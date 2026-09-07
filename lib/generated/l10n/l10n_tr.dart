@@ -563,6 +563,42 @@ class AppLocalizationsTr extends AppLocalizations {
   String get plugins => 'Plugins';
 
   @override
+  String get pkgUpdates => 'Updates';
+
+  @override
+  String get pkgUpToDate => 'Up to date';
+
+  @override
+  String pkgSecurityCount(int n) {
+    return '$n security';
+  }
+
+  @override
+  String get pkgNoManager => 'No package manager this app can read';
+
+  @override
+  String pkgIndexAge(String age) {
+    return 'Index refreshed $age ago';
+  }
+
+  @override
+  String pkgIndexStale(String age) {
+    return 'The package index has not been refreshed in $age. This count is what the server already knew, not what is available.';
+  }
+
+  @override
+  String get pkgUpgrade => 'Upgrade in terminal';
+
+  @override
+  String get pkgUpgradeDesc =>
+      'Opens a terminal with the upgrade command ready. Nothing runs until you send it.';
+
+  @override
+  String pkgSecurityUnknown(String manager) {
+    return '$manager does not say which updates are security fixes';
+  }
+
+  @override
   String get pluginInstall => 'Install a plugin';
 
   @override

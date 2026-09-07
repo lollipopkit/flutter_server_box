@@ -200,7 +200,7 @@ extension _Init on SSHPageState {
     final initCmd = widget.args.initCmd;
     if (initCmd != null && _tmuxCurrentSession == null) {
       _terminal.textInput(initCmd);
-      _terminal.keyInput(TerminalKey.enter);
+      if (widget.args.initCmdRun) _terminal.keyInput(TerminalKey.enter);
     }
 
     final initSnippet = widget.args.initSnippet;

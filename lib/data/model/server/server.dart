@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/dist.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
+import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -28,6 +29,14 @@ class ServerStatus {
   DiskIO diskIO;
   List<DiskSmart> diskSmart;
   List<NvidiaSmiItem>? nvidia;
+
+  /// Pending package updates, from the extended cadence.
+  ///
+  /// Not nullable and not optional: "no manager this build can read" is a
+  /// state the reading itself carries (`PkgUpdates.supported`), and it is a
+  /// different thing from "nothing to upgrade" — one is a server that is up to
+  /// date, the other a question that was never answered.
+  PkgUpdates pkg = const PkgUpdates();
   List<AmdSmiItem>? amd;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};

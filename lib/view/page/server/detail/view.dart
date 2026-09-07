@@ -26,6 +26,7 @@ import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
+import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/system.dart';
@@ -38,6 +39,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/pkg_updates.dart';
 import 'package:server_box/view/widget/plugin/status_card.dart';
 import 'package:server_box/view/widget/plugin/surface_view.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
@@ -93,6 +95,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ServerDetailCards.battery: _buildBatteries,
         ServerDetailCards.pve: _buildPve,
         ServerDetailCards.bmc: _buildBmc,
+        ServerDetailCards.pkg: _buildPkg,
         ServerDetailCards.custom: _buildCustomCmd,
       };
 
@@ -1763,6 +1766,140 @@ ${err.message ?? 'null'}
         RedfishFailure.unreachable => detail ?? libL10n.fail,
       };
 
+
+  /// How many of a possibly-long list the card shows before "more".
+  ///
+  /// Six, because the card sits in a grid beside a dozen others and a machine
+  /// left alone for a month has hundreds — the card's job is to say how many
+  /// and which ones cannot wait, not to be the list.
+  static const _kPkgPreview = 6;
+
+  /// Pending package updates, from the extended cadence.
+  ///
+  /// Null where the server has no manager this build can read — a card that
+  /// can never say anything is worse than no card, and the arrangement keeps
+  /// its place either way.
+  ///
+  /// **"Up to date" is a real answer and gets shown.** It is the whole reason
+  /// somebody would look, and leaving the card out when the count is zero
+  /// would mean the one state worth confirming is the one that looks like a
+  /// failure to collect.
+  Widget? _buildPkg(ServerState si) {
+    final pkg = si.status.pkg;
+    if (!pkg.supported) return null;
+
+    final stale = pkg.stale ? pkg.indexAge!.toAgoStr : null;
+    final security = pkg.security;
+    final subtitle = [
+      if (security != null && security > 0) l10n.pkgSecurityCount(security),
+      if (stale != null) l10n.pkgIndexAge(stale),
+    ].join(' · ');
+
+    if (pkg.total == 0) {
+      return CardX(
+        child: ListTile(
+          leading: Icon(ServerDetailCards.pkg.icon, size: 17),
+          title: Text(l10n.pkgUpToDate, style: UIs.text13),
+          // Which is the difference between "nothing to do" and "nothing was
+          // asked recently enough for that to mean anything".
+          subtitle: stale == null
+              ? null
+              : Text(l10n.pkgIndexAge(stale), style: UIs.text12Grey),
+          trailing: Text(pkg.manager, style: UIs.text12Grey),
+        ),
+      );
+    }
+
+    // Newest-looking first is not a thing a package list has, so the order is
+    // the manager's own — except that security updates come up, which is the
+    // only ordering anybody reads this list for.
+    final items = [
+      ...pkg.items.where((i) => i.security),
+      ...pkg.items.where((i) => !i.security),
+    ];
+
+    return CardX(
+      child: ExpandTile(
+        leading: Icon(ServerDetailCards.pkg.icon, size: 17),
+        title: Row(
+          spacing: 7,
+          children: [
+            Text(l10n.pkgUpdates),
+            _PkgCount(total: pkg.total, security: security),
+          ],
+        ),
+        subtitle: subtitle.isEmpty
+            ? null
+            : Text(
+                subtitle,
+                style: UIs.text12Grey.copyWith(
+                  color: pkg.stale ? Colors.orange : null,
+                ),
+              ),
+        controller: _expand('pkg', _getInitExpand(items.length)),
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: [
+          // Said once, at the top, where a number is about to be read. Below
+          // the list it would be a footnote to a decision already made.
+          if (pkg.stale)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(17, 0, 17, 7),
+              child: Text(
+                l10n.pkgIndexStale(pkg.indexAge!.toAgoStr),
+                style: UIs.text12Grey.copyWith(color: Colors.orange),
+              ),
+            ),
+          for (final item in items.take(_kPkgPreview)) _buildPkgItem(item),
+          if (items.length > _kPkgPreview)
+            ListTile(
+              dense: true,
+              title: Text(
+                libL10n.more,
+                style: UIs.text13.copyWith(color: UIs.primaryColor),
+                textScaler: _textFactor,
+              ),
+              onTap: () => _onTapPkgAll(si),
+            ),
+          if (pkg.upgradeCommand != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(17, 7, 17, 0),
+              child: Btn.text(
+                text: l10n.pkgUpgrade,
+                onTap: () => _onTapPkgUpgrade(si),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _onTapPkgAll(ServerState si) => PkgUpdatesPage.route.go(
+    context,
+    args: PkgUpdatesPageArgs(spi: si.spi, pkg: si.status.pkg),
+  );
+
+  void _onTapPkgUpgrade(ServerState si) =>
+      openPkgUpgrade(context, si.spi, si.status.pkg);
+
+  Widget _buildPkgItem(PkgUpdate item) {
+    final from = item.from;
+    return ListTile(
+      dense: true,
+      title: Text(item.name, style: UIs.text13, textScaler: _textFactor),
+      subtitle: Text(
+        // An arrow where both halves are known; the new version alone where
+        // the manager never printed the old one, rather than an arrow with a
+        // blank on one side.
+        from == null ? item.to : '$from → ${item.to}',
+        style: UIs.text12Grey,
+        textScaler: _textFactor,
+      ),
+      trailing: item.security
+          ? Icon(Icons.shield_outlined, size: 17, color: Colors.orange)
+          : null,
+    );
+  }
+
   Widget? _buildCustomCmd(ServerState si) {
     final ss = si.status;
     if (ss.customCmds.isEmpty) return null;
@@ -1858,6 +1995,38 @@ class _SecretTextState extends State<_SecretText> {
           onPressed: () => setState(() => _shown = !_shown),
         ),
       ],
+    );
+  }
+}
+
+/// The number, with its security half told apart.
+///
+/// A single count reads as one thing to deal with; two say which part cannot
+/// wait. The security half is omitted rather than shown as zero where the
+/// manager cannot tell — see [PkgUpdates.security].
+class _PkgCount extends StatelessWidget {
+  const _PkgCount({required this.total, required this.security});
+
+  final int total;
+  final int? security;
+
+  @override
+  Widget build(BuildContext context) {
+    final urgent = security != null && security! > 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+      decoration: BoxDecoration(
+        color: (urgent ? Colors.orange : UIs.primaryColor).withValues(alpha: 0.17),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        '$total',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: urgent ? Colors.orange : UIs.primaryColor,
+        ),
+      ),
     );
   }
 }

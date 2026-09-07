@@ -63,6 +63,15 @@ final class SshPageArgs {
   };
 
   final String? initCmd;
+
+  /// Whether [initCmd] is sent, or only typed for the user to send.
+  ///
+  /// False where the command is consequential and the package manager cannot
+  /// be relied on to ask first: `apt` and `dnf` print a plan and wait, but
+  /// `apk upgrade` and `brew upgrade` just do it. Typing without sending makes
+  /// the promise the same whichever one the server has.
+  final bool initCmdRun;
+
   final Snippet? initSnippet;
 
   /// A shell that is already running, to be shown here instead of opening one.
@@ -90,6 +99,7 @@ final class SshPageArgs {
   const SshPageArgs({
     required this.source,
     this.initCmd,
+    this.initCmdRun = true,
     this.initSnippet,
     this.session,
     this.notFromTab = true,

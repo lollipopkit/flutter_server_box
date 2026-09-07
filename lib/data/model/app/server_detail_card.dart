@@ -22,6 +22,7 @@ enum ServerDetailCards {
   battery(Icons.battery_full),
   pve(BoxIcons.bxs_dashboard, introducedAfterBuild: 493),
   bmc(Icons.developer_board, introducedAfterBuild: 1491),
+  pkg(Icons.system_update_alt, introducedAfterBuild: 1553),
   custom(Icons.code, introducedAfterBuild: 493);
 
   /// See [Feature.since].
@@ -59,6 +60,7 @@ enum ServerDetailCards {
     battery => libL10n.battery,
     pve => 'PVE',
     bmc => 'BMC',
+    pkg => l10n.pkgUpdates,
     custom => libL10n.cmd,
   };
 

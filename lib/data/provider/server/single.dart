@@ -217,7 +217,7 @@ class ServerNotifier extends _$ServerNotifier {
       // reader never sees it torn, and copying three hundred samples across
       // ten series every refresh would buy nothing.
       history: source.history,
-    );
+    )..pkg = source.pkg;
     status.amd = source.amd?.toList();
     status.osId = source.osId;
     status.osIdLike = source.osIdLike;

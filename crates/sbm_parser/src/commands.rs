@@ -37,6 +37,8 @@ pub const AMD: &str = "amd";
 /// The machine's own interface addresses, so a server reached at a private
 /// address can still say where it is — see `common::parse_ips`
 pub const IP: &str = "ip";
+/// Pending package updates, and how old the package index is — see `pkg`
+pub const PKG: &str = "pkg";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CommandSpec {
@@ -60,7 +62,11 @@ pub struct CommandSpec {
 ///
 /// Both callers refresh these on a slow cadence instead: the app on a timer
 /// (minutes), the monitor on its extended cycle.
-pub const EXTENDED: &[&str] = &[DISK_SMART, AMD, IP];
+/// - `PKG` asks a package manager to work out what would be upgraded. That is
+///   a second of CPU on a large Debian install, it reads a cache that only
+///   changes when someone runs `apt update`, and the answer is the same for
+///   hours at a time.
+pub const EXTENDED: &[&str] = &[DISK_SMART, AMD, IP, PKG];
 
 impl CommandSpec {
     /// Whether this command belongs to the extended function rather than the
@@ -162,6 +168,26 @@ pub const LINUX: &[CommandSpec] = &[
         // asking for less output is free.
         cmd: "ip -o addr show scope global 2>/dev/null || ifconfig 2>/dev/null || hostname -I 2>/dev/null",
     },
+    CommandSpec {
+        key: PKG,
+        // Read-only, unprivileged and offline, in that order of importance.
+        //
+        // Nothing here refreshes an index: that needs root and the network,
+        // takes seconds to minutes, and is a decision an operator makes rather
+        // than a side effect of a status poll. So a stale cache is reported
+        // rather than fixed — `age` is what lets the app say "0 updates, from
+        // an index nobody has refreshed since March", which is the difference
+        // between an answer and a reassurance.
+        //
+        // The manager is chosen once into `m` so the header can be printed
+        // before its output, and `apt-get -s` is used over `apt list
+        // --upgradable` because it is the interface apt documents as stable
+        // for scripts. `Debug::NoLocking` is what makes it work as a normal
+        // user; without it, it wants /var/lib/dpkg/lock.
+        //
+        // `stat -c` is GNU, which is what Linux has; the BSD entry uses -f.
+        cmd: r#"m=; p=; if command -v apt-get >/dev/null 2>&1; then m=apt; p=/var/lib/apt/lists; elif command -v dnf >/dev/null 2>&1; then m=dnf; p=/var/cache/dnf; elif command -v yum >/dev/null 2>&1; then m=yum; p=/var/cache/yum; elif command -v zypper >/dev/null 2>&1; then m=zypper; p=/var/cache/zypp/raw; elif command -v pacman >/dev/null 2>&1; then m=pacman; p=/var/lib/pacman/sync; elif command -v apk >/dev/null 2>&1; then m=apk; p=/var/cache/apk; fi; echo "mgr=${m:-none}"; if [ -n "$p" ] && [ -e "$p" ]; then echo "age=$(( $(date +%s) - $(stat -c %Y "$p" 2>/dev/null || echo 0) ))"; fi; case "$m" in apt) LC_ALL=C apt-get -s -o Debug::NoLocking=true -q upgrade 2>/dev/null;; dnf) LC_ALL=C dnf -q --cacheonly check-update 2>/dev/null;; yum) LC_ALL=C yum -q -C check-update 2>/dev/null;; zypper) LC_ALL=C zypper --non-interactive --no-refresh list-updates 2>/dev/null;; pacman) LC_ALL=C pacman -Qu 2>/dev/null;; apk) LC_ALL=C apk version -l '<' 2>/dev/null;; esac"#,
+    },
 ];
 
 /// BSD/macOS(App `BSDStatusCmdType`)
@@ -218,6 +244,13 @@ pub const BSD: &[CommandSpec] = &[
     // both Darwin and FreeBSD have. Its output carries netmasks and MAC
     // addresses too, which the parser is written to discard.
     CommandSpec { key: IP, cmd: "ifconfig 2>/dev/null" },
+    CommandSpec {
+        key: PKG,
+        // FreeBSD's pkg and Homebrew, which is what a macOS server has. Both
+        // read a catalogue already on disk: `-I` is pkg's "use the index",
+        // and `brew outdated` does not fetch unless asked to.
+        cmd: r#"m=; p=; if command -v pkg >/dev/null 2>&1; then m=pkg; p=/var/db/pkg; elif command -v brew >/dev/null 2>&1; then m=brew; fi; echo "mgr=${m:-none}"; if [ -n "$p" ] && [ -e "$p" ]; then echo "age=$(( $(date +%s) - $(stat -f %m "$p" 2>/dev/null || echo 0) ))"; fi; case "$m" in pkg) LC_ALL=C pkg version -vIL= 2>/dev/null;; brew) LC_ALL=C brew outdated --verbose 2>/dev/null;; esac"#,
+    },
 ];
 
 /// Windows PowerShell(App `WindowsStatusCmdType`)
@@ -281,6 +314,16 @@ pub const WINDOWS: &[CommandSpec] = &[
     CommandSpec {
         key: IP,
         cmd: "Get-NetIPAddress | Select-Object -ExpandProperty IPAddress",
+    },
+    CommandSpec {
+        key: PKG,
+        // No Windows package manager answers this from a non-interactive SSH
+        // session without help: winget wants a source agreement accepted
+        // interactively the first time and elevation for machine scope, and
+        // choco is not installed by default. Reported as absent rather than
+        // guessed at — the app then says the server has no manager it can
+        // read, which is true.
+        cmd: r#"Write-Output "mgr=none""#,
     },
 ];
 

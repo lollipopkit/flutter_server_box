@@ -520,6 +520,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get plugins => '插件';
 
   @override
+  String get pkgUpdates => '更新';
+
+  @override
+  String get pkgUpToDate => '已是最新';
+
+  @override
+  String pkgSecurityCount(int n) {
+    return '$n 个安全更新';
+  }
+
+  @override
+  String get pkgNoManager => '没有本应用能读取的包管理器';
+
+  @override
+  String pkgIndexAge(String age) {
+    return '索引更新于 $age 前';
+  }
+
+  @override
+  String pkgIndexStale(String age) {
+    return '包索引已有 $age 未更新。这个数字是服务器已知的，不是实际可用的。';
+  }
+
+  @override
+  String get pkgUpgrade => '在终端中升级';
+
+  @override
+  String get pkgUpgradeDesc => '打开终端并填好升级命令。在你按下发送前不会执行任何东西。';
+
+  @override
+  String pkgSecurityUnknown(String manager) {
+    return '$manager 不区分哪些是安全更新';
+  }
+
+  @override
   String get pluginInstall => '安装插件';
 
   @override

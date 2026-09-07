@@ -120,6 +120,15 @@ pub struct SystemMetrics {
     /// a machine moves or its lease does, not between two samples.
     #[serde(default)]
     pub ips: Vec<String>,
+    /// Pending package updates, read from whatever manager the machine has.
+    ///
+    /// Extended cadence, carried forward in between. Nothing here refreshes a
+    /// package index — that needs root and the network, and is an operator's
+    /// decision rather than a side effect of this agent polling. So
+    /// `index_age_secs` travels with the reading and is what lets a client say
+    /// "0 updates, off an index nobody has refreshed since March".
+    #[serde(default)]
+    pub pkg: sbm_parser::pkg::PkgUpdates,
     /// Output of the user's custom commands, in the order their files sort in
     /// — which is the order the user arranged them in. Refreshed on the
     /// extended cycle, since that is the one that runs the script.
@@ -484,6 +493,10 @@ async fn collect_metrics(
             status.batteries = scripted.batteries;
             status.disk_smart = scripted.disk_smart;
             status.ips = scripted.ips;
+            // No native path either: reading it means asking a package
+            // manager, which is a process spawn per cycle whatever the
+            // language doing the asking.
+            status.pkg = scripted.pkg;
             if status.conn.is_none() {
                 status.conn = scripted.conn;
             }
@@ -1098,6 +1111,15 @@ fn adapt_status(
     } else {
         prev_metrics.map(|p| p.ips.clone()).unwrap_or_default()
     };
+    // Same again. A carried-forward reading keeps its own `index_age_secs`,
+    // which is deliberately *not* aged along with it: the field says how stale
+    // the package index was when it was read, and a client that wants to know
+    // how stale the reading is has `extended_updated_at` for that.
+    let pkg = if extended_refreshed {
+        status.pkg.clone()
+    } else {
+        prev_metrics.map(|p| p.pkg.clone()).unwrap_or_default()
+    };
 
     let now = Utc::now();
     let diskio = status.diskio;
@@ -1148,6 +1170,7 @@ fn adapt_status(
         },
         disk_smart,
         ips,
+        pkg,
         // Filled in by `collect_metrics`: whether these are fresh or the
         // previous cycle's depends on whether the script ran, which this
         // function is not the one that knows.

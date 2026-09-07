@@ -71,6 +71,14 @@ class MonitorMetrics {
   /// [sensors] and [diskSmart].
   final List<String> ips;
 
+  /// Pending package updates, as the agent read them.
+  ///
+  /// Empty and unsupported on agents predating the field, which reads the same
+  /// as a machine with no package manager — so the app leaves what it already
+  /// knew alone rather than replacing it with nothing. Extended cadence, like
+  /// [sensors] and [diskSmart].
+  final MonitorPkgUpdates? pkg;
+
   const MonitorMetrics({
     required this.timestamp,
     this.extendedUpdatedAt,
@@ -98,6 +106,7 @@ class MonitorMetrics {
     this.sensors = const [],
     this.diskSmart = const [],
     this.customCmds = const [],
+    this.pkg,
   });
 
   factory MonitorMetrics.fromJson(Map<String, dynamic> json) =>
@@ -460,4 +469,55 @@ class MonitorHistoryPoint {
       _$MonitorHistoryPointFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorHistoryPointToJson(this);
+}
+
+/// The agent's `pkg` block, which is `sbm_parser::pkg::PkgUpdates` verbatim.
+///
+/// Its own type rather than the app's [PkgUpdates] because the wire uses
+/// snake_case and json_serializable is what reads it; `toStatus` is the one
+/// place the two meet.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorPkgUpdates {
+  final String manager;
+  final List<MonitorPkgUpdate> items;
+
+  /// Null where the manager cannot tell a security update from an ordinary
+  /// one. Never coerced to zero — see [PkgUpdates.security].
+  final int? security;
+
+  final int? indexAgeSecs;
+
+  const MonitorPkgUpdates({
+    this.manager = '',
+    this.items = const [],
+    this.security,
+    this.indexAgeSecs,
+  });
+
+  factory MonitorPkgUpdates.fromJson(Map<String, dynamic> json) =>
+      _$MonitorPkgUpdatesFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorPkgUpdatesToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorPkgUpdate {
+  final String name;
+  final String? from;
+  final String to;
+  final bool security;
+  final String? repo;
+
+  const MonitorPkgUpdate({
+    required this.name,
+    this.from,
+    this.to = '',
+    this.security = false,
+    this.repo,
+  });
+
+  factory MonitorPkgUpdate.fromJson(Map<String, dynamic> json) =>
+      _$MonitorPkgUpdateFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorPkgUpdateToJson(this);
 }

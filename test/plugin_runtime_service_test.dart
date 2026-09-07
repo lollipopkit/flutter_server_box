@@ -46,6 +46,24 @@ class _Ops implements PluginHostOps {
   }
 
   @override
+  Future<PluginFetchResult> fetch({
+    required String url,
+    required String method,
+    Map<String, String> headers = const {},
+    String? body,
+    String bodyEncoding = 'utf8',
+    String? pinSha256,
+    bool probeCert = false,
+    Duration? timeout,
+  }) async => (
+    status: 200,
+    headers: const <String, String>{},
+    body: '',
+    bodyEncoding: 'utf8',
+    cert: null,
+  );
+
+  @override
   void toast(String text, String kind) => calls.add('toast:$kind:$text');
 
   @override

@@ -1083,6 +1083,60 @@ abstract class AppLocalizations {
   /// **'Plugins'**
   String get plugins;
 
+  /// No description provided for @pkgUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get pkgUpdates;
+
+  /// No description provided for @pkgUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get pkgUpToDate;
+
+  /// No description provided for @pkgSecurityCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} security'**
+  String pkgSecurityCount(int n);
+
+  /// No description provided for @pkgNoManager.
+  ///
+  /// In en, this message translates to:
+  /// **'No package manager this app can read'**
+  String get pkgNoManager;
+
+  /// No description provided for @pkgIndexAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Index refreshed {age} ago'**
+  String pkgIndexAge(String age);
+
+  /// No description provided for @pkgIndexStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The package index has not been refreshed in {age}. This count is what the server already knew, not what is available.'**
+  String pkgIndexStale(String age);
+
+  /// No description provided for @pkgUpgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade in terminal'**
+  String get pkgUpgrade;
+
+  /// No description provided for @pkgUpgradeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens a terminal with the upgrade command ready. Nothing runs until you send it.'**
+  String get pkgUpgradeDesc;
+
+  /// No description provided for @pkgSecurityUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'{manager} does not say which updates are security fixes'**
+  String pkgSecurityUnknown(String manager);
+
   /// No description provided for @pluginInstall.
   ///
   /// In en, this message translates to:

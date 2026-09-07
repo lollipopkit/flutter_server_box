@@ -17,6 +17,7 @@ pub mod commands;
 pub mod common;
 pub mod gpu;
 pub mod linux;
+pub mod pkg;
 pub mod script;
 pub mod smart;
 pub mod types;
@@ -99,6 +100,10 @@ pub struct ServerStatus {
     pub nvidia: Vec<NvidiaSmiItem>,
     pub amd: Vec<AmdSmiItem>,
     pub disk_smart: Vec<DiskSmart>,
+    /// Pending package updates, and how stale the index they were read from
+    /// is. Cross-platform in the same way `host` is: a different command per
+    /// system, one reader for all of them. See [`pkg`].
+    pub pkg: pkg::PkgUpdates,
 }
 
 /// Parse options
@@ -134,6 +139,7 @@ pub fn parse_status_opts(
         ips: common::parse_ips(get(commands::IP)),
         nvidia: gpu::nvidia_from_xml(get(commands::NVIDIA)),
         amd: gpu::amd_from_json(get(commands::AMD)),
+        pkg: pkg::parse_pkg(get(commands::PKG)),
         ..ServerStatus::default()
     };
 

@@ -85,6 +85,9 @@ MonitorMetrics _$MonitorMetricsFromJson(
           ?.map((e) => MonitorCustomCmd.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  pkg: json['pkg'] == null
+      ? null
+      : MonitorPkgUpdates.fromJson(json['pkg'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
@@ -115,6 +118,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'disk_smart': instance.diskSmart,
       'custom_cmds': instance.customCmds,
       'ips': instance.ips,
+      'pkg': instance.pkg,
     };
 
 MonitorCpuCoreTime _$MonitorCpuCoreTimeFromJson(Map<String, dynamic> json) =>
@@ -377,3 +381,41 @@ Map<String, dynamic> _$MonitorHistoryPointToJson(
   'diskio_write_speed': instance.diskioWriteSpeed,
   'battery_percent': instance.batteryPercent,
 };
+
+MonitorPkgUpdates _$MonitorPkgUpdatesFromJson(Map<String, dynamic> json) =>
+    MonitorPkgUpdates(
+      manager: json['manager'] as String? ?? '',
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map((e) => MonitorPkgUpdate.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      security: (json['security'] as num?)?.toInt(),
+      indexAgeSecs: (json['index_age_secs'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$MonitorPkgUpdatesToJson(MonitorPkgUpdates instance) =>
+    <String, dynamic>{
+      'manager': instance.manager,
+      'items': instance.items,
+      'security': instance.security,
+      'index_age_secs': instance.indexAgeSecs,
+    };
+
+MonitorPkgUpdate _$MonitorPkgUpdateFromJson(Map<String, dynamic> json) =>
+    MonitorPkgUpdate(
+      name: json['name'] as String,
+      from: json['from'] as String?,
+      to: json['to'] as String? ?? '',
+      security: json['security'] as bool? ?? false,
+      repo: json['repo'] as String?,
+    );
+
+Map<String, dynamic> _$MonitorPkgUpdateToJson(MonitorPkgUpdate instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'from': instance.from,
+      'to': instance.to,
+      'security': instance.security,
+      'repo': instance.repo,
+    };

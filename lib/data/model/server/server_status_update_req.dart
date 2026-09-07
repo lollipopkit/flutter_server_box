@@ -12,6 +12,7 @@ import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
+import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -75,6 +76,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   _apply('nvidia', () => _applyNvidia(ss, status));
   _apply('amd', () => _applyAmd(ss, status));
   _apply('smart', () => _applySmart(ss, status));
+  _apply('pkg', () => _applyPkg(ss, status));
   // Taken from what the script printed, not from a list the app holds: the
   // commands live on the server now, so their names and their order are only
   // knowable from the output.
@@ -447,6 +449,18 @@ void _applyAmd(ServerStatus ss, Map<String, dynamic> status) {
       ),
     );
   }).toList();
+}
+
+/// The extended cadence carries this, so an ordinary poll answers with an
+/// empty reading. Kept rather than cleared for the same reason `diskSmart` is:
+/// the last count that was taken is a better answer than none, and the app
+/// shows how old the index behind it was anyway.
+void _applyPkg(ServerStatus ss, Map<String, dynamic> status) {
+  final raw = status['pkg'];
+  if (raw is! Map<String, dynamic>) return;
+  final parsed = PkgUpdates.fromJson(raw);
+  if (!parsed.supported && ss.pkg.supported) return;
+  ss.pkg = parsed;
 }
 
 void _applySmart(ServerStatus ss, Map<String, dynamic> status) {

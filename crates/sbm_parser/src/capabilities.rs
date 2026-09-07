@@ -45,6 +45,10 @@ pub struct Capabilities {
     pub nvidia: FieldSupport,
     pub amd: FieldSupport,
     pub disk_smart: FieldSupport,
+    /// Every platform has a command; whether the machine has a manager this
+    /// build can read is a property of the machine, not of the platform, and
+    /// is answered by `PkgUpdates::supported` instead.
+    pub pkg: FieldSupport,
 }
 
 fn has_command(system: SystemType, key: &str) -> bool {
@@ -93,6 +97,7 @@ pub fn capabilities(system: SystemType) -> Capabilities {
         nvidia: hw_from_commands(system, &[commands::NVIDIA]),
         amd: hw_from_commands(system, &[commands::AMD]),
         disk_smart: hw_from_commands(system, &[commands::DISK_SMART]),
+        pkg: hw_from_commands(system, &[commands::PKG]),
     }
 }
 

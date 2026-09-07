@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
+import 'package:server_box/data/model/server/pkg_updates.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 
@@ -41,6 +42,7 @@ ServerStatus applyMonitorMetrics(ServerStatus ss, MonitorMetrics m) {
   _apply('battery', () => _applyBatteries(ss, m));
   _apply('sensors', () => _applySensors(ss, m));
   _apply('smart', () => _applySmart(ss, m));
+  _apply('pkg', () => _applyPkg(ss, m));
   _apply('custom', () => _applyCustomCmds(ss, m));
 
   return ss;
@@ -388,6 +390,33 @@ void _applySensors(ServerStatus ss, MonitorMetrics m) {
   ss.sensors
     ..clear()
     ..addAll(sensors);
+}
+
+/// An agent predating the field sends nothing, which reads the same as a
+/// machine with no package manager — so what the app already knew is left
+/// alone rather than replaced with an empty reading.
+void _applyPkg(ServerStatus ss, MonitorMetrics m) {
+  final pkg = m.pkg;
+  if (pkg == null) return;
+  final parsed = PkgUpdates(
+    manager: pkg.manager,
+    items: [
+      for (final i in pkg.items)
+        PkgUpdate(
+          name: i.name,
+          from: i.from,
+          to: i.to,
+          security: i.security,
+          repo: i.repo,
+        ),
+    ],
+    security: pkg.security,
+    indexAge: pkg.indexAgeSecs == null
+        ? null
+        : Duration(seconds: pkg.indexAgeSecs!),
+  );
+  if (!parsed.supported && ss.pkg.supported) return;
+  ss.pkg = parsed;
 }
 
 /// monitor's `SmartSummary` drops `raw_data`/`smart_attributes` (see

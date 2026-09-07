@@ -172,6 +172,43 @@
   },
   "customCmdChangedOnServer": "The commands on this server have changed since this page loaded them. Reload to see them; saving now would discard them.",
   "plugins": "Plugins",
+  "pkgUpdates": "Updates",
+  "pkgUpToDate": "Up to date",
+  "pkgSecurityCount": "{n} security",
+  "@pkgSecurityCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pkgNoManager": "No package manager this app can read",
+  "pkgIndexAge": "Index refreshed {age} ago",
+  "@pkgIndexAge": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgIndexStale": "The package index has not been refreshed in {age}. This count is what the server already knew, not what is available.",
+  "@pkgIndexStale": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgUpgrade": "Upgrade in terminal",
+  "pkgUpgradeDesc": "Opens a terminal with the upgrade command ready. Nothing runs until you send it.",
+  "pkgSecurityUnknown": "{manager} does not say which updates are security fixes",
+  "@pkgSecurityUnknown": {
+    "placeholders": {
+      "manager": {
+        "type": "String"
+      }
+    }
+  },
   "pluginInstall": "Install a plugin",
   "pluginInstalled": "Installed",
   "pluginBundled": "Bundled",

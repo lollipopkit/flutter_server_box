@@ -26,8 +26,7 @@ class _Server {
     _http.listen((request) async {
       seen.add('${request.method} ${request.uri.path}');
       seenHeaders.add({
-        for (final name in ['accept', 'x-token'])
-          if (request.headers.value(name) case final v?) name: v,
+        for (final name in ['accept', 'x-token']) name: ?request.headers.value(name),
       });
       body = await utf8.decoder.bind(request).join();
       request.response

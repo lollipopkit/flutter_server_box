@@ -160,6 +160,43 @@
   "customCmdIntervalTip": "命令随状态轮询执行，因此该值会向上取整到刷新间隔的整数倍。实际：{seconds} 秒。",
   "customCmdChangedOnServer": "本页加载后，服务器上的命令已被改动。保存会覆盖掉这些改动，请先重新加载。",
   "plugins": "插件",
+  "pkgUpdates": "更新",
+  "pkgUpToDate": "已是最新",
+  "pkgSecurityCount": "{n} 个安全更新",
+  "@pkgSecurityCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "pkgNoManager": "没有本应用能读取的包管理器",
+  "pkgIndexAge": "索引更新于 {age} 前",
+  "@pkgIndexAge": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgIndexStale": "包索引已有 {age} 未更新。这个数字是服务器已知的，不是实际可用的。",
+  "@pkgIndexStale": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "pkgUpgrade": "在终端中升级",
+  "pkgUpgradeDesc": "打开终端并填好升级命令。在你按下发送前不会执行任何东西。",
+  "pkgSecurityUnknown": "{manager} 不区分哪些是安全更新",
+  "@pkgSecurityUnknown": {
+    "placeholders": {
+      "manager": {
+        "type": "String"
+      }
+    }
+  },
   "pluginInstall": "安装插件",
   "pluginInstalled": "已安装",
   "pluginBundled": "随包",
