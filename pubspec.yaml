@@ -22,7 +22,7 @@ dependencies:
   # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
   # `X509Certificate` only offers sha1 ready made.
   crypto: ^3.0.0
-  dio: ^5.2.1
+  dio: ^5.11.1
   pinenacl: ^0.6.0
   # ECDSA and RSA key generation for the in-app keygen. Ed25519 comes from
   # pinenacl; dartssh2 does the OpenSSH serialisation for all three. Already
@@ -96,7 +96,7 @@ dependencies:
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0
   desktop_drop: ^0.8.4
-  sentry: ^9.28.0
+  sentry: ^9.29.0
   # Runtime for the generated reader in `lib/src/proto`, which is how Android's
   # crash tombstone is decoded. Pure Dart, and its own dependencies —
   # collection, fixnum, meta — are already in this tree.
