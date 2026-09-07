@@ -215,6 +215,10 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: monitor/frontend/package-lock.json
+      # packages/webui is a `file:` dependency, so the install above only
+      # symlinks it and its own dependencies are never fetched. `npm run check`
+      # is what needs them here — svelte-check reads that package's source, and
+      # without them reports every import in it as a missing module.
       - name: Install dependencies
         working-directory: monitor/frontend
         run: |
@@ -222,11 +226,16 @@ jobs:
           npm ci --prefix ../../packages/webui
       - name: Test, lint, check and build
         working-directory: monitor/frontend
+        # `--ignore-scripts` skips the `prebuild` hook, which installs
+        # packages/webui — the step above has already done exactly that, and
+        # this is the one place where both run. Nowhere else may drop the hook:
+        # Cloudflare Pages and a local `npm run build` have no step above them,
+        # and the hook is the only thing that installs it there.
         run: |
           npm exec vitest -- run
           npm run lint
           npm run check
-          npm run build
+          npm run build --ignore-scripts
 
   # Installed with bun and built with node, which is how both of these are
   # written: the lockfile committed beside them is `bun.lock`, and the build
