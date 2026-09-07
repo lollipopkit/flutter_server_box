@@ -21,6 +21,8 @@ _BackupV2 _$BackupV2FromJson(Map<String, dynamic> json) => _BackupV2(
   bmcCredentials:
       json['bmcCredentials'] as Map<String, dynamic>? ??
       const <String, Object?>{},
+  plugins:
+      json['plugins'] as Map<String, dynamic>? ?? const <String, Object?>{},
 );
 
 Map<String, dynamic> _$BackupV2ToJson(_BackupV2 instance) => <String, dynamic>{
@@ -34,4 +36,5 @@ Map<String, dynamic> _$BackupV2ToJson(_BackupV2 instance) => <String, dynamic>{
   'settings': instance.settings,
   'portForwards': instance.portForwards,
   'bmcCredentials': instance.bmcCredentials,
+  'plugins': instance.plugins,
 };

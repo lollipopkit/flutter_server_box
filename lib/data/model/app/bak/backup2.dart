@@ -8,6 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
+import 'package:server_box/data/model/plugin/backup.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/bmc_credential.dart';
 import 'package:server_box/data/model/server/custom.dart';
@@ -72,6 +73,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// one. A server whose `bmc.credId` names an account this map does not
     /// carry restores with the address and no account, which the editor shows.
     @Default(<String, Object?>{}) Map<String, Object?> bmcCredentials,
+
+    /// What each installed plugin has stored, by plugin id. See
+    /// [PluginBackup].
+    ///
+    /// Data, not installs: a backup restores records rather than files, so a
+    /// restored install record would name a directory that is not there. The
+    /// configuration and the key-value data survive until the plugin is
+    /// installed again.
+    @Default(<String, Object?>{}) Map<String, Object?> plugins,
   }) = _BackupV2;
 
   /// Must stay a single expression with a cascade, not a block body.
@@ -145,6 +155,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           serversChanged = true;
         }
       }
+
+      // After the servers, because a plugin's configuration is a child of one
+      // and the foreign key refuses a row for a server that is not here yet.
+      // Inside the same transaction, so a later failure takes it with
+      // everything else.
+      PluginBackup.restore(plugins, serverIds: restored.serverIds);
 
       historyNotifications = _mergeSqliteStore(
         Stores.history,
@@ -228,6 +244,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       bmcCredentials: Stores.bmcCredential.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
       container: Stores.container.getAllMap(),
+      plugins: PluginBackup.load(),
       history: _backupStore(Stores.history),
       settings: includeSettings
           ? _backupStore(

@@ -13,6 +13,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/schema.dart';
 
 void main() {
@@ -327,6 +328,51 @@ void main() {
 
       expect(Stores.setting.agentLocalExec.fetch(), isFalse);
       expect(Stores.setting.timeout.fetch(), 9, reason: 'the rest still lands');
+    });
+
+    /// Data, not installs: the record names files a backup does not carry, so
+    /// what travels is the configuration and the key-value data — which
+    /// survive until the plugin is installed again.
+    test('a plugin\'s data goes into the file and comes back', () async {
+      SqliteDb.instance.execute(
+        'INSERT INTO server (id, name, ssh_ip) '
+        "VALUES ('srv-p', 'p', '10.0.0.1');",
+      );
+      PluginCfgStore().put('srv-p', 'bmc', {'addr': 'x'}, cfgVer: 1);
+      PluginKvStore().put('bmc', 'acct', 'one');
+
+      final file = await BackupV2.loadFromStore();
+      expect(file.plugins.keys, ['bmc']);
+
+      SqliteDb.instance.execute('DELETE FROM server_plugin_cfg;');
+      SqliteDb.instance.execute('DELETE FROM plugin_kv;');
+      // Through JSON, because that is what a file is.
+      await BackupV2.fromJson(
+        jsonDecode(file.toJsonString()) as Map<String, dynamic>,
+      ).merge(force: true);
+
+      expect(PluginCfgStore().fetch('srv-p', 'bmc'), {'addr': 'x'});
+      expect(PluginKvStore().fetch('bmc', 'acct'), 'one');
+    });
+
+    /// A file written before the field existed. `plugins` defaults rather than
+    /// being required, or every older backup would stop decoding.
+    test('a file with no plugins field still restores', () async {
+      final json = {
+        'version': BackupV2.formatVer,
+        'date': 1,
+        'spis': <String, Object?>{},
+        'snippets': <String, Object?>{},
+        'keys': <String, Object?>{},
+        'container': <String, Object?>{},
+        'history': <String, Object?>{},
+        'settings': <String, Object?>{},
+      };
+
+      final backup = BackupV2.fromJson(json);
+
+      expect(backup.plugins, isEmpty);
+      await backup.merge(force: true);
     });
 
     /// Restoring does not run the schema migrator, and by the time a user
