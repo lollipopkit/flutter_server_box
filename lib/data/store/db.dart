@@ -558,8 +558,9 @@ class BenchmarkRuns extends Table {
 /// **Not a sync root, and not for `conn_stat`'s reason.** Installing puts
 /// files on *this* device; a row arriving on another one would name a plugin
 /// that is not there, and `granted` would be consent the user gave on a
-/// different device to code this one has never seen. A backup carries it
-/// (section 7's `plugins` field), because a backup restores the files too.
+/// different device to code this one has never seen. A backup carries the
+/// plugin's *data* rather than this (section 7's `plugins` field), for the
+/// same reason: it restores records, not files.
 @DataClassName('PluginInstallRow')
 class PluginInstalls extends Table {
   @override

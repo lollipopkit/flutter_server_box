@@ -5,6 +5,12 @@ import 'dart:convert';
 /// The record, not the plugin: what was unpacked from the `.sbp` are files,
 /// and this says which version of them is installed, where it came from, and
 /// what the user agreed it may do.
+///
+/// **Not in a backup.** A backup is settings and records, not files, so a
+/// restored record would name a directory that is not there — a plugin that
+/// fails to load on every launch. What a backup carries is the plugin's
+/// *data*, which survives until the plugin is installed again (PLUGINS.md
+/// section 7's `plugins` field).
 class PluginInstall {
   const PluginInstall({
     required this.id,
@@ -66,7 +72,8 @@ class PluginInstall {
     installedAt: installedAt ?? this.installedAt,
   );
 
-  /// For a backup, which carries the record beside the files it describes.
+  /// For anything that has to carry the record as text — a diagnostic, a
+  /// developer tool. Not a backup: see the class doc.
   Map<String, dynamic> toJson() => {
     'id': id,
     'version': version,

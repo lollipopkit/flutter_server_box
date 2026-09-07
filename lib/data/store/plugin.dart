@@ -7,11 +7,12 @@ import 'package:sqlite3/sqlite3.dart';
 
 /// What the app knows about the plugins on this device. PLUGINS.md section 7.
 ///
-/// Not an [EntityStore] and not a sync root. Installing puts files on *this*
-/// device; a row arriving on another one would name a plugin that is not
-/// there, and `granted` would be consent the user gave on a different device
-/// to code this one has never seen. A backup carries it, because a backup
-/// restores the files too.
+/// Not an [EntityStore], not a sync root, and not in a backup. Installing puts
+/// files on *this* device; a row arriving on another one would name a plugin
+/// that is not there, and `granted` would be consent the user gave on a
+/// different device to code this one has never seen. What travels is the
+/// plugin's *data* — see PLUGINS.md section 7's `plugins` field — which
+/// survives until the plugin is installed again.
 class PluginInstallStore {
   PluginInstallStore();
 

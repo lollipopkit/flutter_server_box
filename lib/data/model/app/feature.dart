@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -142,7 +143,16 @@ final class Feature {
 /// A plugin's contributions are appended here once the app knows which plugins
 /// are installed (PLUGINS.md section 10 step 5).
 abstract final class Features {
-  static List<Feature> of(FeatureSlot slot) => switch (slot) {
+  static List<Feature> of(FeatureSlot slot) => [
+    ...builtIn(slot),
+    // Appended rather than merged in declaration order: what a plugin adds
+    // goes after what ships with the app, and where the user actually sees it
+    // is decided by the arrangement they made, not by this list.
+    ...PluginContributions.of(slot),
+  ];
+
+  /// What ships with the app, without the installed plugins.
+  static List<Feature> builtIn(FeatureSlot slot) => switch (slot) {
     FeatureSlot.funcBtn => [for (final e in ServerFuncBtn.values) e.feature],
     FeatureSlot.detailCard => [
       for (final e in ServerDetailCards.values) e.feature,
