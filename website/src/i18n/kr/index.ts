@@ -75,7 +75,7 @@ const kr: Translation = {
   download: {
     title: '모든 플랫폼, 모든 배포 경로.',
     subtitle:
-      '기기와 신뢰 모델에 맞는 채널을 선택하세요. iOS는 App Store, macOS는 App Store 또는 Homebrew, Android/Linux/Windows는 직접 패키지를 제공합니다.',
+      '기기와 신뢰 모델에 맞는 채널을 선택하세요. iOS는 App Store, macOS는 App Store(Apple Silicon 전용), GitHub Releases 또는 Homebrew, Android/Linux/Windows는 직접 패키지를 제공합니다.',
     copied: '설치 명령을 복사했습니다',
     copyPrompt: '이 설치 명령을 복사하세요:',
     note:

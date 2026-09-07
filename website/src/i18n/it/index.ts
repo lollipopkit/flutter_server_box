@@ -75,7 +75,7 @@ const it: Translation = {
   download: {
     title: 'Ogni piattaforma, ogni sorgente.',
     subtitle:
-      'Scegli il canale adatto al dispositivo. iOS usa App Store; macOS usa App Store o Homebrew; Android, Linux e Windows hanno pacchetti diretti.',
+      'Scegli il canale adatto al dispositivo. iOS usa App Store; macOS usa App Store (solo Apple silicon), GitHub Releases o Homebrew; Android, Linux e Windows hanno pacchetti diretti.',
     copied: 'Comando copiato',
     copyPrompt: 'Copia questo comando:',
     note:

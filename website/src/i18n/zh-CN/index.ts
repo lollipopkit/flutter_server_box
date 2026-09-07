@@ -74,7 +74,7 @@ const zhCN: Translation = {
   download: {
     title: '所有平台，所有来源。',
     subtitle:
-      '根据设备和信任模型选择下载渠道。iOS 使用 App Store；macOS 使用 App Store 或 Homebrew；Android、Linux 和 Windows 也提供直接安装包。',
+      '根据设备和信任模型选择下载渠道。iOS 使用 App Store；macOS 使用 App Store（仅 Apple Silicon）、GitHub Releases 或 Homebrew；Android、Linux 和 Windows 也提供直接安装包。',
     copied: '已复制安装命令',
     copyPrompt: '复制此安装命令：',
     note:
