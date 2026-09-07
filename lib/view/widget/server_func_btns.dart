@@ -13,6 +13,7 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
@@ -24,6 +25,7 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
+import 'package:server_box/view/page/plugin/page.dart';
 import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/services.dart';
@@ -45,8 +47,8 @@ class ServerFuncBtns extends StatelessWidget {
     if (btns.isEmpty) return UIs.placeholder;
 
     final items = [
-      for (final value in btns)
-        Consumer(builder: (_, ref, _) => _buildItem(context, value, ref)),
+      for (final feature in btns)
+        Consumer(builder: (_, ref, _) => _buildItem(context, feature, ref)),
     ];
 
     // It has to say how wide it is. A shrink-wrapping viewport
@@ -83,7 +85,7 @@ const _kVPadTop = 5.0;
 const _kVPadBottom = 1.0;
 
 extension ServerFuncBtnsBuild on ServerFuncBtns {
-  Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
+  Widget _buildItem(BuildContext context, Feature e, WidgetRef ref) {
     // The label is part of the button, not a caption under one. An
     // `IconButton` with a `Text` beneath it left the word inert, so half of
     // what looks like a target did nothing when tapped.
@@ -97,7 +99,7 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
           children: [
             Icon(e.icon, size: 17),
             const SizedBox(height: 4),
-            Text(e.toStr, style: UIs.text11Grey),
+            Text(e.label(), style: UIs.text11Grey),
           ],
         ),
       ),
@@ -106,10 +108,16 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 }
 
 extension ServerFuncBtnsUtils on ServerFuncBtns {
-  List<ServerFuncBtn> btnsWith(MonitorRemoteAccess? granted) {
+  /// The row, in the order the user arranged it.
+  ///
+  /// Features rather than [ServerFuncBtn]s: a plugin's page is an entry here
+  /// too, and it is not an enum case. What each one *does* is still decided by
+  /// id in [_onTapMoreBtns] — the registry says what a row holds, not what
+  /// pressing it means.
+  List<Feature> btnsWith(MonitorRemoteAccess? granted) {
     final ordered = () {
       try {
-        final byId = {for (final b in ServerFuncBtn.values) b.id: b};
+        final byId = {for (final f in Features.of(FeatureSlot.funcBtn)) f.id: f};
         return [
           // An id this build has nothing for is skipped: a row survives a
           // backup and a sync, so it can name an entry that was removed, or
@@ -117,7 +125,7 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
           for (final id in FeatureSlot.funcBtn.enabledIds()) ?byId[id],
         ];
       } catch (e) {
-        return ServerFuncBtn.values;
+        return [for (final b in ServerFuncBtn.values) b.feature];
       }
     }();
 
@@ -128,12 +136,35 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
       ServerConnectCredential.fromSpi(spi),
       granted: granted,
     );
-    return ordered.where((e) => e.availableWith(caps)).toList();
+    return ordered.where((e) => e.needs?.call(caps) ?? true).toList();
   }
 }
 
 extension ServerFuncBtnsActions on ServerFuncBtns {
   void _onTapMoreBtns(
+    Feature feature,
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final value = ServerFuncBtn.values.firstWhereOrNull(
+      (e) => e.id == feature.id,
+    );
+    if (value == null) {
+      // Not one of the app's own, so it is a plugin's page — the only other
+      // thing that can be in this row.
+      final plugin = PluginContributions.ofFeature(feature.id);
+      if (plugin != null && plugin.isPage(feature.id)) {
+        PluginPage.route.go(
+          context,
+          args: PluginPageArgs(plugin: plugin, spi: spi),
+        );
+      }
+      return;
+    }
+    _onTapBuiltIn(value, context, ref);
+  }
+
+  void _onTapBuiltIn(
     ServerFuncBtn value,
     BuildContext context,
     WidgetRef ref,

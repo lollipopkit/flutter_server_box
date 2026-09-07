@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// Reads a manifest without loading anything.
 ///
@@ -254,6 +254,9 @@ class PluginManifestInfo {
   /// Present when this plugin draws a card on the server detail page.
   final PluginCardInfo? card;
 
+  /// Present when this plugin puts a button in the server function bar.
+  final PluginPageInfo? page;
+
   /// Present when this plugin contributes readings to the status page.
   final PluginStatusInfo? status;
   final String? license;
@@ -267,6 +270,7 @@ class PluginManifestInfo {
     required this.description,
     required this.permissions,
     this.card,
+    this.page,
     this.status,
     this.license,
     this.sourceUrl,
@@ -281,6 +285,7 @@ class PluginManifestInfo {
       description.hashCode ^
       permissions.hashCode ^
       card.hashCode ^
+      page.hashCode ^
       status.hashCode ^
       license.hashCode ^
       sourceUrl.hashCode;
@@ -297,9 +302,61 @@ class PluginManifestInfo {
           description == other.description &&
           permissions == other.permissions &&
           card == other.card &&
+          page == other.page &&
           status == other.status &&
           license == other.license &&
           sourceUrl == other.sourceUrl;
+}
+
+/// A button in the server function bar, opening a page. PLUGINS.md 5.3.
+class PluginPageInfo {
+  /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+  final String id;
+  final String label;
+  final String? icon;
+  final bool defaultOn;
+
+  /// What the server must be able to do for the button to appear —
+  /// `shell`, `terminal`, `files`, `byte_stream`, `stored_history` or
+  /// `persistent_session`.
+  ///
+  /// The app's own `availableWith` switch, moved into data. A button an
+  /// entry cannot serve opens a page that can never load, and which of these
+  /// a transport meets is the app's answer rather than the plugin's.
+  final List<String> needs;
+
+  /// See [`PluginCardInfo::requires_config`].
+  final bool requiresConfig;
+
+  const PluginPageInfo({
+    required this.id,
+    required this.label,
+    this.icon,
+    required this.defaultOn,
+    required this.needs,
+    required this.requiresConfig,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      icon.hashCode ^
+      defaultOn.hashCode ^
+      needs.hashCode ^
+      requiresConfig.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginPageInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          icon == other.icon &&
+          defaultOn == other.defaultOn &&
+          needs == other.needs &&
+          requiresConfig == other.requiresConfig;
 }
 
 /// Something a plugin asked the app to do.

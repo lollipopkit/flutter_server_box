@@ -37,15 +37,19 @@ abstract final class PluginContributions {
   }
 
   /// What they add to [slot].
-  static List<Feature> of(FeatureSlot slot) {
-    if (slot != FeatureSlot.detailCard) return const [];
-    return [
+  static List<Feature> of(FeatureSlot slot) => switch (slot) {
+    FeatureSlot.detailCard => [
       for (final plugin in _byId.values) ...[
         ?plugin.statusFeature,
         ?plugin.cardFeature,
       ],
-    ];
-  }
+    ],
+    FeatureSlot.funcBtn => [for (final plugin in _byId.values) ?plugin.pageFeature],
+    // A tab is the one slot a plugin cannot reach yet: `homeTabs` is stored as
+    // `List<AppTab>`, so a name no case matches has nowhere to go. Widening it
+    // is what letting a plugin contribute a tab has to do first.
+    FeatureSlot.homeTab => const [],
+  };
 
   /// Everything [plugin] contributes, whatever slot it goes in.
   ///
@@ -55,6 +59,7 @@ abstract final class PluginContributions {
   static List<Feature> featuresOf(InstalledPlugin plugin) => [
     ?plugin.statusFeature,
     ?plugin.cardFeature,
+    ?plugin.pageFeature,
   ];
 
   /// What a *first* install should be given a place for.
@@ -66,5 +71,6 @@ abstract final class PluginContributions {
   static List<Feature> defaultOnOf(InstalledPlugin plugin) => [
     if (plugin.manifest.status?.defaultOn == true) ?plugin.statusFeature,
     if (plugin.manifest.card?.defaultOn == true) ?plugin.cardFeature,
+    if (plugin.manifest.page?.defaultOn == true) ?plugin.pageFeature,
   ];
 }

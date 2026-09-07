@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/model/plugin/l10n.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/src/rust/api/plugin.dart' as ffi;
 
 /// A plugin the app has, ready to be loaded. PLUGINS.md section 7.
@@ -72,10 +73,50 @@ class InstalledPlugin {
     return _feature(card.id, card.label);
   }
 
+  /// The button it puts in the server function bar, or null.
+  ///
+  /// `needs` is the app's own `availableWith` switch moved into data: a button
+  /// the connection cannot serve opens a page that can never load, and which
+  /// of those a transport meets is the app's answer rather than the plugin's.
+  /// A name this build has none for is ignored rather than refusing the
+  /// button — a newer plugin naming a capability that does not exist yet
+  /// should show up, not disappear.
+  Feature? get pageFeature {
+    final page = manifest.page;
+    if (page == null) return null;
+    final needs = [
+      for (final name in page.needs) ?_capabilityOf(name),
+    ];
+    return Feature(
+      id: '$id:${page.id}',
+      slot: FeatureSlot.funcBtn,
+      icon: Icons.extension_outlined,
+      label: () => page.label,
+      needs: needs.isEmpty
+          ? null
+          : (caps) => needs.every((test) => test(caps)),
+    );
+  }
+
+  static bool Function(ServerCapabilities)? _capabilityOf(String name) =>
+      switch (name) {
+        'shell' => (caps) => caps.shell,
+        'terminal' => (caps) => caps.terminal,
+        'files' => (caps) => caps.files,
+        'byte_stream' => (caps) => caps.byteStream,
+        'stored_history' => (caps) => caps.storedHistory,
+        'persistent_session' => (caps) => caps.persistentSession,
+        _ => null,
+      };
+
   /// Whether [featureId] is this plugin's card rather than its status
   /// contribution, which is what decides how it is drawn.
   bool isCard(String featureId) =>
       manifest.card != null && featureId == '$id:${manifest.card!.id}';
+
+  /// Whether [featureId] is this plugin's function-bar button.
+  bool isPage(String featureId) =>
+      manifest.page != null && featureId == '$id:${manifest.page!.id}';
 
   Feature _feature(String contributionId, String label) => Feature(
     // `<plugin id>:<contribution id>`, which is what keeps two plugins from

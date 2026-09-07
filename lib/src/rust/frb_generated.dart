@@ -2026,6 +2026,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginPageInfo dco_decode_box_autoadd_plugin_page_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_plugin_page_info(raw);
+  }
+
+  @protected
   PluginSpec dco_decode_box_autoadd_plugin_spec(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_plugin_spec(raw);
@@ -2178,6 +2184,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginPageInfo? dco_decode_opt_box_autoadd_plugin_page_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_plugin_page_info(raw);
+  }
+
+  @protected
   PluginStatusInfo? dco_decode_opt_box_autoadd_plugin_status_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_plugin_status_info(raw);
@@ -2240,8 +2252,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PluginManifestInfo dco_decode_plugin_manifest_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return PluginManifestInfo(
       id: dco_decode_String(arr[0]),
       version: dco_decode_String(arr[1]),
@@ -2250,9 +2262,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       description: dco_decode_String(arr[4]),
       permissions: dco_decode_list_String(arr[5]),
       card: dco_decode_opt_box_autoadd_plugin_card_info(arr[6]),
-      status: dco_decode_opt_box_autoadd_plugin_status_info(arr[7]),
-      license: dco_decode_opt_String(arr[8]),
-      sourceUrl: dco_decode_opt_String(arr[9]),
+      page: dco_decode_opt_box_autoadd_plugin_page_info(arr[7]),
+      status: dco_decode_opt_box_autoadd_plugin_status_info(arr[8]),
+      license: dco_decode_opt_String(arr[9]),
+      sourceUrl: dco_decode_opt_String(arr[10]),
+    );
+  }
+
+  @protected
+  PluginPageInfo dco_decode_plugin_page_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return PluginPageInfo(
+      id: dco_decode_String(arr[0]),
+      label: dco_decode_String(arr[1]),
+      icon: dco_decode_opt_String(arr[2]),
+      defaultOn: dco_decode_bool(arr[3]),
+      needs: dco_decode_list_String(arr[4]),
+      requiresConfig: dco_decode_bool(arr[5]),
     );
   }
 
@@ -2597,6 +2626,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginPageInfo sse_decode_box_autoadd_plugin_page_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_plugin_page_info(deserializer);
+  }
+
+  @protected
   PluginSpec sse_decode_box_autoadd_plugin_spec(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return sse_decode_plugin_spec(deserializer);
@@ -2809,6 +2846,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PluginPageInfo? sse_decode_opt_box_autoadd_plugin_page_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_plugin_page_info(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   PluginStatusInfo? sse_decode_opt_box_autoadd_plugin_status_info(
     SseDeserializer deserializer,
   ) {
@@ -2881,6 +2931,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_description = sse_decode_String(deserializer);
     final var_permissions = sse_decode_list_String(deserializer);
     final var_card = sse_decode_opt_box_autoadd_plugin_card_info(deserializer);
+    final var_page = sse_decode_opt_box_autoadd_plugin_page_info(deserializer);
     final var_status = sse_decode_opt_box_autoadd_plugin_status_info(
       deserializer,
     );
@@ -2894,9 +2945,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       description: var_description,
       permissions: var_permissions,
       card: var_card,
+      page: var_page,
       status: var_status,
       license: var_license,
       sourceUrl: var_sourceUrl,
+    );
+  }
+
+  @protected
+  PluginPageInfo sse_decode_plugin_page_info(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_id = sse_decode_String(deserializer);
+    final var_label = sse_decode_String(deserializer);
+    final var_icon = sse_decode_opt_String(deserializer);
+    final var_defaultOn = sse_decode_bool(deserializer);
+    final var_needs = sse_decode_list_String(deserializer);
+    final var_requiresConfig = sse_decode_bool(deserializer);
+    return PluginPageInfo(
+      id: var_id,
+      label: var_label,
+      icon: var_icon,
+      defaultOn: var_defaultOn,
+      needs: var_needs,
+      requiresConfig: var_requiresConfig,
     );
   }
 
@@ -3276,6 +3347,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_plugin_page_info(
+    PluginPageInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_plugin_page_info(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_plugin_spec(
     PluginSpec self,
     SseSerializer serializer,
@@ -3489,6 +3569,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_plugin_page_info(
+    PluginPageInfo? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_plugin_page_info(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_plugin_status_info(
     PluginStatusInfo? self,
     SseSerializer serializer,
@@ -3550,9 +3643,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.description, serializer);
     sse_encode_list_String(self.permissions, serializer);
     sse_encode_opt_box_autoadd_plugin_card_info(self.card, serializer);
+    sse_encode_opt_box_autoadd_plugin_page_info(self.page, serializer);
     sse_encode_opt_box_autoadd_plugin_status_info(self.status, serializer);
     sse_encode_opt_String(self.license, serializer);
     sse_encode_opt_String(self.sourceUrl, serializer);
+  }
+
+  @protected
+  void sse_encode_plugin_page_info(
+    PluginPageInfo self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.label, serializer);
+    sse_encode_opt_String(self.icon, serializer);
+    sse_encode_bool(self.defaultOn, serializer);
+    sse_encode_list_String(self.needs, serializer);
+    sse_encode_bool(self.requiresConfig, serializer);
   }
 
   @protected

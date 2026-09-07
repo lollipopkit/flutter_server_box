@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/feature.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -25,6 +26,7 @@ import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/widget/plugin/status_card.dart';
+import 'package:server_box/view/widget/server_func_btns.dart';
 
 import 'helpers/test_db.dart';
 import 'rust_lib_helper.dart';
@@ -258,6 +260,92 @@ void main() {
         contains('app.serverbox.both:panel'),
       )),
     );
+  });
+
+  /// A page contribution is a button in the server function bar, and `needs`
+  /// is the app's own `availableWith` switch moved into data.
+  ///
+  /// The point of the test is the filtering: a plugin naming something the
+  /// connection cannot do must not put a button there, because the page behind
+  /// it could never load. `stored_history` is the discriminator because an SSH
+  /// server is the one transport that answers false to it.
+  testWidgets('a page contribution is a button, and needs decides', (
+    tester,
+  ) async {
+    Future<void> installPage(List<String> needs) => tester.runAsync(() async {
+      final archive = Archive()
+        ..add(
+          ArchiveFile.bytes(
+            'manifest.json',
+            utf8.encode(
+              jsonEncode({
+                'id': 'app.serverbox.page',
+                'version': '1.0.0',
+                'abi': 1,
+                'name': 'Pager',
+                'contributes': {
+                  'page': {
+                    'id': 'main',
+                    'label': 'Pager',
+                    'default_on': true,
+                    'needs': needs,
+                  },
+                },
+              }),
+            ),
+          ),
+        )
+        ..add(ArchiveFile.bytes('plugin.js', utf8.encode(_source)));
+      await installer.install(ZipEncoder().encode(archive), consented: {});
+    });
+
+    await installPage(const ['files']);
+    final plugin = PluginContributions.byId('app.serverbox.page')!;
+    expect(plugin.pageFeature?.id, 'app.serverbox.page:main');
+    expect(plugin.isPage('app.serverbox.page:main'), isTrue);
+    expect(plugin.isCard('app.serverbox.page:main'), isFalse);
+    expect(
+      Features.byId(FeatureSlot.funcBtn, 'app.serverbox.page:main'),
+      isNotNull,
+    );
+    expect(
+      FeatureSlot.funcBtn.enabledIds(),
+      contains('app.serverbox.page:main'),
+    );
+
+    const spi = Spi(id: 'srv-1', name: 'one', ssh: SshCredential(ip: '10.0.0.1'));
+    List<String> row() =>
+        const ServerFuncBtns(spi: spi).btnsWith(null).map((f) => f.id).toList();
+
+    // SSH serves files, so the button is there — beside the app's own, which
+    // is the other half of the row still working.
+    expect(row(), contains('app.serverbox.page:main'));
+    expect(row(), contains(ServerFuncBtn.terminal.id));
+
+    // And a name the transport does not meet takes it back out.
+    await tester.runAsync(() => installer.uninstall('app.serverbox.page'));
+    await installPage(const ['stored_history']);
+    expect(row(), isNot(contains('app.serverbox.page:main')));
+
+    // A name no build has is ignored rather than hiding the button: a newer
+    // plugin should show up on an older app, not disappear.
+    await tester.runAsync(() => installer.uninstall('app.serverbox.page'));
+    await installPage(const ['telepathy']);
+    expect(row(), contains('app.serverbox.page:main'));
+
+    // Alone in the row: it is a lazy horizontal list, so an entry after the
+    // app's own eight is off-screen and never built.
+    FeatureSlot.funcBtn.putEnabledIds(['app.serverbox.page:main']);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: SizedBox(height: 60, child: ServerFuncBtns(spi: spi))),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Pager'), findsOneWidget);
   });
 
   /// `requires_config` keeps a card off the machines the plugin has nothing to

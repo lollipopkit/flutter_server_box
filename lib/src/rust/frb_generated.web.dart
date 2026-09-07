@@ -127,6 +127,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginCardInfo dco_decode_box_autoadd_plugin_card_info(dynamic raw);
 
   @protected
+  PluginPageInfo dco_decode_box_autoadd_plugin_page_info(dynamic raw);
+
+  @protected
   PluginSpec dco_decode_box_autoadd_plugin_spec(dynamic raw);
 
   @protected
@@ -192,6 +195,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginCardInfo? dco_decode_opt_box_autoadd_plugin_card_info(dynamic raw);
 
   @protected
+  PluginPageInfo? dco_decode_opt_box_autoadd_plugin_page_info(dynamic raw);
+
+  @protected
   PluginStatusInfo? dco_decode_opt_box_autoadd_plugin_status_info(dynamic raw);
 
   @protected
@@ -208,6 +214,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PluginManifestInfo dco_decode_plugin_manifest_info(dynamic raw);
+
+  @protected
+  PluginPageInfo dco_decode_plugin_page_info(dynamic raw);
 
   @protected
   PluginRequest dco_decode_plugin_request(dynamic raw);
@@ -352,6 +361,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PluginPageInfo sse_decode_box_autoadd_plugin_page_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PluginSpec sse_decode_box_autoadd_plugin_spec(SseDeserializer deserializer);
 
   @protected
@@ -429,6 +443,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PluginPageInfo? sse_decode_opt_box_autoadd_plugin_page_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PluginStatusInfo? sse_decode_opt_box_autoadd_plugin_status_info(
     SseDeserializer deserializer,
   );
@@ -449,6 +468,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginManifestInfo sse_decode_plugin_manifest_info(
     SseDeserializer deserializer,
   );
+
+  @protected
+  PluginPageInfo sse_decode_plugin_page_info(SseDeserializer deserializer);
 
   @protected
   PluginRequest sse_decode_plugin_request(SseDeserializer deserializer);
@@ -615,6 +637,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_plugin_page_info(
+    PluginPageInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_plugin_spec(
     PluginSpec self,
     SseSerializer serializer,
@@ -717,6 +745,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_plugin_page_info(
+    PluginPageInfo? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_plugin_status_info(
     PluginStatusInfo? self,
     SseSerializer serializer,
@@ -740,6 +774,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_plugin_manifest_info(
     PluginManifestInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_plugin_page_info(
+    PluginPageInfo self,
     SseSerializer serializer,
   );
 

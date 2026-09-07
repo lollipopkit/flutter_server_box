@@ -334,6 +334,14 @@ pub fn plugin_read_manifest(manifest_json: String) -> Result<PluginManifestInfo,
         name: m.name.clone(),
         description: m.description.clone(),
         permissions: m.requested().iter().map(|p| p.name().to_string()).collect(),
+        page: m.contributes.page.as_ref().map(|p| PluginPageInfo {
+            id: p.id.clone(),
+            label: p.label.clone(),
+            icon: p.icon.clone(),
+            default_on: p.default_on,
+            needs: p.needs.clone(),
+            requires_config: p.requires_config,
+        }),
         card: m.contributes.card.as_ref().map(|c| PluginCardInfo {
             id: c.id.clone(),
             label: c.label.clone(),
@@ -366,6 +374,8 @@ pub struct PluginManifestInfo {
     pub permissions: Vec<String>,
     /// Present when this plugin draws a card on the server detail page.
     pub card: Option<PluginCardInfo>,
+    /// Present when this plugin puts a button in the server function bar.
+    pub page: Option<PluginPageInfo>,
     /// Present when this plugin contributes readings to the status page.
     pub status: Option<PluginStatusInfo>,
     pub license: Option<String>,
@@ -391,6 +401,28 @@ pub struct PluginCardInfo {
     /// which is most of them — and the plugin cannot decide it for itself,
     /// because deciding means being instantiated and instantiated is already
     /// the cost.
+    pub requires_config: bool,
+}
+
+/// A button in the server function bar, opening a page. PLUGINS.md 5.3.
+#[derive(Debug, Clone)]
+pub struct PluginPageInfo {
+    /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+    pub id: String,
+    pub label: String,
+    pub icon: Option<String>,
+    pub default_on: bool,
+
+    /// What the server must be able to do for the button to appear —
+    /// `shell`, `terminal`, `files`, `byte_stream`, `stored_history` or
+    /// `persistent_session`.
+    ///
+    /// The app's own `availableWith` switch, moved into data. A button an
+    /// entry cannot serve opens a page that can never load, and which of these
+    /// a transport meets is the app's answer rather than the plugin's.
+    pub needs: Vec<String>,
+
+    /// See [`PluginCardInfo::requires_config`].
     pub requires_config: bool,
 }
 
