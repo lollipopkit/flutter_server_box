@@ -551,9 +551,13 @@ F-Droid 构建的在线仓库默认关闭。用户主动开启前，需要说明
 
 所以插件的命令由 App 单独执行（`ServerNotifier.ensureExec`），节奏可以比状态轮询慢，和 `EXTENDED` 那批是同一个道理。服务器上不留文件。
 
+**采集归卡片，不归轮询**（`PluginStatusCard`）。命令是插件返回的任意 shell，为每台服务器在每次轮询上跑它，等于把它放回没人在看的机器的热路径上。现在它在卡片可见时按 `customCmdInterval` 跑 —— 和把自定义命令移出状态函数是同一条理由。实例每次采集加载、采集完释放：状态插件在两次采集之间没有什么是它不能从自己的存储里读回来的，而为半分钟一次的读数给每个插件每台服务器留一个线程，不是划算的交换。
+
 用户的自定义命令已经按同样的方式改过：它们现在是脚本里的一个独立函数 `SbCustom`，由 App 按 `Stores.setting.customCmdInterval` 单独触发，缓存上一次的输出在中间的轮询里重放（`_customRaw`）。插件的命令照搬这套节奏与缓存的做法，但不共用它的目录 —— 那个目录是用户的数据，插件的命令来自插件。
 
-多个插件合并成一次往返：`sbm_parser::script::inline_cmds_script` 生成一条命令，逐个跑完所有插件的采集命令。每条的超时、输出上限、临时输出文件都和自定义命令共用同一段 shell（`sb_cmd`/`SbCmd`），因为那四条 fallback 路径是最容易重写错的部分。命令 base64 内联，写进临时文件、跑完即删。
+多个插件合并成一次往返的能力已经具备（下面这个生成器），但 App 目前一张卡片一次 exec：详情页上只有一两个这种卡片，多开一次连接换来的复杂度不值。
+
+`sbm_parser::script::inline_cmds_script` 生成一条命令，逐个跑完所有插件的采集命令。每条的超时、输出上限、临时输出文件都和自定义命令共用同一段 shell（`sb_cmd`/`SbCmd`），因为那四条 fallback 路径是最容易重写错的部分。命令 base64 内联，写进临时文件、跑完即删。
 
 输出用自己的分隔符 `SrvBoxPluginSep`，不与用户自定义命令的 `SrvBoxCusCmdSep` 共用：两边都是宿主没写的文本，共用一个命名空间会让一边取对名字就能顶掉另一边的读数。
 
@@ -577,7 +581,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **已完成**。`PluginBridge` 实现 14 个接口的协议侧（`sb.http.fetch` 除外，见下），`PluginRuntimeService` 持有运行时并把请求流接到它上面。`test/plugin_bridge_test.dart` 21 个、`test/plugin_runtime_service_test.dart` 6 个（真 QuickJS 上下文）、`test/plugin_ffi_test.dart` 21 个 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
-| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。剩下把 surface 真正挂到详情页卡片上、安装页 UI、开发目录，以及 5.5 的 golden 截图 |
+| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。剩下带 UI 的插件 surface 挂到 `contributes.card`/`page`/`tab`/`settings` 上、安装页 UI、开发目录，以及 5.5 的 golden 截图 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
 

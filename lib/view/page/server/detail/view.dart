@@ -13,8 +13,10 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/self_addr.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -31,8 +33,10 @@ import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/widget/plugin/status_card.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -150,8 +154,14 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     super.initState();
     final order = _settings.detailCardOrder.fetch();
     final disabled = _settings.detailCardDisabled.fetch();
+    // Asked of the registry rather than of the enum: a plugin's card is not a
+    // case of it, and an id belonging to a plugin that is not installed right
+    // now is ignored here and kept in storage — which is what puts it back
+    // where the user had it when the plugin returns.
     order.removeWhere(
-      (e) => !ServerDetailCards.names.contains(e) || disabled.contains(e),
+      (e) =>
+          Features.byId(FeatureSlot.detailCard, e) == null ||
+          disabled.contains(e),
     );
     _cardsOrder.addAll(order);
 
@@ -338,6 +348,31 @@ ${err.message ?? 'null'}
     return state.conn == server_model.ServerConn.finished;
   }
 
+  /// A status plugin's card, or nothing when it has no place on this server.
+  ///
+  /// `requires_config` is what keeps a card off the machines the plugin has
+  /// nothing to say about — most of them, for something like a BMC — and the
+  /// plugin cannot decide it for itself, because deciding means being
+  /// instantiated and instantiated is already the cost.
+  Widget? _buildPluginCard(String id, ServerState si) {
+    final plugin = PluginContributions.ofFeature(id);
+    final status = plugin?.manifest.status;
+    if (plugin == null || status == null) return null;
+    if (status.requiresConfig &&
+        !PluginCfgStore.instance.has(si.spi.id, plugin.id)) {
+      return null;
+    }
+    return PluginStatusCard(
+      // Keyed by the plugin, so reordering the cards does not hand one
+      // plugin's element — and the instance it is collecting through — to
+      // another.
+      key: ValueKey('plugin:$id'),
+      plugin: plugin,
+      spi: si.spi,
+      system: si.status.system,
+    );
+  }
+
   Widget _buildMainPage(ServerState si) {
     // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
     // iperf / services / portForward) needs a shell. Hide the whole row on
@@ -348,8 +383,10 @@ ${err.message ?? 'null'}
     final logo = _buildLogo(si);
     final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {
-      final child = _cardBuildMap[ServerDetailCards.fromName(card)]
-          ?.call(si);
+      final builtIn = ServerDetailCards.fromName(card);
+      final child = builtIn != null
+          ? _cardBuildMap[builtIn]?.call(si)
+          : _buildPluginCard(card, si);
       if (child != null) {
         children.add(child);
       }

@@ -2,8 +2,29 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/data/provider/plugin/app_ops.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/src/rust/api/plugin.dart' as ffi;
+
+part 'runtime.g.dart';
+
+/// The app's one runtime, wired to the app's own way of doing things.
+///
+/// `keepAlive`, because it owns native threads and two request streams: a
+/// runtime that came and went with a widget would leave an instance running
+/// with nothing reading what it asks for.
+@Riverpod(keepAlive: true)
+PluginRuntimeService pluginRuntime(Ref ref) {
+  final service = PluginRuntimeService(
+    bridge: PluginBridge(
+      ops: AppPluginHostOps(ref),
+      handles: PluginServerHandles(),
+    ),
+  );
+  ref.onDispose(service.dispose);
+  return service;
+}
 
 /// The one plugin runtime, and the loop that answers what plugins ask for.
 ///
@@ -164,6 +185,28 @@ class PluginRuntimeService {
       bridge.handles.forget(instanceId);
       bridge.onPatch.remove(instanceId);
     }
+  }
+
+  /// What a status plugin wants run on [platform]. PLUGINS.md section 9.
+  ///
+  /// The same call the install page makes to show what will run, so what the
+  /// user was shown and what runs cannot differ for want of asking twice.
+  Future<ffi.PluginStatusCmd> statusCmd(BigInt instance, String platform) {
+    final runtime = _runtime;
+    if (runtime == null) throw StateError('the plugin runtime is not started');
+    return runtime.statusCmd(instance: instance, platform: platform);
+  }
+
+  /// Hands a status plugin what its command printed.
+  ///
+  /// Checked on the Rust side before it gets here: a label longer than a label
+  /// is cut, a `percent` outside 0..1 is dropped rather than clamped, and only
+  /// a document that is not this shape at all is refused. A bad status plugin
+  /// costs a row, not a card.
+  Future<ffi.PluginStatusResult> statusParse(BigInt instance, String text) {
+    final runtime = _runtime;
+    if (runtime == null) throw StateError('the plugin runtime is not started');
+    return runtime.statusParse(instance: instance, text: text);
   }
 
   /// How many requests the app has not answered. For diagnostics.
