@@ -251,11 +251,17 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      # npm, and a `package-lock.json`, because Dependabot maintains one and
+      # does not maintain a `bun.lock`: it bumped `@astrojs/starlight` in
+      # docs/package.json alone, and `bun install --frozen-lockfile` refused
+      # the tree it left behind. Every Dependabot PR against docs/ or website/
+      # failed that way and no version of it could pass — the update the PR
+      # exists for is the one thing the bot cannot write. The other three npm
+      # directories here have always had both files updated together.
       - name: Install and build
         working-directory: docs
         run: |
-          bun install --frozen-lockfile
+          npm ci
           npm run build
 
   website:
@@ -271,13 +277,13 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-      # Same as the docs above, and the same lockfile that was being ignored.
-      # This one has not broken yet, which is luck rather than a difference.
+      # Same as the docs above, npm for the same reason. This one had not broken
+      # yet, which was luck rather than a difference: its next Dependabot PR
+      # would have.
       - name: Install and build
         working-directory: website
         run: |
-          bun install --frozen-lockfile
+          npm ci
           npm run build
 
   # The one path nothing else in CI compiles. `Build ios` in build.yml ships

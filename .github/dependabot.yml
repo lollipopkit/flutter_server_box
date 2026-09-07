@@ -35,6 +35,11 @@ updates:
         patterns:
           - "*"
 
+  # `/docs` and `/website` keep a `package-lock.json` for these two entries to
+  # work at all: Dependabot writes a manifest and its lockfile together, and a
+  # `bun.lock` is not one it writes. With bun it bumped docs/package.json alone
+  # and CI's frozen install refused every such PR — see the `docs` job in
+  # analysis.yml.
   - package-ecosystem: npm
     directory: "/docs"
     schedule:
