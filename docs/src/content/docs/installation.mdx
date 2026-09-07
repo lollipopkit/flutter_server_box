@@ -30,7 +30,9 @@ Download from the **[App Store](https://apps.apple.com/app/id1586449703)** or **
 brew install --cask server-box
 ```
 
-Both builds require macOS 13 or later. The App Store build is Apple Silicon only; GitHub Releases carry one DMG per architecture — `ServerBox-<version>-arm64.dmg` for Apple Silicon and `ServerBox-<version>-amd64.dmg` for Intel — and Homebrew picks the one for the machine it runs on. The DMG build also provides a local terminal; the App Store build is sandboxed and cannot provide that feature.
+All macOS builds require macOS 13 or later. The App Store build supports Apple silicon only. GitHub Releases provide `ServerBox-<version>-arm64.dmg` for Apple silicon and `ServerBox-<version>-amd64.dmg` for Intel; Homebrew automatically selects the correct build for your Mac.
+
+The DMG build also includes a local terminal. The sandboxed App Store build cannot provide this feature.
 
 ### Linux
 

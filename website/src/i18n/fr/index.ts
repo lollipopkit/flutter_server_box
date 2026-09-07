@@ -75,7 +75,7 @@ const fr: Translation = {
   download: {
     title: 'Toutes les plateformes, toutes les sources.',
     subtitle:
-      'Choisissez le canal adapté à votre appareil. iOS utilise l’App Store ; macOS utilise l’App Store (Apple silicon uniquement), GitHub Releases ou Homebrew ; Android, Linux et Windows ont aussi des paquets directs.',
+      'Choisissez une source fiable pour votre appareil. Sous iOS, l’application est disponible sur l’App Store. Sous macOS, l’App Store ne prend en charge que les Mac avec puce Apple ; les utilisateurs de Mac Intel peuvent l’installer depuis GitHub Releases ou Homebrew. Des téléchargements directs sont aussi proposés pour Android, Linux et Windows.',
     copied: 'Commande copiée',
     copyPrompt: 'Copiez cette commande :',
     note:

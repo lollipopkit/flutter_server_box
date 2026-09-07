@@ -55,9 +55,9 @@ help:
 		'  monitor-dev        Run monitor backend + panel dev server (vite on :3000, API on :3770)' \
 		'' \
 		'Release scripts:' \
-		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh (one DMG per arch)' \
+		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh (one DMG per architecture)' \
 		'                     Optional: make release-macos-dmg ENV_FILE=.env.release' \
-		'                     Optional: RELEASE_ARCHS="arm64" to redo one architecture' \
+		'                     Optional: RELEASE_ARCHS="arm64" to rebuild one architecture' \
 		'  package-dmg        Run scripts/release/package-dmg-from-xcarchive.sh' \
 		'                     Example: make package-dmg APP_PATH="/path/Server Box.app"' \
 		'                     Example: make package-dmg XCARCHIVE_PATH=/path/Runner.xcarchive' \

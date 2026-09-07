@@ -230,7 +230,7 @@ jobs:
           echo "build $build, release $release"
 
   buildMacOS:
-    name: Build macos (${{ matrix.arch }})
+    name: Build macOS (${{ matrix.arch }})
     # A tag builds everything, unconditionally. The selector exists to narrow
     # a manual dispatch; letting it decide the release path would mean an empty
     # or unemitted output skips every job and reports success — which is the
@@ -246,15 +246,14 @@ jobs:
     env:
       APP_NAME: ${{ needs.reproducibilityCheck.outputs.appName }}
       BUILD_NUMBER: ${{ needs.reproducibilityCheck.outputs.buildNumber }}
-    # One DMG per architecture rather than one universal DMG. `arch` is what
-    # the asset is named after, matching the APKs and the AppImage; `xcarch` is
-    # what Xcode calls the same thing, and reaches the build as `ARCHS`.
+    # Build one DMG per architecture instead of a universal DMG. `arch` is the
+    # architecture name used in release assets, consistent with the APK and
+    # AppImage names. `xcarch` is Xcode's equivalent and becomes `ARCHS`.
     #
-    # Splitting is what makes the Intel build checkable at all: this runner is
-    # Apple Silicon, so the x86_64 half of a universal binary was published
-    # having never been loaded by anything. `Check the architecture` below now
-    # says what is in each bundle, and the launch check runs the Intel slice
-    # whenever the runner has Rosetta to run it with.
+    # Separate builds also make the Intel build verifiable. This runner uses
+    # Apple silicon, so nothing executed the x86_64 slice of the former
+    # universal binary before publication. The checks below inspect every
+    # bundle and use Rosetta to launch the Intel build when available.
     strategy:
       fail-fast: false
       matrix:
@@ -315,22 +314,20 @@ jobs:
           EOF
       - name: Build release
         # `flutter build macos` has no `--target-platform`, but it forwards
-        # every `FLUTTER_XCODE_*` variable to xcodebuild as a build setting on
-        # the command line — which outranks the `ARCHS = arm64` in
-        # macos/Runner/Configs/Release.xcconfig, and reaches the Rust build
-        # hook as `-dDarwinArchs`.
+        # `FLUTTER_XCODE_*` variables to xcodebuild as command-line build
+        # settings. These take precedence over `ARCHS = arm64` in
+        # macos/Runner/Configs/Release.xcconfig and reach the Rust build hook
+        # as `-dDarwinArchs`.
         env:
           FLUTTER_XCODE_ARCHS: ${{ matrix.xcarch }}
         run: |
           flutter build macos --release \
             --build-number="${BUILD_NUMBER}" \
             --build-name="1.0.${BUILD_NUMBER}"
-      # What the split is for, and the one thing that cannot be seen by looking
-      # at the app: a slice that did not build the way it was asked to. The
-      # Rust crate is the case that matters — `native_toolchain_rust` falls
-      # back to the host target rather than failing when the one it wants is
-      # missing, which would put an arm64 sbm_ffi in an Intel app and take the
-      # process down at `RustLib.init`, on a machine nobody here has.
+      # Verify every Mach-O instead of trusting the requested architecture.
+      # This matters because `native_toolchain_rust` falls back to the host
+      # target when the requested Rust target is missing. Without this check,
+      # an Intel app could contain an arm64 sbm_ffi and fail at `RustLib.init`.
       - name: Check the architecture
         shell: bash
         env:
@@ -381,10 +378,9 @@ jobs:
 
           codesign --verify --deep --strict "$app"
 
-          # A foreign slice needs Rosetta, which is not on every image. Skipped
-          # rather than failed when it is absent: this is the check the Intel
-          # build never had, and having it only when the runner can run it is
-          # still more than none.
+          # Launching a foreign architecture requires Rosetta, which is not
+          # installed on every runner. Skip this smoke test when unavailable;
+          # the preceding Mach-O inspection still runs unconditionally.
           if [[ "$EXPECTED_ARCH" != "$(uname -m)" ]] &&
             ! /usr/bin/arch "-$EXPECTED_ARCH" /usr/bin/true >/dev/null 2>&1; then
             echo "::notice::this runner cannot execute $EXPECTED_ARCH; skipping the launch check"
@@ -451,8 +447,8 @@ jobs:
       # `sbm_ffi.framework.dSYM` is the one that matters most -- Rust is linked
       # as its own framework here, and it is what can take the process down.
       #
-      # Per architecture, because the binaries they describe now are: a dSYM
-      # only resolves an address for the slice it was built alongside.
+      # Upload dSYMs per architecture because each file resolves addresses only
+      # for the binary slice built alongside it.
       - name: Upload dSYMs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

@@ -203,8 +203,8 @@ read_pubspec_versions() {
   printf '%s\n' "$version_line"
 }
 
-# What an architecture's assets are called. `x86_64` is Xcode's name for it;
-# `amd64` is this project's, the one the APKs and the AppImage already use.
+# Map Xcode architecture names to the names used by release assets. The project
+# already uses `amd64` for APK and AppImage assets.
 asset_arch_for() {
   case "$1" in
     arm64) printf 'arm64\n' ;;
@@ -213,13 +213,9 @@ asset_arch_for() {
   esac
 }
 
-# Every Mach-O in the bundle is the slice that was asked for, and nothing else.
-#
-# The build that produces this is the one users install, and an architecture it
-# got wrong is invisible here: the Rust crate's toolchain falls back to the host
-# target rather than failing when the one it wants is missing, which puts an
-# arm64 library in an Intel app and takes the process down at `RustLib.init` —
-# on a machine this one is not.
+# Verify that every Mach-O contains exactly the requested architecture. This
+# catches the Rust toolchain's fallback to the host target, which could place an
+# arm64 library in an Intel app and cause `RustLib.init` to fail at runtime.
 verify_app_arch() {
   local app_path="$1"
   local expected="$2"
@@ -301,14 +297,14 @@ RELEASE_TAG="${RELEASE_TAG:-v${MARKETING_VERSION}}"
 RELEASE_TITLE="${RELEASE_TITLE:-$RELEASE_TAG}"
 DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${MARKETING_VERSION}}"
 
-# One DMG per architecture, where there used to be one universal DMG. The App
-# Store build is Apple Silicon only (macos/Runner/Configs/Release.xcconfig), so
-# an Intel Mac has nowhere else to get the app, and a universal build hid the
-# other half: only one slice of it was ever loaded before it shipped.
+# Build one DMG per architecture instead of a universal DMG. The App Store build
+# supports Apple silicon only (macos/Runner/Configs/Release.xcconfig), so Intel
+# users rely on the Developer ID DMG. Separate DMGs also allow each architecture
+# to be verified independently before release.
 #
-# `RELEASE_ARCHS` is for a retry. Notarization is the slow half of this, and a
-# run that lost one architecture should not rebuild the other — the Homebrew
-# cask below picks up whichever DMGs of this version are already on disk.
+# `RELEASE_ARCHS` supports partial retries. If one architecture fails during
+# notarization, rerun only that architecture; the Homebrew cask step reuses any
+# DMG for the same version that is already on disk.
 RELEASE_ARCHS="${RELEASE_ARCHS:-arm64 x86_64}"
 if [[ -z "${RELEASE_ARCHS//[[:space:]]/}" ]]; then
   echo "RELEASE_ARCHS must name at least one architecture" >&2
@@ -408,10 +404,10 @@ for arch in $RELEASE_ARCHS; do
       or die "macOS Runner Release entitlements setting not found\n";
   ' "$RUNNER_PROJECT_FILE"
 
-  # ARCHS on the command line, which outranks the `ARCHS = arm64` in
-  # macos/Runner/Configs/Release.xcconfig and the `-xcconfig` override alike.
-  # ONLY_ACTIVE_ARCH with it, so that asking for the other architecture is not
-  # quietly answered with this machine's.
+  # Command-line ARCHS takes precedence over both `ARCHS = arm64` in
+  # macos/Runner/Configs/Release.xcconfig and the `-xcconfig` file.
+  # ONLY_ACTIVE_ARCH=NO prevents Xcode from silently selecting the host
+  # architecture instead of the requested one.
   xcodebuild \
     -workspace "$WORKSPACE_PATH" \
     -scheme "$SCHEME" \
@@ -484,10 +480,9 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
     --clobber
 fi
 
-# The cask names a download per architecture, so it takes both or neither: a
-# half-written one would point Intel machines at a URL that 404s. Both DMGs of
-# this version on disk is the condition, not both built by this run — that is
-# what makes retrying one architecture work.
+# The cask references one download per architecture, so update it only when both
+# DMGs exist. Files already on disk count even if the current run built only one,
+# which allows partial retries without creating a cask that contains a 404 URL.
 DMG_ARM64_PATH="$ARTIFACTS_PATH/${DMG_BASENAME}-arm64.dmg"
 DMG_AMD64_PATH="$ARTIFACTS_PATH/${DMG_BASENAME}-amd64.dmg"
 

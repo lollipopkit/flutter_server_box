@@ -15,10 +15,9 @@ TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 EXPLICIT_TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 XCARCHIVE_PATH="${1:-${XCARCHIVE_PATH:-}}"
 
-# The cask serves both architectures from one file — `arch arm:`/`intel:` and
-# an interpolated url — so it needs both DMGs, not the one that happens to have
-# been built last. A cask naming a download that was never published installs
-# nothing on half the machines that use it.
+# One cask serves both architectures through `arch arm:`/`intel:` and an
+# interpolated URL. Generate it only when both DMGs are available; otherwise,
+# one architecture would receive a URL for an unpublished asset.
 DMG_ARM64_PATH="${DMG_ARM64_PATH:-}"
 DMG_AMD64_PATH="${DMG_AMD64_PATH:-}"
 
@@ -42,8 +41,9 @@ else
   APP_BUILD=""
 fi
 
-# The checked-in Info.plist carries `$(FLUTTER_BUILD_NAME)` rather than a
-# version, so a value that still looks like a build setting is not one.
+# The checked-in Info.plist contains the unresolved `$(FLUTTER_BUILD_NAME)`
+# setting rather than a version. Ignore that placeholder and infer the version
+# from a DMG filename instead.
 if [[ -z "$APP_VERSION" || "$APP_VERSION" == '$('* ]]; then
   APP_VERSION=""
   for candidate in "$DMG_ARM64_PATH" "$DMG_AMD64_PATH"; do
@@ -92,8 +92,8 @@ fi
 SHA256_ARM64="$(shasum -a 256 "$DMG_ARM64_PATH" | awk '{print $1}')"
 SHA256_AMD64="$(shasum -a 256 "$DMG_AMD64_PATH" | awk '{print $1}')"
 
-# `#{version}` and `#{arch}` are Ruby, and reach the file as written: the
-# heredoc expands the shell's `$`, and neither of those is one.
+# `#{version}` and `#{arch}` are Ruby interpolations. They remain literal here
+# because the shell expands `$`, not `#`.
 mkdir -p "$(dirname "$TAP_CASK_PATH")"
 cat > "$TAP_CASK_PATH" <<CASK
 cask "$CASK_NAME" do

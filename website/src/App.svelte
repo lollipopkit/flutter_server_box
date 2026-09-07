@@ -95,8 +95,8 @@
       label: 'macOS',
       sources: [
         { label: 'App Store', href: 'https://apps.apple.com/app/id1586449703' },
-        // The App Store build is Apple Silicon only, so an Intel Mac has to
-        // come through one of these two.
+        // The App Store build supports Apple silicon only. Intel Mac users
+        // must install the app from GitHub Releases or Homebrew.
         { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
         { label: 'Homebrew Cask', command: 'brew install --cask server-box' },
       ],

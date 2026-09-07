@@ -75,7 +75,7 @@ const en: BaseTranslation = {
   download: {
     title: 'Every platform, every source.',
     subtitle:
-      'Choose the channel that matches your device and trust model. iOS uses the App Store; macOS uses the App Store (Apple silicon only), GitHub Releases, or Homebrew; Android, Linux, and Windows also have direct package downloads.',
+      'Choose a trusted source for your device. iOS is available from the App Store. On macOS, the App Store build supports Apple silicon only; Intel users can install the app from GitHub Releases or Homebrew. Direct downloads are also available for Android, Linux, and Windows.',
     copied: 'Install command copied',
     copyPrompt: 'Copy this install command:',
     note:
