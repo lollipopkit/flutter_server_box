@@ -1,4 +1,9 @@
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 
 part 'tab.g.dart';
 
@@ -96,4 +101,53 @@ enum AppTab {
 
   static AppTab fromJson(String json) =>
       _parseAppTabFromElement(json) ?? AppTab.server;
+
+  /// This tab as the registry sees it.
+  ///
+  /// No [Feature.since]: every tab has been here since the bar was
+  /// arrangeable, and a new one gets a boundary the way the other two slots
+  /// do.
+  Feature get feature => Feature(
+    id: name,
+    slot: FeatureSlot.homeTab,
+    icon: iconData,
+    label: () => label,
+  );
+
+  /// The tab's mark.
+  ///
+  /// Here rather than beside the pages, so that the registry — which is data
+  /// and must not reach into `view/` — can list a tab the same way it lists a
+  /// card or a button. `AppTabViewX` builds the widgets from these.
+  IconData get iconData => switch (this) {
+    server => BoxIcons.bx_server,
+    ssh => Icons.terminal_outlined,
+    snippet => Icons.code_outlined,
+    file => Icons.folder_open,
+    agent => Icons.auto_awesome_outlined,
+    benchmark => Icons.speed_outlined,
+  };
+
+  /// The filled form, for the tab being looked at.
+  IconData get selectedIconData => switch (this) {
+    server => BoxIcons.bxs_server,
+    ssh => Icons.terminal,
+    snippet => Icons.code,
+    file => Icons.folder,
+    agent => Icons.auto_awesome,
+    benchmark => Icons.speed,
+  };
+
+  String get label => switch (this) {
+    server => libL10n.server,
+    // Not "SSH": a terminal is what this tab holds, and SSH is only where most
+    // of them happen to come from. One already comes from a monitor agent's
+    // own PTY, and the name had to stop naming the transport before a shell on
+    // this device could live here too.
+    ssh => libL10n.terminal,
+    snippet => libL10n.snippet,
+    file => libL10n.file,
+    agent => 'Agent',
+    benchmark => l10n.benchmark,
+  };
 }

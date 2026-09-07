@@ -1,12 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import 'helpers/test_db.dart';
 
-/// What `ServerFuncBtn.autoAddNewFuncs` does to a row the user has already
+/// What [Features.autoAdd] does to a function-bar row the user has already
 /// arranged, across an upgrade.
+///
+/// Ids rather than indices since m021: the row survives a backup and a sync,
+/// and an index stops meaning what it said the moment a case moves.
 void main() {
   late SettingStore setting;
 
@@ -21,43 +25,43 @@ void main() {
     await closeTestDb();
   });
 
-  /// The stored row, as indices — what the setting actually holds.
-  List<int> row() => setting.serverFuncBtns.get();
+  /// The stored row, as ids — what the setting actually holds.
+  List<String> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
     // A row from before systemd, port forwarding and Power shipped.
     setting.serverFuncBtns.put([
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.files.index,
+      ServerFuncBtn.terminal.id,
+      ServerFuncBtn.files.id,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1536);
+    Features.autoAdd(1000, 1536);
 
     expect(row(), [
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.files.index,
-      ServerFuncBtn.systemd.index,
-      ServerFuncBtn.portForward.index,
-      ServerFuncBtn.power.index,
+      ServerFuncBtn.terminal.id,
+      ServerFuncBtn.files.id,
+      ServerFuncBtn.systemd.id,
+      ServerFuncBtn.portForward.id,
+      ServerFuncBtn.power.id,
     ]);
   });
 
   test(
     'uses release tags as the Systemd and port-forward boundaries',
     () async {
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
 
-      ServerFuncBtn.autoAddNewFuncs(1051, 1070);
+      Features.autoAdd(1051, 1070);
       expect(row(), [
-        ServerFuncBtn.terminal.index,
-        ServerFuncBtn.systemd.index,
+        ServerFuncBtn.terminal.id,
+        ServerFuncBtn.systemd.id,
       ]);
 
-      ServerFuncBtn.autoAddNewFuncs(1340, 1351);
+      Features.autoAdd(1340, 1351);
       expect(row(), [
-        ServerFuncBtn.terminal.index,
-        ServerFuncBtn.systemd.index,
-        ServerFuncBtn.portForward.index,
+        ServerFuncBtn.terminal.id,
+        ServerFuncBtn.systemd.id,
+        ServerFuncBtn.portForward.id,
       ]);
     },
   );
@@ -70,23 +74,23 @@ void main() {
     };
 
     for (final MapEntry(key: boundary, value: button) in boundaries.entries) {
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
 
-      ServerFuncBtn.autoAddNewFuncs(boundary - 1, boundary);
+      Features.autoAdd(boundary - 1, boundary);
 
-      expect(row(), isNot(contains(button.index)));
+      expect(row(), isNot(contains(button.id)));
     }
   });
 
   test('adds nothing for an upgrade that shipped no new entry', () async {
-    setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
 
     // A window after the newest entry's boundary. It has to move whenever one
     // is added, which is the point: the assertion is about a window containing
     // no entry, not about two particular numbers.
-    ServerFuncBtn.autoAddNewFuncs(1492, 1600);
+    Features.autoAdd(1492, 1600);
 
-    expect(row(), [ServerFuncBtn.terminal.index]);
+    expect(row(), [ServerFuncBtn.terminal.id]);
   });
 
   test('leaves an entry the user removed removed', () async {
@@ -95,25 +99,25 @@ void main() {
     // upgrade to 1600 must not put it back — and would have, when the rule was
     // `to` alone.
     setting.serverFuncBtns.put([
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.systemd.index,
+      ServerFuncBtn.terminal.id,
+      ServerFuncBtn.systemd.id,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1536, 1600);
+    Features.autoAdd(1536, 1600);
 
-    expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.systemd.index]);
+    expect(row(), [ServerFuncBtn.terminal.id, ServerFuncBtn.systemd.id]);
   });
 
   test('an entry already in the row is not added twice', () async {
     setting.serverFuncBtns.put([
-      ServerFuncBtn.power.index,
-      ServerFuncBtn.terminal.index,
+      ServerFuncBtn.power.id,
+      ServerFuncBtn.terminal.id,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1536);
+    Features.autoAdd(1000, 1536);
 
     expect(
-      row().where((e) => e == ServerFuncBtn.power.index).length,
+      row().where((e) => e == ServerFuncBtn.power.id).length,
       1,
       reason: 'power was already there',
     );
@@ -121,11 +125,11 @@ void main() {
 
   for (final retainedBuild in [1466, 1480, 1491]) {
     test('adds Power when upgrading from v$retainedBuild', () async {
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
 
-      ServerFuncBtn.autoAddNewFuncs(retainedBuild, 1536);
+      Features.autoAdd(retainedBuild, 1536);
 
-      expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.power.index]);
+      expect(row(), [ServerFuncBtn.terminal.id, ServerFuncBtn.power.id]);
     });
   }
 
@@ -133,20 +137,20 @@ void main() {
   test('a fresh install gets the defaults untouched', () async {
     // lastVer is 0 on a first run, and the window is wide open — but the
     // defaults already list every entry, so nothing is appended to them.
-    ServerFuncBtn.autoAddNewFuncs(0, 1600);
+    Features.autoAdd(0, 1600);
 
     expect(
       setting.get<List>('serverBtns'),
       isNull,
       reason: 'nothing was written, so the defaults still apply',
     );
-    expect(row(), ServerFuncBtn.defaultIdxs);
+    expect(row(), ServerFuncBtn.defaultIds);
     expect(
-      ServerFuncBtn.defaultIdxs,
+      ServerFuncBtn.defaultIds,
       containsAll([
-        ServerFuncBtn.systemd.index,
-        ServerFuncBtn.portForward.index,
-        ServerFuncBtn.power.index,
+        ServerFuncBtn.systemd.id,
+        ServerFuncBtn.portForward.id,
+        ServerFuncBtn.power.id,
       ]),
     );
   });

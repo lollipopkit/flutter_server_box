@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/inset.dart';
-import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/res/store.dart';
 
 class ServerFuncBtnsOrderPage extends StatefulWidget {
@@ -38,8 +38,8 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     return ValBuilder(
       listenable: prop.listenable(),
       builder: (keys) {
-        final disabled = ServerFuncBtn.values
-            .map((e) => e.index)
+        final disabled = Features.of(FeatureSlot.funcBtn)
+            .map((e) => e.id)
             .where((e) => !keys.contains(e))
             .toList();
         final allKeys = [...keys, ...disabled];
@@ -65,17 +65,18 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     );
   }
 
-  Widget _buildListItem(int key, int idx, List<int> keys) {
-    final funcBtn = ServerFuncBtn.values[key];
+  Widget _buildListItem(String key, int idx, List<String> keys) {
+    final feature = Features.byId(FeatureSlot.funcBtn, key);
+    if (feature == null) return SizedBox.shrink(key: ValueKey(key));
     return CardX(
       key: ValueKey(key),
       child: ListTile(
         title: RichText(
           text: TextSpan(
             children: [
-              WidgetSpan(child: Icon(funcBtn.icon)),
+              WidgetSpan(child: Icon(feature.icon)),
               const WidgetSpan(child: UIs.width13),
-              TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
+              TextSpan(text: feature.label(), style: UIs.textGrey),
             ],
           ),
         ),
@@ -84,7 +85,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     );
   }
 
-  Widget _buildCheckBox(List<int> keys, int key, int idx, bool value) {
+  Widget _buildCheckBox(List<String> keys, String key, int idx, bool value) {
     return Checkbox(
       value: value,
       onChanged: (val) {

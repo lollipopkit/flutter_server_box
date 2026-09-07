@@ -10,6 +10,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
@@ -108,13 +109,13 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
   List<ServerFuncBtn> btnsWith(MonitorRemoteAccess? granted) {
     final ordered = () {
       try {
-        final vals = <ServerFuncBtn>[];
-        final list = Stores.setting.serverFuncBtns.fetch();
-        for (final idx in list) {
-          if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
-          vals.add(ServerFuncBtn.values[idx]);
-        }
-        return vals;
+        final byId = {for (final b in ServerFuncBtn.values) b.id: b};
+        return [
+          // An id this build has nothing for is skipped: a row survives a
+          // backup and a sync, so it can name an entry that was removed, or
+          // one a plugin contributed and is no longer installed.
+          for (final id in FeatureSlot.funcBtn.enabledIds()) ?byId[id],
+        ];
       } catch (e) {
         return ServerFuncBtn.values;
       }

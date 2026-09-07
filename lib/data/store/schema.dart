@@ -91,7 +91,9 @@ abstract final class SchemaVersion {
   ///      so the globe can draw it somewhere the app has no way to look up
   /// v20: the `geo` key-value rows dropped — a cache of where each host was,
   ///      retired with the per-lookup requests it existed for
-  static const current = 21;
+  /// v21: `serverBtns` from enum index to stable id, so the function bar can
+  ///      hold an entry that is not a case of one enum
+  static const current = 22;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

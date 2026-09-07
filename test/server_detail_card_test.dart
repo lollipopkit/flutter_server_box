@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -24,14 +25,14 @@ void main() {
   test('uses release tags as the legacy card boundaries', () {
     setting.detailCardOrder.put([ServerDetailCards.about.name]);
 
-    ServerDetailCards.autoAddNewCards(493, 918);
+    Features.autoAdd(493, 918);
     expect(order(), [
       ServerDetailCards.about.name,
       ServerDetailCards.pve.name,
       ServerDetailCards.custom.name,
     ]);
 
-    ServerDetailCards.autoAddNewCards(1130, 1184);
+    Features.autoAdd(1130, 1184);
     expect(order(), [
       ServerDetailCards.about.name,
       ServerDetailCards.pve.name,
@@ -50,7 +51,7 @@ void main() {
     for (final MapEntry(key: boundary, value: cards) in boundaries.entries) {
       setting.detailCardOrder.put([ServerDetailCards.about.name]);
 
-      ServerDetailCards.autoAddNewCards(boundary - 1, boundary);
+      Features.autoAdd(boundary - 1, boundary);
 
       for (final card in cards) {
         expect(order(), isNot(contains(card.name)));
@@ -65,7 +66,7 @@ void main() {
         ServerDetailCards.cpu.name,
       ]);
 
-      ServerDetailCards.autoAddNewCards(retainedBuild, 1536);
+      Features.autoAdd(retainedBuild, 1536);
 
       expect(order(), [
         ServerDetailCards.about.name,
@@ -81,7 +82,7 @@ void main() {
       ServerDetailCards.cpu.name,
     ]);
 
-    ServerDetailCards.autoAddNewCards(1491, 1536);
+    Features.autoAdd(1491, 1536);
 
     expect(order(), isNot(contains(ServerDetailCards.pve.name)));
     expect(order(), isNot(contains(ServerDetailCards.custom.name)));
@@ -93,7 +94,7 @@ void main() {
       ServerDetailCards.bmc.name,
     ]);
 
-    ServerDetailCards.autoAddNewCards(1536, 1600);
+    Features.autoAdd(1536, 1600);
 
     expect(
       order().where((name) => name == ServerDetailCards.bmc.name),
@@ -101,10 +102,15 @@ void main() {
     );
   });
 
+  // Two steps, and they are about different things: `autoAdd` puts in what
+  // arrived, and only this slot has names that were folded into other cards.
+  // An unclaimed id is otherwise kept — a plugin that is not installed right
+  // now must not lose where the user put it.
   test('keeps a new card while removing obsolete trend cards', () {
     setting.detailCardOrder.put([ServerDetailCards.about.name, 'usage']);
 
-    ServerDetailCards.autoAddNewCards(1491, 1536);
+    Features.autoAdd(1491, 1536);
+    ServerDetailCards.dropFoldedTrendCards(1536);
 
     expect(order(), [ServerDetailCards.about.name, ServerDetailCards.bmc.name]);
   });
@@ -113,7 +119,7 @@ void main() {
     setting.detailCardOrder.put([ServerDetailCards.about.name]);
     setting.detailCardDisabled.put([ServerDetailCards.bmc.name]);
 
-    ServerDetailCards.autoAddNewCards(1491, 1536);
+    Features.autoAdd(1491, 1536);
 
     expect(order(), [ServerDetailCards.about.name, ServerDetailCards.bmc.name]);
     expect(setting.detailCardDisabled.get(), [ServerDetailCards.bmc.name]);

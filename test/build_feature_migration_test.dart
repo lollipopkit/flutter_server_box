@@ -27,7 +27,7 @@ void main() {
     () async {
       setting.lastVer.put(1491);
       setting.detailCardOrder.put([ServerDetailCards.about.name]);
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
 
       migrateBuildFeatures(1536);
 
@@ -37,12 +37,12 @@ void main() {
         ServerDetailCards.bmc.name,
       ]);
       expect(setting.serverFuncBtns.get(), [
-        ServerFuncBtn.terminal.index,
-        ServerFuncBtn.power.index,
+        ServerFuncBtn.terminal.id,
+        ServerFuncBtn.power.id,
       ]);
 
       setting.detailCardOrder.put([ServerDetailCards.about.name]);
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
       // Finish the store's queued timestamp writes before replacing it.
       await setting.updateLastUpdateTs(key: null);
       await getIt.unregister<SettingStore>();
@@ -53,7 +53,7 @@ void main() {
 
       expect(setting.lastVer.get(), 1536);
       expect(setting.detailCardOrder.get(), [ServerDetailCards.about.name]);
-      expect(setting.serverFuncBtns.get(), [ServerFuncBtn.terminal.index]);
+      expect(setting.serverFuncBtns.get(), [ServerFuncBtn.terminal.id]);
     },
   );
 
@@ -68,7 +68,7 @@ void main() {
   test('rolls back every feature write when one persistence step fails', () {
     setting.lastVer.put(1491);
     setting.detailCardOrder.put([ServerDetailCards.about.name]);
-    setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.id]);
     SqliteDb.instance.execute('''
       CREATE TRIGGER fail_server_btn_migration
       BEFORE UPDATE OF value ON kv
@@ -82,6 +82,6 @@ void main() {
 
     expect(setting.lastVer.get(), 1491);
     expect(setting.detailCardOrder.get(), [ServerDetailCards.about.name]);
-    expect(setting.serverFuncBtns.get(), [ServerFuncBtn.terminal.index]);
+    expect(setting.serverFuncBtns.get(), [ServerFuncBtn.terminal.id]);
   });
 }

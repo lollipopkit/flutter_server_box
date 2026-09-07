@@ -329,6 +329,35 @@ void main() {
       expect(Stores.setting.timeout.fetch(), 9, reason: 'the rest still lands');
     });
 
+    /// Restoring does not run the schema migrator, and by the time a user
+    /// restores an old file the stored version has long since moved past the
+    /// step that would have converted it. Without the conversion here, the
+    /// function bar reads a list of ints as a row of nothing.
+    test('a row of enum indices in an old file is converted on restore', () async {
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: {
+          // terminal, files, power — as the released builds wrote them.
+          'serverBtns': [0, 1, 8],
+          Stores.setting.lastUpdateTsKey: <String, int>{},
+        },
+      );
+
+      await backup.merge(force: true);
+
+      expect(Stores.setting.serverFuncBtns.fetch(), [
+        'terminal',
+        'files',
+        'power',
+      ]);
+    });
+
     test('a file carrying no settings leaves the local ones alone', () async {
       Stores.setting.homeTabs.put(const [
         AppTab.server,

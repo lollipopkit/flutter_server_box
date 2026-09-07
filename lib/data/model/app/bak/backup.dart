@@ -13,6 +13,7 @@ import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
+import 'package:server_box/data/store/migrations/m021_server_btn_ids.dart';
 import 'package:server_box/data/store/setting.dart';
 
 part 'backup.g.dart';
@@ -115,6 +116,7 @@ class Backup implements Mergeable {
       await const GroupedSettingsMigration().apply();
       await const VirtKeyRowsMigration().apply();
       await const VirtKeyNamesMigration().apply();
+      await const ServerBtnIdsMigration().apply();
     }
 
     Provider.reload();

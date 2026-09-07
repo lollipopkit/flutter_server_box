@@ -2,8 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/res/store.dart';
 
 enum ServerFuncBtn {
   terminal(),
@@ -21,49 +21,33 @@ enum ServerFuncBtn {
   portForward(1340),
   power(1491);
 
-  /// The last released build that did not contain this entry.
-  ///
-  /// A feature branch's commit count is not a release number: Power was
-  /// developed at build 1481 but merged after v1.0.1491, so using 1481 made a
-  /// v1491 install look as though it had already seen the entry. A release
-  /// boundary remains true no matter how many commits the branch accumulated
-  /// before the next tag.
+  /// See [Feature.since].
   final int? introducedAfterBuild;
 
   const ServerFuncBtn([this.introducedAfterBuild]);
 
-  /// Puts entries that arrived during an upgrade into the user's row, which
-  /// was last written when they did not exist.
-  ///
-  /// The window is `(from, to]`, not "everything up to [to]". An entry the
-  /// user has since taken *out* of the row was a decision, and a rule that
-  /// only looks at [to] re-adds it on every later upgrade — overruling that
-  /// decision every time, forever. Only an entry that did not exist the last
-  /// time they could have chosen is added.
-  ///
-  /// [from] is the build this install last ran, 0 on a fresh one — where
-  /// [defaultIdxs] already lists every entry that carries a boundary, so
-  /// nothing here fires. An entry left out of the defaults must therefore also
-  /// have no [introducedAfterBuild], or a fresh install would be the only kind
-  /// that never gets it.
-  ///
-  /// Driven by [introducedAfterBuild] over [values] rather than by a branch per entry:
-  /// the old form needed three near-identical blocks, and a new entry was
-  /// added by remembering to write a fourth.
-  static void autoAddNewFuncs(int from, int to) {
-    final prop = Stores.setting.serverFuncBtns;
-    final list = prop.fetch();
-    final added = [
-      for (final btn in values)
-        if (btn.introducedAfterBuild case final boundary?
-            when boundary >= from && boundary < to && !list.contains(btn.index))
-          btn.index,
-    ];
-    if (added.isEmpty) return;
-    prop.putSync([...list, ...added]);
-  }
+  /// This entry as the registry sees it. [id] is what is stored.
+  Feature get feature => Feature(
+    id: id,
+    slot: FeatureSlot.funcBtn,
+    icon: icon,
+    label: () => toStr,
+    since: introducedAfterBuild,
+    needs: availableWith,
+  );
 
-  static final defaultIdxs = [
+  /// Stable, and deliberately not the index.
+  ///
+  /// It used to be: `serverBtns` held `ServerFuncBtn.index`, so moving a case
+  /// silently re-pointed every entry in every stored row — and a row survives
+  /// a backup, a sync and an upgrade. `m021` converted the stored lists;
+  /// `kLegacyServerFuncBtnIds` is the table it converted them with, and the
+  /// declaration order here has been free to change ever since.
+  String get id => name;
+
+  /// The row a fresh install starts with. Not every entry: this list *is* the
+  /// row, and what is left out is behind "more".
+  static final defaultIds = [
     terminal,
     files,
     container,
@@ -72,7 +56,7 @@ enum ServerFuncBtn {
     systemd,
     portForward,
     power,
-  ].map((e) => e.index).toList();
+  ].map((e) => e.id).toList();
 
   IconData get icon => switch (this) {
     // The file tab's own icon, since that is where this entry lands.

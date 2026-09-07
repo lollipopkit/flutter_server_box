@@ -282,3 +282,26 @@ class LegacySshCredentialAdapter extends TypeAdapter<LegacySshCredentialV1> {
   void write(BinaryWriter writer, LegacySshCredentialV1 obj) =>
       throw UnsupportedError('Hive is read-only');
 }
+
+/// `ServerFuncBtn` in the order the released builds declared it, frozen.
+///
+/// `serverBtns` held the enum's *index*, so a stored row only means anything
+/// against the declaration order of the build that wrote it. `m021` converts
+/// those rows to ids with this table, and once it has, the order in
+/// `ServerFuncBtn` is free to change — which is the whole point of the change.
+///
+/// Here rather than beside the enum because this is the same kind of thing the
+/// rest of this file is: a shape a release wrote, kept so an upgrading install
+/// can still be read. It must never be reordered or shortened; an entry that
+/// no longer exists is dropped by the reader, not removed from here.
+const kLegacyServerFuncBtnIds = <String>[
+  'terminal',
+  'files',
+  'container',
+  'process',
+  'snippet',
+  'iperf',
+  'systemd',
+  'portForward',
+  'power',
+];

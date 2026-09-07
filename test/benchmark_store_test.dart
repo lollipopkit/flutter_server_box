@@ -85,17 +85,18 @@ void main() {
     // a user's device.
     test('is registered, and the version was bumped past it', () {
       expect(const BenchmarkRunsMigration().from, 20);
-      expect(SchemaVersion.current, 21);
       expect(
         kSchemaMigrations.map((m) => m.from),
         contains(20),
         reason: 'an unregistered step throws at launch, not here',
       );
-      expect(
-        kSchemaMigrations.last.from,
-        SchemaVersion.current - 1,
-        reason: 'the chain has to reach the current version',
-      );
+      // Past it, not equal to it. Asserting `current == 21` and
+      // `kSchemaMigrations.last.from == 20` pinned this step as the newest one
+      // and failed the day another was added, which is information about
+      // `all.dart` rather than about this migration —
+      // `schema_migration_list_test.dart` is where the chain as a whole is
+      // checked.
+      expect(SchemaVersion.current, greaterThan(20));
     });
 
     test('creates a table Drift would have created identically', () async {

@@ -556,9 +556,15 @@ class SettingStore extends SqliteStore {
     ),
   );
 
-  late final serverFuncBtns = listProperty(
+  /// The function-bar row, by [ServerFuncBtn.id].
+  ///
+  /// Ids since m021. It held `ServerFuncBtn.index`, which is the one shape
+  /// that stops meaning what it said when the enum changes — and this list
+  /// survives a backup, a sync and an upgrade, so the change would reach a row
+  /// nobody was in a position to fix.
+  late final serverFuncBtns = listProperty<String>(
     'serverBtns',
-    defaultValue: ServerFuncBtn.defaultIdxs,
+    defaultValue: ServerFuncBtn.defaultIds,
   );
 
   /// Docker is more popular than podman, set to `false` to use docker

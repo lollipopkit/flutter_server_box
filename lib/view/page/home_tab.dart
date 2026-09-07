@@ -1,7 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
@@ -25,43 +23,13 @@ extension AppTabViewX on AppTab {
 
   /// The tab's mark. Also what a page *listing* tabs draws — the settings page
   /// that turns them on and reorders them.
-  Widget get icon {
-    return switch (this) {
-      AppTab.server => const Icon(BoxIcons.bx_server),
-      AppTab.ssh => const Icon(Icons.terminal_outlined),
-      AppTab.snippet => const Icon(Icons.code_outlined),
-      AppTab.file => const Icon(Icons.folder_open),
-      AppTab.agent => const Icon(Icons.auto_awesome_outlined),
-      AppTab.benchmark => const Icon(Icons.speed_outlined),
-    };
-  }
+  ///
+  /// The names and the icons themselves are on [AppTab], so the feature
+  /// registry can list a tab without reaching into `view/`.
+  Widget get icon => Icon(iconData);
 
   /// The filled form, for the tab being looked at.
-  Widget get selectedIcon {
-    return switch (this) {
-      AppTab.server => const Icon(BoxIcons.bxs_server),
-      AppTab.ssh => const Icon(Icons.terminal),
-      AppTab.snippet => const Icon(Icons.code),
-      AppTab.file => const Icon(Icons.folder),
-      AppTab.agent => const Icon(Icons.auto_awesome),
-      AppTab.benchmark => const Icon(Icons.speed),
-    };
-  }
-
-  String get label {
-    return switch (this) {
-      AppTab.server => libL10n.server,
-      // Not "SSH": a terminal is what this tab holds, and SSH is only where
-      // most of them happen to come from. One already comes from a monitor
-      // agent's own PTY, and the name had to stop naming the transport before
-      // a shell on this device could live here too.
-      AppTab.ssh => libL10n.terminal,
-      AppTab.snippet => libL10n.snippet,
-      AppTab.file => libL10n.file,
-      AppTab.agent => 'Agent',
-      AppTab.benchmark => l10n.benchmark,
-    };
-  }
+  Widget get selectedIcon => Icon(selectedIconData);
 
   /// Returns a [Widget] rather than a [NavigationDestination] on purpose:
   /// `NavigationBar.destinations` is a list of widgets, so [onMenu] can wrap

@@ -38,6 +38,8 @@ Dart 不用来编写插件：App 内没有可以加载第三方 Dart 代码的�
 
 这些重复修改说明 App 缺少统一的功能注册表。按钮是否可用、点击前是否需要 SSH 连接等条件，也应该在注册时集中声明。
 
+已完成（第十节第 4 步）：`Feature`/`FeatureSlot`/`Features`。三个入口面共用一个 id 空间、一份默认值规则、一份"这次升级新增了什么"的规则。内置入口仍然是 Dart enum —— 它们带着画自己的控件和点击后执行的代码，那两样不是数据 —— 变成数据的是关于它们的一切，也正是插件 manifest 的 `contributes` 要自己提供的部分。
+
 ### 1.4 内置功能与第三方插件分开处理
 
 内置功能使用 Dart feature registry：每个功能在一处声明入口和依赖，App 读取注册表来显示按钮、卡片等内容。按钮存储也要从 enum index 迁到稳定 id，原计划放在 m021。
@@ -475,7 +477,7 @@ CREATE TABLE plugin_kv (
 
 迁移分两部分：
 
-- Dart registry 的迁移：`serverBtns` 从 enum index 改为 id，计划使用 m021，并把旧 `ServerFuncBtn` 映射保留在 `legacy_adapters.dart`，供 Hive 导入使用。实际实施前核对 migration 编号。
+- ~~Dart registry 的迁移~~：已完成。`serverBtns` 由 enum index 迁到 id（m021），旧顺序冻结在 `legacy_adapters.dart` 的 `kLegacyServerFuncBtnIds` —— 用它而不是 `ServerFuncBtn.values` 转换，是因为"声明顺序从此可以随便改"正是这一步要换来的东西。`Backup.merge`/`BackupV2.merge` 也会跑它：恢复不经过 schema migrator，而那时版本号早已越过这一步。
 - BMC 的迁移：交付插件时，将 `bmc_addr`、`bmc_cred_id`、`bmc_cert_sha256` 迁入配置表和键值表。旧列保留一个版本后，按 m017 的 create-copy-drop-rename 方式删除；现有 Hive 迁移 fixture 需继续通过。PVE 留在 Dart，`pve_*` 列不迁移。
 
 ## 八、怎么下载、安装和更新
@@ -552,7 +554,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 1 | QuickJS 运行时、`sb` 接口注入、权限检查、manifest 解析，以及 TypeScript SDK | **已完成**。运行时 81 个测试（权限拒绝、接口表一致性、异步、资源限制、实例线程），SDK 45 个测试（控件、l10n、帧裁剪、模拟宿主） |
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **FFI 已完成**（`test/plugin_ffi_test.dart` 走通加载、调用、宿主回调、权限拒绝）。剩下 Dart 侧把 14 个接口接到 App 的实际功能上，属于第 5 步 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
-| 4 | Dart feature registry 和按钮 id 迁移 | 未开始；内置功能继续用 Dart，验证旧配置兼容 |
+| 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 未开始；实现 5.2 的三项（修订号复用缓存、`ValueListenableBuilder`、`ListView.builder`），补 golden 和宿主集成测试 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |

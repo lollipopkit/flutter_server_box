@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// Declaration order is the default card order on the detail page, and it is
@@ -23,12 +24,21 @@ enum ServerDetailCards {
   bmc(Icons.developer_board, introducedAfterBuild: 1491),
   custom(Icons.code, introducedAfterBuild: 493);
 
-  /// The last released build that did not contain this card.
+  /// See [Feature.since].
   final int? introducedAfterBuild;
 
   final IconData icon;
 
   const ServerDetailCards(this.icon, {this.introducedAfterBuild});
+
+  /// This card as the registry sees it.
+  Feature get feature => Feature(
+    id: name,
+    slot: FeatureSlot.detailCard,
+    icon: icon,
+    label: () => toStr,
+    since: introducedAfterBuild,
+  );
 
   static ServerDetailCards? fromName(String str) =>
       ServerDetailCards.values.firstWhereOrNull((e) => e.name == str);
@@ -55,25 +65,14 @@ enum ServerDetailCards {
   /// Build that folded the standalone trend cards into their snapshot cards.
   static const _kTrendCardsFoldedBuild = 1467;
 
-  /// Adds only cards that first became available during `(from, to]`.
+  /// Drops the names of cards that no longer exist.
   ///
-  /// Looking at [to] alone re-added every old card on every release bump. The
-  /// boundary also cannot be the feature branch's commit count: BMC was merged
-  /// after v1.0.1491 even though its branch still carried 1491 in BuildData.
-  static void autoAddNewCards(int from, int to) {
+  /// Adding what arrived in an upgrade is [Features.autoAdd]'s job now, over
+  /// every slot at once. What is left here is the one thing that is about this
+  /// slot alone.
+  static void dropFoldedTrendCards(int to) {
     final prop = Stores.setting.detailCardOrder;
     final list = prop.fetch();
-    final added = [
-      for (final card in values)
-        if (card.introducedAfterBuild case final boundary?
-            when boundary >= from && boundary < to && !list.contains(card.name))
-          card.name,
-    ];
-    if (added.isNotEmpty) {
-      list.addAll(added);
-      prop.putSync(list);
-    }
-
     if (to >= _kTrendCardsFoldedBuild) {
       // Standalone trend cards, each since folded into the snapshot card of
       // the same subject. These names were only ever written by unreleased
