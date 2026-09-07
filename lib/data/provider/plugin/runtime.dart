@@ -139,8 +139,18 @@ class PluginRuntimeService {
   bool hasExport(BigInt instance, String export) =>
       _runtime?.hasExport(instance: instance, export_: export) ?? false;
 
-  List<String> exports(BigInt instance) =>
-      _runtime?.exports(instance: instance) ?? const [];
+  /// What the instance exports, or nothing for one that is gone.
+  ///
+  /// The runtime throws for an instance it has never had, which is the right
+  /// answer to `call` and the wrong one to a question about what is loaded —
+  /// "it is not there" is not a failure to report.
+  List<String> exports(BigInt instance) {
+    try {
+      return _runtime?.exports(instance: instance) ?? const [];
+    } catch (_) {
+      return const [];
+    }
+  }
 
   /// Ends an instance and takes everything issued to it.
   ///

@@ -318,7 +318,7 @@ FFI 那一层已经接好：`sbm_ffi` 用 `StreamSink` 把请求推给 Dart，Da
 
 以 `l10n.` 开头的字符串从 `l10n/<locale>.json` 查找，找不到时回退到 `en`。带参数时，在 key 后用 U+001F 分隔参数，替换翻译中的 `{0}`、`{1}`；SDK 会移除参数中自带的分隔符。完整句子交给翻译文件，避免插件拼接出无法自然翻译的文案。
 
-插件每次构建整棵树，SDK 负责裁掉没有变化的部分（5.2）。持续输出日志时可以用 `sb.ui.patch`，按 JSON Pointer 替换子树。未知控件或非法属性应显示错误卡片并记录日志，避免影响整个页面。
+插件每次构建整棵树，SDK 负责裁掉没有变化的部分（5.2）。持续输出日志时可以用 `sb.ui.patch`，按 JSON Pointer 替换子树。未知控件或非法属性应显示错误卡片并记录日志，避免影响整个页面。同一条规则还挡住一类框架异常：`expanded` 和 `spacer` 在没有 row/column 的地方会在 layout 阶段抛异常并带走整个 surface，而插件完全可能在卡片顶层写一个 —— 渲染器把父节点类型传下去，这两个在 flex 外面退化成无害的东西。
 
 **节点格式还有一个未决问题：如何表示命名区域。** 例如折叠面板既需要标题节点，也需要内容节点，现在只能把标题塞进 `p.title`。候选方案是让 `c` 按名称保存子树，或者增加 `slot` 节点。发布 UI 接口前需要确定，否则后续修改会影响已有插件。
 
@@ -568,7 +568,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 2 | `sbm_ffi` 暴露加载、调用和释放，Dart 实现宿主回调 | **已完成**。`PluginBridge` 实现 14 个接口的协议侧（`sb.http.fetch` 除外，见下），`PluginRuntimeService` 持有运行时并把请求流接到它上面。`test/plugin_bridge_test.dart` 21 个、`test/plugin_runtime_service_test.dart` 6 个（真 QuickJS 上下文）、`test/plugin_ffi_test.dart` 21 个 |
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
-| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储已完成**（四张表 m022 + 三个 store，23 个测试）；**渲染器已完成**（22 种控件、5.2 的三项、l10n、错误节点，24 个测试）。剩下插件卡片和其余 surface、`BackupV2` 的 `plugins` 字段、安装管理、开发目录，以及 5.5 的 golden 截图 |
+| 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储已完成**（四张表 m022 + 三个 store，23 个测试）；**渲染器已完成**（22 种控件、5.2 的三项、l10n、错误节点，26 个测试）；**surface 已完成**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 把 14 个接口接到 App 的实际功能上，7 个测试跑在真 QuickJS 上）。剩下把 surface 挂到 `contributes` 声明的四个位置上、`BackupV2` 的 `plugins` 字段、安装管理、开发目录，以及 5.5 的 golden 截图 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
 

@@ -51,7 +51,15 @@ class _Builder {
 
   PluginL10n get l10n => state.l10n;
 
-  Widget build(BuildContext context, PluginNode node) {
+  /// [inFlex] is whether this node's parent lays its children out in a row or
+  /// a column — which `expanded` and `spacer` need and cannot ask for.
+  ///
+  /// Flutter throws at layout time when an `Expanded` is not inside a `Flex`,
+  /// and that throw takes the whole surface. A plugin can produce one by
+  /// writing `expanded(...)` at the top of a card, so the parent's type is
+  /// carried down and those two degrade to something harmless instead — which
+  /// is the same rule as the rest of this file: a bad node costs that node.
+  Widget build(BuildContext context, PluginNode node, {bool inFlex = false}) {
     // "You already have this subtree." Handing back the same instance is what
     // makes `Element.updateChild` return without walking into it.
     if (node.stub) {
@@ -64,7 +72,7 @@ class _Builder {
       return _problem('stale revision ${rev ?? '?'}');
     }
 
-    final widget = _keyed(node, _content(context, node));
+    final widget = _keyed(node, _content(context, node, inFlex));
     final rev = node.rev;
     if (rev != null) state.remember(rev, widget);
     return widget;
@@ -79,19 +87,23 @@ class _Builder {
     return KeyedSubtree(key: ValueKey(k), child: child);
   }
 
-  Widget _content(BuildContext context, PluginNode node) {
+  Widget _content(BuildContext context, PluginNode node, bool inFlex) {
     return switch (node.type) {
       // ---- layout
       'column' => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: _num(node, 'spacing')?.toDouble() ?? 0,
-        children: _children(context, node),
+        children: _children(context, node, inFlex: true),
       ),
       'row' => Row(
         spacing: _num(node, 'spacing')?.toDouble() ?? 0,
-        children: _children(context, node),
+        children: _children(context, node, inFlex: true),
       ),
-      'expanded' => Expanded(child: _onlyChild(context, node)),
+      // Outside a row or a column there is nothing to take the remaining
+      // space from, so the child is drawn as it is rather than throwing.
+      'expanded' => inFlex
+          ? Expanded(child: _onlyChild(context, node))
+          : _onlyChild(context, node),
       'padding' => Padding(
         padding: EdgeInsets.all(_num(node, 'all')?.toDouble() ?? 0),
         child: _onlyChild(context, node),
@@ -108,7 +120,7 @@ class _Builder {
         ),
       ),
       'list' => _list(context, node),
-      'spacer' => const Spacer(),
+      'spacer' => inFlex ? const Spacer() : const SizedBox.shrink(),
       'divider' => const Divider(height: 1),
 
       // ---- content and controls
@@ -140,8 +152,12 @@ class _Builder {
     };
   }
 
-  List<Widget> _children(BuildContext context, PluginNode node) => [
-    for (final child in node.children) build(context, child),
+  List<Widget> _children(
+    BuildContext context,
+    PluginNode node, {
+    bool inFlex = false,
+  }) => [
+    for (final child in node.children) build(context, child, inFlex: inFlex),
   ];
 
   Widget _onlyChild(BuildContext context, PluginNode node) {

@@ -145,6 +145,13 @@ abstract final class SbDiag {
   /// its failure is seen; a sync runs unattended, and a user meets its failure
   /// on a device that never received anything.
   static const sync = DiagCategory('sync');
+
+  /// What a plugin said happened, never what it was about.
+  ///
+  /// A plugin passes a name and a level and nothing else — `sb.diag.crumb`
+  /// has nowhere to put a value — so what is recorded is bounded by the
+  /// interface rather than by a plugin's discretion.
+  static const plugin = DiagCategory('plugin');
 }
 
 /// Keys for [Diag.tag], which is what every crumb is read against.

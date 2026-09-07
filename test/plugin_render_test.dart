@@ -344,6 +344,45 @@ void main() {
   });
 
   group('what a bad tree costs', () {
+    /// `Expanded` outside a `Flex` is a layout-time throw, and a throw takes
+    /// the whole surface — which a plugin can cause by writing `expanded(...)`
+    /// at the top of a card. The parent's type is carried down so those two
+    /// degrade instead.
+    testWidgets('a flex-only node outside a flex is harmless', (tester) async {
+      await pump(tester, {
+        't': 'card',
+        'v': 1,
+        'c': [
+          {'t': 'spacer', 'v': 2},
+          {
+            't': 'expanded',
+            'v': 3,
+            'c': [text('inside', v: 4)],
+          },
+        ],
+      });
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('inside'), findsOneWidget);
+    });
+
+    testWidgets('and inside one it still takes the space', (tester) async {
+      await pump(tester, {
+        't': 'row',
+        'v': 1,
+        'c': [
+          {
+            't': 'expanded',
+            'v': 2,
+            'c': [text('wide', v: 3)],
+          },
+        ],
+      });
+
+      expect(find.byType(Expanded), findsOneWidget);
+      expect(find.text('wide'), findsOneWidget);
+    });
+
     testWidgets('an unknown widget costs that node, not the card', (tester) async {
       await pump(tester, {
         't': 'card',
