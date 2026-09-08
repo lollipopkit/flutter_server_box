@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/provider/plugin/app_ops.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/src/rust/api/plugin.dart' as ffi;
 
 part 'runtime.g.dart';
@@ -22,6 +24,12 @@ PluginRuntimeService pluginRuntime(Ref ref) {
       handles: PluginServerHandles(),
     ),
   );
+  // What a hook's `servers` are named by. The same answer
+  // `AppPluginHostOps.listServers` gives, from the same store, so a plugin
+  // reading a name out of a hook and one reading it out of `sb.server.list`
+  // cannot see two different things.
+  service.serverNameLookup = (id) =>
+      ref.read(serversProvider).servers[id]?.name ?? '';
   ref.onDispose(service.dispose);
   return service;
 }
@@ -156,6 +164,79 @@ class PluginRuntimeService {
     if (runtime == null) throw StateError('the plugin runtime is not started');
     return runtime.call(instance: instance, export_: export, input: input);
   }
+
+  /// Tells a plugin a surface was entered.
+  ///
+  /// **The host says the scope; the plugin decides what to load.** A card's
+  /// hook names the machine it is bound to, a tab's names every machine — and
+  /// the same export gets both, so how much work a scope is worth is the
+  /// plugin's call rather than a cadence the host imposes. It is what makes a
+  /// reading lazy: `tick` pays for every machine on a timer, and this fires
+  /// when somebody looks.
+  ///
+  /// Answers nothing. A plugin with something to draw sends it through
+  /// `sb.ui.patch`, which is what lets a slow collection fill a page in as it
+  /// lands instead of holding it blank until every machine has replied.
+  ///
+  /// A plugin that exports no `onHook` is not called at all.
+  Future<void> hook(
+    BigInt instance, {
+    required String kind,
+    required String contributionId,
+    required List<String> granted,
+    List<String> serverIds = const [],
+  }) async {
+    if (!hasExport(instance, _hookExport)) return;
+    final instanceId = _instanceIds[instance];
+    if (instanceId == null) return;
+
+    // **The gate, and it belongs here rather than in the plugin.** The payload
+    // has room for every server, and filling it for a plugin that never asked
+    // for `server.list` would hand over the fleet through the back door — the
+    // permission would then only govern `sb.server.list`, which is the call a
+    // plugin makes rather than the knowledge it ends up with.
+    //
+    // Without the grant a surface's hook still fires; it carries the one
+    // machine it is bound to, which the plugin was given at `init` anyway.
+    final allowed = granted.contains('server.list')
+        ? serverIds
+        : serverIds.take(1).toList();
+
+    final servers = [
+      for (final id in allowed)
+        {
+          'server': bridge.handles.issue(instanceId, id),
+          'name': _serverName?.call(id) ?? '',
+        },
+    ];
+
+    try {
+      await call(
+        instance,
+        _hookExport,
+        jsonEncode({
+          'kind': kind,
+          'contribution': contributionId,
+          'servers': servers,
+        }),
+      );
+    } catch (e, s) {
+      // A hook a plugin threw in is a plugin that will not collect, not a
+      // surface that failed to open: the tree it already drew stays.
+      Loggers.app.warning('Plugin hook $kind/$contributionId', e, s);
+    }
+  }
+
+  static const _hookExport = 'onHook';
+
+  /// How a server id becomes the display name a hook carries.
+  ///
+  /// Injected rather than read here, because this service is below the stores
+  /// and a plugin's view of a server is the host's to decide — see
+  /// `AppPluginHostOps.listServers`, which answers the same shape.
+  String Function(String serverId)? _serverName;
+  set serverNameLookup(String Function(String serverId)? lookup) =>
+      _serverName = lookup;
 
   bool hasExport(BigInt instance, String export) =>
       _runtime?.hasExport(instance: instance, export_: export) ?? false;

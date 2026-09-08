@@ -228,11 +228,25 @@ quickjs-ng 0.15.1。2026-09-06 在引擎里抽查了 19 项：
 | `sb.diag.crumb(name, level)` | 记录诊断事件，只记录发生了什么，不记录敏感内容 | 无额外权限 |
 | `sb.nav.openServer(h)` / `sb.nav.goTab(id)` | 打开服务器或切换 tab | 无额外权限 |
 | `sb.nav.openTerminal(req)` | 打开终端并把命令**填进去**；`run: true` 才发送，默认不发送 | `server.exec` |
+
+插件侧的导出见 4.4 的 `onHook`。
 | `sb.clipboard.read / write` | 读写剪贴板 | `clipboard` |
 | `sb.config.get(key)` | 读取插件设置和绑定服务器上的插件配置；同步 | 无额外权限 |
 | `sb.log.trace / debug / info / warn / error` | 写日志；同步 | 无额外权限 |
 
 时间不需要宿主接口，`Date.now()` 可用。这是与 WebAssembly 方案的一处差别，先前需要为此单独加 `time_now`。
+
+### 4.4 宿主触发的 hook
+
+界面打开时宿主调用插件的 `onHook(ev)`，`ev` 带 `{ kind, contribution, servers }`。**作用域由宿主给，加载什么由插件决定。**
+
+这是让读数变成懒加载的机制。`tick` 是定时的——不管有没有人看，每台机器都要付；`onHook` 在有人打开界面时才发一次。变化中的值用 `tick`，不变的值用它。一张卡片的 hook 里 `servers` 只有它绑定的那台，一个 fleet 界面(tab)的 hook 里是全部——同一个导出收到两种,这一台还是九台值不值得跑,是插件的判断而不是宿主强加的节奏。
+
+原生的包更新走的正是这个形状(`PkgHook`,更新 tab 刷全部、服务器详情页刷一台),插件版要能表达的就是它。
+
+**`servers` 受 `server.list` 管,而且必须在宿主侧管。** payload 里放得下整份名单,给一个从没申请 `server.list` 的插件填满,等于从后门把 fleet 交出去——那样权限管的就只是「插件调了哪个函数」,而不是「插件最终知道了什么」。没有这项授权时 hook 照发,只带它绑定的那一台,而那台在 `init` 时本来就给过它了。
+
+`kind` 目前只有 `"enter"` 一个值,因为宿主只发这一个。`leave` 在这里无事可做——界面消失时实例连同插件状态一起卸载;`refresh` 要等一个有下拉刷新的界面。两个都容易加,但在有东西发出它们之前就声明,描述的是一个不存在的接口(见 4.3 开头那条)。
 
 `sb.server.exec` 对接现有 `ServerNotifier.ensureExec` 和 `ServerExec.run`。插件只能使用宿主给出的服务器句柄，来源是当前绑定的服务器、用户选择结果，或 `sb.server.list`，不能自行指定任意服务器。
 

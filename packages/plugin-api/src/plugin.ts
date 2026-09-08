@@ -6,7 +6,7 @@
  * `statusCmd` plus `parse` alone is a status plugin with no UI at all.
  */
 
-import type { ServerHandle } from "./host.ts";
+import type { ServerHandle, ServerSummary } from "./host.ts";
 // The same five names a widget is toned with, for the same reason: a plugin's
 // row has to look like the app's own in both themes.
 import type { Node, Tone } from "./ui.ts";
@@ -48,6 +48,54 @@ export type ServerEventKind =
 export interface ServerEvent {
   kind: ServerEventKind;
   server: ServerHandle;
+}
+
+/**
+ * Why the host is telling the plugin about a surface.
+ *
+ * One value, because the host sends one. A `leave` would have nothing to do
+ * here — a surface's instance is unloaded when it goes, taking the plugin's
+ * state with it — and a `refresh` waits for a surface that has a pull to
+ * refresh. Both are easy to add; declaring them before anything sends them
+ * would describe an interface that does not exist, which is a plugin passing
+ * its own tests and failing on a device.
+ */
+export type HookKind =
+  /** It is being shown. Fired once per mount, after `init` and `open`. */
+  "enter";
+
+/**
+ * A surface being entered, and which machines it is about.
+ *
+ * **The host says the scope; the plugin decides what to load.** A card is
+ * about the machine it is bound to, a page about the one it was opened from,
+ * a tab about the whole fleet — so the same hook arrives with one server or
+ * with all of them, and how much work that is worth is the plugin's call.
+ *
+ * This is what makes a reading lazy. Nothing here is on a timer: a plugin that
+ * collects in `onHook` collects when somebody looks, where one that collects
+ * in `tick` pays for every machine whether or not anybody is reading. Use
+ * `tick` for a value that changes while you watch it and this for one that
+ * does not.
+ */
+export interface HookEvent {
+  kind: HookKind;
+
+  /** Which of the plugin's contributions is being entered, by its manifest id. */
+  contribution: string;
+
+  /**
+   * The machines in scope, and never more than the plugin may know about.
+   *
+   * One entry — the surface's own server — unless the manifest asked for
+   * `server.list` and the user granted it, which is what a fleet-wide surface
+   * needs. Without that grant a tab's hook still arrives, carrying only the
+   * server it is bound to or nothing at all; the host does not hand over the
+   * list because the payload happens to have room for it.
+   *
+   * Empty for a surface bound to no machine, such as a settings page.
+   */
+  servers: ServerSummary[];
 }
 
 /** What `open`, `onEvent` and `tick` answer with. */
@@ -162,7 +210,8 @@ export interface StatusResult {
  * `listWindow`, `configOptions`, `tool` — are the ones the host does not call
  * yet; their shape is settled with the renderer (PLUGINS.md section 10 step 5),
  * and until then this interface describes an intent rather than a contract.
- * `init`, `open`, `onServerEvent`, `validateConfig`, `statusCmd` and `parse`
+ * `init`, `open`, `onHook`, `onServerEvent`, `validateConfig`, `statusCmd` and
+ * `parse`
  * are the calls that exist, and each takes one object.
  */
 export interface Plugin {
@@ -192,6 +241,15 @@ export interface Plugin {
   listWindow?(key: string, from: number, count: number): Node[] | Promise<Node[]>;
 
   onServerEvent?(event: ServerEvent): void | Promise<void>;
+
+  /**
+   * A surface was entered. See {@link HookEvent}.
+   *
+   * Answers nothing: a plugin that has something new to draw sends it with
+   * `sb.ui.patch`, which is what lets a slow collection fill the page in as it
+   * lands rather than holding it blank until every machine has answered.
+   */
+  onHook?(event: HookEvent): void | Promise<void>;
 
   /** Called before the editor saves, with the form as typed. */
   validateConfig?(cfg: Record<string, string>): ValidateOutput | Promise<ValidateOutput>;

@@ -63,6 +63,7 @@ class PluginSurfaceView extends StatefulWidget {
     required this.spec,
     required this.service,
     this.refreshInterval,
+    this.fleetServerIds,
   });
 
   final PluginSurfaceSpec spec;
@@ -73,6 +74,17 @@ class PluginSurfaceView extends StatefulWidget {
   /// Only while visible: a card behind another tab has nothing to show, and a
   /// plugin ticking there is a plugin running commands nobody asked for.
   final Duration? refreshInterval;
+
+  /// Every machine this surface is about, for one bound to none.
+  ///
+  /// A fleet-wide surface — a tab — has no `serverId`, so without this its
+  /// hook would arrive naming nothing and a plugin could only find the servers
+  /// by calling `sb.server.list` itself. Handing them over is the same
+  /// disclosure either way, and is gated on the same grant: see
+  /// [PluginRuntimeService.hook].
+  ///
+  /// Null where the surface is about one machine, or about none at all.
+  final List<String>? fleetServerIds;
 
   @override
   State<PluginSurfaceView> createState() => _PluginSurfaceViewState();
@@ -185,11 +197,40 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
         }),
       );
       _restartTimer();
+
+      // After `open`, not before: the tree is on screen and the plugin can
+      // patch into it as its collection lands, which is the whole reason a
+      // hook answers nothing. Awaited so a plugin that collects quickly has
+      // filled the page before the first tick, and unawaited by nobody — a
+      // slow one holds this future and not the surface.
+      unawaited(_fireHook('enter'));
     } catch (e, s) {
       Loggers.app.warning('Loading ${spec.pluginId}', e, s);
       if (!mounted || generation != _generation) return;
       setState(() => _error = '$e');
     }
+  }
+
+  /// Tells the plugin this surface was entered.
+  ///
+  /// The scope is this surface's: the machine it is bound to, or — for one
+  /// bound to none, which is what a fleet-wide surface is — every machine the
+  /// host will name. Which of those the plugin is actually given is the
+  /// service's decision and turns on `server.list`; see
+  /// [PluginRuntimeService.hook].
+  Future<void> _fireHook(String kind) async {
+    final instance = _instance;
+    if (instance == null) return;
+    final spec = widget.spec;
+    await widget.service.hook(
+      instance,
+      kind: kind,
+      contributionId: spec.contributionId,
+      granted: spec.granted,
+      serverIds: spec.serverId != null
+          ? [spec.serverId!]
+          : (widget.fleetServerIds ?? const []),
+    );
   }
 
   void _restartTimer() {

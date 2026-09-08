@@ -142,12 +142,16 @@ void main() {
     await closeTestDb();
   });
 
-  Future<BigInt> load(String source, {String? boundServerId = 'srv-1'}) async {
+  Future<BigInt> load(
+    String source, {
+    String? boundServerId = 'srv-1',
+    List<String> granted = const ['server.exec'],
+  }) async {
     final id = await service.load(
       manifestJson: _manifest,
       source: source,
       instanceId: 'inst-1',
-      granted: const ['server.exec'],
+      granted: granted,
       config: const {'addr': 'https://10.0.0.9'},
       boundServerId: boundServerId,
     );
@@ -240,6 +244,91 @@ void main() {
     ''');
 
     expect(await service.call(id, 'go', ''), '"rejected:no_surface"');
+  });
+
+  /// The host says the scope and the plugin decides what to load. What is
+  /// checkable here is the half the host owns: which servers it hands over.
+  group('the enter hook', () {
+    const echoHook = '''
+      let seen = null;
+      export function onHook(ev) { seen = ev; }
+      export function read() { return seen; }
+    ''';
+
+    test('carries the scope the host was given', () async {
+      final id = await load(echoHook, granted: const ['server.list']);
+      service.serverNameLookup = (sid) => sid == 'srv-1' ? 'web' : 'db';
+
+      await service.hook(
+        id,
+        kind: 'enter',
+        contributionId: 'panel',
+        granted: const ['server.list'],
+        serverIds: const ['srv-1', 'srv-2'],
+      );
+
+      final seen = jsonDecode(await service.call(id, 'read', '')) as Map;
+      expect(seen['kind'], 'enter');
+      expect(seen['contribution'], 'panel');
+      final servers = seen['servers'] as List;
+      expect(servers.map((s) => (s as Map)['name']), ['web', 'db']);
+      // Handles, never ids — the same rule `sb.server.list` follows, and for
+      // the same reason: one that leaked names nothing.
+      for (final s in servers) {
+        expect((s as Map)['server'], isNot(anyOf('srv-1', 'srv-2')));
+      }
+    });
+
+    /// The gate that matters. The payload has room for the whole fleet, so a
+    /// plugin that never asked for `server.list` would learn it here — and the
+    /// permission would then govern only the call, not the knowledge.
+    test('hands over one machine without server.list', () async {
+      final id = await load(echoHook);
+
+      await service.hook(
+        id,
+        kind: 'enter',
+        contributionId: 'panel',
+        granted: const ['server.exec'],
+        serverIds: const ['srv-1', 'srv-2'],
+      );
+
+      final seen = jsonDecode(await service.call(id, 'read', '')) as Map;
+      expect(seen['servers'] as List, hasLength(1));
+    });
+
+    /// A plugin that does not want them is not called, rather than called and
+    /// throwing — which would be a warning per surface entered.
+    test('a plugin with no onHook is not called', () async {
+      final id = await load('export function read() { return 1; }');
+
+      await service.hook(
+        id,
+        kind: 'enter',
+        contributionId: 'panel',
+        granted: const ['server.list'],
+        serverIds: const ['srv-1'],
+      );
+
+      expect(await service.call(id, 'read', ''), '1');
+    });
+
+    /// A hook a plugin threw in is a plugin that will not collect, not a
+    /// surface that failed to open.
+    test('a throwing hook does not throw at the host', () async {
+      final id = await load('export function onHook() { throw new Error("x"); }');
+
+      await expectLater(
+        service.hook(
+          id,
+          kind: 'enter',
+          contributionId: 'panel',
+          granted: const [],
+          serverIds: const ['srv-1'],
+        ),
+        completes,
+      );
+    });
   });
 
   test('unloading takes the handles issued to that instance', () async {
