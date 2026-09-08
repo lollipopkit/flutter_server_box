@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/model/plugin/install.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// A plugin's data in a backup. PLUGINS.md section 7's `plugins` field.
@@ -28,7 +29,42 @@ import 'package:sqlite3/sqlite3.dart';
 abstract final class PluginBackup {
   static Database get _db => SqliteDb.instance;
 
+  /// Which plugins the user let take part in this.
+  ///
+  /// `storage.sync` is the permission, and it is the only one that grants no
+  /// host function — it is read here and nowhere else. A plugin's key-value
+  /// namespace is whatever it decided to keep: `sb.store.set` is where a BMC
+  /// account password goes, and a backup travels to wherever the user pointed
+  /// sync at. Writing it out without having asked would be consent nobody
+  /// gave.
+  ///
+  /// Read from `plugin_install`, so a plugin with no install record — one
+  /// removed, leaving its data behind — is not included either. There is no
+  /// consent on file for it.
+  ///
+  /// **Only the export side.** [merge] does not check: by then the data is in
+  /// a file the user chose to restore, installs are not carried (see above),
+  /// so there would be no record to check against and every restore would drop
+  /// everything.
+  static Set<String> _pluginsGrantedSync() {
+    final out = <String>{};
+    for (final row in _db.select('SELECT id, granted FROM plugin_install;')) {
+      if (PluginInstall.parseGranted(row['granted']).contains(_syncPermission)) {
+        out.add(row['id'] as String);
+      }
+    }
+    return out;
+  }
+
+  /// `Permission::StorageSync`'s name, as `plugin_install.granted` stores it.
+  static const _syncPermission = 'storage.sync';
+
   /// Everything every plugin has stored, by plugin id.
+  ///
+  /// Configuration for every plugin; stored data only for those granted
+  /// [`storage.sync`](_pluginsGrantedSync). The configuration is what the user
+  /// typed into the server editor and is the app's own record of it, the way a
+  /// server's fields are.
   static Map<String, Object?> load() {
     final out = <String, Map<String, Object?>>{};
     Map<String, Object?> of(String id) =>
@@ -44,10 +80,13 @@ abstract final class PluginBackup {
         'ver': row['cfg_ver'],
       });
     }
+    final syncing = _pluginsGrantedSync();
     for (final row in _db.select(
       'SELECT plugin_id, key, value FROM plugin_kv ORDER BY plugin_id, key;',
     )) {
-      (of(row['plugin_id'] as String)['kv']! as List).add({
+      final id = row['plugin_id'] as String;
+      if (!syncing.contains(id)) continue;
+      (of(id)['kv']! as List).add({
         'server': null,
         'key': row['key'],
         'value': row['value'],
@@ -57,7 +96,9 @@ abstract final class PluginBackup {
       'SELECT plugin_id, server_id, key, value FROM server_plugin_kv '
       'ORDER BY plugin_id, server_id, key;',
     )) {
-      (of(row['plugin_id'] as String)['kv']! as List).add({
+      final id = row['plugin_id'] as String;
+      if (!syncing.contains(id)) continue;
+      (of(id)['kv']! as List).add({
         'server': row['server_id'],
         'key': row['key'],
         'value': row['value'],

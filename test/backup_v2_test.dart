@@ -337,6 +337,14 @@ void main() {
         'INSERT INTO server (id, name, ssh_ip) '
         "VALUES ('srv-p', 'p', '10.0.0.1');",
       );
+      // The install record is where consent lives: `storage.sync` is what
+      // lets a plugin's stored data leave this device at all.
+      SqliteDb.instance.execute(
+        'INSERT INTO plugin_install '
+        '(id, version, repo, enabled, granted, installed_at) '
+        'VALUES (?, ?, ?, 1, ?, 0);',
+        ['bmc', '1.0.0', 'local', '["storage.sync"]'],
+      );
       PluginCfgStore().put('srv-p', 'bmc', {'addr': 'x'}, cfgVer: 1);
       PluginKvStore().put('bmc', 'acct', 'one');
 

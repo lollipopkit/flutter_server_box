@@ -68,10 +68,16 @@ class ServerBtnIdsMigration implements SchemaMigration {
         final String s => s,
         _ => null,
       };
-      // An id this build has no entry for is dropped here as well as by the
-      // reader: a row that carries one is a row every later writer copies
-      // forward for nothing.
-      if (id == null || !known.contains(id) || !seen.add(id)) continue;
+      // A built-in id this build has no entry for is dropped here as well as
+      // by the reader: a row that carries one is a row every later writer
+      // copies forward for nothing.
+      //
+      // **A plugin's id is kept**, for the reason spelled out in `m023`: this
+      // step also runs after a restore, on a build that has plugin buttons,
+      // and the guard above only skips a row with no int left in it. A row
+      // still half-converted would lose the user's placement.
+      if (id == null || !seen.add(id)) continue;
+      if (!known.contains(id) && !_isPluginFeatureId(id)) continue;
       ids.add(id);
     }
 
@@ -86,5 +92,12 @@ class ServerBtnIdsMigration implements SchemaMigration {
     if (!store.set(key, ids, updateLastUpdateTsOnSet: false)) {
       throw StateError('m021: writing "$key" failed');
     }
+  }
+
+  /// `<plugin id>:<feature id>`. See `HomeTabIdsMigration`, which decides the
+  /// same thing the same way and for the same reason.
+  static bool _isPluginFeatureId(String id) {
+    final at = id.indexOf(':');
+    return at > 0 && at < id.length - 1;
   }
 }

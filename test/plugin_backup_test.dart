@@ -1,6 +1,8 @@
 /// A plugin's data through a backup. PLUGINS.md section 7's `plugins` field.
 library;
 
+import 'dart:convert';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/plugin/backup.dart';
@@ -18,6 +20,17 @@ void main() {
     "INSERT INTO server (id, name, ssh_ip) VALUES ('$id', '$id', '10.0.0.1');",
   );
 
+  /// An install record, which is where the consent lives. A plugin's stored
+  /// data leaves this device only with `storage.sync` in it — the permission's
+  /// whole purpose, and the one that grants no host function.
+  void install(String id, {List<String> granted = const ['storage.sync']}) =>
+      SqliteDb.instance.execute(
+        'INSERT INTO plugin_install '
+        '(id, version, repo, enabled, granted, installed_at) '
+        "VALUES (?, '1.0.0', 'local', 1, ?, 0);",
+        [id, jsonEncode(granted)],
+      );
+
   setUp(() async {
     await openTestDb();
     getIt.registerSingleton<ServerStore>(ServerStore());
@@ -33,6 +46,7 @@ void main() {
   });
 
   test('everything a plugin stored comes back', () {
+    install('bmc');
     cfg.put('srv-1', 'bmc', {'addr': 'https://10.0.0.9'}, cfgVer: 1);
     kv.put('bmc', 'acct/a', 'one');
     kv.put('bmc', 'token', 'per-server', serverId: 'srv-1');
@@ -50,9 +64,38 @@ void main() {
     expect(kv.fetch('bmc', 'token', serverId: 'srv-1'), 'per-server');
   });
 
+  /// `storage.sync` is the only permission that grants no host function: it is
+  /// read here and nowhere else. A plugin's key-value namespace is whatever it
+  /// decided to keep — `sb.store.set` is where a BMC account password goes —
+  /// and a backup travels to wherever the user pointed sync at.
+  test('a plugin not granted storage.sync keeps its data on this device', () {
+    install('bmc', granted: const ['server.exec', 'net.http']);
+    cfg.put('srv-1', 'bmc', {'addr': 'https://10.0.0.9'}, cfgVer: 1);
+    kv.put('bmc', 'acct/a', 'secret');
+    kv.put('bmc', 'token', 'per-server', serverId: 'srv-1');
+
+    final loaded = PluginBackup.load();
+
+    final mine = loaded['bmc'] as Map<String, Object?>;
+    expect(mine['kv'], isEmpty, reason: 'no consent, so nothing stored leaves');
+    // The configuration still travels: it is what the user typed into the
+    // server editor, and the app's own record of it.
+    expect(mine['cfg'], hasLength(1));
+    expect(jsonEncode(loaded), isNot(contains('secret')));
+  });
+
+  /// Data left behind by a plugin the user removed has no consent on file at
+  /// all, so it is not in the file either.
+  test('a plugin with no install record is not exported', () {
+    kv.put('gone', 'k', 'v');
+
+    expect(PluginBackup.load(), isEmpty);
+  });
+
   /// The same mapping snippets and port forwards go through: a server matched
   /// by name may already be here under a different id.
   test('a server that was renumbered is followed', () {
+    install('bmc');
     cfg.put('srv-1', 'bmc', {'addr': 'x'}, cfgVer: 1);
     kv.put('bmc', 'k', 'v', serverId: 'srv-1');
     final loaded = PluginBackup.load();
@@ -69,6 +112,7 @@ void main() {
   /// Both tables have a foreign key, and a backup can name a server this
   /// device deleted.
   test('an entry for a server that is not here is skipped', () {
+    install('bmc');
     cfg.put('srv-1', 'bmc', {'addr': 'x'}, cfgVer: 1);
     kv.put('bmc', 'k', 'v', serverId: 'srv-1');
     kv.put('bmc', 'global', 'g');

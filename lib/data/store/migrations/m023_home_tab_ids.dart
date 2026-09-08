@@ -65,14 +65,20 @@ class HomeTabIdsMigration implements SchemaMigration {
         final String s => s,
         _ => null,
       };
-      // A name this build has no tab for is dropped here as well as by the
-      // reader: a row carrying one is a row every later writer copies forward
-      // for nothing.
+      // A built-in name this build has no tab for is dropped here as well as
+      // by the reader: a row carrying one is a row every later writer copies
+      // forward for nothing.
       //
-      // A plugin's id is not in `known` and would be dropped by that rule —
-      // which is correct *here*, because no build before this one could have
-      // written one. The reader keeps them; see `FeatureSlot.putEnabledIds`.
-      if (id == null || !known.contains(id) || !seen.add(id)) continue;
+      // **A plugin's id is kept.** It is not in `known` and the rule above
+      // would drop it — which was written as safe on the grounds that no build
+      // before this one could have written one. That holds on first launch and
+      // not on the path this step is also called from: `Backup.merge` and
+      // `BackupV2.merge` run it after restoring settings, on a build that
+      // does have plugin tabs. Dropping the id there loses where the user put
+      // the tab, which is exactly what `FeatureSlot.putEnabledIds` says must
+      // not happen.
+      if (id == null || !seen.add(id)) continue;
+      if (!known.contains(id) && !_isPluginFeatureId(id)) continue;
       ids.add(id);
     }
 
@@ -91,5 +97,16 @@ class HomeTabIdsMigration implements SchemaMigration {
     if (!store.set(key, result, updateLastUpdateTsOnSet: false)) {
       throw StateError('m023: writing "$key" failed');
     }
+  }
+
+  /// Whether `id` is a plugin's feature id rather than a built-in name.
+  ///
+  /// `<plugin id>:<feature id>`, which `PluginHomeTab.id` builds and
+  /// `PluginContributions.ofFeature` splits on. Decided by shape rather than
+  /// by asking the registry: a migration runs before the plugin host does, and
+  /// a plugin that is merely not loaded yet must not lose its place.
+  static bool _isPluginFeatureId(String id) {
+    final at = id.indexOf(':');
+    return at > 0 && at < id.length - 1;
   }
 }
