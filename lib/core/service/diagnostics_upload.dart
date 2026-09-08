@@ -144,8 +144,9 @@ abstract final class DiagnosticsUpload {
         // report needs, and are the SDK guessing at context rather than this
         // app supplying it.
         options.attachThreads = false;
-        // The last thing every event passes through — see [scrub].
-        options.beforeSend = (event, hint) => _scrubWithStoredIdentifiers(event);
+        // The last thing every event passes through, and what decides whether
+        // it goes at all — see [scrubWithStoredIdentifiers].
+        options.beforeSend = (event, hint) => scrubWithStoredIdentifiers(event);
       });
       // Before the sink is installed, so the first error to arrive already
       // says what it arrived from. The pure-Dart SDK cannot work this out for
@@ -213,23 +214,33 @@ abstract final class DiagnosticsUpload {
     }
   }
 
-  /// [scrub], with what this install currently knows to be the user's.
+  /// [scrub], with what this install currently knows to be the user's — or
+  /// null, which drops the event.
   ///
   /// Read per event rather than kept: a server added since launch is one whose
   /// name would otherwise still go out. It is a store read on the way to the
   /// network, which is not a hot path — an event is a crash.
-  static sentry.SentryEvent _scrubWithStoredIdentifiers(
+  ///
+  /// **An event this cannot promise to have scrubbed does not go.** The
+  /// records are the whole of what separates a report from a disclosure, so
+  /// sending one without them would upload an unaudited string on the single
+  /// path where nothing was able to check it. The failure is narrow — an error
+  /// raised from an isolate that never opened a store, or while the app is
+  /// coming down — and what is given up is one report, while the error is
+  /// still written to the on-device log by the sink beside this one.
+  ///
+  /// An install with *no servers* is not this case. It has nothing to
+  /// substitute, and its events go as they are.
+  @visibleForTesting
+  static sentry.SentryEvent? scrubWithStoredIdentifiers(
     sentry.SentryEvent event,
   ) {
-    var identifiers = const <String, String>{};
+    final Map<String, String> identifiers;
     try {
       identifiers = KnownIdentifiers.of(Stores.server.fetch());
     } catch (e, s) {
-      // An error reported from an isolate with no store, or from before one is
-      // open. The SDK treats a throw in `beforeSend` as "send it unchanged",
-      // so catching here is what makes [scrub] still run for the parts that
-      // need no records at all.
       Loggers.app.warning('Could not read what to scrub from a report', e, s);
+      return null;
     }
     return scrub(event, identifiers);
   }

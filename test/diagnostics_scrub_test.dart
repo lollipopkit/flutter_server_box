@@ -5,8 +5,11 @@ import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/server.dart';
 
 import 'helpers/spi_fixture.dart';
+import 'helpers/test_db.dart';
 
 /// The last thing an event passes through before it leaves the device.
 ///
@@ -145,8 +148,8 @@ void main() {
   });
 
   test('an install with no servers still has its device fields cleared', () {
-    // The path taken when the store cannot be read at all — an error reported
-    // from an isolate that never opened one.
+    // Nothing to substitute is not the same as nothing to do: what the event
+    // says about the *device* is removed whether or not there are records.
     final event = DiagnosticsUpload.scrub(
       sentry.SentryEvent(
         user: sentry.SentryUser(ipAddress: '2001:db8::1'),
@@ -189,6 +192,45 @@ void main() {
         servers.first.toString(),
         reason: 'the id is what it is about, not anything the user typed',
       );
+    });
+  });
+
+  /// The wrapper `beforeSend` is actually given, where the decision to send at
+  /// all is made.
+  group('reading the records to scrub against', () {
+    test('an event nothing could be checked against is dropped', () {
+      // No store registered, which is an error raised from an isolate that
+      // never opened one, or while the app is coming down. The records are the
+      // whole of what separates a report from a disclosure, so an event that
+      // could not be checked against them is not sent unscrubbed instead.
+      expect(
+        DiagnosticsUpload.scrubWithStoredIdentifiers(
+          sentry.SentryEvent(
+            message: sentry.SentryMessage('could not reach prod-db'),
+          ),
+        ),
+        isNull,
+      );
+    });
+
+    test('an install with no servers is not that case', () async {
+      // It has nothing to substitute, which is an answer rather than a
+      // failure — otherwise a fresh install would report nothing at all.
+      await openTestDb();
+      getIt.registerSingleton<ServerStore>(ServerStore());
+      addTearDown(closeTestDb);
+      addTearDown(getIt.reset);
+
+      final event = DiagnosticsUpload.scrubWithStoredIdentifiers(
+        sentry.SentryEvent(
+          user: sentry.SentryUser(ipAddress: '2001:db8::1'),
+          message: sentry.SentryMessage('nothing here to match'),
+        ),
+      );
+
+      expect(event, isNotNull);
+      expect(event!.user, isNull);
+      expect(event.message!.formatted, 'nothing here to match');
     });
   });
 
