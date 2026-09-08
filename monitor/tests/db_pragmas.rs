@@ -13,10 +13,28 @@ use sqlx::{Row, SqlitePool};
 
 /// A pool over a fresh database file, plus the directory keeping it alive.
 async fn fresh_db() -> Result<(SqlitePool, tempfile::TempDir)> {
+    Ok(fresh_db_at().await?.0)
+}
+
+/// As [`fresh_db`], and the path of the file itself for the tests that weigh
+/// it.
+async fn fresh_db_at() -> Result<((SqlitePool, tempfile::TempDir), std::path::PathBuf)> {
     let dir = tempfile::tempdir()?;
     let path = dir.path().join("monitor.db");
     let pool = database::init(&format!("sqlite:{}", path.display())).await?;
-    Ok((pool, dir))
+    Ok(((pool, dir), path))
+}
+
+fn size_of(path: &std::path::Path) -> u64 {
+    std::fs::metadata(path).map(|m| m.len()).unwrap_or(0)
+}
+
+/// The WAL SQLite keeps beside `path`, which is the database's own name with
+/// `-wal` appended rather than a replaced extension.
+fn wal_path(path: &std::path::Path) -> std::path::PathBuf {
+    let mut name = path.as_os_str().to_os_string();
+    name.push("-wal");
+    name.into()
 }
 
 async fn pragma<T>(pool: &SqlitePool, stmt: &'static str) -> Result<T>
@@ -67,6 +85,17 @@ async fn every_pooled_connection_carries_the_settings() -> Result<()> {
             128,
             "connection {i} wal_autocheckpoint"
         );
+
+        let row = conn
+            .fetch_one("PRAGMA journal_size_limit")
+            .await
+            .map_err(anyhow::Error::from)?;
+        // -1 is SQLite's default and means "never shorten the file".
+        assert_eq!(
+            row.get::<i64, _>(0),
+            128 * 4096 * 2,
+            "connection {i} journal_size_limit"
+        );
     }
 
     Ok(())
@@ -97,9 +126,51 @@ async fn a_new_database_is_laid_out_for_incremental_reclaim() -> Result<()> {
 #[tokio::test]
 async fn reclaim_gives_back_the_pages_a_deletion_freed() -> Result<()> {
     let (pool, _dir) = fresh_db().await?;
+    let (before, freed) = fill_then_delete(&pool).await?;
 
-    // Padded so each row costs about a page: the reclaim threshold is stated
-    // in pages, and 2000 rows of real metrics would not reach it.
+    let cleanup = DataCleanupService::new(pool.clone(), DataRetentionConfig::default());
+    let reclaimed = cleanup.reclaim_free_pages().await?;
+    assert!(reclaimed > 0, "reclaimed nothing from {freed} free pages");
+
+    let after: i64 = pragma(&pool, "PRAGMA page_count").await?;
+    assert!(
+        after < before / 2,
+        "file went from {before} pages to {after} after deleting every row"
+    );
+
+    Ok(())
+}
+
+/// Reclaiming has to reach the filesystem, not move the space into the WAL.
+///
+/// VACUUM rewrites the database as one transaction, so the WAL comes out about
+/// the size of the database — and a checkpoint resets a WAL without shortening
+/// the file. On a real agent's first pass after upgrading that was 84 MB
+/// reclaimed and a 52 MB WAL sitting where it went, which is most of the gain
+/// handed straight back.
+#[tokio::test]
+async fn a_cleanup_pass_does_not_leave_the_reclaimed_space_in_the_wal() -> Result<()> {
+    let ((pool, _dir), path) = fresh_db_at().await?;
+    fill_then_delete(&pool).await?;
+
+    let cleanup = DataCleanupService::new(pool.clone(), DataRetentionConfig::default());
+    cleanup.cleanup_expired_data().await?;
+
+    let wal = size_of(&wal_path(&path));
+    assert!(
+        wal <= 128 * 4096 * 2,
+        "the WAL was left at {wal} bytes by the cleanup pass"
+    );
+
+    Ok(())
+}
+
+/// Enough rows to cross the reclaim threshold, then all of them deleted.
+/// Answers with the page count before the delete and the freelist after it.
+///
+/// Padded so each row costs about a page: the threshold is stated in pages,
+/// and 2000 rows of real metrics would not reach it.
+async fn fill_then_delete(pool: &SqlitePool) -> Result<(i64, i64)> {
     let padding = "x".repeat(4000);
     let mut tx = pool.begin().await?;
     for i in 0..2000 {
@@ -114,25 +185,14 @@ async fn reclaim_gives_back_the_pages_a_deletion_freed() -> Result<()> {
     }
     tx.commit().await?;
 
-    let before: i64 = pragma(&pool, "PRAGMA page_count").await?;
-    sqlx::query("DELETE FROM system_metrics").execute(&pool).await?;
-    let freed: i64 = pragma(&pool, "PRAGMA freelist_count").await?;
+    let before: i64 = pragma(pool, "PRAGMA page_count").await?;
+    sqlx::query("DELETE FROM system_metrics").execute(pool).await?;
+    let freed: i64 = pragma(pool, "PRAGMA freelist_count").await?;
     assert!(
         freed > 1024,
         "fixture freed only {freed} pages, below the reclaim threshold"
     );
-
-    let cleanup = DataCleanupService::new(pool.clone(), DataRetentionConfig::default());
-    let reclaimed = cleanup.reclaim_free_pages().await?;
-    assert!(reclaimed > 0, "reclaimed nothing from {freed} free pages");
-
-    let after: i64 = pragma(&pool, "PRAGMA page_count").await?;
-    assert!(
-        after < before / 2,
-        "file went from {before} pages to {after} after deleting every row"
-    );
-
-    Ok(())
+    Ok((before, freed))
 }
 
 /// Below the threshold nothing is rewritten. A cleanup pass runs on a timer

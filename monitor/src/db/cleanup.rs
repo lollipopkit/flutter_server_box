@@ -25,6 +25,7 @@ impl DataCleanupService {
         let policy_deleted = self.cleanup_policy_tables().await?;
         let size_deleted = self.enforce_db_size_limit().await?;
         let reclaimed = self.reclaim_free_pages().await?;
+        self.shorten_wal().await;
 
         let duration = start_time.elapsed();
         info!(
@@ -165,6 +166,50 @@ impl DataCleanupService {
             );
         }
         Ok(deleted_total)
+    }
+
+    /// Shorten the WAL file to `journal_size_limit`.
+    ///
+    /// A checkpoint resets the WAL, it does not shorten the file, so the file
+    /// stays as large as the largest transaction ever written through it —
+    /// and VACUUM writes the whole database through it. Measured on a real
+    /// agent upgrading: 84 MB reclaimed from the database and a 52 MB WAL left
+    /// where it went. `journal_size_limit` covers this on its own only when a
+    /// checkpoint gets to *reset* the WAL, which a passive one under a
+    /// connection pool often cannot, so this asks for the reset outright.
+    ///
+    /// A step of the cleanup pass rather than part of [`reclaim_free_pages`],
+    /// which returns early when there is nothing on the freelist: an agent
+    /// whose file was already reclaimed still has the WAL that reclaiming
+    /// left, and nothing else would ever shorten it.
+    ///
+    /// Best effort, and a WAL that stays long for another day is worth less
+    /// than anything this would be worth interrupting — but the outcome is
+    /// read, because "blocked" is not an error here. A reader holding the WAL
+    /// makes TRUNCATE answer `busy = 1` and *succeed*, so discarding the row
+    /// leaves the one case worth knowing about looking exactly like the one
+    /// that worked: a WAL growing on disk with nothing in the log about it.
+    async fn shorten_wal(&self) {
+        use sqlx::Row;
+
+        match sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
+            .fetch_one(&self.pool)
+            .await
+        {
+            // (busy, log, checkpointed). `log` is the frames still in the WAL,
+            // which is what says how much was left behind.
+            Ok(row) => {
+                let busy: i64 = row.try_get("busy").unwrap_or_default();
+                if busy != 0 {
+                    let frames: i64 = row.try_get("log").unwrap_or_default();
+                    warn!(
+                        "Could not shorten the WAL: a reader held it, {} frames left",
+                        frames
+                    );
+                }
+            }
+            Err(e) => warn!("Could not shorten the WAL: {}", e),
+        }
     }
 
     async fn trim_oldest(&self, table: &'static str, keep: i64) -> Result<u64> {
