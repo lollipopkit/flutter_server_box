@@ -417,6 +417,9 @@ ${err.message ?? 'null'}
       plugin: plugin,
       spi: si.spi,
       system: si.status.system,
+      // Where this server's agent runs the plugin itself, its reading is what
+      // is drawn and the app collects nothing — see the card's `_fromAgent`.
+      agentReading: si.status.agentPlugins[plugin.id],
     );
   }
 

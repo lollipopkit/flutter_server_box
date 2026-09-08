@@ -79,6 +79,17 @@ class MonitorMetrics {
   /// [sensors] and [diskSmart].
   final MonitorPkgUpdates? pkg;
 
+  /// What the agent's own plugins last reported, by plugin id.
+  ///
+  /// Its keys are the plugins that answered, which is what makes this the
+  /// thing to key on rather than a list of what the agent has configured: a
+  /// plugin named in `config.toml` but failing to load is in the second and
+  /// not the first, and it is the first that decides whether the app collects
+  /// the same reading itself. Empty on an agent with none, which is every
+  /// agent by default. PLUGINS.md 9.5.
+  @JsonKey(fromJson: pluginStatusFromJson)
+  final Map<String, MonitorPluginStatus>? pluginStatus;
+
   const MonitorMetrics({
     required this.timestamp,
     this.extendedUpdatedAt,
@@ -107,6 +118,7 @@ class MonitorMetrics {
     this.diskSmart = const [],
     this.customCmds = const [],
     this.pkg,
+    this.pluginStatus,
   });
 
   factory MonitorMetrics.fromJson(Map<String, dynamic> json) =>
@@ -520,4 +532,93 @@ class MonitorPkgUpdate {
       _$MonitorPkgUpdateFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorPkgUpdateToJson(this);
+}
+
+/// Reads `plugin_status`, skipping whatever it cannot.
+///
+/// **A reading this build does not understand costs that plugin's card and
+/// nothing else.** Generated code casts, so without this one malformed entry
+/// throws inside `MonitorMetrics.fromJson` and takes the whole document with
+/// it — every metric on the page, because a newer agent added a field or
+/// changed a shape. The mapper's per-section tolerance is downstream of the
+/// parse and cannot help.
+///
+/// Null for a field that is absent, which is what an agent predating it sends
+/// and is not the same as an agent running none — see
+/// `_applyAgentPlugins`.
+Map<String, MonitorPluginStatus>? pluginStatusFromJson(Object? raw) {
+  if (raw == null) return null;
+  if (raw is! Map) return const {};
+  final out = <String, MonitorPluginStatus>{};
+  for (final e in raw.entries) {
+    final key = e.key;
+    if (key is! String) continue;
+    try {
+      out[key] = MonitorPluginStatus.fromJson(
+        Map<String, dynamic>.from(e.value as Map),
+      );
+    } catch (_) {
+      // That plugin's card, and only it.
+    }
+  }
+  return out;
+}
+
+/// One plugin's readings, as the agent reported them.
+///
+/// `sbm_plugin::status::StatusResult` on the wire. Its own type rather than
+/// the FFI's, because this arrives as JSON over HTTP rather than across the
+/// bridge — and the two must agree, which `test/plugin_agent_status_test.dart`
+/// is what holds.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorPluginStatus {
+  /// The card's heading. Empty falls back to the plugin's name.
+  @JsonKey(defaultValue: '')
+  final String title;
+
+  @JsonKey(defaultValue: <MonitorPluginStatusItem>[])
+  final List<MonitorPluginStatusItem> items;
+
+  /// Under the readings, for what a row cannot say.
+  final String? note;
+
+  const MonitorPluginStatus({
+    this.title = '',
+    this.items = const [],
+    this.note,
+  });
+
+  factory MonitorPluginStatus.fromJson(Map<String, dynamic> json) =>
+      _$MonitorPluginStatusFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorPluginStatusToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorPluginStatusItem {
+  @JsonKey(defaultValue: '')
+  final String label;
+  @JsonKey(defaultValue: '')
+  final String value;
+
+  /// 0..1, drawn as a bar. Absent where the reading is not a proportion — and
+  /// a value outside the range never arrives, because the agent drops it
+  /// rather than clamping.
+  final double? percent;
+
+  /// `normal`, `muted`, `success`, `warning` or `danger`.
+  @JsonKey(defaultValue: 'normal')
+  final String tone;
+
+  const MonitorPluginStatusItem({
+    this.label = '',
+    this.value = '',
+    this.percent,
+    this.tone = 'normal',
+  });
+
+  factory MonitorPluginStatusItem.fromJson(Map<String, dynamic> json) =>
+      _$MonitorPluginStatusItemFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorPluginStatusItemToJson(this);
 }

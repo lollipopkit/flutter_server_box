@@ -169,6 +169,65 @@ fn trim(s: &str) -> String {
 }
 
 #[cfg(test)]
+mod wire {
+    use super::*;
+
+    /// The JSON a `StatusResult` becomes, exactly.
+    ///
+    /// The agent puts this in `/metrics` and the app parses it there, so the
+    /// two are a wire contract rather than one type used twice — the app reads
+    /// it with `json_serializable` and never sees this struct. The same
+    /// literal is in `test/plugin_agent_status_test.dart`, and a change to
+    /// either side fails here first.
+    ///
+    /// PLUGINS.md 9.5.3.
+    #[test]
+    fn the_shape_the_app_parses_is_this_one() {
+        let result = StatusResult {
+            title: "ZFS".into(),
+            items: vec![
+                StatusItem {
+                    label: "tank".into(),
+                    value: "ONLINE".into(),
+                    percent: Some(0.33),
+                    tone: Tone::Success,
+                },
+                // No percent and the default tone, which is the ordinary
+                // reading and the one whose fields are allowed to be absent.
+                StatusItem {
+                    label: "pool2".into(),
+                    value: "42C".into(),
+                    percent: None,
+                    tone: Tone::Normal,
+                },
+            ],
+            note: Some("2 pools".into()),
+        };
+
+        assert_eq!(
+            serde_json::to_string(&result).unwrap(),
+            r#"{"title":"ZFS","items":[{"label":"tank","value":"ONLINE","percent":0.33,"tone":"success"},{"label":"pool2","value":"42C","tone":"normal"}],"note":"2 pools"}"#
+        );
+    }
+
+    /// `percent` and `note` are absent rather than null when there is none, so
+    /// a reader that treats absent and null differently gets the same answer
+    /// either way.
+    #[test]
+    fn what_there_is_none_of_is_left_out() {
+        let bare = StatusResult {
+            title: String::new(),
+            items: vec![],
+            note: None,
+        };
+        assert_eq!(
+            serde_json::to_string(&bare).unwrap(),
+            r#"{"title":"","items":[]}"#
+        );
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

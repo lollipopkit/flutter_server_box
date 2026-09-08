@@ -636,7 +636,9 @@ manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 
 - **capabilities 里不报**。它的键就是本周期真的答了话的插件，这比「配置了哪些」更有用：一个写在文件里但加载失败的插件会出现在后者不出现在前者，而决定「App 要不要自己采」的正是前者
 - `/metrics/history` 存每周期的 `StatusResult`——这是全部理由所在
 
-**App 侧规则和 `ServerCapabilities` 同形：agent 报了这个插件的读数，App 就不再自己采。** 否则同一个答案跑两遍。
+**App 侧规则和 `ServerCapabilities` 同形：agent 报了这个插件的读数，App 就不再自己采。** 跑两遍是较小的问题；较大的是 agent 那份才会进 history、手表和小组件，所以 App 自己采一份就意味着卡片能和其它所有显示同一个插件的地方对不上。
+
+**一个插件的读数读不动，只赔它那张卡片。** 生成的 JSON 代码是强制转换的，所以一条畸形记录会在 `MonitorMetrics.fromJson` 里抛出、把整份 `/metrics` 一起带走——页面上每一个指标，只因为某个更新过的 agent 加了一个字段。mapper 的分段容错在解析之后，救不了。所以 `plugin_status` 单独用一个宽松的读取函数。
 
 ### 9.5.4 构建
 
@@ -661,7 +663,7 @@ manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）、**`contributes.page`**（功能栏按钮打开整页，`needs` 按 `ServerCapabilities` 过滤；功能栏改为按 id 分发，内置项和插件项走同一条路径）、**`contributes.settings`**（设置菜单里插件自己的页，有插件贡献时 `app.plugins` 才变成分支）、**开发目录**（`SettingStore.pluginDevDirs` 记路径，每次 refresh 直接从开发者目录读，不拷贝；卸载只删记录不动文件）、**`contributes.tab`**（m023 把 `homeTabs` 从 `List<AppTab>` 放宽成 id；`HomeTab` 解析 id 成内置或插件 tab，首页、macOS 菜单栏和标签排序页都改成按 id 走）均已完成。四个入口面齐了，剩 5.5 的 golden 截图 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
-| 8 | agent 也跑插件 | 进行中。**宿主子集**和 **monitor 侧**已完成：`HostProfile{App,Agent}`、`HostFn::available_in`、manifest 的 `runs_in`（默认 `["app"]`，声明 `agent` 同时带界面贡献会在解析期被拒）。agent 上没有 `sb.ui`/`sb.nav`/`sb.clipboard`/`sb.server.list`，装成和未授权函数同一种抛异常替身，只是理由不同（`Refusal::Unavailable`）。**monitor 侧**：`[plugins]` 默认关、按 id 点名、权限由运维写在文件里（和 manifest 求的取交集）；在 extended 周期上跑，结果进 `/metrics` 的 `plugin_status` 并带 carry-forward。剩下 App 侧的「agent 报了就不自己采」 |
+| 8 | agent 也跑插件 | **已完成**。**宿主子集**、**monitor 侧**、**App 侧**：`HostProfile{App,Agent}`、`HostFn::available_in`、manifest 的 `runs_in`（默认 `["app"]`，声明 `agent` 同时带界面贡献会在解析期被拒）。agent 上没有 `sb.ui`/`sb.nav`/`sb.clipboard`/`sb.server.list`，装成和未授权函数同一种抛异常替身，只是理由不同（`Refusal::Unavailable`）。**monitor 侧**：`[plugins]` 默认关、按 id 点名、权限由运维写在文件里（和 manifest 求的取交集）；在 extended 周期上跑，结果进 `/metrics` 的 `plugin_status` 并带 carry-forward。**App 侧**：`/metrics` 的 `plugin_status` 进 `ServerStatus.agentPlugins`，`PluginStatusCard` 有它就画它、什么也不跑。线格式由两边各一个测试盯同一段字面量(`sbm_plugin::status::wire` 和 `test/plugin_agent_status_test.dart`)。剩 9.5 里 `sb.http.fetch`/`sb.store` 在 agent 上的实现——状态插件用不到，等到有界面需要它们再做 |
 
 ### 三个真插件验出来的
 

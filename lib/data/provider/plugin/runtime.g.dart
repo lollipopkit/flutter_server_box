@@ -70,4 +70,4 @@ final class PluginRuntimeProvider
   }
 }
 
-String _$pluginRuntimeHash() => r'ce6ae9313f84eb5a6d85f70464f6314f322e0553';
+String _$pluginRuntimeHash() => r'b487cfd0ecfb0999f4f653fed2eda9ad9af18703';

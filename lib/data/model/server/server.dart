@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/pkg_updates.dart';
+import 'package:server_box/data/model/server/plugin_status_reading.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -37,6 +38,15 @@ class ServerStatus {
   /// different thing from "nothing to upgrade" — one is a server that is up to
   /// date, the other a question that was never answered.
   PkgUpdates pkg = const PkgUpdates();
+
+  /// What a monitor agent's own plugins reported, by plugin id.
+  ///
+  /// Empty for an SSH server and for an agent running none, which is every
+  /// agent by default. Where it has an entry, the app does **not** collect
+  /// that plugin itself: the agent already ran the command on the machine it
+  /// is on, and running it a second time from here is two collections for one
+  /// answer. See `PluginStatusCard` and PLUGINS.md 9.5.
+  Map<String, PluginStatusReading> agentPlugins = const {};
   List<AmdSmiItem>? amd;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};

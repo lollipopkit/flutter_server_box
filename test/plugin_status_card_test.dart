@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/plugin/contributions.dart';
+import 'package:server_box/data/model/server/plugin_status_reading.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -113,7 +114,11 @@ void main() {
     () => installer.install(_sbp(), consented: {'server.exec'}),
   );
 
-  Future<void> mount(WidgetTester tester, {SystemType? system}) async {
+  Future<void> mount(
+    WidgetTester tester, {
+    SystemType? system,
+    PluginStatusReading? agentReading,
+  }) async {
     final plugin = PluginContributions.byId('app.serverbox.zfs')!;
     await tester.runAsync(() async {
       await tester.pumpWidget(
@@ -129,6 +134,7 @@ void main() {
                   ssh: SshCredential(ip: '10.0.0.1'),
                 ),
                 system: system ?? SystemType.linux,
+                agentReading: agentReading,
                 // The script the app really generated, run for real. A
                 // mocked answer would skip the half with a shell in it,
                 // which is the half worth checking. `sh -c` rather than
@@ -206,6 +212,65 @@ void main() {
     // The card is still there and still named, so its place in the
     // arrangement does not silently become a gap.
     expect(find.text('ZFS'), findsOneWidget);
+  });
+
+  /// The rule this exists to hold: the agent already ran the command on the
+  /// machine it is on, so the app runs nothing.
+  ///
+  /// Two collections for one answer is the lesser problem. The larger one is
+  /// that the agent's reading is what reaches `/metrics/history`, the watch
+  /// and the home widgets — so if the app collected its own, the card would be
+  /// able to disagree with everything else showing the same plugin.
+  testWidgets('an agent that reports it is the one the card draws', (
+    tester,
+  ) async {
+    await install(tester);
+    var ran = 0;
+
+    final plugin = PluginContributions.byId('app.serverbox.zfs')!;
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: PluginStatusCard(
+                plugin: plugin,
+                spi: const Spi(
+                  id: 'srv-1',
+                  name: 'one',
+                  ssh: SshCredential(ip: '10.0.0.1'),
+                ),
+                system: SystemType.linux,
+                agentReading: const PluginStatusReading(
+                  title: 'ZFS',
+                  items: [
+                    PluginStatusItemReading(
+                      label: 'tank',
+                      value: 'ONLINE',
+                      percent: 0.33,
+                      tone: 'success',
+                    ),
+                  ],
+                  note: 'from the agent',
+                ),
+                runScript: (script, {entry}) async {
+                  ran++;
+                  return '';
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+    await waitFor(tester, find.text('tank'));
+
+    expect(find.text('tank'), findsOneWidget);
+    expect(find.text('ONLINE'), findsOneWidget);
+    expect(find.text('from the agent'), findsOneWidget);
+    // Nothing was run, and nothing was loaded to run it with.
+    expect(ran, 0);
   });
 
   /// A plugin may contribute both, and they are different things: a status

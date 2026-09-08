@@ -88,6 +88,7 @@ MonitorMetrics _$MonitorMetricsFromJson(
   pkg: json['pkg'] == null
       ? null
       : MonitorPkgUpdates.fromJson(json['pkg'] as Map<String, dynamic>),
+  pluginStatus: pluginStatusFromJson(json['plugin_status']),
 );
 
 Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
@@ -119,6 +120,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'custom_cmds': instance.customCmds,
       'ips': instance.ips,
       'pkg': instance.pkg,
+      'plugin_status': instance.pluginStatus,
     };
 
 MonitorCpuCoreTime _$MonitorCpuCoreTimeFromJson(Map<String, dynamic> json) =>
@@ -419,3 +421,43 @@ Map<String, dynamic> _$MonitorPkgUpdateToJson(MonitorPkgUpdate instance) =>
       'security': instance.security,
       'repo': instance.repo,
     };
+
+MonitorPluginStatus _$MonitorPluginStatusFromJson(Map<String, dynamic> json) =>
+    MonitorPluginStatus(
+      title: json['title'] as String? ?? '',
+      items:
+          (json['items'] as List<dynamic>?)
+              ?.map(
+                (e) =>
+                    MonitorPluginStatusItem.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
+      note: json['note'] as String?,
+    );
+
+Map<String, dynamic> _$MonitorPluginStatusToJson(
+  MonitorPluginStatus instance,
+) => <String, dynamic>{
+  'title': instance.title,
+  'items': instance.items,
+  'note': instance.note,
+};
+
+MonitorPluginStatusItem _$MonitorPluginStatusItemFromJson(
+  Map<String, dynamic> json,
+) => MonitorPluginStatusItem(
+  label: json['label'] as String? ?? '',
+  value: json['value'] as String? ?? '',
+  percent: (json['percent'] as num?)?.toDouble(),
+  tone: json['tone'] as String? ?? 'normal',
+);
+
+Map<String, dynamic> _$MonitorPluginStatusItemToJson(
+  MonitorPluginStatusItem instance,
+) => <String, dynamic>{
+  'label': instance.label,
+  'value': instance.value,
+  'percent': instance.percent,
+  'tone': instance.tone,
+};

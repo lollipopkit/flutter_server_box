@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
+import 'package:server_box/data/model/server/plugin_status_reading.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
@@ -38,6 +39,7 @@ class PluginStatusCard extends ConsumerStatefulWidget {
     required this.spi,
     required this.system,
     this.runScript,
+    this.agentReading,
   });
 
   final InstalledPlugin plugin;
@@ -56,12 +58,22 @@ class PluginStatusCard extends ConsumerStatefulWidget {
   /// is worth checking and the half a mocked answer would skip.
   final Future<String> Function(String script, {String? entry})? runScript;
 
+  /// What this server's monitor agent reported for this plugin, if it runs it
+  /// itself. Null for an SSH server and for an agent running none, which is
+  /// every agent by default. See `_PluginStatusCardState._fromAgent`.
+  final PluginStatusReading? agentReading;
+
   @override
   ConsumerState<PluginStatusCard> createState() => _PluginStatusCardState();
 }
 
 class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
-  ffi.PluginStatusResult? _result;
+  /// The readings on screen, whoever produced them.
+  ///
+  /// One type for both sources: the app's own collection answers an FFI
+  /// struct and an agent answers JSON over HTTP, and converting at the edge
+  /// means `build` never has to know which it is looking at.
+  PluginStatusReading? _result;
   String? _error;
   Timer? _timer;
   BigInt? _instance;
@@ -111,11 +123,23 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
   /// plugin holds nothing between collections that it cannot read back out of
   /// its own storage, and a thread per plugin per server kept alive for a
   /// reading taken every half minute is not a trade worth making.
+  /// What the server's own agent reported for this plugin, or null.
+  ///
+  /// **When it is non-null the app collects nothing.** The agent ran the
+  /// command on the machine it is *on*, and running it again from here is two
+  /// collections for one answer — and the agent's is the one that reaches
+  /// `/metrics/history`, the watch and the home widgets, so it is also the one
+  /// that must not disagree with what is on screen. PLUGINS.md 9.5.
+  PluginStatusReading? get _fromAgent => widget.agentReading;
+
   Future<void> _collect() async {
     final generation = ++_generation;
     final plugin = widget.plugin;
     final status = plugin.manifest.status;
     if (status == null) return;
+
+    // Nothing to run: the agent already did. See [_fromAgent].
+    if (_fromAgent != null) return;
 
     // A platform the plugin did not name. Asking anyway gets nothing, or a
     // command for the wrong system — which is a command that fails on the
@@ -180,7 +204,7 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
       final result = await _service.statusParse(instance, mine);
       if (!mounted || generation != _generation) return;
       setState(() {
-        _result = result;
+        _result = _readingOf(result);
         _error = null;
       });
     } catch (e, s) {
@@ -209,8 +233,11 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
 
   @override
   Widget build(BuildContext context) {
-    final result = _result;
-    final error = _error;
+    // The agent's, where it has one — it is the reading that also reaches
+    // `/metrics/history`, the watch and the home widgets, so it is the one
+    // that must not disagree with what is on screen.
+    final result = _fromAgent ?? _result;
+    final error = _fromAgent != null ? null : _error;
     final title = result?.title.isNotEmpty == true
         ? result!.title
         : widget.plugin.manifest.name;
@@ -230,7 +257,8 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
               ],
             ),
             if (result == null && error == null) UIs.centerLoading,
-            for (final item in result?.items ?? const <ffi.PluginStatusItem>[])
+            for (final item
+                in result?.items ?? const <PluginStatusItemReading>[])
               _Reading(item: item),
             if (result?.note case final note?)
               Text(note, style: UIs.text12Grey),
@@ -251,11 +279,26 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
   }
 }
 
+/// The FFI's answer as the shared shape. See [_PluginStatusCardState._result].
+PluginStatusReading _readingOf(ffi.PluginStatusResult r) => PluginStatusReading(
+  title: r.title,
+  items: [
+    for (final i in r.items)
+      PluginStatusItemReading(
+        label: i.label,
+        value: i.value,
+        percent: i.percent,
+        tone: i.tone,
+      ),
+  ],
+  note: r.note,
+);
+
 /// One reading, drawn the way the app draws its own.
 class _Reading extends StatelessWidget {
   const _Reading({required this.item});
 
-  final ffi.PluginStatusItem item;
+  final PluginStatusItemReading item;
 
   @override
   Widget build(BuildContext context) {

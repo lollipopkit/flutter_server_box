@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/pkg_updates.dart';
+import 'package:server_box/data/model/server/plugin_status_reading.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 
@@ -43,6 +44,7 @@ ServerStatus applyMonitorMetrics(ServerStatus ss, MonitorMetrics m) {
   _apply('sensors', () => _applySensors(ss, m));
   _apply('smart', () => _applySmart(ss, m));
   _apply('pkg', () => _applyPkg(ss, m));
+  _apply('agentPlugins', () => _applyAgentPlugins(ss, m));
   _apply('custom', () => _applyCustomCmds(ss, m));
 
   return ss;
@@ -417,6 +419,30 @@ void _applyPkg(ServerStatus ss, MonitorMetrics m) {
   );
   if (!parsed.supported && ss.pkg.supported) return;
   ss.pkg = parsed;
+}
+
+/// An agent predating the field sends nothing, which reads the same as one
+/// running no plugins — so what the app already knew is left alone rather than
+/// cleared. Extended cadence, like `sensors` and `diskSmart`.
+void _applyAgentPlugins(ServerStatus ss, MonitorMetrics m) {
+  final reported = m.pluginStatus;
+  if (reported == null) return;
+  ss.agentPlugins = {
+    for (final e in reported.entries)
+      e.key: PluginStatusReading(
+        title: e.value.title,
+        items: [
+          for (final i in e.value.items)
+            PluginStatusItemReading(
+              label: i.label,
+              value: i.value,
+              percent: i.percent,
+              tone: i.tone,
+            ),
+        ],
+        note: e.value.note,
+      ),
+  };
 }
 
 /// monitor's `SmartSummary` drops `raw_data`/`smart_attributes` (see
