@@ -103,6 +103,37 @@ void main() {
     expect(crumb.data!['attempt'], 2, reason: 'a non-string is left alone');
   });
 
+  test('a value nested inside a crumb is reached too', () {
+    // `Diag.crumb` takes a `Map<String, String>`, so one level is all there is
+    // today — but the field the SDK exposes is `Map<String, dynamic>`, and a
+    // value put a level down would be a hole nothing would notice.
+    final event = scrubbed(
+      sentry.SentryEvent(
+        breadcrumbs: [
+          sentry.Breadcrumb(
+            message: 'x',
+            data: {
+              'tried': ['10.0.0.7', 'prod-db'],
+              'via': {
+                'jump': {'host': '198.51.100.24'},
+                'attempts': 3,
+              },
+            },
+          ),
+        ],
+      ),
+    );
+
+    final data = event.breadcrumbs!.single.data!;
+    expect(data['tried'], ['<agent-2>', '<server-1>']);
+    expect((data['via'] as Map)['jump'], {'host': '<host-1>'});
+    expect(
+      (data['via'] as Map)['attempts'],
+      3,
+      reason: 'a number keeps its type through the round trip',
+    );
+  });
+
   test('a const map handed to the SDK is replaced, not written through', () {
     // The failure mode is an `Unsupported operation` thrown out of `beforeSend`,
     // which the SDK catches by sending the event unscrubbed.

@@ -146,6 +146,14 @@ abstract final class DiagnosticsUpload {
         options.attachThreads = false;
         // The last thing every event passes through, and what decides whether
         // it goes at all — see [scrubWithStoredIdentifiers].
+        //
+        // A transaction comes here too, and only because `beforeSendTransaction`
+        // is left unset: `SentryClient._runBeforeSend` tries that callback
+        // first and falls through to this one when it is null. Setting it would
+        // be a second entry point for a kind of event nothing in this app
+        // produces — no `startTransaction` call exists here or in fl_lib, and
+        // the pure-Dart SDK auto-instruments nothing. If one is ever started,
+        // its spans need covering as well, which is a different function.
         options.beforeSend = (event, hint) => scrubWithStoredIdentifiers(event);
       });
       // Before the sink is installed, so the first error to arrive already
@@ -260,6 +268,19 @@ abstract final class DiagnosticsUpload {
   /// removes what this install *knows* is the user's and never guesses. Text
   /// nothing here can attribute goes out as written; the class of errors that
   /// quote a hostname is what the levels and the opt-in are for.
+  ///
+  /// **Three fields of a `SentryEvent` are deliberately not touched**, each
+  /// because reaching it would be writing against something that does not
+  /// happen here rather than covering a path:
+  ///
+  /// - `extra` is deprecated in this SDK and nothing in this app writes one.
+  /// - `contexts` is filled by [DiagnosticsPlatform], whose entire purpose is
+  ///   deciding what may go in it — hardware and OS release, no name, no
+  ///   identifier — and by the SDK's own `app`, `runtime` and `culture`. It
+  ///   holds typed objects rather than free text.
+  /// - `request` is set by an HTTP integration, and the pure-Dart SDK has
+  ///   none. Adding `sentry_dio` would change that, and a monitor agent's URL
+  ///   is exactly what such an event would carry: cover it then.
   @visibleForTesting
   static sentry.SentryEvent scrub(
     sentry.SentryEvent event,
@@ -280,7 +301,18 @@ abstract final class DiagnosticsUpload {
     if (identifiers.isEmpty) return event;
 
     String sub(String text) => KnownIdentifiers.substitute(text, identifiers);
-    Object? subValue(Object? value) => value is String ? sub(value) : value;
+
+    // Through nested collections, not just the top level. A crumb's `data` is
+    // one level of `String` today — `Diag.crumb` takes a `Map<String, String>`
+    // — but the field is `Map<String, dynamic>`, and a value put a level down
+    // would be a hole nothing would notice. Non-strings are returned as they
+    // are, so numbers and booleans keep their type through the round trip.
+    Object? subValue(Object? value) => switch (value) {
+      String() => sub(value),
+      Map() => {for (final e in value.entries) e.key: subValue(e.value)},
+      Iterable() => value.map(subValue).toList(),
+      _ => value,
+    };
 
     final message = event.message;
     if (message != null) {

@@ -208,10 +208,14 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       _schedule(noted);
       return;
     }
-    // The one guard for everything below: from here down nothing awaits, so
-    // the provider cannot go away between this line and the end.
-    if (!ref.mounted) return;
-
+    // No blanket guard from here down, on purpose. What follows decides
+    // whether the run is *over*, and that answer belongs in the store whether
+    // or not this page is still open — a fifteen-minute benchmark whose last
+    // poll landed as the user closed the tab would otherwise leave a row that
+    // still says `running`, with the result it had already fetched thrown
+    // away. Only the `state` writes below are guarded; `_schedule` and
+    // `_cleanup` guard themselves, and `_finish` writes its row before its own
+    // guard.
     if (!poll.answered) {
       // The command produced nothing this app recognises: a monitor agent hit
       // its own timeout, a shell was killed, a proxy answered instead. None of
@@ -221,7 +225,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       final noted = active.copyWith(
         pollError: 'The server did not answer the poll',
       );
-      state = state.copyWith(active: noted);
+      if (ref.mounted) state = state.copyWith(active: noted);
       _schedule(noted);
       return;
     }
@@ -286,7 +290,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
 
     if (!poll.finished) {
       _store.put(updated);
-      state = state.copyWith(active: updated);
+      if (ref.mounted) state = state.copyWith(active: updated);
       _schedule(updated);
       return;
     }
