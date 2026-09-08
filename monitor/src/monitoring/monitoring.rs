@@ -313,9 +313,19 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     // and re-reading the directory every cycle would be a new thread per
     // plugin per cycle — the config is read at startup like everything else
     // that decides what this agent will do.
-    let agent_plugins = crate::monitoring::plugins::AgentPlugins::load(
-        app_state.config.plugins.as_ref().unwrap_or(&Default::default()),
-    );
+    let agent_plugins = match crate::monitoring::plugin_host::AgentBridge::new(app_state.db.clone())
+    {
+        Ok(bridge) => crate::monitoring::plugins::AgentPlugins::load(
+            app_state.config.plugins.as_ref().unwrap_or(&Default::default()),
+            std::sync::Arc::new(bridge),
+        ),
+        // Nothing a plugin could reach would work, so none is loaded. The
+        // agent's own readings are what it is for and they are unaffected.
+        Err(e) => {
+            error!("no plugin will run: its host runtime would not start: {e}");
+            crate::monitoring::plugins::AgentPlugins::none()
+        }
+    };
 
     loop {
         // Re-read every cycle (not captured once outside the loop) so a

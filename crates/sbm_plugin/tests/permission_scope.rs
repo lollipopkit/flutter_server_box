@@ -306,7 +306,7 @@ fn the_same_call_in_the_app_reaches_the_app() {
 fn the_agent_still_enforces_permissions_on_what_it_has() {
     let src = r#"
       export async function go() {
-        await sb.server.exec({ server: "bound", script: "uptime" });
+        await sb.http.fetch({ url: "https://10.0.0.1/redfish/v1" });
       }
     "#;
     let bridge = ScriptedBridge::new();
@@ -319,7 +319,7 @@ fn the_agent_still_enforces_permissions_on_what_it_has() {
     let e = p.call("go", b"").unwrap_err();
     let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
     assert!(msg.contains("permission denied"), "{msg}");
-    assert!(msg.contains("server.exec"), "{msg}");
+    assert!(msg.contains("net.http"), "{msg}");
 }
 
 /// The agent has no user, so nothing that asks one a question exists there.
@@ -343,13 +343,12 @@ fn the_agent_host_is_a_subset_of_the_app_host() {
         );
     }
 
-    // What it has: running a command on the machine it is on, the network, its
-    // own storage, and its log.
+    // What it has: the network, its own storage, and its log. Not
+    // `sb.server.exec` — see below.
     let names: Vec<String> = agent.iter().map(|f| f.path()).collect();
     assert_eq!(
         names,
         [
-            "sb.server.exec",
             "sb.http.fetch",
             "sb.store.get",
             "sb.store.set",
@@ -364,17 +363,23 @@ fn the_agent_host_is_a_subset_of_the_app_host() {
 
 /// Every namespace with a person in it is gone, and `sb.server.list` with it —
 /// an agent knows one machine and that machine is itself.
+///
+/// `sb.server.exec` is absent for the neighbouring reason: it names a server
+/// by a handle, and the agent issues none. A status plugin says what to run in
+/// `statusCmd` and the agent runs it, which is the same power under the name
+/// that fits.
 #[test]
-fn nothing_that_needs_a_user_reaches_the_agent() {
+fn nothing_that_needs_a_user_or_a_server_handle_reaches_the_agent() {
     for f in HostFn::ALL {
         let path = f.path();
-        let needs_a_user = f.namespace() == "ui"
+        let absent = f.namespace() == "ui"
             || f.namespace() == "nav"
             || f.namespace() == "clipboard"
-            || path == "sb.server.list";
+            || path == "sb.server.list"
+            || path == "sb.server.exec";
         assert_eq!(
             !f.available_in(HostProfile::Agent),
-            needs_a_user,
+            absent,
             "{path} is on the wrong side of the agent's line"
         );
     }

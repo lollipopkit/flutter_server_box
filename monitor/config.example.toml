@@ -261,7 +261,16 @@ code = 200
 # throws.
 #
 # A status plugin usually needs nothing at all — it answers a command and the
-# agent runs it.
+# agent runs it. `sb.store` and `sb.diag` need no permission either.
+#
+# `net.http` is the one worth thinking about: it lets the plugin reach an
+# address from this machine, which is inside your network. Every https request
+# it makes must name the certificate's SHA-256 (`pinSha256`) or it is refused —
+# a valid chain is not enough, and there is no way to switch that off.
+#
+# `server.exec` is what a status plugin's manifest declares — that is the
+# permission meaning "runs commands on your server", and the agent runs its
+# command on this one. `sb.server.exec` itself does not exist here.
 # grant = []
 #
 # What `sb.config.get` answers, for the values a manifest cannot know.

@@ -206,10 +206,16 @@ impl HostFn {
     pub const fn available_in(self, profile: HostProfile) -> bool {
         match profile {
             HostProfile::App => true,
+            // `sb.server.exec` is **not** here, and its absence is not about
+            // trust: the agent issues no server handle — there is no bound
+            // server and no `sb.server.list` to get one from — so a call could
+            // only ever name a handle that does not exist. A stub that says
+            // "this host does not have that" is a better answer than one that
+            // takes the argument and rejects it. A status plugin's `statusCmd`
+            // is how it runs a command here, and the agent runs it.
             HostProfile::Agent => matches!(
                 self,
-                Self::ServerExec
-                    | Self::HttpFetch
+                Self::HttpFetch
                     | Self::StoreGet
                     | Self::StoreSet
                     | Self::StoreList

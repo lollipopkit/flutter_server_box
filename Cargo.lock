@@ -4193,6 +4193,7 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-stream",
+ "base64 0.22.1",
  "bcrypt",
  "chrono",
  "clap",

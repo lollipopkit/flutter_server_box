@@ -254,6 +254,45 @@ sshd on the machine running the tests. `a_real_sshd_produces_a_working_shell`
 additionally targets a real one when `SBM_E2E_TERMINAL_*` is set, and is
 silently skipped otherwise.
 
+### Agent-side plugins (`monitoring/plugins.rs`, `plugin_host.rs`, `plugin_http.rs`)
+
+The agent runs status plugins itself, so their readings reach `/metrics`,
+`/metrics/history`, the watch and the home widgets — none of which speaks to
+the app. Off by default: `[plugins]` in `config.toml` must be on *and* name the
+plugin by id. The operator's `grant` list is intersected with what the manifest
+asks for; a plugin's manifest must say `"runs_in": ["agent"]`, and one that also
+contributes a card, page, tab or settings section is refused at parse time.
+
+- **The host is a subset** (`sbm_plugin::HostFn::available_in`). No `sb.ui`,
+  `sb.nav`, `sb.clipboard`, `sb.server.list` — no user — and no
+  `sb.server.exec`, because the agent issues no server handle for one to name.
+  Each absent function is the same throwing stub an ungranted one gets, with a
+  different reason (`Refusal::Unavailable`). What is left: `sb.http.fetch`,
+  `sb.store.{get,set,list}`, `sb.diag.crumb`.
+- **`AgentBridge` owns its own tokio runtime, and that is load-bearing.**
+  `#[ntex::main]` builds a *current_thread* runtime; the monitoring loop is a
+  task on it. A host call blocks whichever thread asked for it, so spawning the
+  answer onto the caller's runtime leaves that answer waiting for the thread
+  that is waiting for it — the plugin never returns, the loop never ticks, and
+  the HTTP server on the same thread stops. (Before the fix the symptom was a
+  panic instead: `Handle::current()` runs on the plugin's own thread, which is
+  in no runtime at all.) `plugins.rs` also puts every `PluginHost` call behind
+  `spawn_blocking` for the same reason — a plugin may `await`, and the loop's
+  thread is the agent's.
+  - Dropping a `Runtime` from inside another runtime's thread panics, so
+    `AgentBridge::drop` calls `shutdown_background()`.
+- **`sb.http.fetch` enforces certificate pinning and cannot be told not to.**
+  An https request without `pinSha256` is refused before a socket is opened; a
+  chain a public CA signed is refused exactly like a self-signed one. The
+  review half is `probeCert`, which handshakes, reports the certificate and
+  sends nothing (`sbm_plugin::scope` refuses a probe carrying a body or
+  headers). Redirects are off, the body is capped at 8 MiB, and a plugin's
+  `timeoutMs` may only shorten the agent's bound.
+- **`sb.store` is the `plugin_kv` table**, keyed `(plugin_id, scope, key)`. Two
+  scopes, `global` and `server`, because the app has two and a plugin moved
+  here must find both. No foreign keys: a plugin's data outlives a config edit
+  that removes its entry.
+
 ### Key Design Patterns
 
 1. **Async-first architecture**: Uses tokio for async runtime with concurrent tasks

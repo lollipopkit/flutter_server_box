@@ -28,8 +28,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use sbm_plugin::{
-    BridgeError, CallCtx, HostBridge, HostCall, HostFn, HostProfile, InstanceId, InstanceOptions,
-    LogLevel, Manifest, Permission, PluginHost,
+    HostBridge, HostProfile, InstanceId, InstanceOptions, Manifest, Permission, PluginHost,
 };
 use sbm_plugin::manifest::Platform;
 use sbm_plugin::status::StatusResult;
@@ -93,7 +92,9 @@ pub struct LoadedPlugin {
 
 /// The plugins this agent has, and the host they run on.
 pub struct AgentPlugins {
-    host: PluginHost,
+    /// Shared because a call into it is made from a blocking thread — see
+    /// [`AgentPlugins::collect_one`].
+    host: Arc<PluginHost>,
     loaded: Vec<LoadedPlugin>,
 }
 
@@ -103,8 +104,12 @@ impl AgentPlugins {
     /// A plugin that will not load is logged and skipped: the agent's job is
     /// to report the machine, and one bad directory must not stop it doing
     /// that.
-    pub fn load(config: &PluginsConfig) -> Self {
-        let host = PluginHost::new();
+    ///
+    /// `bridge` is what every loaded plugin's `sb.*` reaches — passed in
+    /// rather than built here, because it holds the database handle and the
+    /// runtime, and this module has nothing else to do with either.
+    pub fn load(config: &PluginsConfig, bridge: Arc<dyn HostBridge>) -> Self {
+        let host = Arc::new(PluginHost::new());
         let mut loaded = Vec::new();
 
         if !config.enabled || config.plugin.is_empty() {
@@ -117,7 +122,7 @@ impl AgentPlugins {
         let root = PathBuf::from(dir);
 
         for entry in &config.plugin {
-            match load_one(&host, &root, entry) {
+            match load_one(&host, &root, entry, Arc::clone(&bridge)) {
                 Ok(plugin) => {
                     info!("plugin {} v{} loaded", plugin.id, plugin.version);
                     loaded.push(plugin);
@@ -126,6 +131,14 @@ impl AgentPlugins {
             }
         }
         Self { host, loaded }
+    }
+
+    /// No plugins, and no way to get any.
+    ///
+    /// For the caller that could not build a host to run them in: the agent
+    /// carries on reporting what it measures itself.
+    pub fn none() -> Self {
+        Self { host: Arc::new(PluginHost::new()), loaded: Vec::new() }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -165,15 +178,23 @@ impl AgentPlugins {
     ) -> Result<StatusResult, String> {
         let parsed = Platform::parse(platform)
             .ok_or_else(|| format!("unknown platform `{platform}`"))?;
-        let cmd = self
-            .host
-            .status_cmd(plugin.instance, parsed)
-            .map_err(|e| e.to_string())?;
+
+        // Off this thread, both times. A call into a plugin blocks until the
+        // plugin answers, and a plugin may `await` — a store read, an HTTP
+        // request with the agent's timeout on it. This loop runs on the
+        // agent's `#[ntex::main]` thread, so blocking it stops the HTTP server
+        // too, for as long as the plugin takes.
+        let cmd = {
+            let host = Arc::clone(&self.host);
+            let id = plugin.instance;
+            blocking(move || host.status_cmd(id, parsed).map_err(|e| e.to_string())).await?
+        };
 
         let output = run_locally(&cmd.cmd).await?;
-        self.host
-            .status_parse(plugin.instance, &output)
-            .map_err(|e| e.to_string())
+
+        let host = Arc::clone(&self.host);
+        let id = plugin.instance;
+        blocking(move || host.status_parse(id, &output).map_err(|e| e.to_string())).await
     }
 }
 
@@ -181,6 +202,7 @@ fn load_one(
     host: &PluginHost,
     root: &Path,
     entry: &PluginEntry,
+    bridge: Arc<dyn HostBridge>,
 ) -> Result<LoadedPlugin, String> {
     // The id names the directory, and nothing else may: an id with a separator
     // in it would reach outside the root the operator named.
@@ -227,7 +249,7 @@ fn load_one(
     options.config = entry.config.clone();
 
     let instance = host
-        .load(source, options, Arc::new(AgentBridge) as Arc<dyn HostBridge>)
+        .load(source, options, bridge)
         .map_err(|e| e.to_string())?;
 
     Ok(LoadedPlugin {
@@ -238,32 +260,19 @@ fn load_one(
     })
 }
 
-/// What a plugin's `sb.*` reaches on this agent.
+/// Runs `work` where blocking is allowed, and reports a panic in it as an
+/// error rather than losing it.
 ///
-/// Deliberately small, and it can be: everything with a user in it is a
-/// throwing stub before it gets here — see `HostFn::available_in` — so this
-/// only has to answer the handful the agent host actually installs.
-struct AgentBridge;
-
-impl HostBridge for AgentBridge {
-    fn call(&self, _ctx: CallCtx<'_>, func: HostFn, _request: &[u8]) -> HostCall {
-        // A status plugin does not call anything: it answers a command and
-        // reads its output, and `collect_one` is what runs the command. The
-        // rest of the agent's set — `sb.http.fetch`, `sb.store` — waits for
-        // the surface that needs it, and says so rather than answering
-        // something wrong.
-        HostCall::err(BridgeError::failed(
-            "unsupported",
-            format!("{} is not implemented on the agent yet", func.path()),
-        ))
-    }
-
-    fn log(&self, _ctx: CallCtx<'_>, level: LogLevel, message: &str) {
-        match level {
-            LogLevel::Error => error!("plugin: {message}"),
-            LogLevel::Warn => warn!("plugin: {message}"),
-            _ => info!("plugin: {message}"),
-        }
+/// A plugin that panicked the host would otherwise take this cycle's whole
+/// answer with it, and the join failure would be all anyone saw.
+async fn blocking<T, F>(work: F) -> Result<T, String>
+where
+    F: FnOnce() -> Result<T, String> + Send + 'static,
+    T: Send + 'static,
+{
+    match tokio::task::spawn_blocking(work).await {
+        Ok(answer) => answer,
+        Err(e) => Err(format!("the call did not finish: {e}")),
     }
 }
 
@@ -325,12 +334,100 @@ mod tests {
         }
     }
 
+    /// Loading is what these tests are about, and nothing here calls `sb.*`.
+    /// The real one needs a database and a runtime — it is tested where it
+    /// lives, in `plugin_host`.
+    struct NoBridge;
+
+    impl sbm_plugin::HostBridge for NoBridge {
+        fn call(
+            &self,
+            _ctx: sbm_plugin::CallCtx<'_>,
+            func: sbm_plugin::HostFn,
+            _request: &[u8],
+        ) -> sbm_plugin::HostCall {
+            unreachable!("a loading test called {}", func.path())
+        }
+
+        fn log(&self, _ctx: sbm_plugin::CallCtx<'_>, _level: sbm_plugin::LogLevel, _m: &str) {}
+    }
+
+    fn bridge() -> Arc<dyn HostBridge> {
+        Arc::new(NoBridge)
+    }
+
     fn entry(id: &str) -> PluginEntry {
         PluginEntry {
             id: id.to_string(),
             grant: vec!["server.exec".to_string()],
             config: BTreeMap::new(),
         }
+    }
+
+    /// The wiring, end to end: a plugin that `await`s reaches the real bridge,
+    /// the answer comes back, and the reading is what it wrote.
+    ///
+    /// Deliberately a **current-thread** runtime, because that is the shape of
+    /// the agent — `#[ntex::main]` builds one, and the monitoring loop is a
+    /// task on it. A bridge that spawned its answer onto the caller's runtime
+    /// would deadlock here and in production: the loop's thread is inside the
+    /// plugin call, so the answer it is waiting for never gets a thread.
+    #[tokio::test]
+    async fn a_plugin_that_awaits_the_store_gets_its_answer() {
+        const COUNTING: &str = r#"
+          export function statusCmd() { return { cmd: "echo hi" }; }
+          export async function parse({ text }) {
+            const seen = await sb.store.get({ scope: "global", key: "runs" });
+            const n = Number(seen.value ?? 0) + 1;
+            await sb.store.set({ scope: "global", key: "runs", value: String(n) });
+            return { title: text.trim() + " " + n, items: [] };
+          }
+        "#;
+
+        let dir = tempfile::tempdir().unwrap();
+        write_plugin(dir.path(), "p", &manifest("p", r#"["agent"]"#, ""), COUNTING);
+
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+        let plugins = AgentPlugins::load(
+            &config(dir.path(), vec![entry("p")]),
+            Arc::new(super::super::plugin_host::AgentBridge::new(pool).unwrap()),
+        );
+
+        assert_eq!(plugins.collect("linux").await["p"].title, "hi 1");
+        // What it stored is still there on the next cycle, which is the whole
+        // reason an agent-side plugin has a store at all.
+        assert_eq!(plugins.collect("linux").await["p"].title, "hi 2");
+    }
+
+    /// An installed function that always refuses is worse than one that is not
+    /// installed: the plugin's `catch` runs either way, but only one of the two
+    /// is what the host said it had.
+    #[tokio::test]
+    async fn a_crumb_is_answered_rather_than_refused() {
+        const CRUMBS: &str = r#"
+          export function statusCmd() { return { cmd: "echo hi" }; }
+          export async function parse() {
+            await sb.diag.crumb({ name: "probed" });
+            return { title: "ok", items: [] };
+          }
+        "#;
+
+        let dir = tempfile::tempdir().unwrap();
+        write_plugin(dir.path(), "p", &manifest("p", r#"["agent"]"#, ""), CRUMBS);
+
+        let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+        let plugins = AgentPlugins::load(
+            &config(dir.path(), vec![entry("p")]),
+            Arc::new(super::super::plugin_host::AgentBridge::new(pool).unwrap()),
+        );
+
+        assert_eq!(plugins.collect("linux").await["p"].title, "ok");
     }
 
     /// Every agent, until an operator says otherwise. The absent section and
@@ -340,15 +437,15 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         write_plugin(dir.path(), "p", &manifest("p", r#"["agent"]"#, ""), SOURCE);
 
-        assert!(AgentPlugins::load(&PluginsConfig::default()).is_empty());
+        assert!(AgentPlugins::load(&PluginsConfig::default(), bridge()).is_empty());
 
         let mut off = config(dir.path(), vec![entry("p")]);
         off.enabled = false;
-        assert!(AgentPlugins::load(&off).is_empty());
+        assert!(AgentPlugins::load(&off, bridge()).is_empty());
 
         // And on, with the same directory, it loads — or the two assertions
         // above would pass for the wrong reason.
-        assert!(!AgentPlugins::load(&config(dir.path(), vec![entry("p")])).is_empty());
+        assert!(!AgentPlugins::load(&config(dir.path(), vec![entry("p")]), bridge()).is_empty());
     }
 
     /// Declaring it is the plugin's half of the bargain. Without it the plugin
@@ -358,7 +455,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         write_plugin(dir.path(), "p", &manifest("p", r#"["app"]"#, ""), SOURCE);
 
-        assert!(AgentPlugins::load(&config(dir.path(), vec![entry("p")])).is_empty());
+        assert!(AgentPlugins::load(&config(dir.path(), vec![entry("p")]), bridge()).is_empty());
     }
 
     /// The id names a directory under the root the operator chose, so a
@@ -368,7 +465,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mut e = entry("../elsewhere");
         e.id = "../elsewhere".to_string();
-        assert!(AgentPlugins::load(&config(dir.path(), vec![e])).is_empty());
+        assert!(AgentPlugins::load(&config(dir.path(), vec![e]), bridge()).is_empty());
     }
 
     /// A directory named for one plugin holding another's manifest is either a
@@ -379,7 +476,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         write_plugin(dir.path(), "p", &manifest("other", r#"["agent"]"#, ""), SOURCE);
 
-        assert!(AgentPlugins::load(&config(dir.path(), vec![entry("p")])).is_empty());
+        assert!(AgentPlugins::load(&config(dir.path(), vec![entry("p")]), bridge()).is_empty());
     }
 
     /// One bad directory must not stop the agent reporting the machine, which
@@ -390,10 +487,10 @@ mod tests {
         write_plugin(dir.path(), "bad", "{ not json", SOURCE);
         write_plugin(dir.path(), "good", &manifest("good", r#"["agent"]"#, ""), SOURCE);
 
-        let loaded = AgentPlugins::load(&config(
-            dir.path(),
-            vec![entry("bad"), entry("good")],
-        ));
+        let loaded = AgentPlugins::load(
+            &config(dir.path(), vec![entry("bad"), entry("good")]),
+            bridge(),
+        );
         assert_eq!(loaded.loaded.len(), 1);
         assert_eq!(loaded.loaded[0].id, "good");
     }
@@ -409,7 +506,7 @@ mod tests {
 
         let mut e = entry("p");
         e.grant.clear();
-        let plugins = AgentPlugins::load(&config(dir.path(), vec![e]));
+        let plugins = AgentPlugins::load(&config(dir.path(), vec![e]), bridge());
         assert!(!plugins.is_empty());
 
         // It never calls `sb.server.exec` itself — the agent runs the command
@@ -425,7 +522,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         write_plugin(dir.path(), "p", &manifest("p", r#"["agent"]"#, ""), SOURCE);
 
-        let plugins = AgentPlugins::load(&config(dir.path(), vec![entry("p")]));
+        let plugins = AgentPlugins::load(&config(dir.path(), vec![entry("p")]), bridge());
         assert!(plugins.collect("windows").await.is_empty());
         assert!(!plugins.collect("linux").await.is_empty());
     }
