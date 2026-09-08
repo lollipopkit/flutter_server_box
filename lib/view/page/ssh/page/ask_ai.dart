@@ -724,7 +724,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     AgentSessionState session,
   ) {
     final command = session.pendingTool!;
-    final working = session.isWorking;
+    final canReview = session.canReviewPendingTool;
     final (label, color, icon) = switch (command.risk) {
       AskAiCommandRisk.readOnly => (
         context.l10n.askAiRiskReadOnly,
@@ -830,23 +830,23 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             alignment: WrapAlignment.end,
             children: [
               TextButton(
-                onPressed: working ? null : _notifier.declinePendingTool,
+                onPressed: canReview ? _notifier.declinePendingTool : null,
                 child: Text(context.l10n.askAiDecline),
               ),
               TextButton.icon(
-                onPressed: working
-                    ? null
-                    : () => copyAgentText(command.command),
+                onPressed: canReview
+                    ? () => copyAgentText(command.command)
+                    : null,
                 icon: const Icon(Icons.copy, size: 17),
                 label: Text(libL10n.copy),
               ),
               OutlinedButton.icon(
-                onPressed: working ? null : _insertPendingCommand,
+                onPressed: canReview ? _insertPendingCommand : null,
                 icon: const Icon(Icons.keyboard_return, size: 17),
                 label: Text(context.l10n.askAiInsertTerminal),
               ),
               FilledButton.icon(
-                onPressed: working ? null : () => _runPendingCommand(command),
+                onPressed: canReview ? () => _runPendingCommand(command) : null,
                 icon: const Icon(Icons.play_arrow, size: 18),
                 label: Text(context.l10n.askAiApproveRun),
               ),
