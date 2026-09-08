@@ -5,6 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/crash_report.dart';
+import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/core/utils/ssh_file_backend.dart';
 
 import 'helpers/spi_fixture.dart';
@@ -84,7 +85,7 @@ void main() {
   });
 
   test('the trace is redacted like the log is', () {
-    final ids = CrashReport.knownIdentifiers([
+    final ids = KnownIdentifiers.of([
       spiFixture(name: 'prod-box', id: 'a'),
     ]);
 
@@ -158,7 +159,7 @@ void main() {
   /// because the app holds the actual records.
   group('identifiers', () {
     test('a server name, host and user are all replaced', () {
-      final ids = CrashReport.knownIdentifiers([
+      final ids = KnownIdentifiers.of([
         spiFixture(name: 'prod-db', id: 'a', ip: '10.1.2.3', user: 'deploy'),
       ]);
 
@@ -179,7 +180,7 @@ void main() {
     test('the same server reads as the same token throughout', () {
       // A reader following one machine through a log needs to see the token
       // twice. It does not need to mean anything beyond that.
-      final ids = CrashReport.knownIdentifiers([
+      final ids = KnownIdentifiers.of([
         spiFixture(name: 'alpha', id: 'a', ip: '10.0.0.1'),
         spiFixture(name: 'beta', id: 'b', ip: '10.0.0.2'),
       ]);
@@ -197,7 +198,7 @@ void main() {
       // `db` inside `db-prod`: replacing the short one first would leave
       // `<server-1>-prod`, which still discloses `-prod` and has lost the fact
       // that the two lines named different machines.
-      final ids = CrashReport.knownIdentifiers([
+      final ids = KnownIdentifiers.of([
         spiFixture(name: 'db', id: 'a'),
         spiFixture(name: 'db-prod', id: 'b'),
       ]);
@@ -214,7 +215,7 @@ void main() {
       // `<<server-2>-1>`, which garbles the report and makes two machines
       // read as one. The same trap exists for anything named host, user or
       // agent.
-      final ids = CrashReport.knownIdentifiers([
+      final ids = KnownIdentifiers.of([
         spiFixture(name: 'prod-server', id: 'a'),
         spiFixture(name: 'server', id: 'b'),
       ]);
@@ -226,7 +227,7 @@ void main() {
     });
 
     test('a name colliding with a placeholder word is still safe', () {
-      final ids = CrashReport.knownIdentifiers([
+      final ids = KnownIdentifiers.of([
         spiFixture(name: 'host', id: 'a', user: 'user'),
       ]);
 
@@ -240,7 +241,7 @@ void main() {
       // Two characters occur inside ordinary words, so replacing them would
       // corrupt the log rather than redact it — and such a name discloses
       // little in any case.
-      final ids = CrashReport.knownIdentifiers([spiFixture(name: 'a', id: 'x')]);
+      final ids = KnownIdentifiers.of([spiFixture(name: 'a', id: 'x')]);
 
       expect(ids.values, isNot(contains('<server-1>')));
       expect(
@@ -252,7 +253,7 @@ void main() {
     test('substitution happens before truncation, not after', () {
       // Otherwise the tail kept is measured against unredacted text, and which
       // lines survive depends on the length of names being removed.
-      final ids = CrashReport.knownIdentifiers([
+      final ids = KnownIdentifiers.of([
         spiFixture(name: 'secret-host', id: 'a'),
       ]);
       final log = [for (var i = 0; i < 200; i++) 'secret-host line $i'].join('\n');

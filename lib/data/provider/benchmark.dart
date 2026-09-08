@@ -92,6 +92,13 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     _timer?.cancel();
     _timer = null;
     if (active == null) return;
+    // `ref.onDispose` cancels the timer, so a timer armed *after* dispose is
+    // one nothing will ever cancel — it would fire on a dead notifier and
+    // throw `UnmountedRefException` out of a callback nobody awaits. Every
+    // caller below is past an `await`, which is where the provider can have
+    // gone: this is keyed by the whole [Spi], so saving a server edit disposes
+    // it while a poll is in flight.
+    if (!ref.mounted) return;
     _timer = Timer(
       immediate ? Duration.zero : _interval(active.elapsed),
       _poll,
@@ -134,7 +141,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // Written only once the far side has confirmed. A row claiming a run that
       // was never started would be picked back up on every later open of this
       // page and polled forever.
+      //
+      // Written even when this provider is gone, and before the guard for that
+      // reason: the run is going on the server either way, and the row is the
+      // only thing that lets the next open of this page find it.
       _store.put(run);
+      if (!ref.mounted) return;
       state = state.copyWith(
         active: run,
         history: _store.forServer(_spi.id),
@@ -143,6 +155,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       _schedule(run, immediate: true);
     } catch (e, s) {
       Loggers.app.warning('Benchmark start failed', e, s);
+      if (!ref.mounted) return;
       state = state.copyWith(isBusy: false, error: '$e');
     }
   }
@@ -170,6 +183,9 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   }
 
   Future<void> _poll() async {
+    // Reached from a timer and from [cancel]'s far side, both of which can
+    // outlive the provider. Reading `state` on a disposed one throws.
+    if (!ref.mounted) return;
     final active = state.active;
     if (active == null) return;
 
@@ -187,11 +203,19 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       // benchmark is not this device's connection — but a page that shows a
       // spinner while every poll fails is telling the user the run is fine.
       final noted = active.copyWith(pollError: '$e');
+      if (!ref.mounted) return;
       state = state.copyWith(active: noted);
       _schedule(noted);
       return;
     }
-
+    // No blanket guard from here down, on purpose. What follows decides
+    // whether the run is *over*, and that answer belongs in the store whether
+    // or not this page is still open — a fifteen-minute benchmark whose last
+    // poll landed as the user closed the tab would otherwise leave a row that
+    // still says `running`, with the result it had already fetched thrown
+    // away. Only the `state` writes below are guarded; `_schedule` and
+    // `_cleanup` guard themselves, and `_finish` writes its row before its own
+    // guard.
     if (!poll.answered) {
       // The command produced nothing this app recognises: a monitor agent hit
       // its own timeout, a shell was killed, a proxy answered instead. None of
@@ -201,7 +225,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       final noted = active.copyWith(
         pollError: 'The server did not answer the poll',
       );
-      state = state.copyWith(active: noted);
+      if (ref.mounted) state = state.copyWith(active: noted);
       _schedule(noted);
       return;
     }
@@ -266,7 +290,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
 
     if (!poll.finished) {
       _store.put(updated);
-      state = state.copyWith(active: updated);
+      if (ref.mounted) state = state.copyWith(active: updated);
       _schedule(updated);
       return;
     }
@@ -292,7 +316,10 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   void _finish(BenchmarkRun run) {
     _timer?.cancel();
     _timer = null;
+    // Before the guard: the result is the thing the user waited for, and it
+    // belongs in the store whether or not this page is still open.
     _store.put(run);
+    if (!ref.mounted) return;
     state = state.copyWith(
       active: null,
       history: _store.forServer(_spi.id),
@@ -302,6 +329,11 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   }
 
   Future<void> _cleanup(BenchmarkRun run) async {
+    // It needs a `ref` to reach the server, so a provider disposed as the run
+    // ended cannot do it. The cost is a run directory left on the machine,
+    // which is what this method is best effort about anyway; the alternative
+    // is an `UnmountedRefException` out of an unawaited future.
+    if (!ref.mounted) return;
     try {
       final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
       await exec.run(YabsScript.cleanupCommand(run.runDir, run.id));
@@ -325,10 +357,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       await exec.run(YabsScript.cancelCommand(active.runDir));
     } catch (e, s) {
       Loggers.app.warning('Benchmark cancel failed', e, s);
+      if (!ref.mounted) return;
       state = state.copyWith(isBusy: false, error: '$e');
       _schedule(active);
       return;
     }
+    if (!ref.mounted) return;
 
     // The exit file the cancel command wrote is what turns the record
     // terminal, so the state comes from a poll like any other rather than
