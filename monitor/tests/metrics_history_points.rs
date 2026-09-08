@@ -16,6 +16,7 @@
 
 use std::sync::{Arc, Once};
 
+use chrono::{DateTime, Duration, Utc};
 use ntex::web::App;
 use ntex::web::test::{self as web_test, TestServer};
 use rustls::crypto::ring;
@@ -48,6 +49,16 @@ async fn state_with_samples(minutes: i64) -> Arc<AppState> {
 /// a fixture at 10-second spacing answers identically whether the width was
 /// rounded up or down and proves nothing either way.
 async fn state_with_samples_every(span_secs: i64, step_secs: i64) -> Arc<AppState> {
+    let rows = span_secs / step_secs;
+    let now = Utc::now();
+    let at: Vec<_> = (0..rows)
+        .map(|i| now - Duration::seconds((rows - i) * step_secs))
+        .collect();
+    state_with(&at).await
+}
+
+/// One row per instant given, in the order given.
+async fn state_with(at: &[DateTime<Utc>]) -> Arc<AppState> {
     ensure_crypto_provider();
     let config = Config {
         jwt_secret: Some(SECRET.to_string()),
@@ -57,25 +68,36 @@ async fn state_with_samples_every(span_secs: i64, step_secs: i64) -> Arc<AppStat
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
 
-    let rows = span_secs / step_secs;
-    for i in 0..rows {
-        let seconds_ago = (rows - i) * step_secs;
-        sqlx::query(
-            "INSERT INTO system_metrics (
-                timestamp, server_name, cpu_usage,
-                memory_total, memory_used, disk_total, disk_used,
-                network_rx_bytes, network_tx_bytes
-             ) VALUES (datetime('now', ?1), 'test', ?2, 100, 50, 100, 50, ?3, ?3)",
-        )
-        .bind(format!("-{seconds_ago} seconds"))
-        .bind(i as f64 % 100.0)
-        .bind(i * 1000)
-        .execute(&db)
-        .await
-        .unwrap();
+    for (i, at) in at.iter().enumerate() {
+        insert_sample(&db, *at, i as i64).await;
     }
 
     AppState::new(Arc::new(config), db)
+}
+
+/// One row, timestamped the way `store_metrics` timestamps one.
+///
+/// The column is written by binding a `DateTime<Utc>`, which sqlx encodes as
+/// RFC 3339 (`2026-09-08T08:28:18.493098803+00:00`). A fixture that reached
+/// for `datetime('now', ...)` instead — as this one did — writes
+/// `2026-09-08 07:28:22`, a shape nothing in the agent produces, and the two
+/// do not compare against each other as either one compares against itself.
+/// That is what let a broken window bound sit here unnoticed: the fixture and
+/// the query agreed with each other and with nothing that ships.
+async fn insert_sample(db: &sqlx::SqlitePool, at: DateTime<Utc>, i: i64) {
+    sqlx::query(
+        "INSERT INTO system_metrics (
+            timestamp, server_name, cpu_usage,
+            memory_total, memory_used, disk_total, disk_used,
+            network_rx_bytes, network_tx_bytes
+         ) VALUES (?1, 'test', ?2, 100, 50, 100, 50, ?3, ?3)",
+    )
+    .bind(at)
+    .bind(i as f64 % 100.0)
+    .bind(i * 1000)
+    .execute(db)
+    .await
+    .unwrap();
 }
 
 async fn test_server(state: Arc<AppState>) -> TestServer {
@@ -203,25 +225,62 @@ async fn a_silly_count_is_clamped() {
 }
 
 
-/// Seconds between the first and last point.
+/// `minutes` is a window, and a row outside it is not in the answer.
 ///
-/// The column is SQLite's `datetime()` text, so this reads the clock out of
-/// it rather than taking a date dependency for two tests. A run that straddles
-/// midnight would see the last time as the smaller of the two; a day is added
-/// back in that case, which is correct for any window shorter than one.
+/// The bound used to be `datetime('now', '-N minutes')`, whose `YYYY-MM-DD
+/// HH:MM:SS` output compares against this column's RFC 3339 only as far as the
+/// date: every row from the same UTC day passed it whatever its time. That is
+/// what this places — one row at the start of the current UTC day — and it is
+/// the only shape that can catch it, since a row from any *earlier* day is
+/// excluded correctly by the broken bound too.
+///
+/// `max_points` is well above the number of rows on purpose. The handler keeps
+/// the newest `max_points` buckets, so with a dense fixture it hands back a
+/// window-sized answer either way and the extra rows are only extra work;
+/// two rows and 300 points is where the difference reaches the response.
+#[ntex::test]
+async fn a_row_from_earlier_today_is_outside_a_five_minute_window() {
+    const MINUTES: i64 = 5;
+    let now = Utc::now();
+    let day_start = now.date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc();
+    let stale = day_start + Duration::seconds(1);
+
+    if now - stale <= Duration::minutes(MINUTES) {
+        // The first few minutes of a UTC day: "earlier today" is inside the
+        // window, so the defect has nothing to show and neither has this test.
+        eprintln!("skipped: {now} is within {MINUTES} minutes of {day_start}");
+        return;
+    }
+    let fresh = now - Duration::seconds(30);
+
+    let srv = test_server(state_with(&[stale, fresh]).await).await;
+    let points = history(&srv, &format!("minutes={MINUTES}&max_points=300")).await;
+
+    assert_eq!(
+        points.len(),
+        1,
+        "a {MINUTES}-minute window over one row inside it and one at {stale} \
+         answered with {} points",
+        points.len()
+    );
+    let oldest = point_time(&points[0]);
+    assert!(
+        now - oldest <= Duration::minutes(MINUTES),
+        "oldest point {oldest} is outside the {MINUTES}-minute window ending {now}"
+    );
+}
+
+/// Seconds between the first and last point.
 fn span_secs(points: &[serde_json::Value]) -> i64 {
-    let at = |p: &serde_json::Value| -> i64 {
-        let ts = p["timestamp"].as_str().expect("point has no timestamp");
-        let clock = ts.rsplit(' ').next().unwrap_or_default();
-        let mut parts = clock.split(':').map(|f| f.parse::<i64>().unwrap_or(0));
-        let h = parts.next().unwrap_or(0);
-        let m = parts.next().unwrap_or(0);
-        let s = parts.next().unwrap_or(0);
-        h * 3600 + m * 60 + s
-    };
-    let (first, last) = match (points.first(), points.last()) {
-        (Some(f), Some(l)) => (at(f), at(l)),
-        _ => return 0,
-    };
-    if last >= first { last - first } else { last + 86_400 - first }
+    match (points.first(), points.last()) {
+        (Some(f), Some(l)) => (point_time(l) - point_time(f)).num_seconds(),
+        _ => 0,
+    }
+}
+
+fn point_time(point: &serde_json::Value) -> DateTime<Utc> {
+    let ts = point["timestamp"].as_str().expect("point has no timestamp");
+    DateTime::parse_from_rfc3339(ts)
+        .unwrap_or_else(|e| panic!("point timestamp {ts:?} is not RFC 3339: {e}"))
+        .with_timezone(&Utc)
 }

@@ -106,18 +106,22 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     let pool = pool().await;
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    // One row inside the window and one well outside it
-    sqlx::query(
-        "INSERT INTO access_log (timestamp, kind, action, result) \
-         VALUES (datetime('now','-200 days'),'terminal','open','ok')",
-    )
-    .execute(&pool)
-    .await
-    .unwrap();
-    sqlx::query("INSERT INTO access_log (kind, action, result) VALUES ('terminal','open','ok')")
+    // One row inside the window and one well outside it, both timestamped the
+    // way `audit::Event::record` timestamps one. Written with
+    // `datetime('now', ...)` and the column's old default before migration
+    // 009, which is a shape the agent never produces and does not compare
+    // against the cutoff the way the shape it does produce compares.
+    let now = chrono::Utc::now();
+    for at in [now - chrono::Duration::days(200), now] {
+        sqlx::query(
+            "INSERT INTO access_log (timestamp, kind, action, result) \
+             VALUES (?, 'terminal', 'open', 'ok')",
+        )
+        .bind(at)
         .execute(&pool)
         .await
         .unwrap();
+    }
 
     let service = DataCleanupService::new(
         pool.clone(),
@@ -137,6 +141,176 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
         "an entry older than its retention policy must be collected"
     );
     assert_eq!(rows[0].get::<String, _>("kind"), "terminal");
+}
+
+/// Everything up to and including [`through`], so a migration can be run
+/// against a database that genuinely predates it.
+///
+/// `Migrator`'s fields are public for the `migrate!()` macro's sake. Building
+/// a subset out of the same `Migration` values is what makes the second run
+/// apply only what is left: it re-validates the checksums of what is already
+/// recorded, and those match by construction.
+fn migrator_through(through: i64) -> sqlx::migrate::Migrator {
+    let all = sqlx::migrate!("./migrations");
+    sqlx::migrate::Migrator {
+        migrations: all
+            .migrations
+            .iter()
+            .filter(|m| m.version <= through)
+            .cloned()
+            .collect::<Vec<_>>()
+            .into(),
+        ..sqlx::migrate::Migrator::DEFAULT
+    }
+}
+
+/// Migration 009 against a row written the way the agent wrote them before it.
+///
+/// A migration gets one pass over a user's records and is not repeatable, so a
+/// mistake in the conversion is silence rather than a crash — the rows are
+/// simply wrong afterwards, in a column only retention reads. Every other test
+/// here runs the whole set first and inserts after, which exercises the new
+/// schema and never the conversion.
+///
+/// The row is inserted through the pre-009 default rather than with a value of
+/// this test's own choosing: `CURRENT_TIMESTAMP` is what produced every
+/// timestamp in this column in the field, and a fixture that types the text
+/// itself would prove the migration handles the fixture.
+#[tokio::test]
+async fn migration_009_converts_the_timestamps_already_in_access_log() {
+    let pool = pool().await;
+    migrator_through(8).run(&pool).await.unwrap();
+
+    sqlx::query(
+        "INSERT INTO access_log (kind, action, subject, remote_ip, ssh_user, result, detail) \
+         VALUES ('terminal','open','admin','10.0.0.1','root','ok','pre-009')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let before = sqlx::query("SELECT id, timestamp FROM access_log")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let old_id: i64 = before.get("id");
+    let old_ts: String = before.get("timestamp");
+    assert_eq!(
+        old_ts.len(),
+        19,
+        "the pre-009 default should write 'YYYY-MM-DD HH:MM:SS', got {old_ts:?}"
+    );
+
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    let row = sqlx::query("SELECT id, timestamp, subject, remote_ip, ssh_user, detail FROM access_log")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(row.get::<i64, _>("id"), old_id, "the row was renumbered");
+    // Every other column carried across the rebuild, not just the one being
+    // converted — a copy that names its columns in the wrong order still
+    // typechecks.
+    assert_eq!(row.get::<String, _>("subject"), "admin");
+    assert_eq!(row.get::<String, _>("remote_ip"), "10.0.0.1");
+    assert_eq!(row.get::<String, _>("ssh_user"), "root");
+    assert_eq!(row.get::<String, _>("detail"), "pre-009");
+
+    // Exact, rather than "looks like RFC 3339": the same instant, in the shape
+    // sqlx encodes a whole-second `DateTime<Utc>` as. Checked against the text
+    // that was there, so the clock cannot make this flaky.
+    let converted: String = row.get("timestamp");
+    assert_eq!(converted, format!("{}+00:00", old_ts.replace(' ', "T")));
+    let parsed = chrono::DateTime::parse_from_rfc3339(&converted)
+        .unwrap_or_else(|e| panic!("{converted:?} is not RFC 3339: {e}"));
+
+    // The point of the conversion. A cutoff one second older than the row used
+    // to read as newer than it, because the comparison stopped meaning
+    // anything at the ' ' where the new shape has a 'T'.
+    let cutoff = parsed.with_timezone(&chrono::Utc) - chrono::Duration::seconds(1);
+    let kept: i64 = sqlx::query_scalar("SELECT count(*) FROM access_log WHERE timestamp >= ?")
+        .bind(cutoff)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(kept, 1, "the converted row is still older than {cutoff}");
+
+    // The rebuild drops the old table, which takes its index and its
+    // sqlite_sequence entry with it.
+    let indexes: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM sqlite_master WHERE type = 'index' AND name = 'idx_access_log_timestamp'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(indexes, 1, "the timestamp index did not survive the rebuild");
+
+    sqlx::query("INSERT INTO access_log (timestamp, kind, action, result) VALUES (?,'ticket','open','ok')")
+        .bind(chrono::Utc::now())
+        .execute(&pool)
+        .await
+        .unwrap();
+    let next: i64 = sqlx::query_scalar("SELECT max(id) FROM access_log")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert!(
+        next > old_id,
+        "AUTOINCREMENT restarted after the rebuild: {next} follows {old_id}"
+    );
+}
+
+/// The retention cutoff is a moment, not a date.
+///
+/// `cleanup_policy_tables` binds `now - retention_days` and compares it
+/// against this column. While the column carried `CURRENT_TIMESTAMP`'s
+/// `YYYY-MM-DD HH:MM:SS` and the cutoff arrived as RFC 3339, the text
+/// comparison stopped meaning anything at position 10 — `' '` against `'T'` —
+/// so every row from the cutoff's own date read as older than the cutoff
+/// whatever its time, and up to a day of audit log past it was deleted on
+/// each pass. One second either side of the boundary is what that got wrong.
+#[tokio::test]
+async fn the_audit_log_cutoff_is_a_moment_not_a_date() {
+    use server_box_monitor::core::config::DataRetentionConfig;
+    use server_box_monitor::db::cleanup::DataCleanupService;
+
+    let pool = pool().await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    // 90 days is the policy migration 006 seeds for this table.
+    let cutoff = chrono::Utc::now() - chrono::Duration::days(90);
+    for (at, detail) in [
+        (cutoff + chrono::Duration::seconds(1), "keep"),
+        (cutoff - chrono::Duration::seconds(1), "drop"),
+    ] {
+        sqlx::query(
+            "INSERT INTO access_log (timestamp, kind, action, result, detail) \
+             VALUES (?, 'terminal', 'open', 'ok', ?)",
+        )
+        .bind(at)
+        .bind(detail)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    let service = DataCleanupService::new(
+        pool.clone(),
+        DataRetentionConfig {
+            metrics_days: 30,
+            alerts_days: 90,
+            cleanup_interval_hours: 24,
+            max_db_size_mb: 1024,
+        },
+    );
+    service.cleanup_expired_data().await.unwrap();
+
+    let kept = sqlx::query("SELECT detail FROM access_log")
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+    let kept: Vec<String> = kept.iter().map(|r| r.get::<String, _>("detail")).collect();
+    assert_eq!(kept, ["keep"], "kept {kept:?} across the retention boundary");
 }
 
 #[tokio::test]
@@ -233,6 +407,7 @@ fn shipped_migrations_keep_their_checksums() {
         (6, "bc1d80ef7f88751b0bb2a64974a7efb928301cd61740cfe77d9e2306a8f71d8cfbdd24a2e2e5dc2e5b9094755b9e03f9"),
         (7, "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5"),
         (8, "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054"),
+        (9, "f50849af86f5e456829df80ddb0c716540a23bd0a15527925bfb27f5e05b8dd567e83c6e1d08898a93135aa05052877b"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();
