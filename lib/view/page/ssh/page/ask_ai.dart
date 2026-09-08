@@ -72,8 +72,7 @@ extension _AskAi on SSHPageState {
     // instead measured the window, so the same 800 landed about a rail's width
     // earlier here than everywhere else: on an iPad in portrait this opened
     // beside the terminal while the server list still had one column.
-    final width =
-        context.size?.width ?? MediaQuery.sizeOf(context).width;
+    final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
     final placement = askAiPanelPlacementForWidth(width);
 
     // The panel's tools act on a server, so there has to be one. A terminal on
@@ -250,6 +249,7 @@ extension _AskAi on SSHPageState {
     if (session != null) await _terminateAiCommandSession(session);
   }
 }
+
 /// The Agent for one server, shown beside its terminal.
 ///
 /// A view onto [agentSessionProvider] and nothing more: the conversation, the
@@ -279,6 +279,7 @@ class _AskAiPanel extends ConsumerStatefulWidget {
 
 class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   final _scrollController = ScrollController();
+  final _commandPreviewScrollController = ScrollController();
   final _inputController = TextEditingController();
   bool _autoStarted = false;
 
@@ -307,6 +308,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     // session, which outlives this panel on purpose: closing it used to cancel
     // whatever was streaming, which is not what closing a window means.
     _scrollController.dispose();
+    _commandPreviewScrollController.dispose();
     _inputController
       ..removeListener(_handleInputChanged)
       ..dispose();
@@ -724,7 +726,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     AgentSessionState session,
   ) {
     final command = session.pendingTool!;
-    final working = session.isWorking;
+    final canReview = session.canReviewPendingTool;
+    final commandPreviewMaxHeight = askAiCommandPreviewMaxHeightFor(
+      MediaQuery.sizeOf(context).height,
+    );
     final (label, color, icon) = switch (command.risk) {
       AskAiCommandRisk.readOnly => (
         context.l10n.askAiRiskReadOnly,
@@ -793,14 +798,24 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
+            constraints: BoxConstraints(maxHeight: commandPreviewMaxHeight),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: SelectableText(
-              command.command,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+            child: Scrollbar(
+              controller: _commandPreviewScrollController,
+              child: SingleChildScrollView(
+                controller: _commandPreviewScrollController,
+                child: SelectableText(
+                  command.command,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
             ),
           ),
           if (command.description.isNotEmpty) ...[
@@ -830,23 +845,23 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             alignment: WrapAlignment.end,
             children: [
               TextButton(
-                onPressed: working ? null : _notifier.declinePendingTool,
+                onPressed: canReview ? _notifier.declinePendingTool : null,
                 child: Text(context.l10n.askAiDecline),
               ),
               TextButton.icon(
-                onPressed: working
-                    ? null
-                    : () => copyAgentText(command.command),
+                onPressed: canReview
+                    ? () => copyAgentText(command.command)
+                    : null,
                 icon: const Icon(Icons.copy, size: 17),
                 label: Text(libL10n.copy),
               ),
               OutlinedButton.icon(
-                onPressed: working ? null : _insertPendingCommand,
+                onPressed: canReview ? _insertPendingCommand : null,
                 icon: const Icon(Icons.keyboard_return, size: 17),
                 label: Text(context.l10n.askAiInsertTerminal),
               ),
               FilledButton.icon(
-                onPressed: working ? null : () => _runPendingCommand(command),
+                onPressed: canReview ? () => _runPendingCommand(command) : null,
                 icon: const Icon(Icons.play_arrow, size: 18),
                 label: Text(context.l10n.askAiApproveRun),
               ),
@@ -893,10 +908,6 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (session.pendingTool != null) ...[
-            _buildProposalCard(context, theme, session),
-            const SizedBox(height: 8),
-          ],
           if (error != null) ...[
             AgentErrorBanner(
               message: describeAgentError(context, error),
@@ -1004,6 +1015,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                   ],
                   if (session.isStreaming)
                     _buildStreamingBubble(context, theme, session),
+                  if (session.pendingTool != null) ...[
+                    _buildProposalCard(context, theme, session),
+                    const SizedBox(height: 10),
+                  ],
                 ],
               ),
             ),

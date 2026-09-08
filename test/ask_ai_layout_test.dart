@@ -2,6 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 
 void main() {
+  group('askAiCommandPreviewMaxHeightFor', () {
+    test('uses thirty percent of compact viewport heights', () {
+      expect(askAiCommandPreviewMaxHeightFor(400), 120);
+      expect(askAiCommandPreviewMaxHeightFor(600), 180);
+    });
+
+    test('caps tall viewport previews so review actions stay nearby', () {
+      expect(askAiCommandPreviewMaxHeightFor(800), 240);
+      expect(askAiCommandPreviewMaxHeightFor(1200), 240);
+    });
+  });
+
   group('askAiPanelPlacementForWidth', () {
     test('uses bottom sheet on phone and narrow tablet widths', () {
       expect(askAiPanelPlacementForWidth(390), AskAiPanelPlacement.bottomSheet);
