@@ -574,8 +574,14 @@ class PluginInstalls extends Table {
   /// The installed version, as the manifest spells it.
   TextColumn get version => text()();
 
-  /// Which repository it came from. Null is bundled with the app; `dev` is a
-  /// directory on the developer's machine.
+  /// Where it came from.
+  ///
+  /// Null is bundled with the app and `dev` is a directory on a developer's
+  /// machine; anything else is a repository's `index.json` URL, which is a
+  /// row in `plugin_repo`. Kept as the URL rather than a foreign key: a
+  /// repository the user has since removed should still leave its plugins
+  /// saying where they came from, and cascading would take a working install
+  /// with the row that merely described where to look for updates.
   TextColumn get repo => text().nullable()();
 
   BoolColumn get enabled => boolean().withDefault(const Constant(true))();
@@ -591,6 +597,44 @@ class PluginInstalls extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// A place plugins may be installed from.
+///
+/// Keyed by the `index.json` URL, because the URL *is* the identity. Keying on
+/// the name would be exactly wrong: the name comes out of the index, so it is
+/// chosen by the thing being identified, and two repositories are free to
+/// claim the same one.
+///
+/// Not a sync root. Which repositories a device reads is closer to a setting
+/// than to a record, and syncing one would mean a second device silently
+/// starts fetching from an address somebody added on the first.
+@DataClassName('PluginRepoRow')
+class PluginRepos extends Table {
+  @override
+  String get tableName => 'plugin_repo';
+  @override
+  bool get withoutRowId => true;
+
+  /// The `index.json` address.
+  TextColumn get url => text()();
+
+  /// What the index called itself when it was last read. Null until then, and
+  /// only ever for display — the URL is what anything keys on.
+  TextColumn get name => text().nullable()();
+
+  /// A repository switched off is kept rather than removed: it stops being
+  /// fetched, and turning it back on does not mean typing the URL again.
+  BoolColumn get enabled => boolean().withDefault(const Constant(true))();
+
+  IntColumn get addedAt => integer()();
+
+  /// When its index was last read, so a refresh can be paced rather than run
+  /// on every visit to the list.
+  IntColumn get lastFetchedAt => integer().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {url};
 }
 
 /// One server's configuration for one plugin. PLUGINS.md section 7.
@@ -798,6 +842,7 @@ class SyncStates extends Table {
     ServerDists,
     BenchmarkRuns,
     PluginInstalls,
+    PluginRepos,
     ServerPluginCfgs,
     PluginKvs,
     ServerPluginKvs,

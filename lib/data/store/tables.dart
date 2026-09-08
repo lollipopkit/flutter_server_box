@@ -70,6 +70,7 @@ abstract final class Tables {
     'server_dist',
     'benchmark_run',
     'plugin_install',
+    'plugin_repo',
     'server_plugin_cfg',
     'plugin_kv',
     'server_plugin_kv',

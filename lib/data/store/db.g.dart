@@ -7750,8 +7750,14 @@ class PluginInstallRow extends DataClass
   /// The installed version, as the manifest spells it.
   final String version;
 
-  /// Which repository it came from. Null is bundled with the app; `dev` is a
-  /// directory on the developer's machine.
+  /// Where it came from.
+  ///
+  /// Null is bundled with the app and `dev` is a directory on a developer's
+  /// machine; anything else is a repository's `index.json` URL, which is a
+  /// row in `plugin_repo`. Kept as the URL rather than a foreign key: a
+  /// repository the user has since removed should still leave its plugins
+  /// saying where they came from, and cascading would take a working install
+  /// with the row that merely described where to look for updates.
   final String? repo;
   final bool enabled;
 
@@ -7973,6 +7979,379 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
           ..write('enabled: $enabled, ')
           ..write('granted: $granted, ')
           ..write('installedAt: $installedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $PluginReposTable extends PluginRepos
+    with TableInfo<$PluginReposTable, PluginRepoRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PluginReposTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<int> addedAt = GeneratedColumn<int>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastFetchedAtMeta = const VerificationMeta(
+    'lastFetchedAt',
+  );
+  @override
+  late final GeneratedColumn<int> lastFetchedAt = GeneratedColumn<int>(
+    'last_fetched_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    url,
+    name,
+    enabled,
+    addedAt,
+    lastFetchedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'plugin_repo';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PluginRepoRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    if (data.containsKey('last_fetched_at')) {
+      context.handle(
+        _lastFetchedAtMeta,
+        lastFetchedAt.isAcceptableOrUnknown(
+          data['last_fetched_at']!,
+          _lastFetchedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {url};
+  @override
+  PluginRepoRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PluginRepoRow(
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}added_at'],
+      )!,
+      lastFetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_fetched_at'],
+      ),
+    );
+  }
+
+  @override
+  $PluginReposTable createAlias(String alias) {
+    return $PluginReposTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class PluginRepoRow extends DataClass implements Insertable<PluginRepoRow> {
+  /// The `index.json` address.
+  final String url;
+
+  /// What the index called itself when it was last read. Null until then, and
+  /// only ever for display — the URL is what anything keys on.
+  final String? name;
+
+  /// A repository switched off is kept rather than removed: it stops being
+  /// fetched, and turning it back on does not mean typing the URL again.
+  final bool enabled;
+  final int addedAt;
+
+  /// When its index was last read, so a refresh can be paced rather than run
+  /// on every visit to the list.
+  final int? lastFetchedAt;
+  const PluginRepoRow({
+    required this.url,
+    this.name,
+    required this.enabled,
+    required this.addedAt,
+    this.lastFetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['url'] = Variable<String>(url);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    map['enabled'] = Variable<bool>(enabled);
+    map['added_at'] = Variable<int>(addedAt);
+    if (!nullToAbsent || lastFetchedAt != null) {
+      map['last_fetched_at'] = Variable<int>(lastFetchedAt);
+    }
+    return map;
+  }
+
+  PluginReposCompanion toCompanion(bool nullToAbsent) {
+    return PluginReposCompanion(
+      url: Value(url),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      enabled: Value(enabled),
+      addedAt: Value(addedAt),
+      lastFetchedAt: lastFetchedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastFetchedAt),
+    );
+  }
+
+  factory PluginRepoRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PluginRepoRow(
+      url: serializer.fromJson<String>(json['url']),
+      name: serializer.fromJson<String?>(json['name']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      addedAt: serializer.fromJson<int>(json['addedAt']),
+      lastFetchedAt: serializer.fromJson<int?>(json['lastFetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'url': serializer.toJson<String>(url),
+      'name': serializer.toJson<String?>(name),
+      'enabled': serializer.toJson<bool>(enabled),
+      'addedAt': serializer.toJson<int>(addedAt),
+      'lastFetchedAt': serializer.toJson<int?>(lastFetchedAt),
+    };
+  }
+
+  PluginRepoRow copyWith({
+    String? url,
+    Value<String?> name = const Value.absent(),
+    bool? enabled,
+    int? addedAt,
+    Value<int?> lastFetchedAt = const Value.absent(),
+  }) => PluginRepoRow(
+    url: url ?? this.url,
+    name: name.present ? name.value : this.name,
+    enabled: enabled ?? this.enabled,
+    addedAt: addedAt ?? this.addedAt,
+    lastFetchedAt: lastFetchedAt.present
+        ? lastFetchedAt.value
+        : this.lastFetchedAt,
+  );
+  PluginRepoRow copyWithCompanion(PluginReposCompanion data) {
+    return PluginRepoRow(
+      url: data.url.present ? data.url.value : this.url,
+      name: data.name.present ? data.name.value : this.name,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      lastFetchedAt: data.lastFetchedAt.present
+          ? data.lastFetchedAt.value
+          : this.lastFetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PluginRepoRow(')
+          ..write('url: $url, ')
+          ..write('name: $name, ')
+          ..write('enabled: $enabled, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('lastFetchedAt: $lastFetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(url, name, enabled, addedAt, lastFetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PluginRepoRow &&
+          other.url == this.url &&
+          other.name == this.name &&
+          other.enabled == this.enabled &&
+          other.addedAt == this.addedAt &&
+          other.lastFetchedAt == this.lastFetchedAt);
+}
+
+class PluginReposCompanion extends UpdateCompanion<PluginRepoRow> {
+  final Value<String> url;
+  final Value<String?> name;
+  final Value<bool> enabled;
+  final Value<int> addedAt;
+  final Value<int?> lastFetchedAt;
+  const PluginReposCompanion({
+    this.url = const Value.absent(),
+    this.name = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.lastFetchedAt = const Value.absent(),
+  });
+  PluginReposCompanion.insert({
+    required String url,
+    this.name = const Value.absent(),
+    this.enabled = const Value.absent(),
+    required int addedAt,
+    this.lastFetchedAt = const Value.absent(),
+  }) : url = Value(url),
+       addedAt = Value(addedAt);
+  static Insertable<PluginRepoRow> custom({
+    Expression<String>? url,
+    Expression<String>? name,
+    Expression<bool>? enabled,
+    Expression<int>? addedAt,
+    Expression<int>? lastFetchedAt,
+  }) {
+    return RawValuesInsertable({
+      if (url != null) 'url': url,
+      if (name != null) 'name': name,
+      if (enabled != null) 'enabled': enabled,
+      if (addedAt != null) 'added_at': addedAt,
+      if (lastFetchedAt != null) 'last_fetched_at': lastFetchedAt,
+    });
+  }
+
+  PluginReposCompanion copyWith({
+    Value<String>? url,
+    Value<String?>? name,
+    Value<bool>? enabled,
+    Value<int>? addedAt,
+    Value<int?>? lastFetchedAt,
+  }) {
+    return PluginReposCompanion(
+      url: url ?? this.url,
+      name: name ?? this.name,
+      enabled: enabled ?? this.enabled,
+      addedAt: addedAt ?? this.addedAt,
+      lastFetchedAt: lastFetchedAt ?? this.lastFetchedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<int>(addedAt.value);
+    }
+    if (lastFetchedAt.present) {
+      map['last_fetched_at'] = Variable<int>(lastFetchedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PluginReposCompanion(')
+          ..write('url: $url, ')
+          ..write('name: $name, ')
+          ..write('enabled: $enabled, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('lastFetchedAt: $lastFetchedAt')
           ..write(')'))
         .toString();
   }
@@ -9956,6 +10335,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $ServerDistsTable serverDists = $ServerDistsTable(this);
   late final $BenchmarkRunsTable benchmarkRuns = $BenchmarkRunsTable(this);
   late final $PluginInstallsTable pluginInstalls = $PluginInstallsTable(this);
+  late final $PluginReposTable pluginRepos = $PluginReposTable(this);
   late final $ServerPluginCfgsTable serverPluginCfgs = $ServerPluginCfgsTable(
     this,
   );
@@ -9993,6 +10373,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     serverDists,
     benchmarkRuns,
     pluginInstalls,
+    pluginRepos,
     serverPluginCfgs,
     pluginKvs,
     serverPluginKvs,
@@ -18080,6 +18461,202 @@ typedef $$PluginInstallsTableProcessedTableManager =
       PluginInstallRow,
       PrefetchHooks Function()
     >;
+typedef $$PluginReposTableCreateCompanionBuilder =
+    PluginReposCompanion Function({
+      required String url,
+      Value<String?> name,
+      Value<bool> enabled,
+      required int addedAt,
+      Value<int?> lastFetchedAt,
+    });
+typedef $$PluginReposTableUpdateCompanionBuilder =
+    PluginReposCompanion Function({
+      Value<String> url,
+      Value<String?> name,
+      Value<bool> enabled,
+      Value<int> addedAt,
+      Value<int?> lastFetchedAt,
+    });
+
+class $$PluginReposTableFilterComposer
+    extends Composer<_$AppDb, $PluginReposTable> {
+  $$PluginReposTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastFetchedAt => $composableBuilder(
+    column: $table.lastFetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$PluginReposTableOrderingComposer
+    extends Composer<_$AppDb, $PluginReposTable> {
+  $$PluginReposTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastFetchedAt => $composableBuilder(
+    column: $table.lastFetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PluginReposTableAnnotationComposer
+    extends Composer<_$AppDb, $PluginReposTable> {
+  $$PluginReposTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<int> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get lastFetchedAt => $composableBuilder(
+    column: $table.lastFetchedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$PluginReposTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $PluginReposTable,
+          PluginRepoRow,
+          $$PluginReposTableFilterComposer,
+          $$PluginReposTableOrderingComposer,
+          $$PluginReposTableAnnotationComposer,
+          $$PluginReposTableCreateCompanionBuilder,
+          $$PluginReposTableUpdateCompanionBuilder,
+          (
+            PluginRepoRow,
+            BaseReferences<_$AppDb, $PluginReposTable, PluginRepoRow>,
+          ),
+          PluginRepoRow,
+          PrefetchHooks Function()
+        > {
+  $$PluginReposTableTableManager(_$AppDb db, $PluginReposTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PluginReposTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PluginReposTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PluginReposTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> url = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<int> addedAt = const Value.absent(),
+                Value<int?> lastFetchedAt = const Value.absent(),
+              }) => PluginReposCompanion(
+                url: url,
+                name: name,
+                enabled: enabled,
+                addedAt: addedAt,
+                lastFetchedAt: lastFetchedAt,
+              ),
+          createCompanionCallback:
+              ({
+                required String url,
+                Value<String?> name = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                required int addedAt,
+                Value<int?> lastFetchedAt = const Value.absent(),
+              }) => PluginReposCompanion.insert(
+                url: url,
+                name: name,
+                enabled: enabled,
+                addedAt: addedAt,
+                lastFetchedAt: lastFetchedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PluginReposTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $PluginReposTable,
+      PluginRepoRow,
+      $$PluginReposTableFilterComposer,
+      $$PluginReposTableOrderingComposer,
+      $$PluginReposTableAnnotationComposer,
+      $$PluginReposTableCreateCompanionBuilder,
+      $$PluginReposTableUpdateCompanionBuilder,
+      (
+        PluginRepoRow,
+        BaseReferences<_$AppDb, $PluginReposTable, PluginRepoRow>,
+      ),
+      PluginRepoRow,
+      PrefetchHooks Function()
+    >;
 typedef $$ServerPluginCfgsTableCreateCompanionBuilder =
     ServerPluginCfgsCompanion Function({
       required String serverId,
@@ -19766,6 +20343,8 @@ class $AppDbManager {
       $$BenchmarkRunsTableTableManager(_db, _db.benchmarkRuns);
   $$PluginInstallsTableTableManager get pluginInstalls =>
       $$PluginInstallsTableTableManager(_db, _db.pluginInstalls);
+  $$PluginReposTableTableManager get pluginRepos =>
+      $$PluginReposTableTableManager(_db, _db.pluginRepos);
   $$ServerPluginCfgsTableTableManager get serverPluginCfgs =>
       $$ServerPluginCfgsTableTableManager(_db, _db.serverPluginCfgs);
   $$PluginKvsTableTableManager get pluginKvs =>

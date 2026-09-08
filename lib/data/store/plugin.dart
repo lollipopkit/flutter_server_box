@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/plugin/install.dart';
+import 'package:server_box/data/model/plugin/repo_record.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -306,4 +307,86 @@ class PluginKvStore {
       pluginId,
     ]);
   }
+}
+
+/// The repositories this device reads. PLUGINS.md section 7.
+///
+/// Keyed by the `index.json` URL, because the URL is the identity — see
+/// `PluginRepos` in `db.dart` for why the name would be the wrong key.
+class PluginRepoStore {
+  PluginRepoStore();
+
+  static final instance = PluginRepoStore();
+
+  Database get _db => SqliteDb.instance;
+
+  /// TODO: seed the official repository here once one is published.
+  ///
+  /// Deliberately empty until then. A row would be a promise that an address
+  /// exists, and a store page listing a repository that answers nothing is
+  /// worse than one that says there are none — the first looks broken, the
+  /// second is true.
+  static const List<String> officialUrls = [];
+
+  /// Oldest first, which is the order they were added in and the order that
+  /// decides a conflict: two repositories offering the same plugin id, and the
+  /// one added first wins.
+  List<PluginRepoRecord> readAll() {
+    final rows = _db.select(
+      'SELECT url, name, enabled, added_at, last_fetched_at '
+      'FROM plugin_repo ORDER BY added_at, url;',
+    );
+    return [for (final row in rows) _fromRow(row)];
+  }
+
+  PluginRepoRecord? fetch(String url) {
+    final row = _db
+        .select(
+          'SELECT url, name, enabled, added_at, last_fetched_at '
+          'FROM plugin_repo WHERE url = ?;',
+          [url],
+        )
+        .singleOrNull;
+    return row == null ? null : _fromRow(row);
+  }
+
+  /// Adds or replaces one.
+  ///
+  /// `ON CONFLICT DO UPDATE` naming only the columns that move, so re-adding a
+  /// URL keeps when it was first added rather than resetting it — which is
+  /// what decides a plugin-id conflict.
+  void put(PluginRepoRecord repo) {
+    _db.execute(
+      'INSERT INTO plugin_repo (url, name, enabled, added_at, last_fetched_at) '
+      'VALUES (?, ?, ?, ?, ?) '
+      'ON CONFLICT (url) DO UPDATE SET '
+      'name = excluded.name, enabled = excluded.enabled, '
+      'last_fetched_at = excluded.last_fetched_at;',
+      [
+        repo.url,
+        repo.name,
+        repo.enabled ? 1 : 0,
+        repo.addedAt.millisecondsSinceEpoch,
+        repo.lastFetchedAt?.millisecondsSinceEpoch,
+      ],
+    );
+  }
+
+  void remove(String url) =>
+      _db.execute('DELETE FROM plugin_repo WHERE url = ?;', [url]);
+
+  void setEnabled(String url, bool enabled) => _db.execute(
+    'UPDATE plugin_repo SET enabled = ? WHERE url = ?;',
+    [enabled ? 1 : 0, url],
+  );
+
+  PluginRepoRecord _fromRow(Row row) => PluginRepoRecord(
+    url: row['url'] as String,
+    name: row['name'] as String?,
+    enabled: (row['enabled'] as int? ?? 1) != 0,
+    addedAt: DateTime.fromMillisecondsSinceEpoch(row['added_at'] as int? ?? 0),
+    lastFetchedAt: row['last_fetched_at'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(row['last_fetched_at'] as int),
+  );
 }

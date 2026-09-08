@@ -18,6 +18,7 @@ import 'package:server_box/data/store/migrations/m020_benchmark_runs.dart';
 import 'package:server_box/data/store/migrations/m021_server_btn_ids.dart';
 import 'package:server_box/data/store/migrations/m022_plugin_tables.dart';
 import 'package:server_box/data/store/migrations/m023_home_tab_ids.dart';
+import 'package:server_box/data/store/migrations/m024_plugin_repos.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -58,4 +59,5 @@ const kSchemaMigrations = <SchemaMigration>[
   ServerBtnIdsMigration(),
   PluginTablesMigration(),
   HomeTabIdsMigration(),
+  PluginReposMigration(),
 ];
