@@ -4,7 +4,13 @@
  * A `.sbp` is a zip, and `PluginPackage.read` refuses one with a path that
  * escapes — so this writes exactly two flat entries and nothing else.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 
 const root = join(import.meta.dir, "..");
@@ -21,6 +27,18 @@ const files: [string, Uint8Array][] = [
   ["manifest.json", new Uint8Array(readFileSync(join(root, "manifest.json")))],
   ["plugin.js", new Uint8Array(readFileSync(join(root, "dist/plugin.js")))],
 ];
+
+// The translations, which the installer reads back out of `l10n/<locale>.json`
+// (`PluginPackage.l10nDir`). Left out of this list until now, so a plugin could
+// ship them in its directory and lose them the moment it was packaged — the
+// dev-directory install worked and the `.sbp` quietly fell back to English.
+const l10nDir = join(root, "l10n");
+if (existsSync(l10nDir)) {
+  for (const name of readdirSync(l10nDir).sort()) {
+    if (!name.endsWith(".json")) continue;
+    files.push([`l10n/${name}`, new Uint8Array(readFileSync(join(l10nDir, name)))]);
+  }
+}
 
 const crcTable = (() => {
   const t = new Uint32Array(256);

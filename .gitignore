@@ -123,3 +123,8 @@ android/app/.cxx
 # ignoring it would leave the test silently unrunnable on a fresh clone.
 packages/plugins/*/dist/*.sbp
 packages/plugins/*/node_modules/
+
+# A copy `bun run build` drops beside `dist/plugin.js`, so `dist/` is a
+# directory the app's plugin installer will load as-is. The manifest itself
+# lives at each plugin's root.
+packages/plugins/*/dist/manifest.json

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun build src/plugin.ts --outfile dist/plugin.js --format esm --minify-whitespace",
+    "build": "bun build src/plugin.ts --outfile dist/plugin.js --format esm --minify-whitespace && cp manifest.json dist/manifest.json",
     "pack": "bun run build && bun run scripts/pack.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
