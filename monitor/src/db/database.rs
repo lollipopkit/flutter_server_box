@@ -22,6 +22,24 @@ use tracing::info;
 /// in smaller pieces, so the ceiling is what to lower.
 const WAL_AUTOCHECKPOINT_PAGES: u32 = 128;
 
+/// Size the WAL file is truncated back to after a checkpoint that leaves it
+/// larger, in bytes.
+///
+/// A checkpoint resets the WAL, it does not shorten the file, and SQLite's
+/// default `journal_size_limit` of -1 means it never will — so the file stays
+/// as large as the largest transaction ever written through it. One
+/// transaction here is far larger than the rest: VACUUM rewrites the whole
+/// database, and `cleanup::reclaim_free_pages` runs one on the first pass
+/// after an upgrade. Measured on a real agent, that reclaimed 84 MB from the
+/// database and left a 52 MB WAL behind it, which is most of the point of
+/// reclaiming given back.
+///
+/// Twice [`WAL_AUTOCHECKPOINT_PAGES`] at the default 4 KiB page, so it is a
+/// backstop for the outlier rather than something that fires on every
+/// checkpoint: the WAL sits at roughly the autocheckpoint ceiling in normal
+/// use and never reaches this.
+const WAL_SIZE_LIMIT_BYTES: u32 = WAL_AUTOCHECKPOINT_PAGES * 4096 * 2;
+
 pub async fn init(database_url: &str) -> Result<SqlitePool> {
     // Logged, not created. `Sqlite::create_database` opens a connection of its
     // own with default settings, and the file it leaves behind is past the
@@ -78,5 +96,6 @@ fn connect_options(database_url: &str) -> Result<SqliteConnectOptions> {
             "wal_autocheckpoint",
             WAL_AUTOCHECKPOINT_PAGES.to_string(),
         )
+        .pragma("journal_size_limit", WAL_SIZE_LIMIT_BYTES.to_string())
         .busy_timeout(Duration::from_secs(30)))
 }
