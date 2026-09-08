@@ -44,6 +44,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/bmc_credential/list.dart';
+import 'package:server_box/view/page/plugin/store.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
@@ -182,32 +183,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             icon: Icons.tab_outlined,
             page: () => const HomeTabsConfigPage(embedded: true),
           ),
-          // A branch only once something is under it. A plugin's settings page
-          // has to be reachable while it is installed and nowhere otherwise,
-          // and an install page permanently wrapped in an expandable holding
-          // one row would be a level of menu that says nothing.
-          if (PluginSettingsPage.nodes() case final pages when pages.isNotEmpty)
-            SettingsNode.branch(
-              id: 'app.plugins',
-              title: l10n.plugins,
-              icon: Icons.extension_outlined,
-              children: [
-                SettingsNode.leaf(
-                  id: 'app.plugins.manage',
-                  title: l10n.pluginInstalled,
-                  icon: Icons.extension_outlined,
-                  page: () => const PluginsPage(embedded: true),
-                ),
-                ...pages,
-              ],
-            )
-          else
-            SettingsNode.leaf(
-              id: 'app.plugins',
-              title: l10n.plugins,
-              icon: Icons.extension_outlined,
-              page: () => const PluginsPage(embedded: true),
-            ),
           if (isIOS)
             SettingsNode.leaf(
               id: 'app.ios',
@@ -357,6 +332,59 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         icon: Icons.developer_board,
         page: () => const BmcCredentialsListPage(),
       ),
+      // Top level, beside the other things the app *has* rather than things it
+      // is configured by. A plugin is closer to a private key or a BMC account
+      // than to a preference: it is a record the user manages, it has its own
+      // page, and burying it under Application put a whole feature two levels
+      // down from where anybody would look for it.
+      //
+      // A branch only once something is under it. A plugin's own settings page
+      // has to be reachable while it is installed and nowhere otherwise, and
+      // an install page permanently wrapped in an expandable holding one row
+      // would be a level of menu that says nothing.
+      if (PluginSettingsPage.nodes() case final pages when pages.isNotEmpty)
+        SettingsNode.branch(
+          id: 'plugins',
+          title: l10n.plugins,
+          icon: Icons.extension_outlined,
+          children: [
+            SettingsNode.leaf(
+              id: 'plugins.manage',
+              title: l10n.pluginInstalled,
+              icon: Icons.extension_outlined,
+              page: () => const PluginsPage(embedded: true),
+            ),
+            SettingsNode.leaf(
+              id: 'plugins.store',
+              title: l10n.pluginStore,
+              icon: Icons.storefront_outlined,
+              page: () => const PluginStorePage(embedded: true),
+            ),
+            ...pages,
+          ],
+        )
+      else
+        // Two rows is already a branch: the store is where plugins come from
+        // and the list is what came, and neither is a sub-page of the other.
+        SettingsNode.branch(
+          id: 'plugins',
+          title: l10n.plugins,
+          icon: Icons.extension_outlined,
+          children: [
+            SettingsNode.leaf(
+              id: 'plugins.manage',
+              title: l10n.pluginInstalled,
+              icon: Icons.extension_outlined,
+              page: () => const PluginsPage(embedded: true),
+            ),
+            SettingsNode.leaf(
+              id: 'plugins.store',
+              title: l10n.pluginStore,
+              icon: Icons.storefront_outlined,
+              page: () => const PluginStorePage(embedded: true),
+            ),
+          ],
+        ),
       SettingsNode.leaf(
         id: 'about',
         title: libL10n.about,

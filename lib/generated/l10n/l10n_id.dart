@@ -598,6 +598,62 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get pluginStore => 'Plugin store';
+
+  @override
+  String get pluginStoreEmpty => 'Nothing to install';
+
+  @override
+  String get pluginStoreEmptyTip =>
+      'The repositories you added offer no plugins this app can run.';
+
+  @override
+  String get pluginRepos => 'Repositories';
+
+  @override
+  String get pluginAddRepo => 'Add a repository';
+
+  @override
+  String get pluginNoRepos => 'No repositories';
+
+  @override
+  String get pluginNoReposTip =>
+      'A repository is an index.json address. Plugins are installed from one, and it decides what runs on your servers.';
+
+  @override
+  String get pluginUpdate => 'Update';
+
+  @override
+  String get pluginNeedsNewerApp => 'Needs a newer app';
+
+  @override
+  String pluginNewerNeedsApp(String version) {
+    return 'v$version needs a newer app';
+  }
+
+  @override
+  String pluginAlsoIn(int count) {
+    return 'also in $count other';
+  }
+
+  @override
+  String pluginUpdatesAvailable(int count) {
+    return '$count updates available';
+  }
+
+  @override
+  String get pluginNoChecksum => 'No checksum';
+
+  @override
+  String pluginNoChecksumTip(String repo) {
+    return '$repo did not say what this package should be, so nothing about the bytes can be checked. Install it only if you trust that repository.';
+  }
+
+  @override
+  String get pluginChecksumFailed =>
+      'The package is not the one the repository described';
+
+  @override
   String get pluginInstall => 'Instal plugin';
 
   @override

@@ -1137,6 +1137,96 @@ abstract class AppLocalizations {
   /// **'{manager} does not say which updates are security fixes'**
   String pkgSecurityUnknown(String manager);
 
+  /// No description provided for @pluginStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Plugin store'**
+  String get pluginStore;
+
+  /// No description provided for @pluginStoreEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to install'**
+  String get pluginStoreEmpty;
+
+  /// No description provided for @pluginStoreEmptyTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The repositories you added offer no plugins this app can run.'**
+  String get pluginStoreEmptyTip;
+
+  /// No description provided for @pluginRepos.
+  ///
+  /// In en, this message translates to:
+  /// **'Repositories'**
+  String get pluginRepos;
+
+  /// No description provided for @pluginAddRepo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a repository'**
+  String get pluginAddRepo;
+
+  /// No description provided for @pluginNoRepos.
+  ///
+  /// In en, this message translates to:
+  /// **'No repositories'**
+  String get pluginNoRepos;
+
+  /// No description provided for @pluginNoReposTip.
+  ///
+  /// In en, this message translates to:
+  /// **'A repository is an index.json address. Plugins are installed from one, and it decides what runs on your servers.'**
+  String get pluginNoReposTip;
+
+  /// No description provided for @pluginUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get pluginUpdate;
+
+  /// No description provided for @pluginNeedsNewerApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a newer app'**
+  String get pluginNeedsNewerApp;
+
+  /// No description provided for @pluginNewerNeedsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'v{version} needs a newer app'**
+  String pluginNewerNeedsApp(String version);
+
+  /// No description provided for @pluginAlsoIn.
+  ///
+  /// In en, this message translates to:
+  /// **'also in {count} other'**
+  String pluginAlsoIn(int count);
+
+  /// No description provided for @pluginUpdatesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} updates available'**
+  String pluginUpdatesAvailable(int count);
+
+  /// No description provided for @pluginNoChecksum.
+  ///
+  /// In en, this message translates to:
+  /// **'No checksum'**
+  String get pluginNoChecksum;
+
+  /// No description provided for @pluginNoChecksumTip.
+  ///
+  /// In en, this message translates to:
+  /// **'{repo} did not say what this package should be, so nothing about the bytes can be checked. Install it only if you trust that repository.'**
+  String pluginNoChecksumTip(String repo);
+
+  /// No description provided for @pluginChecksumFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The package is not the one the repository described'**
+  String get pluginChecksumFailed;
+
   /// No description provided for @pluginInstall.
   ///
   /// In en, this message translates to:

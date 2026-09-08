@@ -209,6 +209,33 @@
       }
     }
   },
+  "pluginStore": "Plugin store",
+  "pluginStoreEmpty": "Nothing to install",
+  "pluginStoreEmptyTip": "The repositories you added offer no plugins this app can run.",
+  "pluginRepos": "Repositories",
+  "pluginAddRepo": "Add a repository",
+  "pluginNoRepos": "No repositories",
+  "pluginNoReposTip": "A repository is an index.json address. Plugins are installed from one, and it decides what runs on your servers.",
+  "pluginUpdate": "Update",
+  "pluginNeedsNewerApp": "Needs a newer app",
+  "pluginNewerNeedsApp": "v{version} needs a newer app",
+  "@pluginNewerNeedsApp": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+  "pluginAlsoIn": "also in {count} other",
+  "@pluginAlsoIn": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pluginUpdatesAvailable": "{count} updates available",
+  "@pluginUpdatesAvailable": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pluginNoChecksum": "No checksum",
+  "pluginNoChecksumTip": "{repo} did not say what this package should be, so nothing about the bytes can be checked. Install it only if you trust that repository.",
+  "@pluginNoChecksumTip": {
+    "placeholders": { "repo": { "type": "String" } }
+  },
+  "pluginChecksumFailed": "The package is not the one the repository described",
   "pluginInstall": "Install a plugin",
   "pluginInstalled": "Installed",
   "pluginBundled": "Bundled",

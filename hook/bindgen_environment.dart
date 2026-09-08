@@ -23,6 +23,14 @@ import 'package:hooks/hooks.dart';
 /// shipped it is used, and neither libclang nor a sysroot has to exist on the
 /// machine doing the build.
 Map<String, String> bindgenCrossCompileEnvironment(BuildInput input) {
+  // **Asked before it is read.** `HookConfig.code` throws outright when the
+  // build is not producing code assets, and a hook runs for other reasons —
+  // a `flutter run` on macOS asks once with `buildCodeAssets` false, and
+  // reading it there took the whole build down with `Bad state:
+  // HookConfig.code should only be accessed when building code assets`, which
+  // names the getter and not the caller.
+  if (!input.config.buildCodeAssets) return const {};
+
   // Read here rather than at the call site: `.code` is an extension `hook/`
   // only imports in this file, and the resolution is where it is written.
   final code = input.config.code;

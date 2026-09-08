@@ -5,11 +5,10 @@
 /// repositories offering the same plugin.
 library;
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/plugin/repo_record.dart';
-import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/migrations/all.dart';
+import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/schema.dart';
 
 import 'helpers/test_db.dart';

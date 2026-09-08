@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/plugin/package.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
 import 'package:server_box/data/provider/plugin/installer.dart';
 import 'package:server_box/src/rust/api/plugin.dart' as ffi;
+import 'package:server_box/view/widget/plugin/consent.dart';
 
 /// What is installed, and how to install more. PLUGINS.md sections 6 and 7.
 ///
@@ -212,78 +213,8 @@ class _PluginsPageState extends State<PluginsPage> {
     }
   }
 
-  /// The permissions dialog, and the only place consent is given.
-  ///
-  /// Answers the set the user agreed to, or null if they did not. All or
-  /// nothing on purpose: a plugin that asks for two things and is granted one
-  /// is a plugin whose author never tested that combination, and the failure
-  /// lands on the user as a feature that half works.
-  Future<Set<String>?> _askConsent(ffi.PluginManifestInfo manifest) async {
-    final permissions = manifest.permissions;
-    final ok = await context.showRoundDialog<bool>(
-      title: '${manifest.name} ${manifest.version}',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 7,
-        children: [
-          if (manifest.description.isNotEmpty)
-            Text(manifest.description, style: UIs.textGrey),
-          Text(
-            permissions.isEmpty
-                ? l10n.pluginNoPermissions
-                : l10n.pluginPermissionsAsk,
-          ),
-          for (final name in permissions)
-            Row(
-              spacing: 5,
-              children: [
-                const Icon(Icons.chevron_right, size: 15),
-                Flexible(child: Text(_describe(name), style: UIs.text13)),
-              ],
-            ),
-          // A status plugin runs a command it chose on every server it is
-          // shown for. `server.exec` is what says so in the list above, but
-          // the list is names and this is what they mean.
-          // The two that are worth a sentence rather than a name: one runs
-          // arbitrary commands, the other learns the whole fleet exists.
-          if (permissions.contains('server.list'))
-            Text(
-              l10n.pluginSeesAllServersTip,
-              style: TextStyle(
-                fontSize: 11,
-                color: context.theme.colorScheme.error,
-              ),
-            ),
-          if (permissions.contains('server.exec'))
-            Text(
-              l10n.pluginRunsOnServer,
-              style: TextStyle(
-                fontSize: 11,
-                color: context.theme.colorScheme.error,
-              ),
-            ),
-        ],
-      ),
-      actions: Btnx.cancelOk,
-    );
-    if (ok != true) return null;
-    return permissions.toSet();
-  }
-
-  /// What a permission means, in the app's own words where it has them.
-  ///
-  /// Falls back to the name rather than to nothing: a build that meets a
-  /// permission it has no sentence for should still say which one, since the
-  /// alternative is asking the user to agree to a blank line.
-  String _describe(String name) => switch (name) {
-    'server.exec' => libL10n.cmd,
-    'server.list' => l10n.pluginSeesAllServers,
-    'net.http' => libL10n.network,
-    'ui.dialog' => libL10n.attention,
-    'clipboard' => libL10n.copy,
-    _ => name,
-  };
+  Future<Set<String>?> _askConsent(ffi.PluginManifestInfo manifest) =>
+      askPluginConsent(context, manifest);
 
   Future<void> _onUninstall(InstalledPlugin plugin) async {
     var keepData = false;
