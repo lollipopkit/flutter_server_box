@@ -58,12 +58,27 @@ class PluginRuntimeService {
 
   bool get started => _runtime != null;
 
+  /// The start in progress, so a second caller awaits it instead of doing it
+  /// again.
+  ///
+  /// `if (_runtime != null) return` is not a guard across an `await`: two
+  /// surfaces opening at once — a detail page's status card and a plugin tab —
+  /// both see null, both build a runtime, and the second assignment loses the
+  /// first. What is lost is not garbage: it is a live runtime with its own
+  /// native threads and its own stream subscription, which nothing unloads
+  /// because nothing has a reference to it.
+  Future<void>? _starting;
+
   /// Starts the runtime and begins answering.
   ///
-  /// Idempotent: the second caller gets the runtime the first one started.
-  Future<void> start() async {
-    if (_runtime != null) return;
+  /// Idempotent: the second caller gets the runtime the first one started,
+  /// including while the first is still starting it.
+  Future<void> start() {
+    if (_runtime != null) return Future.value();
+    return _starting ??= _start()..whenComplete(() => _starting = null);
+  }
 
+  Future<void> _start() async {
     final requests = RustStreamSink<ffi.PluginRequest>();
     final logs = RustStreamSink<ffi.PluginLog>();
     // Listened to only after the sinks have been handed over: the stream does

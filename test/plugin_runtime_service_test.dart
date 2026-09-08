@@ -253,12 +253,12 @@ void main() {
   test('unloading takes the handles issued to that instance', () async {
     final id = await load('export function a() {}');
     final handle = _boundHandle(bridge);
-    expect(bridge.handles.resolve(handle), 'srv-1');
+    expect(bridge.handles.resolve('inst-1', handle), 'srv-1');
 
     await service.unload(id);
     loaded.remove(id);
 
-    expect(bridge.handles.resolve(handle), isNull);
+    expect(bridge.handles.resolve('inst-1', handle), isNull);
   });
 }
 

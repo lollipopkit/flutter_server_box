@@ -1432,6 +1432,11 @@ class ServerNotifier extends _$ServerNotifier {
 
     _pkgInFlight = true;
     final spi = state.spi;
+    // Captured *before* the awaits below, like every other refresh here.
+    // Reading the field at the check instead compares it with itself, and the
+    // guard becomes `state.spi == spi` alone — which a reconnect to the same
+    // record passes.
+    final operation = _operationGeneration;
     try {
       final raw = await _runStatusCommandWithExec(
         client,
@@ -1445,7 +1450,7 @@ class ServerNotifier extends _$ServerNotifier {
       // The same guard the extended cache has, and for the same reason: a
       // refresh against the address the server used to have must not write the
       // old machine's reading onto the new one.
-      if (!_isRefreshCurrent(_operationGeneration, spi)) return;
+      if (!_isRefreshCurrent(operation, spi)) return;
       if (!ffi.containsStatusSegment(raw: raw)) return;
 
       // Only this one field, through the shared parser. Not `getStatus`: that
@@ -1459,7 +1464,7 @@ class ServerNotifier extends _$ServerNotifier {
       );
       final decoded = jsonDecode(json) as Map<String, dynamic>;
       final pkg = PkgUpdates.fromJson(decoded['pkg'] as Map<String, dynamic>);
-      if (!_isRefreshCurrent(_operationGeneration, spi)) return;
+      if (!_isRefreshCurrent(operation, spi)) return;
 
       // A new object, or nothing is notified: the state compares equal when the
       // status is the same instance, so mutating it in place would update the

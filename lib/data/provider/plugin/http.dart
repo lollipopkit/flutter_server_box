@@ -121,7 +121,7 @@ abstract final class PluginHttp {
       }
 
       final response = await request.close().timeout(timeout);
-      final bytes = await _readCapped(response);
+      final bytes = await _readCapped(response, timeout);
       final collected = <String, String>{};
       response.headers.forEach((name, values) {
         collected[name] = values.join(', ');
@@ -153,15 +153,33 @@ abstract final class PluginHttp {
     }
   }
 
-  static Future<List<int>> _readCapped(HttpClientResponse response) async {
-    final out = <int>[];
-    await for (final chunk in response) {
-      out.addAll(chunk);
-      if (out.length > maxBodyBytes) {
-        throw const HttpException('the answer is larger than the limit');
+  /// The body, bounded by both size and time.
+  ///
+  /// The `timeout` matters as much as the cap and used to be missing here:
+  /// `connectionTimeout` and the two `.timeout(timeout)` calls above cover
+  /// connect and headers only. A host answering one byte every thirty seconds
+  /// trips neither, and never trips the cap either — so the request ran until
+  /// the socket died, long after the Rust side had given up on the app and
+  /// told the plugin so, with `client.close` in a `finally` that had not been
+  /// reached.
+  ///
+  /// Applied to the whole drain rather than per chunk, which is what bounds a
+  /// body that arrives slowly *and* forever.
+  static Future<List<int>> _readCapped(
+    HttpClientResponse response,
+    Duration timeout,
+  ) async {
+    final read = () async {
+      final out = <int>[];
+      await for (final chunk in response) {
+        out.addAll(chunk);
+        if (out.length > maxBodyBytes) {
+          throw const HttpException('the answer is larger than the limit');
+        }
       }
-    }
-    return out;
+      return out;
+    }();
+    return read.timeout(timeout);
   }
 
   /// SHA-256 of the DER form, lowercase hex.

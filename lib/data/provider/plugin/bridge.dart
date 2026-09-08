@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:server_box/data/model/plugin/host_ops.dart';
 import 'package:server_box/data/model/plugin/node.dart';
@@ -119,7 +120,7 @@ class PluginBridge {
   ) async {
     switch (func) {
       case 'sb.server.exec':
-        final serverId = handles.resolve(req['server']);
+        final serverId = handles.resolve(instanceId, req['server']);
         if (serverId == null) {
           return PluginAnswer.badRequest('sb.server.exec: unknown server');
         }
@@ -307,7 +308,7 @@ class PluginBridge {
         });
 
       case 'sb.nav.openTerminal':
-        final serverId = handles.resolve(req['server']);
+        final serverId = handles.resolve(instanceId, req['server']);
         if (serverId == null) {
           return PluginAnswer.badRequest('sb.nav.openTerminal: unknown server');
         }
@@ -325,7 +326,7 @@ class PluginBridge {
         return const PluginAnswer.ok();
 
       case 'sb.nav.openServer':
-        final serverId = handles.resolve(req['server']);
+        final serverId = handles.resolve(instanceId, req['server']);
         if (serverId == null) {
           return PluginAnswer.badRequest('sb.nav.openServer: unknown server');
         }
@@ -445,10 +446,21 @@ class PluginServerHandles {
 
   String? boundServerOf(String instanceId) => _bound[instanceId];
 
-  /// The server [handle] names, or null for anything else — including a
-  /// handle belonging to an instance that has gone.
-  String? resolve(Object? handle) =>
-      handle is String ? _servers[handle] : null;
+  /// The server [handle] names **for this instance**, or null for anything
+  /// else — a handle nobody issued, one belonging to an instance that has
+  /// gone, or one issued to a different instance.
+  ///
+  /// Keyed by instance rather than looked up in one shared map. The map is
+  /// process-wide, so without the check a handle belonging to another instance
+  /// — another *plugin* — resolved to its server. `sbm_plugin::scope` keeps a
+  /// per-instance set and refuses such a call before it reaches here, which
+  /// made this the second of two checks in the comment above it and the only
+  /// one in fact.
+  String? resolve(String instanceId, Object? handle) {
+    if (handle is! String) return null;
+    if (!(_issued[instanceId]?.contains(handle) ?? false)) return null;
+    return _servers[handle];
+  }
 
   void forget(String instanceId) {
     for (final handle in _issued.remove(instanceId) ?? const <String>{}) {
@@ -457,15 +469,17 @@ class PluginServerHandles {
     _bound.remove(instanceId);
   }
 
-  static var _counter = 0;
+  static final _random = Random.secure();
 
-  /// Not a server id, and not guessable from one.
+  /// Not a server id, and not guessable from one — nor from the clock.
   ///
   /// The point of the handle is that a plugin cannot name a server it was not
-  /// given, which a value derived from the id would undo.
+  /// given, which a value derived from the id would undo. It used to be a
+  /// base-36 timestamp plus a global counter, which is fully determined by
+  /// when it was minted: a few thousand tries covers the space around a known
+  /// moment. 128 bits from `Random.secure()` instead.
   static String _randomHandle() {
-    _counter++;
-    final now = DateTime.now().microsecondsSinceEpoch;
-    return 'h${now.toRadixString(36)}${_counter.toRadixString(36)}';
+    final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
+    return 'h${bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';
   }
 }

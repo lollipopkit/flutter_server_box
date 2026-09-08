@@ -181,11 +181,15 @@ void main() {
     test('a handle names a server, and nothing else does', () {
       final handle = handles.bind('inst-1', 'srv-1');
 
-      expect(handles.resolve(handle), 'srv-1');
-      expect(handles.resolve('srv-1'), isNull, reason: 'not the id itself');
-      expect(handles.resolve('h999'), isNull);
-      expect(handles.resolve(null), isNull);
-      expect(handles.resolve(42), isNull);
+      expect(handles.resolve('inst-1', handle), 'srv-1');
+      expect(
+        handles.resolve('inst-1', 'srv-1'),
+        isNull,
+        reason: 'not the id itself',
+      );
+      expect(handles.resolve('inst-1', 'h999'), isNull);
+      expect(handles.resolve('inst-1', null), isNull);
+      expect(handles.resolve('inst-1', 42), isNull);
     });
 
     /// Comparing two handles is the only operation a plugin has on one, so
@@ -203,11 +207,20 @@ void main() {
       final b = handles.issue('inst-2', 'srv-1');
 
       expect(a, isNot(b));
-      expect(handles.resolve(a), 'srv-1');
+      expect(handles.resolve('inst-1', a), 'srv-1');
+
+      // The map is process-wide, so this is the check that keeps one
+      // instance's handle from naming a server in another — and one plugin's
+      // from naming one in a different plugin.
+      expect(
+        handles.resolve('inst-2', a),
+        isNull,
+        reason: "another instance's handle names nothing here",
+      );
 
       handles.forget('inst-1');
-      expect(handles.resolve(a), isNull, reason: 'unloading takes them');
-      expect(handles.resolve(b), 'srv-1');
+      expect(handles.resolve('inst-1', a), isNull, reason: 'unloading takes them');
+      expect(handles.resolve('inst-2', b), 'srv-1');
     });
   });
 
@@ -518,7 +531,7 @@ void main() {
 
       final handle = (decoded(answer)! as Map)['server'] as String;
       expect(handle, isNot('srv-9'));
-      expect(handles.resolve(handle), 'srv-9');
+      expect(handles.resolve('inst-1', handle), 'srv-9');
     });
 
     test('and not picking one says so', () async {

@@ -132,7 +132,32 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
   /// that must not disagree with what is on screen. PLUGINS.md 9.5.
   PluginStatusReading? get _fromAgent => widget.agentReading;
 
+  /// One collection at a time.
+  ///
+  /// The timer fires on a fixed interval and a collection is a round trip to a
+  /// server, which routinely outlives it. Two overlapping collections share
+  /// one `instanceId`, and both ends of that go wrong: whichever loaded first
+  /// finds `_instance` already replaced and never unloads its own — an OS
+  /// thread and a QuickJS runtime leaked per overlap — while in the other
+  /// interleaving the first one's `unload` runs before the second has stored
+  /// its handle, and forgets the bound server handle they share, so the live
+  /// instance's `sb.server.exec` answers "unknown server".
+  ///
+  /// Skipping a tick is the right answer rather than queueing one: the next
+  /// tick is a whole interval away and the reading it takes is newer.
   Future<void> _collect() async {
+    if (_collecting) return;
+    _collecting = true;
+    try {
+      await _collectOnce();
+    } finally {
+      _collecting = false;
+    }
+  }
+
+  bool _collecting = false;
+
+  Future<void> _collectOnce() async {
     final generation = ++_generation;
     final plugin = widget.plugin;
     final status = plugin.manifest.status;
@@ -215,9 +240,14 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
       // them.
       setState(() => _error = '$e');
     } finally {
+      // Unconditionally: this invocation loaded it, so this invocation ends
+      // it. The old `identical(loaded, _instance)` guard meant an instance
+      // replaced by a later collection was never unloaded at all — and
+      // `identical` on a `BigInt` is not a value comparison in the first
+      // place.
       final loaded = instance;
-      if (loaded != null && identical(loaded, _instance)) {
-        _instance = null;
+      if (loaded != null) {
+        if (loaded == _instance) _instance = null;
         await _service.unload(loaded);
       }
     }
