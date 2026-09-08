@@ -452,6 +452,182 @@ void main() {
       expect(find.text('web'), findsOneWidget);
     });
 
+    /// A list longer than the window scrolls rather than being cut off.
+    ///
+    /// `expanded(scroll([...]))` is what every one of these pages is built
+    /// from, and it only works if the column above hands the scroll view a
+    /// bounded height.
+    testWidgets('a long list inside expanded scrolls', (tester) async {
+      await pump(tester, {
+        't': 'column',
+        'v': 1,
+        'c': [
+          {'t': 'text', 'v': 2, 'p': {'value': 'header'}},
+          {
+            't': 'expanded',
+            'v': 3,
+            'c': [
+              {
+                't': 'scroll',
+                'v': 4,
+                'c': [
+                  for (var i = 0; i < 60; i++)
+                    {
+                      't': 'tile',
+                      'v': 100 + i,
+                      'p': {'title': 'row $i'},
+                    },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      // A `SingleChildScrollView` builds every child, so the last row is in
+      // the tree either way — where it *is* is the question.
+      final viewport = tester.getSize(find.byType(SingleChildScrollView)).height;
+      expect(
+        tester.getTopLeft(find.text('row 59')).dy,
+        greaterThan(viewport),
+        reason: 'the last row starts below the fold',
+      );
+
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, -2000),
+      );
+      await tester.pump();
+
+      expect(tester.getTopLeft(find.text('row 59')).dy, lessThan(viewport));
+    });
+
+    /// A card is as tall as what is in it.
+    ///
+    /// `Column` defaults to `MainAxisSize.max`, so a settings page whose whole
+    /// content was one switch drew a card down the entire window.
+    testWidgets('a card does not fill the height it is offered', (tester) async {
+      await pump(tester, {
+        't': 'card',
+        'v': 1,
+        'c': [
+          {'t': 'text', 'v': 2, 'p': {'value': 'one line'}},
+        ],
+      });
+
+      final card = tester.getSize(find.byType(CardX));
+      expect(card.height, lessThan(200));
+    });
+
+    /// And a plugin that *wants* the rest of the space still gets it: a tight
+    /// flex child takes the free space, so the column fills after all.
+    testWidgets('expanded still fills inside a min column', (tester) async {
+      await pump(tester, {
+        't': 'column',
+        'v': 1,
+        'c': [
+          {'t': 'text', 'v': 2, 'p': {'value': 'top'}},
+          {
+            't': 'expanded',
+            'v': 3,
+            'c': [
+              {'t': 'text', 'v': 4, 'p': {'value': 'rest'}},
+            ],
+          },
+        ],
+      });
+
+      final column = tester.getSize(find.byType(Column).first);
+      expect(column.height, greaterThan(400));
+    });
+
+    /// A settings page is mostly these, so the value it hands back has to be
+    /// the new one — a plugin that had to remember which way it was would be
+    /// keeping state the app already has.
+    testWidgets('a toggle answers the value it moved to', (tester) async {
+      Object? seen;
+      Object? value;
+      await pump(
+        tester,
+        {
+          't': 'toggle',
+          'v': 1,
+          'p': {'label': 'Stay on one filesystem', 'value': false},
+          'on': {
+            'change': {'m': 'oneFs'},
+          },
+        },
+        onEvent: (msg, v) {
+          seen = msg;
+          value = v;
+        },
+      );
+
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+
+      expect(seen, {'m': 'oneFs'});
+      expect(value, true);
+    });
+
+    /// `onTap` is declared for any node, and honouring it only on `btn` made
+    /// every action a plugin puts in a list — a filter, a reload, a row that
+    /// opens — draw a control that did nothing.
+    testWidgets('a tap on anything else answers too', (tester) async {
+      Object? seen;
+      await pump(
+        tester,
+        {
+          't': 'tag',
+          'v': 1,
+          'p': {'label': 'Reload'},
+          'on': {
+            'tap': {'m': 'reload'},
+          },
+        },
+        onEvent: (msg, _) => seen = msg,
+      );
+
+      await tester.tap(find.text('Reload'));
+      await tester.pump();
+
+      expect(seen, {'m': 'reload'});
+    });
+
+    /// A row hands its tap to the `ListTile`, so the ripple is the row. It
+    /// must not also be wrapped, or one tap would answer twice.
+    testWidgets('a row answers once, not twice', (tester) async {
+      var calls = 0;
+      await pump(
+        tester,
+        {
+          't': 'tile',
+          'v': 1,
+          'p': {'title': '/var', 'subtitle': '18M'},
+          'on': {
+            'tap': {'m': 'open'},
+          },
+        },
+        onEvent: (msg, _) => calls++,
+      );
+
+      await tester.tap(find.text('/var'));
+      await tester.pump();
+
+      expect(calls, 1);
+    });
+
+    /// Nothing to answer, so nothing that looks answerable.
+    testWidgets('a node with no tap is not made tappable', (tester) async {
+      await pump(tester, {
+        't': 'tag',
+        'v': 1,
+        'p': {'label': 'tcp'},
+      });
+
+      expect(find.byType(InkWell), findsNothing);
+    });
+
     testWidgets('a tap hands back the message unchanged', (tester) async {
       Object? seen;
       var calls = 0;

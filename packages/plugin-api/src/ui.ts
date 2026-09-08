@@ -94,6 +94,8 @@ export type NodeType =
   | "divider"
   // content and controls
   | "card"
+  | "tile"
+  | "summary"
   | "kv"
   | "expand"
   | "percent"
@@ -101,6 +103,7 @@ export type NodeType =
   | "bar_chart"
   | "btn"
   | "input"
+  | "toggle"
   | "table"
   | "progress"
   | "tag"
@@ -206,6 +209,61 @@ export const divider = (): Node => node("divider");
 
 export const card = (children: Node[]): Node => node("card", undefined, children);
 
+/**
+ * One row of a list, drawn the way the app draws its own.
+ *
+ * Reach for this before assembling a row out of {@link row} and {@link text}.
+ * A page is usually a list of things with a name, a detail under it and a
+ * reading on the right, and hand-building that gives every plugin a slightly
+ * different rhythm from the app and from every other plugin. This is the app's
+ * dense `ListTile`: a leading icon, a title, a subtitle, and a trailing node.
+ *
+ * Put a run of these inside one {@link card} rather than a card each — a card
+ * per fact is what makes a page of five rows fill a window.
+ *
+ * `icon` names one of the fixed set (see {@link Icon}); an unknown name draws
+ * nothing rather than failing the row.
+ */
+export const tile = (t: {
+  title: Bindable;
+  subtitle?: Bindable;
+  icon?: string;
+  trailing?: Node;
+}): Node =>
+  node(
+    "tile",
+    {
+      title: t.title,
+      ...(t.subtitle === undefined ? {} : { subtitle: t.subtitle }),
+      ...(t.icon === undefined ? {} : { icon: t.icon }),
+    },
+    t.trailing ? [t.trailing] : undefined,
+  );
+
+/**
+ * The block at the top of a page: what the page answers, in one reading.
+ *
+ * `value` is the figure — large, and the first thing read. `label` says what
+ * it counts, `detail` qualifies it, and `actions` sit on the right. Separated
+ * from the list below it by its own weight rather than by a divider, so a page
+ * has two levels instead of one.
+ */
+export const summary = (s: {
+  value: Bindable;
+  label?: Bindable;
+  detail?: Bindable;
+  actions?: Node[];
+}): Node =>
+  node(
+    "summary",
+    {
+      value: s.value,
+      ...(s.label === undefined ? {} : { label: s.label }),
+      ...(s.detail === undefined ? {} : { detail: s.detail }),
+    },
+    s.actions,
+  );
+
 /** A label and a value on one line — the app's `KvRow`. */
 export const kv = (k: string, v: Bindable): Node => node("kv", { k, v });
 
@@ -225,6 +283,22 @@ export const btn = (label: string): Node => node("btn", { label });
 
 export const input = (value: string, p?: { hint?: string; secret?: boolean }): Node =>
   node("input", { value, ...p });
+
+/**
+ * A setting that is on or off.
+ *
+ * The label sits on the left and the switch on the right, which is how the
+ * app draws its own — so a plugin's settings page reads like the pages around
+ * it. `onChange` carries the new value, so a plugin never has to track which
+ * way it was.
+ *
+ * A settings page is mostly these. Reach for {@link btn} only for something
+ * that *happens* rather than something that is.
+ */
+export const toggle = (
+  value: boolean | Binding,
+  p: { label: string; hint?: string },
+): Node => node("toggle", { value, ...p });
 
 export const table = (header: string[], rows: string[][]): Node =>
   node("table", { header, rows });

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:server_box/data/model/app/feature.dart';
+import 'package:server_box/data/model/plugin/icons.dart';
 import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/model/plugin/l10n.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
@@ -58,7 +58,7 @@ class InstalledPlugin {
   Feature? get statusFeature {
     final status = manifest.status;
     if (status == null) return null;
-    return _feature(status.id, status.label);
+    return _feature(status.id, status.label, status.icon);
   }
 
   /// The card it draws on the server detail page, or null.
@@ -70,7 +70,7 @@ class InstalledPlugin {
   Feature? get cardFeature {
     final card = manifest.card;
     if (card == null) return null;
-    return _feature(card.id, card.label);
+    return _feature(card.id, card.label, card.icon);
   }
 
   InstalledPlugin copyWith({PluginInstall? record}) => InstalledPlugin(
@@ -98,7 +98,7 @@ class InstalledPlugin {
     return Feature(
       id: '$id:${page.id}',
       slot: FeatureSlot.funcBtn,
-      icon: Icons.extension_outlined,
+      icon: PluginIcons.of(page.icon),
       label: () => page.label,
       needs: needs.isEmpty
           ? null
@@ -128,7 +128,7 @@ class InstalledPlugin {
     return Feature(
       id: '$id:${tab.id}',
       slot: FeatureSlot.homeTab,
-      icon: Icons.extension_outlined,
+      icon: PluginIcons.of(tab.icon),
       label: () => tab.label,
     );
   }
@@ -146,12 +146,13 @@ class InstalledPlugin {
   bool isPage(String featureId) =>
       manifest.page != null && featureId == '$id:${manifest.page!.id}';
 
-  Feature _feature(String contributionId, String label) => Feature(
-    // `<plugin id>:<contribution id>`, which is what keeps two plugins from
-    // colliding and what an arrangement stores.
-    id: '$id:$contributionId',
-    slot: FeatureSlot.detailCard,
-    icon: Icons.extension_outlined,
-    label: () => label,
-  );
+  Feature _feature(String contributionId, String label, String? icon) =>
+      Feature(
+        // `<plugin id>:<contribution id>`, which is what keeps two plugins
+        // from colliding and what an arrangement stores.
+        id: '$id:$contributionId',
+        slot: FeatureSlot.detailCard,
+        icon: PluginIcons.of(icon),
+        label: () => label,
+      );
 }

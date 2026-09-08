@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/data/model/plugin/icons.dart';
 import 'package:server_box/data/model/plugin/l10n.dart';
 import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/view/widget/plugin/surface.dart';
@@ -72,10 +73,40 @@ class _Builder {
       return _problem('stale revision ${rev ?? '?'}');
     }
 
-    final widget = _keyed(node, _content(context, node, inFlex));
+    final widget = _keyed(node, _tappable(context, node, _content(context, node, inFlex)));
     final rev = node.rev;
     if (rev != null) state.remember(rev, widget);
     return widget;
+  }
+
+  /// Makes any node carrying a `tap` event answer one.
+  ///
+  /// `sb.ui.onTap` is declared for **any** node and was honoured only by
+  /// `btn`, so a plugin that wrapped a tag, a card or a row — which is what
+  /// every action in a list is — drew something that looked like a control and
+  /// did nothing. A page of rows you cannot open is the whole feature missing,
+  /// and nothing said so: the tree was valid and the event was simply never
+  /// read.
+  ///
+  /// Two types are skipped because they wire it themselves and would
+  /// otherwise fire twice: `btn`, and `tile`, which hands it to `ListTile` so
+  /// the ripple is the row rather than a rectangle inside it.
+  Widget _tappable(BuildContext context, PluginNode node, Widget child) {
+    if (node.type == 'btn' || node.type == 'tile') return child;
+    final msg = node.events['tap'];
+    if (msg == null || onEvent == null) return child;
+
+    // Its own `Material`, because a plugin may put a tap on anything and
+    // anywhere — an `InkWell` that only works under one particular ancestor
+    // fails as a red screen rather than as a compile error.
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () => onEvent!(msg, null),
+        borderRadius: BorderRadius.circular(7),
+        child: child,
+      ),
+    );
   }
 
   Widget _keyed(PluginNode node, Widget child) {
@@ -91,6 +122,13 @@ class _Builder {
     return switch (node.type) {
       // ---- layout
       'column' => Column(
+        // `min`, so a column is as tall as what is in it. The default is
+        // `max`, which fills whatever height it is given — a settings page
+        // whose whole content is one switch drew a card down the entire
+        // window. A plugin that wants the remaining space says so with
+        // `expanded`, and that still works here: a tight flex child takes the
+        // free space and the column ends up filling after all.
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: _num(node, 'spacing')?.toDouble() ?? 0,
         children: _children(context, node, inFlex: true),
@@ -129,14 +167,24 @@ class _Builder {
       'card' => RepaintBoundary(
         child: CardX(
           child: Padding(
-            padding: const EdgeInsets.all(13),
+            // A card of rows insets its own rows — adding 13 more here would
+            // put every title 26px from the edge and make a list look nested
+            // inside its own card. Everything else gets the padding a block of
+            // content needs.
+            padding: node.children.every((c) => c.type == 'tile')
+                ? const EdgeInsets.symmetric(vertical: 4)
+                : const EdgeInsets.all(13),
             child: Column(
+              // As tall as its rows. See the `column` case above.
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: _children(context, node),
             ),
           ),
         ),
       ),
+      'tile' => _tile(context, node),
+      'summary' => _summary(context, node),
       'kv' => _kv(context, node),
       'expand' => _expand(context, node),
       'percent' => _percent(context, node),
@@ -146,6 +194,7 @@ class _Builder {
       'icon' => _icon(node),
       'btn' => _btn(context, node),
       'input' => _input(node),
+      'toggle' => _toggle(context, node),
       'table' => _table(context, node),
       'line_chart' || 'bar_chart' => _chart(context, node),
       _ => _problem('unknown widget "${node.type}"'),
@@ -190,6 +239,91 @@ class _Builder {
     }, cacheKey: (raw) => 'text|$raw|${tone?.toARGB32()}');
   }
 
+  /// One row of a list, drawn the way the app draws its own.
+  ///
+  /// The app's dense `ListTile`, so a plugin's list and the process, package
+  /// and container lists beside it share one rhythm. Before this a plugin had
+  /// to build a row out of `row` and `text` and put each one in its own card,
+  /// which gave five facts a whole window and no two plugins the same spacing.
+  Widget _tile(BuildContext context, PluginNode node) {
+    final icon = PluginIcons.resolve('${node.props['icon'] ?? ''}');
+    final subtitle = node.props['subtitle'];
+    final trailing = node.children.isEmpty
+        ? null
+        : build(context, node.children.first);
+
+    final msg = node.events['tap'];
+    return _bound(node, 'title', (raw) {
+      return ListTile(
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 13),
+        onTap: msg == null || onEvent == null
+            ? null
+            : () => onEvent!(msg, null),
+        leading: icon == null
+            ? null
+            : Icon(icon, size: 19, color: context.theme.hintColor),
+        // `min` so a row with no subtitle is one line high rather than the
+        // two a `ListTile` reserves by default.
+        minLeadingWidth: icon == null ? 0 : null,
+        title: Text(l10n.resolve('${raw ?? ''}'), style: UIs.text13),
+        subtitle: subtitle == null
+            ? null
+            : Text(l10n.resolve('$subtitle'), style: UIs.text12Grey),
+        trailing: trailing,
+      );
+      // The message is part of the identity: two rows that differ only in
+      // where they lead are two rows.
+    }, cacheKey: (raw) => 'tile|$raw|$subtitle|${node.props['icon']}|$msg');
+  }
+
+  /// What the page answers, in one reading, above the list that details it.
+  ///
+  /// The figure is set large and everything else is quiet around it, which is
+  /// the whole of the hierarchy: without it a page is one flat stack where the
+  /// count and the rows carry the same weight.
+  Widget _summary(BuildContext context, PluginNode node) {
+    final label = node.props['label'];
+    final detail = node.props['detail'];
+    final actions = _children(context, node);
+
+    return _bound(node, 'value', (raw) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(17, 13, 13, 13),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (label != null)
+                    Text(
+                      l10n.resolve('$label').toUpperCase(),
+                      style: UIs.text11Grey.copyWith(letterSpacing: 0.8),
+                    ),
+                  Text(
+                    l10n.resolve('${raw ?? ''}'),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      height: 1.25,
+                    ),
+                  ),
+                  if (detail != null)
+                    Text(l10n.resolve('$detail'), style: UIs.text12Grey),
+                ],
+              ),
+            ),
+            if (actions.isNotEmpty) Row(spacing: 7, children: actions),
+          ],
+        ),
+      );
+    }, cacheKey: (raw) => 'summary|$raw|$label|$detail');
+  }
+
   Widget _kv(BuildContext context, PluginNode node) {
     final label = l10n.resolve('${node.props['k'] ?? ''}');
     return _bound(node, 'v', (raw) {
@@ -214,19 +348,30 @@ class _Builder {
     }, cacheKey: (raw) => 'tag|$raw|${tone.toARGB32()}');
   }
 
+  /// A share of a whole, as a bar.
+  ///
+  /// A bar and not a ring. A ring at row height is a few pixels of arc, which
+  /// reads as a spinner rather than as a proportion — and a column of them
+  /// cannot be compared, which is the one thing a share is for. A bar has a
+  /// baseline and a common left edge, so a list of them is a chart.
   Widget _percent(BuildContext context, PluginNode node) {
     final label = l10n.resolve('${node.props['label'] ?? ''}');
     return _bound(node, 'value', (raw) {
       final value = _asDouble(raw)?.clamp(0.0, 1.0) ?? 0.0;
+      final bar = ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: LinearProgressIndicator(
+          value: value,
+          minHeight: 5,
+          backgroundColor: context.theme.hintColor.withValues(alpha: 0.15),
+        ),
+      );
+      if (label.isEmpty) return bar;
       return Row(
-        spacing: 7,
+        spacing: 9,
         children: [
-          SizedBox(
-            width: 27,
-            height: 27,
-            child: CircularProgressIndicator(value: value, strokeWidth: 3),
-          ),
-          Text(label, style: UIs.text12),
+          Expanded(child: bar),
+          Text(label, style: UIs.text12Grey),
         ],
       );
     }, cacheKey: (raw) => 'percent|$label|$raw');
@@ -246,7 +391,7 @@ class _Builder {
   Widget _icon(PluginNode node) {
     final name = '${node.props['name'] ?? ''}';
     return _cachedLeaf('icon|$name', () {
-      final data = _icons[name];
+      final data = PluginIcons.resolve(name);
       if (data == null) return _problem('unknown icon "$name"');
       return Icon(data, size: 17);
     });
@@ -261,6 +406,34 @@ class _Builder {
       text: label,
       onTap: onEvent == null ? null : () => onEvent!(msg, null),
     );
+  }
+
+  /// A setting that is on or off, drawn the way the app draws its own.
+  ///
+  /// The label leads and the control sits at the end, which is what makes a
+  /// plugin's settings page read like the pages around it rather than like a
+  /// form somebody embedded.
+  Widget _toggle(BuildContext context, PluginNode node) {
+    final label = l10n.resolve('${node.props['label'] ?? ''}');
+    final hint = node.props['hint'];
+    final msg = node.events['change'];
+    return _bound(node, 'value', (raw) {
+      return ListTile(
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 13),
+        title: Text(label, style: UIs.text13),
+        subtitle: hint == null
+            ? null
+            : Text(l10n.resolve('$hint'), style: UIs.text12Grey),
+        trailing: Switch(
+          value: raw == true,
+          onChanged: onEvent == null
+              ? null
+              : (value) => onEvent!(msg, value),
+        ),
+      );
+    }, cacheKey: (raw) => 'toggle|$label|$hint|$raw|$msg');
   }
 
   Widget _input(PluginNode node) {
@@ -449,29 +622,6 @@ class _Builder {
   /// why", and an empty space answers neither.
   Widget _problem(String detail) => _PluginProblem(detail: detail);
 }
-
-/// The icons a plugin may name.
-///
-/// A fixed table rather than a lookup into the font's codepoints: a plugin
-/// naming an arbitrary glyph would be a plugin whose icon changes meaning when
-/// the icon set does, and there is no way to review that at install time.
-const _icons = <String, IconData>{
-  'info': Icons.info_outline,
-  'warning': Icons.warning_amber_outlined,
-  'error': Icons.error_outline,
-  'check': Icons.check_circle_outline,
-  'power': Icons.power_settings_new,
-  'refresh': Icons.refresh,
-  'settings': Icons.settings_outlined,
-  'server': Icons.dns_outlined,
-  'disk': Icons.storage_outlined,
-  'network': Icons.lan_outlined,
-  'cpu': Icons.memory,
-  'temperature': Icons.thermostat_outlined,
-  'clock': Icons.schedule,
-  'lock': Icons.lock_outline,
-  'terminal': Icons.terminal,
-};
 
 class _PluginProblem extends StatelessWidget {
   const _PluginProblem({required this.detail});

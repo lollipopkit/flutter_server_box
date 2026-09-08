@@ -432,3 +432,25 @@ export function l10nKeys(node: Node): string[] {
   walk(node);
   return out;
 }
+
+/**
+ * Every string a tree would put on screen, in order.
+ *
+ * Reads the props that carry text, not only `text` nodes — a `tile`'s title
+ * and a `summary`'s figure are properties, and a test that walked children
+ * alone would say a page full of rows says nothing. Keep this in step with
+ * whichever node types hold a user-visible string.
+ */
+export function texts(node: Node): string[] {
+  const out: string[] = [];
+  const keys = ["value", "title", "subtitle", "label", "detail", "k", "v"];
+  const walk = (n: Node) => {
+    for (const key of keys) {
+      const v = n.p?.[key];
+      if (typeof v === "string" && v !== "") out.push(v);
+    }
+    for (const c of n.c ?? []) walk(c);
+  };
+  walk(node);
+  return out;
+}
