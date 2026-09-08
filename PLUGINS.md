@@ -598,6 +598,54 @@ F-Droid 构建的在线仓库默认关闭。用户主动开启前，需要说明
 
 App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 
+## 九点五、agent 也跑插件
+
+App 里的插件只在 App 开着的时候采集，所以 history、手表和桌面小组件里永远没有插件的读数——那三样都直接读 agent 的 `/metrics`，不经过 App。让 agent 也跑插件就是为了这个，不是为了省一次 SSH 往返。
+
+状态插件的形状**就是** agent 已经在做的事：`statusCmd() → {cmd}` 加 `parse(text) → StatusResult`，而 agent 本来就在跑一份命令清单、用 `sbm_parser` 解析。所以这不是往 agent 里塞一个陌生概念，是把它已有的那条路开放给用户提供的条目。
+
+考虑过两个不嵌 JS 的做法，都不够：让 agent 只跑命令、App 侧解析（复用自定义命令那套），agent 算不出 `StatusResult`，history 里就存不下，等于主要理由没拿到；在 manifest 里声明式写死命令，插件就只能用常量——没有 `$config` 插值也没有逻辑，BMC 那类正好需要。
+
+### 9.5.1 宿主接口是子集，而且不需要新机制
+
+agent 上没有用户，所以带用户的命名空间在那里根本不存在。**「未授权的函数装成抛异常的替身」这个已有机制，正好也表达「这个宿主没有这个函数」**——不用新增任何东西（见 4.2）。
+
+| 命名空间 | agent 上 | 说明 |
+|---|---|---|
+| `sb.server.exec` | 有 | 本机执行；agent 就在那台机器上 |
+| `sb.http.fetch` | 有 | 而且更有用，agent 在内网里 |
+| `sb.store` / `sb.config` / `sb.diag` / `sb.log` | 有 | |
+| `sb.ui.*` / `sb.nav.*` / `sb.clipboard` | 无 | 没有用户可问、没有界面可跳 |
+| `sb.server.list` | 无 | agent 只知道自己这一台 |
+
+manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 就是承诺只用上面这个子集。
+
+### 9.5.2 同意和分发
+
+**没有用户可问，所以是运维在 `config.toml` 里点名**，默认全关。和 `[remote_access]` 完全一样的先例：权限不是弹窗给的，是运维写进去的。
+
+**App 不能往 agent 推代码。** `full_access` 是「跑一条我敲的命令并且我看着」；常驻的定时执行代码是另一件更大的事，一个为了终端而打开 `full_access` 的运维没有要求这个。插件由运维放进 agent 配置的目录。
+
+**agent 侧的插件不用 App 的授权。** 两边的信任边界不是一回事：App 里是这台设备的用户给的，agent 上是运维给的，而且无人值守跑在服务器账号下。
+
+### 9.5.3 协议变化，和「一份读数只采一次」
+
+- `GET /api/v1/capabilities` 增加 agent 装了哪些插件（id、版本、贡献了什么）
+- `/metrics` 增加 `plugin_status: {<id>: StatusResult}`，跟着 extended 周期走、带 carry-forward，和 `pkg` 同一套
+- `/metrics/history` 存每周期的 `StatusResult`——这是全部理由所在
+
+**App 侧规则和 `ServerCapabilities` 同形：agent 报了这个插件的读数，App 就不再自己采。** 否则同一个答案跑两遍。
+
+### 9.5.4 构建
+
+`x86_64-unknown-linux-musl` 和 `aarch64-unknown-linux-musl` 都在 `rquickjs-sys` 的预生成 bindings 列表里，所以 agent 这边**不需要 bindgen**，不会重演 iOS/Android 那个坑（见十一节）。代价是二进制多一个 C 依赖，约 1 MB。
+
+攻击面上值得说清楚：插件是运维自己装的代码，不是外部输入，这一点和运维手动跑一个脚本没有区别；新增的是 JS 引擎本身的 bug。
+
+### 9.5.5 顺序
+
+**先用三个真插件（监听端口、磁盘占用、定时任务）把 App 侧的接口验一遍，再扩到 agent。** 否则是拿一套没被真实插件验过的接口去做第二个宿主，两边的实现会一起错。
+
 ## 十、接下来按什么顺序做
 
 每一步单独提交 PR，并验证该步的实际效果。第 1 步的 WebAssembly 版本已经实现过一次，改用 JavaScript 后需要重做；第 6 步 BMC 的解析逻辑和测试用例可以从那份实现里搬。
@@ -611,6 +659,7 @@ App Store 对这种扩展的判断也不能仅凭它没有 UI 就下结论。
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）、**`contributes.page`**（功能栏按钮打开整页，`needs` 按 `ServerCapabilities` 过滤；功能栏改为按 id 分发，内置项和插件项走同一条路径）、**`contributes.settings`**（设置菜单里插件自己的页，有插件贡献时 `app.plugins` 才变成分支）、**开发目录**（`SettingStore.pluginDevDirs` 记路径，每次 refresh 直接从开发者目录读，不拷贝；卸载只删记录不动文件）、**`contributes.tab`**（m023 把 `homeTabs` 从 `List<AppTab>` 放宽成 id；`HomeTab` 解析 id 成内置或插件 tab，首页、macOS 菜单栏和标签排序页都改成按 id 走）均已完成。四个入口面齐了，剩 5.5 的 golden 截图 |
 | 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
 | 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
+| 8 | agent 也跑插件 | 未开始，设计见 9.5。要等第 6 步之后：三个真插件验过 App 侧接口，才谈得上拿同一套接口做第二个宿主 |
 
 命名子区域的表示方式（见 5.1）、`Intl` 是否编入引擎（见 3.5）、内存和时间上限的具体数值（见 4.4），都要在 UI 插件正式开放前定下来。
 
