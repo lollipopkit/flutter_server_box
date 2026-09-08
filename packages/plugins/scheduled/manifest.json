@@ -1,0 +1,20 @@
+{
+  "id": "app.serverbox.scheduled",
+  "version": "1.0.0",
+  "abi": 1,
+  "name": "Scheduled",
+  "description": "What runs on a timer: the user's crontab and systemd's timers.",
+  "license": "MIT",
+  "permissions": {
+    "server.exec": true,
+    "ui.dialog": true
+  },
+  "contributes": {
+    "page": {
+      "id": "scheduled",
+      "label": "Scheduled",
+      "default_on": true,
+      "needs": ["shell"]
+    }
+  }
+}
