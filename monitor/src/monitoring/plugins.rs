@@ -25,7 +25,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
+use std::process::Stdio;
 use std::sync::Arc;
+use std::time::Duration;
 
 use sbm_plugin::{
     HostBridge, HostProfile, InstanceId, InstanceOptions, Manifest, Permission, PluginHost,
@@ -33,6 +35,7 @@ use sbm_plugin::{
 use sbm_plugin::manifest::Platform;
 use sbm_plugin::status::StatusResult;
 use serde::{Deserialize, Serialize};
+use tokio::io::AsyncReadExt;
 use tracing::{error, info, warn};
 
 /// `[plugins]` in `config.toml`.
@@ -276,12 +279,43 @@ where
     }
 }
 
+/// How long a plugin's command may run before it is killed.
+///
+/// A status reading is a `zpool list` or a `smartctl` — none of that is slow,
+/// and the extended cycle it runs on is the agent's own schedule. Without a
+/// bound, one command that never exits (a plugin that emitted `cat`, a `df`
+/// against a dead NFS mount) stops **every** plugin from reporting for the
+/// life of the process, because `collect` runs them in sequence.
+const COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// How much of a command's output is kept.
+///
+/// The agent may have 512 MiB of memory, and the output is read into it whole
+/// before a plugin parses it. A status reading that does not fit in a megabyte
+/// is not a status reading.
+const MAX_OUTPUT_BYTES: usize = 1024 * 1024;
+
 /// Runs a plugin's command on this machine.
 ///
 /// The agent *is* the server, so there is no transport and no credential —
 /// which is the whole reason a reading taken here is cheaper than the same one
-/// taken over SSH from a phone.
+/// taken over SSH from a phone. It is also why the bounds above matter: the
+/// command is arbitrary shell an operator installed, running as the agent's
+/// own user, on the cycle that reports the machine.
+///
+/// Only stdout is read, as before. A command that overruns either bound is an
+/// error rather than a truncated reading — half a document parses into
+/// something, and something wrong is worse than nothing.
 async fn run_locally(script: &str) -> Result<String, String> {
+    run_bounded(script, COMMAND_TIMEOUT, MAX_OUTPUT_BYTES).await
+}
+
+/// [`run_locally`] with the bounds named, so a test can use small ones.
+async fn run_bounded(
+    script: &str,
+    timeout: Duration,
+    max_output: usize,
+) -> Result<String, String> {
     let mut command = if cfg!(target_os = "windows") {
         let mut c = tokio::process::Command::new("powershell");
         c.args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script]);
@@ -291,8 +325,45 @@ async fn run_locally(script: &str) -> Result<String, String> {
         c.arg("-c").arg(script);
         c
     };
-    let output = command.output().await.map_err(|e| e.to_string())?;
-    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    // No stdin: a command that reads one would otherwise wait for a terminal
+    // that is not there, and wait until the timeout rather than at once.
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+    // The whole process group would be better — `setsid` and a kill by group,
+    // as the benchmark launcher does — but that is a bigger change than this
+    // is; a child left behind by `sh -c` is bounded by what the operator
+    // installed, and is no longer holding the cycle.
+    command.kill_on_drop(true);
+
+    let mut child = command.spawn().map_err(|e| e.to_string())?;
+    let mut stdout = child.stdout.take().expect("stdout is piped");
+
+    let read = async {
+        let mut out: Vec<u8> = Vec::new();
+        let mut chunk = [0u8; 8192];
+        loop {
+            let n = stdout.read(&mut chunk).await.map_err(|e| e.to_string())?;
+            if n == 0 {
+                return Ok(out);
+            }
+            if out.len() + n > max_output {
+                return Err(format!("it printed more than {max_output} bytes"));
+            }
+            out.extend_from_slice(&chunk[..n]);
+        }
+    };
+
+    let out = match tokio::time::timeout(timeout, read).await {
+        Ok(answer) => answer,
+        Err(_) => Err(format!("it did not finish within {timeout:?}")),
+    };
+    // Either way. On the error paths the process is still running and holds
+    // the pipe; `kill_on_drop` alone would wait for the next await point.
+    let _ = child.kill().await;
+
+    Ok(String::from_utf8_lossy(&out?).into_owned())
 }
 
 #[cfg(test)]
@@ -403,6 +474,43 @@ mod tests {
         // What it stored is still there on the next cycle, which is the whole
         // reason an agent-side plugin has a store at all.
         assert_eq!(plugins.collect("linux").await["p"].title, "hi 2");
+    }
+
+    /// A command that never exits must not hold the cycle. `collect` runs
+    /// plugins in sequence, so one of these stops every other plugin from
+    /// reporting for the life of the process.
+    #[tokio::test]
+    #[cfg(unix)]
+    async fn a_command_that_does_not_finish_is_killed() {
+        let e = run_bounded("sleep 30", Duration::from_millis(200), MAX_OUTPUT_BYTES)
+            .await
+            .expect_err("it should not have waited");
+
+        assert!(e.contains("did not finish"), "{e}");
+    }
+
+    /// The output is read into the agent's memory before a plugin parses it,
+    /// and the agent may have 512 MiB of it.
+    #[tokio::test]
+    #[cfg(unix)]
+    async fn a_command_that_prints_without_end_is_refused() {
+        let e = run_bounded("yes", COMMAND_TIMEOUT, 64 * 1024)
+            .await
+            .expect_err("it should not have kept reading");
+
+        assert!(e.contains("printed more than"), "{e}");
+    }
+
+    /// A command that reads stdin waits for a terminal that is not there. It
+    /// should end at once rather than at the timeout.
+    #[tokio::test]
+    #[cfg(unix)]
+    async fn a_command_reading_stdin_gets_nothing_rather_than_waiting() {
+        let out = run_bounded("cat", Duration::from_secs(5), MAX_OUTPUT_BYTES)
+            .await
+            .expect("stdin is closed, so `cat` ends");
+
+        assert_eq!(out, "");
     }
 
     /// An installed function that always refuses is worse than one that is not

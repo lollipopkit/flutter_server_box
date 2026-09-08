@@ -23,6 +23,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use base64::Engine;
+use futures::StreamExt;
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
 use rustls::{Error as TlsError, SignatureScheme};
@@ -30,6 +31,8 @@ use sbm_plugin::BridgeError;
 use serde::Deserialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use tokio::net::TcpStream;
+use tokio_rustls::TlsConnector;
 
 /// Anything larger is refused rather than held.
 ///
@@ -119,24 +122,15 @@ pub async fn fetch(req: FetchRequest, default_timeout: Duration) -> Result<Vec<u
         }
     }
 
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| BridgeError::failed("http", e.to_string()))?;
-    if bytes.len() > MAX_BODY_BYTES {
-        return Err(BridgeError::failed(
-            "http",
-            "the answer is larger than the limit",
-        ));
-    }
+    let bytes = read_capped(response).await?;
 
     // Text where it is text, which is nearly always: base64 costs an
     // interpreter something per byte and a Redfish document is JSON.
     // Undecodable bytes fall back rather than fail.
-    let (body, encoding) = match String::from_utf8(bytes.to_vec()) {
+    let (body, encoding) = match String::from_utf8(bytes) {
         Ok(text) => (text, "utf8"),
-        Err(_) => (
-            base64::engine::general_purpose::STANDARD.encode(&bytes),
+        Err(e) => (
+            base64::engine::general_purpose::STANDARD.encode(e.as_bytes()),
             "base64",
         ),
     };
@@ -155,18 +149,44 @@ pub async fn fetch(req: FetchRequest, default_timeout: Duration) -> Result<Vec<u
 
 /// Reads the certificate and sends nothing.
 ///
-/// A request is made because that is how a handshake happens, and it is a
-/// `HEAD` to the origin — but what is answered is the certificate, and the
-/// body is dropped. `sbm_plugin::scope` has already refused a probe carrying
-/// anything to send, which is what makes accepting any certificate here safe.
+/// **Nothing**, which is why this handshakes by hand rather than asking
+/// reqwest for a `HEAD`. A request would put the URL's path and query on the
+/// wire to a peer whose certificate has not been vouched for by anybody — the
+/// whole point of a probe is that it is the step *before* there is a reason to
+/// trust it, and `https://bmc/redfish/v1/Sessions?token=…` is exactly the kind
+/// of URL a plugin probes. The app's `PluginHttp.probe` opens a
+/// `SecureSocket`, reads `peerCertificate` and destroys it; this is the same
+/// thing, and the two hosts have to match.
+///
+/// What does leave is the ClientHello, SNI included. That is the hostname,
+/// which the connection's address already is.
+///
+/// A handshake that fails after the certificate arrives is still a success
+/// here: the verifier below has already recorded what was presented, which is
+/// all that was asked for.
 async fn probe(url: &reqwest::Url, timeout: Duration) -> Result<Vec<u8>, BridgeError> {
-    let seen = Arc::new(Mutex::new(None::<Vec<u8>>));
-    let client = build_client(None, Arc::clone(&seen), timeout, true)?;
+    let host = url
+        .host_str()
+        .ok_or_else(|| BridgeError::failed("bad_request", "sb.http.fetch: the url names no host"))?
+        .to_string();
+    let port = url.port_or_known_default().unwrap_or(443);
 
-    // The failure is ignored on purpose: a machine that answers 404, closes
-    // the connection, or speaks no HTTP at all has still presented a
-    // certificate by then, which is the whole of what was asked for.
-    let _ = client.head(url.clone()).send().await;
+    let seen = Arc::new(Mutex::new(None::<Vec<u8>>));
+    let config = tls_config(None, Arc::clone(&seen))?;
+    let name = ServerName::try_from(host.clone())
+        .map_err(|e| BridgeError::failed("bad_request", format!("sb.http.fetch: {e}")))?;
+
+    let handshake = async {
+        let tcp = TcpStream::connect((host.as_str(), port))
+            .await
+            .map_err(|e| BridgeError::failed("http", e.to_string()))?;
+        // The result is dropped either way, and with it the connection.
+        let _ = TlsConnector::from(Arc::new(config)).connect(name, tcp).await;
+        Ok::<(), BridgeError>(())
+    };
+    tokio::time::timeout(timeout, handshake)
+        .await
+        .map_err(|_| BridgeError::failed("timeout", "sb.http.fetch: the probe timed out"))??;
 
     match seen.lock().expect("poisoned").clone() {
         Some(der) => Ok(json!({
@@ -185,6 +205,30 @@ async fn probe(url: &reqwest::Url, timeout: Duration) -> Result<Vec<u8>, BridgeE
     }
 }
 
+/// Reads the body a chunk at a time, refusing at the limit rather than after
+/// it.
+///
+/// `Response::bytes()` buffers the whole answer first, so the check would run
+/// with the memory already spent — and the agent this runs on may have 512 MiB
+/// of it. A plugin cannot choose the host it reaches beyond its grant, but it
+/// can be pointed at one that answers forever.
+async fn read_capped(response: reqwest::Response) -> Result<Vec<u8>, BridgeError> {
+    let mut stream = response.bytes_stream();
+    let mut body: Vec<u8> = Vec::new();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| BridgeError::failed("http", e.to_string()))?;
+        if body.len() + chunk.len() > MAX_BODY_BYTES {
+            return Err(BridgeError::failed(
+                "http",
+                "the answer is larger than the limit",
+            ));
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
+}
+
 fn build_client(
     pin: Option<String>,
     seen: Arc<Mutex<Option<Vec<u8>>>>,
@@ -199,24 +243,31 @@ fn build_client(
         .redirect(reqwest::redirect::Policy::none());
 
     if tls {
-        // Named rather than taken from the process default. reqwest is built
-        // without a provider of its own (`rustls-no-provider`), and
-        // `ClientConfig::builder()` panics when none has been installed —
-        // which, on a machine that has never sent a push, is the state this
-        // runs in. `ring`, matching the rest of the agent.
-        let config = rustls::ClientConfig::builder_with_provider(Arc::new(
-            rustls::crypto::ring::default_provider(),
-        ))
-        .with_safe_default_protocol_versions()
-        .map_err(|e| BridgeError::failed("http", e.to_string()))?
-        .dangerous()
-        .with_custom_certificate_verifier(Arc::new(Pinned { pin, seen }))
-        .with_no_client_auth();
-        builder = builder.use_preconfigured_tls(config);
+        builder = builder.use_preconfigured_tls(tls_config(pin, seen)?);
     }
     builder
         .build()
         .map_err(|e| BridgeError::failed("http", e.to_string()))
+}
+
+/// The provider is named rather than taken from the process default.
+///
+/// reqwest is built without one of its own (`rustls-no-provider`), and
+/// `ClientConfig::builder()` panics when none has been installed — which, on a
+/// machine that has never sent a push, is the state this runs in. `ring`,
+/// matching the rest of the agent.
+fn tls_config(
+    pin: Option<String>,
+    seen: Arc<Mutex<Option<Vec<u8>>>>,
+) -> Result<rustls::ClientConfig, BridgeError> {
+    Ok(rustls::ClientConfig::builder_with_provider(Arc::new(
+        rustls::crypto::ring::default_provider(),
+    ))
+    .with_safe_default_protocol_versions()
+    .map_err(|e| BridgeError::failed("http", e.to_string()))?
+    .dangerous()
+    .with_custom_certificate_verifier(Arc::new(Pinned { pin, seen }))
+    .with_no_client_auth())
 }
 
 /// Accepts one certificate and no other.

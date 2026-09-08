@@ -25,6 +25,9 @@ ntex-files = "3.2"
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
 rustls-pemfile = "2"
+# A certificate probe handshakes by hand and sends nothing — see
+# `monitoring::plugin_http::probe`. Already in the tree under reqwest.
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
 
 # Async runtime
 tokio = { version = "1.53", features = ["full"] }
