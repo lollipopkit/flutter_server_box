@@ -1,0 +1,19 @@
+{
+  "id": "app.serverbox.diskusage",
+  "version": "1.0.0",
+  "abi": 1,
+  "name": "Disk usage",
+  "description": "Where the space went, one directory at a time.",
+  "license": "MIT",
+  "permissions": {
+    "server.exec": true
+  },
+  "contributes": {
+    "page": {
+      "id": "usage",
+      "label": "Usage",
+      "default_on": true,
+      "needs": ["shell"]
+    }
+  }
+}

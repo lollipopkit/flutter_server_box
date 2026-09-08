@@ -32,6 +32,7 @@ export * from "./host.ts";
 export * from "./plugin.ts";
 export * from "./ui.ts";
 export * from "./frame.ts";
+export * from "./shell.ts";
 
 /**
  * The host ABI this SDK is written against.
