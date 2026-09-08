@@ -1,0 +1,817 @@
+{
+  "@@locale": "az",
+  "crashCollect": "Diaqnostika məlumatları",
+  "crashCollectIntro": "ServerBox problemləri aradan qaldırmaq üçün işləyərkən baş verənləri qeydə alır. Göndəriləcək məlumatın həcmini seç.",
+  "crashCollectNone": "Heç nə",
+  "crashCollectNoneTip": "Hesabatlar bu cihazda qalır; qəza baş verdikdən sonra hesabatı əl ilə göndərə bilərsən.",
+  "crashCollectBasic": "Əsas məlumatlar",
+  "crashCollectBasicTip": "Yalnız qəza məlumatları daxil edilir; jurnallar və məhsuldarlıq məlumatları daxil edilmir. **Bu, tətbiqi təkmilləşdirməyimizə və xətaları düzəltməyimizə kömək edir.**",
+  "crashCollectFull": "Tam məlumatlar",
+  "crashCollectFullTip": "Qəza jurnalı ilə yanaşı məhsuldarlıq məlumatları və hansı funksiyaların istifadə olunduğu da daxil edilir: **bunlar nəyin yavaş işlədiyini və hansı funksiyaları saxlamağa dəyər olduğunu göstərir.**",
+  "crashCollectFooter": "Bütün səviyyələrdə məlum server adları, ünvanlar və istifadəçi adları qeydə alınarkən yer tutucularla əvəz olunur. Məlumat toplama səviyyəsini daha sonra parametrlərdə dəyişə bilərsən.",
+  "privacy": "Məxfilik",
+  "privacyPolicy": "Məxfilik siyasəti",
+  "crashLastRunFailed": "ServerBox son dəfə işləyərkən gözlənilmədən bağlandı.",
+  "crashReportTitle": "Qəza hesabatı",
+  "crashReportHint": "Bu, əvvəlki işə salınmanın jurnalıdır. Məlum server adları və ünvanları yer tutucularla əvəz olunub, lakin başqa təfərrüatlar qala bilər. Göndərməzdən əvvəl diqqətlə oxu.",
+  "crashReportSubmit": "Kopyala və bildir",
+  "acceptBeta": "Beta versiya yeniləmələrini qəbul et",
+  "addSystemPrivateKeyTip": "Hazırda məxfi açar yoxdur. Sistemdəki açarı (~/.ssh/id_rsa) əlavə etmək istəyirsən?",
+  "added2List": "Tapşırıq siyahısına əlavə edildi",
+  "askAi": "AI-dan soruş",
+  "askAiAwaitingResponse": "AI cavabı gözlənilir...",
+  "askAiEndpointTip": "Domen və ya tam URL daxil et. Yol seçdiyin protokola əsasən tamamlanır.",
+  "askAiProtocolTip": "Avtomatik rejim əvvəlcə Responses, sonra Chat Completions sınayır.",
+  "askAiCommandInserted": "Əmr terminala daxil edildi",
+  "askAiConfigMissing": "Parametrlərdə {fields} məlumatlarını təyin et.",
+  "askAiDisclaimer": "AI səhv edə bilər. Tətbiq etməzdən əvvəl diqqətlə yoxla.",
+  "askAiInsertTerminal": "Terminala daxil et",
+  "askAiNoResponse": "Cavab yoxdur",
+  "askAiAgentWelcome": "Bu serverdə nə edək?",
+  "askAiAgentPromptHint": "Agentdən nəyisə yoxlamağı və ya düzəltməyi istə...",
+  "askAiAnalyzeSelectionPrompt": "Seçilmiş terminal çıxışını təhlil et və nə baş verdiyini izah et",
+  "askAiTerminalContext": "Terminal konteksti",
+  "askAiReviewNeeded": "Yoxla",
+  "askAiReviewAction": "Təklif olunan əmri yoxla",
+  "askAiReviewBeforeContinuing": "Əvvəlcə cari təklifi yoxla və ya rədd et",
+  "askAiApproveRun": "Təsdiqlə və icra et",
+  "askAiDecline": "Rədd et",
+  "askAiActionDeclined": "Təklif olunan əmr rədd edildi.",
+  "askAiInterrupted": "Agentin cavabı kəsildi.",
+  "askAiRiskReadOnly": "Yalnız oxuma",
+  "askAiRiskCaution": "Sistemi dəyişir",
+  "askAiRiskUnvetted": "Yoxlanılmamış host",
+  "askAiRiskDestructive": "Yüksək risk",
+  "askAiHighRiskConfirmTitle": "Yüksək riskli əmr icra edilsin?",
+  "askAiHighRiskConfirmBody": "Bu əmr geri qaytarılması çətin olan dəyişikliklər edə bilər. Diqqətlə yoxla.",
+  "askAiNoCommandOutput": "Əmr çıxış olmadan tamamlandı.",
+  "askAiOutputTruncated": "Uzun çıxış agentə geri göndərilməzdən əvvəl qısaldıldı.",
+  "askAiAutoApproved": "Avtomatik təsdiqləndi",
+  "askAiAutoRunSafeCommands": "Yalnız oxuma əmrlərini avtomatik icra et",
+  "askAiAutoRunSafeCommandsTip": "Yalnız həm model, həm də yerli yoxlama əmri yalnız oxuma kimi qiymətləndirdikdə icra olunur",
+  "askAiSendOnEnter": "Enter göndərir",
+  "askAiSendOnEnterTip": "Enter göndərir, Shift+Enter yeni sətir açır. Söndürüldükdə: Enter yeni sətir açır, Cmd/Ctrl+Enter göndərir.",
+  "askAiApiKeyOptional": "Yerli istifadə və ya autentifikasiya tələb olunmadıqda boş saxla",
+  "askAiHistory": "Söhbət tarixçəsi",
+  "askAiNewConversation": "Yeni söhbət",
+  "askAiNoHistory": "Hələ yadda saxlanmış söhbət yoxdur",
+  "askAiNoHistoryMessages": "Hələ mesaj yoxdur",
+  "askAiUntitledConversation": "Adsız",
+  "askAiRenameConversation": "Söhbətin adını dəyiş",
+  "askAiDeleteConversationTitle": "Bu söhbət silinsin?",
+  "askAiDeleteConversationTip": "Söhbəti bu cihazdan silir. Geri qaytarmaq mümkün deyil.",
+  "askAiClearHistoryTitle": "Bu serverin agent tarixçəsi təmizlənsin?",
+  "askAiClearHistoryTip": "Bu server üçün yadda saxlanmış bütün agent söhbətləri silinəcək.",
+  "askAiRestoredReview": "Bu əmr tarixçədən götürülüb. Yenidən yoxla",
+  "agentWelcome": "Serverlərində nə edək?",
+  "agentWelcomeTip": "Agentə problemi araşdırmağı və ya tapşırığı yerinə yetirməyi həvalə et",
+  "agentPromptHint": "Agentdən serverlərini yoxlamağı və ya idarə etməyi istə...",
+  "agentNoHistory": "Yadda saxlanmış ümumi agent söhbəti yoxdur",
+  "agentClearHistoryTitle": "Ümumi agent tarixçəsi təmizlənsin?",
+  "agentClearHistoryTip": "Bütün ümumi agent söhbətləri bu cihazdan silinəcək.",
+  "agentToolShell": "Əmr örtüyü",
+  "agentToolReadFile": "Faylı oxu",
+  "agentToolWriteFile": "Fayla yaz",
+  "agentToolFailed": "Alətin icrası uğursuz oldu.",
+  "agentToolCallsFmt": "{count} alət çağırışı",
+  "floatOverTabs": "Digər vərəqlərin üzərində göstər",
+  "agentToolSshConnect": "SSH ilə əlaqə qur",
+  "agentToolSshDisconnect": "SSH əlaqəsini kəs",
+  "agentSshConnectTitle": "Yeni hostla əlaqə qur",
+  "agentAuthMethod": "Autentifikasiya",
+  "agentSshConnectTip": "Agent SSH əlaqəsi yaratmaq istəyir. Parolu burada daxil et",
+  "agentAdHocSessions": "Müvəqqəti əlaqələr",
+  "agentSaveServerTitle": "Server kimi yadda saxla",
+  "agentSaveServerTip": "Bu host və daxil etdiyin parol bu cihazda yadda saxlanılır",
+  "agentMonitorOptional": "Monitorinq agenti (istəyə bağlı)",
+  "authFailTip": "Autentifikasiya uğursuz oldu. Məlumatları yoxla",
+  "autoBackupConflict": "Eyni vaxtda yalnız bir avtomatik ehtiyat nüsxə funksiyası aktivləşdirilə bilər.",
+  "autoConnect": "Avtomatik əlaqə qur",
+  "autoRun": "Avtomatik icra et",
+  "autoUpdateHomeWidget": "Ana ekran vidcetinin avtomatik yenilənməsi",
+  "availableTabs": "Mövcud vərəqlər",
+  "backupEncrypted": "Ehtiyat nüsxə şifrələnib",
+  "backupNotEncrypted": "Ehtiyat nüsxə şifrələnməyib",
+  "backupPassword": "Ehtiyat nüsxə parolu",
+  "backupPasswordRemoved": "Ehtiyat nüsxə parolu silindi",
+  "backupPasswordSet": "Ehtiyat nüsxə parolu təyin edildi",
+  "backupPasswordTip": "Ehtiyat nüsxə fayllarını şifrələmək üçün parol təyin et. Şifrələməni söndürmək üçün boş saxla.",
+  "backupPasswordWrong": "Ehtiyat nüsxə parolu yanlışdır",
+  "connectAll": "Hamısı ilə əlaqə qur",
+  "disconnectAll": "Bütün əlaqələri kəs",
+  "distIcon": "Distributiv nişanları",
+  "distIconIntroLegal": "Nişan yalnız bu cihazın uzaq sistemdən oxuduğu məlumatı göstərir. Bu məlumat yanlış və ya köhnəlmiş ola bilər, törəmə sistemi, yenidən yığılmış buraxılışı və ya konkret versiyanı müəyyən etmir. Sistem müəyyən edilə bilmədikdə sadə işarə göstərilir.\n\nHər nişan müvafiq sahibinin əmtəə nişanıdır və yalnız təmsil etdiyi sistemə istinad etmək üçün istifadə olunur.",
+  "distIconTip": "Hər serverin yanında işlətdiyi güman edilən sistemin kiçik nişanını göstər.",
+  "distNameMap": "Ad əvəzləmələri",
+  "distNameMapTip": "Yalnız nişanları yerləşdirdiyin yerdə faylının adı fərqli olan distributiv üçündür. Açar bu tətbiqin istifadə etdiyi addır; dəyər isə alınacaq addır. Nişan çatışmırsa doldur, əks halda boş saxla.",
+  "logoUrl": "Loqonun URL ünvanı",
+  "logoUrlTip": "Serverin öz səhifəsinin yuxarısında öz rəngləri ilə göstərilən böyük şəkil.",
+  "globe": "Qlobus",
+  "locationTip": "Bu serverin qlobusda göstərildiyi yer. Əvvəlcə enlik, sonra uzunluq, dərəcə ilə. Məsələn, 39.9042, 116.4074.",
+  "markUrl": "Nişanın URL ünvanı",
+  "markUrlTip": "Siyahılarda server adının yanındakı kiçik nişan. Boş olduqda nişan göstərilmir.\n\nLoqo ilə eyni şəkil deyil",
+  "navTabMenuTip": "Vərəqdəki hər şeylə birdəfəyə əlaqə qurmaq və ya əlaqəni kəsmək üçün vərəqi basıb saxla və ya sağ kliklə.",
+  "nTags": "{count} etiket",
+  "remoteBackupPasswordRequired": "Uzaq ehtiyat nüsxələr üçün boş olmayan ehtiyat nüsxə parolu tələb olunur",
+  "monitorHttpsRequired": "HTTP istifadəsinə icazə verilməyibsə, uzaq monitorinq agenti üçün HTTPS tələb olunur.",
+  "monitorAllowInsecureHttp": "HTTP istifadəsinə icazə ver",
+  "monitorAllowInsecureHttpTip": "Yalnız Tailscale kimi ötürülməni özü şifrələyən etibarlı özəl şəbəkədə",
+  "monitorHttpTip": "SSH üzərindən əmrlər icra etmək əvəzinə bu serverin statusunu **monitor** agentinin HTTP API interfeysindən oxu.\n\nƏvvəlcə agent serverdə quraşdırılmalıdır. Dəyişmə qrafikləri, saat tətbiqi və ana ekran vidcetləri bu agent sayəsində işləyir.\n\n[Monitorinq agentinin quraşdırılması]({url})",
+  "@monitorHttpTip": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTip": "İxrac edilən məlumatlar parolla şifrələnə bilər. \nOnları təhlükəsiz yerdə saxla.",
+  "icloudBackupStatusTitle": "Ehtiyat nüsxənin statusu",
+  "icloudBackupStatusLoading": "iCloud ehtiyat nüsxəsinin statusu yüklənir...",
+  "icloudBackupStatusError": "iCloud ehtiyat nüsxəsinin metaməlumatlarını oxumaq mümkün olmadı",
+  "icloudBackupStatusEmpty": "Hələ iCloud ehtiyat nüsxə faylı tapılmayıb",
+  "icloudBackupStateUploading": "Göndərilir",
+  "icloudBackupStateConflict": "Ziddiyyət aşkarlandı",
+  "icloudBackupStateUploaded": "Göndərildi",
+  "icloudBackupStateWaiting": "iCloud gözlənilir",
+  "icloudBackupStatusSummary": "Son ehtiyat nüsxə: {lastModified}\nVəziyyət: {remoteState}",
+  "bgRun": "Arxa planda işlət",
+  "bgRunTip": "Bu keçid yalnız proqramın arxa planda işləməyə cəhd edəcəyini bildirir. Arxa planda işləyə bilməsi müvafiq icazənin aktiv olub-olmamasından asılıdır. AOSP əsaslı Android ROM sistemlərində bu tətbiq üçün \"Batareya optimallaşdırması\" funksiyasını söndür. MIUI / HyperOS üçün enerjiyə qənaət siyasətini \"Məhdudiyyətsiz\" olaraq dəyiş.",
+  "trayTitle": "Vəziyyət işarəsi",
+  "trayReadings": "Göstəricilər",
+  "trayChart": "Qrafik",
+  "trayChartNone": "Yoxdur",
+  "trayCompact": "Yığcam sətirlər",
+  "trayCompactTip": "Hər server üçün bir sətir, qrafiksiz. Linux həmişə birsətirli düzülüşdən istifadə edir, çünki onun panel menyusu xüsusi düzülüş deyil, mətn etiketi ötürən D-Bus vasitəsilə göndərilir; seçilmiş qrafik yenə də şəkil kimi daxil edilə bilər.",
+  "trayKeepRunning": "Sistem panelində işləməyə davam et",
+  "trayKeepRunningTip": "Pəncərəni bağladıqda tətbiq menyu sətrində və ya bildiriş sahəsində qalaraq serverlərini izləməyə davam edir. Bağlama düyməsinin tətbiqi sonlandırması üçün bunu söndür.",
+  "bgRunNeedsNotification": "Arxa planda işləmək üçün daimi bildiriş lazımdır, lakin tətbiqin bildiriş icazəsi yoxdur. Bildirişlərə icazə vermək üçün toxun.",
+  "clearAllStatsContent": "Bütün server əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
+  "clearAllStatsTitle": "Bütün statistikanı təmizlə",
+  "clearServerStatsContent": "\"{serverName}\" serverinin əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
+  "clearServerStatsTitle": "{serverName} statistikasını təmizlə",
+  "clearThisServerStats": "Bu serverin statistikasını təmizlə",
+  "compactDatabase": "Verilənlər bazasını yığcamlaşdır",
+  "compactDatabaseContent": "Verilənlər bazasının ölçüsü: {size}\n\nFaylın ölçüsünü azaltmaq üçün verilənlər bazası yenidən təşkil ediləcək. Heç bir məlumat silinməyəcək.",
+  "closeAfterSave": "Yadda saxla və bağla",
+  "collapseUITip": "İnterfeysdəki uzun siyahıların standart olaraq yığılması",
+  "connectionDetails": "Əlaqə təfərrüatları",
+  "connectionStats": "Əlaqə statistikası",
+  "connectionStatsDesc": "Server əlaqələrinin uğur göstəricisinə və tarixçəsinə bax",
+  "containerTrySudoTip": "Məsələn: tətbiqdə istifadəçi aaa kimi təyin edilib, lakin Docker root istifadəçisi altında quraşdırılıb. Bu halda bu seçimi aktivləşdirməlisən.",
+  "containerSudoPasswordRequired": "Docker istifadəsi üçün sudo parolu tələb olunur. Parolunu daxil et.",
+  "containerSudoPasswordIncorrect": "Sudo parolu yanlışdır və ya istifadəsinə icazə verilmir. Yenidən cəhd et.",
+  "copyPath": "Yolu kopyala",
+  "cpuViewAsProgressTip": "Hər CPU istifadəsini irəliləyiş zolağı şəklində göstər (köhnə üslub)",
+  "customCmd": "Fərdi əmrlər",
+  "deleteServers": "Serverləri toplu şəkildə sil",
+  "deleteDirRecursive": "Qovluğu və içindəkilərin hamısını sil",
+  "desktopTerminalTip": "SSH sessiyaları başladılarkən terminal emulyatorunu açmaq üçün istifadə olunan əmr.",
+  "dirEmpty": "Qovluğun boş olduğuna əmin ol.",
+  "discoverSshServers": "SSH serverlərini aşkar et",
+  "discoveryFailed": "Aşkarlama uğursuz oldu",
+  "discoverySettings": "Aşkarlama parametrləri",
+  "distro": "Distributiv",
+  "diskHealth": "Diskin sağlamlığı",
+  "displayCpuIndex": "CPU indeksini göstər",
+  "dl2Local": "{fileName} bu cihaza endirilsin?",
+  "dockerEmptyRunningItems": "İşləyən konteyner yoxdur.\nBunun səbəbi aşağıdakılar ola bilər:\n- Docker quraşdıran istifadəçi tətbiqdə təyin edilmiş istifadəçi adı ilə eyni deyil.\n- DOCKER_HOST mühit dəyişəni düzgün oxunmayıb. Onu terminalda `echo $DOCKER_HOST` əmrini icra edərək əldə edə bilərsən.",
+  "dockerImagesFmt": "{count} obraz",
+  "dockerProjectOther": "Digər",
+  "dockerPruneTip": "Diskdə yer boşaltmaq üçün istifadə olunmayan məlumatları sil",
+  "dockerStatistics": "Docker statistikası",
+  "doubleColumnMode": "İki sütunlu rejim",
+  "doubleColumnTip": "Bu seçim yalnız funksiyanı aktivləşdirir. Onun həqiqətən işləməsi cihazın enindən asılıdır.",
+  "editVirtKeys": "Virtual düymələr",
+  "editorHighlightTip": "Hazırda kodun rənglənməsi ideal sürətlə işləmir. Məhsuldarlığı artırmaq üçün onu söndürmək olar.",
+  "enableMdns": "mDNS aktivləşdir",
+  "enableMdnsDesc": "SSH xidmətlərini aşkar etmək üçün mDNS/Bonjour istifadə et",
+  "envVars": "Mühit dəyişəni",
+  "extraArgs": "Əlavə arqumentlər",
+  "fallbackSshDest": "Ehtiyat SSH təyinatı",
+  "fdroidReleaseTip": "Bu tətbiqi F-Droid vasitəsilə endirmisənsə, bu seçimi söndürmək tövsiyə olunur.",
+  "fileTooLarge": "'{file}' faylı çox böyükdür: {size}, maksimum {sizeMax}",
+  "fileDirGone": "Bu qovluq artıq burada yoxdur",
+  "fileDirGoneTip": "Silinib və ya adı dəyişdirilib",
+  "fullScreen": "Tam ekran",
+  "fullScreenJitter": "Tam ekranda kiçik yerdəyişmələr",
+  "fullScreenJitterHelp": "Ekranda qalıcı iz yaranmasının qarşısını almaq üçün",
+  "fullScreenTip": "Cihaz üfüqi vəziyyətə çevrildikdə tam ekran rejimi aktivləşdirilsin? Bu seçim yalnız server vərəqinə aiddir.",
+  "githubGistIdOptional": "Gist ID (istəyə bağlı)",
+  "githubGistToken": "GitHub Gist tokeni",
+  "githubGistTokenEmpty": "Token boşdur",
+  "goto": "Keç",
+  "homeTabs": "Ana səhifə vərəqləri",
+  "homeTabsCustomizeDesc": "Ana səhifədə görünən vərəqləri və onların sırasını fərdiləşdir",
+  "ignoreCert": "Sertifikatı nəzərə alma",
+  "image": "Obraz",
+  "@image": {
+    "description": "A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is \"Bild\" and Japanese \"画像\"."
+  },
+  "macDmgBody": "App Store bu tətbiqin təcrid olunmuş mühitdə işləməsini tələb edir və belə mühit terminal aça bilmir. DMG buraxılışı bunu edə bilir.\n\nApp Store buraxılışının yenilənməsi dayandırıla bilər.",
+  "macDmgImportDenied": "macOS əvvəlki buraxılışın məlumatlarını oxumağa icazə vermədi",
+  "macDmgImported": "Əvvəlki buraxılışın məlumatları idxal edildi",
+  "macDmgImportFailed": "Əvvəlki buraxılışın məlumatlarını oxumaq mümkün olmadı",
+  "macDmgTip": "Yerli terminal və snippetlərin yerli icrası (DMG buraxılışı)",
+  "macDmgTitle": "DMG buraxılışı",
+  "showHiddenFiles": "Gizli faylları göstər",
+  "sshKeyAlgorithm": "Alqoritm",
+  "sshKeyComment": "Şərh",
+  "sshKeyGenerate": "Açar cütü yarat",
+  "sshKeyGenerating": "Yaradılır…",
+  "sshKeyLockedFmt": "[{name}] məxfi açarının kilidi açılmadı.",
+  "@sshKeyLockedFmt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "sshKeyPassphraseTip": "İstəyə bağlıdır. Parol ifadəsi olan açar şifrələnmiş şəkildə saxlanılır və əlaqə bu açardan ilk dəfə istifadə etdikdə parol ifadəsi soruşulur.",
+  "sshKeyPassphraseWrong": "Parol ifadəsi yanlışdır.",
+  "sshKeyPublicKey": "Açıq açar",
+  "sshKeyPublicKeyTip": "Bu sətri serverdə ~/.ssh/authorized_keys faylının sonuna əlavə et.",
+  "sshKeyRecommended": "Tövsiyə olunur",
+  "sshKeyUnlockTip": "[{name}] məxfi açarının parol ifadəsini daxil et.",
+  "@sshKeyUnlockTip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ungrouped": "Qruplaşdırılmayıb",
+  "unused": "İstifadə olunmur",
+  "dangling": "İstinadsız",
+  "pruneUnusedImages": "İstifadə olunmayan obrazları sil",
+  "pruneDanglingImages": "İstinadsız obrazları sil",
+  "pruneImages": "Obrazları təmizlə",
+  "unusedTaggedImages": "İstifadə olunmayan etiketli obrazlar",
+  "pruneDanglingImagesTip": "Yalnız istinadsız obrazları silir.",
+  "pruneUnusedImagesTip": "Heç bir konteynerin istifadə etmədiyi etiketli obrazları da sil.",
+  "includeUnusedVolumesTip": "Heç bir konteynerin istifadə etmədiyi saxlama həcmlərini də sil.",
+  "pruneCommandPreview": "Əmrin önbaxışı",
+  "pruneForceSshTip": "-f interaktiv sorğunu ötürür və SSH üzərindən icra zamanı həmişə aktivdir.",
+  "pruneVolumes": "Saxlama həcmlərini təmizlə",
+  "pruneUnusedData": "İstifadə olunmayan məlumatları sil",
+  "pull": "Çək",
+  "invalidHostFormat": "Host formatı yanlışdır. Yalnız IPv4, IPv6 və domen simvollarına icazə verilir.",
+  "jumpServer": "Vasitəçi server",
+  "jumpServersNotFoundFmt": "{serverName} üçün vasitəçi serverlər tapılmadı: {jumpIds}",
+  "@jumpServersNotFoundFmt": {
+    "placeholders": {
+      "serverName": {},
+      "jumpIds": {}
+    }
+  },
+  "nameAlreadyExistsFmt": "\"{name}\" artıq mövcuddur",
+  "@nameAlreadyExistsFmt": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "noJumpServerAvailable": "Mövcud vasitəçi server yoxdur.",
+  "jumpServerAndProxyCommandCannotBeUsedTogether": "Vasitəçi server və ProxyCommand birlikdə istifadə edilə bilməz.",
+  "noConnectionMethod": "SSH, monitorinq agenti və ya hər ikisini konfiqurasiya et",
+  "preferredTransport": "Əvvəlcə sına",
+  "preferredTransportTip": "Vəziyyətin haradan oxunduğunu və əmrin əvvəlcə hansı əlaqəni açdığını müəyyən edir. Digər əlaqə də əlçatan qalır.",
+  "keepForeground": "Tətbiqi ön planda saxla!",
+  "keepStatusWhenErr": "Serverin son vəziyyətini saxla",
+  "keepStatusWhenErrTip": "Yalnız skript icrası zamanı xəta baş verdikdə",
+  "keyAuth": "Açarla autentifikasiya",
+  "lastFailure": "Son uğursuzluq",
+  "lastSuccess": "Son uğurlu cəhd",
+  "letterCache": "Adi klaviatura daxiletməsi",
+  "letterCacheTip": "Aktivləşdirildikdə daxiletmə adi IME vasitəsilə aparılır. Bu, bəzi sistemlərdə terminalda təhlükəsiz klaviatura sorğularının qarşısını ala bilər.",
+  "linuxShellTip": "Terminalın başladacağı əmr örtüyü. Boş olduqda /bin/sh bərpa olunur.",
+  "linuxNetTip": "DNS serverləri. Boş olduqda standart dəyərlər bərpa olunur",
+  "madeWithLove": "{myGithub} tərəfindən ❤️ ilə hazırlanıb",
+  "maxConcurrency": "Maksimum paralel əməliyyat sayı",
+  "maxRetryCount": "Serverlə yenidən əlaqə cəhdlərinin sayı",
+  "mismatchSystem": "Uyğun olmayan sistem: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
+  "mirror": "Güzgü serveri",
+  "needRestart": "Tətbiq yenidən başladılmalıdır",
+  "netViewType": "Şəbəkə görünüşünün növü",
+  "newContainer": "Yeni konteyner",
+  "noConnectionStatsData": "Əlaqə statistikası məlumatları yoxdur",
+  "noLineChart": "Xətti qrafiklərdən istifadə etmə",
+  "noPrivateKeyTip": "Məxfi açar mövcud deyil. Silinmiş ola bilər və ya konfiqurasiya xətası var.",
+  "noPromptAgain": "Bir daha soruşma",
+  "openLastPath": "Son yolu aç",
+  "openLastPathTip": "Hər server üçün çıxış zamanı açıq olan yol ayrıca yadda saxlanılır",
+  "parseContainerStatsTip": "Docker resurs istifadəsi vəziyyətinin təhlili nisbətən yavaşdır.",
+  "plugInType": "Daxiletmə növü",
+  "preferDiskAmount": "Disk tutumunun göstərilməsinə üstünlük ver",
+  "privateKey": "Məxfi açar",
+  "privateKeyNotFoundFmt": "[{keyId}] məxfi açarı tapılmadı.",
+  "bmcPowerOnAction": "İşə sal",
+  "bmcShutdown": "Söndür",
+  "bmcForceOff": "Məcburi söndür",
+  "restart": "Yenidən başlat",
+  "bmcPowerCycle": "Söndür və yenidən işə sal",
+  "bmcPowerConfirm": "Bu sorğu {server} serverinə göndərilsin? Xidmətdən \"{resetType}\" istəniləcək",
+  "@bmcPowerConfirm": {
+    "placeholders": {
+      "server": {
+        "type": "String"
+      },
+      "resetType": {
+        "type": "String"
+      }
+    }
+  },
+  "bmcPowerDone": "Enerji vəziyyəti dəyişdi",
+  "bmcPowerAccepted": "Qəbul edildi, lakin enerji vəziyyəti dəyişməyib. Normal tamamlanma əməliyyat sistemindən asılıdır",
+  "bmcPowerUnsupported": "Bu xidmət həmin əməliyyat üçün heç bir seçimə icazə vermir",
+  "bmcUnauthorized": "BMC hesabı qəbul etmədi",
+  "bmcAccountMissing": "Bu BMC üçün hesab təyin edilməyib",
+  "bmcPowerOn": "İşləyir",
+  "bmcPowerOff": "Söndürülüb",
+  "bmcCertRejected": "Sertifikat rədd edildi. Server parametrlərində onu yoxla",
+  "bmcNotAService": "Bu ünvanda Redfish xidməti yoxdur",
+  "bmcNoSystem": "Xidmət heç bir sistem bildirmir",
+  "bmcSensorsTruncated": "Yalnız ilk sensorlar göstərilir",
+  "bmcMultipleSystems": "Yalnız ilk sistem göstərilir",
+  "bmcTip": "BMC ana platada yerləşən ayrıca kompüterdir və hostun əməliyyat sistemi əlçatmaz olduqda belə ona müraciət etmək mümkündür. Burada konfiqurasiya edildikdə server sönülü və ya donmuş vəziyyətdə olarkən enerji vəziyyəti və avadanlıq sensorları barədə məlumat verə bilər. Təxminən 2016-cı ildən bəri əksər müəssisə avadanlıqlarında olan Redfish tələb olunur.",
+  "bmcCert": "Sertifikat",
+  "bmcCertPinned": "Yoxlanılıb və sabitlənib",
+  "bmcCertUnreviewed": "Hələ yoxlanılmayıb. Sertifikata baxmaq üçün toxun",
+  "bmcCertReview": "Özü tərəfindən imzalanmış sertifikatdır. Qəbul etməzdən əvvəl müqayisə et. Bundan sonra yalnız məhz bu sertifikata etibar ediləcək.",
+  "bmcCertChanged": "Sertifikat uyğun gəlmir. Onu yoxla.",
+  "bmcCertExpired": "Müddəti bitib.",
+  "bmcCertWas": "Əvvəllər qəbul edilib: {fingerprint}",
+  "@bmcCertWas": {
+    "placeholders": {
+      "fingerprint": {
+        "type": "String"
+      }
+    }
+  },
+  "bmcAddrInvalid": "BMC ünvanı URL olmalıdır, məsələn, https://10.0.0.9",
+  "proxyCommandSandboxed": "Bu buraxılış təcrid olunmuş mühitdə işləyir: əmr sənin ev qovluğunu deyil, boş ev qovluğunu alır, buna görə ~/.ssh yolunu oxuyan əməliyyatlar uğursuz olur. DMG buraxılışında bu məhdudiyyət yoxdur.",
+  "privateKeyFileUnreadable": "{path} məxfi açar faylını oxumaq mümkün deyil: {reason}",
+  "@privateKeyFileUnreadable": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "privateKeyFileSandboxed": "Bu buraxılış öz konteynerindən kənardakı faylları oxuya bilmir, buna görə {path} yolundakı açar əlçatmazdır. Açarı parametrlərdə idxal et və ya DMG buraxılışından istifadə et.",
+  "@privateKeyFileSandboxed": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "pushToken": "Push tokeni",
+  "proxyCommandOnlySupportedOnDesktop": "ProxyCommand yalnız masaüstü platformalarda dəstəklənir.",
+  "pveIgnoreCertTip": "Aktivləşdirmək tövsiyə olunmur, təhlükəsizlik risklərini nəzərə al! PVE standart sertifikatından istifadə edirsənsə, bu seçimi aktivləşdirməlisən.",
+  "pveServerClientMissing": "Bu server üçün SSH müştərisi əlçatan deyil.",
+  "pveAddressMissing": "PVE ünvanı yoxdur. Onu server parametrlərində təyin et.",
+  "pvePasswordRequired": "PVE parolu tələb olunur. Onu server parametrlərində təyin et.",
+  "pveOtpRequired": "Bu PVE serverində iki amilli autentifikasiya aktivdir. OTP kodunu daxil et.",
+  "pveOtpChallengeExpired": "OTP sorğusunun müddəti bitib. Yenilə və yenidən cəhd et.",
+  "pveOtpCodeRequired": "OTP kodu tələb olunur.",
+  "pveOtpVerificationFailed": "OTP yoxlaması uğursuz oldu. Yeni kodla yenidən cəhd et.",
+  "pveOtpTitle": "OTP yoxlaması",
+  "pveOtpLabel": "OTP kodu",
+  "pveInvalidResponseBody": "PVE girişi etibarsız cavab gövdəsi qaytardı.",
+  "pveInvalidResponseData": "PVE giriş cavabında etibarlı məlumat məzmunu yoxdur.",
+  "pveMissingAuthTicket": "PVE girişi uğurlu oldu, lakin autentifikasiya bileti qaytarılmadı.",
+  "pveVersionLow": "Bu funksiya hazırda sınaq mərhələsindədir və yalnız PVE 8+ üzərində sınaqdan keçirilib. Ehtiyatla istifadə et.",
+  "pveLoadingForwarding": "SSH tuneli yaradılır...",
+  "pveLoadingLogin": "PVE ilə autentifikasiya aparılır...",
+  "pveLoadingData": "Klaster məlumatları alınır...",
+  "pveLoadingConnect": "Əlaqə qurulur...",
+  "pvePassword": "PVE parolu",
+  "pvePasswordHint": "Açar əsaslı SSH autentifikasiyası istifadə edilərkən tələb olunur",
+  "read": "Oxu",
+  "recentConnections": "Son əlaqələr",
+  "rememberPwdInMem": "Parolu yaddaşda saxla",
+  "rememberPwdInMemTip": "Konteynerlər, yuxu rejimi və s. üçün istifadə olunur.",
+  "remotePath": "Uzaq yol",
+  "rootfsUpdateTip": "{distro} {installed} quraşdırılıb; {latest} mövcuddur. Yeniləmə bütün konteyneri əvəz edir: {pm} məlumatları itirilir",
+  "@rootfsUpdateTip": {
+    "placeholders": {
+      "distro": {},
+      "installed": {},
+      "latest": {},
+      "pm": {}
+    }
+  },
+  "linuxSystemInUse": "{name} sistemini silməzdən əvvəl ondakı terminalları bağla",
+  "@linuxSystemInUse": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "rootfsSubtitle": "Bu cihazda Linux istifadəçi mühiti",
+  "rootfsInstallTip": "{distro} {version} endirilir (təxminən {size} MB) və bu cihazda arxivdən çıxarılır.",
+  "@rootfsInstallTip": {
+    "placeholders": {
+      "distro": {},
+      "version": {},
+      "size": {}
+    }
+  },
+  "sameIdServerExist": "Eyni ID ilə server artıq mövcuddur",
+  "second": "san",
+  "serverFilesUnavailableTip": "Bu serverlə SSH əlaqəsi və ya fayl API interfeysi aktiv olan server_box_monitor quraşdırılması tələb olunur.",
+  "back": "Geri qayıt",
+  "history": "Tarixçə",
+  "homeDir": "Ev qovluğu",
+  "selected": "{count} seçilib",
+  "sendTo": "Göndər…",
+  "serverDetailOrder": "Təfərrüatlar səhifəsində vidcetlərin sırası",
+  "serverFuncBtns": "Server funksiya düymələri",
+  "serverOrder": "Serverlərin sırası",
+  "serverTabEmpty": "Hələ server yoxdur",
+  "serverTabRequired": "Server vərəqi silinə bilməz",
+  "shareCodeHint": "Bu rəqəmləri alıcıya ayrıca bildir. Onlar QR koduna daxil edilmir.",
+  "shareCodePrompt": "6 rəqəmli kod",
+  "shareCodeTitle": "Birdəfəlik kod",
+  "shareExpired": "Bu paylaşımın müddəti bitib. Yenisini istə.",
+  "shareImportFile": "Paylaşılan fayldan",
+  "shareImportTitle": "Paylaşılan serveri idxal et",
+  "shareIncludesKey": "Paylaşıma məxfi açar daxildir.",
+  "shareOmittedBmc": "BMC giriş məlumatları. Ünvan daxil edilib, lakin giriş məlumatları daxil edilməyib.",
+  "shareOmittedJump": "Vasitəçi server, çünki bu cihazda ayrıca server kimi saxlanılır.",
+  "shareOmittedKeyPath": "Açar faylı, çünki onun yolu yalnız bu cihazda etibarlıdır.",
+  "shareOmittedMissingKey": "Məxfi açar, çünki bu cihazın açar anbarında yoxdur.",
+  "shareOmittedTip": "Daxil edilməyib; alıcı bunları konfiqurasiya etməlidir:",
+  "sharePassphraseTip": "Bu parol ifadəsi faylı şifrələyir. Serveri idxal etmək üçün alıcıya bu ifadə lazımdır və onu bərpa etmək mümkün deyil.",
+  "shareQrTip": "Bu QR kodundakı əlaqə təfərrüatları şifrələnib. Paylaşımın müddəti {minutes} dəqiqədən sonra bitir.",
+  "@shareQrTip": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "shareScanQr": "QR kodunu skan et",
+  "shareServerExists": "Bu cihazdakı “{name}” artıq bu ünvandan istifadə edir. Yenə də idxal edilsin?",
+  "@shareServerExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "shareTooBigForQr": "QR kodu üçün çox böyükdür. Fayl kimi paylaş.",
+  "shareTooNew": "Bu paylaşım ServerBox tətbiqinin daha yeni versiyası ilə yaradılıb. Açmaq üçün tətbiqi yenilə.",
+  "shareUnreadable": "Bu, etibarlı ServerBox paylaşımı deyil.",
+  "shareVia": "Paylaşma vasitəsi",
+  "sftpDlPrepare": "Əlaqə qurmağa hazırlanır...",
+  "sftpEditorTip": "Boş olduqda daxili redaktordan istifadə olunur. Məsələn, `vim` (`EDITOR` dəyərini oxumaq tövsiyə olunur).",
+  "sftpRmrDirSummary": "SFTP daxilində qovluğu silmək üçün `rm -r` istifadə et.",
+  "sftpSSHConnected": "SFTP əlaqəsi quruldu",
+  "sftpShowFoldersFirst": "Əvvəlcə qovluqları göstər",
+  "sftpUnavailableUseScp": "Əksər quraşdırılmış sistemlərdə olduğu kimi, bu hostda da SFTP alt sistemi yoxdursa, server parametrlərində fayl ötürülməsini SCP olaraq təyin et.",
+  "sshFileTransportTip": "SFTP müasir sistemlər üçün uyğundur. SSH serverində SFTP alt sistemi olmayan köhnə host və ya quraşdırılmış sistem üçün SCP seç: bunun üçün `scp` əmri və adi fayl alətləri (`find`, `stat`, `mv`, `chmod`) olan əmr örtüyü lazımdır.",
+  "specifyDev": "Cihazı təyin et",
+  "specifyDevTip": "Şəbəkə trafiki standart olaraq bütün cihazlar üzrə hesablanır; yalnız bir cihaz üçün burada onun adını yaz",
+  "tempIsCelsiusTip": "Aktivləşdirildikdə temperatur dəyəri milliselsi əvəzinə Selsi kimi qəbul ediləcək. Yalnız temperatur səhv göstərildikdə aktivləşdir (məsələn, 58°C əvəzinə 0.1°C göstərildikdə).",
+  "spentTime": "Sərf olunan vaxt: {time}",
+  "sshConfigAllExist": "Bütün serverlər artıq mövcuddur ({duplicateCount} təkrar tapıldı)",
+  "sshConnectionModeTip": "Daxili: tətbiqin terminalından istifadə et. Sistem SSH: sistemin ssh əmrini xarici terminalda başlat.",
+  "sshConnectionModeUseBuiltin": "Daxili terminaldan istifadə et",
+  "sshConnectionModeUseSystem": "Sistem SSH istifadə et",
+  "sshConfigDuplicatesSkipped": "{duplicateCount} təkrar ötürüləcək",
+  "sshConfigFound": "Sistemində SSH konfiqurasiyası tapıldı.",
+  "sshConfigFoundServers": "{totalCount} server tapıldı",
+  "sshConfigImport": "SSH konfiqurasiyasını idxal et",
+  "sshConfigImportPermission": "~/.ssh/config faylını oxumağa və server parametrlərini avtomatik idxal etməyə icazə vermək istəyirsən?",
+  "sshConfigImportTip": "İlk server yaradılarkən ~/.ssh/config faylını oxumaq üçün sorğu göstər",
+  "sshConfigImported": "SSH konfiqurasiyasından {count} server idxal edildi",
+  "sshHostKeyChangedDesc": "{serverName} üçün SSH host açarı dəyişib. Yalnız bu serverə etibar edirsənsə davam et.",
+  "sshHostKeyType": "SSH host açarının növü",
+  "sshKnownHostKeys": "Tanınan hostlar",
+  "sshKnownHostKeysTip": "Bu tətbiqin qəbul etdiyi host açarları",
+  "@sshHostKeyType": {
+    "description": "Label for the SSH host key type displayed in the host key verification dialog."
+  },
+  "sshHostKeyNewDesc": "{serverName} serverindən yeni SSH host açarı alındı. Etibar etməzdən əvvəl barmaq izini yoxla.",
+  "sshHostKeyStoredFingerprint": "Saxlanmış barmaq izi: {fingerprint}",
+  "sshVerificationCode": "Təsdiqləmə kodu",
+  "@sshVerificationCode": {
+    "description": "Label for a one-time verification code requested during SSH keyboard-interactive authentication."
+  },
+  "sshConfigManualSelect": "SSH konfiqurasiya faylını əl ilə seçmək istəyirsən?",
+  "sshConfigNoServers": "SSH konfiqurasiyasında server tapılmadı",
+  "sshConfigPermissionDenied": "macOS icazələrinə görə SSH konfiqurasiya faylına daxil olmaq mümkün deyil.",
+  "sshConfigServersToImport": "{importCount} server idxal ediləcək",
+  "sshTermHelp": "Terminalda sürüşdürmə mümkün olduqda üfüqi sürükləyərək mətn seçə bilərsən. Klaviatura düyməsi klaviaturanı açıb bağlayır. Fayl işarəsi cari yolu SFTP daxilində açır. Mübadilə buferi düyməsi mətn seçildikdə məzmunu kopyalayır; mətn seçilmədikdə və buferdə məzmun olduqda isə onu terminala yapışdırır. Kod işarəsi kod snippetlərini terminala yapışdırır və icra edir.",
+  "sshVirtualKeyAutoOff": "Virtual düymələrin avtomatik dəyişməsi",
+  "supportFmtArgs": "Aşağıdakı formatlama parametrləri dəstəklənir:",
+  "suspendTip": "Yuxu rejimi funksiyası root icazəsi və systemd dəstəyi tələb edir.",
+  "switchTo": "{val} rejiminə keç",
+  "syncAppSettings": "Tətbiq parametrlərini sinxronlaşdır",
+  "syncAppSettingsTip": "Tema, düzülüş, redaktor, terminal və digər cihaz seçimlərini avtomatik sinxronlaşdırmaya daxil et.",
+  "termFontSizeTip": "Bu parametr terminalın ölçüsünə (eninə və hündürlüyünə) təsir edəcək. Cari sessiyanın şrift ölçüsünü tənzimləmək üçün terminal səhifəsində miqyası böyüdə bilərsən.",
+  "textScalerTip": "1.0 => 100% (ilkin ölçü), yalnız server səhifəsindəki bəzi şriftlərə təsir edir, dəyişdirmək tövsiyə olunmur.",
+  "times": "Dəfə",
+  "trySudo": "sudo istifadə etməyə cəhd et",
+  "sudoPromptNotFound": "Aktiv sudo parol sorğusu yoxdur.",
+  "updateServerStatusInterval": "Server statusunun yenilənmə intervalı",
+  "useNoPwd": "Parol istifadə edilməyəcək",
+  "usePodmanByDefault": "Standart olaraq Podman istifadə et",
+  "used": "İstifadə olunur",
+  "view": "Bax",
+  "viewDetails": "Təfərrüatlara bax",
+  "virtKeyHelpClipboard": "Terminalda seçilmiş mətn varsa mübadilə buferinə kopyala, əks halda buferin məzmununu terminala yapışdır.",
+  "virtKeyHelpIME": "Klaviaturanı aç/bağla",
+  "virtKeyHelpSFTP": "Cari qovluğu SFTP daxilində aç.",
+  "virtKeyHelpSnippet": "Snippet seç və bu terminalda icra et.",
+  "virtKeyHelpTmux": "tmux sessiyaları və pəncərələri arasında keçid et.",
+  "virtKeyIntroActions": "Qısayollar",
+  "virtKeyIntroActionsTip": "Bunlar yazı daxil etmək əvəzinə nəyisə açır. Nə etdiyini oxumaq üçün birini basıb saxla.",
+  "virtKeyIntroCustomizeTip": "Terminal parametrlərində bu düymələrin sırasını dəyiş və ya istifadə etmədiklərini gizlət.",
+  "virtKeyIntroModifiers": "Dəyişdirici düymələr",
+  "virtKeyIntroModifiersTip": "Aktivləşdirmək üçün birinə toxun, sonra klaviaturada hərfə toxun. Yalnız həmin bir düymə üçün aktiv qalır.",
+  "virtKeyIntroNav": "Naviqasiya",
+  "virtKeyIntroNavTip": "Bunlar kursoru hərəkət etdirir. Hərəkəti təkrarlamaq üçün ox düyməsini basıb saxla.",
+  "virtKeyIntroSelect": "Terminalda sürüşdürüləcək məzmun olduqda mətn seçmək üçün onun üzərində üfüqi sürüklə.",
+  "virtKeyRows": "Eyni vaxtda göstərilən sətirlər",
+  "virtKeyRowsTip": "Qalanları üfüqi sürüşdürmə ilə açılan ayrıca səhifədə yerləşir.",
+  "waitConnection": "Əlaqə qurulana qədər gözlə.",
+  "wakeLock": "Oyaq saxla",
+  "watchNotPaired": "Cütləşdirilmiş Apple Watch yoxdur",
+  "webdavSettingEmpty": "WebDav parametri boşdur",
+  "whenOpenApp": "Tətbiq açılarkən",
+  "wolTip": "WOL (Wake-on-LAN) konfiqurasiya edildikdən sonra serverlə hər dəfə əlaqə qurulduqda WOL sorğusu göndərilir.",
+  "write": "Yaz",
+  "writeScriptFailTip": "Skriptə yazmaq mümkün olmadı. Səbəb icazələrin çatışmaması və ya qovluğun mövcud olmaması ola bilər.",
+  "writeScriptTip": "Serverlə əlaqə qurulduqdan sonra sistemin vəziyyətini izləmək üçün `~/.config/server_box` \n | `/tmp/server_box` yoluna skript yazılacaq. Skriptin məzmununa baxa bilərsən.",
+  "menuGitHubRepository": "GitHub repozitoriyası",
+  "podmanDockerEmulationDetected": "Podman Docker emulyasiyası aşkarlandı. Parametrlərdə Podman seç.",
+  "betaTip": "Bu funksiya hələ beta sınağındadır. İşləyəcəyinə zəmanət verilmir.",
+  "portForward_startPrompt": "Başlamaq üçün port yönləndirmə qaydası əlavə et",
+  "portForward_localHost": "Yerli host",
+  "portForward_localPort": "Yerli port",
+  "portForward_remoteHost": "Uzaq host",
+  "portForward_remotePort": "Uzaq port",
+  "portForward_deleteConfirmFmt": "{name} silinsin?",
+  "sponsor": "Sponsor ol",
+  "sortByJoinTime": "Əlavə edilmə vaxtına görə",
+  "serverHistory": "Server tarixçəsi",
+  "portForwardBetaTitle": "Port yönləndirmə (beta)",
+  "tmuxAutoAttach": "tmux sessiyasına avtomatik qoşulma",
+  "tmuxAuto": "Avtomatik tmux",
+  "tmuxAutoTip": "SSH ilə əlaqə qurarkən tmux sessiyasını avtomatik başlat və ya ona qoşul",
+  "tmuxSessionSelector": "Sessiya seçimi",
+  "tmuxSessionSelectorTip": "Əlaqə qurarkən sessiya seçimini göstər",
+  "tmuxDefaultSessionName": "Standart sessiya adı",
+  "tmuxSessionName": "Sessiya adı",
+  "tmuxExistingSessions": "Mövcud sessiyalar",
+  "tmuxNewSession": "Yeni sessiya",
+  "tmuxWindows": "Pəncərələr",
+  "tmuxNewWindow": "Yeni pəncərə",
+  "tmuxNoWindowsFound": "Pəncərə tapılmadı",
+  "tmuxWindowCount": "{count, plural, one{1 pəncərə} other{{count} pəncərə}}",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tmuxPaneCount": "{count, plural, one{1 bölmə} other{{count} bölmə}}",
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tmuxAttached": "Qoşulub",
+  "tmuxActive": "Aktivdir",
+  "tmuxActiveAt": "aktivdir: {time}",
+  "@tmuxActiveAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tmuxAttachedAt": "qoşulub: {time}",
+  "@tmuxAttachedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tmuxSkip": "Keç",
+  "tmuxNotAvailable": "tmux əlçatan deyil",
+  "containerSegmentsMismatch": "Konteyner cavabında gözlənilməyən bölmə sayı: {count}",
+  "@containerSegmentsMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "containerOperationInProgress": "Başqa konteyner əməliyyatı artıq davam edir",
+  "processCount": "{count, plural, one{1 proses} other{{count} proses}}",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "processParseUnsupportedOutput": "Proses siyahısının formatı dəstəklənmir.",
+  "processParseInvalidRows": "Bəzi proses qeydlərini oxumaq mümkün olmadı.",
+  "processParseInvalidWindowsJson": "Windows prosesləri haqqında cavabı oxumaq mümkün olmadı.",
+  "processParseInvalidWindowsRows": "Bəzi Windows proses qeydlərini oxumaq mümkün olmadı.",
+  "processKillTargetChanged": "Proses dəyişib və ya başa çatıb. Yenilə və yenidən cəhd et.",
+  "watchServers": "Saatdakı serverlər",
+  "watchServersTip": "Saat məlumatları monitor agentindən özü alır, buna görə yalnız bu agenti olan serverləri seçmək mümkündür.",
+  "watchNoMonitorServer": "Heç bir serverdə monitor agenti konfiqurasiya edilməyib",
+  "legacyStatusGoneTitle": "Vəziyyət URL ünvanları artıq işləmir",
+  "legacyStatusGoneBody": "Saat tətbiqi və ana ekran vidcetləri əvvəllər əl ilə daxil edilmiş `/status` ünvanını oxuyurdu. Bu son nöqtə artıq mövcud deyil: yalnız cari dəyərləri mətn kimi qaytara bildiyinə görə qrafik göstərmək mümkün olmurdu.\n\nİndi onlar monitor agentinin autentifikasiya tələb edən API interfeysindən məlumat alır, dəyişmə qrafikləri çəkir və tətbiqlə avtomatik sinxronlaşır. Serveri tətbiqdə bir dəfə konfiqurasiya et, bütün saatlar və vidcetlər onu avtomatik tanıyacaq.",
+  "services": "Servislər",
+  "status": "Vəziyyət",
+  "enable": "Aktivləşdir",
+  "disable": "Söndür",
+  "starting": "Başladılır",
+  "stopping": "Dayandırılır",
+  "serviceManagerUnsupported": "Dəstəklənməyən servis idarəedicisi",
+  "serviceManagerUnsupportedTip": "Bu server ServerBox tərəfindən hələ dəstəklənməyən servis idarəedicisindən istifadə edir. Dəstəklənən idarəedicilər: systemd, procd və OpenRC.",
+  "serviceManagerFmt": "{manager} tərəfindən idarə olunur",
+  "@serviceManagerFmt": {
+    "placeholders": {
+      "manager": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceListFailed": "Servis siyahısını almaq mümkün olmadı",
+  "serviceDetailsUnavailable": "Servislərlə bağlı bəzi təfərrüatlar əlçatan deyil",
+  "serviceDetailsUnavailableTip": "Servis siyahısından istifadə etmək mümkündür, lakin idarəedici bütün status və ya başlanğıc məlumatlarını qaytarmadı.",
+  "serviceEnabled": "Başlanğıcda aktivdir",
+  "systemdUserScopeMissing": "İstifadəçi vahidləri siyahıda göstərilmir",
+  "systemdUserScopeMissingTip": "Bu hesabın serverdə istifadəçi sessiyası şini yoxdur, buna görə yalnız sistem vahidləri göstərilir.",
+  "serverUnreachable": "Bu serverdə əmr icra etmək mümkün olmadı",
+  "containerNoRuntime": "Burada konteyner icra mühiti yoxdur",
+  "containerNoRuntimeTip": "Bu kompüterdə nə `docker`, nə də `podman` cavab verdi. Onlardan biri başqa hesab üçün quraşdırılıbsa, parametrlərdə \"sudo istifadə etməyə cəhd et\" seçimini aktivləşdir.",
+  "containerUnreadable": "Konteyner icra mühiti gözlənilməyən formatda cavab verdi",
+  "power": "Güc",
+  "continueInTerminal": "Terminalda davam et",
+  "askAiRiskUnknown": "Təsnif edilməyib",
+  "agentLocalExec": "Bu cihazda əmrlər icra et",
+  "agentLocalExecTip": "Agentin ServerBox işləyən kompüterdə işləməsinə icazə verir. Yalnız oxuma əmrləri də yoxlanılır",
+  "agentLocalExecRootfsTip": "Agentin yerli olaraq, ServerBox tərəfindən quraşdırılmış Linux konteyneri daxilində işləməsinə icazə verir",
+  "macDmgImportedPartly": "Əvvəllər quraşdırılmış versiyanın məlumatları idxal edildi. Endirilmiş fayllar əvvəlki yerində, {path} qovluğunda saxlanıldı.",
+  "@macDmgImportedPartly": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "bmcAccount": "Hesab",
+  "bmcAccountUnset": "Heç biri seçilməyib. Seçmək və ya yaratmaq üçün toxun",
+  "bmcAccountShared": "{count} server tərəfindən istifadə olunur",
+  "@bmcAccountShared": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bmcAccounts": "BMC hesabları",
+  "bmcAccountSharedTip": "Buradakı dəyişikliklər bütün bu serverlərin istifadə etdiyi hesab məlumatlarını dəyişir.",
+  "bmcAccountInUse": "{count} server bu hesabdan istifadə edir. Onların ünvanları qalacaq, hesab isə silinəcək.",
+  "@bmcAccountInUse": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bmcStaleWrite": "Məlumat yazılarkən BMC dəyişdi. Yenidən cəhd et.",
+  "send": "Göndər",
+  "privacyBlur": "Arxa planda məxfilik",
+  "privacyBlurTip": "Tətbiqlər arasında keçid ekranında tətbiqin məzmununu gizlət",
+  "floatReturnToTab": "Vərəqə qaytar",
+  "termInFloatWindow": "Bu terminal üzən pəncərədədir",
+  "globeEnabledTip": "Serverləri ünvanlarının yerləşdiyi nöqtələrdə qlobus üzərində göstərir. Söndürüldükdə düymə server vərəqindən silinir və bütün sorğular dayandırılır.",
+  "geoShardsConsentAttribution": "IP üzrə coğrafi mövqe məlumatları [DB-IP](https://db-ip.com) tərəfindən təqdim olunur, CC BY 4.0.",
+  "geoMissPrivate": "Özəl ünvan",
+  "geoMissNoData": "Mövqe məlumatı yoxdur",
+  "globeGuide": "Serverlərini ünvanlarının yerləşdiyi nöqtələrdə qlobus üzərində görmək üçün buraya toxun.",
+  "publicIp": "İctimai IP",
+  "geoData": "Şəhər səviyyəsində məlumatlar",
+  "geoDataTip": "Endirildikdən sonra bütün coğrafi mövqe sorğuları bu cihazda saxlanılan məlumatlardan istifadə edir. Server ünvanları və sorğu fəaliyyəti endirmə servisinə göndərilmir.",
+  "geoDataMissing": "Endirilməyib",
+  "geoDataUnreachable": "Məlumatları almaq mümkün olmadı.",
+  "geoDataRemoveFailed": "Məlumatları silmək mümkün olmadı.",
+  "geoDataCurrent": "{month} artıq quraşdırılıb.",
+  "@geoDataCurrent": {
+    "placeholders": {
+      "month": {}
+    }
+  },
+  "geoDataConsent": "**Endirmə: {download} · Cihazda tutulan yer: {disk}.** Tam məlumat toplusu bu cihazda saxlanılır və sonrakı bütün coğrafi mövqe sorğuları yerli olaraq icra olunur. Server ünvanları və sorğu fəaliyyəti endirmə servisinə göndərilmir.\n\nHər ay yenilənir. Yeni versiya əlavə nüsxə saxlamadan quraşdırılmış məlumatları əvəz edir. Məlumatları istənilən vaxt silə bilərsən.",
+  "@geoDataConsent": {
+    "placeholders": {
+      "download": {},
+      "disk": {}
+    }
+  },
+  "benchmark": "Benchmark",
+  "benchmarkIntro": "Bu serverdə disk, şəbəkə və CPU üçün Yet Another Bench Script işə salınır. Tam icra 10 ilə 20 dəqiqə arasında vaxt aparır və bu səhifədən çıxsan və ya tətbiqi bağlasan da davam edir.",
+  "benchmarkLinuxOnly": "Benchmark üçün Linux tələb olunur. Bu server {system} bildirir.",
+  "@benchmarkLinuxOnly": {
+    "placeholders": {
+      "system": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkNoRuns": "Hələ benchmark yoxdur.",
+  "benchmarkRunning": "Benchmark icra olunur",
+  "benchmarkStartFailed": "Benchmark başlatmaq mümkün olmadı",
+  "benchmarkCancelConfirm": "Bu benchmark dayandırılsın? İndiyə qədər ölçülmüş nəticələr itiriləcək.",
+  "benchmarkDeleteConfirm": "Bu benchmark nəticəsi silinsin?",
+  "benchmarkNothingSelected": "Bütün mərhələlər söndürülüb. Yalnız sistem məlumatları toplanacaq və bu, bir neçə saniyə çəkəcək.",
+  "benchmarkDiskTip": "Dörd blok ölçüsündə fio sınağı, təxminən 3 dəqiqə. İş qovluğuna 2 GB ölçülü sınaq faylı yazır və bu qədər boş yer tələb edir.",
+  "benchmarkNetworkTip": "İctimai serverlərlə iperf3 sınağı, təxminən 4 dəqiqə.",
+  "benchmarkReducedNetwork": "Daha az məkan",
+  "benchmarkReducedNetworkTip": "Yeddi əvəzinə üç məkan. Təxmini trafik həcmi {full} əvəzinə {reduced} olacaq.",
+  "@benchmarkReducedNetworkTip": {
+    "placeholders": {
+      "full": {
+        "type": "String"
+      },
+      "reduced": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkCpuTip": "Qapalı mənbəli Geekbench proqramını endirir və **nəticəni geekbench.com saytında hamıya açıq səhifədə dərc edir**, CPU modeli, nüvə sayı və yaddaş məlumatları da daxil olmaqla.",
+  "benchmarkSensitiveOptions": "Aşağıdakı seçimlər bu serverə üçüncü tərəf proqramlarını endirib işə salır və ya server məlumatlarını üçüncü tərəflərə göndərir. Standart olaraq söndürülüb.",
+  "benchmarkIpInfoTip": "Bu serverin ictimai ünvanını şifrələnməmiş HTTP ilə ip-api.com saytına göndərir.",
+  "benchmarkIpInfo": "IP ünvanının sahibini öyrən",
+  "benchmarkPreferBin": "fio və iperf3 endir",
+  "benchmarkPreferBinTip": "Hostdakı paketlərdən istifadə etmək əvəzinə onları GitHub saytından endirir. Yalnız hostda heç biri quraşdırılmayıbsa, aktivləşdir.",
+  "benchmarkWorkDir": "İş qovluğu",
+  "benchmarkWorkDirTip": "Disk sınağının hansı fayl sistemini ölçəcəyini müəyyən edir. Boş saxlanıldıqda daxil olduğun hesabın ev qovluğu istifadə olunur.",
+  "benchmarkEstimatedTime": "Təxminən {minutes} dəq",
+  "@benchmarkEstimatedTime": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkEstimatedTraffic": "Təxminən {size} trafik",
+  "@benchmarkEstimatedTraffic": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkPhaseSystem": "Sistem məlumatları oxunur",
+  "benchmarkPhaseDisk": "Disk sınaqdan keçirilir",
+  "benchmarkPhaseNetwork": "Şəbəkə sınaqdan keçirilir",
+  "benchmarkPhaseCpu": "CPU sınaqdan keçirilir",
+  "benchmarkPhaseDone": "Tamamlanır",
+  "benchmarkDiedUnreported": "İcra nəticə bildirilmədən dayandı. Az yaddaşlı serverlərdə buna adətən yaddaş çatışmazlığı zamanı prosesləri dayandıran mexanizm səbəb olur.",
+  "benchmarkResultUnreadable": "Bu nəticəni JSON kimi oxumaq mümkün olmadı. Xam mətn aşağıdadır.",
+  "benchmarkViewOnGeekbench": "Geekbench saytında bax",
+  "benchmarkGeekbenchPublic": "Bu nəticə yuxarıdakı keçiddə hamıya açıq şəkildə dərc edilib.",
+  "benchmarkSingleCore": "Tək nüvə",
+  "benchmarkMultiCore": "Çox nüvə",
+  "benchmarkBlockSize": "Blok ölçüsü",
+  "benchmarkIops": "IOPS",
+  "benchmarkSend": "Yükləmə",
+  "benchmarkRecv": "Endirmə",
+  "benchmarkLatency": "Gecikmə",
+  "benchmarkVirt": "Virtuallaşdırma",
+  "benchmarkCompare": "Müqayisə et",
+  "benchmarkCompareEmpty": "Müqayisə üçün ən azı iki tamamlanmış benchmark lazımdır.",
+  "benchmarkRawLog": "İcra jurnalı",
+  "benchmarkUpstream": "Yet Another Bench Script ({version}) əsasında işləyir",
+  "@benchmarkUpstream": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "benchmarkPhaseStarting": "Başladılır",
+  "benchmarkNoOutputYet": "Hələ çıxış yoxdur. İlk sətri göstərməzdən əvvəl YABS google.com və icanhazip.com saytlarının əlçatanlığını yoxlayır. Bu saytlardan hər hansı birini bloklayan şəbəkələrdə bu, bir neçə dəqiqə çəkə bilər.",
+  "benchmarkNoServers": "Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt."
+}
