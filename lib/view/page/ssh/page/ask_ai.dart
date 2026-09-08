@@ -279,6 +279,7 @@ class _AskAiPanel extends ConsumerStatefulWidget {
 
 class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   final _scrollController = ScrollController();
+  final _commandPreviewScrollController = ScrollController();
   final _inputController = TextEditingController();
   bool _autoStarted = false;
 
@@ -307,6 +308,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     // session, which outlives this panel on purpose: closing it used to cancel
     // whatever was streaming, which is not what closing a window means.
     _scrollController.dispose();
+    _commandPreviewScrollController.dispose();
     _inputController
       ..removeListener(_handleInputChanged)
       ..dispose();
@@ -725,6 +727,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   ) {
     final command = session.pendingTool!;
     final canReview = session.canReviewPendingTool;
+    final commandPreviewMaxHeight = askAiCommandPreviewMaxHeightFor(
+      MediaQuery.sizeOf(context).height,
+    );
     final (label, color, icon) = switch (command.risk) {
       AskAiCommandRisk.readOnly => (
         context.l10n.askAiRiskReadOnly,
@@ -793,14 +798,24 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           const SizedBox(height: 10),
           Container(
             width: double.infinity,
+            constraints: BoxConstraints(maxHeight: commandPreviewMaxHeight),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: SelectableText(
-              command.command,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+            child: Scrollbar(
+              controller: _commandPreviewScrollController,
+              child: SingleChildScrollView(
+                controller: _commandPreviewScrollController,
+                child: SelectableText(
+                  command.command,
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
             ),
           ),
           if (command.description.isNotEmpty) ...[
