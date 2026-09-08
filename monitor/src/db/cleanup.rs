@@ -183,15 +183,32 @@ impl DataCleanupService {
     /// whose file was already reclaimed still has the WAL that reclaiming
     /// left, and nothing else would ever shorten it.
     ///
-    /// Best effort. TRUNCATE answers with a row saying it was blocked rather
-    /// than failing, and a WAL that stays long for another day is worth less
-    /// than anything this would be worth interrupting.
+    /// Best effort, and a WAL that stays long for another day is worth less
+    /// than anything this would be worth interrupting — but the outcome is
+    /// read, because "blocked" is not an error here. A reader holding the WAL
+    /// makes TRUNCATE answer `busy = 1` and *succeed*, so discarding the row
+    /// leaves the one case worth knowing about looking exactly like the one
+    /// that worked: a WAL growing on disk with nothing in the log about it.
     async fn shorten_wal(&self) {
-        if let Err(e) = sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
-            .execute(&self.pool)
+        use sqlx::Row;
+
+        match sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
+            .fetch_one(&self.pool)
             .await
         {
-            warn!("Could not shorten the WAL: {}", e);
+            // (busy, log, checkpointed). `log` is the frames still in the WAL,
+            // which is what says how much was left behind.
+            Ok(row) => {
+                let busy: i64 = row.try_get("busy").unwrap_or_default();
+                if busy != 0 {
+                    let frames: i64 = row.try_get("log").unwrap_or_default();
+                    warn!(
+                        "Could not shorten the WAL: a reader held it, {} frames left",
+                        frames
+                    );
+                }
+            }
+            Err(e) => warn!("Could not shorten the WAL: {}", e),
         }
     }
 
