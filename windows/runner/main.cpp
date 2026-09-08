@@ -2,6 +2,8 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include <string>
+
 #include "flutter_window.h"
 #include "utils.h"
 
@@ -11,14 +13,23 @@ constexpr wchar_t kSingleInstanceMutex[] =
     L"Local\\tech.lolli.toolbox.ServerBox.SingleInstance";
 constexpr wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
 constexpr wchar_t kWindowTitle[] = L"ServerBox";
+constexpr DWORD kExistingWindowWaitTimeoutMs = 5000;
+constexpr DWORD kExistingWindowPollIntervalMs = 50;
 
-void ActivateExistingWindow() {
-  const HWND window = FindWindowW(kWindowClassName, kWindowTitle);
-  if (window == nullptr) {
-    return;
+bool ActivateExistingWindow() {
+  const ULONGLONG deadline = GetTickCount64() + kExistingWindowWaitTimeoutMs;
+  while (true) {
+    const HWND window = FindWindowW(kWindowClassName, kWindowTitle);
+    if (window != nullptr) {
+      ShowWindowAsync(window, IsIconic(window) ? SW_RESTORE : SW_SHOW);
+      SetForegroundWindow(window);
+      return true;
+    }
+    if (GetTickCount64() >= deadline) {
+      return false;
+    }
+    Sleep(kExistingWindowPollIntervalMs);
   }
-  ShowWindowAsync(window, IsIconic(window) ? SW_RESTORE : SW_SHOW);
-  SetForegroundWindow(window);
 }
 
 }  // namespace
@@ -33,10 +44,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   const HANDLE single_instance =
       CreateMutexW(nullptr, FALSE, kSingleInstanceMutex);
-  if (single_instance != nullptr && GetLastError() == ERROR_ALREADY_EXISTS) {
-    ActivateExistingWindow();
+  const DWORD mutex_error = GetLastError();
+  if (single_instance == nullptr) {
+    const std::wstring message =
+        L"CreateMutexW failed with Win32 error " +
+        std::to_wstring(mutex_error) + L".\n";
+    OutputDebugStringW(message.c_str());
+    return EXIT_FAILURE;
+  }
+  if (mutex_error == ERROR_ALREADY_EXISTS) {
+    const bool activated = ActivateExistingWindow();
     CloseHandle(single_instance);
-    return EXIT_SUCCESS;
+    return activated ? EXIT_SUCCESS : EXIT_FAILURE;
   }
 
   // Initialize COM, so that it is available for use in the library and/or

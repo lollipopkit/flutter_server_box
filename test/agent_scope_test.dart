@@ -300,6 +300,30 @@ void main() {
         reason: 'refusing to insert must not also drop the proposal',
       );
     });
+
+    test('a refused insert leaves an open response running', () async {
+      final repository = _HangingProposalRepository(proposal);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      const scope = 'srv-refused-open';
+      final provider = agentSessionProvider(scope);
+      final notifier = container.read(provider.notifier);
+      addTearDown(() async {
+        await notifier.stopWork();
+        await repository.close();
+        container.dispose();
+      });
+
+      expect(await notifier.submitPrompt('check uptime'), isTrue);
+      await settle();
+
+      expect(await notifier.insertPendingTool(), isFalse);
+      final state = container.read(provider);
+      expect(state.isStreaming, isTrue);
+      expect(state.pendingTool, proposal);
+      expect(state.history.whereType<AskAiFunctionCallItem>(), isEmpty);
+    });
   });
 
   test(

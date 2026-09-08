@@ -488,8 +488,9 @@ class AgentSession extends _$AgentSession {
   /// but a terminal's.
   Future<bool> insertPendingTool() async {
     final proposal = state.pendingTool;
-    if (proposal == null || !await _preparePendingTool(proposal)) return false;
+    if (proposal == null || state.isExecuting) return false;
     if (!_host.insert(proposal.command)) return false;
+    if (!await _preparePendingTool(proposal)) return false;
     state = state.copyWith(
       history: [
         ...state.history,
