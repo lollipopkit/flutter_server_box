@@ -93,6 +93,43 @@ pub enum HostFn {
     ClipboardWrite,
 }
 
+/// Which host a plugin instance is running in.
+///
+/// The two differ in one way that matters and nothing else: the agent has no
+/// user in front of it, so nothing that asks a person a question or takes them
+/// somewhere exists there. PLUGINS.md 9.5.
+///
+/// **The absence needs no new mechanism.** A function this host does not have
+/// is installed as a stub that throws, which is exactly what an ungranted one
+/// already is — so "the manifest did not ask for it" and "this host has not
+/// got it" arrive at a plugin the same way and differ only in what they say.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum HostProfile {
+    /// The app: a person is looking at it.
+    #[default]
+    App,
+    /// The monitor agent: a daemon on the server, on a timer, with nobody
+    /// watching.
+    Agent,
+}
+
+impl HostProfile {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::App => "app",
+            Self::Agent => "agent",
+        }
+    }
+
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "app" => Some(Self::App),
+            "agent" => Some(Self::Agent),
+            _ => None,
+        }
+    }
+}
+
 impl HostFn {
     /// Every entry, in the order 4.3 lists them.
     ///
@@ -156,6 +193,29 @@ impl HostFn {
     /// `sb.server.exec`, for error messages and tests.
     pub fn path(self) -> String {
         format!("sb.{}.{}", self.namespace(), self.method())
+    }
+
+    /// Whether this function exists at all in [`profile`](HostProfile).
+    ///
+    /// The app has every one. The agent has the ones that do not involve a
+    /// person: running a command on the machine it is *on*, reaching the
+    /// network, its own storage, its config and its log. What it has not got
+    /// is anything that asks a question, shows something, navigates, or
+    /// touches a clipboard — there is nobody there — and `sb.server.list`,
+    /// because an agent knows one machine and that machine is itself.
+    pub const fn available_in(self, profile: HostProfile) -> bool {
+        match profile {
+            HostProfile::App => true,
+            HostProfile::Agent => matches!(
+                self,
+                Self::ServerExec
+                    | Self::HttpFetch
+                    | Self::StoreGet
+                    | Self::StoreSet
+                    | Self::StoreList
+                    | Self::DiagCrumb
+            ),
+        }
     }
 
     /// What the manifest must have asked for, or `None` for the ones 6.1 calls

@@ -22,6 +22,10 @@ pub(crate) struct State {
     pub bridge: Arc<dyn HostBridge>,
     pub grants: Grants,
 
+    /// Which host this instance is in, which decides what `sb` even has. See
+    /// [`HostFn::available_in`].
+    pub profile: crate::hostfn::HostProfile,
+
     /// Plugin settings plus this server's config for this plugin, flattened to
     /// strings — what `sb.config.get` answers.
     pub config: BTreeMap<String, String>,
@@ -207,6 +211,7 @@ mod tests {
             instance_id: "i".into(),
             bridge: Arc::new(NoBridge),
             grants,
+            profile: crate::hostfn::HostProfile::App,
             config: BTreeMap::new(),
             refusal: Mutex::new(None),
             server_handles: Mutex::new(handles.iter().map(|s| s.to_string()).collect()),

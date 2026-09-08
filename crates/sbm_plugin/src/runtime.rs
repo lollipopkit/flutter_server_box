@@ -17,6 +17,7 @@ use rquickjs::{
     Value,
 };
 
+use crate::hostfn::HostProfile;
 use crate::bindings::{self, Outbox, Outstanding};
 use crate::bridge::{BridgeError, HostBridge};
 use crate::error::PluginError;
@@ -76,6 +77,13 @@ pub struct InstanceOptions {
     pub grants: Grants,
     pub config: BTreeMap<String, String>,
 
+    /// Which host this is running in, which decides what `sb` has on it.
+    ///
+    /// Defaults to the app. The monitor agent sets [`HostProfile::Agent`],
+    /// and everything that involves a person is then a stub that throws —
+    /// see PLUGINS.md 9.5.
+    pub profile: HostProfile,
+
     /// The server this instance is bound to, as the opaque handle the app
     /// minted for it. `None` for a global surface.
     ///
@@ -93,6 +101,7 @@ pub struct InstanceOptions {
 impl InstanceOptions {
     pub fn new(plugin_id: impl Into<String>, instance_id: impl Into<String>) -> Self {
         Self {
+            profile: HostProfile::default(),
             plugin_id: plugin_id.into(),
             instance_id: instance_id.into(),
             grants: Grants::default(),
@@ -165,6 +174,7 @@ impl Instance {
         }
 
         let state = Arc::new(State {
+            profile: options.profile,
             plugin_id: options.plugin_id,
             instance_id: options.instance_id,
             bridge,

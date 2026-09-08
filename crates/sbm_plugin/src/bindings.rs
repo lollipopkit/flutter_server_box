@@ -46,6 +46,26 @@ pub(crate) fn install(ctx: &Ctx<'_>, state: Arc<State>, outbox: Outbox) -> rquic
     }
 
     for f in HostFn::ALL {
+        // Not on this host at all — the agent has no user, so nothing that
+        // asks one a question exists there. Installed as the same throwing
+        // stub an ungranted function gets, because that is what "you cannot
+        // call this" already looks like from inside a plugin; only the reason
+        // differs. See `HostFn::available_in`.
+        if !f.available_in(state.profile) {
+            let target: Object = sb.get(f.namespace())?;
+            let refusal =
+                Refusal::Unavailable { function: f.path(), host: state.profile.name() };
+            let state = Arc::clone(&state);
+            target.set(
+                f.method(),
+                Func::from(hrtb_value(move |ctx, _| {
+                    state.refuse(refusal.clone());
+                    Err(throw(&ctx, &refusal))
+                })),
+            )?;
+            continue;
+        }
+
         let target: Object = sb.get(f.namespace())?;
         match f.permission() {
             // Not granted: this name is a function that throws, and no code

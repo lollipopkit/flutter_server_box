@@ -37,6 +37,21 @@ pub struct Manifest {
     #[serde(default)]
     pub contributes: Contributions,
 
+    /// Which hosts this plugin may run in. `["app"]` when absent.
+    ///
+    /// Declaring `agent` is a promise about what it uses: the monitor agent
+    /// has no user, so nothing in `sb.ui`, `sb.nav` or `sb.clipboard` exists
+    /// there and neither does `sb.server.list`. The promise is not taken on
+    /// trust — those functions are installed as stubs that throw, as an
+    /// ungranted one already is — so a plugin that breaks it fails on the call
+    /// rather than silently doing less.
+    ///
+    /// A UI contribution is refused alongside `agent` at parse time, because
+    /// there is nothing on a headless daemon for it to draw on. See
+    /// PLUGINS.md 9.5.
+    #[serde(default = "default_runs_in")]
+    pub runs_in: Vec<String>,
+
     /// Locales `l10n/<locale>.json` exists for. `en` is the fallback and must
     /// be present.
     #[serde(default)]
@@ -46,6 +61,10 @@ pub struct Manifest {
     pub license: Option<String>,
     #[serde(default)]
     pub source_url: Option<String>,
+}
+
+fn default_runs_in() -> Vec<String> {
+    vec!["app".to_string()]
 }
 
 impl Manifest {
@@ -95,6 +114,28 @@ impl Manifest {
                 );
             }
         }
+        let mut hosts = Vec::new();
+        for name in &self.runs_in {
+            match crate::hostfn::HostProfile::parse(name) {
+                Some(h) => hosts.push(h),
+                None => return err(format!("unknown host in `runs_in`: `{name}`")),
+            }
+        }
+        if hosts.is_empty() {
+            return err("`runs_in` names no host".into());
+        }
+        // A headless daemon has nothing to draw on, so a plugin that says it
+        // runs there and contributes an interface is describing something that
+        // cannot exist. Refused at parse time rather than silently ignored,
+        // because the author is telling us two things that contradict.
+        if hosts.contains(&crate::hostfn::HostProfile::Agent) && self.contributes.has_ui() {
+            return err(
+                "`runs_in` includes `agent`, which has no user interface — a tab, page, card \
+                 or settings contribution cannot run there"
+                    .into(),
+            );
+        }
+
         // A `$config.<key>` pattern that names no field would be a grant with
         // nothing behind it, and the install dialog would show the user an
         // address that never resolves.
@@ -141,6 +182,13 @@ impl Manifest {
             .collect::<Vec<_>>();
 
         Grants::new(effective).with_http_patterns(patterns)
+    }
+
+    /// Whether this plugin may run in [`profile`](crate::hostfn::HostProfile).
+    pub fn runs_in_host(&self, profile: crate::hostfn::HostProfile) -> bool {
+        self.runs_in.iter().any(|n| {
+            crate::hostfn::HostProfile::parse(n) == Some(profile)
+        })
     }
 
     /// Every permission the manifest asks for, which is what the install dialog
@@ -276,6 +324,20 @@ pub struct Contributions {
     pub status: Option<StatusContribution>,
 }
 
+impl Contributions {
+    /// Whether any of these draws something.
+    ///
+    /// `status` is not one: it answers a command and a reading, and the host
+    /// draws it with its own widgets — which is exactly why it is the
+    /// contribution an agent can carry.
+    pub fn has_ui(&self) -> bool {
+        self.card.is_some()
+            || self.page.is_some()
+            || self.tab.is_some()
+            || self.settings.is_some()
+    }
+}
+
 /// Readings on the status page, collected by a command the host runs.
 ///
 /// No surface: the plugin answers `statusCmd(platform)` with a command and
@@ -390,6 +452,7 @@ pub struct SettingsContribution {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::hostfn::HostProfile;
 
     const BMC: &str = r#"{
       "id": "app.serverbox.bmc",
@@ -452,6 +515,75 @@ mod tests {
         let g = m.resolve_grants(&consented(Permission::ALL), &BTreeMap::new());
         assert!(!g.allows(Permission::ServerExec));
         assert!(g.allows(Permission::UiDialog));
+    }
+
+    /// The app unless the manifest says otherwise. Every plugin written before
+    /// `runs_in` existed says nothing, and every one of them is an app plugin.
+    #[test]
+    fn a_manifest_that_says_nothing_runs_in_the_app_only() {
+        let m = Manifest::parse(BMC.as_bytes()).unwrap();
+        assert!(m.runs_in_host(HostProfile::App));
+        assert!(!m.runs_in_host(HostProfile::Agent));
+    }
+
+    #[test]
+    fn a_status_plugin_may_say_it_runs_in_the_agent() {
+        let json = r#"{
+          "id": "p", "version": "1", "abi": 1, "name": "P",
+          "runs_in": ["app", "agent"],
+          "permissions": { "server.exec": true },
+          "contributes": { "status": {
+            "id": "s", "label": "S", "platforms": ["linux"]
+          } }
+        }"#;
+        let m = Manifest::parse(json.as_bytes()).unwrap();
+        assert!(m.runs_in_host(HostProfile::Agent));
+        assert!(m.runs_in_host(HostProfile::App));
+    }
+
+    /// A headless daemon has nothing to draw on. The author is telling us two
+    /// things that contradict, so this is refused rather than half-honoured.
+    #[test]
+    fn a_ui_contribution_cannot_run_in_the_agent() {
+        let json = r#"{
+          "id": "p", "version": "1", "abi": 1, "name": "P",
+          "runs_in": ["agent"],
+          "contributes": { "card": { "id": "c", "label": "C" } }
+        }"#;
+        let e = Manifest::parse(json.as_bytes()).unwrap_err();
+        assert!(format!("{e}").contains("no user interface"), "{e}");
+    }
+
+    /// A status contribution is not a UI one: it answers a command and a
+    /// reading, and the host draws it with its own widgets — which is exactly
+    /// why it is the contribution an agent can carry.
+    #[test]
+    fn a_status_contribution_is_not_a_user_interface() {
+        let json = r#"{
+          "id": "p", "version": "1", "abi": 1, "name": "P",
+          "permissions": { "server.exec": true },
+          "contributes": { "status": {
+            "id": "s", "label": "S", "platforms": ["linux"]
+          } }
+        }"#;
+        let m = Manifest::parse(json.as_bytes()).unwrap();
+        assert!(!m.contributes.has_ui());
+    }
+
+    #[test]
+    fn an_unknown_host_is_refused_rather_than_ignored() {
+        let json = r#"{
+          "id": "p", "version": "1", "abi": 1, "name": "P",
+          "runs_in": ["app", "toaster"]
+        }"#;
+        let e = Manifest::parse(json.as_bytes()).unwrap_err();
+        assert!(format!("{e}").contains("toaster"), "{e}");
+    }
+
+    #[test]
+    fn an_empty_runs_in_is_refused() {
+        let json = r#"{ "id": "p", "version": "1", "abi": 1, "name": "P", "runs_in": [] }"#;
+        assert!(Manifest::parse(json.as_bytes()).is_err());
     }
 
     #[test]

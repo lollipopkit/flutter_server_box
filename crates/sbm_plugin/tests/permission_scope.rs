@@ -11,7 +11,9 @@ mod support;
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use sbm_plugin::{Grants, HostFn, Instance, InstanceOptions, Manifest, Permission, PluginError};
+use sbm_plugin::{
+    Grants, HostFn, HostProfile, Instance, InstanceOptions, Manifest, Permission, PluginError,
+};
 use support::ScriptedBridge;
 
 /// An argument each function accepts, so a refusal is never the argument's
@@ -256,6 +258,126 @@ fn everything_granted_reaches_everything() {
     ])
     .with_http_patterns(["*".to_string()]);
     assert_scope(grants, HostFn::ALL);
+}
+
+/// The claim made in PLUGINS.md 9.5, run rather than asserted about a table:
+/// on the agent, a function with a user in it is a name that throws.
+#[test]
+fn a_ui_call_on_the_agent_throws_and_never_reaches_the_app() {
+    let src = r#"
+      export async function go() { await sb.ui.toast({ text: "hi", kind: "info" }); }
+    "#;
+    let bridge = ScriptedBridge::new();
+    let mut o = InstanceOptions::new("test.plugin", "inst-1");
+    o.profile = HostProfile::Agent;
+    // Everything granted, so the refusal can only be the host's.
+    o.grants = Grants::new(Permission::ALL.to_vec()).with_http_patterns(["*".to_string()]);
+    let mut p = Instance::new(src, o, Arc::clone(&bridge) as _).unwrap();
+
+    let e = p.call("go", b"").unwrap_err();
+    let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
+    // Named as what it is. A permission is something the user can grant, and
+    // this is not — so the two must not read the same.
+    assert!(msg.contains("does not exist on the agent host"), "{msg}");
+    assert!(!msg.contains("permission denied"), "{msg}");
+    assert!(bridge.funcs().is_empty(), "the app was asked anyway");
+}
+
+/// And the same plugin, in the app, works. Both halves, or this proves only
+/// that something threw.
+#[test]
+fn the_same_call_in_the_app_reaches_the_app() {
+    let src = r#"
+      export async function go() { await sb.ui.toast({ text: "hi", kind: "info" }); }
+    "#;
+    let bridge = ScriptedBridge::new();
+    let mut o = InstanceOptions::new("test.plugin", "inst-1");
+    o.profile = HostProfile::App;
+    o.grants = Grants::default();
+    let mut p = Instance::new(src, o, Arc::clone(&bridge) as _).unwrap();
+
+    p.call("go", b"").unwrap();
+    assert!(bridge.funcs().contains(&HostFn::UiToast));
+}
+
+/// What the agent *does* have still works there, and still obeys its
+/// permission — the subset narrows the host, it does not widen the grants.
+#[test]
+fn the_agent_still_enforces_permissions_on_what_it_has() {
+    let src = r#"
+      export async function go() {
+        await sb.server.exec({ server: "bound", script: "uptime" });
+      }
+    "#;
+    let bridge = ScriptedBridge::new();
+    let mut o = InstanceOptions::new("test.plugin", "inst-1");
+    o.profile = HostProfile::Agent;
+    o.grants = Grants::default();
+    o.bound_server = Some("bound".to_string());
+    let mut p = Instance::new(src, o, Arc::clone(&bridge) as _).unwrap();
+
+    let e = p.call("go", b"").unwrap_err();
+    let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
+    assert!(msg.contains("permission denied"), "{msg}");
+    assert!(msg.contains("server.exec"), "{msg}");
+}
+
+/// The agent has no user, so nothing that asks one a question exists there.
+///
+/// Asserted as a *subset* rather than as a list, so a host function added
+/// later has to be thought about once — it is in the app's set by default, and
+/// saying it belongs on a headless daemon is a decision somebody makes.
+#[test]
+fn the_agent_host_is_a_subset_of_the_app_host() {
+    let agent: BTreeSet<HostFn> = HostFn::ALL
+        .iter()
+        .copied()
+        .filter(|f| f.available_in(HostProfile::Agent))
+        .collect();
+
+    for f in HostFn::ALL {
+        assert!(
+            f.available_in(HostProfile::App),
+            "{} is missing from the app, which has every one",
+            f.path()
+        );
+    }
+
+    // What it has: running a command on the machine it is on, the network, its
+    // own storage, and its log.
+    let names: Vec<String> = agent.iter().map(|f| f.path()).collect();
+    assert_eq!(
+        names,
+        [
+            "sb.server.exec",
+            "sb.http.fetch",
+            "sb.store.get",
+            "sb.store.set",
+            "sb.store.list",
+            "sb.diag.crumb",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>()
+    );
+}
+
+/// Every namespace with a person in it is gone, and `sb.server.list` with it —
+/// an agent knows one machine and that machine is itself.
+#[test]
+fn nothing_that_needs_a_user_reaches_the_agent() {
+    for f in HostFn::ALL {
+        let path = f.path();
+        let needs_a_user = f.namespace() == "ui"
+            || f.namespace() == "nav"
+            || f.namespace() == "clipboard"
+            || path == "sb.server.list";
+        assert_eq!(
+            !f.available_in(HostProfile::Agent),
+            needs_a_user,
+            "{path} is on the wrong side of the agent's line"
+        );
+    }
 }
 
 /// `storage.sync` grants no host function at all — it is read by the storage

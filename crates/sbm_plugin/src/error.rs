@@ -91,6 +91,15 @@ pub enum Refusal {
 
     /// The plugin handed a malformed argument to a host function.
     BadRequest { function: String, detail: String },
+
+    /// A function this *host* does not have, whatever the manifest asked for.
+    ///
+    /// The monitor agent runs plugins with no user in front of it, so nothing
+    /// in `sb.ui`, `sb.nav` or `sb.clipboard` exists there — see PLUGINS.md
+    /// 9.5. Told apart from [`PermissionDenied`](Self::PermissionDenied)
+    /// because the answers differ: a permission is something the user can
+    /// grant, and this is not.
+    Unavailable { function: String, host: &'static str },
 }
 
 impl Refusal {
@@ -100,6 +109,7 @@ impl Refusal {
             Self::PermissionDenied { .. } => "PermissionDenied",
             Self::OutOfScope { .. } => "OutOfScope",
             Self::BadRequest { .. } => "BadRequest",
+            Self::Unavailable { .. } => "Unavailable",
         }
     }
 }
@@ -115,6 +125,9 @@ impl fmt::Display for Refusal {
             }
             Self::BadRequest { function, detail } => {
                 write!(f, "bad request to {function}: {detail}")
+            }
+            Self::Unavailable { function, host } => {
+                write!(f, "{function} does not exist on the {host} host")
             }
         }
     }
