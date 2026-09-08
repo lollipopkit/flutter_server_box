@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/provider/plugin/app_ops.dart';
@@ -55,6 +56,14 @@ class PluginRuntimeService {
   /// Instance id by the number the runtime knows it as, so a request naming
   /// the number can be answered about the right instance.
   final _instanceIds = <BigInt, String>{};
+
+  /// How many instances are loaded right now.
+  ///
+  /// For a test that has to say an instance was *replaced* rather than joined
+  /// by a second one — a leak here is an OS thread and a QuickJS context, and
+  /// nothing about the screen shows it.
+  @visibleForTesting
+  int get loadedCount => _instanceIds.length;
 
   bool get started => _runtime != null;
 

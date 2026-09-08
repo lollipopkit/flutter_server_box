@@ -178,6 +178,51 @@ void main() {
     expect(find.text('card/demo'), findsOneWidget);
   });
 
+  /// The half of plugin hot-reload that lives here.
+  ///
+  /// A development directory is re-read by `PluginInstaller.refresh`, which
+  /// bumps `PluginContributions.revision`; a surface following that gets a new
+  /// `source` and has to swap the instance for one compiled from it. Before
+  /// this was reachable the whole path existed and nothing triggered it.
+  testWidgets('a new source replaces the running instance', (tester) async {
+    await mount(tester, '''
+      export function open() {
+        return { ui: { t: "text", v: 1, p: { value: "before" } } };
+      }
+    ''');
+    expect(find.text('before'), findsOneWidget);
+
+    await tester.runAsync(() async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PluginSurfaceView(
+              spec: PluginSurfaceSpec(
+                pluginId: 'app.serverbox.demo',
+                manifestJson: _manifest,
+                source: '''
+                  export function open() {
+                    return { ui: { t: "text", v: 1, p: { value: "after" } } };
+                  }
+                ''',
+                kind: 'card',
+                contributionId: 'demo',
+              ),
+              service: service,
+            ),
+          ),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pump();
+
+    expect(find.text('after'), findsOneWidget);
+    expect(find.text('before'), findsNothing);
+    // The old instance is gone rather than left running beside the new one.
+    expect(service.loadedCount, 1);
+  });
+
   /// A plugin that will not load is named rather than left as an empty space,
   /// which is indistinguishable from a card the user turned off.
   testWidgets('a plugin that does not parse says so', (tester) async {

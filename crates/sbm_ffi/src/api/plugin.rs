@@ -16,7 +16,7 @@
 //! map.
 
 use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
 
 use flutter_rust_bridge::frb;
@@ -101,8 +101,41 @@ pub struct PluginSpec {
 /// Create it once, keep it, and read `requests` and `logs` for as long as it
 /// lives.
 pub struct PluginRuntime {
-    host: PluginHost,
+    /// Shared so [`shutdown_plugin_runtimes`] can reach it without owning the
+    /// runtime, which the app does through a handle this crate does not hold.
+    host: Arc<PluginHost>,
     bridge: Arc<ChannelBridge>,
+}
+
+/// Every runtime that has been created and not yet dropped.
+///
+/// `Weak`, so this is a way to *find* a live runtime and never a reason for
+/// one to stay alive. Entries whose runtime has gone are cleared on the next
+/// pass rather than tracked.
+static LIVE: Mutex<Vec<Weak<PluginHost>>> = Mutex::new(Vec::new());
+
+/// Ends every instance of every live runtime, and answers how many it ended.
+///
+/// **For hot restart.** Dropping a `PluginRuntime` unloads its instances and
+/// joins their threads — but a hot restart discards the Dart isolate without
+/// running finalizers, so the Dart handle simply disappears and `Drop` never
+/// runs. The orphaned runtime keeps a QuickJS context and an OS thread per
+/// loaded plugin, for the life of the process, once per restart.
+///
+/// Called from `_initApp` right after `RustLib.init`, before anything creates
+/// a runtime: on a cold start there is nothing to find, and on a hot restart
+/// this is the only moment the previous isolate's runtime is still reachable
+/// and certainly unused.
+pub fn shutdown_plugin_runtimes() -> u32 {
+    let mut live = LIVE.lock().expect("poisoned");
+    let mut ended = 0usize;
+    for weak in live.iter() {
+        if let Some(host) = weak.upgrade() {
+            ended += host.unload_all();
+        }
+    }
+    live.clear();
+    ended as u32
 }
 
 impl PluginRuntime {
@@ -135,7 +168,9 @@ impl PluginRuntime {
                 });
             },
         );
-        Self { host: PluginHost::new(), bridge }
+        let host = Arc::new(PluginHost::new());
+        LIVE.lock().expect("poisoned").push(Arc::downgrade(&host));
+        Self { host, bridge }
     }
 
     /// Compiles a plugin and keeps it on a thread of its own.

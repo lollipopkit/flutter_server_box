@@ -91,6 +91,28 @@ class PluginSurfaceState {
     }
   }
 
+  /// Forgets everything the previous instance built.
+  ///
+  /// Called when a surface swaps its instance for one compiled from newer
+  /// source. Revisions are the new plugin's to assign from 1 again, and
+  /// `_byRev` is keyed by nothing else — so a tree that reused a number would
+  /// be handed the *old* plugin's widget for it. The leaf cache is keyed by
+  /// content and would be harmless, but a reload is a clean start and half a
+  /// clean start is the kind of thing that goes wrong once and is never
+  /// reproduced.
+  ///
+  /// The slot notifiers are emptied rather than disposed: the previous tree is
+  /// still mounted at this point and its `ValueListenableBuilder`s are still
+  /// listening, so disposing one throws when it detaches. They are dropped
+  /// with the state itself in [dispose].
+  void reset() {
+    _byRev.clear();
+    _leaves.clear();
+    for (final notifier in _slots.values) {
+      notifier.value = null;
+    }
+  }
+
   void dispose() {
     for (final notifier in _slots.values) {
       notifier.dispose();

@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1878694943;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1975907596;
             
 
 // Section: executor
@@ -620,6 +620,15 @@ let api_custom = <bool>::sse_decode(&mut deserializer);deserializer.end();
                 transform_result_sse::<_, ()>((move || {
                      let output_ok = Ok::<_, ()>(crate::api::script::shell_func_flag(api_func))?;   std::result::Result::Ok(output_ok)
                 })()) })
+            }fn wire__crate__api__plugin__shutdown_plugin_runtimes_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "shutdown_plugin_runtimes", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end(); move |context|  {
+                    transform_result_sse::<_, ()>((move ||  {
+                         let output_ok = Ok::<_, ()>(crate::api::plugin::shutdown_plugin_runtimes())?;   std::result::Result::Ok(output_ok)
+                    })())
+                } })
             }fn wire__crate__api__ssh_asym__x25519_keypair_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "x25519_keypair", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
@@ -1107,6 +1116,7 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 31 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
 37 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
 38 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+49 => wire__crate__api__plugin__shutdown_plugin_runtimes_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -1158,8 +1168,8 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
 46 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
 47 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
 48 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
-49 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
-50 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
+50 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+51 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }

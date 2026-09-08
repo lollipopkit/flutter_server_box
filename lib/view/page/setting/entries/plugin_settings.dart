@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/plugin/contributions.dart';
+import 'package:server_box/data/model/plugin/icons.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
 import 'package:server_box/view/page/setting/entry.dart';
@@ -37,13 +38,24 @@ class PluginSettingsPage extends ConsumerWidget {
         SettingsNode.leaf(
           id: 'plugin.${plugin.id}',
           title: settings.label,
-          icon: Icons.extension_outlined,
+          icon: PluginIcons.of(settings.icon),
           page: () => PluginSettingsPage(plugin: plugin, embedded: true),
         ),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Follows the registry for the same reason `PluginPage` does: this holds
+    // the plugin it was built with, and an edit to a development directory
+    // reaches it only if something says to look again.
+    return ValueListenableBuilder(
+      valueListenable: PluginContributions.revision,
+      builder: (context, _, _) => _build(context, ref),
+    );
+  }
+
+  Widget _build(BuildContext context, WidgetRef ref) {
+    final plugin = PluginContributions.byId(this.plugin.id) ?? this.plugin;
     final settings = plugin.manifest.settings;
     if (settings == null) {
       return Scaffold(body: Center(child: Text(libL10n.empty, style: UIs.textGrey)));

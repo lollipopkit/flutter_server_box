@@ -134,12 +134,20 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
     super.dispose();
   }
 
+  /// Swaps the running instance for one compiled from the current source.
+  ///
+  /// Unloads *before* loading, so the two never exist together: each holds a
+  /// QuickJS context and an OS thread, and a reload that overlapped them would
+  /// cost both for as long as the new one takes to compile — on every edit.
   Future<void> _reload() async {
     final old = _instance;
     _generation++;
     _instance = null;
     if (old != null) await widget.service.unload(old);
     if (!mounted) return;
+    // The new instance numbers its revisions from the start, and the cache is
+    // keyed by nothing but the number.
+    _state.reset();
     await _load();
   }
 

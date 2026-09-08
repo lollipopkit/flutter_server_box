@@ -34,6 +34,7 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
+import 'package:server_box/src/rust/api/plugin.dart' as plugin_ffi;
 import 'package:server_box/src/rust/frb_generated.dart';
 
 Future<void> main() async {
@@ -135,6 +136,26 @@ Future<void> _initApp() async {
 
   // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
+  // A hot restart discards this isolate without running finalizers, so the
+  // previous one's plugin runtime is never dropped — and dropping it is what
+  // ends its instances and joins their threads. Left alone it keeps a QuickJS
+  // context and an OS thread per loaded plugin for the life of the process,
+  // once per restart.
+  //
+  // Here because this is the one moment the orphan is both still reachable
+  // and certainly unused: after the library is up and before anything creates
+  // a runtime. On a cold start there is nothing to find and it answers 0.
+  //
+  // Best effort, like everything else in this function: a debug convenience
+  // must not be a way for the app to fail to start.
+  try {
+    final ended = await plugin_ffi.shutdownPluginRuntimes();
+    if (ended > 0) {
+      Loggers.app.info('Ended $ended plugin instance(s) left by a hot restart');
+    }
+  } catch (e, s) {
+    Loggers.app.warning('Reaping the previous plugin runtime', e, s);
+  }
   // Every SSH connection this isolate opens computes AES and HMAC through the
   // same library from here on, instead of in Dart on the isolate drawing
   // frames. Read when a connection installs its keys, so it has to be in place

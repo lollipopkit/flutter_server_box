@@ -8,6 +8,21 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
+/// Ends every instance of every live runtime, and answers how many it ended.
+///
+/// **For hot restart.** Dropping a `PluginRuntime` unloads its instances and
+/// joins their threads — but a hot restart discards the Dart isolate without
+/// running finalizers, so the Dart handle simply disappears and `Drop` never
+/// runs. The orphaned runtime keeps a QuickJS context and an OS thread per
+/// loaded plugin, for the life of the process, once per restart.
+///
+/// Called from `_initApp` right after `RustLib.init`, before anything creates
+/// a runtime: on a cold start there is nothing to find, and on a hot restart
+/// this is the only moment the previous isolate's runtime is still reachable
+/// and certainly unused.
+Future<int> shutdownPluginRuntimes() =>
+    RustLib.instance.api.crateApiPluginShutdownPluginRuntimes();
+
 /// Reads a manifest without loading anything.
 ///
 /// What the install page needs: the name, the version, and the permissions to

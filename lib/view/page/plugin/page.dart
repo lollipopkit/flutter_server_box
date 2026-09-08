@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
+import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
@@ -26,7 +27,30 @@ class PluginPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final args = this.args;
+    // Rebuilt whenever the installed set is replaced, so an edit to a
+    // development directory reaches a page that is already open: `refresh()`
+    // re-reads the directory, `publish` bumps the revision, and the newer
+    // `source` below reaches `PluginSurfaceView`, which reloads the instance
+    // when it changes. The captured `args` is what the route carries and does
+    // not change on its own.
+    return ValueListenableBuilder(
+      valueListenable: PluginContributions.revision,
+      builder: (context, _, _) => _build(context, ref),
+    );
+  }
+
+  Widget _build(BuildContext context, WidgetRef ref) {
+    // Re-resolved rather than taken from the route: the copy the route carries
+    // is the one that existed when the page was opened. Falls back to it for
+    // a plugin the registry no longer has — the branch below says so, and
+    // saying it with the name the user tapped is better than a blank bar.
+    final captured = this.args;
+    final args = captured == null
+        ? null
+        : PluginPageArgs(
+            plugin: PluginContributions.byId(captured.plugin.id) ?? captured.plugin,
+            spi: captured.spi,
+          );
     final page = args?.plugin.manifest.page;
     // Uninstalled, disabled, or updated to a version that no longer
     // contributes one — all reachable, because a page can outlive the entry

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
 
@@ -15,16 +16,74 @@ import 'package:server_box/data/model/plugin/installed.dart';
 abstract final class PluginContributions {
   static var _byId = <String, InstalledPlugin>{};
 
+  /// Bumped whenever [publish] or [clear] replaces the set.
+  ///
+  /// What a surface follows so an edit to a development directory reaches a
+  /// page that is already open. Without it the whole reload path existed and
+  /// nothing ever triggered it: `PluginSurfaceView.didUpdateWidget` reloads
+  /// the instance when `spec.source` changes, but the page held the
+  /// `InstalledPlugin` captured when it was opened, and nothing told it to
+  /// look again.
+  ///
+  /// A counter rather than the map itself: the value is only ever compared for
+  /// change, and handing out the map would let a listener hold plugins that
+  /// have since been uninstalled.
+  static final revision = ValueNotifier(0);
+
+  /// What the published set was made of, so an unchanged one is not
+  /// republished. See [publish].
+  static String _fingerprint = '';
+
   /// Replaces what plugins contribute, after an install, an uninstall, or the
   /// pass at launch that reads them.
+  ///
+  /// **The revision moves only when something actually changed.** Opening the
+  /// plugins settings page re-reads every directory on `initState`, and that
+  /// is the common case by far — the files are usually the same bytes they
+  /// were. Bumping regardless would rebuild every open plugin surface every
+  /// time somebody looked at the list. A surface would then compare its source
+  /// and decline to reload, so nothing visible went wrong, which is exactly
+  /// why it would never have been noticed.
   static void publish(Iterable<InstalledPlugin> plugins) {
-    _byId = {
+    final next = {
       for (final plugin in plugins)
         if (plugin.record.enabled) plugin.id: plugin,
     };
+    _byId = next;
+    _bumpIfChanged(_fingerprintOf(next.values));
   }
 
-  static void clear() => _byId = {};
+  static void clear() {
+    _byId = {};
+    _bumpIfChanged('');
+  }
+
+  static void _bumpIfChanged(String next) {
+    if (next == _fingerprint) return;
+    _fingerprint = next;
+    revision.value++;
+  }
+
+  /// Everything a surface would rebuild for.
+  ///
+  /// The source, because that is what a reload compiles; the manifest, because
+  /// it decides what is contributed and where; and the grants, because a
+  /// permission the user has just withdrawn has to reach a running instance.
+  /// Config is not here — it is stored per server and read when a surface is
+  /// built, not part of what the registry publishes.
+  ///
+  /// Hashed rather than compared field by field: the set is small, this runs
+  /// once per refresh, and a field added to `InstalledPlugin` that nobody
+  /// remembers to add to a comparison is how this stops working quietly.
+  static String _fingerprintOf(Iterable<InstalledPlugin> plugins) {
+    final parts = [
+      for (final p in plugins)
+        '${p.id}|${p.record.version}|${p.record.enabled}|'
+            '${p.granted.toList()..sort()}|'
+            '${p.manifestJson.hashCode}|${p.source.hashCode}',
+    ]..sort();
+    return parts.join(';');
+  }
 
   static Iterable<InstalledPlugin> get active => _byId.values;
 

@@ -145,6 +145,21 @@ impl PluginHost {
         }
     }
 
+    /// Ends every instance and waits for their threads.
+    ///
+    /// What [`Drop`] does, callable without dropping the host — which is what
+    /// a caller needs when the host itself is reachable only through a handle
+    /// somebody else owns. See `sbm_ffi`'s `shutdown_plugin_runtimes`.
+    pub fn unload_all(&self) -> usize {
+        let ids: Vec<InstanceId> =
+            self.workers.lock().expect("poisoned").keys().copied().collect();
+        let n = ids.len();
+        for id in ids {
+            self.unload(id);
+        }
+        n
+    }
+
     pub fn is_loaded(&self, id: InstanceId) -> bool {
         self.workers.lock().expect("poisoned").contains_key(&id)
     }
@@ -166,11 +181,7 @@ impl PluginHost {
 
 impl Drop for PluginHost {
     fn drop(&mut self) {
-        let ids: Vec<InstanceId> =
-            self.workers.lock().expect("poisoned").keys().copied().collect();
-        for id in ids {
-            self.unload(id);
-        }
+        self.unload_all();
     }
 }
 
@@ -271,6 +282,28 @@ mod tests {
 
     /// The instance is built on its own thread and never moves, because the
     /// runtime it holds cannot be used from another one.
+    /// What a hot restart needs and `Drop` cannot give it: the host is
+    /// reachable only through a handle somebody else owns, so ending its
+    /// instances has to be callable without dropping it.
+    #[test]
+    fn unload_all_ends_every_instance_and_leaves_the_host_usable() {
+        let host = PluginHost::new();
+        let src = "export function ping() { return 1; }";
+        let a = host.load(src.into(), opts("a"), Arc::new(Quiet)).unwrap();
+        let b = host.load(src.into(), opts("b"), Arc::new(Quiet)).unwrap();
+        assert_eq!(host.len(), 2);
+
+        assert_eq!(host.unload_all(), 2);
+
+        assert_eq!(host.len(), 0);
+        assert!(!host.is_loaded(a));
+        assert!(!host.is_loaded(b));
+        // Nothing to end the second time, and not an error either.
+        assert_eq!(host.unload_all(), 0);
+        // And it still loads: this ends instances, it does not end the host.
+        assert!(host.load(src.into(), opts("c"), Arc::new(Quiet)).is_ok());
+    }
+
     #[test]
     fn every_call_reaches_the_same_thread() {
         let host = host();

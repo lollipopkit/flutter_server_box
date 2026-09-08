@@ -378,11 +378,35 @@ void main() {
         contains('app.serverbox.zfs:zfs'),
       );
 
+      // A refresh that read the same bytes is not a change, and must not
+      // rebuild every open plugin surface. The settings page re-reads every
+      // directory whenever it is opened, so this is the common case.
+      final quiet = PluginContributions.revision.value;
+      await installer.refresh();
+      expect(
+        PluginContributions.revision.value,
+        quiet,
+        reason: 'nothing changed, so nothing to tell anyone',
+      );
+
       // An edit, and a refresh is enough to see it.
       await File(dir.path.joinPath(PluginPackage.sourceName))
           .writeAsString('export function statusCmd() { return { cmd: "b" }; }');
+      final before = PluginContributions.revision.value;
       final refreshed = await installer.refresh();
       expect(refreshed.single.source, contains('"b"'));
+      // The other half of picking that edit up: a surface already on screen
+      // holds the plugin it was opened with, and this is what tells it to look
+      // again. Without it the reload existed and nothing ever ran it.
+      expect(
+        PluginContributions.revision.value,
+        greaterThan(before),
+        reason: 'a republished set has to reach an open surface',
+      );
+      expect(
+        PluginContributions.byId('app.serverbox.zfs')?.source,
+        contains('"b"'),
+      );
 
       // And removing it takes the record and the arrangement, but not the
       // developer's files.
