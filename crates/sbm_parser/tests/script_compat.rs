@@ -468,6 +468,13 @@ fn script_headers() {
     assert!(unix.contains("export LANG=en_US.UTF-8"));
 }
 
+#[test]
+fn windows_system_name_does_not_emit_get_computer_info_progress() {
+    let win = build_script(SystemType::Windows, &opts());
+    assert!(win.contains("(Get-CimInstance Win32_OperatingSystem).Caption"));
+    assert!(!win.contains("(Get-ComputerInfo).OsName"));
+}
+
 /// Dart 'scripts handle all system types properly': env probes + Bsd == Linux
 #[test]
 fn system_types_and_probes() {
