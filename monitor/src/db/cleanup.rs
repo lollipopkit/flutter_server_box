@@ -24,11 +24,12 @@ impl DataCleanupService {
         let alerts_deleted = self.cleanup_old_alerts().await?;
         let policy_deleted = self.cleanup_policy_tables().await?;
         let size_deleted = self.enforce_db_size_limit().await?;
+        let reclaimed = self.reclaim_free_pages().await?;
 
         let duration = start_time.elapsed();
         info!(
-            "Data cleanup completed in {:?}. Deleted {} metrics records, {} alerts records, {} policy-table records, {} size-cap records",
-            duration, metrics_deleted, alerts_deleted, policy_deleted, size_deleted
+            "Data cleanup completed in {:?}. Deleted {} metrics records, {} alerts records, {} policy-table records, {} size-cap records, reclaimed {} bytes",
+            duration, metrics_deleted, alerts_deleted, policy_deleted, size_deleted, reclaimed
         );
 
         Ok(())
@@ -50,9 +51,17 @@ impl DataCleanupService {
         "access_log",
     ];
 
-    /// Live data size: pages in use excluding the freelist, so deletions count
-    /// immediately without requiring a blocking full-database VACUUM.
-    async fn live_db_bytes(&self) -> Result<u64> {
+    /// Fraction of the file that has to be freelist before it is worth
+    /// reclaiming. A database that is mostly holes still has to be walked past
+    /// on every cache miss, which is the cost this exists to bound.
+    const FREELIST_RECLAIM_RATIO: f64 = 0.25;
+
+    /// Below this the file is small enough that the ratio above says nothing.
+    /// 1024 pages is 4 MiB at the default page size.
+    const FREELIST_RECLAIM_MIN_PAGES: i64 = 1024;
+
+    /// `page_count`, `freelist_count`, `page_size`.
+    async fn page_stats(&self) -> Result<(i64, i64, i64)> {
         let page_count: i64 = sqlx::query_scalar("PRAGMA page_count")
             .fetch_one(&self.pool)
             .await?;
@@ -62,7 +71,55 @@ impl DataCleanupService {
         let page_size: i64 = sqlx::query_scalar("PRAGMA page_size")
             .fetch_one(&self.pool)
             .await?;
-        Ok((page_count - freelist).max(0) as u64 * page_size.max(0) as u64)
+        Ok((page_count, freelist, page_size.max(0)))
+    }
+
+    /// Live data size: pages in use excluding the freelist, so deletions count
+    /// immediately without requiring a blocking full-database VACUUM.
+    async fn live_db_bytes(&self) -> Result<u64> {
+        let (page_count, freelist, page_size) = self.page_stats().await?;
+        Ok((page_count - freelist).max(0) as u64 * page_size as u64)
+    }
+
+    /// Give pages the deletions above freed back to the filesystem, and
+    /// answer with how many bytes that was.
+    ///
+    /// Retention deletes rows; it does not shrink the file. Without this the
+    /// freelist is the whole difference between a database that has been
+    /// running for a month and one that has not — measured at 20329 of 33331
+    /// pages, a 136 MB file carrying 53 MB — and every page of it is something
+    /// a cold read walks past.
+    ///
+    /// `incremental_vacuum` is the cheap path: it moves free pages to the end
+    /// and truncates, with no rewrite and no long lock. It does nothing unless
+    /// the database was *created* with `auto_vacuum = INCREMENTAL`, which is
+    /// why the other branch exists at all — a file from before that setting
+    /// reports NONE, and the one full VACUUM below both reclaims it and
+    /// converts it, since VACUUM adopts the running connection's setting.
+    pub async fn reclaim_free_pages(&self) -> Result<u64> {
+        let (page_count, freelist, page_size) = self.page_stats().await?;
+        if page_count <= 0
+            || freelist < Self::FREELIST_RECLAIM_MIN_PAGES
+            || (freelist as f64) / (page_count as f64) < Self::FREELIST_RECLAIM_RATIO
+        {
+            return Ok(0);
+        }
+
+        let auto_vacuum: i64 = sqlx::query_scalar("PRAGMA auto_vacuum")
+            .fetch_one(&self.pool)
+            .await?;
+        // 2 is INCREMENTAL; 0 NONE, 1 FULL (which reclaims on its own).
+        if auto_vacuum == 2 {
+            info!("Reclaiming {} free database pages incrementally", freelist);
+            sqlx::query("PRAGMA incremental_vacuum")
+                .execute(&self.pool)
+                .await?;
+        } else {
+            self.vacuum_database().await?;
+        }
+
+        let (after, _, _) = self.page_stats().await?;
+        Ok((page_count - after).max(0) as u64 * page_size as u64)
     }
 
     /// Enforce `max_db_size_mb`: while over the cap, drop the oldest ~10% of
@@ -282,26 +339,21 @@ pub async fn start_cleanup_scheduler(pool: SqlitePool, config: DataRetentionConf
         config.metrics_days, config.alerts_days, config.cleanup_interval_hours
     );
 
+    // Reclaiming space is part of a cleanup pass rather than a timer of its
+    // own. It used to be one fixed at seven times the cleanup interval and
+    // starting a full period out, so a default install rewrote the whole file
+    // every seven days whether or not there was anything to reclaim — and
+    // reclaimed nothing at all before then, or ever, on an agent restarted
+    // more often than that. `reclaim_free_pages` asks the freelist instead.
     tokio::spawn(async move {
         let cleanup_period =
             tokio::time::Duration::from_secs(config.cleanup_interval_hours as u64 * 3600);
-        let vacuum_period = cleanup_period.saturating_mul(7);
         let mut interval = tokio::time::interval(cleanup_period);
-        let mut vacuum =
-            tokio::time::interval_at(tokio::time::Instant::now() + vacuum_period, vacuum_period);
 
         loop {
-            tokio::select! {
-                _ = interval.tick() => {
-                    if let Err(e) = cleanup_service.cleanup_expired_data().await {
-                        error!("Failed to cleanup expired data: {}", e);
-                    }
-                }
-                _ = vacuum.tick() => {
-                    if let Err(e) = cleanup_service.vacuum_database().await {
-                        error!("Failed to vacuum database: {}", e);
-                    }
-                }
+            interval.tick().await;
+            if let Err(e) = cleanup_service.cleanup_expired_data().await {
+                error!("Failed to cleanup expired data: {}", e);
             }
         }
     });

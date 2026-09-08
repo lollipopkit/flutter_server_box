@@ -103,7 +103,7 @@ fn parse_lsblk(json: &serde_json::Value) -> Vec<Disk> {
         let children = device["children"].as_array().map(Vec::as_slice).unwrap_or(&[]);
         let (size, used, avail, _) = lsblk_fs_fields(device);
         let has_stats = size != 0 || used != 0 || avail != 0;
-        let has_own_fs = fstype.is_some_and(|fs| disk_should_calc(fs, mount));
+        let has_own_fs = fstype.is_some_and(|fs| disk_type_should_calc(fs, mount));
 
         // Container devices without their own filesystem: only expand children
         if !has_stats && !has_own_fs && !children.is_empty() {
@@ -143,7 +143,7 @@ fn lsblk_device(device: &serde_json::Value) -> Option<Disk> {
         .filter_map(lsblk_device)
         .collect();
 
-    if fstype.is_some_and(|fs| disk_should_calc(fs, mount)) || !children.is_empty() {
+    if fstype.is_some_and(|fs| disk_type_should_calc(fs, mount)) || !children.is_empty() {
         Some(lsblk_build(device, children))
     } else {
         None
@@ -158,7 +158,7 @@ fn lsblk_single_device(device: &serde_json::Value) -> Option<Disk> {
     if path.is_empty() || (fstype.is_none() && mount.is_empty()) {
         return None;
     }
-    if !disk_should_calc(fstype.unwrap_or(""), mount) {
+    if !disk_type_should_calc(fstype.unwrap_or(""), mount) {
         return None;
     }
     Some(lsblk_build(device, Vec::new()))

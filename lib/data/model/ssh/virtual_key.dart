@@ -123,7 +123,6 @@ extension VirtKeyX on VirtKey {
     VirtKey.up,
     VirtKey.end,
     VirtKey.sftp,
-    VirtKey.snippet,
     VirtKey.tab,
     VirtKey.shift,
     VirtKey.ctrl,

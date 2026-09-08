@@ -11,7 +11,8 @@ PLATFORM ?=
 ENV_FILE ?=
 XCARCHIVE_PATH ?=
 APP_PATH ?=
-DMG_PATH ?=
+DMG_ARM64_PATH ?=
+DMG_AMD64_PATH ?=
 TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
@@ -54,15 +55,18 @@ help:
 		'  monitor-dev        Run monitor backend + panel dev server (vite on :3000, API on :3770)' \
 		'' \
 		'Release scripts:' \
-		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh' \
+		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh (one DMG per architecture)' \
 		'                     Optional: make release-macos-dmg ENV_FILE=.env.release' \
+		'                     Optional: RELEASE_ARCHS="arm64" to rebuild one architecture' \
 		'  package-dmg        Run scripts/release/package-dmg-from-xcarchive.sh' \
 		'                     Example: make package-dmg APP_PATH="/path/Server Box.app"' \
 		'                     Example: make package-dmg XCARCHIVE_PATH=/path/Runner.xcarchive' \
-		'  sync-homebrew-cask Generate ~/proj/homebrew-taps/Casks/server-box.rb from a built DMG' \
+		'  sync-homebrew-cask Generate ~/proj/homebrew-cask/Casks/s/server-box.rb from both DMGs' \
 		'                     Example: make sync-homebrew-cask APP_PATH="/path/Server Box.app"' \
 		'                     Example: make sync-homebrew-cask XCARCHIVE_PATH=/path/Runner.xcarchive' \
-		'                     Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1.dmg'
+		'                     Example: make sync-homebrew-cask \' \
+		'                       DMG_ARM64_PATH=build/artifacts/ServerBox-1.0.1-arm64.dmg \' \
+		'                       DMG_AMD64_PATH=build/artifacts/ServerBox-1.0.1-amd64.dmg'
 
 deps pub-get:
 	$(FLUTTER) pub get
@@ -175,19 +179,19 @@ package-dmg:
 	fi
 
 sync-homebrew-cask:
-	@if [ -z "$(APP_PATH)" ] && [ -z "$(XCARCHIVE_PATH)" ] && [ -z "$(DMG_PATH)" ]; then \
-		echo 'APP_PATH, XCARCHIVE_PATH, or DMG_PATH is required.'; \
+	@if [ -z "$(APP_PATH)" ] && [ -z "$(XCARCHIVE_PATH)" ] && [ -z "$(DMG_ARM64_PATH)$(DMG_AMD64_PATH)" ]; then \
+		echo 'APP_PATH, XCARCHIVE_PATH, or DMG_ARM64_PATH + DMG_AMD64_PATH is required.'; \
 		echo 'Example: make sync-homebrew-cask APP_PATH="/path/Server Box.app"'; \
 		echo 'Example: make sync-homebrew-cask XCARCHIVE_PATH=/path/Runner.xcarchive'; \
-		echo 'Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1.dmg'; \
+		echo 'Example: make sync-homebrew-cask DMG_ARM64_PATH=build/artifacts/ServerBox-1.0.1-arm64.dmg DMG_AMD64_PATH=build/artifacts/ServerBox-1.0.1-amd64.dmg'; \
 		exit 1; \
 	fi
 	@if [ -n "$(APP_PATH)" ]; then \
-		APP_PATH="$(APP_PATH)" DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
+		APP_PATH="$(APP_PATH)" DMG_ARM64_PATH="$(DMG_ARM64_PATH)" DMG_AMD64_PATH="$(DMG_AMD64_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	elif [ -n "$(XCARCHIVE_PATH)" ]; then \
-		XCARCHIVE_PATH="$(XCARCHIVE_PATH)" DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
+		XCARCHIVE_PATH="$(XCARCHIVE_PATH)" DMG_ARM64_PATH="$(DMG_ARM64_PATH)" DMG_AMD64_PATH="$(DMG_AMD64_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	else \
-		DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
+		DMG_ARM64_PATH="$(DMG_ARM64_PATH)" DMG_AMD64_PATH="$(DMG_AMD64_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	fi
 
 # Backend from monitor/ (finds config/db there); panel via vite dev server on

@@ -27,7 +27,13 @@ const ja: Translation = {
     one: 'ServerBox サーバー概要のスクリーンショット',
     two: 'ServerBox 状態チャートのスクリーンショット',
     three: 'ServerBox ターミナルのスクリーンショット',
-    four: 'ServerBox ツールのスクリーンショット',
+    four: 'ServerBox ファイルブラウザのスクリーンショット',
+  },
+  gallery: {
+    title: 'すべての画面を、すべてのデバイスで。',
+    subtitle:
+      'iPhone・iPad・macOS の 31 枚のスクリーンショット。ページを軽く保つため、開くまで読み込みません。',
+    count: '{count} 枚',
   },
   features: {
     title: '日常のサーバーメンテナンスに使える小さな作業場。',
@@ -65,25 +71,11 @@ const ja: Translation = {
       'ServerBox はターミナル、ファイル転送、サービス確認、ハードウェア状態、デバイス通知を同じ流れにまとめます。',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux、Windows',
-    items: {
-      statusChart: '状態チャート',
-      sshTerminal: 'SSH ターミナル',
-      sftp: 'SFTP',
-      docker: 'Docker',
-      process: 'プロセス',
-      systemd: 'Systemd',
-      smart: 'S.M.A.R.T',
-      gpu: 'GPU',
-      sensors: 'センサー',
-      push: '通知',
-      homeWidget: 'ホームウィジェット',
-      watchos: 'watchOS',
-    },
   },
   download: {
     title: 'すべてのプラットフォーム、すべての配布元。',
     subtitle:
-      'デバイスと信頼できる配布元に合わせて選択できます。iOS は App Store、macOS は App Store または Homebrew、Android、Linux、Windows は直接パッケージも利用できます。',
+      'デバイスに合った信頼できる配布元を選んでください。iOS 版は App Store から入手できます。macOS の App Store 版は Apple シリコンにのみ対応しており、Intel Mac では GitHub Releases または Homebrew からインストールできます。Android、Linux、Windows 向けには直接ダウンロードも用意されています。',
     copied: 'インストールコマンドをコピーしました',
     copyPrompt: 'このインストールコマンドをコピーしてください:',
     note:

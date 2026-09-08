@@ -27,7 +27,13 @@ const kr: Translation = {
     one: 'ServerBox 서버 개요 스크린샷',
     two: 'ServerBox 상태 차트 스크린샷',
     three: 'ServerBox 터미널 스크린샷',
-    four: 'ServerBox 도구 스크린샷',
+    four: 'ServerBox 파일 브라우저 스크린샷',
+  },
+  gallery: {
+    title: '모든 화면을, 모든 기기에서.',
+    subtitle:
+      'iPhone, iPad, macOS의 스크린샷 31장. 페이지를 가볍게 유지하기 위해 열기 전에는 불러오지 않습니다.',
+    count: '{count}장',
   },
   features: {
     title: '일상적인 서버 관리를 위한 컴팩트한 작업 공간.',
@@ -65,25 +71,11 @@ const kr: Translation = {
       'ServerBox는 터미널, 파일 전송, 서비스 점검, 하드웨어 상태, 기기 알림을 같은 흐름에 둡니다.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, Windows',
-    items: {
-      statusChart: '상태 차트',
-      sshTerminal: 'SSH 터미널',
-      sftp: 'SFTP',
-      docker: 'Docker',
-      process: '프로세스',
-      systemd: 'Systemd',
-      smart: 'S.M.A.R.T',
-      gpu: 'GPU',
-      sensors: '센서',
-      push: '푸시',
-      homeWidget: '홈 위젯',
-      watchos: 'watchOS',
-    },
   },
   download: {
     title: '모든 플랫폼, 모든 배포 경로.',
     subtitle:
-      '기기와 신뢰 모델에 맞는 채널을 선택하세요. iOS는 App Store, macOS는 App Store 또는 Homebrew, Android/Linux/Windows는 직접 패키지를 제공합니다.',
+      '기기에 맞는 신뢰할 수 있는 배포 경로를 선택하세요. iOS 버전은 App Store에서 받을 수 있습니다. macOS App Store 버전은 Apple silicon만 지원하며, Intel Mac에서는 GitHub Releases 또는 Homebrew로 설치할 수 있습니다. Android, Linux, Windows용 직접 다운로드도 제공됩니다.',
     copied: '설치 명령을 복사했습니다',
     copyPrompt: '이 설치 명령을 복사하세요:',
     note:

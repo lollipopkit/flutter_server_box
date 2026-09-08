@@ -6,29 +6,29 @@
   "scripts": {
     "dev": "vite",
     "typesafe-i18n": "typesafe-i18n --no-watch",
-    "_comment_prebuild": "@serverbox/webui is a file: dependency, so an install here only symlinks it — webui's own dependencies (clsx, tailwind-merge, tailwind-variants) are never fetched, and vite bundles from its source. Without them the build dies on `Rolldown failed to resolve import \"clsx\" from packages/webui/src/utils.ts`, which is what Cloudflare Pages hit: it builds from a clean clone, where nothing has installed them already. npm, not bun, because packages/webui is what carries the lockfile. Same prebuild as monitor/frontend, for the same reason.",
-    "prebuild": "npm install --prefix ../packages/webui",
+    "_comment_prebuild": "@serverbox/webui is a file: dependency, so an install here only symlinks it — webui's own dependencies (clsx, tailwind-merge, tailwind-variants) are never fetched, and vite bundles from its source. Without them the build dies on `Rolldown failed to resolve import \"clsx\" from packages/webui/src/utils.ts`, which is what Cloudflare Pages hit: it builds from a clean clone, where nothing has installed them already. `ci`, not `install`, so the versions are the ones packages/webui/package-lock.json pins — an install may resolve something newer, and the site would be built from a tree no pull request had seen. Same prebuild as monitor/frontend, for the same reason.",
+    "prebuild": "npm ci --prefix ../packages/webui",
     "build": "npm run typesafe-i18n && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@fontsource-variable/figtree": "^5.2.10",
-    "@lucide/svelte": "^1.11.0",
-    "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@tailwindcss/vite": "^4.2.4",
+    "@fontsource-variable/figtree": "^5.3.0",
+    "@lucide/svelte": "^1.41.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "clsx": "^2.1.1",
-    "shadcn-svelte": "^1.2.7",
-    "svelte": "^5.55.5",
+    "shadcn-svelte": "^1.6.0",
+    "svelte": "^5.57.0",
     "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.2.4",
     "tw-animate-css": "^1.4.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.10"
+    "vite": "^8.2.2"
   },
   "dependencies": {
+    "@serverbox/webui": "file:../packages/webui",
     "gsap": "^3.15.0",
-    "typesafe-i18n": "^5.27.1",
-    "@serverbox/webui": "file:../packages/webui"
+    "typesafe-i18n": "^5.27.1"
   }
 }

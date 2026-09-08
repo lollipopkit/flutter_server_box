@@ -199,10 +199,19 @@ fn build_client(
         .redirect(reqwest::redirect::Policy::none());
 
     if tls {
-        let config = rustls::ClientConfig::builder()
-            .dangerous()
-            .with_custom_certificate_verifier(Arc::new(Pinned { pin, seen }))
-            .with_no_client_auth();
+        // Named rather than taken from the process default. reqwest is built
+        // without a provider of its own (`rustls-no-provider`), and
+        // `ClientConfig::builder()` panics when none has been installed —
+        // which, on a machine that has never sent a push, is the state this
+        // runs in. `ring`, matching the rest of the agent.
+        let config = rustls::ClientConfig::builder_with_provider(Arc::new(
+            rustls::crypto::ring::default_provider(),
+        ))
+        .with_safe_default_protocol_versions()
+        .map_err(|e| BridgeError::failed("http", e.to_string()))?
+        .dangerous()
+        .with_custom_certificate_verifier(Arc::new(Pinned { pin, seen }))
+        .with_no_client_auth();
         builder = builder.use_preconfigured_tls(config);
     }
     builder
@@ -441,6 +450,18 @@ mod tests {
             &[],
             UnixTime::now(),
         )
+    }
+
+    /// A client is built without anything having installed a process-default
+    /// crypto provider first. reqwest carries none of its own here, so
+    /// `ClientConfig::builder()` would panic — and the panic would land on the
+    /// plugin host's runtime, where the agent has never sent a push.
+    #[test]
+    fn a_tls_client_builds_with_no_process_default_provider() {
+        let seen = Arc::new(Mutex::new(None));
+        let pin = Some(hex(&Sha256::digest([0u8])));
+
+        assert!(build_client(pin, seen, DEFAULT, true).is_ok());
     }
 
     #[test]

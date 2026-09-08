@@ -151,6 +151,10 @@ class _MyAppState extends State<MyApp> {
       key: ValueKey(locale),
       restorationScopeId: 'serverbox',
       navigatorKey: AppNavigator.key,
+      // It sits over the top-right corner, which is where every page's app bar
+      // keeps its actions — and it says nothing a debug build does not already
+      // say everywhere else.
+      debugShowCheckedModeBanner: false,
       // Outside the breakpoints builder: a toast is sized against the window,
       // not against the scaled layout the breakpoints hand to the pages.
       builder: (ctx, child) {

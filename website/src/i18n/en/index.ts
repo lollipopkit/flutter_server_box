@@ -27,7 +27,13 @@ const en: BaseTranslation = {
     one: 'ServerBox server overview screenshot',
     two: 'ServerBox status chart screenshot',
     three: 'ServerBox terminal screenshot',
-    four: 'ServerBox tools screenshot',
+    four: 'ServerBox file browser screenshot',
+  },
+  gallery: {
+    title: 'Every screen, on every device.',
+    subtitle:
+      '31 screenshots across iPhone, iPad and macOS, folded so the page stays light until you ask for them.',
+    count: '{count} screenshots',
   },
   features: {
     title: 'One compact workspace for everyday server maintenance.',
@@ -65,25 +71,11 @@ const en: BaseTranslation = {
       'ServerBox keeps terminal access, file transfer, service checks, hardware health, and device-native alerts in the same workflow.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, and Windows',
-    items: {
-      statusChart: 'Status chart',
-      sshTerminal: 'SSH Terminal',
-      sftp: 'SFTP',
-      docker: 'Docker',
-      process: 'Process',
-      systemd: 'Systemd',
-      smart: 'S.M.A.R.T',
-      gpu: 'GPU',
-      sensors: 'Sensors',
-      push: 'Push',
-      homeWidget: 'Home Widget',
-      watchos: 'watchOS',
-    },
   },
   download: {
     title: 'Every platform, every source.',
     subtitle:
-      'Choose the channel that matches your device and trust model. iOS uses the App Store; macOS uses the App Store or Homebrew; Android, Linux, and Windows also have direct package downloads.',
+      'Choose a trusted source for your device. iOS is available from the App Store. On macOS, the App Store build supports Apple silicon only; Intel users can install the app from GitHub Releases or Homebrew. Direct downloads are also available for Android, Linux, and Windows.',
     copied: 'Install command copied',
     copyPrompt: 'Copy this install command:',
     note:

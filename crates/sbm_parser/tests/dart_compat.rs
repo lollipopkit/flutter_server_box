@@ -468,6 +468,31 @@ fn disk_parse_df_keeps_storage_named_like_a_virtual_fs() {
     assert_eq!(mounts, ["/srv/pool", "/srv/nfs", "/srv/export", "/srv/backup"]);
 }
 
+/// The first `df` column is a user-controlled source, not a filesystem type.
+/// Type-only exclusions must not silently remove a ZFS root dataset or FUSE
+/// source that happens to use one of those exact names.
+#[test]
+fn disk_parse_df_keeps_sources_named_like_filesystem_types() {
+    let raw = "Filesystem 1K-blocks Used Available Use% Mounted on\n\
+        squashfs 961873408 12345678 949527730 2% /srv/squashfs\n\
+        erofs 961873408 12345678 949527730 2% /srv/erofs\n\
+        iso9660 961873408 12345678 949527730 2% /srv/iso9660\n\
+        snapfuse 961873408 12345678 949527730 2% /srv/snapfuse\n\
+        fuse.snapfuse 961873408 12345678 949527730 2% /srv/fuse-snapfuse\n\
+        swap 961873408 12345678 949527730 2% /srv/swap\n";
+    let disks = linux::parse_disk(raw);
+
+    let paths: Vec<&str> = disks.iter().map(|d| d.path.as_str()).collect();
+    assert_eq!(
+        paths,
+        ["squashfs", "erofs", "iso9660", "snapfuse", "fuse.snapfuse", "swap"]
+    );
+
+    let (used, size) = disk_usage(&disks);
+    assert_eq!(used, 12345678 * 6);
+    assert_eq!(size, 961873408 * 6);
+}
+
 /// `disk_usage` is the Rust side of `DiskUsage.parse`, and takes a [`Disk`]
 /// that carries both a source and a filesystem type where the parser is handed
 /// one or the other. Asking with the path alone missed a row identified only by

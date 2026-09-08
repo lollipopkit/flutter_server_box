@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: "none"
-version: 1.0.1553+1553
+version: 1.0.1579+1579
 
 environment:
   sdk: ">=3.11.0"
@@ -22,7 +22,7 @@ dependencies:
   # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
   # `X509Certificate` only offers sha1 ready made.
   crypto: ^3.0.0
-  dio: ^5.2.1
+  dio: ^5.11.1
   pinenacl: ^0.6.0
   # ECDSA and RSA key generation for the in-app keygen. Ed25519 comes from
   # pinenacl; dartssh2 does the OpenSSH serialisation for all three. Already
@@ -32,7 +32,7 @@ dependencies:
   equatable: ^2.1.0
   easy_isolate: ^1.3.0
   extended_image: ^10.0.0
-  file_picker: ^12.0.0
+  file_picker: ^12.2.0
   flutter_gbk2utf8: ^1.0.1
   flutter_riverpod: ^3.3.1
   flutter_highlight: ^0.7.0
@@ -58,8 +58,8 @@ dependencies:
   # Storage layer over the same encrypted connection: `NativeDatabase.opened`
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.
-  drift: ^2.34.3
-  wakelock_plus: ^1.7.0
+  drift: ^2.34.4
+  wakelock_plus: ^1.8.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^2.0.0
   url_launcher: ^6.2.6
@@ -95,8 +95,8 @@ dependencies:
   # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0
-  desktop_drop: ^0.8.2
-  sentry: ^9.28.0
+  desktop_drop: ^0.8.4
+  sentry: ^9.29.0
   # Runtime for the generated reader in `lib/src/proto`, which is how Android's
   # crash tombstone is decoded. Pure Dart, and its own dependencies —
   # collection, fixnum, meta — are already in this tree.
@@ -150,7 +150,10 @@ flutter:
     # on the server: `curl | bash` fixes no version and verifies nothing, and
     # raw.githubusercontent.com is unreachable from a good share of the hosts
     # people run this against. Refresh with `scripts/update-yabs.sh`.
-    - assets/yabs.sh
+    #
+    # base64, because App Store validation rejects a bundled `.sh` — see
+    # `YabsScript.assetPath`. A shell script cannot be added to this list.
+    - assets/yabs.b64
     # The directory, not each file: `Dist.markAsset` names them by enum name.
     # Only distributions whose logo carries an explicit copyright licence are
     # in there — see the README beside them, which Flutter leaves out because

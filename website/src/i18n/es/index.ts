@@ -27,7 +27,13 @@ const es: Translation = {
     one: 'Captura de vista general de ServerBox',
     two: 'Captura de gráficas de ServerBox',
     three: 'Captura del terminal de ServerBox',
-    four: 'Captura de herramientas de ServerBox',
+    four: 'Captura del explorador de archivos de ServerBox',
+  },
+  gallery: {
+    title: 'Cada pantalla, en cada dispositivo.',
+    subtitle:
+      '31 capturas de iPhone, iPad y macOS, plegadas para que la página siga siendo ligera hasta que las pidas.',
+    count: '{count} capturas',
   },
   features: {
     title: 'Un espacio compacto para el mantenimiento diario.',
@@ -65,25 +71,11 @@ const es: Translation = {
       'ServerBox mantiene terminal, transferencia de archivos, servicios, salud de hardware y alertas en el mismo flujo.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux y Windows',
-    items: {
-      statusChart: 'Gráficas',
-      sshTerminal: 'Terminal SSH',
-      sftp: 'SFTP',
-      docker: 'Docker',
-      process: 'Procesos',
-      systemd: 'Systemd',
-      smart: 'S.M.A.R.T',
-      gpu: 'GPU',
-      sensors: 'Sensores',
-      push: 'Alertas',
-      homeWidget: 'Widget',
-      watchos: 'watchOS',
-    },
   },
   download: {
     title: 'Cada plataforma, cada fuente.',
     subtitle:
-      'Elige el canal adecuado para tu dispositivo. iOS usa App Store; macOS usa App Store o Homebrew; Android, Linux y Windows también tienen paquetes directos.',
+      'Elige una fuente de confianza para tu dispositivo. En iOS, la aplicación está disponible en App Store. En macOS, la versión de App Store solo es compatible con Apple silicon; los usuarios de Intel pueden instalarla desde GitHub Releases o Homebrew. También hay descargas directas para Android, Linux y Windows.',
     copied: 'Comando copiado',
     copyPrompt: 'Copia este comando:',
     note:

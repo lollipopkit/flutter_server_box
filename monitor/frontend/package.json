@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "_comment_prebuild": "@serverbox/webui is a file: dependency, so an install here only symlinks it — its own devDependencies (svelte, clsx, tailwind-variants, ...) are never fetched, and svelte-check reads its source. Done as prebuild rather than asked of each builder: Cloudflare Pages runs a bare `npm run build` and had been failing on exactly this.",
-    "prebuild": "npm install --prefix ../../packages/webui",
+    "_comment_prebuild": "@serverbox/webui is a file: dependency, so an install here only symlinks it — its own devDependencies (svelte, clsx, tailwind-variants, ...) are never fetched, and svelte-check reads its source. Done as prebuild rather than asked of each builder: Cloudflare Pages runs a bare `npm run build` and had been failing on exactly this. `ci`, not `install`, so the versions are the ones packages/webui/package-lock.json pins.",
+    "prebuild": "npm ci --prefix ../../packages/webui",
     "build": "npm run typesafe-i18n && svelte-check --tsconfig ./tsconfig.json && vite build",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint . --max-warnings 0",
@@ -16,7 +16,7 @@
     "typesafe-i18n": "typesafe-i18n --no-watch"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.34.0",
+    "@lucide/svelte": "^1.41.0",
     "@serverbox/webui": "file:../../packages/webui",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
@@ -30,17 +30,17 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/svelte": "^5.4.2",
     "@tsconfig/svelte": "^5.0.4",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "5.0.0",
     "eslint": "^10.9.1",
     "eslint-plugin-svelte": "^3.23.0",
-    "globals": "^17.11.0",
+    "globals": "^17.12.0",
     "jsdom": "^30.0.1",
     "svelte": "^5.56.0",
     "svelte-check": "^4.7.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.0",
-    "typescript-eslint": "^8.68.0",
+    "typescript-eslint": "^8.69.0",
     "vite": "^8.2.2",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.0"
   }
 }

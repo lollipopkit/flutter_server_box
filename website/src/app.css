@@ -212,7 +212,12 @@ body {
   padding: clamp(5rem, 12vw, 9rem) 0;
 }
 
+/* The same content width as the nav and every section below it. Without it the
+   hero was the one full-bleed block on the page, and on a phone its heading and
+   subtitle ran to both edges while everything around them kept a gutter. */
 .hero {
+  width: min(1080px, 92vw);
+  margin: 0 auto;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -369,6 +374,91 @@ body {
 
 .feature-card.wide {
   grid-column: span 2;
+}
+
+/* Screenshot gallery.
+   A plain <details> per device class, so the folding needs no state and works
+   with JS off. A closed group is never in the viewport, which is what makes
+   `loading="lazy"` on its images cost nothing until someone opens it. */
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gallery-group {
+  border: 1px solid var(--light-gray);
+  border-radius: var(--radius-container);
+  background: var(--white);
+}
+
+.gallery-group > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--black);
+}
+
+/* Safari draws its own triangle and ignores `list-style`. */
+.gallery-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gallery-group > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--stone);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.gallery-group[open] > summary::after {
+  content: '−';
+}
+
+.gallery-count {
+  color: var(--stone);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+/* Desktop shots are landscape and unreadable four across. */
+.gallery-grid.desktop {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.gallery-grid figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gallery-grid img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-container);
+  border: 1px solid var(--light-gray);
+  background: var(--snow);
+}
+
+.gallery-grid figcaption {
+  color: var(--stone);
+  font-size: 0.8rem;
+  text-align: center;
 }
 
 .protocol-section {
@@ -623,6 +713,10 @@ body {
     display: none;
   }
 
+  /* The links are hidden at this width, so the switcher shares the bar with the
+     brand alone. A select is as wide as its widest option, and this is only the
+     floor that keeps the pill from changing size with the language chosen —
+     capping it instead is what cut `English` down to `Engli`. */
   .language-switcher select {
     min-width: 7.2rem;
   }
@@ -633,6 +727,11 @@ body {
 
   .feature-card.wide {
     grid-column: span 1;
+  }
+
+  .gallery-grid,
+  .gallery-grid.desktop {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .testimonial-grid {
@@ -659,14 +758,6 @@ body {
     padding: 0.55rem 1rem;
   }
 
-  .language-switcher select {
-    min-width: 4.5rem;
-    max-width: 4.5rem;
-    padding-right: 1.45rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   .nav-actions {
     gap: 0.4rem;
   }
@@ -677,6 +768,14 @@ body {
 
   .hero {
     padding: clamp(4rem, 10vw, 6rem) 0 clamp(3rem, 6vw, 5rem);
+  }
+
+  /* The heading is written as two lines and carries its own `<br>`. The base
+     size is a floor rather than a ratio, so on a phone it is wider than the
+     column and the second half wraps again — three lines, one of them a single
+     word. Scaled to the viewport here so each half stays one line. */
+  .hero h1 {
+    font-size: clamp(1.9rem, 8.6vw, 2.5rem);
   }
 
   .screenshot-stack {

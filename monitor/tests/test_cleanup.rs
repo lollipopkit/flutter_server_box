@@ -167,8 +167,10 @@ async fn a_negative_table_policy_does_not_delete_current_data() -> Result<()> {
         .execute(&pool)
         .await?;
     sqlx::query(
-        "INSERT INTO access_log (kind, action, result) VALUES ('terminal', 'open', 'ok')",
+        "INSERT INTO access_log (timestamp, kind, action, result) \
+         VALUES (?, 'terminal', 'open', 'ok')",
     )
+    .bind(Utc::now())
     .execute(&pool)
     .await?;
 

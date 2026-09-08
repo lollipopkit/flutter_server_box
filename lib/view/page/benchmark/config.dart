@@ -76,6 +76,8 @@ class _BenchmarkConfigState extends State<BenchmarkConfig> {
         UIs.height13,
         CardX(child: Column(children: _buildOptions(estimate))),
         UIs.height13,
+        CardX(child: Column(children: _buildProprietaryOptions())),
+        UIs.height13,
         _buildSummary(estimate),
         UIs.height13,
         FilledButton.icon(
@@ -132,11 +134,35 @@ extension _Widgets on _BenchmarkConfigState {
           onChanged: (v) =>
               setState(() => _options = _options.copyWith(reducedNetwork: v)),
         ),
+      _textField(
+        controller: _workDirCtrl,
+        label: l10n.benchmarkWorkDir,
+        hint: l10n.benchmarkWorkDirTip,
+        icon: Icons.folder_outlined,
+        onChanged: (v) =>
+            setState(() => _options = _options.copyWith(workDir: v)),
+      ),
+    ];
+  }
+
+  List<Widget> _buildProprietaryOptions() {
+    return [
+      ListTile(
+        contentPadding: const EdgeInsets.only(
+          left: _BenchmarkConfigState._rowLeft,
+          right: 13,
+          top: 7,
+        ),
+        minLeadingWidth: _BenchmarkConfigState._iconSize,
+        horizontalTitleGap: _BenchmarkConfigState._iconGap,
+        leading: const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+        title: Text(l10n.benchmarkSensitiveOptions, style: UIs.text15),
+      ),
       _switch(
         title: 'CPU',
-        // The one option whose cost is not the user's own resources but a
-        // disclosure about their machine, so it is styled as a warning and
-        // starts off.
+        // Geekbench downloads and runs proprietary software on the remote
+        // server, so it belongs in the separate disclosure section and starts
+        // off. The explanatory text also says that its result is public.
         subtitle: l10n.benchmarkCpuTip,
         value: _options.cpu,
         icon: Icons.memory,
@@ -185,14 +211,6 @@ extension _Widgets on _BenchmarkConfigState {
           () => _options = _options.copyWith(preferPrecompiledBinaries: v),
         ),
       ),
-      _textField(
-        controller: _workDirCtrl,
-        label: l10n.benchmarkWorkDir,
-        hint: l10n.benchmarkWorkDirTip,
-        icon: Icons.folder_outlined,
-        onChanged: (v) =>
-            setState(() => _options = _options.copyWith(workDir: v)),
-      ),
     ];
   }
 
@@ -221,7 +239,10 @@ extension _Widgets on _BenchmarkConfigState {
               l10n.benchmarkEstimatedTraffic(estimate.trafficBytes.bytes2Str),
             ),
           if (estimate.requiredFreeBytes case final free?)
-            _chip(Icons.sd_storage_outlined, '${libL10n.disk} ${free.bytes2Str}'),
+            _chip(
+              Icons.sd_storage_outlined,
+              '${libL10n.disk} ${free.bytes2Str}',
+            ),
         ],
       ),
     );
@@ -271,11 +292,9 @@ extension _Widgets on _BenchmarkConfigState {
   /// A row whose control is a text field.
   ///
   /// The name is an ordinary [Text] in the same column as every other row's
-  /// title, and the field carries only a hint. It is not the field's own label,
-  /// which is what it was: `InputDecorator` paints a resting label through a
-  /// transform of its own, so it landed about six logical pixels right of where
-  /// its box was placed — visible on screen, invisible to any assertion about
-  /// layout.
+  /// title. The field keeps its own outlined boundary so an empty value is
+  /// visibly editable; otherwise it looks like the row simply ends below the
+  /// explanatory text.
   Widget _textField({
     required TextEditingController controller,
     required String label,
@@ -309,14 +328,20 @@ extension _Widgets on _BenchmarkConfigState {
                 UIs.height7,
                 Text(label, style: UIs.text15),
                 Text(hint, style: UIs.text12Grey),
-                Input(
+                TextField(
+                  key: const ValueKey('benchmark-work-dir-input'),
                   controller: controller,
-                  suggestion: false,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   onChanged: onChanged,
-                  // Without this the field wraps itself in a `CardX` — a card
-                  // inside the card this column already is, with padding of its
-                  // own.
-                  noWrap: true,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ],
             ),

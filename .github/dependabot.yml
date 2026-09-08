@@ -1,9 +1,26 @@
 version: 2
+
+# One group per language, not per directory: `rust`, `flutter`, `web`. What a
+# review of a dependency bump needs is everything that moves together, and for
+# this repository that boundary is the toolchain — four npm directories are one
+# JavaScript upgrade, three of them linked to each other by `file:`.
+#
+# A group can only span the directories of a single `updates` entry, and an
+# entry is one ecosystem. So cargo, pub and npm are three entries and cannot be
+# fewer; `directories` is what lets the npm one cover all four at once.
+#
+# `cooldown: default-days: 7` on each of them is the same week that
+# `minimumReleaseAge = 604800` in the maintainer's bunfig applies locally: a
+# version published in the last seven days is not proposed here either, so a
+# PR no longer arrives asking for something this machine would refuse to
+# install. Without it, `default-days` is 3.
+#
+# It covers **version updates only** — GitHub does not apply cooldown to
+# security updates, which is the right way round: a fix for a known advisory
+# should not sit for a week, and those PRs keep arriving the day they exist.
 updates:
-  # Rust workspace (monitor + shared crates + FFI).
-  #
-  # The workspace root, not the member directories: Cargo.lock lives here and
-  # nowhere else, so a run scoped to a member can only widen that member's
+  # Rust: the workspace root, not the member directories. Cargo.lock lives here
+  # and nowhere else, so a run scoped to a member can only widen that member's
   # manifest and leaves the lock pinning the old version. It also covers every
   # member without listing them — sbm_native was a member for months that no
   # listing here ever named.
@@ -11,18 +28,10 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
-      rust-deps:
-        patterns:
-          - "*"
-
-  # monitor web frontend
-  - package-ecosystem: npm
-    directory: "/monitor/frontend"
-    schedule:
-      interval: weekly
-    groups:
-      frontend-deps:
+      rust:
         patterns:
           - "*"
 
@@ -30,46 +39,48 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
-      flutter-deps:
+      flutter:
         patterns:
           - "*"
 
+  # Every JavaScript directory in one entry, so a week's upgrade arrives as one
+  # PR rather than four. packages/webui belongs with them rather than on its
+  # own: monitor/frontend and website consume it as a `file:` dependency and
+  # build from its source, so a bump there is only reviewable next to them.
+  #
+  # Each of these keeps a `package-lock.json`, and that is what makes any of it
+  # work: Dependabot writes a manifest and its lockfile together, and a
+  # `bun.lock` is not one it writes. With bun it bumped docs/package.json alone
+  # and CI's frozen install refused every such PR — see the `docs` job in
+  # analysis.yml.
   - package-ecosystem: npm
-    directory: "/docs"
+    directories:
+      - "/monitor/frontend"
+      - "/docs"
+      - "/website"
+      - "/packages/webui"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
-      docs-deps:
+      web:
         patterns:
           - "*"
 
-  - package-ecosystem: npm
-    directory: "/website"
-    schedule:
-      interval: weekly
-    groups:
-      website-deps:
-        patterns:
-          - "*"
-
-  - package-ecosystem: npm
-    directory: "/packages/webui"
-    schedule:
-      interval: weekly
-    groups:
-      webui-deps:
-        patterns:
-          - "*"
-
-  # Grouped like the other two: the actions in a workflow are bumped for one
-  # reason at a time (a runner's Node version, most of them), and a review that
-  # sees them together is the one that can tell. Ungrouped, a single week's run
-  # opened four PRs against the same two files.
+  # Its own group for the same reason as the three above: the actions in a
+  # workflow are bumped for one reason at a time (a runner's Node version, most
+  # of them), and a review that sees them together is the one that can tell.
+  # Ungrouped, a single week's run opened four PRs against the same two files.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns:

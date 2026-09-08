@@ -139,6 +139,32 @@ void main() {
       expect(usage.size, BigInt.from(961873408) * BigInt.from(4));
     });
 
+    test('DiskUsage keeps sources named like filesystem types', () {
+      Disk storage(String path) => Disk(
+        path: path,
+        mount: '/srv/$path',
+        usedPercent: 2,
+        used: BigInt.from(12345678),
+        size: BigInt.from(961873408),
+        avail: BigInt.from(949527730),
+      );
+
+      final disks = const [
+        'squashfs',
+        'erofs',
+        'iso9660',
+        'snapfuse',
+        'fuse.snapfuse',
+        'swap',
+      ].map(storage).toList();
+      for (final disk in disks) {
+        expect(disk.isStorage, isTrue, reason: disk.path);
+      }
+
+      final usage = DiskUsage.parse(disks);
+      expect(usage.size, BigInt.from(961873408) * BigInt.from(disks.length));
+    });
+
     test('DiskUsage keeps a loop device carrying a writable filesystem', () {
       final usage = DiskUsage.parse([
         Disk(

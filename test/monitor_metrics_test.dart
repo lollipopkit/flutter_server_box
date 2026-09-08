@@ -240,6 +240,29 @@ void main() {
       expect(status.diskUsage?.size, BigInt.from(4));
     });
 
+    test('and a source named like an excluded filesystem type is kept', () {
+      final status = applyMonitorMetrics(
+        InitStatus.status,
+        MonitorMetrics.fromJson(
+          legacyBody({
+            'disk_details': const [
+              {
+                'path': 'squashfs',
+                'mount': '/srv/archive',
+                'used': 2048,
+                'total': 8192,
+                'usage_percent': 25.0,
+              },
+            ],
+          }),
+        ),
+      );
+
+      expect(status.disk.single.path, 'squashfs');
+      expect(status.diskUsage?.used, BigInt.from(2));
+      expect(status.diskUsage?.size, BigInt.from(8));
+    });
+
     test('and aggregate network data replaces stale temperature detail', () {
       final status = InitStatus.status;
       status.temps.setAll({'old': 99});

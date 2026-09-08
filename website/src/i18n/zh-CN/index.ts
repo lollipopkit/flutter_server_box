@@ -27,7 +27,13 @@ const zhCN: Translation = {
     one: 'ServerBox 服务器概览截图',
     two: 'ServerBox 状态图表截图',
     three: 'ServerBox 终端截图',
-    four: 'ServerBox 工具截图',
+    four: 'ServerBox 文件浏览器截图',
+  },
+  gallery: {
+    title: '每个界面，每种设备。',
+    subtitle:
+      'iPhone、iPad 与 macOS 共 31 张截图，默认折叠，展开后才加载。',
+    count: '{count} 张截图',
   },
   features: {
     title: '一个紧凑工作区，覆盖日常服务器维护。',
@@ -64,25 +70,11 @@ const zhCN: Translation = {
       'ServerBox 将终端访问、文件传输、服务检查、硬件健康和设备原生提醒放在同一个工作流中。',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux 与 Windows',
-    items: {
-      statusChart: '状态图表',
-      sshTerminal: 'SSH 终端',
-      sftp: 'SFTP',
-      docker: 'Docker',
-      process: '进程',
-      systemd: 'Systemd',
-      smart: 'S.M.A.R.T',
-      gpu: 'GPU',
-      sensors: '传感器',
-      push: '推送',
-      homeWidget: '桌面小组件',
-      watchos: 'watchOS',
-    },
   },
   download: {
     title: '所有平台，所有来源。',
     subtitle:
-      '根据设备和信任模型选择下载渠道。iOS 使用 App Store；macOS 使用 App Store 或 Homebrew；Android、Linux 和 Windows 也提供直接安装包。',
+      '请为你的设备选择可信的下载来源。iOS 版本可从 App Store 获取。macOS App Store 版本仅支持 Apple silicon；Intel Mac 用户可通过 GitHub Releases 或 Homebrew 安装。Android、Linux 和 Windows 也可直接下载安装包。',
     copied: '已复制安装命令',
     copyPrompt: '复制此安装命令：',
     note:

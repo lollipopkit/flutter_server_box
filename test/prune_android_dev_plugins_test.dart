@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import '../scripts/release/prune-android-dev-plugins.dart' as prune;
+import '../scripts/release/prune_android_dev_plugins.dart' as prune;
 
 void main() {
   test('removes dev-only Android metadata and stale Java registration', () {
     final originalDirectory = Directory.current;
     final temp = Directory.systemTemp.createTempSync(
-      'prune-android-dev-plugins-',
+      'prune_android_dev_plugins_',
     );
     addTearDown(() {
       Directory.current = originalDirectory;
