@@ -140,10 +140,16 @@ impl Event {
         let kind = self.kind.as_str();
         let action = self.action.as_str();
         let result = self.outcome.as_str();
+        // Supplied rather than defaulted. The column used to carry
+        // `CURRENT_TIMESTAMP`, whose `YYYY-MM-DD HH:MM:SS` does not compare
+        // against the RFC 3339 every other timestamp in this database is
+        // written as, and retention compares this one — see migration 009.
         let write = sqlx::query(
-            "INSERT INTO access_log (kind, action, subject, remote_ip, ssh_user, result, detail) \
-             VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO access_log \
+             (timestamp, kind, action, subject, remote_ip, ssh_user, result, detail) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         )
+        .bind(chrono::Utc::now())
         .bind(kind)
         .bind(action)
         .bind(&self.subject)

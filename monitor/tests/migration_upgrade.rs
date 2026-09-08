@@ -106,18 +106,22 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     let pool = pool().await;
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    // One row inside the window and one well outside it
-    sqlx::query(
-        "INSERT INTO access_log (timestamp, kind, action, result) \
-         VALUES (datetime('now','-200 days'),'terminal','open','ok')",
-    )
-    .execute(&pool)
-    .await
-    .unwrap();
-    sqlx::query("INSERT INTO access_log (kind, action, result) VALUES ('terminal','open','ok')")
+    // One row inside the window and one well outside it, both timestamped the
+    // way `audit::Event::record` timestamps one. Written with
+    // `datetime('now', ...)` and the column's old default before migration
+    // 009, which is a shape the agent never produces and does not compare
+    // against the cutoff the way the shape it does produce compares.
+    let now = chrono::Utc::now();
+    for at in [now - chrono::Duration::days(200), now] {
+        sqlx::query(
+            "INSERT INTO access_log (timestamp, kind, action, result) \
+             VALUES (?, 'terminal', 'open', 'ok')",
+        )
+        .bind(at)
         .execute(&pool)
         .await
         .unwrap();
+    }
 
     let service = DataCleanupService::new(
         pool.clone(),
@@ -137,6 +141,59 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
         "an entry older than its retention policy must be collected"
     );
     assert_eq!(rows[0].get::<String, _>("kind"), "terminal");
+}
+
+/// The retention cutoff is a moment, not a date.
+///
+/// `cleanup_policy_tables` binds `now - retention_days` and compares it
+/// against this column. While the column carried `CURRENT_TIMESTAMP`'s
+/// `YYYY-MM-DD HH:MM:SS` and the cutoff arrived as RFC 3339, the text
+/// comparison stopped meaning anything at position 10 — `' '` against `'T'` —
+/// so every row from the cutoff's own date read as older than the cutoff
+/// whatever its time, and up to a day of audit log past it was deleted on
+/// each pass. One second either side of the boundary is what that got wrong.
+#[tokio::test]
+async fn the_audit_log_cutoff_is_a_moment_not_a_date() {
+    use server_box_monitor::core::config::DataRetentionConfig;
+    use server_box_monitor::db::cleanup::DataCleanupService;
+
+    let pool = pool().await;
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
+    // 90 days is the policy migration 006 seeds for this table.
+    let cutoff = chrono::Utc::now() - chrono::Duration::days(90);
+    for (at, detail) in [
+        (cutoff + chrono::Duration::seconds(1), "keep"),
+        (cutoff - chrono::Duration::seconds(1), "drop"),
+    ] {
+        sqlx::query(
+            "INSERT INTO access_log (timestamp, kind, action, result, detail) \
+             VALUES (?, 'terminal', 'open', 'ok', ?)",
+        )
+        .bind(at)
+        .bind(detail)
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    let service = DataCleanupService::new(
+        pool.clone(),
+        DataRetentionConfig {
+            metrics_days: 30,
+            alerts_days: 90,
+            cleanup_interval_hours: 24,
+            max_db_size_mb: 1024,
+        },
+    );
+    service.cleanup_expired_data().await.unwrap();
+
+    let kept = sqlx::query("SELECT detail FROM access_log")
+        .fetch_all(&pool)
+        .await
+        .unwrap();
+    let kept: Vec<String> = kept.iter().map(|r| r.get::<String, _>("detail")).collect();
+    assert_eq!(kept, ["keep"], "kept {kept:?} across the retention boundary");
 }
 
 #[tokio::test]
@@ -233,6 +290,7 @@ fn shipped_migrations_keep_their_checksums() {
         (6, "bc1d80ef7f88751b0bb2a64974a7efb928301cd61740cfe77d9e2306a8f71d8cfbdd24a2e2e5dc2e5b9094755b9e03f9"),
         (7, "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5"),
         (8, "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054"),
+        (9, "f50849af86f5e456829df80ddb0c716540a23bd0a15527925bfb27f5e05b8dd567e83c6e1d08898a93135aa05052877b"),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();
