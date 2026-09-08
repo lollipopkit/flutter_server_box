@@ -134,6 +134,56 @@ void main() {
     );
   });
 
+  test('a map key is text as much as a value is', () {
+    final event = scrubbed(
+      sentry.SentryEvent(
+        breadcrumbs: [
+          sentry.Breadcrumb(
+            message: 'x',
+            data: {
+              'prod-db': 'reachable',
+              'nested': {'10.0.0.9': 'refused', 7: 'left alone'},
+            },
+          ),
+        ],
+        tags: {'prod-db': 'agent-box'},
+      ),
+    );
+
+    final data = event.breadcrumbs!.single.data!;
+    expect(data.keys, contains('<server-1>'));
+    expect(data['<server-1>'], 'reachable');
+    final nested = data['nested'] as Map;
+    expect(nested['<bmc-2>'], 'refused');
+    expect(nested[7], 'left alone', reason: 'a key that is not text is kept');
+    expect(event.tags, {'<server-1>': '<server-2>'});
+  });
+
+  test('two keys reducing to one token keep both entries', () {
+    // The agent's address and the host inside it are two keys and one
+    // replacement. Overwriting would have made the map come out shorter than
+    // it went in, which is a diagnostic silently rewritten rather than
+    // redacted.
+    final event = scrubbed(
+      sentry.SentryEvent(
+        breadcrumbs: [
+          sentry.Breadcrumb(
+            message: 'x',
+            data: {
+              'https://10.0.0.7:3770': 'first',
+              '10.0.0.7': 'second',
+            },
+          ),
+        ],
+      ),
+    );
+
+    final data = event.breadcrumbs!.single.data!;
+    expect(data, hasLength(2));
+    expect(data['<agent-2>'], 'first');
+    expect(data['<agent-2> #2'], 'second');
+  });
+
   test('a const map handed to the SDK is replaced, not written through', () {
     // The failure mode is an `Unsupported operation` thrown out of `beforeSend`,
     // which the SDK catches by sending the event unscrubbed.

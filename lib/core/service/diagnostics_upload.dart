@@ -302,17 +302,51 @@ abstract final class DiagnosticsUpload {
 
     String sub(String text) => KnownIdentifiers.substitute(text, identifiers);
 
+    /// [key], substituted, under a name no entry of [out] has taken.
+    ///
+    /// **Keys are text too.** Every call site writes a literal one today —
+    /// `Diag.crumb` names its fields in code — but nothing about
+    /// `Map<String, dynamic>` stops the next one keying by server name, and a
+    /// key discloses exactly what a value does.
+    ///
+    /// Numbered on collision rather than overwritten, which is the reason this
+    /// is a function at all: two spellings of one address reduce to the same
+    /// token, and a map literal would keep the last of them and silently come
+    /// out shorter than it went in.
+    String subKey(Map<Object?, Object?> out, String key) {
+      final replaced = sub(key);
+      if (!out.containsKey(replaced)) return replaced;
+      var n = 2;
+      while (out.containsKey('$replaced #$n')) {
+        n++;
+      }
+      return '$replaced #$n';
+    }
+
     // Through nested collections, not just the top level. A crumb's `data` is
     // one level of `String` today — `Diag.crumb` takes a `Map<String, String>`
     // — but the field is `Map<String, dynamic>`, and a value put a level down
     // would be a hole nothing would notice. Non-strings are returned as they
-    // are, so numbers and booleans keep their type through the round trip.
-    Object? subValue(Object? value) => switch (value) {
-      String() => sub(value),
-      Map() => {for (final e in value.entries) e.key: subValue(e.value)},
-      Iterable() => value.map(subValue).toList(),
-      _ => value,
-    };
+    // are, so numbers and booleans keep their type through the round trip, and
+    // a key that is not text is left alone: there is nothing in it to match,
+    // and rewriting it would change a shape this cannot read.
+    Object? subValue(Object? value) {
+      switch (value) {
+        case String():
+          return sub(value);
+        case Map():
+          final out = <Object?, Object?>{};
+          for (final e in value.entries) {
+            final key = e.key;
+            out[key is String ? subKey(out, key) : key] = subValue(e.value);
+          }
+          return out;
+        case Iterable():
+          return value.map(subValue).toList();
+        default:
+          return value;
+      }
+    }
 
     final message = event.message;
     if (message != null) {
@@ -335,13 +369,20 @@ abstract final class DiagnosticsUpload {
       if (message != null) crumb.message = sub(message);
       final data = crumb.data;
       if (data != null) {
-        crumb.data = {for (final e in data.entries) e.key: subValue(e.value)};
+        // Through the same walk as any nested map, then retyped: the field is
+        // declared tighter than what that answers, and every key at this level
+        // is already a `String`.
+        crumb.data = Map<String, dynamic>.from(subValue(data)! as Map);
       }
     }
 
     final tags = event.tags;
     if (tags != null) {
-      event.tags = {for (final e in tags.entries) e.key: sub(e.value)};
+      final out = <String, String>{};
+      for (final e in tags.entries) {
+        out[subKey(out, e.key)] = sub(e.value);
+      }
+      event.tags = out;
     }
 
     final culprit = event.culprit;
