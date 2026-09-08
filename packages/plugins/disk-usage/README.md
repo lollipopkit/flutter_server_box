@@ -37,8 +37,76 @@ next plugin.
 ```sh
 bun install
 bun test          # the command and the parser, and the plugin against MockHost
-bun run pack      # dist/plugin.js and dist/<id>-<version>.sbp
+bun run build     # dist/plugin.js, plus a copy of manifest.json beside it
+bun run pack      # the above, and dist/<id>-<version>.sbp
 ```
+
+## Reading it honestly
+
+`du` prints one line per directory it could not read, and this used to send
+them to `/dev/null`. That made a `/` measured as an ordinary user report a
+total quietly smaller than the `df` figure printed beside it — which reads as a
+bug in the parser rather than as a fact about the account. They are counted
+now, told apart from results by shape (a result is `<number>\t<path>`), and the
+count is said next to the total: **the number is short by whatever is in
+them.**
+
+Rows are largest first, which is the question the page answers. **By name** is
+for finding one you already know of, and the choice is remembered — an order
+somebody chose is a preference, not a property of the directory they were in.
+
+## Picking and deleting
+
+Tap a directory to measure it; **Select** turns the same tap into picking, and
+**Delete _n_** removes what is picked. Three things about that:
+
+- The user is asked first, with the paths and the total listed. `sb.ui.prompt`
+  with no fields is a confirmation, and the manifest asks for `ui.dialog`
+  because of this and nothing else.
+- Every path is quoted and `--` ends the options: a directory called `-rf` is a
+  legal directory name, and it arrives here out of a listing this plugin asked
+  the server for.
+- The level is measured again afterwards rather than adjusted. What `rm`
+  actually removed is a question for the machine, and every other row's share
+  of the total moved with it.
+
+Descending clears the selection. It describes what is in front of you, and
+carrying it down would mean a delete that removes something off screen.
+
+## Settings
+
+The plugin contributes a page under **Settings → Plugins**, which is where its
+own preferences live — not per server, so `sb.store`'s `global` scope. The page
+is a surface like any other: `open` is called with `kind: "settings"`, and what
+it draws comes from the store rather than from a machine.
+
+## Translations
+
+`l10n/en.json` and `l10n/zh-CN.json`; the manifest declares both and
+`scripts/pack.ts` puts them in the `.sbp`. Every user-visible string goes
+through `l10n("key")` — the app substitutes when it draws, so a count is
+`l10n("ports", "2")` rather than a sentence assembled here. What is *not*
+translated is the user's own text: a path, a cron line, a process name.
+
+`test/plugin_l10n_test.dart` in the app holds all of it together: every key
+the source asks for exists in every locale, the locales carry the same keys,
+no key is left behind unused, and the built `.sbp` actually contains the
+files.
+
+## Trying it in the app
+
+Two ways in, both under **Settings → Plugins → Installed → add**:
+
+- **`.sbp`** — pick `dist/<id>-<version>.sbp` after `bun run pack`. What a
+  user would install.
+- **Dev directory** (desktop only) — pick **`dist/`**, not the plugin's root.
+  The installer wants `manifest.json` and `plugin.js` side by side, which is
+  why `bun run build` copies the manifest there. Re-running the build and
+  reloading the plugin picks up an edit without repacking.
+
+The consent dialog lists the permissions the manifest asks for; the page
+contribution has `default_on`, so after installing it is a function button on
+a server's detail page.
 
 `test/plugin_disk_usage_test.dart` in the app reads `dist/plugin.js`, so it
 fails if the bundle is stale.

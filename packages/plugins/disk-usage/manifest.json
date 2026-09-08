@@ -5,13 +5,16 @@
   "name": "Disk usage",
   "description": "Where the space went, one directory at a time.",
   "license": "MIT",
+  "l10n": ["en", "zh-CN"],
   "permissions": {
-    "server.exec": true
+    "server.exec": true,
+    "ui.dialog": true
   },
   "contributes": {
+    "settings": { "id": "prefs", "label": "Disk usage", "icon": "chart" },
     "page": {
       "id": "usage",
-      "label": "Usage",
+      "label": "Usage", "icon": "chart",
       "default_on": true,
       "needs": ["shell"]
     }

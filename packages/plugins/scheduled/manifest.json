@@ -5,14 +5,16 @@
   "name": "Scheduled",
   "description": "What runs on a timer: the user's crontab and systemd's timers.",
   "license": "MIT",
+  "l10n": ["en", "zh-CN"],
   "permissions": {
     "server.exec": true,
     "ui.dialog": true
   },
   "contributes": {
+    "settings": { "id": "prefs", "label": "Scheduled", "icon": "clock" },
     "page": {
       "id": "scheduled",
-      "label": "Scheduled",
+      "label": "Scheduled", "icon": "clock",
       "default_on": true,
       "needs": ["shell"]
     }

@@ -14,10 +14,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
+import 'package:server_box/view/widget/plugin/render.dart';
+import 'package:server_box/view/widget/plugin/surface.dart';
 
 import 'helpers/plugin_host_ops.dart';
 import 'helpers/test_db.dart';
@@ -78,11 +81,19 @@ void main() {
     await closeTestDb();
   });
 
+  /// Every string the tree would put on screen, in order.
+  ///
+  /// Reads the props that carry text and not only `text` nodes: a `tile`'s
+  /// title and a `summary`'s figure are properties, so a walker looking for
+  /// `text` children alone would say a page full of rows says nothing. Matches
+  /// `texts` in `@serverbox/plugin-api/test`.
   List<String> texts(PluginNode node) {
+    const keys = ['value', 'title', 'subtitle', 'label', 'detail', 'k', 'v'];
     final out = <String>[];
     void walk(PluginNode n) {
-      if (n.type == 'text' && n.props['value'] is String) {
-        out.add(n.props['value'] as String);
+      for (final key in keys) {
+        final v = n.props[key];
+        if (v is String && v.isNotEmpty) out.add(v);
       }
       for (final c in n.children) {
         walk(c);
@@ -93,6 +104,45 @@ void main() {
     return out;
   }
 
+
+  /// The whole complaint the page drew and could not answer: a row that looks
+  /// like it opens has to open.
+  ///
+  /// Through the renderer on purpose. The plugin's own tests call `onEvent`
+  /// directly, and the gap was never there — it was between the tree and the
+  /// tap: `onTap` is declared for any node and only `btn` read it, so every
+  /// row in this list drew a control that did nothing.
+  testWidgets('a row drawn by the plugin opens when it is tapped', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      await service.hook(
+        instance,
+        kind: 'enter',
+        contributionId: 'usage',
+        granted: const ['server.exec'],
+        serverIds: const ['srv-1'],
+      );
+    });
+
+    Object? seen;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PluginRenderer(
+            tree: patches.last.node,
+            state: PluginSurfaceState(),
+            onEvent: (msg, _) => seen = msg,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('var'));
+    await tester.pump();
+
+    expect(seen, {'m': 'open', 'path': '/var'});
+  });
 
   test('the hook measures the root and draws what came back', () async {
     await service.hook(
@@ -105,7 +155,7 @@ void main() {
 
     // Measuring first, then the answer — a level can take a minute.
     expect(patches, hasLength(2));
-    expect(texts(patches.first.node), contains('Measuring…'));
+    expect(texts(patches.first.node), contains('l10n.measuring'));
 
     final drawn = texts(patches.last.node);
     expect(drawn, contains('var'));

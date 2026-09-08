@@ -73,12 +73,19 @@ void main() {
     await closeTestDb();
   });
 
+  /// Every string the tree would put on screen, in order.
+  ///
+  /// A `tile`'s title and subtitle and a `summary`'s figure are properties,
+  /// not `text` children, so the list of keys is what decides whether a page
+  /// full of rows reads as empty. Matches `texts` in
+  /// `@serverbox/plugin-api/test`.
   List<String> words(PluginNode node) {
+    const keys = ['value', 'title', 'subtitle', 'label', 'detail', 'k', 'v'];
     final out = <String>[];
     void walk(PluginNode n) {
-      for (final prop in const ['value', 'label']) {
-        final v = n.props[prop];
-        if (v is String) out.add(v);
+      for (final key in keys) {
+        final v = n.props[key];
+        if (v is String && v.isNotEmpty) out.add(v);
       }
       for (final c in n.children) {
         walk(c);
@@ -171,8 +178,9 @@ void main() {
     expect(execs, hasLength(2));
     expect(execs[0], contains('| crontab -'));
     expect(execs[1], contains('systemctl list-timers'));
+    // The note is a translated string, so the tree carries its key.
     expect(
-      patches.any((p) => words(p.node).any((t) => t.contains('changed on the server'))),
+      patches.any((p) => words(p.node).contains('l10n.conflict')),
       isTrue,
     );
   });

@@ -8,9 +8,16 @@
 
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { MockHost } from "@serverbox/plugin-api/test";
+import { MockHost, l10nKeys, texts } from "@serverbox/plugin-api/test";
 import type { HookEvent, Node, ServerHandle } from "@serverbox/plugin-api";
-import { READ_COMMAND, toggled, writeCommand } from "../src/schedule.ts";
+import {
+  READ_COMMAND,
+  added,
+  edited,
+  removed,
+  toggled,
+  writeCommand,
+} from "../src/schedule.ts";
 
 const LINES = [
   "MAILTO=root",
@@ -50,18 +57,6 @@ const enter: HookEvent = {
  * tag — so a walker that only looked at `text` would report a row as having no
  * state at all.
  */
-function texts(node: Node): string[] {
-  const out: string[] = [];
-  const walk = (n: Node) => {
-    for (const prop of ["value", "label"]) {
-      const v = n.p?.[prop];
-      if (typeof v === "string") out.push(v);
-    }
-    for (const c of n.c ?? []) walk(c);
-  };
-  walk(node);
-  return out;
-}
 
 function lastDrawn(host: MockHost): Node {
   const patches = host.callsTo("ui.patch");
@@ -82,7 +77,11 @@ describe("reading", () => {
     const drawn = texts(lastDrawn(host));
     expect(drawn).toContain("/opt/backup.sh");
     expect(drawn).toContain("logrotate.timer");
-    expect(drawn.some((t) => t.includes("2 cron"))).toBe(true);
+    // The breakdown is a translated sentence with the counts as arguments, so
+    // what the tree carries is the key — the app substitutes when it draws.
+    // `breakdownOff` here because one of the fixture's jobs is disabled; the
+    // plain `breakdown` is the same sentence without that count.
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.breakdownOff");
     // `MAILTO=root` is a setting, not a job.
     expect(drawn).not.toContain("MAILTO=root");
   });
@@ -126,7 +125,7 @@ describe("turning a job off", () => {
     // The fingerprint it read is what it says it is replacing.
     expect(scripts[1]).toContain(`!= '${SUM}'`);
     // And the row is off now, without another read.
-    expect(texts(lastDrawn(host))).toContain("off");
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.tagOff");
   });
 
   // The reason compare-and-swap is here: a crontab is the only copy, and
@@ -148,7 +147,7 @@ describe("turning a job off", () => {
     expect(scripts).toEqual([READ_COMMAND, WRITE_OFF, READ_COMMAND]);
     expect(
       host.callsTo("ui.patch").some((p) =>
-        texts(p.node).some((t) => t.includes("changed on the server")),
+        l10nKeys(p.node).includes("l10n.conflict"),
       ),
     ).toBe(true);
   });
@@ -167,7 +166,7 @@ describe("turning a job off", () => {
     const drawn = texts(lastDrawn(host));
     expect(drawn.some((t) => t.includes("no crontab for you"))).toBe(true);
     // Still on, because the write did not happen.
-    expect(drawn).toContain("on");
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.tagOn");
   });
 
   test("a line that is not a job is not toggled", async () => {
@@ -181,5 +180,145 @@ describe("turning a job off", () => {
 
     expect(host.callsTo("ui.prompt")).toHaveLength(0);
     expect(host.callsTo("server.exec")).toHaveLength(1);
+  });
+});
+
+describe("adding and editing", () => {
+  const base = () =>
+    new MockHost().exec(READ_COMMAND, { stdout: READ });
+
+  test("a new job is appended and the whole file is written", async () => {
+    const write = writeCommand(
+      added(LINES, { when: "@daily", command: "/opt/new.sh" }),
+      SUM,
+    );
+    const host = base()
+      .exec(write, { stdout: "ok\n999 44\n" })
+      .answerPrompt({ values: { when: "@daily", command: "/opt/new.sh" } });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "add" });
+
+    expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
+      READ_COMMAND,
+      write,
+    ]);
+  });
+
+  test("an edit replaces that line and leaves the others", async () => {
+    const write = writeCommand(
+      edited(LINES, 1, { when: "0 4 * * *", command: "/opt/backup.sh" }),
+      SUM,
+    );
+    const host = base()
+      .exec(write, { stdout: "ok\n999 44\n" })
+      .answerPrompt({
+        values: { when: "0 4 * * *", command: "/opt/backup.sh" },
+      });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "edit", line: 1 });
+
+    expect(host.callsTo("server.exec")[1]!.req.script).toBe(write);
+  });
+
+  /// `crontab` accepts a line it cannot parse and simply never runs it, so
+  /// this dialog is the only moment anybody finds out.
+  test("a schedule crontab would not run is refused before it is written", async () => {
+    const host = base().answerPrompt({
+      values: { when: "every day at three", command: "/opt/new.sh" },
+    });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "add" });
+
+    expect(host.callsTo("server.exec")).toHaveLength(1);
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.errBadSchedule");
+  });
+
+  test("a job with no command is refused too", async () => {
+    const host = base().answerPrompt({
+      values: { when: "@daily", command: "  " },
+    });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "add" });
+
+    expect(host.callsTo("server.exec")).toHaveLength(1);
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.errNoCommand");
+  });
+
+  test("cancelling writes nothing", async () => {
+    const host = base().answerPrompt({ cancelled: true });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "add" });
+
+    expect(host.callsTo("server.exec")).toHaveLength(1);
+  });
+});
+
+describe("removing jobs", () => {
+  test("every picked line goes in one write", async () => {
+    // One write and not one per job: the second compare-and-swap would meet
+    // the fingerprint the first had just changed.
+    const write = writeCommand(removed(LINES, [1, 2]), SUM);
+    const host = new MockHost()
+      .exec(READ_COMMAND, { stdout: READ })
+      .exec(write, { stdout: "ok\n999 44\n" })
+      .confirmNext();
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "select" });
+    await plugin.onEvent({ m: "pick", line: 1 });
+    await plugin.onEvent({ m: "pick", line: 2 });
+    await plugin.onEvent({ m: "remove" });
+
+    expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
+      READ_COMMAND,
+      write,
+    ]);
+  });
+
+  test("nothing is removed until the dialog is answered", async () => {
+    const host = new MockHost()
+      .exec(READ_COMMAND, { stdout: READ })
+      .answerPrompt({ cancelled: true });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "select" });
+    await plugin.onEvent({ m: "pick", line: 1 });
+    await plugin.onEvent({ m: "remove" });
+
+    expect(host.callsTo("server.exec")).toHaveLength(1);
+  });
+
+  test("picking changes what a tap on a row means", async () => {
+    const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter);
+
+    await plugin.onEvent({ m: "select" });
+    const out = await plugin.onEvent({ m: "pick", line: 1 });
+
+    // No dialog and no write: the same tap that opened the editor a moment ago
+    // now picks.
+    expect(host.callsTo("ui.prompt")).toHaveLength(0);
+    expect(l10nKeys(out.ui!)).toContain("l10n.remove");
   });
 });

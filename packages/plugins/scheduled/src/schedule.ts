@@ -48,20 +48,35 @@ export interface Schedule {
 }
 
 /** Reads both, and the fingerprint the next write will have to match. */
-export const READ_COMMAND = [
-  `printf 'cron\\n'`,
-  `crontab -l 2>/dev/null`,
-  `printf 'cronsum\\n'`,
-  // `cksum` is POSIX and on every machine that has `crontab`. A missing
-  // crontab prints nothing and sums to the empty string's sum, which is a
-  // real answer: "there is no crontab" and "the crontab is empty" are the
-  // same thing to a writer.
-  `crontab -l 2>/dev/null | cksum`,
-  `printf 'hascron\\n'`,
-  `command -v crontab >/dev/null 2>&1 && printf 'yes\\n'`,
-  `printf 'timers\\n'`,
-  `systemctl list-timers --all --no-pager --no-legend 2>/dev/null`,
-].join("\n");
+export const READ_COMMAND = readCommand();
+
+/**
+ * [READ_COMMAND], with the systemd half optional.
+ *
+ * The section is always printed even when it is not asked for, so the output
+ * has the same shape either way and the parser needs to know nothing about
+ * this. A machine with no systemd answers nothing to it anyway; the setting is
+ * for the one that has it and whose timers are noise to the person looking.
+ */
+export function readCommand(opts?: { timers?: boolean }): string {
+  const timers = opts?.timers ?? true;
+  return [
+    `printf 'cron\\n'`,
+    `crontab -l 2>/dev/null`,
+    `printf 'cronsum\\n'`,
+    // `cksum` is POSIX and on every machine that has `crontab`. A missing
+    // crontab prints nothing and sums to the empty string's sum, which is a
+    // real answer: "there is no crontab" and "the crontab is empty" are the
+    // same thing to a writer.
+    `crontab -l 2>/dev/null | cksum`,
+    `printf 'hascron\\n'`,
+    `command -v crontab >/dev/null 2>&1 && printf 'yes\\n'`,
+    `printf 'timers\\n'`,
+    ...(timers
+      ? [`systemctl list-timers --all --no-pager --no-legend 2>/dev/null`]
+      : []),
+  ].join("\n");
+}
 
 /**
  * Replaces the crontab, but only if it still looks like [expect].
@@ -274,6 +289,85 @@ export function parseTimer(line: string): Timer | null {
  * way to edit one line of a crontab, and pretending otherwise is how a
  * read-modify-write loses the lines it did not know about.
  */
+/**
+ * Whether `when` is something crontab will accept.
+ *
+ * The same check the reader applies, so a line this says yes to is a line that
+ * comes back as a job rather than as a comment nobody can see. Refusing here
+ * is the only chance to say so: crontab itself accepts the file and the job
+ * simply never runs.
+ */
+export function isSchedule(when: string): boolean {
+  const trimmed = when.trim();
+  if (!trimmed) return false;
+  if (trimmed.startsWith("@")) return CRON_SHORTHANDS.has(trimmed.toLowerCase());
+  const fields = trimmed.split(/\s+/);
+  return fields.length === 5 && fields.every(isCronField);
+}
+
+/** What `@reboot` and its neighbours are; anything else with an `@` is not one. */
+const CRON_SHORTHANDS = new Set([
+  "@reboot",
+  "@yearly",
+  "@annually",
+  "@monthly",
+  "@weekly",
+  "@daily",
+  "@midnight",
+  "@hourly",
+]);
+
+/**
+ * The crontab with one line replaced.
+ *
+ * Keeps the line's own indentation and its disabled state: editing what a job
+ * does is not the same as turning it back on, and a person who edits a
+ * commented-out line expects it to stay commented out.
+ */
+export function edited(
+  lines: string[],
+  index: number,
+  job: { when: string; command: string },
+): string[] {
+  const out = [...lines];
+  const line = out[index];
+  if (line === undefined) return out;
+  const trimmed = line.trimStart();
+  const indent = line.slice(0, line.length - trimmed.length);
+  const hash = trimmed.startsWith("#") ? "#" : "";
+  out[index] = `${indent}${hash}${job.when.trim()} ${job.command.trim()}`;
+  return out;
+}
+
+/**
+ * The crontab with one line gone.
+ *
+ * The line and not the job: a crontab holds comments and `MAILTO=` settings
+ * between the jobs, and every index in a [CronJob] is an index into the file.
+ */
+export function removed(lines: string[], indexes: Iterable<number>): string[] {
+  const drop = new Set(indexes);
+  return lines.filter((_, i) => !drop.has(i));
+}
+
+/**
+ * The crontab with one job appended.
+ *
+ * At the end, where `crontab -e` puts one. A trailing empty line is kept as
+ * the last line so the file still ends in a newline once joined.
+ */
+export function added(
+  lines: string[],
+  job: { when: string; command: string },
+): string[] {
+  const out = [...lines];
+  // A file that ends in an empty string is one that ended with a newline.
+  // Appending after it would leave a blank line in the middle.
+  while (out.length > 0 && out[out.length - 1]!.trim() === "") out.pop();
+  out.push(`${job.when.trim()} ${job.command.trim()}`);
+  return out;
+}
+
 export function toggled(lines: string[], index: number): string[] {
   const out = [...lines];
   const line = out[index];

@@ -117,6 +117,37 @@ describe("parsing", () => {
     const noisy = parse("/var", "du\ndu: cannot read directory\n40\t/var\n");
     expect(noisy.totalBytes).toBe(40 * 1024);
   });
+
+  /// The total is short by whatever is in them, and nothing else on the page
+  /// says so — `2>/dev/null` used to throw these away, which made `/` measured
+  /// as an ordinary user quietly disagree with the `df` figure beside it.
+  test("directories du could not read are counted", () => {
+    const denied = parse(
+      "/",
+      [
+        "du",
+        "du: cannot read directory '/root': Permission denied",
+        "du: cannot read directory '/lost+found': Permission denied",
+        "8\t/etc",
+        "40\t/",
+      ].join("\n"),
+    );
+
+    expect(denied.unreadable).toBe(2);
+    expect(denied.totalBytes).toBe(40 * 1024);
+    expect(denied.children.map((c) => c.name)).toEqual(["etc"]);
+  });
+
+  test("a clean reading counts none", () => {
+    expect(parse("/", "du\n8\t/etc\n40\t/\n").unreadable).toBe(0);
+  });
+
+  /// Which is why the errors have to stay on the stream: they are the only
+  /// evidence the number is short.
+  test("the command keeps du's complaints rather than discarding them", () => {
+    expect(command("/")).toContain("2>&1");
+    expect(command("/")).not.toContain("du -x -d 1 -k '/' 2>/dev/null");
+  });
 });
 
 describe("moving around", () => {

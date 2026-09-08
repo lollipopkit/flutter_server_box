@@ -23,6 +23,16 @@ export interface Scan {
   children: Entry[];
   /** The filesystem's own numbers, where `df` answered. */
   filesystem?: { usedBytes: number; sizeBytes: number };
+
+  /**
+   * How many directories `du` could not read.
+   *
+   * **The total is short by whatever is in them**, and nothing else on the
+   * page says so. This used to be thrown away with `2>/dev/null`, which meant
+   * a `/` measured as an ordinary user reported a number quietly smaller than
+   * the `df` figure printed beside it, and looked like a bug in the parser.
+   */
+  unreadable: number;
 }
 
 /**
@@ -44,17 +54,27 @@ export interface Scan {
  * that differs between implementations. Kibibytes are what every `du` agrees
  * on.
  */
-export function command(path: string): string {
+export function command(path: string, opts?: { crossFilesystems?: boolean }): string {
   if (!isUsablePath(path)) throw new Error(`not a path: ${path}`);
   // Quoted, and this is the line that matters in this file. A directory called
   // `; rm -rf ~` is a legal directory name, and it arrives here out of a
   // listing this plugin asked the server for.
   const quoted = shellQuote(path);
+  // `-x` keeps the measurement on one filesystem, which is the right default:
+  // `/` on a machine whose `/var` is its own mount otherwise walks both and
+  // reports a total the `df` line beside it contradicts. Off, it follows
+  // mounts — which is what somebody looking for where the space went across a
+  // set of volumes actually wants.
+  const stayOnOne = opts?.crossFilesystems ? "" : "-x ";
   return [
     `printf 'df\\n'`,
     `df -kP ${quoted} 2>/dev/null | tail -n +2`,
     `printf 'du\\n'`,
-    `du -x -d 1 -k ${quoted} 2>/dev/null`,
+    // **`2>&1`, not `2>/dev/null`.** `du` prints one line per directory it
+    // could not read, and discarding them made the total silently short. They
+    // are told apart from results by shape — a result is `<number>\t<path>` —
+    // which the parser already had to do for anything else on the stream.
+    `du ${stayOnOne}-d 1 -k ${quoted} 2>&1`,
   ].join("\n");
 }
 
@@ -65,6 +85,7 @@ export function parse(path: string, raw: string): Scan {
   const children: Entry[] = [];
   let totalBytes = 0;
   let filesystem: Scan["filesystem"];
+  let unreadable = 0;
 
   for (const line of raw.split("\n")) {
     const trimmed = line.trim();
@@ -89,10 +110,16 @@ export function parse(path: string, raw: string): Scan {
     // the front and everything after the first run of whitespace is the path,
     // rather than splitting into columns.
     const at = trimmed.search(/\s/);
-    if (at <= 0) continue;
-    const kb = Number(trimmed.slice(0, at));
-    const found = trimmed.slice(at).trim();
-    if (!Number.isFinite(kb) || !found) continue;
+    const kb = at <= 0 ? Number.NaN : Number(trimmed.slice(0, at));
+    const found = at <= 0 ? "" : trimmed.slice(at).trim();
+    if (!Number.isFinite(kb) || !found) {
+      // Not a result, so it is `du` on stderr — one line per directory it
+      // could not read. Counted rather than shown: the paths are long, there
+      // may be hundreds, and what the reader needs to know is that the total
+      // is short.
+      unreadable++;
+      continue;
+    }
 
     if (found === path) {
       totalBytes = kb * KIB;
@@ -107,7 +134,7 @@ export function parse(path: string, raw: string): Scan {
   // Largest first: the question is where the space went, and the answer is
   // almost always the first row.
   children.sort((a, b) => b.bytes - a.bytes);
-  return { path, totalBytes, children, filesystem };
+  return { path, totalBytes, children, filesystem, unreadable };
 }
 
 /** Exactly one level below, by path rather than by asking the server again. */

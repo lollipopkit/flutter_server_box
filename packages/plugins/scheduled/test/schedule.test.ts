@@ -9,10 +9,14 @@
 
 import { describe, expect, test } from "bun:test";
 import {
+  added,
+  edited,
+  isSchedule,
   parse,
   parseCronLine,
   parseTimer,
   parseWrite,
+  removed,
   toggled,
   writeCommand,
 } from "../src/schedule.ts";
@@ -214,5 +218,79 @@ describe("the write", () => {
 
   test("saying nothing at all is a failure, not a success", () => {
     expect(parseWrite("")).toMatchObject({ at: "failed" });
+  });
+});
+
+describe("editing the file", () => {
+  const lines = ["MAILTO=root", "0 3 * * * /opt/backup.sh", "#30 4 * * 0 /opt/w.sh"];
+
+  test("an edit keeps the line's own disabled state", () => {
+    // Editing what a job does is not turning it back on, and a person editing
+    // a commented-out line expects it to stay commented out.
+    expect(edited(lines, 2, { when: "0 5 * * 0", command: "/opt/w.sh" })[2]).toBe(
+      "#0 5 * * 0 /opt/w.sh",
+    );
+    expect(edited(lines, 1, { when: "0 4 * * *", command: "/opt/b.sh" })[1]).toBe(
+      "0 4 * * * /opt/b.sh",
+    );
+  });
+
+  test("an edit leaves every other line alone", () => {
+    const out = edited(lines, 1, { when: "@daily", command: "/opt/b.sh" });
+    expect(out[0]).toBe("MAILTO=root");
+    expect(out[2]).toBe(lines[2]);
+    expect(out).toHaveLength(3);
+  });
+
+  /// Every index is an index into the *file*, which holds settings and
+  /// comments between the jobs.
+  test("removing takes the lines named and nothing else", () => {
+    expect(removed(lines, [1])).toEqual(["MAILTO=root", "#30 4 * * 0 /opt/w.sh"]);
+    expect(removed(lines, [0, 2])).toEqual(["0 3 * * * /opt/backup.sh"]);
+    expect(removed(lines, [])).toEqual(lines);
+  });
+
+  test("adding appends without leaving a blank line in the middle", () => {
+    const ending = ["0 3 * * * /opt/backup.sh", ""];
+    expect(added(ending, { when: "@daily", command: "/opt/new.sh" })).toEqual([
+      "0 3 * * * /opt/backup.sh",
+      "@daily /opt/new.sh",
+    ]);
+  });
+
+  test("an empty crontab takes the first job", () => {
+    expect(added([], { when: "0 1 * * *", command: "/x" })).toEqual([
+      "0 1 * * * /x",
+    ]);
+  });
+});
+
+describe("what crontab will accept", () => {
+  test("five fields, or a shorthand", () => {
+    expect(isSchedule("0 3 * * *")).toBe(true);
+    expect(isSchedule("*/15 * * * *")).toBe(true);
+    expect(isSchedule("0 3 * * mon-fri")).toBe(true);
+    expect(isSchedule("@daily")).toBe(true);
+    expect(isSchedule("@reboot")).toBe(true);
+  });
+
+  /// The only chance to say so: crontab accepts the file either way and the
+  /// job simply never runs.
+  test("anything else is refused", () => {
+    expect(isSchedule("")).toBe(false);
+    expect(isSchedule("0 3 * *")).toBe(false);
+    expect(isSchedule("0 3 * * * *")).toBe(false);
+    expect(isSchedule("@sometimes")).toBe(false);
+    expect(isSchedule("every day at three")).toBe(false);
+    expect(isSchedule("0 3 * * funday")).toBe(false);
+  });
+
+  /// The same rule the reader uses, so a line this accepts comes back as a
+  /// job rather than as a comment nobody can see.
+  test("what it accepts, the reader reads back", () => {
+    for (const when of ["0 3 * * *", "@daily", "*/5 1-4 * * mon"]) {
+      expect(isSchedule(when)).toBe(true);
+      expect(parseCronLine(`${when} /opt/x.sh`, 0)?.when).toBe(when);
+    }
   });
 });

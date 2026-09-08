@@ -10,7 +10,7 @@
 
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { MockHost, find } from "@serverbox/plugin-api/test";
+import { MockHost, find, l10nKeys, texts } from "@serverbox/plugin-api/test";
 import type { HookEvent, Node, ServerHandle } from "@serverbox/plugin-api";
 import { COMMAND } from "../src/parse.ts";
 
@@ -36,15 +36,6 @@ function enter(server = "h-1"): HookEvent {
 }
 
 /** Every `text` value in a tree, so an assertion names what is on screen. */
-function texts(node: Node): string[] {
-  const out: string[] = [];
-  const walk = (n: Node) => {
-    if (n.t === "text" && typeof n.p?.value === "string") out.push(n.p.value);
-    for (const c of n.c ?? []) walk(c);
-  };
-  walk(node);
-  return out;
-}
 
 describe("the collection", () => {
   test("open draws immediately and runs nothing", async () => {
@@ -57,7 +48,7 @@ describe("the collection", () => {
     // The point of collecting in the hook: `open` holds the surface until it
     // answers, and this is a command on a machine that may be asleep.
     expect(host.called()).toEqual([]);
-    expect(texts(out.ui!)).toContain("Reading…");
+    expect(l10nKeys(out.ui!)).toContain("l10n.reading");
   });
 
   test("the hook runs the command and patches the rows in", async () => {
@@ -68,7 +59,14 @@ describe("the collection", () => {
     plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
 
-    expect(host.called()).toEqual(["server.exec", "ui.patch"]);
+    // Two `store.get` first: the page opens on whichever filter the settings
+    // page says is the default, and in whichever order was last chosen.
+    expect(host.called()).toEqual([
+      "store.get",
+      "store.get",
+      "server.exec",
+      "ui.patch",
+    ]);
     // The whole tree, because what changed is the body — a JSON Pointer into a
     // layout this plugin also owns would be two descriptions that have to
     // agree.
@@ -76,12 +74,18 @@ describe("the collection", () => {
     expect(patch.path).toBe("");
 
     const drawn = texts(patch.node);
+    // The port is the row's title, so it stands alone. The process shares the
+    // subtitle with the protocol and the address — a row that carried only a
+    // process name spent a line saying "—" whenever reading it needed root.
     expect(drawn).toContain("22");
-    expect(drawn).toContain("sshd");
     expect(drawn).toContain("6379");
-    expect(drawn.some((t) => t.includes("2 listening"))).toBe(true);
+    expect(drawn.some((t) => t.includes("sshd"))).toBe(true);
+    // The count is a translated sentence with the number as an argument, so
+    // the key is what the tree carries — the app substitutes.
+    const keys = l10nKeys(patch.node);
+    expect(keys).toContain("l10n.ports");
     // The one thing this list is opened to find out.
-    expect(drawn.some((t) => t.includes("1 reachable from outside"))).toBe(true);
+    expect(keys).toContain("l10n.exposedCount");
   });
 
   /// The hook is the only place the server handle comes from — a page is
@@ -105,21 +109,30 @@ describe("the collection", () => {
 
     await plugin.onHook(enter());
 
-    const drawn = texts(host.callsTo("ui.patch")[0]!.node);
-    expect(drawn.some((t) => t.includes("neither ss nor netstat"))).toBe(true);
+    // `errNoTool` is the sentence that names both commands and what to install
+    // instead — the half that makes it a message rather than a diagnosis.
+    expect(l10nKeys(host.callsTo("ui.patch")[0]!.node)).toContain(
+      "l10n.errNoTool",
+    );
   });
 
-  /// A refused or failed command is a page that says so, not one that stays on
-  /// "Reading…" for ever.
-  test("a command that failed is drawn as a failure", async () => {
+  /// A refused or failed command is a page that says so and offers the way
+  /// out, not one that stays on "Reading…" for ever — and not one that shows
+  /// the user a JavaScript error, which is a fact about this code rather than
+  /// about their machine.
+  test("a command that failed is drawn as a failure with a way out", async () => {
     const host = new MockHost();
     restore = host.install();
     const plugin = await load();
 
     await plugin.onHook(enter());
 
-    const drawn = texts(host.callsTo("ui.patch")[0]!.node);
-    expect(drawn.some((t) => t.includes("no exec scripted"))).toBe(true);
+    const node = host.callsTo("ui.patch")[0]!.node;
+    expect(l10nKeys(node)).toContain("l10n.errTitle");
+    expect(l10nKeys(node)).toContain("l10n.retry");
+    // And never the JavaScript error, which is a fact about this code rather
+    // than about the user's machine.
+    expect(texts(node).some((t) => t.includes("no exec scripted"))).toBe(false);
   });
 
   test("a hook naming no server does not run a command", async () => {
@@ -147,6 +160,8 @@ describe("the controls", () => {
     // patch is the point — on a machine that takes seconds the button has to
     // have done something.
     expect(host.called()).toEqual([
+      "store.get",
+      "store.get",
       "server.exec",
       "ui.patch",
       "ui.patch",
@@ -188,3 +203,80 @@ describe("the rows", () => {
     expect(find(tree, "tcp:127.0.0.1:6379")).toBeDefined();
   });
 });
+
+describe("finding one among many", () => {
+  /// Two rows need no search box; ninety are exactly where this page stops
+  /// being readable without one.
+  const MANY = `fmt=ss
+${Array.from(
+  { length: 12 },
+  (_, i) =>
+    `tcp   LISTEN 0 4096 0.0.0.0:${8000 + i}     0.0.0.0:* users:(("svc${i}",pid=${i},fd=3))`,
+).join("\n")}
+`;
+
+  const host12 = () => new MockHost().exec(COMMAND, { stdout: MANY });
+
+  test("a short list gets no search box, a long one does", async () => {
+    const few = new MockHost().exec(COMMAND, { stdout: SS });
+    restore = few.install();
+    let plugin = await load();
+    await plugin.onHook(enter());
+    expect(l10nKeys(lastPatch(few))).not.toContain("l10n.searchHint");
+    restore();
+
+    const many = host12();
+    restore = many.install();
+    plugin = await load();
+    await plugin.onHook(enter());
+    expect(l10nKeys(lastPatch(many))).toContain("l10n.searchHint");
+  });
+
+  test("it matches a port by prefix, a process and an address", async () => {
+    const host = host12();
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter());
+
+    // "800" finds 8000..8009 and not 8010 or 8011 — which is what somebody
+    // typing three digits means.
+    const byPort = texts((await plugin.onEvent({ m: "search" }, "800")).ui!);
+    expect(byPort).toContain("8000");
+    expect(byPort).not.toContain("8010");
+
+    const byProcess = texts((await plugin.onEvent({ m: "search" }, "svc7")).ui!);
+    expect(byProcess).toContain("8007");
+    expect(byProcess).not.toContain("8006");
+  });
+
+  test("a search that finds nothing says so and offers the way back", async () => {
+    const host = host12();
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter());
+
+    const out = await plugin.onEvent({ m: "search" }, "nothing-like-this");
+
+    const keys = l10nKeys(out.ui!);
+    expect(keys).toContain("l10n.emptySearchTitle");
+    expect(keys).toContain("l10n.clear");
+  });
+
+  test("the order is by port, or by process, and is remembered", async () => {
+    const host = host12();
+    restore = host.install();
+    const plugin = await load();
+    await plugin.onHook(enter());
+
+    const out = await plugin.onEvent({ m: "sort" });
+
+    expect(l10nKeys(out.ui!)).toContain("l10n.sortProcess");
+    expect(host.value("global", "sortBy")).toBe("process");
+  });
+});
+
+/** The tree of the last patch, which is what is on screen. */
+function lastPatch(host: MockHost): Node {
+  const patches = host.callsTo("ui.patch");
+  return patches[patches.length - 1]!.node;
+}

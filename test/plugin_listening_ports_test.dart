@@ -64,12 +64,19 @@ void main() {
     service.dispose();
   });
 
-  /// Every `text` value in the tree, so an assertion names what is on screen.
+  /// Every string the tree would put on screen, in order.
+  ///
+  /// Reads the props that carry text and not only `text` nodes: a `tile`'s
+  /// title and a `summary`'s figure are properties, so a walker looking for
+  /// `text` children alone would say a page full of rows says nothing. Matches
+  /// `texts` in `@serverbox/plugin-api/test`.
   List<String> texts(PluginNode node) {
+    const keys = ['value', 'title', 'subtitle', 'label', 'detail', 'k', 'v'];
     final out = <String>[];
     void walk(PluginNode n) {
-      if (n.type == 'text' && n.props['value'] is String) {
-        out.add(n.props['value'] as String);
+      for (final key in keys) {
+        final v = n.props[key];
+        if (v is String && v.isNotEmpty) out.add(v);
       }
       for (final c in n.children) {
         walk(c);
@@ -114,7 +121,7 @@ void main() {
     expect(ops.calls, isEmpty);
     expect(texts(nodeOf((jsonDecode(out) as Map)['ui'].toString().isEmpty
         ? out
-        : jsonEncode((jsonDecode(out) as Map)['ui']))), contains('Reading…'));
+        : jsonEncode((jsonDecode(out) as Map)['ui']))), contains('l10n.reading'));
   });
 
   /// The whole point of the hook: the host says which machines, the plugin
@@ -136,11 +143,16 @@ void main() {
     expect(seen!.path, isEmpty);
 
     final drawn = texts(seen!.node);
+    // The port is the row's title, so it stands alone. The process shares the
+    // subtitle with the protocol and the address — a row carrying only a
+    // process name spent a line on "—" whenever reading it needed root.
     expect(drawn, contains('22'));
-    expect(drawn, contains('sshd'));
     expect(drawn, contains('6379'));
-    expect(drawn.any((t) => t.contains('2 listening')), isTrue);
-    expect(drawn.any((t) => t.contains('1 reachable from outside')), isTrue);
+    expect(drawn.any((t) => t.contains('sshd')), isTrue);
+    // The counts are translated sentences with the number as an argument, so
+    // what the tree carries is the key — the app substitutes when it draws.
+    expect(drawn.any((t) => t.startsWith('l10n.ports')), isTrue);
+    expect(drawn.any((t) => t.startsWith('l10n.exposedCount')), isTrue);
   });
 
   /// The command the plugin sends is its own, and this is the only place the

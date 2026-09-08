@@ -12,16 +12,23 @@
 
 import {
   card,
+  classify,
   column,
   divider,
   expanded,
+  input,
   key,
+  l10n,
+  notice,
+  onChange,
   onTap,
   padding,
-  row,
   scroll,
+  summary,
   tag,
   text,
+  tile,
+  toggle,
   tone,
   type HookEvent,
   type Plugin,
@@ -44,25 +51,149 @@ let server: ServerHandle | null = null;
 /** Whether only the ones reachable from outside are shown. */
 let exposedOnly = false;
 
-export function open(_surface: Surface): UiOutput {
+/** What the search box holds. Not persisted: it is about this visit. */
+let query = "";
+
+/**
+ * How the rows are ordered.
+ *
+ * By port is the default: it is the one field every row has, and a list of
+ * ports is read by number. By process groups a server's services together,
+ * which is the other way anybody looks at this.
+ */
+type SortBy = "port" | "process";
+let sortBy: SortBy = "port";
+
+const SORT_KEY = "sortBy";
+
+async function loadSort(): Promise<void> {
+  try {
+    const stored = (await sb.store.get({ scope: "global", key: SORT_KEY }))
+      .value;
+    sortBy = stored === "process" ? "process" : "port";
+  } catch {
+    sortBy = "port";
+  }
+}
+
+/** The rows to draw, after the filter, the search and the order. */
+function shownRows(all: Listener[]): Listener[] {
+  const needle = query.trim().toLowerCase();
+  const out = all.filter((l) => {
+    if (exposedOnly && !l.exposed) return false;
+    if (!needle) return true;
+    // Port, process and address: the three things somebody would type. A port
+    // is matched as a prefix so "80" finds 80 and 8080, which is what a person
+    // typing two digits is looking for.
+    return (
+      `${l.port}`.startsWith(needle) ||
+      (l.process ?? "").toLowerCase().includes(needle) ||
+      l.addr.toLowerCase().includes(needle)
+    );
+  });
+
+  out.sort((a, b) =>
+    sortBy === "process"
+      ? (a.process ?? "").localeCompare(b.process ?? "") || a.port - b.port
+      : a.port - b.port,
+  );
+  return out;
+}
+
+/**
+ * What went wrong, in the user's language.
+ *
+ * `reason` from the SDK answers in English, which is right for a plugin that
+ * ships no translations and wrong for one that does — so this classifies with
+ * `classify` and picks the key itself.
+ */
+function whyOf(e: unknown): string {
+  const { kind, permission } = classify(e);
+  switch (kind) {
+    case "denied":
+      return permission ? l10n("errDenied", permission) : l10n("errDeniedPlain");
+    case "unavailable":
+      return l10n("errUnavailable");
+    case "timeout":
+      return l10n("errTimeout");
+    case "io":
+      return l10n("errIo");
+    case "cert":
+      return l10n("errCert");
+    case "decode":
+      return l10n("errDecode");
+    case "unknown":
+      return l10n("errUnknown");
+  }
+}
+
+/// The default for [exposedOnly], which is a preference and not a property of
+/// any one machine — so `global`.
+const EXPOSED_DEFAULT_KEY = "exposedByDefault";
+
+async function exposedByDefault(): Promise<boolean> {
+  try {
+    return (await sb.store.get({ scope: "global", key: EXPOSED_DEFAULT_KEY }))
+      .value === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function open(surface: Surface): UiOutput {
+  if (surface.kind === "settings") {
+    void drawSettings();
+    return { ui: padding(17, text("…")) };
+  }
   // Deliberately not collecting here. `open` holds the surface until it
   // answers, and this is a command on a machine that may be slow or asleep.
   return { ui: view() };
 }
 
+/// The settings surface, which reads the store and so draws after it answers.
+async function drawSettings(): Promise<void> {
+  const on = await exposedByDefault();
+  const node = card([
+    onChange(
+      toggle(on, {
+        label: l10n("prefsExposed"),
+        hint: l10n("prefsExposedHint"),
+      }),
+      { m: "setExposedDefault" },
+    ),
+  ]);
+  try {
+    await sb.ui.patch({ path: "", node });
+  } catch {
+    // Nobody is looking at the settings page any more.
+  }
+}
+
 export async function onHook(event: HookEvent): Promise<void> {
   const first = event.servers[0];
   if (!first) {
-    state = { at: "failed", why: "no server" };
+    state = { at: "failed", why: l10n("errNoServer") };
     await sb.ui.patch({ path: "", node: view() });
     return;
   }
   server = first.server;
+  // The page opens on whichever filter the user chose as the default.
+  exposedOnly = await exposedByDefault();
+  await loadSort();
   await collect();
 }
 
-export async function onEvent(msg: unknown): Promise<UiOutput> {
+export async function onEvent(msg: unknown, value?: unknown): Promise<UiOutput> {
   const m = msg as { m: string };
+  if (m.m === "setExposedDefault") {
+    await sb.store.set({
+      scope: "global",
+      key: EXPOSED_DEFAULT_KEY,
+      value: value === true ? "1" : "0",
+    });
+    await drawSettings();
+    return {};
+  }
   if (m.m === "reload") {
     state = { at: "loading" };
     // Drawn before the command runs, so the button visibly did something on a
@@ -73,6 +204,19 @@ export async function onEvent(msg: unknown): Promise<UiOutput> {
   }
   if (m.m === "exposed") {
     exposedOnly = !exposedOnly;
+    return { ui: view() };
+  }
+  if (m.m === "sort") {
+    sortBy = sortBy === "port" ? "process" : "port";
+    try {
+      await sb.store.set({ scope: "global", key: SORT_KEY, value: sortBy });
+    } catch {
+      // The order is applied either way; only the memory of it is lost.
+    }
+    return { ui: view() };
+  }
+  if (m.m === "search") {
+    query = `${value ?? ""}`;
     return { ui: view() };
   }
   return {};
@@ -86,10 +230,10 @@ async function collect(): Promise<void> {
     const { format, listeners } = parse(r.stdout);
     state =
       format === "none"
-        ? { at: "failed", why: "neither ss nor netstat is installed" }
+        ? { at: "failed", why: l10n("errNoTool") }
         : { at: "ready", listeners, format };
   } catch (e) {
-    state = { at: "failed", why: String(e) };
+    state = { at: "failed", why: whyOf(e) };
   }
   // The whole tree, not a subtree: what changed is the body, and naming a
   // JSON Pointer into a tree this file also owns would be two descriptions of
@@ -99,39 +243,84 @@ async function collect(): Promise<void> {
 
 function view() {
   if (state.at === "loading") {
-    return padding(17, text("Reading…"));
+    return padding(17, text(l10n("reading")));
   }
   if (state.at === "failed") {
-    return padding(17, tone(text(state.why), "danger"));
+    return notice({
+      kind: "failed",
+      icon: "warning",
+      title: l10n("errTitle"),
+      detail: state.why,
+      actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
+    });
   }
 
-  const shown = exposedOnly
-    ? state.listeners.filter((l) => l.exposed)
-    : state.listeners;
+  const shown = shownRows(state.listeners);
   const exposed = state.listeners.filter((l) => l.exposed).length;
 
+  const n = state.listeners.length;
   return column([
-    padding(
-      13,
-      row(
-        [
-          expanded(
-            text(
-              `${state.listeners.length} listening · ${exposed} reachable from outside`,
-            ),
+    summary({
+      label: l10n("summaryLabel"),
+      value: n === 1 ? l10n("port") : l10n("ports", `${n}`),
+      detail:
+        exposed === 0 ? l10n("exposedNone") : l10n("exposedCount", `${exposed}`),
+      actions: [
+        onTap(
+          tag(l10n(sortBy === "port" ? "sortPort" : "sortProcess")),
+          { m: "sort" },
+        ),
+        onTap(
+          tag(l10n(exposedOnly ? "filterExposed" : "filterAll")),
+          { m: "exposed" },
+        ),
+        onTap(tag(l10n("reload")), { m: "reload" }),
+      ],
+    }),
+    // Below the summary rather than in it: it is a control for the list, and
+    // a list of two does not need one — but a server with ninety open ports is
+    // exactly where this page stops being readable without it.
+    ...(state.listeners.length < 8 && !query
+      ? []
+      : [
+          padding(
+            13,
+            onChange(input(query, { hint: l10n("searchHint") }), {
+              m: "search",
+            }),
           ),
-          onTap(tag(exposedOnly ? "Exposed only" : "All"), { m: "exposed" }),
-          onTap(tag("Reload"), { m: "reload" }),
-        ],
-        { spacing: 7 },
-      ),
-    ),
+        ]),
     divider(),
     expanded(
       scroll(
         shown.length === 0
-          ? [padding(17, text("Nothing is listening."))]
-          : shown.map(rowFor),
+          ? query.trim()
+            ? [
+                notice({
+                  icon: "info",
+                  title: l10n("emptySearchTitle", query.trim()),
+                  detail: l10n("emptySearchDetail"),
+                  actions: [{ label: l10n("clear"), msg: { m: "search" } }],
+                }),
+              ]
+            : [
+              exposedOnly
+                ? notice({
+                    icon: "lock",
+                    title: l10n("emptyExposedTitle"),
+                    detail: l10n("emptyExposedDetail"),
+                    actions: [
+                      { label: l10n("filterAll"), msg: { m: "exposed" } },
+                    ],
+                  })
+                : notice({
+                    icon: "network",
+                    title: l10n("emptyTitle"),
+                    detail: l10n("emptyDetail"),
+                    actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
+                  }),
+              ]
+          : [card(shown.map(rowFor))],
       ),
     ),
   ]);
@@ -141,27 +330,25 @@ function rowFor(l: Listener) {
   // Keyed by what makes a listener itself, so the renderer keeps a row's
   // element across a reload instead of rebuilding the list.
   return key(
-    card([
-      padding(
-        11,
-        row(
-          [
-            // The port is what the eye goes to, so it leads and nothing is put
-            // before it.
-            text(`${l.port}`),
-            expanded(text(l.process ?? "—")),
-            tag(l.proto),
-            // The one thing this list is opened to find out. Named rather than
-            // coloured alone: a colour says "bad", and a service that is
-            // *meant* to be reachable is not bad.
-            l.exposed
-              ? tone(tag(l.addr), "warning")
-              : tone(tag(l.addr), "muted"),
-          ],
-          { spacing: 9 },
-        ),
-      ),
-    ]),
+    tile({
+      icon: l.exposed ? "globe" : "lock",
+      // The port leads: it is what the eye goes to, and a process name is
+      // often missing because reading it needs root.
+      title: `${l.port}`,
+      // The process where there is one, and the address either way — a row
+      // that said only "—" spent a whole line saying nothing.
+      // The process where it could be read, and why not where it could not:
+      // seeing another user's socket needs root, and a blank line does not
+      // say so.
+      subtitle: [l.process ?? l10n("unknownProcess"), `${l.proto} · ${l.addr}`]
+        .join("  ·  "),
+      // The one thing this list is opened to find out. Named rather than
+      // coloured alone: a colour says "bad", and a service that is *meant*
+      // to be reachable is not bad.
+      trailing: l.exposed
+        ? tone(tag(l10n("tagExposed")), "warning")
+        : tone(tag(l10n("tagLocal")), "muted"),
+    }),
     `${l.proto}:${l.addr}:${l.port}`,
   );
 }
