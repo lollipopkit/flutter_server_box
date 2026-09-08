@@ -62,6 +62,21 @@ void main() {
 
   late _RecordingSink sink;
 
+  /// Reads the script once, out here, where a real isolate can finish.
+  ///
+  /// `AssetBundle.loadString` decodes on the calling isolate below 50 KiB and
+  /// hands anything larger to `compute()`. `assets/yabs.b64` is 68 KB — base64
+  /// of a 50 KB script, and the shell script it replaced was 50,515 bytes,
+  /// just under the line — so the first `YabsScript.load()` now spawns one. A
+  /// `testWidgets` body runs in a fake-async zone that never pumps that
+  /// isolate's completion, and the test times out after ten minutes with
+  /// nothing naming the cause.
+  ///
+  /// `load()` caches for the process, so warming it here is all it takes. Only
+  /// the install path calls it, which is why one test in this file hit this
+  /// and the two before it did not.
+  setUpAll(() => YabsScript.load());
+
   setUp(() async {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
