@@ -12,11 +12,11 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/plugin/host_ops.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
 import 'package:server_box/data/store/plugin.dart';
 
+import 'helpers/plugin_host_ops.dart';
 import 'helpers/test_db.dart';
 import 'rust_lib_helper.dart';
 
@@ -30,91 +30,10 @@ const _manifest = '''
 }
 ''';
 
-class _Ops implements PluginHostOps {
-  final calls = <String>[];
-  PluginExecResult execResult = (code: 0, stdout: 'up 3 days', stderr: '');
-  String? picked;
-
-  @override
-  Future<PluginExecResult> exec(
-    String serverId,
-    String script, {
-    Duration? timeout,
-  }) async {
-    calls.add('exec:$serverId:$script');
-    return execResult;
-  }
-
-  @override
-  Future<List<PluginServerSummary>> listServers() async => const [];
-
-  @override
-  Future<void> openTerminal(
-    String serverId, {
-    String? cmd,
-    bool run = false,
-  }) async {}
-
-  @override
-  Future<PluginFetchResult> fetch({
-    required String url,
-    required String method,
-    Map<String, String> headers = const {},
-    String? body,
-    String bodyEncoding = 'utf8',
-    String? pinSha256,
-    bool probeCert = false,
-    Duration? timeout,
-  }) async => (
-    status: 200,
-    headers: const <String, String>{},
-    body: '',
-    bodyEncoding: 'utf8',
-    cert: null,
-  );
-
-  @override
-  void toast(String text, String kind) => calls.add('toast:$kind:$text');
-
-  @override
-  Future<PluginPromptResult> prompt({
-    required String title,
-    String? message,
-    List<PluginPromptField> fields = const [],
-    String? confirm,
-  }) async {
-    calls.add('prompt:$title');
-    return (cancelled: false, values: {'user': 'admin'});
-  }
-
-  @override
-  Future<String?> pickServer() async {
-    calls.add('pickServer');
-    return picked;
-  }
-
-  @override
-  Future<String?> clipboardRead() async => 'clip';
-
-  @override
-  Future<void> clipboardWrite(String text) async => calls.add('write:$text');
-
-  @override
-  Future<void> openServer(String serverId) async =>
-      calls.add('open:$serverId');
-
-  @override
-  Future<void> goTab(String tab) async => calls.add('tab:$tab');
-
-  @override
-  void crumb(String pluginId, String name, String level) =>
-      calls.add('crumb:$name');
-}
-
 void main() {
   setUpAll(initRustLibForTest);
 
-  late _Ops ops;
+  late FakePluginHostOps ops;
   late PluginRuntimeService service;
   late PluginBridge bridge;
   final loaded = <BigInt>[];
@@ -124,7 +43,7 @@ void main() {
     SqliteDb.instance.execute(
       "INSERT INTO server (id, name, ssh_ip) VALUES ('srv-1', 'one', '10.0.0.1');",
     );
-    ops = _Ops();
+    ops = FakePluginHostOps();
     bridge = PluginBridge(
       ops: ops,
       handles: PluginServerHandles(),

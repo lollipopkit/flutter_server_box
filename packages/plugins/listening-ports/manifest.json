@@ -1,0 +1,19 @@
+{
+  "id": "app.serverbox.ports",
+  "version": "1.0.0",
+  "abi": 1,
+  "name": "Listening ports",
+  "description": "What is listening on a server, and which of it is reachable from outside.",
+  "license": "MIT",
+  "permissions": {
+    "server.exec": true
+  },
+  "contributes": {
+    "page": {
+      "id": "ports",
+      "label": "Ports",
+      "default_on": true,
+      "needs": ["shell"]
+    }
+  }
+}

@@ -111,3 +111,10 @@ android/app/.cxx
 # history: it churns every session, and what belongs in the repo is the TODO
 # beside the code it is about.
 /TODOS.md
+
+# The packed `.sbp` is derived from the bundle and the manifest, so it is not
+# kept. `dist/plugin.js` *is* kept: `test/plugin_listening_ports_test.dart` is
+# the only thing proving the SDK and the app agree, and it reads that file —
+# ignoring it would leave the test silently unrunnable on a fresh clone.
+packages/plugins/*/dist/*.sbp
+packages/plugins/*/node_modules/
