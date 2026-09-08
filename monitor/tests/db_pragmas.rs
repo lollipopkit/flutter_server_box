@@ -32,6 +32,11 @@ where
 /// connection answered it and silently leaves the rest on the defaults, which
 /// is why these belong in the connect options.
 ///
+/// `wal_autocheckpoint` is the one that can fail here. `synchronous` is
+/// asserted because the value is a decision worth stating, but FULL is also
+/// what a connection carrying no settings at all reports, so it cannot tell
+/// the two apart on its own.
+///
 /// Held open at the same time on purpose: acquiring them one after another
 /// hands back the same connection every time and would pass either way.
 #[tokio::test]
@@ -49,8 +54,9 @@ async fn every_pooled_connection_carries_the_settings() -> Result<()> {
             .fetch_one("PRAGMA synchronous")
             .await
             .map_err(anyhow::Error::from)?;
-        // 1 is NORMAL, 2 is SQLite's own default of FULL.
-        assert_eq!(row.get::<i64, _>(0), 1, "connection {i} synchronous");
+        // 2 is FULL, 1 the NORMAL this database deliberately does not use —
+        // see the note in `connect_options`.
+        assert_eq!(row.get::<i64, _>(0), 2, "connection {i} synchronous");
 
         let row = conn
             .fetch_one("PRAGMA wal_autocheckpoint")

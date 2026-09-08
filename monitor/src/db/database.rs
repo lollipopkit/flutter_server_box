@@ -58,11 +58,18 @@ fn connect_options(database_url: &str) -> Result<SqliteConnectOptions> {
         // way while a newly created one would quietly get a rollback journal —
         // a fsync-per-commit against the whole database file.
         .journal_mode(SqliteJournalMode::Wal)
-        // FULL is SQLite's default and means an fsync per commit on top of the
-        // one WAL already does. Under WAL, NORMAL risks losing the most recent
-        // transactions to a power failure and cannot corrupt the database —
-        // the right trade for a sampler whose next row is seconds away.
-        .synchronous(SqliteSynchronous::Normal)
+        // Kept at SQLite's default, and named so that lowering it is a
+        // decision rather than an omission. NORMAL under WAL cannot corrupt
+        // the file and only risks the most recent transactions, which for a
+        // metrics row seconds away from its successor costs nothing — but this
+        // database is not only metrics. `users` carries the panel credential,
+        // `watch_tokens` is what revoking a watch's access deletes from, and
+        // `access_log` and `config_audit_log` exist to be readable after
+        // exactly the kind of event that would lose an unsynced commit. A
+        // password change or a revocation silently not having happened is not
+        // a cost worth an fsync, and the read amplification this file set out
+        // to fix was `wal_autocheckpoint`, not this.
+        .synchronous(SqliteSynchronous::Full)
         // Only ever takes effect on a database that is still empty, so this
         // sets the behaviour for new installs; an existing file reports NONE
         // until the one full VACUUM in `cleanup` converts it.
