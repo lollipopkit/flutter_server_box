@@ -1,6 +1,13 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/plugin/contributions.dart';
+import 'package:server_box/data/model/plugin/installed.dart';
+import 'package:server_box/data/provider/plugin/runtime.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/src/rust/api/plugin.dart' as ffi;
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
 import 'package:server_box/view/page/pkg/tab.dart';
@@ -9,6 +16,7 @@ import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
+import 'package:server_box/view/widget/plugin/surface_view.dart';
 
 /// One entry of the home bar, resolved from the id the arrangement stores.
 ///
@@ -27,7 +35,24 @@ sealed class HomeTab {
   static HomeTab? of(String id) {
     final builtIn = AppTab.fromId(id);
     if (builtIn != null) return BuiltInHomeTab(builtIn);
+    final plugin = PluginContributions.ofFeature(id);
+    if (plugin != null && plugin.isTab(id)) return PluginHomeTab(plugin);
     return null;
+  }
+
+  /// Every id there is, the bar's in the order the user arranged them and the
+  /// rest after — which is what "more" holds.
+  ///
+  /// Asked of the registry rather than of [AppTab], because a plugin's tab is
+  /// not a case of it. An id in the arrangement that nothing claims is kept in
+  /// storage and skipped here; see `FeatureSlot.putEnabledIds`.
+  static List<String> orderedIds(List<String> bar) {
+    final on = bar.toSet();
+    return [
+      ...bar,
+      for (final f in Features.of(FeatureSlot.homeTab))
+        if (!on.contains(f.id)) f.id,
+    ];
   }
 
   String get id;
@@ -69,6 +94,85 @@ final class BuiltInHomeTab extends HomeTab {
   @override
   NavigationRailDestination navRailDestination({ContextMenuOpener? onMenu}) =>
       tab.navRailDestination(onMenu: onMenu);
+}
+
+/// A tab a plugin contributes.
+///
+/// The whole of it is a [PluginSurfaceView], as with every other plugin
+/// surface. What makes it the widest one is what it is *not* given: no
+/// `serverId`, because a tab is about the fleet — so its hook carries every
+/// machine the plugin may know about instead of the one a card sits on.
+final class PluginHomeTab extends HomeTab {
+  const PluginHomeTab(this.plugin);
+
+  final InstalledPlugin plugin;
+
+  ffi.PluginTabInfo get _tab => plugin.manifest.tab!;
+
+  @override
+  String get id => '${plugin.id}:${_tab.id}';
+  @override
+  String get label => _tab.label;
+  // One mark for every plugin, as in the other two slots. A plugin naming its
+  // own would be naming one of Material's by string, which is a set that
+  // changes under it and a name that means nothing when it does.
+  @override
+  IconData get iconData => Icons.extension_outlined;
+  @override
+  IconData get selectedIconData => Icons.extension;
+
+  @override
+  Widget get page => _PluginTabPage(plugin: plugin);
+
+  @override
+  Widget navDestination({ContextMenuOpener? onMenu}) =>
+      NavigationDestination(icon: icon, selectedIcon: selectedIcon, label: label);
+
+  @override
+  NavigationRailDestination navRailDestination({ContextMenuOpener? onMenu}) =>
+      NavigationRailDestination(
+        icon: icon,
+        selectedIcon: selectedIcon,
+        label: Text(label),
+      );
+}
+
+/// The surface, with the fleet it is about.
+///
+/// Its own widget rather than a `PluginSurfaceView` built inline, because the
+/// server list has to be watched: a tab opened before the servers loaded, or
+/// left open while one is added, would otherwise fire its hook naming a fleet
+/// that has since changed.
+class _PluginTabPage extends ConsumerWidget {
+  const _PluginTabPage({required this.plugin});
+
+  final InstalledPlugin plugin;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final order = ref.watch(serversProvider.select((s) => s.serverOrder));
+    return PluginSurfaceView(
+      key: ValueKey(plugin.id),
+      spec: PluginSurfaceSpec(
+        pluginId: plugin.id,
+        manifestJson: plugin.manifestJson,
+        source: plugin.source,
+        kind: 'tab',
+        contributionId: plugin.manifest.tab!.id,
+        granted: plugin.granted,
+        l10n: plugin.l10nFor(
+          Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
+        ),
+      ),
+      service: ref.read(pluginRuntimeProvider),
+      fleetServerIds: order,
+      // No ticking. A tab is the surface most likely to be left open, and what
+      // a fleet-wide one collects is a command per machine — the hook fires on
+      // the way in and the plugin patches as answers land. A plugin that wants
+      // a clock has `sb.ui.patch` and its own timer inside a collection it
+      // chose to start.
+    );
+  }
 }
 
 extension AppTabViewX on AppTab {

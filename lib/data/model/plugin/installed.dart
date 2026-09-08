@@ -117,6 +117,26 @@ class InstalledPlugin {
         _ => null,
       };
 
+  /// The tab it puts on the home page, or null.
+  ///
+  /// The widest surface a plugin gets and the only fleet-wide one: it is bound
+  /// to no server, so its `onHook` carries every machine the plugin may know
+  /// about rather than the one a card sits on.
+  Feature? get tabFeature {
+    final tab = manifest.tab;
+    if (tab == null) return null;
+    return Feature(
+      id: '$id:${tab.id}',
+      slot: FeatureSlot.homeTab,
+      icon: Icons.extension_outlined,
+      label: () => tab.label,
+    );
+  }
+
+  /// Whether [featureId] is this plugin's home tab.
+  bool isTab(String featureId) =>
+      manifest.tab != null && featureId == '$id:${manifest.tab!.id}';
+
   /// Whether [featureId] is this plugin's card rather than its status
   /// contribution, which is what decides how it is drawn.
   bool isCard(String featureId) =>

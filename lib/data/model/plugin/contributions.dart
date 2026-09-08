@@ -45,10 +45,9 @@ abstract final class PluginContributions {
       ],
     ],
     FeatureSlot.funcBtn => [for (final plugin in _byId.values) ?plugin.pageFeature],
-    // A tab is the one slot a plugin cannot reach yet: `homeTabs` is stored as
-    // `List<AppTab>`, so a name no case matches has nowhere to go. Widening it
-    // is what letting a plugin contribute a tab has to do first.
-    FeatureSlot.homeTab => const [],
+    FeatureSlot.homeTab => [
+      for (final plugin in _byId.values) ?plugin.tabFeature,
+    ],
   };
 
   /// Everything [plugin] contributes, whatever slot it goes in.
@@ -60,6 +59,7 @@ abstract final class PluginContributions {
     ?plugin.statusFeature,
     ?plugin.cardFeature,
     ?plugin.pageFeature,
+    ?plugin.tabFeature,
   ];
 
   /// What a *first* install should be given a place for.
@@ -72,5 +72,10 @@ abstract final class PluginContributions {
     if (plugin.manifest.status?.defaultOn == true) ?plugin.statusFeature,
     if (plugin.manifest.card?.defaultOn == true) ?plugin.cardFeature,
     if (plugin.manifest.page?.defaultOn == true) ?plugin.pageFeature,
+    // Deliberately not `tabFeature`. The home bar fits four labels on a phone,
+    // so putting one there is taking a place from a tab the user chose — see
+    // `AppTab.feature`, which is why no built-in tab has a `since` either. A
+    // plugin's tab is reachable behind "more" and in the arranging page from
+    // the moment it is installed.
   ];
 }

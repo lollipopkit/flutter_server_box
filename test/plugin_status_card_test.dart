@@ -25,6 +25,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/widget/plugin/status_card.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
@@ -346,6 +347,57 @@ void main() {
     );
     await tester.pump();
     expect(find.text('Pager'), findsOneWidget);
+  });
+
+  /// A tab is the widest surface a plugin gets and the last slot it could not
+  /// reach: `homeTabs` was typed `List<AppTab>` until m023, so a name no case
+  /// matched had nowhere to go.
+  test('a tab contribution reaches the home bar', () async {
+    final archive = Archive()
+      ..add(
+        ArchiveFile.bytes(
+          'manifest.json',
+          utf8.encode(
+            jsonEncode({
+              'id': 'app.serverbox.fleet',
+              'version': '1.0.0',
+              'abi': 1,
+              'name': 'Fleet',
+              'permissions': {'server.list': true},
+              'contributes': {
+                'tab': {'id': 'all', 'label': 'Fleet', 'default_on': true},
+              },
+            }),
+          ),
+        ),
+      )
+      ..add(ArchiveFile.bytes('plugin.js', utf8.encode(_source)));
+
+    final plugin = await installer.install(
+      ZipEncoder().encode(archive),
+      consented: {'server.list'},
+    );
+
+    const id = 'app.serverbox.fleet:all';
+    expect(plugin.tabFeature?.id, id);
+    expect(plugin.isTab(id), isTrue);
+    expect(Features.byId(FeatureSlot.homeTab, id), isNotNull);
+    // Reachable behind "more" and in the arranging page from the moment it is
+    // installed, and resolvable to something the home page can draw.
+    expect(HomeTab.orderedIds(FeatureSlot.homeTab.enabledIds()), contains(id));
+    expect(HomeTab.of(id), isA<PluginHomeTab>());
+    expect(HomeTab.of(id)?.label, 'Fleet');
+
+    // **Not put in the bar.** It fits four labels on a phone, so taking one of
+    // those is the user's decision — the same rule that keeps every built-in
+    // tab out of `Features.autoAdd`.
+    expect(FeatureSlot.homeTab.enabledIds(), isNot(contains(id)));
+
+    // And uninstalling takes it out of the registry while the arrangement, if
+    // the user had moved it into the bar, keeps its place.
+    await installer.uninstall('app.serverbox.fleet');
+    expect(Features.byId(FeatureSlot.homeTab, id), isNull);
+    expect(HomeTab.of(id), isNull);
   });
 
   /// `requires_config` keeps a card off the machines the plugin has nothing to

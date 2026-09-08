@@ -885,6 +885,15 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
+                impl SseDecode for Option<crate::api::plugin::PluginTabInfo> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::plugin::PluginTabInfo>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+                
                 impl SseDecode for crate::api::plugin::PluginCardInfo {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_id = <String>::sse_decode(deserializer);
@@ -929,10 +938,11 @@ let mut var_permissions = <Vec<String>>::sse_decode(deserializer);
 let mut var_card = <Option<crate::api::plugin::PluginCardInfo>>::sse_decode(deserializer);
 let mut var_page = <Option<crate::api::plugin::PluginPageInfo>>::sse_decode(deserializer);
 let mut var_settings = <Option<crate::api::plugin::PluginSettingsInfo>>::sse_decode(deserializer);
+let mut var_tab = <Option<crate::api::plugin::PluginTabInfo>>::sse_decode(deserializer);
 let mut var_status = <Option<crate::api::plugin::PluginStatusInfo>>::sse_decode(deserializer);
 let mut var_license = <Option<String>>::sse_decode(deserializer);
 let mut var_sourceUrl = <Option<String>>::sse_decode(deserializer);
-return crate::api::plugin::PluginManifestInfo{id: var_id, version: var_version, abi: var_abi, name: var_name, description: var_description, permissions: var_permissions, card: var_card, page: var_page, settings: var_settings, status: var_status, license: var_license, source_url: var_sourceUrl};}
+return crate::api::plugin::PluginManifestInfo{id: var_id, version: var_version, abi: var_abi, name: var_name, description: var_description, permissions: var_permissions, card: var_card, page: var_page, settings: var_settings, tab: var_tab, status: var_status, license: var_license, source_url: var_sourceUrl};}
                 }
                 
                 impl SseDecode for crate::api::plugin::PluginPageInfo {
@@ -1007,6 +1017,15 @@ return crate::api::plugin::PluginStatusItem{label: var_label, value: var_value, 
 let mut var_items = <Vec<crate::api::plugin::PluginStatusItem>>::sse_decode(deserializer);
 let mut var_note = <Option<String>>::sse_decode(deserializer);
 return crate::api::plugin::PluginStatusResult{title: var_title, items: var_items, note: var_note};}
+                }
+                
+                impl SseDecode for crate::api::plugin::PluginTabInfo {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_id = <String>::sse_decode(deserializer);
+let mut var_label = <String>::sse_decode(deserializer);
+let mut var_icon = <Option<String>>::sse_decode(deserializer);
+let mut var_defaultOn = <bool>::sse_decode(deserializer);
+return crate::api::plugin::PluginTabInfo{id: var_id, label: var_label, icon: var_icon, default_on: var_defaultOn};}
                 }
                 
                 impl SseDecode for (String,String,) {
@@ -1331,6 +1350,7 @@ self.permissions.into_into_dart().into_dart(),
 self.card.into_into_dart().into_dart(),
 self.page.into_into_dart().into_dart(),
 self.settings.into_into_dart().into_dart(),
+self.tab.into_into_dart().into_dart(),
 self.status.into_into_dart().into_dart(),
 self.license.into_into_dart().into_dart(),
 self.source_url.into_into_dart().into_dart()
@@ -1478,6 +1498,23 @@ self.note.into_into_dart().into_dart()
             impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::plugin::PluginStatusResult {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::plugin::PluginStatusResult> for crate::api::plugin::PluginStatusResult {
             fn into_into_dart(self) -> crate::api::plugin::PluginStatusResult {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::plugin::PluginTabInfo {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.id.into_into_dart().into_dart(),
+self.label.into_into_dart().into_dart(),
+self.icon.into_into_dart().into_dart(),
+self.default_on.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::plugin::PluginTabInfo {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::plugin::PluginTabInfo> for crate::api::plugin::PluginTabInfo {
+            fn into_into_dart(self) -> crate::api::plugin::PluginTabInfo {
                 self
             }
         }
@@ -1738,6 +1775,14 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
+                impl SseEncode for Option<crate::api::plugin::PluginTabInfo> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::plugin::PluginTabInfo>::sse_encode(value, serializer);
+                }}
+                }
+                
                 impl SseEncode for crate::api::plugin::PluginCardInfo {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.id, serializer);
@@ -1778,6 +1823,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
 <Option<crate::api::plugin::PluginCardInfo>>::sse_encode(self.card, serializer);
 <Option<crate::api::plugin::PluginPageInfo>>::sse_encode(self.page, serializer);
 <Option<crate::api::plugin::PluginSettingsInfo>>::sse_encode(self.settings, serializer);
+<Option<crate::api::plugin::PluginTabInfo>>::sse_encode(self.tab, serializer);
 <Option<crate::api::plugin::PluginStatusInfo>>::sse_encode(self.status, serializer);
 <Option<String>>::sse_encode(self.license, serializer);
 <Option<String>>::sse_encode(self.source_url, serializer);}
@@ -1847,6 +1893,14 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.title, serializer);
 <Vec<crate::api::plugin::PluginStatusItem>>::sse_encode(self.items, serializer);
 <Option<String>>::sse_encode(self.note, serializer);}
+                }
+                
+                impl SseEncode for crate::api::plugin::PluginTabInfo {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.id, serializer);
+<String>::sse_encode(self.label, serializer);
+<Option<String>>::sse_encode(self.icon, serializer);
+<bool>::sse_encode(self.default_on, serializer);}
                 }
                 
                 impl SseEncode for (String,String,) {

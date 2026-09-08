@@ -148,7 +148,7 @@ class _HomePageState extends ConsumerState<HomePage>
   /// Every page there is, the bar's first and "more"'s after. The index space
   /// for everything below, so a tab reached through "more" is a page like any
   /// other rather than something pushed over one.
-  late List<String> _tabs = [..._barTabs, ...AppTab.overflowIdsOf(_barTabs)];
+  late List<String> _tabs = HomeTab.orderedIds(_barTabs);
 
   /// The tab strip, whichever of the two is on screen. Only one is built at a
   /// time — the bar on a phone, the rail beside a window — so one key covers
@@ -988,7 +988,7 @@ extension _HomePageStateUtils on _HomePageState {
 extension _HomePageStateActions on _HomePageState {
   void _handleHomeTabsChanged() {
     final newBar = Stores.setting.homeTabs.fetch();
-    final newTabs = [...newBar, ...AppTab.overflowIdsOf(newBar)];
+    final newTabs = HomeTab.orderedIds(newBar);
     // The page list is every tab either way, so it only changes when the *bar*
     // does — which is what the setting says.
     if (!mounted || newBar.equals(_barTabs)) return;

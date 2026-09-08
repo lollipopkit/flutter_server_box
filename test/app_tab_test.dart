@@ -35,7 +35,7 @@ void main() {
       // one beside it is pinned rather than being an `AppTab`: it is the only
       // way into the settings on a phone, and "more" used to carry it.
       expect(AppTab.overflowOf(AppTab.values), isEmpty);
-      expect(availableHomeTabs(AppTab.values), isEmpty);
+      expect(availableHomeTabs(AppTab.values.map((e) => e.name)), isEmpty);
     });
 
     /// The declaration order is the `@HiveField` index and what an `int` in a
@@ -120,23 +120,26 @@ void main() {
     );
   });
 
+  /// Ids, not enum cases, since m023: a plugin's tab is not a case of `AppTab`
+  /// and a page that listed only those would leave one permanently behind
+  /// "more" with no way to move it into the bar.
   test('offers every arrangeable tab the stored list does not name', () {
     // The legacy four. Everything added since has to be reachable from here,
     // or an install that stored that list could never turn one on.
     final available = availableHomeTabs(const [
-      AppTab.server,
-      AppTab.ssh,
-      AppTab.file,
-      AppTab.snippet,
+      'server',
+      'ssh',
+      'file',
+      'snippet',
     ]);
 
-    expect(available, [AppTab.agent, AppTab.benchmark, AppTab.pkg]);
+    expect(available, ['agent', 'benchmark', 'pkg']);
   });
 
   group('reorderHomeTabs', () {
     // [server, file] | separator at 2 | [ssh, snippet, agent]
-    const enabled = [AppTab.server, AppTab.file];
-    const disabled = [AppTab.ssh, AppTab.snippet, AppTab.agent];
+    const enabled = ['server', 'file'];
+    const disabled = ['ssh', 'snippet', 'agent'];
 
     test('dragging past the separator enables a tab', () {
       final next = reorderHomeTabs(
@@ -146,8 +149,8 @@ void main() {
         newIndex: 1,
       );
 
-      expect(next?.enabled, [AppTab.server, AppTab.ssh, AppTab.file]);
-      expect(next?.disabled, [AppTab.snippet, AppTab.agent]);
+      expect(next?.enabled, ['server', 'ssh', 'file']);
+      expect(next?.disabled, ['snippet', 'agent']);
     });
 
     test('dragging under the separator disables a tab', () {
@@ -158,19 +161,19 @@ void main() {
         newIndex: 3,
       );
 
-      expect(next?.enabled, [AppTab.server]);
-      expect(next?.disabled, [AppTab.ssh, AppTab.file, AppTab.snippet, AppTab.agent]);
+      expect(next?.enabled, ['server']);
+      expect(next?.disabled, ['ssh', 'file', 'snippet', 'agent']);
     });
 
     test('reorders within one half without changing what is enabled', () {
       final next = reorderHomeTabs(
-        enabled: const [AppTab.server, AppTab.file, AppTab.ssh],
+        enabled: const ['server', 'file', 'ssh'],
         disabled: disabled,
         oldIndex: 2,
         newIndex: 0,
       );
 
-      expect(next?.enabled, [AppTab.ssh, AppTab.server, AppTab.file]);
+      expect(next?.enabled, ['ssh', 'server', 'file']);
       expect(next?.disabled, disabled);
     });
 
@@ -182,7 +185,7 @@ void main() {
         newIndex: 3,
       );
 
-      expect(next?.enabled, isNot(contains(AppTab.server)));
+      expect(next?.enabled, isNot(contains('server')));
     });
 
     test('moves nothing for a drag that lands where it started', () {

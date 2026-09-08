@@ -139,6 +139,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginStatusInfo dco_decode_box_autoadd_plugin_status_info(dynamic raw);
 
   @protected
+  PluginTabInfo dco_decode_box_autoadd_plugin_tab_info(dynamic raw);
+
+  @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
 
   @protected
@@ -209,6 +212,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginStatusInfo? dco_decode_opt_box_autoadd_plugin_status_info(dynamic raw);
 
   @protected
+  PluginTabInfo? dco_decode_opt_box_autoadd_plugin_tab_info(dynamic raw);
+
+  @protected
   PluginCardInfo dco_decode_plugin_card_info(dynamic raw);
 
   @protected
@@ -246,6 +252,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PluginStatusResult dco_decode_plugin_status_result(dynamic raw);
+
+  @protected
+  PluginTabInfo dco_decode_plugin_tab_info(dynamic raw);
 
   @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
@@ -390,6 +399,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PluginTabInfo sse_decode_box_autoadd_plugin_tab_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
 
   @protected
@@ -474,6 +488,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PluginTabInfo? sse_decode_opt_box_autoadd_plugin_tab_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PluginCardInfo sse_decode_plugin_card_info(SseDeserializer deserializer);
 
   @protected
@@ -517,6 +536,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PluginStatusResult sse_decode_plugin_status_result(
     SseDeserializer deserializer,
   );
+
+  @protected
+  PluginTabInfo sse_decode_plugin_tab_info(SseDeserializer deserializer);
 
   @protected
   (String, String) sse_decode_record_string_string(
@@ -687,6 +709,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_plugin_tab_info(
+    PluginTabInfo self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
 
   @protected
@@ -795,6 +823,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_plugin_tab_info(
+    PluginTabInfo? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_plugin_card_info(
     PluginCardInfo self,
     SseSerializer serializer,
@@ -856,6 +890,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     PluginStatusResult self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_plugin_tab_info(PluginTabInfo self, SseSerializer serializer);
 
   @protected
   void sse_encode_record_string_string(

@@ -334,6 +334,12 @@ pub fn plugin_read_manifest(manifest_json: String) -> Result<PluginManifestInfo,
         name: m.name.clone(),
         description: m.description.clone(),
         permissions: m.requested().iter().map(|p| p.name().to_string()).collect(),
+        tab: m.contributes.tab.as_ref().map(|t| PluginTabInfo {
+            id: t.id.clone(),
+            label: t.label.clone(),
+            icon: t.icon.clone(),
+            default_on: t.default_on,
+        }),
         settings: m.contributes.settings.as_ref().map(|c| PluginSettingsInfo {
             id: c.id.clone(),
             label: c.label.clone(),
@@ -383,6 +389,8 @@ pub struct PluginManifestInfo {
     pub page: Option<PluginPageInfo>,
     /// Present when this plugin has a page of its own under Settings.
     pub settings: Option<PluginSettingsInfo>,
+    /// Present when this plugin contributes a tab to the home bar.
+    pub tab: Option<PluginTabInfo>,
     /// Present when this plugin contributes readings to the status page.
     pub status: Option<PluginStatusInfo>,
     pub license: Option<String>,
@@ -431,6 +439,26 @@ pub struct PluginPageInfo {
 
     /// See [`PluginCardInfo::requires_config`].
     pub requires_config: bool,
+}
+
+/// A tab on the home page. PLUGINS.md 5.3.
+///
+/// The widest surface a plugin gets, and the only one that is about the whole
+/// fleet rather than one machine: it is bound to no server, so its `onHook`
+/// carries every server the plugin may know about rather than one.
+///
+/// `default_on` is read on a first install like every other contribution, but
+/// the home bar fits four labels on a phone — so a plugin asking for a place
+/// in it is asking for one of those four, and the app puts it behind "more"
+/// instead. What `default_on` decides here is only that the tab is reachable
+/// without the user going to find it in the arranging page.
+#[derive(Debug, Clone)]
+pub struct PluginTabInfo {
+    /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+    pub id: String,
+    pub label: String,
+    pub icon: Option<String>,
+    pub default_on: bool,
 }
 
 /// A plugin's own page under Settings. PLUGINS.md 5.3.

@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// Reads a manifest without loading anything.
 ///
@@ -260,6 +260,9 @@ class PluginManifestInfo {
   /// Present when this plugin has a page of its own under Settings.
   final PluginSettingsInfo? settings;
 
+  /// Present when this plugin contributes a tab to the home bar.
+  final PluginTabInfo? tab;
+
   /// Present when this plugin contributes readings to the status page.
   final PluginStatusInfo? status;
   final String? license;
@@ -275,6 +278,7 @@ class PluginManifestInfo {
     this.card,
     this.page,
     this.settings,
+    this.tab,
     this.status,
     this.license,
     this.sourceUrl,
@@ -291,6 +295,7 @@ class PluginManifestInfo {
       card.hashCode ^
       page.hashCode ^
       settings.hashCode ^
+      tab.hashCode ^
       status.hashCode ^
       license.hashCode ^
       sourceUrl.hashCode;
@@ -309,6 +314,7 @@ class PluginManifestInfo {
           card == other.card &&
           page == other.page &&
           settings == other.settings &&
+          tab == other.tab &&
           status == other.status &&
           license == other.license &&
           sourceUrl == other.sourceUrl;
@@ -620,4 +626,44 @@ class PluginStatusResult {
           title == other.title &&
           items == other.items &&
           note == other.note;
+}
+
+/// A tab on the home page. PLUGINS.md 5.3.
+///
+/// The widest surface a plugin gets, and the only one that is about the whole
+/// fleet rather than one machine: it is bound to no server, so its `onHook`
+/// carries every server the plugin may know about rather than one.
+///
+/// `default_on` is read on a first install like every other contribution, but
+/// the home bar fits four labels on a phone — so a plugin asking for a place
+/// in it is asking for one of those four, and the app puts it behind "more"
+/// instead. What `default_on` decides here is only that the tab is reachable
+/// without the user going to find it in the arranging page.
+class PluginTabInfo {
+  /// Stable within the plugin; the stored id is `<plugin id>:<this>`.
+  final String id;
+  final String label;
+  final String? icon;
+  final bool defaultOn;
+
+  const PluginTabInfo({
+    required this.id,
+    required this.label,
+    this.icon,
+    required this.defaultOn,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ label.hashCode ^ icon.hashCode ^ defaultOn.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PluginTabInfo &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          icon == other.icon &&
+          defaultOn == other.defaultOn;
 }

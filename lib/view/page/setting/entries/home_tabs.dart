@@ -9,11 +9,15 @@ import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
 @visibleForTesting
-List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
+List<String> availableHomeTabs(Iterable<String> selectedTabs) {
   final selected = selectedTabs.toSet();
-  return AppTab.values
-      .where((tab) => !selected.contains(tab))
-      .toList(growable: false);
+  // Asked of the registry rather than of `AppTab`: a plugin's tab is not a
+  // case of it, and a page that listed only the enum's would leave one
+  // permanently behind "more" with no way to move it into the bar.
+  return [
+    for (final f in Features.of(FeatureSlot.homeTab))
+      if (!selected.contains(f.id)) f.id,
+  ];
 }
 
 /// Where a drag leaves the two halves of the list, or null when it moves
@@ -24,14 +28,14 @@ List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
 /// separator and moving within one half are the same arithmetic. Whether the
 /// result is allowed is the caller's to say.
 @visibleForTesting
-({List<AppTab> enabled, List<AppTab> disabled})? reorderHomeTabs({
-  required List<AppTab> enabled,
-  required List<AppTab> disabled,
+({List<String> enabled, List<String> disabled})? reorderHomeTabs({
+  required List<String> enabled,
+  required List<String> disabled,
   required int oldIndex,
   required int newIndex,
 }) {
   if (oldIndex == newIndex) return null;
-  final items = <AppTab?>[...enabled, null, ...disabled];
+  final items = <String?>[...enabled, null, ...disabled];
   // The separator is not draggable, so this is a reorder of something else's
   // making.
   if (items[oldIndex] == null) return null;
@@ -39,8 +43,8 @@ List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
   items.insert(newIndex, items.removeAt(oldIndex));
   final split = items.indexOf(null);
   return (
-    enabled: items.take(split).whereType<AppTab>().toList(),
-    disabled: items.skip(split + 1).whereType<AppTab>().toList(),
+    enabled: items.take(split).whereType<String>().toList(),
+    disabled: items.skip(split + 1).whereType<String>().toList(),
   );
 }
 
@@ -64,12 +68,15 @@ class HomeTabsConfigPage extends StatefulWidget {
 
 class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
   /// The tabs the home page shows, in the order it shows them.
-  late List<AppTab> _enabled;
+  late List<String> _enabled;
 
   /// The rest, kept as a list rather than derived on every build so that a tab
   /// dragged out stays where it was dropped instead of jumping to wherever the
   /// enum happens to put it.
-  late List<AppTab> _disabled;
+  late List<String> _disabled;
+
+  /// Stored ids this build has no tab for. See [initState].
+  late List<String> _unclaimed;
 
   @override
   void initState() {
@@ -80,10 +87,25 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
     //
     // An id this page has no tab for is dropped here and carried on save; see
     // `_onReorder`.
+    // An id nothing claims — a tab removed in an upgrade, or one a plugin
+    // contributed and is no longer installed — is set aside rather than drawn.
+    // It cannot be a row: the reorder arithmetic addresses the joined list by
+    // position, so a row that is not there would shift every index after it.
+    //
+    // Kept, not dropped, and carried back on save: it is where the user put a
+    // tab, and reinstalling the plugin should find it there. It can only have
+    // come from the *enabled* half, since that is the only half stored.
+    final stored = Stores.setting.homeTabs.fetch();
+    final claimed = {for (final f in Features.of(FeatureSlot.homeTab)) f.id};
     _enabled = [
-      for (final id in Stores.setting.homeTabs.fetch()) ?AppTab.fromId(id),
+      for (final id in stored)
+        if (claimed.contains(id)) id,
     ];
-    _disabled = List<AppTab>.from(availableHomeTabs(_enabled));
+    _unclaimed = [
+      for (final id in stored)
+        if (!claimed.contains(id)) id,
+    ];
+    _disabled = availableHomeTabs(_enabled).toList();
   }
 
   @override
@@ -132,7 +154,7 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
   }
 
   /// The list as the reorderable sees it: enabled, the separator, disabled.
-  List<AppTab?> get _items => [..._enabled, null, ..._disabled];
+  List<String?> get _items => [..._enabled, null, ..._disabled];
 
   Widget _buildSeparator() {
     return Padding(
@@ -151,9 +173,14 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
     );
   }
 
-  Widget _buildTabItem(AppTab tab, int idx, bool enabled) {
+  /// Null for an id nothing claims — a tab removed in an upgrade, or one a
+  /// plugin contributed and is no longer installed. It stays in the stored row
+  /// and is simply not drawn; see `FeatureSlot.putEnabledIds`.
+  Widget _buildTabItem(String id, int idx, bool enabled) {
+    // Never null: an id nothing claims never reaches a row — see [initState].
+    final tab = HomeTab.of(id)!;
     return ReorderableDelayedDragStartListener(
-      key: ValueKey(tab.name),
+      key: ValueKey(id),
       index: idx,
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
@@ -181,7 +208,7 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
     if (next == null) return;
 
     // Nothing else to fall back to: the server tab is what the app opens on.
-    if (!next.enabled.contains(AppTab.server)) {
+    if (!next.enabled.contains(AppTab.server.name)) {
       Toast.show(l10n.serverTabRequired);
       return;
     }
@@ -195,7 +222,11 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
     // rather than dropped lives there. This page only knows about `AppTab`s,
     // so it is also the only thing standing between a stored id it cannot draw
     // and a save that would lose it.
-    FeatureSlot.homeTab.putEnabledIds(_enabled.map((e) => e.name).toList());
+    // The set-aside ids go back on the end. Their old position cannot be kept
+    // through a reorder they were not part of, and the end is the honest place
+    // for one — a plugin reinstalled later is in the bar, which is where the
+    // user had put it, rather than silently gone.
+    FeatureSlot.homeTab.putEnabledIds([..._enabled, ..._unclaimed]);
     // What [AppTab.defaultOrder] is a guess about, and the only thing that can
     // judge it. That list is four of six tabs, chosen on an argument about what
     // a tab is *for* — snippets are a library rather than a place, a benchmark
@@ -206,7 +237,7 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
     Diag.crumb(
       DiagCategory.nav,
       'tabs arranged',
-      data: {'bar': _enabled.map((e) => e.name).join(' ')},
+      data: {'bar': _enabled.join(' ')},
     );
   }
 }
