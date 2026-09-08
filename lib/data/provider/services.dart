@@ -106,6 +106,13 @@ class ServicesNotifier extends _$ServicesNotifier {
     return _manager?.commandFor(unit, action, isRoot: _spi.isRoot);
   }
 
+  /// Lists the units, and writes nothing once this provider is gone.
+  ///
+  /// **Every write below an `await` is guarded.** This is keyed by the whole
+  /// [Spi], so saving an edit makes a *different* provider and disposes this
+  /// one — while a listing started before the edit is still in flight. Writing
+  /// `state` then throws `UnmountedRefException` out of a `Future` nobody is
+  /// awaiting, which reaches the zone handler and is reported as a crash.
   Future<void> getServices() async {
     state = state.copyWith(isBusy: true);
 
@@ -114,12 +121,14 @@ class ServicesNotifier extends _$ServicesNotifier {
       exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
     } catch (e, s) {
       dprint('Services exec', e, s);
+      if (!ref.mounted) return;
       state = state.copyWith(
         isBusy: false,
         failure: ServiceFailure(ServiceIssue.unreachable, detail: '$e'),
       );
       return;
     }
+    if (!ref.mounted) return;
 
     try {
       final probe = await ServiceManagerDetector.probe(exec);
@@ -130,6 +139,7 @@ class ServicesNotifier extends _$ServicesNotifier {
       // rather than a systemd client. `none` is a real answer too — it is what
       // a container or a busybox appliance reports.
       Diag.crumb(SbDiag.service, 'list', data: {'via': type?.name ?? 'none'});
+      if (!ref.mounted) return;
       if (type == null) {
         _manager = null;
         state = state.copyWith(
@@ -149,6 +159,7 @@ class ServicesNotifier extends _$ServicesNotifier {
 
       final manager = _managerFor(type);
       final listing = await manager.list(exec);
+      if (!ref.mounted) return;
       _manager = manager;
       state = state.copyWith(
         units: listing.units,
@@ -162,6 +173,7 @@ class ServicesNotifier extends _$ServicesNotifier {
       );
     } catch (e, s) {
       dprint('Services refresh', e, s);
+      if (!ref.mounted) return;
       state = state.copyWith(
         units: const [],
         notice: null,
@@ -169,7 +181,8 @@ class ServicesNotifier extends _$ServicesNotifier {
         failure: ServiceFailure(ServiceIssue.listFailed, detail: '$e'),
       );
     } finally {
-      state = state.copyWith(isBusy: false);
+      // Also reached by every `return` above, which is why it is guarded too.
+      if (ref.mounted) state = state.copyWith(isBusy: false);
     }
   }
 

@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sentry/sentry.dart' as sentry;
 import 'package:server_box/core/service/aptabase.dart';
 import 'package:server_box/core/service/diagnostics_platform.dart';
+import 'package:server_box/core/service/known_identifiers.dart';
 import 'package:server_box/core/service/native_exit.dart';
 import 'package:server_box/core/service/openpanel.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
@@ -142,6 +144,8 @@ abstract final class DiagnosticsUpload {
         // report needs, and are the SDK guessing at context rather than this
         // app supplying it.
         options.attachThreads = false;
+        // The last thing every event passes through — see [scrub].
+        options.beforeSend = (event, hint) => _scrubWithStoredIdentifiers(event);
       });
       // Before the sink is installed, so the first error to arrive already
       // says what it arrived from. The pure-Dart SDK cannot work this out for
@@ -207,6 +211,102 @@ abstract final class DiagnosticsUpload {
     } catch (e, s) {
       Loggers.app.warning('Crash upload failed to stop', e, s);
     }
+  }
+
+  /// [scrub], with what this install currently knows to be the user's.
+  ///
+  /// Read per event rather than kept: a server added since launch is one whose
+  /// name would otherwise still go out. It is a store read on the way to the
+  /// network, which is not a hot path — an event is a crash.
+  static sentry.SentryEvent _scrubWithStoredIdentifiers(
+    sentry.SentryEvent event,
+  ) {
+    var identifiers = const <String, String>{};
+    try {
+      identifiers = KnownIdentifiers.of(Stores.server.fetch());
+    } catch (e, s) {
+      // An error reported from an isolate with no store, or from before one is
+      // open. The SDK treats a throw in `beforeSend` as "send it unchanged",
+      // so catching here is what makes [scrub] still run for the parts that
+      // need no records at all.
+      Loggers.app.warning('Could not read what to scrub from a report', e, s);
+    }
+    return scrub(event, identifiers);
+  }
+
+  /// Takes the user's own infrastructure back out of an outgoing event.
+  ///
+  /// **A crumb is written to be published; an exception's message is not.**
+  /// Everything this app records by hand goes through [Redact] where it is
+  /// made, and `SentrySink.log` drops the log stream for exactly that reason —
+  /// but an error's text is written by whoever threw it, which includes
+  /// packages and Riverpod. `Spi.toString` used to be `Spi<user@host:port>`,
+  /// and Riverpod names a family provider after its argument: one
+  /// `UnmountedRefException` uploaded a server's address and login. That
+  /// `toString` is fixed, and this is the net under the next one.
+  ///
+  /// Precise rather than pattern-based — see [KnownIdentifiers] — so it
+  /// removes what this install *knows* is the user's and never guesses. Text
+  /// nothing here can attribute goes out as written; the class of errors that
+  /// quote a hostname is what the levels and the opt-in are for.
+  @visibleForTesting
+  static sentry.SentryEvent scrub(
+    sentry.SentryEvent event,
+    Map<String, String> identifiers,
+  ) {
+    // Nothing sets either: `sendDefaultPii` is false, and the SDK fills
+    // `ip_address` and `server_name` only when it is true. Cleared anyway, for
+    // the same reason that option is set explicitly rather than left to the
+    // default — a later SDK changing its mind would be silent, and a hostname
+    // is a name the machine answers to on every network it joins.
+    //
+    // The address the *receiving* server records from the connection is not
+    // reachable from here. That is a setting on the instance (GlitchTip:
+    // Organization → Scrub IP Addresses).
+    event.user = null;
+    event.serverName = null;
+
+    if (identifiers.isEmpty) return event;
+
+    String sub(String text) => KnownIdentifiers.substitute(text, identifiers);
+    Object? subValue(Object? value) => value is String ? sub(value) : value;
+
+    final message = event.message;
+    if (message != null) {
+      message.formatted = sub(message.formatted);
+      final template = message.template;
+      if (template != null) message.template = sub(template);
+      final params = message.params;
+      // Replaced rather than written through, here and below: a list or map
+      // handed to the SDK may be const, and assigning the field is not.
+      if (params != null) message.params = params.map(subValue).toList();
+    }
+
+    for (final e in event.exceptions ?? const <sentry.SentryException>[]) {
+      final value = e.value;
+      if (value != null) e.value = sub(value);
+    }
+
+    for (final crumb in event.breadcrumbs ?? const <sentry.Breadcrumb>[]) {
+      final message = crumb.message;
+      if (message != null) crumb.message = sub(message);
+      final data = crumb.data;
+      if (data != null) {
+        crumb.data = {for (final e in data.entries) e.key: subValue(e.value)};
+      }
+    }
+
+    final tags = event.tags;
+    if (tags != null) {
+      event.tags = {for (final e in tags.entries) e.key: sub(e.value)};
+    }
+
+    final culprit = event.culprit;
+    if (culprit != null) event.culprit = sub(culprit);
+    final transaction = event.transaction;
+    if (transaction != null) event.transaction = sub(transaction);
+
+    return event;
   }
 }
 

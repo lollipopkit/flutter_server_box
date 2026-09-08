@@ -154,8 +154,20 @@ abstract class Spi with _$Spi {
     return lifted;
   }
 
+  /// Says *which* server without saying where it is or who logs into it.
+  ///
+  /// **This string ends up in places nobody chose.** Riverpod names a family
+  /// provider by its argument's `toString`, and four providers are keyed by a
+  /// whole [Spi] — so `Spi<user@host:port>` was quoted verbatim into an
+  /// `UnmountedRefException` and uploaded with it, address, account and all.
+  /// A `toString` is not a display string; [displayAddr] is, and the pages
+  /// that want an address call it directly.
+  ///
+  /// [Redact.id] rather than the raw [id] so this reads as the same token the
+  /// crumbs carry under `server` — a report can still be followed through one
+  /// machine, which is all an identifier here is for.
   @override
-  String toString() => 'Spi<$displayAddr>';
+  String toString() => 'Spi<${Redact.id(id)}>';
 
   /// Parse the [id], if it's null or empty, generate a new one.
   static String parseId(Object? id) {
