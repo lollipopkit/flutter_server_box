@@ -72,8 +72,7 @@ extension _AskAi on SSHPageState {
     // instead measured the window, so the same 800 landed about a rail's width
     // earlier here than everywhere else: on an iPad in portrait this opened
     // beside the terminal while the server list still had one column.
-    final width =
-        context.size?.width ?? MediaQuery.sizeOf(context).width;
+    final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
     final placement = askAiPanelPlacementForWidth(width);
 
     // The panel's tools act on a server, so there has to be one. A terminal on
@@ -250,6 +249,7 @@ extension _AskAi on SSHPageState {
     if (session != null) await _terminateAiCommandSession(session);
   }
 }
+
 /// The Agent for one server, shown beside its terminal.
 ///
 /// A view onto [agentSessionProvider] and nothing more: the conversation, the
@@ -893,10 +893,6 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (session.pendingTool != null) ...[
-            _buildProposalCard(context, theme, session),
-            const SizedBox(height: 8),
-          ],
           if (error != null) ...[
             AgentErrorBanner(
               message: describeAgentError(context, error),
@@ -1004,6 +1000,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                   ],
                   if (session.isStreaming)
                     _buildStreamingBubble(context, theme, session),
+                  if (session.pendingTool != null) ...[
+                    _buildProposalCard(context, theme, session),
+                    const SizedBox(height: 10),
+                  ],
                 ],
               ),
             ),
