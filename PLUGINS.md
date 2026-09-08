@@ -4,7 +4,7 @@ ServerBox 计划允许用户安装第三方插件，用来增加服务器状态�
 
 **目前还不能在 App 里安装或使用插件。** 2026-09-06 之前按 WebAssembly 方案实现过 Rust 运行时、SDK 和 BMC 示例的插件侧代码。同日改用 JavaScript 方案，那部分实现需要重做，理由和实测见第三节，影响范围见第十节。本文记录改用 JavaScript 之后的设计，不是已发布功能的说明。
 
-目前的安排是：先做只负责提供采集命令、解析状态数据的插件，再做带界面的插件。PVE、benchmark、process、services 等内置功能继续用 Dart 实现；BMC 保留为验证插件界面的样本。
+目前的安排是：先做只负责提供采集命令、解析状态数据的插件，再做带界面的插件。PVE、benchmark、process、services 等内置功能继续用 Dart 实现。**BMC 也一样留在 Dart**——曾计划把它改成插件来验证界面接口，2026-09-08 决定不改，理由见 4.9。
 
 ## 一、要解决什么问题
 
@@ -46,7 +46,7 @@ Dart 不用来编写插件：App 内没有可以加载第三方 Dart 代码的�
 
 第三方功能才使用本文的插件系统。它们需要独立安装、权限限制和版本管理。内置功能随 App 一起发布，全部改成插件会增加约 6600 行重写工作，还会让调试跨越 Dart、FFI、JavaScript 三层，并受到插件控件的限制。
 
-BMC 是唯一保留的 UI 插件样本：它主要显示一张详情卡片，不需要复杂长列表和图表，适合先验证接口、存储和交互。不过一个样本不能证明所有界面需求都已覆盖，因此 UI 插件要晚于状态插件发布。
+UI 插件要晚于状态插件发布。曾打算拿 BMC 当验证样本，现在不了（见 4.9）——验证接口的是 `packages/plugins/` 下那三个真插件，而它们全是 `contributes.page`，**`card`/`tab`/`settings` 三个面还没有任何真插件用过**。这是开放第三方 UI 插件之前要补上的。
 
 ## 二、整体怎么工作
 
@@ -70,7 +70,7 @@ BMC 是唯一保留的 UI 插件样本：它主要显示一张详情卡片，不
 |---|---|---|
 | `crates/sbm_plugin` | QuickJS 运行时、宿主接口注入、权限检查、manifest 解析、实例线程、异步桥、状态结果校验 | 已实现，113 个测试通过 |
 | `packages/plugin-api` | TypeScript SDK：类型定义、控件构造函数、帧裁剪、模拟宿主的测试工具 | 已实现，45 个测试通过 |
-| `plugins/bmc` | BMC 的 Redfish 请求、状态处理和界面描述 | 未开始；参照 `packages/redfish/` 与 `git log` 里已删除的 Rust 移植 |
+| `packages/plugins/*` | 三个真插件：监听端口、磁盘占用、定时任务 | 已完成，各带 MockHost 测试和一个真 QuickJS 上的 Dart 测试 |
 | `crates/sbm_ffi` 的插件接口 | 让 Dart 加载、调用和释放插件 | 已实现，`test/plugin_ffi_test.dart` 17 个测试通过 |
 | `lib/plugin/` | 注册、渲染、宿主回调和安装管理 | 未开始 |
 | `assets/plugins/` | 随 App 分发的插件包 | 未开始 |
@@ -207,7 +207,7 @@ quickjs-ng 0.15.1。2026-09-06 在引擎里抽查了 19 项：
 
 `configOptions` 和 `tool` 用一个参数区分对象，不再按名字生成多个导出。WebAssembly 方案下每个导出是一个独立符号，只能用 `options_<key>` 这样的命名；ES module 没有这个限制。
 
-`configOptions` 处理无法写死在 manifest 里的选项，例如 BMC 插件保存的共享账号列表。对未配置的服务器，优先用 manifest 的 `requires_config` 隐藏入口，避免为了判断是否显示而创建实例。
+`configOptions` 处理无法写死在 manifest 里的选项，例如一个插件保存的共享账号列表。对未配置的服务器，优先用 manifest 的 `requires_config` 隐藏入口，避免为了判断是否显示而创建实例。
 
 插件抛出的异常由宿主捕获，记录日志并在该区域显示错误，不影响页面其余部分。
 
@@ -300,6 +300,16 @@ FFI 那一层已经接好：`sbm_ffi` 用 `StreamSink` 把请求推给 Dart，Da
 具体的内存上限和时间上限（当前默认 64 MB / 5 秒 / 120 秒）尚未按真机负载定过。计量精度比 WASM 的 fuel 粗：fuel 可以按指令数计，中断回调只能按时间近似。
 
 一处实现约束记在这里：持有 JavaScript 值的字段必须在运行时之前析构。quickjs 在 `JS_FreeRuntime` 里断言 `list_empty(&rt->gc_obj_list)`，顺序反了会直接 abort 进程，而不是报错。`Instance` 的字段顺序因此是有意义的。
+
+### 4.9 BMC 留在 Dart
+
+原计划把 BMC 改写成插件，用它验证界面接口，验完删掉 Dart 实现和 `packages/redfish`。2026-09-08 决定不做。
+
+**换来的东西不值那个价。** BMC 的 Dart 实现是能用的、有测试的、已经发布的；把它重写成 TypeScript 得到的是同一个功能加一个新的失败面，而验证接口这件事，`packages/plugins/` 下三个真插件已经在做，而且是从零写的——一个从既有实现改写过来的插件，会不自觉地照着既有实现的形状去用接口，反而更难发现接口缺什么。
+
+**而且插件宿主给不了它现在有的东西。** 证书 pin 的审阅流程（`probeCert`）是为它设计的，那部分已经在 `sb.http.fetch` 里；但 `bmc_credential` 是一张有外键、参与备份和同步的表，插件的存储是键值对，搬过去要么降级、要么在插件那边重建一套关系。
+
+代价是记下来：BMC 仍然是这套接口唯一验证过的「复杂 UI」形状，而它现在不验证任何东西。第 7 步开放第三方 UI 插件的前提因此改了，见第十节。
 
 ## 五、插件界面怎么画
 
@@ -408,7 +418,7 @@ SDK（`packages/plugin-api`）提供控件构造函数和类型定义，作者�
 
 模拟宿主复制了真实宿主的两条拒绝规则，否则插件会在测试里通过、在设备上失败：没有 `pinSha256` 也没有 `probeCert` 的请求不发出；带 body 或 header 的证书探测被拒绝。`denied` 选项让 manifest 没申请的权限按真实方式抛出。
 
-按 WebAssembly 方案实现的 `plugins/bmc/tests/` 已经用这种方式覆盖过发现设备、登录、轮询、电源操作与确认、证书复核和账号增删。改写为 TypeScript 时，这些用例和 `packages/redfish/test/` 的 fixture 一起作为依据。
+按 WebAssembly 方案实现的 `plugins/bmc/tests/` 曾用这种方式覆盖过发现设备、登录、轮询、电源操作与确认、证书复核和账号增删。那份实现已删除，BMC 也不再改成插件（见 4.9），所以这些用例现在只是这套写法的先例。真正在跑的是 `packages/plugins/` 下三个插件的测试。
 
 ### 5.5 宿主侧如何验收
 
@@ -418,7 +428,7 @@ Flutter 渲染器需要为每种控件准备 JSON 输入和 golden 截图，检�
 
 ### 5.6 界面的限制
 
-BMC 样本已经促使设计增加了 `tone`、`requires_config`、`options_from`、`probeCert` 和响应中的 `cert`。更复杂的插件还会提出新需求。
+BMC 样本曾促使设计增加了 `tone`、`requires_config`、`options_from`、`probeCert` 和响应中的 `cert`——这些留下了，即使那个插件不做了。后来三个真插件又提出了 `shellQuote`（进了 SDK）、`sb.server.list`、`sb.nav.openTerminal` 和 `onHook`。更复杂的插件还会提出新需求。
 
 目前的控件描述不能完整表达 App 已有的下拉刷新、侧滑、长按菜单、过滤搜索和图表 tooltip 等交互。每增加一种能力，都要长期维护兼容性。这是让内置功能继续使用 Dart、暂缓开放 UI 插件的主要原因。
 
@@ -527,7 +537,7 @@ CREATE TABLE plugin_kv (
 迁移分两部分：
 
 - ~~Dart registry 的迁移~~：已完成。`serverBtns` 由 enum index 迁到 id（m021），旧顺序冻结在 `legacy_adapters.dart` 的 `kLegacyServerFuncBtnIds` —— 用它而不是 `ServerFuncBtn.values` 转换，是因为"声明顺序从此可以随便改"正是这一步要换来的东西。`Backup.merge`/`BackupV2.merge` 也会跑它：恢复不经过 schema migrator，而那时版本号早已越过这一步。
-- BMC 的迁移：交付插件时，将 `bmc_addr`、`bmc_cred_id`、`bmc_cert_sha256` 迁入配置表和键值表。旧列保留一个版本后，按 m017 的 create-copy-drop-rename 方式删除；现有 Hive 迁移 fixture 需继续通过。PVE 留在 Dart，`pve_*` 列不迁移。
+- BMC 不迁移。`bmc_addr`、`bmc_cred_id`、`bmc_cert_sha256` 留在 `server` 表上，和 `pve_*` 一样——见 4.9。
 
 ## 八、怎么下载、安装和更新
 
@@ -545,7 +555,7 @@ CREATE TABLE plugin_kv (
 
 随包插件放在 `assets/plugins/*.sbp`，首次启动时安装，来源记为 `repo = NULL`。这样离线或关闭在线仓库时仍有可用版本；联网后可以安装仓库中的更新。更新检查沿用 `RootfsManifestSource.refresh` 的节奏，新增权限必须先经用户同意。
 
-桌面版计划支持直接加载本地开发目录，不要求打包或签名，来源记为 `repo = 'dev'`，并在页面中明确标记。BMC 接入期间也用它对比 Dart 和插件两份实现。
+桌面版计划支持直接加载本地开发目录，不要求打包或签名，来源记为 `repo = 'dev'`，并在页面中明确标记。已实现（`SettingStore.pluginDevDirs`），`packages/plugins/` 下三个插件就是这么开发的。
 
 SDK README 将列出 ABI 与 App 版本的对应关系。App 拒绝加载 ABI 高于自身支持版本的插件，仓库为不同 ABI 保留兼容版本。
 
@@ -652,7 +662,7 @@ manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 
 
 ## 十、接下来按什么顺序做
 
-每一步单独提交 PR，并验证该步的实际效果。第 1 步的 WebAssembly 版本已经实现过一次，改用 JavaScript 后需要重做；第 6 步 BMC 的解析逻辑和测试用例可以从那份实现里搬。
+每一步单独提交 PR，并验证该步的实际效果。第 1 步的 WebAssembly 版本已经实现过一次，改用 JavaScript 后需要重做。
 
 | 顺序 | 工作 | 当前状态与验收重点 |
 |---|---|---|
@@ -661,8 +671,8 @@ manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 
 | 3 | 接入状态命令插件，随包提供一个样本 | 进行中。`StatusResult` 的形状与校验、`contributes.status`（含必须申请 `server.exec`）、`inline_cmds_script`（一次往返跑完所有插件命令、服务器上不留文件）、`PluginRuntime.statusCmd`/`statusParse`、SDK 的状态插件类型和样例都已完成，Rust 侧 121 个测试 + `test/plugin_ffi_test.dart` 打通「插件要什么命令 → 真跑一遍 → 结果回到同一个插件」。剩下的要等第 5 步的插件存储：App 得先知道装了哪些插件，才谈得上在状态页画出来 |
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）、**`contributes.page`**（功能栏按钮打开整页，`needs` 按 `ServerCapabilities` 过滤；功能栏改为按 id 分发，内置项和插件项走同一条路径）、**`contributes.settings`**（设置菜单里插件自己的页，有插件贡献时 `app.plugins` 才变成分支）、**开发目录**（`SettingStore.pluginDevDirs` 记路径，每次 refresh 直接从开发者目录读，不拷贝；卸载只删记录不动文件）、**`contributes.tab`**（m023 把 `homeTabs` 从 `List<AppTab>` 放宽成 id；`HomeTab` 解析 id 成内置或插件 tab，首页、macOS 菜单栏和标签排序页都改成按 id 走）均已完成。四个入口面齐了，剩 5.5 的 golden 截图 |
-| 6 | 在 App 中接通 BMC 插件 | 未开始；对照 `packages/redfish/test/` 的 fixture 和现有行为，验证一致后再删除 Dart 实现及 `packages/redfish` |
-| 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件，BMC 验证完 UI 接口后再开放 UI 插件 |
+| ~~6~~ | ~~在 App 中接通 BMC 插件~~ | **不做**，2026-09-08 决定。理由见 4.9；`packages/redfish` 和 BMC 的 Dart 实现都保留 |
+| 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件。开放 UI 插件的前提原来是 BMC，现在改成：`card`/`tab`/`settings` 三个面各要有一个真插件用过（三个现有的都只用了 `page`） |
 | 8 | agent 也跑插件 | **已完成**。**宿主子集**、**monitor 侧**、**App 侧**：`HostProfile{App,Agent}`、`HostFn::available_in`、manifest 的 `runs_in`（默认 `["app"]`，声明 `agent` 同时带界面贡献会在解析期被拒）。agent 上没有 `sb.ui`/`sb.nav`/`sb.clipboard`/`sb.server.list`，装成和未授权函数同一种抛异常替身，只是理由不同（`Refusal::Unavailable`）。**monitor 侧**：`[plugins]` 默认关、按 id 点名、权限由运维写在文件里（和 manifest 求的取交集）；在 extended 周期上跑，结果进 `/metrics` 的 `plugin_status` 并带 carry-forward。**App 侧**：`/metrics` 的 `plugin_status` 进 `ServerStatus.agentPlugins`，`PluginStatusCard` 有它就画它、什么也不跑。线格式由两边各一个测试盯同一段字面量(`sbm_plugin::status::wire` 和 `test/plugin_agent_status_test.dart`)。剩 9.5 里 `sb.http.fetch`/`sb.store` 在 agent 上的实现——状态插件用不到，等到有界面需要它们再做 |
 
 ### 三个真插件验出来的
