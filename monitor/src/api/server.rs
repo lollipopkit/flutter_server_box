@@ -1093,12 +1093,28 @@ async fn get_metrics_history(
     // `i64::div_ceil` is still unstable; both operands are positive here.
     let bucket_secs = ((minutes * 60 + max_points - 1) / max_points).max(1);
 
+    // Bound as a `DateTime<Utc>`, so sqlx encodes it with the same RFC 3339
+    // form `store_metrics` writes the column with and the comparison is
+    // between two values of one shape.
+    //
+    // It was `datetime('now', '-N minutes')`, whose output is
+    // `2026-09-08 07:28:22` while the column holds
+    // `2026-09-08T08:28:18.493098803+00:00`. Both are text, so SQLite compares
+    // them as text, and `'T'` sorts above `' '`: every row sharing the
+    // boundary's *date* compared greater regardless of its time. The window
+    // was therefore "since midnight UTC" whenever that was the longer of the
+    // two — 4255 rows scanned for a 60-minute window holding 496, and the
+    // factor grows through the UTC day to 24x. The answer still looked right,
+    // because the cap at the end of this function keeps the newest
+    // `max_points` buckets either way; only the work was visible.
+    let cutoff = chrono::Utc::now() - chrono::Duration::minutes(minutes);
+
     use sqlx::Row;
     let rows = sqlx::query(
-        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= datetime('now', ?2)          GROUP BY bucket ORDER BY bucket",
+        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2          GROUP BY bucket ORDER BY bucket",
     )
     .bind(bucket_secs)
-    .bind(format!("-{minutes} minutes"))
+    .bind(cutoff)
     .fetch_all(&app_state.db)
     .await?;
 
