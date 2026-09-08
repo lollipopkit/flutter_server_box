@@ -352,6 +352,38 @@ fn a_module_may_await_a_host_call_while_it_loads() {
     assert_eq!(app.requests().len(), 1);
 }
 
+/// A refusal the module caught while loading must not surface on the first
+/// export call.
+///
+/// `State::refuse` keeps the first refusal until somebody takes it, and only
+/// `call` takes one. Feature detection at module scope is the natural way to
+/// write "use the clipboard if this host has one", and without a take at the
+/// end of load the plugin's *next* call — whatever it is — comes back `Denied`
+/// naming a function that call never touched.
+#[test]
+fn a_refusal_the_module_caught_does_not_poison_the_first_call() {
+    let (app, _logs) = App::start(Duration::from_millis(1), |_| {
+        json(serde_json::json!({"code": 0, "stdout": "", "stderr": ""}))
+    });
+
+    let host = PluginHost::new();
+    let id = host
+        .load(
+            r#"
+              let clip = null;
+              try { clip = await sb.clipboard.read(); } catch (e) { clip = null; }
+              export function ready() { return clip === null; }
+            "#
+            .into(),
+            // `opts()` grants exec and http, never the clipboard.
+            opts(),
+            Arc::clone(&app.bridge) as Arc<_>,
+        )
+        .expect("a caught refusal is not a load failure");
+
+    assert_eq!(host.call(id, "ready", b"").unwrap(), b"true");
+}
+
 /// The same shape, failing. A plugin whose top-level await throws must not load
 /// at all, rather than load with half its state built.
 #[test]

@@ -212,7 +212,15 @@ impl UrlTarget {
     }
 }
 
-/// Splits `host:port`, leaving a bracketed IPv6 literal intact.
+/// Splits `host:port`, leaving an IPv6 literal intact whether or not it is
+/// bracketed.
+///
+/// **More than one colon means the whole string is the host.** Parsing the
+/// last field as a port is what a `host:port` split does, and on `fd00::1` it
+/// succeeds — giving host `fd00:` and port 1, which matches nothing a plugin
+/// could ever build, since it would write the bracketed `https://[fd00::1]/`.
+/// The grant then silently reaches nothing. A port is only a port when there
+/// is exactly one colon, or when the address was bracketed.
 fn split_host_port(s: &str) -> (&str, Option<u16>) {
     if let Some(rest) = s.strip_prefix('[') {
         return match rest.split_once(']') {
@@ -220,10 +228,13 @@ fn split_host_port(s: &str) -> (&str, Option<u16>) {
             None => (s, None),
         };
     }
+    if s.matches(':').count() > 1 {
+        return (s, None);
+    }
     match s.rsplit_once(':') {
         Some((host, port)) => match port.parse() {
             Ok(port) => (host, Some(port)),
-            // Not a port, so the colon was part of a bare IPv6 literal.
+            // Not a number, so not a port.
             Err(_) => (s, None),
         },
         None => (s, None),
@@ -294,6 +305,23 @@ mod tests {
         assert!(g.allows_url("https://[fd00::1]:8443/redfish/v1/"));
         assert!(!g.allows_url("https://[fd00::1]/redfish/v1/"));
         assert!(grants(&["[fd00::1]"]).allows_url("https://[fd00::1]/"));
+    }
+
+    /// A user typing an address into a `role: address` config field writes it
+    /// the way they know it, without brackets — and a plugin building a URL
+    /// from that value has to bracket it, because a URL requires it. The two
+    /// have to end up as the same host or the grant reaches nothing.
+    #[test]
+    fn an_unbracketed_ipv6_literal_is_a_host_and_not_a_port() {
+        assert_eq!(split_host_port("fd00::1"), ("fd00::1", None));
+        assert_eq!(split_host_port("::1"), ("::1", None));
+
+        assert!(grants(&["fd00::1"]).allows_url("https://[fd00::1]/redfish/v1/"));
+        assert!(grants(&["fd00::1"]).allows_url("https://[fd00::1]:8443/"));
+        assert!(!grants(&["fd00::1"]).allows_url("https://fd00.example.com/"));
+
+        // One colon is still a port, which is the common case.
+        assert_eq!(split_host_port("10.0.0.9:8443"), ("10.0.0.9", Some(8443)));
     }
 
     #[test]

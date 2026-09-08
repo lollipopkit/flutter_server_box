@@ -240,6 +240,21 @@ impl Instance {
         *deadline.lock().expect("poisoned") = None;
         let (namespace, exports) = loaded;
 
+        // A refusal recorded while the module was evaluating is dropped here.
+        //
+        // `State::refuse` keeps the first one until somebody takes it, and
+        // `call` takes it at the end of every call to turn a caught exception
+        // back into a `Denied`. Nothing takes it during load, so without this
+        // a plugin doing feature detection at module scope —
+        // `try { await sb.clipboard.read() } catch { … }` — would load fine
+        // and then fail its *first* export call with a permission error for a
+        // call that export never made.
+        //
+        // Dropping rather than failing the load: the plugin caught it, which
+        // is what a plugin is supposed to do with a refusal, and a host
+        // function it does not have is a thing it is allowed to ask about.
+        let _ = state.take_refusal();
+
         Ok(Self {
             ctx,
             rt,

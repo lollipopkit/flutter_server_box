@@ -139,11 +139,30 @@ impl Manifest {
         // A `$config.<key>` pattern that names no field would be a grant with
         // nothing behind it, and the install dialog would show the user an
         // address that never resolves.
-        let keys: BTreeSet<&str> = self.config.fields.iter().map(|f| f.key.as_str()).collect();
+        //
+        // And the field it names has to be an **address**. That is the whole
+        // of what `FieldRole::Address` is for: a pattern is a grant, so a
+        // manifest pointing one at a free-text `notes` field would make
+        // whatever the user typed there into the plugin's reach — widening its
+        // own grant through a value the permission dialog presented as a
+        // setting.
+        let fields: BTreeMap<&str, &ConfigField> =
+            self.config.fields.iter().map(|f| (f.key.as_str(), f)).collect();
         for p in self.permissions.http_patterns() {
             if let Some(key) = p.strip_prefix("$config.") {
-                if !keys.contains(key) {
-                    return err(format!("`net.http` names `$config.{key}`, which is not a field"));
+                match fields.get(key) {
+                    None => {
+                        return err(format!(
+                            "`net.http` names `$config.{key}`, which is not a field"
+                        ));
+                    }
+                    Some(f) if f.role != Some(FieldRole::Address) => {
+                        return err(format!(
+                            "`net.http` names `$config.{key}`, which is not \
+                             marked `\"role\": \"address\"`"
+                        ));
+                    }
+                    Some(_) => {}
                 }
             }
         }
@@ -599,6 +618,22 @@ mod tests {
         let src = BMC.replace("\"ui.dialog\": true", "\"fs.write\": true");
         let e = Manifest::parse(src.as_bytes()).unwrap_err();
         assert!(e.to_string().contains("fs.write"), "{e}");
+    }
+
+    /// The role is the check, not the key's existence. A pattern is a grant,
+    /// so pointing one at a field the user fills in freely would let a plugin
+    /// widen its own reach through something the install dialog showed as a
+    /// setting.
+    #[test]
+    fn a_pattern_may_only_name_a_field_marked_as_an_address() {
+        let src = BMC.replace(
+            r#""role": "address", "#,
+            "",
+        );
+
+        let e = Manifest::parse(src.as_bytes()).unwrap_err().to_string();
+        assert!(e.contains("role"), "{e}");
+        assert!(e.contains("address"), "{e}");
     }
 
     #[test]

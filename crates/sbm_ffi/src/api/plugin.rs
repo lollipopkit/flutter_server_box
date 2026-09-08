@@ -16,7 +16,7 @@
 //! map.
 
 use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 use flutter_rust_bridge::frb;
@@ -103,9 +103,6 @@ pub struct PluginSpec {
 pub struct PluginRuntime {
     host: PluginHost,
     bridge: Arc<ChannelBridge>,
-    /// The manifest each instance was loaded with, so the app does not have to
-    /// carry it back for every question.
-    manifests: Mutex<BTreeMap<u64, Manifest>>,
 }
 
 impl PluginRuntime {
@@ -138,7 +135,7 @@ impl PluginRuntime {
                 });
             },
         );
-        Self { host: PluginHost::new(), bridge, manifests: Mutex::new(BTreeMap::new()) }
+        Self { host: PluginHost::new(), bridge }
     }
 
     /// Compiles a plugin and keeps it on a thread of its own.
@@ -161,9 +158,13 @@ impl PluginRuntime {
         options.config = config;
         options.bound_server = spec.bound_server;
 
-        let id = self.host.load(spec.source, options, Arc::clone(&self.bridge) as Arc<_>)?;
-        self.manifests.lock().expect("poisoned").insert(id.0, manifest);
-        Ok(id.0)
+        // The manifest is not kept. It used to be, "so the app does not have
+        // to carry it back for every question" — but no question here asks it:
+        // `status_cmd`, `status_parse`, `exports` and `has_export` all go
+        // through `self.host`, and the app parses the manifest itself for the
+        // install dialog and the editor form. A copy nothing reads is a copy
+        // that can disagree.
+        Ok(self.host.load(spec.source, options, Arc::clone(&self.bridge) as Arc<_>)?.0)
     }
 
     /// Calls one of PLUGINS.md 4.2's exports.
@@ -211,7 +212,6 @@ impl PluginRuntime {
     /// are cancelled before this returns.
     pub fn unload(&self, instance: u64) {
         self.host.unload(InstanceId(instance));
-        self.manifests.lock().expect("poisoned").remove(&instance);
     }
 
     /// What the plugin exports, so the app can tell a card from a status plugin
