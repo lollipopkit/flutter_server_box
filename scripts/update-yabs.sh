@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Refresh the vendored copy of Yet Another Bench Script.
 #
+# The copy is upstream **plus one local patch** (scripts/yabs-local.patch),
+# which this reapplies after fetching. It is not verbatim, so `upstreamCommit`
+# alone does not identify the shipped bytes — `sha256Hex` does.
+#
 # The script is shipped as an asset rather than fetched by the server at run
 # time, so updating it is a commit here. This fetches one pinned revision,
 # writes it to assets/, and prints the three constants that have to move with
@@ -33,6 +37,24 @@ trap 'rm -f "$tmp" "$tmp.enc"' EXIT
 
 echo "Fetching $repo@$commit"
 curl -fsSL "https://raw.githubusercontent.com/$repo/$commit/yabs.sh" -o "$tmp"
+
+# The one local change, reapplied. Without this a refresh silently reverts it:
+# the fetch overwrites the asset, the constants below are printed from the new
+# bytes, and `test/yabs_script_test.dart` passes again — so nothing fails and
+# nobody reads the diff. What comes back is upstream downloading static fio and
+# iperf3 binaries onto a server the user only agreed to benchmark.
+#
+# A patch that no longer applies stops here. That is the point: it means
+# upstream has changed the same lines, and whether the change is still needed
+# is a decision rather than something to paper over with `--fuzz`.
+patch_file="$root/scripts/yabs-local.patch"
+echo "Applying $(basename "$patch_file")"
+if ! patch --batch --forward --silent "$tmp" < "$patch_file"; then
+  echo "The local patch no longer applies to $repo@$commit." >&2
+  echo "Rebase scripts/yabs-local.patch onto the new upstream, or drop it if" >&2
+  echo "upstream has made it unnecessary. Do not skip it." >&2
+  exit 1
+fi
 
 version="$(sed -n 's/^YABS_VERSION="\(.*\)"$/\1/p' "$tmp" | head -1)"
 if [ -z "$version" ]; then
