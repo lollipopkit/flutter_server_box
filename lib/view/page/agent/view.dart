@@ -952,16 +952,16 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: session.isWorking
-                      ? null
-                      : () => unawaited(_notifier.declinePendingTool()),
+                  onPressed: session.canReviewPendingTool
+                      ? () => unawaited(_notifier.declinePendingTool())
+                      : null,
                   child: Text(context.l10n.askAiDecline),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: session.isWorking
-                      ? null
-                      : () => _runPendingTool(proposal),
+                  onPressed: session.canReviewPendingTool
+                      ? () => _runPendingTool(proposal)
+                      : null,
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: Text(context.l10n.askAiApproveRun),
                 ),

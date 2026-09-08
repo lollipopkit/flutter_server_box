@@ -228,7 +228,15 @@ pub const WINDOWS: &[CommandSpec] = &[
         key: NET,
         cmd: r#"$s1 = @(Get-WmiObject Win32_PerfRawData_Tcpip_NetworkInterface | Select-Object Name, BytesReceivedPersec, BytesSentPersec, Timestamp_Sys100NS); Start-Sleep -Seconds 1; $s2 = @(Get-WmiObject Win32_PerfRawData_Tcpip_NetworkInterface | Select-Object Name, BytesReceivedPersec, BytesSentPersec, Timestamp_Sys100NS); @($s1, $s2) | ConvertTo-Json -Depth 5"#,
     },
-    CommandSpec { key: SYS, cmd: "(Get-ComputerInfo).OsName" },
+    // `Get-ComputerInfo` emits progress records while it assembles the full
+    // object. Through Windows OpenSSH those records can arrive as CLIXML on
+    // stdout, so the status page displayed `<Objs Version="1.1.0.1" ...>` as
+    // the operating system. The CIM property is the same value without the
+    // progress stream.
+    CommandSpec {
+        key: SYS,
+        cmd: "(Get-CimInstance Win32_OperatingSystem).Caption",
+    },
     CommandSpec {
         key: CPU,
         cmd: "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage, NumberOfCores, NumberOfLogicalProcessors | ConvertTo-Json",

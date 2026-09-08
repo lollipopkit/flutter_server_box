@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -189,6 +190,41 @@ void main() {
   );
 
   test(
+    'a complete proposal remains reviewable when the stream stays open',
+    () async {
+      final repository = _HangingProposalRepository(proposal);
+      addTearDown(repository.close);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      final t = terminal();
+      container.read(agentScopeHostsProvider).register('srv-open', t.host);
+      final notifier = container.read(
+        agentSessionProvider('srv-open').notifier,
+      );
+
+      await notifier.submitPrompt('check uptime');
+      await settle();
+
+      final waiting = container.read(agentSessionProvider('srv-open'));
+      expect(waiting.isStreaming, isTrue);
+      expect(waiting.pendingTool, proposal);
+      expect(waiting.canReviewPendingTool, isTrue);
+
+      expect(await notifier.insertPendingTool(), isTrue);
+      final reviewed = container.read(agentSessionProvider('srv-open'));
+      expect(t.inserted, ['uptime']);
+      expect(reviewed.isStreaming, isFalse);
+      expect(reviewed.pendingTool, isNull);
+      expect(
+        reviewed.history.whereType<AskAiFunctionCallItem>().single.command,
+        proposal,
+      );
+    },
+  );
+
+  test(
     'a command approved after the terminal closed says so, and does not throw',
     () async {
       final h = harness();
@@ -264,6 +300,30 @@ void main() {
         reason: 'refusing to insert must not also drop the proposal',
       );
     });
+
+    test('a refused insert leaves an open response running', () async {
+      final repository = _HangingProposalRepository(proposal);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      const scope = 'srv-refused-open';
+      final provider = agentSessionProvider(scope);
+      final notifier = container.read(provider.notifier);
+      addTearDown(() async {
+        await notifier.stopWork();
+        await repository.close();
+        container.dispose();
+      });
+
+      expect(await notifier.submitPrompt('check uptime'), isTrue);
+      await settle();
+
+      expect(await notifier.insertPendingTool(), isFalse);
+      final state = container.read(provider);
+      expect(state.isStreaming, isTrue);
+      expect(state.pendingTool, proposal);
+      expect(state.history.whereType<AskAiFunctionCallItem>(), isEmpty);
+    });
   });
 
   test(
@@ -324,5 +384,34 @@ class _ProposingRepository extends AskAiRepository {
         protocol: protocol ?? AskAiProtocol.chatCompletions,
       ),
     ]);
+  }
+}
+
+class _HangingProposalRepository extends AskAiRepository {
+  _HangingProposalRepository(this.proposal);
+
+  final AskAiCommand proposal;
+  final _controller = StreamController<AskAiEvent>();
+
+  Future<void> close() => _controller.close();
+
+  @override
+  Stream<AskAiEvent> ask({
+    required String terminalContext,
+    required String serverName,
+    String? localeHint,
+    List<AskAiConversationItem> conversation = const [],
+    AskAiProtocol? protocol,
+    String? customInstructions,
+    List<AskAiToolDefinition> tools = const [
+      AskAiToolDefinition.runShellCommand,
+    ],
+  }) {
+    scheduleMicrotask(() {
+      _controller
+        ..add(const AskAiContentDelta('Let me look.'))
+        ..add(AskAiToolSuggestion(proposal));
+    });
+    return _controller.stream;
   }
 }

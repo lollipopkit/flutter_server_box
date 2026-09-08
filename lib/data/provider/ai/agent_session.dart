@@ -141,6 +141,10 @@ class AgentSessionState {
 
   bool get isWorking => isStreaming || isExecuting;
 
+  /// A complete tool proposal can be reviewed even when a compatible API
+  /// leaves its SSE response open after sending the function-call arguments.
+  bool get canReviewPendingTool => pendingTool != null && !isExecuting;
+
   bool get isEmpty => timeline.isEmpty && !isStreaming && pendingTool == null;
 
   AgentSessionState copyWith({
@@ -383,7 +387,7 @@ class AgentSession extends _$AgentSession {
   /// that allows auto-running already excludes everything that needs asking.
   Future<void> runPendingTool({bool autoApproved = false}) async {
     final proposal = state.pendingTool;
-    if (proposal == null || state.isWorking) return;
+    if (proposal == null || !await _preparePendingTool(proposal)) return;
 
     state = state.copyWith(
       isExecuting: true,
@@ -451,7 +455,7 @@ class AgentSession extends _$AgentSession {
 
   Future<void> declinePendingTool() async {
     final proposal = state.pendingTool;
-    if (proposal == null || state.isWorking) return;
+    if (proposal == null || !await _preparePendingTool(proposal)) return;
     state = state.copyWith(
       history: [
         ...state.history,
@@ -484,8 +488,9 @@ class AgentSession extends _$AgentSession {
   /// but a terminal's.
   Future<bool> insertPendingTool() async {
     final proposal = state.pendingTool;
-    if (proposal == null || state.isWorking) return false;
+    if (proposal == null || state.isExecuting) return false;
     if (!_host.insert(proposal.command)) return false;
+    if (!await _preparePendingTool(proposal)) return false;
     state = state.copyWith(
       history: [
         ...state.history,
@@ -505,6 +510,43 @@ class AgentSession extends _$AgentSession {
     );
     await _persist();
     return true;
+  }
+
+  /// Makes an already complete proposal actionable when the provider has not
+  /// closed its SSE response yet.
+  ///
+  /// Tool suggestions are only emitted after their arguments parse into a
+  /// complete [AskAiCommand]. Some OpenAI-compatible providers then keep the
+  /// stream open instead of sending the final completion event. Waiting for
+  /// that event left every review action disabled until the app restarted.
+  /// Stopping at the complete proposal preserves the assistant text and the
+  /// function call that the missing completion would have stored.
+  Future<bool> _preparePendingTool(AskAiCommand proposal) async {
+    if (!identical(state.pendingTool, proposal) || state.isExecuting) {
+      return false;
+    }
+    if (!state.isStreaming) return true;
+
+    final text = (state.streamingContent ?? '').trim();
+    final subscription = _subscription;
+    _subscription = null;
+    state = state.copyWith(
+      turnCompleted: true,
+      isStreaming: false,
+      streamingContent: null,
+      history: [
+        ...state.history,
+        if (text.isNotEmpty) AskAiMessageItem.assistant(text),
+        AskAiFunctionCallItem(command: proposal),
+      ],
+      timeline: text.isNotEmpty
+          ? [...state.timeline, AgentAssistantEntry(text)]
+          : null,
+      error: null,
+    );
+    await subscription?.cancel();
+    await _persist();
+    return identical(state.pendingTool, proposal) && !state.isExecuting;
   }
 
   Future<void> stopWork() async {
