@@ -25,6 +25,13 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_access: Option<RemoteAccessConfig>,
 
+    /// Status plugins this agent runs itself. Off unless present and enabled,
+    /// exactly as `remote_access` is, and for the same reason: there is no
+    /// user here to answer a dialog, so the operator answers by typing. See
+    /// `monitoring::plugins` and PLUGINS.md 9.5.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub plugins: Option<crate::monitoring::plugins::PluginsConfig>,
+
     /// The flat top-level keys the Go agent's `config.json` used.
     ///
     /// Read-only, and never written back: [`Self::normalize`] folds them into
@@ -863,6 +870,7 @@ impl Default for Config {
             // Written out so a generated config.toml shows the section and
             // its switches; every switch in it defaults to off
             remote_access: Some(RemoteAccessConfig::default()),
+            plugins: None,
             push: Some(vec![
                 PushConfig {
                     name: "webhook".to_string(),

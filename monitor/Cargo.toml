@@ -10,6 +10,10 @@ path = "src/lib.rs"
 [dependencies]
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
+# QuickJS, so a status plugin can run here as well as in the app. Both musl
+# targets this ships to have pre-generated bindings, so no libclang is
+# needed — see PLUGINS.md 9.5.4.
+sbm_plugin = { path = "../crates/sbm_plugin" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
 # path (never used by the SSH-based app) — see monitoring.rs::collect_metrics
 sbm_native = { path = "../crates/sbm_native" }

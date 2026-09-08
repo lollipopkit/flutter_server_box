@@ -1,6 +1,7 @@
 pub mod custom_cmds;
 #[path = "monitoring.rs"]
 mod service;
+pub mod plugins;
 pub mod push;
 pub mod rules;
 pub mod size;

@@ -4216,6 +4216,7 @@ dependencies = [
  "rustls-pemfile",
  "sbm_native",
  "sbm_parser",
+ "sbm_plugin",
  "serde",
  "serde_json",
  "sha2 0.11.0",

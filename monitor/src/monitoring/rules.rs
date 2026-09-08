@@ -332,6 +332,7 @@ mod tests {
             sensors: vec![],
             disk_smart: vec![],
             pkg: Default::default(),
+            plugin_status: Default::default(),
         ips: vec![],
             custom_cmds: vec![],
             amd_cache: vec![],

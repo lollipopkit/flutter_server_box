@@ -223,3 +223,47 @@ title = "ServerBox Monitor"
 content = "{{message}}"
 body_regex = ".*"
 code = 200
+
+# Status plugins this agent runs itself. See PLUGINS.md section 9.5.
+#
+# Why here at all: a plugin running in the app collects only while somebody has
+# the app open, so its readings never reach /metrics/history, the watch or the
+# home widgets — all three read this agent directly. Running the same plugin
+# here is what puts it in front of them.
+#
+# Only status plugins. A plugin's manifest must say `"runs_in": ["agent"]`, and
+# one that also contributes a card, page, tab or settings section is refused:
+# there is nothing on a headless daemon for it to draw on.
+#
+# This section is never required — omit it entirely and nothing runs.
+# [plugins]
+# Nothing runs unless this is on *and* an entry below names it.
+# enabled = false
+
+# Where unpacked plugins live: one directory per id, each holding
+# manifest.json and plugin.js.
+#
+# You put them there. The app cannot install one: `full_access` means "run a
+# command I typed and watch it", and code that runs on a schedule for ever is a
+# larger thing to agree to.
+# dir = "/etc/server-box-monitor/plugins"
+
+# One block per plugin. Absent from this list means it does not run, however
+# many directories are under `dir`.
+# [[plugins.plugin]]
+# The manifest's id, which is also its directory's name.
+# id = "app.serverbox.example"
+#
+# What it may do, by permission name. Written here rather than read from the
+# manifest: a manifest says what a plugin *wants*, and on a phone the user
+# answers that in a dialog. There is nobody here to ask, so you answer by
+# typing. Anything it asks for and is not granted becomes a function that
+# throws.
+#
+# A status plugin usually needs nothing at all — it answers a command and the
+# agent runs it.
+# grant = []
+#
+# What `sb.config.get` answers, for the values a manifest cannot know.
+# [plugins.plugin.config]
+# addr = "https://10.0.0.9"

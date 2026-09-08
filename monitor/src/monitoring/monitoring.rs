@@ -129,6 +129,15 @@ pub struct SystemMetrics {
     /// "0 updates, off an index nobody has refreshed since March".
     #[serde(default)]
     pub pkg: sbm_parser::pkg::PkgUpdates,
+    /// What this agent's own plugins last reported, by plugin id.
+    ///
+    /// Empty on an agent with none configured, which is every agent by
+    /// default. Extended cadence and carried forward like the rest — and the
+    /// reason it is here at all: an app plugin collects only while the app is
+    /// open, so its readings never reach `/metrics/history`, the watch or the
+    /// home widgets. PLUGINS.md 9.5.
+    #[serde(default)]
+    pub plugin_status: std::collections::BTreeMap<String, sbm_plugin::status::StatusResult>,
     /// Output of the user's custom commands, in the order their files sort in
     /// — which is the order the user arranged them in. Refreshed on the
     /// extended cycle, since that is the one that runs the script.
@@ -300,6 +309,13 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
     let mut native_state = sbm_native::NativeState::new();
+    // Loaded once. A plugin holds a QuickJS context on a thread of its own,
+    // and re-reading the directory every cycle would be a new thread per
+    // plugin per cycle — the config is read at startup like everything else
+    // that decides what this agent will do.
+    let agent_plugins = crate::monitoring::plugins::AgentPlugins::load(
+        app_state.config.plugins.as_ref().unwrap_or(&Default::default()),
+    );
 
     loop {
         // Re-read every cycle (not captured once outside the loop) so a
@@ -323,6 +339,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
             extended_due,
             prev_metrics.as_ref(),
             &mut native_state,
+            &agent_plugins,
         )
         .await
         {
@@ -420,6 +437,7 @@ async fn collect_metrics(
     extended_due: bool,
     prev_metrics: Option<&SystemMetrics>,
     native_state: &mut sbm_native::NativeState,
+    plugins: &crate::monitoring::plugins::AgentPlugins,
 ) -> Result<SystemMetrics> {
     let system = system_type();
     // Off the reactor. `sample` is synchronous and does real IO — procfs and
@@ -519,6 +537,21 @@ async fn collect_metrics(
         prev_metrics,
         extended_refreshed,
         pkg_refreshed,
+        // On the extended cadence, like everything else a command has to be
+        // run for. A plugin's command is arbitrary shell on the machine this
+        // agent is measuring; running one per HTTP request would put it in the
+        // numbers it reports.
+        if extended_due {
+            plugins
+                .collect(match system {
+                    SystemType::Linux => "linux",
+                    SystemType::Bsd => "bsd",
+                    SystemType::Windows => "windows",
+                })
+                .await
+        } else {
+            Default::default()
+        },
     );
     metrics.custom_cmds = refreshed_custom_cmds(custom_cmds, prev_metrics, custom_refreshed);
     Ok(metrics)
@@ -1041,6 +1074,8 @@ fn adapt_status(
     // Its own flag, not `extended_refreshed`: `SbPkg` is a separate run and
     // may succeed on a cycle where `SbStatusExt` did not.
     pkg_refreshed: bool,
+    // What the agent's own plugins reported this cycle. Empty where none ran.
+    plugin_status_now: std::collections::BTreeMap<String, sbm_plugin::status::StatusResult>,
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(
         system,
@@ -1133,6 +1168,15 @@ fn adapt_status(
     // which is deliberately *not* aged along with it: the field says how stale
     // the package index was when it was read, and a client that wants to know
     // how stale the reading is has `extended_updated_at` for that.
+    // Same cadence, same carry-forward. A plugin that did not answer this
+    // cycle keeps what it last said rather than disappearing from the page.
+    let plugin_status = if extended_refreshed {
+        plugin_status_now
+    } else {
+        prev_metrics
+            .map(|p| p.plugin_status.clone())
+            .unwrap_or_default()
+    };
     let pkg = if pkg_refreshed {
         status.pkg.clone()
     } else {
@@ -1189,6 +1233,7 @@ fn adapt_status(
         disk_smart,
         ips,
         pkg,
+        plugin_status,
         // Filled in by `collect_metrics`: whether these are fresh or the
         // previous cycle's depends on whether the script ran, which this
         // function is not the one that knows.
@@ -1804,6 +1849,7 @@ mod tests {
             None,
             true,
             true,
+            Default::default(),
         );
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
@@ -1840,6 +1886,7 @@ mod tests {
             None,
             true,
             true,
+            Default::default(),
         );
         // Next (non-extended) cycle: script-only fields carry forward, while
         // the native disk-I/O snapshot reflects the current empty device set.
@@ -1851,6 +1898,7 @@ mod tests {
             Some(&prev),
             false,
             false,
+            Default::default(),
         );
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
@@ -1883,6 +1931,7 @@ mod tests {
             None,
             true,
             true,
+            Default::default(),
         );
         prev.custom_cmds = vec![CustomCmdOutput {
             name: "health".to_string(),
@@ -1916,6 +1965,7 @@ mod tests {
             Some(&prev),
             execution.extended_succeeded,
             execution.pkg_succeeded,
+            Default::default(),
         );
 
         assert_eq!(metrics.batteries, prev.batteries);
@@ -1946,6 +1996,7 @@ mod tests {
             None,
             true,
             true,
+            Default::default(),
         );
 
         let metrics = adapt_status(
@@ -1956,6 +2007,7 @@ mod tests {
             Some(&prev),
             true,
             true,
+            Default::default(),
         );
 
         assert!(metrics.batteries.is_empty());
@@ -1977,6 +2029,7 @@ mod tests {
             None,
             false,
             false,
+            Default::default(),
         );
         assert!(
             first.diskio_rate.is_empty(),
@@ -1998,6 +2051,7 @@ mod tests {
             Some(&first),
             false,
             false,
+            Default::default(),
         );
         // Force a known 2-second elapsed window instead of relying on real time
         // passing between the two adapt_status() calls in this test
@@ -2028,6 +2082,7 @@ mod tests {
             None,
             false,
             false,
+            Default::default(),
         );
 
         let current = [sbm_parser::types::DiskIoPiece {
