@@ -48,11 +48,19 @@ class InstalledPlugin {
   bool get needsConsent =>
       manifest.permissions.any((p) => !record.granted.contains(p));
 
-  PluginL10n l10nFor(String locale) => PluginL10n(
-    active:
-        l10n[locale] ?? l10n[locale.split(RegExp('[-_]')).first] ?? const {},
-    fallback: l10n['en'] ?? const {},
-  );
+  PluginL10n l10nFor(String locale) {
+    final language = locale.split(RegExp('[-_]')).first;
+    // Flutter exposes the app's Simplified Chinese locale as `zh`, while
+    // plugin packages use the unambiguous BCP-47 tag `zh-CN`.
+    final active = l10n[locale] ??
+        l10n[language] ??
+        (language == 'zh' ? l10n['zh-CN'] : null) ??
+        const <String, String>{};
+    return PluginL10n(
+      active: active,
+      fallback: l10n['en'] ?? const {},
+    );
+  }
 
   /// What this plugin contributes to the status page, or null.
   Feature? get statusFeature {

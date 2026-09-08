@@ -91,6 +91,18 @@ void main() {
       expect(package.l10nFor('zh-Hans').resolve('l10n.title'), '存储池');
     });
 
+    test('Simplified Chinese aliases the zh-CN package locale', () {
+      final package = PluginPackage.read(
+        sbp(l10n: const {
+          'en': {'title': 'Pools'},
+          'zh-CN': {'title': '存储池'},
+        }),
+      );
+
+      expect(package.l10nFor('zh').resolve('l10n.title'), '存储池');
+      expect(package.l10nFor('zh-Hans').resolve('l10n.title'), '存储池');
+    });
+
     /// The classic archive attack. Nothing is written before the whole package
     /// has been read, which is what makes refusing here enough.
     test('a path that escapes the directory is refused', () {

@@ -97,7 +97,9 @@ describe("the collection", () => {
 
     await plugin.onHook(enter("h-42"));
 
-    expect(host.callsTo("server.exec")[0]!.req.server).toBe("h-42");
+    expect(host.callsTo("server.exec")[0]!.req.server).toBe(
+      "h-42" as ServerHandle,
+    );
   });
 
   /// A machine with neither command is a different answer from one with

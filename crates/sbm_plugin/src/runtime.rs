@@ -25,7 +25,27 @@ use crate::permission::Grants;
 use crate::scope::State;
 
 /// The ABI a plugin's `abi` field names.
-pub const ABI_VERSION: u32 = 1;
+///
+/// **Bump this whenever a plugin can observe something new.** A node type, a
+/// host function, a manifest field, an export the host will call — anything a
+/// plugin author could write against. The check is one-directional
+/// (`manifest.abi > ABI_VERSION` is refused), so a plugin declaring an older
+/// number keeps working here, and one declaring a newer number is refused by
+/// an older app *instead of* half-working on it.
+///
+/// Half-working is the failure this prevents and it is silent: before v2 was
+/// declared, a plugin using `tile` on an app that did not have it drew
+/// "unknown widget" in every row and reported nothing.
+///
+/// It is also the axis a repository selects on. An index carries several
+/// versions of a plugin, each with the ABI it needs, and an app installs the
+/// newest one at or below this number — which is the whole of "an older app
+/// still finds one it can run".
+///
+/// - **v1** — the original set.
+/// - **v2** — `tile`, `summary` and `toggle` nodes; `tap` honoured on any node
+///   rather than only on `btn`; `icon` on every contribution.
+pub const ABI_VERSION: u32 = 2;
 
 /// How long one call may run JavaScript before it is stopped.
 ///

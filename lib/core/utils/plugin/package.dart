@@ -114,12 +114,17 @@ class PluginPackage {
   }
 
   /// The strings for [locale], and `en` behind them.
-  PluginL10n l10nFor(String locale) => PluginL10n(
+  PluginL10n l10nFor(String locale) {
     // `zh_Hant` before `zh`, because a locale is more specific than its
-    // language and a package may ship both.
-    active: l10n[locale] ?? l10n[locale.split(RegExp('[-_]')).first] ?? const {},
-    fallback: l10n['en'] ?? const {},
-  );
+    // language and a package may ship both. Flutter uses `zh` for Simplified
+    // Chinese, while plugin packages use the unambiguous `zh-CN` tag.
+    final language = locale.split(RegExp('[-_]')).first;
+    final active = l10n[locale] ??
+        l10n[language] ??
+        (language == 'zh' ? l10n['zh-CN'] : null) ??
+        const <String, String>{};
+    return PluginL10n(active: active, fallback: l10n['en'] ?? const {});
+  }
 
   /// The entry name, or null when it is one nothing may be written under.
   ///

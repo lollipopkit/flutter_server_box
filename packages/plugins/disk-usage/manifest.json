@@ -1,7 +1,7 @@
 {
   "id": "app.serverbox.diskusage",
   "version": "1.0.0",
-  "abi": 1,
+  "abi": 2,
   "name": "Disk usage",
   "description": "Where the space went, one directory at a time.",
   "license": "MIT",

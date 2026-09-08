@@ -18,9 +18,15 @@ pub struct Manifest {
     pub id: String,
     pub version: String,
 
-    /// Which host ABI this was built against. Refused when higher than
-    /// [`ABI_VERSION`]; the index keeps several versions of a plugin so an
-    /// older app still finds one it can run.
+    /// Which host ABI this was built against.
+    ///
+    /// Refused when higher than [`ABI_VERSION`], and that refusal is the point:
+    /// a plugin that draws a node this build does not have would otherwise
+    /// install and draw "unknown widget" in every row. See `ABI_VERSION` for
+    /// when the number moves.
+    ///
+    /// An index keeps several versions of a plugin, each with the ABI it
+    /// needs, so an older app still finds one it can run.
     pub abi: u32,
 
     /// Shown when no `l10n/<locale>.json` has a name.

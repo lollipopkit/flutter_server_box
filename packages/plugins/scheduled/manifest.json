@@ -1,7 +1,7 @@
 {
   "id": "app.serverbox.scheduled",
   "version": "1.0.0",
-  "abi": 1,
+  "abi": 2,
   "name": "Scheduled",
   "description": "What runs on a timer: the user's crontab and systemd's timers.",
   "license": "MIT",

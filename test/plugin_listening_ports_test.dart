@@ -103,7 +103,9 @@ void main() {
     final decoded = jsonDecode(manifestJson) as Map<String, dynamic>;
     final page = (decoded['contributes'] as Map)['page'] as Map;
 
-    expect(decoded['abi'], 1);
+    // v2, because it draws `tile` and `summary`. Declaring v1 would let an
+    // app that has neither install it and draw "unknown widget" per row.
+    expect(decoded['abi'], 2);
     expect(page['id'], 'ports');
     // `needs` is the app's own `availableWith` switch moved into data: the
     // button must not appear on a server that cannot run a command.

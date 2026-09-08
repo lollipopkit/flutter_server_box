@@ -121,7 +121,11 @@ void main() {
 
   group('what the app can read without loading anything', () {
     test('the ABI version and the permission list come from the runtime', () {
-      expect(pluginAbiVersion(), 1);
+      // v2 since `tile`/`summary`/`toggle` and tap-on-any-node. Asserted as a
+      // number rather than compared to itself: the point is that moving the
+      // ABI is a decision somebody makes, and a test that read the same
+      // constant would agree with any value.
+      expect(pluginAbiVersion(), 2);
       // Read from Rust rather than restated here, so the install dialog and the
       // runtime cannot disagree about what a manifest may ask for.
       expect(
