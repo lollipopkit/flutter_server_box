@@ -762,17 +762,18 @@ class SettingStore extends SqliteStore {
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);
 
-  /// Tabs at home page
+  /// Tabs at home page, by id and in the order the user arranged them.
   ///
-  /// [AppTab.defaultOrder] rather than `AppTab.values`: the two differ, and
-  /// the difference is which tab the bar has room for.
-  late final homeTabs = listProperty(
+  /// Ids rather than `AppTab`s, since m023: a plugin's tab is not a case of
+  /// that enum and a list typed by it has nowhere to put one. A built-in tab's
+  /// id is its `name`; a plugin's is `<plugin id>:<contribution id>`, as in
+  /// the other two feature slots.
+  ///
+  /// [AppTab.defaultOrder] rather than every tab: the two differ, and the
+  /// difference is which tab the bar has room for.
+  late final homeTabs = listProperty<String>(
     'homeTabs',
-    defaultValue: AppTab.defaultOrder,
-    fromObj: AppTab.parseAppTabsFromObj,
-    toObj: (val) {
-      return val?.map((e) => e.name).toList() ?? [];
-    },
+    defaultValue: AppTab.defaultOrder.map((e) => e.name).toList(),
   );
 
   /// What `{DIST}` expands to, for a distribution whose file is named

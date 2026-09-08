@@ -31,6 +31,7 @@ import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/migrations/m021_server_btn_ids.dart';
+import 'package:server_box/data/store/migrations/m023_home_tab_ids.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
@@ -190,6 +191,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         const VirtKeyRowsMigration().applySync();
         const VirtKeyNamesMigration().applySync();
         const ServerBtnIdsMigration().applySync();
+        const HomeTabIdsMigration().applySync();
       }
     });
 

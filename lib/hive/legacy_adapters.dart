@@ -294,6 +294,27 @@ class LegacySshCredentialAdapter extends TypeAdapter<LegacySshCredentialV1> {
 /// rest of this file is: a shape a release wrote, kept so an upgrading install
 /// can still be read. It must never be reordered or shortened; an entry that
 /// no longer exists is dropped by the reader, not removed from here.
+/// The home bar's tabs, in the order every release that stored an integer
+/// wrote them.
+///
+/// `homeTabs` accepted three shapes at once — an `AppTab`, its `name`, or its
+/// index — because `_parseAppTabFromElement` read all three. The integer is
+/// the `@HiveField` index, which is the declaration order, so `m023` converts
+/// those rows to names with this table and the enum's order stops being
+/// something a stored row depends on.
+///
+/// Same rules as [kLegacyServerFuncBtnIds]: never reordered, never shortened,
+/// and an entry this build no longer has is dropped by the reader rather than
+/// deleted from here.
+const kLegacyAppTabIds = <String>[
+  'server',
+  'ssh',
+  'file',
+  'snippet',
+  'agent',
+  'benchmark',
+];
+
 const kLegacyServerFuncBtnIds = <String>[
   'terminal',
   'files',

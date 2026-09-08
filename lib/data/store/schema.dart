@@ -96,7 +96,7 @@ abstract final class SchemaVersion {
   /// v22: `plugin_install`, `server_plugin_cfg`, `plugin_kv` and
   ///      `server_plugin_kv` — where an installed plugin's record, its
   ///      per-server configuration and its own data live
-  static const current = 23;
+  static const current = 24;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

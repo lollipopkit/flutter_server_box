@@ -68,7 +68,7 @@ class MacOSMenuBarManager {
 
   static List<PlatformMenuItem> _buildNavigateMenuItems(
     AppLocalizations l10n,
-    List<AppTab> homeTabs,
+    List<String> homeTabs,
     void Function(int) onTabChanged,
   ) {
     final menuItems = <PlatformMenuItem>[];
@@ -80,8 +80,11 @@ class MacOSMenuBarManager {
       AppTab.agent: 'Agent',
     };
     for (var i = 0; i < homeTabs.length; i++) {
-      final tab = homeTabs[i];
-      final label = tabLabels[tab];
+      // By id, and only the ones this menu names. A tab with no entry — a
+      // newer built-in, a plugin's — is skipped rather than given a blank
+      // line: the shortcut numbering follows the bar's positions, so skipping
+      // keeps ⌘1 on the first tab whatever is in the bar.
+      final label = tabLabels[AppTab.fromId(homeTabs[i])];
       if (label == null) continue;
       final shortcutKey = _getShortcutKeyForIndex(i);
       menuItems.add(

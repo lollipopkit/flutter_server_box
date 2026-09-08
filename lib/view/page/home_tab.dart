@@ -10,6 +10,67 @@ import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 
+/// One entry of the home bar, resolved from the id the arrangement stores.
+///
+/// The bar holds ids since m023, because a plugin's tab is not a case of
+/// [AppTab] and a list typed by that enum has nowhere to put one. Everything
+/// the home page needs of a tab — what it is called, what it draws, what it
+/// puts in the bar and the rail — is asked of this instead of of the enum, so
+/// the page does not have to know which kind it is looking at.
+sealed class HomeTab {
+  const HomeTab();
+
+  /// Null for an id this build has nothing for: a tab removed in an upgrade,
+  /// or one a plugin contributed and is no longer installed. The arrangement
+  /// keeps such an id and every reader skips it — see
+  /// `FeatureSlot.putEnabledIds`.
+  static HomeTab? of(String id) {
+    final builtIn = AppTab.fromId(id);
+    if (builtIn != null) return BuiltInHomeTab(builtIn);
+    return null;
+  }
+
+  String get id;
+  String get label;
+  IconData get iconData;
+  IconData get selectedIconData;
+
+  /// The page itself. Built once and kept alive behind the others, so this is
+  /// asked for on every build and must return the same kind of thing each
+  /// time.
+  Widget get page;
+
+  Widget get icon => Icon(iconData);
+  Widget get selectedIcon => Icon(selectedIconData);
+
+  Widget navDestination({ContextMenuOpener? onMenu});
+  NavigationRailDestination navRailDestination({ContextMenuOpener? onMenu});
+}
+
+/// One of the app's own.
+final class BuiltInHomeTab extends HomeTab {
+  const BuiltInHomeTab(this.tab);
+
+  final AppTab tab;
+
+  @override
+  String get id => tab.name;
+  @override
+  String get label => tab.label;
+  @override
+  IconData get iconData => tab.iconData;
+  @override
+  IconData get selectedIconData => tab.selectedIconData;
+  @override
+  Widget get page => tab.page;
+  @override
+  Widget navDestination({ContextMenuOpener? onMenu}) =>
+      tab.navDestination(onMenu: onMenu);
+  @override
+  NavigationRailDestination navRailDestination({ContextMenuOpener? onMenu}) =>
+      tab.navRailDestination(onMenu: onMenu);
+}
+
 extension AppTabViewX on AppTab {
   Widget get page {
     return switch (this) {

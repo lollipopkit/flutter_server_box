@@ -182,7 +182,7 @@ void main() {
 
     expect(Stores.setting.timeout.get(), 9);
     expect(Stores.setting.recordHistory.get(), false);
-    expect(Stores.setting.homeTabs.get().map((e) => e.name), ['server', 'ssh']);
+    expect(Stores.setting.homeTabs.get(), ['server', 'ssh']);
 
     expect(Stores.history.sftpGoPath.all, ['/etc', '/var']);
 

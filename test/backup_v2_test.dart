@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
-import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -155,7 +154,7 @@ void main() {
         container: const {},
         history: const {},
         settings: const {
-          'homeTabs': [AppTab.server, AppTab.ssh],
+          'homeTabs': ['server', 'ssh'],
         },
       );
 
@@ -406,10 +405,10 @@ void main() {
 
     test('a file carrying no settings leaves the local ones alone', () async {
       Stores.setting.homeTabs.put(const [
-        AppTab.server,
-        AppTab.ssh,
-        AppTab.file,
-        AppTab.snippet,
+        'server',
+        'ssh',
+        'file',
+        'snippet',
       ]);
 
       final backup = BackupV2(
@@ -425,10 +424,10 @@ void main() {
       await backup.merge(force: true);
 
       expect(Stores.setting.homeTabs.fetch(), const [
-        AppTab.server,
-        AppTab.ssh,
-        AppTab.file,
-        AppTab.snippet,
+        'server',
+        'ssh',
+        'file',
+        'snippet',
       ]);
     });
 

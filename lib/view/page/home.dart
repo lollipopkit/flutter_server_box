@@ -143,12 +143,12 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final _notifier = ref.read(serversProvider.notifier);
   /// What the user arranged: the bar, and the rail.
-  late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
+  late List<String> _barTabs = Stores.setting.homeTabs.fetch();
 
   /// Every page there is, the bar's first and "more"'s after. The index space
   /// for everything below, so a tab reached through "more" is a page like any
   /// other rather than something pushed over one.
-  late List<AppTab> _tabs = [..._barTabs, ...AppTab.overflowOf(_barTabs)];
+  late List<String> _tabs = [..._barTabs, ...AppTab.overflowIdsOf(_barTabs)];
 
   /// The tab strip, whichever of the two is on screen. Only one is built at a
   /// time — the bar on a phone, the rail beside a window — so one key covers
@@ -176,7 +176,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (tab == null) return false;
     final index = _selectIndex.value;
     if (index < 0 || index >= _tabs.length) return false;
-    return _tabs[index] == tab;
+    return _tabs[index] == tab.name;
   }
 
   @override
@@ -252,7 +252,7 @@ class _HomePageState extends ConsumerState<HomePage>
   /// between launches.
   void _rememberTab(int index) {
     if (index < 0 || index >= _tabs.length) return;
-    _lastTab.put(_tabs[index].name);
+    _lastTab.put(_tabs[index]);
   }
 
   /// Where to reopen, or null to leave it on the first tab.
@@ -262,7 +262,7 @@ class _HomePageState extends ConsumerState<HomePage>
   int? _savedTabIndex() {
     final name = _lastTab.fetch();
     if (name.isNotEmpty) {
-      final at = _tabs.indexWhere((tab) => tab.name == name);
+      final at = _tabs.indexOf(name);
       return at < 0 ? null : at;
     }
     // TODO: delete with `HistoryStore.homeTabIndex`. An install upgrading from
@@ -280,7 +280,10 @@ class _HomePageState extends ConsumerState<HomePage>
   void _publishCurrentTab() {
     final index = _selectIndex.value;
     if (index < 0 || index >= _tabs.length) return;
-    ref.read(currentHomeTabProvider.notifier).update(_tabs[index]);
+    // Only a built-in one: what reads this is the floating Agent staying out
+    // of the Agent tab's way, and a plugin's tab is not one of those.
+    final tab = AppTab.fromId(_tabs[index]);
+    if (tab != null) ref.read(currentHomeTabProvider.notifier).update(tab);
   }
 
   @override
@@ -365,7 +368,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // animation; the caller only says where it wants to be.
     ref.listen(homeTabRequestProvider, (_, tab) {
       if (tab == null) return;
-      final index = _tabs.indexOf(tab);
+      final index = _tabs.indexOf(tab.name);
       if (index >= 0) _onDestinationSelected(index);
       ref.read(homeTabRequestProvider.notifier).done();
     });
@@ -431,7 +434,10 @@ class _HomePageState extends ConsumerState<HomePage>
                   // splitter, so the splitter's own divider is above any app
                   // bar that could have spent the inset.
                   rootBuilder: (_) =>
-                      SafeArea(bottom: false, child: _tabs[index].page),
+                      SafeArea(
+                        bottom: false,
+                        child: HomeTab.of(_tabs[index])?.page ?? UIs.placeholder,
+                      ),
                 ),
                 onPageChanged: (value) {
                   FocusScope.of(context).unfocus();
@@ -548,7 +554,9 @@ class _HomePageState extends ConsumerState<HomePage>
           },
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: [
-            for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
+            for (final id in shown)
+              if (HomeTab.of(id) case final tab?)
+                tab.navDestination(onMenu: _navMenuForId(id)),
             // One slot, holding whichever of the two is needed. While
             // anything is behind "more" that is where the settings live, as
             // they always have; with every tab turned on there is nothing left
@@ -599,16 +607,17 @@ class _HomePageState extends ConsumerState<HomePage>
     await showRowsSheet<void>(
       context,
       rows: (ctx) => [
-        for (final tab in overflow)
+        for (final id in overflow)
+          if (HomeTab.of(id) case final tab?)
           ListTile(
             leading: tab.icon,
             title: Text(tab.label),
-            selected: _tabs.indexOf(tab) == selected,
+            selected: _tabs.indexOf(id) == selected,
             onTap: () {
               // The sheet closes itself; the page it came from is what
               // switches tabs, on the navigator that owns the tabs.
               Navigator.of(ctx).pop();
-              _onDestinationSelected(_tabs.indexOf(tab));
+              _onDestinationSelected(_tabs.indexOf(id));
             },
           ),
         const Divider(height: 1),
@@ -703,8 +712,9 @@ class _HomePageState extends ConsumerState<HomePage>
                   ? _selectIndex.value
                   : shown,
               destinations: [
-                for (final tab in _tabs.take(shown))
-                  tab.navRailDestination(onMenu: _navMenuFor(tab)),
+                for (final id in _tabs.take(shown))
+                  if (HomeTab.of(id) case final tab?)
+                    tab.navRailDestination(onMenu: _navMenuForId(id)),
                 if (more)
                   NavigationRailDestination(
                     icon: const Icon(Icons.more_horiz),
@@ -947,7 +957,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
     final isLandscape =
         MediaQuery.orientationOf(context) == Orientation.landscape;
-    return isLandscape && _tabs[selectedIndex] == AppTab.server;
+    return isLandscape && _tabs[selectedIndex] == AppTab.server.name;
   }
 
   void _syncFullscreenSystemUi({bool? forceHide}) {
@@ -978,7 +988,7 @@ extension _HomePageStateUtils on _HomePageState {
 extension _HomePageStateActions on _HomePageState {
   void _handleHomeTabsChanged() {
     final newBar = Stores.setting.homeTabs.fetch();
-    final newTabs = [...newBar, ...AppTab.overflowOf(newBar)];
+    final newTabs = [...newBar, ...AppTab.overflowIdsOf(newBar)];
     // The page list is every tab either way, so it only changes when the *bar*
     // does — which is what the setting says.
     if (!mounted || newBar.equals(_barTabs)) return;
@@ -1061,6 +1071,14 @@ extension _HomePageStateActions on _HomePageState {
 /// reachable from anywhere in the app. Turning everything off is most wanted
 /// from somewhere that is not the server list.
 extension _HomePageNav on _HomePageState {
+  /// The menu for an id, or none for a tab this build has no menu for —
+  /// which is every plugin's, since what a tab's long press offers is the
+  /// app's own actions on the app's own pages.
+  ContextMenuOpener? _navMenuForId(String id) {
+    final tab = AppTab.fromId(id);
+    return tab == null ? null : _navMenuFor(tab);
+  }
+
   ContextMenuOpener? _navMenuFor(AppTab tab) {
     final l10n = context.l10n;
     final menu = switch (tab) {

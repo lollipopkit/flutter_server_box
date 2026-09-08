@@ -38,7 +38,7 @@ enum FeatureSlot {
   List<String> enabledIds() => switch (this) {
     funcBtn => Stores.setting.serverFuncBtns.fetch(),
     detailCard => Stores.setting.detailCardOrder.fetch(),
-    homeTab => Stores.setting.homeTabs.fetch().map((e) => e.name).toList(),
+    homeTab => Stores.setting.homeTabs.fetch(),
   };
 
   /// Writes [ids] back, de-duplicated.
@@ -50,9 +50,6 @@ enum FeatureSlot {
   /// A repeat is dropped: these lists are arrangements, and one entry twice
   /// has no meaning.
   ///
-  /// [homeTab] is the exception and cannot help it: its property is typed
-  /// `List<AppTab>`, so a name no case matches has nowhere to go. Widening it
-  /// is part of letting a plugin contribute a tab.
   ///
   /// Synchronous because the callers own a transaction.
   void putEnabledIds(List<String> ids) {
@@ -66,7 +63,7 @@ enum FeatureSlot {
       case detailCard:
         Stores.setting.detailCardOrder.putSync(kept);
       case homeTab:
-        Stores.setting.homeTabs.putSync(AppTab.parseAppTabsFromObj(kept));
+        Stores.setting.homeTabs.putSync(kept);
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/home_tab.dart';
@@ -73,7 +74,15 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
   @override
   void initState() {
     super.initState();
-    _enabled = List<AppTab>.from(Stores.setting.homeTabs.fetch());
+    // Resolved, not cast. The stored row is ids since m023, and
+    // `List<AppTab>.from` on a list of strings compiles and throws — the
+    // analyzer cannot see it, because `List.from` takes `Iterable<dynamic>`.
+    //
+    // An id this page has no tab for is dropped here and carried on save; see
+    // `_onReorder`.
+    _enabled = [
+      for (final id in Stores.setting.homeTabs.fetch()) ?AppTab.fromId(id),
+    ];
     _disabled = List<AppTab>.from(availableHomeTabs(_enabled));
   }
 
@@ -181,7 +190,12 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
       _enabled = next.enabled;
       _disabled = next.disabled;
     });
-    Stores.setting.homeTabs.put(_enabled);
+    // Through the slot rather than the property: it is the one writer for an
+    // arrangement, and the rule that an id this build has no entry for is kept
+    // rather than dropped lives there. This page only knows about `AppTab`s,
+    // so it is also the only thing standing between a stored id it cannot draw
+    // and a save that would lose it.
+    FeatureSlot.homeTab.putEnabledIds(_enabled.map((e) => e.name).toList());
     // What [AppTab.defaultOrder] is a guess about, and the only thing that can
     // judge it. That list is four of six tabs, chosen on an argument about what
     // a tab is *for* — snippets are a library rather than a place, a benchmark

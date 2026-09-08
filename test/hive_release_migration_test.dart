@@ -260,8 +260,9 @@ void main() {
         expect(Stores.setting.termFontSize.get(), 13.0);
         expect(Stores.setting.maxRetryCount.get(), 2);
 
-        expect(Stores.setting.homeTabs.get().map((e) => e.name),
-            ['server', 'ssh', 'snippet']);
+        // Ids since m023: the row a release wrote could be integers, names or
+        // `AppTab`s, and every one of them lands here as a name.
+        expect(Stores.setting.homeTabs.get(), ['server', 'ssh', 'snippet']);
         // Written as `[0, 1, 2, 13, 14]` by that release and converted to
         // names by m013 — an index stops meaning the same key the moment a
         // case is inserted into `VirtKey`.

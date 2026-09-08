@@ -45,6 +45,23 @@ enum AppTab {
   /// so for the machine in front of them.
   static const defaultOrder = [server, ssh, file, agent];
 
+  /// The ids not in [enabled], in declaration order — what "more" holds.
+  ///
+  /// Ids, because a bar may hold a tab that is not a case of this enum since
+  /// m023. What is *not* enabled is still every built-in one that is missing,
+  /// plus whatever the registry adds — see `Features.of(FeatureSlot.homeTab)`,
+  /// which is the id-space version of this and what the home page uses.
+  static List<String> overflowIdsOf(Iterable<String> enabled) {
+    final on = enabled.toSet();
+    return [
+      for (final tab in values)
+        if (!on.contains(tab.name)) tab.name,
+    ];
+  }
+
+  static AppTab? fromId(String id) =>
+      values.firstWhereOrNull((t) => t.name == id);
+
   /// The tabs not in [enabled], in declaration order — what "more" holds.
   ///
   /// Settings is not among them, and is not an [AppTab] at all: it is a
