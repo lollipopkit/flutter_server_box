@@ -2100,6 +2100,44 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виводу ще немає. Перед виведенням першого рядка YABS перевіряє доступність google.com та icanhazip.com. У мережах, де заблоковано хоча б один із цих сайтів, перевірка може тривати кілька хвилин.';
 
   @override
+  String get tagsEmptyTip =>
+      'Тегів ще немає. Додайте тег під час редагування сервера, і він з’явиться тут.';
+
+  @override
   String get benchmarkNoServers =>
       'Спочатку додайте сервер, а потім поверніться, щоб запустити бенчмарк.';
+
+  @override
+  String get schemaTooNewTitle => 'Ці дані новіші за програму';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Їх записала новіша версія ServerBox (версія сховища v$stored); ця версія читає дані до v$supported. Дані не змінювалися.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Перевстановіть новішу версію, і всі дані знову відкриються як раніше.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Експортувати без пароля';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Файл міститиме у відкритому вигляді всі закриті ключі SSH, паролі серверів і ключі API. Той, хто отримає файл, отримає доступ до всього цього.';
+
+  @override
+  String get schemaTooNewWipe => 'Видалити всі дані';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Усі сервери, ключі, фрагменти коду та налаштування на цьому пристрої буде видалено без можливості скасування. Експортована тут резервна копія стане єдиною копією, що залишиться.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Дані видалено. Відкрийте програму знову, щоб почати з чистого аркуша.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Не вдалося видалити частину даних, і ця версія досі не може відкрити те, що залишилося. Перевстановіть новішу версію, щоб отримати до них доступ.';
 }

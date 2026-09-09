@@ -2108,6 +2108,44 @@ class AppLocalizationsIt extends AppLocalizations {
       'Ancora nessun output. Prima di mostrare la prima riga, YABS verifica che google.com e icanhazip.com siano raggiungibili. Sulle reti che bloccano uno dei due siti, questa operazione può richiedere diversi minuti.';
 
   @override
+  String get tagsEmptyTip =>
+      'Nessun tag. Aggiungine uno modificando un server e apparirà qui.';
+
+  @override
   String get benchmarkNoServers =>
       'Aggiungi prima un server, poi torna per eseguire il benchmark.';
+
+  @override
+  String get schemaTooNewTitle => 'Questi dati sono più recenti dell’app';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Sono stati scritti da una versione più recente di ServerBox (archiviazione v$stored); questa versione può leggere fino a v$supported. Non è stato modificato nulla.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Reinstalla la versione più recente per aprire tutto come prima.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Esporta senza password';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Il file conterrà in chiaro tutte le chiavi private SSH, le password dei server e le chiavi API. Chiunque ottenga il file avrà accesso a tutto.';
+
+  @override
+  String get schemaTooNewWipe => 'Elimina tutti i dati';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Tutti i server, le chiavi, gli snippet e le impostazioni su questo dispositivo verranno eliminati senza possibilità di annullare l’operazione. Un backup esportato qui sarebbe l’unica copia rimasta.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Dati eliminati. Riapri l’app per ricominciare da zero.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Non è stato possibile eliminare alcuni dati e questa versione non può ancora aprire ciò che rimane. Reinstalla la versione più recente per accedervi.';
 }

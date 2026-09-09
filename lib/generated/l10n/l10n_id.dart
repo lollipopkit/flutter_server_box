@@ -2085,6 +2085,44 @@ class AppLocalizationsId extends AppLocalizations {
       'Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit.';
 
   @override
+  String get tagsEmptyTip =>
+      'Belum ada tag. Tambahkan tag saat mengedit server, dan tag tersebut akan muncul di sini.';
+
+  @override
   String get benchmarkNoServers =>
       'Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark.';
+
+  @override
+  String get schemaTooNewTitle => 'Data ini lebih baru daripada aplikasi';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Data ini ditulis oleh versi ServerBox yang lebih baru (penyimpanan v$stored); versi ini hanya dapat membaca hingga v$supported. Tidak ada yang diubah.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Instal kembali versi yang lebih baru itu agar semua data dapat dibuka seperti semula.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Ekspor tanpa kata sandi';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'File ini akan menyimpan semua kunci privat SSH, kata sandi server, dan kunci API dalam teks biasa. Siapa pun yang mendapatkan file ini akan mendapatkan semuanya.';
+
+  @override
+  String get schemaTooNewWipe => 'Hapus semua data';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Semua server, kunci, cuplikan, dan pengaturan di perangkat ini akan dihapus dan tidak dapat dibatalkan. Cadangan yang diekspor di sini akan menjadi satu-satunya salinan yang tersisa.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Data dihapus. Buka kembali aplikasi untuk memulai dari awal.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya.';
 }

@@ -2106,6 +2106,44 @@ class AppLocalizationsDe extends AppLocalizations {
       'Noch keine Ausgabe. Vor der ersten Zeile prüft YABS, ob google.com und icanhazip.com erreichbar sind. In Netzwerken, die eine der beiden Websites blockieren, kann dies mehrere Minuten dauern.';
 
   @override
+  String get tagsEmptyTip =>
+      'Noch keine Tags. Füge beim Bearbeiten eines Servers einen hinzu, dann erscheint er hier.';
+
+  @override
   String get benchmarkNoServers =>
       'Füge zuerst einen Server hinzu und kehre dann zurück, um ihn zu benchmarken.';
+
+  @override
+  String get schemaTooNewTitle => 'Diese Daten sind neuer als die App';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Die Daten wurden von einer neueren Version von ServerBox geschrieben (Speicherversion v$stored); diese Version kann bis v$supported lesen. Es wurde nichts geändert.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Installiere die neuere Version erneut, dann werden alle Daten wie zuvor geöffnet.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Ohne Passwort exportieren';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Die Datei enthält alle privaten SSH-Schlüssel, Serverpasswörter und API-Schlüssel im Klartext. Wer die Datei erhält, erhält Zugriff auf alle diese Daten.';
+
+  @override
+  String get schemaTooNewWipe => 'Alle Daten löschen';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Alle Server, Schlüssel, Snippets und Einstellungen auf diesem Gerät werden gelöscht. Das kann nicht rückgängig gemacht werden. Eine hier exportierte Sicherung wäre die einzige verbleibende Kopie.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Daten gelöscht. Öffne die App erneut, um neu zu beginnen.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Ein Teil der Daten konnte nicht gelöscht werden, und diese Version kann die verbleibenden Daten weiterhin nicht öffnen. Installiere die neuere Version erneut, um darauf zuzugreifen.';
 }

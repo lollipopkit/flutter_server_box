@@ -2097,6 +2097,44 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hələ çıxış yoxdur. İlk sətri göstərməzdən əvvəl YABS google.com və icanhazip.com saytlarının əlçatanlığını yoxlayır. Bu saytlardan hər hansı birini bloklayan şəbəkələrdə bu, bir neçə dəqiqə çəkə bilər.';
 
   @override
+  String get tagsEmptyTip =>
+      'Hələ etiket yoxdur. Serveri redaktə edərkən etiket əlavə et, burada görünəcək.';
+
+  @override
   String get benchmarkNoServers =>
       'Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt.';
+
+  @override
+  String get schemaTooNewTitle => 'Bu məlumatlar tətbiqdən daha yenidir';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Məlumatlar ServerBox-ın daha yeni versiyası tərəfindən yazılıb (yaddaş v$stored). Bu versiya ən çox v$supported oxuya bilir və məlumatlar dəyişdirilməyib.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Bütün məlumatları yenidən açmaq üçün daha yeni versiyanı quraşdır.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Şifrəsiz ixrac et';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Faylda bütün SSH məxfi açarları, server parolları və API açarları açıq mətn kimi saxlanacaq. Faylı əldə edən şəxs bunların hamısına giriş əldə edə bilər.';
+
+  @override
+  String get schemaTooNewWipe => 'Bütün məlumatları sil';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Bu cihazdakı bütün serverlər, açarlar, snippet-lər və parametrlər silinəcək. Bu əməliyyatı geri qaytarmaq olmaz. Burada ixrac edilmiş ehtiyat nüsxə qalan yeganə surət olacaq.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Məlumatlar silindi. Tətbiqi yenidən aç və sıfırdan başla.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Məlumatların bir hissəsini silmək mümkün olmadı və bu versiya qalan məlumatları hələ də aça bilmir. Onlara giriş üçün daha yeni versiyanı yenidən quraşdır.';
 }

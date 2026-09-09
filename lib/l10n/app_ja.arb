@@ -610,5 +610,15 @@
   "benchmarkUpstream": "Yet Another Bench Script ({version}) を使用",
   "benchmarkPhaseStarting": "開始中",
   "benchmarkNoOutputYet": "まだ出力はありません。YABS は最初の行を出力する前に、google.com と icanhazip.com に接続できるか確認します。いずれかのサイトがブロックされているネットワークでは、数分かかる場合があります。",
-  "benchmarkNoServers": "先にサーバーを追加してから戻ると、ベンチマークを実行できます。"
+  "benchmarkNoServers": "先にサーバーを追加してから戻ると、ベンチマークを実行できます。",
+  "tagsEmptyTip": "まだタグはありません。サーバーの編集中に追加すると、ここに表示されます。",
+  "schemaTooNewTitle": "このデータはアプリより新しいバージョンで作成されています",
+  "schemaTooNewBody": "このデータは新しいバージョンの ServerBox で作成されました（保存形式 v{stored}）。このバージョンで読み込めるのは v{supported} までです。データは変更されていません。",
+  "schemaTooNewReinstall": "新しいバージョンを再インストールすれば、すべて元どおり開けます。",
+  "schemaTooNewExportPlain": "パスワードなしで書き出す",
+  "schemaTooNewPlainWarn": "ファイルにはすべての SSH 秘密鍵、サーバーのパスワード、API キーが平文で保存されます。このファイルを入手した人は、すべての情報を取得できます。",
+  "schemaTooNewWipe": "すべてのデータを削除",
+  "schemaTooNewWipeConfirm": "このデバイス上のすべてのサーバー、鍵、スニペット、設定を削除します。この操作は取り消せません。ここで書き出したバックアップが残る唯一のコピーになります。",
+  "schemaTooNewWipeDone": "データを削除しました。アプリを再度開いて最初から始めてください。",
+  "schemaTooNewWipeFailed": "一部のデータを削除できなかったため、このバージョンでは残りのデータも開けません。新しいバージョンを再インストールしてアクセスしてください。"
 }

@@ -34,10 +34,49 @@ import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
+import 'package:server_box/view/page/schema_too_new.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
-    await _initApp();
+    try {
+      await _initApp();
+    } on SchemaTooNewException catch (e) {
+      // The one failure with something to say. Every other way `_initApp` can
+      // throw goes to the zone handler, which logs it and leaves the launch
+      // with no window at all — right for a bug, wrong for this: the data is
+      // intact, the fix is to reinstall the newer build, and both of those
+      // were only ever written to a file on the device.
+      //
+      // Caught here rather than made non-fatal further down, because nothing
+      // after `_doDbMigrate` may run: the refusal is only worth anything while
+      // nothing has been written. See [SchemaTooNewException].
+      Loggers.app.severe('Storage is newer than this build', e);
+      // On desktop the window is created hidden — `hiddenWindowAtLaunch()` on
+      // macOS, no `WS_VISIBLE` on Windows, no `gtk_widget_show` on Linux — and
+      // the only `windowManager.show()` at launch is inside `_initWindow`,
+      // which is *after* the throw. Without this the rescue screen is drawn
+      // into a window nobody ever sees: still no window, still no message,
+      // which is the failure it exists to fix.
+      //
+      // Measured, by running a build with this call commented out against a
+      // v25 database: the widget tree was there, and `window_manager` had no
+      // window at all. Asking it anything is then fatal rather than false —
+      // `WindowManager.mainWindow` force-unwraps, so `isVisible()` took the
+      // process down with `EXC_BREAKPOINT` in `WindowManager.swift:60`. So this
+      // is not only about the user seeing the screen; without it the plugin is
+      // a landmine for anything that later asks about the window.
+      //
+      // Not `_initWindow`, which reads the size and the title-bar preference
+      // out of the database this build has just refused to touch. Fixed
+      // arguments instead: this window holds one screen of text.
+      try {
+        await SystemUIs.initDesktopWindow(hideTitleBar: false);
+      } catch (e, s) {
+        Loggers.app.warning('Could not show the rescue window', e, s);
+      }
+      runApp(SchemaTooNewApp(err: e));
+      return;
+    }
     runApp(ProviderScope(child: const MyApp()));
   });
 }

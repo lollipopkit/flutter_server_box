@@ -3646,11 +3646,71 @@ abstract class AppLocalizations {
   /// **'No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.'**
   String get benchmarkNoOutputYet;
 
+  /// No description provided for @tagsEmptyTip.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags yet. Add one while editing a server and it will appear here.'**
+  String get tagsEmptyTip;
+
   /// No description provided for @benchmarkNoServers.
   ///
   /// In en, this message translates to:
-  /// **'Add a server first, then come back to benchmark it.'**
+  /// **'Add a server first, then return here to benchmark it.'**
   String get benchmarkNoServers;
+
+  /// No description provided for @schemaTooNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This data is newer than the app'**
+  String get schemaTooNewTitle;
+
+  /// No description provided for @schemaTooNewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It was written by a newer version of ServerBox (storage v{stored}). This version reads up to v{supported}; nothing has been changed.'**
+  String schemaTooNewBody(int stored, int supported);
+
+  /// No description provided for @schemaTooNewReinstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Reinstall the newer version to open all your data again.'**
+  String get schemaTooNewReinstall;
+
+  /// No description provided for @schemaTooNewExportPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Export without a password'**
+  String get schemaTooNewExportPlain;
+
+  /// No description provided for @schemaTooNewPlainWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'The file will contain every SSH private key, server password and API key in plain text. Anyone who gets the file can access them all.'**
+  String get schemaTooNewPlainWarn;
+
+  /// No description provided for @schemaTooNewWipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all data'**
+  String get schemaTooNewWipe;
+
+  /// No description provided for @schemaTooNewWipeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'All servers, keys, snippets and settings on this device will be deleted. This cannot be undone. A backup exported here would be the only copy left.'**
+  String get schemaTooNewWipeConfirm;
+
+  /// No description provided for @schemaTooNewWipeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Data deleted. Open the app again to start fresh.'**
+  String get schemaTooNewWipeDone;
+
+  /// No description provided for @schemaTooNewWipeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.'**
+  String get schemaTooNewWipeFailed;
 }
 
 class _AppLocalizationsDelegate

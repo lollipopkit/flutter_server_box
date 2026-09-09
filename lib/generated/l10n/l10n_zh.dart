@@ -1925,7 +1925,42 @@ class AppLocalizationsZh extends AppLocalizations {
       '暂时没有输出。YABS 在输出第一行前会先检查能否访问 google.com 和 icanhazip.com；如果网络屏蔽其中任一站点，可能需要等待数分钟。';
 
   @override
+  String get tagsEmptyTip => '还没有标签。编辑服务器时添加标签，它就会显示在这里。';
+
+  @override
   String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
+
+  @override
+  String get schemaTooNewTitle => '这些数据比当前应用新';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return '这些数据由更新版本的 ServerBox 写入（存储版本 v$stored）。当前版本最高支持 v$supported，数据未被改动。';
+  }
+
+  @override
+  String get schemaTooNewReinstall => '请重新安装更新的版本，即可再次打开全部数据。';
+
+  @override
+  String get schemaTooNewExportPlain => '导出无密码副本';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      '文件将以明文包含所有 SSH 私钥、服务器密码和 API key。任何拿到文件的人都能访问这些内容。';
+
+  @override
+  String get schemaTooNewWipe => '删除所有数据';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      '本设备上的所有服务器、密钥、代码片段和设置都将被删除，且无法撤销。此前导出的备份将成为仅存的副本。';
+
+  @override
+  String get schemaTooNewWipeDone => '数据已删除。请重新打开应用，从头开始。';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      '部分数据未能删除，当前版本仍然无法打开剩下的内容。请重新安装更新的版本来读取它。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3848,5 +3883,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。';
 
   @override
-  String get benchmarkNoServers => '請先新增伺服器，然後返回執行效能測試。';
+  String get tagsEmptyTip => '尚無標籤。編輯伺服器時新增標籤，就會顯示在這裡。';
+
+  @override
+  String get benchmarkNoServers => '請先新增伺服器，再返回執行效能測試。';
+
+  @override
+  String get schemaTooNewTitle => '這些資料比目前 App 新';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return '這些資料由較新版本的 ServerBox 寫入（儲存版本 v$stored）。目前版本最高支援 v$supported，資料未被更動。';
+  }
+
+  @override
+  String get schemaTooNewReinstall => '請重新安裝較新版本，即可再次開啟所有資料。';
+
+  @override
+  String get schemaTooNewExportPlain => '匯出無密碼副本';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      '檔案將以明文包含所有 SSH 私鑰、伺服器密碼與 API key。任何取得檔案的人都能存取這些內容。';
+
+  @override
+  String get schemaTooNewWipe => '刪除所有資料';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      '本裝置上的所有伺服器、金鑰、程式碼片段與設定都將被刪除，且無法復原。先前匯出的備份將成為僅存的副本。';
+
+  @override
+  String get schemaTooNewWipeDone => '資料已刪除。請重新開啟 App，從頭開始。';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      '部分資料未能刪除，目前版本仍然無法開啟剩下的內容。請重新安裝更新的版本來讀取它。';
 }
