@@ -1048,15 +1048,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get pushToken => 'Dorong token';
 
   @override
-  String get liveActivity => 'Live Activity';
+  String get liveActivity => 'Aktivitas Live';
 
   @override
   String get liveActivityTip =>
-      'Show terminal sessions on the Lock Screen and in the Dynamic Island. A server\'s name and the state of its connection are readable there without unlocking.';
+      'Tampilkan sesi terminal di Layar Terkunci dan Dynamic Island. Nama server dan status koneksi dapat dilihat tanpa membuka kunci perangkat.';
 
   @override
   String get liveActivitySystemDisabled =>
-      'Turned off for this app in iOS Settings › Face ID & Passcode, or under Settings › ServerBox › Live Activities.';
+      'Dimatikan untuk aplikasi ini di Pengaturan iOS › Face ID & Kode, atau di Pengaturan › ServerBox › Aktivitas Live.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

@@ -1051,15 +1051,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pushToken => 'Надіслати токен';
 
   @override
-  String get liveActivity => 'Live Activity';
+  String get liveActivity => 'Активність у реальному часі';
 
   @override
   String get liveActivityTip =>
-      'Show terminal sessions on the Lock Screen and in the Dynamic Island. A server\'s name and the state of its connection are readable there without unlocking.';
+      'Показує сеанси термінала на екрані блокування та в Dynamic Island. Ім’я сервера й стан підключення видно без розблокування пристрою.';
 
   @override
   String get liveActivitySystemDisabled =>
-      'Turned off for this app in iOS Settings › Face ID & Passcode, or under Settings › ServerBox › Live Activities.';
+      'Вимкнено для цієї програми в налаштуваннях iOS › Face ID і код-пароль або в розділі Налаштування › ServerBox › Активності в реальному часі.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

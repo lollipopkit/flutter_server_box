@@ -1060,11 +1060,11 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get liveActivityTip =>
-      'Terminal sessiyalarını kilid ekranında və Dynamic Island-da göstər. Server adı və bağlantı vəziyyəti orada kilidi açmadan görünür.';
+      'Terminal seanslarını kilid ekranında və Dynamic Island-da göstərir. Serverin adı və bağlantı vəziyyəti kilidi açmadan görünür.';
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS parametrlərində bu tətbiq üçün söndürülüb. «Parametrlər › ServerBox › Canlı fəaliyyət» bölməsindən aktivləşdir.';
+      'iOS buna icazə vermir. «Settings › ServerBox › Live Activities» və «Settings › Face ID & Passcode › Live Activities» bölmələrini yoxla.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

@@ -1046,11 +1046,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveActivityTip =>
-      'Show terminal sessions on the Lock Screen and in the Dynamic Island. A server\'s name and the state of its connection are readable there without unlocking.';
+      'Show terminal sessions on the Lock Screen and Dynamic Island. Without unlocking, the server name and connection state are visible there.';
 
   @override
   String get liveActivitySystemDisabled =>
-      'Turned off for this app in iOS Settings › Face ID & Passcode, or under Settings › ServerBox › Live Activities.';
+      'iOS is not allowing one. Check Settings › ServerBox › Live Activities, and Settings › Face ID & Passcode › Live Activities.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

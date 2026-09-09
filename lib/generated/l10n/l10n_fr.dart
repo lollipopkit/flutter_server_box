@@ -1063,15 +1063,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pushToken => 'Jeton d\'identification';
 
   @override
-  String get liveActivity => 'Live Activity';
+  String get liveActivity => 'Activité en direct';
 
   @override
   String get liveActivityTip =>
-      'Show terminal sessions on the Lock Screen and in the Dynamic Island. A server\'s name and the state of its connection are readable there without unlocking.';
+      'Affichez les sessions du terminal sur l’écran verrouillé et dans Dynamic Island. Le nom du serveur et l’état de la connexion y sont visibles sans déverrouiller l’appareil.';
 
   @override
   String get liveActivitySystemDisabled =>
-      'Turned off for this app in iOS Settings › Face ID & Passcode, or under Settings › ServerBox › Live Activities.';
+      'Désactivée pour cette app dans Réglages iOS › Face ID et code, ou dans Réglages › ServerBox › Activités en direct.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

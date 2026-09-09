@@ -1946,13 +1946,13 @@ abstract class AppLocalizations {
   /// No description provided for @liveActivityTip.
   ///
   /// In en, this message translates to:
-  /// **'Show terminal sessions on the Lock Screen and in the Dynamic Island. A server\'s name and the state of its connection are readable there without unlocking.'**
+  /// **'Show terminal sessions on the Lock Screen and Dynamic Island. Without unlocking, the server name and connection state are visible there.'**
   String get liveActivityTip;
 
   /// No description provided for @liveActivitySystemDisabled.
   ///
   /// In en, this message translates to:
-  /// **'Turned off for this app in iOS Settings › Face ID & Passcode, or under Settings › ServerBox › Live Activities.'**
+  /// **'iOS is not allowing one. Check Settings › ServerBox › Live Activities, and Settings › Face ID & Passcode › Live Activities.'**
   String get liveActivitySystemDisabled;
 
   /// No description provided for @proxyCommandOnlySupportedOnDesktop.

@@ -981,11 +981,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get liveActivity => '实时活动';
 
   @override
-  String get liveActivityTip => '在锁屏和灵动岛上显示终端会话。服务器名称和连接状态在那里无需解锁即可看到。';
+  String get liveActivityTip => '在锁屏和灵动岛上显示终端会话。无需解锁即可看到服务器名称和连接状态。';
 
   @override
   String get liveActivitySystemDisabled =>
-      '已在 iOS 设置中对本应用关闭。请在「设置 › ServerBox › 实时活动」中开启。';
+      'iOS 未允许显示。请检查「设置 › ServerBox › 实时活动」以及「设置 › 面容 ID 与密码 › 实时活动」。';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 仅支持桌面平台。';
@@ -2905,11 +2905,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get liveActivity => '即時動態';
 
   @override
-  String get liveActivityTip => '在鎖定畫面和動態島上顯示終端機工作階段。伺服器名稱與連線狀態在那裡無需解鎖即可看到。';
+  String get liveActivityTip => '在鎖定畫面和動態島上顯示終端機工作階段。無需解鎖即可查看伺服器名稱與連線狀態。';
 
   @override
   String get liveActivitySystemDisabled =>
-      '已在 iOS 設定中對本 App 關閉。請在「設定 › ServerBox › 即時動態」中開啟。';
+      'iOS 未允許顯示。請檢查「設定 › ServerBox › 即時動態」以及「設定 › 面容 ID 與密碼 › 即時動態」。';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 僅支援桌面平台。';
