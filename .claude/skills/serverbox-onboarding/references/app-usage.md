@@ -43,7 +43,7 @@ depends on what the agent's operator enabled.
 | Feature | Over SSH | Through an agent |
 |---|---|---|
 | Status, charts | yes | yes, plus stored history |
-| Terminal | yes | `[remote_access.terminal] enabled` **and** secure transport |
+| Terminal | yes | `full_access`, `[remote_access.terminal] enabled`, **and** secure transport |
 | Commands, processes, systemd, containers, snippets, power | yes | `full_access` **and** secure transport |
 | File browsing | SFTP | `[remote_access.fs]` with `roots` set |
 | SFTP transfers, port forwarding | yes | never — add the same machine over SSH as a second server |
