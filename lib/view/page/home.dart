@@ -901,9 +901,37 @@ class _HomePageState extends ConsumerState<HomePage>
     // this branch exists for. The future completes once the pop has.
     await LocalAuthPage.route.go(
       context,
-      args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
+      args: LocalAuthPageArgs(
+        onAuthSuccess: () => _shouldAuth = false,
+        onUnavailable: _onAuthUnavailable,
+      ),
     );
     if (showGuide) await _maybeShowNavGuide();
+  }
+
+  /// This device cannot answer the lock, so stop asking it.
+  ///
+  /// The setting is only ever true here because it arrived from somewhere else:
+  /// a backup taken on a phone, restored onto a machine with no sensor. The
+  /// lock screen has no way to open on such a machine, and the settings page
+  /// hides the switch when `LocalAuth.isAvail` is false — so the one control
+  /// that would turn it off is missing on exactly the devices that need it,
+  /// and the app was unusable (#1406).
+  ///
+  /// Written without a sync timestamp. This is a fact about *this* machine, and
+  /// stamping it would let the next sync carry it to the phone the backup came
+  /// from and silently unlock that too.
+  void _onAuthUnavailable() {
+    _shouldAuth = false;
+    final prop = Stores.setting.useBioAuth;
+    final saved = prop.store.set(prop.key, false, updateLastUpdateTsOnSet: false);
+    // `set` answers false rather than throwing. Worth a line and nothing more:
+    // the app is already past the lock either way, and the cost of a failed
+    // write is being asked once more on the next launch.
+    if (saved != true) {
+      Loggers.app.warning('Could not turn ${prop.key} off on a device '
+          'that cannot authenticate');
+    }
   }
 
   /// Let the native privacy cover come off, now that either the lock screen is
