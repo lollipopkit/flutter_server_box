@@ -8,6 +8,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_result.dart';
 import 'package:server_box/data/store/benchmark.dart';
+import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/log_view.dart';
 
 /// One benchmark's numbers.
@@ -157,7 +158,7 @@ extension _Sections on _BenchmarkResultPageState {
             Icon(icon, color: color, size: 17),
             UIs.width13,
             Expanded(
-              child: Text(_fmtDuration(elapsed), style: UIs.text15),
+              child: Text(fmtDuration(elapsed), style: UIs.text15),
             ),
             if (_run.status == BenchmarkStatus.running)
               const SizedBox(
@@ -173,12 +174,6 @@ extension _Sections on _BenchmarkResultPageState {
         if (_run.exitCode case final code?) _kv('Exit', '$code'),
       ],
     );
-  }
-
-  static String _fmtDuration(Duration d) {
-    final m = d.inMinutes;
-    final s = d.inSeconds % 60;
-    return '${m}m ${s.toString().padLeft(2, '0')}s';
   }
 
   Widget _systemCard(YabsResult r) {
