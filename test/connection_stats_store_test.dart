@@ -163,7 +163,7 @@ void main() {
 
   test('a server with no attempts is absent from the list, not an error', () {
     expect(
-      store.getAllServerStats().where((e) => e.serverId == 'nobody'),
+      store.getAllServerStats().where((e) => e.serverId == 'b'),
       isEmpty,
     );
   });
