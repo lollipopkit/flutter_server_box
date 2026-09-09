@@ -147,7 +147,16 @@ abstract final class SchemaVersion {
 
   /// Marks a fresh install as already current, so its empty stores aren't put
   /// through migrations written for data that doesn't exist.
-  static void initFresh() => _store(current);
+  static void initFresh() {
+    // Never downwards. This is reached when nothing says what version the data
+    // is, which on a downgraded install is a state a retired `HiveImport`
+    // marker could produce — and writing [current] over a higher stored version
+    // tells [migrate] there is nothing to do, so the older build then writes
+    // its own shapes over data it cannot read. That is the exact loss the
+    // refusal exists to prevent, arrived at by a different door.
+    if (stored > current) return;
+    _store(current);
+  }
 
   /// The layout `HiveImport` produces: entities as JSON rows in `kv`.
   ///

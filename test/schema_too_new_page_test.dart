@@ -59,6 +59,37 @@ void main() {
 
   tearDown(SqliteDb.close);
 
+  /// Paths handed to the share sheet, and what was in the file at that moment.
+  ///
+  /// Captured rather than found on disk afterwards: the copy lives in a
+  /// temporary directory that is removed as soon as the share returns.
+  late List<String> shared;
+  late List<int> sharedSizes;
+
+  setUp(() {
+    shared = [];
+    sharedSizes = [];
+    SchemaTooNewPage.shareForTest = (path) async {
+      shared.add(path);
+      sharedSizes.add(File(path).lengthSync());
+    };
+  });
+
+  tearDown(() => SchemaTooNewPage.shareForTest = null);
+
+  /// Lets real asynchronous work finish.
+  ///
+  /// The export runs under `Isolate.run`, which a `testWidgets` fake-async zone
+  /// does not drive on its own — without this the copy never completes and the
+  /// share is never reached.
+  Future<void> settle(WidgetTester tester) async {
+    await tester.runAsync(() => Future<void>.delayed(
+          const Duration(milliseconds: 200),
+        ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
       const SchemaTooNewApp(
@@ -105,13 +136,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text(l10n.schemaTooNewPlainWarn), findsOneWidget);
-    expect(
-      tmp.listSync().whereType<File>().where(
-        (f) => f.path.contains('rescue'),
-      ),
-      isEmpty,
-      reason: 'a copy was written before the user had answered',
-    );
+    expect(shared, isEmpty, reason: 'a copy was made before the user answered');
   });
 
   testWidgets('and writes one when the warning is accepted', (tester) async {
@@ -122,18 +147,19 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await settle(tester);
 
-    final written = tmp
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.contains('rescue'))
-        .toList();
-    expect(written, hasLength(1));
+    expect(shared, hasLength(1));
     // Named for the version that wrote the data, which is what a future reader
     // has to match it against.
-    expect(written.single.path, contains('v23'));
-    expect(written.single.path, endsWith('-plain.db'));
+    expect(shared.single, contains('v23'));
+    expect(shared.single, endsWith('-plain.db'));
+    expect(sharedSizes.single, greaterThan(0));
+    // Not beside `store.db`: `sharePaths` reveals the file on desktop, and this
+    // one is the whole database in the clear.
+    expect(shared.single, isNot(startsWith(Paths.doc)));
+    // And gone once the sheet has been answered.
+    expect(File(shared.single).existsSync(), isFalse);
   });
 
   testWidgets('the wipe asks first, and says what is left afterwards', (
@@ -155,6 +181,31 @@ void main() {
     expect(find.text(l10n.schemaTooNewWipeDone), findsOneWidget);
     expect(find.text(libL10n.backup), findsNothing);
     expect(find.text(l10n.schemaTooNewWipe), findsNothing);
+    // And a way out, rather than an instruction the user cannot act on:
+    // reopening resumes this same process and this same dead screen.
+    expect(find.text(libL10n.exit), findsOneWidget);
+  });
+
+  testWidgets('a wipe that cannot delete still closes the export routes', (
+    tester,
+  ) async {
+    // `wipe` closes the connection before it deletes. If a delete then fails,
+    // offering Backup again is offering a button that can only report "the
+    // database is not open" — and it was the user's last chance at the data.
+    await pump(tester);
+    // Nothing to delete: the file is gone, so `wipe` throws on the way.
+    SqliteDb.instance.execute('PRAGMA journal_mode = DELETE;');
+    File(SqliteDb.path!).deleteSync();
+
+    await tester.tap(find.text(l10n.schemaTooNewWipe));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text(libL10n.ok).last);
+    await tester.pump();
+    await settle(tester);
+
+    expect(find.text(libL10n.backup), findsNothing);
+    expect(find.text(l10n.schemaTooNewExportPlain), findsNothing);
   });
 
   testWidgets('declining the wipe leaves everything alone', (tester) async {

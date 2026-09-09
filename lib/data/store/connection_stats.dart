@@ -34,6 +34,9 @@ class ConnectionStatsStore {
 
   /// The table is created with the rest of the schema, so this is only the
   /// per-launch age sweep.
+  ///
+  /// It *writes*, which is why `Stores.init` only calls it once the stored
+  /// schema version says this build may.
   Future<void> init() async => _expire();
 
   /// Records one attempt, or does nothing if the server is gone.

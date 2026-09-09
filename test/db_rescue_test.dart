@@ -219,6 +219,62 @@ void main() {
     );
   });
 
+  test('an index whose name contains "unique" is not made unique', () async {
+    // The modifier came from `sql.contains('UNIQUE')`, so `idx_unique_name`
+    // read as one — and the copy died on the first duplicate.
+    final db = SqliteDb.instance;
+    db.execute('CREATE TABLE dupes(name TEXT);');
+    db.execute("INSERT INTO dupes VALUES ('same'), ('same');");
+    db.execute('CREATE INDEX idx_unique_name ON dupes(name);');
+
+    await DbRescue.exportTo(out('dupes.db'));
+
+    final copy = sqlite3.open(out('dupes.db'));
+    addTearDown(copy.close);
+    expect(copy.select('SELECT name FROM dupes;').length, 2);
+  });
+
+  test('a generated column does not take the export down', () async {
+    // `SELECT *` yields it and `INSERT` will not take it.
+    final db = SqliteDb.instance;
+    db.execute('CREATE TABLE gen('
+        'a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2) STORED);');
+    db.execute('INSERT INTO gen(a) VALUES (21);');
+
+    await DbRescue.exportTo(out('gen.db'));
+
+    final copy = sqlite3.open(out('gen.db'));
+    addTearDown(copy.close);
+    expect(copy.select('SELECT a, b FROM gen;').single['b'], 42);
+  });
+
+  test('an object it cannot rewrite is named, not run against the source',
+      () async {
+    // An unmatched `CREATE` used to fall through unchanged — and the
+    // connection's default schema is `main`, so it executed against the
+    // database being rescued.
+    final db = SqliteDb.instance;
+    db.execute('CREATE TABLE src(body TEXT);');
+    db.execute("INSERT INTO src VALUES ('x');");
+    try {
+      db.execute('CREATE VIRTUAL TABLE vt USING fts5(body);');
+    } catch (_) {
+      return; // fts5 not in this build; the guard is still the point.
+    }
+
+    await expectLater(
+      DbRescue.exportTo(out('virt.db')),
+      throwsA(isA<UnsupportedError>()),
+    );
+    // And the source is untouched: one virtual table, not two.
+    expect(
+      db
+          .select("SELECT count(*) c FROM sqlite_master WHERE name = 'vt';")
+          .single['c'],
+      1,
+    );
+  });
+
   group('an encrypted export', () {
     test('needs its password, and refuses another', () async {
       seedFutureSchema();
@@ -290,5 +346,21 @@ void main() {
     for (final suffix in const ['', '-wal', '-shm', '-journal']) {
       expect(File('$path$suffix').existsSync(), isFalse, reason: suffix);
     }
+  });
+
+  test('and the Hive boxes, which would otherwise be imported straight back',
+      () async {
+    // `HiveImport` decides whether to run from a marker in `setting` — inside
+    // the database. Deleting the database alone *arms* it: no marker, boxes
+    // full of servers and keys, and the next launch copies them all back in.
+    final box = File(Paths.doc.joinPath('server.hive'))
+      ..writeAsStringSync('not really a box, but it is what the import looks '
+          'for');
+    final lock = File(Paths.doc.joinPath('server.lock'))..writeAsStringSync('');
+
+    await DbRescue.wipe();
+
+    expect(box.existsSync(), isFalse);
+    expect(lock.existsSync(), isFalse);
   });
 }

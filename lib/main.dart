@@ -51,6 +51,21 @@ Future<void> main() async {
       // after `_doDbMigrate` may run: the refusal is only worth anything while
       // nothing has been written. See [SchemaTooNewException].
       Loggers.app.severe('Storage is newer than this build', e);
+      // On desktop the window is created hidden — `hiddenWindowAtLaunch()` on
+      // macOS, no `WS_VISIBLE` on Windows, no `gtk_widget_show` on Linux — and
+      // the only `windowManager.show()` at launch is inside `_initWindow`,
+      // which is *after* the throw. Without this the rescue screen is drawn
+      // into a window nobody ever sees: still no window, still no message,
+      // which is the failure it exists to fix.
+      //
+      // Not `_initWindow`, which reads the size and the title-bar preference
+      // out of the database this build has just refused to touch. Fixed
+      // arguments instead: this window holds one screen of text.
+      try {
+        await SystemUIs.initDesktopWindow(hideTitleBar: false);
+      } catch (e, s) {
+        Loggers.app.warning('Could not show the rescue window', e, s);
+      }
       runApp(SchemaTooNewApp(err: e));
       return;
     }

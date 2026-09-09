@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -58,9 +59,11 @@ abstract final class DbRescue {
     }
 
     // A leftover from an interrupted attempt would be attached and appended
-    // to, leaving a file holding two copies of every table.
-    final out = File(outPath);
-    if (out.existsSync()) out.deleteSync();
+    // to, leaving a file holding two copies of every table. Sidecars included:
+    // the attached database is in rollback-journal mode, so a process killed
+    // mid-copy leaves `-journal` behind, and SQLite would replay that hot
+    // journal into the unrelated file the next attach creates.
+    _deleteWithSidecars(outPath);
 
     try {
       await Isolate.run(
@@ -73,10 +76,20 @@ abstract final class DbRescue {
       );
     } catch (_) {
       // A half-written copy is worse than none: it looks like a backup.
-      if (out.existsSync()) out.deleteSync();
+      _deleteWithSidecars(outPath);
       rethrow;
     }
   }
+
+  /// Everything SQLite may have made for the database at [path].
+  static void _deleteWithSidecars(String path) {
+    for (final suffix in _sidecars) {
+      final f = File('$path$suffix');
+      if (f.existsSync()) f.deleteSync();
+    }
+  }
+
+  static const _sidecars = ['', '-wal', '-shm', '-journal'];
 
   /// The copy itself, on a connection of this isolate's own.
   ///
@@ -117,6 +130,23 @@ abstract final class DbRescue {
 
       // `KEY ''` means no encryption in sqlite3mc, which is what makes the
       // plain export plain.
+      //
+      // An encrypted one names its cipher, and that is not the same decision as
+      // the read above. Reading may leave it out because the file says what it
+      // was written with; *writing* without it takes whatever sqlite3mc has as
+      // its default that month, so a bump could hand a user a backup readable
+      // only by a build nobody can identify from the file. fl_lib pins the
+      // store's cipher for the same reason. This is a format choice for the
+      // exported file, not a restatement of what `SqliteDb` uses — the two can
+      // differ without anything breaking.
+      //
+      // On the connection, before the attach: `PRAGMA <schema>.cipher` needs
+      // the schema to exist, and after the attach the file has already been
+      // created with a cipher. `main` is open and keyed by now, so changing the
+      // default cannot affect reading it.
+      if (password != null) {
+        db.execute("PRAGMA cipher = '$_exportCipher';");
+      }
       db.execute(
         'ATTACH DATABASE ? AS $_alias KEY ?;',
         [outPath, password ?? ''],
@@ -168,33 +198,78 @@ abstract final class DbRescue {
       final name = o['name'] as String;
       final sql = o['sql'] as String;
 
-      // `CREATE TABLE x (...)` -> `CREATE TABLE rescue_out.x (...)`. Only the
-      // leading keyword is touched; the body, including any `IF NOT EXISTS`
-      // that followed it, is the newer build's and is copied verbatim.
-      final qualified = sql.replaceFirst(
-        RegExp(
-          r'^\s*CREATE\s+(TEMP\s+|TEMPORARY\s+)?(UNIQUE\s+)?'
-          r'(TABLE|INDEX|VIEW|TRIGGER)\s+(IF\s+NOT\s+EXISTS\s+)?',
-          caseSensitive: false,
-        ),
-        'CREATE ${type == 'index' && sql.toUpperCase().contains('UNIQUE') ? 'UNIQUE ' : ''}'
-            '${type.toUpperCase()} $_alias.',
-      );
-      db.execute(qualified);
-
-      if (type == 'table') {
-        db.execute(
-          'INSERT INTO $_alias."$name" SELECT * FROM main."$name";',
-        );
-      }
+      db.execute(_qualify(sql, type));
+      if (type == 'table') _copyRows(db, name);
     }
   }
 
-  /// Deletes the database file, so the next launch starts empty.
+  /// The leading `CREATE ...` of [sql], pointed at the attached database.
   ///
-  /// The file only. The encryption key stays in the keychain — it is per
-  /// install, not per database, and a new file is keyed with it just the same —
-  /// and so do the logs, which are the only record of why this was needed.
+  /// `CREATE TABLE x (...)` -> `CREATE TABLE rescue_out.x (...)`. Only the
+  /// keywords before the name are rewritten; the body, including any
+  /// `IF NOT EXISTS`, is the newer build's and is carried verbatim.
+  ///
+  /// The modifiers come from the match, not from reading the text again. A
+  /// first version re-derived `UNIQUE` with `sql.contains('UNIQUE')`, which is
+  /// true of `CREATE INDEX idx_unique_name ...` — so a plain index was recreated
+  /// as a unique one, and the copy died on the first duplicate.
+  static String _qualify(String sql, String type) {
+    final match = _createRe.firstMatch(sql);
+    if (match == null) {
+      // Never fall through to executing [sql] unchanged: the connection's
+      // default schema is `main`, so an unrecognised statement would run
+      // against the database being rescued. `CREATE VIRTUAL TABLE`, which a
+      // newer build may well add, is exactly such a statement.
+      throw UnsupportedError('Cannot copy an object declared as: $sql');
+    }
+    // Everything after the match is the object's own name and body.
+    final unique = match.group(2) == null ? '' : 'UNIQUE ';
+    return 'CREATE $unique${type.toUpperCase()} $_alias.'
+        '${sql.substring(match.end)}';
+  }
+
+  static final _createRe = RegExp(
+    r'^\s*CREATE\s+(TEMP\s+|TEMPORARY\s+)?(UNIQUE\s+)?'
+    r'(TABLE|INDEX|VIEW|TRIGGER)\s+(IF\s+NOT\s+EXISTS\s+)?',
+    caseSensitive: false,
+  );
+
+  /// Copies one table's rows, naming the columns on both sides.
+  ///
+  /// `SELECT *` would be shorter and is wrong: a generated column is in `*` and
+  /// cannot be inserted into, so a table with one would take the whole export
+  /// down. `table_xinfo` reports every column with a `hidden` flag — 0 ordinary,
+  /// 2 a `STORED` generated one, 3 `VIRTUAL`, 1 a hidden virtual-table column.
+  /// Only 0 and 2 can be written.
+  static void _copyRows(Database db, String table) {
+    final cols = db
+        .select('SELECT name, hidden FROM pragma_table_xinfo(?);', [table])
+        .where((r) => r['hidden'] == 0 || r['hidden'] == 2)
+        .map((r) => '"${r['name']}"')
+        .join(', ');
+    if (cols.isEmpty) return;
+    db.execute(
+      'INSERT INTO $_alias."$table" ($cols) SELECT $cols FROM main."$table";',
+    );
+  }
+
+  /// The cipher an encrypted export is written with. See [_exportSync].
+  static const _exportCipher = 'chacha20';
+
+  /// Deletes the stored data, so the next launch starts empty.
+  ///
+  /// The database and the Hive boxes. The boxes matter because `HiveImport`
+  /// decides whether to run from a marker kept in `setting` — inside the
+  /// database — so deleting the database alone *arms* the import: the next
+  /// launch finds no marker and boxes full of servers, keys and snippets, and
+  /// copies every one of them back in. For somebody wiping to get data off a
+  /// device that is the opposite of what the confirmation promised.
+  ///
+  /// TODO: drop the box sweep with `HiveImport`.
+  ///
+  /// The encryption key stays in the keychain — it is per install, not per
+  /// database, and a new file is keyed with it just the same — and so do the
+  /// logs, which are the only record of why this was needed.
   ///
   /// The connection is closed first: unlinking a file out from under a live
   /// handle is undefined at best, and on Windows the delete fails outright.
@@ -204,10 +279,18 @@ abstract final class DbRescue {
     final path = SqliteDb.path;
     await closeTables();
     await SqliteDb.close();
-    if (path == null) return;
-    for (final suffix in const ['', '-wal', '-shm', '-journal']) {
-      final f = File('$path$suffix');
-      if (f.existsSync()) f.deleteSync();
+    await Hive.close();
+    if (path != null) _deleteWithSidecars(path);
+
+    // Everything Hive keeps, wherever it was told to keep it. Matched by
+    // extension rather than by a list of box names: a box this build has no
+    // name for is one the import would still read.
+    final hiveDir = Directory(Paths.doc);
+    if (!hiveDir.existsSync()) return;
+    for (final f in hiveDir.listSync().whereType<File>()) {
+      if (f.path.endsWith('.hive') || f.path.endsWith('.lock')) {
+        f.deleteSync();
+      }
     }
   }
 }
