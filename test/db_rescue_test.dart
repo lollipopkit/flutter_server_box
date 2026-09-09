@@ -40,7 +40,79 @@ void main() {
     db.execute('CREATE UNIQUE INDEX idx_plugin_name ON plugin_install(name);');
   }
 
+  /// A child table that `sqlite_master` lists *before* its parent, with rows in
+  /// both.
+  ///
+  /// Which is not a contrivance: a create-copy-drop-rename migration moves the
+  /// table it rebuilds to the end of `sqlite_master`, and `server` — the parent
+  /// of six cascade tables — was rebuilt by m017. A real v23 database on a real
+  /// iPad failed exactly here, with `no such table: rescue_out.server`, while
+  /// every test above passed: the invented tables had no foreign keys, and the
+  /// real ones had no rows.
+  void seedChildBeforeParent() {
+    final db = SqliteDb.instance;
+    db.execute('CREATE TABLE child_thing('
+        'id TEXT PRIMARY KEY, '
+        'parent TEXT NOT NULL REFERENCES parent_thing(id) ON DELETE CASCADE);');
+    db.execute('CREATE TABLE parent_thing(id TEXT PRIMARY KEY);');
+    db.execute("INSERT INTO parent_thing VALUES ('p');");
+    db.execute("INSERT INTO child_thing VALUES ('c', 'p');");
+  }
+
   String out(String name) => '${tmp.path}/$name';
+
+  test('a child listed before its parent still copies', () {
+    seedChildBeforeParent();
+    final path = out('fk.db');
+
+    expect(() => DbRescue.exportTo(path), returnsNormally);
+
+    final copy = sqlite3.open(path);
+    addTearDown(copy.close);
+    expect(copy.select('SELECT id FROM child_thing;').single['id'], 'c');
+    expect(copy.select('SELECT id FROM parent_thing;').single['id'], 'p');
+  });
+
+  test('and the copy still declares the foreign key', () {
+    // Off during the copy, not removed from the schema: the DDL comes over
+    // verbatim, so the copy enforces what the original did.
+    seedChildBeforeParent();
+    final path = out('fk2.db');
+
+    DbRescue.exportTo(path);
+
+    final copy = sqlite3.open(path);
+    addTearDown(copy.close);
+    copy.execute('PRAGMA foreign_keys = ON;');
+    expect(
+      () => copy.execute("INSERT INTO child_thing VALUES ('c2', 'nobody');"),
+      throwsA(isA<SqliteException>()),
+    );
+  });
+
+  test('foreign keys are back on afterwards', () {
+    // Left off, every cascade on this connection is disarmed for the rest of
+    // its life — and this connection is the app's.
+    seedChildBeforeParent();
+    DbRescue.exportTo(out('fk3.db'));
+
+    expect(
+      SqliteDb.instance.select('PRAGMA foreign_keys;').single.values.first,
+      1,
+    );
+  });
+
+  test('and back on even when the copy fails', () {
+    seedChildBeforeParent();
+    try {
+      DbRescue.exportTo('${tmp.path}/nope/deep.db');
+    } catch (_) {}
+
+    expect(
+      SqliteDb.instance.select('PRAGMA foreign_keys;').single.values.first,
+      1,
+    );
+  });
 
   test('a plain export opens with no key at all', () {
     seedFutureSchema();

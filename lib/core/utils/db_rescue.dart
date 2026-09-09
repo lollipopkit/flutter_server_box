@@ -34,20 +34,47 @@ abstract final class DbRescue {
     final out = File(outPath);
     if (out.existsSync()) out.deleteSync();
 
-    // `KEY ''` means no encryption in sqlite3mc, which is what makes the plain
-    // export plain. No cipher pragma either way: the keyed file records what it
-    // was written with, so `PRAGMA key` alone reopens it — which also keeps
-    // this from having to know the constant `SqliteDb` keeps to itself.
-    db.execute(
-      'ATTACH DATABASE ? AS $_alias KEY ?;',
-      [outPath, password ?? ''],
-    );
+    // Off across the whole copy, and this is not optional. `sqlite_master` is
+    // in creation order, and a create-copy-drop-rename migration moves the
+    // table it rebuilds to the *end* — so `server`, the parent of six
+    // `ON DELETE CASCADE` tables, comes after its own children. Inserting
+    // `server_tag` before `server` exists then fails the foreign key, which is
+    // what a real v23 database did on the first device this ran on. Ordering
+    // the copy by dependency would be the alternative, and it would have to
+    // parse the newer build's DDL to find the dependencies.
+    //
+    // Outside a transaction, because the pragma is a no-op inside one — and
+    // there is no transaction here for that reason.
+    //
+    // Nothing is lost by it: the source satisfies its own constraints, so a
+    // faithful copy does too. They are still declared in the copy, since the
+    // DDL comes over verbatim.
+    db.execute('PRAGMA foreign_keys = OFF;');
+    var copied = false;
     try {
-      _copySchemaAndRows(db);
+      // `KEY ''` means no encryption in sqlite3mc, which is what makes the
+      // plain export plain. No cipher pragma either way: the keyed file records
+      // what it was written with, so `PRAGMA key` alone reopens it — which also
+      // keeps this from having to know the constant `SqliteDb` keeps private.
+      db.execute(
+        'ATTACH DATABASE ? AS $_alias KEY ?;',
+        [outPath, password ?? ''],
+      );
+      try {
+        _copySchemaAndRows(db);
+        copied = true;
+      } finally {
+        // Detached even when the copy failed, or the next attempt finds the
+        // alias taken and the file locked.
+        db.execute('DETACH DATABASE $_alias;');
+      }
     } finally {
-      // Detached even when the copy failed, or the next attempt finds the
-      // alias taken and the file locked.
-      db.execute('DETACH DATABASE $_alias;');
+      // Back on whatever happened. Left off, every cascade on this connection
+      // is disarmed for the rest of its life.
+      db.execute('PRAGMA foreign_keys = ON;');
+      // A half-written copy is worse than none: it looks like a backup. Only
+      // after the detach, since an attached file cannot be unlinked.
+      if (!copied && out.existsSync()) out.deleteSync();
     }
   }
 
