@@ -388,7 +388,7 @@
   "askAiSendOnEnterTip": "Enter gönderir, Shift+Enter yeni satır. Kapalı: Enter yeni satır, Cmd/Ctrl+Enter gönderir.",
   "askAiApiKeyOptional": "Yerel ya da kimlik doğrulaması gerekmiyorsa boş bırak",
   "askAiAllowInsecure": "Şifresiz HTTP’ye izin ver",
-  "askAiAllowInsecureTip": "Ağınızdaki kendi barındırdığınız bir modele http:// üzerinden ulaşmak için gerekir. API anahtarı ve tüm terminal bağlamı şifrelenmeden gönderilir. localhost için gerekmez.",
+  "askAiAllowInsecureTip": "localhost dışındaki adreslerde bulunan kendi barındırdığınız modellere http:// bağlantılarına izin verir. API anahtarı ve tüm terminal bağlamı şifrelenmeden gönderilir; localhost etkilenmez.",
   "askAiInsecureEndpoint": "Bu uç nokta http:// kullanıyor. Kullanmak için AI ayarlarında “Şifresiz HTTP’ye izin ver” seçeneğini açın.",
   "askAiHistory": "Konuşma geçmişi",
   "askAiNewConversation": "Yeni konuşma",

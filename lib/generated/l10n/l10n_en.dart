@@ -188,7 +188,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Needed to reach a self-hosted model over http:// on your network. The API key and any terminal context are sent unencrypted. localhost works without this.';
+      'Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.';
 
   @override
   String get askAiInsecureEndpoint =>

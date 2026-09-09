@@ -192,7 +192,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Es necesario para acceder a un modelo propio mediante http:// en tu red. La clave API y cualquier contexto de terminal se enviarán sin cifrar. No es necesario para localhost.';
+      'Permite conexiones http:// a modelos propios en direcciones distintas de localhost. La clave API y cualquier contexto de terminal se enviarán sin cifrar; localhost no se ve afectado.';
 
   @override
   String get askAiInsecureEndpoint =>

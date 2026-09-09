@@ -43,23 +43,32 @@ abstract class BenchmarkState with _$BenchmarkState {
 /// without either knowing about the other.
 @riverpod
 class BenchmarkNotifier extends _$BenchmarkNotifier {
-  late final Spi _spi;
+  late final String _serverId;
   Timer? _timer;
 
   BenchmarkStore get _store => BenchmarkStore.instance;
 
+  /// Keyed by the server's id, not by the whole [Spi].
+  ///
+  /// Nothing here reads a field of one: every use resolves the machine through
+  /// `serverProvider(_serverId)`, which is where an edit lands anyway. Keying
+  /// on the value meant renaming a server — or changing any field of it —
+  /// disposed this notifier and built a new one, throwing away `isBusy` and any
+  /// error on screen and restarting the poll cycle, in the middle of a run that
+  /// takes a quarter of an hour. The run survived that, because it is detached
+  /// and `build` picks it back up out of the store; nothing else did.
   @override
-  BenchmarkState build(Spi spi) {
-    _spi = spi;
+  BenchmarkState build(String serverId) {
+    _serverId = serverId;
     ref.onDispose(() => _timer?.cancel());
 
-    final active = _store.activeFor(spi.id);
+    final active = _store.activeFor(serverId);
     // Polling starts on its own when there is something to poll: the run has
     // been going since before this page existed.
     if (active != null) _schedule(active, immediate: true);
     return BenchmarkState(
       active: active,
-      history: _store.forServer(spi.id),
+      history: _store.forServer(serverId),
     );
   }
 
@@ -96,8 +105,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     // one nothing will ever cancel — it would fire on a dead notifier and
     // throw `UnmountedRefException` out of a callback nobody awaits. Every
     // caller below is past an `await`, which is where the provider can have
-    // gone: this is keyed by the whole [Spi], so saving a server edit disposes
-    // it while a poll is in flight.
+    // gone: closing the tab disposes this while a poll is in flight.
     if (!ref.mounted) return;
     _timer = Timer(
       immediate ? Duration.zero : _interval(active.elapsed),
@@ -115,12 +123,12 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     state = state.copyWith(isBusy: true, error: null);
 
     try {
-      final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
+      final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
       await _ensureScript(exec);
 
       final run = BenchmarkRun(
         id: 'bench_${DateTime.now().microsecondsSinceEpoch}',
-        serverId: _spi.id,
+        serverId: _serverId,
         startedAt: DateTime.now(),
         status: BenchmarkStatus.running,
         options: options,
@@ -149,7 +157,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
       if (!ref.mounted) return;
       state = state.copyWith(
         active: run,
-        history: _store.forServer(_spi.id),
+        history: _store.forServer(_serverId),
         isBusy: false,
       );
       _schedule(run, immediate: true);
@@ -191,7 +199,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
 
     final YabsPollState poll;
     try {
-      final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
+      final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
       final res = await exec.run(YabsScript.pollCommand(active.runDir));
       poll = YabsPollState.parse(res.combined);
     } catch (e) {
@@ -322,7 +330,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     if (!ref.mounted) return;
     state = state.copyWith(
       active: null,
-      history: _store.forServer(_spi.id),
+      history: _store.forServer(_serverId),
       isBusy: false,
     );
     unawaited(_cleanup(run));
@@ -335,7 +343,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     // is an `UnmountedRefException` out of an unawaited future.
     if (!ref.mounted) return;
     try {
-      final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
+      final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
       await exec.run(YabsScript.cleanupCommand(run.runDir, run.id));
     } catch (e) {
       // Worth a line: what is left behind is a 2 GB fio file when the run was
@@ -353,7 +361,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
     _timer?.cancel();
 
     try {
-      final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
+      final exec = await ref.read(serverProvider(_serverId).notifier).ensureExec();
       await exec.run(YabsScript.cancelCommand(active.runDir));
     } catch (e, s) {
       Loggers.app.warning('Benchmark cancel failed', e, s);
@@ -374,7 +382,7 @@ class BenchmarkNotifier extends _$BenchmarkNotifier {
   /// Forgets one stored run.
   void remove(String id) {
     _store.remove(id);
-    state = state.copyWith(history: _store.forServer(_spi.id));
+    state = state.copyWith(history: _store.forServer(_serverId));
   }
 
   void clearError() => state = state.copyWith(error: null);

@@ -179,7 +179,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'ネットワーク上のセルフホストモデルに http:// で接続する場合に必要です。API キーと端末コンテキストは暗号化されずに送信されます。localhost では必要ありません。';
+      'localhost 以外のアドレスにあるセルフホストモデルへの http:// 接続を許可します。API キーと端末コンテキストは暗号化されずに送信されます。localhost には影響しません。';
 
   @override
   String get askAiInsecureEndpoint =>

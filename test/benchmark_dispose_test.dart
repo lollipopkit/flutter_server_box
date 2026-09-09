@@ -1,9 +1,8 @@
 /// A poll that lands after the page has gone.
 ///
-/// `benchmarkProvider` is keyed by the whole `Spi`, like `servicesProvider`, so
-/// saving a server edit disposes it mid-poll — and so does closing the tab. Two
-/// different things must happen in that window, which is why the guards here
-/// are per-write rather than one at the top:
+/// Closing the tab disposes `benchmarkProvider` mid-poll. Two different things
+/// must happen in that window, which is why the guards here are per-write
+/// rather than one at the top:
 ///
 /// - Nothing may write `state`, which throws on a disposed provider.
 /// - The *record* must still be written. A benchmark takes fifteen minutes, and
@@ -84,7 +83,7 @@ void main() {
         serverProvider(sid).overrideWith(() => _FakeServerNotifier(exec)),
       ],
     );
-    container.read(benchmarkProvider(spi).notifier);
+    container.read(benchmarkProvider(sid).notifier);
     return container;
   }
 

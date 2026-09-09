@@ -53,7 +53,7 @@
   "askAiSendOnEnterTip": "Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.",
   "askAiApiKeyOptional": "Leave empty for local or unauthenticated",
   "askAiAllowInsecure": "Allow plain HTTP",
-  "askAiAllowInsecureTip": "Needed to reach a self-hosted model over http:// on your network. The API key and any terminal context are sent unencrypted. localhost works without this.",
+  "askAiAllowInsecureTip": "Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.",
   "askAiInsecureEndpoint": "This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.",
   "askAiHistory": "Conversation history",
   "askAiNewConversation": "New conversation",

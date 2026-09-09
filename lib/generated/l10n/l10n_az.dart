@@ -191,7 +191,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Şəbəkəndə http:// ilə işləyən öz modelinə qoşulmaq üçün lazımdır. API açarı və terminal konteksti şifrələnmədən göndərilir. localhost üçün tələb olunmur.';
+      'localhost xaricindəki ünvanlarda yerləşən öz modelinə http:// ilə qoşulmağa imkan verir. API açarı və terminal konteksti şifrələnmədən göndərilir; localhost bundan təsirlənmir.';
 
   @override
   String get askAiInsecureEndpoint =>

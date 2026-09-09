@@ -192,7 +192,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Ağınızdaki kendi barındırdığınız bir modele http:// üzerinden ulaşmak için gerekir. API anahtarı ve tüm terminal bağlamı şifrelenmeden gönderilir. localhost için gerekmez.';
+      'localhost dışındaki adreslerde bulunan kendi barındırdığınız modellere http:// bağlantılarına izin verir. API anahtarı ve tüm terminal bağlamı şifrelenmeden gönderilir; localhost etkilenmez.';
 
   @override
   String get askAiInsecureEndpoint =>

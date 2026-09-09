@@ -190,7 +190,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Diperlukan untuk mengakses model yang di-host sendiri melalui http:// di jaringan Anda. Kunci API dan konteks terminal akan dikirim tanpa enkripsi. Tidak diperlukan untuk localhost.';
+      'Mengizinkan koneksi http:// ke model yang di-host sendiri pada alamat selain localhost. Kunci API dan konteks terminal akan dikirim tanpa enkripsi; localhost tidak terpengaruh.';
 
   @override
   String get askAiInsecureEndpoint =>

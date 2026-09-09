@@ -440,13 +440,12 @@ extension _Actions on _BenchmarkTabPageState {
     // from the newest entry, so it would come back filled in from a run that no
     // longer exists.
     //
-    // Straight to the store for any other machine. `benchmarkProvider` is keyed
-    // by the whole `Spi` and only `BenchmarkRunPage` ever reads one, so no
-    // notifier is alive for a machine that is not selected — and reading one
-    // into being here would set it polling the run this is deleting.
-    final spi = run.serverId == _selectedId ? _byId[run.serverId] : null;
-    if (spi != null) {
-      ref.read(benchmarkProvider(spi).notifier).remove(run.id);
+    // Straight to the store for any other machine. Only `BenchmarkRunPage`
+    // reads this provider and only the selected machine has one on screen, so
+    // no notifier is alive for the rest — and reading one into being here would
+    // set it polling the run this is deleting.
+    if (run.serverId == _selectedId) {
+      ref.read(benchmarkProvider(run.serverId).notifier).remove(run.id);
     } else {
       BenchmarkStore.instance.remove(run.id);
     }

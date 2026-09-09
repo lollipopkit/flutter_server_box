@@ -176,7 +176,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      '在局域网内通过 http:// 访问自建模型时需要开启。API Key 和终端上下文将以明文发送。localhost 无需开启。';
+      '允许通过 http:// 连接 localhost 以外地址上的自建模型。API Key 和终端上下文将以明文发送；localhost 不受影响。';
 
   @override
   String get askAiInsecureEndpoint => '该地址使用 http://。请在 AI 设置中开启「允许明文 HTTP」。';
@@ -2090,7 +2090,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiAllowInsecureTip =>
-      '在區域網路內透過 http:// 存取自建模型時需要開啟。API Key 與終端機上下文將以明文傳送。localhost 無需開啟。';
+      '允許透過 http:// 連線至 localhost 以外位址上的自建模型。API Key 與終端機上下文將以明文傳送；localhost 不受影響。';
 
   @override
   String get askAiInsecureEndpoint => '此位址使用 http://。請在 AI 設定中開啟「允許明文 HTTP」。';

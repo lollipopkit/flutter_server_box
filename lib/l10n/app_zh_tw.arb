@@ -53,7 +53,7 @@
   "askAiSendOnEnterTip": "Enter 傳送訊息，Shift+Enter 換行。關閉後：Enter 換行，Cmd/Ctrl+Enter 傳送。",
   "askAiApiKeyOptional": "本機或無需認證可留空",
   "askAiAllowInsecure": "允許明文 HTTP",
-  "askAiAllowInsecureTip": "在區域網路內透過 http:// 存取自建模型時需要開啟。API Key 與終端機上下文將以明文傳送。localhost 無需開啟。",
+  "askAiAllowInsecureTip": "允許透過 http:// 連線至 localhost 以外位址上的自建模型。API Key 與終端機上下文將以明文傳送；localhost 不受影響。",
   "askAiInsecureEndpoint": "此位址使用 http://。請在 AI 設定中開啟「允許明文 HTTP」。",
   "askAiHistory": "對話歷史",
   "askAiNewConversation": "新增對話",

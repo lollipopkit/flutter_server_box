@@ -192,7 +192,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Erforderlich, um ein selbst gehostetes Modell über http:// in deinem Netzwerk zu erreichen. Der API-Schlüssel und etwaiger Terminalkontext werden unverschlüsselt übertragen. Für localhost ist dies nicht nötig.';
+      'Erlaubt http://-Verbindungen zu selbst gehosteten Modellen an Adressen außerhalb von localhost. Der API-Schlüssel und etwaiger Terminalkontext werden unverschlüsselt übertragen; localhost ist nicht betroffen.';
 
   @override
   String get askAiInsecureEndpoint =>

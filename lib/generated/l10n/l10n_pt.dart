@@ -190,7 +190,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Necessário para acessar um modelo auto-hospedado por http:// na sua rede. A chave da API e qualquer contexto do terminal serão enviados sem criptografia. Não é necessário para localhost.';
+      'Permite conexões http:// a modelos auto-hospedados em endereços diferentes de localhost. A chave da API e qualquer contexto do terminal serão enviados sem criptografia; localhost não é afetado.';
 
   @override
   String get askAiInsecureEndpoint =>

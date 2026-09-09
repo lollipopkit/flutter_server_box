@@ -388,7 +388,7 @@
   "askAiSendOnEnterTip": "Enter で送信、Shift+Enter で改行。オフ：Enter で改行、Cmd/Ctrl+Enter で送信。",
   "askAiApiKeyOptional": "ローカルや認証不要なら空のままで",
   "askAiAllowInsecure": "平文 HTTP を許可",
-  "askAiAllowInsecureTip": "ネットワーク上のセルフホストモデルに http:// で接続する場合に必要です。API キーと端末コンテキストは暗号化されずに送信されます。localhost では必要ありません。",
+  "askAiAllowInsecureTip": "localhost 以外のアドレスにあるセルフホストモデルへの http:// 接続を許可します。API キーと端末コンテキストは暗号化されずに送信されます。localhost には影響しません。",
   "askAiInsecureEndpoint": "このエンドポイントは http:// を使用します。使用するには AI 設定で「平文 HTTP を許可」をオンにしてください。",
   "askAiHistory": "会話履歴",
   "askAiNewConversation": "新しい会話",

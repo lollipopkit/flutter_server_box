@@ -191,7 +191,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Требуется для доступа к самостоятельно размещённой модели через http:// в вашей сети. Ключ API и любой контекст терминала будут отправлены без шифрования. Для localhost это не требуется.';
+      'Разрешает подключения по http:// к самостоятельно размещённым моделям по адресам, отличным от localhost. Ключ API и любой контекст терминала будут отправлены без шифрования; localhost это не затрагивает.';
 
   @override
   String get askAiInsecureEndpoint =>

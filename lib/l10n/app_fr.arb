@@ -388,7 +388,7 @@
   "askAiSendOnEnterTip": "Entrée envoie, Maj+Entrée nouvelle ligne. Désactivé : Entrée nouvelle ligne, Cmd/Ctrl+Entrée envoie.",
   "askAiApiKeyOptional": "Laisse vide pour local ou sans authentification",
   "askAiAllowInsecure": "Autoriser HTTP non chiffré",
-  "askAiAllowInsecureTip": "Nécessaire pour accéder à un modèle auto-hébergé via http:// sur votre réseau. La clé API et tout contexte du terminal sont envoyés sans chiffrement. Inutile pour localhost.",
+  "askAiAllowInsecureTip": "Autorise les connexions http:// aux modèles auto-hébergés sur des adresses autres que localhost. La clé API et tout contexte du terminal sont envoyés sans chiffrement ; localhost n’est pas concerné.",
   "askAiInsecureEndpoint": "Ce point de terminaison utilise http://. Activez « Autoriser HTTP non chiffré » dans les paramètres AI pour l’utiliser.",
   "askAiHistory": "Historique des conversations",
   "askAiNewConversation": "Nouvelle conversation",

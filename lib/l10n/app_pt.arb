@@ -388,7 +388,7 @@
   "askAiSendOnEnterTip": "Enter envia, Shift+Enter nova linha. Desligado: Enter nova linha, Cmd/Ctrl+Enter envia.",
   "askAiApiKeyOptional": "Deixe vazio para local ou sem autenticação",
   "askAiAllowInsecure": "Permitir HTTP simples",
-  "askAiAllowInsecureTip": "Necessário para acessar um modelo auto-hospedado por http:// na sua rede. A chave da API e qualquer contexto do terminal serão enviados sem criptografia. Não é necessário para localhost.",
+  "askAiAllowInsecureTip": "Permite conexões http:// a modelos auto-hospedados em endereços diferentes de localhost. A chave da API e qualquer contexto do terminal serão enviados sem criptografia; localhost não é afetado.",
   "askAiInsecureEndpoint": "Este endpoint usa http://. Ative “Permitir HTTP simples” nas configurações de AI para usá-lo.",
   "askAiHistory": "Histórico de conversas",
   "askAiNewConversation": "Nova conversa",

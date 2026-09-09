@@ -64,7 +64,7 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
   void initState() {
     super.initState();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && ref.read(benchmarkProvider(_spi)).active != null) {
+      if (mounted && ref.read(benchmarkProvider(_spi.id)).active != null) {
         setState(() {});
       }
     });
@@ -78,14 +78,14 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(benchmarkProvider(_spi));
-    ref.listen<String?>(benchmarkProvider(_spi).select((s) => s.error), (
+    final state = ref.watch(benchmarkProvider(_spi.id));
+    ref.listen<String?>(benchmarkProvider(_spi.id).select((s) => s.error), (
       _,
       err,
     ) {
       if (err == null) return;
       Toast.error(l10n.benchmarkStartFailed, body: err);
-      ref.read(benchmarkProvider(_spi).notifier).clearError();
+      ref.read(benchmarkProvider(_spi.id).notifier).clearError();
     });
 
     return Scaffold(
@@ -109,7 +109,7 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
               initial: state.history.firstOrNull?.options,
               busy: state.isBusy,
               onStart: (options) =>
-                  ref.read(benchmarkProvider(_spi).notifier).start(options),
+                  ref.read(benchmarkProvider(_spi.id).notifier).start(options),
             ),
           UIs.height13,
         ],
@@ -124,6 +124,6 @@ class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;
-    await ref.read(benchmarkProvider(_spi).notifier).cancel();
+    await ref.read(benchmarkProvider(_spi.id).notifier).cancel();
   }
 }

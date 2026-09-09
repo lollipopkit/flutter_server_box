@@ -446,7 +446,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiAllowInsecureTip.
   ///
   /// In en, this message translates to:
-  /// **'Needed to reach a self-hosted model over http:// on your network. The API key and any terminal context are sent unencrypted. localhost works without this.'**
+  /// **'Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.'**
   String get askAiAllowInsecureTip;
 
   /// No description provided for @askAiInsecureEndpoint.

@@ -388,7 +388,7 @@
   "askAiSendOnEnterTip": "Enter verstuurt, Shift+Enter nieuwe regel. Uit: Enter nieuwe regel, Cmd/Ctrl+Enter verstuurt.",
   "askAiApiKeyOptional": "Leeg laten voor lokaal of zonder authenticatie",
   "askAiAllowInsecure": "Onversleutelde HTTP toestaan",
-  "askAiAllowInsecureTip": "Nodig om via http:// verbinding te maken met een zelf gehost model op je netwerk. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden. Niet nodig voor localhost.",
+  "askAiAllowInsecureTip": "Staat http://-verbindingen toe met zelf gehoste modellen op adressen buiten localhost. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden; localhost wordt niet beïnvloed.",
   "askAiInsecureEndpoint": "Dit eindpunt gebruikt http://. Schakel ‘Onversleutelde HTTP toestaan’ in bij de AI-instellingen om het te gebruiken.",
   "askAiHistory": "Gespreksgeschiedenis",
   "askAiNewConversation": "Nieuw gesprek",

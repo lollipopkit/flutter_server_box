@@ -180,7 +180,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      '네트워크에서 http://를 통해 자체 호스팅 모델에 연결할 때 필요합니다. API 키와 모든 터미널 컨텍스트가 암호화되지 않은 상태로 전송됩니다. localhost에는 필요하지 않습니다.';
+      'localhost가 아닌 주소의 자체 호스팅 모델에 http://로 연결할 수 있도록 허용합니다. API 키와 모든 터미널 컨텍스트가 암호화되지 않은 상태로 전송되며 localhost에는 영향을 주지 않습니다.';
 
   @override
   String get askAiInsecureEndpoint =>

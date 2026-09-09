@@ -521,9 +521,17 @@ void main() {
     // would keep the old name in the bar for the life of the page. Asserted on
     // the page rather than through the tab, because the tab's own rebuild
     // trigger is a separate question — this is the part the page promises.
+    // And the run it is watching outlives the edit, which is why
+    // `benchmarkProvider` is keyed by the server's id and not by the `Spi`: on
+    // the value, a rename built a second notifier — new `isBusy`, no error on
+    // screen, poll cycle restarted — a quarter of an hour into a run.
+    seedRunning();
     const key = ValueKey(sid);
     await pump(tester, BenchmarkRunPage(key: key, args: SpiRequiredArgs(spi)));
     final state = tester.state(find.byType(BenchmarkRunPage));
+    final notifier = ProviderScope.containerOf(
+      tester.element(find.byType(BenchmarkRunPage)),
+    ).read(benchmarkProvider(sid).notifier);
     expect(find.text('web'), findsOneWidget);
 
     await pump(
@@ -541,6 +549,15 @@ void main() {
     );
     expect(find.text('web-renamed'), findsOneWidget);
     expect(find.text('web'), findsNothing);
+    expect(
+      ProviderScope.containerOf(
+        tester.element(find.byType(BenchmarkRunPage)),
+      ).read(benchmarkProvider(sid).notifier),
+      same(notifier),
+      reason: 'the rename built a second notifier for the same machine',
+    );
+    // Still the running card, not the form: the run was not dropped.
+    expect(find.text(libL10n.stop), findsOneWidget);
     await close(tester);
   });
 
@@ -649,7 +666,7 @@ void main() {
     expect(
       ProviderScope.containerOf(
         tester.element(find.byType(BenchmarkRunPage)),
-      ).read(benchmarkProvider(spi)).history,
+      ).read(benchmarkProvider(sid)).history,
       isEmpty,
       reason: 'the notifier still holds the deleted run',
     );

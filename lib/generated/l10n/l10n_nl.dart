@@ -190,7 +190,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiAllowInsecureTip =>
-      'Nodig om via http:// verbinding te maken met een zelf gehost model op je netwerk. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden. Niet nodig voor localhost.';
+      'Staat http://-verbindingen toe met zelf gehoste modellen op adressen buiten localhost. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden; localhost wordt niet beïnvloed.';
 
   @override
   String get askAiInsecureEndpoint =>

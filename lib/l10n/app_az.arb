@@ -53,7 +53,7 @@
   "askAiSendOnEnterTip": "Enter göndərir, Shift+Enter yeni sətir açır. Söndürüldükdə: Enter yeni sətir açır, Cmd/Ctrl+Enter göndərir.",
   "askAiApiKeyOptional": "Yerli istifadə və ya autentifikasiya tələb olunmadıqda boş saxla",
   "askAiAllowInsecure": "Şifrələnməmiş HTTP-yə icazə ver",
-  "askAiAllowInsecureTip": "Şəbəkəndə http:// ilə işləyən öz modelinə qoşulmaq üçün lazımdır. API açarı və terminal konteksti şifrələnmədən göndərilir. localhost üçün tələb olunmur.",
+  "askAiAllowInsecureTip": "localhost xaricindəki ünvanlarda yerləşən öz modelinə http:// ilə qoşulmağa imkan verir. API açarı və terminal konteksti şifrələnmədən göndərilir; localhost bundan təsirlənmir.",
   "askAiInsecureEndpoint": "Bu ünvan http:// istifadə edir. İstifadə etmək üçün AI parametrlərində «Şifrələnməmiş HTTP-yə icazə ver» seçimini aktivləşdir.",
   "askAiHistory": "Söhbət tarixçəsi",
   "askAiNewConversation": "Yeni söhbət",
