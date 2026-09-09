@@ -2086,39 +2086,43 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get tagsEmptyTip =>
-      'No tags yet. Add one while editing a server, and it will appear here.';
+      'Belum ada tag. Tambahkan tag saat mengedit server, dan tag tersebut akan muncul di sini.';
 
   @override
   String get benchmarkNoServers =>
       'Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark.';
 
   @override
-  String get schemaTooNewTitle => 'This data is newer than the app';
+  String get schemaTooNewTitle => 'Data ini lebih baru daripada aplikasi';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+    return 'Data ini ditulis oleh versi ServerBox yang lebih baru (penyimpanan v$stored); versi ini hanya dapat membaca hingga v$supported. Tidak ada yang diubah.';
   }
 
   @override
   String get schemaTooNewReinstall =>
-      'Install that newer version again and everything opens as it was.';
+      'Instal kembali versi yang lebih baru itu agar semua data dapat dibuka seperti semula.';
 
   @override
-  String get schemaTooNewExportPlain => 'Export without a password';
+  String get schemaTooNewExportPlain => 'Ekspor tanpa kata sandi';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+      'File ini akan menyimpan semua kunci privat SSH, kata sandi server, dan kunci API dalam teks biasa. Siapa pun yang mendapatkan file ini akan mendapatkan semuanya.';
 
   @override
-  String get schemaTooNewWipe => 'Delete all data';
+  String get schemaTooNewWipe => 'Hapus semua data';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+      'Semua server, kunci, cuplikan, dan pengaturan di perangkat ini akan dihapus dan tidak dapat dibatalkan. Cadangan yang diekspor di sini akan menjadi satu-satunya salinan yang tersisa.';
 
   @override
   String get schemaTooNewWipeDone =>
-      'Data deleted. Open the app again to start fresh.';
+      'Data dihapus. Buka kembali aplikasi untuk memulai dari awal.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya.';
 }

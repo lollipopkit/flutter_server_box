@@ -239,12 +239,14 @@ abstract final class DbRescue {
   /// `SELECT *` would be shorter and is wrong: a generated column is in `*` and
   /// cannot be inserted into, so a table with one would take the whole export
   /// down. `table_xinfo` reports every column with a `hidden` flag — 0 ordinary,
-  /// 2 a `STORED` generated one, 3 `VIRTUAL`, 1 a hidden virtual-table column.
-  /// Only 0 and 2 can be written.
+  /// 1 a hidden virtual-table column, 2 a `VIRTUAL` generated one, 3 `STORED`.
+  /// **Only 0 is writable.** Both kinds of generated column refuse an `INSERT`,
+  /// and the copy recreates them from the DDL anyway, so their values come back
+  /// on their own.
   static void _copyRows(Database db, String table) {
     final cols = db
         .select('SELECT name, hidden FROM pragma_table_xinfo(?);', [table])
-        .where((r) => r['hidden'] == 0 || r['hidden'] == 2)
+        .where((r) => r['hidden'] == 0)
         .map((r) => '"${r['name']}"')
         .join(', ');
     if (cols.isEmpty) return;

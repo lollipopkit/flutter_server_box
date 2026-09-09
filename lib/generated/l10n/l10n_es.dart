@@ -2116,39 +2116,44 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tagsEmptyTip =>
-      'No tags yet. Add one while editing a server, and it will appear here.';
+      'Aún no hay etiquetas. Añade una al editar un servidor y aparecerá aquí.';
 
   @override
   String get benchmarkNoServers =>
       'Añade primero un servidor y vuelve después para ejecutar el benchmark.';
 
   @override
-  String get schemaTooNewTitle => 'This data is newer than the app';
+  String get schemaTooNewTitle =>
+      'Estos datos son más recientes que la aplicación';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+    return 'Los escribió una versión más reciente de ServerBox (almacenamiento v$stored); esta versión puede leer hasta v$supported. No se ha modificado nada.';
   }
 
   @override
   String get schemaTooNewReinstall =>
-      'Install that newer version again and everything opens as it was.';
+      'Vuelve a instalar esa versión más reciente y todo se abrirá como antes.';
 
   @override
-  String get schemaTooNewExportPlain => 'Export without a password';
+  String get schemaTooNewExportPlain => 'Exportar sin contraseña';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+      'El archivo contendrá en texto sin cifrar todas las claves privadas SSH, contraseñas de servidores y claves API. Quien obtenga el archivo tendrá acceso a todo ello.';
 
   @override
-  String get schemaTooNewWipe => 'Delete all data';
+  String get schemaTooNewWipe => 'Eliminar todos los datos';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+      'Se eliminarán todos los servidores, claves, fragmentos y ajustes de este dispositivo, y no se podrá deshacer. Una copia de seguridad exportada aquí sería la única copia restante.';
 
   @override
   String get schemaTooNewWipeDone =>
-      'Data deleted. Open the app again to start fresh.';
+      'Datos eliminados. Abre la aplicación de nuevo para empezar desde cero.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'No se han podido eliminar algunos datos y esta versión aún no puede abrir lo que queda. Vuelve a instalar la versión más reciente para acceder a ellos.';
 }

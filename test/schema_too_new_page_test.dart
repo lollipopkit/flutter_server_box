@@ -179,6 +179,7 @@ void main() {
     expect(tester.takeException(), isNull);
     // The controls are gone: there is nothing left to export.
     expect(find.text(l10n.schemaTooNewWipeDone), findsOneWidget);
+    expect(find.text(l10n.schemaTooNewWipeFailed), findsNothing);
     expect(find.text(libL10n.backup), findsNothing);
     expect(find.text(l10n.schemaTooNewWipe), findsNothing);
     // And a way out, rather than an instruction the user cannot act on:
@@ -193,9 +194,15 @@ void main() {
     // offering Backup again is offering a button that can only report "the
     // database is not open" — and it was the user's last chance at the data.
     await pump(tester);
-    // Nothing to delete: the file is gone, so `wipe` throws on the way.
-    SqliteDb.instance.execute('PRAGMA journal_mode = DELETE;');
-    File(SqliteDb.path!).deleteSync();
+    // A directory the delete cannot write to. `wipe` skips a file that is
+    // merely absent, so removing it first would let the wipe *succeed* — which
+    // is how this case used to pass while asserting nothing about the message.
+    // `runSync`, not `run`: real async I/O started in a `testWidgets`
+    // fake-async zone completes on a callback the zone never pumps, and the
+    // test simply hangs.
+    final holding = Directory(SqliteDb.path!).parent;
+    Process.runSync('chmod', ['500', holding.path]);
+    addTearDown(() => Process.runSync('chmod', ['700', holding.path]));
 
     await tester.tap(find.text(l10n.schemaTooNewWipe));
     await tester.pump();
@@ -206,6 +213,11 @@ void main() {
 
     expect(find.text(libL10n.backup), findsNothing);
     expect(find.text(l10n.schemaTooNewExportPlain), findsNothing);
+    // And it does not claim the data is gone. It is not: a delete that failed
+    // leaves a database this build still cannot open, and saying otherwise is
+    // wrong in both directions.
+    expect(find.text(l10n.schemaTooNewWipeDone), findsNothing);
+    expect(find.text(l10n.schemaTooNewWipeFailed), findsOneWidget);
   });
 
   testWidgets('declining the wipe leaves everything alone', (tester) async {

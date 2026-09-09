@@ -2080,39 +2080,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagsEmptyTip =>
-      'No tags yet. Add one while editing a server, and it will appear here.';
+      'No tags yet. Add one while editing a server and it will appear here.';
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Add a server first, then return here to benchmark it.';
 
   @override
   String get schemaTooNewTitle => 'This data is newer than the app';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+    return 'It was written by a newer version of ServerBox (storage v$stored). This version reads up to v$supported; nothing has been changed.';
   }
 
   @override
   String get schemaTooNewReinstall =>
-      'Install that newer version again and everything opens as it was.';
+      'Reinstall the newer version to open all your data again.';
 
   @override
   String get schemaTooNewExportPlain => 'Export without a password';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+      'The file will contain every SSH private key, server password and API key in plain text. Anyone who gets the file can access them all.';
 
   @override
   String get schemaTooNewWipe => 'Delete all data';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+      'All servers, keys, snippets and settings on this device will be deleted. This cannot be undone. A backup exported here would be the only copy left.';
 
   @override
   String get schemaTooNewWipeDone =>
       'Data deleted. Open the app again to start fresh.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.';
 }

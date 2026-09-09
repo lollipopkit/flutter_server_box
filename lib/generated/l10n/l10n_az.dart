@@ -2098,38 +2098,43 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get tagsEmptyTip =>
-      'Hələ etiket yoxdur. Serveri redaktə edərkən əlavə et, burada görünəcək.';
+      'Hələ etiket yoxdur. Serveri redaktə edərkən etiket əlavə et, burada görünəcək.';
 
   @override
   String get benchmarkNoServers =>
       'Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt.';
 
   @override
-  String get schemaTooNewTitle => 'Bu məlumat tətbiqdən yenidir';
+  String get schemaTooNewTitle => 'Bu məlumatlar tətbiqdən daha yenidir';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'Məlumat ServerBox-ın daha yeni versiyası tərəfindən yazılıb (yaddaş v$stored); bu versiya ən çox v$supported oxuyur. Heç nə dəyişdirilməyib.';
+    return 'Məlumatlar ServerBox-ın daha yeni versiyası tərəfindən yazılıb (yaddaş v$stored). Bu versiya ən çox v$supported oxuya bilir və məlumatlar dəyişdirilməyib.';
   }
 
   @override
   String get schemaTooNewReinstall =>
-      'Həmin yeni versiyanı yenidən quraşdır, hər şey əvvəlki kimi açılacaq.';
+      'Bütün məlumatları yenidən açmaq üçün daha yeni versiyanı quraşdır.';
 
   @override
-  String get schemaTooNewExportPlain => 'Parolsuz ixrac et';
+  String get schemaTooNewExportPlain => 'Şifrəsiz ixrac et';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'Fayl bütün SSH məxfi açarlarını, server parollarını və API açarlarını şifrələnməmiş saxlayacaq. Faylı əldə edən hamısını əldə edir.';
+      'Faylda bütün SSH məxfi açarları, server parolları və API açarları açıq mətn kimi saxlanacaq. Faylı əldə edən şəxs bunların hamısına giriş əldə edə bilər.';
 
   @override
   String get schemaTooNewWipe => 'Bütün məlumatları sil';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Bu cihazdakı bütün serverlər, açarlar, snippet-lər və parametrlər silinəcək və bunu geri qaytarmaq olmaz. Burada ixrac edilmiş ehtiyat nüsxə qalan yeganə surət olacaq.';
+      'Bu cihazdakı bütün serverlər, açarlar, snippet-lər və parametrlər silinəcək. Bu əməliyyatı geri qaytarmaq olmaz. Burada ixrac edilmiş ehtiyat nüsxə qalan yeganə surət olacaq.';
 
   @override
-  String get schemaTooNewWipeDone => 'Məlumatlar silindi. Tətbiqi yenidən aç.';
+  String get schemaTooNewWipeDone =>
+      'Məlumatlar silindi. Tətbiqi yenidən aç və sıfırdan başla.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Məlumatların bir hissəsini silmək mümkün olmadı və bu versiya qalan məlumatları hələ də aça bilmir. Onlara giriş üçün daha yeni versiyanı yenidən quraşdır.';
 }

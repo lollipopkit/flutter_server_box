@@ -610,5 +610,15 @@
   "benchmarkUpstream": "Desenvolvido com Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Iniciando",
   "benchmarkNoOutputYet": "Ainda não há saída. Antes de exibir a primeira linha, o YABS verifica se google.com e icanhazip.com estão acessíveis. Em redes que bloqueiam qualquer um desses sites, isso pode levar vários minutos.",
-  "benchmarkNoServers": "Adicione um servidor primeiro e volte depois para executar o benchmark."
+  "benchmarkNoServers": "Adicione um servidor primeiro e volte depois para executar o benchmark.",
+  "tagsEmptyTip": "Ainda não há tags. Adicione uma ao editar um servidor, e ela aparecerá aqui.",
+  "schemaTooNewTitle": "Estes dados são mais recentes que o app",
+  "schemaTooNewBody": "Eles foram gravados por uma versão mais recente do ServerBox (armazenamento v{stored}); esta versão lê até v{supported}. Nada foi alterado.",
+  "schemaTooNewReinstall": "Reinstale a versão mais recente para abrir tudo como antes.",
+  "schemaTooNewExportPlain": "Exportar sem senha",
+  "schemaTooNewPlainWarn": "O arquivo conterá, em texto simples, todas as chaves privadas SSH, senhas de servidores e chaves de API. Quem obtiver o arquivo terá acesso a tudo isso.",
+  "schemaTooNewWipe": "Excluir todos os dados",
+  "schemaTooNewWipeConfirm": "Todos os servidores, chaves, snippets e configurações deste dispositivo serão excluídos, sem possibilidade de desfazer. Um backup exportado aqui seria a única cópia restante.",
+  "schemaTooNewWipeDone": "Dados excluídos. Abra o app novamente para começar do zero.",
+  "schemaTooNewWipeFailed": "Não foi possível excluir alguns dados, e esta versão ainda não consegue abrir o que restou. Reinstale a versão mais recente para acessá-los."
 }

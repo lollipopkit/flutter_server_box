@@ -610,5 +610,15 @@
   "benchmarkUpstream": "Mogelijk gemaakt door Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Starten",
   "benchmarkNoOutputYet": "Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren.",
-  "benchmarkNoServers": "Voeg eerst een server toe en kom daarna terug om een benchmark uit te voeren."
+  "benchmarkNoServers": "Voeg eerst een server toe en kom daarna terug om een benchmark uit te voeren.",
+  "tagsEmptyTip": "Nog geen tags. Voeg er een toe tijdens het bewerken van een server; deze verschijnt hier.",
+  "schemaTooNewTitle": "Deze gegevens zijn nieuwer dan de app",
+  "schemaTooNewBody": "Ze zijn geschreven door een nieuwere versie van ServerBox (opslag v{stored}); deze versie kan tot en met v{supported} lezen. Er is niets gewijzigd.",
+  "schemaTooNewReinstall": "Installeer die nieuwere versie opnieuw; alles wordt dan weer geopend zoals voorheen.",
+  "schemaTooNewExportPlain": "Exporteren zonder wachtwoord",
+  "schemaTooNewPlainWarn": "Het bestand bevat alle privésleutels voor SSH, serverwachtwoorden en API-sleutels als platte tekst. Iedereen die het bestand krijgt, krijgt toegang tot al deze gegevens.",
+  "schemaTooNewWipe": "Alle gegevens verwijderen",
+  "schemaTooNewWipeConfirm": "Alle servers, sleutels, snippets en instellingen op dit apparaat worden verwijderd. Dit kan niet ongedaan worden gemaakt. Een hier geëxporteerde back-up zou de enige overgebleven kopie zijn.",
+  "schemaTooNewWipeDone": "Gegevens verwijderd. Open de app opnieuw om opnieuw te beginnen.",
+  "schemaTooNewWipeFailed": "Sommige gegevens konden niet worden verwijderd en deze versie kan de resterende gegevens nog steeds niet openen. Installeer de nieuwere versie opnieuw om erbij te kunnen."
 }

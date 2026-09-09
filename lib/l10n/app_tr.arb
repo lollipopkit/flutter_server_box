@@ -610,5 +610,15 @@
   "benchmarkUpstream": "Yet Another Bench Script ({version}) tarafından desteklenir",
   "benchmarkPhaseStarting": "Başlatılıyor",
   "benchmarkNoOutputYet": "Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir.",
-  "benchmarkNoServers": "Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün."
+  "benchmarkNoServers": "Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün.",
+  "tagsEmptyTip": "Henüz etiket yok. Bir sunucuyu düzenlerken etiket ekleyin; burada görünür.",
+  "schemaTooNewTitle": "Bu veriler uygulamadan daha yeni",
+  "schemaTooNewBody": "Bu veriler ServerBox’ın daha yeni bir sürümü tarafından yazılmış (depolama v{stored}); bu sürüm en fazla v{supported} okuyabilir. Hiçbir şey değiştirilmedi.",
+  "schemaTooNewReinstall": "Daha yeni sürümü yeniden yükleyin; her şey eskisi gibi açılır.",
+  "schemaTooNewExportPlain": "Parolasız dışa aktar",
+  "schemaTooNewPlainWarn": "Dosya tüm SSH özel anahtarlarını, sunucu parolalarını ve API anahtarlarını düz metin olarak içerecek. Dosyayı alan kişi bunların tamamına erişebilir.",
+  "schemaTooNewWipe": "Tüm verileri sil",
+  "schemaTooNewWipeConfirm": "Bu cihazdaki tüm sunucular, anahtarlar, snippet’ler ve ayarlar silinecek; bu işlem geri alınamaz. Burada dışa aktarılan bir yedek, geriye kalan tek kopya olur.",
+  "schemaTooNewWipeDone": "Veriler silindi. Baştan başlamak için uygulamayı yeniden açın.",
+  "schemaTooNewWipeFailed": "Bazı veriler silinemedi ve bu sürüm geriye kalanları hâlâ açamıyor. Erişmek için daha yeni sürümü yeniden yükleyin."
 }

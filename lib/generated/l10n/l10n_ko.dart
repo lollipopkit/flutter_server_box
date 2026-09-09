@@ -1981,39 +1981,40 @@ class AppLocalizationsKo extends AppLocalizations {
       '아직 출력이 없습니다. YABS는 첫 줄을 출력하기 전에 google.com과 icanhazip.com에 연결할 수 있는지 확인합니다. 둘 중 하나를 차단하는 네트워크에서는 몇 분이 걸릴 수 있습니다.';
 
   @override
-  String get tagsEmptyTip =>
-      'No tags yet. Add one while editing a server, and it will appear here.';
+  String get tagsEmptyTip => '아직 태그가 없습니다. 서버를 편집할 때 태그를 추가하면 여기에 표시됩니다.';
 
   @override
   String get benchmarkNoServers => '먼저 서버를 추가한 다음 돌아와 벤치마크를 실행하세요.';
 
   @override
-  String get schemaTooNewTitle => 'This data is newer than the app';
+  String get schemaTooNewTitle => '이 데이터는 앱보다 최신 버전에서 생성되었습니다';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+    return '더 최신 버전의 ServerBox에서 작성된 데이터입니다(저장 형식 v$stored). 이 버전은 v$supported까지 읽을 수 있습니다. 데이터는 변경되지 않았습니다.';
   }
 
   @override
-  String get schemaTooNewReinstall =>
-      'Install that newer version again and everything opens as it was.';
+  String get schemaTooNewReinstall => '최신 버전을 다시 설치하면 모든 데이터를 이전처럼 열 수 있습니다.';
 
   @override
-  String get schemaTooNewExportPlain => 'Export without a password';
+  String get schemaTooNewExportPlain => '암호 없이 내보내기';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+      '파일에 모든 SSH 개인 키, 서버 비밀번호 및 API 키가 평문으로 저장됩니다. 이 파일을 얻은 사람은 모든 정보에 접근할 수 있습니다.';
 
   @override
-  String get schemaTooNewWipe => 'Delete all data';
+  String get schemaTooNewWipe => '모든 데이터 삭제';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+      '이 기기의 모든 서버, 키, 스니펫 및 설정이 삭제되며 되돌릴 수 없습니다. 여기서 내보낸 백업이 남는 유일한 사본이 됩니다.';
 
   @override
-  String get schemaTooNewWipeDone =>
-      'Data deleted. Open the app again to start fresh.';
+  String get schemaTooNewWipeDone => '데이터가 삭제되었습니다. 앱을 다시 열어 처음부터 시작하세요.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      '일부 데이터를 삭제하지 못했으며, 이 버전은 남은 데이터도 열 수 없습니다. 최신 버전을 다시 설치하여 접근하세요.';
 }

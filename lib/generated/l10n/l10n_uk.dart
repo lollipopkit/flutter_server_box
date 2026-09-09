@@ -2101,39 +2101,43 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get tagsEmptyTip =>
-      'No tags yet. Add one while editing a server, and it will appear here.';
+      'Тегів ще немає. Додайте тег під час редагування сервера, і він з’явиться тут.';
 
   @override
   String get benchmarkNoServers =>
       'Спочатку додайте сервер, а потім поверніться, щоб запустити бенчмарк.';
 
   @override
-  String get schemaTooNewTitle => 'This data is newer than the app';
+  String get schemaTooNewTitle => 'Ці дані новіші за програму';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+    return 'Їх записала новіша версія ServerBox (версія сховища v$stored); ця версія читає дані до v$supported. Дані не змінювалися.';
   }
 
   @override
   String get schemaTooNewReinstall =>
-      'Install that newer version again and everything opens as it was.';
+      'Перевстановіть новішу версію, і всі дані знову відкриються як раніше.';
 
   @override
-  String get schemaTooNewExportPlain => 'Export without a password';
+  String get schemaTooNewExportPlain => 'Експортувати без пароля';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+      'Файл міститиме у відкритому вигляді всі закриті ключі SSH, паролі серверів і ключі API. Той, хто отримає файл, отримає доступ до всього цього.';
 
   @override
-  String get schemaTooNewWipe => 'Delete all data';
+  String get schemaTooNewWipe => 'Видалити всі дані';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+      'Усі сервери, ключі, фрагменти коду та налаштування на цьому пристрої буде видалено без можливості скасування. Експортована тут резервна копія стане єдиною копією, що залишиться.';
 
   @override
   String get schemaTooNewWipeDone =>
-      'Data deleted. Open the app again to start fresh.';
+      'Дані видалено. Відкрийте програму знову, щоб почати з чистого аркуша.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Не вдалося видалити частину даних, і ця версія досі не може відкрити те, що залишилося. Перевстановіть новішу версію, щоб отримати до них доступ.';
 }

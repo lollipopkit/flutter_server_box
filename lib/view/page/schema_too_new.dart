@@ -51,9 +51,19 @@ class SchemaTooNewPage extends StatefulWidget {
 }
 
 class _SchemaTooNewPageState extends State<SchemaTooNewPage> {
-  /// True once the database has been deleted, which makes every other control
-  /// here meaningless — there is nothing left to export.
-  bool _wiped = false;
+  /// True once the wipe has been *attempted*, which is what makes the export
+  /// controls meaningless: `DbRescue.wipe` closes the connection before it
+  /// deletes anything, so there is nothing left to read either way.
+  bool _wipeStarted = false;
+
+  /// True once it also succeeded.
+  ///
+  /// Separate from [_wipeStarted] because the two answers differ, and the
+  /// difference is the whole message: a delete that failed leaves a database on
+  /// disk that this build still cannot open. Telling that user their data is
+  /// gone is wrong in both directions — it is not gone, and the app is not
+  /// usable.
+  bool _wipedOk = false;
 
   bool _busy = false;
 
@@ -70,7 +80,7 @@ class _SchemaTooNewPageState extends State<SchemaTooNewPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: _wiped
+                children: _wipeStarted
                     ? _doneBody(l10n)
                     : _explainBody(l10n),
               ),
@@ -140,10 +150,14 @@ class _SchemaTooNewPageState extends State<SchemaTooNewPage> {
   ];
 
   List<Widget> _doneBody(AppLocalizations l10n) => [
-    const Icon(Icons.check_circle_outline, size: 57),
+    Icon(
+      _wipedOk ? Icons.check_circle_outline : Icons.error_outline,
+      size: 57,
+      color: _wipedOk ? null : Theme.of(context).colorScheme.error,
+    ),
     UIs.height13,
     Text(
-      l10n.schemaTooNewWipeDone,
+      _wipedOk ? l10n.schemaTooNewWipeDone : l10n.schemaTooNewWipeFailed,
       style: const TextStyle(fontSize: 17),
       textAlign: TextAlign.center,
     ),
@@ -258,10 +272,11 @@ extension _Actions on _SchemaTooNewPageState {
     // chance to get the data out.
     setState(() {
       _busy = true;
-      _wiped = true;
+      _wipeStarted = true;
     });
     try {
       await DbRescue.wipe();
+      if (mounted) setState(() => _wipedOk = true);
     } catch (e, s) {
       Loggers.app.warning('Rescue wipe failed', e, s);
       if (mounted) {

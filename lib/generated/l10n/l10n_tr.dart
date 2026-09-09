@@ -2082,39 +2082,43 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tagsEmptyTip =>
-      'No tags yet. Add one while editing a server, and it will appear here.';
+      'Henüz etiket yok. Bir sunucuyu düzenlerken etiket ekleyin; burada görünür.';
 
   @override
   String get benchmarkNoServers =>
       'Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün.';
 
   @override
-  String get schemaTooNewTitle => 'This data is newer than the app';
+  String get schemaTooNewTitle => 'Bu veriler uygulamadan daha yeni';
 
   @override
   String schemaTooNewBody(int stored, int supported) {
-    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+    return 'Bu veriler ServerBox’ın daha yeni bir sürümü tarafından yazılmış (depolama v$stored); bu sürüm en fazla v$supported okuyabilir. Hiçbir şey değiştirilmedi.';
   }
 
   @override
   String get schemaTooNewReinstall =>
-      'Install that newer version again and everything opens as it was.';
+      'Daha yeni sürümü yeniden yükleyin; her şey eskisi gibi açılır.';
 
   @override
-  String get schemaTooNewExportPlain => 'Export without a password';
+  String get schemaTooNewExportPlain => 'Parolasız dışa aktar';
 
   @override
   String get schemaTooNewPlainWarn =>
-      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+      'Dosya tüm SSH özel anahtarlarını, sunucu parolalarını ve API anahtarlarını düz metin olarak içerecek. Dosyayı alan kişi bunların tamamına erişebilir.';
 
   @override
-  String get schemaTooNewWipe => 'Delete all data';
+  String get schemaTooNewWipe => 'Tüm verileri sil';
 
   @override
   String get schemaTooNewWipeConfirm =>
-      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+      'Bu cihazdaki tüm sunucular, anahtarlar, snippet’ler ve ayarlar silinecek; bu işlem geri alınamaz. Burada dışa aktarılan bir yedek, geriye kalan tek kopya olur.';
 
   @override
   String get schemaTooNewWipeDone =>
-      'Data deleted. Open the app again to start fresh.';
+      'Veriler silindi. Baştan başlamak için uygulamayı yeniden açın.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Bazı veriler silinemedi ve bu sürüm geriye kalanları hâlâ açamıyor. Erişmek için daha yeni sürümü yeniden yükleyin.';
 }

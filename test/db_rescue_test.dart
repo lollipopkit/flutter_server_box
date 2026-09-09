@@ -234,18 +234,30 @@ void main() {
     expect(copy.select('SELECT name FROM dupes;').length, 2);
   });
 
-  test('a generated column does not take the export down', () async {
-    // `SELECT *` yields it and `INSERT` will not take it.
+  test('neither kind of generated column takes the export down', () async {
+    // `SELECT *` yields both and `INSERT` refuses both, so they have to be left
+    // out of the column list — and the copy recreates them from the DDL, so the
+    // values come back on their own.
+    //
+    // Both kinds, because `table_xinfo`'s `hidden` is 2 for VIRTUAL and 3 for
+    // STORED, and a first version had those the wrong way round: it excluded
+    // STORED, which is what this test used, and let VIRTUAL through. The export
+    // died on any table with one.
     final db = SqliteDb.instance;
     db.execute('CREATE TABLE gen('
-        'a INTEGER, b INTEGER GENERATED ALWAYS AS (a * 2) STORED);');
-    db.execute('INSERT INTO gen(a) VALUES (21);');
+        'a INTEGER, '
+        'v INTEGER GENERATED ALWAYS AS (a * 2) VIRTUAL, '
+        's INTEGER GENERATED ALWAYS AS (a * 3) STORED);');
+    db.execute('INSERT INTO gen(a) VALUES (7);');
 
     await DbRescue.exportTo(out('gen.db'));
 
     final copy = sqlite3.open(out('gen.db'));
     addTearDown(copy.close);
-    expect(copy.select('SELECT a, b FROM gen;').single['b'], 42);
+    final row = copy.select('SELECT a, v, s FROM gen;').single;
+    expect(row['a'], 7);
+    expect(row['v'], 14);
+    expect(row['s'], 21);
   });
 
   test('an object it cannot rewrite is named, not run against the source',
