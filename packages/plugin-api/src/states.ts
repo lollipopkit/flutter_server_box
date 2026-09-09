@@ -96,7 +96,15 @@ export function classify(e: unknown): {
   // with no `kind`, and its message is the only thing that identifies it.
   const said = `${(e as { message?: unknown } | null)?.message ?? e ?? ""}`;
   if (said.includes("permission denied")) {
-    return { kind: "denied", permission: /needs `([^`]+)`/.exec(said)?.[1] };
+    // Left out rather than set to `undefined`: the field means "there is one the
+    // user could grant", and a present-but-undefined key says that too under
+    // `exactOptionalPropertyTypes`. It also made `bun run typecheck` fail here,
+    // which nothing but this script notices — `bun test` does not typecheck.
+    const permission = /needs `([^`]+)`/.exec(said)?.[1];
+    return {
+      kind: "denied",
+      ...(permission !== undefined ? { permission } : {}),
+    };
   }
   if (said.includes("is not available on")) return { kind: "unavailable" };
 

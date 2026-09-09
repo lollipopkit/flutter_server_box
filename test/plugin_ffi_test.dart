@@ -134,6 +134,43 @@ void main() {
       );
     });
 
+    /// The SDK writes this number into every manifest built against it, and
+    /// **being behind is what does the damage**: the host refuses only a
+    /// *higher* number, so a manifest that understates its ABI installs on an
+    /// app too old for what it uses and draws "unknown widget" in every row.
+    /// The SDK said 1 while the host was at 2, and nothing was in a position to
+    /// notice — the two are in different languages and neither build reads the
+    /// other.
+    test('the SDK declares the same ABI as the runtime', () {
+      final source = File(
+        'packages/plugin-api/src/index.ts',
+      ).readAsStringSync();
+      final declared = RegExp(
+        r'export const ABI_VERSION\s*=\s*(\d+)',
+      ).firstMatch(source);
+
+      expect(declared, isNotNull, reason: 'the SDK no longer declares one');
+      expect(int.parse(declared!.group(1)!), pluginAbiVersion());
+    });
+
+    /// And every plugin that ships from this repository, for the same reason
+    /// from the other end: a bundled manifest above the host's number is one
+    /// this build refuses to install at all.
+    test('every bundled plugin names an ABI this build implements', () {
+      for (final dir in Directory('packages/plugins').listSync()) {
+        if (dir is! Directory) continue;
+        final manifest = File('${dir.path}/manifest.json');
+        if (!manifest.existsSync()) continue;
+        final abi =
+            (jsonDecode(manifest.readAsStringSync()) as Map)['abi'] as int;
+        expect(
+          abi,
+          lessThanOrEqualTo(pluginAbiVersion()),
+          reason: manifest.path,
+        );
+      }
+    });
+
     test('every host function the app has to implement is listed', () {
       final fns = pluginHostFunctions();
       expect(fns, contains('sb.http.fetch'));

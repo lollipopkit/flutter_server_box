@@ -41,5 +41,16 @@ export * from "./states.ts";
  * Goes into `manifest.json`'s `abi`. The app refuses a plugin whose number is
  * higher than its own, and the index keeps several versions of a plugin so an
  * older app still finds one it can run.
+ *
+ * **It moves with the host's own `ABI_VERSION`, and being behind is the way
+ * this number does damage.** The check is one-directional, so a manifest
+ * declaring a number lower than what it uses is *accepted* by an app too old
+ * for it — and then a v2 node draws "unknown widget" in every row, which is the
+ * silent half-working the check exists to prevent. This said 1 while the host
+ * was at 2; `plugin_ffi_test.dart` compares the two now.
+ *
+ * - **v1** — the original set.
+ * - **v2** — `tile`, `summary` and `toggle` nodes; `tap` honoured on any node
+ *   rather than only on `btn`; `icon` on every contribution.
  */
-export const ABI_VERSION = 1;
+export const ABI_VERSION = 2;
