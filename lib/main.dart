@@ -58,6 +58,14 @@ Future<void> main() async {
       // into a window nobody ever sees: still no window, still no message,
       // which is the failure it exists to fix.
       //
+      // Measured, by running a build with this call commented out against a
+      // v25 database: the widget tree was there, and `window_manager` had no
+      // window at all. Asking it anything is then fatal rather than false —
+      // `WindowManager.mainWindow` force-unwraps, so `isVisible()` took the
+      // process down with `EXC_BREAKPOINT` in `WindowManager.swift:60`. So this
+      // is not only about the user seeing the screen; without it the plugin is
+      // a landmine for anything that later asks about the window.
+      //
       // Not `_initWindow`, which reads the size and the title-bar preference
       // out of the database this build has just refused to touch. Fixed
       // arguments instead: this window holds one screen of text.
