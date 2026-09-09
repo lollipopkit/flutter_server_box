@@ -268,6 +268,28 @@ abstract final class MethodChans {
   }
 
   // iOS Live Activities controls
+
+  /// Whether iOS would let this app show a Live Activity right now.
+  ///
+  /// A separate answer from [SettingStore.liveActivity]: that is whether the
+  /// app asks, this is whether the system allows. The user can refuse it per
+  /// app in Settings, and can turn it off device-wide, and `Activity.request`
+  /// simply fails when they have — so without asking this, a switch turned on
+  /// here does nothing and says nothing about why.
+  ///
+  /// False off iOS and on anything before 16.2, which is where
+  /// `LiveActivityManager` starts.
+  static Future<bool> liveActivityAvailable() async {
+    if (!isIOS) return false;
+    try {
+      return await _channel.invokeMethod<bool>('liveActivityAvailable') ??
+          false;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to query iOS Live Activity availability', e, s);
+      return false;
+    }
+  }
+
   static Future<void> updateLiveActivity(String payload) async {
     if (!isIOS) return;
     try {

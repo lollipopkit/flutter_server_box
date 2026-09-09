@@ -1052,6 +1052,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get pushToken => 'Push-token';
 
   @override
+  String get liveActivity => 'Live Activity';
+
+  @override
+  String get liveActivityTip =>
+      'Show terminal sessions on the Lock Screen and in the Dynamic Island. A server\'s name and the state of its connection are readable there without unlocking.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'Turned off for this app in iOS Settings › Face ID & Passcode, or under Settings › ServerBox › Live Activities.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand wordt alleen op desktopplatforms ondersteund.';
 

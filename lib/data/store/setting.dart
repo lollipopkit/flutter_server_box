@@ -244,6 +244,24 @@ class SettingStore extends SqliteStore {
   /// [MethodChans.setPrivacyBlur], and every launch re-pushes.
   late final privacyBlur = propertyDefault('privacyBlur', false);
 
+  /// Whether this app may put a Live Activity on the lock screen at all.
+  ///
+  /// iOS only, and one switch for every kind rather than one per kind: the user
+  /// question is whether this app appears on the lock screen, not which of its
+  /// features does. What is behind it today is the terminal session activity;
+  /// the monitor status one will sit behind the same switch.
+  ///
+  /// **Off by default, which is a change of behaviour.** A Live Activity used
+  /// to appear whenever a terminal connected, with nothing to stop it. It shows
+  /// a server's name and the state of a connection to it, on a screen that is
+  /// readable without unlocking the phone, and that is not something to opt
+  /// somebody into — least of all silently, on a device they hand to other
+  /// people. An install that wants it turns it on once.
+  ///
+  /// Independent of iOS' own per-app Live Activity permission, which can also
+  /// be off: this says whether the app *asks*.
+  late final liveActivity = propertyDefault('liveActivity', false);
+
   /// Servers the watch app may show, by [Spi.id], in display order.
   ///
   /// The watch used to be configured by a list of URLs living only inside the

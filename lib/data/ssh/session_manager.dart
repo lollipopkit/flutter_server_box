@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/android_service_policy.dart';
+import 'package:server_box/data/ssh/ios_live_activity_policy.dart';
 
 enum TermSessionStatus {
   connecting,
@@ -74,6 +75,15 @@ abstract final class TermSessionManager {
       // A Live Activity can outlive a killed process. Clear any orphan left
       // by the previous app run before new sessions can be registered.
       await MethodChans.stopLiveActivity();
+      // Turning the switch off has to take the activity off the lock screen
+      // now, not at the next five-second tick — it is a switch about what is
+      // readable without unlocking the phone.
+      //
+      // Listened to here rather than acted on in the settings page, because
+      // `StoreSwitch` runs its `callback` *before* writing the new value:
+      // anything reading the setting from there reads the old one. A store
+      // listener fires on the write.
+      Stores.setting.liveActivity.listenable().addListener(syncLiveActivity);
     }
   }
 
@@ -163,6 +173,18 @@ abstract final class TermSessionManager {
     _syncing ??= _drainSync();
   }
 
+  /// Re-decides whether a Live Activity should be up, after the setting that
+  /// says so has changed.
+  ///
+  /// The sessions themselves are untouched, so nothing else here notices the
+  /// switch moving — and the wrong half of that is the one that matters:
+  /// turning it off with a terminal open would otherwise leave the activity on
+  /// the lock screen until the session ended.
+  static void syncLiveActivity() {
+    if (!isIOS) return;
+    _sync();
+  }
+
   static Future<void> _drainSync() async {
     try {
       while (_syncDirty) {
@@ -246,18 +268,22 @@ abstract final class TermSessionManager {
 
     // iOS: manage Live Activity timer
     if (isIOS) {
-      if (_entries.isEmpty) {
-        _updateTimer?.cancel();
-        _updateTimer = null;
-        await MethodChans.stopLiveActivity();
-      } else {
-        // Start timer if not already running
-        _updateTimer ??= Timer.periodic(
-          _updateInterval,
-          (_) => _sync(),
-        );
-        // Immediately update for immediate feedback
-        await _updateLiveActivity();
+      switch (decideIosLiveActivityAction(
+        hasSessions: _entries.isNotEmpty,
+        enabled: Stores.setting.liveActivity.fetch(),
+      )) {
+        case IosLiveActivityAction.stop:
+          _updateTimer?.cancel();
+          _updateTimer = null;
+          await MethodChans.stopLiveActivity();
+        case IosLiveActivityAction.update:
+          // Start timer if not already running
+          _updateTimer ??= Timer.periodic(
+            _updateInterval,
+            (_) => _sync(),
+          );
+          // Immediately update for immediate feedback
+          await _updateLiveActivity();
       }
     }
   }
