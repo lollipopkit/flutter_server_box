@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -10,6 +11,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server_picker.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
@@ -54,12 +56,57 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
   /// changes when a poll comes back, which is up to twenty seconds apart.
   Timer? _tick;
 
+  /// Every run of every server, read once and kept until something changes it.
+  ///
+  /// Held because [BenchmarkStore.all] is the expensive query on this page: it
+  /// decodes every run of every server, logs and result documents included, and
+  /// the tick below used to run it once a second for as long as the tab was on
+  /// screen. Null means "read it again".
+  List<BenchmarkRun>? _history;
+
+  /// Which servers had a run in flight when [_history] was last read.
+  Set<String> _running = const {};
+
+  /// How many runs there were then. See [BenchmarkStore.listRevision].
+  int _total = 0;
+
   @override
   void initState() {
     super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && _selected != null) setState(() {});
-    });
+    _syncRevision();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+  }
+
+  /// Redraws while something is running, and re-reads the history when the set
+  /// of runs changes.
+  ///
+  /// Both are gated. The guard used to be "a machine is selected", which is true
+  /// whenever there is a server at all — so a tab left open with nothing running
+  /// rebuilt every second and re-read the whole table each time, logs and result
+  /// documents included. What the list draws of a run is its machine, its age
+  /// and how it ended, and only the revision below can change any of those.
+  void _onTick() {
+    if (!mounted) return;
+    final rev = BenchmarkStore.instance.listRevision();
+    if (rev.total != _total || !setEquals(rev.running, _running)) {
+      _total = rev.total;
+      _running = rev.running;
+      _history = null;
+    } else if (rev.running.isEmpty) {
+      // Nothing in flight and nothing changed: no clock on this page moves.
+      return;
+    }
+    setState(() {});
+  }
+
+  /// Drops the cached history and resyncs what [_onTick] compares against, so
+  /// a write this page made itself is not also reported as a change a second
+  /// later.
+  void _syncRevision() {
+    final rev = BenchmarkStore.instance.listRevision();
+    _total = rev.total;
+    _running = rev.running;
+    _history = null;
   }
 
   @override
@@ -95,6 +142,10 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
     return id == null ? null : _byId[id];
   }
 
+  /// Every past run, off the cache. See [_history].
+  List<BenchmarkRun> get _allRuns =>
+      _history ??= BenchmarkStore.instance.all();
+
   @override
   Widget build(BuildContext context) {
     final servers = _servers;
@@ -102,7 +153,6 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
     // was last looking at, the machine with fifteen minutes of work in flight
     // is the one worth showing.
     _selectedId ??= _runningIdAmong(servers) ?? servers.firstOrNull?.id;
-
 
     return PaneSettings.listenAll((paneWidth, paneCollapsed) {
       return AdaptivePanes.detail(
@@ -133,7 +183,7 @@ class _BenchmarkTabPageState extends ConsumerState<BenchmarkTabPage> {
 
   String? _runningIdAmong(List<Spi> servers) {
     for (final spi in servers) {
-      if (BenchmarkStore.instance.activeFor(spi.id) != null) return spi.id;
+      if (_running.contains(spi.id)) return spi.id;
     }
     return null;
   }
@@ -201,7 +251,7 @@ extension _Widgets on _BenchmarkTabPageState {
     // By the machine's name, which is the only thing on a row that a person
     // would search for — the rest of what a run says is on the result.
     final history = [
-      for (final run in BenchmarkStore.instance.all())
+      for (final run in _allRuns)
         if (needle.isEmpty ||
             (byId[run.serverId]?.name.toLowerCase().contains(needle) ?? false))
           run,
@@ -286,27 +336,32 @@ extension _Widgets on _BenchmarkTabPageState {
   /// own element, and this method runs on a different one.
   Widget _buildDetail() {
     if (_viewingRunId case final id?) {
-      final run = BenchmarkStore.instance.get(id);
-      // Deleted from the list beside it. Falls through to the machine's own
-      // column rather than rendering a record that is gone.
+      // Off the list this pane sits beside, not a query of its own: this runs
+      // on every rebuild, and reading the row back would carry the log and the
+      // result document each time for a page that re-reads them itself.
       //
-      // Keyed by run: the state polls by run id, so a reused element would
-      // keep showing and polling the run that was there before.
-      if (run != null) {
-        return BenchmarkResultPage(key: ValueKey(id), args: run);
-      }
+      // Unkeyed. The id is the pane's `detailId`, so choosing another run mints
+      // a new page key in `NestedNavigator` and this is built from scratch
+      // anyway. Null when it was deleted from the list beside it — falls
+      // through to the machine's own column rather than rendering a record
+      // that is gone.
+      final run = _allRuns.firstWhereOrNull((run) => run.id == id);
+      if (run != null) return BenchmarkResultPage(args: run);
     }
     final spi = _selected;
     if (spi == null) return const EmptyPane(icon: Icons.speed_outlined);
-    // Keyed like the single-column branch: the state holds its server in a
-    // `late final`, so a reused element would keep acting on the old machine.
+    // Keyed on the machine, because nothing else here is. `detailId` stays null
+    // across a change of machine — that is what makes closing a result read as
+    // a way back — so `NestedNavigator` rebuilds this child in place and the
+    // element, with its scroll offset and its clock, would otherwise carry from
+    // one machine to the next. What the page *shows* is right either way now
+    // that it reads its `Spi` through `widget` rather than caching one.
     return BenchmarkRunPage(
       key: ValueKey(spi.id),
       args: SpiRequiredArgs(spi),
       inPane: true,
     );
   }
-
 }
 
 // --- Actions ---
@@ -327,7 +382,7 @@ extension _Actions on _BenchmarkTabPageState {
       selectedId: _selectedId,
       // A machine with a run in flight is worth spotting here, since choosing
       // another is what hides it.
-      trailingOf: (spi) => BenchmarkStore.instance.activeFor(spi.id) != null
+      trailingOf: (spi) => _running.contains(spi.id)
           ? const Icon(Icons.timelapse, size: 17)
           : null,
     );
@@ -372,7 +427,6 @@ extension _Actions on _BenchmarkTabPageState {
     BenchmarkResultPage.route.go(context, run);
   }
 
-
   Future<void> _onDelete(BenchmarkRun run) async {
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
@@ -380,9 +434,24 @@ extension _Actions on _BenchmarkTabPageState {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;
-    BenchmarkStore.instance.remove(run.id);
+    // Through the notifier when the run's machine is the one the other column
+    // is showing: that column reads `state.history`, and a delete written
+    // straight to the store leaves the record in it — the run form seeds itself
+    // from the newest entry, so it would come back filled in from a run that no
+    // longer exists.
+    //
+    // Straight to the store for any other machine. Only `BenchmarkRunPage`
+    // reads this provider and only the selected machine has one on screen, so
+    // no notifier is alive for the rest — and reading one into being here would
+    // set it polling the run this is deleting.
+    if (run.serverId == _selectedId) {
+      ref.read(benchmarkProvider(run.serverId).notifier).remove(run.id);
+    } else {
+      BenchmarkStore.instance.remove(run.id);
+    }
     if (!mounted) return;
     setState(() {
+      _syncRevision();
       // The right column was showing it. Back to the machine's own column,
       // rather than to a pane rendering a record that no longer exists.
       if (_viewingRunId == run.id) _viewingRunId = null;

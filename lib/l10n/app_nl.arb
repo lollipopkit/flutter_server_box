@@ -387,6 +387,9 @@
   "askAiSendOnEnter": "Enter verstuurt",
   "askAiSendOnEnterTip": "Enter verstuurt, Shift+Enter nieuwe regel. Uit: Enter nieuwe regel, Cmd/Ctrl+Enter verstuurt.",
   "askAiApiKeyOptional": "Leeg laten voor lokaal of zonder authenticatie",
+  "askAiAllowInsecure": "Onversleutelde HTTP toestaan",
+  "askAiAllowInsecureTip": "Staat http://-verbindingen toe met zelf gehoste modellen op adressen buiten localhost. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden; localhost wordt niet beïnvloed.",
+  "askAiInsecureEndpoint": "Dit eindpunt gebruikt http://. Schakel ‘Onversleutelde HTTP toestaan’ in bij de AI-instellingen om het te gebruiken.",
   "askAiHistory": "Gespreksgeschiedenis",
   "askAiNewConversation": "Nieuw gesprek",
   "askAiNoHistory": "Nog geen opgeslagen gesprekken",
@@ -603,5 +606,6 @@
   "benchmarkRawLog": "Uitvoeringslogboek",
   "benchmarkUpstream": "Mogelijk gemaakt door Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Starten",
-  "benchmarkNoOutputYet": "Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren."
+  "benchmarkNoOutputYet": "Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren.",
+  "benchmarkNoServers": "Voeg eerst een server toe en kom daarna terug om een benchmark uit te voeren."
 }

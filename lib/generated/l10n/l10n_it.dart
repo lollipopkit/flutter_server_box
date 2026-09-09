@@ -187,6 +187,17 @@ class AppLocalizationsIt extends AppLocalizations {
       'Lascia vuoto per locale o senza autenticazione';
 
   @override
+  String get askAiAllowInsecure => 'Consenti HTTP non crittografato';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Consente connessioni http:// ai modelli self-hosted su indirizzi diversi da localhost. La chiave API e l’eventuale contesto del terminale vengono inviati senza crittografia; localhost non è interessato.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Questo endpoint usa http://. Attiva «Consenti HTTP non crittografato» nelle impostazioni AI per utilizzarlo.';
+
+  @override
   String get askAiHistory => 'Cronologia conversazioni';
 
   @override
@@ -2087,5 +2098,5 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Aggiungi prima un server, poi torna per eseguire il benchmark.';
 }

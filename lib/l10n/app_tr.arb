@@ -387,6 +387,9 @@
   "askAiSendOnEnter": "Enter gönderir",
   "askAiSendOnEnterTip": "Enter gönderir, Shift+Enter yeni satır. Kapalı: Enter yeni satır, Cmd/Ctrl+Enter gönderir.",
   "askAiApiKeyOptional": "Yerel ya da kimlik doğrulaması gerekmiyorsa boş bırak",
+  "askAiAllowInsecure": "Şifresiz HTTP’ye izin ver",
+  "askAiAllowInsecureTip": "localhost dışındaki adreslerde bulunan kendi barındırdığınız modellere http:// bağlantılarına izin verir. API anahtarı ve tüm terminal bağlamı şifrelenmeden gönderilir; localhost etkilenmez.",
+  "askAiInsecureEndpoint": "Bu uç nokta http:// kullanıyor. Kullanmak için AI ayarlarında “Şifresiz HTTP’ye izin ver” seçeneğini açın.",
   "askAiHistory": "Konuşma geçmişi",
   "askAiNewConversation": "Yeni konuşma",
   "askAiNoHistory": "Henüz kayıtlı konuşma yok",
@@ -603,5 +606,6 @@
   "benchmarkRawLog": "Çalıştırma günlüğü",
   "benchmarkUpstream": "Yet Another Bench Script ({version}) tarafından desteklenir",
   "benchmarkPhaseStarting": "Başlatılıyor",
-  "benchmarkNoOutputYet": "Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir."
+  "benchmarkNoOutputYet": "Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir.",
+  "benchmarkNoServers": "Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün."
 }

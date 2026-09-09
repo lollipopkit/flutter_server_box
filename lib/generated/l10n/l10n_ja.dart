@@ -175,6 +175,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiApiKeyOptional => 'ローカルや認証不要なら空のままで';
 
   @override
+  String get askAiAllowInsecure => '平文 HTTP を許可';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'localhost 以外のアドレスにあるセルフホストモデルへの http:// 接続を許可します。API キーと端末コンテキストは暗号化されずに送信されます。localhost には影響しません。';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'このエンドポイントは http:// を使用します。使用するには AI 設定で「平文 HTTP を許可」をオンにしてください。';
+
+  @override
   String get askAiHistory => '会話履歴';
 
   @override
@@ -1952,6 +1963,5 @@ class AppLocalizationsJa extends AppLocalizations {
       'まだ出力はありません。YABS は最初の行を出力する前に、google.com と icanhazip.com に接続できるか確認します。いずれかのサイトがブロックされているネットワークでは、数分かかる場合があります。';
 
   @override
-  String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+  String get benchmarkNoServers => '先にサーバーを追加してから戻ると、ベンチマークを実行できます。';
 }

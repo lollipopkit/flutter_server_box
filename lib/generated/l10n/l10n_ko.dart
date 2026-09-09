@@ -176,6 +176,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiApiKeyOptional => '로컬이거나 인증이 필요 없으면 비워 두세요';
 
   @override
+  String get askAiAllowInsecure => '평문 HTTP 허용';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'localhost가 아닌 주소의 자체 호스팅 모델에 http://로 연결할 수 있도록 허용합니다. API 키와 모든 터미널 컨텍스트가 암호화되지 않은 상태로 전송되며 localhost에는 영향을 주지 않습니다.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      '이 엔드포인트는 http://를 사용합니다. 사용하려면 AI 설정에서 ‘평문 HTTP 허용’을 켜세요.';
+
+  @override
   String get askAiHistory => '대화 기록';
 
   @override
@@ -1959,6 +1970,5 @@ class AppLocalizationsKo extends AppLocalizations {
       '아직 출력이 없습니다. YABS는 첫 줄을 출력하기 전에 google.com과 icanhazip.com에 연결할 수 있는지 확인합니다. 둘 중 하나를 차단하는 네트워크에서는 몇 분이 걸릴 수 있습니다.';
 
   @override
-  String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+  String get benchmarkNoServers => '먼저 서버를 추가한 다음 돌아와 벤치마크를 실행하세요.';
 }

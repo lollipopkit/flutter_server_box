@@ -387,6 +387,9 @@
   "askAiSendOnEnter": "Enter mengirim",
   "askAiSendOnEnterTip": "Enter mengirim, Shift+Enter baris baru. Mati: Enter baris baru, Cmd/Ctrl+Enter mengirim.",
   "askAiApiKeyOptional": "Kosongkan untuk lokal atau tanpa autentikasi",
+  "askAiAllowInsecure": "Izinkan HTTP tanpa enkripsi",
+  "askAiAllowInsecureTip": "Mengizinkan koneksi http:// ke model yang di-host sendiri pada alamat selain localhost. Kunci API dan konteks terminal akan dikirim tanpa enkripsi; localhost tidak terpengaruh.",
+  "askAiInsecureEndpoint": "Endpoint ini menggunakan http://. Aktifkan “Izinkan HTTP tanpa enkripsi” di pengaturan AI untuk menggunakannya.",
   "askAiHistory": "Riwayat percakapan",
   "askAiNewConversation": "Percakapan baru",
   "askAiNoHistory": "Belum ada percakapan tersimpan",
@@ -603,5 +606,6 @@
   "benchmarkRawLog": "Log pengujian",
   "benchmarkUpstream": "Didukung oleh Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Memulai",
-  "benchmarkNoOutputYet": "Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit."
+  "benchmarkNoOutputYet": "Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit.",
+  "benchmarkNoServers": "Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark."
 }

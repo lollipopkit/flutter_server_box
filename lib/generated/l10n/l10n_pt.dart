@@ -186,6 +186,17 @@ class AppLocalizationsPt extends AppLocalizations {
       'Deixe vazio para local ou sem autenticação';
 
   @override
+  String get askAiAllowInsecure => 'Permitir HTTP simples';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Permite conexões http:// a modelos auto-hospedados em endereços diferentes de localhost. A chave da API e qualquer contexto do terminal serão enviados sem criptografia; localhost não é afetado.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Este endpoint usa http://. Ative “Permitir HTTP simples” nas configurações de AI para usá-lo.';
+
+  @override
   String get askAiHistory => 'Histórico de conversas';
 
   @override
@@ -2073,5 +2084,5 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Adicione um servidor primeiro e volte depois para executar o benchmark.';
 }

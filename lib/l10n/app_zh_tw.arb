@@ -52,6 +52,9 @@
   "askAiSendOnEnter": "Enter 傳送",
   "askAiSendOnEnterTip": "Enter 傳送訊息，Shift+Enter 換行。關閉後：Enter 換行，Cmd/Ctrl+Enter 傳送。",
   "askAiApiKeyOptional": "本機或無需認證可留空",
+  "askAiAllowInsecure": "允許明文 HTTP",
+  "askAiAllowInsecureTip": "允許透過 http:// 連線至 localhost 以外位址上的自建模型。API Key 與終端機上下文將以明文傳送；localhost 不受影響。",
+  "askAiInsecureEndpoint": "此位址使用 http://。請在 AI 設定中開啟「允許明文 HTTP」。",
   "askAiHistory": "對話歷史",
   "askAiNewConversation": "新增對話",
   "askAiNoHistory": "還沒有已儲存的對話",
@@ -610,5 +613,6 @@
   "benchmarkRawLog": "執行記錄",
   "benchmarkUpstream": "由 Yet Another Bench Script ({version}) 提供",
   "benchmarkPhaseStarting": "正在啟動",
-  "benchmarkNoOutputYet": "暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。"
+  "benchmarkNoOutputYet": "暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。",
+  "benchmarkNoServers": "請先新增伺服器，然後返回執行效能測試。"
 }

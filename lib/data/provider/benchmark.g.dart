@@ -49,7 +49,7 @@ final class BenchmarkNotifierProvider
   /// without either knowing about the other.
   BenchmarkNotifierProvider._({
     required BenchmarkNotifierFamily super.from,
-    required Spi super.argument,
+    required String super.argument,
   }) : super(
          retry: null,
          name: r'benchmarkProvider',
@@ -91,7 +91,7 @@ final class BenchmarkNotifierProvider
   }
 }
 
-String _$benchmarkNotifierHash() => r'ce7940e9697ff8edf5f3759af6653ec6e13deeba';
+String _$benchmarkNotifierHash() => r'64e857531eb3c80e83c1f70dc3ced6c11a553a13';
 
 /// Drives one server's benchmark: install, start, poll, finish.
 ///
@@ -112,7 +112,7 @@ final class BenchmarkNotifierFamily extends $Family
           BenchmarkState,
           BenchmarkState,
           BenchmarkState,
-          Spi
+          String
         > {
   BenchmarkNotifierFamily._()
     : super(
@@ -135,8 +135,8 @@ final class BenchmarkNotifierFamily extends $Family
   /// short command, so it works over SSH and over a monitor agent's `/exec`
   /// without either knowing about the other.
 
-  BenchmarkNotifierProvider call(Spi spi) =>
-      BenchmarkNotifierProvider._(argument: spi, from: this);
+  BenchmarkNotifierProvider call(String serverId) =>
+      BenchmarkNotifierProvider._(argument: serverId, from: this);
 
   @override
   String toString() => r'benchmarkProvider';
@@ -155,10 +155,10 @@ final class BenchmarkNotifierFamily extends $Family
 /// without either knowing about the other.
 
 abstract class _$BenchmarkNotifier extends $Notifier<BenchmarkState> {
-  late final _$args = ref.$arg as Spi;
-  Spi get spi => _$args;
+  late final _$args = ref.$arg as String;
+  String get serverId => _$args;
 
-  BenchmarkState build(Spi spi);
+  BenchmarkState build(String serverId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {

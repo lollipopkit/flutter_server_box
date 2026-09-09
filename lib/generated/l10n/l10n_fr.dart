@@ -188,6 +188,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Laisse vide pour local ou sans authentification';
 
   @override
+  String get askAiAllowInsecure => 'Autoriser HTTP non chiffré';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Autorise les connexions http:// aux modèles auto-hébergés sur des adresses autres que localhost. La clé API et tout contexte du terminal sont envoyés sans chiffrement ; localhost n’est pas concerné.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Ce point de terminaison utilise http://. Activez « Autoriser HTTP non chiffré » dans les paramètres AI pour l’utiliser.';
+
+  @override
   String get askAiHistory => 'Historique des conversations';
 
   @override
@@ -2094,5 +2105,5 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Ajoutez d’abord un serveur, puis revenez pour lancer le benchmark.';
 }

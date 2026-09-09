@@ -161,3 +161,14 @@ class BenchmarkRun {
   String toString() =>
       'BenchmarkRun($id, $serverId, ${status.name}, exit=$exitCode)';
 }
+
+/// Minutes and seconds, which is the range a benchmark lives in.
+///
+/// Here rather than in a widget file, next to [BenchmarkRun.elapsed] and the
+/// `runtime` a result reports: both pages that format one of those had to
+/// import a list tile to reach it otherwise.
+String fmtDuration(Duration d) {
+  final m = d.inMinutes;
+  final s = d.inSeconds % 60;
+  return '${m}m ${s.toString().padLeft(2, '0')}s';
+}

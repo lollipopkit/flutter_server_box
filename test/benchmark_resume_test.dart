@@ -17,9 +17,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/benchmark.dart';
@@ -456,6 +458,218 @@ void main() {
       reason: 'a page was pushed per machine chosen',
     );
     expect(find.byType(BackButton), findsNothing);
+    await close(tester);
+  });
+
+  testWidgets('the pane follows a change of machine', (tester) async {
+    // The two-column half of the test above, and the one that was missing. A
+    // machine change leaves `detailId` null — that is what makes closing a
+    // result read as a way back — so `NestedNavigator` mints no new page key
+    // and rebuilds the run column in place. The column held its `Spi` in a
+    // `late final`, so the element surviving meant the page went on naming, and
+    // acting on, the machine chosen before.
+    final other = spiFixture(
+      id: 'srv-resume-4',
+      name: 'db',
+      ip: 'h4',
+      user: 'u',
+      autoConnect: false,
+    );
+    Stores.server.put(other);
+
+    await pump(tester, const BenchmarkTabPage());
+    expect(find.byType(BenchmarkRunPage), findsOneWidget);
+    expect(find.text('web'), findsWidgets);
+
+    // The list column's bar button, not the run form's Start: with no run in
+    // flight the form is on screen beside it and carries the same icon.
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CustomAppBar),
+        matching: find.byIcon(Icons.play_arrow),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('db').last);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    final page = tester.widget<BenchmarkRunPage>(find.byType(BenchmarkRunPage));
+    expect(
+      page.args.spi.id,
+      other.id,
+      reason: 'the run column is still on the machine chosen before',
+    );
+    expect(
+      find.descendant(
+        of: find.byType(BenchmarkRunPage),
+        matching: find.text('db'),
+      ),
+      findsOneWidget,
+      reason: 'the column names the machine it was showing before',
+    );
+    await close(tester);
+  });
+
+  testWidgets('the run page reads its machine through its args, not a copy', (
+    tester,
+  ) async {
+    // Whoever shows this keys it on `spi.id`, which a rename does not change:
+    // the element and its state survive, and a `Spi` copied in at `initState`
+    // would keep the old name in the bar for the life of the page. Asserted on
+    // the page rather than through the tab, because the tab's own rebuild
+    // trigger is a separate question — this is the part the page promises.
+    // And the run it is watching outlives the edit, which is why
+    // `benchmarkProvider` is keyed by the server's id and not by the `Spi`: on
+    // the value, a rename built a second notifier — new `isBusy`, no error on
+    // screen, poll cycle restarted — a quarter of an hour into a run.
+    seedRunning();
+    const key = ValueKey(sid);
+    await pump(tester, BenchmarkRunPage(key: key, args: SpiRequiredArgs(spi)));
+    final state = tester.state(find.byType(BenchmarkRunPage));
+    final notifier = ProviderScope.containerOf(
+      tester.element(find.byType(BenchmarkRunPage)),
+    ).read(benchmarkProvider(sid).notifier);
+    expect(find.text('web'), findsOneWidget);
+
+    await pump(
+      tester,
+      BenchmarkRunPage(
+        key: key,
+        args: SpiRequiredArgs(spi.copyWith(name: 'web-renamed')),
+      ),
+    );
+
+    expect(
+      tester.state(find.byType(BenchmarkRunPage)),
+      same(state),
+      reason: 'the element was replaced, so this proves nothing',
+    );
+    expect(find.text('web-renamed'), findsOneWidget);
+    expect(find.text('web'), findsNothing);
+    expect(
+      ProviderScope.containerOf(
+        tester.element(find.byType(BenchmarkRunPage)),
+      ).read(benchmarkProvider(sid).notifier),
+      same(notifier),
+      reason: 'the rename built a second notifier for the same machine',
+    );
+    // Still the running card, not the form: the run was not dropped.
+    expect(find.text(libL10n.stop), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('reading a second past run replaces the first', (tester) async {
+    // Two results in the same pane. `detailId` is the run id, so this is the
+    // case `NestedNavigator` does mint a fresh page key for — which is why the
+    // result page needs no key of its own, and why that has to stay true.
+    final first = seedRunning();
+    BenchmarkStore.instance.put(
+      first.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
+    );
+    BenchmarkStore.instance.put(
+      BenchmarkRun(
+        id: 'bench_resume_2',
+        serverId: sid,
+        startedAt: DateTime.now().subtract(const Duration(hours: 2)),
+        finishedAt: DateTime.now().subtract(const Duration(hours: 1)),
+        status: BenchmarkStatus.completed,
+        options: const YabsOptions(),
+        runDir: '/tmp/y/.server_box_bench',
+        log: 'second-run-log',
+        exitCode: 0,
+      ),
+    );
+
+    await pump(tester, const BenchmarkTabPage());
+    expect(find.byType(BenchmarkHistoryTile), findsNWidgets(2));
+
+    await tester.tap(find.byType(BenchmarkHistoryTile).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    var page = tester.widget<BenchmarkResultPage>(
+      find.byType(BenchmarkResultPage),
+    );
+    expect(page.args.id, first.id, reason: 'the newest run is listed first');
+
+    await tester.tap(find.byType(BenchmarkHistoryTile).last);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    page = tester.widget<BenchmarkResultPage>(
+      find.byType(BenchmarkResultPage),
+    );
+    expect(
+      page.args.id,
+      'bench_resume_2',
+      reason: 'the pane kept showing the run that was there before',
+    );
+    await close(tester);
+  });
+
+  testWidgets('a run that starts and fails inside one second still lists', (
+    tester,
+  ) async {
+    // The history is cached and the tick decides when to re-read it. Keying
+    // that on the set of machines with a run in flight is not enough: a start
+    // whose first poll answers "the run directory is gone" writes the row
+    // `running` and rewrites it `failed` between two ticks, so the set is empty
+    // on both sides and the run would never appear.
+    await pump(tester, const BenchmarkTabPage());
+    expect(find.byType(BenchmarkHistoryTile), findsNothing);
+
+    BenchmarkStore.instance.put(
+      BenchmarkRun(
+        id: 'bench_fast_fail',
+        serverId: sid,
+        startedAt: DateTime.now(),
+        finishedAt: DateTime.now(),
+        status: BenchmarkStatus.failed,
+        options: const YabsOptions(),
+        runDir: '/tmp/z/.server_box_bench',
+        error: 'The run directory is gone',
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    expect(find.byType(BenchmarkHistoryTile), findsOneWidget);
+    await close(tester);
+  });
+
+  testWidgets('deleting a run clears it from the run form as well', (
+    tester,
+  ) async {
+    // The delete used to go straight to the store, leaving the record in the
+    // notifier's `history` — and the run form seeds its options from the newest
+    // entry there, so a deleted run came back pre-filled.
+    final run = seedRunning();
+    BenchmarkStore.instance.put(
+      run.copyWith(status: BenchmarkStatus.completed, exitCode: 0),
+    );
+
+    await pump(tester, const BenchmarkTabPage());
+    expect(find.byType(BenchmarkHistoryTile), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text(libL10n.ok).last);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(BenchmarkHistoryTile), findsNothing);
+    expect(
+      ProviderScope.containerOf(
+        tester.element(find.byType(BenchmarkRunPage)),
+      ).read(benchmarkProvider(sid)).history,
+      isEmpty,
+      reason: 'the notifier still holds the deleted run',
+    );
     await close(tester);
   });
 

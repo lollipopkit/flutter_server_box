@@ -392,6 +392,9 @@
   "askAiSendOnEnter": "Invio invia",
   "askAiSendOnEnterTip": "Invio invia, Maiusc+Invio a capo. Disattivato: Invio a capo, Cmd/Ctrl+Invio invia.",
   "askAiApiKeyOptional": "Lascia vuoto per locale o senza autenticazione",
+  "askAiAllowInsecure": "Consenti HTTP non crittografato",
+  "askAiAllowInsecureTip": "Consente connessioni http:// ai modelli self-hosted su indirizzi diversi da localhost. La chiave API e l’eventuale contesto del terminale vengono inviati senza crittografia; localhost non è interessato.",
+  "askAiInsecureEndpoint": "Questo endpoint usa http://. Attiva «Consenti HTTP non crittografato» nelle impostazioni AI per utilizzarlo.",
   "askAiHistory": "Cronologia conversazioni",
   "askAiNewConversation": "Nuova conversazione",
   "askAiNoHistory": "Nessuna conversazione salvata",
@@ -606,5 +609,6 @@
   "benchmarkRawLog": "Registro di esecuzione",
   "benchmarkUpstream": "Basato su Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Avvio",
-  "benchmarkNoOutputYet": "Ancora nessun output. Prima di mostrare la prima riga, YABS verifica che google.com e icanhazip.com siano raggiungibili. Sulle reti che bloccano uno dei due siti, questa operazione può richiedere diversi minuti."
+  "benchmarkNoOutputYet": "Ancora nessun output. Prima di mostrare la prima riga, YABS verifica che google.com e icanhazip.com siano raggiungibili. Sulle reti che bloccano uno dei due siti, questa operazione può richiedere diversi minuti.",
+  "benchmarkNoServers": "Aggiungi prima un server, poi torna per eseguire il benchmark."
 }

@@ -186,6 +186,17 @@ class AppLocalizationsId extends AppLocalizations {
       'Kosongkan untuk lokal atau tanpa autentikasi';
 
   @override
+  String get askAiAllowInsecure => 'Izinkan HTTP tanpa enkripsi';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Mengizinkan koneksi http:// ke model yang di-host sendiri pada alamat selain localhost. Kunci API dan konteks terminal akan dikirim tanpa enkripsi; localhost tidak terpengaruh.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Endpoint ini menggunakan http://. Aktifkan “Izinkan HTTP tanpa enkripsi” di pengaturan AI untuk menggunakannya.';
+
+  @override
   String get askAiHistory => 'Riwayat percakapan';
 
   @override
@@ -2064,5 +2075,5 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark.';
 }

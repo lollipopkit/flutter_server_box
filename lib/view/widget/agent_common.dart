@@ -26,6 +26,10 @@ String describeAgentError(BuildContext context, Object error) {
   if (error is AgentNoResponse) return l10n.askAiNoResponse;
   if (error is AskAiConfigException) {
     if (error.missingFields.isEmpty) {
+      // A plain-http address is not a malformed one, and saying "invalid URL"
+      // about a model that is running and reachable sends the user looking for
+      // a typo. Name the switch instead.
+      if (error.insecureScheme) return l10n.askAiInsecureEndpoint;
       return error.hasInvalidBaseUrl
           ? '${libL10n.invalidUrl}: ${error.invalidBaseUrl}'
           : error.toString();

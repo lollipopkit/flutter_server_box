@@ -186,6 +186,17 @@ class AppLocalizationsUk extends AppLocalizations {
       'Залиште порожнім для локального або без автентифікації';
 
   @override
+  String get askAiAllowInsecure => 'Дозволити незашифрований HTTP';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Дозволяє підключення через http:// до самостійно розміщених моделей за адресами, відмінними від localhost. Ключ API та будь-який контекст термінала буде надіслано без шифрування; localhost це не стосується.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Ця кінцева точка використовує http://. Увімкніть «Дозволити незашифрований HTTP» у налаштуваннях AI, щоб використовувати її.';
+
+  @override
   String get askAiHistory => 'Історія розмов';
 
   @override
@@ -2079,5 +2090,5 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Спочатку додайте сервер, а потім поверніться, щоб запустити бенчмарк.';
 }
