@@ -1790,7 +1790,7 @@ packages:
     source: hosted
     version: "0.6.18"
   toml:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: toml
       sha256: "35a35f782228656a2af31e8c73d1353cc4ef3d683fd68af1111b44631879c05e"

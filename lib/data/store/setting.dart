@@ -582,6 +582,19 @@ class SettingStore extends SqliteStore {
     defaultValue: const [],
   );
 
+  /// Which of `PluginRepoStore.officialUrls` this device has been given.
+  ///
+  /// The URLs rather than a flag, for the reason written on `seedOfficial`: a
+  /// later build has to be able to add a second official repository, and a
+  /// repository the user removed has to stay removed.
+  ///
+  /// Device-local bookkeeping, so it does not move the clock sync reads.
+  late final pluginReposSeeded = listProperty<String>(
+    'pluginReposSeeded',
+    defaultValue: const [],
+    updateLastModified: false,
+  );
+
   /// Docker is more popular than podman, set to `false` to use docker
   late final usePodman = propertyDefault('usePodman', false);
 

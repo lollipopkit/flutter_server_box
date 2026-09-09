@@ -6,6 +6,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/plugin/install.dart';
@@ -16,8 +17,29 @@ import 'package:server_box/data/model/plugin/store.dart';
 const _digest =
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
-PluginIndex _index(List<Map<String, Object?>> plugins) =>
-    PluginIndex.parse(jsonEncode({'schema': 1, 'plugins': plugins}));
+/// A repository offering [plugins], as the app receives one: a tree of files.
+PluginIndex _index(List<Map<String, Object?>> plugins) => PluginIndex.fromFiles({
+  'repo.toml': _bytes('schema = 1'),
+  for (final p in plugins)
+    PluginRepoLayout.pathOf(p['id']! as String)!: _bytes(_toml(p)),
+});
+
+Uint8List _bytes(String text) => Uint8List.fromList(utf8.encode(text));
+
+/// One plugin's file, from the shape these tests describe a listing in.
+String _toml(Map<String, Object?> plugin) => [
+  'id = "${plugin['id']}"',
+  'name = "${plugin['name']}"',
+  'description = ""',
+  for (final v in plugin['versions']! as List) ...[
+    '',
+    '[[version]]',
+    'version = "${(v as Map)['version']}"',
+    'abi = ${v['abi']}',
+    'url = "${v['url']}"',
+    'sha256 = "${v['sha256']}"',
+  ],
+].join('\n');
 
 Map<String, Object?> _listing(
   String id, {
@@ -38,7 +60,7 @@ Map<String, Object?> _listing(
 };
 
 PluginRepoRecord _repo(String host, DateTime at) =>
-    PluginRepoRecord(url: 'https://$host/index.json', addedAt: at);
+    PluginRepoRecord(url: 'https://$host/plugins', addedAt: at);
 
 PluginInstall _installed(String id, String version) => PluginInstall(
   id: id,
@@ -56,7 +78,7 @@ void main() {
       repos: [first],
       indexes: {
         first.url: _index([
-          _listing('a.b', versions: [('1.0.0', 1), ('2.0.0', 2), ('3.0.0', 9)]),
+          _listing('a.b.c', versions: [('1.0.0', 1), ('2.0.0', 2), ('3.0.0', 9)]),
         ]),
       },
       installed: const {},
@@ -73,7 +95,7 @@ void main() {
     final entries = PluginStore.merge(
       repos: [first],
       indexes: {
-        first.url: _index([_listing('a.b', versions: [('2.0.0', 9)])]),
+        first.url: _index([_listing('a.b.c', versions: [('2.0.0', 9)])]),
       },
       installed: const {},
       abi: 2,
@@ -93,8 +115,8 @@ void main() {
       final entries = PluginStore.merge(
         repos: [first, second],
         indexes: {
-          first.url: _index([_listing('a.b', name: 'From A', versions: [('1.0.0', 1)])]),
-          second.url: _index([_listing('a.b', name: 'From B', versions: [('9.0.0', 1)])]),
+          first.url: _index([_listing('a.b.c', name: 'From A', versions: [('1.0.0', 1)])]),
+          second.url: _index([_listing('a.b.c', name: 'From B', versions: [('9.0.0', 1)])]),
         },
         installed: const {},
         abi: 2,
@@ -116,8 +138,8 @@ void main() {
         // would do.
         repos: [second, first]..sort((a, b) => a.addedAt.compareTo(b.addedAt)),
         indexes: {
-          first.url: _index([_listing('a.b', name: 'From A', versions: [('1.0.0', 1)])]),
-          second.url: _index([_listing('a.b', name: 'From B', versions: [('1.0.0', 1)])]),
+          first.url: _index([_listing('a.b.c', name: 'From A', versions: [('1.0.0', 1)])]),
+          second.url: _index([_listing('a.b.c', name: 'From B', versions: [('1.0.0', 1)])]),
         },
         installed: const {},
         abi: 2,
@@ -130,8 +152,8 @@ void main() {
       final entries = PluginStore.merge(
         repos: [first.copyWith(enabled: false), second],
         indexes: {
-          first.url: _index([_listing('a.b', name: 'From A', versions: [('1.0.0', 1)])]),
-          second.url: _index([_listing('a.b', name: 'From B', versions: [('1.0.0', 1)])]),
+          first.url: _index([_listing('a.b.c', name: 'From A', versions: [('1.0.0', 1)])]),
+          second.url: _index([_listing('a.b.c', name: 'From B', versions: [('1.0.0', 1)])]),
         },
         installed: const {},
         abi: 2,
@@ -147,9 +169,9 @@ void main() {
         PluginStore.merge(
           repos: [first],
           indexes: {
-            first.url: _index([_listing('a.b', versions: versions)]),
+            first.url: _index([_listing('a.b.c', versions: versions)]),
           },
-          installed: {'a.b': _installed('a.b', have)},
+          installed: {'a.b.c': _installed('a.b.c', have)},
           abi: 2,
         );
 
@@ -192,7 +214,7 @@ void main() {
     final entries = PluginStore.merge(
       repos: [first, second],
       indexes: {
-        second.url: _index([_listing('a.b', versions: [('1.0.0', 1)])]),
+        second.url: _index([_listing('a.b.c', versions: [('1.0.0', 1)])]),
       },
       installed: const {},
       abi: 2,

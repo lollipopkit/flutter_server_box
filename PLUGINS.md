@@ -543,29 +543,86 @@ CREATE TABLE plugin_kv (
 
 ### 8.1 插件仓库
 
-计划新建 `lollipopkit/serverbox-plugins`，独立维护，不作为 submodule。GitHub Releases 发布 `index.json` 和 Ed25519 签名 `index.json.sig`，官方公钥编进 App。
+已实现，**照 brew 的 tap 做**：一个仓库就是一个 git 仓库，里面**每个插件一个 TOML 文件**，包放在旁边；客户端取回它最新的整棵树来读。于是没有 release 可以挂东西，没有一份每次发布都要重写的总文档，一个 PR 只动它真正要动的那个插件。用户自己加仓库，加入顺序有意义（见下面的冲突一条）。存储是 `plugin_repo` 表（m025）+ `PluginRepoStore`，页面是 `view/page/plugin/store.dart`。
 
-验证沿用 `RootfsManifestTrust` 的规则：先对下载的原始字节验签，再解析；检查 serial 防止退回旧索引；检查 `valid_until` 防止使用过期索引。
+```
+repo.toml                              schema、name
+plugins/app/serverbox/diskusage.toml   每个插件一个文件，里面写包的 url
+```
 
-索引记录插件的 `id`、`version`、`abi`、`sha256`、`size`、`url`、`permissions`、本地化名称与描述、`license` 和 `source_url`。官方仓库只收自由开源插件。添加第三方仓库时，用户需要提供 URL 和公钥指纹，并核对指纹。
+**仓库里没有二进制。** 包是这个仓库自己的 release，**一个插件版本一个 release**，tag 是 `<id>-<version>`（`app.serverbox.diskusage-1.0.1`）。于是一个 tag 恰好指认一组字节，URL 在那个版本还被列着的期间一直有效；release 永不替换，换字节就是换版本 —— 生成器也拒绝另一种做法。
+
+**路径就是 id。** 插件 id 是 reverse-DNS，前两段是发布者、其余是插件：`app.serverbox.diskusage` 在 `plugins/app/serverbox/diskusage.toml`。两级目录按 brew 的 `Formula/a/…` 那样分片，同时把一个发布者的插件放在一起 —— 按首字母分片做不到这一点。**文件里的 `id` 和它所在的路径不一致就拒绝读**，那是文件被复制到错误目录的样子，不查的话 app 会去装一个仓库自己都不认为在提供的东西。
+
+**客户端一次请求取回整棵树**：`<repo>/archive/HEAD.tar.gz`（`PluginRepoSource.archiveUrlOf` 从地址推出来，GitHub / Gitea / Forgejo 同一条路径）。`HEAD` 而不是分支名 —— 默认分支叫什么不该由客户端猜，服务端会解析。装的时候再按文件里的 `url` 取那个包。实测 GitHub 对 `HEAD` 的解析有缓存，push 后约 10 秒内可能仍给上一个 commit；客户端 24 小时才重取一次，所以这件事只在"发布完立刻验证"时看得见。
+
+**包的 release 放在 tap 而不是 app repo**，这是绕开一整类问题的原因之一：fl_lib 的更新检查从 release 的 tag 或标题里读 build 号，`app.serverbox.diskusage-1.0.1` 这种 tag 要是出现在 app repo 里会被读成 build 1（末尾那串数字），而它带的是一个 `.sbp`。放在 tap 里，那边没有任何东西在读 release 当版本。（顺带在 fl_lib 里把"读不出版本"从 warning 降为静默返回 null —— 那不是格式错误，是一个不属于 app 的 release，而每次检查更新都写一行日志会把看日志的人带偏。`update_test.dart` 盯着这条。）
+
+**装载有上限**：压缩后 16MB、解压后 64MB、单条 8MB。tarball 是别人写的，而一个很小的压缩包可以声称自己很大。
+
+**不做签名。** 原计划的 Ed25519 + `index.json.sig` + 公钥编进 App + serial/`valid_until` 防退回都没有采用。信任锚是 HTTPS 和仓库运营者：树用 HTTPS 取，每个版本写明包的 SHA-256，安装前按这个值校验字节。**文件和包来自两个地方**（tap 和某个 release），所以这个摘要就是把一个地址和一组确定字节绑起来的东西 —— 和 brew 的 formula 里那个 `sha256` 是同一件事。格式也允许 `path`（包放在仓库自己树里），那种情况下它退化成一致性检查，本仓库不用。于是——
+
+- 中间的镜像或 CDN 换掉包会被抓到，因为它写不了 index；
+- **控制 index 的人控制装什么**，因为 URL 和摘要都是它给的。TLS 和运营者本身是信任锚，这里没有任何东西能替代其中任何一个。
+
+签名要解决的是密钥归属、轮换，以及升级时换了发布者，而这三件事只在有多个互不信任的发布者时才值钱。什么时候该回到这个决定，记在 TODOS 第 2 节；先例是 `RootfsManifestTrust`。
+
+已定的规则，都在代码里有一处对应：
+
+| 规则 | 在哪 |
+|---|---|
+| 没有 checksum 的包**默认拒绝**，提醒后用户可明确跳过（私有仓库经隧道分发是真实场景） | `PluginTrustIssue.noDigest`，且**问在下载之前** —— 下载完再问，字节已经在本机了 |
+| checksum **不匹配永不可跳过**：那不是缺少保证，是保证出了问题 | `PluginTrustRefused.skippable` |
+| `repo.toml` 声明 `schema`，高于本 build 就**整份拒绝** | `PluginIndex.fromFiles`。不认识的字段可能正是决定某件事的那个；而 `repo.toml` 也是"这个 tarball 是不是一个插件仓库"的唯一凭据 |
+| 一个插件文件读不了只损失那个插件，`repo.toml` 读不了损失整个仓库 | 同上。仓库里放着别人发的文件，其中一个坏了不该带走其余的 |
+| 兼容轴是 **ABI 不是 app 版本**：装 `abi <= ABI_VERSION` 里最新的那个 | `PluginListing.bestFor`。app 版本号每周都在动，契约不是 |
+| 本 build 太旧的版本**列出来但装不了**，并写明哪个版本需要更新的 app | `StoreEntry.appTooOld` / `tooNew`。藏起来读作"这插件不存在"，给按钮则是必然失败的按钮 |
+| 同一个 id 在两个仓库里：**先加的赢**，并在条目上说出来 | `PluginStore.merge` / `StoreEntry.shadowed`。同 brew 的 tap 优先级；静默取其一是用户发现不了的 |
+| index 和包都必须 https（loopback 例外） | `PluginRepoSource` |
+| index 只在过期时才拉（24h，同 brew 量级），另有手动刷新 | `PluginRepoRecord.staleAt` |
+
+**官方仓库是 [`lollipopkit/serverbox-plugins`](https://github.com/lollipopkit/serverbox-plugins)**（2026-09-09 建立）。**没有 release**：`.sbp` 直接提交在树里（`.gitattributes` 标 binary），因为客户端取的就是这棵树，而一个包几十 KB —— 取回仓库就是取回它提供的全部东西。git 历史就是"什么时候发布了什么"，一次 commit 就是一次完整发布，不存在"文件发了包没发"的窗口。官方仓库只收自由开源插件（8.3 的 F-Droid 一节依赖这条）。
+
+`PluginRepoStore.officialUrls` 是这个地址，**按 URL 逐个种一次**（`seedOfficial`，在 `_initApp` 里 schema 迁移之后调用）。记的是 URL 而不是一个 bool：以后加第二个官方仓库要能加进去，而用户删掉的仓库必须删得掉 —— 而"列表空了就种"分不出这两件事，空列表恰恰就是"唯一那个被删了"的样子。
+
+**不做**：评分、评论、下载量（要一个有状态的后端，而现在整条链路是静态文件 + HTTPS）；自动更新（插件会在用户的服务器上执行命令，换一个版本是要看一眼的事）。
+
+**打包和仓库生成在 `packages/plugin-tools`**：`bin/pack.ts` 产出 `.sbp`，`bin/repo.ts` 把它们写成 TOML 树 + `packages/`。两条规则写在那份 README 里，都是决定而非机械：**摘要从要发布的字节现算**（手抄的迟早会错，而错了的表现是所有人都装不上），**已有的文件是合并进去而不是覆盖**（一个文件保留多个版本正是为了让旧 app 找到它能跑的那个，只写 `dist/` 里现有的等于每次都把旧版本删掉）。由此，同一个版本换了字节默认拒绝，`--allow-republish` 才当作有意。这一轮只重写**本次动过的**插件文件 —— 仓库里还有别人发的文件，每次发布都重排一遍会把真正的改动埋掉。
+
+TOML 用 `Bun.TOML.parse` 读、手写发射器写；app 侧用 `package:toml`（本来就在依赖树里，Rust 构建钩子要读 `Cargo.toml`）。两边都用真正的解析器而不是自制子集：这些文件是别人写的，一个只认自己产物的读取器会用一句难懂的报错拒绝合法 TOML。
+
+`test/fixtures/plugin_index/generated.json` 是这个工具的真实输出，`test/plugin_index_generated_test.dart` 用 app 自己的解析器读它 —— 两侧是两种语言，字段拼错在哪一侧都不是编译错误，而是一个所有人都看着是空的仓库。
+
+**发布走 `scripts/publish-plugins.sh`**：pack → 写树 → 本地核对 → **一次 commit** → push → `bin/verify.ts` 按客户端的方式取回线上再核对一遍。一次 commit 就是一次完整发布，这是"包提交在树里"换来的东西 —— 从前 index 和 asset 分两步走，中间断掉就留下一份说着谎的索引，那个顺序（先 commit index 再上传）曾经是这个脚本存在的主要理由。
+
+`verify.ts` 是整套工具里**唯一读线上字节的东西**：其余都在构建机的字节上工作，而发布出错的方式全在这两者之间 —— 没上传的 asset、commit 了 index 却没上传对应的包、手改过的 release。
 
 ### 8.2 安装流程和本地开发
 
-安装时下载 `.sbp`，校验 SHA-256，解压到 `Paths.doc/plugins/<id>/<version>/`，把 `plugin.js` 载入一个一次性上下文以确认语法和导出可用，再写安装记录。中间失败则回滚本次安装目录。
+安装：下载 → 校验 SHA-256 → `PluginPackage.read` 读进内存并检查（路径穿越、解压炸弹、逐项与总量上限）→ 权限对话框 → 解压到 `Paths.doc/plugins/<id>/` → 写安装记录 → 加进用户的排列。
 
-随包插件放在 `assets/plugins/*.sbp`，首次启动时安装，来源记为 `repo = NULL`。这样离线或关闭在线仓库时仍有可用版本；联网后可以安装仓库中的更新。更新检查沿用 `RootfsManifestSource.refresh` 的节奏，新增权限必须先经用户同意。
+**目录不带版本号**：一个 id 一份文件。更新是先写 `<id>.new` 再整体换过去，所以半途失败不会留下一个版本的 manifest 配另一个版本的脚本。原计划里"把 `plugin.js` 载入一次性上下文确认语法"没有做：装完首次打开就会加载，失败在那里同样看得见，而多一次加载是多一个只在安装路径上存在的失败面。
 
-桌面版计划支持直接加载本地开发目录，不要求打包或签名，来源记为 `repo = 'dev'`，并在页面中明确标记。已实现（`SettingStore.pluginDevDirs`），`packages/plugins/` 下三个插件就是这么开发的。
+**更新走的是和安装同一条路径** —— 同一个 `download()`、同一套校验、同一个安装器。两处不同，都是有意的：
 
-SDK README 将列出 ABI 与 App 版本的对应关系。App 拒绝加载 ABI 高于自身支持版本的插件，仓库为不同 ABI 保留兼容版本。
+- **权限对话框只在新版本要了没被同意过的东西时才出现**（`askPluginUpgradeConsent`）。6.2 要的是"新增权限必须先经用户同意"，而没有新增就没有可看的东西；每次都问，会把这个唯一靠被读才有价值的对话框训练成随手划过 —— "全部更新"五个插件就是五次。不问时装的是**上次的授权集合**而不是 manifest 自己的清单，所以上次被拒的权限这次仍然是拒的。
+- 更新不打开用户关掉的插件，也不把用户从排列里拿掉的入口放回去（`default_on` 只在首次安装生效）。
+
+`assets/plugins/*.sbp` 那套随包插件**没有做**：现在没有任何插件随 app 发布。`packages/plugins/` 下三个是靠开发目录加载的 —— 桌面端，`SettingStore.pluginDevDirs` 只记路径，每次 refresh 直接从开发者写它们的地方读，不拷贝，所以改一行加重启就是整个开发循环。来源记为 `repo = 'dev'` 并在列表里明确标记。
+
+App 拒绝加载 ABI 高于自身的插件，这是 `plugin_read_manifest` 里的一次比较，也是上面那张表里"兼容轴"的另一半。
+
+SDK README（`packages/plugin-api/README.md`）写的是 v1/v2 各有什么，而不是 ABI 与 App 版本的对照表：对照表要按每次发版维护，而作者要知道的是"我用的这个节点从哪一版起有"。**并且 SDK 的 `ABI_VERSION` 曾经停在 1 而宿主已经是 2** —— 检查是单向的，所以少报的一侧会被接受，然后一个 v2 节点在旧 app 上画成"unknown widget"，正是这个检查要挡的静默半可用。现在 `plugin_ffi_test.dart` 直接比这两个数。
 
 ### 8.3 App Store 和 F-Droid
 
 App Store 构建的既定方案是默认开启在线仓库，但这不代表已经确认能通过审核。设计依据是 Review Guidelines 4.7 对非内嵌 plug-ins 的规定，还需要处理逐插件同意、带 universal link 的插件索引，以及不得暴露原生平台 API 等要求。ServerBox 的宿主函数是否符合相关边界，仍有审核不确定性；解释执行本身不能保证避开 2.5.2，改用 JavaScript 也不改变这一点。
 
-计划用 `website/` 为每个插件生成介绍页。保留构建开关 `SBM_PLUGIN_REPO`：必要时可关闭在线仓库，只保留随包插件；届时无法在线安装和更新。
+介绍页已完成，在 `website/` 里：`/plugins/`（`src/Plugins.svelte` + `plugins/index.html`）。**内容从 `packages/plugins/*/manifest.json` 构建期读出来**（`vite.config.js` 的 `pluginCatalog` 虚拟模块），所以页面上的版本、ABI 和权限就是包里的那些，不是一份会漂的抄写。七种语言，插件自己的名字和描述不翻译 —— 那是数据，而且 app 也照 manifest 显示。
 
-F-Droid 构建的在线仓库默认关闭。用户主动开启前，需要说明下载的插件绕过了 F-Droid 的检查。官方仓库只收自由开源插件，以避免推广非自由附加组件对应的 `NonFreeAddons` 问题。发布前仍需核对当时政策。
+**不做 `SBM_PLUGIN_REPO` 构建开关**（2026-09-09 决定）。它要换来的是"必要时只保留随包插件"，而随包插件本身没有做，所以这个开关现在能做的只是把整个插件功能关掉 —— 那不是一个开关，是两个构建。真需要时再加，比现在留一个从未被任一构建打开过的分支好。
+
+F-Droid 构建：官方仓库只收自由开源插件，这就是 `NonFreeAddons` 那条要的东西，所以在线仓库不需要默认关闭。用户加的第三方仓库绕过了 F-Droid 的检查，安装对话框已经说明包的来源和校验状态。发布前仍需核对当时政策。
 
 ## 九、第一批做状态命令插件
 
@@ -674,7 +731,7 @@ manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 
 | 4 | Dart feature registry 和按钮 id 迁移 | **已完成**。`lib/data/model/app/feature.dart`：`Feature`/`FeatureSlot`/`Features`，三个入口面（功能栏按钮、详情卡片、首页 tab）合并成一个 id 空间和一份"这次升级新增了什么"的规则。`serverBtns` 由 enum index 迁到 id（m021，`kLegacyServerFuncBtnIds` 冻结旧顺序），恢复备份时也会转换 |
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）、**`contributes.page`**（功能栏按钮打开整页，`needs` 按 `ServerCapabilities` 过滤；功能栏改为按 id 分发，内置项和插件项走同一条路径）、**`contributes.settings`**（设置菜单里插件自己的页，有插件贡献时 `app.plugins` 才变成分支）、**开发目录**（`SettingStore.pluginDevDirs` 记路径，每次 refresh 直接从开发者目录读，不拷贝；卸载只删记录不动文件）、**`contributes.tab`**（m023 把 `homeTabs` 从 `List<AppTab>` 放宽成 id；`HomeTab` 解析 id 成内置或插件 tab，首页、macOS 菜单栏和标签排序页都改成按 id 走）均已完成。四个入口面齐了，剩 5.5 的 golden 截图 |
 | ~~6~~ | ~~在 App 中接通 BMC 插件~~ | **不做**，2026-09-08 决定。理由见 4.9；`packages/redfish` 和 BMC 的 Dart 实现都保留 |
-| 7 | 在线仓库、第三方仓库和网站插件页 | 未开始；先只收状态插件。开放 UI 插件的前提原来是 BMC，现在改成：`card`/`tab`/`settings` 三个面各要有一个真插件用过（三个现有的都只用了 `page`） |
+| 7 | 在线仓库、第三方仓库和网站插件页 | **已完成**（8.1）：`plugin_repo` + 商店页 + 按 ABI 选版本 + sha256 校验 + 多源合并；打包和 index 生成在 `packages/plugin-tools`；官方仓库 `lollipopkit/serverbox-plugins` 已发布三个插件，`officialUrls` 已填并按 URL 种一次；网站 `/plugins/` 页从 manifest 构建期生成。开放第三方 UI 插件的前提原来是 BMC，现在改成：`card`/`tab`/`settings` 三个面各要有一个真插件用过（三个现有的都只用了 `page`） |
 | 8 | agent 也跑插件 | **已完成**。**宿主子集**、**monitor 侧**、**App 侧**：`HostProfile{App,Agent}`、`HostFn::available_in`、manifest 的 `runs_in`（默认 `["app"]`，声明 `agent` 同时带界面贡献会在解析期被拒）。agent 上没有 `sb.ui`/`sb.nav`/`sb.clipboard`/`sb.server.list`/`sb.server.exec`，装成和未授权函数同一种抛异常替身，只是理由不同（`Refusal::Unavailable`）。**monitor 侧**：`[plugins]` 默认关、按 id 点名、权限由运维写在文件里（和 manifest 求的取交集）；在 extended 周期上跑，结果进 `/metrics` 的 `plugin_status` 并带 carry-forward。**App 侧**：`/metrics` 的 `plugin_status` 进 `ServerStatus.agentPlugins`，`PluginStatusCard` 有它就画它、什么也不跑。线格式由两边各一个测试盯同一段字面量(`sbm_plugin::status::wire` 和 `test/plugin_agent_status_test.dart`)。**宿主接口**：`sb.store`（`plugin_kv` 表，按 plugin_id 和 scope 分隔）、`sb.http.fetch`（证书 pin 规则与 App 一致，rustls 的 `ServerCertVerifier`）、`sb.diag.crumb` 都已实现，bridge 自带一个 runtime——agent 跑在 `#[ntex::main]` 的 current-thread runtime 上，把答案 spawn 回调用者那条线程会死锁 |
 
 ### 三个真插件验出来的

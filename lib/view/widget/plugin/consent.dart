@@ -74,6 +74,30 @@ Future<Set<String>?> askPluginConsent(
   return permissions.toSet();
 }
 
+/// The same question for an update, asked only when there is something new in
+/// it.
+///
+/// An update goes through the install path in every other respect — the same
+/// download, the same digest rule — and PLUGINS.md 6.2 is why it asks at all:
+/// a permission the new version adds must not be usable before the user has
+/// seen it. **When it adds none, there is nothing to show.** Asking anyway
+/// teaches tapping through a dialog whose whole value is being read, and an
+/// "update all" over five plugins would be five of them.
+///
+/// What is installed then is [granted] rather than the manifest's own list, so
+/// a permission refused last time stays refused: `PluginInstaller.install`
+/// intersects the two, and handing it the manifest would be granting by
+/// omission.
+Future<Set<String>?> askPluginUpgradeConsent(
+  BuildContext context,
+  ffi.PluginManifestInfo manifest, {
+  required Set<String> granted,
+}) async {
+  final asks = manifest.permissions.toSet();
+  if (asks.difference(granted).isEmpty) return granted;
+  return askPluginConsent(context, manifest);
+}
+
 /// What a permission means, in the app's own words where it has them.
 ///
 /// Falls back to the name rather than to nothing: a build that meets a

@@ -27,15 +27,40 @@ class PluginRepoRecord {
   /// When its index was last read. Null means never.
   final DateTime? lastFetchedAt;
 
-  /// What to show when the index has not been read yet.
-  ///
-  /// The host, because a full URL in a list is mostly `https://` and a path
-  /// nobody reads — and because a repository that has never answered has no
-  /// name to show.
+  /// What to call it: the name it announced, or its address read short.
   String get label {
     final named = name;
     if (named != null && named.trim().isNotEmpty) return named;
-    return Uri.tryParse(url)?.host ?? url;
+    return labelOfAddress(url);
+  }
+
+  /// What to show for a repository that has not answered yet.
+  ///
+  /// **`owner/repo`, not the host.** A repository is a git repository now, and
+  /// nearly all of them are on github.com — so the host is the part of the
+  /// address that tells two of them apart *least*, and a list of them all read
+  /// "github.com". Homebrew names a tap the same way and for the same reason.
+  ///
+  /// A full URL is not the answer either: in a list it is mostly `https://` and
+  /// a path nobody reads.
+  static String labelOfAddress(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.host.isEmpty) return url;
+
+    var segments = [for (final s in uri.pathSegments) if (s.isNotEmpty) s];
+    // The archive form the app also accepts (`…/archive/HEAD.tar.gz`), so
+    // pasting one does not produce a repository called `archive/HEAD.tar.gz`.
+    if (segments.length >= 2 &&
+        segments[segments.length - 2] == 'archive' &&
+        segments.last.endsWith('.tar.gz')) {
+      segments = segments.sublist(0, segments.length - 2);
+    }
+    if (segments.isEmpty) return uri.host;
+
+    final last = segments.last.replaceFirst(RegExp(r'\.git$'), '');
+    // With one segment the host is what identifies it, so it stays.
+    if (segments.length == 1) return '${uri.host}/$last';
+    return '${segments[segments.length - 2]}/$last';
   }
 
   /// Whether it is worth fetching again.

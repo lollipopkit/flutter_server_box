@@ -5,7 +5,8 @@
 /// draws `l10n.thatKey` on screen, a locale declared in the manifest with no
 /// file behind it falls back silently, and a `.sbp` built without the
 /// translations installs an English-only plugin from a directory that had
-/// them — which is what `scripts/pack.ts` did until the packer was fixed.
+/// them — which is what the packer did until it was fixed, back when each
+/// plugin carried its own copy of it (now `packages/plugin-tools`).
 library;
 
 import 'dart:convert';

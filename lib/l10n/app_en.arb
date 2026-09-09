@@ -215,8 +215,8 @@
   "pluginRepos": "Repositories",
   "pluginAddRepo": "Add a repository",
   "pluginNoRepos": "No repositories",
-  "pluginNoReposTip": "A repository is an index.json address. Plugins are installed from one, and it decides what runs on your servers.",
-  "pluginUpdate": "Update",
+  "pluginNoReposTip": "A repository is a git repository of plugins, added by its address. Plugins are installed from one, and it decides what runs on your servers.",
+  "pluginUpdateAll": "Update all",
   "pluginNeedsNewerApp": "Needs a newer app",
   "pluginNewerNeedsApp": "v{version} needs a newer app",
   "@pluginNewerNeedsApp": {

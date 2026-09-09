@@ -19,6 +19,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import 'helpers/plugin_sbp.dart';
 import 'helpers/test_db.dart';
 import 'rust_lib_helper.dart';
 
@@ -52,22 +53,13 @@ List<int> sbp({
   Map<String, Object?> l10n = const {'en': {'title': 'Pools'}},
   List<int>? icon,
   Map<String, List<int>> extra = const {},
-}) {
-  final archive = Archive();
-  void add(String name, List<int> bytes) =>
-      archive.add(ArchiveFile.bytes(name, bytes));
-
-  add(PluginPackage.manifestName, utf8.encode(manifest ?? _manifest()));
-  add(PluginPackage.sourceName, utf8.encode(source));
-  for (final e in l10n.entries) {
-    add('${PluginPackage.l10nDir}${e.key}.json', utf8.encode(jsonEncode(e.value)));
-  }
-  if (icon != null) add(PluginPackage.iconName, icon);
-  for (final e in extra.entries) {
-    add(e.key, e.value);
-  }
-  return ZipEncoder().encode(archive);
-}
+}) => buildSbp(
+  manifest: manifest ?? _manifest(),
+  source: source,
+  l10n: l10n,
+  icon: icon,
+  extra: extra,
+);
 
 void main() {
   setUpAll(initRustLibForTest);

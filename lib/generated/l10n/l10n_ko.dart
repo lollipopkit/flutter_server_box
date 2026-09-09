@@ -588,10 +588,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pluginNoReposTip =>
-      'A repository is an index.json address. Plugins are installed from one, and it decides what runs on your servers.';
+      'A repository is a git repository of plugins, added by its address. Plugins are installed from one, and it decides what runs on your servers.';
 
   @override
-  String get pluginUpdate => 'Update';
+  String get pluginUpdateAll => 'Update all';
 
   @override
   String get pluginNeedsNewerApp => 'Needs a newer app';

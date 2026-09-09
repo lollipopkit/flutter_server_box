@@ -59,6 +59,13 @@ dependencies:
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.
   drift: ^2.34.4
+  # A plugin repository is TOML, one file per plugin — see
+  # `lib/data/model/plugin/repo.dart`. Already in the tree as a transitive
+  # dependency (the Rust build hooks read `Cargo.toml`); direct because this
+  # code imports it, and a real parser rather than a subset because those files
+  # are written by other people and a reader that only accepted what our own
+  # generator emits would reject valid TOML with a confusing message.
+  toml: ^0.18.0
   wakelock_plus: ^1.8.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^2.0.0

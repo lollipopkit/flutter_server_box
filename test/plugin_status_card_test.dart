@@ -30,6 +30,7 @@ import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/widget/plugin/status_card.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
+import 'helpers/plugin_sbp.dart';
 import 'helpers/test_db.dart';
 import 'rust_lib_helper.dart';
 
@@ -69,17 +70,11 @@ String _manifest({bool requiresConfig = false}) => jsonEncode({
   },
 });
 
-List<int> _sbp({bool requiresConfig = false}) {
-  final archive = Archive()
-    ..add(
-      ArchiveFile.bytes(
-        'manifest.json',
-        utf8.encode(_manifest(requiresConfig: requiresConfig)),
-      ),
-    )
-    ..add(ArchiveFile.bytes('plugin.js', utf8.encode(_source)));
-  return ZipEncoder().encode(archive);
-}
+List<int> _sbp({bool requiresConfig = false}) => buildSbp(
+  manifest: _manifest(requiresConfig: requiresConfig),
+  source: _source,
+  l10n: const {},
+);
 
 void main() {
   setUpAll(initRustLibForTest);

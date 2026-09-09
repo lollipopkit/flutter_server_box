@@ -30,6 +30,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
+import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
@@ -429,6 +430,11 @@ Future<void> _doDbMigrate() async {
   Diag.tag(SbDiagTag.schema, '${SchemaVersion.current}');
 
   migrateBuildFeatures(BuildData.build);
+
+  // The repository this build ships with, added once per URL — see
+  // `PluginRepoStore.seedOfficial`. After the schema step, because on an
+  // upgrading install that is what creates the table it writes to.
+  PluginRepoStore.instance.seedOfficial();
 
   // What the installed plugins contribute, published once so the feature
   // registry can answer for them. Before anything draws, because a card whose

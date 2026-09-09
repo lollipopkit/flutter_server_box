@@ -28,18 +28,32 @@ import 'package:server_box/view/widget/plugin/consent.dart';
 ///   default**. The dialog says what that means, and going ahead is the user's
 ///   answer to having been told — not a preference they set once.
 class PluginStorePage extends StatefulWidget {
-  const PluginStorePage({super.key, this.embedded = false});
+  const PluginStorePage({
+    super.key,
+    this.embedded = false,
+    @visibleForTesting this.source,
+    @visibleForTesting this.installer,
+  });
 
   /// Shown inside the settings pane, which already names it in its bar.
   final bool embedded;
+
+  /// Where an index and a package come from. Given in a test so the install
+  /// path can be walked without a repository — which is the only way to check
+  /// the refusals, since a real one would have to be made to serve bad bytes.
+  final PluginRepoSource? source;
+
+  /// Given in a test so nothing is written under the app's own data directory.
+  final PluginInstaller? installer;
 
   @override
   State<PluginStorePage> createState() => _PluginStorePageState();
 }
 
 class _PluginStorePageState extends State<PluginStorePage> {
-  late final _installer = PluginInstaller(root: PluginInstaller.appRoot);
-  final _source = PluginRepoSource();
+  late final _installer =
+      widget.installer ?? PluginInstaller(root: PluginInstaller.appRoot);
+  late final _source = widget.source ?? PluginRepoSource();
   final _repos = PluginRepoStore.instance;
 
   var _busy = false;
@@ -77,7 +91,10 @@ class _PluginStorePageState extends State<PluginStorePage> {
           final index = await _source.index(repo.url);
           _indexes[repo.url] = index;
           _failures.remove(repo.url);
-          _repos.put(repo.copyWith(lastFetchedAt: now));
+          // Including what it calls itself, which is the only place that name
+          // is ever learned — read on every fetch and, before this, thrown
+          // away, so every GitHub-hosted repository was listed as its address.
+          _repos.put(repo.copyWith(lastFetchedAt: now, name: index.name));
         } catch (e) {
           _failures[repo.url] = '$e';
           Loggers.app.warning('Reading the plugin index ${repo.url}', e);
@@ -159,18 +176,42 @@ class _PluginStorePageState extends State<PluginStorePage> {
                 outdated.map((e) => e.listing.name).join(', '),
                 style: UIs.text12Grey,
               ),
+              trailing: Btn.text(
+                text: l10n.pluginUpdateAll,
+                onTap: _busy ? null : () => unawaited(_updateAll(outdated)),
+              ),
             ),
           ),
-        for (final entry in _entries) _EntryTile(entry: entry, onTap: _install),
+        for (final entry in _entries)
+          _EntryTile(entry: entry, busy: _busy, onTap: _install),
       ],
     );
   }
 
   // ------------------------------------------------------------ installing
 
-  Future<void> _install(StoreEntry entry) async {
+  /// Updates everything with a newer runnable release, one at a time.
+  ///
+  /// Through [_install], because an update is an install: same download, same
+  /// digest rule, and the same dialog whenever the permissions moved. One
+  /// failure does not stop the rest — they are separate plugins from separate
+  /// repositories, and stopping would make the first slow server decide what
+  /// the others get.
+  Future<void> _updateAll(List<StoreEntry> outdated) async {
+    var done = 0;
+    for (final entry in outdated) {
+      if (!mounted) return;
+      if (await _install(entry, announce: false)) done++;
+    }
+    // One message for the run rather than one per plugin, and the count
+    // because it is how a cancelled or failed one is visible at all.
+    if (mounted && done > 0) Toast.show('${libL10n.saved} ($done)');
+  }
+
+  /// Installs [entry]'s best release, answering whether it landed.
+  Future<bool> _install(StoreEntry entry, {bool announce = true}) async {
     final release = entry.best;
-    if (release == null || _busy) return;
+    if (release == null || _busy) return false;
     setState(() => _busy = true);
     try {
       var accept = false;
@@ -183,24 +224,36 @@ class _PluginStorePageState extends State<PluginStorePage> {
           child: Text(l10n.pluginNoChecksumTip(entry.repo.label)),
           actions: Btnx.cancelRedOk,
         );
-        if (ok != true || !mounted) return;
+        if (ok != true || !mounted) return false;
         accept = true;
       }
 
       final download = await _source.download(
         release,
+        // The repository this came from: a release naming a path inside it is
+        // already in hand from the fetch, and asking for those bytes again over
+        // the same connection would be the only request this makes.
+        from: _indexes[entry.repo.url],
         acceptWithoutDigest: accept,
       );
       final package = PluginPackage.read(download.bytes);
       final manifest = ffi.pluginReadManifest(
         manifestJson: package.manifestJson,
       );
-      if (!mounted) return;
+      if (!mounted) return false;
 
-      // The same dialog an `.sbp` install shows, and the same rule: an upgrade
-      // asks again, because the permissions may have moved.
-      final consented = await askPluginConsent(context, manifest);
-      if (consented == null || !mounted) return;
+      // The same dialog an `.sbp` install shows. An update asks too, but only
+      // when the new version wants something the user has not already agreed
+      // to — see `askPluginUpgradeConsent`.
+      final installed = entry.installed;
+      final consented = installed == null
+          ? await askPluginConsent(context, manifest)
+          : await askPluginUpgradeConsent(
+              context,
+              manifest,
+              granted: installed.granted,
+            );
+      if (consented == null || !mounted) return false;
 
       await _installer.install(
         download.bytes,
@@ -209,13 +262,16 @@ class _PluginStorePageState extends State<PluginStorePage> {
         repo: entry.repo.url,
       );
       _rebuild();
-      Toast.show(libL10n.saved);
+      if (announce) Toast.show(libL10n.saved);
+      return true;
     } on PluginTrustRefused catch (e) {
       // A mismatch is not a question — see `PluginTrustRefused.skippable`.
       if (mounted) Toast.error(l10n.pluginChecksumFailed, body: '$e');
+      return false;
     } catch (e, s) {
       Loggers.app.warning('Installing ${entry.listing.id}', e, s);
       if (mounted) Toast.error(libL10n.fail, body: '$e');
+      return false;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -251,7 +307,7 @@ class _PluginStorePageState extends State<PluginStorePage> {
       title: l10n.pluginAddRepo,
       child: Input(
         autoFocus: true,
-        hint: 'https://example.com/index.json',
+        hint: 'https://github.com/you/serverbox-plugins',
         onSubmitted: (v) => context.popDialog(v.trim()),
       ),
     );
@@ -265,6 +321,7 @@ class _PluginStorePageState extends State<PluginStorePage> {
       _repos.put(
         PluginRepoRecord(
           url: url,
+          name: index.name,
           addedAt: DateTime.now(),
           lastFetchedAt: DateTime.now(),
         ),
@@ -280,15 +337,25 @@ class _PluginStorePageState extends State<PluginStorePage> {
 }
 
 class _EntryTile extends StatelessWidget {
-  const _EntryTile({required this.entry, required this.onTap});
+  const _EntryTile({
+    required this.entry,
+    required this.busy,
+    required this.onTap,
+  });
 
   final StoreEntry entry;
-  final Future<void> Function(StoreEntry) onTap;
+
+  /// Something else on the page is downloading. The button says so rather than
+  /// looking pressable and being declined.
+  final bool busy;
+
+  final Future<bool> Function(StoreEntry) onTap;
 
   @override
   Widget build(BuildContext context) {
     final best = entry.best;
     final installed = entry.installed;
+    final act = busy ? null : () => unawaited(onTap(entry));
     return CardX(
       child: ListTile(
         leading: const Icon(Icons.extension_outlined, size: 19),
@@ -296,15 +363,9 @@ class _EntryTile extends StatelessWidget {
         subtitle: Text(_subtitle(), style: UIs.text12Grey),
         trailing: switch (entry) {
           _ when best == null => Text(l10n.pluginNeedsNewerApp, style: UIs.text12Grey),
-          _ when entry.outdated => Btn.text(
-            text: l10n.pluginUpdate,
-            onTap: () => unawaited(onTap(entry)),
-          ),
+          _ when entry.outdated => Btn.text(text: libL10n.update, onTap: act),
           _ when installed != null => Text(l10n.pluginInstalled, style: UIs.text12Grey),
-          _ => Btn.text(
-            text: l10n.pluginInstall,
-            onTap: () => unawaited(onTap(entry)),
-          ),
+          _ => Btn.text(text: l10n.pluginInstall, onTap: act),
         },
       ),
     );
@@ -325,8 +386,13 @@ class _EntryTile extends StatelessWidget {
         l10n.pluginNewerNeedsApp(entry.tooNew.first.version),
     ];
     final description = entry.listing.description;
+    // What the repository says changed, and only for an update: it is the
+    // question somebody about to press Update is asking, and on a plugin that
+    // is not installed it is a note about a version nobody has.
+    final notes = entry.outdated ? entry.best?.notes : null;
     return [
       parts.join('  ·  '),
+      if (notes != null && notes.isNotEmpty) notes,
       if (description.isNotEmpty) description,
     ].join('\n');
   }

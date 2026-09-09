@@ -320,13 +320,42 @@ class PluginRepoStore {
 
   Database get _db => SqliteDb.instance;
 
-  /// TODO: seed the official repository here once one is published.
+  /// The repositories this build ships with, added once each — see
+  /// [seedOfficial].
   ///
-  /// Deliberately empty until then. A row would be a promise that an address
-  /// exists, and a store page listing a repository that answers nothing is
-  /// worse than one that says there are none — the first looks broken, the
-  /// second is true.
-  static const List<String> officialUrls = [];
+  /// **The repository itself, not a file in it.** What the app fetches is a
+  /// tarball of its latest tree, which carries the plugin files and the packages
+  /// together — so the digests in it are a consistency check rather than a trust
+  /// boundary, and TLS plus that repository's owner is the trust anchor. See
+  /// `PluginRepoSource.archiveUrlOf` for what this address turns into.
+  static const List<String> officialUrls = [
+    'https://github.com/lollipopkit/serverbox-plugins',
+  ];
+
+  /// Adds each of [officialUrls] the first time this build sees it.
+  ///
+  /// **Recorded per URL, not as one flag.** Two things have to be true at once:
+  /// a later build that adds a second official repository can add it, and a
+  /// repository the user removed stays removed. A bool cannot tell those apart,
+  /// and neither can "add it when the list is empty" — an empty list is exactly
+  /// what removing the only repository looks like.
+  ///
+  /// Runs at launch rather than when the store page opens, so the row is there
+  /// before anything asks what repositories exist.
+  void seedOfficial() {
+    final prop = Stores.setting.pluginReposSeeded;
+    final seeded = prop.fetch();
+    final now = DateTime.now();
+    final added = <String>[];
+    for (final url in officialUrls) {
+      if (seeded.contains(url)) continue;
+      added.add(url);
+      // Not overwritten if the user typed it in themselves: `put` would keep
+      // `added_at`, but there is nothing to write either way.
+      if (fetch(url) == null) put(PluginRepoRecord(url: url, addedAt: now));
+    }
+    if (added.isNotEmpty) prop.put([...seeded, ...added]);
+  }
 
   /// Oldest first, which is the order they were added in and the order that
   /// decides a conflict: two repositories offering the same plugin id, and the

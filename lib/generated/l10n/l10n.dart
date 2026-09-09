@@ -1176,14 +1176,14 @@ abstract class AppLocalizations {
   /// No description provided for @pluginNoReposTip.
   ///
   /// In en, this message translates to:
-  /// **'A repository is an index.json address. Plugins are installed from one, and it decides what runs on your servers.'**
+  /// **'A repository is a git repository of plugins, added by its address. Plugins are installed from one, and it decides what runs on your servers.'**
   String get pluginNoReposTip;
 
-  /// No description provided for @pluginUpdate.
+  /// No description provided for @pluginUpdateAll.
   ///
   /// In en, this message translates to:
-  /// **'Update'**
-  String get pluginUpdate;
+  /// **'Update all'**
+  String get pluginUpdateAll;
 
   /// No description provided for @pluginNeedsNewerApp.
   ///
