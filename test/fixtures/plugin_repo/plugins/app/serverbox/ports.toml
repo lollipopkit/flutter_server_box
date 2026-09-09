@@ -1,0 +1,11 @@
+id = "app.serverbox.ports"
+name = "Listening ports"
+description = "What is listening on a server, and which of it is reachable from outside."
+license = "MIT"
+
+[[version]]
+version = "1.0.1"
+abi = 2
+url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.ports-1.0.1/app.serverbox.ports-1.0.1.sbp"
+sha256 = "1c5c6ea4d643b2b06ead76e04b2e675512942e90820d0670427156a0427cfb3b"
+size = 14023

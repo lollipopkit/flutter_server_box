@@ -83,7 +83,7 @@ it draws comes from the store rather than from a machine.
 ## Translations
 
 `l10n/en.json` and `l10n/zh-CN.json`; the manifest declares both and
-`scripts/pack.ts` puts them in the `.sbp`. Every user-visible string goes
+`bun run pack` puts them in the `.sbp`. Every user-visible string goes
 through `l10n("key")` — the app substitutes when it draws, so a count is
 `l10n("ports", "2")` rather than a sentence assembled here. What is *not*
 translated is the user's own text: a path, a cron line, a process name.

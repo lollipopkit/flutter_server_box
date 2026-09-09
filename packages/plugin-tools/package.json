@@ -1,0 +1,16 @@
+{
+  "name": "@serverbox/plugin-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pack a ServerBox plugin and generate a repository index",
+  "license": "MIT",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.6.0"
+  }
+}

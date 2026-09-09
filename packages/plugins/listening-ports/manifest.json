@@ -1,6 +1,6 @@
 {
   "id": "app.serverbox.ports",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "abi": 2,
   "name": "Listening ports",
   "description": "What is listening on a server, and which of it is reachable from outside.",
