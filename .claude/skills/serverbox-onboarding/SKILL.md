@@ -19,9 +19,8 @@ containers, processes, systemd. The repository is a monorepo:
 | `packages/` | Vendored Dart forks, each a submodule, referenced by path from `pubspec.yaml` |
 | `docs/` | The documentation site (Astro Starlight), English with a `zh/` mirror |
 
-A server is reached over **SSH or through a monitor agent's HTTP API, never
-both**. That single fact explains most "why can't I do X on this server"
-questions — see `references/principles.md`.
+A server can use **SSH, a monitor agent's HTTP API, or both**. Each configured
+transport contributes its own capabilities; see `references/principles.md`.
 
 ## Work out which question this is first
 

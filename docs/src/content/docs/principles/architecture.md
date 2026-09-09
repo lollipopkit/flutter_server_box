@@ -1,9 +1,11 @@
 ---
-title: Architecture Overview
-description: Server Box's overall architecture and component responsibilities
+title: System Architecture
+description: How Server Box connects its UI, state, storage, and platform layers
 ---
 
 Server Box separates UI, state coordination, local data, and external connections by responsibility. This lets SSH, Monitor agent, and local terminal backends share the same UI while keeping platform-specific code at the edges.
+
+This page describes the system-level model. For implementation details and code layout, see [Implementation architecture](/docs/development/architecture/).
 
 ## Architecture layers
 

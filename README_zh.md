@@ -15,7 +15,9 @@
 特别感谢 <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>。
 </p>
 
-## 🏙️ 截屏
+用户指南、架构说明和开发文档请参阅[文档站](https://serverbox.lolli.tech/docs/)。
+
+## 截屏
 
 <!-- 按平台折叠，每张图都带 `loading="lazy"`：三个设备形态共 31 张，全部展开
      会在读者决定要不要看之前就先加载几 MB。想让某一组默认展开，给对应的
@@ -100,24 +102,24 @@
 </table>
 </details>
 
-## 📥 安装
+## 安装
 
-平台|下载
---|--
+| 平台 | 下载 |
+| --- | --- |
 iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（`_NoSign.ipa`，未签名，需自行签名后安装）
 macOS | [App Store](https://apps.apple.com/app/id1586449703)（仅支持 Apple silicon） / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases)（按架构分别提供 `.dmg`） / `brew install --cask server-box`
 Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/)
 Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid)
 
-请从 **信任** 的来源下载!
+请只从可信来源下载。
 
-## 🔖 特点
+## 特点
 
-- `状态图表`（CPU、传感器、GPU 等）, `SSH` 终端, `SFTP`, `Docker & 进程 & 服务`（systemd、procd、OpenRC）管理，`S.M.A.R.T`...
-- 特殊支持：`生物认证`、`推送`、`桌面小部件`、`watchOS App`、`跟随系统颜色`...
-- 本地化：16 种语言。清单见 `lib/l10n/`，译者见该目录的 git history —— 在这里抄一份只会过期。感谢贡献者们！
+- 支持 CPU、传感器、GPU 等状态图表，SSH 终端，SFTP，Docker、进程和服务管理，以及 S.M.A.R.T。
+- 支持生物认证、推送通知、桌面小组件、watchOS App 和跟随系统颜色。
+- 支持 16 种语言。当前清单见 `lib/l10n/`，译者信息记录在该目录的 git history 中。
 
-## 🆘 帮助
+## 帮助
 
 <div align="center">
   <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-群-pink"></a>
@@ -127,7 +129,7 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) 是安装在你服务器上的 agent。不打开 ServerBox app 时仍需工作的功能都依赖它 —— **推送服务**、**桌面小部件** 和 **手表 app**；它同时也是添加服务器的第二种方式：app 可以经 HTTP 而不是 SSH 访问它，适用于不便暴露 SSH 端口的主机，并且图表在 app 首次连接前就已有历史数据。它自己还提供一个网页面板。安装方法和各个远程访问开关的含义详见其[中文文档](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README_zh.md)。  
 - **常见问题** 可以在 [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki/主页) 查看。
-- **让 AI agent 帮你？** 本仓库带了一份 skill：安装和使用 app、部署与配置 monitor agent、搭建 Flutter + Rust + Node 开发环境，以及能解释掉大部分「这台服务器为什么不能做 X」的那几条事实。用下面的命令装进你用的 agent：
+- **Agent onboarding：** 本仓库包含一份 skill，用于安装和使用 App、部署与配置 Monitor agent、搭建 Flutter + Rust + Node 开发环境，以及回答常见的服务器管理问题。使用下面的命令将它添加到你的 agent：
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
@@ -135,13 +137,13 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
   内容在 [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding)，装之前可以先读它到底会告诉你的 agent 什么。
 
-反馈前须知：
+提交 issue 前请确认：
 
 1. 反馈问题请附带 log（点击首页右上角），并以 bug 模版提交。
-2. 反馈问题前请检查是否是 serverbox 的问题。
-3. 欢迎所有有效、正面的反馈，主观（比如你觉得其他UI更好看）的反馈不一定会接受
+2. 确认问题确实由 ServerBox 引起。
+3. 欢迎具体、建设性的反馈。主观偏好，例如更喜欢其他 UI，可能不会被采纳。
 
-## 🧱 贡献
+## 贡献
 
 任何正面的贡献都欢迎。[CONTRIBUTING.md](CONTRIBUTING.md) 说明了开发环境、commit 规范、提交前要跑的检查，以及翻译流程。
 
@@ -151,19 +153,14 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 
 ### 开发
 
-1. 安装 [Flutter](https://flutter.dev/docs/get-started/install) 和 [Rust](https://rustup.rs)
-2. 克隆这个仓库, 运行 `make deps` 后 `make run` 启动应用
-3. 运行 `dart run fl_build -p PLATFORM` 构建应用
+- 请先阅读[开发指南](https://serverbox.lolli.tech/docs/zh/development/structure/)。
+- 平台要求和发布构建方式见[构建指南](https://serverbox.lolli.tech/docs/zh/development/building/)。
+- 本地环境、检查、提交和翻译流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ### 翻译
 
-需要你的帮助！欢迎直接提 PR。
+- 欢迎贡献翻译，流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-## 💡 我的其它 Apps
-
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - 支持 OpenAI API 的 第三方全平台客户端。
-- [更多](https://github.com/lollipopkit) - 工具 & etc.
-
-## 📝 协议
+## 协议
 
 `AGPL v3 lollipopkit & 所有贡献者`

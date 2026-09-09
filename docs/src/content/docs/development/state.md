@@ -1,9 +1,11 @@
 ---
-title: State Management
-description: Manage Server Box application state with Riverpod
+title: Riverpod Patterns
+description: Provider, asynchronous state, and resource-lifecycle patterns used by Server Box
 ---
 
 Server Box uses Riverpod and `riverpod_generator` for UI state, asynchronous data, and service dependencies.
+
+For the system-level state model, see [State model](/docs/principles/state/).
 
 ## Provider structure
 

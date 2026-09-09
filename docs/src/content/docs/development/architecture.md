@@ -1,9 +1,11 @@
 ---
-title: Architecture
-description: Server Box architecture patterns and design decisions
+title: Implementation Architecture
+description: Implementation details for Server Box's Flutter, storage, connection, and native layers
 ---
 
 Server Box is organized by responsibility: UI, state coordination, local storage, and external connections are kept separate. This allows SSH, Monitor agent, and local terminal backends to share the same UI while keeping platform-specific code at the edges.
+
+For the system-level overview, see [System Architecture](/docs/principles/architecture/).
 
 ## Layers
 

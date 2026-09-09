@@ -15,7 +15,10 @@ A Flutter project which provides charts to display Linux, Unix and Windows serve
 Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartssh2</a> & <a href="https://github.com/TerminalStudio/xterm.dart">xterm.dart</a>.
 </p>
 
-## 🏙️ Screenshots
+Read the [documentation site](https://serverbox.lolli.tech/docs/) for user guides,
+architecture notes, and development instructions.
+
+## Screenshots
 
 <!-- Folded by platform, and every image is `loading="lazy"`: this is 31 shots
      across three device classes, and unfolded it is several megabytes before a
@@ -101,24 +104,24 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 </table>
 </details>
 
-## 📥 Installation
+## Installation
 
-|Platform| From|
-|--|--|
+| Platform | Download |
+| --- | --- |
 | iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`_NoSign.ipa`, unsigned, you need to sign it yourself) |
 | macOS | [App Store](https://apps.apple.com/app/id1586449703) (Apple silicon only) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (architecture-specific `.dmg`) / `brew install --cask server-box` |
 | Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
 | Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lollipopkit.com/serverbox/pkg/?sort=time&order=desc&layout=grid) |
 
-Please only download pkgs from the source that **you trust**!  
+Download packages only from sources you trust.
 
-## 🔖 Features
+## Features
 
-- `Status chart` (CPU, Sensors, GPU...), `SSH` Term, `SFTP`, `Docker & Process & Services` (systemd, procd, OpenRC), `S.M.A.R.T`...
-- Platform specific: `Bio auth`、`Msg push`、`Home widget`、`watchOS App`...
-- 16 languages. The list is `lib/l10n/`, and the people who wrote them are that directory's git history — a copy here only ever went stale.
+- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; Docker, process, and service management; and S.M.A.R.T.
+- Platform features include biometric authentication, push notifications, home-screen widgets, watchOS support, and system color themes.
+- 16 languages. The current list is in `lib/l10n/`; its git history records the translators.
 
-## 🆘 Help
+## Help
 
 <div align="center">
   <a href="https://qm.qq.com/q/daCGa7eShG"><img alt="qq" src="https://img.shields.io/badge/QQ-Group-pink"></a>
@@ -128,7 +131,7 @@ Please only download pkgs from the source that **you trust**!
 
 - [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for anything that has to work while the app is closed — **message push**, **home widgets** and the **watch app** — and it is also a second way to add a server: the app can reach it over HTTP instead of SSH, which suits hosts whose SSH port you would rather not expose, and gives charts a history from before the app ever connected. It serves a web panel of its own too. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for setup and for what each remote-access switch grants.
 - **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
-- **Asking an AI agent?** This repository ships a skill that orients one: installing and using the app, deploying and configuring the monitor agent, bootstrapping the Flutter + Rust + Node environment, and the few facts that explain most "why can't I do X on this server" questions. Add it to whichever agent you use with
+- **Agent onboarding:** This repository includes a skill for installing and using the app, deploying and configuring Monitor agent, setting up the Flutter + Rust + Node environment, and answering common server-management questions. Add it to your agent with
 
   ```sh
   npx skills add lollipopkit/flutter_server_box
@@ -136,15 +139,15 @@ Please only download pkgs from the source that **you trust**!
 
   The source is [`.claude/skills/serverbox-onboarding`](.claude/skills/serverbox-onboarding), so you can read what it will tell your agent before installing it.
 
-Before you open an issue, please read the following:
+Check these points before opening an issue:
 
 1. Paste the **entire log** (click the top right of the home page) in the issue template.
-2. Make sure whether the issue is caused by ServerBox app.
-3. Welcome all valid and positive feedback, subjective feedback (such as you think other UI is better) may not be accepted.
+2. Confirm that the issue is caused by ServerBox.
+3. Concrete, constructive feedback is welcome. Subjective requests, such as preferring another UI, may not be accepted.
 
 After you read the above, you can open an [issue](https://github.com/lollipopkit/flutter_server_box/issues/new).
 
-## 🧱 Contributions
+## Contributions
 
 Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
 
@@ -154,20 +157,14 @@ If I forgot to add your name to the contributors list, please add a comment in t
 
 ### Development
 
-1. Setup [Flutter](https://flutter.dev/docs/get-started/install) and [Rust](https://rustup.rs) environments.
-2. Clone this repo, run `make deps` then `make run` to start the app.
-3. Run `dart run fl_build -p PLATFORM` to build the app.
+- Read the [development guide](https://serverbox.lolli.tech/docs/development/structure/).
+- Follow the [build guide](https://serverbox.lolli.tech/docs/development/building/) for platform requirements and release builds.
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, checks, commits, and translations.
 
 ### Translation
 
-- We need your help! Just feel free to open a PR.
+- Translation contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
 
-## 💡 My other apps
-
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - A third-party GPT Client for OpenAI API on all platforms.
-- [MFuse](https://github.com/lollipopkit/mfuse) - a macOS app that exposes remote storage in Finder through File Provider, with a modular backend layer for multiple protocols.
-- [More](https://github.com/lollipopkit) - Tools & etc.
-
-## 📝 License
+## License
 
 `AGPL v3 lollipopkit & all contributors`

@@ -1,9 +1,12 @@
 English | [简体中文](README_zh.md)
 
-## ServerBox Monitor
-This app runs on server end and monitors the server status.  
-It is a part of [ServerBox](https://github.com/lollipopkit/flutter_server_box) project.  
-**It's under active development, you may need to reconfig it after upgrading.**
+# ServerBox Monitor
+
+ServerBox Monitor is the server-side agent for
+[ServerBox](https://github.com/lollipopkit/flutter_server_box). It records
+server metrics, serves the Monitor HTTP API, and can host the web panel.
+The configuration format may change between releases, so review
+`config.example.toml` after upgrading.
 
 
 ## 🖥️ Screenshots
@@ -32,7 +35,7 @@ It is a part of [ServerBox](https://github.com/lollipopkit/flutter_server_box) p
   </tr>
 </table>
 
-## 📖 Usage
+## Install and run
 
 ```sh
 # systemd: a `systemctl --user` service, running as your own account
@@ -83,7 +86,7 @@ SFTP and port forwarding are not offered on a monitor server: the agent has no
 endpoint that relays a connection to an address the app names. Add the server
 over SSH if you need them.
 
-## 🔐 Remote access (optional, off by default)
+## Remote access (optional, off by default)
 
 The WebSocket terminal is disabled until you turn it on in `config.toml`, and
 cannot be enabled from the panel — see `[remote_access]` in
@@ -138,5 +141,5 @@ Notes:
   never records a credential.
 - Failed logins are throttled per source address and per username.
 
-## 🔖 License
+## License
 `GPL v3. lollipopkit 2023`

@@ -69,18 +69,18 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'How It Works',
+					label: 'Internals',
 					translations: {
-						zh: '工作原理',
+						zh: '内部原理',
 					},
 					items: [
-						{ label: 'Architecture', translations: { zh: '架构' }, slug: 'principles/architecture' },
+						{ label: 'System architecture', translations: { zh: '系统架构' }, slug: 'principles/architecture' },
 						{ label: 'SSH Connection', translations: { zh: 'SSH 连接' }, slug: 'principles/ssh' },
 						{ label: 'Terminal', translations: { zh: '终端' }, slug: 'principles/terminal' },
 						{ label: 'SFTP', translations: { zh: 'SFTP' }, slug: 'principles/sftp' },
 						{ label: 'BMC (Redfish)', translations: { zh: 'BMC(Redfish)' }, slug: 'principles/bmc' },
 						{ label: 'Globe and Location Resolution', translations: { zh: '地球仪与位置解析' }, slug: 'principles/globe' },
-						{ label: 'State Management', translations: { zh: '状态管理' }, slug: 'principles/state' },
+						{ label: 'State model', translations: { zh: '状态模型' }, slug: 'principles/state' },
 					],
 				},
 				{
@@ -90,8 +90,8 @@ export default defineConfig({
 					},
 					items: [
 						{ label: 'Project Structure', translations: { zh: '项目结构' }, slug: 'development/structure' },
-						{ label: 'Architecture', translations: { zh: '架构' }, slug: 'development/architecture' },
-						{ label: 'State Management', translations: { zh: '状态管理' }, slug: 'development/state' },
+						{ label: 'Implementation architecture', translations: { zh: '实现架构' }, slug: 'development/architecture' },
+						{ label: 'Riverpod patterns', translations: { zh: 'Riverpod 实践' }, slug: 'development/state' },
 						{ label: 'Code Generation', translations: { zh: '代码生成' }, slug: 'development/codegen' },
 						{ label: 'Building', translations: { zh: '构建' }, slug: 'development/building' },
 						{ label: 'Testing', translations: { zh: '测试' }, slug: 'development/testing' },

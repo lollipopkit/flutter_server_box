@@ -23,8 +23,9 @@ App Store link: <https://apps.apple.com/app/id1586449703>. Releases:
 
 ## Adding a server
 
-The selector at the top of the add-server form chooses the connection method,
-and a server is one or the other, never both.
+The selector at the top of the add-server form chooses a connection method.
+SSH and Monitor HTTP can be configured for the same server, and the App keeps
+the capabilities provided by both.
 
 **SSH** — name, host, port (22), user, and a password or a private key. This is
 the default and the one to use unless something makes it impossible.

@@ -1,9 +1,11 @@
 ---
-title: 状态管理
-description: 使用 Riverpod 管理 Server Box 的应用状态
+title: 状态模型
+description: Server Box 如何组织运行时状态、服务器状态和持久化数据
 ---
 
 Server Box 使用 Riverpod 管理页面状态、异步数据和服务依赖。以下是项目中常用的状态管理模式。
+
+本页介绍系统层面的状态模型。Provider 的实现方式和资源生命周期请参阅 [Riverpod 实践](/docs/zh/development/state/)。
 
 ## 为什么使用 Riverpod？
 

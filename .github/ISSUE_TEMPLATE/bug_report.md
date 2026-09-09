@@ -9,16 +9,15 @@ assignees: ''
 
 
 <!--
-Thanks for your feedback：
-1、Please check if there is a similar issue first
-2、If it is a function or UI suggestion, please go to Discussion
+Before opening an issue, check for an existing report. Use Discussions for
+feature or UI suggestions.
 -->
 
-**Describe the bug**
+## Describe the bug
 <!--A clear and concise description of what the bug is.-->
 
 
-**To Reproduce**
+## To reproduce
 <!--
 Steps to reproduce the behavior:
 1. Go to '...'
@@ -28,26 +27,26 @@ Steps to reproduce the behavior:
 -->
 
 
-**Desired Results**
+## Expected result
 <!--A clear description of the result you expected.-->
 
 
-**Actual Results**
+## Actual result
 <!--A clear description of the actual result.-->
 
 
-**Screenshots**
+## Screenshots
 <!--If applicable, add screenshots(both bug screen and logs
 screen) to help explain your problem.-->
 
 
-**Device**
+## Device
 <!--
 - OS: e.g. iOS16 or Android13
 - App Version: e.g. 1.0.302
 -->
 
 
-**Additional context**
+## Additional context
 <!--Add any other context about the problem here.-->
 

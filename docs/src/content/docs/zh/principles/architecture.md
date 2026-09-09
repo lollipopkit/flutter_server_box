@@ -1,9 +1,11 @@
 ---
-title: 架构概览
-description: Server Box 的整体架构和组件职责
+title: 系统架构
+description: Server Box 如何组织界面、状态、存储和平台层
 ---
 
 Server Box 采用分层结构，将界面、状态协调、本地数据和外部连接分别处理。这样既方便跨平台实现，也让 SSH、Monitor agent 和本机终端能够共用上层 UI。
+
+本页介绍系统层面的模型。实现细节和代码布局请参阅[实现架构](/docs/zh/development/architecture/)。
 
 ## 架构分层
 

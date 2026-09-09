@@ -1,9 +1,11 @@
 ---
-title: State Management
-description: How Server Box manages application state with Riverpod
+title: State Model
+description: How runtime state, server state, and persisted data fit together
 ---
 
 Server Box uses Riverpod for page state, asynchronous data, and service dependencies. This page describes the state-management patterns used in the project.
+
+This page explains the system-level state model. For provider implementation patterns and resource lifecycles, see [Riverpod patterns](/docs/development/state/).
 
 ## Why Riverpod?
 
