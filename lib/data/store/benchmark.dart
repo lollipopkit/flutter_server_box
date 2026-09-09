@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -20,22 +19,9 @@ class BenchmarkStore {
 
   static final instance = BenchmarkStore();
 
-  /// A separate instance for a test, so the change stream is not shared with
-  /// the singleton across tests in one process.
-  factory BenchmarkStore.forTest() => BenchmarkStore();
-
   final String _table;
 
   Database get _db => SqliteDb.instance;
-
-  final _changes = StreamController<void>.broadcast();
-
-  /// Fires after any write, for the pages showing a run or a history list.
-  Stream<void> get changes => _changes.stream;
-
-  void _invalidate() {
-    if (!_changes.isClosed) _changes.add(null);
-  }
 
   /// How many runs are kept per server.
   ///
@@ -150,7 +136,6 @@ class BenchmarkStore {
       ],
     );
     _prune(run.serverId);
-    _invalidate();
   }
 
   /// Drops this server's oldest runs past [historyLimit].
@@ -170,16 +155,6 @@ class BenchmarkStore {
 
   void remove(String id) {
     _db.execute('DELETE FROM $_table WHERE id = ?;', [id]);
-    _invalidate();
-  }
-
-  /// Forgets one server's history.
-  ///
-  /// The foreign key cascades when the server itself is deleted; this is for
-  /// the user clearing it by hand.
-  void removeForServer(String serverId) {
-    _db.execute('DELETE FROM $_table WHERE server_id = ?;', [serverId]);
-    _invalidate();
   }
 
   /// Every run of every server, newest first.
@@ -190,21 +165,6 @@ class BenchmarkStore {
   List<BenchmarkRun> all() {
     final rows = _db.select(
       'SELECT $_columns FROM $_table ORDER BY started_at DESC;',
-    );
-    return [
-      for (final row in rows) ?_fromRow(row),
-    ];
-  }
-
-  /// Every run of every server, newest first — the cross-server comparison.
-  ///
-  /// Only rows that produced a result: comparing against a run that failed
-  /// halfway would put an empty column beside real ones.
-  List<BenchmarkRun> allCompleted() {
-    final rows = _db.select(
-      'SELECT $_columns FROM $_table WHERE status = ? AND result_json IS NOT NULL '
-      'ORDER BY started_at DESC;',
-      [BenchmarkStatus.completed.name],
     );
     return [
       for (final row in rows) ?_fromRow(row),

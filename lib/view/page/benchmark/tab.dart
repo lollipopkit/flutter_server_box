@@ -279,7 +279,6 @@ extension _Widgets on _BenchmarkTabPageState {
     );
   }
 
-
   /// The right column: a result being read, or the selected machine's run.
   ///
   /// Both are pages with their own `ref`. That is what lets this build them
@@ -290,11 +289,22 @@ extension _Widgets on _BenchmarkTabPageState {
       final run = BenchmarkStore.instance.get(id);
       // Deleted from the list beside it. Falls through to the machine's own
       // column rather than rendering a record that is gone.
-      if (run != null) return BenchmarkResultPage(args: run);
+      //
+      // Keyed by run: the state polls by run id, so a reused element would
+      // keep showing and polling the run that was there before.
+      if (run != null) {
+        return BenchmarkResultPage(key: ValueKey(id), args: run);
+      }
     }
     final spi = _selected;
     if (spi == null) return const EmptyPane(icon: Icons.speed_outlined);
-    return BenchmarkRunPage(args: SpiRequiredArgs(spi), inPane: true);
+    // Keyed like the single-column branch: the state holds its server in a
+    // `late final`, so a reused element would keep acting on the old machine.
+    return BenchmarkRunPage(
+      key: ValueKey(spi.id),
+      args: SpiRequiredArgs(spi),
+      inPane: true,
+    );
   }
 
 }

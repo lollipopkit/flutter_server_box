@@ -60,52 +60,6 @@ class ConnectionStatsStore {
     return rows.map(_fromRow).toList();
   }
 
-  ServerConnectionStats getServerStats(String serverId, String serverName) {
-    final allStats = getConnectionHistory(serverId);
-
-    if (allStats.isEmpty) {
-      return ServerConnectionStats(
-        serverId: serverId,
-        serverName: serverName,
-        totalAttempts: 0,
-        successCount: 0,
-        failureCount: 0,
-        recentConnections: [],
-        successRate: 0.0,
-      );
-    }
-
-    var successCount = 0;
-    DateTime? lastSuccessTime;
-    DateTime? lastFailureTime;
-    final recentConnections = <ConnectionStat>[];
-
-    for (final stat in allStats) {
-      if (stat.result.isSuccess) {
-        successCount += 1;
-        lastSuccessTime ??= stat.timestamp;
-      } else {
-        lastFailureTime ??= stat.timestamp;
-      }
-      if (recentConnections.length < _recentPerServer) {
-        recentConnections.add(stat);
-      }
-    }
-
-    final totalAttempts = allStats.length;
-    return ServerConnectionStats(
-      serverId: serverId,
-      serverName: serverName,
-      totalAttempts: totalAttempts,
-      successCount: successCount,
-      failureCount: totalAttempts - successCount,
-      lastSuccessTime: lastSuccessTime,
-      lastFailureTime: lastFailureTime,
-      recentConnections: recentConnections,
-      successRate: successCount / totalAttempts,
-    );
-  }
-
   /// Every server's summary, in two queries.
   ///
   /// One `GROUP BY` to enumerate servers and then a full history read per
