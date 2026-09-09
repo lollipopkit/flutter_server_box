@@ -188,6 +188,17 @@ class AppLocalizationsDe extends AppLocalizations {
       'Leer lassen für lokal oder ohne Authentifizierung';
 
   @override
+  String get askAiAllowInsecure => 'Unverschlüsseltes HTTP zulassen';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Erforderlich, um ein selbst gehostetes Modell über http:// in deinem Netzwerk zu erreichen. Der API-Schlüssel und etwaiger Terminalkontext werden unverschlüsselt übertragen. Für localhost ist dies nicht nötig.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Dieser Endpunkt verwendet http://. Aktiviere in den AI-Einstellungen „Unverschlüsseltes HTTP zulassen“, um ihn zu verwenden.';
+
+  @override
   String get askAiHistory => 'Gesprächsverlauf';
 
   @override
@@ -2085,5 +2096,5 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Füge zuerst einen Server hinzu und kehre dann zurück, um ihn zu benchmarken.';
 }

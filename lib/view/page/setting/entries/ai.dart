@@ -87,6 +87,18 @@ extension _AI on _AppSettingsPageState {
           description: l10n.askAiEndpointTip,
           displayBuilder: (val) => val.isEmpty ? libL10n.empty : val,
         ),
+        // Under the address, because it is a property of the address. Shown
+        // always rather than only for an `http://` one: it is the answer to
+        // "why is my local model rejected", and a switch that appears only once
+        // the rejected value has been saved is found after the giving up.
+        ListTile(
+          leading: const Icon(Icons.lock_open, size: _kIconSize),
+          title: TipText(
+            l10n.askAiAllowInsecure,
+            l10n.askAiAllowInsecureTip,
+          ),
+          trailing: StoreSwitch(prop: _setting.askAiAllowInsecure),
+        ),
         _buildAskAiTextTile(
           prop: _setting.askAiModel,
           leading: const Icon(Icons.view_module, size: _kIconSize),

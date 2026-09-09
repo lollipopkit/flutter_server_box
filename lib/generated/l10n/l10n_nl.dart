@@ -186,6 +186,17 @@ class AppLocalizationsNl extends AppLocalizations {
       'Leeg laten voor lokaal of zonder authenticatie';
 
   @override
+  String get askAiAllowInsecure => 'Onversleutelde HTTP toestaan';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Nodig om via http:// verbinding te maken met een zelf gehost model op je netwerk. De API-sleutel en eventuele terminalcontext worden onversleuteld verzonden. Niet nodig voor localhost.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Dit eindpunt gebruikt http://. Schakel ‘Onversleutelde HTTP toestaan’ in bij de AI-instellingen om het te gebruiken.';
+
+  @override
   String get askAiHistory => 'Gespreksgeschiedenis';
 
   @override
@@ -2076,5 +2087,5 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Voeg eerst een server toe en kom daarna terug om een benchmark uit te voeren.';
 }

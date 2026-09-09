@@ -187,6 +187,17 @@ class AppLocalizationsRu extends AppLocalizations {
       'Оставьте пустым для локального или без аутентификации';
 
   @override
+  String get askAiAllowInsecure => 'Разрешить незашифрованный HTTP';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Требуется для доступа к самостоятельно размещённой модели через http:// в вашей сети. Ключ API и любой контекст терминала будут отправлены без шифрования. Для localhost это не требуется.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Эта конечная точка использует http://. Включите «Разрешить незашифрованный HTTP» в настройках AI, чтобы использовать её.';
+
+  @override
   String get askAiHistory => 'История диалогов';
 
   @override
@@ -2086,5 +2097,5 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Сначала добавьте сервер, затем вернитесь, чтобы запустить бенчмарк.';
 }

@@ -188,6 +188,17 @@ class AppLocalizationsTr extends AppLocalizations {
       'Yerel ya da kimlik doğrulaması gerekmiyorsa boş bırak';
 
   @override
+  String get askAiAllowInsecure => 'Şifresiz HTTP’ye izin ver';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Ağınızdaki kendi barındırdığınız bir modele http:// üzerinden ulaşmak için gerekir. API anahtarı ve tüm terminal bağlamı şifrelenmeden gönderilir. localhost için gerekmez.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'Bu uç nokta http:// kullanıyor. Kullanmak için AI ayarlarında “Şifresiz HTTP’ye izin ver” seçeneğini açın.';
+
+  @override
   String get askAiHistory => 'Konuşma geçmişi';
 
   @override
@@ -2060,5 +2071,5 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün.';
 }

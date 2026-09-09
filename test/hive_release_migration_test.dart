@@ -320,10 +320,15 @@ void main() {
             .single['n'];
         expect(rows, 120);
 
-        final stats = Stores.connectionStats.getAllServerStats().firstWhere(
-          (e) => e.serverId == 'srv-pwd',
-        );
-        expect(stats.totalAttempts, 60);
+        // Looked up rather than `firstWhere`d: a migration that stopped writing
+        // this server's rows is the regression this test exists for, and
+        // `firstWhere` answers it with `Bad state: No element`, naming nothing
+        // and skipping the three counts below that would say what went wrong.
+        final stats = Stores.connectionStats
+            .getAllServerStats()
+            .firstWhereOrNull((e) => e.serverId == 'srv-pwd');
+        expect(stats, isNotNull, reason: 'srv-pwd has no conn_stat rows at all');
+        expect(stats!.totalAttempts, 60);
         // The generator made one in five a success.
         expect(stats.successCount, 12);
         expect(stats.failureCount, 48);

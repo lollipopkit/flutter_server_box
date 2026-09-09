@@ -13,6 +13,7 @@ AskAiConfig _$AskAiConfigFromJson(Map<String, dynamic> json) => AskAiConfig(
   protocol: json['protocol'] as String? ?? 'auto',
   autoRunSafeCommands: json['autoRunSafeCommands'] as bool? ?? false,
   sendOnEnter: json['sendOnEnter'] as bool? ?? true,
+  allowInsecure: json['allowInsecure'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$AskAiConfigToJson(AskAiConfig instance) =>
@@ -23,4 +24,5 @@ Map<String, dynamic> _$AskAiConfigToJson(AskAiConfig instance) =>
       'protocol': instance.protocol,
       'autoRunSafeCommands': instance.autoRunSafeCommands,
       'sendOnEnter': instance.sendOnEnter,
+      'allowInsecure': instance.allowInsecure,
     };

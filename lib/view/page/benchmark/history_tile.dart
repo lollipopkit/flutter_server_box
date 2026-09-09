@@ -72,10 +72,3 @@ class BenchmarkHistoryTile extends StatelessWidget {
     );
   }
 }
-
-/// Minutes and seconds, which is the range a benchmark lives in.
-String fmtDuration(Duration d) {
-  final m = d.inMinutes;
-  final s = d.inSeconds % 60;
-  return '${m}m ${s.toString().padLeft(2, '0')}s';
-}

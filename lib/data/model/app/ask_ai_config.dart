@@ -31,6 +31,7 @@ class AskAiConfig {
     this.protocol = 'auto',
     this.autoRunSafeCommands = false,
     this.sendOnEnter = true,
+    this.allowInsecure = false,
   });
 
   factory AskAiConfig.fromJson(Map<String, dynamic> json) =>
@@ -51,6 +52,16 @@ class AskAiConfig {
   /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them.
   final bool sendOnEnter;
 
+  /// Whether [baseUrl] may be plain `http` to a host that is not loopback.
+  ///
+  /// Off, and asked for per configuration rather than inferred from the
+  /// address. `http://localhost` is allowed without it — nothing leaves the
+  /// device — but a model served over the LAN is still an address this app
+  /// sends an API key and the contents of a terminal to in the clear, and the
+  /// network it is on is not something the app can judge. Same shape and same
+  /// reasoning as `MonitorHttpCredential.allowInsecure`.
+  final bool allowInsecure;
+
   Map<String, dynamic> toJson() => _$AskAiConfigToJson(this);
 
   AskAiConfig copyWith({
@@ -60,6 +71,7 @@ class AskAiConfig {
     String? protocol,
     bool? autoRunSafeCommands,
     bool? sendOnEnter,
+    bool? allowInsecure,
   }) => AskAiConfig(
     baseUrl: baseUrl ?? this.baseUrl,
     apiKey: apiKey ?? this.apiKey,
@@ -67,6 +79,7 @@ class AskAiConfig {
     protocol: protocol ?? this.protocol,
     autoRunSafeCommands: autoRunSafeCommands ?? this.autoRunSafeCommands,
     sendOnEnter: sendOnEnter ?? this.sendOnEnter,
+    allowInsecure: allowInsecure ?? this.allowInsecure,
   );
 
   @override
@@ -77,7 +90,8 @@ class AskAiConfig {
       model == other.model &&
       protocol == other.protocol &&
       autoRunSafeCommands == other.autoRunSafeCommands &&
-      sendOnEnter == other.sendOnEnter;
+      sendOnEnter == other.sendOnEnter &&
+      allowInsecure == other.allowInsecure;
 
   @override
   int get hashCode => Object.hash(
@@ -87,5 +101,6 @@ class AskAiConfig {
     protocol,
     autoRunSafeCommands,
     sendOnEnter,
+    allowInsecure,
   );
 }

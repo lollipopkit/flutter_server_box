@@ -478,6 +478,15 @@ class SettingStore extends SqliteStore {
     write: (c, v) => c.copyWith(sendOnEnter: v),
   );
 
+  /// Whether [askAiBaseUrl] may be plain `http` to something other than
+  /// loopback. See [AskAiConfig.allowInsecure].
+  late final askAiAllowInsecure = FieldProp<AskAiConfig, bool>(
+    askAi,
+    'allowInsecure',
+    read: (c) => c.allowInsecure,
+    write: (c, v) => c.copyWith(allowInsecure: v),
+  );
+
   /// Whether the Agent may run commands on this device.
   ///
   /// Off until asked for, unlike a configured server. A server was added

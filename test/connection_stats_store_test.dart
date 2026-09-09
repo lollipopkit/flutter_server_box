@@ -161,11 +161,16 @@ void main() {
     expect(summary.lastFailureTime, base.add(const Duration(minutes: 1)));
   });
 
-  test('a server with no attempts is absent from the list, not an error', () {
-    expect(
-      store.getAllServerStats().where((e) => e.serverId == 'b'),
-      isEmpty,
-    );
+  test('a server with no attempts is absent from the list, not an error', () async {
+    // Rows for `a` only, so the list is non-empty and the assertion is about
+    // `b` being left out of it. With nothing recorded at all `getAllServerStats`
+    // returns early on `totals.isEmpty`, and every server is absent from the
+    // empty list — which a stub answering `[]` would pass just as well.
+    await store.recordConnection(stat('a', at: base));
+
+    final all = store.getAllServerStats();
+    expect(all.map((e) => e.serverId), ['a']);
+    expect(all.where((e) => e.serverId == 'b'), isEmpty);
   });
 
   test('the overall list names each server as it was named last', () async {

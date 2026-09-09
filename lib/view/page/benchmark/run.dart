@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/benchmark.dart';
 import 'package:server_box/view/page/benchmark/config.dart';
 import 'package:server_box/view/page/benchmark/running_card.dart';
@@ -41,13 +42,19 @@ class BenchmarkRunPage extends ConsumerStatefulWidget {
   /// is what a detail is closed back *to* — the button would have nowhere to go.
   final bool inPane;
 
-
   @override
   ConsumerState<BenchmarkRunPage> createState() => _BenchmarkRunPageState();
 }
 
 class _BenchmarkRunPageState extends ConsumerState<BenchmarkRunPage> {
-  late final _spi = widget.args.spi;
+  /// Read through rather than held.
+  ///
+  /// Whoever shows this keys it on `spi.id`, and the tab rebuilds its `Spi`
+  /// from the store on every build — so renaming a machine arrives as new
+  /// `args` under an unchanged key. The element survives that, and a copy taken
+  /// in `initState` would keep the old name in the bar for as long as the tab
+  /// is open.
+  Spi get _spi => widget.args.spi;
 
   /// Redraws the elapsed clock. The record itself only changes when a poll
   /// comes back, which is up to twenty seconds apart.

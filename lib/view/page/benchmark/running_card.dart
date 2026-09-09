@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
 import 'package:server_box/view/page/benchmark/estimate.dart';
-import 'package:server_box/view/page/benchmark/history_tile.dart';
 import 'package:server_box/view/page/benchmark/log_view.dart';
 import 'package:server_box/view/page/benchmark/phase.dart';
 

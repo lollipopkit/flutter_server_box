@@ -43,11 +43,28 @@ class AskAiRepository {
       throw AskAiConfigException(missingFields: missing);
     }
 
+    // Loopback over plain `http` is allowed unconditionally — nothing leaves
+    // the device. Anything else over `http` is a model served across a network
+    // this app cannot judge, and the request carries the API key and whatever
+    // terminal output was gathered as context, so it takes the switch.
+    final allowInsecure = _settings.askAiAllowInsecure.fetch();
     final parsedBaseUri = Uri.tryParse(baseUrl);
-    final hasScheme = parsedBaseUri?.hasScheme ?? false;
-    final hasHost = (parsedBaseUri?.host ?? '').isNotEmpty;
-    if (!hasScheme || !hasHost || !isSecureRemoteEndpoint(parsedBaseUri!)) {
-      throw AskAiConfigException(invalidBaseUrl: baseUrl);
+    // What the user has to change, which is otherwise the one thing the message
+    // cannot say: a rejected `http://` address and a typo read the same from
+    // here. Computed before the check because it describes why the check is
+    // about to fail.
+    final insecureScheme =
+        parsedBaseUri != null &&
+        parsedBaseUri.host.isNotEmpty &&
+        parsedBaseUri.scheme.toLowerCase() == 'http';
+    // `isSecureRemoteEndpoint` answers the scheme and the host together, which
+    // is the whole of what makes an endpoint usable here.
+    if (parsedBaseUri == null ||
+        !isSecureRemoteEndpoint(parsedBaseUri, allowInsecure: allowInsecure)) {
+      throw AskAiConfigException(
+        invalidBaseUrl: baseUrl,
+        insecureScheme: insecureScheme,
+      );
     }
 
     final resolvedProtocol = resolveProtocol(
@@ -937,10 +954,18 @@ class AskAiConfigException implements Exception {
   const AskAiConfigException({
     this.missingFields = const [],
     this.invalidBaseUrl,
+    this.insecureScheme = false,
   });
 
   final List<AskAiConfigField> missingFields;
   final String? invalidBaseUrl;
+
+  /// The address parses and names a host, and the only thing wrong with it is
+  /// that it is plain `http` to something other than loopback.
+  ///
+  /// Separate from [invalidBaseUrl] because the two need different words: one
+  /// is a typo and the other is a setting one switch away.
+  final bool insecureScheme;
 
   bool get hasInvalidBaseUrl => (invalidBaseUrl ?? '').isNotEmpty;
 
@@ -953,6 +978,7 @@ class AskAiConfigException implements Exception {
       );
     }
     if (hasInvalidBaseUrl) parts.add('invalidBaseUrl: $invalidBaseUrl');
+    if (insecureScheme) parts.add('insecureScheme');
     if (parts.isEmpty) return 'AskAiConfigException()';
     return 'AskAiConfigException(${parts.join('; ')})';
   }

@@ -387,6 +387,9 @@
   "askAiSendOnEnter": "Enter отправляет",
   "askAiSendOnEnterTip": "Enter отправляет, Shift+Enter — новая строка. Выкл.: Enter — новая строка, Cmd/Ctrl+Enter отправляет.",
   "askAiApiKeyOptional": "Оставьте пустым для локального или без аутентификации",
+  "askAiAllowInsecure": "Разрешить незашифрованный HTTP",
+  "askAiAllowInsecureTip": "Требуется для доступа к самостоятельно размещённой модели через http:// в вашей сети. Ключ API и любой контекст терминала будут отправлены без шифрования. Для localhost это не требуется.",
+  "askAiInsecureEndpoint": "Эта конечная точка использует http://. Включите «Разрешить незашифрованный HTTP» в настройках AI, чтобы использовать её.",
   "askAiHistory": "История диалогов",
   "askAiNewConversation": "Новый диалог",
   "askAiNoHistory": "Сохранённых бесед пока нет",
@@ -603,5 +606,6 @@
   "benchmarkRawLog": "Журнал выполнения",
   "benchmarkUpstream": "На основе Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Запуск",
-  "benchmarkNoOutputYet": "Вывода пока нет. Перед выводом первой строки YABS проверяет доступность google.com и icanhazip.com. В сетях, где заблокирован хотя бы один из этих сайтов, проверка может занять несколько минут."
+  "benchmarkNoOutputYet": "Вывода пока нет. Перед выводом первой строки YABS проверяет доступность google.com и icanhazip.com. В сетях, где заблокирован хотя бы один из этих сайтов, проверка может занять несколько минут.",
+  "benchmarkNoServers": "Сначала добавьте сервер, затем вернитесь, чтобы запустить бенчмарк."
 }

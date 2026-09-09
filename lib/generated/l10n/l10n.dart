@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'l10n_az.dart';
 import 'l10n_de.dart';
 import 'l10n_en.dart';
 import 'l10n_es.dart';
@@ -106,6 +107,7 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
+    Locale('az'),
     Locale('de'),
     Locale('en'),
     Locale('es'),
@@ -434,6 +436,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leave empty for local or unauthenticated'**
   String get askAiApiKeyOptional;
+
+  /// No description provided for @askAiAllowInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow plain HTTP'**
+  String get askAiAllowInsecure;
+
+  /// No description provided for @askAiAllowInsecureTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed to reach a self-hosted model over http:// on your network. The API key and any terminal context are sent unencrypted. localhost works without this.'**
+  String get askAiAllowInsecureTip;
+
+  /// No description provided for @askAiInsecureEndpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.'**
+  String get askAiInsecureEndpoint;
 
   /// No description provided for @askAiHistory.
   ///
@@ -3626,6 +3646,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) => <String>[
+    'az',
     'de',
     'en',
     'es',
@@ -3661,6 +3682,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
 
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'az':
+      return AppLocalizationsAz();
     case 'de':
       return AppLocalizationsDe();
     case 'en':

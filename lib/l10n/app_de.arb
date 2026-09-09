@@ -387,6 +387,9 @@
   "askAiSendOnEnter": "Enter sendet",
   "askAiSendOnEnterTip": "Enter sendet, Shift+Enter neue Zeile. Aus: Enter neue Zeile, Cmd/Strg+Enter sendet.",
   "askAiApiKeyOptional": "Leer lassen für lokal oder ohne Authentifizierung",
+  "askAiAllowInsecure": "Unverschlüsseltes HTTP zulassen",
+  "askAiAllowInsecureTip": "Erforderlich, um ein selbst gehostetes Modell über http:// in deinem Netzwerk zu erreichen. Der API-Schlüssel und etwaiger Terminalkontext werden unverschlüsselt übertragen. Für localhost ist dies nicht nötig.",
+  "askAiInsecureEndpoint": "Dieser Endpunkt verwendet http://. Aktiviere in den AI-Einstellungen „Unverschlüsseltes HTTP zulassen“, um ihn zu verwenden.",
   "askAiHistory": "Gesprächsverlauf",
   "askAiNewConversation": "Neues Gespräch",
   "askAiNoHistory": "Noch keine gespeicherten Unterhaltungen",
@@ -603,5 +606,6 @@
   "benchmarkRawLog": "Ausführungsprotokoll",
   "benchmarkUpstream": "Bereitgestellt von Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Wird gestartet",
-  "benchmarkNoOutputYet": "Noch keine Ausgabe. Vor der ersten Zeile prüft YABS, ob google.com und icanhazip.com erreichbar sind. In Netzwerken, die eine der beiden Websites blockieren, kann dies mehrere Minuten dauern."
+  "benchmarkNoOutputYet": "Noch keine Ausgabe. Vor der ersten Zeile prüft YABS, ob google.com und icanhazip.com erreichbar sind. In Netzwerken, die eine der beiden Websites blockieren, kann dies mehrere Minuten dauern.",
+  "benchmarkNoServers": "Füge zuerst einen Server hinzu und kehre dann zurück, um ihn zu benchmarken."
 }

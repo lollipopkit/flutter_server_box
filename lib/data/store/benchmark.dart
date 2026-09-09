@@ -108,6 +108,28 @@ class BenchmarkStore {
     return rows.isEmpty ? null : _fromRow(rows.first);
   }
 
+  /// Everything about this table that a list of runs would draw differently,
+  /// in one cheap query: how many there are, and which servers have one in
+  /// flight.
+  ///
+  /// The benchmark tab asks this once a second to decide whether to re-read
+  /// [all], which decodes every run's log and result document — tens of
+  /// kilobytes a row. Two small columns per row instead.
+  ///
+  /// Both halves are needed. The count alone misses a run ending, and the
+  /// running set alone misses a run that starts and fails inside one second —
+  /// which is what a poll answering "the run directory is gone" does.
+  ({int total, Set<String> running}) listRevision() {
+    final rows = _db.select('SELECT server_id, status FROM $_table;');
+    final running = <String>{};
+    for (final row in rows) {
+      if (row['status'] == BenchmarkStatus.running.name) {
+        running.add(row['server_id'] as String);
+      }
+    }
+    return (total: rows.length, running: running);
+  }
+
   /// Writes [run], replacing whatever was under its id.
   ///
   /// `ON CONFLICT DO UPDATE` naming the data columns, not `INSERT OR REPLACE`:

@@ -172,6 +172,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiApiKeyOptional => '本地或无需认证可留空';
 
   @override
+  String get askAiAllowInsecure => '允许明文 HTTP';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      '在局域网内通过 http:// 访问自建模型时需要开启。API Key 和终端上下文将以明文发送。localhost 无需开启。';
+
+  @override
+  String get askAiInsecureEndpoint => '该地址使用 http://。请在 AI 设置中开启「允许明文 HTTP」。';
+
+  @override
   String get askAiHistory => '对话历史';
 
   @override
@@ -2076,6 +2086,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiApiKeyOptional => '本機或無需認證可留空';
 
   @override
+  String get askAiAllowInsecure => '允許明文 HTTP';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      '在區域網路內透過 http:// 存取自建模型時需要開啟。API Key 與終端機上下文將以明文傳送。localhost 無需開啟。';
+
+  @override
+  String get askAiInsecureEndpoint => '此位址使用 http://。請在 AI 設定中開啟「允許明文 HTTP」。';
+
+  @override
   String get askAiHistory => '對話歷史';
 
   @override
@@ -3806,4 +3826,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get benchmarkNoOutputYet =>
       '暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。';
+
+  @override
+  String get benchmarkNoServers => '請先新增伺服器，然後返回執行效能測試。';
 }

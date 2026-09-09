@@ -184,6 +184,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiApiKeyOptional => 'Leave empty for local or unauthenticated';
 
   @override
+  String get askAiAllowInsecure => 'Allow plain HTTP';
+
+  @override
+  String get askAiAllowInsecureTip =>
+      'Needed to reach a self-hosted model over http:// on your network. The API key and any terminal context are sent unencrypted. localhost works without this.';
+
+  @override
+  String get askAiInsecureEndpoint =>
+      'This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.';
+
+  @override
   String get askAiHistory => 'Conversation history';
 
   @override
