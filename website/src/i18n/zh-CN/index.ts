@@ -12,6 +12,7 @@ const zhCN: Translation = {
     capabilities: '能力',
     download: '下载',
     docs: '文档',
+    plugins: '插件',
     languageLabel: '语言',
   },
   hero: {
@@ -86,6 +87,56 @@ const zhCN: Translation = {
       '可从 App Store、GitHub Releases、F-Droid、OpenAPK 或项目 CDN 安装。',
     appStoreAction: '打开 App Store',
     githubAction: '从 GitHub Releases 下载',
+  },
+  plugins: {
+    metaTitle: 'ServerBox 插件 —— 不必等新版本就能扩展',
+    metaDescription:
+      '插件为 ServerBox 增加页面、卡片和状态读数。每个插件都是运行在沙箱里的小模块，声明它需要的权限，而应用会校验下载到的每一个包。',
+    title: '不必等新版本，就能扩展应用。',
+    subtitle:
+      '一个插件可以增加一个页面、一张卡片、一个首页标签，或额外的状态读数。它是一个很小的模块，运行在沙箱里，只能做它在 manifest 里声明、并且你同意过的事。',
+    how: {
+      sandbox: {
+        title: '运行在沙箱里',
+        description:
+          '插件是运行在隔离运行时里的 JavaScript：没有文件系统、没有网络，也没有属于它自己的服务器连接。它做的每一件事，都是请求应用去做。',
+      },
+      permissions: {
+        title: '先申请，再动手',
+        description:
+          'manifest 里写明它需要什么 —— 执行命令、访问某个地址、看到你的服务器列表 —— 安装时你同意的就是这份清单。没被授予的调用会当场失败。',
+      },
+      anyRepo: {
+        title: '任意仓库，逐字节校验',
+        description:
+          '应用可以从任何 HTTPS 的仓库地址安装 —— 一次请求取回它最新的整棵树 —— 并按插件文件给出的 checksum 校验每个包。没有 checksum 的包默认被拒绝，除非你明确同意。',
+      },
+    },
+    listTitle: '官方仓库里的插件',
+    listSubtitle: '{count} 个插件，源码在本仓库，发布节奏与应用分开。',
+    asks: '申请权限',
+    asksNothing: '无',
+    appearsIn: '出现在',
+    languages: '语言',
+    source: '源码',
+    install: {
+      title: '怎么安装',
+      stepOne: '在应用里打开 设置 → 插件 → 插件商店。',
+      stepTwo: '选一个插件按安装。官方仓库已经在列表里。',
+      stepThree:
+        '看清它申请的权限再同意。运行任何东西之前，应用会先用仓库给出的 checksum 校验下载内容。',
+      address: '如果你删掉了官方仓库，想加回来：',
+      copy: '复制地址',
+    },
+    write: {
+      title: '怎么写一个',
+      description:
+        '一个插件就是一个 TypeScript 或 JavaScript 的 ES module，用 bun test 对着 mock 宿主测试 —— 不需要应用，也不需要构建步骤。桌面端可以直接指向插件目录，改完重启就是整个开发循环。',
+      sdk: 'SDK',
+      examples: '示例插件',
+      repository: '官方仓库',
+    },
+    home: '首页',
   },
   footer: {
     features: '特性',

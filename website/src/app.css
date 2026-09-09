@@ -708,6 +708,137 @@ body {
   gap: 1.5rem;
 }
 
+/* ---- the plugins page ------------------------------------------------- */
+
+/* The same hero, without the room a screenshot stack needs under it. */
+.hero-compact {
+  padding: clamp(4rem, 10vw, 7rem) 0 clamp(1rem, 3vw, 2rem);
+}
+
+.plugin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.plugin-card {
+  border-radius: var(--radius-container);
+  border: 1px solid var(--light-gray);
+  background: var(--white);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.plugin-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.plugin-head h3 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.plugin-version {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--stone);
+}
+
+.plugin-description {
+  color: var(--stone);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Three rows of label and value. A definition list because that is what it is:
+   the permissions a plugin asks for are the same names the app's install dialog
+   shows, so they are values rather than prose and are not translated. */
+.plugin-meta {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: auto;
+}
+
+.plugin-meta > div {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) 1fr;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.plugin-meta dt {
+  color: var(--stone);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.plugin-meta dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.plugin-meta .protocol-badge {
+  font-size: 0.76rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.plugin-none {
+  color: var(--stone);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+}
+
+.plugin-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--light-gray);
+  color: var(--stone);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+
+.plugin-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--near-black);
+  text-decoration: none;
+}
+
+.plugin-foot a:hover {
+  opacity: 0.7;
+}
+
+.plugin-steps {
+  display: grid;
+  gap: 0.75rem;
+  margin: 2rem 0 0;
+  padding-left: 1.25rem;
+  max-width: 66ch;
+  color: var(--stone);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.plugin-steps li::marker {
+  color: var(--near-black);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 768px) {
   .site-nav nav {
     display: none;

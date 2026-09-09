@@ -12,6 +12,7 @@ const es: Translation = {
     capabilities: 'Capacidades',
     download: 'Descargar',
     docs: 'Documentación',
+    plugins: 'Plugins',
     languageLabel: 'Idioma',
   },
   hero: {
@@ -87,6 +88,59 @@ const es: Translation = {
       'Instala desde App Store, GitHub Releases, F-Droid, OpenAPK o el CDN del proyecto.',
     appStoreAction: 'Abrir App Store',
     githubAction: 'Descargar desde GitHub Releases',
+  },
+  plugins: {
+    metaTitle: 'Plugins de ServerBox — amplía la app sin esperar una versión',
+    metaDescription:
+      'Los plugins añaden a ServerBox páginas, tarjetas y lecturas de estado. Cada uno es un módulo pequeño y aislado que declara los permisos que necesita, y la app verifica cada paquete que descarga.',
+    title: 'Amplía la app sin esperar una versión.',
+    subtitle:
+      'Un plugin añade una página, una tarjeta, una pestaña de inicio o lecturas de estado. Es un módulo pequeño, corre aislado y solo puede hacer lo que su manifiesto pidió y tú aceptaste.',
+    how: {
+      sandbox: {
+        title: 'Corre aislado',
+        description:
+          'Un plugin es JavaScript en un runtime aislado: sin sistema de archivos, sin red y sin conexión propia a tus servidores. Todo lo que hace, se lo pide a la app.',
+      },
+      permissions: {
+        title: 'Pide antes de actuar',
+        description:
+          'Su manifiesto nombra lo que necesita — ejecutar un comando, alcanzar un host, ver tu lista de servidores — y esa lista es la que aceptas al instalarlo. Una llamada no concedida falla en el acto.',
+      },
+      anyRepo: {
+        title: 'Cualquier repositorio, bytes verificados',
+        description:
+          'La app instala desde cualquier dirección de repositorio por HTTPS — una petición para su árbol más reciente — y comprueba cada paquete con la suma que indicó su archivo. Un paquete sin suma se rechaza salvo que lo autorices.',
+      },
+    },
+    listTitle: 'En el repositorio oficial',
+    listSubtitle:
+      '{count} plugins, desarrollados en este repositorio y publicados aparte de la app.',
+    asks: 'Pide',
+    asksNothing: 'nada',
+    appearsIn: 'Aparece en',
+    languages: 'Idiomas',
+    source: 'Código',
+    install: {
+      title: 'Instalar uno',
+      stepOne: 'En la app, abre Ajustes → Plugins → Tienda de plugins.',
+      stepTwo:
+        'Elige un plugin y pulsa Instalar. El repositorio oficial ya está en la lista.',
+      stepThree:
+        'Lee lo que pide y acepta. Antes de ejecutar nada, la app comprueba la descarga con la suma del repositorio.',
+      address:
+        'La dirección del repositorio, si la quitaste y quieres volver a añadirla:',
+      copy: 'Copiar dirección',
+    },
+    write: {
+      title: 'Escribir uno',
+      description:
+        'Un plugin es un único módulo ES en TypeScript o JavaScript, probado contra un host simulado con bun test — sin app y sin paso de compilación. En escritorio puedes apuntar la app a su carpeta: editar y reiniciar es todo el ciclo.',
+      sdk: 'SDK',
+      examples: 'Plugins de ejemplo',
+      repository: 'Repositorio oficial',
+    },
+    home: 'Inicio',
   },
   footer: {
     features: 'Funciones',

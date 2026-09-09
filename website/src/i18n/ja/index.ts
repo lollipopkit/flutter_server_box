@@ -12,6 +12,7 @@ const ja: Translation = {
     capabilities: 'ツール',
     download: 'ダウンロード',
     docs: 'ドキュメント',
+    plugins: 'プラグイン',
     languageLabel: '言語',
   },
   hero: {
@@ -87,6 +88,58 @@ const ja: Translation = {
       'App Store、GitHub Releases、F-Droid、OpenAPK、またはプロジェクト CDN からインストールできます。',
     appStoreAction: 'App Store を開く',
     githubAction: 'GitHub Releases からダウンロード',
+  },
+  plugins: {
+    metaTitle: 'ServerBox プラグイン — 次のリリースを待たずに拡張する',
+    metaDescription:
+      'プラグインは ServerBox にページ、カード、ステータス項目を追加します。それぞれサンドボックスで動く小さなモジュールで、必要な権限を宣言し、アプリはダウンロードしたパッケージを毎回検証します。',
+    title: '次のリリースを待たずに拡張する。',
+    subtitle:
+      'プラグインはページ、カード、ホームタブ、追加のステータス項目を加えます。小さなモジュールがサンドボックスで動き、マニフェストで求めてあなたが許可したことだけができます。',
+    how: {
+      sandbox: {
+        title: 'サンドボックスで動く',
+        description:
+          'プラグインは隔離されたランタイム上の JavaScript です。ファイルシステムもネットワークも自前のサーバー接続も持たず、必要なことはすべてアプリに依頼します。',
+      },
+      permissions: {
+        title: '先に許可を求める',
+        description:
+          'マニフェストに必要なもの — コマンドの実行、特定のホストへの接続、サーバー一覧の参照 — が書かれ、インストール時に許可するのはその一覧です。許可されていない呼び出しはその場で失敗します。',
+      },
+      anyRepo: {
+        title: 'どのリポジトリでも、バイト列を検証',
+        description:
+          'HTTPS のリポジトリアドレスであればどこからでもインストールでき（最新のツリーを一度の要求で取得します）、各パッケージをプラグインファイルが示したチェックサムで検証します。チェックサムのないパッケージは、明示的に許可しない限り拒否されます。',
+      },
+    },
+    listTitle: '公式リポジトリのプラグイン',
+    listSubtitle:
+      '{count} 個のプラグイン。ソースはこのリポジトリにあり、リリースはアプリとは別に行われます。',
+    asks: '要求する権限',
+    asksNothing: 'なし',
+    appearsIn: '表示される場所',
+    languages: '言語',
+    source: 'ソース',
+    install: {
+      title: 'インストール',
+      stepOne: 'アプリで 設定 → プラグイン → プラグインストア を開きます。',
+      stepTwo:
+        'プラグインを選んでインストールを押します。公式リポジトリは最初から登録されています。',
+      stepThree:
+        '要求する権限を読んで許可します。何かを実行する前に、アプリはリポジトリのチェックサムでダウンロードを検証します。',
+      address: '公式リポジトリを削除して戻したいときのアドレス:',
+      copy: 'アドレスをコピー',
+    },
+    write: {
+      title: '自分で書く',
+      description:
+        'プラグインは TypeScript か JavaScript の ES モジュール 1 つで、bun test でモックホストに対してテストできます — アプリもビルド手順も要りません。デスクトップ版はディレクトリを直接指定できるので、編集して再起動するだけで反映されます。',
+      sdk: 'SDK',
+      examples: 'サンプルプラグイン',
+      repository: '公式リポジトリ',
+    },
+    home: 'ホーム',
   },
   footer: {
     features: '機能',

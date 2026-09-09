@@ -24,7 +24,7 @@
     'Status chart', 'SSH Terminal', 'SFTP', 'SCP', 'Docker', 'Process',
     'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS',
     'Monitor Agent', 'AI Agent', 'Globe', 'Benchmark',
-    'Port Forward', 'Local Shell',
+    'Port Forward', 'Local Shell', 'Plugins',
   ]
 
   const features = [
@@ -227,6 +227,7 @@
       <nav>
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
+        <a href="/plugins/">{$LL.nav.plugins()}</a>
         <a href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.nav.download()}</a>
         <a href="/docs/">{$LL.nav.docs()}</a>
       </nav>
@@ -412,6 +413,7 @@
       <div class="footer-links">
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
+        <a href="/plugins/">{$LL.nav.plugins()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>
       </div>

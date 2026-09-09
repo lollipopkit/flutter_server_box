@@ -51,6 +51,10 @@ type RootTranslation = {
 		 */
 		docs: string
 		/**
+		 * P​l​u​g​i​n​s
+		 */
+		plugins: string
+		/**
 		 * L​a​n​g​u​a​g​e
 		 */
 		languageLabel: string
@@ -232,6 +236,137 @@ type RootTranslation = {
 		 */
 		githubAction: string
 	}
+	plugins: {
+		/**
+		 * S​e​r​v​e​r​B​o​x​ ​p​l​u​g​i​n​s​ ​—​ ​e​x​t​e​n​d​ ​t​h​e​ ​a​p​p​ ​w​i​t​h​o​u​t​ ​w​a​i​t​i​n​g​ ​f​o​r​ ​a​ ​r​e​l​e​a​s​e
+		 */
+		metaTitle: string
+		/**
+		 * P​l​u​g​i​n​s​ ​e​x​t​e​n​d​ ​S​e​r​v​e​r​B​o​x​ ​w​i​t​h​ ​n​e​w​ ​p​a​g​e​s​,​ ​c​a​r​d​s​ ​a​n​d​ ​s​t​a​t​u​s​ ​r​e​a​d​i​n​g​s​.​ ​E​a​c​h​ ​o​n​e​ ​i​s​ ​a​ ​s​m​a​l​l​ ​s​a​n​d​b​o​x​e​d​ ​m​o​d​u​l​e​ ​t​h​a​t​ ​n​a​m​e​s​ ​t​h​e​ ​p​e​r​m​i​s​s​i​o​n​s​ ​i​t​ ​n​e​e​d​s​,​ ​a​n​d​ ​t​h​e​ ​a​p​p​ ​v​e​r​i​f​i​e​s​ ​e​v​e​r​y​ ​p​a​c​k​a​g​e​ ​i​t​ ​d​o​w​n​l​o​a​d​s​.
+		 */
+		metaDescription: string
+		/**
+		 * E​x​t​e​n​d​ ​t​h​e​ ​a​p​p​ ​w​i​t​h​o​u​t​ ​w​a​i​t​i​n​g​ ​f​o​r​ ​a​ ​r​e​l​e​a​s​e​.
+		 */
+		title: string
+		/**
+		 * A​ ​p​l​u​g​i​n​ ​a​d​d​s​ ​a​ ​p​a​g​e​,​ ​a​ ​c​a​r​d​,​ ​a​ ​h​o​m​e​ ​t​a​b​,​ ​o​r​ ​e​x​t​r​a​ ​s​t​a​t​u​s​ ​r​e​a​d​i​n​g​s​.​ ​I​t​ ​i​s​ ​o​n​e​ ​s​m​a​l​l​ ​m​o​d​u​l​e​,​ ​i​t​ ​r​u​n​s​ ​i​n​ ​a​ ​s​a​n​d​b​o​x​,​ ​a​n​d​ ​i​t​ ​c​a​n​ ​o​n​l​y​ ​d​o​ ​w​h​a​t​ ​i​t​s​ ​m​a​n​i​f​e​s​t​ ​a​s​k​e​d​ ​f​o​r​ ​a​n​d​ ​y​o​u​ ​a​g​r​e​e​d​ ​t​o​.
+		 */
+		subtitle: string
+		how: {
+			sandbox: {
+				/**
+				 * R​u​n​s​ ​i​n​ ​a​ ​s​a​n​d​b​o​x
+				 */
+				title: string
+				/**
+				 * A​ ​p​l​u​g​i​n​ ​i​s​ ​J​a​v​a​S​c​r​i​p​t​ ​i​n​ ​a​n​ ​i​s​o​l​a​t​e​d​ ​r​u​n​t​i​m​e​ ​w​i​t​h​ ​n​o​ ​f​i​l​e​ ​s​y​s​t​e​m​,​ ​n​o​ ​n​e​t​w​o​r​k​,​ ​a​n​d​ ​n​o​ ​s​e​r​v​e​r​ ​c​o​n​n​e​c​t​i​o​n​ ​o​f​ ​i​t​s​ ​o​w​n​.​ ​E​v​e​r​y​t​h​i​n​g​ ​i​t​ ​d​o​e​s​,​ ​i​t​ ​a​s​k​s​ ​t​h​e​ ​a​p​p​ ​t​o​ ​d​o​.
+				 */
+				description: string
+			}
+			permissions: {
+				/**
+				 * A​s​k​s​ ​b​e​f​o​r​e​ ​i​t​ ​a​c​t​s
+				 */
+				title: string
+				/**
+				 * I​t​s​ ​m​a​n​i​f​e​s​t​ ​n​a​m​e​s​ ​w​h​a​t​ ​i​t​ ​n​e​e​d​s​ ​—​ ​r​u​n​n​i​n​g​ ​a​ ​c​o​m​m​a​n​d​,​ ​r​e​a​c​h​i​n​g​ ​a​ ​h​o​s​t​,​ ​s​e​e​i​n​g​ ​y​o​u​r​ ​s​e​r​v​e​r​ ​l​i​s​t​ ​—​ ​a​n​d​ ​t​h​a​t​ ​l​i​s​t​ ​i​s​ ​w​h​a​t​ ​y​o​u​ ​a​g​r​e​e​ ​t​o​ ​w​h​e​n​ ​y​o​u​ ​i​n​s​t​a​l​l​ ​i​t​.​ ​A​n​ ​u​n​g​r​a​n​t​e​d​ ​c​a​l​l​ ​f​a​i​l​s​ ​o​n​ ​t​h​e​ ​s​p​o​t​.
+				 */
+				description: string
+			}
+			anyRepo: {
+				/**
+				 * A​n​y​ ​r​e​p​o​s​i​t​o​r​y​,​ ​c​h​e​c​k​e​d​ ​b​y​t​e​s
+				 */
+				title: string
+				/**
+				 * T​h​e​ ​a​p​p​ ​i​n​s​t​a​l​l​s​ ​f​r​o​m​ ​a​n​y​ ​r​e​p​o​s​i​t​o​r​y​ ​a​d​d​r​e​s​s​ ​o​v​e​r​ ​H​T​T​P​S​ ​—​ ​o​n​e​ ​r​e​q​u​e​s​t​ ​f​o​r​ ​i​t​s​ ​l​a​t​e​s​t​ ​t​r​e​e​ ​—​ ​a​n​d​ ​c​h​e​c​k​s​ ​e​a​c​h​ ​p​a​c​k​a​g​e​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​c​h​e​c​k​s​u​m​ ​i​t​s​ ​f​i​l​e​ ​n​a​m​e​d​.​ ​O​n​e​ ​t​h​a​t​ ​n​a​m​e​s​ ​n​o​n​e​ ​i​s​ ​r​e​f​u​s​e​d​ ​u​n​l​e​s​s​ ​y​o​u​ ​s​a​y​ ​o​t​h​e​r​w​i​s​e​.
+				 */
+				description: string
+			}
+		}
+		/**
+		 * I​n​ ​t​h​e​ ​o​f​f​i​c​i​a​l​ ​r​e​p​o​s​i​t​o​r​y
+		 */
+		listTitle: string
+		/**
+		 * {​c​o​u​n​t​}​ ​p​l​u​g​i​n​s​,​ ​b​u​i​l​t​ ​i​n​ ​t​h​i​s​ ​r​e​p​o​s​i​t​o​r​y​ ​a​n​d​ ​r​e​l​e​a​s​e​d​ ​s​e​p​a​r​a​t​e​l​y​ ​f​r​o​m​ ​t​h​e​ ​a​p​p​.
+		 * @param {unknown} count
+		 */
+		listSubtitle: RequiredParams<'count'>
+		/**
+		 * A​s​k​s​ ​f​o​r
+		 */
+		asks: string
+		/**
+		 * n​o​t​h​i​n​g
+		 */
+		asksNothing: string
+		/**
+		 * A​p​p​e​a​r​s​ ​i​n
+		 */
+		appearsIn: string
+		/**
+		 * L​a​n​g​u​a​g​e​s
+		 */
+		languages: string
+		/**
+		 * S​o​u​r​c​e
+		 */
+		source: string
+		install: {
+			/**
+			 * I​n​s​t​a​l​l​i​n​g​ ​o​n​e
+			 */
+			title: string
+			/**
+			 * I​n​ ​t​h​e​ ​a​p​p​,​ ​o​p​e​n​ ​S​e​t​t​i​n​g​s​ ​→​ ​P​l​u​g​i​n​s​ ​→​ ​P​l​u​g​i​n​ ​s​t​o​r​e​.
+			 */
+			stepOne: string
+			/**
+			 * P​i​c​k​ ​a​ ​p​l​u​g​i​n​ ​a​n​d​ ​p​r​e​s​s​ ​I​n​s​t​a​l​l​.​ ​T​h​e​ ​o​f​f​i​c​i​a​l​ ​r​e​p​o​s​i​t​o​r​y​ ​i​s​ ​a​l​r​e​a​d​y​ ​l​i​s​t​e​d​.
+			 */
+			stepTwo: string
+			/**
+			 * R​e​a​d​ ​w​h​a​t​ ​i​t​ ​a​s​k​s​ ​f​o​r​,​ ​t​h​e​n​ ​a​g​r​e​e​.​ ​T​h​e​ ​a​p​p​ ​c​h​e​c​k​s​ ​t​h​e​ ​d​o​w​n​l​o​a​d​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​r​e​p​o​s​i​t​o​r​y​’​s​ ​c​h​e​c​k​s​u​m​ ​b​e​f​o​r​e​ ​a​n​y​t​h​i​n​g​ ​r​u​n​s​.
+			 */
+			stepThree: string
+			/**
+			 * T​h​e​ ​r​e​p​o​s​i​t​o​r​y​ ​a​d​d​r​e​s​s​,​ ​i​f​ ​y​o​u​ ​r​e​m​o​v​e​d​ ​i​t​ ​a​n​d​ ​w​a​n​t​ ​i​t​ ​b​a​c​k​:
+			 */
+			address: string
+			/**
+			 * C​o​p​y​ ​a​d​d​r​e​s​s
+			 */
+			copy: string
+		}
+		write: {
+			/**
+			 * W​r​i​t​i​n​g​ ​o​n​e
+			 */
+			title: string
+			/**
+			 * A​ ​p​l​u​g​i​n​ ​i​s​ ​o​n​e​ ​E​S​ ​m​o​d​u​l​e​ ​i​n​ ​T​y​p​e​S​c​r​i​p​t​ ​o​r​ ​J​a​v​a​S​c​r​i​p​t​,​ ​t​e​s​t​e​d​ ​a​g​a​i​n​s​t​ ​a​ ​m​o​c​k​ ​h​o​s​t​ ​w​i​t​h​ ​b​u​n​ ​t​e​s​t​ ​—​ ​n​o​ ​a​p​p​ ​a​n​d​ ​n​o​ ​b​u​i​l​d​ ​s​t​e​p​.​ ​O​n​ ​a​ ​d​e​s​k​t​o​p​ ​y​o​u​ ​c​a​n​ ​p​o​i​n​t​ ​t​h​e​ ​a​p​p​ ​a​t​ ​i​t​s​ ​d​i​r​e​c​t​o​r​y​,​ ​a​n​d​ ​e​d​i​t​i​n​g​ ​i​t​ ​i​s​ ​t​h​e​ ​w​h​o​l​e​ ​c​y​c​l​e​.
+			 */
+			description: string
+			/**
+			 * S​D​K
+			 */
+			sdk: string
+			/**
+			 * E​x​a​m​p​l​e​ ​p​l​u​g​i​n​s
+			 */
+			examples: string
+			/**
+			 * O​f​f​i​c​i​a​l​ ​r​e​p​o​s​i​t​o​r​y
+			 */
+			repository: string
+		}
+		/**
+		 * H​o​m​e
+		 */
+		home: string
+	}
 	footer: {
 		/**
 		 * F​e​a​t​u​r​e​s
@@ -280,6 +415,10 @@ export type TranslationFunctions = {
 		 * Docs
 		 */
 		docs: () => LocalizedString
+		/**
+		 * Plugins
+		 */
+		plugins: () => LocalizedString
 		/**
 		 * Language
 		 */
@@ -460,6 +599,136 @@ export type TranslationFunctions = {
 		 * Download from GitHub Releases
 		 */
 		githubAction: () => LocalizedString
+	}
+	plugins: {
+		/**
+		 * ServerBox plugins — extend the app without waiting for a release
+		 */
+		metaTitle: () => LocalizedString
+		/**
+		 * Plugins extend ServerBox with new pages, cards and status readings. Each one is a small sandboxed module that names the permissions it needs, and the app verifies every package it downloads.
+		 */
+		metaDescription: () => LocalizedString
+		/**
+		 * Extend the app without waiting for a release.
+		 */
+		title: () => LocalizedString
+		/**
+		 * A plugin adds a page, a card, a home tab, or extra status readings. It is one small module, it runs in a sandbox, and it can only do what its manifest asked for and you agreed to.
+		 */
+		subtitle: () => LocalizedString
+		how: {
+			sandbox: {
+				/**
+				 * Runs in a sandbox
+				 */
+				title: () => LocalizedString
+				/**
+				 * A plugin is JavaScript in an isolated runtime with no file system, no network, and no server connection of its own. Everything it does, it asks the app to do.
+				 */
+				description: () => LocalizedString
+			}
+			permissions: {
+				/**
+				 * Asks before it acts
+				 */
+				title: () => LocalizedString
+				/**
+				 * Its manifest names what it needs — running a command, reaching a host, seeing your server list — and that list is what you agree to when you install it. An ungranted call fails on the spot.
+				 */
+				description: () => LocalizedString
+			}
+			anyRepo: {
+				/**
+				 * Any repository, checked bytes
+				 */
+				title: () => LocalizedString
+				/**
+				 * The app installs from any repository address over HTTPS — one request for its latest tree — and checks each package against the checksum its file named. One that names none is refused unless you say otherwise.
+				 */
+				description: () => LocalizedString
+			}
+		}
+		/**
+		 * In the official repository
+		 */
+		listTitle: () => LocalizedString
+		/**
+		 * {count} plugins, built in this repository and released separately from the app.
+		 */
+		listSubtitle: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * Asks for
+		 */
+		asks: () => LocalizedString
+		/**
+		 * nothing
+		 */
+		asksNothing: () => LocalizedString
+		/**
+		 * Appears in
+		 */
+		appearsIn: () => LocalizedString
+		/**
+		 * Languages
+		 */
+		languages: () => LocalizedString
+		/**
+		 * Source
+		 */
+		source: () => LocalizedString
+		install: {
+			/**
+			 * Installing one
+			 */
+			title: () => LocalizedString
+			/**
+			 * In the app, open Settings → Plugins → Plugin store.
+			 */
+			stepOne: () => LocalizedString
+			/**
+			 * Pick a plugin and press Install. The official repository is already listed.
+			 */
+			stepTwo: () => LocalizedString
+			/**
+			 * Read what it asks for, then agree. The app checks the download against the repository’s checksum before anything runs.
+			 */
+			stepThree: () => LocalizedString
+			/**
+			 * The repository address, if you removed it and want it back:
+			 */
+			address: () => LocalizedString
+			/**
+			 * Copy address
+			 */
+			copy: () => LocalizedString
+		}
+		write: {
+			/**
+			 * Writing one
+			 */
+			title: () => LocalizedString
+			/**
+			 * A plugin is one ES module in TypeScript or JavaScript, tested against a mock host with bun test — no app and no build step. On a desktop you can point the app at its directory, and editing it is the whole cycle.
+			 */
+			description: () => LocalizedString
+			/**
+			 * SDK
+			 */
+			sdk: () => LocalizedString
+			/**
+			 * Example plugins
+			 */
+			examples: () => LocalizedString
+			/**
+			 * Official repository
+			 */
+			repository: () => LocalizedString
+		}
+		/**
+		 * Home
+		 */
+		home: () => LocalizedString
 	}
 	footer: {
 		/**
