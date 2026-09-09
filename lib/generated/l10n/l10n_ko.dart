@@ -996,6 +996,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pushToken => '푸시 토큰';
 
   @override
+  String get liveActivity => '실시간 활동';
+
+  @override
+  String get liveActivityTip =>
+      '잠금 화면과 Dynamic Island에 터미널 세션을 표시합니다. 기기를 잠금 해제하지 않아도 서버 이름과 연결 상태를 확인할 수 있습니다.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS에서 허용하지 않습니다. 스위치는 설정 › ServerBox › 실시간 활동과 설정 › Face ID 및 암호 › 실시간 활동에 있습니다.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand는 데스크톱 플랫폼에서만 지원됩니다.';
 

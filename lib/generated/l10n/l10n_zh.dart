@@ -978,6 +978,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pushToken => '消息推送 Token';
 
   @override
+  String get liveActivity => '实时活动';
+
+  @override
+  String get liveActivityTip => '在锁屏和灵动岛上显示终端会话。无需解锁即可看到服务器名称和连接状态。';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS 未允许显示。开关位于「设置 › ServerBox › 实时活动」和「设置 › 面容 ID 与密码 › 实时活动」。';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 仅支持桌面平台。';
 
   @override
@@ -2890,6 +2900,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pushToken => '消息推送 Token';
+
+  @override
+  String get liveActivity => '即時動態';
+
+  @override
+  String get liveActivityTip => '在鎖定畫面和動態島上顯示終端機工作階段。無需解鎖即可查看伺服器名稱與連線狀態。';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS 未允許顯示。開關位於「設定 › ServerBox › 即時動態」和「設定 › 面容 ID 與密碼 › 即時動態」。';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 僅支援桌面平台。';

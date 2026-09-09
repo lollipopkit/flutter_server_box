@@ -1061,6 +1061,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pushToken => 'Token de notificaciones';
 
   @override
+  String get liveActivity => 'Actividad en vivo';
+
+  @override
+  String get liveActivityTip =>
+      'Muestra las sesiones de terminal en la pantalla bloqueada y en Dynamic Island. El nombre del servidor y el estado de la conexión se muestran allí sin desbloquear el dispositivo.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS no lo permite. Los interruptores están en Ajustes › ServerBox › Actividades en vivo y Ajustes › Face ID y código › Actividades en vivo.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand solo se admite en plataformas de escritorio.';
 

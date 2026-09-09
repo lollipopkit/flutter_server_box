@@ -1051,6 +1051,17 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pushToken => 'Надіслати токен';
 
   @override
+  String get liveActivity => 'Активність у реальному часі';
+
+  @override
+  String get liveActivityTip =>
+      'Показує сеанси термінала на екрані блокування та в Dynamic Island. Ім’я сервера й стан підключення видно без розблокування пристрою.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS не дозволяє. Перемикачі розташовані в розділах Налаштування › ServerBox › Активності в реальному часі та Налаштування › Face ID і код-пароль › Активності в реальному часі.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand підтримується лише на настільних платформах.';
 

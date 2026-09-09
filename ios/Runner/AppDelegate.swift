@@ -107,19 +107,25 @@ import ActivityKit
                 } else {
                     result(nil)
                 }
-            // The three Live Activity cases answer from inside the Task, not
-            // after starting it. ActivityKit is what takes the time here, and
-            // none of it may run on this thread; replying only once it is done
-            // is also what keeps the Dart side's queue ordering these calls.
-            case "startLiveActivity":
-                if #available(iOS 16.2, *), let payload = call.arguments as? String {
-                    Task {
-                        await LiveActivityManager.shared.start(json: payload)
-                        result(nil)
-                    }
+            // Whether the system would let us put one up at all: refused per
+            // app or device-wide in Settings, in which case `Activity.request`
+            // fails and there is nothing in the failure to show a user. Cheap
+            // and synchronous, unlike the two below.
+            case "liveActivityAvailable":
+                if #available(iOS 16.2, *) {
+                    result(ActivityAuthorizationInfo().areActivitiesEnabled)
                 } else {
-                    result(nil)
+                    result(false)
                 }
+            // The two Live Activity cases below answer from inside the Task,
+            // not after starting it. ActivityKit is what takes the time here,
+            // and none of it may run on this thread; replying only once it is
+            // done is also what keeps the Dart side's queue ordering these
+            // calls.
+            //
+            // No `startLiveActivity`: `update` starts one when there is none,
+            // which is the only way Dart has ever raised one. The case existed
+            // with nothing on the other side of the channel to call it.
             case "updateLiveActivity":
                 if #available(iOS 16.2, *), let payload = call.arguments as? String {
                     Task {

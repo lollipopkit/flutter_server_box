@@ -376,6 +376,9 @@
     }
   },
   "pushToken": "Push tokeni",
+  "liveActivity": "Canlı fəaliyyət",
+  "liveActivityTip": "Terminal seanslarını kilid ekranında və Dynamic Island-da göstərir. Serverin adı və bağlantı vəziyyəti kilidi açmadan görünür.",
+  "liveActivitySystemDisabled": "iOS buna icazə vermir. Açarlar «Settings › ServerBox › Live Activities» və «Settings › Face ID & Passcode › Live Activities» bölmələrindədir.",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand yalnız masaüstü platformalarda dəstəklənir.",
   "pveIgnoreCertTip": "Aktivləşdirmək tövsiyə olunmur, təhlükəsizlik risklərini nəzərə al! PVE standart sertifikatından istifadə edirsənsə, bu seçimi aktivləşdirməlisən.",
   "pveServerClientMissing": "Bu server üçün SSH müştərisi əlçatan deyil.",

@@ -376,6 +376,9 @@
     }
   },
   "pushToken": "Push token",
+  "liveActivity": "Live Activity",
+  "liveActivityTip": "Show terminal sessions on the Lock Screen and Dynamic Island. Without unlocking, the server name and connection state are visible there.",
+  "liveActivitySystemDisabled": "iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand is only supported on desktop platforms.",
   "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",
   "pveServerClientMissing": "The SSH client for this server is not available.",

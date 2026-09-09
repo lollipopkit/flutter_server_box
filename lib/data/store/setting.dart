@@ -244,6 +244,24 @@ class SettingStore extends SqliteStore {
   /// [MethodChans.setPrivacyBlur], and every launch re-pushes.
   late final privacyBlur = propertyDefault('privacyBlur', false);
 
+  /// Whether this app may put a Live Activity on the lock screen at all.
+  ///
+  /// iOS only, and one switch for every kind rather than one per kind: the user
+  /// question is whether this app appears on the lock screen, not which of its
+  /// features does. What is behind it today is the terminal session activity;
+  /// the monitor status one will sit behind the same switch.
+  ///
+  /// **Off by default, which is a change of behaviour.** A Live Activity used
+  /// to appear whenever a terminal connected, with nothing to stop it. It shows
+  /// a server's name and the state of a connection to it, on a screen that is
+  /// readable without unlocking the phone, and that is not something to opt
+  /// somebody into — least of all silently, on a device they hand to other
+  /// people. An install that wants it turns it on once.
+  ///
+  /// Independent of iOS' own per-app Live Activity permission, which can also
+  /// be off: this says whether the app *asks*.
+  late final liveActivity = propertyDefault('liveActivity', false);
+
   /// Servers the watch app may show, by [Spi.id], in display order.
   ///
   /// The watch used to be configured by a list of URLs living only inside the
@@ -506,17 +524,26 @@ class SettingStore extends SqliteStore {
   /// Settings that describe *this device* rather than a preference worth
   /// carrying to another one, so a backup neither exports nor restores them.
   ///
-  /// [agentLocalExec] is the whole list. Its doc says a restore of a provider
-  /// configuration must not carry it, and until this existed it did: the key
-  /// is an ordinary settings row, so exporting on a machine where the Agent
-  /// had been let loose and restoring on a phone turned it on there with
-  /// nothing said. The permission is about which machine, and a backup file
-  /// does not know which machine it is being read on.
+  /// Both are answers to "what may this machine do", and a backup file does not
+  /// know which machine it is being read on.
   ///
-  /// Handled beside the internal keys rather than by giving it an internal
-  /// name, so an install that has already answered the question keeps its
+  /// [agentLocalExec]'s doc says a restore of a provider configuration must not
+  /// carry it, and until this existed it did: the key is an ordinary settings
+  /// row, so exporting on a machine where the Agent had been let loose and
+  /// restoring on a phone turned it on there with nothing said.
+  ///
+  /// [liveActivity] the same, one screen out. It decides whether a server's
+  /// name and the state of a connection to it are readable without unlocking,
+  /// so restoring a phone's backup onto a second phone would start putting
+  /// them on that phone's lock screen without anyone deciding it. It is also
+  /// iOS-only, which makes the other direction wrong too: a backup taken on
+  /// Android carries the untouched default and would switch it off on an iPhone
+  /// that had it on.
+  ///
+  /// Handled beside the internal keys rather than by giving them internal
+  /// names, so an install that has already answered the question keeps its
   /// answer instead of being quietly reset by a rename.
-  static const deviceLocalKeys = {'agentLocalExec'};
+  static const deviceLocalKeys = {'agentLocalExec', 'liveActivity'};
 
   /// The floating Agent's placement and size, as one row.
   ///

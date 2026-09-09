@@ -144,7 +144,10 @@ actor LiveActivityManager {
     /// just closed, and staying there.
     private var generation = 0
 
-    func start(json: String) async {
+    /// Raised through [update], which is the only entry point: Dart has never
+    /// had a `start` of its own, and one activity per app makes "put one up if
+    /// there is none" the whole of the difference.
+    private func start(json: String) async {
         guard let payload = Self.parse(json) else { return }
 
         if let activity = updatableActivity() {

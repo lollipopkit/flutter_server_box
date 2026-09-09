@@ -1050,6 +1050,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pushToken => 'Push belirteci';
 
   @override
+  String get liveActivity => 'Canlı Etkinlik';
+
+  @override
+  String get liveActivityTip =>
+      'Terminal oturumlarını Kilitli Ekran\'da ve Dynamic Island\'da gösterir. Cihazın kilidi açılmadan sunucu adı ve bağlantı durumu görülebilir.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS buna izin vermiyor. Anahtarlar Ayarlar › ServerBox › Canlı Etkinlikler ve Ayarlar › Face ID ve Parola › Canlı Etkinlikler bölümlerinde.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand yalnızca masaüstü platformlarda desteklenir.';
 

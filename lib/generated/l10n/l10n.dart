@@ -1937,6 +1937,24 @@ abstract class AppLocalizations {
   /// **'Push token'**
   String get pushToken;
 
+  /// No description provided for @liveActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Activity'**
+  String get liveActivity;
+
+  /// No description provided for @liveActivityTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show terminal sessions on the Lock Screen and Dynamic Island. Without unlocking, the server name and connection state are visible there.'**
+  String get liveActivityTip;
+
+  /// No description provided for @liveActivitySystemDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.'**
+  String get liveActivitySystemDisabled;
+
   /// No description provided for @proxyCommandOnlySupportedOnDesktop.
   ///
   /// In en, this message translates to:

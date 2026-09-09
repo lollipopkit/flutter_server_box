@@ -329,6 +329,49 @@ void main() {
       expect(Stores.setting.timeout.fetch(), 9, reason: 'the rest still lands');
     });
 
+    test('the Live Activity switch travels no further either', () async {
+      // Same rule, one screen out: it decides whether a server's name and the
+      // state of a connection to it are readable without unlocking. Restoring
+      // one phone's backup onto a second would otherwise start putting them on
+      // that phone's lock screen with nobody having decided it.
+      Stores.setting.liveActivity.put(true);
+
+      final backup = await BackupV2.loadFromStore();
+
+      expect(backup.settings.containsKey('liveActivity'), isFalse);
+    });
+
+    test('and a file cannot switch it on or off', () async {
+      // Both directions, because this one is iOS-only: a backup taken on
+      // Android carries the untouched default, and letting that land would
+      // switch it *off* on an iPhone that had it on.
+      for (final (before, inFile) in [(false, true), (true, false)]) {
+        Stores.setting.liveActivity.put(before);
+
+        final backup = BackupV2(
+          version: BackupV2.formatVer,
+          date: 1,
+          spis: const {},
+          snippets: const {},
+          keys: const {},
+          container: const {},
+          history: const {},
+          settings: {
+            'liveActivity': inFile,
+            'timeOut': 9,
+            Stores.setting.lastUpdateTsKey: <String, int>{},
+          },
+        );
+        await backup.merge(force: true);
+
+        expect(
+          Stores.setting.liveActivity.fetch(),
+          before,
+          reason: 'a backup holding $inFile changed a device answering $before',
+        );
+      }
+    });
+
     test('a file carrying no settings leaves the local ones alone', () async {
       Stores.setting.homeTabs.put(const [
         AppTab.server,

@@ -1048,6 +1048,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get pushToken => 'Dorong token';
 
   @override
+  String get liveActivity => 'Aktivitas Live';
+
+  @override
+  String get liveActivityTip =>
+      'Tampilkan sesi terminal di Layar Terkunci dan Dynamic Island. Nama server dan status koneksi dapat dilihat tanpa membuka kunci perangkat.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS tidak mengizinkannya. Sakelarnya ada di Pengaturan › ServerBox › Aktivitas Live dan Pengaturan › Face ID & Kode Sandi › Aktivitas Live.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand hanya didukung di platform desktop.';
 

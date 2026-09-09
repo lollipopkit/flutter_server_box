@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/watch_sync.dart';
@@ -34,6 +35,10 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   late final _watchPairedFuture = WatchSync.instance.isWatchPaired;
   late final _pushTokenFuture = getToken();
 
+  /// Whether iOS itself would allow one. Read once per visit to this page: the
+  /// user can change it in Settings, but only by leaving this one.
+  late final _liveActivityAvailableFuture = MethodChans.liveActivityAvailable();
+
   void _showCopyResult(bool success) {
     if (success) {
       Toast.success(libL10n.success);
@@ -61,6 +66,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
       padding: context.padBottom(const EdgeInsets.symmetric(horizontal: 17)),
       children: [
         _buildPushToken(),
+        _buildLiveActivity(),
         _buildAutoUpdateHomeWidget(),
         _buildWatchApp(),
       ].nonNulls.map((e) => CardX(child: e)).toList(),
@@ -103,6 +109,34 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
           );
         },
       ),
+    );
+  }
+
+  /// One switch for every Live Activity this app raises.
+  ///
+  /// Off by default, and a change of behaviour: one used to appear whenever a
+  /// terminal connected, with nothing to stop it. What it shows — a server's
+  /// name, and the state of a connection to it — is readable without unlocking
+  /// the phone, so it is opted into rather than out of.
+  ///
+  /// The subtitle carries the system's answer as well as the app's, because
+  /// they fail identically from the user's side: the switch is on, nothing
+  /// appears, and only one of the two places says why.
+  Widget _buildLiveActivity() {
+    return ListTile(
+      title: Text(l10n.liveActivity),
+      subtitle: FutureWidget<bool>(
+        future: _liveActivityAvailableFuture,
+        loading: Text(l10n.liveActivityTip, style: UIs.textGrey),
+        error: (e, _) => Text('${libL10n.error}: $e', style: UIs.textGrey),
+        success: (available) => Text(
+          available == true
+              ? l10n.liveActivityTip
+              : l10n.liveActivitySystemDisabled,
+          style: UIs.textGrey,
+        ),
+      ),
+      trailing: StoreSwitch(prop: Stores.setting.liveActivity),
     );
   }
 

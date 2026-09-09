@@ -995,6 +995,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pushToken => 'プッシュトークン';
 
   @override
+  String get liveActivity => 'ライブアクティビティ';
+
+  @override
+  String get liveActivityTip =>
+      'ロック画面と Dynamic Island にターミナルセッションを表示します。デバイスのロックを解除しなくても、サーバー名と接続状態を確認できます。';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS が許可していません。スイッチは「設定 › ServerBox › ライブアクティビティ」と「設定 › Face ID とパスコード › ライブアクティビティ」にあります。';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand はデスクトップのみ対応しています。';
 

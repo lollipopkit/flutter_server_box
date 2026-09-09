@@ -1063,6 +1063,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pushToken => 'Jeton d\'identification';
 
   @override
+  String get liveActivity => 'Activité en direct';
+
+  @override
+  String get liveActivityTip =>
+      'Affichez les sessions du terminal sur l’écran verrouillé et dans Dynamic Island. Le nom du serveur et l’état de la connexion y sont visibles sans déverrouiller l’appareil.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS ne l’autorise pas. Les réglages se trouvent dans Réglages › ServerBox › Activités en direct et Réglages › Face ID et code › Activités en direct.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand n\'est pris en charge que sur les plateformes de bureau.';
 

@@ -1055,6 +1055,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pushToken => 'Push Token';
 
   @override
+  String get liveActivity => 'Live-Aktivität';
+
+  @override
+  String get liveActivityTip =>
+      'Terminal-Sitzungen auf dem Sperrbildschirm und in der Dynamic Island anzeigen. Der Servername und der Verbindungsstatus sind dort ohne Entsperren sichtbar.';
+
+  @override
+  String get liveActivitySystemDisabled =>
+      'iOS lässt derzeit keine zu. Die Schalter finden sich unter Einstellungen › ServerBox › Live-Aktivitäten und Einstellungen › Face ID & Code › Live-Aktivitäten.';
+
+  @override
   String get proxyCommandOnlySupportedOnDesktop =>
       'ProxyCommand wird nur auf Desktop-Plattformen unterstützt.';
 
