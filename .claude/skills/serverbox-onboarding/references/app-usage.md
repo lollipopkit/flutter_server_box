@@ -32,7 +32,9 @@ the default and the one to use unless something makes it impossible.
 
 **Monitor HTTP** — the agent's URL (`https://1.2.3.4:3770`), its panel user and
 password, and **Monitor Ignore certificate** for a self-signed certificate. The
-server then carries no SSH credentials at all. Status and charts work
+When Monitor HTTP is the only configured transport, the server carries no SSH
+credentials. If SSH is configured as well, both transports remain available.
+Status and charts work
 immediately, with history from before the app ever connected; everything else
 depends on what the agent's operator enabled.
 
@@ -41,7 +43,7 @@ depends on what the agent's operator enabled.
 | Feature | Over SSH | Through an agent |
 |---|---|---|
 | Status, charts | yes | yes, plus stored history |
-| Terminal | yes | `full_access` **and** `[remote_access.terminal] enabled` **and** secure transport |
+| Terminal | yes | `[remote_access.terminal] enabled` **and** secure transport |
 | Commands, processes, systemd, containers, snippets, power | yes | `full_access` **and** secure transport |
 | File browsing | SFTP | `[remote_access.fs]` with `roots` set |
 | SFTP transfers, port forwarding | yes | never — add the same machine over SSH as a second server |
