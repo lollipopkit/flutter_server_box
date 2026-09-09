@@ -73,7 +73,8 @@ dart run fl_build -p linux
 dart run fl_build -p windows
 ```
 
-Requires a Windows build environment with Visual Studio.
+Requires Visual Studio with the Desktop development with C++ workload and ATL
+support.
 
 ## Build Monitor agent
 
@@ -103,8 +104,8 @@ Release artifacts are built by the `monitor-release.yml` workflow. It supports `
 
 ```bash
 flutter clean
-dart run build_runner build --delete-conflicting-outputs
 flutter pub get
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 `flutter clean` removes `build/`, including the iOS Linux engine libraries when that engine is enabled. Rebuild the required target with `scripts/build-ish-ios.sh device`, `simulator`, or `macos`; otherwise the linker will report missing engine files.

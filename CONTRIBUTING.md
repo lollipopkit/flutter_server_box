@@ -1,9 +1,9 @@
 # Contributing to ServerBox
 
-Any positive contribution is welcome — code, translations, bug reports, and
-documentation alike.
+Contributions to code, translations, bug reports, and documentation are
+welcome.
 
-## Before you open a pull request
+## Before opening a pull request
 
 - **Small fixes:** just open the pull request.
 - **New features or anything that changes how the app behaves:** open an issue
@@ -23,7 +23,7 @@ pull request, and you sign by leaving one comment:
 I have read the CLA Document and I hereby sign the CLA
 ```
 
-**The short version:** ServerBox is AGPLv3 and is also distributed through the
+ServerBox is AGPLv3 and is also distributed through the
 App Store, whose terms cannot all be satisfied alongside every AGPLv3
 condition. The agreement grants the maintainer the right to ship your work in
 those builds. You keep the copyright to what you wrote, and you can reuse it
@@ -49,9 +49,10 @@ Two things that trip the check up:
 2. `make deps` — fetch Dart/Flutter dependencies.
 3. `make run` — start the app. `make help` lists everything else.
 
-Working on the server-side monitor needs Node as well: `make monitor-dev` runs
-its backend (API on `:3770`) and its Svelte panel (vite on `:3000`) together.
-`monitor/CLAUDE.md` covers that side of the repository.
+Working on the server-side Monitor needs Node as well: `make monitor-dev` runs
+its backend (API on `:3770`) and its Svelte panel (Vite on `:3000`) together.
+See [monitor/README.md](monitor/README.md) for the service's installation and
+configuration instructions.
 
 ### Code generation
 

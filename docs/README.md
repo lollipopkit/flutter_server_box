@@ -1,8 +1,9 @@
 # ServerBox Documentation
 
-The documentation site, built with [Astro Starlight](https://starlight.astro.build).
-It is served under `/docs` of the project website; `scripts/build-cloudflare-pages.sh`
-builds both and copies this site's output into `website/dist/docs/`.
+The documentation site uses [Astro Starlight](https://starlight.astro.build)
+and is published at <https://serverbox.lolli.tech/docs/>. It is served under
+`/docs` of the project website; `scripts/build-cloudflare-pages.sh` builds both
+sites and copies this site's output into `website/dist/docs/`.
 
 ## Structure
 
@@ -33,7 +34,7 @@ Run from `docs/`:
 
 | Command | Action |
 | :------ | :----- |
-| `npm install` | Install dependencies |
+| `npm ci` | Install the locked dependencies |
 | `npm run dev` | Dev server at `localhost:4321/docs` |
 | `npm run check-locale-parity` | Check that English and Simplified Chinese pages mirror each other |
 | `npm run build` | Build to `./dist/` |
@@ -41,6 +42,6 @@ Run from `docs/`:
 
 ## Writing
 
-Documentation follows the code. When a page describes behaviour that has
-changed, correct the page in the same change rather than leaving it for later —
-and correct every locale, not only English.
+Documentation follows the code. When a page describes changed behaviour,
+update it in the same change and keep the English and Simplified Chinese pages
+in sync.

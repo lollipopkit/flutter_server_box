@@ -1,8 +1,6 @@
 <!--
-Thanks for the pull request.
-
-First time here? A bot will ask you to sign the CLA in a comment below — one
-comment and you are done. See CONTRIBUTING.md for what it means.
+First-time contributors: a bot will ask you to sign the CLA in a comment below.
+One comment is enough. See CONTRIBUTING.md for details.
 -->
 
 ## What this changes

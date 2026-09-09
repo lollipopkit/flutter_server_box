@@ -1,9 +1,11 @@
 ---
-title: 状态管理
-description: 使用 Riverpod 管理应用状态
+title: Riverpod 实践
+description: Server Box 中 Provider、异步状态和资源生命周期的实现方式
 ---
 
 Server Box 使用 Riverpod 和 `riverpod_generator` 管理 UI 状态、异步数据和服务依赖。
+
+系统层面的状态模型请参阅 [状态模型](/docs/zh/principles/state/)。
 
 ## Provider 结构
 

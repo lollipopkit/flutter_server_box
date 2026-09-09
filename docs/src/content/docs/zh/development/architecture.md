@@ -1,9 +1,11 @@
 ---
-title: 架构
-description: Server Box 的主要架构和设计决策
+title: 实现架构
+description: Server Box 的 Flutter、存储、连接和原生层实现细节
 ---
 
 Server Box 按职责分层组织代码，将 UI、状态协调、本地存储和外部连接分开。
+
+系统层面的概览请参阅[系统架构](/docs/zh/principles/architecture/)。
 
 ## 分层结构
 

@@ -1,9 +1,11 @@
 [English](README.md) | 简体中文
 
-## ServerBox 监测器
-这个应用程序运行在服务器端, 监测服务器状态.  
-这是 [ServerBox](https://github.com/lollipopkit/flutter_server_box) 项目的一部分.
-**正处于活跃开发中，你可能需要在更新后重新配置.**
+# ServerBox Monitor
+
+ServerBox Monitor 是
+[ServerBox](https://github.com/lollipopkit/flutter_server_box) 的服务端 agent，
+负责记录服务器指标、提供 Monitor HTTP API，并在需要时托管网页面板。
+不同版本之间可能会调整配置格式，升级后请重新检查 `config.example.toml`。
 
 ## 🖥️ 截图
 <table>
@@ -31,7 +33,7 @@
   </tr>
 </table>
 
-## 📖 使用方法
+## 安装和运行
 
 ```sh
 # systemd: 安装为 `systemctl --user` 服务, 以你自己的账号运行
@@ -76,18 +78,18 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 monitor 服务器不提供 SFTP 和端口转发：agent 没有任何端点可以把连接中继到 App
 指定的地址。需要这两项请以 SSH 方式添加该服务器。
 
-## 🔐 远程访问（可选，默认关闭）
+## 远程访问（可选，默认关闭）
 
-WebSocket 终端默认关闭，需要在 `config.toml` 中显式开启，且无法从面板打开——参见
-`config.example.toml` 里的 `[remote_access]`。
+WebSocket 终端默认关闭，需要在 `config.toml` 中显式开启，且无法从面板打开。
+相关配置见 `config.example.toml` 里的 `[remote_access]`。
 
 **`[remote_access.terminal] enabled`** 为面板增加网页内终端。代理作为 SSH 客户端连接
-`ssh_addr`，因此会话权限完全等同于浏览器登录的那个 SSH 账号——仅有面板密码不会
+`ssh_addr`，因此会话权限完全等同于浏览器登录的那个 SSH 账号。仅有面板密码不会
 获得 shell，sshd 自身的日志、`AllowUsers`、两步验证提示也都照常生效。会话在连接
 断开后会保留几分钟，手机切换网络后可以接回同一个 shell 而不是丢失它。
 
 **`full_access`** 去掉 SSH 登录这一步：任何登录了面板的人都能拿到
-shell，身份是代理进程所属的账号。不设置时跟随平台——Linux 默认开启，macOS 与
+shell，身份是代理进程所属的账号。未设置时跟随平台：Linux 默认开启，macOS 与
 Windows 默认关闭。**此时面板密码就等于本机的一个 shell**，这也是 `install.sh`
 默认安装 *user* systemd 服务的原因；如果你以 root 运行代理，请关掉它。SSH 登录
 方式始终并存。也可用 `SBM_FULL_ACCESS=0/1` 设置；面板的首次使用提示
@@ -110,5 +112,5 @@ Windows 默认关闭。**此时面板密码就等于本机的一个 shell**，�
 - `access_log` 记录谁在何时从何处打开了什么、结果如何，不记录任何凭据。
 - 登录失败按来源地址和用户名双重限流。
 
-## 🔖 许可证
+## 许可证
 `GPL v3. lollipopkit 2023`

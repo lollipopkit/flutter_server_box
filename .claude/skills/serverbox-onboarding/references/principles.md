@@ -13,11 +13,12 @@ Riverpod state, `lib/data/model/` and `lib/data/store/` are the data layer.
 Status parsing is not Dart at all — it is a Rust crate shared with the
 server-side agent, so both always agree about what a command's output means.
 
-## A server is reached one way, and features ask rather than test
+## A server can expose two transports, and features ask rather than test
 
-`ServerConnectCredential.fromSpi` picks by whether `Spi.monitorHttp` is set. A
-monitor server carries no `SshCredential`; the edit page enforces the same
-exclusivity with one switch.
+`ServerConnectCredential.fromSpi` selects the preferred transport. A server
+can carry both `SshCredential` and `monitorHttp`; a Monitor-only server has no
+SSH credentials, while a server with both keeps the capabilities from both
+connections.
 
 What a transport can do is asked through `ServerCapabilities`, so a feature
 needing a shell never has to know that "SSH" is the thing that provides one:
