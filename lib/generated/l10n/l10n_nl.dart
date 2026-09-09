@@ -2097,6 +2097,10 @@ class AppLocalizationsNl extends AppLocalizations {
       'Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
       'Voeg eerst een server toe en kom daarna terug om een benchmark uit te voeren.';
 }

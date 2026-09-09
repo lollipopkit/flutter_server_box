@@ -2094,6 +2094,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Ainda não há saída. Antes de exibir a primeira linha, o YABS verifica se google.com e icanhazip.com estão acessíveis. Em redes que bloqueiam qualquer um desses sites, isso pode levar vários minutos.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
       'Adicione um servidor primeiro e volte depois para executar o benchmark.';
 }

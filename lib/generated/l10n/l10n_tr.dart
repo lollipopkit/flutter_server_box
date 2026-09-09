@@ -2081,6 +2081,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
       'Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün.';
 }

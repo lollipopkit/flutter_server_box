@@ -617,5 +617,6 @@
   "benchmarkUpstream": "由 Yet Another Bench Script ({version}) 提供",
   "benchmarkPhaseStarting": "正在啟動",
   "benchmarkNoOutputYet": "暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。",
+  "tagsEmptyTip": "還沒有標籤。在編輯伺服器時新增標籤，它就會出現在這裡。",
   "benchmarkNoServers": "請先新增伺服器，然後返回執行效能測試。"
 }

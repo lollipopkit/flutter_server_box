@@ -1981,5 +1981,9 @@ class AppLocalizationsKo extends AppLocalizations {
       '아직 출력이 없습니다. YABS는 첫 줄을 출력하기 전에 google.com과 icanhazip.com에 연결할 수 있는지 확인합니다. 둘 중 하나를 차단하는 네트워크에서는 몇 분이 걸릴 수 있습니다.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers => '먼저 서버를 추가한 다음 돌아와 벤치마크를 실행하세요.';
 }

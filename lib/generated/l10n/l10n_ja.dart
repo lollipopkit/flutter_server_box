@@ -1974,5 +1974,9 @@ class AppLocalizationsJa extends AppLocalizations {
       'まだ出力はありません。YABS は最初の行を出力する前に、google.com と icanhazip.com に接続できるか確認します。いずれかのサイトがブロックされているネットワークでは、数分かかる場合があります。';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers => '先にサーバーを追加してから戻ると、ベンチマークを実行できます。';
 }

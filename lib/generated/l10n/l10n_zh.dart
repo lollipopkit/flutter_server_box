@@ -1925,6 +1925,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '暂时没有输出。YABS 在输出第一行前会先检查能否访问 google.com 和 icanhazip.com；如果网络屏蔽其中任一站点，可能需要等待数分钟。';
 
   @override
+  String get tagsEmptyTip => '还没有标签。在编辑服务器时添加标签，它就会出现在这里。';
+
+  @override
   String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
 }
 
@@ -3846,6 +3849,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get benchmarkNoOutputYet =>
       '暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。';
+
+  @override
+  String get tagsEmptyTip => '還沒有標籤。在編輯伺服器時新增標籤，它就會出現在這裡。';
 
   @override
   String get benchmarkNoServers => '請先新增伺服器，然後返回執行效能測試。';

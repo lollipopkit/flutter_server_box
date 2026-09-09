@@ -2107,6 +2107,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Вывода пока нет. Перед выводом первой строки YABS проверяет доступность google.com и icanhazip.com. В сетях, где заблокирован хотя бы один из этих сайтов, проверка может занять несколько минут.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
       'Сначала добавьте сервер, затем вернитесь, чтобы запустить бенчмарк.';
 }

@@ -2097,6 +2097,10 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hələ çıxış yoxdur. İlk sətri göstərməzdən əvvəl YABS google.com və icanhazip.com saytlarının əlçatanlığını yoxlayır. Bu saytlardan hər hansı birini bloklayan şəbəkələrdə bu, bir neçə dəqiqə çəkə bilər.';
 
   @override
+  String get tagsEmptyTip =>
+      'Hələ etiket yoxdur. Serveri redaktə edərkən əlavə et, burada görünəcək.';
+
+  @override
   String get benchmarkNoServers =>
       'Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt.';
 }

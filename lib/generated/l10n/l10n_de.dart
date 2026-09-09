@@ -2106,6 +2106,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Noch keine Ausgabe. Vor der ersten Zeile prüft YABS, ob google.com und icanhazip.com erreichbar sind. In Netzwerken, die eine der beiden Websites blockieren, kann dies mehrere Minuten dauern.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
       'Füge zuerst einen Server hinzu und kehre dann zurück, um ihn zu benchmarken.';
 }

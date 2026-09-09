@@ -2085,6 +2085,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server, and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
       'Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark.';
 }
