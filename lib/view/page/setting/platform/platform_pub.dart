@@ -73,30 +73,52 @@ abstract final class PlatformPublicSettings {
         title: Text(libL10n.switch_),
         subtitle: Text('${libL10n.fail}: $e', style: UIs.textGrey),
       ),
-      success: (can) {
-        can ??= false;
-        return ListTile(
-          title: Text(libL10n.switch_),
-          subtitle: can
-              ? null
-              : Text(libL10n.notExistFmt(libL10n.bioAuth), style: UIs.textGrey),
-          trailing: can
-              ? StoreSwitch(
-                  prop: Stores.setting.useBioAuth,
-                  callback: (val) async {
-                    if (val) {
-                      Stores.setting.useBioAuth.put(false);
-                      return;
-                    }
-                    // Only auth when turn off (val == false)
-                    final result = await LocalAuth.goWithResult();
-                    // If failed, turn on again
-                    if (result != AuthResult.success) {
-                      Stores.setting.useBioAuth.put(true);
-                    }
-                  },
-                )
-              : null,
+      success: (canAuth) {
+        // A `final` rather than `can ??= false`: both closures below capture
+        // it, and a captured variable is not promoted.
+        final can = canAuth ?? false;
+        final unavailable = can
+            ? null
+            : Text(libL10n.notExistFmt(libL10n.bioAuth), style: UIs.textGrey);
+        return ValBuilder(
+          listenable: Stores.setting.useBioAuth.listenable(),
+          builder: (on) {
+            // The switch used to be absent whenever the device could not
+            // authenticate, which is right until the setting is on anyway —
+            // and a backup restored from a phone puts it there. Then the one
+            // control that would turn it off was missing on exactly the
+            // devices that needed it, and the lock screen had nothing behind
+            // it to open (#1406). `home.dart` turns it off by itself now; this
+            // is what is left if that write ever fails.
+            if (!can && !on) {
+              return ListTile(
+                title: Text(libL10n.switch_),
+                subtitle: unavailable,
+              );
+            }
+            return ListTile(
+              title: Text(libL10n.switch_),
+              subtitle: unavailable,
+              trailing: StoreSwitch(
+                prop: Stores.setting.useBioAuth,
+                // A `validator` and not a `callback`, for the reason spelled
+                // out above `buildPrivacyBlur`: `StoreSwitch` writes the new
+                // value after the callback regardless, so the old code's
+                // "authenticate, and put the old value back if it failed" was
+                // overwritten a line later. Turning the lock *off* took no
+                // authentication at all — anyone holding an unlocked device
+                // could remove it, which is the one thing this check is for.
+                validator: (val) async {
+                  if (val) return can;
+                  // Except where nothing can be proven. Asking a machine with
+                  // no sensor to authenticate before it may stop asking for
+                  // authentication is the deadlock again, one screen along.
+                  if (!can) return true;
+                  return await LocalAuth.goWithResult() == AuthResult.success;
+                },
+              ),
+            );
+          },
         );
       },
     );
