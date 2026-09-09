@@ -3657,6 +3657,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a server first, then come back to benchmark it.'**
   String get benchmarkNoServers;
+
+  /// No description provided for @schemaTooNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This data is newer than the app'**
+  String get schemaTooNewTitle;
+
+  /// No description provided for @schemaTooNewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It was written by a newer version of ServerBox (storage v{stored}); this one reads up to v{supported}. Nothing has been changed.'**
+  String schemaTooNewBody(int stored, int supported);
+
+  /// No description provided for @schemaTooNewReinstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install that newer version again and everything opens as it was.'**
+  String get schemaTooNewReinstall;
+
+  /// No description provided for @schemaTooNewExportPlain.
+  ///
+  /// In en, this message translates to:
+  /// **'Export without a password'**
+  String get schemaTooNewExportPlain;
+
+  /// No description provided for @schemaTooNewPlainWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.'**
+  String get schemaTooNewPlainWarn;
+
+  /// No description provided for @schemaTooNewWipe.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all data'**
+  String get schemaTooNewWipe;
+
+  /// No description provided for @schemaTooNewWipeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.'**
+  String get schemaTooNewWipeConfirm;
+
+  /// No description provided for @schemaTooNewWipeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Data deleted. Open the app again to start fresh.'**
+  String get schemaTooNewWipeDone;
 }
 
 class _AppLocalizationsDelegate

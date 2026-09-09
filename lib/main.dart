@@ -34,10 +34,26 @@ import 'package:server_box/data/store/tables.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/hive/legacy_adapters.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
+import 'package:server_box/view/page/schema_too_new.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
-    await _initApp();
+    try {
+      await _initApp();
+    } on SchemaTooNewException catch (e) {
+      // The one failure with something to say. Every other way `_initApp` can
+      // throw goes to the zone handler, which logs it and leaves the launch
+      // with no window at all — right for a bug, wrong for this: the data is
+      // intact, the fix is to reinstall the newer build, and both of those
+      // were only ever written to a file on the device.
+      //
+      // Caught here rather than made non-fatal further down, because nothing
+      // after `_doDbMigrate` may run: the refusal is only worth anything while
+      // nothing has been written. See [SchemaTooNewException].
+      Loggers.app.severe('Storage is newer than this build', e);
+      runApp(SchemaTooNewApp(err: e));
+      return;
+    }
     runApp(ProviderScope(child: const MyApp()));
   });
 }

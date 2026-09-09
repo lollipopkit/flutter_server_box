@@ -1929,6 +1929,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkNoServers => '请先添加服务器，再回来进行性能测试。';
+
+  @override
+  String get schemaTooNewTitle => '数据比当前版本新';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return '这些数据由更新版本的 ServerBox 写入（存储版本 v$stored），当前版本最高支持 v$supported。数据未被改动。';
+  }
+
+  @override
+  String get schemaTooNewReinstall => '装回那个更新的版本，一切照旧。';
+
+  @override
+  String get schemaTooNewExportPlain => '导出未加密副本';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      '文件将以明文包含所有 SSH 私钥、服务器密码和 API key。拿到文件的人就拿到了这一切。';
+
+  @override
+  String get schemaTooNewWipe => '清空所有数据';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      '本设备上的服务器、密钥、代码片段和设置将全部删除，且无法撤销。此前在这里导出的备份将是仅存的副本。';
+
+  @override
+  String get schemaTooNewWipeDone => '数据已清空。请重新打开应用。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3855,4 +3883,32 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get benchmarkNoServers => '請先新增伺服器，然後返回執行效能測試。';
+
+  @override
+  String get schemaTooNewTitle => '資料比目前版本新';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return '這些資料由更新版本的 ServerBox 寫入（儲存版本 v$stored），目前版本最高支援 v$supported。資料未被更動。';
+  }
+
+  @override
+  String get schemaTooNewReinstall => '裝回那個更新的版本，一切照舊。';
+
+  @override
+  String get schemaTooNewExportPlain => '匯出未加密副本';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      '檔案將以明文包含所有 SSH 私鑰、伺服器密碼與 API key。拿到檔案的人就拿到了這一切。';
+
+  @override
+  String get schemaTooNewWipe => '清除所有資料';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      '本裝置上的伺服器、金鑰、程式碼片段與設定將全部刪除，且無法復原。先前在這裡匯出的備份將是僅存的副本。';
+
+  @override
+  String get schemaTooNewWipeDone => '資料已清除。請重新開啟 App。';
 }

@@ -618,5 +618,13 @@
   "benchmarkPhaseStarting": "正在啟動",
   "benchmarkNoOutputYet": "暫時沒有輸出。YABS 在輸出第一行前會先檢查能否連線至 google.com 和 icanhazip.com；如果網路封鎖其中任一網站，可能需要等待數分鐘。",
   "tagsEmptyTip": "還沒有標籤。在編輯伺服器時新增標籤，它就會出現在這裡。",
-  "benchmarkNoServers": "請先新增伺服器，然後返回執行效能測試。"
+  "benchmarkNoServers": "請先新增伺服器，然後返回執行效能測試。",
+  "schemaTooNewTitle": "資料比目前版本新",
+  "schemaTooNewBody": "這些資料由更新版本的 ServerBox 寫入（儲存版本 v{stored}），目前版本最高支援 v{supported}。資料未被更動。",
+  "schemaTooNewReinstall": "裝回那個更新的版本，一切照舊。",
+  "schemaTooNewExportPlain": "匯出未加密副本",
+  "schemaTooNewPlainWarn": "檔案將以明文包含所有 SSH 私鑰、伺服器密碼與 API key。拿到檔案的人就拿到了這一切。",
+  "schemaTooNewWipe": "清除所有資料",
+  "schemaTooNewWipeConfirm": "本裝置上的伺服器、金鑰、程式碼片段與設定將全部刪除，且無法復原。先前在這裡匯出的備份將是僅存的副本。",
+  "schemaTooNewWipeDone": "資料已清除。請重新開啟 App。"
 }

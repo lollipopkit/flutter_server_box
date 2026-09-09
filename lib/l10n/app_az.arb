@@ -820,5 +820,13 @@
   "benchmarkPhaseStarting": "Başladılır",
   "benchmarkNoOutputYet": "Hələ çıxış yoxdur. İlk sətri göstərməzdən əvvəl YABS google.com və icanhazip.com saytlarının əlçatanlığını yoxlayır. Bu saytlardan hər hansı birini bloklayan şəbəkələrdə bu, bir neçə dəqiqə çəkə bilər.",
   "tagsEmptyTip": "Hələ etiket yoxdur. Serveri redaktə edərkən əlavə et, burada görünəcək.",
-  "benchmarkNoServers": "Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt."
+  "benchmarkNoServers": "Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt.",
+  "schemaTooNewTitle": "Bu məlumat tətbiqdən yenidir",
+  "schemaTooNewBody": "Məlumat ServerBox-ın daha yeni versiyası tərəfindən yazılıb (yaddaş v{stored}); bu versiya ən çox v{supported} oxuyur. Heç nə dəyişdirilməyib.",
+  "schemaTooNewReinstall": "Həmin yeni versiyanı yenidən quraşdır, hər şey əvvəlki kimi açılacaq.",
+  "schemaTooNewExportPlain": "Parolsuz ixrac et",
+  "schemaTooNewPlainWarn": "Fayl bütün SSH məxfi açarlarını, server parollarını və API açarlarını şifrələnməmiş saxlayacaq. Faylı əldə edən hamısını əldə edir.",
+  "schemaTooNewWipe": "Bütün məlumatları sil",
+  "schemaTooNewWipeConfirm": "Bu cihazdakı bütün serverlər, açarlar, snippet-lər və parametrlər silinəcək və bunu geri qaytarmaq olmaz. Burada ixrac edilmiş ehtiyat nüsxə qalan yeganə surət olacaq.",
+  "schemaTooNewWipeDone": "Məlumatlar silindi. Tətbiqi yenidən aç."
 }

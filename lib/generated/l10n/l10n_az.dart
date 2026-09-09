@@ -2103,4 +2103,33 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get benchmarkNoServers =>
       'Əvvəlcə server əlavə et, sonra benchmark üçün buraya qayıt.';
+
+  @override
+  String get schemaTooNewTitle => 'Bu məlumat tətbiqdən yenidir';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Məlumat ServerBox-ın daha yeni versiyası tərəfindən yazılıb (yaddaş v$stored); bu versiya ən çox v$supported oxuyur. Heç nə dəyişdirilməyib.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Həmin yeni versiyanı yenidən quraşdır, hər şey əvvəlki kimi açılacaq.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Parolsuz ixrac et';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Fayl bütün SSH məxfi açarlarını, server parollarını və API açarlarını şifrələnməmiş saxlayacaq. Faylı əldə edən hamısını əldə edir.';
+
+  @override
+  String get schemaTooNewWipe => 'Bütün məlumatları sil';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Bu cihazdakı bütün serverlər, açarlar, snippet-lər və parametrlər silinəcək və bunu geri qaytarmaq olmaz. Burada ixrac edilmiş ehtiyat nüsxə qalan yeganə surət olacaq.';
+
+  @override
+  String get schemaTooNewWipeDone => 'Məlumatlar silindi. Tətbiqi yenidən aç.';
 }

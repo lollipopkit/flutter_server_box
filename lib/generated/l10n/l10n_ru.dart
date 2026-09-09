@@ -2113,4 +2113,34 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get benchmarkNoServers =>
       'Сначала добавьте сервер, затем вернитесь, чтобы запустить бенчмарк.';
+
+  @override
+  String get schemaTooNewTitle => 'This data is newer than the app';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'It was written by a newer version of ServerBox (storage v$stored); this one reads up to v$supported. Nothing has been changed.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Install that newer version again and everything opens as it was.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Export without a password';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'The file will hold every SSH private key, server password and API key in plain text. Whoever gets the file gets all of them.';
+
+  @override
+  String get schemaTooNewWipe => 'Delete all data';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Every server, key, snippet and setting on this device goes, and it cannot be undone. A backup exported here would be the only copy left.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Data deleted. Open the app again to start fresh.';
 }
