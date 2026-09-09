@@ -1,22 +1,39 @@
 {
   "id": "app.serverbox.scheduled",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "abi": 2,
   "name": "Scheduled",
   "description": "What runs on a timer: the user's crontab and systemd's timers.",
   "license": "MIT",
-  "l10n": ["en", "zh-CN"],
+  "l10n": [
+    "en",
+    "zh-CN"
+  ],
   "permissions": {
     "server.exec": true,
-    "ui.dialog": true
+    "ui.dialog": true,
+    "server.list": true
   },
   "contributes": {
-    "settings": { "id": "prefs", "label": "Scheduled", "icon": "clock" },
+    "settings": {
+      "id": "prefs",
+      "label": "Scheduled",
+      "icon": "clock"
+    },
+    "tab": {
+      "id": "fleet",
+      "label": "Scheduled",
+      "icon": "clock",
+      "default_on": false
+    },
     "page": {
       "id": "scheduled",
-      "label": "Scheduled", "icon": "clock",
+      "label": "Scheduled",
+      "icon": "clock",
       "default_on": true,
-      "needs": ["shell"]
+      "needs": [
+        "shell"
+      ]
     }
   }
 }

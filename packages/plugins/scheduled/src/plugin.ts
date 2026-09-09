@@ -34,8 +34,10 @@ import {
   tone,
   type HookEvent,
   type Plugin,
+  type PluginEvent,
   type ServerHandle,
   type Surface,
+  type SurfaceKind,
   type UiOutput,
 } from "@serverbox/plugin-api";
 import {
@@ -129,11 +131,150 @@ async function includeTimers(): Promise<boolean> {
 }
 
 export function open(surface: Surface): UiOutput {
+  surfaceKind = surface.kind;
   if (surface.kind === "settings") {
-    void drawSettings();
-    return { ui: padding(17, text("…")) };
+    // Drawn from the hook rather than started here. **A promise a plugin leaves
+    // running when a call returns does not progress**: the runtime drives an
+    // instance only while it is inside a call, so the store read this form
+    // needs would sit outstanding until something else happened to call in.
+    // The hook is the call that always follows `open`, so that is where the
+    // waiting belongs.
+    return { ui: padding(17, text(l10n("reading"))) };
   }
+  if (surface.kind === "tab") return { ui: fleetView() };
   return { ui: view() };
+}
+
+/**
+ * Which surface this instance is drawing.
+ *
+ * Set in `open`, which the host calls before the hook. Each surface is its own
+ * instance, so the tab's copy of this module is not the page's.
+ */
+let surfaceKind: SurfaceKind = "page";
+
+/** One machine's answer, as the tab has it so far. */
+type FleetRow = {
+  name: string;
+  server: ServerHandle;
+} & (
+  | { at: "reading" }
+  | { at: "ready"; jobs: number; timers: number; next: string | null }
+  | { at: "failed"; why: string }
+);
+
+let fleet: FleetRow[] = [];
+
+/**
+ * Every machine, one after another.
+ *
+ * **Serial, and drawn after each answer.** The alternative is a command on
+ * every server at once, which on a fleet of twenty is twenty connections
+ * opening because somebody looked at a tab. Patching as they land is what
+ * `sb.ui.patch` is for — see PLUGINS.md 4.4 — and it means a slow machine at
+ * the end costs a row that says so rather than an empty page.
+ */
+async function readFleet(servers: { server: ServerHandle; name: string }[]): Promise<void> {
+  fleet = servers.map((s) => ({ at: "reading", name: s.name, server: s.server }));
+  await patchFleet();
+  if (servers.length === 0) return;
+
+  const script = readCommand({ timers: await includeTimers() });
+  for (let i = 0; i < servers.length; i++) {
+    const at = servers[i]!;
+    try {
+      const r = await sb.server.exec({ server: at.server, script });
+      const parsed = parse(r.stdout);
+      const next = parsed.timers
+        .map((t) => t.next)
+        .filter((n) => n && n !== "-")
+        .sort()[0];
+      fleet[i] = {
+        at: "ready",
+        name: at.name,
+        server: at.server,
+        jobs: parsed.jobs.filter((j) => !j.disabled).length,
+        timers: parsed.timers.length,
+        next: next ?? null,
+      };
+    } catch (e) {
+      fleet[i] = { at: "failed", name: at.name, server: at.server, why: whyOf(e) };
+    }
+    await patchFleet();
+  }
+}
+
+async function patchFleet(): Promise<void> {
+  try {
+    await sb.ui.patch({ path: "", node: fleetView() });
+  } catch {
+    // Nobody is looking at the tab any more.
+  }
+}
+
+/**
+ * The tab: one row per machine, and what it is running on a timer.
+ *
+ * A tab is not bound to a server, which is why this one asks for `server.list`
+ * — the fleet is the whole subject. Tapping a row opens that server, which is
+ * the question a row raises.
+ */
+function fleetView() {
+  if (fleet.length === 0) {
+    return notice({
+      icon: "info",
+      title: l10n("fleetEmptyTitle"),
+      detail: l10n("fleetEmptyDetail"),
+    });
+  }
+
+  const ready = fleet.filter((r) => r.at === "ready");
+  const jobs = ready.reduce((n, r) => n + (r.at === "ready" ? r.jobs : 0), 0);
+  const timers = ready.reduce((n, r) => n + (r.at === "ready" ? r.timers : 0), 0);
+
+  return column([
+    summary({
+      label: l10n("fleetLabel"),
+      value: l10n("fleetCount", `${jobs}`, `${timers}`),
+      // Said while it is still going, because a total that grows without
+      // explanation reads as a number that cannot be trusted.
+      detail:
+        ready.length === fleet.length
+          ? l10n("fleetOn", `${fleet.length}`)
+          : l10n("fleetReading", `${ready.length}`, `${fleet.length}`),
+      actions: [onTap(tag(l10n("reload")), { m: "reloadFleet" })],
+    }),
+    divider(),
+    expanded(scroll([card(fleet.map(fleetRow))])),
+  ]);
+}
+
+function fleetRow(row: FleetRow) {
+  const subtitle =
+    row.at === "reading"
+      ? l10n("reading")
+      : row.at === "failed"
+        ? row.why
+        : row.jobs + row.timers === 0
+          ? l10n("fleetNothing")
+          : l10n("fleetRowCount", `${row.jobs}`, `${row.timers}`);
+  return key(
+    onTap(
+      tile({
+        icon: row.at === "failed" ? "warning" : "clock",
+        title: row.name,
+        subtitle,
+        // The next thing that will happen on that machine, which is the one
+        // field worth carrying up from the page.
+        trailing:
+          row.at === "ready" && row.next
+            ? tone(tag(row.next), "muted")
+            : undefined,
+      }),
+      { m: "openServer", server: row.server },
+    ),
+    `${row.server}`,
+  );
 }
 
 /// The settings surface, which reads the store and so draws after it answers.
@@ -156,6 +297,20 @@ async function drawSettings(): Promise<void> {
 }
 
 export async function onHook(event: HookEvent): Promise<void> {
+  // A settings surface collects nothing: its form is drawn from the store by
+  // `open`, and the hook is only what pumps that promise. Without this the
+  // "no server" branch below draws the page's error over the form — a settings
+  // surface is bound to no machine, so `event.servers` is empty by design.
+  if (surfaceKind === "settings") {
+    // Nothing to collect: the form is the store, and this is the call that gets
+    // to wait for it.
+    await drawSettings();
+    return;
+  }
+  if (surfaceKind === "tab") {
+    await readFleet(event.servers);
+    return;
+  }
   const first = event.servers[0];
   if (!first) {
     state = { at: "failed", why: l10n("errNoServer") };
@@ -166,8 +321,8 @@ export async function onHook(event: HookEvent): Promise<void> {
   await read();
 }
 
-export async function onEvent(msg: unknown, value?: unknown): Promise<UiOutput> {
-  const m = msg as { m: string; line?: number };
+export async function onEvent({ msg, value }: PluginEvent): Promise<UiOutput> {
+  const m = msg as { m: string; line?: number; server?: ServerHandle };
   if (m.m === "setTimers") {
     await sb.store.set({
       scope: "global",
@@ -175,6 +330,23 @@ export async function onEvent(msg: unknown, value?: unknown): Promise<UiOutput> 
       value: value === true ? "1" : "0",
     });
     await drawSettings();
+    return {};
+  }
+  if (m.m === "reloadFleet") {
+    await readFleet(fleet.map((r) => ({ server: r.server, name: r.name })));
+    return {};
+  }
+  if (m.m === "openServer" && m.server) {
+    try {
+      // No permission of its own: opening a server the user can already see is
+      // navigation, not disclosure.
+      await sb.nav.openServer({ server: m.server });
+    } catch {
+      // A handle the host will not resolve any more — the server was deleted
+      // while the tab was open, or this instance outlived its hook. Nothing to
+      // navigate to, and taking the whole surface down over a tap that went
+      // nowhere is worse than the tap doing nothing.
+    }
     return {};
   }
   if (m.m === "reload") {

@@ -113,6 +113,55 @@ void main() {
     expect((decoded['permissions'] as Map).keys, ['server.exec']);
   });
 
+  /// The card on the server detail page — the same reading, in a glance.
+  ///
+  /// Worth checking through the real host rather than only against the mock:
+  /// a card is opened with a different `kind` and hooked with a different
+  /// contribution id, and until this plugin grew one nothing had ever asked
+  /// the app for that pair.
+  group('the card', () {
+    test('it is declared where the app looks for it', () {
+      final decoded = jsonDecode(manifestJson) as Map<String, dynamic>;
+      final card = (decoded['contributes'] as Map)['card'] as Map;
+
+      expect(card['id'], 'summary');
+      // Not added to every server's page on install: the plugin already puts a
+      // button in the function bar, and one that takes two places by itself is
+      // one that decided for the user.
+      expect(card['default_on'], isFalse);
+    });
+
+    test('it summarises, and names only what is reachable', () async {
+      PluginPatch? seen;
+      service.bridge.onPatch['inst-ports'] = (p) => seen = p;
+
+      await service.call(
+        instance,
+        'open',
+        jsonEncode({'kind': 'card', 'id': 'summary'}),
+      );
+      await service.hook(
+        instance,
+        kind: 'enter',
+        contributionId: 'summary',
+        granted: const ['server.exec'],
+        serverIds: const ['srv-1'],
+      );
+
+      final drawn = texts(seen!.node);
+      // The scripted output has sshd on 0.0.0.0 and redis on loopback.
+      expect(drawn, contains('22'));
+      expect(drawn, isNot(contains('6379')));
+    });
+
+    /// The detail page hands every card the status refresh interval. This
+    /// plugin exports no `tick`, which is how it declines — `ss` on every
+    /// server every few seconds is work nobody asked for.
+    test('it has nothing for the page to tick', () {
+      expect(service.hasExport(instance, 'tick'), isFalse);
+    });
+  });
+
   test('open draws immediately and runs nothing', () async {
     final out = await service.call(
       instance,
@@ -199,7 +248,11 @@ void main() {
     final out = await service.call(
       instance,
       'onEvent',
-      jsonEncode({'m': 'exposed'}),
+      // The shape the app sends: one object, because the host calls every
+      // export with exactly one argument.
+      jsonEncode({
+        'msg': {'m': 'exposed'},
+      }),
     );
 
     expect(ops.calls, hasLength(before));

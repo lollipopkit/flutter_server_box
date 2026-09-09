@@ -45,5 +45,13 @@
   "fieldCommand": "命令",
   "save": "保存",
   "errNoCommand": "任务需要一条要执行的命令。",
-  "errBadSchedule": "“{0}” 不是 crontab 能执行的时间表。需要五个字段,或者 @daily 这一类。"
+  "errBadSchedule": "“{0}” 不是 crontab 能执行的时间表。需要五个字段,或者 @daily 这一类。",
+  "fleetLabel": "所有服务器",
+  "fleetCount": "{0} 个任务 · {1} 个 timer",
+  "fleetOn": "共 {0} 台",
+  "fleetReading": "已读 {0}/{1}",
+  "fleetRowCount": "{0} 个任务 · {1} 个 timer",
+  "fleetNothing": "没有定时任务",
+  "fleetEmptyTitle": "没有服务器",
+  "fleetEmptyDetail": "添加服务器后，这里会列出每台机器上按时间运行的东西。"
 }

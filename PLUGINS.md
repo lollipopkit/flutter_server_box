@@ -197,7 +197,7 @@ quickjs-ng 0.15.1。2026-09-06 在引擎里抽查了 19 项：
 |---|---|---|
 | `init(ctx)` | 实例创建后调用一次 | 初始化状态 |
 | `open(surface)` | 页面、卡片、tab 或设置区域首次显示 | `{ui}`，省略 `ui` 表示该区域没有内容 |
-| `onEvent(msg, value)` | 用户操作控件 | `{ui}` |
+| `onEvent({msg, value})` | 用户操作控件 | `{ui}` |
 | `tick()` | 显示区域可见时，按 App 的共享刷新间隔调用 | `{ui}`，省略表示界面没有变化 |
 | `onServerEvent(e)` | 服务器连接、断开或删除 | 处理生命周期变化 |
 | `validateConfig(cfg)` | 编辑器保存前 | `{errors: [...]}` |
@@ -338,7 +338,7 @@ FFI 那一层已经接好：`sbm_ffi` 用 `StreamSink` 把请求推给 Dart，Da
 | `k` | 稳定标识，映射为 Flutter 的 `ValueKey` |
 | `p` | 控件属性，例如文字、间距和颜色含义 |
 | `c` | 子节点 |
-| `on` | 用户事件对应的消息，由宿主原样传给 `onEvent`；输入控件另传当前 `value` |
+| `on` | 用户事件对应的消息，由宿主原样传给 `onEvent`；输入控件另传当前 `value`。**宿主对每个导出只传一个参数**，所以这两样是一个对象 `{msg, value}` —— 写成两个形参的插件，在 app 里每个控件都不响应，而对着 mock 用两个实参调用的测试全绿 |
 | `v` | 该子树的修订号，由 SDK 自动填写，作者不写。见 5.2 |
 | `s` | `1` 表示"这棵子树你已经有了"，同样由 SDK 填写。见下 |
 
@@ -732,6 +732,7 @@ manifest 加 `runs_in: ["app", "agent"]`，默认 `["app"]`。声明了 `agent` 
 | 5 | Flutter 渲染器、插件卡片、存储、备份、安装管理和开发目录 | 进行中。**存储**（四张表 m022 + 三个 store）、**渲染器**（22 种控件、5.2 的三项、l10n、错误节点）、**surface**（`PluginSurfaceView` 驱动 `init`/`open`/`tick`/`onEvent`/`patch`，`AppPluginHostOps` 接 14 个接口）、**安装管理**（`.sbp` 读取与校验、装/卸/开关、`contributes` 接进 feature registry）、**备份**（`plugins` 字段）均已完成，共 81 个测试。**详情页卡片**（`PluginStatusCard`，`contributes.status` 画在服务器详情页上）均已完成，共 84 个测试。**`contributes.card`**（详情页上的 UI 卡片，走 `PluginSurfaceView`）、**安装页**（`PluginsPage`：列出已装插件、装/卸/开关、权限对话框）、**`contributes.page`**（功能栏按钮打开整页，`needs` 按 `ServerCapabilities` 过滤；功能栏改为按 id 分发，内置项和插件项走同一条路径）、**`contributes.settings`**（设置菜单里插件自己的页，有插件贡献时 `app.plugins` 才变成分支）、**开发目录**（`SettingStore.pluginDevDirs` 记路径，每次 refresh 直接从开发者目录读，不拷贝；卸载只删记录不动文件）、**`contributes.tab`**（m023 把 `homeTabs` 从 `List<AppTab>` 放宽成 id；`HomeTab` 解析 id 成内置或插件 tab，首页、macOS 菜单栏和标签排序页都改成按 id 走）均已完成。四个入口面齐了，剩 5.5 的 golden 截图 |
 | ~~6~~ | ~~在 App 中接通 BMC 插件~~ | **不做**，2026-09-08 决定。理由见 4.9；`packages/redfish` 和 BMC 的 Dart 实现都保留 |
 | 7 | 在线仓库、第三方仓库和网站插件页 | **已完成**（8.1）：`plugin_repo` + 商店页 + 按 ABI 选版本 + sha256 校验 + 多源合并；打包和 index 生成在 `packages/plugin-tools`；官方仓库 `lollipopkit/serverbox-plugins` 已发布三个插件，`officialUrls` 已填并按 URL 种一次；网站 `/plugins/` 页从 manifest 构建期生成。开放第三方 UI 插件的前提原来是 BMC，现在改成：`card`/`tab`/`settings` 三个面各要有一个真插件用过（三个现有的都只用了 `page`） |
+| 5.5 | 四个入口面各有真插件用过 | **已完成**。`listening-ports` 的 card、`disk-usage` 的 settings 表单、`scheduled` 的全机 tab。抓到三个只有真插件才碰得到的问题:`onEvent` 的调用约定(宿主只传一个参数,插件全写成两个形参,于是 app 里每个控件都不响应,而 mock 测试全绿)、fleet hook 发的 handle 运行时不认、以及 `open` 里起的 promise 在调用返回后不会被推进(settings 表单因此画不出来)。剩 golden 截图 |
 | 8 | agent 也跑插件 | **已完成**。**宿主子集**、**monitor 侧**、**App 侧**：`HostProfile{App,Agent}`、`HostFn::available_in`、manifest 的 `runs_in`（默认 `["app"]`，声明 `agent` 同时带界面贡献会在解析期被拒）。agent 上没有 `sb.ui`/`sb.nav`/`sb.clipboard`/`sb.server.list`/`sb.server.exec`，装成和未授权函数同一种抛异常替身，只是理由不同（`Refusal::Unavailable`）。**monitor 侧**：`[plugins]` 默认关、按 id 点名、权限由运维写在文件里（和 manifest 求的取交集）；在 extended 周期上跑，结果进 `/metrics` 的 `plugin_status` 并带 carry-forward。**App 侧**：`/metrics` 的 `plugin_status` 进 `ServerStatus.agentPlugins`，`PluginStatusCard` 有它就画它、什么也不跑。线格式由两边各一个测试盯同一段字面量(`sbm_plugin::status::wire` 和 `test/plugin_agent_status_test.dart`)。**宿主接口**：`sb.store`（`plugin_kv` 表，按 plugin_id 和 scope 分隔）、`sb.http.fetch`（证书 pin 规则与 App 一致，rustls 的 `ServerCertVerifier`）、`sb.diag.crumb` 都已实现，bridge 自带一个 runtime——agent 跑在 `#[ntex::main]` 的 current-thread runtime 上，把答案 spawn 回调用者那条线程会死锁 |
 
 ### 三个真插件验出来的

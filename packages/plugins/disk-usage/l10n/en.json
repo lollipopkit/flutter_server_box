@@ -36,5 +36,14 @@
   "sortSize": "Largest first",
   "sortName": "By name",
   "unreadable": "{0} directories could not be read, so the total is short",
-  "unreadableOne": "1 directory could not be read, so the total is short"
+  "unreadableOne": "1 directory could not be read, so the total is short",
+  "prefsSkip": "Leave out",
+  "prefsSkipHint": "Directory names to hide from a listing, separated by spaces. It hides rows; it does not make the scan faster, because du has no portable way to skip a directory.",
+  "prefsHideBelow": "Hide below",
+  "prefsHideBelowHint": "Leave out anything smaller than this many MiB. Empty or 0 shows everything.",
+  "prefsErrPath": "That is not an absolute path.",
+  "prefsErrNumber": "A whole number of MiB, or empty.",
+  "prefsReset": "Reset to defaults",
+  "hiddenByFilter": "{0} hidden by your settings",
+  "reading": "Reading…"
 }

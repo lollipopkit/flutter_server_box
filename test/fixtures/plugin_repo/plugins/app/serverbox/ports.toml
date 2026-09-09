@@ -4,8 +4,8 @@ description = "What is listening on a server, and which of it is reachable from 
 license = "MIT"
 
 [[version]]
-version = "1.0.1"
+version = "1.1.0"
 abi = 2
-url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.ports-1.0.1/app.serverbox.ports-1.0.1.sbp"
-sha256 = "1c5c6ea4d643b2b06ead76e04b2e675512942e90820d0670427156a0427cfb3b"
-size = 14023
+url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.ports-1.1.0/app.serverbox.ports-1.1.0.sbp"
+sha256 = "ad02720915534585ae07f09bb09cc74c31997057a8f5614c42789a1d70ed4572"
+size = 15061

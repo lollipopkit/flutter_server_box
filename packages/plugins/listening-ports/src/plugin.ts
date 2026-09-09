@@ -32,8 +32,10 @@ import {
   tone,
   type HookEvent,
   type Plugin,
+  type PluginEvent,
   type ServerHandle,
   type Surface,
+  type SurfaceKind,
   type UiOutput,
 } from "@serverbox/plugin-api";
 import { COMMAND, parse, type Format, type Listener } from "./parse.ts";
@@ -47,6 +49,15 @@ let state: State = { at: "loading" };
 
 /** The server this page is about, from the hook. */
 let server: ServerHandle | null = null;
+
+/**
+ * Which surface this instance is drawing.
+ *
+ * One module, two views of the same reading: the page, and a card on the
+ * server's detail page. Set in `open`, which the host calls before the hook —
+ * and each surface is its own instance, so this is not shared with the page's.
+ */
+let surfaceKind: SurfaceKind = "page";
 
 /** Whether only the ones reachable from outside are shown. */
 let exposedOnly = false;
@@ -141,9 +152,15 @@ async function exposedByDefault(): Promise<boolean> {
 }
 
 export function open(surface: Surface): UiOutput {
+  surfaceKind = surface.kind;
   if (surface.kind === "settings") {
-    void drawSettings();
-    return { ui: padding(17, text("…")) };
+    // Drawn from the hook rather than started here. **A promise a plugin leaves
+    // running when a call returns does not progress**: the runtime drives an
+    // instance only while it is inside a call, so the store read this form
+    // needs would sit outstanding until something else happened to call in.
+    // The hook is the call that always follows `open`, so that is where the
+    // waiting belongs.
+    return { ui: padding(17, text(l10n("reading"))) };
   }
   // Deliberately not collecting here. `open` holds the surface until it
   // answers, and this is a command on a machine that may be slow or asleep.
@@ -170,6 +187,16 @@ async function drawSettings(): Promise<void> {
 }
 
 export async function onHook(event: HookEvent): Promise<void> {
+  // A settings surface collects nothing: its form is drawn from the store by
+  // `open`, and the hook is only what pumps that promise. Without this the
+  // "no server" branch below draws the page's error over the form — a settings
+  // surface is bound to no machine, so `event.servers` is empty by design.
+  if (surfaceKind === "settings") {
+    // Nothing to collect: the form is the store, and this is the call that gets
+    // to wait for it.
+    await drawSettings();
+    return;
+  }
   const first = event.servers[0];
   if (!first) {
     state = { at: "failed", why: l10n("errNoServer") };
@@ -183,7 +210,7 @@ export async function onHook(event: HookEvent): Promise<void> {
   await collect();
 }
 
-export async function onEvent(msg: unknown, value?: unknown): Promise<UiOutput> {
+export async function onEvent({ msg, value }: PluginEvent): Promise<UiOutput> {
   const m = msg as { m: string };
   if (m.m === "setExposedDefault") {
     await sb.store.set({
@@ -242,6 +269,7 @@ async function collect(): Promise<void> {
 }
 
 function view() {
+  if (surfaceKind === "card") return cardView();
   if (state.at === "loading") {
     return padding(17, text(l10n("reading")));
   }
@@ -325,6 +353,58 @@ function view() {
     ),
   ]);
 }
+
+/**
+ * The card on the server's detail page: the same reading, in a glance.
+ *
+ * **It collects once, on the way in, and never ticks.** The detail page hands
+ * every card the status refresh interval, and this plugin exports no `tick`
+ * on purpose — `ss` on every server every few seconds is a plugin doing work
+ * nobody asked for, and what is listening does not change while you watch.
+ *
+ * No filter, no search, no sort: the card answers "is anything reachable from
+ * outside", and the page is where the rest is. Anything it drew that the page
+ * also draws would be a second place to keep in step.
+ */
+function cardView() {
+  if (state.at === "loading") return padding(13, tone(text(l10n("reading")), "muted"));
+  if (state.at === "failed") {
+    // Compact on purpose: a card is one of several on that page, and a failure
+    // here is not the page's subject. The full error, with its retry, is on the
+    // plugin's own page.
+    return padding(13, tone(text(state.why), "muted"));
+  }
+
+  const exposed = state.listeners.filter((l) => l.exposed);
+  const n = state.listeners.length;
+  return column([
+    summary({
+      label: l10n("summaryLabel"),
+      value: n === 1 ? l10n("port") : l10n("ports", `${n}`),
+      detail:
+        exposed.length === 0
+          ? l10n("exposedNone")
+          : l10n("exposedCount", `${exposed.length}`),
+    }),
+    // Only the ones reachable from outside, and only a few: the card exists to
+    // put those in front of somebody who was not looking for them. A card that
+    // listed every port would be the page, in the wrong place.
+    ...(exposed.length === 0
+      ? []
+      : [divider(), ...exposed.slice(0, CARD_ROWS).map(rowFor)]),
+    ...(exposed.length > CARD_ROWS
+      ? [
+          padding(
+            9,
+            tone(text(l10n("cardMore", `${exposed.length - CARD_ROWS}`)), "muted"),
+          ),
+        ]
+      : []),
+  ]);
+}
+
+/// How many exposed listeners the card shows before it says "and N more".
+const CARD_ROWS = 3;
 
 function rowFor(l: Listener) {
   // Keyed by what makes a listener itself, so the renderer keeps a row's

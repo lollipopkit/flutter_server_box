@@ -45,5 +45,13 @@
   "fieldCommand": "Command",
   "save": "Save",
   "errNoCommand": "A job needs a command to run.",
-  "errBadSchedule": "\"{0}\" is not a schedule crontab will run. Five fields, or @daily and its neighbours."
+  "errBadSchedule": "\"{0}\" is not a schedule crontab will run. Five fields, or @daily and its neighbours.",
+  "fleetLabel": "Across your servers",
+  "fleetCount": "{0} jobs · {1} timers",
+  "fleetOn": "on {0} servers",
+  "fleetReading": "read {0} of {1}",
+  "fleetRowCount": "{0} jobs · {1} timers",
+  "fleetNothing": "nothing scheduled",
+  "fleetEmptyTitle": "No servers",
+  "fleetEmptyDetail": "Add a server and this lists what runs on a timer on each of them."
 }

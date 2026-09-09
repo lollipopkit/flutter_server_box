@@ -46,9 +46,18 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    SqliteDb.instance.execute(
-      "INSERT INTO server (id, name, ssh_ip) VALUES ('srv-1', 'one', '10.0.0.1');",
-    );
+    // Three, because the fleet tab is about more than one — and a handle is
+    // issued per server row, so a hook naming one that is not there hands the
+    // plugin nothing.
+    for (final (id, name) in [
+      ('srv-1', 'one'),
+      ('srv-2', 'two'),
+      ('srv-3', 'three'),
+    ]) {
+      SqliteDb.instance.execute(
+        "INSERT INTO server (id, name, ssh_ip) VALUES ('$id', '$name', '10.0.0.1');",
+      );
+    }
     patches = [];
     ops = FakePluginHostOps()
       ..execResult = (code: 0, stdout: _read, stderr: '');
@@ -104,6 +113,80 @@ void main() {
     serverIds: const ['srv-1'],
   );
 
+  /// The tab, which is the first surface here that is about the whole fleet.
+  ///
+  /// Two things are the app's rather than the plugin's: how many machines a
+  /// hook carries, and that the number is what the grant says — a plugin cannot
+  /// widen it by asking, and `serverIds` having room for the list is not a
+  /// reason to hand it over.
+  group('the fleet tab', () {
+    Future<void> enterFleet({
+      List<String> granted = const ['server.exec', 'ui.dialog', 'server.list'],
+      List<String> servers = const ['srv-1', 'srv-2', 'srv-3'],
+    }) async {
+      await service.call(
+        instance,
+        'open',
+        jsonEncode({'kind': 'tab', 'id': 'fleet'}),
+      );
+      await service.hook(
+        instance,
+        kind: 'enter',
+        contributionId: 'fleet',
+        granted: granted,
+        serverIds: servers,
+      );
+    }
+
+    test('with the grant it reads every machine, one after another', () async {
+      await enterFleet();
+
+      // Three commands, and one per server rather than three at one.
+      expect(ops.calls, hasLength(3));
+      expect(ops.calls[0], startsWith('exec:srv-1:'));
+      expect(ops.calls[2], startsWith('exec:srv-3:'));
+      // Drawn once before anything was asked, then after each answer, so a
+      // slow machine at the end costs a row rather than an empty page.
+      expect(patches, hasLength(4));
+      // The key carries its arguments after a separator, so this is the key
+      // rather than the rendered string.
+      expect(
+        words(patches.last.node).any((w) => w.startsWith('l10n.fleetCount')),
+        isTrue,
+      );
+    });
+
+    /// Without `server.list` the hook carries one machine. The plugin is not
+    /// told to behave differently — the host simply does not hand over the
+    /// rest, which is the check that makes the permission mean anything.
+    test('without the grant it reaches one machine', () async {
+      await enterFleet(granted: const ['server.exec', 'ui.dialog']);
+
+      expect(ops.calls, hasLength(1));
+      expect(ops.calls.single, startsWith('exec:srv-1:'));
+    });
+
+    test('a row opens that server', () async {
+      await enterFleet(servers: const ['srv-1']);
+      ops.calls.clear();
+
+      // The handle the plugin was given, asked of the bridge — a plugin never
+      // sees a server id, and one made up is refused.
+      final handle = service.bridge.handles.issue('inst-sched', 'srv-1');
+      await service.call(
+        instance,
+        'onEvent',
+        jsonEncode({
+          'msg': {'m': 'openServer', 'server': handle},
+        }),
+      );
+
+      // The handle the plugin was given, resolved back to a server id by the
+      // bridge — a plugin never sees one and cannot make one up.
+      expect(ops.calls, ['open:srv-1']);
+    });
+  });
+
   test('it reads cron and the timers in one command', () async {
     await enter();
 
@@ -131,7 +214,9 @@ void main() {
     await service.call(
       instance,
       'onEvent',
-      jsonEncode({'m': 'toggle', 'line': 1}),
+      jsonEncode({
+        'msg': {'m': 'toggle', 'line': 1},
+      }),
     );
 
     expect(ops.calls.where((c) => c.startsWith('prompt:')), hasLength(1));
@@ -147,7 +232,9 @@ void main() {
     await service.call(
       instance,
       'onEvent',
-      jsonEncode({'m': 'toggle', 'line': 1}),
+      jsonEncode({
+        'msg': {'m': 'toggle', 'line': 1},
+      }),
     );
 
     final write = ops.calls.firstWhere((c) => c.contains('crontab -'));
@@ -169,7 +256,9 @@ void main() {
     await service.call(
       instance,
       'onEvent',
-      jsonEncode({'m': 'toggle', 'line': 1}),
+      jsonEncode({
+        'msg': {'m': 'toggle', 'line': 1},
+      }),
     );
 
     // The write, then a read — never a second write against a fingerprint

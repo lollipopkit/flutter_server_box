@@ -156,7 +156,7 @@ describe("the controls", () => {
     const plugin = await load();
 
     await plugin.onHook(enter());
-    await plugin.onEvent({ m: "reload" });
+    await plugin.onEvent({ msg: { m: "reload" } });
 
     // patch(rows) · exec · patch("Reading…") · exec · patch(rows): the middle
     // patch is the point — on a machine that takes seconds the button has to
@@ -181,7 +181,7 @@ describe("the controls", () => {
 
     await plugin.onHook(enter());
     const before = host.callsTo("server.exec").length;
-    const out = await plugin.onEvent({ m: "exposed" });
+    const out = await plugin.onEvent({ msg: { m: "exposed" } });
 
     expect(host.callsTo("server.exec")).toHaveLength(before);
     const drawn = texts(out.ui!);
@@ -242,11 +242,11 @@ ${Array.from(
 
     // "800" finds 8000..8009 and not 8010 or 8011 — which is what somebody
     // typing three digits means.
-    const byPort = texts((await plugin.onEvent({ m: "search" }, "800")).ui!);
+    const byPort = texts((await plugin.onEvent({ msg: { m: "search" }, value: "800" })).ui!);
     expect(byPort).toContain("8000");
     expect(byPort).not.toContain("8010");
 
-    const byProcess = texts((await plugin.onEvent({ m: "search" }, "svc7")).ui!);
+    const byProcess = texts((await plugin.onEvent({ msg: { m: "search" }, value: "svc7" })).ui!);
     expect(byProcess).toContain("8007");
     expect(byProcess).not.toContain("8006");
   });
@@ -257,7 +257,7 @@ ${Array.from(
     const plugin = await load();
     await plugin.onHook(enter());
 
-    const out = await plugin.onEvent({ m: "search" }, "nothing-like-this");
+    const out = await plugin.onEvent({ msg: { m: "search" }, value: "nothing-like-this" });
 
     const keys = l10nKeys(out.ui!);
     expect(keys).toContain("l10n.emptySearchTitle");
@@ -270,10 +270,75 @@ ${Array.from(
     const plugin = await load();
     await plugin.onHook(enter());
 
-    const out = await plugin.onEvent({ m: "sort" });
+    const out = await plugin.onEvent({ msg: { m: "sort" } });
 
     expect(l10nKeys(out.ui!)).toContain("l10n.sortProcess");
     expect(host.value("global", "sortBy")).toBe("process");
+  });
+});
+
+describe("the card", () => {
+  /// The same reading, in a glance, on the server's detail page. It exists to
+  /// put a port reachable from outside in front of somebody who was not looking
+  /// for one — so what it shows is the count and those, and nothing else.
+  test("it summarises and names only what is exposed", async () => {
+    const host = new MockHost().exec(COMMAND, { stdout: SS });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "card", id: "summary" });
+    await plugin.onHook({ ...enter(), contribution: "summary" });
+
+    const shown = texts(lastPatch(host));
+    // Two listeners, one of them on 0.0.0.0.
+    expect(shown).toContain("22");
+    expect(shown).not.toContain("6379");
+    expect(l10nKeys(lastPatch(host))).toContain("l10n.exposedCount");
+  });
+
+  /// A card is one of several on that page, and every one of them ticking would
+  /// be `ss` on every server every few seconds. The detail page hands cards an
+  /// interval; this plugin exports no `tick`, which is what declines it.
+  test("it collects once and does not tick", async () => {
+    const host = new MockHost().exec(COMMAND, { stdout: SS });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "card", id: "summary" });
+    await plugin.onHook({ ...enter(), contribution: "summary" });
+
+    expect(host.called().filter((c) => c === "server.exec")).toHaveLength(1);
+    expect(plugin.tick).toBeUndefined();
+  });
+
+  test("nothing reachable says so instead of listing a lock", async () => {
+    const local = `fmt=ss
+tcp   LISTEN 0 511  127.0.0.1:6379 0.0.0.0:* users:(("redis-server",pid=9,fd=6))
+`;
+    const host = new MockHost().exec(COMMAND, { stdout: local });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "card", id: "summary" });
+    await plugin.onHook({ ...enter(), contribution: "summary" });
+
+    expect(l10nKeys(lastPatch(host))).toContain("l10n.exposedNone");
+    expect(texts(lastPatch(host))).not.toContain("6379");
+  });
+
+  /// Compact rather than a notice with a retry: a failure on a card is not the
+  /// detail page's subject, and the plugin's own page is where the retry is.
+  test("a failure is one muted line", async () => {
+    const host = new MockHost();
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "card", id: "summary" });
+    await plugin.onHook({ ...enter(), contribution: "summary" });
+
+    const keys = l10nKeys(lastPatch(host));
+    expect(keys.some((k) => k.startsWith("l10n.err"))).toBeTrue();
+    expect(keys).not.toContain("l10n.retry");
   });
 });
 

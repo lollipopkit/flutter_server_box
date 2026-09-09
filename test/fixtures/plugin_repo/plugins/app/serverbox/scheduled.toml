@@ -4,8 +4,8 @@ description = "What runs on a timer: the user's crontab and systemd's timers."
 license = "MIT"
 
 [[version]]
-version = "1.0.1"
+version = "1.1.0"
 abi = 2
-url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.scheduled-1.0.1/app.serverbox.scheduled-1.0.1.sbp"
-sha256 = "5811ee0dddc8c4bf5e171e957f438a6c6f30b6cf05d890bb8b470ce52a4dd8d9"
-size = 19170
+url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.scheduled-1.1.0/app.serverbox.scheduled-1.1.0.sbp"
+sha256 = "63145c0253b307182fc542b6363abf6bd8e0e1a73f498ae87f78fdb2f71d59a6"
+size = 22357

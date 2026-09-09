@@ -34,5 +34,6 @@
   "searchHint": "Search a port, a process or an address",
   "clear": "Clear",
   "emptySearchTitle": "Nothing matches \"{0}\"",
-  "emptySearchDetail": "The search looks at the port, the process name and the bound address."
+  "emptySearchDetail": "The search looks at the port, the process name and the bound address.",
+  "cardMore": "and {0} more"
 }

@@ -34,5 +34,6 @@
   "searchHint": "搜索端口、进程或地址",
   "clear": "清除",
   "emptySearchTitle": "没有匹配 “{0}” 的结果",
-  "emptySearchDetail": "搜索会匹配端口、进程名和绑定地址。"
+  "emptySearchDetail": "搜索会匹配端口、进程名和绑定地址。",
+  "cardMore": "另有 {0} 个"
 }

@@ -63,6 +63,91 @@ function lastDrawn(host: MockHost): Node {
   return patches[patches.length - 1]!.node;
 }
 
+describe("the fleet tab", () => {
+  const fleetEnter = (
+    ...servers: [string, string][]
+  ): HookEvent => ({
+    kind: "enter",
+    contribution: "fleet",
+    servers: servers.map(([server, name]) => ({
+      server: server as ServerHandle,
+      name,
+    })),
+  });
+
+  /// A tab is not bound to a server, which is why this one asks for
+  /// `server.list` — the fleet is its whole subject.
+  test("it reads every machine and totals them", async () => {
+    const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "tab", id: "fleet" });
+    await plugin.onHook(fleetEnter(["h-1", "web"], ["h-2", "db"]));
+
+    const shown = texts(lastDrawn(host));
+    expect(shown).toContain("web");
+    expect(shown).toContain("db");
+    // One enabled job and one timer per machine, twice.
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.fleetCount");
+    expect(host.called().filter((c) => c === "server.exec")).toHaveLength(2);
+  });
+
+  /// **Serial, and drawn after each answer.** Twenty machines must not mean
+  /// twenty connections opening because somebody looked at a tab, and a slow
+  /// one at the end should cost a row that says so rather than a blank page.
+  test("it draws as answers land rather than at the end", async () => {
+    const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "tab", id: "fleet" });
+    await plugin.onHook(fleetEnter(["h-1", "web"], ["h-2", "db"]));
+
+    // One before anything was asked, then one per machine.
+    expect(host.callsTo("ui.patch")).toHaveLength(3);
+  });
+
+  test("a machine that will not answer is a row, not the page", async () => {
+    // Only `h-1` is scripted; the exec for `h-2` rejects.
+    const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "tab", id: "fleet" });
+    await plugin.onHook(fleetEnter(["h-1", "web"], ["h-2", "db"]));
+
+    // Both rows are there; the totals only count what answered.
+    const shown = texts(lastDrawn(host));
+    expect(shown).toContain("web");
+    expect(shown).toContain("db");
+  });
+
+  test("tapping a row opens that server", async () => {
+    const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "tab", id: "fleet" });
+    await plugin.onHook(fleetEnter(["h-1", "web"]));
+    await plugin.onEvent({ msg: { m: "openServer", server: "h-1" }, value: undefined });
+
+    expect(host.called()).toContain("nav.openServer");
+  });
+
+  test("no servers is a state with something to say", async () => {
+    const host = new MockHost();
+    restore = host.install();
+    const plugin = await load();
+
+    const out = plugin.open({ kind: "tab", id: "fleet" });
+    await plugin.onHook(fleetEnter());
+
+    expect(l10nKeys(out.ui!)).toContain("l10n.fleetEmptyTitle");
+    expect(host.called().filter((c) => c === "server.exec")).toHaveLength(0);
+  });
+});
+
 /** The write this plugin would send to turn line 1 off. */
 const WRITE_OFF = writeCommand(toggled(LINES, 1), SUM);
 
@@ -99,7 +184,7 @@ describe("turning a job off", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "toggle", line: 1 });
+    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
 
     expect(host.callsTo("ui.prompt")).toHaveLength(1);
     expect(host.callsTo("ui.prompt")[0]!.spec.message).toContain(
@@ -118,7 +203,7 @@ describe("turning a job off", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "toggle", line: 1 });
+    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
 
     const scripts = host.callsTo("server.exec").map((c) => c.req.script);
     expect(scripts).toHaveLength(2);
@@ -139,7 +224,7 @@ describe("turning a job off", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "toggle", line: 1 });
+    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
 
     const scripts = host.callsTo("server.exec").map((c) => c.req.script);
     // read · write · read. Never a second write against a fingerprint that is
@@ -161,7 +246,7 @@ describe("turning a job off", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "toggle", line: 1 });
+    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
 
     const drawn = texts(lastDrawn(host));
     expect(drawn.some((t) => t.includes("no crontab for you"))).toBe(true);
@@ -176,7 +261,7 @@ describe("turning a job off", () => {
 
     await plugin.onHook(enter);
     // `MAILTO=root` is line 0 and is not a job.
-    await plugin.onEvent({ m: "toggle", line: 0 });
+    await plugin.onEvent({ msg: { m: "toggle", line: 0 } });
 
     expect(host.callsTo("ui.prompt")).toHaveLength(0);
     expect(host.callsTo("server.exec")).toHaveLength(1);
@@ -199,7 +284,7 @@ describe("adding and editing", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "add" });
+    await plugin.onEvent({ msg: { m: "add" } });
 
     expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
       READ_COMMAND,
@@ -221,7 +306,7 @@ describe("adding and editing", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "edit", line: 1 });
+    await plugin.onEvent({ msg: { m: "edit", line: 1 } });
 
     expect(host.callsTo("server.exec")[1]!.req.script).toBe(write);
   });
@@ -236,7 +321,7 @@ describe("adding and editing", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "add" });
+    await plugin.onEvent({ msg: { m: "add" } });
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
     expect(l10nKeys(lastDrawn(host))).toContain("l10n.errBadSchedule");
@@ -250,7 +335,7 @@ describe("adding and editing", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "add" });
+    await plugin.onEvent({ msg: { m: "add" } });
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
     expect(l10nKeys(lastDrawn(host))).toContain("l10n.errNoCommand");
@@ -262,7 +347,7 @@ describe("adding and editing", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "add" });
+    await plugin.onEvent({ msg: { m: "add" } });
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
   });
@@ -281,10 +366,10 @@ describe("removing jobs", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    await plugin.onEvent({ m: "pick", line: 1 });
-    await plugin.onEvent({ m: "pick", line: 2 });
-    await plugin.onEvent({ m: "remove" });
+    await plugin.onEvent({ msg: { m: "select" } });
+    await plugin.onEvent({ msg: { m: "pick", line: 1 } });
+    await plugin.onEvent({ msg: { m: "pick", line: 2 } });
+    await plugin.onEvent({ msg: { m: "remove" } });
 
     expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
       READ_COMMAND,
@@ -300,9 +385,9 @@ describe("removing jobs", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    await plugin.onEvent({ m: "pick", line: 1 });
-    await plugin.onEvent({ m: "remove" });
+    await plugin.onEvent({ msg: { m: "select" } });
+    await plugin.onEvent({ msg: { m: "pick", line: 1 } });
+    await plugin.onEvent({ msg: { m: "remove" } });
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
   });
@@ -313,8 +398,8 @@ describe("removing jobs", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    const out = await plugin.onEvent({ m: "pick", line: 1 });
+    await plugin.onEvent({ msg: { m: "select" } });
+    const out = await plugin.onEvent({ msg: { m: "pick", line: 1 } });
 
     // No dialog and no write: the same tap that opened the editor a moment ago
     // now picks.

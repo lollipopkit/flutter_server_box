@@ -229,7 +229,7 @@ class PluginRuntimeService {
     final servers = [
       for (final id in allowed)
         {
-          'server': bridge.handles.issue(instanceId, id),
+          'server': _issue(instance, instanceId, id),
           'name': _serverName?.call(id) ?? '',
         },
     ];
@@ -249,6 +249,24 @@ class PluginRuntimeService {
       // surface that failed to open: the tree it already drew stays.
       Loggers.app.warning('Plugin hook $kind/$contributionId', e, s);
     }
+  }
+
+  /// Mints a handle for [serverId] and tells the runtime it exists.
+  ///
+  /// **Two sides keep this set and both have to agree.** The bridge resolves a
+  /// handle to a server id; the runtime refuses one it was never told about,
+  /// which is what stops a plugin inventing a handle for a machine it was not
+  /// given. Only the *bound* server's handle reaches the runtime at load — so a
+  /// fleet hook used to hand a plugin handles that were then refused on use
+  /// with `sb.server.exec: server handle was not issued to this instance`, and
+  /// a tab is the only surface that could ever hit it.
+  ///
+  /// It widens nothing on its own: what may be named here was decided above, by
+  /// the `server.list` grant.
+  String _issue(BigInt instance, String instanceId, String serverId) {
+    final handle = bridge.handles.issue(instanceId, serverId);
+    _runtime?.issueServerHandle(instance: instance, handle: handle);
+    return handle;
   }
 
   static const _hookExport = 'onHook';

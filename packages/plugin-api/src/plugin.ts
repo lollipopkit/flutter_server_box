@@ -98,6 +98,19 @@ export interface HookEvent {
   servers: ServerSummary[];
 }
 
+/**
+ * What the user did.
+ *
+ * One object, because that is how the host calls every export: `msg` is
+ * whatever the plugin attached to the control's event, and `value` is the
+ * control's current value for the ones that have one — what a text field holds,
+ * whether a switch is on.
+ */
+export interface PluginEvent {
+  msg: unknown;
+  value?: unknown;
+}
+
 /** What `open`, `onEvent` and `tick` answer with. */
 export interface UiOutput {
   /**
@@ -205,14 +218,21 @@ export interface StatusResult {
  * a plugin can write `satisfies Plugin` and have its export signatures checked.
  *
  * **Every export is called with exactly one argument**, the host's input parsed
- * from JSON. That is why the ones below that need more than one value take an
- * object. The multi-parameter signatures still written that way — `onEvent`,
- * `listWindow`, `configOptions`, `tool` — are the ones the host does not call
- * yet; their shape is settled with the renderer (PLUGINS.md section 10 step 5),
- * and until then this interface describes an intent rather than a contract.
- * `init`, `open`, `onHook`, `onServerEvent`, `validateConfig`, `statusCmd` and
- * `parse`
- * are the calls that exist, and each takes one object.
+ * from JSON — `func.call((arg,))`, with no special case for any export. That is
+ * why the ones below that need more than one value take an object, `onEvent`
+ * included: it receives `{msg, value}` and not two parameters.
+ *
+ * That signature used to be written `onEvent(msg, value)` here, and every
+ * bundled plugin followed it. Against a mock that calls with two arguments it
+ * works; in the app it cannot, because the host passes one object — so `msg`
+ * arrived as `{msg, value}`, `msg.m` was `undefined`, and every control in
+ * every one of them did nothing. Nothing on the host side changed to fix it:
+ * this interface was describing a call that never existed.
+ *
+ * `listWindow`, `configOptions` and `tool` are still written with several
+ * parameters and are the ones the host does not call yet; their shape is
+ * settled with the renderer (PLUGINS.md section 10 step 5), and until then they
+ * describe an intent rather than a contract.
  */
 export interface Plugin {
   /** Once, after the instance exists and before any surface is shown. */
@@ -221,13 +241,8 @@ export interface Plugin {
   /** A surface is being shown. The tree this answers with is the whole of it. */
   open?(surface: Surface): UiOutput | Promise<UiOutput>;
 
-  /**
-   * The user did something.
-   *
-   * `msg` is whatever the plugin attached to the event; `value` is the
-   * control's current value, for the ones that have one.
-   */
-  onEvent?(msg: unknown, value?: unknown): UiOutput | Promise<UiOutput>;
+  /** The user did something. See {@link PluginEvent}. */
+  onEvent?(event: PluginEvent): UiOutput | Promise<UiOutput>;
 
   /** The shared refresh interval, and only while a surface is visible. */
   tick?(): UiOutput | Promise<UiOutput>;

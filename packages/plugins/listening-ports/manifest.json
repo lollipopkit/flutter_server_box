@@ -1,21 +1,37 @@
 {
   "id": "app.serverbox.ports",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "abi": 2,
   "name": "Listening ports",
   "description": "What is listening on a server, and which of it is reachable from outside.",
   "license": "MIT",
-  "l10n": ["en", "zh-CN"],
+  "l10n": [
+    "en",
+    "zh-CN"
+  ],
   "permissions": {
     "server.exec": true
   },
   "contributes": {
-    "settings": { "id": "prefs", "label": "Listening ports", "icon": "port" },
+    "settings": {
+      "id": "prefs",
+      "label": "Listening ports",
+      "icon": "port"
+    },
+    "card": {
+      "id": "summary",
+      "label": "Listening ports",
+      "icon": "port",
+      "default_on": false
+    },
     "page": {
       "id": "ports",
-      "label": "Ports", "icon": "port",
+      "label": "Ports",
+      "icon": "port",
       "default_on": true,
-      "needs": ["shell"]
+      "needs": [
+        "shell"
+      ]
     }
   }
 }

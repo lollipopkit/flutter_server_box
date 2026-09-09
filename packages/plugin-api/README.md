@@ -40,7 +40,7 @@ Every export may be `async`, and the host awaits it.
 |---|---|
 | `init(ctx)` | Once, before any surface is shown. |
 | `open(surface)` | A surface is being shown; the tree it answers with is the whole of it. |
-| `onEvent(msg, value)` | The user did something. `msg` is whatever the plugin attached. |
+| `onEvent({msg, value})` | The user did something. `msg` is whatever the plugin attached; `value` is the control's current value. **One object**, like every export — a two-parameter version is a plugin whose controls do nothing in the app. |
 | `tick()` | The app's shared refresh interval, and only while a surface is visible. |
 | `listWindow(key, from, count)` | More rows for a `list` that declared more than it carried. |
 | `onServerEvent(event)` | A server connected, disconnected, or was deleted. |

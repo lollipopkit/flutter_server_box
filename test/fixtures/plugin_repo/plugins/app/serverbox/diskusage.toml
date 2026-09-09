@@ -4,8 +4,8 @@ description = "Where the space went, one directory at a time."
 license = "MIT"
 
 [[version]]
-version = "1.0.1"
+version = "1.1.0"
 abi = 2
-url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.diskusage-1.0.1/app.serverbox.diskusage-1.0.1.sbp"
-sha256 = "4e31010957a4d3f405d964c6c242fbba624f267f3093a37ad891e20d634288d9"
-size = 17643
+url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.diskusage-1.1.0/app.serverbox.diskusage-1.1.0.sbp"
+sha256 = "0872774dbe8546245732ba12fbbd2fa8f7666de44bc837a2958bde0df5c6f9ee"
+size = 21669

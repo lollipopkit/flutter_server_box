@@ -144,6 +144,89 @@ void main() {
     expect(seen, {'m': 'open', 'path': '/var'});
   });
 
+  /// The settings surface, which until this plugin grew a form was one switch.
+  ///
+  /// Through the real host because that is where the store is: the values the
+  /// form reads and writes go through `sb.store` into the app's own tables, not
+  /// into a fake, and a form that cannot read back what it wrote is a form that
+  /// forgets every time it is opened.
+  group('the settings form', () {
+    /// Opened the way the app opens it: `open`, then the hook.
+    ///
+    /// **The hook is not optional here even though this surface ignores it.**
+    /// The form draws from the store, so `open` starts a promise and returns —
+    /// and nothing pumps that promise until the next call into the runtime.
+    /// In the app that call is the hook, which every surface gets; a test that
+    /// stopped after `open` would wait forever for a patch and read as the
+    /// plugin never drawing.
+    Future<void> openSettings() async {
+      await service.call(
+        instance,
+        'open',
+        jsonEncode({'kind': 'settings', 'id': 'prefs'}),
+      );
+      // No servers, which is what a settings surface gets: it is bound to no
+      // machine. The plugin has to leave its page's "no server" branch alone
+      // for this one, or the error draws over the form.
+      await service.hook(
+        instance,
+        kind: 'enter',
+        contributionId: 'prefs',
+        granted: const ['server.exec'],
+      );
+    }
+
+    /// `onEvent` takes the message and the control's value as two arguments,
+    /// which is `{msg, value}` on the wire — see `PluginSurfaceView._onEvent`.
+    Future<void> event(String m, [Object? value]) => service.call(
+      instance,
+      'onEvent',
+      jsonEncode({
+        'msg': {'m': m},
+        'value': value,
+      }),
+    );
+
+    test('it draws its fields and a way back to the defaults', () async {
+      await openSettings();
+
+      final drawn = texts(patches.last.node);
+      expect(drawn, contains('l10n.prefsStartAt'));
+      expect(drawn, contains('l10n.prefsSkip'));
+      expect(drawn, contains('l10n.prefsHideBelow'));
+      expect(drawn, contains('l10n.prefsReset'));
+    });
+
+    test('a good value is kept, and read back on the next open', () async {
+      await openSettings();
+      await event('setStartAt', '/srv');
+      await openSettings();
+
+      expect(texts(patches.last.node), contains('/srv'));
+    });
+
+    /// Rejected rather than ignored. A value silently dropped when it is read
+    /// back is one the user believes is in effect.
+    test('a path that is not one is refused, with the reason on screen', () async {
+      await openSettings();
+      await event('setStartAt', 'var');
+
+      final drawn = texts(patches.last.node);
+      expect(drawn, contains('l10n.prefsErrPath'));
+      // And what was typed is still there to be corrected.
+      expect(drawn, contains('var'));
+    });
+
+    test('reset takes every field back', () async {
+      await openSettings();
+      await event('setStartAt', '/srv');
+      await event('resetPrefs');
+      await openSettings();
+
+      expect(texts(patches.last.node), isNot(contains('/srv')));
+    });
+  });
+
   test('the hook measures the root and draws what came back', () async {
     await service.hook(
       instance,
@@ -196,7 +279,9 @@ void main() {
     await service.call(
       instance,
       'onEvent',
-      jsonEncode({'m': 'open', 'path': '/tmp/; touch /tmp/pwned'}),
+      jsonEncode({
+        'msg': {'m': 'open', 'path': '/tmp/; touch /tmp/pwned'},
+      }),
     );
 
     final script = ops.calls.single;
@@ -229,7 +314,9 @@ void main() {
     await service.call(
       instance,
       'onEvent',
-      jsonEncode({'m': 'open', 'path': '/tmp/two\nlines'}),
+      jsonEncode({
+        'msg': {'m': 'open', 'path': '/tmp/two\nlines'},
+      }),
     );
 
     // The plugin drew its failure rather than sending anything.

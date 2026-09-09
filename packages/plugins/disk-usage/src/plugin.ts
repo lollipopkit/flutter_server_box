@@ -13,6 +13,7 @@
  */
 
 import {
+  btn,
   card,
   classify,
   column,
@@ -39,8 +40,10 @@ import {
   tone,
   type HookEvent,
   type Plugin,
+  type PluginEvent,
   type ServerHandle,
   type Surface,
+  type SurfaceKind,
   type UiOutput,
 } from "@serverbox/plugin-api";
 import {
@@ -48,6 +51,7 @@ import {
   humanBytes,
   parentOf,
   parse,
+  type Entry,
   type Scan,
 } from "./scan.ts";
 
@@ -136,24 +140,103 @@ async function loadSort(): Promise<void> {
   }
 }
 
+/** Names left out of a listing, and the size a row has to reach to be in one. */
+const SKIP_KEY = "skipNames";
+const HIDE_BELOW_KEY = "hideBelowMib";
+
+interface Settings {
+  crossFilesystems: boolean;
+  startAt: string;
+  /** Directory names to leave out of a listing. */
+  skip: string[];
+  /** Rows under this are left out. Zero shows everything. */
+  hideBelowBytes: number;
+}
+
+const DEFAULTS: Settings = {
+  crossFilesystems: false,
+  startAt: ROOT,
+  skip: [],
+  hideBelowBytes: 0,
+};
+
 /** Read once per collection rather than kept, so an edit applies next scan. */
-async function settings(): Promise<{ crossFilesystems: boolean; startAt: string }> {
+async function settings(): Promise<Settings> {
   try {
-    const [cross, start] = await Promise.all([
+    const [cross, start, skip, hide] = await Promise.all([
       sb.store.get({ scope: "global", key: CROSS_FS_KEY }),
       sb.store.get({ scope: "global", key: START_AT_KEY }),
+      sb.store.get({ scope: "global", key: SKIP_KEY }),
+      sb.store.get({ scope: "global", key: HIDE_BELOW_KEY }),
     ]);
     return {
       crossFilesystems: cross.value === "1",
       // An unusable value is ignored rather than sent: the field is free text
       // and `/` is always a directory.
-      startAt:
-        start.value && isUsablePath(start.value) ? start.value : ROOT,
+      startAt: start.value && isUsablePath(start.value) ? start.value : ROOT,
+      skip: splitNames(skip.value),
+      hideBelowBytes: mibOf(hide.value) * 1024 * 1024,
     };
   } catch {
-    return { crossFilesystems: false, startAt: ROOT };
+    return DEFAULTS;
   }
 }
+
+/**
+ * The names in a skip list, however they were separated.
+ *
+ * Whitespace or commas, because both are what people type and neither is legal
+ * in the middle of a directory name they would want to skip.
+ */
+export function splitNames(raw: string | null | undefined): string[] {
+  return `${raw ?? ""}`
+    .split(/[\s,]+/)
+    .map((n) => n.trim())
+    .filter((n) => n.length > 0);
+}
+
+/** A whole number of MiB, or 0 for anything this is not. */
+function mibOf(raw: string | null | undefined): number {
+  const n = Number.parseInt(`${raw ?? ""}`.trim(), 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
+ * What the two filters leave, and what they took.
+ *
+ * The count is drawn: a list shortened without saying so is how somebody
+ * concludes a directory is empty when what happened is that they set a
+ * threshold weeks ago.
+ */
+export function filtered(
+  children: { name: string; path: string; bytes: number }[],
+  where: { skip: string[]; hideBelowBytes: number },
+): { shown: typeof children; hidden: number } {
+  const skip = new Set(where.skip.map((n) => n.toLowerCase()));
+  const shown = children.filter(
+    (c) => !skip.has(c.name.toLowerCase()) && c.bytes >= where.hideBelowBytes,
+  );
+  return { shown, hidden: children.length - shown.length };
+}
+
+/**
+ * The filters as the last scan read them.
+ *
+ * Kept here because the view is synchronous and the store is not, and refreshed
+ * where the scan reads everything else — so an edit applies to the next scan
+ * rather than half-applying to the one on screen.
+ */
+let filters = { skip: [] as string[], hideBelowBytes: 0 };
+
+/**
+ * What the settings form holds that the store does not.
+ *
+ * A field the user is halfway through typing is not a setting yet, and a
+ * rejected one must not jump back to the stored value while they are looking at
+ * why it was rejected. Both live here, and only until the surface goes.
+ */
+const draft = new Map<string, string>();
+const rejected = new Map<string, string>();
 
 type State =
   | { at: "idle" }
@@ -180,17 +263,41 @@ function clearSelection(): void {
   selected = new Set();
 }
 
+/**
+ * Which surface this instance is drawing.
+ *
+ * Set in `open`, which the host calls before the hook. Each surface is its own
+ * instance, so the settings page's copy of this module is not the page's.
+ */
+let surfaceKind: SurfaceKind = "page";
+
 export function open(surface: Surface): UiOutput {
+  surfaceKind = surface.kind;
   // The settings page is not bound to a server and does not measure anything,
   // so it answers from the store rather than from `state`.
   if (surface.kind === "settings") {
-    void drawSettings();
-    return { ui: padding(17, text("…")) };
+    // Drawn from the hook rather than started here. **A promise a plugin leaves
+    // running when a call returns does not progress**: the runtime drives an
+    // instance only while it is inside a call, so the store read this form
+    // needs would sit outstanding until something else happened to call in.
+    // The hook is the call that always follows `open`, so that is where the
+    // waiting belongs.
+    return { ui: padding(17, text(l10n("reading"))) };
   }
   return { ui: view() };
 }
 
 export async function onHook(event: HookEvent): Promise<void> {
+  // A settings surface collects nothing: its form is drawn from the store by
+  // `open`, and the hook is only what pumps that promise. Without this the
+  // "no server" branch below draws the page's error over the form — a settings
+  // surface is bound to no machine, so `event.servers` is empty by design.
+  if (surfaceKind === "settings") {
+    // Nothing to collect: the form is the store, and this is the call that gets
+    // to wait for it.
+    await drawSettings();
+    return;
+  }
   const first = event.servers[0];
   if (!first) {
     state = { at: "failed", path: ROOT, why: l10n("errNoServer") };
@@ -207,7 +314,7 @@ export async function onHook(event: HookEvent): Promise<void> {
   await scan(remembered ?? (await settings()).startAt);
 }
 
-export async function onEvent(msg: unknown, value?: unknown): Promise<UiOutput> {
+export async function onEvent({ msg, value }: PluginEvent): Promise<UiOutput> {
   const m = msg as { m: string; path?: string };
   if (m.m === "setCrossFs") {
     await sb.store.set({
@@ -220,12 +327,69 @@ export async function onEvent(msg: unknown, value?: unknown): Promise<UiOutput> 
   }
   if (m.m === "setStartAt") {
     const typed = `${value ?? ""}`.trim();
+    draft.set(START_AT_KEY, typed);
+    // Rejected here rather than ignored at read time, which is what it used to
+    // be: a value that is silently not used is one the user believes is in
+    // effect. Empty clears it, which is how a text field says "back to the
+    // default".
+    // Absolute, because that is what "start at" means: a relative path
+    // resolves against whatever directory the command happens to run in, which
+    // is the user's home and not what anybody typing `var` meant.
+    if (typed !== "" && !(typed.startsWith("/") && isUsablePath(typed))) {
+      rejected.set(START_AT_KEY, l10n("prefsErrPath"));
+      await drawSettings();
+      return {};
+    }
+    rejected.delete(START_AT_KEY);
     await sb.store.set({
       scope: "global",
       key: START_AT_KEY,
-      // Empty clears it, which is how a text field says "back to the default".
       value: typed === "" ? null : typed,
     });
+    await drawSettings();
+    return {};
+  }
+  if (m.m === "setSkip") {
+    const typed = `${value ?? ""}`;
+    draft.set(SKIP_KEY, typed);
+    // Free text with nothing to get wrong: anything that is not a name simply
+    // matches no directory. Stored as typed so the field reads back the way it
+    // was written.
+    await sb.store.set({
+      scope: "global",
+      key: SKIP_KEY,
+      value: splitNames(typed).length === 0 ? null : typed.trim(),
+    });
+    return {};
+  }
+  if (m.m === "setHideBelow") {
+    const typed = `${value ?? ""}`.trim();
+    draft.set(HIDE_BELOW_KEY, typed);
+    const n = Number.parseInt(typed, 10);
+    if (typed !== "" && (!Number.isFinite(n) || n < 0 || `${n}` !== typed)) {
+      rejected.set(HIDE_BELOW_KEY, l10n("prefsErrNumber"));
+      await drawSettings();
+      return {};
+    }
+    rejected.delete(HIDE_BELOW_KEY);
+    await sb.store.set({
+      scope: "global",
+      key: HIDE_BELOW_KEY,
+      value: typed === "" || n === 0 ? null : `${n}`,
+    });
+    await drawSettings();
+    return {};
+  }
+  if (m.m === "resetPrefs") {
+    // Every key this form owns, back to absent. Absent rather than written
+    // defaults: what a default is belongs to the build, and a stored copy of
+    // one is a value that stops following it.
+    for (const key of [CROSS_FS_KEY, START_AT_KEY, SKIP_KEY, HIDE_BELOW_KEY]) {
+      await sb.store.set({ scope: "global", key, value: null });
+    }
+    draft.clear();
+    rejected.clear();
+    await drawSettings();
     return {};
   }
   if (m.m === "open" && m.path) {
@@ -408,23 +572,70 @@ async function drawSettings(): Promise<void> {
         { m: "setCrossFs" },
       ),
     ]),
-    padding(
-      13,
-      column(
-        [
-          text(l10n("prefsStartAt")),
-          tone(text(l10n("prefsStartAtHint")), "muted"),
-          onChange(input(s.startAt, { hint: ROOT }), { m: "setStartAt" }),
-        ],
-        { spacing: 5 },
-      ),
-    ),
+    field({
+      key: START_AT_KEY,
+      label: l10n("prefsStartAt"),
+      hint: l10n("prefsStartAtHint"),
+      placeholder: ROOT,
+      stored: s.startAt,
+      msg: "setStartAt",
+    }),
+    field({
+      key: SKIP_KEY,
+      label: l10n("prefsSkip"),
+      hint: l10n("prefsSkipHint"),
+      placeholder: "node_modules .cache",
+      stored: s.skip.join(" "),
+      msg: "setSkip",
+    }),
+    field({
+      key: HIDE_BELOW_KEY,
+      label: l10n("prefsHideBelow"),
+      hint: l10n("prefsHideBelowHint"),
+      placeholder: "0",
+      stored: s.hideBelowBytes === 0 ? "" : `${s.hideBelowBytes / 1024 / 1024}`,
+      msg: "setHideBelow",
+    }),
+    padding(13, onTap(btn(l10n("prefsReset")), { m: "resetPrefs" })),
   ]);
   try {
     await sb.ui.patch({ path: "", node });
   } catch {
     // Nobody is looking at the settings page any more.
   }
+}
+
+/**
+ * One row of the form: a label, what it is for, the field, and why the last
+ * thing typed into it was not kept.
+ *
+ * The value comes from the draft when there is one, so a rejected edit stays on
+ * screen next to its reason — redrawing the stored value under somebody who is
+ * being told their input is wrong takes away the thing they need to fix.
+ */
+function field(f: {
+  key: string;
+  label: string;
+  hint: string;
+  placeholder: string;
+  stored: string;
+  msg: string;
+}) {
+  const why = rejected.get(f.key);
+  return padding(
+    13,
+    column(
+      [
+        text(f.label),
+        tone(text(f.hint), "muted"),
+        onChange(input(draft.get(f.key) ?? f.stored, { hint: f.placeholder }), {
+          m: f.msg,
+        }),
+        ...(why ? [tone(text(why), "danger")] : []),
+      ],
+      { spacing: 5 },
+    ),
+  );
 }
 
 async function scan(path: string): Promise<void> {
@@ -441,9 +652,14 @@ async function scan(path: string): Promise<void> {
   await draw();
 
   try {
+    // One read for everything the scan needs, including the two filters the
+    // view applies — the view is synchronous and the store is not, so they are
+    // taken here and applied to what this scan produces.
+    const s = await settings();
+    filters = { skip: s.skip, hideBelowBytes: s.hideBelowBytes };
     const r = await sb.server.exec({
       server: handle,
-      script: command(path, { crossFilesystems: (await settings()).crossFilesystems }),
+      script: command(path, { crossFilesystems: s.crossFilesystems }),
       timeoutMs: TIMEOUT_MS,
     });
     state = { at: "ready", scan: parse(path, r.stdout) };
@@ -583,10 +799,27 @@ function view() {
                 actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
               }),
             ]
-          : [card(ordered(s.children).map((c) => rowFor(c, s.totalBytes)))],
+          : rowsFor(s),
       ),
     ),
   ]);
+}
+
+/**
+ * The rows, after the two filters the settings page owns.
+ *
+ * The count of what they took is drawn under them. A list shortened without
+ * saying so is how somebody concludes a directory is nearly empty, when what
+ * happened is a threshold they set weeks ago.
+ */
+function rowsFor(s: { children: Entry[]; totalBytes: number }) {
+  const { shown, hidden } = filtered(s.children, filters);
+  return [
+    card(ordered(shown).map((c) => rowFor(c, s.totalBytes))),
+    ...(hidden === 0
+      ? []
+      : [padding(11, tone(text(l10n("hiddenByFilter", `${hidden}`)), "muted"))]),
+  ];
 }
 
 /** The path, the way back up, and a way to ask again. */

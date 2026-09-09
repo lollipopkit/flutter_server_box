@@ -1,22 +1,32 @@
 {
   "id": "app.serverbox.diskusage",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "abi": 2,
   "name": "Disk usage",
   "description": "Where the space went, one directory at a time.",
   "license": "MIT",
-  "l10n": ["en", "zh-CN"],
+  "l10n": [
+    "en",
+    "zh-CN"
+  ],
   "permissions": {
     "server.exec": true,
     "ui.dialog": true
   },
   "contributes": {
-    "settings": { "id": "prefs", "label": "Disk usage", "icon": "chart" },
+    "settings": {
+      "id": "prefs",
+      "label": "Disk usage",
+      "icon": "chart"
+    },
     "page": {
       "id": "usage",
-      "label": "Usage", "icon": "chart",
+      "label": "Usage",
+      "icon": "chart",
       "default_on": true,
-      "needs": ["shell"]
+      "needs": [
+        "shell"
+      ]
     }
   }
 }

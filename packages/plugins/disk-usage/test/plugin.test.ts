@@ -33,12 +33,156 @@ async function load() {
   return await import(`../src/plugin.ts?${Math.random()}`);
 }
 
+/** Lets everything already queued run, including the store reads a draw waits on. */
+const flush = () => new Promise((r) => setTimeout(r, 0));
+
 const enter: HookEvent = {
   kind: "enter",
   contribution: "usage",
   servers: [{ server: "h-1" as ServerHandle, name: "web" }],
 };
 
+
+describe("the settings form", () => {
+  /// The first plugin surface with a form rather than a switch, which is what
+  /// PLUGINS.md 5 asked for before opening this to anybody else: several
+  /// fields, values that can be wrong, and a way back to the defaults.
+  test("it draws every field, from the store", async () => {
+    const host = new MockHost({
+      global: {
+        startAt: "/var",
+        skipNames: "node_modules .cache",
+        hideBelowMib: "64",
+      },
+    });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "settings", id: "prefs" });
+    // The form is drawn by the hook, not by `open`: a promise left running when
+    // a call returns does not progress, so the waiting belongs in the call that
+    // always follows — see `onHook`.
+    await plugin.onHook({ ...enter, contribution: "prefs", servers: [] });
+
+    const shown = texts(lastDrawn(host));
+    expect(shown).toContain("/var");
+    expect(shown).toContain("node_modules .cache");
+    expect(shown).toContain("64");
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.prefsReset");
+  });
+
+  /// **Rejected rather than ignored.** An unusable path used to be dropped when
+  /// it was read back, which means the user is looking at a value they believe
+  /// is in effect and is not.
+  test("a path that is not one is refused, with the reason and the text kept", async () => {
+    const host = new MockHost();
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "settings", id: "prefs" });
+    await plugin.onEvent({ msg: { m: "setStartAt" }, value: "not a path" });
+
+    expect(host.value("global", "startAt")).toBeUndefined();
+    const drawn = lastDrawn(host);
+    expect(l10nKeys(drawn)).toContain("l10n.prefsErrPath");
+    // What they typed is still there to be corrected. Redrawing the stored
+    // value under somebody being told their input is wrong takes away the
+    // thing they need to fix.
+    expect(texts(drawn)).toContain("not a path");
+  });
+
+  test("a size that is not a whole number is refused", async () => {
+    const host = new MockHost();
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "settings", id: "prefs" });
+    await plugin.onEvent({ msg: { m: "setHideBelow" }, value: "1.5" });
+
+    expect(host.value("global", "hideBelowMib")).toBeUndefined();
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.prefsErrNumber");
+  });
+
+  test("a good value is stored, and clears what was said about the last one", async () => {
+    const host = new MockHost();
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "settings", id: "prefs" });
+    await plugin.onEvent({ msg: { m: "setStartAt" }, value: "nope" });
+    await plugin.onEvent({ msg: { m: "setStartAt" }, value: "/srv" });
+
+    expect(host.value("global", "startAt")).toBe("/srv");
+    expect(l10nKeys(lastDrawn(host))).not.toContain("l10n.prefsErrPath");
+  });
+
+  /// Empty is how a text field says "back to the default", and the default
+  /// belongs to the build — so it is cleared rather than written down.
+  test("emptying a field clears it rather than storing a default", async () => {
+    const host = new MockHost({ global: { startAt: "/var" } });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "settings", id: "prefs" });
+    await plugin.onEvent({ msg: { m: "setStartAt" }, value: "  " });
+
+    expect(host.value("global", "startAt")).toBeUndefined();
+  });
+
+  test("reset clears every key the form owns", async () => {
+    const host = new MockHost({
+      global: {
+        startAt: "/var",
+        skipNames: "x",
+        hideBelowMib: "64",
+        crossFilesystems: "1",
+      },
+    });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "settings", id: "prefs" });
+    await plugin.onEvent({ msg: { m: "resetPrefs" }, value: undefined });
+
+    for (const key of ["startAt", "skipNames", "hideBelowMib", "crossFilesystems"]) {
+      expect(host.value("global", key)).toBeUndefined();
+    }
+  });
+});
+
+describe("what the filters leave", () => {
+  test("a skipped name and a small directory are left out, and counted", async () => {
+    const host = new MockHost({
+      global: { skipNames: "cache", hideBelowMib: "16" },
+    }).exec(command("/var"), { stdout: VAR });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "page", id: "usage" });
+    await plugin.onHook({ ...enter, servers: enter.servers });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" }, value: undefined });
+
+    const shown = texts(lastDrawn(host));
+    // `/var/cache` is skipped by name; `/var/log` is 1 GiB and stays.
+    expect(shown).not.toContain("cache");
+    expect(shown).toContain("log");
+    // And the page says something was taken, rather than quietly being short.
+    expect(l10nKeys(lastDrawn(host))).toContain("l10n.hiddenByFilter");
+  });
+
+  test("with no filters set, nothing is hidden and nothing is said", async () => {
+    const host = new MockHost().exec(command("/var"), { stdout: VAR });
+    restore = host.install();
+    const plugin = await load();
+
+    plugin.open({ kind: "page", id: "usage" });
+    await plugin.onHook({ ...enter, servers: enter.servers });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" }, value: undefined });
+
+    expect(texts(lastDrawn(host))).toContain("cache");
+    expect(l10nKeys(lastDrawn(host))).not.toContain("l10n.hiddenByFilter");
+  });
+});
 
 /** The tree of the last patch, which is what is on screen. */
 function lastDrawn(host: MockHost): Node {
@@ -104,7 +248,7 @@ describe("descending", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "open", path: "/var" });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" } });
 
     expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
       command("/"),
@@ -121,14 +265,14 @@ describe("descending", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "open", path: "/var" });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" } });
     const before = host.callsTo("server.exec").length;
 
-    await plugin.onEvent({ m: "up" });
+    await plugin.onEvent({ msg: { m: "up" } });
     expect(host.callsTo("server.exec")).toHaveLength(before + 1);
 
     // At the root there is nowhere to go, so nothing is asked.
-    await plugin.onEvent({ m: "up" });
+    await plugin.onEvent({ msg: { m: "up" } });
     expect(host.callsTo("server.exec")).toHaveLength(before + 1);
   });
 });
@@ -141,14 +285,14 @@ describe("picking and deleting", () => {
     await plugin.onHook(enter);
     const before = host.callsTo("server.exec").length;
 
-    await plugin.onEvent({ m: "select" });
+    await plugin.onEvent({ msg: { m: "select" } });
     // The same tap that descended a moment ago now picks, and measures
     // nothing: descending while picking would take the selection out of sight
     // of the person who made it.
-    await plugin.onEvent({ m: "pick", path: "/var" });
+    await plugin.onEvent({ msg: { m: "pick", path: "/var" } });
 
     expect(host.callsTo("server.exec")).toHaveLength(before);
-    const out = await plugin.onEvent({ m: "pick", path: "/usr" });
+    const out = await plugin.onEvent({ msg: { m: "pick", path: "/usr" } });
     expect(l10nKeys(out.ui!)).toContain("l10n.delete");
   });
 
@@ -158,12 +302,12 @@ describe("picking and deleting", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    await plugin.onEvent({ m: "pick", path: "/var" });
+    await plugin.onEvent({ msg: { m: "select" } });
+    await plugin.onEvent({ msg: { m: "pick", path: "/var" } });
     // Cancelled, which is the default this mock gives when nothing is scripted
     // — and the point: a delete that ran anyway would be unrecoverable.
     host.answerPrompt({ cancelled: true });
-    await plugin.onEvent({ m: "delete" });
+    await plugin.onEvent({ msg: { m: "delete" } });
 
     expect(
       host.callsTo("server.exec").some((c) => c.req.script.includes("rm")),
@@ -176,9 +320,9 @@ describe("picking and deleting", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    await plugin.onEvent({ m: "pick", path: "/var" });
-    await plugin.onEvent({ m: "delete" });
+    await plugin.onEvent({ msg: { m: "select" } });
+    await plugin.onEvent({ msg: { m: "pick", path: "/var" } });
+    await plugin.onEvent({ msg: { m: "delete" } });
 
     const rm = host
       .callsTo("server.exec")
@@ -195,9 +339,9 @@ describe("picking and deleting", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    await plugin.onEvent({ m: "pick", path: "/var" });
-    await plugin.onEvent({ m: "delete" });
+    await plugin.onEvent({ msg: { m: "select" } });
+    await plugin.onEvent({ msg: { m: "pick", path: "/var" } });
+    await plugin.onEvent({ msg: { m: "delete" } });
 
     // What `rm` actually removed is a question for the machine, and every
     // other row's share of the total moved with it.
@@ -213,10 +357,10 @@ describe("picking and deleting", () => {
     const plugin = await load();
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ m: "select" });
-    await plugin.onEvent({ m: "pick", path: "/var" });
-    await plugin.onEvent({ m: "cancelSelect" });
-    await plugin.onEvent({ m: "open", path: "/var" });
+    await plugin.onEvent({ msg: { m: "select" } });
+    await plugin.onEvent({ msg: { m: "pick", path: "/var" } });
+    await plugin.onEvent({ msg: { m: "cancelSelect" } });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" } });
 
     // A selection is about what is in front of you; carried down it would mean
     // a delete that removes something off screen.
@@ -233,7 +377,7 @@ describe("where it left you", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "open", path: "/var" });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" } });
 
     expect(host.value("server", "lastPath")).toBe("/var");
   });
@@ -243,7 +387,7 @@ describe("where it left you", () => {
     restore = host.install();
     const first = await load();
     await first.onHook(enter);
-    await first.onEvent({ m: "open", path: "/var" });
+    await first.onEvent({ msg: { m: "open", path: "/var" } });
 
     // A fresh instance, as a second visit is.
     const again = await load();
@@ -261,7 +405,7 @@ describe("where it left you", () => {
     const plugin = await load();
 
     await plugin.onHook(enter);
-    await plugin.onEvent({ m: "open", path: "/var" });
+    await plugin.onEvent({ msg: { m: "open", path: "/var" } });
 
     expect(host.value("server", "lastPath")).toBe("/");
     // The failure is drawn, with the two ways off it — and without the
@@ -300,7 +444,7 @@ du: cannot read directory '/root': Permission denied
 
     expect(first()[0]).toBe("var");
 
-    const out = await plugin.onEvent({ m: "sort" });
+    const out = await plugin.onEvent({ msg: { m: "sort" } });
     const names = texts(out.ui!).filter((t) => t === "var" || t === "usr");
     expect(names[0]).toBe("usr");
     // Remembered: the order somebody chose is a preference, not a property of

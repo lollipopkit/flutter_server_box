@@ -36,5 +36,14 @@
   "sortSize": "按大小",
   "sortName": "按名称",
   "unreadable": "有 {0} 个目录读不到,所以总量偏小",
-  "unreadableOne": "有 1 个目录读不到,所以总量偏小"
+  "unreadableOne": "有 1 个目录读不到,所以总量偏小",
+  "prefsSkip": "排除",
+  "prefsSkipHint": "不在列表里显示的目录名，用空格分隔。它只隐藏行，不会让扫描更快 —— du 没有可移植的跳过目录的办法。",
+  "prefsHideBelow": "小于多少不显示",
+  "prefsHideBelowHint": "小于这个 MiB 数的条目不列出。留空或 0 表示全都显示。",
+  "prefsErrPath": "这不是一个绝对路径。",
+  "prefsErrNumber": "要填整数 MiB，或者留空。",
+  "prefsReset": "恢复默认",
+  "hiddenByFilter": "{0} 项被你的设置隐藏",
+  "reading": "读取中…"
 }
