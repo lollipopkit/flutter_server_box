@@ -819,5 +819,25 @@
   },
   "benchmarkPhaseStarting": "Starting",
   "benchmarkNoOutputYet": "No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.",
-  "benchmarkNoServers": "Add a server first, then come back to benchmark it."
+  "tagsEmptyTip": "No tags yet. Add one while editing a server and it will appear here.",
+  "benchmarkNoServers": "Add a server first, then return here to benchmark it.",
+  "schemaTooNewTitle": "This data is newer than the app",
+  "schemaTooNewBody": "It was written by a newer version of ServerBox (storage v{stored}). This version reads up to v{supported}; nothing has been changed.",
+  "schemaTooNewReinstall": "Reinstall the newer version to open all your data again.",
+  "schemaTooNewExportPlain": "Export without a password",
+  "schemaTooNewPlainWarn": "The file will contain every SSH private key, server password and API key in plain text. Anyone who gets the file can access them all.",
+  "schemaTooNewWipe": "Delete all data",
+  "schemaTooNewWipeConfirm": "All servers, keys, snippets and settings on this device will be deleted. This cannot be undone. A backup exported here would be the only copy left.",
+  "schemaTooNewWipeDone": "Data deleted. Open the app again to start fresh.",
+  "@schemaTooNewBody": {
+    "placeholders": {
+      "stored": {
+        "type": "int"
+      },
+      "supported": {
+        "type": "int"
+      }
+    }
+  },
+  "schemaTooNewWipeFailed": "Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it."
 }

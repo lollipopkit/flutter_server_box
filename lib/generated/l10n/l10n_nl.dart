@@ -2097,6 +2097,44 @@ class AppLocalizationsNl extends AppLocalizations {
       'Nog geen uitvoer. Voordat de eerste regel verschijnt, controleert YABS of google.com en icanhazip.com bereikbaar zijn. Op netwerken die een van beide sites blokkeren, kan dit enkele minuten duren.';
 
   @override
+  String get tagsEmptyTip =>
+      'Nog geen tags. Voeg er een toe tijdens het bewerken van een server; deze verschijnt hier.';
+
+  @override
   String get benchmarkNoServers =>
       'Voeg eerst een server toe en kom daarna terug om een benchmark uit te voeren.';
+
+  @override
+  String get schemaTooNewTitle => 'Deze gegevens zijn nieuwer dan de app';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Ze zijn geschreven door een nieuwere versie van ServerBox (opslag v$stored); deze versie kan tot en met v$supported lezen. Er is niets gewijzigd.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Installeer die nieuwere versie opnieuw; alles wordt dan weer geopend zoals voorheen.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Exporteren zonder wachtwoord';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Het bestand bevat alle privésleutels voor SSH, serverwachtwoorden en API-sleutels als platte tekst. Iedereen die het bestand krijgt, krijgt toegang tot al deze gegevens.';
+
+  @override
+  String get schemaTooNewWipe => 'Alle gegevens verwijderen';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Alle servers, sleutels, snippets en instellingen op dit apparaat worden verwijderd. Dit kan niet ongedaan worden gemaakt. Een hier geëxporteerde back-up zou de enige overgebleven kopie zijn.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Gegevens verwijderd. Open de app opnieuw om opnieuw te beginnen.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Sommige gegevens konden niet worden verwijderd en deze versie kan de resterende gegevens nog steeds niet openen. Installeer de nieuwere versie opnieuw om erbij te kunnen.';
 }

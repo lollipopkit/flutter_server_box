@@ -610,5 +610,15 @@
   "benchmarkUpstream": "Didukung oleh Yet Another Bench Script ({version})",
   "benchmarkPhaseStarting": "Memulai",
   "benchmarkNoOutputYet": "Belum ada keluaran. Sebelum menampilkan baris pertama, YABS memeriksa apakah google.com dan icanhazip.com dapat dijangkau. Pada jaringan yang memblokir salah satu situs tersebut, proses ini dapat memerlukan beberapa menit.",
-  "benchmarkNoServers": "Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark."
+  "benchmarkNoServers": "Tambahkan server terlebih dahulu, lalu kembali untuk menjalankan benchmark.",
+  "tagsEmptyTip": "Belum ada tag. Tambahkan tag saat mengedit server, dan tag tersebut akan muncul di sini.",
+  "schemaTooNewTitle": "Data ini lebih baru daripada aplikasi",
+  "schemaTooNewBody": "Data ini ditulis oleh versi ServerBox yang lebih baru (penyimpanan v{stored}); versi ini hanya dapat membaca hingga v{supported}. Tidak ada yang diubah.",
+  "schemaTooNewReinstall": "Instal kembali versi yang lebih baru itu agar semua data dapat dibuka seperti semula.",
+  "schemaTooNewExportPlain": "Ekspor tanpa kata sandi",
+  "schemaTooNewPlainWarn": "File ini akan menyimpan semua kunci privat SSH, kata sandi server, dan kunci API dalam teks biasa. Siapa pun yang mendapatkan file ini akan mendapatkan semuanya.",
+  "schemaTooNewWipe": "Hapus semua data",
+  "schemaTooNewWipeConfirm": "Semua server, kunci, cuplikan, dan pengaturan di perangkat ini akan dihapus dan tidak dapat dibatalkan. Cadangan yang diekspor di sini akan menjadi satu-satunya salinan yang tersisa.",
+  "schemaTooNewWipeDone": "Data dihapus. Buka kembali aplikasi untuk memulai dari awal.",
+  "schemaTooNewWipeFailed": "Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya."
 }

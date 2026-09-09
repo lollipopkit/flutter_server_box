@@ -552,10 +552,16 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   position: at < 0 ? null : at + 1,
                   total: tags.length,
                   icon: MingCute.hashtag_line,
-                  // Nothing to switch between with no tags anywhere, so the
-                  // name is a label rather than a way into a sheet — the same
-                  // rule the session strips follow with nothing open.
-                  onTap: tags.isEmpty ? null : () => _showTagSheet(tags),
+                  // Opens even with no tags anywhere. It used to be a plain
+                  // label then — the rule the session strips follow with
+                  // nothing open — but the two cases are not alike: a terminal
+                  // strip with no sessions is a feature nobody has started
+                  // using, while this is a filter whose whole vocabulary is
+                  // defined elsewhere. Someone looking for tags taps the thing
+                  // marked with a `#`, and a control that does nothing answers
+                  // neither "there are none" nor "here is where they come
+                  // from". The sheet says both.
+                  onTap: () => _showTagSheet(tags),
                 ),
               ),
               ..._listActions(globeKey: _globeBtnKey),
@@ -748,15 +754,29 @@ class _ServerPageState extends ConsumerState<ServerPage>
             onTap: () => pick(TagSwitcher.kDefaultTag),
           ),
           const Divider(height: 1),
-          for (final tag in tags)
-            // The same shape as the row above it: the mark, then the name.
-            // The mark is the `#`, so the name does not carry one as well.
-            SheetChoiceTile(
-              icon: MingCute.hashtag_line,
-              title: tag,
-              selected: tag == _tag.value,
-              onTap: () => pick(tag),
-            ),
+          // Where tags come from, for the sheet that would otherwise be one
+          // row saying "All" — which reads as a broken filter rather than as
+          // an empty one. A server's editor is the only place they are made,
+          // and nothing on this tab says so.
+          if (tags.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(17, 17, 17, 27),
+              child: Text(
+                l10n.tagsEmptyTip,
+                style: UIs.textGrey,
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            for (final tag in tags)
+              // The same shape as the row above it: the mark, then the name.
+              // The mark is the `#`, so the name does not carry one as well.
+              SheetChoiceTile(
+                icon: MingCute.hashtag_line,
+                title: tag,
+                selected: tag == _tag.value,
+                onTap: () => pick(tag),
+              ),
         ];
       },
     );

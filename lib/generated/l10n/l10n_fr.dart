@@ -2115,6 +2115,45 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucune sortie pour le moment. Avant d’afficher sa première ligne, YABS vérifie si google.com et icanhazip.com sont accessibles. Sur un réseau qui bloque l’un de ces sites, cette étape peut prendre plusieurs minutes.';
 
   @override
+  String get tagsEmptyTip =>
+      'Aucun tag pour le moment. Ajoutez-en un en modifiant un serveur pour le voir apparaître ici.';
+
+  @override
   String get benchmarkNoServers =>
       'Ajoutez d’abord un serveur, puis revenez pour lancer le benchmark.';
+
+  @override
+  String get schemaTooNewTitle =>
+      'Ces données sont plus récentes que l’application';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Elles ont été écrites par une version plus récente de ServerBox (stockage v$stored) ; cette version peut lire jusqu’à v$supported. Rien n’a été modifié.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Réinstallez cette version plus récente pour retrouver toutes vos données.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Exporter sans mot de passe';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Le fichier contiendra en clair toutes les clés privées SSH, les mots de passe des serveurs et les clés API. Toute personne qui obtient le fichier y aura accès.';
+
+  @override
+  String get schemaTooNewWipe => 'Supprimer toutes les données';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Tous les serveurs, clés, extraits et réglages de cet appareil seront supprimés, sans possibilité d’annulation. Une sauvegarde exportée ici serait la seule copie restante.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Données supprimées. Rouvrez l’application pour repartir de zéro.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Certaines données n’ont pas pu être supprimées et cette version ne peut toujours pas ouvrir ce qui reste. Réinstallez la version plus récente pour y accéder.';
 }

@@ -9,6 +9,7 @@ import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
+import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/server_dist.dart';
@@ -141,9 +142,26 @@ abstract final class Stores {
       // is is not something the user did, so it must not move the clock sync
       // reads.
       selfAddr.init(),
-      // Not a table to create — only the per-launch sweep of expired rows.
-      connectionStats.init(),
     ]);
+
+    // Not a table to create — only the per-launch sweep of expired rows, and
+    // it writes. `Stores.init` runs before `SchemaVersion.migrate` gets to
+    // refuse a database written by a newer build — it has to, since the stored
+    // version is read out of a store — so this would otherwise delete rows from
+    // a database the app is about to declare untouchable, and the rescue
+    // screen's "nothing has been changed" would be untrue.
+    //
+    // The worse half: a newer build that renamed this table or its `timestamp`
+    // column makes the sweep throw a plain `SqliteException`, which is *not*
+    // the exception `main` catches — so the launch dies with no window, which
+    // is the entire failure `SchemaTooNewPage` exists to prevent.
+    //
+    // After the `Future.wait`, because the guard reads the settings store.
+    // `SettingStore.removeRetiredKeys` carries the same guard for the same
+    // reason.
+    if (setting.schemaVersion.fetch() <= SchemaVersion.current) {
+      await connectionStats.init();
+    }
 
     // Before every fixup below. Each of them writes a flag meaning "this device
     // has been dealt with", and running them against the empty stores would set

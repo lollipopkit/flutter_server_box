@@ -2079,6 +2079,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.';
 
   @override
+  String get tagsEmptyTip =>
+      'No tags yet. Add one while editing a server and it will appear here.';
+
+  @override
   String get benchmarkNoServers =>
-      'Add a server first, then come back to benchmark it.';
+      'Add a server first, then return here to benchmark it.';
+
+  @override
+  String get schemaTooNewTitle => 'This data is newer than the app';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'It was written by a newer version of ServerBox (storage v$stored). This version reads up to v$supported; nothing has been changed.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Reinstall the newer version to open all your data again.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Export without a password';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'The file will contain every SSH private key, server password and API key in plain text. Anyone who gets the file can access them all.';
+
+  @override
+  String get schemaTooNewWipe => 'Delete all data';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'All servers, keys, snippets and settings on this device will be deleted. This cannot be undone. A backup exported here would be the only copy left.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Data deleted. Open the app again to start fresh.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.';
 }

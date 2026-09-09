@@ -2081,6 +2081,44 @@ class AppLocalizationsTr extends AppLocalizations {
       'Henüz çıktı yok. YABS ilk satırı yazdırmadan önce google.com ve icanhazip.com adreslerine erişilip erişilemediğini kontrol eder. Bu sitelerden birini engelleyen ağlarda işlem birkaç dakika sürebilir.';
 
   @override
+  String get tagsEmptyTip =>
+      'Henüz etiket yok. Bir sunucuyu düzenlerken etiket ekleyin; burada görünür.';
+
+  @override
   String get benchmarkNoServers =>
       'Önce bir sunucu ekleyin, ardından benchmark çalıştırmak için geri dönün.';
+
+  @override
+  String get schemaTooNewTitle => 'Bu veriler uygulamadan daha yeni';
+
+  @override
+  String schemaTooNewBody(int stored, int supported) {
+    return 'Bu veriler ServerBox’ın daha yeni bir sürümü tarafından yazılmış (depolama v$stored); bu sürüm en fazla v$supported okuyabilir. Hiçbir şey değiştirilmedi.';
+  }
+
+  @override
+  String get schemaTooNewReinstall =>
+      'Daha yeni sürümü yeniden yükleyin; her şey eskisi gibi açılır.';
+
+  @override
+  String get schemaTooNewExportPlain => 'Parolasız dışa aktar';
+
+  @override
+  String get schemaTooNewPlainWarn =>
+      'Dosya tüm SSH özel anahtarlarını, sunucu parolalarını ve API anahtarlarını düz metin olarak içerecek. Dosyayı alan kişi bunların tamamına erişebilir.';
+
+  @override
+  String get schemaTooNewWipe => 'Tüm verileri sil';
+
+  @override
+  String get schemaTooNewWipeConfirm =>
+      'Bu cihazdaki tüm sunucular, anahtarlar, snippet’ler ve ayarlar silinecek; bu işlem geri alınamaz. Burada dışa aktarılan bir yedek, geriye kalan tek kopya olur.';
+
+  @override
+  String get schemaTooNewWipeDone =>
+      'Veriler silindi. Baştan başlamak için uygulamayı yeniden açın.';
+
+  @override
+  String get schemaTooNewWipeFailed =>
+      'Bazı veriler silinemedi ve bu sürüm geriye kalanları hâlâ açamıyor. Erişmek için daha yeni sürümü yeniden yükleyin.';
 }
