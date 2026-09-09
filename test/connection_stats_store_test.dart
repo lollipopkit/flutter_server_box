@@ -150,7 +150,9 @@ void main() {
       stat('a', at: base.add(const Duration(minutes: 2))),
     );
 
-    final summary = store.getServerStats('a', 'srv');
+    final summary = store.getAllServerStats().single;
+    expect(summary.serverId, 'a');
+    expect(summary.serverName, 'srv');
     expect(summary.totalAttempts, 3);
     expect(summary.successCount, 2);
     expect(summary.failureCount, 1);
@@ -159,11 +161,11 @@ void main() {
     expect(summary.lastFailureTime, base.add(const Duration(minutes: 1)));
   });
 
-  test('a server with no attempts summarises as empty, not as an error', () {
-    final summary = store.getServerStats('nobody', 'srv');
-    expect(summary.totalAttempts, 0);
-    expect(summary.successRate, 0.0);
-    expect(summary.recentConnections, isEmpty);
+  test('a server with no attempts is absent from the list, not an error', () {
+    expect(
+      store.getAllServerStats().where((e) => e.serverId == 'nobody'),
+      isEmpty,
+    );
   });
 
   test('the overall list names each server as it was named last', () async {
@@ -199,7 +201,7 @@ void main() {
   });
 
   group('the overall list, which is two queries regardless of server count', () {
-    test('it agrees with reading each server separately', () async {
+    test('the overall list aggregates each server correctly', () async {
       for (var server = 0; server < 4; server++) {
         for (var i = 0; i < 25; i++) {
           await store.recordConnection(
@@ -220,24 +222,28 @@ void main() {
       };
       expect(all.keys, hasLength(4));
 
-      // The aggregate has to answer exactly what the per-server read does.
+      // Even minutes succeeded and odd ones timed out, so the aggregates are
+      // known up front rather than agreed between two implementations.
       for (var server = 0; server < 4; server++) {
         final id = 's$server';
-        final one = store.getServerStats(id, 'name-$server');
-        final many = all[id]!;
+        final summary = all[id]!;
 
-        expect(many.serverName, one.serverName, reason: id);
-        expect(many.totalAttempts, one.totalAttempts, reason: id);
-        expect(many.successCount, one.successCount, reason: id);
-        expect(many.failureCount, one.failureCount, reason: id);
-        expect(many.successRate, closeTo(one.successRate, 1e-12), reason: id);
-        expect(many.lastSuccessTime, one.lastSuccessTime, reason: id);
-        expect(many.lastFailureTime, one.lastFailureTime, reason: id);
+        expect(summary.serverName, 'name-$server', reason: id);
+        expect(summary.totalAttempts, 25, reason: id);
+        expect(summary.successCount, 13, reason: id);
+        expect(summary.failureCount, 12, reason: id);
+        expect(summary.successRate, closeTo(13 / 25, 1e-12), reason: id);
         expect(
-          many.recentConnections.map((e) => e.timestamp),
-          one.recentConnections.map((e) => e.timestamp),
+          summary.lastSuccessTime,
+          base.add(const Duration(minutes: 24)),
           reason: id,
         );
+        expect(
+          summary.lastFailureTime,
+          base.add(const Duration(minutes: 23)),
+          reason: id,
+        );
+        expect(summary.recentConnections, hasLength(20), reason: id);
       }
     });
 

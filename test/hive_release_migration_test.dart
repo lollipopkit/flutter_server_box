@@ -320,7 +320,9 @@ void main() {
             .single['n'];
         expect(rows, 120);
 
-        final stats = Stores.connectionStats.getServerStats('srv-pwd', 'x');
+        final stats = Stores.connectionStats.getAllServerStats().firstWhere(
+          (e) => e.serverId == 'srv-pwd',
+        );
         expect(stats.totalAttempts, 60);
         // The generator made one in five a success.
         expect(stats.successCount, 12);
