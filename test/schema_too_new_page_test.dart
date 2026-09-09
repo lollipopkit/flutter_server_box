@@ -6,26 +6,39 @@
 /// reinstall the newer build* — was in a log file on the device.
 library;
 
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
-
-import 'helpers/test_db.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tmp;
+  late Directory dbDir;
 
   // `Paths.doc` is `late` and refuses a second assignment, so it is set once
   // and its contents cleared per test instead.
   setUpAll(() async {
     tmp = await Directory.systemTemp.createTemp('schema-page-');
     Paths.doc = tmp.path;
+
+    final rng = Random(11);
+    FlutterSecureStorage.setMockInitialValues({
+      'hivePwd': base64UrlEncode(
+        Uint8List.fromList(List<int>.generate(32, (_) => rng.nextInt(256))),
+      ),
+    });
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
   });
 
   tearDownAll(() {
@@ -36,10 +49,15 @@ void main() {
     for (final e in tmp.listSync()) {
       e.deleteSync(recursive: true);
     }
-    await openTestDb();
+    // A real file, not `openTestDb`'s in-memory database: the export runs on a
+    // second isolate that opens the store by path, and an in-memory one has
+    // none. `Paths.doc` is where the page writes its copies, so the store goes
+    // in a subdirectory to keep the two apart.
+    dbDir = Directory('${tmp.path}/store')..createSync();
+    await SqliteDb.open(dbDir.path);
   });
 
-  tearDown(closeTestDb);
+  tearDown(SqliteDb.close);
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(

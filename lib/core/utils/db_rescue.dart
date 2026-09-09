@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/store/tables.dart';
@@ -17,7 +20,7 @@ import 'package:sqlite3/sqlite3.dart';
 /// copies at the SQL level, enumerating `sqlite_master`, so a shape this build
 /// has never heard of survives.
 abstract final class DbRescue {
-  /// Writes a copy of the live database to [outPath].
+  /// Writes a copy of the live database to [outPath], off the UI isolate.
   ///
   /// [password] null gives a plain SQLite file that any tool opens, and any
   /// tool can therefore read the private keys and server passwords in it.
@@ -27,55 +30,118 @@ abstract final class DbRescue {
   /// The copy is a *file*, not a `BackupV2` document: this build cannot
   /// serialize records whose shape it does not understand, and a rescue that
   /// silently drops the newer build's data is not a rescue.
-  static void exportTo(String outPath, {String? password}) {
-    final db = SqliteDb.instance;
+  ///
+  /// On its own isolate with its own connection, because the copy is one
+  /// `INSERT ... SELECT` per table and SQLite runs each to completion — there
+  /// is no point inside one at which the UI could be let back in. The
+  /// database this is worth running on is the large one: fifty benchmark runs
+  /// a server, each carrying a log and a result document, is tens of megabytes
+  /// to read, decrypt and write, and doing that on the isolate drawing frames
+  /// freezes the screen for as long as it takes.
+  static Future<void> exportTo(String outPath, {String? password}) async {
+    final dbPath = SqliteDb.path;
+    if (dbPath == null) {
+      throw StateError('The database is not open');
+    }
+
+    // The second connection reads the file, and the newest pages may still be
+    // in the write-ahead log. SQLite would let it read them, but only through
+    // the `-shm` file and only while this connection keeps that consistent —
+    // folding them back first makes the copy depend on the file alone.
+    SqliteDb.instance.execute('PRAGMA wal_checkpoint(TRUNCATE);');
+
+    // Read here, not there: it comes from the keychain through a platform
+    // channel, and a background isolate has no messenger to ask over.
+    final keyB64 = await SecureStoreProps.hivePwd.read();
+    if (keyB64 == null) {
+      throw StateError('No store encryption key');
+    }
+
     // A leftover from an interrupted attempt would be attached and appended
     // to, leaving a file holding two copies of every table.
     final out = File(outPath);
     if (out.existsSync()) out.deleteSync();
 
-    // Off across the whole copy, and this is not optional. `sqlite_master` is
-    // in creation order, and a create-copy-drop-rename migration moves the
-    // table it rebuilds to the *end* — so `server`, the parent of six
-    // `ON DELETE CASCADE` tables, comes after its own children. Inserting
-    // `server_tag` before `server` exists then fails the foreign key, which is
-    // what a real v23 database did on the first device this ran on. Ordering
-    // the copy by dependency would be the alternative, and it would have to
-    // parse the newer build's DDL to find the dependencies.
-    //
-    // Outside a transaction, because the pragma is a no-op inside one — and
-    // there is no transaction here for that reason.
-    //
-    // Nothing is lost by it: the source satisfies its own constraints, so a
-    // faithful copy does too. They are still declared in the copy, since the
-    // DDL comes over verbatim.
-    db.execute('PRAGMA foreign_keys = OFF;');
-    var copied = false;
     try {
+      await Isolate.run(
+        () => _exportSync(
+          dbPath: dbPath,
+          keyB64: keyB64,
+          outPath: outPath,
+          password: password,
+        ),
+      );
+    } catch (_) {
+      // A half-written copy is worse than none: it looks like a backup.
+      if (out.existsSync()) out.deleteSync();
+      rethrow;
+    }
+  }
+
+  /// The copy itself, on a connection of this isolate's own.
+  ///
+  /// No `PRAGMA cipher`: sqlite3mc reads which one a file was written with, and
+  /// leaving it out is what keeps this from restating a constant `SqliteDb`
+  /// keeps private — where a copy that drifted would not fail to compile, it
+  /// would fail to open a user's database at the one moment they needed it.
+  /// `db_rescue_test.dart` opens a real `SqliteDb` file to hold that.
+  static void _exportSync({
+    required String dbPath,
+    required String keyB64,
+    required String outPath,
+    required String? password,
+  }) {
+    final db = sqlite3.open(dbPath);
+    try {
+      db.execute('PRAGMA key = "x\'${_hex(base64Url.decode(keyB64))}\'";');
+      // The first statement that reads a page, and so the first that can fail
+      // on a wrong key — same reason `SqliteDb.open` does this.
+      db.select('SELECT count(*) FROM sqlite_master;');
+
+      // Off across the whole copy, and this is not optional. `sqlite_master` is
+      // in creation order, and a create-copy-drop-rename migration moves the
+      // table it rebuilds to the *end* — so `server`, the parent of six
+      // `ON DELETE CASCADE` tables, comes after its own children. Inserting
+      // `server_tag` before `server` exists then fails the foreign key, which is
+      // what a real v23 database did on the first device this ran on. Ordering
+      // the copy by dependency would be the alternative, and it would have to
+      // parse the newer build's DDL to find the dependencies.
+      //
+      // Outside a transaction, because the pragma is a no-op inside one — and
+      // there is no transaction here for that reason.
+      //
+      // Nothing is lost by it: the source satisfies its own constraints, so a
+      // faithful copy does too. They are still declared in the copy, since the
+      // DDL comes over verbatim.
+      db.execute('PRAGMA foreign_keys = OFF;');
+
       // `KEY ''` means no encryption in sqlite3mc, which is what makes the
-      // plain export plain. No cipher pragma either way: the keyed file records
-      // what it was written with, so `PRAGMA key` alone reopens it — which also
-      // keeps this from having to know the constant `SqliteDb` keeps private.
+      // plain export plain.
       db.execute(
         'ATTACH DATABASE ? AS $_alias KEY ?;',
         [outPath, password ?? ''],
       );
       try {
         _copySchemaAndRows(db);
-        copied = true;
       } finally {
-        // Detached even when the copy failed, or the next attempt finds the
-        // alias taken and the file locked.
         db.execute('DETACH DATABASE $_alias;');
       }
     } finally {
-      // Back on whatever happened. Left off, every cascade on this connection
-      // is disarmed for the rest of its life.
-      db.execute('PRAGMA foreign_keys = ON;');
-      // A half-written copy is worse than none: it looks like a backup. Only
-      // after the detach, since an attached file cannot be unlinked.
-      if (!copied && out.existsSync()) out.deleteSync();
+      // This connection is this isolate's and goes with it, so the pragma does
+      // not have to be put back — but the handle does have to be closed, or the
+      // file keeps a lock the app's own connection can trip over.
+      db.close();
     }
+  }
+
+  static String _hex(Uint8List bytes) {
+    const digits = '0123456789abcdef';
+    final sb = StringBuffer();
+    for (final b in bytes) {
+      sb.write(digits[(b >> 4) & 0xf]);
+      sb.write(digits[b & 0xf]);
+    }
+    return sb.toString();
   }
 
   static const _alias = 'rescue_out';

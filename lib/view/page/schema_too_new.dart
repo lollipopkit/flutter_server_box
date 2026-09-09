@@ -164,10 +164,9 @@ extension _Actions on _SchemaTooNewPageState {
     setState(() => _busy = true);
     try {
       final path = _outPath(suffix);
-      // Synchronous, and on the UI isolate: the database handle belongs to it,
-      // and a rescue copy of a settings database is small enough that the
-      // alternative is not worth the second connection.
-      DbRescue.exportTo(path, password: password);
+      // Awaited: it runs on its own isolate, so the spinner this sets can
+      // actually spin.
+      await DbRescue.exportTo(path, password: password);
       await Pfs.sharePaths(paths: [path], title: libL10n.backup);
     } catch (e, s) {
       Loggers.app.warning('Rescue export failed', e, s);
