@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:server_box/data/model/server/geo.dart';
 
@@ -148,6 +149,7 @@ abstract final class BundledLand {
   }
 
   /// For tests, which need each case to start from nothing.
+  @visibleForTesting
   static void resetForTest([GlobeLand? land]) {
     _loaded = land;
     _tried = land != null;
