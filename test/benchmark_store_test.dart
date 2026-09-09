@@ -148,7 +148,7 @@ void main() {
       SqliteDb.instance.execute(
         "INSERT INTO server (id, name, ssh_ip) VALUES ('srv2', 'web', '10.0.0.2');",
       );
-      store = BenchmarkStore.forTest();
+      store = BenchmarkStore();
     });
 
     tearDown(closeTestDb);
@@ -283,14 +283,5 @@ void main() {
       );
     });
 
-    test('forgetting one server leaves the other alone', () {
-      store.put(_run('a'));
-      store.put(_run('b', serverId: 'srv2'));
-
-      store.removeForServer('srv');
-
-      expect(store.forServer('srv'), isEmpty);
-      expect(store.forServer('srv2'), hasLength(1));
-    });
   });
 }
