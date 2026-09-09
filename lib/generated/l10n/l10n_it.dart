@@ -1064,7 +1064,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'Disattivata per questa app nelle impostazioni iOS › Face ID e codice, oppure in Impostazioni › ServerBox › Attività live.';
+      'iOS non lo consente. Gli interruttori si trovano in Impostazioni › ServerBox › Attività live e Impostazioni › Face ID e codice › Attività live.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

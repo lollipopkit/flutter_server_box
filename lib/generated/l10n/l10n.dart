@@ -1952,7 +1952,7 @@ abstract class AppLocalizations {
   /// No description provided for @liveActivitySystemDisabled.
   ///
   /// In en, this message translates to:
-  /// **'iOS is not allowing one. Check Settings › ServerBox › Live Activities, and Settings › Face ID & Passcode › Live Activities.'**
+  /// **'iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.'**
   String get liveActivitySystemDisabled;
 
   /// No description provided for @proxyCommandOnlySupportedOnDesktop.

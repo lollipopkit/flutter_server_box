@@ -224,7 +224,7 @@
   "pushToken": "Token de notificação push",
   "liveActivity": "Atividade ao vivo",
   "liveActivityTip": "Mostra sessões do terminal na Tela Bloqueada e na Dynamic Island. O nome do servidor e o estado da conexão ficam visíveis sem desbloquear o dispositivo.",
-  "liveActivitySystemDisabled": "Desativada para este app em Ajustes do iOS › Face ID e Código, ou em Ajustes › ServerBox › Atividades ao vivo.",
+  "liveActivitySystemDisabled": "O iOS não está permitindo. Os controles estão em Ajustes › ServerBox › Atividades ao Vivo e Ajustes › Face ID e Código › Atividades ao Vivo.",
   "pveIgnoreCertTip": "Não recomendado para ativar, cuidado com os riscos de segurança! Se estiver usando o certificado padrão do PVE, você precisa habilitar esta opção.",
   "pveVersionLow": "Esta funcionalidade está atualmente em fase de teste e foi testada apenas no PVE 8+. Por favor, use com cautela.",
   "read": "Leitura",

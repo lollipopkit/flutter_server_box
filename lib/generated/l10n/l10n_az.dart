@@ -1064,7 +1064,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS buna icazə vermir. «Settings › ServerBox › Live Activities» və «Settings › Face ID & Passcode › Live Activities» bölmələrini yoxla.';
+      'iOS buna icazə vermir. Açarlar «Settings › ServerBox › Live Activities» və «Settings › Face ID & Passcode › Live Activities» bölmələrindədir.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

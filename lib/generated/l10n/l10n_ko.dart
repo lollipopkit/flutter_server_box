@@ -1004,7 +1004,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS 설정 › Face ID 및 암호 또는 설정 › ServerBox › 실시간 활동에서 이 앱에 대해 꺼져 있습니다.';
+      'iOS에서 허용하지 않습니다. 스위치는 설정 › ServerBox › 실시간 활동과 설정 › Face ID 및 암호 › 실시간 활동에 있습니다.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

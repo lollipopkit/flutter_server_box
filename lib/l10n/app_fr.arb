@@ -224,7 +224,7 @@
   "pushToken": "Jeton d'identification",
   "liveActivity": "Activité en direct",
   "liveActivityTip": "Affichez les sessions du terminal sur l’écran verrouillé et dans Dynamic Island. Le nom du serveur et l’état de la connexion y sont visibles sans déverrouiller l’appareil.",
-  "liveActivitySystemDisabled": "Désactivée pour cette app dans Réglages iOS › Face ID et code, ou dans Réglages › ServerBox › Activités en direct.",
+  "liveActivitySystemDisabled": "iOS ne l’autorise pas. Les réglages se trouvent dans Réglages › ServerBox › Activités en direct et Réglages › Face ID et code › Activités en direct.",
   "pveIgnoreCertTip": "Il n'est pas recommandé de l'activer, attention aux risques de sécurité ! Si vous utilisez le certificat par défaut de PVE, vous devez activer cette option.",
   "pveVersionLow": "Cette fonctionnalité est actuellement en phase de test et n'a été testée que sur PVE 8+. Veuillez l'utiliser avec prudence.",
   "read": "Lire",

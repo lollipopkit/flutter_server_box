@@ -1056,7 +1056,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'Dimatikan untuk aplikasi ini di Pengaturan iOS › Face ID & Kode, atau di Pengaturan › ServerBox › Aktivitas Live.';
+      'iOS tidak mengizinkannya. Sakelarnya ada di Pengaturan › ServerBox › Aktivitas Live dan Pengaturan › Face ID & Kode Sandi › Aktivitas Live.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

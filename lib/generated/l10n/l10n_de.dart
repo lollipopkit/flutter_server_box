@@ -1063,7 +1063,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'Für diese App in den iOS-Einstellungen unter „Face ID & Code“ oder unter Einstellungen › ServerBox › Live-Aktivitäten deaktiviert.';
+      'iOS lässt derzeit keine zu. Die Schalter finden sich unter Einstellungen › ServerBox › Live-Aktivitäten und Einstellungen › Face ID & Code › Live-Aktivitäten.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

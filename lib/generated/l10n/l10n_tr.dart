@@ -1058,7 +1058,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS Ayarları › Face ID ve Parola veya Ayarlar › ServerBox › Canlı Etkinlikler bölümünde bu uygulama için kapalı.';
+      'iOS buna izin vermiyor. Anahtarlar Ayarlar › ServerBox › Canlı Etkinlikler ve Ayarlar › Face ID ve Parola › Canlı Etkinlikler bölümlerinde.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

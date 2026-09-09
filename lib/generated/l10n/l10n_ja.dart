@@ -1003,7 +1003,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS の「設定 › Face ID とパスコード」、または「設定 › ServerBox › ライブアクティビティ」でこのアプリに対してオフになっています。';
+      'iOS が許可していません。スイッチは「設定 › ServerBox › ライブアクティビティ」と「設定 › Face ID とパスコード › ライブアクティビティ」にあります。';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

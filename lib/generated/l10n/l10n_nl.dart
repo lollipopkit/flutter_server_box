@@ -1060,7 +1060,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'Uitgeschakeld voor deze app in iOS-instellingen › Face ID en toegangscode, of in Instellingen › ServerBox › Live activiteiten.';
+      'iOS staat dit niet toe. De schakelaars staan in Instellingen › ServerBox › Live-activiteiten en Instellingen › Face ID en toegangscode › Live-activiteiten.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

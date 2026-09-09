@@ -1063,7 +1063,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'Отключено для этого приложения в настройках iOS › Face ID и код-пароль или в разделе Настройки › ServerBox › Активности в реальном времени.';
+      'iOS не разрешает. Переключатели находятся в разделах Настройки › ServerBox › Активности в реальном времени и Настройки › Face ID и код-пароль › Активности в реальном времени.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

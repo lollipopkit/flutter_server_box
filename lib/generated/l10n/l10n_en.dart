@@ -1050,7 +1050,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS is not allowing one. Check Settings › ServerBox › Live Activities, and Settings › Face ID & Passcode › Live Activities.';
+      'iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>

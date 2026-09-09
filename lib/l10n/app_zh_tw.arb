@@ -304,7 +304,7 @@
   "pushToken": "消息推送 Token",
   "liveActivity": "即時動態",
   "liveActivityTip": "在鎖定畫面和動態島上顯示終端機工作階段。無需解鎖即可查看伺服器名稱與連線狀態。",
-  "liveActivitySystemDisabled": "iOS 未允許顯示。請檢查「設定 › ServerBox › 即時動態」以及「設定 › 面容 ID 與密碼 › 即時動態」。",
+  "liveActivitySystemDisabled": "iOS 未允許顯示。開關位於「設定 › ServerBox › 即時動態」和「設定 › 面容 ID 與密碼 › 即時動態」。",
   "pveIgnoreCertTip": "不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。",
   "pveServerClientMissing": "目前伺服器的 SSH 用戶端不可用。",
   "pveAddressMissing": "未設定 PVE 位址，請在伺服器設定中填寫。",

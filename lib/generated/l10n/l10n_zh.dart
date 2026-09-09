@@ -985,7 +985,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS 未允许显示。请检查「设置 › ServerBox › 实时活动」以及「设置 › 面容 ID 与密码 › 实时活动」。';
+      'iOS 未允许显示。开关位于「设置 › ServerBox › 实时活动」和「设置 › 面容 ID 与密码 › 实时活动」。';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 仅支持桌面平台。';
@@ -2909,7 +2909,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get liveActivitySystemDisabled =>
-      'iOS 未允許顯示。請檢查「設定 › ServerBox › 即時動態」以及「設定 › 面容 ID 與密碼 › 即時動態」。';
+      'iOS 未允許顯示。開關位於「設定 › ServerBox › 即時動態」和「設定 › 面容 ID 與密碼 › 即時動態」。';
 
   @override
   String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 僅支援桌面平台。';

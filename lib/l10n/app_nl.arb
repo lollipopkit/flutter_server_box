@@ -224,7 +224,7 @@
   "pushToken": "Push-token",
   "liveActivity": "Live activiteit",
   "liveActivityTip": "Toon terminalsessies op het toegangsscherm en in Dynamic Island. De servernaam en verbindingsstatus zijn daar zichtbaar zonder het apparaat te ontgrendelen.",
-  "liveActivitySystemDisabled": "Uitgeschakeld voor deze app in iOS-instellingen › Face ID en toegangscode, of in Instellingen › ServerBox › Live activiteiten.",
+  "liveActivitySystemDisabled": "iOS staat dit niet toe. De schakelaars staan in Instellingen › ServerBox › Live-activiteiten en Instellingen › Face ID en toegangscode › Live-activiteiten.",
   "pveIgnoreCertTip": "Niet aanbevolen om in te schakelen, let op beveiligingsrisico's! Als u de standaardcertificaat van PVE gebruikt, moet u deze optie inschakelen.",
   "pveVersionLow": "Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.",
   "read": "Lezen",
