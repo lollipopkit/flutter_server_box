@@ -82,10 +82,18 @@ void main() {
   /// The export runs under `Isolate.run`, which a `testWidgets` fake-async zone
   /// does not drive on its own — without this the copy never completes and the
   /// share is never reached.
-  Future<void> settle(WidgetTester tester) async {
-    await tester.runAsync(() => Future<void>.delayed(
-          const Duration(milliseconds: 200),
-        ));
+  Future<void> settle(WidgetTester tester, {bool waitForShare = false}) async {
+    await tester.runAsync(() async {
+      if (!waitForShare) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        return;
+      }
+
+      final deadline = DateTime.now().add(const Duration(seconds: 5));
+      while (shared.isEmpty && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+    });
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
   }
@@ -147,7 +155,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
-    await settle(tester);
+    await settle(tester, waitForShare: true);
 
     expect(shared, hasLength(1));
     // Named for the version that wrote the data, which is what a future reader
