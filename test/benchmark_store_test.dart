@@ -85,7 +85,7 @@ void main() {
     // a user's device.
     test('is registered, and the version was bumped past it', () {
       expect(const BenchmarkRunsMigration().from, 20);
-      expect(SchemaVersion.current, 21);
+      expect(SchemaVersion.current, 22);
       expect(
         kSchemaMigrations.map((m) => m.from),
         contains(20),
