@@ -757,9 +757,6 @@ class SettingStore extends SqliteStore {
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
 
-  /// Have notified user for notificaiton permission or not
-  late final noNotiPerm = propertyDefault('noNotiPerm', false);
-
   /// The backup password
   late final backupPassword = SecureProp('bakPasswd');
 
@@ -953,6 +950,11 @@ class SettingStore extends SqliteStore {
     for (final key in const [
       'moveOutServerTabFuncBtns',
       'forceSinglePane',
+      // These settings were removed without a schema step. They have no
+      // reader now, so keeping them only inflates backups and raw dumps.
+      'fgService',
+      'noNotiPerm',
+      'showDistIcon',
       // The plain-key schema version. It moved to an internal key so that a
       // backup stops carrying it; this drops the copy a Hive import brought
       // across, which nothing reads and a backup would still export.
@@ -1075,6 +1077,4 @@ final class FloatShellProps {
   final FieldProp<FloatShellConfig, double> sheetHeight;
 
   FloatShellConfig get() => config.get();
-
-  Future<void> set(FloatShellConfig value) => config.set(value);
 }

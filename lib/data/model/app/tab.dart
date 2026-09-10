@@ -92,8 +92,4 @@ enum AppTab {
     return null;
   }
 
-  String toJson() => name;
-
-  static AppTab fromJson(String json) =>
-      _parseAppTabFromElement(json) ?? AppTab.server;
 }

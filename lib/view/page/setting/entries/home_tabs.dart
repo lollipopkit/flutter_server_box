@@ -7,7 +7,6 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
-@visibleForTesting
 List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
   final selected = selectedTabs.toSet();
   return AppTab.values
@@ -22,7 +21,6 @@ List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
 /// then disabled — which is what the reorderable is built from, so crossing the
 /// separator and moving within one half are the same arithmetic. Whether the
 /// result is allowed is the caller's to say.
-@visibleForTesting
 ({List<AppTab> enabled, List<AppTab> disabled})? reorderHomeTabs({
   required List<AppTab> enabled,
   required List<AppTab> disabled,

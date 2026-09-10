@@ -257,6 +257,9 @@ void main() {
       store.setAll({
         'moveOutServerTabFuncBtns': true,
         'forceSinglePane': true,
+        'fgService': true,
+        'noNotiPerm': true,
+        'showDistIcon': true,
         'recordHistory': false,
       });
 
@@ -264,6 +267,9 @@ void main() {
 
       expect(store.get<bool>('moveOutServerTabFuncBtns'), isNull);
       expect(store.get<bool>('forceSinglePane'), isNull);
+      expect(store.get<bool>('fgService'), isNull);
+      expect(store.get<bool>('noNotiPerm'), isNull);
+      expect(store.get<bool>('showDistIcon'), isNull);
       expect(store.get<bool>('recordHistory'), isFalse);
     },
   );
