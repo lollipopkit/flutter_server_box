@@ -61,7 +61,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get crashReportSubmit => 'Copier et signaler';
 
   @override
-  String get acceptBeta => 'Accepter les mises à jour de la version de test';
+  String get preReleaseUpdates => 'Recevoir les mises à jour préliminaires';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -517,14 +517,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get clearThisServerStats => 'Effacer les statistiques de ce serveur';
-
-  @override
-  String get compactDatabase => 'Compacter la base de données';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Taille de la base de données : $size\n\nCela réorganisera la base de données pour réduire la taille du fichier. Aucune donnée ne sera supprimée.';
-  }
 
   @override
   String get closeAfterSave => 'Enregistrer et fermer';

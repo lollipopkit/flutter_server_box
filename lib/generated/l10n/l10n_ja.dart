@@ -59,7 +59,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get crashReportSubmit => 'コピーして報告';
 
   @override
-  String get acceptBeta => 'テストバージョンの更新を受け入れる';
+  String get preReleaseUpdates => 'プレリリース版の更新を受け取る';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -479,14 +479,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get clearThisServerStats => 'このサーバーの統計をクリア';
-
-  @override
-  String get compactDatabase => 'データベースを圧縮';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'データベースサイズ: $size\n\nこれにより、ファイルサイズを小さくするためにデータベースが再編成されます。データは削除されません。';
-  }
 
   @override
   String get closeAfterSave => '保存して閉じる';

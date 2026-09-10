@@ -61,7 +61,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get crashReportSubmit => 'Kopyala ve bildir';
 
   @override
-  String get acceptBeta => 'Beta sürüm güncellemelerini kabul et';
+  String get preReleaseUpdates => 'Ön sürüm güncellemelerini al';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -510,14 +510,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get clearThisServerStats => 'Bu Sunucu İstatistiklerini Temizle';
-
-  @override
-  String get compactDatabase => 'Veritabanını Sıkıştır';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Veritabanı boyutu: $size\n\nBu, dosya boyutunu küçültmek için veritabanını yeniden düzenleyecektir. Veriler silinmeyecek.';
-  }
 
   @override
   String get closeAfterSave => 'Kaydet ve kapat';

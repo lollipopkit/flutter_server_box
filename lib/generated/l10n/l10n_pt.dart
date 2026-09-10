@@ -61,7 +61,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get crashReportSubmit => 'Copiar e relatar';
 
   @override
-  String get acceptBeta => 'Aceitar atualizações da versão de teste';
+  String get preReleaseUpdates => 'Receber atualizações de pré-lançamento';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -510,14 +510,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get clearThisServerStats => 'Limpar estatísticas deste servidor';
-
-  @override
-  String get compactDatabase => 'Compactar banco de dados';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Tamanho do banco de dados: $size\n\nIsso reorganizará o banco de dados para reduzir o tamanho do arquivo. Nenhum dado será excluído.';
-  }
 
   @override
   String get closeAfterSave => 'Salvar e fechar';

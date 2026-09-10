@@ -59,7 +59,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get crashReportSubmit => '복사 후 보고';
 
   @override
-  String get acceptBeta => '베타 버전 업데이트 수락';
+  String get preReleaseUpdates => '프리릴리스 업데이트 받기';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -482,14 +482,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get clearThisServerStats => '이 서버의 통계 삭제';
-
-  @override
-  String get compactDatabase => '데이터베이스 압축';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return '데이터베이스 크기: $size\n\n데이터베이스를 재구성하여 파일 크기를 줄입니다. 데이터는 삭제되지 않습니다.';
-  }
 
   @override
   String get closeAfterSave => '저장 후 닫기';

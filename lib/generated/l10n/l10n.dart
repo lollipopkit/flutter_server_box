@@ -215,11 +215,11 @@ abstract class AppLocalizations {
   /// **'Copy & report'**
   String get crashReportSubmit;
 
-  /// No description provided for @acceptBeta.
+  /// No description provided for @preReleaseUpdates.
   ///
   /// In en, this message translates to:
-  /// **'Accept beta version updates'**
-  String get acceptBeta;
+  /// **'Receive pre-release updates'**
+  String get preReleaseUpdates;
 
   /// No description provided for @addSystemPrivateKeyTip.
   ///
@@ -1000,18 +1000,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear This Server Statistics'**
   String get clearThisServerStats;
-
-  /// No description provided for @compactDatabase.
-  ///
-  /// In en, this message translates to:
-  /// **'Compact Database'**
-  String get compactDatabase;
-
-  /// No description provided for @compactDatabaseContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Database size: {size}\n\nThis will reorganize the database to reduce file size. No data will be deleted.'**
-  String compactDatabaseContent(Object size);
 
   /// No description provided for @closeAfterSave.
   ///

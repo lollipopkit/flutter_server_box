@@ -58,7 +58,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashReportSubmit => '复制并反馈';
 
   @override
-  String get acceptBeta => '接受测试版更新推送';
+  String get preReleaseUpdates => '接收预发布版本更新';
 
   @override
   String get addSystemPrivateKeyTip => '检测到暂无私钥，是否添加系统默认的私钥（~/.ssh/id_rsa）？';
@@ -472,14 +472,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearThisServerStats => '清空此服务器统计';
-
-  @override
-  String get compactDatabase => '压缩数据库';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return '数据库大小：$size\n\n此操作将重新组织数据库以减少体积，数据不会丢失。';
-  }
 
   @override
   String get closeAfterSave => '保存后关闭';
@@ -2017,7 +2009,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get crashReportSubmit => '複製並回報';
 
   @override
-  String get acceptBeta => '接受測試版更新推送';
+  String get preReleaseUpdates => '接收預發布版本更新';
 
   @override
   String get addSystemPrivateKeyTip => '偵測到尚無私鑰，是否要加入系統預設的私鑰（~/.ssh/id_rsa）？';
@@ -2431,14 +2423,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get clearThisServerStats => '清空此伺服器統計';
-
-  @override
-  String get compactDatabase => '壓縮資料庫';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return '資料庫大小：$size\n\n此操作將重新組織資料庫以減少體積，資料不會遺失。';
-  }
 
   @override
   String get closeAfterSave => '儲存後關閉';

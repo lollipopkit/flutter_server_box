@@ -136,9 +136,8 @@ class ConnectionStatsStore {
     return result;
   }
 
-  static DateTime? _timeOf(Object? millis) => millis is int
-      ? DateTime.fromMillisecondsSinceEpoch(millis)
-      : null;
+  static DateTime? _timeOf(Object? millis) =>
+      millis is int ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
 
   Future<void> clearAll() async {
     _db.execute('DELETE FROM conn_stat;');
@@ -174,23 +173,6 @@ class ConnectionStatsStore {
       DateTime.now().subtract(_retention).millisecondsSinceEpoch,
     ]);
   }
-
-  Future<void> compact() async {
-    Loggers.app.info('Start compacting the store database...');
-    try {
-      SqliteDb.vacuum();
-      Loggers.app.info('Finished compacting the store database');
-    } catch (e, st) {
-      Loggers.app.warning('Failed compacting the store database', e, st);
-      rethrow;
-    }
-  }
-
-  /// Size of the whole store database, not of this table.
-  ///
-  /// Every store shares one file, so there is no per-table number to report and
-  /// the compaction this feeds is `VACUUM` on that file.
-  Future<int> dbSizeAsync() => SqliteDb.size();
 
   /// The id is generated rather than `<serverId>_<millis>`, which two attempts
   /// in the same millisecond shared — the second overwrote the first, and the

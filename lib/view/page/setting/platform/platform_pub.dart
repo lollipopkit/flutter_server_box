@@ -33,94 +33,39 @@ abstract final class PlatformPublicSettings {
   }
 
   static Widget get buildBioAuth {
-    return ExpandTile(
-      leading: const Icon(Icons.fingerprint),
-      title: Text(libL10n.bioAuth),
-      children: [_buildBioAuth(), _buildBioAuthDelay()],
-    );
-  }
-
-  static Widget _buildBioAuthDelay() {
+    if (!isIOS && !isAndroid && !isWindows) return const SizedBox.shrink();
     return FutureWidget<bool>(
       future: LocalAuth.isAvail,
-      loading: ListTile(
-        title: Text('${libL10n.delay} (${libL10n.second})'),
-        subtitle: const Text('...', style: UIs.textGrey),
-      ),
-      error: (e, _) => ListTile(
-        title: Text('${libL10n.delay} (${libL10n.second})'),
-        subtitle: Text('${libL10n.fail}: $e', style: UIs.textGrey),
-      ),
-      success: (can) {
-        return ListTile(
-          title: Text('${libL10n.delay} (${libL10n.second})'),
-          trailing: can == true
-              ? Stores.setting.delayBioAuthLock.fieldWidget()
-              : null,
-        );
+      loading: const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      success: (canAuth) {
+        if (canAuth != true) return const SizedBox.shrink();
+        return ExpandTile(
+          leading: const Icon(Icons.fingerprint),
+          title: Text(libL10n.bioAuth),
+          children: [_buildBioAuth(), _buildBioAuthDelay()],
+        ).cardx;
       },
     );
   }
 
   static Widget _buildBioAuth() {
-    return FutureWidget<bool>(
-      future: LocalAuth.isAvail,
-      loading: ListTile(
-        title: Text(libL10n.switch_),
-        subtitle: const Text('...', style: UIs.textGrey),
+    return ListTile(
+      title: Text(libL10n.switch_),
+      trailing: StoreSwitch(
+        prop: Stores.setting.useBioAuth,
+        validator: (val) async {
+          if (val) return true;
+          return await LocalAuth.goWithResult() == AuthResult.success;
+        },
       ),
-      error: (e, _) => ListTile(
-        title: Text(libL10n.switch_),
-        subtitle: Text('${libL10n.fail}: $e', style: UIs.textGrey),
-      ),
-      success: (canAuth) {
-        // A `final` rather than `can ??= false`: both closures below capture
-        // it, and a captured variable is not promoted.
-        final can = canAuth ?? false;
-        final unavailable = can
-            ? null
-            : Text(libL10n.notExistFmt(libL10n.bioAuth), style: UIs.textGrey);
-        return ValBuilder(
-          listenable: Stores.setting.useBioAuth.listenable(),
-          builder: (on) {
-            // The switch used to be absent whenever the device could not
-            // authenticate, which is right until the setting is on anyway —
-            // and a backup restored from a phone puts it there. Then the one
-            // control that would turn it off was missing on exactly the
-            // devices that needed it, and the lock screen had nothing behind
-            // it to open (#1406). `home.dart` turns it off by itself now; this
-            // is what is left if that write ever fails.
-            if (!can && !on) {
-              return ListTile(
-                title: Text(libL10n.switch_),
-                subtitle: unavailable,
-              );
-            }
-            return ListTile(
-              title: Text(libL10n.switch_),
-              subtitle: unavailable,
-              trailing: StoreSwitch(
-                prop: Stores.setting.useBioAuth,
-                // A `validator` and not a `callback`, for the reason spelled
-                // out above `buildPrivacyBlur`: `StoreSwitch` writes the new
-                // value after the callback regardless, so the old code's
-                // "authenticate, and put the old value back if it failed" was
-                // overwritten a line later. Turning the lock *off* took no
-                // authentication at all — anyone holding an unlocked device
-                // could remove it, which is the one thing this check is for.
-                validator: (val) async {
-                  if (val) return can;
-                  // Except where nothing can be proven. Asking a machine with
-                  // no sensor to authenticate before it may stop asking for
-                  // authentication is the deadlock again, one screen along.
-                  if (!can) return true;
-                  return await LocalAuth.goWithResult() == AuthResult.success;
-                },
-              ),
-            );
-          },
-        );
-      },
+    );
+  }
+
+  static Widget _buildBioAuthDelay() {
+    return ListTile(
+      title: Text('${libL10n.delay} (${libL10n.second})'),
+      trailing: Stores.setting.delayBioAuthLock.fieldWidget(),
     );
   }
 }

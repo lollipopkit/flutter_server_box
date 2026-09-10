@@ -61,7 +61,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get crashReportSubmit => 'Копировать и сообщить';
 
   @override
-  String get acceptBeta => 'Принять обновления тестовой версии';
+  String get preReleaseUpdates => 'Получать обновления предварительных версий';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -513,14 +513,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearThisServerStats => 'Очистить статистику этого сервера';
-
-  @override
-  String get compactDatabase => 'Сжать базу данных';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Размер базы данных: $size\n\nЭто перестроит базу данных для уменьшения размера файла. Данные не будут удалены.';
-  }
 
   @override
   String get closeAfterSave => 'Сохранить и закрыть';

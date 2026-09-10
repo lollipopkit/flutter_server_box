@@ -61,7 +61,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get crashReportSubmit => 'Salin & laporkan';
 
   @override
-  String get acceptBeta => 'Terima pembaruan versi uji coba';
+  String get preReleaseUpdates => 'Terima pembaruan pra-rilis';
 
   @override
   String get addSystemPrivateKeyTip =>
@@ -508,14 +508,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get clearThisServerStats => 'Hapus Statistik Server Ini';
-
-  @override
-  String get compactDatabase => 'Kompres Database';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Ukuran database: $size\n\nIni akan mengatur ulang database untuk mengurangi ukuran file. Tidak ada data yang akan dihapus.';
-  }
 
   @override
   String get closeAfterSave => 'Simpan dan tutup';
