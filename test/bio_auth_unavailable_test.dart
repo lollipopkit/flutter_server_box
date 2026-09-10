@@ -13,7 +13,7 @@
 /// test reads as "the switch is missing" whatever the code does.
 library;
 
-import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/fl_lib.dart' hide isWindows;
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,40 +87,42 @@ void main() {
     expect(find.byType(Switch), findsNothing);
   });
 
-  testWidgets('on a device that can authenticate, turning it off asks first', (
-    tester,
-  ) async {
-    // The check that was silently doing nothing. `StoreSwitch` writes the new
-    // value after its `callback` regardless of what the callback did, so the
-    // old "authenticate, and put the old value back on failure" was overwritten
-    // a line later: anyone holding an unlocked device could remove the lock,
-    // which is the one thing this asks about.
-    LocalAuth.isAvailForTest = () async => true;
-    LocalAuth.goWithResultForTest = ({bool onlyBio = false}) async =>
-        AuthResult.fail;
-    Stores.setting.useBioAuth.put(true);
+  testWidgets(
+    'on a device that can authenticate, turning it off asks first',
+    (tester) async {
+      // The check that was silently doing nothing. `StoreSwitch` writes the
+      // new value after its `callback` regardless of what the callback did, so
+      // the old "authenticate, and put the old value back on failure" was
+      // overwritten a line later: anyone holding an unlocked device could
+      // remove the lock, which is the one thing this asks about.
+      LocalAuth.isAvailForTest = () async => true;
+      LocalAuth.goWithResultForTest = ({bool onlyBio = false}) async =>
+          AuthResult.fail;
+      Stores.setting.useBioAuth.put(true);
 
-    await pumpSetting(tester);
-    await tester.tap(find.text(libL10n.bioAuth));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.byType(Switch));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+      await pumpSetting(tester);
+      await tester.tap(find.text(libL10n.bioAuth));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-    expect(
-      Stores.setting.useBioAuth.fetch(),
-      isTrue,
-      reason: 'the lock came off without anyone proving anything',
-    );
+      expect(
+        Stores.setting.useBioAuth.fetch(),
+        isTrue,
+        reason: 'the lock came off without anyone proving anything',
+      );
 
-    // And it does come off once the prompt is satisfied.
-    LocalAuth.goWithResultForTest = ({bool onlyBio = false}) async =>
-        AuthResult.success;
-    await tester.tap(find.byType(Switch));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+      // And it does come off once the prompt is satisfied.
+      LocalAuth.goWithResultForTest = ({bool onlyBio = false}) async =>
+          AuthResult.success;
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
-    expect(Stores.setting.useBioAuth.fetch(), isFalse);
-  });
+      expect(Stores.setting.useBioAuth.fetch(), isFalse);
+    },
+    skip: !isIOS && !isAndroid && !isWindows,
+  );
 }
