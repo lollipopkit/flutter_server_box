@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
