@@ -443,7 +443,7 @@ extension _App on _AppSettingsPageState {
 
   Widget _buildBeta() {
     return ListTile(
-      title: TipText('Beta Program', l10n.acceptBeta),
+      title: Text(l10n.preReleaseUpdates),
       trailing: StoreSwitch(prop: _setting.betaTest),
     );
   }

@@ -61,7 +61,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get crashReportSubmit => 'Kopiëren en melden';
 
   @override
-  String get acceptBeta => 'Accepteer testversie-updates';
+  String get preReleaseUpdates => 'Pre-release-updates ontvangen';
 
   @override
   String get addSystemPrivateKeyTip =>

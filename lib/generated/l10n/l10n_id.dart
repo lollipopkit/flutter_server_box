@@ -61,7 +61,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get crashReportSubmit => 'Salin & laporkan';
 
   @override
-  String get acceptBeta => 'Terima pembaruan versi uji coba';
+  String get preReleaseUpdates => 'Terima pembaruan pra-rilis';
 
   @override
   String get addSystemPrivateKeyTip =>

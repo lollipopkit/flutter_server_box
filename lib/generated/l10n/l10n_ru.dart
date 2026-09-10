@@ -61,7 +61,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get crashReportSubmit => 'Копировать и сообщить';
 
   @override
-  String get acceptBeta => 'Принять обновления тестовой версии';
+  String get preReleaseUpdates => 'Получать обновления предварительных версий';
 
   @override
   String get addSystemPrivateKeyTip =>

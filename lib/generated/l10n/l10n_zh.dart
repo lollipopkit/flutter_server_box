@@ -58,7 +58,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashReportSubmit => '复制并反馈';
 
   @override
-  String get acceptBeta => '接受测试版更新推送';
+  String get preReleaseUpdates => '接收预发布版本更新';
 
   @override
   String get addSystemPrivateKeyTip => '检测到暂无私钥，是否添加系统默认的私钥（~/.ssh/id_rsa）？';
@@ -2009,7 +2009,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get crashReportSubmit => '複製並回報';
 
   @override
-  String get acceptBeta => '接受測試版更新推送';
+  String get preReleaseUpdates => '接收預發布版本更新';
 
   @override
   String get addSystemPrivateKeyTip => '偵測到尚無私鑰，是否要加入系統預設的私鑰（~/.ssh/id_rsa）？';

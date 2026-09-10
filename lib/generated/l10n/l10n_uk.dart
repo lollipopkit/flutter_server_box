@@ -61,7 +61,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get crashReportSubmit => 'Копіювати та повідомити';
 
   @override
-  String get acceptBeta => 'Прийняти оновлення бета-версії';
+  String get preReleaseUpdates => 'Отримувати оновлення попередніх версій';
 
   @override
   String get addSystemPrivateKeyTip =>

@@ -61,7 +61,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get crashReportSubmit => 'Kopyala və bildir';
 
   @override
-  String get acceptBeta => 'Beta versiya yeniləmələrini qəbul et';
+  String get preReleaseUpdates => 'Önizləmə versiyası yeniləmələrini qəbul et';
 
   @override
   String get addSystemPrivateKeyTip =>

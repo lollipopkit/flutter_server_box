@@ -15,7 +15,7 @@
   "crashReportTitle": "Rapporto di arresto anomalo",
   "crashReportHint": "Questo è il registro dell'esecuzione precedente. I nomi e gli indirizzi dei server noti sono stati sostituiti da segnaposto, ma altri dettagli possono rimanere. Leggilo attentamente prima di inviarlo.",
   "crashReportSubmit": "Copia e segnala",
-  "acceptBeta": "Accetta aggiornamenti versione beta",
+  "preReleaseUpdates": "Ricevi aggiornamenti pre-release",
   "addSystemPrivateKeyTip": "Attualmente non esistono chiavi private, vuoi aggiungere quella fornita dal sistema (~/.ssh/id_rsa)?",
   "added2List": "Aggiunto alla lista delle attività",
   "askAi": "Chiedi all'IA",

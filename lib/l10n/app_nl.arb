@@ -15,7 +15,7 @@
   "crashReportTitle": "Crashrapport",
   "crashReportHint": "Dit is het logboek van de vorige uitvoering. Bekende servernamen en adressen zijn vervangen door plaatsaanduidingen, maar andere gegevens kunnen achterblijven. Lees het zorgvuldig door voordat je het indient.",
   "crashReportSubmit": "Kopiëren en melden",
-  "acceptBeta": "Accepteer testversie-updates",
+  "preReleaseUpdates": "Pre-release-updates ontvangen",
   "addSystemPrivateKeyTip": "Er is momenteel geen privésleutel, wilt u degene toevoegen die bij het systeem wordt geleverd (~/.ssh/id_rsa)?",
   "added2List": "Toegevoegd aan takenlijst",
   "askAi": "AI vragen",

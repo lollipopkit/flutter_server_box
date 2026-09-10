@@ -15,7 +15,7 @@
   "crashReportTitle": "Qəza hesabatı",
   "crashReportHint": "Bu, əvvəlki işə salınmanın jurnalıdır. Məlum server adları və ünvanları yer tutucularla əvəz olunub, lakin başqa təfərrüatlar qala bilər. Göndərməzdən əvvəl diqqətlə oxu.",
   "crashReportSubmit": "Kopyala və bildir",
-  "acceptBeta": "Beta versiya yeniləmələrini qəbul et",
+  "preReleaseUpdates": "Önizləmə versiyası yeniləmələrini qəbul et",
   "addSystemPrivateKeyTip": "Hazırda məxfi açar yoxdur. Sistemdəki açarı (~/.ssh/id_rsa) əlavə etmək istəyirsən?",
   "added2List": "Tapşırıq siyahısına əlavə edildi",
   "askAi": "AI-dan soruş",

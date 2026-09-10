@@ -59,7 +59,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get crashReportSubmit => '복사 후 보고';
 
   @override
-  String get acceptBeta => '베타 버전 업데이트 수락';
+  String get preReleaseUpdates => '프리릴리스 업데이트 받기';
 
   @override
   String get addSystemPrivateKeyTip =>

@@ -15,7 +15,7 @@
   "crashReportTitle": "當機報告",
   "crashReportHint": "這是上次執行的日誌。已知的伺服器名稱和位址已替換為預留位置，但其中可能仍包含其他資訊。提交前請仔細閱讀。",
   "crashReportSubmit": "複製並回報",
-  "acceptBeta": "接受測試版更新推送",
+  "preReleaseUpdates": "接收預發布版本更新",
   "addSystemPrivateKeyTip": "偵測到尚無私鑰，是否要加入系統預設的私鑰（~/.ssh/id_rsa）？",
   "added2List": "已新增至任務清單",
   "askAi": "詢問 AI",

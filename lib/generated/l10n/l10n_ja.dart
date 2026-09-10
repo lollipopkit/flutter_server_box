@@ -59,7 +59,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get crashReportSubmit => 'コピーして報告';
 
   @override
-  String get acceptBeta => 'テストバージョンの更新を受け入れる';
+  String get preReleaseUpdates => 'プレリリース版の更新を受け取る';
 
   @override
   String get addSystemPrivateKeyTip =>

@@ -15,7 +15,7 @@
   "crashReportTitle": "クラッシュレポート",
   "crashReportHint": "これは前回の実行ログです。既知のサーバー名とアドレスはプレースホルダーに置き換えられていますが、他の情報が残っている場合があります。送信する前によく読んでください。",
   "crashReportSubmit": "コピーして報告",
-  "acceptBeta": "テストバージョンの更新を受け入れる",
+  "preReleaseUpdates": "プレリリース版の更新を受け取る",
   "addSystemPrivateKeyTip": "現在秘密鍵がありません。システムのデフォルト(~/.ssh/id_rsa)を追加しますか？",
   "added2List": "タスクリストに追加されました",
   "askAi": "AI に質問",

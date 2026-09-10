@@ -15,7 +15,7 @@
   "crashReportTitle": "Absturzbericht",
   "crashReportHint": "Dies ist das Protokoll des vorherigen Laufs. Bekannte Servernamen und -adressen wurden durch Platzhalter ersetzt, andere Angaben können jedoch verbleiben. Bitte lesen Sie es vor dem Absenden sorgfältig durch.",
   "crashReportSubmit": "Kopieren & melden",
-  "acceptBeta": "Akzeptieren Sie Testversion-Updates",
+  "preReleaseUpdates": "Vorabversions-Updates erhalten",
   "addSystemPrivateKeyTip": "Derzeit haben Sie keinen privaten Schlüssel, fügen Sie den Schlüssel hinzu, der mit dem System geliefert wird (~/.ssh/id_rsa)?",
   "added2List": "Zur Aufgabenliste hinzugefügt",
   "askAi": "KI fragen",
