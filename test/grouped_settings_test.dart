@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/ask_ai_config.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/store/migrations/m009_grouped_settings.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'helpers/test_db.dart';
 
 /// The `value` column exactly as stored.
 String? _rawValue(String key) {
@@ -30,13 +31,13 @@ void main() {
   late SettingStore store;
   late GroupedSettingsMigration migration;
 
-  setUp(() {
-    SqliteDb.openInMemory();
+  setUp(() async {
+    await openTestDb();
     store = SettingStore('setting_test');
     migration = GroupedSettingsMigration(store: store);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('it is the step that follows the one before it', () {
     expect(migration.from, 9);

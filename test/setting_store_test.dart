@@ -7,24 +7,24 @@
 /// that tells "never offered" from "offered and declined".
 library;
 
-import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/fl_lib.dart' as lib show isMacOS;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'helpers/test_db.dart';
 
 void main() {
   late SettingStore store;
   late SettingsFixupsMigration migration;
 
-  setUp(() {
-    SqliteDb.openInMemory();
+  setUp(() async {
+    await openTestDb();
     store = SettingStore('setting_test');
     migration = SettingsFixupsMigration(store: store);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('it is the step that follows the one before it', () {
     // A gap between `from` and `SchemaVersion.current` is a launch that throws
