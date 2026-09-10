@@ -267,7 +267,9 @@ void main() {
     expect(menuRow(libL10n.terminal), findsOneWidget);
   });
 
-  testWidgets('the native tab bar can scroll across a level', (tester) async {
+  testWidgets('the native tab bar is centered and can scroll across a level', (
+    tester,
+  ) async {
     await pump(tester, width: 500);
 
     await tester.tap(menuRow(libL10n.app));
@@ -276,6 +278,10 @@ void main() {
     expect(
       tester.widget<TabBar>(find.byKey(settingsTabsKey)).isScrollable,
       isTrue,
+    );
+    expect(
+      tester.widget<TabBar>(find.byKey(settingsTabsKey)).tabAlignment,
+      TabAlignment.center,
     );
   });
 

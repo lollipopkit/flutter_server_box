@@ -198,6 +198,7 @@ class _SettingsPagesState extends State<_SettingsPages>
               key: settingsTabsKey,
               controller: _controller,
               isScrollable: true,
+              tabAlignment: TabAlignment.center,
               tabs: [
                 for (final node in widget.leaves)
                   Tab(icon: Icon(node.icon, size: 20), text: node.title),
