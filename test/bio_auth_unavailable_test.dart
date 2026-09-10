@@ -76,31 +76,15 @@ void main() {
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    // The tile is inside an `ExpandTile`, closed by default.
-    await tester.tap(find.text(libL10n.bioAuth));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
   }
 
-  testWidgets('a device that cannot authenticate can still turn the lock off', (
+  testWidgets('a device without authentication hides the setting', (
     tester,
   ) async {
-    // The switch used to be absent whenever `isAvail` was false, so the setting
-    // could arrive on such a device and there was no control to remove it with.
-    Stores.setting.useBioAuth.put(true);
-
     await pumpSetting(tester);
-    expect(
-      find.byType(Switch),
-      findsOneWidget,
-      reason: 'no way to turn off a lock this device can never open',
-    );
-
-    await tester.tap(find.byType(Switch));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
-    expect(Stores.setting.useBioAuth.fetch(), isFalse);
+    expect(find.text(libL10n.bioAuth), findsNothing);
+    expect(find.text(libL10n.notExistFmt(libL10n.bioAuth)), findsNothing);
+    expect(find.byType(Switch), findsNothing);
   });
 
   testWidgets('on a device that can authenticate, turning it off asks first', (
@@ -117,6 +101,9 @@ void main() {
     Stores.setting.useBioAuth.put(true);
 
     await pumpSetting(tester);
+    await tester.tap(find.text(libL10n.bioAuth));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.tap(find.byType(Switch));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -134,20 +121,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(Stores.setting.useBioAuth.fetch(), isFalse);
-  });
-
-  testWidgets('and cannot turn it on', (tester) async {
-    // The other direction is still refused: switching it on here would put the
-    // app straight back behind a lock with nothing to open it.
-    await pumpSetting(tester);
-
-    expect(find.byType(Switch), findsNothing);
-    expect(
-      find.text(libL10n.notExistFmt(libL10n.bioAuth)),
-      findsWidgets,
-      reason: 'the reason the switch is absent should be on screen',
-    );
     expect(Stores.setting.useBioAuth.fetch(), isFalse);
   });
 }
