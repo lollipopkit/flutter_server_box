@@ -17,7 +17,7 @@ import 'helpers/test_db.dart';
 ///
 /// Above 800 it is a menu beside the content, showing every level and opening
 /// branches in place. Below, it starts as a list of what there is; picking a row
-/// goes in, and the level it landed on becomes a bar of tabs floating over the
+/// goes in, and the level it landed on becomes a native tab bar above the
 /// content. Either way the bar at the top names what is being shown.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +47,7 @@ void main() {
     matching: find.text(title),
   );
 
-  /// A tab of the floating bar, told apart from the settings behind it.
+  /// A tab of the native bar, told apart from the settings behind it.
   Finder tabRow(String title) => find.descendant(
     of: find.byKey(settingsTabsKey),
     matching: find.text(title),
@@ -196,7 +196,7 @@ void main() {
     }
   });
 
-  testWidgets('picking a row goes in and brings up its level as tabs', (
+  testWidgets('picking a row goes in and brings up native tabs above it', (
     tester,
   ) async {
     await pump(tester, width: 500);
@@ -208,8 +208,8 @@ void main() {
     expect(tabRow(libL10n.sequence), findsOneWidget);
     // What is first inside it, rather than a row of tabs with none of them on.
     expect(barTitle(tester), libL10n.general);
-    // One way back, in the bar at the top. A second at the foot was the same
-    // move twice on one screen.
+    // One way back, in the app bar. A second at the foot was the same move
+    // twice on one screen.
     expect(backBtn, findsOneWidget);
     expect(
       find.descendant(
@@ -220,19 +220,15 @@ void main() {
     );
   });
 
-  testWidgets('the tabs rise into place rather than appearing', (tester) async {
+  testWidgets('the native tabs are placed below the app bar', (tester) async {
     await pump(tester, width: 500);
 
     await tester.tap(menuRow(libL10n.server));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 80));
-    final midway = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
-
     await settle(tester, 20);
-    final settled = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
+    final appBarBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
+    final tabsTop = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
 
-    // Still on its way up from under the foot of the screen.
-    expect(midway, greaterThan(settled));
+    expect(tabsTop, greaterThanOrEqualTo(appBarBottom));
   });
 
   testWidgets('a first-level leaf shows on its own, with no tabs', (
@@ -271,50 +267,31 @@ void main() {
     expect(menuRow(libL10n.terminal), findsOneWidget);
   });
 
-  testWidgets('the bar is as wide as the level on it', (tester) async {
+  testWidgets('the native tab bar can scroll across a level', (tester) async {
     await pump(tester, width: 500);
 
-    await tester.tap(menuRow(libL10n.server));
-    await settle(tester, 20);
-    final four = tester.getSize(find.byKey(settingsTabsKey)).width;
-
-    await tester.tap(backBtn);
-    await settle(tester, 20);
-    await tester.tap(menuRow(libL10n.file));
+    await tester.tap(menuRow(libL10n.app));
     await settle(tester, 20);
 
-    // Two tabs and a way back is a shorter bar than four and a way back.
-    expect(tester.getSize(find.byKey(settingsTabsKey)).width, lessThan(four));
+    expect(
+      tester.widget<TabBar>(find.byKey(settingsTabsKey)).isScrollable,
+      isTrue,
+    );
   });
 
-  testWidgets('the tab being shown is filled in', (tester) async {
+  testWidgets('the selected tab follows the displayed page', (tester) async {
     await pump(tester, width: 500);
     await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
-    final scheme = Theme.of(
-      tester.element(find.byKey(settingsTabsKey)),
-    ).colorScheme;
-    Color? fillOf(String title) {
-      // The pill is around the icon, not the label — so it is a sibling of the
-      // text, reached through the button's own column.
-      final button = find
-          .ancestor(of: tabRow(title), matching: find.byType(Column))
-          .first;
-      final pill = find.descendant(
-        of: button,
-        matching: find.byType(AnimatedContainer),
-      );
-      final decoration =
-          tester.widget<AnimatedContainer>(pill.first).decoration
-              as BoxDecoration?;
-      return decoration?.color;
-    }
+    final tabBar = tester.widget<TabBar>(find.byKey(settingsTabsKey));
+    expect(tabBar.controller!.index, 0);
 
-    // Filled rather than only recoloured — a shade of grey against another is
-    // not a state at a glance.
-    expect(fillOf(libL10n.general), scheme.secondaryContainer);
-    expect(fillOf(libL10n.sequence), isNull);
+    await tester.tap(tabRow(libL10n.sequence));
+    await settle(tester, 20);
+
+    expect(tabBar.controller!.index, 1);
+    expect(barTitle(tester), libL10n.sequence);
   });
 
   testWidgets('the leaves of a level sit side by side, and drag between', (
@@ -328,7 +305,7 @@ void main() {
 
     // Dragging the content is the same move as tapping the next tab, which is
     // what putting them side by side promises.
-    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    await tester.drag(find.byType(TabBarView), const Offset(-400, 0));
     await settle(tester, 20);
 
     expect(barTitle(tester), libL10n.sequence);
