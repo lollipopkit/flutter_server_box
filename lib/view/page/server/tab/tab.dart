@@ -635,6 +635,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
   ];
 
   void _toggleGlobe() {
+    if (!_globe.value &&
+        _filterServers(ref.read(serversProvider).serverOrder).isEmpty) {
+      Toast.show(l10n.serverTabEmpty);
+      return;
+    }
     final on = !_globe.value;
     _globe.value = on;
     Stores.setting.serverPageGlobe.put(on);

@@ -256,6 +256,19 @@ void main() {
     expect(immersiveTab(tester), isNull);
   });
 
+  testWidgets('tapping the globe with no servers keeps the list state', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    await tester.tap(globeButton());
+    await tester.pump();
+
+    expect(find.byType(ServerGlobe), findsNothing);
+    expect(find.byIcon(Icons.public), findsOneWidget);
+    expect(Stores.setting.serverPageGlobe.fetch(), isFalse);
+  });
+
   /// The globe as the whole window.
   ///
   /// A sphere fills the column it is given, and the bar over it and the
