@@ -125,10 +125,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _clearAllSettings() async {
     try {
-      if (!await SettingStore.instance.clear()) {
+      if (!await Stores.setting.clear()) {
         Toast.error(libL10n.fail);
         return;
       }
+      RNodes.app.notify();
       Toast.success(libL10n.success);
     } catch (e, s) {
       Loggers.app.warning('Failed to clear settings', e, s);

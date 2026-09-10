@@ -33,6 +33,7 @@ abstract final class PlatformPublicSettings {
   }
 
   static Widget get buildBioAuth {
+    if (!isIOS && !isAndroid && !isWindows) return const SizedBox.shrink();
     return FutureWidget<bool>(
       future: LocalAuth.isAvail,
       loading: const SizedBox.shrink(),

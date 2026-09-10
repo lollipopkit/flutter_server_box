@@ -24,7 +24,7 @@ extension _App on _AppSettingsPageState {
       if (isMobile) _buildWakeLock().cardx,
       _buildCollapseUI().cardx,
       if (isDesktop) _buildHideTitleBar().cardx,
-      _buildEditRawSettings().cardx,
+      if (kDebugMode) _buildEditRawSettings().cardx,
     ];
 
     return Column(children: children);
