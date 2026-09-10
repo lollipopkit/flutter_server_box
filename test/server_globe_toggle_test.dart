@@ -91,7 +91,13 @@ void main() {
 
   void addServer({String id = 'srv-1', String ip = '8.8.8.8'}) {
     Stores.server.put(
-      spiFixture(id: id, name: 'srv $id', ip: ip, user: 'u', autoConnect: false),
+      spiFixture(
+        id: id,
+        name: 'srv $id',
+        ip: ip,
+        user: 'u',
+        autoConnect: false,
+      ),
     );
   }
 
@@ -173,11 +179,33 @@ void main() {
     expect(find.byType(ServerGlobe), findsOneWidget);
     expect(find.byType(GlobeView), findsOneWidget);
 
-    // The icon is the grid now, because what the button offers is the way out.
-    await tester.tap(find.byIcon(Icons.grid_view_rounded));
+    // The globe carries the standard close action while it owns the window.
+    expect(find.byIcon(Icons.close), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 50));
     }
+    expect(find.byType(ServerGlobe), findsNothing);
+  });
+
+  testWidgets('closing keeps the globe and list in one native transition', (
+    tester,
+  ) async {
+    Stores.setting.serverPageGlobe.put(true);
+    addServer();
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pump();
+
+    expect(find.byType(ServerGlobe), findsOneWidget);
+    expect(
+      find.byType(SessionSwitcherLabel),
+      findsOneWidget,
+      reason: 'AnimatedSwitcher should cross-fade and scale, not cut',
+    );
+
+    await settle(tester);
     expect(find.byType(ServerGlobe), findsNothing);
   });
 
@@ -253,7 +281,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(ServerGlobe),
-          matching: find.byIcon(Icons.grid_view_rounded),
+          matching: find.byIcon(Icons.close),
         ),
         findsOneWidget,
       );
@@ -265,7 +293,7 @@ void main() {
       await pump(tester);
       expect(find.byType(SessionSwitcherLabel), findsNothing);
 
-      await tester.tap(find.byIcon(Icons.grid_view_rounded));
+      await tester.tap(find.byIcon(Icons.close));
       await settle(tester);
 
       expect(find.byType(ServerGlobe), findsNothing);
@@ -550,9 +578,9 @@ void main() {
       addServer();
       await pump(tester);
       final ctx = tester.element(find.byType(ServerPage));
-      ProviderScope.containerOf(ctx)
-          .read(currentHomeTabProvider.notifier)
-          .update(AppTab.ssh);
+      ProviderScope.containerOf(
+        ctx,
+      ).read(currentHomeTabProvider.notifier).update(AppTab.ssh);
       await waitItOut(tester);
       expect(find.text(body), findsNothing);
     });

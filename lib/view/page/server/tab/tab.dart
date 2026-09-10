@@ -87,9 +87,10 @@ Widget _viewSwapTransition(Widget child, Animation<double> animation) {
     // be built and dropped on every frame of the transition.
     child: ScaleTransition(
       scale: animation.drive(
-        Tween(begin: 0.9, end: 1.0).chain(
-          CurveTween(curve: Curves.easeOutCubic),
-        ),
+        Tween(
+          begin: 0.9,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOutCubic)),
       ),
       child: child,
     ),
@@ -220,9 +221,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _scrollController.dispose();
     _sortVersion.dispose();
     _search.dispose();
-    Stores.setting.globeEnabled
-        .listenable()
-        .removeListener(_globeEnabledListener);
+    Stores.setting.globeEnabled.listenable().removeListener(
+      _globeEnabledListener,
+    );
     _globe.dispose();
     _tag.dispose();
     _tags.dispose();
@@ -334,7 +335,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   void _pruneCardNotifiers(Set<String> aliveIds) {
-    final toRemove = _cardsStatus.keys.where((id) => !aliveIds.contains(id)).toList();
+    final toRemove = _cardsStatus.keys
+        .where((id) => !aliveIds.contains(id))
+        .toList();
     for (final id in toRemove) {
       _cardsStatus.remove(id)?.dispose();
     }
@@ -442,31 +445,26 @@ class _ServerPageState extends ConsumerState<ServerPage>
           child: ListenableBuilder(
             // The four ways of viewing the list, and nothing else: a tag, a
             // search, an order, and whether it is a globe.
-            listenable: Listenable.merge([
-              _tag,
-              _sortVersion,
-              _search,
-              _globe,
-            ]),
+            listenable: Listenable.merge([_tag, _sortVersion, _search, _globe]),
             builder: (_, _) {
-                // The settings arrangement, viewed however the sort button
-                // says — see [ServerSortOrder], whose first option is that
-                // arrangement unchanged.
-                final ordered = ServerSortOrder.stored.apply(
-                  serverOrder,
-                  servers,
-                  (id) => conns[id] ?? ServerConn.disconnected,
-                );
-                // The rail gets everything, not the filtered list. It groups
-                // by tag instead of filtering to one, and has no switcher of
-                // its own — so a tag picked in the grid before a server was
-                // opened would hide servers there with nothing on screen to
-                // say so or undo it.
-                // The globe replaces the list in both layouts rather than only
-                // in one. Beside a detail pane it is a narrow globe, which is
-                // small but is at least still the view that was chosen — and
-                // the actions row above it is how it is left, so it has to
-                // stay reachable there too.
+              // The settings arrangement, viewed however the sort button
+              // says — see [ServerSortOrder], whose first option is that
+              // arrangement unchanged.
+              final ordered = ServerSortOrder.stored.apply(
+                serverOrder,
+                servers,
+                (id) => conns[id] ?? ServerConn.disconnected,
+              );
+              // The rail gets everything, not the filtered list. It groups
+              // by tag instead of filtering to one, and has no switcher of
+              // its own — so a tag picked in the grid before a server was
+              // opened would hide servers there with nothing on screen to
+              // say so or undo it.
+              // The globe replaces the list in both layouts rather than only
+              // in one. Beside a detail pane it is a narrow globe, which is
+              // small but is at least still the view that was chosen — and
+              // the actions row above it is how it is left, so it has to
+              // stay reachable there too.
               if (split) {
                 // Beside a detail pane the globe is a column rather than the
                 // page, and the pane above it carries the way out — so the
@@ -482,6 +480,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 // nothing animates.
                 return AnimatedSwitcher(
                   duration: _kViewSwapDuration,
+                  reverseDuration: _kViewSwapDuration,
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
                   transitionBuilder: _viewSwapTransition,
                   layoutBuilder: _viewSwapLayout,
                   child: _globe.value
@@ -542,31 +543,31 @@ class _ServerPageState extends ConsumerState<ServerPage>
           child: InlineSearchBar(
             controller: _search,
             child: Row(
-            children: [
-              Expanded(
-                child: SessionSwitcherLabel(
-                  name: current.isEmpty ? libL10n.all : '#$current',
-                  // Counting from 1, and null on "all" — which is not one of
-                  // the tags but the absence of a choice among them, so it
-                  // shows the icon instead.
-                  position: at < 0 ? null : at + 1,
-                  total: tags.length,
-                  icon: MingCute.hashtag_line,
-                  // Opens even with no tags anywhere. It used to be a plain
-                  // label then — the rule the session strips follow with
-                  // nothing open — but the two cases are not alike: a terminal
-                  // strip with no sessions is a feature nobody has started
-                  // using, while this is a filter whose whole vocabulary is
-                  // defined elsewhere. Someone looking for tags taps the thing
-                  // marked with a `#`, and a control that does nothing answers
-                  // neither "there are none" nor "here is where they come
-                  // from". The sheet says both.
-                  onTap: () => _showTagSheet(tags),
+              children: [
+                Expanded(
+                  child: SessionSwitcherLabel(
+                    name: current.isEmpty ? libL10n.all : '#$current',
+                    // Counting from 1, and null on "all" — which is not one of
+                    // the tags but the absence of a choice among them, so it
+                    // shows the icon instead.
+                    position: at < 0 ? null : at + 1,
+                    total: tags.length,
+                    icon: MingCute.hashtag_line,
+                    // Opens even with no tags anywhere. It used to be a plain
+                    // label then — the rule the session strips follow with
+                    // nothing open — but the two cases are not alike: a terminal
+                    // strip with no sessions is a feature nobody has started
+                    // using, while this is a filter whose whole vocabulary is
+                    // defined elsewhere. Someone looking for tags taps the thing
+                    // marked with a `#`, and a control that does nothing answers
+                    // neither "there are none" nor "here is where they come
+                    // from". The sheet says both.
+                    onTap: () => _showTagSheet(tags),
+                  ),
                 ),
-              ),
-              ..._listActions(globeKey: _globeBtnKey),
-              const SizedBox(width: 7),
-            ],
+                ..._listActions(globeKey: _globeBtnKey),
+                const SizedBox(width: 7),
+              ],
             ),
           ),
         );
@@ -683,7 +684,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return ServerGlobe(
       key: const ValueKey('globe'),
       ids: filtered,
-      onTapServer: (spi) => _onTapCard(context, ref.read(serverProvider(spi.id))),
+      onTapServer: (spi) =>
+          _onTapCard(context, ref.read(serverProvider(spi.id))),
       onEditServer: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
       action: immersive ? _buildGlobeExit() : null,
@@ -706,8 +708,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: IconButton(
-        icon: const Icon(Icons.grid_view_rounded, size: 18),
-        tooltip: l10n.globe,
+        icon: const Icon(Icons.close, size: 18),
+        tooltip: libL10n.close,
         onPressed: _toggleGlobe,
       ),
     );
@@ -798,9 +800,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _immersive = on;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref
-          .read(immersiveTabProvider.notifier)
-          .update(AppTab.server, wants: on);
+      ref.read(immersiveTabProvider.notifier).update(AppTab.server, wants: on);
     });
   }
 
@@ -819,6 +819,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // a filtered-out tag to no servers at all is also a crossing.
     return AnimatedSwitcher(
       duration: _kViewSwapDuration,
+      reverseDuration: _kViewSwapDuration,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
       // Scale and fade rather than fade alone — see [_viewSwapTransition] for
       // why the anchor is the sphere and not merely the middle. It applies to
       // the empty states too, where the same contraction reads as the list
@@ -842,7 +845,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildGrid(List<String> filtered) {
-
     // Cards are as tall as what they have to say — a server that has not
     // connected is one line, one that has is several charts. Splitting them
     // round-robin into a `ListView` per column left a short column beside a
@@ -1028,7 +1030,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
           textStyle: textStyle,
         ),
       Btn.column(
-        onTap: () => ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi)),
+        onTap: () =>
+            ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi)),
         icon: const Icon(Icons.edit, color: color),
         text: libL10n.edit,
         textStyle: textStyle,
