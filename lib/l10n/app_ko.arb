@@ -82,8 +82,6 @@
   "clearServerStatsContent": "서버 \"{serverName}\"의 연결 통계를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "clearServerStatsTitle": "{serverName} 통계 삭제",
   "clearThisServerStats": "이 서버의 통계 삭제",
-  "compactDatabase": "데이터베이스 압축",
-  "compactDatabaseContent": "데이터베이스 크기: {size}\n\n데이터베이스를 재구성하여 파일 크기를 줄입니다. 데이터는 삭제되지 않습니다.",
   "closeAfterSave": "저장 후 닫기",
   "collapseUITip": "UI의 긴 목록을 기본적으로 접을지 여부",
   "connectionDetails": "연결 상세 정보",

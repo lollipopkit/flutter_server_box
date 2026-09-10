@@ -153,8 +153,6 @@
   "clearServerStatsContent": "Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.",
   "clearServerStatsTitle": "Clear {serverName} Statistics",
   "clearThisServerStats": "Clear This Server Statistics",
-  "compactDatabase": "Compact Database",
-  "compactDatabaseContent": "Database size: {size}\n\nThis will reorganize the database to reduce file size. No data will be deleted.",
   "closeAfterSave": "Save and close",
   "collapseUITip": "Whether to collapse long lists present in the UI by default",
   "connectionDetails": "Connection Details",

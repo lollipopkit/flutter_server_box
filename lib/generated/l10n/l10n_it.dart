@@ -515,14 +515,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get clearThisServerStats => 'Cancella statistiche di questo server';
 
   @override
-  String get compactDatabase => 'Compatta database';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Dimensione database: $size\n\nQuesto riorganizzerà il database per ridurre la dimensione del file. Nessun dato verrà eliminato.';
-  }
-
-  @override
   String get closeAfterSave => 'Salva e chiudi';
 
   @override

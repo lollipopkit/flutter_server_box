@@ -484,14 +484,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clearThisServerStats => '이 서버의 통계 삭제';
 
   @override
-  String get compactDatabase => '데이터베이스 압축';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return '데이터베이스 크기: $size\n\n데이터베이스를 재구성하여 파일 크기를 줄입니다. 데이터는 삭제되지 않습니다.';
-  }
-
-  @override
   String get closeAfterSave => '저장 후 닫기';
 
   @override

@@ -72,8 +72,6 @@
   "clearServerStatsContent": "Sei sicuro di voler cancellare le statistiche di connessione per il server \"{serverName}\"? Questa azione non può essere annullata.",
   "clearServerStatsTitle": "Cancella statistiche {serverName}",
   "clearThisServerStats": "Cancella statistiche di questo server",
-  "compactDatabase": "Compatta database",
-  "compactDatabaseContent": "Dimensione database: {size}\n\nQuesto riorganizzerà il database per ridurre la dimensione del file. Nessun dato verrà eliminato.",
   "closeAfterSave": "Salva e chiudi",
   "collapseUITip": "Se comprimere le liste lunghe presenti nell'interfaccia utente per impostazione predefinita",
   "connectionDetails": "Dettagli connessione",

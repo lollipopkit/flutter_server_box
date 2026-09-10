@@ -22,7 +22,6 @@ class ConnectionStatsPage extends StatefulWidget {
 class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   List<ServerConnectionStats> _serverStats = [];
   bool _isLoading = true;
-  bool _isCompacting = false;
 
   @override
   void initState() {
@@ -45,13 +44,6 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
             onPressed: _showClearAllDialog,
             icon: const Icon(Icons.clear_all, color: Colors.red),
             tooltip: libL10n.clear,
-          ),
-          IconButton(
-            onPressed: _isCompacting ? null : _showCompactDialog,
-            icon: _isCompacting
-                ? SizedLoading.small
-                : const Icon(Icons.compress),
-            tooltip: l10n.compactDatabase,
           ),
         ],
       ),
@@ -263,14 +255,6 @@ extension _Builds on _ConnectionStatsPageState {
 }
 
 extension _Actions on _ConnectionStatsPageState {
-  void _finishCompacting([String? message]) {
-    if (!mounted) return;
-    setState(() => _isCompacting = false);
-    if (message != null) {
-      Toast.show(message);
-    }
-  }
-
   Future<void> _loadStats() async {
     if (!mounted) return;
     setState(() {
@@ -285,38 +269,6 @@ extension _Actions on _ConnectionStatsPageState {
       _serverStats = stats;
       _isLoading = false;
     });
-  }
-
-  Future<void> _showCompactDialog() async {
-    // One file for every store now, so this is the whole database rather than
-    // this page's share of it — and so is the `VACUUM` the dialog runs.
-    final oldSize = await Stores.connectionStats.dbSizeAsync();
-    if (!mounted) return;
-
-    final sizeStr = oldSize.bytes2Str;
-
-    context.showRoundDialog(
-      title: l10n.compactDatabase,
-      child: Text(l10n.compactDatabaseContent(sizeStr)),
-      actions: [
-        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
-        TextButton(
-          onPressed: () async {
-            context.popDialog();
-            setState(() => _isCompacting = true);
-            try {
-              await Stores.connectionStats.compact();
-              final newSize = await Stores.connectionStats.dbSizeAsync();
-              final newSizeStr = newSize.bytes2Str;
-              _finishCompacting('${libL10n.success}: $sizeStr -> $newSizeStr');
-            } catch (e) {
-              _finishCompacting('${libL10n.error}: $e');
-            }
-          },
-          child: Text(libL10n.confirm),
-        ),
-      ],
-    );
   }
 
   void _showServerDetailsDialog(ServerConnectionStats stats) {

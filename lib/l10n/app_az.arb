@@ -153,8 +153,6 @@
   "clearServerStatsContent": "\"{serverName}\" serverinin əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.",
   "clearServerStatsTitle": "{serverName} statistikasını təmizlə",
   "clearThisServerStats": "Bu serverin statistikasını təmizlə",
-  "compactDatabase": "Verilənlər bazasını yığcamlaşdır",
-  "compactDatabaseContent": "Verilənlər bazasının ölçüsü: {size}\n\nFaylın ölçüsünü azaltmaq üçün verilənlər bazası yenidən təşkil ediləcək. Heç bir məlumat silinməyəcək.",
   "closeAfterSave": "Yadda saxla və bağla",
   "collapseUITip": "İnterfeysdəki uzun siyahıların standart olaraq yığılması",
   "connectionDetails": "Əlaqə təfərrüatları",

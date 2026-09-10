@@ -514,14 +514,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get clearThisServerStats => 'Bu serverin statistikasını təmizlə';
 
   @override
-  String get compactDatabase => 'Verilənlər bazasını yığcamlaşdır';
-
-  @override
-  String compactDatabaseContent(Object size) {
-    return 'Verilənlər bazasının ölçüsü: $size\n\nFaylın ölçüsünü azaltmaq üçün verilənlər bazası yenidən təşkil ediləcək. Heç bir məlumat silinməyəcək.';
-  }
-
-  @override
   String get closeAfterSave => 'Yadda saxla və bağla';
 
   @override
