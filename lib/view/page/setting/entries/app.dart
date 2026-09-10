@@ -8,22 +8,26 @@ extension _App on _AppSettingsPageState {
   Widget _buildApp() {
     final androidSettings = isAndroid ? _buildAndroidSettings() : null;
     final specific = _buildPlatformSetting();
-    final children = [
-      _buildLocale(),
-      _buildThemeMode(),
-      _buildAppColor(),
-      _buildCheckUpdate(),
+    final children = <Widget>[
+      _buildLocale().cardx,
+      _buildThemeMode().cardx,
+      _buildAppColor().cardx,
+      _buildCheckUpdate().cardx,
       PlatformPublicSettings.buildBioAuth,
       // `buildPrivacyBlur` was here. Covering the app in the switcher is about
       // who can read what is on screen, which is what the privacy page is —
       // and a setting is easier to find under the subject it belongs to than
       // in the list of everything.
-      ?androidSettings,
-      ?specific,
-      _buildAppMore(),
+      if (androidSettings != null) androidSettings.cardx,
+      if (specific != null) specific.cardx,
+      _buildBeta().cardx,
+      if (isMobile) _buildWakeLock().cardx,
+      _buildCollapseUI().cardx,
+      if (isDesktop) _buildHideTitleBar().cardx,
+      _buildEditRawSettings().cardx,
     ];
 
-    return Column(children: children.map((e) => e.cardx).toList());
+    return Column(children: children);
   }
 
   Widget _buildAndroidSettings() {
@@ -321,21 +325,6 @@ extension _App on _AppSettingsPageState {
         listenable: _setting.locale.listenable(),
         builder: () => Text(context.localeNativeName, style: UIs.text15),
       ),
-    );
-  }
-
-  Widget _buildAppMore() {
-    return ExpandTile(
-      leading: const Icon(MingCute.more_3_fill),
-      title: Text(libL10n.more),
-      initiallyExpanded: false,
-      children: [
-        _buildBeta(),
-        if (isMobile) _buildWakeLock(),
-        _buildCollapseUI(),
-        if (isDesktop) _buildHideTitleBar(),
-        _buildEditRawSettings(),
-      ],
     );
   }
 
