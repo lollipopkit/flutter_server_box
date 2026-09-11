@@ -1998,6 +1998,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get userPasswordEditTip => '密码留空将保留现有密码。';
+
+  @override
+  String get scheduledTasks => '计划任务';
+
+  @override
+  String get scheduledTaskLinuxOnly => '计划任务管理目前仅支持 Linux 服务器。';
+
+  @override
+  String get scheduledTaskUnavailable => '此服务器上没有可用的 crontab。';
+
+  @override
+  String get scheduledTaskPreserveTip => '保存时会保留此 crontab 中的注释、环境变量和无法识别的行。';
+
+  @override
+  String get scheduledTaskSchedule => '执行周期';
+
+  @override
+  String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3993,4 +4011,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get userPasswordEditTip => '密碼留空將保留現有密碼。';
+
+  @override
+  String get scheduledTasks => '排程工作';
+
+  @override
+  String get scheduledTaskLinuxOnly => '排程工作管理目前僅支援 Linux 伺服器。';
+
+  @override
+  String get scheduledTaskUnavailable => '此伺服器上沒有可用的 crontab。';
+
+  @override
+  String get scheduledTaskPreserveTip => '儲存時會保留此 crontab 中的註解、環境變數及無法識別的行。';
+
+  @override
+  String get scheduledTaskSchedule => '執行週期';
+
+  @override
+  String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
 }

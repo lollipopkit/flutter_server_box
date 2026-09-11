@@ -2160,4 +2160,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get userPasswordEditTip =>
       'Leave the password empty to keep the existing password.';
+
+  @override
+  String get scheduledTasks => 'Scheduled tasks';
+
+  @override
+  String get scheduledTaskLinuxOnly =>
+      'Scheduled task management currently supports Linux servers.';
+
+  @override
+  String get scheduledTaskUnavailable =>
+      'crontab is not available on this server.';
+
+  @override
+  String get scheduledTaskPreserveTip =>
+      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+
+  @override
+  String get scheduledTaskSchedule => 'Schedule';
+
+  @override
+  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
 }

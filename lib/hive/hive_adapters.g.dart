@@ -291,6 +291,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         return ServerFuncBtn.power;
       case 12:
         return ServerFuncBtn.users;
+      case 13:
+        return ServerFuncBtn.scheduledTasks;
       default:
         return ServerFuncBtn.terminal;
     }
@@ -319,6 +321,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         writer.writeByte(10);
       case ServerFuncBtn.users:
         writer.writeByte(12);
+      case ServerFuncBtn.scheduledTasks:
+        writer.writeByte(13);
     }
   }
 

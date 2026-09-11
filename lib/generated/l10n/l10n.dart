@@ -3789,6 +3789,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leave the password empty to keep the existing password.'**
   String get userPasswordEditTip;
+
+  /// No description provided for @scheduledTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled tasks'**
+  String get scheduledTasks;
+
+  /// No description provided for @scheduledTaskLinuxOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled task management currently supports Linux servers.'**
+  String get scheduledTaskLinuxOnly;
+
+  /// No description provided for @scheduledTaskUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'crontab is not available on this server.'**
+  String get scheduledTaskUnavailable;
+
+  /// No description provided for @scheduledTaskPreserveTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments, environment variables, and unrecognized lines in this crontab are preserved.'**
+  String get scheduledTaskPreserveTip;
+
+  /// No description provided for @scheduledTaskSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get scheduledTaskSchedule;
+
+  /// No description provided for @scheduledTaskScheduleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: 0 2 * * * or @reboot'**
+  String get scheduledTaskScheduleHint;
 }
 
 class _AppLocalizationsDelegate

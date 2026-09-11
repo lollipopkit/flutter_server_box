@@ -40,6 +40,7 @@ void main() {
       ServerFuncBtn.portForward.index,
       ServerFuncBtn.power.index,
       ServerFuncBtn.users.index,
+      ServerFuncBtn.scheduledTasks.index,
     ]);
   });
 
@@ -69,6 +70,7 @@ void main() {
       (1340, ServerFuncBtn.portForward),
       (1491, ServerFuncBtn.power),
       (1579, ServerFuncBtn.users),
+      (1579, ServerFuncBtn.scheduledTasks),
     ];
 
     for (final (boundary, button) in boundaries) {
@@ -150,6 +152,7 @@ void main() {
         ServerFuncBtn.portForward.index,
         ServerFuncBtn.power.index,
         ServerFuncBtn.users.index,
+        ServerFuncBtn.scheduledTasks.index,
       ]),
     );
   });

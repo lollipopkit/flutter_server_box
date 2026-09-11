@@ -640,5 +640,11 @@
   "userMoveHome": "路徑變更時移動現有家目錄",
   "userRemoveHome": "刪除家目錄",
   "userPasswordCreateTip": "密碼留空將建立一個無法使用密碼登入的帳戶。",
-  "userPasswordEditTip": "密碼留空將保留現有密碼。"
+  "userPasswordEditTip": "密碼留空將保留現有密碼。",
+  "scheduledTasks": "排程工作",
+  "scheduledTaskLinuxOnly": "排程工作管理目前僅支援 Linux 伺服器。",
+  "scheduledTaskUnavailable": "此伺服器上沒有可用的 crontab。",
+  "scheduledTaskPreserveTip": "儲存時會保留此 crontab 中的註解、環境變數及無法識別的行。",
+  "scheduledTaskSchedule": "執行週期",
+  "scheduledTaskScheduleHint": "例如：0 2 * * * 或 @reboot"
 }

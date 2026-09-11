@@ -852,5 +852,11 @@
   "userMoveHome": "Move the existing home directory when the path changes",
   "userRemoveHome": "Remove the home directory",
   "userPasswordCreateTip": "Leave the password empty to create a password-locked account.",
-  "userPasswordEditTip": "Leave the password empty to keep the existing password."
+  "userPasswordEditTip": "Leave the password empty to keep the existing password.",
+  "scheduledTasks": "Scheduled tasks",
+  "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
+  "scheduledTaskUnavailable": "crontab is not available on this server.",
+  "scheduledTaskPreserveTip": "Comments, environment variables, and unrecognized lines in this crontab are preserved.",
+  "scheduledTaskSchedule": "Schedule",
+  "scheduledTaskScheduleHint": "For example: 0 2 * * * or @reboot"
 }
