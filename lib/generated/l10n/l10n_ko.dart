@@ -2009,4 +2009,53 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get schemaTooNewWipeFailed =>
       '일부 데이터를 삭제하지 못했으며, 이 버전은 남은 데이터도 열 수 없습니다. 최신 버전을 다시 설치하여 접근하세요.';
+
+  @override
+  String get systemUsers => 'Users';
+
+  @override
+  String get userManagerLinuxOnly =>
+      'System user management currently supports Linux servers.';
+
+  @override
+  String get userRegularAccount => 'Regular';
+
+  @override
+  String get userCurrentAccount => 'Current account';
+
+  @override
+  String get userSystemAccount => 'System account';
+
+  @override
+  String get userUid => 'UID';
+
+  @override
+  String get userComment => 'Comment';
+
+  @override
+  String get userPrimaryGroup => 'Primary group';
+
+  @override
+  String get userSupplementaryGroups => 'Supplementary groups';
+
+  @override
+  String get userLoginShell => 'Login shell';
+
+  @override
+  String get userCreateHome => 'Create home directory';
+
+  @override
+  String get userMoveHome =>
+      'Move the existing home directory when the path changes';
+
+  @override
+  String get userRemoveHome => 'Remove the home directory';
+
+  @override
+  String get userPasswordCreateTip =>
+      'Leave the password empty to create a password-locked account.';
+
+  @override
+  String get userPasswordEditTip =>
+      'Leave the password empty to keep the existing password.';
 }

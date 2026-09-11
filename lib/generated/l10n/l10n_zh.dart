@@ -1953,6 +1953,51 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get schemaTooNewWipeFailed =>
       '部分数据未能删除，当前版本仍然无法打开剩下的内容。请重新安装更新的版本来读取它。';
+
+  @override
+  String get systemUsers => '用户';
+
+  @override
+  String get userManagerLinuxOnly => '系统用户管理目前仅支持 Linux 服务器。';
+
+  @override
+  String get userRegularAccount => '普通用户';
+
+  @override
+  String get userCurrentAccount => '当前账户';
+
+  @override
+  String get userSystemAccount => '系统账户';
+
+  @override
+  String get userUid => 'UID';
+
+  @override
+  String get userComment => '备注';
+
+  @override
+  String get userPrimaryGroup => '主用户组';
+
+  @override
+  String get userSupplementaryGroups => '附加用户组';
+
+  @override
+  String get userLoginShell => '登录 Shell';
+
+  @override
+  String get userCreateHome => '创建主目录';
+
+  @override
+  String get userMoveHome => '路径变化时移动现有主目录';
+
+  @override
+  String get userRemoveHome => '删除主目录';
+
+  @override
+  String get userPasswordCreateTip => '密码留空将创建一个无法使用密码登录的账户。';
+
+  @override
+  String get userPasswordEditTip => '密码留空将保留现有密码。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3903,4 +3948,49 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get schemaTooNewWipeFailed =>
       '部分資料未能刪除，目前版本仍然無法開啟剩下的內容。請重新安裝更新的版本來讀取它。';
+
+  @override
+  String get systemUsers => '使用者';
+
+  @override
+  String get userManagerLinuxOnly => '系統使用者管理目前僅支援 Linux 伺服器。';
+
+  @override
+  String get userRegularAccount => '一般使用者';
+
+  @override
+  String get userCurrentAccount => '目前帳戶';
+
+  @override
+  String get userSystemAccount => '系統帳戶';
+
+  @override
+  String get userUid => 'UID';
+
+  @override
+  String get userComment => '備註';
+
+  @override
+  String get userPrimaryGroup => '主要群組';
+
+  @override
+  String get userSupplementaryGroups => '附加群組';
+
+  @override
+  String get userLoginShell => '登入 Shell';
+
+  @override
+  String get userCreateHome => '建立家目錄';
+
+  @override
+  String get userMoveHome => '路徑變更時移動現有家目錄';
+
+  @override
+  String get userRemoveHome => '刪除家目錄';
+
+  @override
+  String get userPasswordCreateTip => '密碼留空將建立一個無法使用密碼登入的帳戶。';
+
+  @override
+  String get userPasswordEditTip => '密碼留空將保留現有密碼。';
 }

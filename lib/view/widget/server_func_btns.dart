@@ -27,6 +27,7 @@ import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/services.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
+import 'package:server_box/view/page/users.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
 class ServerFuncBtns extends StatelessWidget {
@@ -255,6 +256,12 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         PortForwardPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.users:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        final args = SpiRequiredArgs(spi);
+        UsersPage.route.go(context, args);
         break;
     }
   }

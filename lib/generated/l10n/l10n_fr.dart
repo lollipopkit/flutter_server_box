@@ -2148,4 +2148,53 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get schemaTooNewWipeFailed =>
       'Certaines données n’ont pas pu être supprimées et cette version ne peut toujours pas ouvrir ce qui reste. Réinstallez la version plus récente pour y accéder.';
+
+  @override
+  String get systemUsers => 'Users';
+
+  @override
+  String get userManagerLinuxOnly =>
+      'System user management currently supports Linux servers.';
+
+  @override
+  String get userRegularAccount => 'Regular';
+
+  @override
+  String get userCurrentAccount => 'Current account';
+
+  @override
+  String get userSystemAccount => 'System account';
+
+  @override
+  String get userUid => 'UID';
+
+  @override
+  String get userComment => 'Comment';
+
+  @override
+  String get userPrimaryGroup => 'Primary group';
+
+  @override
+  String get userSupplementaryGroups => 'Supplementary groups';
+
+  @override
+  String get userLoginShell => 'Login shell';
+
+  @override
+  String get userCreateHome => 'Create home directory';
+
+  @override
+  String get userMoveHome =>
+      'Move the existing home directory when the path changes';
+
+  @override
+  String get userRemoveHome => 'Remove the home directory';
+
+  @override
+  String get userPasswordCreateTip =>
+      'Leave the password empty to create a password-locked account.';
+
+  @override
+  String get userPasswordEditTip =>
+      'Leave the password empty to keep the existing password.';
 }

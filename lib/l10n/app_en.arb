@@ -837,5 +837,20 @@
       }
     }
   },
-  "schemaTooNewWipeFailed": "Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it."
+  "schemaTooNewWipeFailed": "Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.",
+  "systemUsers": "Users",
+  "userManagerLinuxOnly": "System user management currently supports Linux servers.",
+  "userRegularAccount": "Regular",
+  "userCurrentAccount": "Current account",
+  "userSystemAccount": "System account",
+  "userUid": "UID",
+  "userComment": "Comment",
+  "userPrimaryGroup": "Primary group",
+  "userSupplementaryGroups": "Supplementary groups",
+  "userLoginShell": "Login shell",
+  "userCreateHome": "Create home directory",
+  "userMoveHome": "Move the existing home directory when the path changes",
+  "userRemoveHome": "Remove the home directory",
+  "userPasswordCreateTip": "Leave the password empty to create a password-locked account.",
+  "userPasswordEditTip": "Leave the password empty to keep the existing password."
 }

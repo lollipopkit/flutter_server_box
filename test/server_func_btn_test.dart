@@ -25,13 +25,13 @@ void main() {
   List<int> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
-    // A row from before systemd, port forwarding and Power shipped.
+    // A row from before any of the entries with release boundaries shipped.
     setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.files.index,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1000, 1536);
+    ServerFuncBtn.autoAddNewFuncs(1000, 1600);
 
     expect(row(), [
       ServerFuncBtn.terminal.index,
@@ -39,6 +39,7 @@ void main() {
       ServerFuncBtn.systemd.index,
       ServerFuncBtn.portForward.index,
       ServerFuncBtn.power.index,
+      ServerFuncBtn.users.index,
     ]);
   });
 
@@ -63,13 +64,14 @@ void main() {
   );
 
   test('adds no entry when the target is the release boundary', () {
-    const boundaries = {
-      1051: ServerFuncBtn.systemd,
-      1340: ServerFuncBtn.portForward,
-      1491: ServerFuncBtn.power,
-    };
+    const boundaries = [
+      (1051, ServerFuncBtn.systemd),
+      (1340, ServerFuncBtn.portForward),
+      (1491, ServerFuncBtn.power),
+      (1579, ServerFuncBtn.users),
+    ];
 
-    for (final MapEntry(key: boundary, value: button) in boundaries.entries) {
+    for (final (boundary, button) in boundaries) {
       setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
 
       ServerFuncBtn.autoAddNewFuncs(boundary - 1, boundary);
@@ -84,7 +86,7 @@ void main() {
     // A window after the newest entry's boundary. It has to move whenever one
     // is added, which is the point: the assertion is about a window containing
     // no entry, not about two particular numbers.
-    ServerFuncBtn.autoAddNewFuncs(1492, 1600);
+    ServerFuncBtn.autoAddNewFuncs(1580, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index]);
   });
@@ -99,7 +101,7 @@ void main() {
       ServerFuncBtn.systemd.index,
     ]);
 
-    ServerFuncBtn.autoAddNewFuncs(1536, 1600);
+    ServerFuncBtn.autoAddNewFuncs(1580, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.systemd.index]);
   });
@@ -147,6 +149,7 @@ void main() {
         ServerFuncBtn.systemd.index,
         ServerFuncBtn.portForward.index,
         ServerFuncBtn.power.index,
+        ServerFuncBtn.users.index,
       ]),
     );
   });

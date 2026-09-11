@@ -625,5 +625,20 @@
   "schemaTooNewWipe": "删除所有数据",
   "schemaTooNewWipeConfirm": "本设备上的所有服务器、密钥、代码片段和设置都将被删除，且无法撤销。此前导出的备份将成为仅存的副本。",
   "schemaTooNewWipeDone": "数据已删除。请重新打开应用，从头开始。",
-  "schemaTooNewWipeFailed": "部分数据未能删除，当前版本仍然无法打开剩下的内容。请重新安装更新的版本来读取它。"
+  "schemaTooNewWipeFailed": "部分数据未能删除，当前版本仍然无法打开剩下的内容。请重新安装更新的版本来读取它。",
+  "systemUsers": "用户",
+  "userManagerLinuxOnly": "系统用户管理目前仅支持 Linux 服务器。",
+  "userRegularAccount": "普通用户",
+  "userCurrentAccount": "当前账户",
+  "userSystemAccount": "系统账户",
+  "userUid": "UID",
+  "userComment": "备注",
+  "userPrimaryGroup": "主用户组",
+  "userSupplementaryGroups": "附加用户组",
+  "userLoginShell": "登录 Shell",
+  "userCreateHome": "创建主目录",
+  "userMoveHome": "路径变化时移动现有主目录",
+  "userRemoveHome": "删除主目录",
+  "userPasswordCreateTip": "密码留空将创建一个无法使用密码登录的账户。",
+  "userPasswordEditTip": "密码留空将保留现有密码。"
 }
