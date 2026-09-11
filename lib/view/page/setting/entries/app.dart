@@ -8,26 +8,22 @@ extension _App on _AppSettingsPageState {
   Widget _buildApp() {
     final androidSettings = isAndroid ? _buildAndroidSettings() : null;
     final specific = _buildPlatformSetting();
-    final children = <Widget>[
-      _buildLocale().cardx,
-      _buildThemeMode().cardx,
-      _buildAppColor().cardx,
-      _buildCheckUpdate().cardx,
+    final children = [
+      _buildLocale(),
+      _buildThemeMode(),
+      _buildAppColor(),
+      _buildCheckUpdate(),
       PlatformPublicSettings.buildBioAuth,
       // `buildPrivacyBlur` was here. Covering the app in the switcher is about
       // who can read what is on screen, which is what the privacy page is —
       // and a setting is easier to find under the subject it belongs to than
       // in the list of everything.
-      if (androidSettings != null) androidSettings.cardx,
-      if (specific != null) specific.cardx,
-      _buildBeta().cardx,
-      if (isMobile) _buildWakeLock().cardx,
-      _buildCollapseUI().cardx,
-      if (isDesktop) _buildHideTitleBar().cardx,
-      if (kDebugMode) _buildEditRawSettings().cardx,
+      ?androidSettings,
+      ?specific,
+      _buildAppMore(),
     ];
 
-    return Column(children: children);
+    return Column(children: children.map((e) => e.cardx).toList());
   }
 
   Widget _buildAndroidSettings() {
@@ -325,6 +321,23 @@ extension _App on _AppSettingsPageState {
         listenable: _setting.locale.listenable(),
         builder: () => Text(context.localeNativeName, style: UIs.text15),
       ),
+    );
+  }
+
+  Widget _buildAppMore() {
+    return ExpandTile(
+      leading: const Icon(MingCute.more_3_fill),
+      title: Text(libL10n.more),
+      initiallyExpanded: false,
+      children: [
+        _buildBeta(),
+        if (isMobile) _buildWakeLock(),
+        _buildCollapseUI(),
+        if (isDesktop) _buildHideTitleBar(),
+        // Debug only, which is where it was moved to while these rows were
+        // flat. Folding them back does not put it back in a release build.
+        if (kDebugMode) _buildEditRawSettings(),
+      ],
     );
   }
 
