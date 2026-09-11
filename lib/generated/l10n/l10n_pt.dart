@@ -138,6 +138,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get askAiInterrupted => 'A resposta do Agente foi interrompida.';
 
   @override
+  String get askAiResend => 'Resend';
+
+  @override
+  String get askAiResendTip =>
+      'Everything after this message is discarded — the replies, the commands and their results.';
+
+  @override
   String get askAiModelTable => 'Model table';
 
   @override
@@ -164,10 +171,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get askAiConversationCompacted =>
       'Earlier messages were summarised to keep the conversation going.';
-
-  @override
-  String get askAiOneToolCallPerTurn =>
-      'Only one tool call is reviewed per turn. The rest were not run.';
 
   @override
   String get askAiRiskReadOnly => 'Somente leitura';

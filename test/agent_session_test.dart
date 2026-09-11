@@ -79,7 +79,7 @@ void main() {
         (replay.entries[3] as AgentNoticeEntry).kind,
         AgentNoticeKind.declined,
       );
-      expect(replay.pending?.id, pendingCommand.id);
+      expect(replay.pending.single.id, pendingCommand.id);
     });
 
     test('carries no localized text, only the reason for a notice', () {
@@ -111,7 +111,7 @@ void main() {
         (replay.entries.single as AgentRawNoticeEntry).text,
         contains('remote runner returned an unknown response'),
       );
-      expect(replay.pending, isNull);
+      expect(replay.pending, isEmpty);
     });
 
     test('matches duplicate call IDs in arrival order', () {
@@ -136,7 +136,7 @@ void main() {
         (replay.entries.single as AgentToolResultEntry).proposal.command,
         'uptime',
       );
-      expect(replay.pending?.command, 'df -h');
+      expect(replay.pending.single.command, 'df -h');
     });
 
     test('a summary shows on the page, with the turns it stands for', () {
@@ -171,29 +171,41 @@ void main() {
       );
     });
 
-    test('a call the app skipped replays as a notice, not as a result', () {
+    test('a whole unanswered batch comes back, in the order it was made', () {
+      // Reopening a conversation has to restore all of them: an id left behind
+      // is answered later with no call recorded, which the API rejects.
+      const first = AskAiCommand(id: 'call-a', command: 'uptime');
+      const second = AskAiCommand(id: 'call-b', command: 'free -m');
       final replay = replayAgentTimeline([
-        const AskAiFunctionCallItem(command: pendingCommand),
+        const AskAiMessageItem.user('Check the machine.'),
+        const AskAiFunctionCallItem(command: first),
+        const AskAiFunctionCallItem(command: second),
+      ]);
+
+      expect(replay.pending.map((call) => call.id), ['call-a', 'call-b']);
+    });
+
+    test('only the calls still waiting come back', () {
+      const answered = AskAiCommand(id: 'call-a', command: 'uptime');
+      const waiting = AskAiCommand(id: 'call-b', command: 'free -m');
+      final replay = replayAgentTimeline([
+        const AskAiFunctionCallItem(command: answered),
+        const AskAiFunctionCallItem(command: waiting),
         AskAiFunctionOutputItem(
-          callId: pendingCommand.id,
+          callId: answered.id,
           output: encodeAgentConversationToolAction(
-            AgentConversationToolAction.skipped,
+            AgentConversationToolAction.declined,
           ),
         ),
       ]);
 
-      expect(
-        (replay.entries.single as AgentNoticeEntry).kind,
-        AgentNoticeKind.skipped,
-      );
-      // Answered, so it is not still waiting for review when the page reopens.
-      expect(replay.pending, isNull);
+      expect(replay.pending.map((call) => call.id), ['call-b']);
     });
 
     test('an empty conversation replays to nothing pending', () {
       final replay = replayAgentTimeline(const []);
       expect(replay.entries, isEmpty);
-      expect(replay.pending, isNull);
+      expect(replay.pending, isEmpty);
     });
   });
 
@@ -234,7 +246,7 @@ void main() {
 
     test('leaves a nullable field alone when it is not passed', () {
       final withPending = base.copyWith(
-        pendingTool: pendingCommand,
+        pendingTools: const [pendingCommand],
         error: 'boom',
         streamingContent: 'partial',
       );
@@ -248,12 +260,12 @@ void main() {
 
     test('clears a nullable field when null is passed explicitly', () {
       final withPending = base.copyWith(
-        pendingTool: pendingCommand,
+        pendingTools: const [pendingCommand],
         error: 'boom',
         streamingContent: 'partial',
       );
       final cleared = withPending.copyWith(
-        pendingTool: null,
+        pendingTools: const [],
         error: null,
         streamingContent: null,
       );
@@ -272,7 +284,7 @@ void main() {
     test('isEmpty is false as soon as there is anything to show', () {
       expect(base.isEmpty, isTrue);
       expect(base.copyWith(isStreaming: true).isEmpty, isFalse);
-      expect(base.copyWith(pendingTool: pendingCommand).isEmpty, isFalse);
+      expect(base.copyWith(pendingTools: const [pendingCommand]).isEmpty, isFalse);
       expect(
         base.copyWith(timeline: const [AgentUserEntry('hi')]).isEmpty,
         isFalse,
@@ -334,23 +346,152 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       final state = container.read(globalAgentSessionProvider);
-      // One is reviewed, and it is the first.
+      // Both are kept, in the order the model made them, and the first is the
+      // one on screen.
+      expect(state.pendingTools.map((call) => call.id), [first.id, second.id]);
+      expect(state.pendingIndex, 0);
       expect(state.pendingTool?.id, first.id);
+      // Nothing is answered until the user acts: the model hears back once
+      // every call in the turn has an answer, not before.
+      expect(state.history.whereType<AskAiFunctionOutputItem>(), isEmpty);
+    });
 
-      final answered = {
-        for (final item in state.history.whereType<AskAiFunctionOutputItem>())
-          item.callId: item.output,
-      };
-      expect(answered.keys, [second.id]);
-      expect(
-        decodeAgentConversationToolAction(answered[second.id]!),
-        AgentConversationToolAction.skipped,
+    test('declining answers the whole batch, not the card on screen', () async {
+      const first = AskAiCommand(
+        id: 'call-a',
+        command: 'uptime',
+        toolName: 'run_shell_command',
       );
-      // And the user is told, rather than the second call vanishing.
+      const second = AskAiCommand(
+        id: 'call-b',
+        command: 'free -m',
+        toolName: 'run_shell_command',
+      );
+      final repository = _ParallelToolCallRepository(const [first, second]);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      addTearDown(
+        () => conversationStore.clearServer(globalAgentConversationScope),
+      );
+      final notifier = container.read(globalAgentSessionProvider.notifier);
+
+      await notifier.submitPrompt('check the server');
+      await Future<void>.delayed(Duration.zero);
+      await notifier.declinePendingTool();
+
+      final state = container.read(globalAgentSessionProvider);
+      // Every id answered, or the next request is the one the API rejects.
+      final answered = state.history
+          .whereType<AskAiFunctionOutputItem>()
+          .map((item) => item.callId);
+      expect(answered, containsAll([first.id, second.id]));
+      expect(state.pendingTools, isEmpty);
+      // One notice: the user said no once.
       expect(
         state.timeline.whereType<AgentNoticeEntry>().map((e) => e.kind),
-        [AgentNoticeKind.skipped],
+        [AgentNoticeKind.declined],
       );
+    });
+
+    test('resending from a message discards what answered it', () async {
+      final repository = _ParallelToolCallRepository(const []);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      addTearDown(
+        () => conversationStore.clearServer(globalAgentConversationScope),
+      );
+      final notifier = container.read(globalAgentSessionProvider.notifier);
+
+      await notifier.submitPrompt('first question');
+      await Future<void>.delayed(Duration.zero);
+      await notifier.submitPrompt('second question');
+      await Future<void>.delayed(Duration.zero);
+
+      // Back to the first, with different words.
+      final sent = await notifier.resendFrom(0, 'first question, rephrased');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(sent, isTrue);
+      final state = container.read(globalAgentSessionProvider);
+      final asked = state.history
+          .whereType<AskAiMessageItem>()
+          .where((item) => item.role == AskAiMessageRole.user)
+          .map((item) => item.content);
+      // The rewritten question, and nothing that came after the original.
+      expect(asked, ['first question, rephrased']);
+      expect(
+        state.timeline.whereType<AgentUserEntry>().map((e) => e.content),
+        ['first question, rephrased'],
+      );
+    });
+
+    test('deleting cuts the same way, and asks nothing', () async {
+      final repository = _ParallelToolCallRepository(const []);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      addTearDown(
+        () => conversationStore.clearServer(globalAgentConversationScope),
+      );
+      final notifier = container.read(globalAgentSessionProvider.notifier);
+
+      await notifier.submitPrompt('first question');
+      await Future<void>.delayed(Duration.zero);
+      await notifier.submitPrompt('second question');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(await notifier.deleteFrom(1), isTrue);
+
+      final state = container.read(globalAgentSessionProvider);
+      expect(
+        state.timeline.whereType<AgentUserEntry>().map((e) => e.content),
+        ['first question'],
+      );
+      // No new turn: a delete is not a question.
+      expect(state.isStreaming, isFalse);
+    });
+
+    test('resending is refused while a turn is running', () async {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(globalAgentSessionProvider.notifier);
+      notifier.state = notifier.state.copyWith(
+        timeline: const [AgentUserEntry('hi')],
+        history: const [AskAiMessageItem.user('hi')],
+        isStreaming: true,
+      );
+
+      expect(await notifier.resendFrom(0, 'again'), isFalse);
+      // And an empty edit is not a question.
+      notifier.state = notifier.state.copyWith(isStreaming: false);
+      expect(await notifier.resendFrom(0, '   '), isFalse);
+      // Nor is a message that is not there.
+      expect(await notifier.resendFrom(5, 'again'), isFalse);
+    });
+
+    test('showPendingTool moves within the batch and ignores nonsense', () {
+      const first = AskAiCommand(id: 'call-a', command: 'uptime');
+      const second = AskAiCommand(id: 'call-b', command: 'free -m');
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(globalAgentSessionProvider.notifier);
+      notifier.state = notifier.state.copyWith(
+        pendingTools: const [first, second],
+        pendingIndex: 0,
+      );
+
+      notifier.showPendingTool(1);
+      expect(container.read(globalAgentSessionProvider).pendingTool?.id, 'call-b');
+
+      // A page view settling on a stale index should do nothing at all.
+      notifier.showPendingTool(7);
+      notifier.showPendingTool(-1);
+      expect(container.read(globalAgentSessionProvider).pendingTool?.id, 'call-b');
     });
 
     test('rapid double submission persists and streams only once', () async {
@@ -385,6 +526,11 @@ class _ParallelToolCallRepository extends AskAiRepository {
 
   final List<AskAiCommand> commands;
 
+  /// Only the first turn proposes anything. The turn that follows an answer is
+  /// a real one in production, and here it only has to end — otherwise it is
+  /// still running when the test's container is disposed.
+  var _answered = false;
+
   @override
   Stream<AskAiEvent> ask({
     required String terminalContext,
@@ -397,6 +543,8 @@ class _ParallelToolCallRepository extends AskAiRepository {
       AskAiToolDefinition.runShellCommand,
     ],
   }) {
+    if (_answered) return const Stream.empty();
+    _answered = true;
     return Stream.fromIterable([
       for (final command in commands) AskAiToolSuggestion(command),
       AskAiCompleted(

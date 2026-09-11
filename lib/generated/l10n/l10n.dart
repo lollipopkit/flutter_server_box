@@ -353,6 +353,18 @@ abstract class AppLocalizations {
   /// **'Agent response was interrupted.'**
   String get askAiInterrupted;
 
+  /// No description provided for @askAiResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get askAiResend;
+
+  /// No description provided for @askAiResendTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything after this message is discarded — the replies, the commands and their results.'**
+  String get askAiResendTip;
+
   /// No description provided for @askAiModelTable.
   ///
   /// In en, this message translates to:
@@ -400,12 +412,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Earlier messages were summarised to keep the conversation going.'**
   String get askAiConversationCompacted;
-
-  /// No description provided for @askAiOneToolCallPerTurn.
-  ///
-  /// In en, this message translates to:
-  /// **'Only one tool call is reviewed per turn. The rest were not run.'**
-  String get askAiOneToolCallPerTurn;
 
   /// No description provided for @askAiRiskReadOnly.
   ///

@@ -496,7 +496,7 @@ String buildGlobalAgentInstructions({
       'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',
     )
     ..writeln(
-      'One tool call per turn. The app reviews them one at a time and answers the rest without running them, so a turn with several in it costs a round trip and runs only the first.',
+      'One tool call per turn. Every call is reviewed by the user, one at a time, so a turn carrying several asks them to decide all of it before you have seen a single result.',
     )
     ..writeln(
       'A server already listed as connected needs no connect action; call the shell or file tool directly.',

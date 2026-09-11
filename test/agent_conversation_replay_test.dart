@@ -72,7 +72,7 @@ void main() {
       (replay.entries[3] as AgentNoticeEntry).kind,
       AgentNoticeKind.declined,
     );
-    expect(replay.pending?.id, pendingCommand.id);
+    expect(replay.pending.single.id, pendingCommand.id);
   });
 
   test('a shell result is not read as a tool result', () {
@@ -141,7 +141,7 @@ void main() {
       (replay.entries.single as AgentNoticeEntry).kind,
       AgentNoticeKind.inserted,
     );
-    expect(replay.pending, isNull);
+    expect(replay.pending, isEmpty);
   });
 
   test('matches duplicate call IDs in arrival order', () {
@@ -164,7 +164,7 @@ void main() {
       (replay.entries.single as AgentShellResultEntry).command.command,
       'uptime',
     );
-    expect(replay.pending?.command, 'df -h');
+    expect(replay.pending.single.command, 'df -h');
   });
 
   test('renders unparsable function output as a notice', () {
@@ -180,7 +180,7 @@ void main() {
       (replay.entries.single as AgentRawNoticeEntry).text,
       contains('remote runner returned an unknown response'),
     );
-    expect(replay.pending, isNull);
+    expect(replay.pending, isEmpty);
   });
 
   test('restored commands are never eligible for automatic execution', () {

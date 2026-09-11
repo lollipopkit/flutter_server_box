@@ -13,17 +13,24 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/widget/agent_common.dart';
+import 'package:server_box/view/widget/agent_entry_appear.dart';
+import 'package:server_box/view/widget/agent_proposal_pager.dart';
+import 'package:server_box/view/widget/agent_user_bubble.dart';
 import 'package:server_box/view/widget/float_shell.dart';
 
-/// Width the scrollbar of a scrollable output box keeps at its right edge.
+/// How far the copy button floating over an output box stays from that box's
+/// top and right edges.
 ///
-/// A Material scrollbar is 8 wide and is drawn over the view rather than
-/// beside it, so anything else on that edge has to be told to stay out of it;
-/// 16 leaves it that much again as margin.
-///
-/// Zero on touch platforms, where `MaterialScrollBehavior` draws no scrollbar
-/// at all and this would be a strip of dead space on the narrowest screens.
-double get _outputScrollbarGutter => isDesktop ? 16.0 : 0.0;
+/// Two things set the right-hand value and the larger wins. A Material
+/// scrollbar is 8 wide and is drawn *over* the view rather than beside it, so
+/// on desktop anything on that edge has to be told to stay out of it — 16
+/// leaves the scrollbar that much again as margin. Touch platforms draw no
+/// scrollbar, so all that is left is keeping the button off the box's rounded
+/// corner, which 8 does.
+double get _outputCopyInset => isDesktop ? 16.0 : 8.0;
+
+/// The same gap above, where there is no scrollbar on any platform.
+const _outputCopyTopInset = 8.0;
 
 /// Padding on each side of the copy icon that floats over an output box.
 const _outputCopyPad = 7.0;
@@ -31,15 +38,15 @@ const _outputCopyPad = 7.0;
 /// The copy icon itself.
 const _outputCopyIcon = 15.0;
 
-/// What the output text keeps clear on its right: the scrollbar's gutter, plus
-/// the button standing in front of it.
+/// What the output text keeps clear on its right: everything the button is
+/// made of, plus the gap holding it off the edge.
 ///
 /// Derived rather than written out as one number, because all three have to
 /// agree — with the sum spelled `52` by hand, changing the icon size or the
 /// padding left the text running underneath the button with nothing to catch
 /// it.
 double get _outputTextRightInset =>
-    _outputScrollbarGutter + _outputCopyPad * 2 + _outputCopyIcon;
+    _outputCopyInset + _outputCopyPad * 2 + _outputCopyIcon;
 
 /// Everything a tool result has to say, as one block of text.
 ///
@@ -230,6 +237,10 @@ class AgentConversationView extends ConsumerStatefulWidget {
 class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
+
+  /// How many timeline entries had already been drawn. Anything past it is an
+  /// arrival — see where it is read.
+  var _renderedEntries = 0;
 
   AgentSession get _notifier => ref.read(globalAgentSessionProvider.notifier);
 
@@ -499,6 +510,14 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     List<AgentTimelineEntry> timeline,
   ) {
     final widgets = <Widget>[];
+    var userOrdinal = 0;
+    // What was already on screen last build. Anything past it arrived since,
+    // and is the only thing worth animating — replaying the entrance whenever
+    // an old entry scrolls back into view is what makes a list feel cheap.
+    // Read and updated here rather than in `setState`: it describes the frame
+    // being built, and changing it does not itself need one.
+    final settled = _renderedEntries;
+    _renderedEntries = timeline.length;
     for (var i = 0; i < timeline.length; i++) {
       final entry = timeline[i];
       if (entry is AgentToolResultEntry) {
@@ -508,12 +527,29 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
           run.add(timeline[++i] as AgentToolResultEntry);
         }
         widgets.add(
-          run.length == 1
-              ? _buildToolResultCard(context, theme, run.first)
-              : _buildToolGroupCard(context, theme, run),
+          AgentEntryAppear(
+            animate: i >= settled,
+            child: run.length == 1
+                ? _buildToolResultCard(context, theme, run.first)
+                : _buildToolGroupCard(context, theme, run),
+          ),
         );
       } else {
-        widgets.add(_buildTimelineEntry(context, theme, entry));
+        widgets.add(
+          AgentEntryAppear(
+            animate: i >= settled,
+            child: _buildTimelineEntry(
+              context,
+              theme,
+              entry,
+            // Which of the user's own messages this is. Counted here rather
+            // than carried on the entry: the timeline is rebuilt from the
+            // history on every open, and a stored index would be one more
+            // thing that has to stay in step with it.
+              userOrdinal: entry is AgentUserEntry ? userOrdinal++ : -1,
+            ),
+          ),
+        );
       }
       widgets.add(const SizedBox(height: 14));
     }
@@ -523,11 +559,18 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   Widget _buildTimelineEntry(
     BuildContext context,
     ThemeData theme,
-    AgentTimelineEntry entry,
-  ) {
+    AgentTimelineEntry entry, {
+    int userOrdinal = -1,
+  }) {
     return switch (entry) {
-      AgentUserEntry(:final content) => Align(
-        alignment: Alignment.centerRight,
+      AgentUserEntry(:final content) => AgentUserBubble(
+        content: content,
+        ordinal: userOrdinal,
+        onResend: _notifier.resendFrom,
+        onDelete: _notifier.deleteFrom,
+        // No `Align` here: the bubble goes to the right through the column
+        // inside `AgentUserBubble`, so that what scales is the bubble rather
+        // than a full-width box with a bubble at one end of it.
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 680),
           child: Container(
@@ -536,7 +579,12 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
               color: theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: SelectableText(
+            // Not selectable, deliberately: a `SelectableText` registers its
+            // own long press for the word-select handles, wins the arena
+            // against the bubble's, and the menu never opens. Copy is on that
+            // menu and on the hover row, so nothing is lost but the ability to
+            // take part of a message — which is the trade iMessage makes too.
+            child: Text(
               content,
               style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
             ),
@@ -730,8 +778,8 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                 ),
               ),
               Positioned(
-                top: 4,
-                right: _outputScrollbarGutter,
+                top: _outputCopyTopInset,
+                right: _outputCopyInset,
                 // Opaque, and a step away from the box's own colour: drawn in
                 // `surfaceContainerHighest` at 90% over a box of exactly that
                 // colour, the button had no edge at all and the text scrolled
@@ -822,8 +870,8 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     BuildContext context,
     ThemeData theme,
     AgentSessionState session,
+    AskAiCommand proposal,
   ) {
-    final proposal = session.pendingTool!;
     final arguments = proposal.arguments;
     final serverId = proposal.serverId;
     final serverName = serverId == null
@@ -1190,8 +1238,15 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
         ),
         const SizedBox(height: 14),
       ],
-      if (session.pendingTool != null)
-        _buildProposalCard(context, theme, session),
+      // Not behind an `if`: the pager animates its own emptiness, and a
+      // widget taken out of the tree cannot be seen leaving.
+      AgentProposalPager(
+          proposals: session.pendingTools,
+          index: session.pendingIndex,
+          onIndexChanged: _notifier.showPendingTool,
+          cardBuilder: (context, proposal) =>
+              _buildProposalCard(context, theme, session, proposal),
+        ),
     ];
 
     return Column(

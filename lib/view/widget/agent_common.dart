@@ -7,6 +7,8 @@
 /// see [describeAgentError] for the one that had drifted furthest.
 library;
 
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,7 +64,6 @@ String agentNoticeText(BuildContext context, AgentNoticeKind kind) =>
       AgentNoticeKind.interrupted => context.l10n.askAiInterrupted,
       AgentNoticeKind.inserted => context.l10n.askAiCommandInserted,
       AgentNoticeKind.compacted => context.l10n.askAiConversationCompacted,
-      AgentNoticeKind.skipped => context.l10n.askAiOneToolCallPerTurn,
     };
 
 /// Copies [text], and says so.

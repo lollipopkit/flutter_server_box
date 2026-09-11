@@ -130,6 +130,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiInterrupted => '已中断 Agent 回复。';
 
   @override
+  String get askAiResend => '重新发送';
+
+  @override
+  String get askAiResendTip => '这条消息之后的内容会被丢弃——包括回复、命令及其结果。';
+
+  @override
   String get askAiModelTable => '模型数据表';
 
   @override
@@ -155,9 +161,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiConversationCompacted => '较早的消息已压缩为摘要，以便对话继续。';
-
-  @override
-  String get askAiOneToolCallPerTurn => '每轮只处理一个工具调用，其余未执行。';
 
   @override
   String get askAiRiskReadOnly => '只读';
@@ -2175,6 +2178,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiInterrupted => '已中斷 Agent 回覆。';
 
   @override
+  String get askAiResend => '重新傳送';
+
+  @override
+  String get askAiResendTip => '這則訊息之後的內容會被捨棄——包括回覆、命令及其結果。';
+
+  @override
   String get askAiModelTable => '模型資料表';
 
   @override
@@ -2200,9 +2209,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiConversationCompacted => '較早的訊息已壓縮為摘要，以便對話繼續。';
-
-  @override
-  String get askAiOneToolCallPerTurn => '每輪只處理一個工具呼叫，其餘未執行。';
 
   @override
   String get askAiRiskReadOnly => '唯讀';
