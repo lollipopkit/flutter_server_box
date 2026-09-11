@@ -50,6 +50,8 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   Widget build(BuildContext context) {
     final system = ref.watch(_provider.select((state) => state.status.system));
     final supported = system == SystemType.linux;
+    final canMutate =
+        supported && !_unsupported && _failure == null && _catalog != null;
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
@@ -59,7 +61,8 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
         ),
         actions: isDesktop
             ? [
-                Btn.icon(text: libL10n.refresh,
+                Btn.icon(
+                  text: libL10n.refresh,
                   icon: const Icon(Icons.refresh),
                   onTap: _busy ? null : _refresh,
                 ),
@@ -67,7 +70,7 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
             : null,
       ),
       body: RefreshIndicator(onRefresh: _refresh, child: _buildBody()),
-      floatingActionButton: supported && !_unsupported
+      floatingActionButton: canMutate
           ? FloatingActionButton(
               tooltip: libL10n.add,
               onPressed: _busy ? null : () => _editUser(),
@@ -229,7 +232,7 @@ extension on _UsersPageState {
           ],
         ),
       ),
-      trailing: editable
+      trailing: editable && !_busy
           ? PopupMenu<_UserAction>(
               items: [
                 PopupMenuItem(

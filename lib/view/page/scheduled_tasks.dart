@@ -47,6 +47,11 @@ final class _ScheduledTasksPageState
   Widget build(BuildContext context) {
     final system = ref.watch(_provider.select((state) => state.status.system));
     final supported = system == SystemType.linux;
+    final canMutate = supported &&
+        !_unsupported &&
+        !_unavailable &&
+        _failure == null &&
+        _catalog != null;
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
@@ -56,7 +61,8 @@ final class _ScheduledTasksPageState
         ),
         actions: isDesktop
             ? [
-                Btn.icon(text: libL10n.refresh,
+                Btn.icon(
+                  text: libL10n.refresh,
                   icon: const Icon(Icons.refresh),
                   onTap: _busy ? null : _refresh,
                 ),
@@ -64,10 +70,10 @@ final class _ScheduledTasksPageState
             : null,
       ),
       body: RefreshIndicator(onRefresh: _refresh, child: _buildBody()),
-      floatingActionButton: supported && !_unsupported && !_unavailable
+      floatingActionButton: canMutate
           ? FloatingActionButton(
               tooltip: libL10n.add,
-              onPressed: _busy || _catalog == null ? null : () => _editTask(),
+              onPressed: _busy ? null : () => _editTask(),
               child: const Icon(Icons.add_alarm),
             )
           : null,
@@ -193,22 +199,24 @@ extension on _ScheduledTasksPageState {
           style: const TextStyle(fontFamily: 'monospace'),
         ),
       ),
-      trailing: PopupMenu<_ScheduledTaskAction>(
-        items: [
-          PopupMenuItem(
-            value: _ScheduledTaskAction.edit,
-            child: Text(libL10n.edit),
-          ),
-          PopupMenuItem(
-            value: _ScheduledTaskAction.delete,
-            child: Text(libL10n.delete),
-          ),
-        ],
-        onSelected: (action) => switch (action) {
-          _ScheduledTaskAction.edit => _editTask(task),
-          _ScheduledTaskAction.delete => _deleteTask(task),
-        },
-      ),
+      trailing: _busy
+          ? null
+          : PopupMenu<_ScheduledTaskAction>(
+              items: [
+                PopupMenuItem(
+                  value: _ScheduledTaskAction.edit,
+                  child: Text(libL10n.edit),
+                ),
+                PopupMenuItem(
+                  value: _ScheduledTaskAction.delete,
+                  child: Text(libL10n.delete),
+                ),
+              ],
+              onSelected: (action) => switch (action) {
+                _ScheduledTaskAction.edit => _editTask(task),
+                _ScheduledTaskAction.delete => _deleteTask(task),
+              },
+            ),
     ).cardx.paddingSymmetric(horizontal: 13);
   }
 }
