@@ -388,6 +388,20 @@ void main() {
           .map((item) => item.callId);
       expect(answered, containsAll([first.id, second.id]));
       expect(state.pendingTools, isEmpty);
+      // And asserted on what actually went out, not only on local state: the
+      // provider is the one that rejects a mismatch, and it sees the request
+      // rather than the notifier. Both answers, in the order the calls were
+      // made, alongside the calls they answer.
+      expect(repository.requests, hasLength(2));
+      final sent = repository.requests.last;
+      expect(
+        sent.whereType<AskAiFunctionCallItem>().map((item) => item.command.id),
+        [first.id, second.id],
+      );
+      expect(
+        sent.whereType<AskAiFunctionOutputItem>().map((item) => item.callId),
+        [first.id, second.id],
+      );
       // One notice: the user said no once.
       expect(
         state.timeline.whereType<AgentNoticeEntry>().map((e) => e.kind),
@@ -445,6 +459,7 @@ void main() {
       await notifier.submitPrompt('second question');
       await Future<void>.delayed(Duration.zero);
 
+      final asked = repository.requests.length;
       expect(await notifier.deleteFrom(1), isTrue);
 
       final state = container.read(globalAgentSessionProvider);
@@ -452,8 +467,11 @@ void main() {
         state.timeline.whereType<AgentUserEntry>().map((e) => e.content),
         ['first question'],
       );
-      // No new turn: a delete is not a question.
+      // No new turn: a delete is not a question. Counted as well as read off
+      // the state, since a request that went out and failed would leave
+      // `isStreaming` false too.
       expect(state.isStreaming, isFalse);
+      expect(repository.requests, hasLength(asked));
     });
 
     test('resending is refused while a turn is running', () async {
@@ -526,6 +544,11 @@ class _ParallelToolCallRepository extends AskAiRepository {
 
   final List<AskAiCommand> commands;
 
+  /// What each request carried, which is the only place the bug is visible:
+  /// the turn that drops a call looks fine, and the request after it is the
+  /// one the API rejects.
+  final requests = <List<AskAiConversationItem>>[];
+
   /// Only the first turn proposes anything. The turn that follows an answer is
   /// a real one in production, and here it only has to end — otherwise it is
   /// still running when the test's container is disposed.
@@ -543,6 +566,7 @@ class _ParallelToolCallRepository extends AskAiRepository {
       AskAiToolDefinition.runShellCommand,
     ],
   }) {
+    requests.add(List.unmodifiable(conversation));
     if (_answered) return const Stream.empty();
     _answered = true;
     return Stream.fromIterable([

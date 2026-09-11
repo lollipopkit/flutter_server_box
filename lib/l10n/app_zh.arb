@@ -40,6 +40,7 @@
   "askAiInterrupted": "已中断 Agent 回复。",
   "askAiResend": "重新发送",
   "askAiResendTip": "这条消息之后的内容会被丢弃——包括回复、命令及其结果。",
+  "askAiDeleteTip": "这条消息及其之后的内容都会被删除——包括回复、命令及其结果。",
   "askAiModelTable": "模型数据表",
   "askAiModelTableTip": "来自 models.dev 的模型上下文长度对照表。App 内置一份，点击可获取更新。",
   "askAiContextFallback": "表中没有该模型",

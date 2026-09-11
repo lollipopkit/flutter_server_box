@@ -157,24 +157,36 @@ class _Dots extends StatelessWidget {
           // Tappable, and with a target bigger than the dot: a flick is the
           // fast way between neighbours and this is the only way to the fourth
           // card from the first.
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => onTap(i),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 7),
-              child: AnimatedContainer(
-                duration: Durations.short3,
-                curve: Curves.easeOut,
-                // The current one is a short bar rather than a bigger dot: at
-                // this size a difference in diameter is hard to see and a
-                // difference in shape is not.
-                width: i == index ? 16 : 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: i == index
-                      ? scheme.primary
-                      : scheme.onSurfaceVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(3),
+          //
+          // `InkResponse` rather than a bare `GestureDetector` so it can also
+          // be reached without a pointer — a flick needs a velocity a keyboard
+          // cannot produce, which would otherwise leave the third card of a
+          // batch unreachable. Labelled `n/total` rather than with a sentence:
+          // that reads the same in every language this ships in, and the card
+          // itself says what is being decided.
+          Semantics(
+            button: true,
+            selected: i == index,
+            label: '${i + 1}/$count',
+            child: InkResponse(
+              onTap: () => onTap(i),
+              radius: 14,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 7),
+                child: AnimatedContainer(
+                  duration: Durations.short3,
+                  curve: Curves.easeOut,
+                  // The current one is a short bar rather than a bigger dot: at
+                  // this size a difference in diameter is hard to see and a
+                  // difference in shape is not.
+                  width: i == index ? 16 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == index
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
                 ),
               ),
             ),

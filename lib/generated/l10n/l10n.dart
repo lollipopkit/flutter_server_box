@@ -365,6 +365,12 @@ abstract class AppLocalizations {
   /// **'Everything after this message is discarded — the replies, the commands and their results.'**
   String get askAiResendTip;
 
+  /// No description provided for @askAiDeleteTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This message and everything after it are removed — the replies, the commands and their results.'**
+  String get askAiDeleteTip;
+
   /// No description provided for @askAiModelTable.
   ///
   /// In en, this message translates to:

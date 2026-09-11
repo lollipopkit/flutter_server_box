@@ -115,7 +115,7 @@ class _AgentUserBubbleState extends State<AgentUserBubble> {
                           icon: Icons.delete_outline,
                           tooltip: libL10n.delete,
                           destructive: true,
-                          onTap: () => unawaited(widget.onDelete(widget.ordinal)),
+                          onTap: () => unawaited(_confirmDelete(context)),
                         ),
                       ],
                     ),
@@ -177,10 +177,27 @@ class _AgentUserBubbleState extends State<AgentUserBubble> {
       case _BubbleAction.copy:
         await copyAgentText(widget.content);
       case _BubbleAction.delete:
-        await widget.onDelete(widget.ordinal);
+        await _confirmDelete(context);
       case null:
         break;
     }
+  }
+
+  /// Asked first, because this takes more than the message it is next to.
+  ///
+  /// Deleting cuts the conversation back to before this turn: every reply, every
+  /// command and every result after it goes with it, none of it recoverable and
+  /// none of it named by a button that says only "delete". Resending says the
+  /// same thing in its own dialog before the editor.
+  Future<void> _confirmDelete(BuildContext context) async {
+    final tip = context.l10n.askAiDeleteTip;
+    final ok = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(tip),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true) return;
+    await widget.onDelete(widget.ordinal);
   }
 
   Future<void> _showEditor(BuildContext context) async {
