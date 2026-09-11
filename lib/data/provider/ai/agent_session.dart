@@ -30,6 +30,10 @@ enum AgentNoticeKind {
   /// themselves, so what it did — or whether it ran at all — is not known here.
   /// Only a terminal Agent can reach this.
   inserted,
+
+  /// The turns above this were summarised, and the model is now sent the
+  /// summary instead of them. They are still on the page.
+  compacted,
 }
 
 @immutable
@@ -205,6 +209,10 @@ class AgentSession extends _$AgentSession {
   StreamSubscription<void>? _conversationWatch;
   bool _submissionInFlight = false;
 
+  /// One summary at a time. Two turns finishing close together would otherwise
+  /// each summarise the same prefix and insert two summaries of it.
+  bool _compacting = false;
+
   /// The language to answer in, remembered from the last thing the user did.
   ///
   /// Passed in by the view, which is the only side that can read a locale. The
@@ -359,6 +367,9 @@ class AgentSession extends _$AgentSession {
           : null,
     );
     await _persist();
+    // After the turn is stored, so a summary that fails costs nothing, and
+    // unawaited, so it never stands between the user and the next turn.
+    unawaited(_compactIfNeeded());
 
     if (command == null) return;
     if (!shouldAutoRunAgentCommand(
@@ -451,6 +462,57 @@ class AgentSession extends _$AgentSession {
     );
     await _persist();
     if (!run.cancelled) startStream();
+  }
+
+  /// Replaces the turns that no longer fit in a request with a summary of
+  /// them.
+  ///
+  /// The summary is *inserted*, never a replacement: the items it stands for
+  /// stay in storage and on the page, and only a request leaves them out. The
+  /// conversation a user scrolls back through is the one that happened.
+  ///
+  /// Failure is silent on purpose. A model that is unreachable, out of quota
+  /// or refusing this particular transcript leaves the conversation exactly as
+  /// it was — which still works, having only the window it had before. Telling
+  /// the user their conversation failed to compress would be reporting an
+  /// internal step they never asked for.
+  Future<void> _compactIfNeeded() async {
+    if (_compacting || state.isWorking) return;
+    final history = state.history;
+    if (!AskAiRepository.shouldCompact(history)) return;
+
+    _compacting = true;
+    try {
+      final window = AskAiRepository.conversationWindow(history);
+      final dropped = history.length - window.items.length;
+      if (dropped <= 0) return;
+      final covered = history.sublist(0, dropped);
+
+      final summary = await ref
+          .read(askAiRepositoryProvider)
+          .summarise(items: covered, localeHint: _localeHint);
+      if (summary.isEmpty) return;
+
+      // Against the history as it is *now*: a turn may have been added while
+      // the summariser was working, and appending to a stale copy would drop
+      // it. The prefix is append-only, so what was covered is still the head.
+      final current = state.history;
+      if (current.length < dropped) return;
+      state = state.copyWith(
+        history: [
+          ...current.sublist(0, dropped),
+          AskAiSummaryItem(summary: summary, coveredItems: dropped),
+          ...current.sublist(dropped),
+        ],
+        timeline: [...state.timeline, const AgentNoticeEntry(AgentNoticeKind.compacted)],
+      );
+      await _persist();
+      Diag.crumb(SbDiag.agent, 'compacted', data: {'items': '$dropped'});
+    } catch (_) {
+      // See above: the conversation is unchanged and still usable.
+    } finally {
+      _compacting = false;
+    }
   }
 
   Future<void> declinePendingTool() async {
@@ -783,6 +845,11 @@ final globalAgentSessionProvider = agentSessionProvider(
               entries.add(AgentRawNoticeEntry(output));
             }
         }
+      // Shown rather than skipped. Everything above it is still on the page,
+      // and without a line here the reader has no way to know that the model
+      // is no longer being sent it.
+      case AskAiSummaryItem():
+        entries.add(const AgentNoticeEntry(AgentNoticeKind.compacted));
       case AskAiReasoningItem() || AskAiRawResponseItem():
         break;
     }

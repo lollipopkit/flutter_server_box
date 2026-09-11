@@ -138,6 +138,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiInterrupted => 'Het antwoord van de agent is onderbroken.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Alleen lezen';
 
   @override

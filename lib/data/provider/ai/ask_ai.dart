@@ -38,6 +38,43 @@ const _kEarlierOutputCharacters = 6000;
 /// knows it shortened something.
 const _kShortenedMarker = '\n[... earlier output shortened ...]\n';
 
+/// How many items have to be outside the window before summarising them is
+/// worth a request of its own.
+///
+/// Low enough that it happens before the first thing is forgotten, high enough
+/// that it is not once a turn. One turn is about four items.
+const _kCompactAfterDropped = 12;
+
+/// What the summariser is told it is for.
+///
+/// The headings are not generic. Which machines, what was found on them, and
+/// what was actually *changed* as opposed to inspected are the things this app
+/// cannot let a summary lose — the rest of a conversation can be re-derived by
+/// running a command again, and a change cannot.
+const _kSummariserInstructions =
+    'You are summarising a conversation between a user and an operations agent '
+    'that runs commands on the user\'s servers. It has grown too long to send '
+    'in full. Your summary replaces those turns entirely and is the only '
+    'account of them the agent will have.\n'
+    'Write it under these headings, leaving out any with nothing in them:\n'
+    '- Language: the language the user writes in.\n'
+    '- Goal: what the user is trying to achieve, in one sentence.\n'
+    '- Servers: which machines were worked on, by the name and id used.\n'
+    '- Findings: what was established. Facts and figures, not prose.\n'
+    '- Changes: what was actually changed, kept apart from what was only '
+    'inspected.\n'
+    '- Tools: the exact tool names that were called.\n'
+    '- Open: what was asked and not answered, what was started and not '
+    'finished.\n'
+    'Be dense. Keep identifiers, paths, versions and numbers verbatim — they '
+    'cannot be recovered from anywhere else. Add nothing that is not in the '
+    'conversation, and do not address the user.';
+
+/// The turn that asks for it. The conversation being summarised is everything
+/// above this message.
+const _kSummariseRequest =
+    'Summarise the conversation above under those headings.';
+
 /// Appended to the instructions when the request is not the whole
 /// conversation.
 const _kTrimmedConversationNotice =
@@ -527,8 +564,12 @@ class AskAiRepository {
         'store': false,
         'instructions': sentInstructions,
         'input': _responsesInputItems(window.items),
-        'parallel_tool_calls': false,
-        'tools': requestTools,
+        // Omitted rather than sent empty. A request with no tools is the
+        // summariser's, and several compatible APIs reject `"tools": []`.
+        if (requestTools.isNotEmpty) ...{
+          'parallel_tool_calls': false,
+          'tools': requestTools,
+        },
       };
     }
 
@@ -539,9 +580,53 @@ class AskAiRepository {
         {'role': 'system', 'content': sentInstructions},
         ..._chatMessages(window.items),
       ],
-      'parallel_tool_calls': false,
-      'tools': requestTools,
+      if (requestTools.isNotEmpty) ...{
+        'parallel_tool_calls': false,
+        'tools': requestTools,
+      },
     };
+  }
+
+  /// Asks the model what the conversation so far amounted to.
+  ///
+  /// Its own request, with no tools: this one is not allowed to *do* anything,
+  /// and a summariser holding a shell is a summariser that can be talked into
+  /// using it by the very transcript it is reading.
+  ///
+  /// Throws what [ask] throws. The caller decides what a failed summary means;
+  /// here it means the conversation stays as it was, which is survivable.
+  Future<String> summarise({
+    required List<AskAiConversationItem> items,
+    String? localeHint,
+  }) async {
+    if (items.isEmpty) return '';
+    await for (final event in ask(
+      terminalContext: '',
+      serverName: '',
+      localeHint: localeHint,
+      conversation: [
+        ...items,
+        const AskAiMessageItem.user(_kSummariseRequest),
+      ],
+      customInstructions: _kSummariserInstructions,
+      tools: const [],
+    )) {
+      if (event is AskAiStreamError) throw event.error;
+      if (event is AskAiCompleted) return event.fullText.trim();
+    }
+    return '';
+  }
+
+  /// Whether enough has fallen outside what a request carries to be worth
+  /// summarising.
+  ///
+  /// Not "is the conversation long". A long one that still fits loses detail
+  /// for nothing, and a short one that does not fit is one enormous turn —
+  /// which is carried whole by design and would not shrink anyway.
+  static bool shouldCompact(List<AskAiConversationItem> conversation) {
+    final window = conversationWindow(conversation);
+    if (window.complete) return false;
+    return conversation.length - window.items.length >= _kCompactAfterDropped;
   }
 
   @visibleForTesting
@@ -613,16 +698,32 @@ class AskAiRepository {
   /// moment anything was dropped or shortened, and the instructions say so —
   /// silently forgetting is what made this look like amnesia rather than like
   /// a limit.
-  @visibleForTesting
   static ({List<AskAiConversationItem> items, bool complete}) conversationWindow(
     List<AskAiConversationItem> conversation,
   ) {
     if (conversation.isEmpty) return (items: const [], complete: true);
 
+    // Everything behind the newest summary is what that summary is for. It
+    // stays in storage — the timeline is replayed from the same list — and
+    // only drops out of the request.
+    var summarised = false;
+    var conversation_ = conversation;
+    for (var index = conversation.length - 1; index >= 0; index--) {
+      if (conversation[index] is AskAiSummaryItem) {
+        summarised = index > 0;
+        conversation_ = conversation.sublist(index);
+        break;
+      }
+    }
+    conversation = conversation_;
+
     final userStarts = <int>[];
     for (var index = 0; index < conversation.length; index++) {
       final item = conversation[index];
-      if (item is AskAiMessageItem && item.role == AskAiMessageRole.user) {
+      // A summary opens a window the same way a user message does: it is sent
+      // as one, and what follows it is a turn like any other.
+      if (item is AskAiSummaryItem ||
+          (item is AskAiMessageItem && item.role == AskAiMessageRole.user)) {
         userStarts.add(index);
       }
     }
@@ -677,7 +778,11 @@ class AskAiRepository {
       // Shortening counts as incomplete even when every turn is present: what
       // a command printed is no longer all there, and a model that says "as
       // we saw earlier" should know it is working from an excerpt.
-      complete: earlier.length == currentStart && !shortenedSomething,
+      // A summarised conversation is complete in the sense that matters: what
+      // is missing was replaced by something that says what it was, and the
+      // model is reading that summary rather than guessing around a gap.
+      complete:
+          earlier.length == currentStart && !shortenedSomething && !summarised,
     );
   }
 
@@ -870,10 +975,24 @@ List<AskAiConversationItem> _chatOutputItems({
   ];
 }
 
+/// What a summary looks like to the model.
+///
+/// Marked, so a model cannot mistake it for something the user typed, and
+/// worded as a handover rather than as a note: it is the only account of those
+/// turns the model will get.
+String _summaryAsMessage(AskAiSummaryItem item) =>
+    '[Summary of the earlier part of this conversation, written when it grew '
+    'too long to send in full. Treat it as what happened; continue from here.]'
+    '\n\n${item.summary}';
+
 List<Map<String, dynamic>> _chatMessages(List<AskAiConversationItem> items) {
   final messages = <Map<String, dynamic>>[];
   for (var index = 0; index < items.length; index++) {
     final item = items[index];
+    if (item is AskAiSummaryItem) {
+      messages.add({'role': 'user', 'content': _summaryAsMessage(item)});
+      continue;
+    }
     if (item is AskAiMessageItem) {
       if (item.role == AskAiMessageRole.user) {
         messages.add({'role': 'user', 'content': item.content});
@@ -945,6 +1064,12 @@ List<Map<String, dynamic>> _responsesInputItems(
           },
           AskAiReasoningItem() => item.rawResponseItem,
           AskAiRawResponseItem() => item.rawResponseItem,
+          // Sent as the user, which is what it is standing in for: the turns
+          // behind it opened with one.
+          AskAiSummaryItem() => {
+            'role': 'user',
+            'content': _summaryAsMessage(item),
+          },
         };
       })
       .where((item) => item.isNotEmpty)

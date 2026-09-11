@@ -138,6 +138,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiInterrupted => 'Respons Agent terputus.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Hanya baca';
 
   @override

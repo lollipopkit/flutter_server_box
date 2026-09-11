@@ -139,6 +139,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiInterrupted => 'Agent yanıtı kesildi.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Salt okunur';
 
   @override

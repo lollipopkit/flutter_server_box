@@ -38,6 +38,7 @@
   "askAiDecline": "拒绝",
   "askAiActionDeclined": "已拒绝建议命令。",
   "askAiInterrupted": "已中断 Agent 回复。",
+  "askAiConversationCompacted": "较早的消息已压缩为摘要，以便对话继续。",
   "askAiRiskReadOnly": "只读",
   "askAiRiskCaution": "会更改系统",
   "askAiRiskUnvetted": "未审核的主机",

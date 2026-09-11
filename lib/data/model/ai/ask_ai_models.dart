@@ -57,6 +57,7 @@ sealed class AskAiConversationItem {
       'function_output' => AskAiFunctionOutputItem.fromJson(json),
       'reasoning' => AskAiReasoningItem.fromJson(json),
       'raw_response' => AskAiRawResponseItem.fromJson(json),
+      'summary' => AskAiSummaryItem.fromJson(json),
       _ => null,
     };
   }
@@ -238,6 +239,49 @@ class AskAiRawResponseItem extends AskAiConversationItem {
   Map<String, dynamic> toJson() => {
     'kind': persistenceKind,
     'raw_response_item': rawResponseItem,
+  };
+}
+
+/// What the turns before it amounted to, written by the model.
+///
+/// Stored *beside* the items it stands for, never in place of them. The
+/// timeline the user reads is replayed from this same list, and a conversation
+/// that deleted its own history to save room would be a worse fault than the
+/// one this exists to fix. Only a request substitutes it: everything before
+/// the newest summary is left out and the summary goes instead.
+///
+/// Which means the position in the list is the whole of the bookkeeping. There
+/// is no range to record and nothing to keep in step — a second summary covers
+/// the first the same way it covers everything else behind it.
+@immutable
+class AskAiSummaryItem extends AskAiConversationItem {
+  const AskAiSummaryItem({required this.summary, this.coveredItems = 0});
+
+  factory AskAiSummaryItem.fromJson(Map<String, dynamic> json) {
+    final covered = json['covered_items'];
+    return AskAiSummaryItem(
+      summary: json['summary'] as String? ?? '',
+      coveredItems: covered is num ? covered.toInt() : 0,
+    );
+  }
+
+  final String summary;
+
+  /// How many items went into it. Shown to the reader, and used by nothing —
+  /// see the note above about position being the bookkeeping.
+  final int coveredItems;
+
+  @override
+  String get persistenceKind => 'summary';
+
+  @override
+  int get estimatedCharacters => summary.length;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'summary': summary,
+    'covered_items': coveredItems,
   };
 }
 

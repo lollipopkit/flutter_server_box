@@ -129,6 +129,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiInterrupted => '已中断 Agent 回复。';
 
   @override
+  String get askAiConversationCompacted => '较早的消息已压缩为摘要，以便对话继续。';
+
+  @override
   String get askAiRiskReadOnly => '只读';
 
   @override
@@ -2141,6 +2144,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiInterrupted => '已中斷 Agent 回覆。';
+
+  @override
+  String get askAiConversationCompacted => '較早的訊息已壓縮為摘要，以便對話繼續。';
 
   @override
   String get askAiRiskReadOnly => '唯讀';

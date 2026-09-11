@@ -38,6 +38,7 @@
   "askAiDecline": "Decline",
   "askAiActionDeclined": "The proposed command was declined.",
   "askAiInterrupted": "Agent response was interrupted.",
+  "askAiConversationCompacted": "Earlier messages were summarised to keep the conversation going.",
   "askAiRiskReadOnly": "Read-only",
   "askAiRiskCaution": "Changes system",
   "askAiRiskUnvetted": "Unvetted host",

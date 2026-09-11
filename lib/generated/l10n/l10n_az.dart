@@ -139,6 +139,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiInterrupted => 'Agentin cavabı kəsildi.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Yalnız oxuma';
 
   @override

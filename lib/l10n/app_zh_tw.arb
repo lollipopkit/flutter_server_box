@@ -38,6 +38,7 @@
   "askAiDecline": "拒絕",
   "askAiActionDeclined": "已拒絕建議指令。",
   "askAiInterrupted": "已中斷 Agent 回覆。",
+  "askAiConversationCompacted": "較早的訊息已壓縮為摘要，以便對話繼續。",
   "askAiRiskReadOnly": "唯讀",
   "askAiRiskCaution": "會變更系統",
   "askAiRiskUnvetted": "未審核的主機",

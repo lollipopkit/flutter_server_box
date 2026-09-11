@@ -372,6 +372,101 @@ void main() {
       }
     });
 
+    test('a summary replaces what it stands for, in the request only', () {
+      final conversation = <AskAiConversationItem>[
+        ...turn('one', 'the answer was 41'),
+        ...turn('two', 'and then 42'),
+        const AskAiSummaryItem(summary: 'Goal: count. Findings: 41, 42.'),
+        ...turn('three', 'now 43'),
+      ];
+
+      final window = AskAiRepository.conversationWindow(conversation);
+
+      // Nothing from before the summary is sent...
+      final sent = window.items
+          .whereType<AskAiMessageItem>()
+          .map((item) => item.content);
+      expect(sent, isNot(contains('one')));
+      expect(sent, isNot(contains('two')));
+      expect(sent, contains('three'));
+      // ...and the summary is, as the message that opens the window.
+      expect(window.items.first, isA<AskAiSummaryItem>());
+      // The stored conversation is untouched: the page still shows all of it.
+      expect(conversation, hasLength(13));
+    });
+
+    test('the newest summary is the one that counts', () {
+      final conversation = <AskAiConversationItem>[
+        ...turn('one', 'a'),
+        const AskAiSummaryItem(summary: 'first summary'),
+        ...turn('two', 'b'),
+        const AskAiSummaryItem(summary: 'second summary'),
+        ...turn('three', 'c'),
+      ];
+
+      final window = AskAiRepository.conversationWindow(conversation);
+
+      expect(
+        window.items.whereType<AskAiSummaryItem>().map((e) => e.summary),
+        ['second summary'],
+      );
+    });
+
+    test('a summary reaches the model as a marked user message', () {
+      final body = AskAiRepository.buildRequestBody(
+        model: 'test-model',
+        terminalContext: '',
+        serverName: 'Example server',
+        conversation: const [
+          AskAiSummaryItem(summary: 'Goal: restart nginx.'),
+          AskAiMessageItem.user('carry on'),
+        ],
+      );
+
+      final messages = body['messages'] as List<dynamic>;
+      final summaryMessage = messages[1] as Map<String, dynamic>;
+      expect(summaryMessage['role'], 'user');
+      expect(summaryMessage['content'], contains('Goal: restart nginx.'));
+      // Marked, so it cannot be read as something the user typed.
+      expect(summaryMessage['content'], contains('Summary of the earlier'));
+    });
+
+    test('a summariser request carries no tools at all', () {
+      // `"tools": []` is rejected by several compatible APIs, and a summariser
+      // holding a shell is one that can be talked into using it.
+      final body = AskAiRepository.buildRequestBody(
+        model: 'test-model',
+        terminalContext: '',
+        serverName: '',
+        conversation: const [AskAiMessageItem.user('summarise')],
+        tools: const [],
+      );
+
+      expect(body.containsKey('tools'), isFalse);
+      expect(body.containsKey('parallel_tool_calls'), isFalse);
+    });
+
+    test('summarising is for what fell out, not for being long', () {
+      // Fits: nothing to gain, and a request spent to lose detail.
+      expect(
+        AskAiRepository.shouldCompact([...turn('one', 'a'), ...turn('two', 'b')]),
+        isFalse,
+      );
+      // One enormous turn does not fit, but it is carried whole by design and
+      // summarising the nothing behind it would not shrink the request.
+      expect(
+        AskAiRepository.shouldCompact(turn('one', 'x' * 90000)),
+        isFalse,
+      );
+      // Long enough that turns are being dropped: now it is worth a request.
+      expect(
+        AskAiRepository.shouldCompact([
+          for (var i = 0; i < 30; i++) ...turn('ask $i', 'y' * 5000),
+        ]),
+        isTrue,
+      );
+    });
+
     test('a request that had to drop something tells the model so', () {
       final full = AskAiRepository.buildRequestBody(
         model: 'test-model',

@@ -132,6 +132,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiInterrupted => '에이전트 응답이 중단되었습니다.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => '읽기 전용';
 
   @override

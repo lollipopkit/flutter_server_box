@@ -138,6 +138,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiInterrupted => 'Відповідь агента перервано.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Лише читання';
 
   @override

@@ -353,6 +353,12 @@ abstract class AppLocalizations {
   /// **'Agent response was interrupted.'**
   String get askAiInterrupted;
 
+  /// No description provided for @askAiConversationCompacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier messages were summarised to keep the conversation going.'**
+  String get askAiConversationCompacted;
+
   /// No description provided for @askAiRiskReadOnly.
   ///
   /// In en, this message translates to:

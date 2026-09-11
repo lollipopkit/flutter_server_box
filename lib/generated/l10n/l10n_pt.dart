@@ -138,6 +138,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get askAiInterrupted => 'A resposta do Agente foi interrompida.';
 
   @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Somente leitura';
 
   @override
