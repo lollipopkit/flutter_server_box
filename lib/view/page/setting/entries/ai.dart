@@ -115,8 +115,103 @@ extension _AI on _AppSettingsPageState {
           displayBuilder: (val) =>
               val.isNotEmpty ? libL10n.configured : l10n.askAiApiKeyOptional,
         ),
+        _buildCompactAt(l10n),
+        _buildContextTokens(l10n),
       ].map((e) => CardX(child: e)).toList(),
     );
+  }
+
+  /// How full the context gets before the conversation is summarised.
+  Widget _buildCompactAt(AppLocalizations l10n) {
+    return _buildAskAiIntTile(
+      prop: _setting.askAiCompactAtPercent,
+      leading: const Icon(Icons.compress, size: _kIconSize),
+      title: l10n.askAiCompactAt,
+      description: l10n.askAiCompactAtTip,
+      hint: '90',
+      // A summary is only useful while there is still room to send it and the
+      // turn it is for, so the top of the range is short of the limit itself.
+      sanitize: (value) => value.clamp(10, 99),
+      displayBuilder: (val) => '$val%',
+    );
+  }
+
+  /// What the model holds, when the shipped table is wrong about it.
+  Widget _buildContextTokens(AppLocalizations l10n) {
+    return _buildAskAiIntTile(
+      prop: _setting.askAiContextTokens,
+      leading: const Icon(Icons.straighten, size: _kIconSize),
+      title: l10n.askAiContextTokens,
+      description: l10n.askAiContextTokensTip,
+      hint: '0',
+      sanitize: (value) => value < 0 ? 0 : value,
+      displayBuilder: (val) => val <= 0 ? libL10n.auto : '$val',
+    );
+  }
+
+  /// The same row as [_buildAskAiTextTile] over a number.
+  ///
+  /// [sanitize] rather than validation in the dialog: a value out of range is
+  /// a typo, and refusing it would leave the user to guess the range. Pulling
+  /// it into range and showing the result says what the range is.
+  Widget _buildAskAiIntTile({
+    required StorePropDefault<int> prop,
+    required Widget leading,
+    required String title,
+    required String hint,
+    required String Function(int value) displayBuilder,
+    required int Function(int value) sanitize,
+    String? description,
+  }) {
+    return prop.listenable().listenVal((val) {
+      return ListTile(
+        leading: leading,
+        title: TipText(title, description ?? title),
+        subtitle: Text(displayBuilder(val), style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => withTextFieldController((ctrl) async {
+          ctrl.text = '${prop.get()}';
+
+          void onSave() {
+            final parsed = int.tryParse(ctrl.text.trim());
+            if (parsed != null) {
+              unawaited(_persist(prop.set(sanitize(parsed))));
+            }
+            context.popDialog();
+          }
+
+          await context.showRoundDialog(
+            title: title,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Input(
+                  controller: ctrl,
+                  autoFocus: true,
+                  type: TextInputType.number,
+                  label: title,
+                  hint: hint,
+                  icon: Icons.edit,
+                  onSubmitted: (_) => onSave(),
+                ),
+                if (description != null) ...[
+                  const SizedBox(height: 8),
+                  Text(description, style: UIs.textGrey),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: context.popDialog,
+                child: Text(libL10n.cancel),
+              ),
+              TextButton(onPressed: onSave, child: Text(libL10n.ok)),
+            ],
+          );
+        }),
+      );
+    });
   }
 
   /// The value on the right and a dialog behind the tap, which is how every

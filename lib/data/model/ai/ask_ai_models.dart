@@ -820,6 +820,7 @@ class AskAiCompleted extends AskAiEvent {
     required this.protocol,
     this.reasoningContent,
     this.responseId,
+    this.promptTokens,
   });
 
   final String fullText;
@@ -828,6 +829,14 @@ class AskAiCompleted extends AskAiEvent {
   final AskAiProtocol protocol;
   final String? reasoningContent;
   final String? responseId;
+
+  /// What the request actually cost, as the provider counted it.
+  ///
+  /// Null where the provider said nothing — not every OpenAI-compatible server
+  /// answers `usage`, and a stream has to ask for it. It is the only honest
+  /// measure of how full the context is; everything else is an estimate of
+  /// characters standing in for tokens.
+  final int? promptTokens;
 }
 
 /// Signals that the stream terminated with an error before completion.

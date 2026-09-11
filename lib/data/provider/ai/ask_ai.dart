@@ -213,6 +213,9 @@ class AskAiRepository {
     final emittedCallIds = <String>{};
     final toolBuilders = <int, _ChatToolCallBuilder>{};
     var completed = false;
+    // Arrives in its own chunk at the end, and only when the request asked for
+    // it — see `stream_options` in `buildRequestBody`.
+    int? promptTokens;
 
     AskAiCompleted completion() {
       final reasoning = reasoningBuffer.isEmpty
@@ -228,6 +231,7 @@ class AskAiRepository {
         ),
         protocol: AskAiProtocol.chatCompletions,
         reasoningContent: reasoning,
+        promptTokens: promptTokens,
       );
     }
 
@@ -260,6 +264,9 @@ class AskAiRepository {
           continue;
         }
 
+        promptTokens = _promptTokensOf(json['usage']) ?? promptTokens;
+
+        // The usage chunk carries no choices, which is not an error.
         final choices = json['choices'];
         if (choices is! List || choices.isEmpty) continue;
 
@@ -338,6 +345,7 @@ class AskAiRepository {
     final emittedCallIds = <String>{};
     var completed = false;
     String? responseId;
+    int? promptTokens;
 
     List<AskAiConversationItem> fallbackItems() {
       final items = rawItems.entries.toList()
@@ -387,6 +395,7 @@ class AskAiRepository {
         protocol: AskAiProtocol.responses,
         reasoningContent: reasoning?.isEmpty == true ? null : reasoning,
         responseId: responseId,
+        promptTokens: promptTokens,
       );
     }
 
@@ -469,6 +478,7 @@ class AskAiRepository {
           case 'response.completed':
             final response = _mapOrNull(event['response']);
             responseId ??= response?['id'] as String?;
+            promptTokens = _promptTokensOf(response?['usage']) ?? promptTokens;
             final output = response?['output'];
             final mappedItems = output is List
                 ? output
@@ -584,6 +594,10 @@ class AskAiRepository {
         'parallel_tool_calls': false,
         'tools': requestTools,
       },
+      // Asked for explicitly: a Chat Completions stream reports no usage
+      // unless it is. Ignored by servers that do not implement it, which is
+      // why nothing depends on the answer arriving.
+      'stream_options': {'include_usage': true},
     };
   }
 
@@ -617,13 +631,30 @@ class AskAiRepository {
     return '';
   }
 
-  /// Whether enough has fallen outside what a request carries to be worth
-  /// summarising.
+  /// Whether the conversation should be summarised before the next turn.
   ///
-  /// Not "is the conversation long". A long one that still fits loses detail
-  /// for nothing, and a short one that does not fit is one enormous turn —
-  /// which is carried whole by design and would not shrink anyway.
-  static bool shouldCompact(List<AskAiConversationItem> conversation) {
+  /// Two ways to answer yes, and they measure different things.
+  ///
+  /// [promptTokens] is what the last request actually cost, as the provider
+  /// counted it. Against the model's context that is the real question — at
+  /// [percent] of it, summarise, because the summary itself and the turn it is
+  /// for still have to fit. This is the one that matters and the one that is
+  /// configurable.
+  ///
+  /// Without it — a provider that reports no usage, or the first turn — fall
+  /// back to what the window had to drop. That says nothing about tokens, only
+  /// that the conversation has outgrown what a request carries, which is its
+  /// own reason to summarise.
+  static bool shouldCompact(
+    List<AskAiConversationItem> conversation, {
+    int? promptTokens,
+    int? contextTokens,
+    int percent = 90,
+  }) {
+    if (promptTokens != null && contextTokens != null && contextTokens > 0) {
+      final limit = contextTokens * percent.clamp(10, 99) ~/ 100;
+      if (promptTokens >= limit) return true;
+    }
     final window = conversationWindow(conversation);
     if (window.complete) return false;
     return conversation.length - window.items.length >= _kCompactAfterDropped;
@@ -973,6 +1004,19 @@ List<AskAiConversationItem> _chatOutputItems({
       AskAiMessageItem.assistant(content, reasoningContent: reasoningContent),
     for (final command in commands) AskAiFunctionCallItem(command: command),
   ];
+}
+
+/// The prompt half of a `usage` object, whichever protocol wrote it.
+///
+/// Chat Completions says `prompt_tokens`; Responses says `input_tokens`. Null
+/// for anything else, including a provider that reports nothing — an estimate
+/// is what the caller falls back to, and a zero would read as an empty
+/// context.
+int? _promptTokensOf(Object? usage) {
+  if (usage is! Map) return null;
+  final value = usage['prompt_tokens'] ?? usage['input_tokens'];
+  if (value is num && value > 0) return value.toInt();
+  return null;
 }
 
 /// What a summary looks like to the model.

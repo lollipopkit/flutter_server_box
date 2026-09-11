@@ -22,6 +22,7 @@ import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
+import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -181,6 +182,10 @@ Future<void> _initApp() async {
   // Before anything can open the licence page. Cheap: the callback only runs
   // when that page asks for it.
   registerDistMarkLicenses();
+  // Read once, off the path of the first Agent turn: the table decides when a
+  // conversation is summarised, and loading it there would put an asset read
+  // between the user and their first answer.
+  unawaited(ModelContextTable.ensureLoaded());
   await _initData();
   await _initWindow();
 

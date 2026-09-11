@@ -467,6 +467,71 @@ void main() {
       );
     });
 
+    test('real token usage is what decides, when the provider reports it', () {
+      final small = turn('one', 'a line');
+
+      // Well under: nothing to do, whatever the window says.
+      expect(
+        AskAiRepository.shouldCompact(
+          small,
+          promptTokens: 1000,
+          contextTokens: 100000,
+        ),
+        isFalse,
+      );
+      // At the configured share of the context, even for a short conversation:
+      // the summary and the turn it is for still have to fit.
+      expect(
+        AskAiRepository.shouldCompact(
+          small,
+          promptTokens: 90000,
+          contextTokens: 100000,
+        ),
+        isTrue,
+      );
+      // And the share is the caller's to choose.
+      expect(
+        AskAiRepository.shouldCompact(
+          small,
+          promptTokens: 60000,
+          contextTokens: 100000,
+          percent: 50,
+        ),
+        isTrue,
+      );
+      expect(
+        AskAiRepository.shouldCompact(
+          small,
+          promptTokens: 60000,
+          contextTokens: 100000,
+          percent: 95,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a provider that reports no usage still gets compacted', () {
+      // Falling back to what the window dropped. It says nothing about tokens,
+      // only that the conversation outgrew what a request carries.
+      final long = [for (var i = 0; i < 30; i++) ...turn('ask $i', 'y' * 5000)];
+      expect(AskAiRepository.shouldCompact(long), isTrue);
+      expect(
+        AskAiRepository.shouldCompact(long, promptTokens: 10, contextTokens: 0),
+        isTrue,
+      );
+    });
+
+    test('a stream asks for its usage, since it is not reported unasked', () {
+      final body = AskAiRepository.buildRequestBody(
+        model: 'test-model',
+        terminalContext: '',
+        serverName: 'Example server',
+        conversation: const [AskAiMessageItem.user('hi')],
+      );
+
+      expect(body['stream_options'], {'include_usage': true});
+    });
+
     test('a request that had to drop something tells the model so', () {
       final full = AskAiRepository.buildRequestBody(
         model: 'test-model',

@@ -353,6 +353,30 @@ abstract class AppLocalizations {
   /// **'Agent response was interrupted.'**
   String get askAiInterrupted;
 
+  /// No description provided for @askAiCompactAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarise at'**
+  String get askAiCompactAt;
+
+  /// No description provided for @askAiCompactAtTip.
+  ///
+  /// In en, this message translates to:
+  /// **'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.'**
+  String get askAiCompactAtTip;
+
+  /// No description provided for @askAiContextTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Context size'**
+  String get askAiContextTokens;
+
+  /// No description provided for @askAiContextTokensTip.
+  ///
+  /// In en, this message translates to:
+  /// **'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.'**
+  String get askAiContextTokensTip;
+
   /// No description provided for @askAiConversationCompacted.
   ///
   /// In en, this message translates to:

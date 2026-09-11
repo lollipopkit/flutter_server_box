@@ -139,6 +139,20 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiInterrupted => 'Ответ агента прерван.';
 
   @override
+  String get askAiCompactAt => 'Summarise at';
+
+  @override
+  String get askAiCompactAtTip =>
+      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+
+  @override
+  String get askAiContextTokens => 'Context size';
+
+  @override
+  String get askAiContextTokensTip =>
+      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+
+  @override
   String get askAiConversationCompacted =>
       'Earlier messages were summarised to keep the conversation going.';
 

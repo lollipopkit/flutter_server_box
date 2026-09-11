@@ -7,6 +7,7 @@ import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
@@ -114,6 +115,7 @@ class AgentSessionState {
     this.isExecuting = false,
     this.turnCompleted = false,
     this.autoRunCount = 0,
+    this.promptTokens,
   });
 
   final AskAiProtocol protocol;
@@ -143,6 +145,11 @@ class AgentSessionState {
   final bool turnCompleted;
   final int autoRunCount;
 
+  /// What the last request cost, as the provider counted it, or null where it
+  /// said nothing. Not persisted: it describes the request that was just made,
+  /// and a conversation reopened tomorrow will make a different one.
+  final int? promptTokens;
+
   bool get isWorking => isStreaming || isExecuting;
 
   /// A complete tool proposal can be reviewed even when a compatible API
@@ -165,6 +172,7 @@ class AgentSessionState {
     bool? isExecuting,
     bool? turnCompleted,
     int? autoRunCount,
+    int? promptTokens,
   }) {
     return AgentSessionState(
       protocol: protocol ?? this.protocol,
@@ -186,6 +194,7 @@ class AgentSessionState {
       isExecuting: isExecuting ?? this.isExecuting,
       turnCompleted: turnCompleted ?? this.turnCompleted,
       autoRunCount: autoRunCount ?? this.autoRunCount,
+      promptTokens: promptTokens ?? this.promptTokens,
     );
   }
 }
@@ -358,6 +367,7 @@ class AgentSession extends _$AgentSession {
       pendingTool: command,
       pendingToolRestored: false,
       protocol: event.protocol,
+      promptTokens: event.promptTokens,
       history: [...state.history, ...event.outputItems],
       timeline: text.trim().isNotEmpty
           ? [...state.timeline, AgentAssistantEntry(text)]
@@ -479,7 +489,18 @@ class AgentSession extends _$AgentSession {
   Future<void> _compactIfNeeded() async {
     if (_compacting || state.isWorking) return;
     final history = state.history;
-    if (!AskAiRepository.shouldCompact(history)) return;
+    final settings = Stores.setting;
+    if (!AskAiRepository.shouldCompact(
+      history,
+      promptTokens: state.promptTokens,
+      contextTokens: ModelContextTable.contextFor(
+        settings.askAiModel.fetch(),
+        override: settings.askAiContextTokens.fetch(),
+      ),
+      percent: settings.askAiCompactAtPercent.fetch(),
+    )) {
+      return;
+    }
 
     _compacting = true;
     try {

@@ -32,6 +32,8 @@ class AskAiConfig {
     this.autoRunSafeCommands = false,
     this.sendOnEnter = true,
     this.allowInsecure = false,
+    this.compactAtPercent = 90,
+    this.contextTokens = 0,
   });
 
   factory AskAiConfig.fromJson(Map<String, dynamic> json) =>
@@ -62,6 +64,25 @@ class AskAiConfig {
   /// reasoning as `MonitorHttpCredential.allowInsecure`.
   final bool allowInsecure;
 
+  /// How full the context has to get before the conversation is summarised.
+  ///
+  /// A percentage of what the model holds. Below 100 because the summary is
+  /// only useful while there is still room to send it and the turn it is for;
+  /// at the limit itself the request has already been refused.
+  ///
+  /// Configurable because the cost of being wrong is asymmetric and the two
+  /// sides are the user's to weigh: too early loses detail that was still
+  /// affordable, too late loses the turn.
+  final int compactAtPercent;
+
+  /// What the model holds, when the user knows better than the table.
+  ///
+  /// Zero means "look it up" — see `ModelContextTable`, which ships a copy of
+  /// models.dev and matches on the end of the name. A proxy that serves a
+  /// shorter window than the model has is the case this exists for; so is a
+  /// model that is newer than the table.
+  final int contextTokens;
+
   Map<String, dynamic> toJson() => _$AskAiConfigToJson(this);
 
   AskAiConfig copyWith({
@@ -72,6 +93,8 @@ class AskAiConfig {
     bool? autoRunSafeCommands,
     bool? sendOnEnter,
     bool? allowInsecure,
+    int? compactAtPercent,
+    int? contextTokens,
   }) => AskAiConfig(
     baseUrl: baseUrl ?? this.baseUrl,
     apiKey: apiKey ?? this.apiKey,
@@ -80,6 +103,8 @@ class AskAiConfig {
     autoRunSafeCommands: autoRunSafeCommands ?? this.autoRunSafeCommands,
     sendOnEnter: sendOnEnter ?? this.sendOnEnter,
     allowInsecure: allowInsecure ?? this.allowInsecure,
+    compactAtPercent: compactAtPercent ?? this.compactAtPercent,
+    contextTokens: contextTokens ?? this.contextTokens,
   );
 
   @override
@@ -91,7 +116,9 @@ class AskAiConfig {
       protocol == other.protocol &&
       autoRunSafeCommands == other.autoRunSafeCommands &&
       sendOnEnter == other.sendOnEnter &&
-      allowInsecure == other.allowInsecure;
+      allowInsecure == other.allowInsecure &&
+      compactAtPercent == other.compactAtPercent &&
+      contextTokens == other.contextTokens;
 
   @override
   int get hashCode => Object.hash(
@@ -102,5 +129,7 @@ class AskAiConfig {
     autoRunSafeCommands,
     sendOnEnter,
     allowInsecure,
+    compactAtPercent,
+    contextTokens,
   );
 }
