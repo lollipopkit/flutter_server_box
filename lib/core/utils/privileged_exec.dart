@@ -1,7 +1,7 @@
 import 'package:server_box/data/model/server/server_exec.dart';
 
 abstract final class PrivilegedExec {
-  static const _passwordlessProbe = "sudo -S -p '' true";
+  static const _passwordlessProbe = 'sudo -n true';
   static const _passwordlessEntry = 'sudo -n sh';
   static const _passwordEntry = "sudo -S -p '' sh";
 

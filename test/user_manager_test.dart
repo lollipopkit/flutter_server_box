@@ -88,6 +88,7 @@ docker:x:998:admin,deploy
       script,
       contains("-c 'Release operator'\\''s account'"),
     );
+    expect(script, startsWith('set -e\nuseradd '));
     expect(script, contains("-G 'docker,wheel' 'deploy'"));
     expect(script, contains("chpasswd <<'SrvBoxUserPassword'"));
     expect(script, contains('deploy:correct horse battery staple'));

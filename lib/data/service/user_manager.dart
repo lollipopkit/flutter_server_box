@@ -244,7 +244,8 @@ fi
     String? password,
   ) {
     if (password == null || password.isEmpty) return command;
-    return '''$command
+    return '''set -e
+$command
 chpasswd <<'SrvBoxUserPassword'
 $user:$password
 SrvBoxUserPassword''';
