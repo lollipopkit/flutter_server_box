@@ -521,6 +521,27 @@ void main() {
       );
     });
 
+    test('a flag spelled loosely does not cost the whole tool call', () {
+      // `as bool?` throws on these, and the throw reads as "not a tool call".
+      for (final written in ['true', 1, true]) {
+        final decoded = AskAiRepository.parseToolArgumentsForTest(
+          jsonEncode({
+            'command': 'rm -rf /tmp/x',
+            'description': 'Remove it',
+            'safe_to_run': false,
+            'destructive': written,
+          }),
+        );
+        expect(decoded?.command, 'rm -rf /tmp/x', reason: '$written');
+        expect(decoded?.modelDestructive, isTrue, reason: '$written');
+      }
+      // And anything unrecognisable falls back rather than throwing.
+      final odd = AskAiRepository.parseToolArgumentsForTest(
+        jsonEncode({'command': 'uptime', 'destructive': 'perhaps'}),
+      );
+      expect(odd?.modelDestructive, isFalse);
+    });
+
     test('a stream asks for its usage, since it is not reported unasked', () {
       final body = AskAiRepository.buildRequestBody(
         model: 'test-model',
@@ -530,6 +551,40 @@ void main() {
       );
 
       expect(body['stream_options'], {'include_usage': true});
+    });
+
+    test('a second compaction does not summarise what the first already did', () {
+      // The window stands on the newest summary, so the prefix behind it is
+      // already accounted for. Counting it again made every turn report a
+      // dozen dropped items and insert another summary of the same history.
+      final settled = <AskAiConversationItem>[
+        for (var i = 0; i < 20; i++) ...turn('old $i', 'x' * 4000),
+        const AskAiSummaryItem(summary: 'Goal: the earlier work.'),
+        ...turn('recent', 'a line'),
+      ];
+
+      expect(AskAiRepository.shouldCompact(settled), isFalse);
+
+      final window = AskAiRepository.conversationWindow(settled);
+      expect(window.droppedSinceSummary, 0);
+      // And the kept part starts at the summary, not before it.
+      expect(settled[window.keptFrom], isA<AskAiSummaryItem>());
+    });
+
+    test('what is summarised next covers the summary before it', () {
+      final grown = <AskAiConversationItem>[
+        ...turn('old', 'x' * 4000),
+        const AskAiSummaryItem(summary: 'Goal: the earlier work.'),
+        for (var i = 0; i < 30; i++) ...turn('since $i', 'y' * 5000),
+      ];
+
+      expect(AskAiRepository.shouldCompact(grown), isTrue);
+
+      final window = AskAiRepository.conversationWindow(grown);
+      // Past the old summary, so the next one lands after it and stands for
+      // it — otherwise the old one stays newest and the new one is ignored.
+      final oldSummaryAt = grown.indexWhere((e) => e is AskAiSummaryItem);
+      expect(window.keptFrom, greaterThan(oldSummaryAt));
     });
 
     test('a request that had to drop something tells the model so', () {

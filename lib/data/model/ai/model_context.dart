@@ -64,6 +64,16 @@ abstract final class ModelContextTable {
   static Map<String, int>? _models;
   static String? _generated;
 
+  /// The fetch in flight, so a second caller joins it rather than starting
+  /// another. Held here rather than in the row that shows it: that row is
+  /// rebuilt whenever any AI setting changes, and a flag living in its build
+  /// method came back false mid-fetch — spinner gone, button live again.
+  static Future<int>? _inFlight;
+
+  /// Whether a fetch is running. A `ValueListenable` so the row can follow it
+  /// across those rebuilds.
+  static final refreshing = ValueNotifier(false);
+
   /// When the table in use was generated, or null before it is loaded.
   ///
   /// The shipped date for the asset, the download's date after a refresh —
@@ -111,12 +121,25 @@ abstract final class ModelContextTable {
   /// Throws what the network threw. The caller is a button the user pressed,
   /// so a failure has somewhere to be reported — unlike [ensureLoaded], which
   /// runs at launch and must not be able to stop one.
-  static Future<int> refresh({Dio? dio}) async {
+  static Future<int> refresh({Dio? dio}) {
+    // Joining rather than refusing: two taps mean the same thing, and the
+    // second should get the same answer rather than a second download.
+    return _inFlight ??= _refresh(dio).whenComplete(() {
+      _inFlight = null;
+      refreshing.value = false;
+    });
+  }
+
+  static Future<int> _refresh(Dio? dio) async {
+    refreshing.value = true;
     final client = dio ?? Dio();
     final response = await client.get<String>(
       sourceUrl,
       options: Options(
         responseType: ResponseType.plain,
+        // Both halves. A standalone `Dio` has no connect timeout by default,
+        // so a host that accepts nothing leaves the button spinning forever.
+        connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(minutes: 2),
       ),
     );

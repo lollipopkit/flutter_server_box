@@ -18,7 +18,9 @@ trap 'rm -rf "$tmp"' EXIT
 
 echo "Fetching https://models.dev/api.json ..."
 curl -fsSL --max-time 120 "https://models.dev/api.json" -o "$tmp/api.json"
-etag="$(curl -fsSI --max-time 30 "https://models.dev/api.json" | awk 'tolower($1) == "etag:" { print $2 }' | tr -d '\r"')"
+# Optional: the table is already downloaded, and `set -euo pipefail` would end
+# the run over a HEAD request that a CDN answered differently.
+etag="$(curl -fsSI --max-time 30 "https://models.dev/api.json" 2>/dev/null | awk 'tolower($1) == "etag:" { print $2 }' | tr -d '\r"' || true)"
 
 python3 - "$tmp/api.json" "$out" "$etag" <<'PY'
 import json, sys, datetime

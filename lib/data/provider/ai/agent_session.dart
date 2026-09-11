@@ -172,7 +172,7 @@ class AgentSessionState {
     bool? isExecuting,
     bool? turnCompleted,
     int? autoRunCount,
-    int? promptTokens,
+    Object? promptTokens = _unset,
   }) {
     return AgentSessionState(
       protocol: protocol ?? this.protocol,
@@ -194,7 +194,12 @@ class AgentSessionState {
       isExecuting: isExecuting ?? this.isExecuting,
       turnCompleted: turnCompleted ?? this.turnCompleted,
       autoRunCount: autoRunCount ?? this.autoRunCount,
-      promptTokens: promptTokens ?? this.promptTokens,
+      // Explicitly nullable: a turn whose provider reported no usage has to
+      // clear the last one's, or the next compaction decides on a number that
+      // describes a request nobody made.
+      promptTokens: identical(promptTokens, _unset)
+          ? this.promptTokens
+          : promptTokens as int?,
     );
   }
 }
@@ -508,9 +513,14 @@ class AgentSession extends _$AgentSession {
     _compacting = true;
     try {
       final window = AskAiRepository.conversationWindow(history);
-      final dropped = history.length - window.items.length;
-      if (dropped <= 0) return;
-      final covered = history.sublist(0, dropped);
+      // Where the kept part begins, which is past the previous summary when
+      // there is one. Taking the window's item count instead counted the
+      // already-summarised prefix again: the new summary landed *before* the
+      // old one, so the old one stayed the newest, and every turn from then on
+      // summarised the same history and inserted another copy.
+      final keptFrom = window.keptFrom;
+      if (window.droppedSinceSummary <= 0 || keptFrom <= 0) return;
+      final covered = history.sublist(0, keptFrom);
 
       final summary = await ref
           .read(askAiRepositoryProvider)
@@ -521,17 +531,17 @@ class AgentSession extends _$AgentSession {
       // the summariser was working, and appending to a stale copy would drop
       // it. The prefix is append-only, so what was covered is still the head.
       final current = state.history;
-      if (current.length < dropped) return;
+      if (current.length < keptFrom) return;
       state = state.copyWith(
         history: [
-          ...current.sublist(0, dropped),
-          AskAiSummaryItem(summary: summary, coveredItems: dropped),
-          ...current.sublist(dropped),
+          ...current.sublist(0, keptFrom),
+          AskAiSummaryItem(summary: summary, coveredItems: keptFrom),
+          ...current.sublist(keptFrom),
         ],
         timeline: [...state.timeline, const AgentNoticeEntry(AgentNoticeKind.compacted)],
       );
       await _persist();
-      Diag.crumb(SbDiag.agent, 'compacted', data: {'items': '$dropped'});
+      Diag.crumb(SbDiag.agent, 'compacted', data: {'items': '$keptFrom'});
     } catch (_) {
       // See above: the conversation is unchanged and still usable.
     } finally {

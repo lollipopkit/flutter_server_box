@@ -225,13 +225,11 @@ extension _AI on _AppSettingsPageState {
 
   /// The table itself: how old it is, and a way to fetch a newer one.
   Widget _buildModelTable(AppLocalizations l10n) {
-    // Local to the row rather than a field: this file is an extension on the
-    // page's state and has nowhere to put one, and nothing outside the row
-    // cares whether it is fetching.
-    var refreshing = false;
-    return StatefulBuilder(
-      builder: (context, setState) {
-        final generated = ModelContextTable.generated;
+    // Followed from the table rather than kept here. This row is rebuilt
+    // whenever any AI setting changes, and a flag in this method came back
+    // false mid-fetch — the spinner vanished and the button went live again.
+    return ModelContextTable.refreshing.listenVal((refreshing) {
+      final generated = ModelContextTable.generated;
         return ListTile(
           leading: const Icon(Icons.dataset_outlined, size: _kIconSize),
           title: TipText(l10n.askAiModelTable, l10n.askAiModelTableTip),
@@ -247,7 +245,6 @@ extension _AI on _AppSettingsPageState {
           onTap: refreshing
               ? null
               : () async {
-                  setState(() => refreshing = true);
                   try {
                     final count = await ModelContextTable.refresh();
                     Toast.success('${l10n.askAiModelTable}: $count');
@@ -255,15 +252,10 @@ extension _AI on _AppSettingsPageState {
                     // Reported, not swallowed: the user pressed a button and
                     // is owed an answer. The old table is still in use.
                     Toast.error('$error');
-                  } finally {
-                    if (context.mounted) {
-                      setState(() => refreshing = false);
-                    }
                   }
                 },
-        );
-      },
-    );
+      );
+    });
   }
 
   /// The same row as [_buildAskAiTextTile] over a number.

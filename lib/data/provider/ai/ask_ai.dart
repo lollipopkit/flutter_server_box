@@ -631,6 +631,15 @@ class AskAiRepository {
     return '';
   }
 
+  /// One tool call's arguments, decoded the way a stream decodes them.
+  @visibleForTesting
+  static AskAiCommand? parseToolArgumentsForTest(String rawArguments) =>
+      _parseCommand(
+        id: 'call-test',
+        name: 'run_shell_command',
+        rawArguments: rawArguments,
+      );
+
   /// Whether the conversation should be summarised before the next turn.
   ///
   /// Two ways to answer yes, and they measure different things.
@@ -655,9 +664,12 @@ class AskAiRepository {
       final limit = contextTokens * percent.clamp(10, 99) ~/ 100;
       if (promptTokens >= limit) return true;
     }
-    final window = conversationWindow(conversation);
-    if (window.complete) return false;
-    return conversation.length - window.items.length >= _kCompactAfterDropped;
+    // What was dropped *since the last summary*. The whole conversation minus
+    // the window would count the already-summarised prefix again, which is
+    // always over the threshold once there has been one summary — so every
+    // turn summarised the same history and inserted another summary of it.
+    return conversationWindow(conversation).droppedSinceSummary >=
+        _kCompactAfterDropped;
   }
 
   @visibleForTesting
@@ -729,19 +741,42 @@ class AskAiRepository {
   /// moment anything was dropped or shortened, and the instructions say so —
   /// silently forgetting is what made this look like amnesia rather than like
   /// a limit.
-  static ({List<AskAiConversationItem> items, bool complete}) conversationWindow(
-    List<AskAiConversationItem> conversation,
-  ) {
-    if (conversation.isEmpty) return (items: const [], complete: true);
+  ///
+  /// [keptFrom] is where the kept part begins in [conversation], and
+  /// [droppedSinceSummary] is how much of the stretch after the newest summary
+  /// was left behind. Both are for the caller that summarises: counting the
+  /// already-summarised prefix again is how a conversation ends up with a pile
+  /// of summaries of the same turns.
+  static ({
+    List<AskAiConversationItem> items,
+    bool complete,
+    int keptFrom,
+    int droppedSinceSummary,
+  })
+  conversationWindow(List<AskAiConversationItem> conversation) {
+    if (conversation.isEmpty) {
+      return (
+        items: const [],
+        complete: true,
+        keptFrom: 0,
+        droppedSinceSummary: 0,
+      );
+    }
 
     // Everything behind the newest summary is what that summary is for. It
     // stays in storage — the timeline is replayed from the same list — and
     // only drops out of the request.
     var summarised = false;
+    // Where the summarised prefix ends. Everything counted from here on is
+    // relative to it: a turn dropped *before* the last summary was already
+    // accounted for by that summary, and counting it again is what made the
+    // next compaction summarise the same history over and over.
+    var base = 0;
     var conversation_ = conversation;
     for (var index = conversation.length - 1; index >= 0; index--) {
       if (conversation[index] is AskAiSummaryItem) {
         summarised = index > 0;
+        base = index;
         conversation_ = conversation.sublist(index);
         break;
       }
@@ -763,13 +798,19 @@ class AskAiRepository {
     // one that opened with an automatic prompt. Take the tail and say so.
     if (userStarts.isEmpty) {
       if (conversation.length <= _kCurrentTurnItems) {
-        return (items: List.unmodifiable(conversation), complete: true);
+        return (
+          items: List.unmodifiable(conversation),
+          complete: !summarised,
+          keptFrom: base,
+          droppedSinceSummary: 0,
+        );
       }
+      final start = conversation.length - _kCurrentTurnItems;
       return (
-        items: List.unmodifiable(
-          conversation.sublist(conversation.length - _kCurrentTurnItems),
-        ),
+        items: List.unmodifiable(conversation.sublist(start)),
         complete: false,
+        keptFrom: base + start,
+        droppedSinceSummary: start,
       );
     }
 
@@ -804,16 +845,19 @@ class AskAiRepository {
       if (candidateShortened) shortenedSomething = true;
     }
 
+    // How much of *this* stretch was left behind, which is the only number
+    // that says whether there is anything new to summarise.
+    final droppedSinceSummary = currentStart - earlier.length;
     return (
       items: List.unmodifiable([...earlier, ...current]),
       // Shortening counts as incomplete even when every turn is present: what
       // a command printed is no longer all there, and a model that says "as
-      // we saw earlier" should know it is working from an excerpt.
-      // A summarised conversation is complete in the sense that matters: what
-      // is missing was replaced by something that says what it was, and the
-      // model is reading that summary rather than guessing around a gap.
+      // we saw earlier" should know it is working from an excerpt. So does
+      // standing on a summary, for the same reason.
       complete:
-          earlier.length == currentStart && !shortenedSomething && !summarised,
+          droppedSinceSummary == 0 && !shortenedSomething && !summarised,
+      keptFrom: base + droppedSinceSummary,
+      droppedSinceSummary: droppedSinceSummary,
     );
   }
 
@@ -827,10 +871,14 @@ class AskAiRepository {
   static AskAiConversationItem _shortenForRequest(AskAiConversationItem item) {
     if (item is! AskAiFunctionOutputItem) return item;
     if (item.output.length <= _kEarlierOutputCharacters) return item;
-    return AskAiFunctionOutputItem(
-      callId: item.callId,
-      output: _shortenToolOutput(item.output),
-    );
+    final shorter = _shortenToolOutput(item.output);
+    // A document whose every string is already short is long because it has
+    // many of them, and re-encoding it saves nothing. Returning the original
+    // keeps `identical` true, which is what tells the window that nothing was
+    // shortened — otherwise the request said so in its instructions while
+    // carrying the same bytes.
+    if (shorter.length >= item.output.length) return item;
+    return AskAiFunctionOutputItem(callId: item.callId, output: shorter);
   }
 
   static String _shortenToolOutput(String output) {
@@ -1004,6 +1052,21 @@ List<AskAiConversationItem> _chatOutputItems({
       AskAiMessageItem.assistant(content, reasoningContent: reasoningContent),
     for (final command in commands) AskAiFunctionCallItem(command: command),
   ];
+}
+
+/// A flag as a model may actually have written it.
+///
+/// Null for anything that is not recognisably a yes or a no, so the caller
+/// picks its own default rather than being handed a guess.
+bool? _asBool(Object? value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final text = value.trim().toLowerCase();
+    if (text == 'true' || text == 'yes' || text == '1') return true;
+    if (text == 'false' || text == 'no' || text == '0') return false;
+  }
+  return null;
 }
 
 /// The prompt half of a `usage` object, whichever protocol wrote it.
@@ -1196,10 +1259,13 @@ AskAiCommand? _parseCommand({
               .trim(),
       toolName: toolName,
       rawArguments: rawArguments,
-      modelSafeToRun: decoded['safe_to_run'] as bool? ?? false,
+      // Read leniently. `as bool?` throws on `"true"` or `1`, and the throw is
+      // caught below as "not a tool call" — so a model that spelled one flag
+      // loosely lost the whole command, and the user saw the Agent do nothing.
+      modelSafeToRun: _asBool(decoded['safe_to_run']) ?? false,
       // False when the model left it out, which a model that has not been
       // told about the field always does. The local list still answers.
-      modelDestructive: decoded['destructive'] as bool? ?? false,
+      modelDestructive: _asBool(decoded['destructive']) ?? false,
     );
   } on FormatException {
     return null;
