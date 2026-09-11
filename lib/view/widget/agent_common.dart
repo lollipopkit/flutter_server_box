@@ -132,6 +132,67 @@ bool composerKeySends(
   return true;
 }
 
+/// How tall a command preview may be, given the height it is shown in.
+///
+/// A share of the viewport rather than a constant, so a long command does not
+/// push the buttons that approve it off a phone screen, and does not waste a
+/// desktop window's height either.
+double askAiCommandPreviewMaxHeightFor(double viewportHeight) {
+  return (viewportHeight * 0.3).clamp(120.0, 240.0);
+}
+
+/// A command, shown where it is about to be approved or declined.
+///
+/// The height cap is the point of the widget. [SelectableText] in a [Column]
+/// draws past its constraints rather than clipping, and neither `AlertDialog`
+/// nor a card scrolls its content for you — so a long enough command was drawn
+/// over the labels of the very buttons that decide it (#1462). Every surface
+/// that shows a proposal uses this, because each of them had grown its own
+/// answer to the same question and two of them had no answer at all.
+class AgentCommandPreview extends StatefulWidget {
+  const AgentCommandPreview({super.key, required this.text, this.style});
+
+  final String text;
+
+  /// Null is monospace, which is what a command wants everywhere but the one
+  /// tool call that is not a command.
+  final TextStyle? style;
+
+  @override
+  State<AgentCommandPreview> createState() => _AgentCommandPreviewState();
+}
+
+class _AgentCommandPreviewState extends State<AgentCommandPreview> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: askAiCommandPreviewMaxHeightFor(
+          MediaQuery.sizeOf(context).height,
+        ),
+      ),
+      child: Scrollbar(
+        controller: _controller,
+        child: SingleChildScrollView(
+          controller: _controller,
+          child: SelectableText(
+            widget.text,
+            style: widget.style ?? const TextStyle(fontFamily: 'monospace'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The failure of the last turn, with the offer to try it again.
 ///
 /// Takes the sentence rather than the error: one surface keeps the raw object

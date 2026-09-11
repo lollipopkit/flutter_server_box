@@ -300,10 +300,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
           children: [
             Text(context.l10n.askAiHighRiskConfirmBody),
             const SizedBox(height: 12),
-            SelectableText(
-              proposal.displayValue,
-              style: const TextStyle(fontFamily: 'monospace'),
-            ),
+            AgentCommandPreview(text: proposal.displayValue),
           ],
         ),
         actionsBuilder: (dialogContext) => [
@@ -908,8 +905,8 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                   color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: SelectableText(
-                  detail,
+                child: AgentCommandPreview(
+                  text: detail,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontFamily: proposal.toolName == 'run_shell_command'
                         ? 'monospace'
@@ -922,18 +919,15 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
-                constraints: const BoxConstraints(maxHeight: 240),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: SingleChildScrollView(
-                  child: SelectableText(
-                    content,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
+                child: AgentCommandPreview(
+                  text: content,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
                   ),
                 ),
               ),
