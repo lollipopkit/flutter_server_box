@@ -533,8 +533,11 @@ extension on _UsersPageState {
         );
         final duplicate = user == null &&
             catalog.users.any((existing) => existing.name == draft.name);
-        if (UserManager.validateDraft(draft) != null || duplicate) {
-          Toast.error('${libL10n.invalid}: ${libL10n.user}');
+        final validation = UserManager.validateDraft(draft);
+        if (validation != null || duplicate) {
+          Toast.error(
+            validation ?? l10n.nameAlreadyExistsFmt(draft.name),
+          );
           continue;
         }
         return draft;

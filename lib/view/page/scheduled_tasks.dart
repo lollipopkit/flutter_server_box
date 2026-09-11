@@ -367,12 +367,12 @@ extension on _ScheduledTasksPageState {
         if (submitted != true || !mounted) return null;
         final schedule = scheduleCtrl.text.trim();
         final command = commandCtrl.text.trim();
-        if (CronDocument.validate(
-              schedule: schedule,
-              command: command,
-            ) !=
-            null) {
-          Toast.error('${libL10n.invalid}: ${l10n.scheduledTaskSchedule}');
+        final validation = CronDocument.validate(
+          schedule: schedule,
+          command: command,
+        );
+        if (validation != null) {
+          Toast.error(validation);
           continue;
         }
         return (schedule: schedule, command: command, enabled: enabled);
