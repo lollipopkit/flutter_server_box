@@ -50,13 +50,215 @@ final class SettingsNode {
   }
 }
 
+/// Height of the floating tab bar, and the gap around it.
+///
+/// The gap is carried by the bar's own padding rather than by where it is
+/// placed, so that its shadow falls inside the scroll view that clips it. The
+/// two shadows are written to stay within this much — see where they are built.
+const _kTabsHeight = 56.0;
+const _kTabsMargin = 12.0;
+
+/// Displacement springs past its mark and settles, as it does elsewhere.
+/// Only the bar's own width: a size factor past 1 would be a gap.
+const _kTabsCurve = Curves.easeOutBack;
+
 /// Names the menu — the column beside the content, or the list a narrow
 /// window starts on. Only ever one of them is in the tree.
 const settingsMenuKey = ValueKey('settings_menu');
 
-/// Names the native tab bar. Several of its labels are also words in the
+/// Names the floating tab bar. Several of its labels are also words in the
 /// settings behind it, so finding one means saying which of the two is meant.
 const settingsTabsKey = ValueKey('settings_tabs');
+
+/// The same tree as [_SettingsMenu], one level at a time.
+///
+/// A narrow window has no room for a column beside the content, and a drawer
+/// hides where you are the moment you have gone there. This shows the level you
+/// are on, floating over the foot of the content.
+///
+/// Only the level: the way back out is the title bar's own button, which is
+/// where every other page in the app puts it. A second one here was the same
+/// move twice on one screen.
+final class _SettingsTabs extends StatelessWidget {
+  /// The level being shown, which is the root or one branch's children.
+  final List<SettingsNode> nodes;
+
+  final String? selectedId;
+  final void Function(SettingsNode node) onTap;
+
+  const _SettingsTabs({
+    super.key,
+    required this.nodes,
+    required this.selectedId,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(_kTabsHeight / 2);
+
+    final row = SizedBox(
+      height: _kTabsHeight,
+      child: Row(
+        // As wide as what is on it. A level of two tabs is a short bar.
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(width: 4),
+          for (final node in nodes)
+            _TabButton(
+              icon: node.icon,
+              label: node.title,
+              // A branch counts as on while what is showing is inside it.
+              selected: node.flattened.any((e) => e.id == selectedId),
+              onTap: () => onTap(node),
+            ),
+          const SizedBox(width: 4),
+        ],
+      ),
+    );
+
+    // Translucent and blurring what goes behind it, because the content runs
+    // the full height of the page and passes under here rather than stopping
+    // above it. Opaque, the bar sat in a band of bare background and read as a
+    // second bottom bar instead of as something over the page.
+    //
+    // The shadow is outside the clip: inside, the rounded rect that keeps the
+    // blur in would cut it off.
+    //
+    // An elevation and not a single `BoxShadow`: one soft shadow at 16% is
+    // visible over the content on a full page and invisible over the bare
+    // background of a short one, which is where it was first noticed. What
+    // Flutter draws for an elevation carries far enough to read either way.
+    final bar = Material(
+      color: Colors.transparent,
+      elevation: 8,
+      shadowColor: Colors.black.withValues(alpha: 0.34),
+      borderRadius: radius,
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Material(
+            key: settingsTabsKey,
+            color: scheme.surfaceContainerHigh.withValues(alpha: 0.72),
+            // Around the row rather than inside it, so the bar itself is what
+            // springs between one level's width and the next. Inside, the
+            // overshoot would be a gap opening at the end of a bar that had
+            // already stopped growing.
+            child: AnimatedSize(
+              duration: Durations.medium2,
+              curve: _kTabsCurve,
+              alignment: Alignment.centerLeft,
+              child: row,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Centred while it fits and scrolled when it does not: the first level has
+    // more tabs than a phone is wide, and the levels under it have three.
+    //
+    // The vertical padding is the room the shadow needs. A scroll view clips to
+    // its viewport, and this one's viewport is as tall as the bar exactly — so
+    // the shadow was cut off above and below while the sides, which have the
+    // width of the page to spread into, kept theirs. Padding grows the viewport
+    // instead of turning the clip off, which the horizontal axis still needs:
+    // a level too wide for the phone has to scroll out of sight, not spill.
+    //
+    // It is padding here rather than an offset on the `Positioned` that places
+    // this, so the bar sits where it always did — see [_kTabsMargin].
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.all(_kTabsMargin),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: math.max(0, constraints.maxWidth - _kTabsMargin * 2),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [bar]),
+        ),
+      ),
+    );
+  }
+}
+
+final class _TabButton extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  const _TabButton({
+    required this.icon,
+    this.label,
+    this.selected = false,
+    this.onTap,
+  });
+
+  /// The pill behind the icon, at the measurements `NavigationBar` uses.
+  ///
+  /// It sizes the icon's background and nothing else. The label below is left
+  /// to its own width, so a tab is as wide as its name — the pill only sets
+  /// how narrow a short one can get.
+  static const _indicator = Size(56, 30);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = selected ? scheme.onSecondaryContainer : scheme.onSurfaceVariant;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        // Wider than it was. The label used to sit in a fixed box and centre
+        // itself in it, which left a gap either side whatever it said; now it
+        // reaches the edges of its tab, and two of them need keeping apart.
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Around the icon and not the label, the way the rail on the home
+            // page marks its own destination.
+            AnimatedContainer(
+              duration: Durations.short3,
+              curve: Curves.easeOut,
+              width: _indicator.width,
+              height: _indicator.height,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? scheme.secondaryContainer : null,
+                borderRadius: BorderRadius.circular(_indicator.height / 2),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            if (label != null) ...[
+              const SizedBox(height: 3),
+              // Unconstrained: a tab is as wide as its own name. Held to the
+              // pill's width these ellipsed — they are section names, not the
+              // one or two words a bottom bar carries, and several languages
+              // spell them longer still. The bar already scrolls sideways when
+              // a level does not fit across the window, so the room is there
+              // to be taken.
+              Text(
+                label!,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.1,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// One row of the narrow list.
 ///
@@ -116,21 +318,20 @@ final class _SettingsList extends StatelessWidget {
   }
 }
 
-/// One level's leaves, with the native tab bar above them.
+/// One level's leaves, side by side.
 ///
-/// `TabBar` and `TabBarView` share a `TabController`, so tapping or swiping a
-/// setting uses the same Material tab behavior and keeps the selected setting
-/// in sync with the settings navigator.
+/// A [PageView] rather than one page swapped for another: the tabs under it are
+/// siblings, so moving between them is moving along a row, and it should look
+/// like it. Dragging the content does the same thing as tapping a tab, which is
+/// what having them side by side promises.
 final class _SettingsPages extends StatefulWidget {
   final List<SettingsNode> leaves;
-  final bool showTabBar;
   final String selectedId;
   final void Function(SettingsNode node) onChanged;
 
   const _SettingsPages({
     super.key,
     required this.leaves,
-    required this.showTabBar,
     required this.selectedId,
     required this.onChanged,
   });
@@ -139,22 +340,8 @@ final class _SettingsPages extends StatefulWidget {
   State<_SettingsPages> createState() => _SettingsPagesState();
 }
 
-class _SettingsPagesState extends State<_SettingsPages>
-    with SingleTickerProviderStateMixin {
-  late final TabController _controller;
-  late int _lastNotifiedIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    final initial = _indexOf(widget.selectedId);
-    _lastNotifiedIndex = initial;
-    _controller = TabController(
-      length: widget.leaves.length,
-      initialIndex: initial,
-      vsync: this,
-    )..addListener(_onControllerChanged);
-  }
+class _SettingsPagesState extends State<_SettingsPages> {
+  late final PageController _controller = PageController(initialPage: _indexOf(widget.selectedId));
 
   int _indexOf(String id) {
     final index = widget.leaves.indexWhere((e) => e.id == id);
@@ -166,52 +353,33 @@ class _SettingsPagesState extends State<_SettingsPages>
     super.didUpdateWidget(oldWidget);
     if (widget.selectedId == oldWidget.selectedId) return;
     final target = _indexOf(widget.selectedId);
-    if (_controller.index != target) {
-      _lastNotifiedIndex = target;
-      _controller.animateTo(target);
-    }
+    if (!_controller.hasClients || _controller.page?.round() == target) return;
+    _controller.animateToPage(
+      target,
+      duration: Durations.medium2,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
   }
 
-  void _onControllerChanged() {
-    if (_controller.indexIsChanging) return;
-    final index = _controller.index;
-    if (index == _lastNotifiedIndex || index >= widget.leaves.length) return;
-    _lastNotifiedIndex = index;
-    widget.onChanged(widget.leaves[index]);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (widget.showTabBar)
-          Material(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            child: TabBar(
-              key: settingsTabsKey,
-              controller: _controller,
-              isScrollable: true,
-              tabAlignment: TabAlignment.center,
-              tabs: [
-                for (final node in widget.leaves)
-                  Tab(icon: Icon(node.icon, size: 20), text: node.title),
-              ],
-            ),
-          ),
-        Expanded(
-          child: TabBarView(
-            controller: _controller,
-            children: [for (final leaf in widget.leaves) leaf.builder!()],
-          ),
-        ),
-      ],
+    return PageView.builder(
+      controller: _controller,
+      // Told rather than inferred: a drag that lands on another page has picked
+      // it, and the tabs have to say so.
+      onPageChanged: (index) => widget.onChanged(widget.leaves[index]),
+      itemCount: widget.leaves.length,
+      // Built as it is reached. Every page change rebuilds this widget — that
+      // is how the tabs hear about a swipe — and a `children` list builds all
+      // of a group's pages again each time, including the ones no drag can
+      // reach without passing through the neighbour first.
+      itemBuilder: (_, index) => widget.leaves[index].builder!(),
     );
   }
 }

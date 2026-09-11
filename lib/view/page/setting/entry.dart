@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
@@ -544,7 +546,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             collapseTooltip: libL10n.fold,
             expandTooltip: libL10n.open,
             listBuilder: (_, _) => menu,
-            surfaceBuilder: (_, _) => content,
+            // A `Builder` so the insets read below are the ones this body
+            // actually has: the state's own context is above the `Scaffold`,
+            // where `padding` is still the whole window's — the status bar the
+            // app bar already covers, and the home indicator the `SafeArea`
+            // just above here already cleared.
+            surfaceBuilder: (ctx, split) => split
+                ? content
+                : Builder(
+                    builder: (ctx) => _buildNarrow(ctx, nodes, content),
+                  ),
           ),
         ),
       ),
@@ -603,7 +614,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       return _SettingsPages(
         key: ValueKey('pages_${leaves.firstOrNull?.id ?? 'none'}'),
         leaves: leaves,
-        showTabBar: !wide && leaves.length > 1,
         selectedId: selected.id,
         onChanged: _onSelect,
       );
@@ -648,6 +658,83 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return NavigatorPopHandler(
       onPopWithResult: (_) => _contentNav.currentState?.pop(),
       child: navigator,
+    );
+  }
+
+  /// The content with the tabs floating over its foot.
+  ///
+  /// The content fills the body and the bar sits over it, so what is on the page
+  /// carries on under the bar instead of stopping at a bare strip above it. The
+  /// room a list needs to bring its last row into the clear arrives as
+  /// [MediaQuery] padding, which `context.padBottom` puts on the scrollable —
+  /// padding a list can scroll through, rather than a strip taken out of the
+  /// page's box.
+  ///
+  /// [context] has to be one from inside the body — see where this is called.
+  Widget _buildNarrow(
+    BuildContext context,
+    List<SettingsNode> nodes,
+    Widget content,
+  ) {
+    final mediaQuery = MediaQuery.of(context);
+    // Nothing over the list — a bar of tabs there would be the same names
+    // twice — and nothing over a leaf, which has no level under it to show.
+    final entered = _path.lastOrNull;
+    final level = entered == null || entered.isLeaf ? null : entered;
+    final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
+
+    return Stack(
+      // Nothing here should reach past the floor of this box — the page is
+      // pushed into the home tab's navigator, and the `Scaffold` paints its
+      // bottom bar after the body, so anything that does is covered rather than
+      // shown. `none` only keeps the clip from being what cuts it: the bar
+      // carries its own margin, so it stops short of the floor on its own.
+      clipBehavior: Clip.none,
+      children: [
+        MediaQuery(
+          data: mediaQuery.copyWith(
+            padding: mediaQuery.padding.copyWith(
+              bottom: mediaQuery.padding.bottom + space,
+            ),
+          ),
+          child: content,
+        ),
+        // Edge to edge, and the bar centres itself within that: it is as wide
+        // as the level it is showing, and only scrolls when that is too wide.
+        //
+        // Flush with the floor, because the gap the bar stands in is padding
+        // inside it now. Lifting it from here as well would move it up by that
+        // much again, and put the shadow back outside the clip it just left.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: AnimatedSwitcher(
+            duration: Durations.medium2,
+            // Springs up past its place and settles, as displacement does
+            // elsewhere. No fade with it: the curve overshoots, and an opacity
+            // past 1 asserts.
+            switchInCurve: _kTabsCurve,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => SlideTransition(
+              position: Tween(
+                // Far enough to take the shadow with it.
+                begin: const Offset(0, 1.4),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+            child: level == null
+                ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
+                : _SettingsTabs(
+                    key: ValueKey(level.id),
+                    nodes: _levelOf(level),
+                    selectedId: _selectedId,
+                    onTap: _onTab,
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -859,3 +946,4 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     );
   }
 }
+
