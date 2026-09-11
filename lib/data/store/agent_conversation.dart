@@ -202,6 +202,23 @@ class AgentConversationStore {
       }
       start = nextStart;
     }
+    if (start == 0) return List.unmodifiable(items);
+
+    // The newest summary of what was just dropped survives the drop.
+    //
+    // A summary exists to stand for turns that are no longer sent; dropping it
+    // along with the turns it covers is the store forgetting the one thing it
+    // was keeping on purpose. Storage trimming and compaction meet here: the
+    // originals go, the account of them stays, and a conversation reopened
+    // tomorrow still knows what it was doing.
+    //
+    // One, not all: each summary already covers every earlier one.
+    for (var index = start - 1; index >= 0; index--) {
+      final item = items[index];
+      if (item is AskAiSummaryItem) {
+        return List.unmodifiable([item, ...items.sublist(start)]);
+      }
+    }
     return List.unmodifiable(items.sublist(start));
   }
 

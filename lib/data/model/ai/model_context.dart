@@ -3,8 +3,41 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:meta/meta.dart';
+
+/// Turns models.dev's document into the two columns the table needs.
+///
+/// Top level because it runs through `compute`, which takes a function that
+/// can be sent to another isolate.
+///
+/// The same reduction `scripts/update-model-context.sh` does, because the app
+/// has to be able to do it without the script — smallest window per id for the
+/// same reason: compacting early costs a summary, compacting late costs the
+/// turn.
+Map<String, int> _tableFromApiDocument(String raw) {
+  final decoded = jsonDecode(raw);
+  if (decoded is! Map) return const {};
+  final table = <String, int>{};
+  for (final provider in decoded.values) {
+    if (provider is! Map) continue;
+    final models = provider['models'];
+    if (models is! Map) continue;
+    for (final entry in models.entries) {
+      final model = entry.value;
+      if (model is! Map) continue;
+      final limit = model['limit'];
+      if (limit is! Map) continue;
+      final context = limit['context'];
+      if (context is! num || context <= 0) continue;
+      final key = entry.key.toString().toLowerCase();
+      final tokens = context.toInt();
+      final existing = table[key];
+      table[key] = existing == null || tokens < existing ? tokens : existing;
+    }
+  }
+  return table;
+}
 
 /// How many tokens a model will hold, looked up by the name the user typed.
 ///
@@ -92,57 +125,33 @@ abstract final class ModelContextTable {
       throw const FormatException('models.dev returned nothing');
     }
 
-    final table = _tableFromApiDocument(body);
+    // On another isolate: 4.5 MB of JSON is tens of milliseconds of parsing
+    // and this is a button on a page that is still drawing. `compute` copies
+    // the string across, which is cheaper than the frames it would otherwise
+    // drop.
+    final table = await compute(_tableFromApiDocument, body);
     if (table.isEmpty) {
       throw const FormatException('models.dev returned no context limits');
     }
 
+    final generated = DateTime.now().toIso8601String().split('T').first;
     final document = jsonEncode({
       'source': sourceUrl,
-      'generated': DateTime.now().toIso8601String().split('T').first,
+      'generated': generated,
       'models': table,
     });
     // Written before it is adopted: a table in memory that is not on disk
     // would be gone at the next launch with nothing to say why.
     await _cacheFile().writeAsString(document, flush: true);
     _models = table;
-    _generated = jsonDecode(document)['generated'] as String?;
+    _generated = generated;
     return table.length;
   }
 
   /// Turns models.dev's document into the two columns this needs.
-  ///
-  /// The same reduction `scripts/update-model-context.sh` does, because the
-  /// app has to be able to do it without the script — and the smallest window
-  /// wins for the same reason: compacting early costs a summary, compacting
-  /// late costs the turn.
   @visibleForTesting
   static Map<String, int> tableFromApiDocument(String raw) =>
       _tableFromApiDocument(raw);
-
-  static Map<String, int> _tableFromApiDocument(String raw) {
-    final decoded = jsonDecode(raw);
-    if (decoded is! Map) return const {};
-    final table = <String, int>{};
-    for (final provider in decoded.values) {
-      if (provider is! Map) continue;
-      final models = provider['models'];
-      if (models is! Map) continue;
-      for (final entry in models.entries) {
-        final model = entry.value;
-        if (model is! Map) continue;
-        final limit = model['limit'];
-        if (limit is! Map) continue;
-        final context = limit['context'];
-        if (context is! num || context <= 0) continue;
-        final key = entry.key.toString().toLowerCase();
-        final tokens = context.toInt();
-        final existing = table[key];
-        table[key] = existing == null || tokens < existing ? tokens : existing;
-      }
-    }
-    return table;
-  }
 
   /// Reads one of this app's own documents — the asset or the cache. Answers
   /// whether it was usable.
@@ -176,6 +185,14 @@ abstract final class ModelContextTable {
   /// the entry for `deepseek-v4-flash`. Prefixes are not matched at all: a
   /// name ending in something else is a different model, whatever it starts
   /// with.
+  ///
+  /// Candidates are cut out of the *name* rather than searched for in the
+  /// table. A match has to start at a separator, so the only substrings that
+  /// can match are the ones beginning just after one — four of them for
+  /// `accounts/fireworks/models/deepseek-v4-flash`. Asking the map about each,
+  /// longest first, is four hash lookups; scanning every entry was 3370
+  /// `endsWith` calls, on a path that runs once a turn and again on every
+  /// rebuild of the settings row that shows the answer.
   static int? lookup(String model) {
     final models = _models;
     if (models == null || models.isEmpty) return null;
@@ -185,21 +202,14 @@ abstract final class ModelContextTable {
     final exact = models[needle];
     if (exact != null) return exact;
 
-    int? best;
-    var bestLength = 0;
-    for (final entry in models.entries) {
-      if (entry.key.length <= bestLength) continue;
-      if (!needle.endsWith(entry.key)) continue;
-      // Only at a boundary. Without this, `gpt-5-nano` would be answered by an
-      // entry for `nano`, and a name is not a substring match.
-      final boundary = needle.length - entry.key.length;
-      if (boundary > 0 && !_isSeparator(needle.codeUnitAt(boundary - 1))) {
-        continue;
-      }
-      best = entry.value;
-      bestLength = entry.key.length;
+    // Left to right, so the first hit is the longest — `deepseek-v4-flash-0731`
+    // is answered by its own entry rather than by `deepseek-v4-flash`.
+    for (var index = 0; index < needle.length - 1; index++) {
+      if (!_isSeparator(needle.codeUnitAt(index))) continue;
+      final found = models[needle.substring(index + 1)];
+      if (found != null) return found;
     }
-    return best;
+    return null;
   }
 
   /// What sits between a prefix and the model's own id.
