@@ -1,7 +1,7 @@
 import 'package:server_box/data/model/server/server_exec.dart';
 
 abstract final class PrivilegedExec {
-  static const _passwordlessProbe = 'sudo -n true';
+  static const _passwordlessProbe = 'true';
   static const _passwordlessEntry = 'sudo -n sh';
   static const _passwordEntry = "sudo -S -p '' sh";
 
@@ -28,7 +28,10 @@ abstract final class PrivilegedExec {
       );
     }
 
-    final probe = await exec.runWithSudo(_passwordlessProbe);
+    final probe = await exec.runWithSudo(
+      _passwordlessProbe,
+      entry: _passwordlessEntry,
+    );
     if (!probe.succeeded) return probe;
     return exec.run(script, entry: _passwordlessEntry);
   }

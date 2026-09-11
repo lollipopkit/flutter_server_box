@@ -67,7 +67,8 @@ void main() {
 
     expect(result.exitCode, kSudoPasswordRejected);
     expect(exec.calls, hasLength(1));
-    expect(exec.calls.first.script, 'sudo -n true');
+    expect(exec.calls.first.script, 'true');
+    expect(exec.calls.first.entry, 'sudo -n sh');
   });
 
   test('a passwordless sudo probe is followed by sudo -n sh', () async {
