@@ -20,7 +20,7 @@
   "added2List": "Added to task list",
   "askAi": "Ask AI",
   "askAiAwaitingResponse": "Waiting for AI response...",
-  "askAiEndpointTip": "Enter a domain or a full URL. The path is completed from the protocol you pick.",
+  "askAiEndpointTip": "Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.",
   "askAiProtocolTip": "Auto tries Responses, then Chat Completions.",
   "askAiCommandInserted": "Command inserted into terminal",
   "askAiConfigMissing": "Please configure {fields} in Settings.",

@@ -73,7 +73,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiAwaitingResponse => '等待 AI 响应...';
 
   @override
-  String get askAiEndpointTip => '填写域名或完整地址。会根据所选协议自动补全路径。';
+  String get askAiEndpointTip =>
+      '需要带上 API 版本号，如 /v1；智谱是 /api/paas/v4。只会按所选协议补上 /chat/completions 或 /responses。';
 
   @override
   String get askAiProtocolTip => '自动模式会尝试 Responses / Chat Completions。';
@@ -2114,7 +2115,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiAwaitingResponse => '等待 AI 回應...';
 
   @override
-  String get askAiEndpointTip => '填寫網域或完整位址。會根據所選協定自動補全路徑。';
+  String get askAiEndpointTip =>
+      '需要帶上 API 版本號，如 /v1；智譜是 /api/paas/v4。只會依所選協定補上 /chat/completions 或 /responses。';
 
   @override
   String get askAiProtocolTip => '自動模式會嘗試 Responses / Chat Completions。';

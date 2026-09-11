@@ -20,7 +20,7 @@
   "added2List": "已添加至任务列表",
   "askAi": "问 AI",
   "askAiAwaitingResponse": "等待 AI 响应...",
-  "askAiEndpointTip": "填写域名或完整地址。会根据所选协议自动补全路径。",
+  "askAiEndpointTip": "需要带上 API 版本号，如 /v1；智谱是 /api/paas/v4。只会按所选协议补上 /chat/completions 或 /responses。",
   "askAiProtocolTip": "自动模式会尝试 Responses / Chat Completions。",
   "askAiCommandInserted": "命令已插入终端",
   "askAiConfigMissing": "请前往设置配置 {fields}",

@@ -248,7 +248,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
-  /// **'Enter a domain or a full URL. The path is completed from the protocol you pick.'**
+  /// **'Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.'**
   String get askAiEndpointTip;
 
   /// No description provided for @askAiProtocolTip.

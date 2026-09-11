@@ -920,6 +920,20 @@ class AskAiRepository {
     return '[Earlier terminal context omitted]\n${text.substring(text.length - limit)}';
   }
 
+  /// The endpoint for [protocol], from the address the user wrote.
+  ///
+  /// Only the protocol's own path is added. The version is the user's to
+  /// write, because it is not this app's to know: `v1` is OpenAI's number and
+  /// Zhipu's is `v4`, so a guess that inserted `v1` made their documented root
+  /// unusable (#1465) — `/api/paas/v4/v1/chat/completions` — while appearing
+  /// to work everywhere else.
+  ///
+  /// Guessing it back for those cases would be the same mistake with a longer
+  /// list. An address that ends in a version is an API root, an address that
+  /// does not is the root its owner says it is, and this appends
+  /// `chat/completions` or `responses` to either. Addresses stored before the
+  /// guess was removed are rewritten once, by `AiEndpointVersionMigration`, so
+  /// they keep meaning what they meant.
   static Uri composeEndpointUri(String endpoint, AskAiProtocol protocol) {
     final uri = Uri.parse(endpoint.replaceAll(RegExp(r'/+$'), ''));
     final target = protocol == AskAiProtocol.responses
@@ -927,15 +941,14 @@ class AskAiRepository {
         : const ['chat', 'completions'];
     var segments = List<String>.from(uri.pathSegments);
     if (_endsWithSegments(segments, target)) return uri;
+    // The other protocol's path, swapped rather than stacked: a user who
+    // changes the protocol without retyping the address means the same root.
     if (_endsWithSegments(segments, const ['chat', 'completions'])) {
       segments = segments.sublist(0, segments.length - 2);
     } else if (_endsWithSegments(segments, const ['responses'])) {
       segments = segments.sublist(0, segments.length - 1);
     }
-    final append = segments.isNotEmpty && segments.last == 'v1'
-        ? target
-        : ['v1', ...target];
-    return uri.replace(pathSegments: [...segments, ...append]);
+    return uri.replace(pathSegments: [...segments, ...target]);
   }
 
   static AskAiProtocol resolveProtocol({

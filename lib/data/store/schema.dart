@@ -93,7 +93,7 @@ abstract final class SchemaVersion {
   ///      retired with the per-lookup requests it existed for
   /// v21: the old five-button home arrangement becomes four buttons plus
   ///      the "more" destination
-  static const current = 22;
+  static const current = 23;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

@@ -78,7 +78,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter a domain or a full URL. The path is completed from the protocol you pick.';
+      'Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.';
 
   @override
   String get askAiProtocolTip => 'Auto tries Responses, then Chat Completions.';

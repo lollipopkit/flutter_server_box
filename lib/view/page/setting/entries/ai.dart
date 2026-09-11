@@ -83,7 +83,7 @@ extension _AI on _AppSettingsPageState {
           prop: _setting.askAiBaseUrl,
           leading: const Icon(MingCute.link_2_line, size: _kIconSize),
           title: libL10n.apiEndpoint,
-          hint: 'https://api.openai.com',
+          hint: 'https://api.openai.com/v1',
           description: l10n.askAiEndpointTip,
           displayBuilder: (val) => val.isEmpty ? libL10n.empty : val,
         ),
