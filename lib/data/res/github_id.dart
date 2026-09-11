@@ -197,7 +197,8 @@ abstract final class GithubIds {
     'ArindamBhatta',
     'LiuShu3',
     'rayangl',
-    'openwrt-jichang-core'
+    'openwrt-jichang-core',
+    'panjinxin01'
   };
 }
 

@@ -57,6 +57,7 @@ sealed class AskAiConversationItem {
       'function_output' => AskAiFunctionOutputItem.fromJson(json),
       'reasoning' => AskAiReasoningItem.fromJson(json),
       'raw_response' => AskAiRawResponseItem.fromJson(json),
+      'summary' => AskAiSummaryItem.fromJson(json),
       _ => null,
     };
   }
@@ -241,6 +242,49 @@ class AskAiRawResponseItem extends AskAiConversationItem {
   };
 }
 
+/// What the turns before it amounted to, written by the model.
+///
+/// Stored *beside* the items it stands for, never in place of them. The
+/// timeline the user reads is replayed from this same list, and a conversation
+/// that deleted its own history to save room would be a worse fault than the
+/// one this exists to fix. Only a request substitutes it: everything before
+/// the newest summary is left out and the summary goes instead.
+///
+/// Which means the position in the list is the whole of the bookkeeping. There
+/// is no range to record and nothing to keep in step — a second summary covers
+/// the first the same way it covers everything else behind it.
+@immutable
+class AskAiSummaryItem extends AskAiConversationItem {
+  const AskAiSummaryItem({required this.summary, this.coveredItems = 0});
+
+  factory AskAiSummaryItem.fromJson(Map<String, dynamic> json) {
+    final covered = json['covered_items'];
+    return AskAiSummaryItem(
+      summary: json['summary'] as String? ?? '',
+      coveredItems: covered is num ? covered.toInt() : 0,
+    );
+  }
+
+  final String summary;
+
+  /// How many items went into it. Shown to the reader, and used by nothing —
+  /// see the note above about position being the bookkeeping.
+  final int coveredItems;
+
+  @override
+  String get persistenceKind => 'summary';
+
+  @override
+  int get estimatedCharacters => summary.length;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'summary': summary,
+    'covered_items': coveredItems,
+  };
+}
+
 Map<String, dynamic>? _mapOrNull(Object? value) {
   if (value is! Map) return null;
   return Map<String, dynamic>.from(value);
@@ -281,7 +325,7 @@ class AskAiToolDefinition {
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['command', 'description', 'safe_to_run'],
+      'required': ['command', 'description', 'safe_to_run', 'destructive'],
       'properties': {
         'command': {
           'type': 'string',
@@ -296,6 +340,16 @@ class AskAiToolDefinition {
           'type': 'boolean',
           'description':
               'True only for clearly read-only, idempotent, non-destructive commands.',
+        },
+        'destructive': {
+          'type': 'boolean',
+          'description':
+              'True when running this could lose data or take a service down: '
+              'deleting, overwriting, formatting, killing, rebooting, or '
+              'anything else that cannot simply be undone. The app has its own '
+              'list of such commands and asks when either of you says so, so '
+              'say so for what a list cannot see — a path that matters, a '
+              'script whose name says nothing about what it does.',
         },
       },
     },
@@ -327,6 +381,7 @@ class AskAiCommand {
     this.toolName = 'run_shell_command',
     this.rawArguments = '',
     this.modelSafeToRun = false,
+    this.modelDestructive = false,
   });
 
   factory AskAiCommand.fromJson(Map<String, dynamic> json) {
@@ -337,6 +392,9 @@ class AskAiCommand {
       toolName: json['tool_name'] as String? ?? 'run_shell_command',
       rawArguments: json['raw_arguments'] as String? ?? '',
       modelSafeToRun: json['model_safe_to_run'] as bool? ?? false,
+      // Absent in every conversation written before the field existed, and
+      // false is what those calls were treated as at the time.
+      modelDestructive: json['model_destructive'] as bool? ?? false,
     );
   }
 
@@ -349,6 +407,21 @@ class AskAiCommand {
   /// This is advisory only. Local risk classification must also consider the
   /// command safe before the app may auto-run it.
   final bool modelSafeToRun;
+
+  /// The model's own answer to "would this destroy something".
+  ///
+  /// Not the opposite of [modelSafeToRun], and not redundant with it. That one
+  /// is a floor — it withholds auto-running, and most commands that change
+  /// anything set it false — while this one is a ceiling, and asks. Between
+  /// them sits everything ordinary: `mkdir`, `systemctl restart`, a package
+  /// install. Reading `!modelSafeToRun` as "dangerous" would put a
+  /// confirmation in front of all of those and teach people to tap through it.
+  ///
+  /// Taken together with [classifyRisk] rather than instead of it: the local
+  /// list sees a shape, `rm -rf /var/lib/postgresql`, and the model sees what
+  /// it is about to do to a machine it has been reading for several turns.
+  /// Either one is enough — see [risk].
+  final bool modelDestructive;
 
   Map<String, dynamic> get arguments {
     if (rawArguments.isEmpty) return const {};
@@ -423,9 +496,19 @@ class AskAiCommand {
     'write_file',
   };
 
-  AskAiCommandRisk get risk => _targetedTools.contains(toolName)
-      ? _unvettedFloor(intrinsicRisk)
-      : intrinsicRisk;
+  /// What the app asks about, decided by two readers that answer separately.
+  ///
+  /// [classifyRisk] matches a shape and knows nothing about the machine;
+  /// [modelDestructive] is the model's own reading of a call it has context
+  /// for and no pattern would catch. Either one saying so is enough, because
+  /// the cost of asking is a tap and the cost of not asking is whatever the
+  /// command does — there is no argument for making them agree first.
+  AskAiCommandRisk get risk {
+    final local = _targetedTools.contains(toolName)
+        ? _unvettedFloor(intrinsicRisk)
+        : intrinsicRisk;
+    return modelDestructive ? AskAiCommandRisk.destructive : local;
+  }
 
   /// Nothing runs unattended on a host met this conversation.
   ///
@@ -464,6 +547,7 @@ class AskAiCommand {
     'tool_name': toolName,
     'raw_arguments': rawArguments,
     'model_safe_to_run': modelSafeToRun,
+    'model_destructive': modelDestructive,
   };
 
   Map<String, dynamic> toToolCallJson() {
@@ -473,6 +557,7 @@ class AskAiCommand {
             'command': command,
             'description': description,
             'safe_to_run': modelSafeToRun,
+            'destructive': modelDestructive,
           });
     return {
       'id': id,
@@ -488,6 +573,7 @@ class AskAiCommand {
             'command': command,
             'description': description,
             'safe_to_run': modelSafeToRun,
+            'destructive': modelDestructive,
           });
     return {
       if (itemId != null && itemId.isNotEmpty) 'id': itemId,
@@ -734,6 +820,7 @@ class AskAiCompleted extends AskAiEvent {
     required this.protocol,
     this.reasoningContent,
     this.responseId,
+    this.promptTokens,
   });
 
   final String fullText;
@@ -742,6 +829,14 @@ class AskAiCompleted extends AskAiEvent {
   final AskAiProtocol protocol;
   final String? reasoningContent;
   final String? responseId;
+
+  /// What the request actually cost, as the provider counted it.
+  ///
+  /// Null where the provider said nothing — not every OpenAI-compatible server
+  /// answers `usage`, and a stream has to ask for it. It is the only honest
+  /// measure of how full the context is; everything else is an estimate of
+  /// characters standing in for tokens.
+  final int? promptTokens;
 }
 
 /// Signals that the stream terminated with an error before completion.

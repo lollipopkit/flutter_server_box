@@ -496,6 +496,24 @@ class SettingStore extends SqliteStore {
     write: (c, v) => c.copyWith(sendOnEnter: v),
   );
 
+  /// Percentage of the model's context at which the conversation is
+  /// summarised. See [AskAiConfig.compactAtPercent].
+  late final askAiCompactAtPercent = FieldProp<AskAiConfig, int>(
+    askAi,
+    'compactAtPercent',
+    read: (c) => c.compactAtPercent,
+    write: (c, v) => c.copyWith(compactAtPercent: v),
+  );
+
+  /// What a model holds, where the shipped table is wrong about it, keyed by
+  /// endpoint and model. See [AskAiConfig.contextOverrides].
+  late final askAiContextOverrides = FieldProp<AskAiConfig, Map<String, int>>(
+    askAi,
+    'contextOverrides',
+    read: (c) => c.contextOverrides,
+    write: (c, v) => c.copyWith(contextOverrides: v),
+  );
+
   /// Whether [askAiBaseUrl] may be plain `http` to something other than
   /// loopback. See [AskAiConfig.allowInsecure].
   late final askAiAllowInsecure = FieldProp<AskAiConfig, bool>(

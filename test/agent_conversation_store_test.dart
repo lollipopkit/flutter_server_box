@@ -186,6 +186,41 @@ void main() {
     );
   });
 
+  test('a summary survives the trim that drops what it stands for', () {
+    // Storage trimming and compaction meet here. The originals are what the
+    // store is short of room for; the account of them is the one thing worth
+    // keeping, and dropping it would be forgetting on purpose.
+    final items = <AskAiConversationItem>[
+      AskAiMessageItem.user('Turn 0'),
+      for (var index = 0; index < 90; index++)
+        AskAiMessageItem.assistant('Reply 0-$index'),
+      const AskAiSummaryItem(summary: 'Goal: restart nginx. Changes: none.'),
+      for (var turn = 1; turn < 3; turn++) ...[
+        AskAiMessageItem.user('Turn $turn'),
+        for (var index = 0; index < 90; index++)
+          AskAiMessageItem.assistant('Reply $turn-$index'),
+      ],
+    ];
+
+    final trimmed = AgentConversationStore.trimItemsForStorage(items);
+
+    expect(trimmed.length, lessThanOrEqualTo(240));
+    // Dropped with everything else it covered, and put back at the front.
+    expect(trimmed.first, isA<AskAiSummaryItem>());
+    expect(
+      (trimmed.first as AskAiSummaryItem).summary,
+      contains('restart nginx'),
+    );
+    expect(
+      trimmed.whereType<AskAiMessageItem>().any(
+        (item) => item.content == 'Turn 0',
+      ),
+      isFalse,
+    );
+    // One, not a pile: each summary already covers every earlier one.
+    expect(trimmed.whereType<AskAiSummaryItem>(), hasLength(1));
+  });
+
   test('does not split a tool pair when trimming inside one turn', () {
     const command = AskAiCommand(id: 'boundary-call', command: 'uptime');
     final items = <AskAiConversationItem>[

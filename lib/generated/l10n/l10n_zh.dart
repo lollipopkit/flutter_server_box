@@ -129,6 +129,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiInterrupted => '已中断 Agent 回复。';
 
   @override
+  String get askAiModelTable => '模型数据表';
+
+  @override
+  String get askAiModelTableTip =>
+      '来自 models.dev 的模型上下文长度对照表。App 内置一份，点击可获取更新。';
+
+  @override
+  String get askAiContextFallback => '表中没有该模型';
+
+  @override
+  String get askAiCompactAt => '压缩阈值';
+
+  @override
+  String get askAiCompactAtTip =>
+      '上下文占用达到该比例时，把较早的对话压缩为摘要。设得低会更早丢失细节，设得高可能导致请求被模型拒绝。';
+
+  @override
+  String get askAiContextTokens => '上下文长度';
+
+  @override
+  String get askAiContextTokensTip =>
+      '该模型能容纳的 token 数。自动表示按模型名查表；当服务商提供的长度短于模型本身时，填写具体数值。';
+
+  @override
+  String get askAiConversationCompacted => '较早的消息已压缩为摘要，以便对话继续。';
+
+  @override
   String get askAiRiskReadOnly => '只读';
 
   @override
@@ -2141,6 +2168,33 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiInterrupted => '已中斷 Agent 回覆。';
+
+  @override
+  String get askAiModelTable => '模型資料表';
+
+  @override
+  String get askAiModelTableTip =>
+      '來自 models.dev 的模型上下文長度對照表。App 內建一份，點擊可取得更新。';
+
+  @override
+  String get askAiContextFallback => '表中沒有該模型';
+
+  @override
+  String get askAiCompactAt => '壓縮閾值';
+
+  @override
+  String get askAiCompactAtTip =>
+      '上下文佔用達到該比例時，把較早的對話壓縮為摘要。設得低會更早失去細節，設得高可能導致請求被模型拒絕。';
+
+  @override
+  String get askAiContextTokens => '上下文長度';
+
+  @override
+  String get askAiContextTokensTip =>
+      '該模型能容納的 token 數。自動表示依模型名稱查表；當服務商提供的長度短於模型本身時，填寫具體數值。';
+
+  @override
+  String get askAiConversationCompacted => '較早的訊息已壓縮為摘要，以便對話繼續。';
 
   @override
   String get askAiRiskReadOnly => '唯讀';

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'ask_ai_config.g.dart';
@@ -32,6 +33,8 @@ class AskAiConfig {
     this.autoRunSafeCommands = false,
     this.sendOnEnter = true,
     this.allowInsecure = false,
+    this.compactAtPercent = 90,
+    this.contextOverrides = const {},
   });
 
   factory AskAiConfig.fromJson(Map<String, dynamic> json) =>
@@ -62,6 +65,59 @@ class AskAiConfig {
   /// reasoning as `MonitorHttpCredential.allowInsecure`.
   final bool allowInsecure;
 
+  /// How full the context has to get before the conversation is summarised.
+  ///
+  /// A percentage of what the model holds. Below 100 because the summary is
+  /// only useful while there is still room to send it and the turn it is for;
+  /// at the limit itself the request has already been refused.
+  ///
+  /// Configurable because the cost of being wrong is asymmetric and the two
+  /// sides are the user's to weigh: too early loses detail that was still
+  /// affordable, too late loses the turn.
+  final int compactAtPercent;
+
+  /// What a model holds, where the user knows better than the table.
+  ///
+  /// Keyed by endpoint host *and* model, because either alone is wrong: one
+  /// provider serves many models with different windows, and one model name is
+  /// served by many providers with different windows — an aggregator's
+  /// `gpt-5-nano` may be shorter than OpenAI's. A number typed for one is not
+  /// an answer for the other, and switching model used to carry it over.
+  ///
+  /// Absent means "look it up" — see `ModelContextTable`.
+  final Map<String, int> contextOverrides;
+
+  /// How an override is keyed. Host rather than the whole address: a path or a
+  /// trailing slash is the same provider.
+  static String contextKey(String baseUrl, String model) {
+    final trimmed = baseUrl.trim();
+    final host = Uri.tryParse(trimmed)?.host ?? '';
+    final where = (host.isEmpty ? trimmed : host).toLowerCase();
+    return '$where|${model.trim().toLowerCase()}';
+  }
+
+  /// The override for one endpoint and model, or zero where there is none.
+  int contextOverrideFor(String baseUrl, String model) =>
+      contextOverrides[contextKey(baseUrl, model)] ?? 0;
+
+  /// [contextOverrides] with one entry set, or removed when [tokens] is not
+  /// positive — "automatic" is the absence of an answer, not a zero stored
+  /// forever for every model the user ever opened this dialog on.
+  Map<String, int> withContextOverride(
+    String baseUrl,
+    String model,
+    int tokens,
+  ) {
+    final key = contextKey(baseUrl, model);
+    final next = Map<String, int>.from(contextOverrides);
+    if (tokens > 0) {
+      next[key] = tokens;
+    } else {
+      next.remove(key);
+    }
+    return next;
+  }
+
   Map<String, dynamic> toJson() => _$AskAiConfigToJson(this);
 
   AskAiConfig copyWith({
@@ -72,6 +128,8 @@ class AskAiConfig {
     bool? autoRunSafeCommands,
     bool? sendOnEnter,
     bool? allowInsecure,
+    int? compactAtPercent,
+    Map<String, int>? contextOverrides,
   }) => AskAiConfig(
     baseUrl: baseUrl ?? this.baseUrl,
     apiKey: apiKey ?? this.apiKey,
@@ -80,6 +138,8 @@ class AskAiConfig {
     autoRunSafeCommands: autoRunSafeCommands ?? this.autoRunSafeCommands,
     sendOnEnter: sendOnEnter ?? this.sendOnEnter,
     allowInsecure: allowInsecure ?? this.allowInsecure,
+    compactAtPercent: compactAtPercent ?? this.compactAtPercent,
+    contextOverrides: contextOverrides ?? this.contextOverrides,
   );
 
   @override
@@ -91,7 +151,15 @@ class AskAiConfig {
       protocol == other.protocol &&
       autoRunSafeCommands == other.autoRunSafeCommands &&
       sendOnEnter == other.sendOnEnter &&
-      allowInsecure == other.allowInsecure;
+      allowInsecure == other.allowInsecure &&
+      compactAtPercent == other.compactAtPercent &&
+      // By value: `copyWith` hands back a new map every time, and reference
+      // equality here would report a change on every write — which a field
+      // listenable reads as "my field changed".
+      const MapEquality<String, int>().equals(
+        contextOverrides,
+        other.contextOverrides,
+      );
 
   @override
   int get hashCode => Object.hash(
@@ -102,5 +170,7 @@ class AskAiConfig {
     autoRunSafeCommands,
     sendOnEnter,
     allowInsecure,
+    compactAtPercent,
+    const MapEquality<String, int>().hash(contextOverrides),
   );
 }

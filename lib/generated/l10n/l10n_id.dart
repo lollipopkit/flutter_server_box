@@ -138,6 +138,34 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiInterrupted => 'Respons Agent terputus.';
 
   @override
+  String get askAiModelTable => 'Model table';
+
+  @override
+  String get askAiModelTableTip =>
+      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+
+  @override
+  String get askAiContextFallback => 'not in the table';
+
+  @override
+  String get askAiCompactAt => 'Summarise at';
+
+  @override
+  String get askAiCompactAtTip =>
+      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+
+  @override
+  String get askAiContextTokens => 'Context size';
+
+  @override
+  String get askAiContextTokensTip =>
+      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+
+  @override
+  String get askAiConversationCompacted =>
+      'Earlier messages were summarised to keep the conversation going.';
+
+  @override
   String get askAiRiskReadOnly => 'Hanya baca';
 
   @override

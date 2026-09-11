@@ -7,6 +7,7 @@ import 'package:server_box/core/diag.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/provider/ai/agent_scope.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
@@ -30,6 +31,10 @@ enum AgentNoticeKind {
   /// themselves, so what it did — or whether it ran at all — is not known here.
   /// Only a terminal Agent can reach this.
   inserted,
+
+  /// The turns above this were summarised, and the model is now sent the
+  /// summary instead of them. They are still on the page.
+  compacted,
 }
 
 @immutable
@@ -110,6 +115,7 @@ class AgentSessionState {
     this.isExecuting = false,
     this.turnCompleted = false,
     this.autoRunCount = 0,
+    this.promptTokens,
   });
 
   final AskAiProtocol protocol;
@@ -139,6 +145,11 @@ class AgentSessionState {
   final bool turnCompleted;
   final int autoRunCount;
 
+  /// What the last request cost, as the provider counted it, or null where it
+  /// said nothing. Not persisted: it describes the request that was just made,
+  /// and a conversation reopened tomorrow will make a different one.
+  final int? promptTokens;
+
   bool get isWorking => isStreaming || isExecuting;
 
   /// A complete tool proposal can be reviewed even when a compatible API
@@ -161,6 +172,7 @@ class AgentSessionState {
     bool? isExecuting,
     bool? turnCompleted,
     int? autoRunCount,
+    Object? promptTokens = _unset,
   }) {
     return AgentSessionState(
       protocol: protocol ?? this.protocol,
@@ -182,6 +194,12 @@ class AgentSessionState {
       isExecuting: isExecuting ?? this.isExecuting,
       turnCompleted: turnCompleted ?? this.turnCompleted,
       autoRunCount: autoRunCount ?? this.autoRunCount,
+      // Explicitly nullable: a turn whose provider reported no usage has to
+      // clear the last one's, or the next compaction decides on a number that
+      // describes a request nobody made.
+      promptTokens: identical(promptTokens, _unset)
+          ? this.promptTokens
+          : promptTokens as int?,
     );
   }
 }
@@ -204,6 +222,10 @@ class AgentSession extends _$AgentSession {
   StreamSubscription<AskAiEvent>? _subscription;
   StreamSubscription<void>? _conversationWatch;
   bool _submissionInFlight = false;
+
+  /// One summary at a time. Two turns finishing close together would otherwise
+  /// each summarise the same prefix and insert two summaries of it.
+  bool _compacting = false;
 
   /// The language to answer in, remembered from the last thing the user did.
   ///
@@ -350,6 +372,7 @@ class AgentSession extends _$AgentSession {
       pendingTool: command,
       pendingToolRestored: false,
       protocol: event.protocol,
+      promptTokens: event.promptTokens,
       history: [...state.history, ...event.outputItems],
       timeline: text.trim().isNotEmpty
           ? [...state.timeline, AgentAssistantEntry(text)]
@@ -359,6 +382,9 @@ class AgentSession extends _$AgentSession {
           : null,
     );
     await _persist();
+    // After the turn is stored, so a summary that fails costs nothing, and
+    // unawaited, so it never stands between the user and the next turn.
+    unawaited(_compactIfNeeded());
 
     if (command == null) return;
     if (!shouldAutoRunAgentCommand(
@@ -451,6 +477,76 @@ class AgentSession extends _$AgentSession {
     );
     await _persist();
     if (!run.cancelled) startStream();
+  }
+
+  /// Replaces the turns that no longer fit in a request with a summary of
+  /// them.
+  ///
+  /// The summary is *inserted*, never a replacement: the items it stands for
+  /// stay in storage and on the page, and only a request leaves them out. The
+  /// conversation a user scrolls back through is the one that happened.
+  ///
+  /// Failure is silent on purpose. A model that is unreachable, out of quota
+  /// or refusing this particular transcript leaves the conversation exactly as
+  /// it was — which still works, having only the window it had before. Telling
+  /// the user their conversation failed to compress would be reporting an
+  /// internal step they never asked for.
+  Future<void> _compactIfNeeded() async {
+    if (_compacting || state.isWorking) return;
+    final history = state.history;
+    final settings = Stores.setting;
+    if (!AskAiRepository.shouldCompact(
+      history,
+      promptTokens: state.promptTokens,
+      contextTokens: ModelContextTable.contextFor(
+        settings.askAiModel.fetch(),
+        override: settings.askAi.fetch().contextOverrideFor(
+          settings.askAiBaseUrl.fetch(),
+          settings.askAiModel.fetch(),
+        ),
+      ),
+      percent: settings.askAiCompactAtPercent.fetch(),
+    )) {
+      return;
+    }
+
+    _compacting = true;
+    try {
+      final window = AskAiRepository.conversationWindow(history);
+      // Where the kept part begins, which is past the previous summary when
+      // there is one. Taking the window's item count instead counted the
+      // already-summarised prefix again: the new summary landed *before* the
+      // old one, so the old one stayed the newest, and every turn from then on
+      // summarised the same history and inserted another copy.
+      final keptFrom = window.keptFrom;
+      if (window.droppedSinceSummary <= 0 || keptFrom <= 0) return;
+      final covered = history.sublist(0, keptFrom);
+
+      final summary = await ref
+          .read(askAiRepositoryProvider)
+          .summarise(items: covered, localeHint: _localeHint);
+      if (summary.isEmpty) return;
+
+      // Against the history as it is *now*: a turn may have been added while
+      // the summariser was working, and appending to a stale copy would drop
+      // it. The prefix is append-only, so what was covered is still the head.
+      final current = state.history;
+      if (current.length < keptFrom) return;
+      state = state.copyWith(
+        history: [
+          ...current.sublist(0, keptFrom),
+          AskAiSummaryItem(summary: summary, coveredItems: keptFrom),
+          ...current.sublist(keptFrom),
+        ],
+        timeline: [...state.timeline, const AgentNoticeEntry(AgentNoticeKind.compacted)],
+      );
+      await _persist();
+      Diag.crumb(SbDiag.agent, 'compacted', data: {'items': '$keptFrom'});
+    } catch (_) {
+      // See above: the conversation is unchanged and still usable.
+    } finally {
+      _compacting = false;
+    }
   }
 
   Future<void> declinePendingTool() async {
@@ -783,6 +879,11 @@ final globalAgentSessionProvider = agentSessionProvider(
               entries.add(AgentRawNoticeEntry(output));
             }
         }
+      // Shown rather than skipped. Everything above it is still on the page,
+      // and without a line here the reader has no way to know that the model
+      // is no longer being sent it.
+      case AskAiSummaryItem():
+        entries.add(const AgentNoticeEntry(AgentNoticeKind.compacted));
       case AskAiReasoningItem() || AskAiRawResponseItem():
         break;
     }

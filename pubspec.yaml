@@ -145,6 +145,11 @@ flutter:
   assets:
     - assets/app_icon.png
     - assets/rootfs_manifest.json
+    # Model id to context window, generated from models.dev by
+    # `scripts/update-model-context.sh`. Stale between releases on purpose —
+    # an unknown model falls back to a conservative default rather than to a
+    # download. Decides when a conversation is summarised, nothing else.
+    - assets/model_context.json
     # Yet Another Bench Script, vendored verbatim under WTFPL and pinned by
     # `YabsScript.upstreamCommit`. Shipped rather than piped from the network
     # on the server: `curl | bash` fixes no version and verifies nothing, and

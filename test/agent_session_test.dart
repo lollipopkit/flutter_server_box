@@ -139,6 +139,38 @@ void main() {
       expect(replay.pending?.command, 'df -h');
     });
 
+    test('a summary shows on the page, with the turns it stands for', () {
+      const result = AgentToolExecutionResult(
+        toolName: 'run_shell_command',
+        summary: 'Command exited with code 0.',
+        succeeded: true,
+        duration: Duration.zero,
+      );
+      final replay = replayAgentTimeline([
+        const AskAiMessageItem.user('Check the server.'),
+        const AskAiFunctionCallItem(command: shellCommand),
+        AskAiFunctionOutputItem(
+          callId: shellCommand.id,
+          output: result.toToolMessage(),
+        ),
+        const AskAiSummaryItem(summary: 'Goal: check a server.'),
+        const AskAiMessageItem.user('And now?'),
+      ]);
+
+      // The summarised turns are still there — only the request leaves them
+      // out — with a line saying the model is no longer being sent them.
+      expect(replay.entries.map((entry) => entry.runtimeType.toString()), [
+        'AgentUserEntry',
+        'AgentToolResultEntry',
+        'AgentNoticeEntry',
+        'AgentUserEntry',
+      ]);
+      expect(
+        (replay.entries[2] as AgentNoticeEntry).kind,
+        AgentNoticeKind.compacted,
+      );
+    });
+
     test('an empty conversation replays to nothing pending', () {
       final replay = replayAgentTimeline(const []);
       expect(replay.entries, isEmpty);

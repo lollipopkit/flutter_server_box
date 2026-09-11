@@ -27,6 +27,7 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/linux_distros.dart';
@@ -60,6 +61,7 @@ import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'about.dart';
