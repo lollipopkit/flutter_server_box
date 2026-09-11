@@ -16,6 +16,7 @@ import 'package:server_box/data/store/migrations/m018_server_geo.dart';
 import 'package:server_box/data/store/migrations/m019_drop_geo_cache.dart';
 import 'package:server_box/data/store/migrations/m020_benchmark_runs.dart';
 import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
+import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -54,4 +55,5 @@ const kSchemaMigrations = <SchemaMigration>[
   DropGeoCacheMigration(),
   BenchmarkRunsMigration(),
   HomeTabsBarMigration(),
+  AiEndpointVersionMigration(),
 ];

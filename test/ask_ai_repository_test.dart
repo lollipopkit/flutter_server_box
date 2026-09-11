@@ -7,13 +7,24 @@ import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
 void main() {
   group('AskAiRepository.composeEndpointUri', () {
-    test('appends v1 chat completions to service root', () {
-      final uri = AskAiRepository.composeEndpointUri(
-        'https://api.openai.com',
-        AskAiProtocol.chatCompletions,
+    test('adds the protocol path and nothing else', () {
+      // The version is the user's to write: `v1` is OpenAI's number and
+      // Zhipu's is `v4`, so guessing one made the other unusable (#1465).
+      // Addresses stored before this are rewritten by m022.
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://api.openai.com/v1',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://api.openai.com/v1/chat/completions',
       );
-
-      expect(uri.toString(), 'https://api.openai.com/v1/chat/completions');
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://api.openai.com',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://api.openai.com/chat/completions',
+      );
     });
 
     test('appends chat completions to v1 endpoint', () {
@@ -68,22 +79,15 @@ void main() {
       );
     });
 
-    test('a path that names no version still gets v1', () {
-      // Unchanged on purpose: a gateway path means the v1 API under it, and
-      // that is what these addresses have always resolved to.
+    test('a gateway path is sent as written, not as guessed', () {
+      // Guessing `v1` back for these would be the same mistake with a longer
+      // list of exceptions. What the user wrote is the root.
       expect(
         AskAiRepository.composeEndpointUri(
           'https://proxy.example/openai',
           AskAiProtocol.chatCompletions,
         ).toString(),
-        'https://proxy.example/openai/v1/chat/completions',
-      );
-      expect(
-        AskAiRepository.composeEndpointUri(
-          'https://api.openai.com',
-          AskAiProtocol.chatCompletions,
-        ).toString(),
-        'https://api.openai.com/v1/chat/completions',
+        'https://proxy.example/openai/chat/completions',
       );
     });
 
@@ -117,7 +121,7 @@ void main() {
     test('composes and converts full protocol endpoints', () {
       expect(
         AskAiRepository.composeEndpointUri(
-          'https://api.openai.com',
+          'https://api.openai.com/v1',
           AskAiProtocol.responses,
         ),
         Uri.parse('https://api.openai.com/v1/responses'),

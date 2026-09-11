@@ -85,7 +85,14 @@ void main() {
     // a user's device.
     test('is registered, and the version was bumped past it', () {
       expect(const BenchmarkRunsMigration().from, 20);
-      expect(SchemaVersion.current, 22);
+      // Relative, not `SchemaVersion.current == 20 + 2`: an absolute number
+      // pins this step as one of the newest and fails the day another is
+      // added, which is information about `all.dart` rather than about this
+      // one. See the same note in `m013_virt_key_names_test.dart`.
+      expect(
+        SchemaVersion.current,
+        greaterThan(const BenchmarkRunsMigration().from),
+      );
       expect(
         kSchemaMigrations.map((m) => m.from),
         contains(20),

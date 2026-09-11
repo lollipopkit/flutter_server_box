@@ -248,7 +248,7 @@ abstract class AppLocalizations {
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
-  /// **'A domain, an API root such as https://open.bigmodel.cn/api/paas/v4, or the full endpoint. Whatever is missing is completed from the protocol.'**
+  /// **'Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.'**
   String get askAiEndpointTip;
 
   /// No description provided for @askAiProtocolTip.

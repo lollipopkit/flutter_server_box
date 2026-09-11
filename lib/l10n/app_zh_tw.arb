@@ -20,7 +20,7 @@
   "added2List": "已新增至任務清單",
   "askAi": "詢問 AI",
   "askAiAwaitingResponse": "等待 AI 回應...",
-  "askAiEndpointTip": "可填網域、API 根位址（如 https://open.bigmodel.cn/api/paas/v4），或完整端點。缺少的部分會依所選協定補全。",
+  "askAiEndpointTip": "需要帶上 API 版本號，如 /v1；智譜是 /api/paas/v4。只會依所選協定補上 /chat/completions 或 /responses。",
   "askAiProtocolTip": "自動模式會嘗試 Responses / Chat Completions。",
   "askAiCommandInserted": "指令已插入終端機",
   "askAiConfigMissing": "請前往設定配置 {fields}",

@@ -74,7 +74,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      '可填域名、API 根地址（如 https://open.bigmodel.cn/api/paas/v4），或完整端点。缺少的部分会按所选协议补全。';
+      '需要带上 API 版本号，如 /v1；智谱是 /api/paas/v4。只会按所选协议补上 /chat/completions 或 /responses。';
 
   @override
   String get askAiProtocolTip => '自动模式会尝试 Responses / Chat Completions。';
@@ -2116,7 +2116,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiEndpointTip =>
-      '可填網域、API 根位址（如 https://open.bigmodel.cn/api/paas/v4），或完整端點。缺少的部分會依所選協定補全。';
+      '需要帶上 API 版本號，如 /v1；智譜是 /api/paas/v4。只會依所選協定補上 /chat/completions 或 /responses。';
 
   @override
   String get askAiProtocolTip => '自動模式會嘗試 Responses / Chat Completions。';

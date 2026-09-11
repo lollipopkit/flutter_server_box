@@ -26,7 +26,7 @@ part 'ask_ai_config.g.dart';
 @JsonSerializable()
 class AskAiConfig {
   const AskAiConfig({
-    this.baseUrl = 'https://api.openai.com',
+    this.baseUrl = 'https://api.openai.com/v1',
     this.apiKey = '',
     this.model = 'gpt-5.6-luna',
     this.protocol = 'auto',

@@ -20,7 +20,9 @@ void main() {
 
   test('is registered as the step after the current schema', () {
     expect(migration.from, 21);
-    expect(SchemaVersion.current, 22);
+    // Relative, not absolute: pinning this as the newest step fails the day
+    // another is added. See `m013_virt_key_names_test.dart`.
+    expect(SchemaVersion.current, greaterThan(migration.from));
     expect(
       kSchemaMigrations.where((m) => m.from == migration.from),
       hasLength(1),

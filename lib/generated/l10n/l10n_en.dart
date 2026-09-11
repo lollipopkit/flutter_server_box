@@ -78,7 +78,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'A domain, an API root such as https://open.bigmodel.cn/api/paas/v4, or the full endpoint. Whatever is missing is completed from the protocol.';
+      'Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.';
 
   @override
   String get askAiProtocolTip => 'Auto tries Responses, then Chat Completions.';
