@@ -138,6 +138,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiInterrupted => 'Agent response was interrupted.';
 
   @override
+  String get askAiModelTable => 'Model table';
+
+  @override
+  String get askAiModelTableTip =>
+      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+
+  @override
+  String get askAiContextFallback => 'not in the table';
+
+  @override
   String get askAiCompactAt => 'Summarise at';
 
   @override

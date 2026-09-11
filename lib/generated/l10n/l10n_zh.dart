@@ -129,6 +129,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiInterrupted => '已中断 Agent 回复。';
 
   @override
+  String get askAiModelTable => '模型数据表';
+
+  @override
+  String get askAiModelTableTip =>
+      '来自 models.dev 的模型上下文长度对照表。App 内置一份，点击可获取更新。';
+
+  @override
+  String get askAiContextFallback => '表中没有该模型';
+
+  @override
   String get askAiCompactAt => '压缩阈值';
 
   @override
@@ -2158,6 +2168,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiInterrupted => '已中斷 Agent 回覆。';
+
+  @override
+  String get askAiModelTable => '模型資料表';
+
+  @override
+  String get askAiModelTableTip =>
+      '來自 models.dev 的模型上下文長度對照表。App 內建一份，點擊可取得更新。';
+
+  @override
+  String get askAiContextFallback => '表中沒有該模型';
 
   @override
   String get askAiCompactAt => '壓縮閾值';

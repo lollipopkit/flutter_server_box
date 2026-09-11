@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/ai/model_context.dart';
+import 'package:server_box/data/model/app/ask_ai_config.dart';
 
 /// The table decides when a conversation is summarised. A wrong answer is
 /// survivable — too low spends a summary early, too high spends a turn — so
@@ -66,6 +67,85 @@ void main() {
     );
     // Zero is "look it up", which is what the setting stores by default.
     expect(ModelContextTable.contextFor('gpt-5-nano', override: 0), 400000);
+  });
+
+  test('an override is keyed by endpoint and model together', () {
+    const config = AskAiConfig();
+    // The same model name on two providers is two answers: an aggregator may
+    // serve a shorter window than the model has.
+    final withOpenAi = config.copyWith(
+      contextOverrides: config.withContextOverride(
+        'https://api.openai.com',
+        'gpt-5-nano',
+        16000,
+      ),
+    );
+    final withBoth = withOpenAi.copyWith(
+      contextOverrides: withOpenAi.withContextOverride(
+        'https://openrouter.ai/api/v1',
+        'gpt-5-nano',
+        8000,
+      ),
+    );
+
+    expect(
+      withBoth.contextOverrideFor('https://api.openai.com', 'gpt-5-nano'),
+      16000,
+    );
+    expect(
+      withBoth.contextOverrideFor('https://openrouter.ai/api/v1', 'gpt-5-nano'),
+      8000,
+    );
+    // And a model that was never given one is still automatic.
+    expect(
+      withBoth.contextOverrideFor('https://api.openai.com', 'glm-4.6'),
+      0,
+    );
+  });
+
+  test('a path or a trailing slash is the same provider', () {
+    const config = AskAiConfig();
+    final set = config.copyWith(
+      contextOverrides: config.withContextOverride(
+        'https://open.bigmodel.cn/api/paas/v4',
+        'glm-4.6',
+        120000,
+      ),
+    );
+
+    expect(
+      set.contextOverrideFor('https://open.bigmodel.cn/api/coding/paas/v4', 'glm-4.6'),
+      120000,
+    );
+  });
+
+  test('clearing an override removes it rather than storing a zero', () {
+    const config = AskAiConfig();
+    final set = config.copyWith(
+      contextOverrides: config.withContextOverride('https://a', 'm', 100),
+    );
+    expect(set.contextOverrides, hasLength(1));
+
+    final cleared = set.copyWith(
+      contextOverrides: set.withContextOverride('https://a', 'm', 0),
+    );
+    expect(cleared.contextOverrides, isEmpty);
+  });
+
+  test('a models.dev document reduces to the two columns needed', () {
+    const raw = '''
+{
+  "openai": {"models": {"gpt-5-nano": {"limit": {"context": 400000}}}},
+  "aggregator": {"models": {"gpt-5-nano": {"limit": {"context": 64000}}}},
+  "broken": {"models": {"no-limit": {}}},
+  "not-a-provider": 7
+}
+''';
+    final table = ModelContextTable.tableFromApiDocument(raw);
+
+    // The smallest wins: compacting early costs a summary, late costs a turn.
+    expect(table['gpt-5-nano'], 64000);
+    expect(table.containsKey('no-limit'), isFalse);
   });
 
   test('the shipped asset is shaped the way the loader reads it', () {

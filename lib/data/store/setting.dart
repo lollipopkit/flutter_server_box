@@ -505,13 +505,13 @@ class SettingStore extends SqliteStore {
     write: (c, v) => c.copyWith(compactAtPercent: v),
   );
 
-  /// What the model holds, when the shipped table is wrong about it. Zero
-  /// looks it up. See [AskAiConfig.contextTokens].
-  late final askAiContextTokens = FieldProp<AskAiConfig, int>(
+  /// What a model holds, where the shipped table is wrong about it, keyed by
+  /// endpoint and model. See [AskAiConfig.contextOverrides].
+  late final askAiContextOverrides = FieldProp<AskAiConfig, Map<String, int>>(
     askAi,
-    'contextTokens',
-    read: (c) => c.contextTokens,
-    write: (c, v) => c.copyWith(contextTokens: v),
+    'contextOverrides',
+    read: (c) => c.contextOverrides,
+    write: (c, v) => c.copyWith(contextOverrides: v),
   );
 
   /// Whether [askAiBaseUrl] may be plain `http` to something other than

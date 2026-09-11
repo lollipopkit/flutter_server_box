@@ -117,6 +117,7 @@ extension _AI on _AppSettingsPageState {
         ),
         _buildCompactAt(l10n),
         _buildContextTokens(l10n),
+        _buildModelTable(l10n),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -136,16 +137,132 @@ extension _AI on _AppSettingsPageState {
     );
   }
 
-  /// What the model holds, when the shipped table is wrong about it.
+  /// What this model, on this endpoint, holds — where the table is wrong.
+  ///
+  /// Bound to the pair rather than to a single number: one provider serves
+  /// many models with different windows, and one model name is served by many
+  /// providers with different windows. A single value followed the user to
+  /// whatever they switched to next, which is the wrong answer twice over.
   Widget _buildContextTokens(AppLocalizations l10n) {
-    return _buildAskAiIntTile(
-      prop: _setting.askAiContextTokens,
-      leading: const Icon(Icons.straighten, size: _kIconSize),
-      title: l10n.askAiContextTokens,
-      description: l10n.askAiContextTokensTip,
-      hint: '0',
-      sanitize: (value) => value < 0 ? 0 : value,
-      displayBuilder: (val) => val <= 0 ? libL10n.auto : '$val',
+    return _setting.askAi.listenable().listenVal((config) {
+      final baseUrl = config.baseUrl;
+      final model = config.model;
+      final override = config.contextOverrideFor(baseUrl, model);
+      final resolved = ModelContextTable.contextFor(model, override: override);
+
+      return ListTile(
+        leading: const Icon(Icons.straighten, size: _kIconSize),
+        title: TipText(l10n.askAiContextTokens, l10n.askAiContextTokensTip),
+        // What will actually be used, and where it came from. A row that only
+        // said "automatic" left the user to guess whether the table had
+        // recognised their model at all.
+        subtitle: Text(
+          override > 0
+              ? '$resolved'
+              : '$resolved · ${ModelContextTable.lookup(model) == null ? l10n.askAiContextFallback : libL10n.auto}',
+          style: UIs.textGrey,
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => _showContextTokensDialog(l10n, baseUrl, model),
+      );
+    });
+  }
+
+  Future<void> _showContextTokensDialog(
+    AppLocalizations l10n,
+    String baseUrl,
+    String model,
+  ) async {
+    return withTextFieldController((ctrl) async {
+      final config = _setting.askAi.fetch();
+      final current = config.contextOverrideFor(baseUrl, model);
+      if (current > 0) ctrl.text = '$current';
+
+      void onSave() {
+        final parsed = int.tryParse(ctrl.text.trim()) ?? 0;
+        unawaited(
+          _persist(
+            _setting.askAiContextOverrides.set(
+              _setting.askAi
+                  .fetch()
+                  .withContextOverride(baseUrl, model, parsed < 0 ? 0 : parsed),
+            ),
+          ),
+        );
+        context.popDialog();
+      }
+
+      await context.showRoundDialog(
+        title: l10n.askAiContextTokens,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Input(
+              controller: ctrl,
+              autoFocus: true,
+              type: TextInputType.number,
+              label: l10n.askAiContextTokens,
+              hint: '0',
+              icon: Icons.edit,
+              onSubmitted: (_) => onSave(),
+            ),
+            const SizedBox(height: 8),
+            // Which pair this is about. The dialog is reached from a row that
+            // showed a number, and the number is only true for these two.
+            Text('$model · $baseUrl', style: UIs.textGrey),
+            const SizedBox(height: 4),
+            Text(l10n.askAiContextTokensTip, style: UIs.textGrey),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+          TextButton(onPressed: onSave, child: Text(libL10n.ok)),
+        ],
+      );
+    });
+  }
+
+  /// The table itself: how old it is, and a way to fetch a newer one.
+  Widget _buildModelTable(AppLocalizations l10n) {
+    // Local to the row rather than a field: this file is an extension on the
+    // page's state and has nowhere to put one, and nothing outside the row
+    // cares whether it is fetching.
+    var refreshing = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        final generated = ModelContextTable.generated;
+        return ListTile(
+          leading: const Icon(Icons.dataset_outlined, size: _kIconSize),
+          title: TipText(l10n.askAiModelTable, l10n.askAiModelTableTip),
+          subtitle: Text(
+            generated == null
+                ? libL10n.empty
+                : '${ModelContextTable.modelCount} · $generated',
+            style: UIs.textGrey,
+          ),
+          trailing: refreshing
+              ? SizedLoading.small
+              : const Icon(Icons.refresh),
+          onTap: refreshing
+              ? null
+              : () async {
+                  setState(() => refreshing = true);
+                  try {
+                    final count = await ModelContextTable.refresh();
+                    Toast.success('${l10n.askAiModelTable}: $count');
+                  } catch (error) {
+                    // Reported, not swallowed: the user pressed a button and
+                    // is owed an answer. The old table is still in use.
+                    Toast.error('$error');
+                  } finally {
+                    if (context.mounted) {
+                      setState(() => refreshing = false);
+                    }
+                  }
+                },
+        );
+      },
     );
   }
 

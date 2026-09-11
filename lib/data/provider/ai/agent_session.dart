@@ -495,7 +495,10 @@ class AgentSession extends _$AgentSession {
       promptTokens: state.promptTokens,
       contextTokens: ModelContextTable.contextFor(
         settings.askAiModel.fetch(),
-        override: settings.askAiContextTokens.fetch(),
+        override: settings.askAi.fetch().contextOverrideFor(
+          settings.askAiBaseUrl.fetch(),
+          settings.askAiModel.fetch(),
+        ),
       ),
       percent: settings.askAiCompactAtPercent.fetch(),
     )) {

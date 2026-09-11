@@ -15,7 +15,11 @@ AskAiConfig _$AskAiConfigFromJson(Map<String, dynamic> json) => AskAiConfig(
   sendOnEnter: json['sendOnEnter'] as bool? ?? true,
   allowInsecure: json['allowInsecure'] as bool? ?? false,
   compactAtPercent: (json['compactAtPercent'] as num?)?.toInt() ?? 90,
-  contextTokens: (json['contextTokens'] as num?)?.toInt() ?? 0,
+  contextOverrides:
+      (json['contextOverrides'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, (e as num).toInt()),
+      ) ??
+      const {},
 );
 
 Map<String, dynamic> _$AskAiConfigToJson(AskAiConfig instance) =>
@@ -28,5 +32,5 @@ Map<String, dynamic> _$AskAiConfigToJson(AskAiConfig instance) =>
       'sendOnEnter': instance.sendOnEnter,
       'allowInsecure': instance.allowInsecure,
       'compactAtPercent': instance.compactAtPercent,
-      'contextTokens': instance.contextTokens,
+      'contextOverrides': instance.contextOverrides,
     };

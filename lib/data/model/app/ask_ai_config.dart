@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'ask_ai_config.g.dart';
@@ -33,7 +34,7 @@ class AskAiConfig {
     this.sendOnEnter = true,
     this.allowInsecure = false,
     this.compactAtPercent = 90,
-    this.contextTokens = 0,
+    this.contextOverrides = const {},
   });
 
   factory AskAiConfig.fromJson(Map<String, dynamic> json) =>
@@ -75,13 +76,47 @@ class AskAiConfig {
   /// affordable, too late loses the turn.
   final int compactAtPercent;
 
-  /// What the model holds, when the user knows better than the table.
+  /// What a model holds, where the user knows better than the table.
   ///
-  /// Zero means "look it up" — see `ModelContextTable`, which ships a copy of
-  /// models.dev and matches on the end of the name. A proxy that serves a
-  /// shorter window than the model has is the case this exists for; so is a
-  /// model that is newer than the table.
-  final int contextTokens;
+  /// Keyed by endpoint host *and* model, because either alone is wrong: one
+  /// provider serves many models with different windows, and one model name is
+  /// served by many providers with different windows — an aggregator's
+  /// `gpt-5-nano` may be shorter than OpenAI's. A number typed for one is not
+  /// an answer for the other, and switching model used to carry it over.
+  ///
+  /// Absent means "look it up" — see `ModelContextTable`.
+  final Map<String, int> contextOverrides;
+
+  /// How an override is keyed. Host rather than the whole address: a path or a
+  /// trailing slash is the same provider.
+  static String contextKey(String baseUrl, String model) {
+    final trimmed = baseUrl.trim();
+    final host = Uri.tryParse(trimmed)?.host ?? '';
+    final where = (host.isEmpty ? trimmed : host).toLowerCase();
+    return '$where|${model.trim().toLowerCase()}';
+  }
+
+  /// The override for one endpoint and model, or zero where there is none.
+  int contextOverrideFor(String baseUrl, String model) =>
+      contextOverrides[contextKey(baseUrl, model)] ?? 0;
+
+  /// [contextOverrides] with one entry set, or removed when [tokens] is not
+  /// positive — "automatic" is the absence of an answer, not a zero stored
+  /// forever for every model the user ever opened this dialog on.
+  Map<String, int> withContextOverride(
+    String baseUrl,
+    String model,
+    int tokens,
+  ) {
+    final key = contextKey(baseUrl, model);
+    final next = Map<String, int>.from(contextOverrides);
+    if (tokens > 0) {
+      next[key] = tokens;
+    } else {
+      next.remove(key);
+    }
+    return next;
+  }
 
   Map<String, dynamic> toJson() => _$AskAiConfigToJson(this);
 
@@ -94,7 +129,7 @@ class AskAiConfig {
     bool? sendOnEnter,
     bool? allowInsecure,
     int? compactAtPercent,
-    int? contextTokens,
+    Map<String, int>? contextOverrides,
   }) => AskAiConfig(
     baseUrl: baseUrl ?? this.baseUrl,
     apiKey: apiKey ?? this.apiKey,
@@ -104,7 +139,7 @@ class AskAiConfig {
     sendOnEnter: sendOnEnter ?? this.sendOnEnter,
     allowInsecure: allowInsecure ?? this.allowInsecure,
     compactAtPercent: compactAtPercent ?? this.compactAtPercent,
-    contextTokens: contextTokens ?? this.contextTokens,
+    contextOverrides: contextOverrides ?? this.contextOverrides,
   );
 
   @override
@@ -118,7 +153,13 @@ class AskAiConfig {
       sendOnEnter == other.sendOnEnter &&
       allowInsecure == other.allowInsecure &&
       compactAtPercent == other.compactAtPercent &&
-      contextTokens == other.contextTokens;
+      // By value: `copyWith` hands back a new map every time, and reference
+      // equality here would report a change on every write — which a field
+      // listenable reads as "my field changed".
+      const MapEquality<String, int>().equals(
+        contextOverrides,
+        other.contextOverrides,
+      );
 
   @override
   int get hashCode => Object.hash(
@@ -130,6 +171,6 @@ class AskAiConfig {
     sendOnEnter,
     allowInsecure,
     compactAtPercent,
-    contextTokens,
+    const MapEquality<String, int>().hash(contextOverrides),
   );
 }

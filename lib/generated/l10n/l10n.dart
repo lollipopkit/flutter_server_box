@@ -353,6 +353,24 @@ abstract class AppLocalizations {
   /// **'Agent response was interrupted.'**
   String get askAiInterrupted;
 
+  /// No description provided for @askAiModelTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Model table'**
+  String get askAiModelTable;
+
+  /// No description provided for @askAiModelTableTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.'**
+  String get askAiModelTableTip;
+
+  /// No description provided for @askAiContextFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'not in the table'**
+  String get askAiContextFallback;
+
   /// No description provided for @askAiCompactAt.
   ///
   /// In en, this message translates to:
