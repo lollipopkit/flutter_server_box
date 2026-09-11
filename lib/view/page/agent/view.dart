@@ -300,7 +300,12 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
           children: [
             Text(context.l10n.askAiHighRiskConfirmBody),
             const SizedBox(height: 12),
-            AgentCommandPreview(text: proposal.displayValue),
+            AgentCommandPreview(
+              text: proposal.displayValue,
+              language: proposal.toolName == 'run_shell_command'
+                  ? 'shell'
+                  : 'text',
+            ),
           ],
         ),
         actionsBuilder: (dialogContext) => [
@@ -907,6 +912,12 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                 ),
                 child: AgentCommandPreview(
                   text: detail,
+                  // Only one of these tools takes a command. The rest put a
+                  // path or an action here, and tagging those as shell would
+                  // be a claim about them that is not true.
+                  language: proposal.toolName == 'run_shell_command'
+                      ? 'shell'
+                      : 'text',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontFamily: proposal.toolName == 'run_shell_command'
                         ? 'monospace'
@@ -926,6 +937,9 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                 ),
                 child: AgentCommandPreview(
                   text: content,
+                  // What a `write_file` would write. Whatever it is, it is not
+                  // a command.
+                  language: 'text',
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontFamily: 'monospace',
                   ),

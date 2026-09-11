@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/view/widget/agent_common.dart';
@@ -19,6 +20,36 @@ void main() {
     test('caps tall viewport previews so review actions stay nearby', () {
       expect(askAiCommandPreviewMaxHeightFor(800), 240);
       expect(askAiCommandPreviewMaxHeightFor(1200), 240);
+    });
+  });
+
+  group('fenceAgentCommand', () {
+    test('tags the block with the language it was given', () {
+      expect(
+        fenceAgentCommand('ls -la', language: 'shell'),
+        '```shell\nls -la\n```',
+      );
+      expect(
+        fenceAgentCommand('/etc/hosts', language: 'text'),
+        '```text\n/etc/hosts\n```',
+      );
+    });
+
+    test('outgrows a command that contains a fence of its own', () {
+      // Command substitution is ordinary shell, and a run of three or more
+      // backticks reaches a three-tick fence's length.
+      expect(
+        fenceAgentCommand('echo `date`', language: 'shell'),
+        '```shell\necho `date`\n```',
+      );
+      expect(
+        fenceAgentCommand('cat <<EOF\n```\nEOF', language: 'shell'),
+        '````shell\ncat <<EOF\n```\nEOF\n````',
+      );
+      expect(
+        fenceAgentCommand('echo "`````"', language: 'shell'),
+        '``````shell\necho "`````"\n``````',
+      );
     });
   });
 
@@ -64,6 +95,7 @@ void main() {
       await tester.pump();
 
       expect(tester.takeException(), isNull);
+      expect(find.byType(SimpleMarkdown), findsOneWidget);
 
       final preview = tester.getRect(find.byType(AgentCommandPreview));
       expect(
@@ -91,14 +123,14 @@ void main() {
       await tester.pumpWidget(dialogWith(AgentCommandPreview(text: _longCommand)));
       await tester.pump();
 
-      final scrollView = find.descendant(
-        of: find.byType(AgentCommandPreview),
-        matching: find.byType(SingleChildScrollView),
-      );
-      expect(scrollView, findsOneWidget);
-
-      // `.first` is the outer one: a `SelectableText` carries a `Scrollable`
-      // of its own, and that is the one that must not answer here.
+      // `.first` is the outer one. A code block carries a horizontal scroll
+      // view of its own, and that is not the one being asked about here.
+      final scrollView = find
+          .descendant(
+            of: find.byType(AgentCommandPreview),
+            matching: find.byType(SingleChildScrollView),
+          )
+          .first;
       final scrollable = find
           .descendant(of: scrollView, matching: find.byType(Scrollable))
           .first;
@@ -109,6 +141,47 @@ void main() {
       await tester.drag(scrollable, const Offset(0, -120));
       await tester.pump();
       expect(position.pixels, greaterThan(0));
+    });
+
+    testWidgets('renders the command as a block, fence and all kept out', (
+      tester,
+    ) async {
+      useReportedPhone(tester);
+
+      await tester.pumpWidget(
+        dialogWith(const AgentCommandPreview(text: 'echo `date`')),
+      );
+      await tester.pump();
+
+      Finder shows(String text) => find.descendant(
+        of: find.byType(AgentCommandPreview),
+        matching: find.textContaining(text),
+      );
+
+      // The command reaches the screen; the fence that carried it there and
+      // the language it was tagged with do not.
+      expect(shows('echo `date`'), findsOneWidget);
+      expect(shows('```'), findsNothing);
+      expect(shows('shell'), findsNothing);
+    });
+
+    testWidgets('scrolls one long line sideways instead of growing', (
+      tester,
+    ) async {
+      useReportedPhone(tester);
+
+      await tester.pumpWidget(
+        dialogWith(AgentCommandPreview(text: 'echo ${'x' * 4000}')),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      // One line stays one line: the block scrolls sideways rather than
+      // wrapping, so the cap is not what is holding it in.
+      expect(
+        tester.getRect(find.byType(AgentCommandPreview)).height,
+        lessThan(askAiCommandPreviewMaxHeightFor(800)),
+      );
     });
 
     testWidgets('takes only the height a short command needs', (tester) async {
