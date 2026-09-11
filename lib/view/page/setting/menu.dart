@@ -311,51 +311,57 @@ final class _TabButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final color = selected ? scheme.onSecondaryContainer : scheme.onSurfaceVariant;
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        // Wider than it was. The label used to sit in a fixed box and centre
-        // itself in it, which left a gap either side whatever it said; now it
-        // reaches the edges of its tab, and two of them need keeping apart.
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Around the icon and not the label, the way the rail on the home
-            // page marks its own destination.
-            AnimatedContainer(
-              duration: Durations.short3,
-              curve: Curves.easeOut,
-              width: _indicator.width,
-              height: _indicator.height,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? scheme.secondaryContainer : null,
-                borderRadius: BorderRadius.circular(_indicator.height / 2),
-              ),
-              child: Icon(icon, size: 20, color: color),
-            ),
-            if (label != null) ...[
-              const SizedBox(height: 3),
-              // Unconstrained: a tab is as wide as its own name. Held to the
-              // pill's width these ellipsed — they are section names, not the
-              // one or two words a bottom bar carries, and several languages
-              // spell them longer still. The bar already scrolls sideways when
-              // a level does not fit across the window, so the room is there
-              // to be taken.
-              Text(
-                label!,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.1,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: color,
+    // Which tab is on is a colour and a pill, neither of which a screen reader
+    // has any way to read. `TabBar` says it for its own tabs; this bar is not
+    // one, so it says it here.
+    return Semantics(
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          // Wider than it was. The label used to sit in a fixed box and centre
+          // itself in it, which left a gap either side whatever it said; now it
+          // reaches the edges of its tab, and two of them need keeping apart.
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Around the icon and not the label, the way the rail on the home
+              // page marks its own destination.
+              AnimatedContainer(
+                duration: Durations.short3,
+                curve: Curves.easeOut,
+                width: _indicator.width,
+                height: _indicator.height,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? scheme.secondaryContainer : null,
+                  borderRadius: BorderRadius.circular(_indicator.height / 2),
                 ),
+                child: Icon(icon, size: 20, color: color),
               ),
+              if (label != null) ...[
+                const SizedBox(height: 3),
+                // Unconstrained: a tab is as wide as its own name. Held to the
+                // pill's width these ellipsed — they are section names, not the
+                // one or two words a bottom bar carries, and several languages
+                // spell them longer still. The bar already scrolls sideways
+                // when a level does not fit across the window, so the room is
+                // there to be taken.
+                Text(
+                  label!,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.1,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: color,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -445,6 +451,21 @@ final class _SettingsPages extends StatefulWidget {
 class _SettingsPagesState extends State<_SettingsPages> {
   late final PageController _controller = PageController(initialPage: _indexOf(widget.selectedId));
 
+  /// Where a tap is currently being animated to, and null the rest of the time.
+  ///
+  /// `animateToPage` scrolls through every page between here and there, and
+  /// `PageView` reports each one it passes. Without this, tapping the fourth
+  /// tab announced the second and the third on the way, which named them in
+  /// the title bar and wrote each to the settings navigator.
+  int? _animatingTo;
+
+  /// Which animation [_animatingTo] belongs to.
+  ///
+  /// A second tap mid-flight starts a second animation, and the first one's
+  /// completion still arrives. Without a generation it would clear the guard
+  /// that the animation still running had just set.
+  int _animation = 0;
+
   int _indexOf(String id) {
     final index = widget.leaves.indexWhere((e) => e.id == id);
     return index < 0 ? 0 : index;
@@ -456,11 +477,26 @@ class _SettingsPagesState extends State<_SettingsPages> {
     if (widget.selectedId == oldWidget.selectedId) return;
     final target = _indexOf(widget.selectedId);
     if (!_controller.hasClients || _controller.page?.round() == target) return;
-    _controller.animateToPage(
-      target,
-      duration: Durations.medium2,
-      curve: Curves.easeOutCubic,
-    );
+
+    final animation = ++_animation;
+    _animatingTo = target;
+    _controller
+        .animateToPage(
+          target,
+          duration: Durations.medium2,
+          curve: Curves.easeOutCubic,
+        )
+        .whenComplete(() {
+          if (!mounted || animation != _animation) return;
+          _animatingTo = null;
+          // A drag can interrupt the animation, and where it came to rest is a
+          // choice like any other — reported now rather than dropped, or the
+          // tabs would keep pointing at a page nobody is on.
+          final landed = _controller.page?.round();
+          if (landed != null && landed != target && landed < widget.leaves.length) {
+            widget.onChanged(widget.leaves[landed]);
+          }
+        });
   }
 
   @override
@@ -474,8 +510,12 @@ class _SettingsPagesState extends State<_SettingsPages> {
     return PageView.builder(
       controller: _controller,
       // Told rather than inferred: a drag that lands on another page has picked
-      // it, and the tabs have to say so.
-      onPageChanged: (index) => widget.onChanged(widget.leaves[index]),
+      // it, and the tabs have to say so. Pages passed through on the way to a
+      // tapped one are not landings — see [_animatingTo].
+      onPageChanged: (index) {
+        if (_animatingTo != null && index != _animatingTo) return;
+        widget.onChanged(widget.leaves[index]);
+      },
       itemCount: widget.leaves.length,
       // Built as it is reached. Every page change rebuilds this widget — that
       // is how the tabs hear about a swipe — and a `children` list builds all

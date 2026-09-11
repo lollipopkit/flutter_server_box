@@ -8,22 +8,27 @@ extension _App on _AppSettingsPageState {
   Widget _buildApp() {
     final androidSettings = isAndroid ? _buildAndroidSettings() : null;
     final specific = _buildPlatformSetting();
-    final children = [
-      _buildLocale(),
-      _buildThemeMode(),
-      _buildAppColor(),
-      _buildCheckUpdate(),
+    // Carded one by one rather than by mapping the list. `buildBioAuth` owns
+    // its own card and answers with an empty widget where there is no
+    // biometric hardware, where it is still loading, and where the check
+    // failed — so a card applied from out here is a card around nothing three
+    // times over, and a card around a card in the one case it has something.
+    final children = <Widget>[
+      _buildLocale().cardx,
+      _buildThemeMode().cardx,
+      _buildAppColor().cardx,
+      _buildCheckUpdate().cardx,
       PlatformPublicSettings.buildBioAuth,
       // `buildPrivacyBlur` was here. Covering the app in the switcher is about
       // who can read what is on screen, which is what the privacy page is —
       // and a setting is easier to find under the subject it belongs to than
       // in the list of everything.
-      ?androidSettings,
-      ?specific,
-      _buildAppMore(),
+      if (androidSettings != null) androidSettings.cardx,
+      if (specific != null) specific.cardx,
+      _buildAppMore().cardx,
     ];
 
-    return Column(children: children.map((e) => e.cardx).toList());
+    return Column(children: children);
   }
 
   Widget _buildAndroidSettings() {

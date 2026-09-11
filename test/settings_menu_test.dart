@@ -313,6 +313,31 @@ void main() {
     expect(edgeFade(), findsOneWidget);
   });
 
+  testWidgets('a tab several along does not announce the ones passed through', (
+    tester,
+  ) async {
+    await pump(tester, width: 500);
+
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+
+    // The fourth tab of the app group, so the animation crosses two others.
+    final target = AppLocalizations.of(
+      tester.element(find.byKey(settingsTabsKey)),
+    )!.homeTabs;
+    final titles = <String>[barTitle(tester)];
+
+    await tester.tap(tabRow(target));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      final title = barTitle(tester);
+      if (title != titles.last) titles.add(title);
+    }
+
+    // Where it started and where it was sent, and nothing in between.
+    expect(titles, [libL10n.general, target]);
+  });
+
   testWidgets('the tab being shown is filled in', (tester) async {
     await pump(tester, width: 500);
     await tester.tap(menuRow(libL10n.server));
