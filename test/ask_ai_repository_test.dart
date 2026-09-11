@@ -276,6 +276,127 @@ void main() {
     });
   });
 
+  group('AskAiRepository.conversationWindow', () {
+    /// A turn: what the user asked, the call it produced, and what it printed.
+    List<AskAiConversationItem> turn(String ask, String output) => [
+      AskAiMessageItem.user(ask),
+      const AskAiMessageItem.assistant('Working on it.'),
+      AskAiFunctionCallItem(
+        command: AskAiCommand(id: 'call-$ask', command: 'find / -name x'),
+      ),
+      AskAiFunctionOutputItem(
+        callId: 'call-$ask',
+        output: jsonEncode({'exit_code': 0, 'stdout': output}),
+      ),
+    ];
+
+    test('a short conversation is carried whole and says so', () {
+      final window = AskAiRepository.conversationWindow([
+        ...turn('one', 'a line'),
+        ...turn('two', 'another line'),
+      ]);
+
+      expect(window.items, hasLength(8));
+      expect(window.complete, isTrue);
+    });
+
+    test('a turn bigger than the whole budget does not erase the ones before it', () {
+      // The reported shape (#1464): one task that printed far more than a
+      // request can hold, and then a follow-up that depends on it.
+      final huge = 'x' * 90000;
+      final conversation = [
+        ...turn('one', 'the answer was 41'),
+        ...turn('two', huge),
+        const AskAiMessageItem.user('do that again'),
+      ];
+
+      final window = AskAiRepository.conversationWindow(conversation);
+
+      // The earlier turns are still there, which is the whole point: before
+      // this, the window was the last user message and nothing else.
+      expect(
+        window.items.whereType<AskAiMessageItem>().map((item) => item.content),
+        contains('one'),
+      );
+      expect(window.items.length, greaterThan(1));
+      expect(window.complete, isFalse);
+    });
+
+    test('an earlier turn keeps both ends of what it printed', () {
+      final output = '${'head' * 3000}MIDDLE${'tail' * 3000}';
+      final window = AskAiRepository.conversationWindow([
+        ...turn('one', output),
+        const AskAiMessageItem.user('and now?'),
+      ]);
+
+      final carried = window.items.whereType<AskAiFunctionOutputItem>().single;
+      expect(carried.output.length, lessThan(output.length));
+      expect(carried.output, contains('head'));
+      expect(carried.output, contains('tail'));
+      expect(carried.output, isNot(contains('MIDDLE')));
+      // Still the document the tool returned, not a cut string.
+      expect(
+        (jsonDecode(carried.output) as Map)['exit_code'],
+        0,
+      );
+      expect(window.complete, isFalse);
+    });
+
+    test('the current turn is carried whole however big it is', () {
+      final huge = 'x' * 90000;
+      final window = AskAiRepository.conversationWindow(turn('one', huge));
+
+      final carried = window.items.whereType<AskAiFunctionOutputItem>().single;
+      expect(carried.output, contains(huge));
+    });
+
+    test('every window starts at a user message, so no call is split', () {
+      final conversation = [
+        for (var i = 0; i < 40; i++) ...turn('ask $i', 'y' * 5000),
+      ];
+
+      final window = AskAiRepository.conversationWindow(conversation);
+
+      expect(window.items.first, isA<AskAiMessageItem>());
+      expect(
+        (window.items.first as AskAiMessageItem).role,
+        AskAiMessageRole.user,
+      );
+      // And every result in it answers a call that is also in it.
+      final callIds = window.items
+          .whereType<AskAiFunctionCallItem>()
+          .map((item) => item.command.id)
+          .toSet();
+      for (final output in window.items.whereType<AskAiFunctionOutputItem>()) {
+        expect(callIds, contains(output.callId));
+      }
+    });
+
+    test('a request that had to drop something tells the model so', () {
+      final full = AskAiRepository.buildRequestBody(
+        model: 'test-model',
+        terminalContext: '',
+        serverName: 'Example server',
+        conversation: turn('one', 'a line'),
+      );
+      final trimmed = AskAiRepository.buildRequestBody(
+        model: 'test-model',
+        terminalContext: '',
+        serverName: 'Example server',
+        conversation: [
+          ...turn('one', 'x' * 90000),
+          const AskAiMessageItem.user('carry on'),
+        ],
+      );
+
+      String systemOf(Map<String, dynamic> body) =>
+          (body['messages'] as List<dynamic>).first['content'] as String;
+
+      expect(systemOf(full), isNot(contains('longer than this request')));
+      expect(systemOf(trimmed), contains('longer than this request'));
+    });
+  });
+
   group('AskAiRepository Agent request', () {
     test('preserves tool call and tool result protocol history', () {
       const command = AskAiCommand(
