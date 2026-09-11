@@ -10,7 +10,7 @@ import 'package:server_box/data/model/ai/ask_ai_models.dart';
 /// where the entry types this file used to carry now live: a conversation is
 /// replayed the same way for both Agent surfaces.
 
-enum AgentConversationToolAction { declined, inserted }
+enum AgentConversationToolAction { declined, inserted, skipped }
 
 bool shouldAutoRunAgentCommand({
   required AskAiCommand command,
@@ -27,6 +27,14 @@ String encodeAgentConversationToolAction(AgentConversationToolAction action) {
       'The user declined this command. Do not assume it was executed.',
     AgentConversationToolAction.inserted =>
       'The command was inserted into the interactive terminal. Its execution result is unknown.',
+    // Answered rather than left empty. A call this app did not run still has
+    // to have an output, or the next request carries an assistant message
+    // whose `tool_calls` outnumber the `tool` messages answering them, which
+    // the API rejects outright.
+    AgentConversationToolAction.skipped =>
+      'ServerBox reviews one tool call at a time, so this one was not run and '
+          'nothing happened on the server. Request it again on its own if it '
+          'is still needed.',
   };
   return jsonEncode({'server_box_action': action.name, 'message': message});
 }

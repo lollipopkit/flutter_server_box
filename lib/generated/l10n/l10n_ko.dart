@@ -160,6 +160,10 @@ class AppLocalizationsKo extends AppLocalizations {
       'Earlier messages were summarised to keep the conversation going.';
 
   @override
+  String get askAiOneToolCallPerTurn =>
+      'Only one tool call is reviewed per turn. The rest were not run.';
+
+  @override
   String get askAiRiskReadOnly => '읽기 전용';
 
   @override

@@ -496,6 +496,18 @@ String buildGlobalAgentInstructions({
       'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',
     )
     ..writeln(
+      'One tool call per turn. The app reviews them one at a time and answers the rest without running them, so a turn with several in it costs a round trip and runs only the first.',
+    )
+    ..writeln(
+      'A server already listed as connected needs no connect action; call the shell or file tool directly.',
+    )
+    // A failed command reached the user as "I need you to tell me which file",
+    // over a machine the model could have listed in one more call. Said here
+    // because the model has the result in front of it and the user does not.
+    ..writeln(
+      'When a command fails, read its output and try a different way yourself before asking the user. Many servers are BusyBox or another minimal userland, so a GNU-only option is worth retrying as its POSIX equivalent. Ask only for what the machine cannot tell you.',
+    )
+    ..writeln(
       'Keep explanations concise and make the target and risks explicit.',
     );
 
@@ -693,13 +705,22 @@ sealed class AgentSshTarget {
     final sessionId = proposal.sessionId;
     if (serverId != null && sessionId != null) {
       throw const FormatException(
-        'Name either server_id or session_id, not both',
+        'Name either server_id or session_id, not both. Drop the one that is '
+        'not the machine you mean and call this again.',
       );
     }
     if (sessionId != null) return AdHocSessionTarget(sessionId);
     if (serverId == LocalExec.deviceId) return const LocalTarget();
     if (serverId != null) return ConfiguredServerTarget(serverId);
-    throw const FormatException('server_id or session_id is required');
+    // Says what to do about it, because this is read by the model as the
+    // tool's output and it is the whole of what it gets to work from. An
+    // omitted argument and an empty one arrive here the same way, so neither
+    // is worth naming separately.
+    throw const FormatException(
+      'Name the machine this is for: server_id for a server in the list, or '
+      'session_id for a connection opened with ssh_connect. Exactly one of '
+      'the two, and not an empty string.',
+    );
   }
 }
 

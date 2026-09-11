@@ -157,6 +157,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiConversationCompacted => '较早的消息已压缩为摘要，以便对话继续。';
 
   @override
+  String get askAiOneToolCallPerTurn => '每轮只处理一个工具调用，其余未执行。';
+
+  @override
   String get askAiRiskReadOnly => '只读';
 
   @override
@@ -2197,6 +2200,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiConversationCompacted => '較早的訊息已壓縮為摘要，以便對話繼續。';
+
+  @override
+  String get askAiOneToolCallPerTurn => '每輪只處理一個工具呼叫，其餘未執行。';
 
   @override
   String get askAiRiskReadOnly => '唯讀';

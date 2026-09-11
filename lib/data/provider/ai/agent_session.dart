@@ -35,6 +35,13 @@ enum AgentNoticeKind {
   /// The turns above this were summarised, and the model is now sent the
   /// summary instead of them. They are still on the page.
   compacted,
+
+  /// A second, third or fourth tool call arrived in one turn and was not run.
+  ///
+  /// Shown rather than dropped quietly: the model proposed something, the app
+  /// decided not to do it, and a card that never appears is indistinguishable
+  /// from a model that never asked.
+  skipped,
 }
 
 @immutable
@@ -365,6 +372,28 @@ class AgentSession extends _$AgentSession {
     final command = event.commands.isEmpty
         ? state.pendingTool
         : event.commands.first;
+
+    // Everything after the first, answered now.
+    //
+    // `parallel_tool_calls: false` asks for one call a turn and most providers
+    // honour it, but the app reviews one at a time whatever arrives — so the
+    // rest are not run. They still reach the history as part of the assistant
+    // message's `tool_calls`, and a call there with no `tool` message
+    // answering it makes the *next* request invalid: the API rejects the whole
+    // conversation, which is the "results come back a turn late, or not at
+    // all" in #1463. Answering them here keeps the turn well formed and tells
+    // the model plainly that these did not happen.
+    final skipped = event.commands.skip(1).toList(growable: false);
+    final skippedOutputs = [
+      for (final call in skipped)
+        AskAiFunctionOutputItem(
+          callId: call.id,
+          output: encodeAgentConversationToolAction(
+            AgentConversationToolAction.skipped,
+          ),
+        ),
+    ];
+
     state = state.copyWith(
       turnCompleted: true,
       isStreaming: false,
@@ -373,10 +402,13 @@ class AgentSession extends _$AgentSession {
       pendingToolRestored: false,
       protocol: event.protocol,
       promptTokens: event.promptTokens,
-      history: [...state.history, ...event.outputItems],
-      timeline: text.trim().isNotEmpty
-          ? [...state.timeline, AgentAssistantEntry(text)]
-          : null,
+      history: [...state.history, ...event.outputItems, ...skippedOutputs],
+      timeline: [
+        ...state.timeline,
+        if (text.trim().isNotEmpty) AgentAssistantEntry(text),
+        for (var i = 0; i < skipped.length; i++)
+          const AgentNoticeEntry(AgentNoticeKind.skipped),
+      ],
       error: text.trim().isEmpty && command == null
           ? const AgentNoResponse()
           : null,
@@ -874,6 +906,8 @@ final globalAgentSessionProvider = agentSessionProvider(
             entries.add(const AgentNoticeEntry(AgentNoticeKind.declined));
           case AgentConversationToolAction.inserted:
             entries.add(const AgentNoticeEntry(AgentNoticeKind.inserted));
+          case AgentConversationToolAction.skipped:
+            entries.add(const AgentNoticeEntry(AgentNoticeKind.skipped));
           case null:
             if (output.trim().isNotEmpty) {
               entries.add(AgentRawNoticeEntry(output));

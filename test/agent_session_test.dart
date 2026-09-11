@@ -171,6 +171,25 @@ void main() {
       );
     });
 
+    test('a call the app skipped replays as a notice, not as a result', () {
+      final replay = replayAgentTimeline([
+        const AskAiFunctionCallItem(command: pendingCommand),
+        AskAiFunctionOutputItem(
+          callId: pendingCommand.id,
+          output: encodeAgentConversationToolAction(
+            AgentConversationToolAction.skipped,
+          ),
+        ),
+      ]);
+
+      expect(
+        (replay.entries.single as AgentNoticeEntry).kind,
+        AgentNoticeKind.skipped,
+      );
+      // Answered, so it is not still waiting for review when the page reopens.
+      expect(replay.pending, isNull);
+    });
+
     test('an empty conversation replays to nothing pending', () {
       final replay = replayAgentTimeline(const []);
       expect(replay.entries, isEmpty);
@@ -285,6 +304,55 @@ void main() {
       await tempDir.delete(recursive: true);
     });
 
+    test('every call of a parallel turn is answered, run or not', () async {
+      // `parallel_tool_calls: false` asks for one, and a provider that ignores
+      // it used to leave the extra calls unanswered — which invalidates the
+      // next request rather than this one, so it surfaced as results arriving
+      // a turn late or not at all (#1463).
+      const first = AskAiCommand(
+        id: 'call-a',
+        command: 'uptime',
+        toolName: 'run_shell_command',
+      );
+      const second = AskAiCommand(
+        id: 'call-b',
+        command: 'free -m',
+        toolName: 'run_shell_command',
+      );
+      final repository = _ParallelToolCallRepository(const [first, second]);
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      // This turn leaves a call awaiting review, and the next test's session
+      // would restore it out of the store and refuse to submit anything.
+      addTearDown(() => conversationStore.clearServer(globalAgentConversationScope));
+      final notifier = container.read(globalAgentSessionProvider.notifier);
+
+      await notifier.submitPrompt('check the server');
+      // The stream is synchronous; the turn is handled in microtasks.
+      await Future<void>.delayed(Duration.zero);
+
+      final state = container.read(globalAgentSessionProvider);
+      // One is reviewed, and it is the first.
+      expect(state.pendingTool?.id, first.id);
+
+      final answered = {
+        for (final item in state.history.whereType<AskAiFunctionOutputItem>())
+          item.callId: item.output,
+      };
+      expect(answered.keys, [second.id]);
+      expect(
+        decodeAgentConversationToolAction(answered[second.id]!),
+        AgentConversationToolAction.skipped,
+      );
+      // And the user is told, rather than the second call vanishing.
+      expect(
+        state.timeline.whereType<AgentNoticeEntry>().map((e) => e.kind),
+        [AgentNoticeKind.skipped],
+      );
+    });
+
     test('rapid double submission persists and streams only once', () async {
       final repository = _CountingAskAiRepository();
       final container = ProviderContainer(
@@ -309,6 +377,40 @@ void main() {
       );
     });
   });
+}
+
+/// A provider that ignores `parallel_tool_calls: false`.
+class _ParallelToolCallRepository extends AskAiRepository {
+  _ParallelToolCallRepository(this.commands);
+
+  final List<AskAiCommand> commands;
+
+  @override
+  Stream<AskAiEvent> ask({
+    required String terminalContext,
+    required String serverName,
+    String? localeHint,
+    List<AskAiConversationItem> conversation = const [],
+    AskAiProtocol? protocol,
+    String? customInstructions,
+    List<AskAiToolDefinition> tools = const [
+      AskAiToolDefinition.runShellCommand,
+    ],
+  }) {
+    return Stream.fromIterable([
+      for (final command in commands) AskAiToolSuggestion(command),
+      AskAiCompleted(
+        fullText: '',
+        commands: commands,
+        // What the codecs build: one assistant message carrying every call.
+        outputItems: [
+          const AskAiMessageItem.assistant(''),
+          for (final command in commands) AskAiFunctionCallItem(command: command),
+        ],
+        protocol: AskAiProtocol.chatCompletions,
+      ),
+    ]);
+  }
 }
 
 class _CountingAskAiRepository extends AskAiRepository {

@@ -46,6 +46,7 @@
   "askAiContextTokens": "Context size",
   "askAiContextTokensTip": "How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.",
   "askAiConversationCompacted": "Earlier messages were summarised to keep the conversation going.",
+  "askAiOneToolCallPerTurn": "Only one tool call is reviewed per turn. The rest were not run.",
   "askAiRiskReadOnly": "Read-only",
   "askAiRiskCaution": "Changes system",
   "askAiRiskUnvetted": "Unvetted host",

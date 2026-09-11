@@ -62,6 +62,7 @@ String agentNoticeText(BuildContext context, AgentNoticeKind kind) =>
       AgentNoticeKind.interrupted => context.l10n.askAiInterrupted,
       AgentNoticeKind.inserted => context.l10n.askAiCommandInserted,
       AgentNoticeKind.compacted => context.l10n.askAiConversationCompacted,
+      AgentNoticeKind.skipped => context.l10n.askAiOneToolCallPerTurn,
     };
 
 /// Copies [text], and says so.
