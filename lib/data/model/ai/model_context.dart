@@ -74,6 +74,14 @@ abstract final class ModelContextTable {
   /// across those rebuilds.
   static final refreshing = ValueNotifier(false);
 
+  /// How far along that fetch is, or null while there is no measure of it.
+  ///
+  /// Null for most of the run, and that is not a gap to be filled: models.dev
+  /// answers chunked, so there is no length to divide by, and the parse that
+  /// follows the download has no progress at all. The bar says "still going"
+  /// in those stretches rather than inventing a number.
+  static final progress = ValueNotifier<double?>(null);
+
   /// When the table in use was generated, or null before it is loaded.
   ///
   /// The shipped date for the asset, the download's date after a refresh —
@@ -127,11 +135,13 @@ abstract final class ModelContextTable {
     return _inFlight ??= _refresh(dio).whenComplete(() {
       _inFlight = null;
       refreshing.value = false;
+      progress.value = null;
     });
   }
 
   static Future<int> _refresh(Dio? dio) async {
     refreshing.value = true;
+    progress.value = null;
     final client = dio ?? Dio();
     final response = await client.get<String>(
       sourceUrl,
@@ -142,12 +152,18 @@ abstract final class ModelContextTable {
         connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(minutes: 2),
       ),
+      onReceiveProgress: (received, total) {
+        // `total` is -1 when the response is chunked, which this one is.
+        progress.value = total > 0 ? received / total : null;
+      },
     );
     final body = response.data;
     if (body == null || body.isEmpty) {
       throw const FormatException('models.dev returned nothing');
     }
 
+    // Back to unmeasured for the parse, which has no progress to report.
+    progress.value = null;
     // On another isolate: 4.5 MB of JSON is tens of milliseconds of parsing
     // and this is a button on a page that is still drawing. `compute` copies
     // the string across, which is cheaper than the frames it would otherwise

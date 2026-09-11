@@ -61,6 +61,7 @@ import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/progress_line.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'about.dart';

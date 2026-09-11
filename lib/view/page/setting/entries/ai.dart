@@ -230,30 +230,45 @@ extension _AI on _AppSettingsPageState {
     // false mid-fetch — the spinner vanished and the button went live again.
     return ModelContextTable.refreshing.listenVal((refreshing) {
       final generated = ModelContextTable.generated;
-        return ListTile(
-          leading: const Icon(Icons.dataset_outlined, size: _kIconSize),
-          title: TipText(l10n.askAiModelTable, l10n.askAiModelTableTip),
-          subtitle: Text(
-            generated == null
-                ? libL10n.empty
-                : '${ModelContextTable.modelCount} · $generated',
-            style: UIs.textGrey,
-          ),
-          trailing: refreshing
-              ? SizedLoading.small
-              : const Icon(Icons.refresh),
-          onTap: refreshing
-              ? null
-              : () async {
-                  try {
-                    final count = await ModelContextTable.refresh();
-                    Toast.success('${l10n.askAiModelTable}: $count');
-                  } catch (error) {
-                    // Reported, not swallowed: the user pressed a button and
-                    // is owed an answer. The old table is still in use.
-                    Toast.error('$error');
-                  }
-                },
+      return ListTile(
+        leading: const Icon(Icons.dataset_outlined, size: _kIconSize),
+        title: TipText(l10n.askAiModelTable, l10n.askAiModelTableTip),
+        // The bar goes under the line that says what the table is, inside the
+        // row rather than across the page: it is this row that is working, and
+        // a page-wide bar would not say which.
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              generated == null
+                  ? libL10n.empty
+                  : '${ModelContextTable.modelCount} · $generated',
+              style: UIs.textGrey,
+            ),
+            if (refreshing) ...[
+              const SizedBox(height: 7),
+              ModelContextTable.progress.listenVal(
+                (value) => ProgressLine(value: value),
+              ),
+            ],
+          ],
+        ),
+        trailing: refreshing
+            ? SizedLoading.small
+            : const Icon(Icons.refresh),
+        onTap: refreshing
+            ? null
+            : () async {
+                try {
+                  final count = await ModelContextTable.refresh();
+                  Toast.success('${l10n.askAiModelTable}: $count');
+                } catch (error) {
+                  // Reported, not swallowed: the user pressed a button and is
+                  // owed an answer. The old table is still in use.
+                  Toast.error('$error');
+                }
+              },
       );
     });
   }
