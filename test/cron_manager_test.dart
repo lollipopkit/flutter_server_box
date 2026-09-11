@@ -118,6 +118,36 @@ MAILTO=ops@example.com
     expect(exec.stdins.last, '0 * * * * /usr/local/bin/hourly\n');
   });
 
+  test('treats the expected no-crontab stderr as an empty document', () async {
+    final exec = _QueueExec([
+      const ExecResult(
+        exitCode: 1,
+        stdout: 'SrvBoxCron.User\tadmin\nSrvBoxCron.Body\n',
+        stderr: 'no crontab for admin\n',
+      ),
+    ]);
+
+    final catalog = await CronManager.list(exec);
+
+    expect(catalog.user, 'admin');
+    expect(catalog.document.lines, isEmpty);
+  });
+
+  test('does not include successful crontab warnings in the document', () async {
+    final exec = _QueueExec([
+      const ExecResult(
+        exitCode: 0,
+        stdout: 'SrvBoxCron.User\tadmin\nSrvBoxCron.Body\n0 * * * * echo ok\n',
+        stderr: 'warning: legacy syntax\n',
+      ),
+    ]);
+
+    final catalog = await CronManager.list(exec);
+
+    expect(catalog.document.jobs, hasLength(1));
+    expect(catalog.document.render(), '0 * * * * echo ok\n');
+  });
+
   test('reports a missing crontab implementation', () async {
     final exec = _QueueExec([
       const ExecResult(

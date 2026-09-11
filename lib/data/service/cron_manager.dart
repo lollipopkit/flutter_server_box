@@ -25,22 +25,16 @@ command -v crontab >/dev/null 2>&1 || {
 printf 'SrvBoxCron.User\t'
 id -un || exit $?
 printf 'SrvBoxCron.Body\n'
-cron_output=$(crontab -l 2>&1)
-cron_status=$?
-if [ "$cron_status" -eq 0 ]; then
-  if [ -n "$cron_output" ]; then printf '%s\n' "$cron_output"; fi
-elif [ "$cron_status" -eq 1 ] && printf '%s' "$cron_output" | grep -qi '^no crontab for '; then
-  :
-else
-  printf '%s\n' "$cron_output" >&2
-  exit "$cron_status"
-fi
+crontab -l
 ''';
 
   static Future<CronCatalog> list(ServerExec exec) async {
     final result = await exec.run(listScript);
-    if (!result.succeeded) {
-      final detail = result.combined.trim();
+    final error = result.stderr.trim();
+    final hasNoCrontab = result.exitCode == 1 &&
+        error.toLowerCase().startsWith('no crontab for ');
+    if (!result.succeeded && !hasNoCrontab) {
+      final detail = error.isEmpty ? result.stdout.trim() : error;
       throw CronManagerException(
         detail.isEmpty ? 'Unable to list scheduled tasks' : detail,
         unavailable: result.exitCode == 127,
