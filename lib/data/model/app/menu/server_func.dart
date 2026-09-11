@@ -19,7 +19,9 @@ enum ServerFuncBtn {
   iperf(),
   systemd(1051),
   portForward(1340),
-  power(1491);
+  power(1491),
+  users(1579),
+  scheduledTasks(1579);
 
   /// The last released build that did not contain this entry.
   ///
@@ -72,6 +74,8 @@ enum ServerFuncBtn {
     systemd,
     portForward,
     power,
+    users,
+    scheduledTasks,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
@@ -85,6 +89,8 @@ enum ServerFuncBtn {
     systemd => MingCute.plugin_2_fill,
     portForward => Icons.compare_arrows,
     power => Icons.power_settings_new,
+    users => Icons.manage_accounts_outlined,
+    scheduledTasks => Icons.schedule,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -96,7 +102,8 @@ enum ServerFuncBtn {
     // All three end in the terminal — snippets and iperf hand it a command to
     // start with, and nothing else.
     terminal || snippet || iperf => caps.terminal,
-    container || process || systemd || power => caps.shell,
+    container || process || systemd || power || users || scheduledTasks =>
+      caps.shell,
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
@@ -116,5 +123,7 @@ enum ServerFuncBtn {
     systemd => l10n.services,
     portForward => libL10n.portForward,
     power => l10n.power,
+    users => l10n.systemUsers,
+    scheduledTasks => l10n.scheduledTasks,
   };
 }

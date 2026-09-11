@@ -2139,4 +2139,74 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get schemaTooNewWipeFailed =>
       'Не удалось удалить часть данных, и эта версия по-прежнему не может открыть оставшиеся данные. Переустановите более новую версию, чтобы получить к ним доступ.';
+
+  @override
+  String get systemUsers => 'Users';
+
+  @override
+  String get userManagerLinuxOnly =>
+      'System user management currently supports Linux servers.';
+
+  @override
+  String get userRegularAccount => 'Regular';
+
+  @override
+  String get userCurrentAccount => 'Current account';
+
+  @override
+  String get userSystemAccount => 'System account';
+
+  @override
+  String get userUid => 'UID';
+
+  @override
+  String get userComment => 'Comment';
+
+  @override
+  String get userPrimaryGroup => 'Primary group';
+
+  @override
+  String get userSupplementaryGroups => 'Supplementary groups';
+
+  @override
+  String get userLoginShell => 'Login shell';
+
+  @override
+  String get userCreateHome => 'Create home directory';
+
+  @override
+  String get userMoveHome =>
+      'Move the existing home directory when the path changes';
+
+  @override
+  String get userRemoveHome => 'Remove the home directory';
+
+  @override
+  String get userPasswordCreateTip =>
+      'Leave the password empty to create a password-locked account.';
+
+  @override
+  String get userPasswordEditTip =>
+      'Leave the password empty to keep the existing password.';
+
+  @override
+  String get scheduledTasks => 'Scheduled tasks';
+
+  @override
+  String get scheduledTaskLinuxOnly =>
+      'Scheduled task management currently supports Linux servers.';
+
+  @override
+  String get scheduledTaskUnavailable =>
+      'crontab is not available on this server.';
+
+  @override
+  String get scheduledTaskPreserveTip =>
+      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+
+  @override
+  String get scheduledTaskSchedule => 'Schedule';
+
+  @override
+  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
 }

@@ -3699,6 +3699,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.'**
   String get schemaTooNewWipeFailed;
+
+  /// No description provided for @systemUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Users'**
+  String get systemUsers;
+
+  /// No description provided for @userManagerLinuxOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'System user management currently supports Linux servers.'**
+  String get userManagerLinuxOnly;
+
+  /// No description provided for @userRegularAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular'**
+  String get userRegularAccount;
+
+  /// No description provided for @userCurrentAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Current account'**
+  String get userCurrentAccount;
+
+  /// No description provided for @userSystemAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'System account'**
+  String get userSystemAccount;
+
+  /// No description provided for @userUid.
+  ///
+  /// In en, this message translates to:
+  /// **'UID'**
+  String get userUid;
+
+  /// No description provided for @userComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get userComment;
+
+  /// No description provided for @userPrimaryGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary group'**
+  String get userPrimaryGroup;
+
+  /// No description provided for @userSupplementaryGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplementary groups'**
+  String get userSupplementaryGroups;
+
+  /// No description provided for @userLoginShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Login shell'**
+  String get userLoginShell;
+
+  /// No description provided for @userCreateHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Create home directory'**
+  String get userCreateHome;
+
+  /// No description provided for @userMoveHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the existing home directory when the path changes'**
+  String get userMoveHome;
+
+  /// No description provided for @userRemoveHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the home directory'**
+  String get userRemoveHome;
+
+  /// No description provided for @userPasswordCreateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the password empty to create a password-locked account.'**
+  String get userPasswordCreateTip;
+
+  /// No description provided for @userPasswordEditTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave the password empty to keep the existing password.'**
+  String get userPasswordEditTip;
+
+  /// No description provided for @scheduledTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled tasks'**
+  String get scheduledTasks;
+
+  /// No description provided for @scheduledTaskLinuxOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled task management currently supports Linux servers.'**
+  String get scheduledTaskLinuxOnly;
+
+  /// No description provided for @scheduledTaskUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'crontab is not available on this server.'**
+  String get scheduledTaskUnavailable;
+
+  /// No description provided for @scheduledTaskPreserveTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments, environment variables, and unrecognized lines in this crontab are preserved.'**
+  String get scheduledTaskPreserveTip;
+
+  /// No description provided for @scheduledTaskSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get scheduledTaskSchedule;
+
+  /// No description provided for @scheduledTaskScheduleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For example: 0 2 * * * or @reboot'**
+  String get scheduledTaskScheduleHint;
 }
 
 class _AppLocalizationsDelegate
