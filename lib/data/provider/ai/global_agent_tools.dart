@@ -176,6 +176,7 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
         'command',
         'description',
         'safe_to_run',
+        'destructive',
       ],
       'properties': {
         'server_id': {
@@ -202,6 +203,16 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
           'type': 'boolean',
           'description':
               'True only for clearly read-only, idempotent, non-destructive commands.',
+        },
+        'destructive': {
+          'type': 'boolean',
+          'description':
+              'True when running this could lose data or take a service down: '
+              'deleting, overwriting, formatting, killing, rebooting, or '
+              'anything else that cannot simply be undone. The app has its own '
+              'list of such commands and asks when either of you says so, so '
+              'say so for what a list cannot see — a path that matters, a '
+              'script whose name says nothing about what it does.',
         },
       },
     },
@@ -465,6 +476,9 @@ String buildGlobalAgentInstructions({
     )
     ..writeln(
       'Set safe_to_run=true only for read-only, idempotent actions. It must be false for writes and connection changes.',
+    )
+    ..writeln(
+      'Set destructive=true on run_shell_command when it could lose data or take a service down. The app keeps its own list of dangerous commands and asks the user whenever either of you says so, so use it for what a list cannot see — a path that matters, a script whose name says nothing about what it does — rather than repeating what it would already catch.',
     )
     ..writeln(
       'If a server is disconnected, use the serverbox connect action before shell or file tools.',

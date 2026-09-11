@@ -195,6 +195,44 @@ void main() {
       expect(localDidNotApprove.canAutoRun, isFalse);
     });
 
+    test('either reader calling a command destructive is enough', () {
+      // The local list sees a shape. This one has none it knows, and on most
+      // machines `truncate` on a log is housekeeping — which is the case the
+      // list cannot tell apart from the one the model has been reading for
+      // several turns.
+      const modelOnly = AskAiCommand(
+        command: 'truncate -s 0 /var/lib/app/ledger.db',
+        rawArguments:
+            '{"command":"truncate -s 0 /var/lib/app/ledger.db","description":"Empty the ledger","safe_to_run":false,"destructive":true}',
+        modelDestructive: true,
+      );
+      expect(modelOnly.risk, AskAiCommandRisk.destructive);
+
+      // And the list still answers for a model that said nothing — an older
+      // conversation, or one whose model ignored the field.
+      const localOnly = AskAiCommand(command: 'sudo rm -rf /var/lib/example');
+      expect(localOnly.risk, AskAiCommandRisk.destructive);
+    });
+
+    test('a model that only withholds safe_to_run is not calling it dangerous', () {
+      // Everything that writes anything sets `safe_to_run` false. Reading that
+      // as "dangerous" would put the confirmation in front of `mkdir` and
+      // teach people to tap through it.
+      const ordinary = AskAiCommand(command: 'systemctl restart nginx');
+      expect(ordinary.modelSafeToRun, isFalse);
+      expect(ordinary.risk, AskAiCommandRisk.caution);
+      expect(ordinary.canAutoRun, isFalse);
+    });
+
+    test('the model cannot talk the app out of what the list caught', () {
+      const insistent = AskAiCommand(
+        command: 'sudo rm -rf /var/lib/example',
+        modelSafeToRun: true,
+      );
+      expect(insistent.risk, AskAiCommandRisk.destructive);
+      expect(insistent.canAutoRun, isFalse);
+    });
+
     test('classifies global Agent tools locally', () {
       const readFile = AskAiCommand(
         command: '/etc/os-release',

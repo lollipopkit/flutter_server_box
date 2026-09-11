@@ -530,6 +530,9 @@ class AskAiRepository {
       ..writeln(
         'Set safe_to_run=true only for commands that are clearly read-only, idempotent, and non-destructive.',
       )
+      ..writeln(
+        'Set destructive=true when the command could lose data or take a service down. The app keeps its own list of dangerous commands and asks the user whenever either of you says so, so use it for what a list cannot see rather than repeating what it would already catch.',
+      )
       ..writeln('Keep explanations concise and make risks explicit.');
 
     if (localeHint != null && localeHint.isNotEmpty) {
@@ -891,6 +894,9 @@ AskAiCommand? _parseCommand({
       toolName: toolName,
       rawArguments: rawArguments,
       modelSafeToRun: decoded['safe_to_run'] as bool? ?? false,
+      // False when the model left it out, which a model that has not been
+      // told about the field always does. The local list still answers.
+      modelDestructive: decoded['destructive'] as bool? ?? false,
     );
   } on FormatException {
     return null;
