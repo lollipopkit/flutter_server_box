@@ -139,6 +139,17 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiInterrupted => 'La respuesta del Agente se interrumpió.';
 
   @override
+  String get askAiResend => 'Resend';
+
+  @override
+  String get askAiResendTip =>
+      'Everything after this message is discarded — the replies, the commands and their results.';
+
+  @override
+  String get askAiDeleteTip =>
+      'This message and everything after it are removed — the replies, the commands and their results.';
+
+  @override
   String get askAiModelTable => 'Model table';
 
   @override

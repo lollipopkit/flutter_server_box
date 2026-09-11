@@ -107,7 +107,8 @@ class AgentSessionState {
     this.history = const [],
     this.conversations = const [],
     this.conversation,
-    this.pendingTool,
+    this.pendingTools = const [],
+    this.pendingIndex = 0,
     this.pendingToolRestored = false,
     this.streamingContent,
     this.error,
@@ -128,7 +129,26 @@ class AgentSessionState {
   final List<AgentConversation> conversations;
 
   final AgentConversation? conversation;
-  final AskAiCommand? pendingTool;
+
+  /// Every call this turn produced that has not been answered yet, in the
+  /// order the model made them.
+  ///
+  /// A list because a turn can carry several: `parallel_tool_calls: false`
+  /// asks for one and most providers honour it, but the ones that do not used
+  /// to have everything past the first thrown away. They are reviewed one at a
+  /// time — approving one moves to the next, declining answers all of them —
+  /// and the model hears back only once every call has an answer.
+  final List<AskAiCommand> pendingTools;
+
+  /// Which of [pendingTools] is on screen. Answered calls leave the list, so
+  /// an index that stays put is already looking at the next one.
+  final int pendingIndex;
+
+  /// The call being reviewed, or null when there is nothing to review.
+  AskAiCommand? get pendingTool =>
+      pendingIndex >= 0 && pendingIndex < pendingTools.length
+      ? pendingTools[pendingIndex]
+      : null;
 
   /// The pending tool came back from storage rather than from this turn, so it
   /// has never been reviewed and must not auto-run.
@@ -164,7 +184,8 @@ class AgentSessionState {
     List<AskAiConversationItem>? history,
     List<AgentConversation>? conversations,
     Object? conversation = _unset,
-    Object? pendingTool = _unset,
+    List<AskAiCommand>? pendingTools,
+    int? pendingIndex,
     bool? pendingToolRestored,
     Object? streamingContent = _unset,
     Object? error = _unset,
@@ -182,9 +203,8 @@ class AgentSessionState {
       conversation: identical(conversation, _unset)
           ? this.conversation
           : conversation as AgentConversation?,
-      pendingTool: identical(pendingTool, _unset)
-          ? this.pendingTool
-          : pendingTool as AskAiCommand?,
+      pendingTools: pendingTools ?? this.pendingTools,
+      pendingIndex: pendingIndex ?? this.pendingIndex,
       pendingToolRestored: pendingToolRestored ?? this.pendingToolRestored,
       streamingContent: identical(streamingContent, _unset)
           ? this.streamingContent
@@ -320,7 +340,8 @@ class AgentSession extends _$AgentSession {
               error: error,
               isStreaming: false,
               streamingContent: null,
-              pendingTool: null,
+              pendingTools: const [],
+              pendingIndex: 0,
             );
           },
           onDone: () {
@@ -338,12 +359,15 @@ class AgentSession extends _$AgentSession {
       return;
     }
     if (event is AskAiToolSuggestion) {
-      if (state.pendingTool == null) {
-        state = state.copyWith(
-          pendingTool: event.command,
-          pendingToolRestored: false,
-        );
-      }
+      // Queued, not replaced. A turn that carries several arrives as several
+      // of these, and taking only the first is what used to throw the rest
+      // away — leaving their ids in the assistant message with nothing
+      // answering them, which invalidates the *next* request (#1463).
+      if (state.pendingTools.any((call) => call.id == event.command.id)) return;
+      state = state.copyWith(
+        pendingTools: [...state.pendingTools, event.command],
+        pendingToolRestored: false,
+      );
       return;
     }
     if (event is AskAiStreamError) {
@@ -353,7 +377,8 @@ class AgentSession extends _$AgentSession {
         error: event.error,
         isStreaming: false,
         streamingContent: null,
-        pendingTool: null,
+        pendingTools: const [],
+        pendingIndex: 0,
       );
       return;
     }
@@ -362,14 +387,21 @@ class AgentSession extends _$AgentSession {
     final text = event.fullText.trim().isNotEmpty
         ? event.fullText
         : (state.streamingContent ?? '');
-    final command = event.commands.isEmpty
-        ? state.pendingTool
-        : event.commands.first;
+    // All of them, in the order the model made them. A turn that carries
+    // several is reviewed one at a time and answered in full — the ids in the
+    // assistant message and the `tool` messages have to match, or the *next*
+    // request is the one the API rejects (#1463).
+    final pending = event.commands.isEmpty
+        ? state.pendingTools
+        : List<AskAiCommand>.unmodifiable(event.commands);
+    final command = pending.isEmpty ? null : pending.first;
+
     state = state.copyWith(
       turnCompleted: true,
       isStreaming: false,
       streamingContent: null,
-      pendingTool: command,
+      pendingTools: pending,
+      pendingIndex: 0,
       pendingToolRestored: false,
       protocol: event.protocol,
       promptTokens: event.promptTokens,
@@ -448,6 +480,10 @@ class AgentSession extends _$AgentSession {
       run.cancelled ? 'tool cancelled' : 'tool done',
       data: {'tool': proposal.toolName},
     );
+    final remaining = [
+      for (final call in state.pendingTools)
+        if (call.id != proposal.id) call,
+    ];
     state = state.copyWith(
       history: [
         ...state.history,
@@ -471,12 +507,47 @@ class AgentSession extends _$AgentSession {
           ),
         },
       ],
-      pendingTool: null,
+      pendingTools: remaining,
+      // The list closed up under it, so the same index is already the next
+      // call — which is what "approve and move on" means.
+      pendingIndex: remaining.isEmpty
+          ? 0
+          : state.pendingIndex.clamp(0, remaining.length - 1),
       pendingToolRestored: false,
       isExecuting: false,
     );
     await _persist();
-    if (!run.cancelled) startStream();
+    if (run.cancelled) return;
+    // Back to the model only once every call in the turn has an answer.
+    // Handing it a turn with one outstanding is the invalid request this
+    // exists to prevent.
+    if (remaining.isEmpty) {
+      startStream();
+      return;
+    }
+    _autoRunNextIfAllowed();
+  }
+
+  /// Carries an auto-run through the rest of a batch.
+  ///
+  /// Deferred for the same reason the first one is: this can be reached from
+  /// inside the stream listener, and starting a run there re-enters it.
+  void _autoRunNextIfAllowed() {
+    final next = state.pendingTool;
+    if (next == null) return;
+    if (!shouldAutoRunAgentCommand(
+      command: next,
+      enabled: Stores.setting.askAiAutoRunSafeCommands.fetch(),
+      restored: state.pendingToolRestored,
+      runCount: state.autoRunCount,
+    )) {
+      return;
+    }
+    scheduleMicrotask(() {
+      if (identical(state.pendingTool, next)) {
+        unawaited(runPendingTool(autoApproved: true));
+      }
+    });
   }
 
   /// Replaces the turns that no longer fit in a request with a summary of
@@ -549,28 +620,133 @@ class AgentSession extends _$AgentSession {
     }
   }
 
+  /// Declines the whole batch, not the one on screen.
+  ///
+  /// Declining is an answer to "should the Agent do this", and the batch is
+  /// one proposal made in several parts. Answering only the call in front of
+  /// the user would leave the rest waiting with nothing to say what happened
+  /// to the others, and would hand the model a turn it cannot act on. One
+  /// notice for the same reason: the user said no once.
   Future<void> declinePendingTool() async {
+    final pending = state.pendingTools;
     final proposal = state.pendingTool;
     if (proposal == null || !await _preparePendingTool(proposal)) return;
     state = state.copyWith(
       history: [
         ...state.history,
-        AskAiFunctionOutputItem(
-          callId: proposal.id,
-          output: encodeAgentConversationToolAction(
-            AgentConversationToolAction.declined,
+        for (final call in pending)
+          AskAiFunctionOutputItem(
+            callId: call.id,
+            output: encodeAgentConversationToolAction(
+              AgentConversationToolAction.declined,
+            ),
           ),
-        ),
       ],
       timeline: [
         ...state.timeline,
         const AgentNoticeEntry(AgentNoticeKind.declined),
       ],
-      pendingTool: null,
+      pendingTools: const [],
+      pendingIndex: 0,
       pendingToolRestored: false,
     );
     await _persist();
     startStream();
+  }
+
+  /// Asks again from an earlier message, with whatever the user typed.
+  ///
+  /// [ordinal] is which of the user's own messages to go back to, counted from
+  /// the start — the same count in the timeline and in the history, since both
+  /// only ever grow at the end.
+  ///
+  /// Everything after it is discarded: the replies, the calls and their
+  /// results. It has to be. What follows a message is an answer *to* that
+  /// message, and keeping it beside a different question would be a
+  /// conversation that never happened. The dialog says so before this runs.
+  ///
+  /// False when there is nothing to go back to or a turn is already running.
+  Future<bool> resendFrom(int ordinal, String text) async {
+    if (state.isWorking) return false;
+    final prompt = text.trim();
+    if (prompt.isEmpty) return false;
+
+    final historyCut = _nthUserMessage(state.history, ordinal);
+    if (historyCut < 0) return false;
+    final timelineCut = _nthUserEntry(state.timeline, ordinal);
+
+    state = state.copyWith(
+      history: state.history.sublist(0, historyCut),
+      timeline: timelineCut < 0
+          ? state.timeline
+          : state.timeline.sublist(0, timelineCut),
+      // The batch belonged to the turn that is being replaced. Leaving it
+      // would put calls on screen that answer a question no longer asked.
+      pendingTools: const [],
+      pendingIndex: 0,
+      pendingToolRestored: false,
+      streamingContent: null,
+      error: null,
+    );
+    await _persist();
+    return submitPrompt(prompt);
+  }
+
+  /// Drops a message and everything that answered it, without asking again.
+  ///
+  /// The same cut [resendFrom] makes, and for the same reason — a reply cannot
+  /// outlive the question — with no new turn at the end. Removing a message
+  /// and keeping what it produced would leave the model reading answers to a
+  /// question it can no longer see.
+  Future<bool> deleteFrom(int ordinal) async {
+    if (state.isWorking) return false;
+    final historyCut = _nthUserMessage(state.history, ordinal);
+    if (historyCut < 0) return false;
+    final timelineCut = _nthUserEntry(state.timeline, ordinal);
+
+    state = state.copyWith(
+      history: state.history.sublist(0, historyCut),
+      timeline: timelineCut < 0
+          ? state.timeline
+          : state.timeline.sublist(0, timelineCut),
+      pendingTools: const [],
+      pendingIndex: 0,
+      pendingToolRestored: false,
+      streamingContent: null,
+      error: null,
+    );
+    await _persist();
+    return true;
+  }
+
+  static int _nthUserMessage(List<AskAiConversationItem> items, int ordinal) {
+    var seen = 0;
+    for (var index = 0; index < items.length; index++) {
+      final item = items[index];
+      if (item is! AskAiMessageItem) continue;
+      if (item.role != AskAiMessageRole.user) continue;
+      if (seen == ordinal) return index;
+      seen++;
+    }
+    return -1;
+  }
+
+  static int _nthUserEntry(List<AgentTimelineEntry> entries, int ordinal) {
+    var seen = 0;
+    for (var index = 0; index < entries.length; index++) {
+      if (entries[index] is! AgentUserEntry) continue;
+      if (seen == ordinal) return index;
+      seen++;
+    }
+    return -1;
+  }
+
+  /// Shows another call of the same batch. Out-of-range is ignored rather than
+  /// clamped: a page view settling on a stale index should do nothing.
+  void showPendingTool(int index) {
+    if (index < 0 || index >= state.pendingTools.length) return;
+    if (index == state.pendingIndex) return;
+    state = state.copyWith(pendingIndex: index);
   }
 
   /// Puts the pending command on the terminal's input line instead of running
@@ -601,7 +777,17 @@ class AgentSession extends _$AgentSession {
         ...state.timeline,
         const AgentNoticeEntry(AgentNoticeKind.inserted),
       ],
-      pendingTool: null,
+      // Only this one. A terminal has one input line, and the rest of the
+      // batch is still unanswered — leaving it waiting is what lets the user
+      // put one command on the line and decide about the others.
+      pendingTools: [
+        for (final call in state.pendingTools)
+          if (call.id != proposal.id) call,
+      ],
+      pendingIndex: state.pendingIndex.clamp(
+        0,
+        state.pendingTools.length - 2 < 0 ? 0 : state.pendingTools.length - 2,
+      ),
       pendingToolRestored: false,
     );
     await _persist();
@@ -633,7 +819,11 @@ class AgentSession extends _$AgentSession {
       history: [
         ...state.history,
         if (text.isNotEmpty) AskAiMessageItem.assistant(text),
-        AskAiFunctionCallItem(command: proposal),
+        // Every call of the batch, not only the one being acted on: an id
+        // answered later with no call recorded here is an orphan the API
+        // rejects.
+        for (final call in state.pendingTools)
+          AskAiFunctionCallItem(command: call),
       ],
       timeline: text.isNotEmpty
           ? [...state.timeline, AgentAssistantEntry(text)]
@@ -656,7 +846,8 @@ class AgentSession extends _$AgentSession {
     state = state.copyWith(
       isStreaming: false,
       streamingContent: null,
-      pendingTool: null,
+      pendingTools: const [],
+      pendingIndex: 0,
       pendingToolRestored: false,
       timeline: [
         ...state.timeline,
@@ -751,8 +942,8 @@ class AgentSession extends _$AgentSession {
       conversations: _fetchConversations(),
       history: List.of(conversation?.items ?? const <AskAiConversationItem>[]),
       timeline: replay.entries,
-      pendingTool: replay.pending,
-      pendingToolRestored: replay.pending != null,
+      pendingTools: replay.pending,
+      pendingToolRestored: replay.pending.isNotEmpty,
     );
   }
 
@@ -821,7 +1012,8 @@ final globalAgentSessionProvider = agentSessionProvider(
 /// Entries carry data, never sentences. Nothing here knows what language the
 /// app is in, and a conversation reopened after the user changed it should
 /// read in the new one.
-({List<AgentTimelineEntry> entries, AskAiCommand? pending}) replayAgentTimeline(
+({List<AgentTimelineEntry> entries, List<AskAiCommand> pending})
+replayAgentTimeline(
   List<AskAiConversationItem> items,
 ) {
   final entries = <AgentTimelineEntry>[];
@@ -889,13 +1081,14 @@ final globalAgentSessionProvider = agentSessionProvider(
     }
   }
 
-  AskAiCommand? pending;
-  for (final call in callOrder.reversed) {
-    if (call.completed) continue;
-    pending = call.command;
-    break;
-  }
-  return (entries: List.unmodifiable(entries), pending: pending);
+  // Every call still waiting for an answer, in the order they were made — a
+  // turn can carry several, and reopening a conversation has to bring back all
+  // of them or the ones it forgot become orphans on the next request.
+  final pending = [
+    for (final call in callOrder)
+      if (!call.completed) call.command,
+  ];
+  return (entries: List.unmodifiable(entries), pending: List.unmodifiable(pending));
 }
 
 /// The turn ended with neither text nor a tool call.

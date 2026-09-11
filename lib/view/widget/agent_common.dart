@@ -7,6 +7,8 @@
 /// see [describeAgentError] for the one that had drifted furthest.
 library;
 
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

@@ -130,6 +130,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiInterrupted => '已中断 Agent 回复。';
 
   @override
+  String get askAiResend => '重新发送';
+
+  @override
+  String get askAiResendTip => '这条消息之后的内容会被丢弃——包括回复、命令及其结果。';
+
+  @override
+  String get askAiDeleteTip => '这条消息及其之后的内容都会被删除——包括回复、命令及其结果。';
+
+  @override
   String get askAiModelTable => '模型数据表';
 
   @override
@@ -2170,6 +2179,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiInterrupted => '已中斷 Agent 回覆。';
+
+  @override
+  String get askAiResend => '重新傳送';
+
+  @override
+  String get askAiResendTip => '這則訊息之後的內容會被捨棄——包括回覆、命令及其結果。';
+
+  @override
+  String get askAiDeleteTip => '這則訊息及其之後的內容都會被刪除——包括回覆、命令及其結果。';
 
   @override
   String get askAiModelTable => '模型資料表';

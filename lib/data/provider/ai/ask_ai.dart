@@ -693,6 +693,12 @@ class AskAiRepository {
       )
       ..writeln('Never claim a command ran until a tool result is provided.')
       ..writeln(
+        'One tool call per turn. Every call is reviewed by the user, one at a time, so a turn carrying several asks them to decide all of it before you have seen a single result.',
+      )
+      ..writeln(
+        'When a command fails, read its output and try a different way yourself before asking the user. Many servers are BusyBox or another minimal userland, so a GNU-only option is worth retrying as its POSIX equivalent.',
+      )
+      ..writeln(
         'Prefer read-only inspection before changes. Avoid interactive commands and password prompts.',
       )
       ..writeln(

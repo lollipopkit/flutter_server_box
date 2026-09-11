@@ -353,6 +353,24 @@ abstract class AppLocalizations {
   /// **'Agent response was interrupted.'**
   String get askAiInterrupted;
 
+  /// No description provided for @askAiResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get askAiResend;
+
+  /// No description provided for @askAiResendTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything after this message is discarded — the replies, the commands and their results.'**
+  String get askAiResendTip;
+
+  /// No description provided for @askAiDeleteTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This message and everything after it are removed — the replies, the commands and their results.'**
+  String get askAiDeleteTip;
+
   /// No description provided for @askAiModelTable.
   ///
   /// In en, this message translates to:

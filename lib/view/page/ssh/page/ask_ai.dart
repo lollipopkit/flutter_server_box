@@ -282,6 +282,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   final _inputController = TextEditingController();
   bool _autoStarted = false;
 
+  /// How many timeline entries had already been drawn. Anything past it is an
+  /// arrival, and only an arrival is animated.
+  var _renderedEntries = 0;
+
   AgentSession get _notifier =>
       ref.read(agentSessionProvider(widget.serverId).notifier);
 
@@ -540,11 +544,23 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     );
   }
 
+  /// How many of the user's own messages come before [index], which is the
+  /// same count the session uses to cut back to one.
+  int _userOrdinalAt(List<AgentTimelineEntry> timeline, int index) {
+    if (timeline[index] is! AgentUserEntry) return -1;
+    var seen = 0;
+    for (var i = 0; i < index; i++) {
+      if (timeline[i] is AgentUserEntry) seen++;
+    }
+    return seen;
+  }
+
   Widget _buildTimelineEntry(
     BuildContext context,
     ThemeData theme,
-    AgentTimelineEntry entry,
-  ) {
+    AgentTimelineEntry entry, {
+    int userOrdinal = -1,
+  }) {
     Widget notice(String text) => Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -567,8 +583,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     );
 
     return switch (entry) {
-      AgentUserEntry(:final content) => Align(
-        alignment: Alignment.centerRight,
+      AgentUserEntry(:final content) => AgentUserBubble(
+        content: content,
+        ordinal: userOrdinal,
+        onResend: _notifier.resendFrom,
+        onDelete: _notifier.deleteFrom,
+        // No `Align`: see the note on the other surface — what scales has to
+        // be the bubble, not a full-width box containing one.
         child: Container(
           constraints: const BoxConstraints(maxWidth: 460),
           padding: const EdgeInsets.all(12),
@@ -576,7 +597,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             color: theme.colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: SelectableText(content),
+          // Plain `Text`: see the note on the other surface — a selectable
+          // one takes the long press the bubble's menu needs.
+          child: Text(content),
         ),
       ),
       AgentAssistantEntry(:final content) => Align(
@@ -719,8 +742,8 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     BuildContext context,
     ThemeData theme,
     AgentSessionState session,
+    AskAiCommand command,
   ) {
-    final command = session.pendingTool!;
     final canReview = session.canReviewPendingTool;
     final (label, color, icon) = switch (command.risk) {
       AskAiCommandRisk.readOnly => (
@@ -956,6 +979,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     final theme = Theme.of(context);
     final provider = agentSessionProvider(widget.serverId);
     final session = ref.watch(provider);
+    // See the note on the field: what was here last build is what does not
+    // animate. Updated during build because it describes this frame.
+    final settled = _renderedEntries;
+    _renderedEntries = session.timeline.length;
 
     // Following the state rather than scrolling wherever this panel last
     // appended something: the session moves on its own, so a turn started here
@@ -991,14 +1018,30 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                 children: [
                   _buildTerminalContext(context, theme),
                   if (session.isEmpty) _buildEmptyState(context, theme),
-                  for (final entry in session.timeline) ...[
-                    _buildTimelineEntry(context, theme, entry),
+                  // Indexed, so a user bubble knows which of the user's own
+                  // messages it is — which is what resending cuts back to.
+                  for (var i = 0; i < session.timeline.length; i++) ...[
+                    AgentEntryAppear(
+                      animate: i >= settled,
+                      child: _buildTimelineEntry(
+                        context,
+                        theme,
+                        session.timeline[i],
+                        userOrdinal: _userOrdinalAt(session.timeline, i),
+                      ),
+                    ),
                     const SizedBox(height: 10),
                   ],
                   if (session.isStreaming)
                     _buildStreamingBubble(context, theme, session),
-                  if (session.pendingTool != null) ...[
-                    _buildProposalCard(context, theme, session),
+                  ...[
+                    AgentProposalPager(
+                      proposals: session.pendingTools,
+                      index: session.pendingIndex,
+                      onIndexChanged: _notifier.showPendingTool,
+                      cardBuilder: (context, proposal) =>
+                          _buildProposalCard(context, theme, session, proposal),
+                    ),
                     const SizedBox(height: 10),
                   ],
                 ],
