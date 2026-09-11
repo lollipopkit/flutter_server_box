@@ -287,6 +287,32 @@ void main() {
     expect(tester.getSize(find.byKey(settingsTabsKey)).width, lessThan(four));
   });
 
+  /// The mask over the bar, which is only there while there is something to
+  /// mask — so this is `findsNothing` as often as it is `findsOneWidget`.
+  Finder edgeFade() => find.ancestor(
+    of: find.byKey(settingsTabsKey),
+    matching: find.byType(ShaderMask),
+  );
+
+  testWidgets('a level that fits its window is not faded', (tester) async {
+    await pump(tester, width: 500);
+
+    await tester.tap(menuRow(libL10n.file));
+    await settle(tester, 20);
+
+    expect(edgeFade(), findsNothing);
+  });
+
+  testWidgets('a level wider than its window fades at the edge', (tester) async {
+    // Narrow enough that the app group's leaves cannot all be on screen.
+    await pump(tester, width: 320);
+
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester, 20);
+
+    expect(edgeFade(), findsOneWidget);
+  });
+
   testWidgets('the tab being shown is filled in', (tester) async {
     await pump(tester, width: 500);
     await tester.tap(menuRow(libL10n.server));
