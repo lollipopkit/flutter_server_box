@@ -6,6 +6,24 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+/// A context window as the table stores it, or null when the value is not one.
+///
+/// Whole and positive. A fraction is not a shorter window, it is a document
+/// that has stopped meaning what it says — and it slips past a `> 0` test on
+/// the way to `toInt()`, which stores `0.5` as a zero. That zero is then
+/// *answered* by `lookup`, so `contextFor` returns it instead of the fallback
+/// and `shouldCompact` skips the token test for the rest of the conversation.
+///
+/// `is! num` covers booleans: Dart's `bool` is not a `num`, unlike Python's,
+/// where it is an `int` and needs saying out loud.
+int? _contextTokensOf(Object? value) {
+  if (value is! num) return null;
+  // `5 == 5.0` in Dart, so a whole number written as a float still passes.
+  if (value != value.truncateToDouble()) return null;
+  final tokens = value.toInt();
+  return tokens > 0 ? tokens : null;
+}
+
 /// Turns models.dev's document into the two columns the table needs.
 ///
 /// Top level because it runs through `compute`, which takes a function that
@@ -28,10 +46,9 @@ Map<String, int> _tableFromApiDocument(String raw) {
       if (model is! Map) continue;
       final limit = model['limit'];
       if (limit is! Map) continue;
-      final context = limit['context'];
-      if (context is! num || context <= 0) continue;
+      final tokens = _contextTokensOf(limit['context']);
+      if (tokens == null) continue;
       final key = entry.key.toString().toLowerCase();
-      final tokens = context.toInt();
       final existing = table[key];
       table[key] = existing == null || tokens < existing ? tokens : existing;
     }
@@ -203,14 +220,11 @@ abstract final class ModelContextTable {
 
       final table = <String, int>{};
       for (final entry in models.entries) {
-        final value = entry.value;
-        // A window of zero or less is not a shorter window, it is a broken
-        // entry — and it would be worse than not knowing: `lookup` would
-        // answer it, so `contextFor` would return it instead of the fallback,
-        // and `shouldCompact` skips the token test whenever the context is not
-        // positive. The conversation would quietly stop being measured.
-        if (value is! num || value <= 0) continue;
-        table[entry.key.toString().toLowerCase()] = value.toInt();
+        // Whole and positive, or dropped — see [_contextTokensOf] for what a
+        // broken entry does to the conversation that reads it.
+        final tokens = _contextTokensOf(entry.value);
+        if (tokens == null) continue;
+        table[entry.key.toString().toLowerCase()] = tokens;
       }
       // Parsed but empty is not a table. Assigning it would count as loaded,
       // and a half-written cache file would leave the app with no table at all

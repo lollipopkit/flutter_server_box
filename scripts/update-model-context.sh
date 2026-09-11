@@ -35,10 +35,16 @@ by_id = {}
 for provider in data.values():
     for model_id, model in (provider.get('models') or {}).items():
         context = (model.get('limit') or {}).get('context')
-        # Positive, not merely present: a zero or a negative is a broken entry,
-        # and the app refuses a table containing one.
-        if not isinstance(context, (int, float)) or context <= 0:
+        # Whole and positive. `isinstance(True, int)` is true in Python, so a
+        # boolean has to be excluded by name; a fraction would be written to
+        # the asset as one, and the app stores `0.5` as a zero — which it then
+        # answers instead of falling back. The app refuses such a table, so
+        # this refuses to generate one.
+        if isinstance(context, bool) or not isinstance(context, (int, float)):
             continue
+        if context <= 0 or int(context) != context:
+            continue
+        context = int(context)
         key = model_id.lower()
         by_id[key] = min(by_id.get(key, context), context)
 

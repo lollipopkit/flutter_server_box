@@ -146,6 +146,18 @@ void main() {
     // The smallest wins: compacting early costs a summary, late costs a turn.
     expect(table['gpt-5-nano'], 64000);
     expect(table.containsKey('no-limit'), isFalse);
+
+    // The same rule on the way in from models.dev, not only out of a cache.
+    final odd = ModelContextTable.tableFromApiDocument(
+      '{"p":{"models":{'
+      '"fraction":{"limit":{"context":1.5}},'
+      '"flag":{"limit":{"context":true}},'
+      '"whole":{"limit":{"context":8000.0}}'
+      '}}}',
+    );
+    expect(odd.containsKey('fraction'), isFalse);
+    expect(odd.containsKey('flag'), isFalse);
+    expect(odd['whole'], 8000);
   });
 
   test('a document that parses to nothing usable is refused', () {
@@ -160,6 +172,39 @@ void main() {
       isFalse,
     );
     expect(ModelContextTable.adoptForTest('{"models":{"a":0}}'), isFalse);
+    // A fraction under one truncates to a zero, which is the value the check
+    // above exists to keep out.
+    expect(ModelContextTable.adoptForTest('{"models":{"a":0.5}}'), isFalse);
+    expect(ModelContextTable.adoptForTest('{"models":{"a":true}}'), isFalse);
+  });
+
+  test('a whole number written as a float is still a number', () {
+    // `128000.0` is a `double` in Dart and means what it says; only a real
+    // fraction is a document that has stopped meaning what it says.
+    expect(
+      ModelContextTable.adoptForTest('{"models":{"whole":128000.0}}'),
+      isTrue,
+    );
+    expect(ModelContextTable.lookup('whole'), 128000);
+  });
+
+  test('a fraction or a boolean is dropped, not truncated', () {
+    expect(
+      ModelContextTable.adoptForTest(
+        '{"models":{"good":1000,"fraction":128000.5,"flag":true,"tiny":0.5}}',
+      ),
+      isTrue,
+    );
+    expect(ModelContextTable.lookup('good'), 1000);
+    expect(ModelContextTable.lookup('fraction'), isNull);
+    expect(ModelContextTable.lookup('flag'), isNull);
+    // The one that mattered: truncating this stores a zero, and a zero is
+    // answered instead of falling back.
+    expect(ModelContextTable.lookup('tiny'), isNull);
+    expect(
+      ModelContextTable.contextFor('tiny'),
+      ModelContextTable.fallbackContext,
+    );
   });
 
   test('a broken entry is dropped rather than answered', () {
