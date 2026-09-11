@@ -29,6 +29,7 @@ import 'package:server_box/view/page/scheduled_tasks.dart';
 import 'package:server_box/view/page/services.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/page/users.dart';
+import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
 class ServerFuncBtns extends StatelessWidget {
@@ -54,13 +55,25 @@ class ServerFuncBtns extends StatelessWidget {
     // takes the width of what is in it and no more — and, once whatever holds
     // it runs out of room to give, scrolls instead of overflowing. One line
     // either way.
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      shrinkWrap: true,
-      padding: const EdgeInsets.fromLTRB(_kPad, _kVPadTop, _kPad, _kVPadBottom),
-      itemCount: items.length,
-      itemBuilder: (_, i) => items[i],
-      separatorBuilder: (_, _) => const SizedBox(width: _kGap),
+    //
+    // Faded at whichever end it is scrolling past, the way the settings tabs
+    // are: a button cut in half by the bar's edge reads as the last one, and
+    // this row is the only way to reach half of what a server can do.
+    return EdgeFadeScroll(
+      builder: (context, controller) => ListView.separated(
+        controller: controller,
+        scrollDirection: Axis.horizontal,
+        shrinkWrap: true,
+        padding: const EdgeInsets.fromLTRB(
+          _kPad,
+          _kVPadTop,
+          _kPad,
+          _kVPadBottom,
+        ),
+        itemCount: items.length,
+        itemBuilder: (_, i) => items[i],
+        separatorBuilder: (_, _) => const SizedBox(width: _kGap),
+      ),
     );
   }
 }

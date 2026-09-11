@@ -58,12 +58,6 @@ final class SettingsNode {
 const _kTabsHeight = 56.0;
 const _kTabsMargin = 12.0;
 
-/// How much of an end the fade covers when a level runs off it.
-///
-/// Wider than a tab's padding and narrower than a tab, so what is fading is
-/// legible as a tab rather than as a smudge or as half the bar.
-const _kTabsFade = 32.0;
-
 /// Displacement springs past its mark and settles, as it does elsewhere.
 /// Only the bar's own width: a size factor past 1 would be a gap.
 const _kTabsCurve = Curves.easeOutBack;
@@ -85,7 +79,7 @@ const settingsTabsKey = ValueKey('settings_tabs');
 /// Only the level: the way back out is the title bar's own button, which is
 /// where every other page in the app puts it. A second one here was the same
 /// move twice on one screen.
-final class _SettingsTabs extends StatefulWidget {
+final class _SettingsTabs extends StatelessWidget {
   /// The level being shown, which is the root or one branch's children.
   final List<SettingsNode> nodes;
 
@@ -100,63 +94,8 @@ final class _SettingsTabs extends StatefulWidget {
   });
 
   @override
-  State<_SettingsTabs> createState() => _SettingsTabsState();
-}
-
-final class _SettingsTabsState extends State<_SettingsTabs> {
-  /// Read for how much is off each end, not to scroll anything.
-  final _controller = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    // There is no position to measure until the first layout, and nothing
-    // notifies when one arrives. Without this the right edge of a level too
-    // wide for the window is cut off square until the first drag.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  /// Fades whichever end has tabs behind it, and neither when none has.
-  ///
-  /// The fade is as wide as what is hidden, up to [_kTabsFade]: a bar one
-  /// pixel from its end is a bar at its end, and a mask that ignored that
-  /// would leave the last tab permanently half faded.
-  Shader _edgeFade(Rect rect, double before, double after) {
-    final leading = (math.min(before, _kTabsFade) / rect.width).clamp(0.0, 1.0);
-    final trailing = math.max(
-      leading,
-      1 - (math.min(after, _kTabsFade) / rect.width).clamp(0.0, 1.0),
-    );
-    return LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      // Alpha only: the bar floats over the page, so an end covered by a
-      // colour would hide the content it is floating over rather than the
-      // tabs running off the edge.
-      colors: const [
-        Colors.transparent,
-        Colors.black,
-        Colors.black,
-        Colors.transparent,
-      ],
-      stops: [0, leading, trailing, 1],
-    ).createShader(rect);
-  }
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final nodes = widget.nodes;
-    final selectedId = widget.selectedId;
-    final onTap = widget.onTap;
     final radius = BorderRadius.circular(_kTabsHeight / 2);
 
     final row = SizedBox(
@@ -234,53 +173,26 @@ final class _SettingsTabsState extends State<_SettingsTabs> {
     //
     // It is padding here rather than an offset on the `Positioned` that places
     // this, so the bar sits where it always did — see [_kTabsMargin].
-    final scroller = LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        controller: _controller,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.all(_kTabsMargin),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minWidth: math.max(0, constraints.maxWidth - _kTabsMargin * 2),
-          ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [bar]),
-        ),
-      ),
-    );
-
+    //
     // A level wider than the window ends at the window's edge, and a tab cut
     // off square there reads as the last one rather than as one of several
-    // more. Fading it says the bar carries on.
-    //
-    // Rebuilt on scroll through the controller, and on a change of metrics
-    // that no scroll caused — the bar grows and shrinks between levels, which
-    // is what decides whether there is anything off the end at all.
-    return NotificationListener<ScrollMetricsNotification>(
-      onNotification: (_) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) setState(() {});
-        });
-        return false;
-      },
-      child: AnimatedBuilder(
-        animation: _controller,
-        child: scroller,
-        builder: (context, child) {
-          final position = _controller.positions.length == 1
-              ? _controller.position
-              : null;
-          final before = position?.extentBefore ?? 0;
-          final after = position?.extentAfter ?? 0;
-          // Nothing off either end: no mask at all rather than one that does
-          // nothing, because the mask is a `saveLayer` and the bar under it
-          // is blurring what it stands over.
-          if (before < 0.5 && after < 0.5) return child!;
-          return ShaderMask(
-            blendMode: BlendMode.dstIn,
-            shaderCallback: (rect) => _edgeFade(rect, before, after),
-            child: child,
-          );
-        },
+    // more — hence [EdgeFadeScroll] around it, which says the bar carries on.
+    return EdgeFadeScroll(
+      builder: (context, controller) => LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          controller: controller,
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.all(_kTabsMargin),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: math.max(0, constraints.maxWidth - _kTabsMargin * 2),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [bar],
+            ),
+          ),
+        ),
       ),
     );
   }

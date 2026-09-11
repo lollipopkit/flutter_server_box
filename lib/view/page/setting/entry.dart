@@ -57,6 +57,7 @@ import 'package:server_box/view/widget/crash_report_dialog.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
+import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
