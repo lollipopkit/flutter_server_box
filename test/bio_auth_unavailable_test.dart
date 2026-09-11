@@ -85,6 +85,10 @@ void main() {
     expect(find.text(libL10n.bioAuth), findsNothing);
     expect(find.text(libL10n.notExistFmt(libL10n.bioAuth)), findsNothing);
     expect(find.byType(Switch), findsNothing);
+    // Nothing at all: this one carries its own card in the one case it has
+    // something to put in it, so a caller that cards it as well leaves an
+    // empty card on a device that hid the setting.
+    expect(find.byType(CardX), findsNothing);
   });
 
   testWidgets(

@@ -8,6 +8,11 @@ extension _App on _AppSettingsPageState {
   Widget _buildApp() {
     final androidSettings = isAndroid ? _buildAndroidSettings() : null;
     final specific = _buildPlatformSetting();
+    // Carded one by one rather than by mapping the list. `buildBioAuth` owns
+    // its own card and answers with an empty widget where there is no
+    // biometric hardware, where it is still loading, and where the check
+    // failed — so a card applied from out here is a card around nothing three
+    // times over, and a card around a card in the one case it has something.
     final children = <Widget>[
       _buildLocale().cardx,
       _buildThemeMode().cardx,
@@ -20,11 +25,7 @@ extension _App on _AppSettingsPageState {
       // in the list of everything.
       if (androidSettings != null) androidSettings.cardx,
       if (specific != null) specific.cardx,
-      _buildBeta().cardx,
-      if (isMobile) _buildWakeLock().cardx,
-      _buildCollapseUI().cardx,
-      if (isDesktop) _buildHideTitleBar().cardx,
-      if (kDebugMode) _buildEditRawSettings().cardx,
+      _buildAppMore().cardx,
     ];
 
     return Column(children: children);
@@ -325,6 +326,23 @@ extension _App on _AppSettingsPageState {
         listenable: _setting.locale.listenable(),
         builder: () => Text(context.localeNativeName, style: UIs.text15),
       ),
+    );
+  }
+
+  Widget _buildAppMore() {
+    return ExpandTile(
+      leading: const Icon(MingCute.more_3_fill),
+      title: Text(libL10n.more),
+      initiallyExpanded: false,
+      children: [
+        _buildBeta(),
+        if (isMobile) _buildWakeLock(),
+        _buildCollapseUI(),
+        if (isDesktop) _buildHideTitleBar(),
+        // Debug only, which is where it was moved to while these rows were
+        // flat. Folding them back does not put it back in a release build.
+        if (kDebugMode) _buildEditRawSettings(),
+      ],
     );
   }
 
