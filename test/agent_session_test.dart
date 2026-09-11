@@ -393,15 +393,24 @@ void main() {
       // rather than the notifier. Both answers, in the order the calls were
       // made, alongside the calls they answer.
       expect(repository.requests, hasLength(2));
-      final sent = repository.requests.last;
-      expect(
-        sent.whereType<AskAiFunctionCallItem>().map((item) => item.command.id),
-        [first.id, second.id],
-      );
-      expect(
-        sent.whereType<AskAiFunctionOutputItem>().map((item) => item.callId),
-        [first.id, second.id],
-      );
+      // Filtered to the two tool item types but not separated into two lists:
+      // the calls of a turn are one assistant message and the answers follow
+      // it, so `call-a, answer-a, call-b, answer-b` is a different shape and
+      // has to fail here rather than pass two same-order checks.
+      final sent = [
+        for (final item in repository.requests.last)
+          switch (item) {
+            AskAiFunctionCallItem(:final command) => 'call:${command.id}',
+            AskAiFunctionOutputItem(:final callId) => 'answer:$callId',
+            _ => null,
+          },
+      ].whereType<String>();
+      expect(sent, [
+        'call:${first.id}',
+        'call:${second.id}',
+        'answer:${first.id}',
+        'answer:${second.id}',
+      ]);
       // One notice: the user said no once.
       expect(
         state.timeline.whereType<AgentNoticeEntry>().map((e) => e.kind),
