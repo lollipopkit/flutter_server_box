@@ -20,7 +20,7 @@
   "added2List": "Added to task list",
   "askAi": "Ask AI",
   "askAiAwaitingResponse": "Waiting for AI response...",
-  "askAiEndpointTip": "Enter a domain or a full URL. The path is completed from the protocol you pick.",
+  "askAiEndpointTip": "A domain, an API root such as https://open.bigmodel.cn/api/paas/v4, or the full endpoint. Whatever is missing is completed from the protocol.",
   "askAiProtocolTip": "Auto tries Responses, then Chat Completions.",
   "askAiCommandInserted": "Command inserted into terminal",
   "askAiConfigMissing": "Please configure {fields} in Settings.",

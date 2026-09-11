@@ -73,7 +73,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiAwaitingResponse => '等待 AI 响应...';
 
   @override
-  String get askAiEndpointTip => '填写域名或完整地址。会根据所选协议自动补全路径。';
+  String get askAiEndpointTip =>
+      '可填域名、API 根地址（如 https://open.bigmodel.cn/api/paas/v4），或完整端点。缺少的部分会按所选协议补全。';
 
   @override
   String get askAiProtocolTip => '自动模式会尝试 Responses / Chat Completions。';
@@ -2114,7 +2115,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiAwaitingResponse => '等待 AI 回應...';
 
   @override
-  String get askAiEndpointTip => '填寫網域或完整位址。會根據所選協定自動補全路徑。';
+  String get askAiEndpointTip =>
+      '可填網域、API 根位址（如 https://open.bigmodel.cn/api/paas/v4），或完整端點。缺少的部分會依所選協定補全。';
 
   @override
   String get askAiProtocolTip => '自動模式會嘗試 Responses / Chat Completions。';

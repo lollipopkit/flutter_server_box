@@ -40,6 +40,69 @@ void main() {
       );
     });
 
+    test('a version other than v1 is still an API root (#1465)', () {
+      // Zhipu's is v4. `v1` alone was the rule, so the path came out as
+      // `/api/paas/v4/v1/chat/completions` and every request 404'd.
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://open.bigmodel.cn/api/paas/v4',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      );
+      // The coding plan's, which has another segment before the version.
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://open.bigmodel.cn/api/coding/paas/v4',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://open.bigmodel.cn/api/coding/paas/v4/chat/completions',
+      );
+      // And a trailing slash is the same address.
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://open.bigmodel.cn/api/paas/v4/',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+      );
+    });
+
+    test('a path that names no version still gets v1', () {
+      // Unchanged on purpose: a gateway path means the v1 API under it, and
+      // that is what these addresses have always resolved to.
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://proxy.example/openai',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://proxy.example/openai/v1/chat/completions',
+      );
+      expect(
+        AskAiRepository.composeEndpointUri(
+          'https://api.openai.com',
+          AskAiProtocol.chatCompletions,
+        ).toString(),
+        'https://api.openai.com/v1/chat/completions',
+      );
+    });
+
+    test('a full endpoint is left exactly as it was typed', () {
+      // The way out for anything this cannot guess: name the whole path.
+      for (final endpoint in const [
+        'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        'https://gateway.example/weird/path/chat/completions',
+      ]) {
+        expect(
+          AskAiRepository.composeEndpointUri(
+            endpoint,
+            AskAiProtocol.chatCompletions,
+          ).toString(),
+          endpoint,
+        );
+      }
+    });
+
     test('supports OpenRouter-compatible v1 endpoint', () {
       final uri = AskAiRepository.composeEndpointUri(
         'https://openrouter.ai/api/v1',

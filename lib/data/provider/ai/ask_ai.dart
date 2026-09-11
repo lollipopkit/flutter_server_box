@@ -920,6 +920,14 @@ class AskAiRepository {
     return '[Earlier terminal context omitted]\n${text.substring(text.length - limit)}';
   }
 
+  /// Where a provider's API root ends: `v1`, `v2`, `v4` — any of them.
+  ///
+  /// `v1` alone was the rule, and it is only OpenAI's number. Zhipu serves
+  /// `/api/paas/v4`, so the completion was `/api/paas/v4/v1/chat/completions`
+  /// and every request 404'd — reported as "the app cannot use a custom base
+  /// URL" (#1465), which it could all along, just not that one.
+  static final _apiVersionSegment = RegExp(r'^v\d+$');
+
   static Uri composeEndpointUri(String endpoint, AskAiProtocol protocol) {
     final uri = Uri.parse(endpoint.replaceAll(RegExp(r'/+$'), ''));
     final target = protocol == AskAiProtocol.responses
@@ -932,7 +940,12 @@ class AskAiRepository {
     } else if (_endsWithSegments(segments, const ['responses'])) {
       segments = segments.sublist(0, segments.length - 1);
     }
-    final append = segments.isNotEmpty && segments.last == 'v1'
+    // A path that already names a version is an API root and gets the target
+    // appended. Anything else — a bare host, or a gateway path like
+    // `/openai` — gets `v1` as well, which is what it got before and what
+    // those addresses mean.
+    final last = segments.isEmpty ? null : segments.last;
+    final append = last != null && _apiVersionSegment.hasMatch(last)
         ? target
         : ['v1', ...target];
     return uri.replace(pathSegments: [...segments, ...append]);

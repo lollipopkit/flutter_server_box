@@ -78,7 +78,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter a domain or a full URL. The path is completed from the protocol you pick.';
+      'A domain, an API root such as https://open.bigmodel.cn/api/paas/v4, or the full endpoint. Whatever is missing is completed from the protocol.';
 
   @override
   String get askAiProtocolTip => 'Auto tries Responses, then Chat Completions.';
