@@ -35,7 +35,9 @@ by_id = {}
 for provider in data.values():
     for model_id, model in (provider.get('models') or {}).items():
         context = (model.get('limit') or {}).get('context')
-        if not context:
+        # Positive, not merely present: a zero or a negative is a broken entry,
+        # and the app refuses a table containing one.
+        if not isinstance(context, (int, float)) or context <= 0:
             continue
         key = model_id.lower()
         by_id[key] = min(by_id.get(key, context), context)

@@ -200,17 +200,34 @@ abstract final class ModelContextTable {
       if (decoded is! Map) return false;
       final models = decoded['models'];
       if (models is! Map || models.isEmpty) return false;
-      _models = {
-        for (final entry in models.entries)
-          if (entry.value is num)
-            entry.key.toString().toLowerCase(): (entry.value as num).toInt(),
-      };
+
+      final table = <String, int>{};
+      for (final entry in models.entries) {
+        final value = entry.value;
+        // A window of zero or less is not a shorter window, it is a broken
+        // entry — and it would be worse than not knowing: `lookup` would
+        // answer it, so `contextFor` would return it instead of the fallback,
+        // and `shouldCompact` skips the token test whenever the context is not
+        // positive. The conversation would quietly stop being measured.
+        if (value is! num || value <= 0) continue;
+        table[entry.key.toString().toLowerCase()] = value.toInt();
+      }
+      // Parsed but empty is not a table. Assigning it would count as loaded,
+      // and a half-written cache file would leave the app with no table at all
+      // while the one in its own assets sat there unread.
+      if (table.isEmpty) return false;
+
+      _models = table;
       _generated = decoded['generated'] as String?;
       return true;
     } catch (_) {
       return false;
     }
   }
+
+  /// [_adopt], for the test that a broken document is refused.
+  @visibleForTesting
+  static bool adoptForTest(String raw) => _adopt(raw);
 
   /// The context window for [model], or null when nothing matched.
   ///

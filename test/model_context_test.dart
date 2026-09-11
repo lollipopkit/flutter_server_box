@@ -148,6 +148,39 @@ void main() {
     expect(table.containsKey('no-limit'), isFalse);
   });
 
+  test('a document that parses to nothing usable is refused', () {
+    // Refused rather than adopted empty: `ensureLoaded` reads the cache first
+    // and only falls back to the asset when this answers false. Adopting an
+    // empty map counts as loaded, so a half-written cache file would leave the
+    // app with no table while its own asset sat there unread.
+    expect(ModelContextTable.adoptForTest('not json at all'), isFalse);
+    expect(ModelContextTable.adoptForTest('{"models":{}}'), isFalse);
+    expect(
+      ModelContextTable.adoptForTest('{"models":{"a":"not a number"}}'),
+      isFalse,
+    );
+    expect(ModelContextTable.adoptForTest('{"models":{"a":0}}'), isFalse);
+  });
+
+  test('a broken entry is dropped rather than answered', () {
+    // Zero would be worse than not knowing: `lookup` would answer it, so
+    // `contextFor` would return it instead of the fallback, and the token test
+    // is skipped whenever the context is not positive.
+    expect(
+      ModelContextTable.adoptForTest(
+        '{"generated":"2026-09-11","models":{"good":1000,"zero":0,"negative":-5}}',
+      ),
+      isTrue,
+    );
+    expect(ModelContextTable.lookup('good'), 1000);
+    expect(ModelContextTable.lookup('zero'), isNull);
+    expect(ModelContextTable.lookup('negative'), isNull);
+    expect(
+      ModelContextTable.contextFor('zero'),
+      ModelContextTable.fallbackContext,
+    );
+  });
+
   test('the shipped asset is shaped the way the loader reads it', () {
     final file = File('assets/model_context.json');
     expect(file.existsSync(), isTrue, reason: 'run scripts/update-model-context.sh');
@@ -163,5 +196,8 @@ void main() {
       expect(entry.value, isA<num>(), reason: entry.key);
       expect((entry.value as num) > 0, isTrue, reason: entry.key);
     }
+    // And the loader accepts it — the asset is the fallback for everything
+    // else, so a shape it refuses would leave the app with no table at all.
+    expect(ModelContextTable.adoptForTest(file.readAsStringSync()), isTrue);
   });
 }
