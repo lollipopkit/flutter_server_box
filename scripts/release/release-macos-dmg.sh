@@ -251,6 +251,81 @@ verify_app_arch() {
   echo "$app_path: $checked binaries, all $expected"
 }
 
+# How many times a call to Apple's notary service is worth making.
+NOTARY_ATTEMPTS="${NOTARY_ATTEMPTS:-4}"
+
+# Retried on a transport failure and never on a verdict.
+#
+# `notarytool submit --wait` exits non-zero both when it could not deliver the
+# file and when the service looked at the file and said no. Resubmitting a
+# refused build queues the same refusal again, so the retry is gated on the
+# output *not* carrying a terminal status.
+#
+# Worth having because of where this sits: the v1.0.1617 amd64 upload died with
+# `Network.NWError error 54 - Connection reset by peer` after the archive, the
+# export, the DMG and the signature were all already done, and the only way
+# back was to build that architecture again from nothing.
+notarize_dmg() {
+  local dmg_path="$1"
+  local attempt=1
+  local delay=15
+  local status=1
+  local log
+  log="$(mktemp)"
+
+  while :; do
+    if xcrun notarytool submit "$dmg_path" \
+      --keychain-profile "$APPLE_NOTARY_KEYCHAIN_PROFILE" \
+      --wait 2>&1 | tee "$log"; then
+      status=0
+      break
+    fi
+
+    if grep -qE 'status: (Invalid|Rejected)' "$log"; then
+      echo "The notary service refused $dmg_path. Not retrying." >&2
+      break
+    fi
+
+    if (( attempt >= NOTARY_ATTEMPTS )); then
+      echo "No verdict on $dmg_path after $attempt attempts." >&2
+      break
+    fi
+
+    echo "Notarization attempt $attempt ended before a verdict; retrying in ${delay}s." >&2
+    sleep "$delay"
+    attempt=$(( attempt + 1 ))
+    delay=$(( delay * 2 ))
+  done
+
+  rm -f "$log"
+  return "$status"
+}
+
+# The ticket is fetched from Apple, and it is not always there the moment the
+# submission is accepted. `stapler` reports that wait with the same failure it
+# gives for a build that was never notarized at all.
+staple_dmg() {
+  local dmg_path="$1"
+  local attempt=1
+  local delay=15
+
+  while :; do
+    if xcrun stapler staple "$dmg_path"; then
+      return 0
+    fi
+
+    if (( attempt >= NOTARY_ATTEMPTS )); then
+      echo "Could not staple $dmg_path after $attempt attempts." >&2
+      return 1
+    fi
+
+    echo "Stapling attempt $attempt failed; retrying in ${delay}s." >&2
+    sleep "$delay"
+    attempt=$(( attempt + 1 ))
+    delay=$(( delay * 2 ))
+  done
+}
+
 require_var APPLE_TEAM_ID
 require_var APPLE_NOTARY_KEYCHAIN_PROFILE
 
@@ -451,11 +526,8 @@ for arch in $RELEASE_ARCHS; do
   codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$dmg_path"
   codesign --verify --verbose=2 "$dmg_path"
 
-  xcrun notarytool submit "$dmg_path" \
-    --keychain-profile "$APPLE_NOTARY_KEYCHAIN_PROFILE" \
-    --wait
-
-  xcrun stapler staple "$dmg_path"
+  notarize_dmg "$dmg_path"
+  staple_dmg "$dmg_path"
   xcrun stapler validate "$dmg_path"
   spctl -a -t open --context context:primary-signature -vv "$dmg_path"
 
