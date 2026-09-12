@@ -128,6 +128,30 @@ class KvToTablesMigration implements SchemaMigration {
   static int _bool(Object? v, {bool fallback = false}) =>
       (v is bool ? v : fallback) ? 1 : 0;
 
+  /// The migrated key that an old name-as-id refers to.
+  ///
+  /// [keyIds] only covers the keys *this* pass migrated, and a pass that
+  /// migrates none is normal rather than exceptional: `HiveImport` can land
+  /// the `key` box on one launch and the `server` box on the next — a box
+  /// fails to open while the device is still locked — and the first pass
+  /// consumed and deleted the `key` rows it converted. Servers therefore
+  /// arrive at a pass whose map is empty, and resolving through that map alone
+  /// wrote every key-authenticated server's reference away as null, with a
+  /// debug log as the only sign and no second chance at it.
+  ///
+  /// The row is still here, under the name it had — which is what the old id
+  /// was, and which `_migratePrivateKeys` keeps unrenamed for exactly the
+  /// first key under it, the one it hands out the reference for.
+  String? _resolveKeyId(Map<String, String> keyIds, String? oldKeyId) {
+    if (oldKeyId == null) return null;
+    final migrated = keyIds[oldKeyId];
+    if (migrated != null) return migrated;
+    final rows = _db.select('SELECT id FROM private_key WHERE name = ?;', [
+      oldKeyId,
+    ]);
+    return rows.isEmpty ? null : rows.first['id'] as String;
+  }
+
   /// Old name-as-id -> new generated id.
   Map<String, String> _migratePrivateKeys() {
     final ids = <String, String>{};
@@ -314,7 +338,7 @@ class KvToTablesMigration implements SchemaMigration {
     // `~/.ssh/config` import wrote `IdentityFile` into this field. Mapping it
     // to null would be the only record that it ever existed.
     final oldKeyId = (ssh?['pubKeyId'] ?? ssh?['keyId']) as String?;
-    final newKeyId = keyIds[oldKeyId];
+    final newKeyId = _resolveKeyId(keyIds, oldKeyId);
     final keyPath = newKeyId == null && oldKeyId != null && _isPath(oldKeyId)
         ? oldKeyId
         : ssh?['keyPath'] as String?;

@@ -58,14 +58,14 @@ enum ServerFuncBtn {
     final added = [
       for (final btn in values)
         if (btn.introducedAfterBuild case final boundary?
-            when boundary >= from && boundary < to && !list.contains(btn.index))
-          btn.index,
+            when boundary >= from && boundary < to && !list.contains(btn.name))
+          btn.name,
     ];
     if (added.isEmpty) return;
     prop.putSync([...list, ...added]);
   }
 
-  static final defaultIdxs = [
+  static final defaultNames = [
     terminal,
     files,
     container,
@@ -76,7 +76,33 @@ enum ServerFuncBtn {
     power,
     users,
     scheduledTasks,
-  ].map((e) => e.index).toList();
+  ].map((e) => e.name).toList();
+
+  /// The entry a stored row names.
+  ///
+  /// The row used to be an `Enum.index`, and three cases have been removed
+  /// over the years — every removal shifted the meaning of every value after
+  /// it, so a row written before one of them named an entry the user never
+  /// chose. An `int` is still accepted, because `EnumNamesMigration` is not
+  /// the only way one can arrive: a device still running an older build syncs
+  /// this setting in the shape that build writes.
+  static ServerFuncBtn? byStored(Object? stored) => switch (stored) {
+    final String name => values.firstWhereOrNull((btn) => btn.name == name),
+    final int idx when idx >= 0 && idx < values.length => values[idx],
+    _ => null,
+  };
+
+  /// A stored list in either shape, as names this build knows.
+  ///
+  /// An entry that resolves to nothing is dropped rather than shifting the
+  /// ones after it, which is the whole point of the change.
+  static List<String> namesFromStored(Object? stored) {
+    if (stored is! Iterable) return defaultNames;
+    return [
+      for (final entry in stored)
+        if (byStored(entry) case final btn?) btn.name,
+    ];
+  }
 
   IconData get icon => switch (this) {
     // The file tab's own icon, since that is where this entry lands.
