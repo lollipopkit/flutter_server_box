@@ -411,9 +411,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       (cred) => cred.id,
       (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
     );
-    final localByName = {
-      for (final server in Stores.server.fetch()) server.name: server.id,
-    };
+    // Every local id per name, not one: a server's name is not unique, and a
+    // map keyed by it answers with whichever record happened to be last.
+    final localByName = <String, List<String>>{};
+    for (final server in Stores.server.fetch()) {
+      (localByName[server.name] ??= <String>[]).add(server.id);
+    }
     final serverIds = <String, String>{};
     final decoded = <String, Map<String, Object?>>{};
     final sourceOwners = <String, String>{};
@@ -437,14 +440,18 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           ? embedded
           : entry.key;
       final name = server['name'];
-      // An id this device already holds is the identity. Names are not unique
-      // on servers, and `localByName` keeps one entry per name, so a device
-      // with two servers called the same thing sent both incoming records to
-      // the same local id — which the collision check below then reported as a
-      // malformed backup, failing every restore on such a device.
+      // An id this device already holds is the identity; a name only stands in
+      // for a record that carries none. A name is ambiguous when more than one
+      // local server has it, and resolves to nothing then — the same rule
+      // `ServerStore.reconcile` applies, and it has to be the same one, since
+      // the id decided here is what reconcile is later handed. Resolving it to
+      // one of them instead overwrote whichever the lookup answered with.
+      final namedLocally = name is String ? localByName[name] : null;
       final restoredId = Stores.server.fetchOneRaw(backupId) != null
           ? backupId
-          : (name is String ? localByName[name] ?? backupId : backupId);
+          : (namedLocally != null && namedLocally.length == 1
+                ? namedLocally.single
+                : backupId);
       claimSourceId(entry.key, entry.key);
       claimSourceId(backupId, entry.key);
       final destinationOwner = destinationOwners[restoredId];

@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -97,6 +98,40 @@ void main() {
       expect(Stores.server.reconcile(incoming).id, 'web');
     });
 
+    test('a legacy record does not adopt one of two same-named servers', () async {
+      const a = Spi(id: 'srv-a', name: 'web', ssh: SshCredential(ip: '10.0.0.1'));
+      const b = Spi(id: 'srv-b', name: 'web', ssh: SshCredential(ip: '10.0.0.2'));
+      Stores.server.put(a);
+      Stores.server.put(b);
+
+      // Keyed by name, the way a record written before ids was. Resolving it
+      // through a name->id map answers with whichever of the two came last,
+      // and that one is then overwritten.
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: DateTime.now().millisecondsSinceEpoch,
+        spis: const {
+          'web': {
+            'id': '',
+            'name': 'web',
+            'ssh': {'ip': '10.0.0.9', 'port': 22, 'user': 'root'},
+          },
+        },
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+
+      await backup.merge(force: true);
+      Stores.server.dropCache();
+
+      expect(Stores.server.fetchOneRaw('srv-a')?.ssh?.ip, '10.0.0.1');
+      expect(Stores.server.fetchOneRaw('srv-b')?.ssh?.ip, '10.0.0.2');
+      expect(Stores.server.fetch().length, 3, reason: 'it arrives as its own');
+    });
+
     test('one local server of that name still adopts a legacy record', () {
       Stores.server.put(
         const Spi(id: 'srv-a', name: 'web', ssh: SshCredential(ip: '10.0.0.1')),
@@ -169,6 +204,34 @@ void main() {
       await backup.merge();
 
       expect(Stores.setting.get<int>('timeOut'), 11);
+    });
+  });
+
+  group('a restored setting in an older shape', () {
+    test('a button row written as indexes reads as the entries it named', () async {
+      // A restore does not run the schema migrator, so `EnumNamesMigration`
+      // does not see this row — and does not have to. Every read goes through
+      // the property's `fromObj`, which takes either shape; the same tolerance
+      // a device still on an older build relies on when it syncs one over.
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: DateTime.now().millisecondsSinceEpoch,
+        spis: const {},
+        snippets: const {},
+        keys: const {},
+        container: const {},
+        history: const {},
+        settings: const {
+          'serverBtns': [0, 2],
+        },
+      );
+
+      await backup.merge(force: true);
+
+      expect(Stores.setting.serverFuncBtns.fetch(), [
+        ServerFuncBtn.terminal.name,
+        ServerFuncBtn.container.name,
+      ]);
     });
   });
 
