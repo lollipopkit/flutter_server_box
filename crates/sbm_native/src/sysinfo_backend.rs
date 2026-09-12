@@ -185,14 +185,18 @@ pub fn sample(state: &mut State) -> ServerStatus {
         .map(|disk| {
             let name = disk.name().to_string_lossy().into_owned();
             let mount = disk.mount_point().to_string_lossy().into_owned();
-            let id = if mount.is_empty() { name } else { mount };
-            (disk, id)
+            let id = if mount.is_empty() {
+                name.clone()
+            } else {
+                mount
+            };
+            (disk, id, name)
         })
         .collect();
 
     let disks: Vec<Disk> = keyed_disks
         .iter()
-        .map(|(d, id)| {
+        .map(|(d, id, name)| {
             let total_kb = d.total_space() / 1024;
             let avail_kb = d.available_space() / 1024;
             let used_kb = total_kb.saturating_sub(avail_kb);
@@ -204,6 +208,12 @@ pub fn sample(state: &mut State) -> ServerStatus {
                 used: used_kb,
                 size: total_kb,
                 avail: avail_kb,
+                // The volume label (see this module's doc comment — on macOS
+                // `name()` is not a device path). Volumes of one APFS container
+                // share it and each report the container's full size, so it is
+                // what lets monitor count that capacity once
+                // (`monitoring::apfs_pool_key`) rather than once per volume.
+                name: (!name.is_empty()).then(|| name.clone()),
                 ..Disk::default()
             }
         })
@@ -211,7 +221,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
 
     let diskio: Vec<DiskIoPiece> = keyed_disks
         .iter()
-        .map(|(d, id)| {
+        .map(|(d, id, _)| {
             let usage = d.usage();
             DiskIoPiece {
                 dev: id.clone(),

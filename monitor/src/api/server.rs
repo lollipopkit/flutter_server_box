@@ -1175,21 +1175,25 @@ async fn get_velocity(
 
     let server_name = app_state.config.get_server_name();
 
-    match app_state
-        .velocity_manager
-        .read()
-        .await
-        .get_server_velocity(&server_name)
-        .await
-    {
-        Ok(velocity_data) => {
-            let network_totals = app_state
-                .velocity_manager
-                .read()
-                .await
-                .get_network_totals(&server_name)
-                .await;
+    // Everything this handler needs comes from one guard. A temporary in a
+    // `match` scrutinee lives to the end of the match, so taking the lock
+    // there and again inside an arm deadlocks against the monitoring loop's
+    // writer: tokio's RwLock is fair, so the queued writer blocks the second
+    // reader while itself waiting on the first guard.
+    let sampled = {
+        let velocity = app_state.velocity_manager.read().await;
+        match velocity.get_server_velocity(&server_name).await {
+            Ok(velocity_data) => {
+                let network_totals = velocity.get_network_totals(&server_name).await;
+                let is_ready = velocity.is_ready(&server_name).await;
+                Ok((velocity_data, network_totals, is_ready))
+            }
+            Err(e) => Err(e),
+        }
+    };
 
+    match sampled {
+        Ok((velocity_data, network_totals, is_ready)) => {
             let network_info = NetworkSpeedInfo::new(
                 velocity_data.network_rx_speed,
                 velocity_data.network_tx_speed,
@@ -1200,12 +1204,7 @@ async fn get_velocity(
             let response = VelocityAnalysisResponse::new(
                 network_info,
                 velocity_data.cpu_usage_percent,
-                app_state
-                    .velocity_manager
-                    .read()
-                    .await
-                    .is_ready(&server_name)
-                    .await,
+                is_ready,
             );
 
             Ok(HttpResponse::Ok().json(&response))
