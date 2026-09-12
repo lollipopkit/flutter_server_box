@@ -11,6 +11,7 @@ import 'dart:convert';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
@@ -25,12 +26,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   });
 
   CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_RemoteDesktopSessionHandlePtr => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle;
+
+  CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_SshBlockCipherPtr => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher;
 
   CrossPlatformFinalizerArg
   get rust_arc_decrement_strong_count_SshMacPtr => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshMac;
+
+  @protected
+  RemoteDesktopSessionHandle
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    dynamic raw,
+  );
 
   @protected
   SshBlockCipher
@@ -51,6 +62,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RemoteDesktopSessionHandle
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    dynamic raw,
+  );
+
+  @protected
   SshBlockCipher
   dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     dynamic raw,
@@ -64,6 +81,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Map<String, String> dco_decode_Map_String_String_None(dynamic raw);
+
+  @protected
+  RemoteDesktopSessionHandle
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    dynamic raw,
+  );
 
   @protected
   SshBlockCipher
@@ -84,6 +107,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  RdpSessionParams dco_decode_box_autoadd_rdp_session_params(dynamic raw);
+
+  @protected
+  RemoteDesktopEvent dco_decode_box_autoadd_remote_desktop_event(dynamic raw);
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  VncSessionParams dco_decode_box_autoadd_vnc_session_params(dynamic raw);
+
+  @protected
   CommandSpec dco_decode_command_spec(dynamic raw);
 
   @protected
@@ -94,6 +129,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double dco_decode_f_64(dynamic raw);
+
+  @protected
+  int dco_decode_i_16(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
@@ -123,10 +161,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  RemoteDesktopEvent? dco_decode_opt_box_autoadd_remote_desktop_event(
+    dynamic raw,
+  );
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
+
+  @protected
   List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw);
 
   @protected
+  RdpSessionParams dco_decode_rdp_session_params(dynamic raw);
+
+  @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
+
+  @protected
+  RemoteDesktopConnectionState dco_decode_remote_desktop_connection_state(
+    dynamic raw,
+  );
+
+  @protected
+  RemoteDesktopEndReason dco_decode_remote_desktop_end_reason(dynamic raw);
+
+  @protected
+  RemoteDesktopEvent dco_decode_remote_desktop_event(dynamic raw);
 
   @protected
   ScriptSegment dco_decode_script_segment(dynamic raw);
@@ -135,7 +195,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
 
   @protected
+  int dco_decode_u_16(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -147,7 +213,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt dco_decode_usize(dynamic raw);
 
   @protected
+  VncSessionParams dco_decode_vnc_session_params(dynamic raw);
+
+  @protected
   X25519KeyPair dco_decode_x_25519_key_pair(dynamic raw);
+
+  @protected
+  RemoteDesktopSessionHandle
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    SseDeserializer deserializer,
+  );
 
   @protected
   SshBlockCipher
@@ -168,6 +243,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  RemoteDesktopSessionHandle
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SshBlockCipher
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SseDeserializer deserializer,
@@ -181,6 +262,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Map<String, String> sse_decode_Map_String_String_None(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RemoteDesktopSessionHandle
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
     SseDeserializer deserializer,
   );
 
@@ -203,6 +290,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  RdpSessionParams sse_decode_box_autoadd_rdp_session_params(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RemoteDesktopEvent sse_decode_box_autoadd_remote_desktop_event(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  VncSessionParams sse_decode_box_autoadd_vnc_session_params(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
 
   @protected
@@ -213,6 +318,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   double sse_decode_f_64(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_16(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -246,10 +354,36 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  RemoteDesktopEvent? sse_decode_opt_box_autoadd_remote_desktop_event(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
   List<CustomCmd>? sse_decode_opt_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
+  RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer);
+
+  @protected
   (String, String) sse_decode_record_string_string(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RemoteDesktopConnectionState sse_decode_remote_desktop_connection_state(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RemoteDesktopEndReason sse_decode_remote_desktop_end_reason(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RemoteDesktopEvent sse_decode_remote_desktop_event(
     SseDeserializer deserializer,
   );
 
@@ -260,7 +394,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
 
   @protected
+  int sse_decode_u_16(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -272,7 +412,17 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   BigInt sse_decode_usize(SseDeserializer deserializer);
 
   @protected
+  VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer);
+
+  @protected
   X25519KeyPair sse_decode_x_25519_key_pair(SseDeserializer deserializer);
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    RemoteDesktopSessionHandle self,
+    SseSerializer serializer,
+  );
 
   @protected
   void
@@ -292,6 +442,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void
   sse_encode_Auto_RefMut_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SshBlockCipher self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    RemoteDesktopSessionHandle self,
     SseSerializer serializer,
   );
 
@@ -317,6 +474,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    RemoteDesktopSessionHandle self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SshBlockCipher self,
     SseSerializer serializer,
@@ -336,6 +500,27 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_rdp_session_params(
+    RdpSessionParams self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_remote_desktop_event(
+    RemoteDesktopEvent self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_vnc_session_params(
+    VncSessionParams self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
 
   @protected
@@ -349,6 +534,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_16(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
@@ -393,8 +581,23 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_remote_desktop_event(
+    RemoteDesktopEvent? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_list_custom_cmd(
     List<CustomCmd>? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_rdp_session_params(
+    RdpSessionParams self,
     SseSerializer serializer,
   );
 
@@ -405,13 +608,37 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_remote_desktop_connection_state(
+    RemoteDesktopConnectionState self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_remote_desktop_end_reason(
+    RemoteDesktopEndReason self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_remote_desktop_event(
+    RemoteDesktopEvent self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_script_segment(ScriptSegment self, SseSerializer serializer);
 
   @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_u_16(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
@@ -421,6 +648,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_usize(BigInt self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_vnc_session_params(
+    VncSessionParams self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_x_25519_key_pair(
@@ -433,6 +666,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
 class RustLibWire implements BaseWire {
   RustLibWire.fromExternalLibrary(ExternalLibrary lib);
+
+  void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+        ptr,
+      );
+
+  void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    int ptr,
+  ) => wasmModule
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+        ptr,
+      );
 
   void
   rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
@@ -473,6 +722,16 @@ external RustLibWasmModule get wasmModule;
 @JS()
 @anonymous
 extension type RustLibWasmModule._(JSObject _) implements JSObject {
+  external void
+  rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    int ptr,
+  );
+
+  external void
+  rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    int ptr,
+  );
+
   external void
   rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     int ptr,

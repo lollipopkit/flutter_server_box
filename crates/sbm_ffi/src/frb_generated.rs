@@ -27,6 +27,7 @@
 
 // Section: imports
 
+use crate::api::remote_desktop::*;
 use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};
@@ -39,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
                     default_rust_auto_opaque = RustAutoOpaqueMoi,
                 );
                 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1621534510;
+                pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1361367070;
             
 
 // Section: executor
@@ -48,7 +49,212 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
-fn wire__crate__api__ssh_crypto__SshBlockCipher_block_size_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_close_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_close", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::close(&*api_that_guard); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_next_event_impl(port_: flutter_rust_bridge::for_generated::MessagePort,ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32)  {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec,_,_,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_next_event", port: Some(port_), mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);deserializer.end(); move |context| async move {
+                    transform_result_sse::<_, ()>((move || async move {
+                        let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_async_ref().await),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>(crate::api::remote_desktop::RemoteDesktopSessionHandle::next_event(&*api_that_guard).await)?;   std::result::Result::Ok(output_ok)
+                    })().await)
+                } })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_release_all_keys_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_release_all_keys", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::release_all_keys(&*api_that_guard); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_resize_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_resize", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_width = <u16>::sse_decode(&mut deserializer);
+let api_height = <u16>::sse_decode(&mut deserializer);
+let api_scale_factor = <u32>::sse_decode(&mut deserializer);
+let api_physical_width_mm = <Option<u32>>::sse_decode(&mut deserializer);
+let api_physical_height_mm = <Option<u32>>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::api::remote_desktop::RemoteDesktopSessionHandle::resize(&*api_that_guard, api_width, api_height, api_scale_factor, api_physical_width_mm, api_physical_height_mm)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_clipboard_text_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_send_clipboard_text", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_text = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = crate::api::remote_desktop::RemoteDesktopSessionHandle::send_clipboard_text(&*api_that_guard, api_text)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_key_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_send_key", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_code = <u32>::sse_decode(&mut deserializer);
+let api_down = <bool>::sse_decode(&mut deserializer);
+let api_extended = <bool>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::send_key(&*api_that_guard, api_code, api_down, api_extended); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_pointer_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_send_pointer", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_x = <u16>::sse_decode(&mut deserializer);
+let api_y = <u16>::sse_decode(&mut deserializer);
+let api_buttons = <u8>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::send_pointer(&*api_that_guard, api_x, api_y, api_buttons); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_unicode_text_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_send_unicode_text", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_text = <String>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::send_unicode_text(&*api_that_guard, api_text); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_wheel_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_send_wheel", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_x = <u16>::sse_decode(&mut deserializer);
+let api_y = <u16>::sse_decode(&mut deserializer);
+let api_delta_x = <i16>::sse_decode(&mut deserializer);
+let api_delta_y = <i16>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::send_wheel(&*api_that_guard, api_x, api_y, api_delta_x, api_delta_y); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_set_visible_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_set_visible", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_that = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(&mut deserializer);
+let api_visible = <bool>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, ()>((move || {
+                    let mut api_that_guard = None;
+let decode_indices_ = flutter_rust_bridge::for_generated::lockable_compute_decode_order(vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(&api_that, 0, false)]);
+        for i in decode_indices_ {
+            match i {
+                0 => api_that_guard = Some(api_that.lockable_decode_sync_ref()),
+                _ => unreachable!(),
+            }
+        }
+        let api_that_guard = api_that_guard.unwrap();
+ let output_ok = Ok::<_, ()>({ crate::api::remote_desktop::RemoteDesktopSessionHandle::set_visible(&*api_that_guard, api_visible); })?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_rdp_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_start_rdp", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_params = <crate::api::remote_desktop::RdpSessionParams>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::remote_desktop::RemoteDesktopSessionHandle::start_rdp(api_params)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_vnc_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+                FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "RemoteDesktopSessionHandle_start_vnc", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_params = <crate::api::remote_desktop::VncSessionParams>::sse_decode(&mut deserializer);deserializer.end();
+                transform_result_sse::<_, String>((move || {
+                     let output_ok = crate::api::remote_desktop::RemoteDesktopSessionHandle::start_vnc(api_params)?;   std::result::Result::Ok(output_ok)
+                })()) })
+            }fn wire__crate__api__ssh_crypto__SshBlockCipher_block_size_impl(ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,rust_vec_len_: i32,data_len_: i32) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                 FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec,_>(flutter_rust_bridge::for_generated::TaskInfo{ debug_name: "SshBlockCipher_block_size", port: None, mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync }, move || {
             let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
@@ -370,12 +576,19 @@ let api_peer_public_key = <Vec<u8>>::sse_decode(&mut deserializer);deserializer.
 
 // Section: related_funcs
 
+flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshBlockCipher>);
 flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshMac>);
 
 
 // Section: dart2rust
 
+
+                impl SseDecode for RemoteDesktopSessionHandle {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_decode(deserializer);
+        return flutter_rust_bridge::for_generated::rust_auto_opaque_decode_owned(inner);}
+                }
 
                 impl SseDecode for SshBlockCipher {
                     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -395,6 +608,12 @@ flutter_rust_bridge::frb_generated_moi_arc_impl_value!(flutter_rust_bridge::for_
         return inner.into_iter().collect();}
                 }
                 
+                impl SseDecode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <usize>::sse_decode(deserializer);
+        return decode_rust_opaque_moi(inner);}
+                }
+
                 impl SseDecode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshBlockCipher>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <usize>::sse_decode(deserializer);
@@ -444,6 +663,11 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_f64::<NativeEndian>().unwrap()}
                 }
                 
+                impl SseDecode for i16 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_i16::<NativeEndian>().unwrap()}
+                }
+
                 impl SseDecode for i32 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_i32::<NativeEndian>().unwrap()}
@@ -506,6 +730,24 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
+                impl SseDecode for Option<crate::api::remote_desktop::RemoteDesktopEvent> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<crate::api::remote_desktop::RemoteDesktopEvent>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+
+                impl SseDecode for Option<u32> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
+                return Some(<u32>::sse_decode(deserializer));
+            } else {
+                return None;
+            }}
+                }
+
                 impl SseDecode for Option<Vec<crate::api::script::CustomCmd>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {if (<bool>::sse_decode(deserializer)) {
@@ -515,6 +757,22 @@ return crate::api::ssh_asym::EcdsaSignature{r: var_r, s: var_s};}
             }}
                 }
                 
+                impl SseDecode for crate::api::remote_desktop::RdpSessionParams {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_connectHost = <String>::sse_decode(deserializer);
+let mut var_connectPort = <u16>::sse_decode(deserializer);
+let mut var_serverName = <String>::sse_decode(deserializer);
+let mut var_serverPort = <u16>::sse_decode(deserializer);
+let mut var_username = <String>::sse_decode(deserializer);
+let mut var_password = <String>::sse_decode(deserializer);
+let mut var_domain = <Option<String>>::sse_decode(deserializer);
+let mut var_trustedCertSha256 = <Option<String>>::sse_decode(deserializer);
+let mut var_width = <u16>::sse_decode(deserializer);
+let mut var_height = <u16>::sse_decode(deserializer);
+let mut var_scaleFactor = <u32>::sse_decode(deserializer);
+return crate::api::remote_desktop::RdpSessionParams{connect_host: var_connectHost, connect_port: var_connectPort, server_name: var_serverName, server_port: var_serverPort, username: var_username, password: var_password, domain: var_domain, trusted_cert_sha256: var_trustedCertSha256, width: var_width, height: var_height, scale_factor: var_scaleFactor};}
+                }
+
                 impl SseDecode for (String,String,) {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_field0 = <String>::sse_decode(deserializer);
@@ -522,6 +780,75 @@ let mut var_field1 = <String>::sse_decode(deserializer);
 return (var_field0, var_field1);}
                 }
                 
+                impl SseDecode for crate::api::remote_desktop::RemoteDesktopConnectionState {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::remote_desktop::RemoteDesktopConnectionState::Connecting,
+1 => crate::api::remote_desktop::RemoteDesktopConnectionState::Connected,
+2 => crate::api::remote_desktop::RemoteDesktopConnectionState::Reconnecting,
+3 => crate::api::remote_desktop::RemoteDesktopConnectionState::Disconnected,
+            _ => unreachable!("Invalid variant for RemoteDesktopConnectionState: {}", inner),
+        };}
+                }
+
+                impl SseDecode for crate::api::remote_desktop::RemoteDesktopEndReason {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::remote_desktop::RemoteDesktopEndReason::ClosedByUser,
+1 => crate::api::remote_desktop::RemoteDesktopEndReason::AuthenticationFailed,
+2 => crate::api::remote_desktop::RemoteDesktopEndReason::CertificateRejected,
+3 => crate::api::remote_desktop::RemoteDesktopEndReason::ConfigurationError,
+4 => crate::api::remote_desktop::RemoteDesktopEndReason::TransportError,
+5 => crate::api::remote_desktop::RemoteDesktopEndReason::ServerDisconnected,
+            _ => unreachable!("Invalid variant for RemoteDesktopEndReason: {}", inner),
+        };}
+                }
+
+                impl SseDecode for crate::api::remote_desktop::RemoteDesktopEvent {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut tag_ = <i32>::sse_decode(deserializer);
+            match tag_ {0 => { let mut var_state = <crate::api::remote_desktop::RemoteDesktopConnectionState>::sse_decode(deserializer);
+let mut var_attempt = <u8>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::ConnectionState{state: var_state, attempt: var_attempt}; }
+1 => { let mut var_bgra = <Vec<u8>>::sse_decode(deserializer);
+let mut var_width = <u32>::sse_decode(deserializer);
+let mut var_height = <u32>::sse_decode(deserializer);
+let mut var_sequence = <u64>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::Frame{bgra: var_bgra, width: var_width, height: var_height, sequence: var_sequence}; }
+2 => { let mut var_width = <u32>::sse_decode(deserializer);
+let mut var_height = <u32>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::Resolution{width: var_width, height: var_height}; }
+3 => { return crate::api::remote_desktop::RemoteDesktopEvent::CursorDefault; }
+4 => { return crate::api::remote_desktop::RemoteDesktopEvent::CursorHidden; }
+5 => { let mut var_x = <u32>::sse_decode(deserializer);
+let mut var_y = <u32>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::CursorPosition{x: var_x, y: var_y}; }
+6 => { let mut var_rgba = <Vec<u8>>::sse_decode(deserializer);
+let mut var_width = <u32>::sse_decode(deserializer);
+let mut var_height = <u32>::sse_decode(deserializer);
+let mut var_hotspotX = <u32>::sse_decode(deserializer);
+let mut var_hotspotY = <u32>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::CursorBitmap{rgba: var_rgba, width: var_width, height: var_height, hotspot_x: var_hotspotX, hotspot_y: var_hotspotY}; }
+7 => { let mut var_text = <String>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::ClipboardText{text: var_text}; }
+8 => { let mut var_sha256 = <String>::sse_decode(deserializer);
+let mut var_subject = <String>::sse_decode(deserializer);
+let mut var_issuer = <String>::sse_decode(deserializer);
+let mut var_validFrom = <String>::sse_decode(deserializer);
+let mut var_validTo = <String>::sse_decode(deserializer);
+let mut var_previousSha256 = <Option<String>>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::CertificateRequest{sha256: var_sha256, subject: var_subject, issuer: var_issuer, valid_from: var_validFrom, valid_to: var_validTo, previous_sha256: var_previousSha256}; }
+9 => { let mut var_message = <String>::sse_decode(deserializer);
+let mut var_retryable = <bool>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::Error{message: var_message, retryable: var_retryable}; }
+10 => { let mut var_reason = <crate::api::remote_desktop::RemoteDesktopEndReason>::sse_decode(deserializer);
+let mut var_message = <Option<String>>::sse_decode(deserializer);
+return crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason: var_reason, message: var_message}; }
+ _ => { unimplemented!(""); }}}
+                }
+
                 impl SseDecode for crate::api::script::ScriptSegment {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_key = <String>::sse_decode(deserializer);
@@ -543,11 +870,21 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
         };}
                 }
                 
+                impl SseDecode for u16 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u16::<NativeEndian>().unwrap()}
+                }
+
                 impl SseDecode for u32 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u32::<NativeEndian>().unwrap()}
                 }
                 
+                impl SseDecode for u64 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u64::<NativeEndian>().unwrap()}
+                }
+
                 impl SseDecode for u8 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u8().unwrap()}
@@ -563,6 +900,15 @@ return crate::api::script::ScriptSegment{key: var_key, value: var_value};}
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {deserializer.cursor.read_u64::<NativeEndian>().unwrap() as _}
                 }
                 
+                impl SseDecode for crate::api::remote_desktop::VncSessionParams {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_connectHost = <String>::sse_decode(deserializer);
+let mut var_connectPort = <u16>::sse_decode(deserializer);
+let mut var_password = <Option<String>>::sse_decode(deserializer);
+let mut var_shared = <bool>::sse_decode(deserializer);
+return crate::api::remote_desktop::VncSessionParams{connect_host: var_connectHost, connect_port: var_connectPort, password: var_password, shared: var_shared};}
+                }
+
                 impl SseDecode for crate::api::ssh_asym::X25519KeyPair {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {let mut var_privateKey = <Vec<u8>>::sse_decode(deserializer);
@@ -578,9 +924,10 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
                 )  {
                     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
                     match func_id {
-                        19 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-24 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
-25 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+                        2 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_next_event_impl(port, ptr, rust_vec_len, data_len),
+31 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+36 => wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len),
+37 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
@@ -593,40 +940,66 @@ return crate::api::ssh_asym::X25519KeyPair{private_key: var_privateKey, public_k
                 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
                     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
                     match func_id {
-                        1 => wire__crate__api__ssh_crypto__SshBlockCipher_block_size_impl(ptr, rust_vec_len, data_len),
-2 => wire__crate__api__ssh_crypto__SshBlockCipher_new_impl(ptr, rust_vec_len, data_len),
-3 => wire__crate__api__ssh_crypto__SshBlockCipher_process_impl(ptr, rust_vec_len, data_len),
-4 => wire__crate__api__ssh_crypto__SshMac_compute_impl(ptr, rust_vec_len, data_len),
-5 => wire__crate__api__ssh_crypto__SshMac_mac_size_impl(ptr, rust_vec_len, data_len),
-6 => wire__crate__api__ssh_crypto__SshMac_new_impl(ptr, rust_vec_len, data_len),
-7 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
-8 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
-9 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
-10 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
-11 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
-12 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
-13 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
-14 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
-15 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
-16 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
-17 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
-18 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
-20 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
-21 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-22 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
-23 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-26 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
-27 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-28 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
-29 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
-30 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
-31 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
+                        1 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_close_impl(ptr, rust_vec_len, data_len),
+3 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_release_all_keys_impl(ptr, rust_vec_len, data_len),
+4 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_resize_impl(ptr, rust_vec_len, data_len),
+5 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_clipboard_text_impl(ptr, rust_vec_len, data_len),
+6 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_key_impl(ptr, rust_vec_len, data_len),
+7 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_pointer_impl(ptr, rust_vec_len, data_len),
+8 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_unicode_text_impl(ptr, rust_vec_len, data_len),
+9 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_send_wheel_impl(ptr, rust_vec_len, data_len),
+10 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_set_visible_impl(ptr, rust_vec_len, data_len),
+11 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_rdp_impl(ptr, rust_vec_len, data_len),
+12 => wire__crate__api__remote_desktop__RemoteDesktopSessionHandle_start_vnc_impl(ptr, rust_vec_len, data_len),
+13 => wire__crate__api__ssh_crypto__SshBlockCipher_block_size_impl(ptr, rust_vec_len, data_len),
+14 => wire__crate__api__ssh_crypto__SshBlockCipher_new_impl(ptr, rust_vec_len, data_len),
+15 => wire__crate__api__ssh_crypto__SshBlockCipher_process_impl(ptr, rust_vec_len, data_len),
+16 => wire__crate__api__ssh_crypto__SshMac_compute_impl(ptr, rust_vec_len, data_len),
+17 => wire__crate__api__ssh_crypto__SshMac_mac_size_impl(ptr, rust_vec_len, data_len),
+18 => wire__crate__api__ssh_crypto__SshMac_new_impl(ptr, rust_vec_len, data_len),
+19 => wire__crate__api__ssh_asym__bcrypt_pbkdf_impl(ptr, rust_vec_len, data_len),
+20 => wire__crate__api__script__build_script_impl(ptr, rust_vec_len, data_len),
+21 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
+22 => wire__crate__api__script__contains_script_segment_impl(ptr, rust_vec_len, data_len),
+23 => wire__crate__api__script__contains_status_segment_impl(ptr, rust_vec_len, data_len),
+24 => wire__crate__api__script__custom_result_key_impl(ptr, rust_vec_len, data_len),
+25 => wire__crate__api__script__custom_result_name_impl(ptr, rust_vec_len, data_len),
+26 => wire__crate__api__ssh_asym__ecdsa_sign_impl(ptr, rust_vec_len, data_len),
+27 => wire__crate__api__ssh_asym__ecdsa_verify_impl(ptr, rust_vec_len, data_len),
+28 => wire__crate__api__ssh_asym__ed25519_sign_impl(ptr, rust_vec_len, data_len),
+29 => wire__crate__api__ssh_asym__ed25519_verify_impl(ptr, rust_vec_len, data_len),
+30 => wire__crate__api__script__exec_command_impl(ptr, rust_vec_len, data_len),
+32 => wire__crate__api__script__install_command_impl(ptr, rust_vec_len, data_len),
+33 => wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+34 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+35 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+38 => wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len),
+39 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+40 => wire__crate__api__script__script_segment_marker_impl(ptr, rust_vec_len, data_len),
+41 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+42 => wire__crate__api__ssh_asym__x25519_keypair_impl(ptr, rust_vec_len, data_len),
+43 => wire__crate__api__ssh_asym__x25519_shared_secret_impl(ptr, rust_vec_len, data_len),
                         _ => unreachable!(),
                     }
                 }
                 
 
 // Section: rust2dart
+
+
+                // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for FrbWrapper<RemoteDesktopSessionHandle> {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self.0).into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<RemoteDesktopSessionHandle> {}
+
+                impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<RemoteDesktopSessionHandle>> for RemoteDesktopSessionHandle {
+            fn into_into_dart(self) -> FrbWrapper<RemoteDesktopSessionHandle> {
+                self.into()
+            }
+        }
 
 
                 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -704,6 +1077,117 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::EcdsaSignature> for
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::RdpSessionParams {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.connect_host.into_into_dart().into_dart(),
+self.connect_port.into_into_dart().into_dart(),
+self.server_name.into_into_dart().into_dart(),
+self.server_port.into_into_dart().into_dart(),
+self.username.into_into_dart().into_dart(),
+self.password.into_into_dart().into_dart(),
+self.domain.into_into_dart().into_dart(),
+self.trusted_cert_sha256.into_into_dart().into_dart(),
+self.width.into_into_dart().into_dart(),
+self.height.into_into_dart().into_dart(),
+self.scale_factor.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RdpSessionParams {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RdpSessionParams> for crate::api::remote_desktop::RdpSessionParams {
+            fn into_into_dart(self) -> crate::api::remote_desktop::RdpSessionParams {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::RemoteDesktopConnectionState {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::Connecting => 0.into_dart(),
+Self::Connected => 1.into_dart(),
+Self::Reconnecting => 2.into_dart(),
+Self::Disconnected => 3.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RemoteDesktopConnectionState {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktopConnectionState> for crate::api::remote_desktop::RemoteDesktopConnectionState {
+            fn into_into_dart(self) -> crate::api::remote_desktop::RemoteDesktopConnectionState {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::RemoteDesktopEndReason {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {
+                    Self::ClosedByUser => 0.into_dart(),
+Self::AuthenticationFailed => 1.into_dart(),
+Self::CertificateRejected => 2.into_dart(),
+Self::ConfigurationError => 3.into_dart(),
+Self::TransportError => 4.into_dart(),
+Self::ServerDisconnected => 5.into_dart(),
+                    _ => unreachable!(),
+                }
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RemoteDesktopEndReason {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktopEndReason> for crate::api::remote_desktop::RemoteDesktopEndReason {
+            fn into_into_dart(self) -> crate::api::remote_desktop::RemoteDesktopEndReason {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::RemoteDesktopEvent {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    match self {crate::api::remote_desktop::RemoteDesktopEvent::ConnectionState{state,attempt} => { [0.into_dart(),
+state.into_into_dart().into_dart(),
+attempt.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::Frame{bgra,width,height,sequence} => { [1.into_dart(),
+bgra.into_into_dart().into_dart(),
+width.into_into_dart().into_dart(),
+height.into_into_dart().into_dart(),
+sequence.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::Resolution{width,height} => { [2.into_dart(),
+width.into_into_dart().into_dart(),
+height.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorDefault => { [3.into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorHidden => { [4.into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorPosition{x,y} => { [5.into_dart(),
+x.into_into_dart().into_dart(),
+y.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorBitmap{rgba,width,height,hotspot_x,hotspot_y} => { [6.into_dart(),
+rgba.into_into_dart().into_dart(),
+width.into_into_dart().into_dart(),
+height.into_into_dart().into_dart(),
+hotspot_x.into_into_dart().into_dart(),
+hotspot_y.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::ClipboardText{text} => { [7.into_dart(),
+text.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::CertificateRequest{sha256,subject,issuer,valid_from,valid_to,previous_sha256} => { [8.into_dart(),
+sha256.into_into_dart().into_dart(),
+subject.into_into_dart().into_dart(),
+issuer.into_into_dart().into_dart(),
+valid_from.into_into_dart().into_dart(),
+valid_to.into_into_dart().into_dart(),
+previous_sha256.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::Error{message,retryable} => { [9.into_dart(),
+message.into_into_dart().into_dart(),
+retryable.into_into_dart().into_dart()].into_dart() }
+crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,message} => { [10.into_dart(),
+reason.into_into_dart().into_dart(),
+message.into_into_dart().into_dart()].into_dart() }
+ _ => { unimplemented!(""); }}
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::RemoteDesktopEvent {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::RemoteDesktopEvent> for crate::api::remote_desktop::RemoteDesktopEvent {
+            fn into_into_dart(self) -> crate::api::remote_desktop::RemoteDesktopEvent {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::script::ScriptSegment {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -739,6 +1223,23 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::script::ShellFuncKind> for cr
             }
         }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+            impl flutter_rust_bridge::IntoDart for crate::api::remote_desktop::VncSessionParams {
+                fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+                    [
+                    self.connect_host.into_into_dart().into_dart(),
+self.connect_port.into_into_dart().into_dart(),
+self.password.into_into_dart().into_dart(),
+self.shared.into_into_dart().into_dart()
+                ].into_dart()
+                }
+            }
+            impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::remote_desktop::VncSessionParams {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::remote_desktop::VncSessionParams> for crate::api::remote_desktop::VncSessionParams {
+            fn into_into_dart(self) -> crate::api::remote_desktop::VncSessionParams {
+                self
+            }
+        }
+// Codec=Dco (DartCObject based), see doc to use other codecs
             impl flutter_rust_bridge::IntoDart for crate::api::ssh_asym::X25519KeyPair {
                 fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
                     [
@@ -753,6 +1254,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 self
             }
         }
+
+                impl SseEncode for RemoteDesktopSessionHandle {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>>::sse_encode(flutter_rust_bridge::for_generated::rust_auto_opaque_encode::<_, MoiArc<_>>(self), serializer);}
+                }
 
                 impl SseEncode for SshBlockCipher {
                     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -769,6 +1275,13 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<(String,String,)>>::sse_encode(self.into_iter().collect(), serializer);}
                 }
                 
+                impl SseEncode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {let (ptr, size) = self.sse_encode_raw();
+                <usize>::sse_encode(ptr, serializer);
+                <i32>::sse_encode(size, serializer);}
+                }
+
                 impl SseEncode for RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<SshBlockCipher>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {let (ptr, size) = self.sse_encode_raw();
@@ -816,6 +1329,11 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_f64::<NativeEndian>(self).unwrap();}
                 }
                 
+                impl SseEncode for i16 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_i16::<NativeEndian>(self).unwrap();}
+                }
+
                 impl SseEncode for i32 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_i32::<NativeEndian>(self).unwrap();}
@@ -865,6 +1383,22 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
+                impl SseEncode for Option<crate::api::remote_desktop::RemoteDesktopEvent> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <crate::api::remote_desktop::RemoteDesktopEvent>::sse_encode(value, serializer);
+                }}
+                }
+
+                impl SseEncode for Option<u32> {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
+                if let Some(value) = self {
+                    <u32>::sse_encode(value, serializer);
+                }}
+                }
+
                 impl SseEncode for Option<Vec<crate::api::script::CustomCmd>> {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<bool>::sse_encode(self.is_some(), serializer);
@@ -873,12 +1407,89 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::ssh_asym::X25519KeyPair> for 
                 }}
                 }
                 
+                impl SseEncode for crate::api::remote_desktop::RdpSessionParams {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.connect_host, serializer);
+<u16>::sse_encode(self.connect_port, serializer);
+<String>::sse_encode(self.server_name, serializer);
+<u16>::sse_encode(self.server_port, serializer);
+<String>::sse_encode(self.username, serializer);
+<String>::sse_encode(self.password, serializer);
+<Option<String>>::sse_encode(self.domain, serializer);
+<Option<String>>::sse_encode(self.trusted_cert_sha256, serializer);
+<u16>::sse_encode(self.width, serializer);
+<u16>::sse_encode(self.height, serializer);
+<u32>::sse_encode(self.scale_factor, serializer);}
+                }
+
                 impl SseEncode for (String,String,) {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.0, serializer);
 <String>::sse_encode(self.1, serializer);}
                 }
                 
+                impl SseEncode for crate::api::remote_desktop::RemoteDesktopConnectionState {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::remote_desktop::RemoteDesktopConnectionState::Connecting => { 0 }
+crate::api::remote_desktop::RemoteDesktopConnectionState::Connected => { 1 }
+crate::api::remote_desktop::RemoteDesktopConnectionState::Reconnecting => { 2 }
+crate::api::remote_desktop::RemoteDesktopConnectionState::Disconnected => { 3 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+
+                impl SseEncode for crate::api::remote_desktop::RemoteDesktopEndReason {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<i32>::sse_encode(match self {crate::api::remote_desktop::RemoteDesktopEndReason::ClosedByUser => { 0 }
+crate::api::remote_desktop::RemoteDesktopEndReason::AuthenticationFailed => { 1 }
+crate::api::remote_desktop::RemoteDesktopEndReason::CertificateRejected => { 2 }
+crate::api::remote_desktop::RemoteDesktopEndReason::ConfigurationError => { 3 }
+crate::api::remote_desktop::RemoteDesktopEndReason::TransportError => { 4 }
+crate::api::remote_desktop::RemoteDesktopEndReason::ServerDisconnected => { 5 }
+ _ => { unimplemented!(""); }}, serializer);}
+                }
+
+                impl SseEncode for crate::api::remote_desktop::RemoteDesktopEvent {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {match self {crate::api::remote_desktop::RemoteDesktopEvent::ConnectionState{state,attempt} => { <i32>::sse_encode(0, serializer); <crate::api::remote_desktop::RemoteDesktopConnectionState>::sse_encode(state, serializer);
+<u8>::sse_encode(attempt, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::Frame{bgra,width,height,sequence} => { <i32>::sse_encode(1, serializer); <Vec<u8>>::sse_encode(bgra, serializer);
+<u32>::sse_encode(width, serializer);
+<u32>::sse_encode(height, serializer);
+<u64>::sse_encode(sequence, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::Resolution{width,height} => { <i32>::sse_encode(2, serializer); <u32>::sse_encode(width, serializer);
+<u32>::sse_encode(height, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorDefault => { <i32>::sse_encode(3, serializer);  }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorHidden => { <i32>::sse_encode(4, serializer);  }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorPosition{x,y} => { <i32>::sse_encode(5, serializer); <u32>::sse_encode(x, serializer);
+<u32>::sse_encode(y, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::CursorBitmap{rgba,width,height,hotspot_x,hotspot_y} => { <i32>::sse_encode(6, serializer); <Vec<u8>>::sse_encode(rgba, serializer);
+<u32>::sse_encode(width, serializer);
+<u32>::sse_encode(height, serializer);
+<u32>::sse_encode(hotspot_x, serializer);
+<u32>::sse_encode(hotspot_y, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::ClipboardText{text} => { <i32>::sse_encode(7, serializer); <String>::sse_encode(text, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::CertificateRequest{sha256,subject,issuer,valid_from,valid_to,previous_sha256} => { <i32>::sse_encode(8, serializer); <String>::sse_encode(sha256, serializer);
+<String>::sse_encode(subject, serializer);
+<String>::sse_encode(issuer, serializer);
+<String>::sse_encode(valid_from, serializer);
+<String>::sse_encode(valid_to, serializer);
+<Option<String>>::sse_encode(previous_sha256, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::Error{message,retryable} => { <i32>::sse_encode(9, serializer); <String>::sse_encode(message, serializer);
+<bool>::sse_encode(retryable, serializer);
+ }
+crate::api::remote_desktop::RemoteDesktopEvent::Ended{reason,message} => { <i32>::sse_encode(10, serializer); <crate::api::remote_desktop::RemoteDesktopEndReason>::sse_encode(reason, serializer);
+<Option<String>>::sse_encode(message, serializer);
+ }
+ _ => { unimplemented!(""); }}}
+                }
+
                 impl SseEncode for crate::api::script::ScriptSegment {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.key, serializer);
@@ -896,11 +1507,21 @@ crate::api::script::ShellFuncKind::Suspend => { 5 }
  _ => { unimplemented!(""); }}, serializer);}
                 }
                 
+                impl SseEncode for u16 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u16::<NativeEndian>(self).unwrap();}
+                }
+
                 impl SseEncode for u32 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u32::<NativeEndian>(self).unwrap();}
                 }
                 
+                impl SseEncode for u64 {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u64::<NativeEndian>(self).unwrap();}
+                }
+
                 impl SseEncode for u8 {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u8(self).unwrap();}
@@ -916,6 +1537,14 @@ crate::api::script::ShellFuncKind::Suspend => { 5 }
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {serializer.cursor.write_u64::<NativeEndian>(self as _).unwrap();}
                 }
                 
+                impl SseEncode for crate::api::remote_desktop::VncSessionParams {
+                    // Codec=Sse (Serialization based), see doc to use other codecs
+                    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<String>::sse_encode(self.connect_host, serializer);
+<u16>::sse_encode(self.connect_port, serializer);
+<Option<String>>::sse_encode(self.password, serializer);
+<bool>::sse_encode(self.shared, serializer);}
+                }
+
                 impl SseEncode for crate::api::ssh_asym::X25519KeyPair {
                     // Codec=Sse (Serialization based), see doc to use other codecs
                     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {<Vec<u8>>::sse_encode(self.private_key, serializer);
@@ -935,6 +1564,7 @@ crate::api::script::ShellFuncKind::Suspend => { 5 }
 
 // Section: imports
 
+use crate::api::remote_desktop::*;
 use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
@@ -942,6 +1572,18 @@ use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt,
 // Section: boilerplate
 
 flutter_rust_bridge::frb_generated_boilerplate_io!();
+
+                #[unsafe(no_mangle)]
+                pub extern "C" fn frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>::increment_strong_count(ptr as _);
+                }
+
+
+                #[unsafe(no_mangle)]
+                pub extern "C" fn frbgen_server_box_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>::decrement_strong_count(ptr as _);
+                }
+
 
                 #[unsafe(no_mangle)]
                 pub extern "C" fn frbgen_server_box_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(ptr: *const std::ffi::c_void)  {
@@ -982,6 +1624,7 @@ flutter_rust_bridge::frb_generated_boilerplate_io!();
 
 // Section: imports
 
+use crate::api::remote_desktop::*;
 use crate::api::ssh_crypto::*;use flutter_rust_bridge::{Handler, IntoIntoDart};
 use flutter_rust_bridge::for_generated::{Lockable, transform_result_dco, Lifetimeable};
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt, ReadBytesExt};use super::*;
@@ -992,6 +1635,18 @@ use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, WriteBytesExt,
 // Section: boilerplate
 
 flutter_rust_bridge::frb_generated_boilerplate_web!();
+
+                #[wasm_bindgen]
+                pub  fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>::increment_strong_count(ptr as _);
+                }
+
+
+                #[wasm_bindgen]
+                pub  fn rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(ptr: *const std::ffi::c_void)  {
+                    MoiArc::<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<RemoteDesktopSessionHandle>>::decrement_strong_count(ptr as _);
+                }
+
 
                 #[wasm_bindgen]
                 pub  fn rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(ptr: *const std::ffi::c_void)  {
@@ -1020,4 +1675,3 @@ flutter_rust_bridge::frb_generated_boilerplate_web!();
         }
         #[cfg(target_family = "wasm")]
         pub use web::*;
-        

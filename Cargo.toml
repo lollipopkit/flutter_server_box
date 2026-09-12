@@ -8,6 +8,16 @@
 resolver = "2"
 members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_ffi", "monitor"]
 
+# IronRDP 0.17 pins an sspi/picky combination that still pins pre-release
+# RustCrypto crates. They cannot coexist with russh's stable ed25519-dalek 3
+# in this workspace. These dependency-only upstream updates keep the IronRDP
+# APIs and crate versions unchanged while selecting the stable crypto stack.
+[patch.crates-io]
+ironrdp-client = { path = "third_party/ironrdp-client" }
+ironrdp-connector = { path = "third_party/ironrdp-connector" }
+ironrdp-tls = { path = "third_party/ironrdp-tls" }
+sspi = { git = "https://github.com/Devolutions/sspi-rs.git", rev = "847304fe35859a8aec401a50033e39df4c7235f4", version = "=0.21.3" }
+
 [profile.release]
 # Smaller release binaries for the shipped container / native packages
 strip = true
