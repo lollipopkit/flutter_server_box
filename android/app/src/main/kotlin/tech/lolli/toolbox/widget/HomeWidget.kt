@@ -14,6 +14,7 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -181,35 +182,50 @@ abstract class HomeWidget(private val kind: WidgetKind) : AppWidgetProvider() {
         showLoading(views, manager, appWidgetId, server.name)
 
         CoroutineScope(Dispatchers.IO).launch {
-            withTimeoutOrNull(COROUTINE_TIMEOUT) {
-                try {
-                    val (reading, history) = WidgetApi.load(context, server)
-                    withContext(Dispatchers.Main) {
-                        showData(context, views, manager, appWidgetId, config, reading, history, bounds)
+            // The guard is released here and nowhere else. Releasing it at the
+            // end of the body instead made it depend on the body reaching the
+            // end: anything thrown past these handlers — a cancellation, an
+            // Error — left `activeUpdates` holding this id for the life of the
+            // process, and every later update, refresh tap and publish was
+            // skipped with "already updating". The widget then sits on its
+            // loading state until the app is killed.
+            try {
+                withTimeoutOrNull(COROUTINE_TIMEOUT) {
+                    try {
+                        val (reading, history) = WidgetApi.load(context, server)
+                        withContext(Dispatchers.Main) {
+                            showData(context, views, manager, appWidgetId, config, reading, history, bounds)
+                        }
+                    } catch (e: CancellationException) {
+                        // Belongs to `withTimeoutOrNull`, which is watching for it.
+                        // Caught as an `Exception` below it would be swallowed, and
+                        // the timeout branch would never run.
+                        throw e
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Widget $appWidgetId update failed: ${e.message}")
+                        val message = when (e) {
+                            is WidgetApi.MissingTokenException,
+                            is WidgetApi.RejectedTokenException,
+                                -> R.string.widget_err_no_token
+                            is WidgetApi.InsecureException -> R.string.widget_err_insecure
+                            is SocketTimeoutException -> R.string.widget_err_timeout
+                            is JSONException -> R.string.widget_err_network
+                            is IOException -> R.string.widget_err_network
+                            else -> R.string.widget_err_network
+                        }
+                        withContext(Dispatchers.Main) {
+                            showError(context, views, manager, appWidgetId, message, server.name)
+                        }
                     }
-                } catch (e: Exception) {
-                    Log.w(TAG, "Widget $appWidgetId update failed: ${e.message}")
-                    val message = when (e) {
-                        is WidgetApi.MissingTokenException,
-                        is WidgetApi.RejectedTokenException,
-                            -> R.string.widget_err_no_token
-                        is WidgetApi.InsecureException -> R.string.widget_err_insecure
-                        is SocketTimeoutException -> R.string.widget_err_timeout
-                        is JSONException -> R.string.widget_err_network
-                        is IOException -> R.string.widget_err_network
-                        else -> R.string.widget_err_network
-                    }
+                } ?: run {
+                    Log.w(TAG, "Widget $appWidgetId update timed out")
                     withContext(Dispatchers.Main) {
-                        showError(context, views, manager, appWidgetId, message, server.name)
+                        showError(context, views, manager, appWidgetId, R.string.widget_err_timeout, server.name)
                     }
                 }
-            } ?: run {
-                Log.w(TAG, "Widget $appWidgetId update timed out")
-                withContext(Dispatchers.Main) {
-                    showError(context, views, manager, appWidgetId, R.string.widget_err_timeout, server.name)
-                }
+            } finally {
+                activeUpdates.remove(appWidgetId)
             }
-            activeUpdates.remove(appWidgetId)
         }
     }
 

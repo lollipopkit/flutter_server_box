@@ -193,7 +193,20 @@ object WidgetStore {
     @Synchronized
     private fun secretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-        (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }
+        try {
+            (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }
+        } catch (e: Exception) {
+            // The alias is present and unusable — a key invalidated by a
+            // lock-screen change, or one restored onto a device whose Keystore
+            // never held its private half. Asking again answers the same way,
+            // so without replacing it every token this store is ever asked to
+            // keep fails to encrypt, for the life of the install: the widget
+            // never holds a credential again and nothing says why. Dropping it
+            // costs nothing that is not already lost — whatever it encrypted
+            // cannot be read either, and the app publishes a fresh token.
+            Log.w(TAG, "Replacing an unusable widget key: ${e.message}")
+            runCatching { keyStore.deleteEntry(KEY_ALIAS) }
+        }
 
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, KEYSTORE)
         generator.init(
@@ -232,16 +245,32 @@ object WidgetStore {
                 val entry = raw.optJSONObject(i) ?: continue
                 val parsed = WidgetServer.fromJson(entry) ?: continue
 
+                // Only while the entry still names the endpoint the stored
+                // credential was minted against. A token is scoped to one
+                // agent, so after an address change the held one is not a
+                // credential to fall back on — it is a secret sent to whatever
+                // now answers at the new address, and an `expiresAt` inherited
+                // beside it reports a working credential, so nothing ever asks
+                // for a real one. Matches `AppDelegate.swift`'s `sameEndpoint`.
+                val stored = server(context, parsed.id)
+                val sameEndpoint = stored?.addr == parsed.addr
+
                 val token = entry.optString("token")
-                if (token.isNotEmpty()) setToken(context, parsed.id, token)
+                if (token.isNotEmpty()) {
+                    setToken(context, parsed.id, token)
+                } else if (!sameEndpoint) {
+                    setToken(context, parsed.id, null)
+                }
 
                 val expiresAt = entry.optLong("expiresAt", 0L)
                 servers.add(
                     parsed.copy(
                         tokenExpiresAt = if (expiresAt > 0) {
                             expiresAt
+                        } else if (sameEndpoint) {
+                            stored?.tokenExpiresAt ?: 0L
                         } else {
-                            server(context, parsed.id)?.tokenExpiresAt ?: 0L
+                            0L
                         }
                     )
                 )
