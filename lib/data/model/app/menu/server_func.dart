@@ -21,7 +21,8 @@ enum ServerFuncBtn {
   portForward(1340),
   power(1491),
   users(1579),
-  scheduledTasks(1579);
+  scheduledTasks(1579),
+  remoteDesktop(1617);
 
   /// The last released build that did not contain this entry.
   ///
@@ -76,6 +77,7 @@ enum ServerFuncBtn {
     power,
     users,
     scheduledTasks,
+    remoteDesktop,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
@@ -91,6 +93,7 @@ enum ServerFuncBtn {
     power => Icons.power_settings_new,
     users => Icons.manage_accounts_outlined,
     scheduledTasks => Icons.schedule,
+    remoteDesktop => Icons.desktop_windows_outlined,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -108,7 +111,7 @@ enum ServerFuncBtn {
     // without growing a stream this app can point anywhere.
     files => caps.files,
     // A forwarded connection is a byte stream, not a command's output.
-    portForward => caps.byteStream,
+    portForward || remoteDesktop => caps.byteStream,
   };
 
   String get toStr => switch (this) {
@@ -125,5 +128,6 @@ enum ServerFuncBtn {
     power => l10n.power,
     users => l10n.systemUsers,
     scheduledTasks => l10n.scheduledTasks,
+    remoteDesktop => 'Remote desktop',
   };
 }

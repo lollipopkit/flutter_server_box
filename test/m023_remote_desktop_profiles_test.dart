@@ -5,8 +5,6 @@ import 'package:server_box/data/store/migrations/m023_remote_desktop_profiles.da
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/tables.dart';
 
-import 'helpers/test_db.dart';
-
 List<(String, String, bool, int)> _columns() => [
   for (final row in SqliteDb.instance.select(
     'PRAGMA table_info(remote_desktop_profile);',

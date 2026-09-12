@@ -179,8 +179,11 @@ void main() {
       // API is a grant of its own — see the next test.
       expect(ServerFuncBtn.files.availableWith(granted), isFalse);
       expect(ServerFuncBtn.portForward.availableWith(granted), isFalse);
+      expect(ServerFuncBtn.remoteDesktop.availableWith(granted), isFalse);
       for (final btn in ServerFuncBtn.values) {
-        if (btn == ServerFuncBtn.files || btn == ServerFuncBtn.portForward) {
+        if (btn == ServerFuncBtn.files ||
+            btn == ServerFuncBtn.portForward ||
+            btn == ServerFuncBtn.remoteDesktop) {
           continue;
         }
         expect(btn.availableWith(granted), isTrue, reason: btn.name);

@@ -277,7 +277,7 @@ void main() {
       expect(remoteDesktops.fetch(), isEmpty);
       expect(
         SqliteDb.instance.select(
-          "SELECT count(*) AS n FROM tombstone "
+          'SELECT count(*) AS n FROM tombstone '
           "WHERE tbl = 'remote_desktop_profile' AND row_id = ?;",
           [remoteDesktop.id],
         ).single['n'],

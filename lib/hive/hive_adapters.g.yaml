@@ -113,7 +113,7 @@ types:
         index: 2
   ServerFuncBtn:
     typeId: 6
-    nextIndex: 14
+    nextIndex: 15
     fields:
       terminal:
         index: 0
@@ -137,6 +137,8 @@ types:
         index: 12
       scheduledTasks:
         index: 13
+      remoteDesktop:
+        index: 14
   WakeOnLanCfg:
     typeId: 8
     nextIndex: 3

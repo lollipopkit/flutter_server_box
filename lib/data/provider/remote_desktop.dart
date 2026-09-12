@@ -237,6 +237,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   late final AppLifecycleListener _lifecycle;
   bool _disposed = false;
   bool _appVisible = true;
+  bool _surfaceVisible = false;
 
   @override
   RemoteDesktopSessionsState build() {
@@ -354,8 +355,15 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
 
   void setVisible(String id, bool visible) {
     final entry = _entries[id];
-    entry?.handle?.setVisible(visible: visible && _appVisible);
-    _replaceView(id, (view) => view.copyWith(visible: visible));
+    final effective = visible && _appVisible && _surfaceVisible;
+    entry?.handle?.setVisible(visible: effective);
+    _replaceView(id, (view) => view.copyWith(visible: effective));
+  }
+
+  void setSurfaceVisible(bool visible) {
+    if (_surfaceVisible == visible) return;
+    _surfaceVisible = visible;
+    _syncVisibility();
   }
 
   void sendKey(String id, int code, bool down, {bool extended = false}) {
@@ -497,7 +505,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       entry.tunnel = tunnel;
       entry.handle = handle;
       handle.setVisible(
-        visible: _appVisible && state.activeId == entry.profile.id,
+        visible:
+            _appVisible &&
+            _surfaceVisible &&
+            state.activeId == entry.profile.id,
       );
       await _pump(entry, generation, handle);
     } catch (error, stackTrace) {
@@ -731,9 +742,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final activeId = state.activeId;
     var next = state;
     for (final session in state.sessions.values) {
-      final visible = session.id == activeId;
+      final visible =
+          session.id == activeId && _appVisible && _surfaceVisible;
       _entries[session.id]?.handle?.setVisible(
-        visible: visible && _appVisible,
+        visible: visible,
       );
       if (session.visible != visible) {
         next = next.put(session.copyWith(visible: visible));

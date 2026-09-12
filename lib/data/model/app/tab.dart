@@ -15,7 +15,9 @@ enum AppTab {
   @HiveField(4)
   agent,
   @HiveField(5)
-  benchmark;
+  benchmark,
+  @HiveField(6)
+  remoteDesktop;
 
   /// The tabs a fresh install puts in the bar, and the fallback when a stored
   /// list cannot be read.

@@ -17,6 +17,7 @@ void main() {
       expect(AppTab.overflowOf(AppTab.defaultOrder), [
         AppTab.snippet,
         AppTab.benchmark,
+        AppTab.remoteDesktop,
       ]);
     });
 
@@ -128,7 +129,17 @@ void main() {
       AppTab.snippet,
     ]);
 
-    expect(available, [AppTab.agent, AppTab.benchmark]);
+    expect(available, [
+      AppTab.agent,
+      AppTab.benchmark,
+      AppTab.remoteDesktop,
+    ]);
+  });
+
+  test('appends remote desktop without changing legacy enum indices', () {
+    expect(AppTab.server.index, 0);
+    expect(AppTab.benchmark.index, 5);
+    expect(AppTab.remoteDesktop.index, 6);
   });
 
   group('reorderHomeTabs', () {

@@ -59,9 +59,6 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _imeController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref
-          .read(remoteDesktopSessionsProvider.notifier)
-          .setVisible(widget.sessionId, true);
       _keyboardFocus.requestFocus();
     });
   }
@@ -70,24 +67,15 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   void didUpdateWidget(covariant RemoteDesktopViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sessionId == widget.sessionId) return;
-    ref
-        .read(remoteDesktopSessionsProvider.notifier)
-        .setVisible(oldWidget.sessionId, false);
     _input?.releaseAll();
     _input = null;
     _remotePointer = Offset.zero;
-    ref
-        .read(remoteDesktopSessionsProvider.notifier)
-        .setVisible(widget.sessionId, true);
   }
 
   @override
   void dispose() {
     _resizeTimer?.cancel();
     _input?.releaseAll();
-    ref
-        .read(remoteDesktopSessionsProvider.notifier)
-        .setVisible(widget.sessionId, false);
     _keyboardFocus.removeListener(_onFocusChanged);
     _keyboardFocus.dispose();
     _imeFocus.dispose();
