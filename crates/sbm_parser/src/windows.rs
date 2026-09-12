@@ -42,9 +42,30 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
         let Some(load) = processor["LoadPercentage"].as_u64().filter(|v| *v <= 100) else {
             continue;
         };
-        let physical = processor["NumberOfCores"].as_u64().unwrap_or(1) as usize;
-        let logical =
-            processor["NumberOfLogicalProcessors"].as_u64().unwrap_or(physical as u64) as usize;
+        let physical = processor["NumberOfCores"]
+            .as_u64()
+            .filter(|n| *n <= MAX_CPU_CORES)
+            .unwrap_or(1);
+        // This number decides how many entries to allocate, and it arrives from
+        // whatever the remote host's WMI query returned. Unbounded, a corrupt
+        // or hostile reading allocates until the process is killed — over FFI
+        // that is the app dying, not an exception a caller can catch. A count
+        // past the bound is a broken query, handled like a broken
+        // LoadPercentage: skip the entry rather than invent a reading for it.
+        let logical = processor["NumberOfLogicalProcessors"]
+            .as_u64()
+            .unwrap_or(physical);
+        if logical > MAX_CPU_CORES {
+            continue;
+        }
+        // The bound belongs to the machine, not to one entry: enough entries
+        // each just inside it still add up to an allocation no machine could
+        // have. No later entry can bring the running total back down, so this
+        // stops rather than skipping — what was read before it is kept.
+        if cores.len() as u64 + logical > MAX_CPU_CORES {
+            break;
+        }
+        let logical = logical as usize;
         let idle = 100 - load;
 
         for i in 0..logical {
@@ -62,7 +83,7 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
                 softirq: 0,
             });
         }
-        offset += logical;
+        offset = offset.saturating_add(logical);
     }
 
     if !cores.is_empty() {
@@ -118,6 +139,12 @@ pub fn parse_disks(raw: &str) -> Vec<Disk> {
             let size_kb = size / 1024;
             let free_kb = free / 1024;
             let used_kb = size_kb - free_kb;
+            // The guard above rejects a zero size in bytes; anything under a
+            // KiB floors to zero here and divides by zero below — an integer
+            // division that panics in release too.
+            if size_kb == 0 {
+                return None;
+            }
             Some(Disk {
                 used_percent: (used_kb * 100 / size_kb).min(100) as u32,
                 path: device_id.clone(),
