@@ -130,8 +130,41 @@ fi
 SHA256_ARM64="$(shasum -a 256 "$DMG_ARM64_PATH" | awk '{print $1}')"
 SHA256_AMD64="$(shasum -a 256 "$DMG_AMD64_PATH" | awk '{print $1}')"
 
+# `brew bump-cask-pr` rewrites `version` and `sha256` and expects everything
+# else to follow from them, which is also how a reviewer reads the URL. A tag
+# written out in full would have to be hand-edited every release, so it is
+# interpolated whenever it is exactly `v<version>` — which it is unless a
+# caller overrode `RELEASE_TAG`.
+if [[ "$RELEASE_TAG" == "v$APP_VERSION" ]]; then
+  URL_TAG='v#{version}'
+else
+  URL_TAG="$RELEASE_TAG"
+fi
+
 # `#{version}` and `#{arch}` are Ruby interpolations. They remain literal here
 # because the shell expands `$`, not `#`.
+#
+# What comes out of this heredoc is submitted to Homebrew/homebrew-cask
+# verbatim, so it carries no commentary: a cask is read by people maintaining
+# thousands of them, and reasoning about this repository's Xcode settings is
+# not theirs to carry. The reasoning lives here instead.
+#
+# - `depends_on macos: :ventura` matches `MACOSX_DEPLOYMENT_TARGET` in the
+#   Xcode project. Without it Homebrew installs happily on an older macOS and
+#   the app fails to launch with a dyld error, which reads as a broken build
+#   rather than as a machine that is too old. The bare symbol already means
+#   "or newer" — `Cask::DSL::DependsOn` calls `MacOSRequirement.parse` with
+#   `comparator: ">="` — and spelling it `">= :ventura"` is the same
+#   requirement written the way the `Homebrew/OSDependsOn` cop rejects.
+# - The `zap` paths were checked against what a real run leaves behind. The
+#   DMG build is **not** sandboxed (`macos/Runner/ReleaseDmg.entitlements`
+#   sets `app-sandbox` false), so its data is under Application Support keyed
+#   by the app's name, not in a container keyed by its bundle id — which is
+#   what this cask used to name, and what a Homebrew install never creates.
+#   The container stays for a user who had the App Store build first.
+#   `HTTPStorages`, `Saved Application State` and `WebKit` were checked too
+#   and are not created. The database encryption key cannot be listed at all:
+#   it is a login keychain item and `zap` has no stanza for one.
 mkdir -p "$(dirname "$TAP_CASK_PATH")"
 cat > "$TAP_CASK_PATH" <<CASK
 cask "$CASK_NAME" do
@@ -141,35 +174,16 @@ cask "$CASK_NAME" do
   sha256 arm:   "$SHA256_ARM64",
          intel: "$SHA256_AMD64"
 
-  url "https://github.com/$APP_REPO_SLUG/releases/download/$RELEASE_TAG/${APP_ASSET_NAME}-#{version}-#{arch}.dmg",
+  url "https://github.com/$APP_REPO_SLUG/releases/download/$URL_TAG/${APP_ASSET_NAME}-#{version}-#{arch}.dmg",
       verified: "github.com/$APP_REPO_SLUG/"
   name "$CASK_DISPLAY_NAME"
   desc "$CASK_DESC"
   homepage "https://github.com/$APP_REPO_SLUG"
 
-  # Matches MACOSX_DEPLOYMENT_TARGET in the Xcode project. Without it Homebrew
-  # installs happily on an older macOS and the app then fails to launch with
-  # a dyld error, which reads as a broken build rather than as a machine that
-  # is too old.
-  #
-  # A bare symbol, which already means "or newer": \`MacOSRequirement.parse\`
-  # defaults its comparator to \`>=\`. Spelling that out as \`">= :ventura"\` is
-  # the same requirement and is what the \`Homebrew/OSDependsOn\` cop rejects,
-  # so a tap PR carrying it fails style before anyone looks at the version.
   depends_on macos: :ventura
 
   app "$APP_NAME.app"
 
-  # Checked against what a real run leaves behind, not guessed from the bundle
-  # id. The DMG build is **not** sandboxed (\`macos/Runner/ReleaseDmg.entitlements\`
-  # sets \`app-sandbox\` false), so its data is under Application Support keyed by
-  # the app's name rather than in a container keyed by its id — which is what
-  # the cask used to name, and what a Homebrew install never creates. The
-  # container is still listed because the App Store build does use it and a
-  # user may have had that one first.
-  #
-  # Not removable here: the database encryption key, which is a login keychain
-  # item and has no cask stanza.
   zap trash: [
     "~/Library/Application Support/$APP_ASSET_NAME",
     "~/Library/Caches/$APP_BUNDLE_ID",
