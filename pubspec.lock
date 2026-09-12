@@ -1337,7 +1337,7 @@ packages:
     source: hosted
     version: "6.5.2"
   pretty_qr_code:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: pretty_qr_code
       sha256: "474f8a4512113fba06f14a6ec9bbf42353b4e651d7a520e3096f2a9b6bbe7a8a"

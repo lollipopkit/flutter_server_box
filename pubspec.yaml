@@ -120,6 +120,10 @@ dev_dependencies:
   riverpod_generator: ^4.0.3
   test: ^1.29.0
   xml: ^7.0.1
+  # The QR encoder, so `server_share_qr_test.dart` can hold the share's
+  # capacity cap against what actually gets drawn. fl_lib depends on it too,
+  # and `QrView` is the only thing in the app that draws one.
+  pretty_qr_code: ^3.3.0
   flutter_test:
     sdk: flutter
   fl_build:
