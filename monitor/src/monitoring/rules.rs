@@ -118,7 +118,17 @@ async fn check_cpu_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resul
 
 async fn check_memory_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    
+
+    // `adapt_memory` reports an absent sample as zeros, so a total of 0 means
+    // /proc/meminfo (or its platform equivalent) could not be read — no machine
+    // has no memory. Judged as a reading it is 0% used, which silences a "high
+    // memory" rule, and `avail` divides by it: NaN compares false against every
+    // threshold, so that rule can never fire again.
+    if metrics.memory.total == 0 {
+        warn!("No memory reading this cycle; skipping rule '{}'", rule.name);
+        return Ok((false, 0.0, "--".to_string()));
+    }
+
     match matcher.as_str() {
         "used" | "memory" | "" => {
             let usage = metrics.memory.usage_percent as f64;
@@ -169,6 +179,16 @@ async fn check_swap_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resu
 }
 
 async fn check_disk_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
+    // Disk usage comes from `df`, which the native sampler abandons on a
+    // timeout (an unresponsive network mount) and reports as no filesystems at
+    // all. That aggregates to a total of 0 and a usage of 0%, which reads as a
+    // measured "empty disk": a `<10%` rule fires on a machine that is fine, and
+    // a `>=90%` rule stays quiet on one that is filling up.
+    if metrics.disk.total == 0 {
+        warn!("No disk reading this cycle; skipping rule '{}'", rule.name);
+        return Ok((false, 0.0, "--".to_string()));
+    }
+
     let usage = metrics.disk.usage_percent as f64;
     let should_alert = should_trigger_alert(&rule.threshold, usage)?;
     let formatted = format!("{:.2}%", usage);
@@ -182,34 +202,29 @@ async fn check_network_rule(
 ) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
     if let Ok(velocity_metrics) = velocity_manager.get_server_velocity(&metrics.server_name).await {
-        let (value, _unit) = match matcher.as_str() {
-            "rx" | "in" => {
-                if let Some(speed) = velocity_metrics.network_rx_speed {
-                    (speed, "B/s")
-                } else {
-                    (0.0, "B/s")
-                }
-            }
-            "tx" | "out" => {
-                if let Some(speed) = velocity_metrics.network_tx_speed {
-                    (speed, "B/s")
-                } else {
-                    (0.0, "B/s")
-                }
-            }
-            _ => {
-                let rx = velocity_metrics.network_rx_speed.unwrap_or(0.0);
-                let tx = velocity_metrics.network_tx_speed.unwrap_or(0.0);
-                (rx + tx, "B/s")
-            }
+        // A speed is the difference between two samples, so there is none until
+        // the second one lands: after an agent restart, after a gap in
+        // collection, and for an interface that has just appeared. `None` is
+        // that state and is not 0 B/s — a bare threshold parses as `<`
+        // (`Threshold::parse`, Go-compatible), so substituting zero reports the
+        // link as down every time the agent starts.
+        let Some(value) = (match matcher.as_str() {
+            "rx" | "in" => velocity_metrics.network_rx_speed,
+            "tx" | "out" => velocity_metrics.network_tx_speed,
+            _ => match (velocity_metrics.network_rx_speed, velocity_metrics.network_tx_speed) {
+                (Some(rx), Some(tx)) => Some(rx + tx),
+                _ => None,
+            },
+        }) else {
+            return Ok((false, 0.0, "--".to_string()));
         };
-        
+
         let should_alert = should_trigger_speed_alert(&rule.threshold, value)?;
         let formatted = format_network_speed(value);
-        
+
         Ok((should_alert, value, formatted))
     } else {
-        Ok((false, 0.0, "0 B/s".to_string()))
+        Ok((false, 0.0, "--".to_string()))
     }
 }
 
@@ -339,6 +354,179 @@ mod tests {
         // This test would need velocity_manager to work with check_rules_with_velocity
         // For now we just test that the function exists and rules are parsed correctly
         assert!(!config.get_monitoring().rules.is_empty());
+    }
+
+    fn rule(monitor_type: &str, matcher: &str, threshold: &str) -> MonitoringRule {
+        MonitoringRule {
+            name: format!("{monitor_type}-{matcher}"),
+            monitor_type: monitor_type.to_string(),
+            threshold: threshold.to_string(),
+            matcher: matcher.to_string(),
+        }
+    }
+
+    /// Every field zeroed, which is what `adapt_memory`/`aggregate_disks`
+    /// produce when the sample behind them is missing.
+    fn empty_metrics() -> SystemMetrics {
+        SystemMetrics {
+            timestamp: Utc::now(),
+            extended_updated_at: Utc::now(),
+            server_name: "test".to_string(),
+            cpu_usage: 0.0,
+            cpu_cores: vec![],
+            memory: crate::monitoring::MemoryMetrics {
+                total: 0,
+                used: 0,
+                free: 0,
+                usage_percent: 0.0,
+            },
+            swap: crate::monitoring::SwapMetrics {
+                total: 0,
+                used: 0,
+                usage_percent: 0.0,
+            },
+            disk: crate::monitoring::DiskMetrics {
+                total: 0,
+                used: 0,
+                free: 0,
+                usage_percent: 0.0,
+            },
+            network: crate::monitoring::NetworkMetrics {
+                rx_bytes: 0,
+                tx_bytes: 0,
+            },
+            temperature: None,
+            temps: vec![],
+            sys: None,
+            os_id: None,
+            os_id_like: Vec::new(),
+            cpu_brand: None,
+            gpus: vec![],
+            disk_details: vec![],
+            ifaces: vec![],
+            uptime: None,
+            conn: None,
+            diskio: vec![],
+            diskio_rate: vec![],
+            batteries: vec![],
+            sensors: vec![],
+            disk_smart: vec![],
+            ips: vec![],
+            custom_cmds: vec![],
+            amd_cache: vec![],
+        }
+    }
+
+    /// `/proc/meminfo` unreadable arrives as a total of 0. `avail` divided by
+    /// it, so the rule compared NaN — false against every threshold — and the
+    /// low-memory alert could never fire again.
+    #[tokio::test]
+    async fn memory_rule_skips_a_cycle_with_no_reading() {
+        let metrics = empty_metrics();
+
+        let (alert, value, formatted) = check_memory_rule(&rule("memory", "avail", "<=10%"), &metrics)
+            .await
+            .unwrap();
+        assert!(!alert);
+        assert!(!value.is_nan(), "a missing sample must not produce NaN");
+        assert_eq!(formatted, "--");
+
+        // The same total of 0 reads as 0% used, which would silence this one.
+        let (alert, _, formatted) = check_memory_rule(&rule("memory", "used", ">=90%"), &metrics)
+            .await
+            .unwrap();
+        assert!(!alert);
+        assert_eq!(formatted, "--");
+    }
+
+    #[tokio::test]
+    async fn memory_rule_fires_on_a_real_reading() {
+        let mut metrics = empty_metrics();
+        metrics.memory = crate::monitoring::MemoryMetrics {
+            total: 1000,
+            used: 950,
+            free: 50,
+            usage_percent: 95.0,
+        };
+
+        let (alert, _, _) = check_memory_rule(&rule("memory", "used", ">=90%"), &metrics)
+            .await
+            .unwrap();
+        assert!(alert);
+
+        let (alert, value, _) = check_memory_rule(&rule("memory", "avail", "<=10%"), &metrics)
+            .await
+            .unwrap();
+        assert!(alert);
+        assert_eq!(value, 5.0);
+    }
+
+    /// A `df` that timed out leaves no filesystems, which aggregates to a total
+    /// of 0 and 0% used — indistinguishable from a measured empty disk.
+    #[tokio::test]
+    async fn disk_rule_skips_a_cycle_with_no_reading() {
+        let (alert, _, formatted) = check_disk_rule(&rule("disk", "", "<10%"), &empty_metrics())
+            .await
+            .unwrap();
+        assert!(!alert, "an absent reading must not fire a low-usage rule");
+        assert_eq!(formatted, "--");
+    }
+
+    #[tokio::test]
+    async fn disk_rule_fires_on_a_real_reading() {
+        let mut metrics = empty_metrics();
+        metrics.disk = crate::monitoring::DiskMetrics {
+            total: 10000,
+            used: 9500,
+            free: 500,
+            usage_percent: 95.0,
+        };
+
+        let (alert, _, _) = check_disk_rule(&rule("disk", "", ">=90%"), &metrics)
+            .await
+            .unwrap();
+        assert!(alert);
+    }
+
+    /// A speed needs two samples. Until the second one lands there is no
+    /// reading, and substituting 0 B/s made every agent restart report the
+    /// link as down: a bare threshold parses as `<`.
+    #[tokio::test]
+    async fn network_rule_skips_a_cycle_with_no_speed_yet() {
+        let velocity = VelocityManager::new();
+        let metrics = empty_metrics();
+
+        for matcher in ["rx", "tx", ""] {
+            let (alert, value, formatted) =
+                check_network_rule(&rule("network", matcher, "1m/s"), &metrics, &velocity)
+                    .await
+                    .unwrap();
+            assert!(!alert, "matcher {matcher:?} fired without a reading");
+            assert_eq!(value, 0.0);
+            assert_eq!(formatted, "--");
+        }
+    }
+
+    #[tokio::test]
+    async fn network_rule_fires_once_a_speed_is_measured() {
+        let mut velocity = VelocityManager::new();
+        let now = Utc::now();
+        velocity
+            .update_server_metrics("test", 0, 0, vec![], now - chrono::Duration::seconds(10))
+            .await;
+        velocity
+            .update_server_metrics("test", 10_000_000, 10_000_000, vec![], now)
+            .await;
+
+        // 10 MB over 10 s, against a threshold in KiB/s.
+        let (alert, value, _) = check_network_rule(
+            &rule("network", "rx", ">100k/s"),
+            &empty_metrics(),
+            &velocity,
+        )
+        .await
+        .unwrap();
+        assert!(alert, "expected a measured speed, got {value}");
     }
 
     #[test]

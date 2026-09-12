@@ -1331,13 +1331,32 @@ fn percent(used: u64, total: u64) -> f32 {
 /// avail) belong to one pool: count size/avail once, keep summing used.
 /// Linux paths never match the /dev/diskN pattern and are unaffected.
 fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
-    if let Some(rest) = d.path.strip_prefix("/dev/disk") {
-        let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-        if !base.is_empty() {
-            return Some((base, d.size, d.avail));
-        }
-    }
-    None
+    let container = apfs_container(&d.path).or_else(|| {
+        // Native sampling keys a volume by its mount point — the panel needs
+        // one row each — so no device reaches `path` there. It arrives in
+        // `name` instead, spelled the lsblk way ("disk3s5"). Restricted to
+        // APFS because on Linux `name` is an lsblk NAME, where two rows
+        // sharing one are two views of a device rather than a pool.
+        d.fs_type
+            .as_deref()
+            .filter(|t| t.eq_ignore_ascii_case("apfs"))?;
+        apfs_container(d.name.as_deref()?)
+    })?;
+    Some((container, d.size, d.avail))
+}
+
+/// The APFS container a device belongs to: `disk3` out of `/dev/disk3s1s1` or
+/// `disk3s5`. Both spellings appear — the script path reports `df`'s source in
+/// `path`, native sampling puts the bare device in `name`.
+///
+/// The container is the identity that matters and the only one available:
+/// volumes carry a *label*, which is shared inside a container and, for two
+/// disks nobody renamed, across containers too.
+fn apfs_container(device: &str) -> Option<String> {
+    let rest = device.strip_prefix("/dev/").unwrap_or(device);
+    let rest = rest.strip_prefix("disk")?;
+    let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+    (!base.is_empty()).then_some(base)
 }
 
 /// Disk aggregation with Go-compatible /status semantics: real filesystems
@@ -1706,6 +1725,96 @@ mod tests {
         assert_eq!(metrics.total, 2000 * 1024);
         assert_eq!(metrics.free, 1200 * 1024);
         assert_eq!(metrics.used, 400 * 1024);
+    }
+
+    /// Native sampling keys a volume by its mount point — the panel needs one
+    /// row per volume — so the `/dev/diskN` form never reaches `path` and the
+    /// device arrives in `name`. Without pooling on it, a Mac's capacity is
+    /// reported once per volume. Values as probed on a real machine.
+    #[test]
+    fn native_apfs_volumes_are_pooled_by_container() {
+        let volume = |mount: &str, device: &str| Disk {
+            path: mount.to_string(),
+            mount: mount.to_string(),
+            fs_type: Some("apfs".to_string()),
+            name: Some(device.to_string()),
+            used: 200,
+            size: 1000,
+            avail: 600,
+            ..Default::default()
+        };
+        let disks = vec![
+            volume("/", "disk3s1s1"),
+            volume("/System/Volumes/Data", "disk3s5"),
+        ];
+
+        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        assert_eq!(metrics.total, 1000 * 1024, "capacity counted once");
+        assert_eq!(metrics.free, 600 * 1024);
+        // Used is per volume and still sums, as in the /dev/diskN case.
+        assert_eq!(metrics.used, 400 * 1024);
+    }
+
+    /// Two disks are two disks. The volume *label* cannot say so — two drives
+    /// nobody renamed share one ("Untitled"), and a pair bought together has
+    /// the same capacity, so a label-keyed pool would report half the storage
+    /// this machine has. The container behind each volume is the identity.
+    #[test]
+    fn distinct_apfs_containers_are_not_pooled() {
+        let volume = |mount: &str, device: &str| Disk {
+            path: mount.to_string(),
+            mount: mount.to_string(),
+            fs_type: Some("apfs".to_string()),
+            name: Some(device.to_string()),
+            used: 200,
+            size: 1000,
+            avail: 600,
+            ..Default::default()
+        };
+        let disks = vec![
+            volume("/Volumes/Untitled", "disk4s1"),
+            volume("/Volumes/Untitled 1", "disk9s1"),
+        ];
+
+        let metrics = aggregate_disks(SystemType::Bsd, &disks);
+        assert_eq!(metrics.total, 2000 * 1024);
+        assert_eq!(metrics.free, 1200 * 1024);
+        assert_eq!(metrics.used, 400 * 1024);
+    }
+
+    /// The `name` fallback is APFS-only: on Linux `name` is an lsblk NAME, and
+    /// two rows carrying one are two views of a device, not a pool.
+    #[test]
+    fn non_apfs_volumes_sharing_a_name_are_not_pooled() {
+        let volume = |path: &str, mount: &str| Disk {
+            path: path.to_string(),
+            mount: mount.to_string(),
+            fs_type: Some("ext4".to_string()),
+            name: Some("sda1".to_string()),
+            used: 200,
+            size: 1000,
+            avail: 600,
+            ..Default::default()
+        };
+        let disks = vec![
+            volume("/dev/sda1", "/"),
+            volume("/dev/sda1-bind", "/mnt/data"),
+        ];
+
+        let metrics = aggregate_disks(SystemType::Linux, &disks);
+        assert_eq!(metrics.total, 2000 * 1024);
+    }
+
+    #[test]
+    fn apfs_container_reads_both_spellings_of_a_device() {
+        assert_eq!(apfs_container("/dev/disk3s1s1").as_deref(), Some("3"));
+        assert_eq!(apfs_container("disk3s5").as_deref(), Some("3"));
+        assert_eq!(apfs_container("/dev/disk10s1").as_deref(), Some("10"));
+        assert_eq!(apfs_container("/dev/sda1"), None);
+        assert_eq!(apfs_container("sda1"), None);
+        assert_eq!(apfs_container("/System/Volumes/Data"), None);
+        // A label, which is what this must never accept as an identity.
+        assert_eq!(apfs_container("Macintosh HD"), None);
     }
 
     #[test]

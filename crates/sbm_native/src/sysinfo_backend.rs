@@ -76,6 +76,38 @@ fn is_plausible_temp(c: f64) -> bool {
     c.is_finite() && (-40.0..=150.0).contains(&c)
 }
 
+/// The device serving a mount point, without the `/dev/` prefix — the lsblk
+/// NAME convention `Disk.name` documents ("disk3s5", "sda1").
+///
+/// `sysinfo`'s `Disk::name()` is a volume *label* on macOS ("Macintosh HD"),
+/// which identifies nothing: every volume of an APFS container carries the
+/// same one, and so does every disk nobody renamed. The device is what tells
+/// one container from another, and `statfs` is where it comes from —
+/// `f_mntfromname` is the source `df` prints.
+#[cfg(target_os = "macos")]
+fn device_for_mount(mount: &str) -> Option<String> {
+    use std::ffi::{CStr, CString};
+
+    let path = CString::new(mount).ok()?;
+    let mut buf: libc::statfs = unsafe { std::mem::zeroed() };
+    // SAFETY: `path` is a valid NUL-terminated C string that outlives the call,
+    // and `buf` is a correctly sized, owned `statfs` the call only writes into.
+    if unsafe { libc::statfs(path.as_ptr(), &mut buf) } != 0 {
+        return None;
+    }
+    // SAFETY: on success statfs leaves `f_mntfromname` NUL-terminated within
+    // its own bounds.
+    let raw = unsafe { CStr::from_ptr(buf.f_mntfromname.as_ptr()) }.to_string_lossy();
+    let device = raw.strip_prefix("/dev/").unwrap_or(&raw);
+    (!device.is_empty()).then(|| device.to_string())
+}
+
+/// Windows names volumes by drive letter, which `mount` already carries.
+#[cfg(not(target_os = "macos"))]
+fn device_for_mount(_mount: &str) -> Option<String> {
+    None
+}
+
 fn cpu_brand(system: &System) -> Vec<(String, u32)> {
     let mut brands: Vec<(String, u32)> = Vec::new();
     for cpu in system.cpus() {
@@ -183,16 +215,23 @@ pub fn sample(state: &mut State) -> ServerStatus {
         .list()
         .iter()
         .map(|disk| {
-            let name = disk.name().to_string_lossy().into_owned();
             let mount = disk.mount_point().to_string_lossy().into_owned();
-            let id = if mount.is_empty() { name } else { mount };
-            (disk, id)
+            let device = device_for_mount(&mount);
+            // Keyed by mount point: APFS volumes of one container report
+            // identical `sysinfo` names, and the panel renders disk/diskio rows
+            // keyed by this value.
+            let id = if mount.is_empty() {
+                disk.name().to_string_lossy().into_owned()
+            } else {
+                mount
+            };
+            (disk, id, device)
         })
         .collect();
 
     let disks: Vec<Disk> = keyed_disks
         .iter()
-        .map(|(d, id)| {
+        .map(|(d, id, device)| {
             let total_kb = d.total_space() / 1024;
             let avail_kb = d.available_space() / 1024;
             let used_kb = total_kb.saturating_sub(avail_kb);
@@ -204,6 +243,12 @@ pub fn sample(state: &mut State) -> ServerStatus {
                 used: used_kb,
                 size: total_kb,
                 avail: avail_kb,
+                // The volume is keyed by mount point above, so this is the only
+                // place the device survives. Volumes of one APFS container each
+                // report the container's whole size, and this is what lets
+                // monitor recognise them as one and count that capacity once
+                // (`monitoring::apfs_pool_key`) rather than once per volume.
+                name: device.clone(),
                 ..Disk::default()
             }
         })
@@ -211,7 +256,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
 
     let diskio: Vec<DiskIoPiece> = keyed_disks
         .iter()
-        .map(|(d, id)| {
+        .map(|(d, id, _)| {
             let usage = d.usage();
             DiskIoPiece {
                 dev: id.clone(),
@@ -357,6 +402,29 @@ mod tests {
             devs.len(),
             unique_devs.len(),
             "duplicate diskio dev: {devs:?}"
+        );
+    }
+
+    /// `Disk.name` has to be the device. Monitor pools APFS volumes by the
+    /// container in it (`monitoring::apfs_pool_key`) to keep one container's
+    /// capacity from being counted once per volume — and the label `sysinfo`
+    /// hands out cannot do that job, since every volume of a container carries
+    /// the same one and so does every disk nobody renamed.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn disks_carry_a_device_not_a_volume_label() {
+        let mut state = State::default();
+        let status = sample(&mut state);
+
+        let root = status
+            .disks
+            .iter()
+            .find(|d| d.mount == "/")
+            .expect("a root filesystem");
+        let device = root.name.as_deref().expect("root volume has a device");
+        assert!(
+            device.starts_with("disk"),
+            "expected a device like disk3s1s1, got {device:?}"
         );
     }
 
