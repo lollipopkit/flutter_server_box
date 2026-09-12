@@ -161,10 +161,24 @@ fi
 #   sets `app-sandbox` false), so its data is under Application Support keyed
 #   by the app's name, not in a container keyed by its bundle id — which is
 #   what this cask used to name, and what a Homebrew install never creates.
-#   The container stays for a user who had the App Store build first.
-#   `HTTPStorages`, `Saved Application State` and `WebKit` were checked too
-#   and are not created. The database encryption key cannot be listed at all:
-#   it is a login keychain item and `zap` has no stanza for one.
+#   Confirmed by installing the cask, launching it, and reading what appeared:
+#   those three and nothing else. `HTTPStorages`, `Saved Application State`
+#   and `WebKit` stay absent through a real GUI launch.
+#
+#   The container is deliberately **not** listed, though the App Store build
+#   of this app does use one. `~/Library/Containers` is protected, so
+#   `brew zap` cannot move it as the user and escalates: a run with it listed
+#   prints `Using sudo to gain ownership`, asks for a password, and ends with
+#   `could not be trashed, please do so manually`. Making every uninstall
+#   prompt for a password to fail at removing another distribution channel's
+#   data is worse than leaving 40 KB behind.
+#
+#   The database encryption key cannot be listed at all: it is a login
+#   keychain item and `zap` has no stanza for one.
+#
+# - No `verified:` on the URL. `brew install` warns that the parameter is
+#   deprecated and names the line, and the default verification already
+#   covers a URL whose host and path match the homepage.
 mkdir -p "$(dirname "$TAP_CASK_PATH")"
 cat > "$TAP_CASK_PATH" <<CASK
 cask "$CASK_NAME" do
@@ -174,8 +188,7 @@ cask "$CASK_NAME" do
   sha256 arm:   "$SHA256_ARM64",
          intel: "$SHA256_AMD64"
 
-  url "https://github.com/$APP_REPO_SLUG/releases/download/$URL_TAG/${APP_ASSET_NAME}-#{version}-#{arch}.dmg",
-      verified: "github.com/$APP_REPO_SLUG/"
+  url "https://github.com/$APP_REPO_SLUG/releases/download/$URL_TAG/${APP_ASSET_NAME}-#{version}-#{arch}.dmg"
   name "$CASK_DISPLAY_NAME"
   desc "$CASK_DESC"
   homepage "https://github.com/$APP_REPO_SLUG"
@@ -187,7 +200,6 @@ cask "$CASK_NAME" do
   zap trash: [
     "~/Library/Application Support/$APP_ASSET_NAME",
     "~/Library/Caches/$APP_BUNDLE_ID",
-    "~/Library/Containers/$APP_BUNDLE_ID",
     "~/Library/Preferences/$APP_BUNDLE_ID.plist",
   ]
 end
