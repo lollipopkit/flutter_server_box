@@ -97,7 +97,16 @@ abstract final class ServerShareUi {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              QrView(data: text, tip: spi.name, tip2: '${libL10n.server} ~ ServerBox'),
+              QrView(
+                data: text,
+                tip: spi.name,
+                tip2: '${libL10n.server} ~ ServerBox',
+                // The other device is in the room and reads this off a
+                // screen, so nothing is going to scuff the symbol. What
+                // decides whether it can be read is how many camera pixels
+                // land on a module, and L is two versions fewer than M.
+                errorCorrectLevel: QrErrorCorrectLevel.L,
+              ),
               UIs.height13,
               Text(l10n.shareCodeTitle, style: UIs.text13Grey),
               SelectableText(
