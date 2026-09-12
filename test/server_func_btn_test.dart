@@ -21,45 +21,45 @@ void main() {
     await closeTestDb();
   });
 
-  /// The stored row, as indices — what the setting actually holds.
-  List<int> row() => setting.serverFuncBtns.get();
+  /// The stored row, as names — what the setting actually holds.
+  List<String> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
     // A row from before any of the entries with release boundaries shipped.
     setting.serverFuncBtns.put([
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.files.index,
+      ServerFuncBtn.terminal.name,
+      ServerFuncBtn.files.name,
     ]);
 
     ServerFuncBtn.autoAddNewFuncs(1000, 1600);
 
     expect(row(), [
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.files.index,
-      ServerFuncBtn.systemd.index,
-      ServerFuncBtn.portForward.index,
-      ServerFuncBtn.power.index,
-      ServerFuncBtn.users.index,
-      ServerFuncBtn.scheduledTasks.index,
+      ServerFuncBtn.terminal.name,
+      ServerFuncBtn.files.name,
+      ServerFuncBtn.systemd.name,
+      ServerFuncBtn.portForward.name,
+      ServerFuncBtn.power.name,
+      ServerFuncBtn.users.name,
+      ServerFuncBtn.scheduledTasks.name,
     ]);
   });
 
   test(
     'uses release tags as the Systemd and port-forward boundaries',
     () async {
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
       ServerFuncBtn.autoAddNewFuncs(1051, 1070);
       expect(row(), [
-        ServerFuncBtn.terminal.index,
-        ServerFuncBtn.systemd.index,
+        ServerFuncBtn.terminal.name,
+        ServerFuncBtn.systemd.name,
       ]);
 
       ServerFuncBtn.autoAddNewFuncs(1340, 1351);
       expect(row(), [
-        ServerFuncBtn.terminal.index,
-        ServerFuncBtn.systemd.index,
-        ServerFuncBtn.portForward.index,
+        ServerFuncBtn.terminal.name,
+        ServerFuncBtn.systemd.name,
+        ServerFuncBtn.portForward.name,
       ]);
     },
   );
@@ -74,23 +74,23 @@ void main() {
     ];
 
     for (final (boundary, button) in boundaries) {
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
       ServerFuncBtn.autoAddNewFuncs(boundary - 1, boundary);
 
-      expect(row(), isNot(contains(button.index)));
+      expect(row(), isNot(contains(button.name)));
     }
   });
 
   test('adds nothing for an upgrade that shipped no new entry', () async {
-    setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
     // A window after the newest entry's boundary. It has to move whenever one
     // is added, which is the point: the assertion is about a window containing
     // no entry, not about two particular numbers.
     ServerFuncBtn.autoAddNewFuncs(1580, 1600);
 
-    expect(row(), [ServerFuncBtn.terminal.index]);
+    expect(row(), [ServerFuncBtn.terminal.name]);
   });
 
   test('leaves an entry the user removed removed', () async {
@@ -99,25 +99,25 @@ void main() {
     // upgrade to 1600 must not put it back — and would have, when the rule was
     // `to` alone.
     setting.serverFuncBtns.put([
-      ServerFuncBtn.terminal.index,
-      ServerFuncBtn.systemd.index,
+      ServerFuncBtn.terminal.name,
+      ServerFuncBtn.systemd.name,
     ]);
 
     ServerFuncBtn.autoAddNewFuncs(1580, 1600);
 
-    expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.systemd.index]);
+    expect(row(), [ServerFuncBtn.terminal.name, ServerFuncBtn.systemd.name]);
   });
 
   test('an entry already in the row is not added twice', () async {
     setting.serverFuncBtns.put([
-      ServerFuncBtn.power.index,
-      ServerFuncBtn.terminal.index,
+      ServerFuncBtn.power.name,
+      ServerFuncBtn.terminal.name,
     ]);
 
     ServerFuncBtn.autoAddNewFuncs(1000, 1536);
 
     expect(
-      row().where((e) => e == ServerFuncBtn.power.index).length,
+      row().where((e) => e == ServerFuncBtn.power.name).length,
       1,
       reason: 'power was already there',
     );
@@ -125,11 +125,11 @@ void main() {
 
   for (final retainedBuild in [1466, 1480, 1491]) {
     test('adds Power when upgrading from v$retainedBuild', () async {
-      setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
+      setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
       ServerFuncBtn.autoAddNewFuncs(retainedBuild, 1536);
 
-      expect(row(), [ServerFuncBtn.terminal.index, ServerFuncBtn.power.index]);
+      expect(row(), [ServerFuncBtn.terminal.name, ServerFuncBtn.power.name]);
     });
   }
 
@@ -144,15 +144,15 @@ void main() {
       isNull,
       reason: 'nothing was written, so the defaults still apply',
     );
-    expect(row(), ServerFuncBtn.defaultIdxs);
+    expect(row(), ServerFuncBtn.defaultNames);
     expect(
-      ServerFuncBtn.defaultIdxs,
+      ServerFuncBtn.defaultNames,
       containsAll([
-        ServerFuncBtn.systemd.index,
-        ServerFuncBtn.portForward.index,
-        ServerFuncBtn.power.index,
-        ServerFuncBtn.users.index,
-        ServerFuncBtn.scheduledTasks.index,
+        ServerFuncBtn.systemd.name,
+        ServerFuncBtn.portForward.name,
+        ServerFuncBtn.power.name,
+        ServerFuncBtn.users.name,
+        ServerFuncBtn.scheduledTasks.name,
       ]),
     );
   });

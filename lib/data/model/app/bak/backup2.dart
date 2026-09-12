@@ -109,10 +109,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         force: force,
         notify: false,
       );
+      final appliedServerIds = <String>{};
       serversChanged = Stores.server.merge(
         restored.servers,
         force: force,
         notify: false,
+        appliedIds: appliedServerIds,
       );
       snippetsChanged = Stores.snippet.merge(
         _snippetsWithRestoredServerIds(restored.serverIds),
@@ -136,6 +138,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           if (!_isInternalStoreKey(key)) key,
       };
       for (final serverId in containerIds) {
+        // A container host is a child of its server and carries no timestamp
+        // of its own — editing one stamps the parent. So the backup speaks for
+        // it exactly where it spoke for the parent. Applied to every server
+        // instead, this deleted a host configured here after the backup was
+        // taken, on a server `merge` had just correctly decided to keep.
+        if (!appliedServerIds.contains(serverId)) continue;
         if (Stores.container.restoreOne(
           serverId,
           restoredContainer[serverId] ?? const <String, Object?>{},
@@ -403,9 +411,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       (cred) => cred.id,
       (cred) => Stores.bmcCredential.fetchByName(cred.name)?.id,
     );
-    final localByName = {
-      for (final server in Stores.server.fetch()) server.name: server.id,
-    };
+    // Every local id per name, not one: a server's name is not unique, and a
+    // map keyed by it answers with whichever record happened to be last.
+    final localByName = <String, List<String>>{};
+    for (final server in Stores.server.fetch()) {
+      (localByName[server.name] ??= <String>[]).add(server.id);
+    }
     final serverIds = <String, String>{};
     final decoded = <String, Map<String, Object?>>{};
     final sourceOwners = <String, String>{};
@@ -429,9 +440,18 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           ? embedded
           : entry.key;
       final name = server['name'];
-      final restoredId = name is String
-          ? localByName[name] ?? backupId
-          : backupId;
+      // An id this device already holds is the identity; a name only stands in
+      // for a record that carries none. A name is ambiguous when more than one
+      // local server has it, and resolves to nothing then — the same rule
+      // `ServerStore.reconcile` applies, and it has to be the same one, since
+      // the id decided here is what reconcile is later handed. Resolving it to
+      // one of them instead overwrote whichever the lookup answered with.
+      final namedLocally = name is String ? localByName[name] : null;
+      final restoredId = Stores.server.fetchOneRaw(backupId) != null
+          ? backupId
+          : (namedLocally != null && namedLocally.length == 1
+                ? namedLocally.single
+                : backupId);
       claimSourceId(entry.key, entry.key);
       claimSourceId(backupId, entry.key);
       final destinationOwner = destinationOwners[restoredId];
@@ -723,7 +743,13 @@ Set<String> _mergeSqliteStore(
     final currentHasKey = currentKeys.contains(key);
 
     if (backupHasKey && !currentHasKey) {
-      if (!force && backupTimestamp <= currentTimestamp) continue;
+      // Nothing here to protect. A key this device does not hold and has no
+      // timestamp for was never written and never deleted, so the backup's
+      // copy is the only copy — `0 <= 0` used to drop it, which is every entry
+      // of every envelope that carries no timestamps.
+      if (!force && currentTimestamp > 0 && backupTimestamp <= currentTimestamp) {
+        continue;
+      }
       final value = backupData[key];
       if (value == null) continue;
       _writeKv(store, key, value);

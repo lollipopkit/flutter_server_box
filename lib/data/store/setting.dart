@@ -8,6 +8,7 @@ import 'package:server_box/data/model/app/linux_distro.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
@@ -599,9 +600,12 @@ class SettingStore extends SqliteStore {
     ),
   );
 
-  late final serverFuncBtns = listProperty(
+  late final serverFuncBtns = listProperty<String>(
     'serverBtns',
-    defaultValue: ServerFuncBtn.defaultIdxs,
+    defaultValue: ServerFuncBtn.defaultNames,
+    // Tolerates the `Enum.index` list this used to hold, which a device on an
+    // older build still syncs over.
+    fromObj: ServerFuncBtn.namesFromStored,
   );
 
   /// Docker is more popular than podman, set to `false` to use docker
@@ -911,7 +915,11 @@ class SettingStore extends SqliteStore {
   /// arranged in the settings. Sorting the list some other way is a view of
   /// it, and this is where that view is remembered; [serverOrder] stays the
   /// arrangement itself.
-  late final serverPageSortBy = propertyDefault('serverPageSortBy', 0);
+  late final serverPageSortBy = propertyDefault<String>(
+    'serverPageSortBy',
+    ServerSortField.manual.name,
+    fromObj: (obj) => ServerSortField.fromStored(obj).name,
+  );
   late final serverPageSortAsc = propertyDefault('serverPageSortAsc', true);
 
   /// Whether to automatically start/attach tmux on SSH connect.

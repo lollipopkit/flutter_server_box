@@ -39,7 +39,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
       listenable: prop.listenable(),
       builder: (keys) {
         final disabled = ServerFuncBtn.values
-            .map((e) => e.index)
+            .map((e) => e.name)
             .where((e) => !keys.contains(e))
             .toList();
         final allKeys = [...keys, ...disabled];
@@ -65,8 +65,10 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     );
   }
 
-  Widget _buildListItem(int key, int idx, List<int> keys) {
-    final funcBtn = ServerFuncBtn.values[key];
+  Widget _buildListItem(String key, int idx, List<String> keys) {
+    final funcBtn = ServerFuncBtn.byStored(key);
+    // A name this build does not have — a row synced from a newer one.
+    if (funcBtn == null) return const SizedBox.shrink(key: ValueKey('unknown'));
     return CardX(
       key: ValueKey(key),
       child: ListTile(
@@ -84,7 +86,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     );
   }
 
-  Widget _buildCheckBox(List<int> keys, int key, int idx, bool value) {
+  Widget _buildCheckBox(List<String> keys, String key, int idx, bool value) {
     return Checkbox(
       value: value,
       onChanged: (val) {

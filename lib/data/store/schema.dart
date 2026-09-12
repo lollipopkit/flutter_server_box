@@ -93,7 +93,10 @@ abstract final class SchemaVersion {
   ///      retired with the per-lookup requests it existed for
   /// v21: the old five-button home arrangement becomes four buttons plus
   ///      the "more" destination
-  static const current = 23;
+  /// v24: the server function row and the server sort field stored by enum
+  ///      name rather than by index, which shifted meaning every time a case
+  ///      was removed
+  static const current = 24;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

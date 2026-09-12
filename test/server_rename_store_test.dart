@@ -68,6 +68,16 @@ void main() {
       'podman',
     ]);
     SqliteDb.instance.execute(
+      'INSERT INTO server_dist (server_id, dist, updated_at) VALUES (?, ?, ?);',
+      [original.id, 'ubuntu', 1],
+    );
+    SqliteDb.instance.execute(
+      'INSERT INTO benchmark_run '
+      '(id, server_id, started_at, status, options, run_dir) '
+      'VALUES (?, ?, ?, ?, ?, ?);',
+      ['bench-1', original.id, 1, 'running', '{}', '/tmp/yabs-1'],
+    );
+    SqliteDb.instance.execute(
       'INSERT INTO conn_stat '
       '(id, server_id, server_name, timestamp, result, duration_ms) '
       'VALUES (?, ?, ?, ?, ?, ?);',
@@ -148,6 +158,21 @@ void main() {
     expect(
       SqliteDb.instance
           .select('SELECT server_id FROM conn_stat;')
+          .single['server_id'],
+      replacement.id,
+    );
+    // Left out of the carried tables, these were cascaded away by the delete
+    // that ends a rename: the recorded distribution, and the whole benchmark
+    // history including a row naming a directory with a live run in it.
+    expect(
+      SqliteDb.instance
+          .select('SELECT server_id FROM server_dist;')
+          .single['server_id'],
+      replacement.id,
+    );
+    expect(
+      SqliteDb.instance
+          .select('SELECT server_id, run_dir FROM benchmark_run;')
           .single['server_id'],
       replacement.id,
     );

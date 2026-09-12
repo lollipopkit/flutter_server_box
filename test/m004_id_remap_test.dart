@@ -67,6 +67,35 @@ void main() {
     return servers.fetch().single.id;
   }
 
+  /// `HiveImport` can land the `key` box on one launch and the `server` box on
+  /// the next — a box fails to open while the device is still locked — and the
+  /// first pass consumes and deletes the `key` rows it converted. So the pass
+  /// that finally migrates the servers has no key rows left to build its map
+  /// from, and resolving through that map alone wrote every key-authenticated
+  /// server's reference away as null, once, with no second chance at it.
+  test('a later pass still finds a key the first pass migrated', () async {
+    // What the first pass left behind: the row in its table, under the name
+    // that used to be its id. No `kv` key rows, exactly as it found them.
+    SqliteDb.instance.execute(
+      'INSERT INTO private_key (id, name, key, updated_at) VALUES (?, ?, ?, 0);',
+      ['generated-id', 'mykey', 'PEM'],
+    );
+    seed('server', 'srv-1', {
+      'id': 'srv-1',
+      'name': 'legacy',
+      'ssh': {
+        'ip': '10.0.0.1',
+        'port': 22,
+        'user': 'root',
+        'pubKeyId': 'mykey',
+      },
+    });
+
+    await migrate();
+
+    expect(servers.fetch().single.ssh?.keyId, 'generated-id');
+  });
+
   test('the server is given a real id', () async {
     seedLegacyServer();
 
