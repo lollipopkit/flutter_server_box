@@ -10,6 +10,9 @@ CASK_SUBDIR="${CASK_SUBDIR:-${CASK_NAME:0:1}}"
 CASK_DISPLAY_NAME="${CASK_DISPLAY_NAME:-ServerBox}"
 CASK_DESC="${CASK_DESC:-App for monitoring server status with SSH terminal, SFTP, Container management}"
 APP_REPO_SLUG="${APP_REPO_SLUG:-lollipopkit/flutter_server_box}"
+# What the leftovers under ~/Library are keyed by. `PRODUCT_BUNDLE_IDENTIFIER`
+# in macos/Runner.xcodeproj.
+APP_BUNDLE_ID="${APP_BUNDLE_ID:-com.lollipopkit.toolbox}"
 TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}"
 TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 EXPLICIT_TAP_CASK_PATH="${TAP_CASK_PATH:-}"
@@ -56,6 +59,41 @@ if [[ -z "$APP_VERSION" || "$APP_VERSION" == '$('* ]]; then
   done
 fi
 
+# Neither path was given, so the loop above had nothing to read — and the
+# defaults below cannot supply one, because the filename they build contains
+# the version being looked for. So look in the directory those defaults point
+# at.
+#
+# This is the whole standalone case. `release-macos-dmg.sh` passes both paths,
+# and running this script by hand is what its own comments describe for a
+# partial retry, which until now could only fail.
+ARTIFACTS_DIR="${ARTIFACTS_DIR:-$REPO_ROOT/build/artifacts}"
+if [[ -z "$APP_VERSION" && -z "$DMG_ARM64_PATH" && -z "$DMG_AMD64_PATH" ]]; then
+  found_versions=()
+  # arm64 alone: the amd64 half is checked for existence further down, and
+  # reporting a missing one there gives the better message.
+  for candidate in "$ARTIFACTS_DIR/${APP_ASSET_NAME}-"*"-arm64.dmg"; do
+    [[ -f "$candidate" ]] || continue
+    dmg_filename="$(basename "$candidate")"
+    if [[ "$dmg_filename" =~ ^${APP_ASSET_NAME}-([0-9]+(\.[0-9]+){1,2})-arm64\.dmg$ ]]; then
+      found_versions+=("${BASH_REMATCH[1]}")
+    fi
+  done
+
+  # Refused rather than resolved, because both ways of resolving it are wrong
+  # in a way nothing downstream would notice: the cask that comes out is
+  # internally consistent whichever version is picked, so publishing last
+  # month's build looks exactly like publishing this one.
+  if (( ${#found_versions[@]} == 1 )); then
+    APP_VERSION="${found_versions[0]}"
+  elif (( ${#found_versions[@]} > 1 )); then
+    echo "more than one version is built in $ARTIFACTS_DIR:" >&2
+    printf '  %s\n' "${found_versions[@]}" >&2
+    echo "Name one with DMG_ARM64_PATH and DMG_AMD64_PATH." >&2
+    exit 1
+  fi
+fi
+
 if [[ -z "$APP_VERSION" ]]; then
   echo "unable to determine the app version" >&2
   echo "Provide XCARCHIVE_PATH or APP_PATH, or DMGs named ${APP_ASSET_NAME}-<version>-<arm64|amd64>.dmg." >&2
@@ -64,8 +102,8 @@ fi
 
 RELEASE_TAG="${RELEASE_TAG:-v${APP_VERSION}}"
 DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${APP_VERSION}}"
-DMG_ARM64_PATH="${DMG_ARM64_PATH:-$REPO_ROOT/build/artifacts/${DMG_BASENAME}-arm64.dmg}"
-DMG_AMD64_PATH="${DMG_AMD64_PATH:-$REPO_ROOT/build/artifacts/${DMG_BASENAME}-amd64.dmg}"
+DMG_ARM64_PATH="${DMG_ARM64_PATH:-$ARTIFACTS_DIR/${DMG_BASENAME}-arm64.dmg}"
+DMG_AMD64_PATH="${DMG_AMD64_PATH:-$ARTIFACTS_DIR/${DMG_BASENAME}-amd64.dmg}"
 
 for dmg in "$DMG_ARM64_PATH" "$DMG_AMD64_PATH"; do
   if [[ ! -f "$dmg" ]]; then
@@ -113,9 +151,31 @@ cask "$CASK_NAME" do
   # installs happily on an older macOS and the app then fails to launch with
   # a dyld error, which reads as a broken build rather than as a machine that
   # is too old.
-  depends_on macos: ">= :ventura"
+  #
+  # A bare symbol, which already means "or newer": \`MacOSRequirement.parse\`
+  # defaults its comparator to \`>=\`. Spelling that out as \`">= :ventura"\` is
+  # the same requirement and is what the \`Homebrew/OSDependsOn\` cop rejects,
+  # so a tap PR carrying it fails style before anyone looks at the version.
+  depends_on macos: :ventura
 
   app "$APP_NAME.app"
+
+  # Checked against what a real run leaves behind, not guessed from the bundle
+  # id. The DMG build is **not** sandboxed (\`macos/Runner/ReleaseDmg.entitlements\`
+  # sets \`app-sandbox\` false), so its data is under Application Support keyed by
+  # the app's name rather than in a container keyed by its id — which is what
+  # the cask used to name, and what a Homebrew install never creates. The
+  # container is still listed because the App Store build does use it and a
+  # user may have had that one first.
+  #
+  # Not removable here: the database encryption key, which is a login keychain
+  # item and has no cask stanza.
+  zap trash: [
+    "~/Library/Application Support/$APP_ASSET_NAME",
+    "~/Library/Caches/$APP_BUNDLE_ID",
+    "~/Library/Containers/$APP_BUNDLE_ID",
+    "~/Library/Preferences/$APP_BUNDLE_ID.plist",
+  ]
 end
 CASK
 
