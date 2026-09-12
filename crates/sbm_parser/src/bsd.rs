@@ -30,11 +30,16 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     static PERCENT: OnceLock<Regex> = OnceLock::new();
     static CORE_COUNT: OnceLock<Regex> = OnceLock::new();
 
+    // The count is `sysctl -n hw.ncpu` as the host answered it, and it decides
+    // how many pseudo-cores to allocate — see `MAX_CPU_CORES` for why an
+    // unbounded one is a process kill rather than an error. A count outside
+    // the bound is a broken reading and falls back to the single pseudo-core,
+    // which is what an absent one already did.
     let count = regex(&CORE_COUNT, r"(?m)^\s*(\d+)\s*$")
         .captures(raw)
-        .and_then(|c| c[1].parse::<usize>().ok())
-        .filter(|&n| n > 0)
-        .unwrap_or(1);
+        .and_then(|c| c[1].parse::<u64>().ok())
+        .filter(|&n| n > 0 && n <= MAX_CPU_CORES)
+        .unwrap_or(1) as usize;
 
     let cores = |user: u64, sys: u64, nice: u64, idle: u64, irq: u64| {
         (0..count)
@@ -208,8 +213,17 @@ fn to_kib(amount: f64, unit: &str) -> u64 {
 }
 
 /// `netstat -ibn`(Dart `NetSpeed.parseBsd`):
-/// Only 11-column Link lines; skip inactive interfaces ending in `*`; first line wins per interface name
+/// Link lines only; skip inactive interfaces ending in `*`; first line wins per interface name
+///
+/// macOS prints 11 columns and FreeBSD 12 — it has an `Idrop` between `Ierrs`
+/// and `Ibytes`. Accepting only macOS's width meant every line of a FreeBSD
+/// host's output was discarded and the host reported no network at all.
+/// Because the extra column is inserted *before* `Ibytes`, counting from the
+/// right covers both: `Coll` is last, `Obytes` second to last, `Ibytes` fifth.
 pub fn parse_net(raw: &str) -> Vec<NetIface> {
+    const MACOS_COLUMNS: usize = 11;
+    const FREEBSD_COLUMNS: usize = 12;
+
     let lines: Vec<&str> = raw.split('\n').collect();
     if lines.len() < 2 {
         return Vec::new();
@@ -221,10 +235,13 @@ pub fn parse_net(raw: &str) -> Vec<NetIface> {
         if device.ends_with('*') || result.iter().any(|n| n.device == *device) {
             continue;
         }
-        if fields.len() != 11 {
+        if fields.len() != MACOS_COLUMNS && fields.len() != FREEBSD_COLUMNS {
             continue;
         }
-        let (Ok(rx), Ok(tx)) = (fields[6].parse(), fields[9].parse()) else {
+        let (Ok(rx), Ok(tx)) = (
+            fields[fields.len() - 5].parse(),
+            fields[fields.len() - 2].parse(),
+        ) else {
             continue;
         };
         result.push(NetIface {

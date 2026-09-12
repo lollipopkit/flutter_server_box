@@ -20,8 +20,13 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
             continue;
         }
         let parse = |i: usize| fields[i].parse::<u64>();
+        // /proc/stat's column order is `user nice system idle iowait irq
+        // softirq` — nice comes second. Reading field 2 as `sys` put nice time
+        // under the `sys` label in the UI (near zero on most machines) and left
+        // real system time displayed nowhere. `total()` sums every field, so
+        // nothing that aggregates could notice.
         match (parse(1), parse(2), parse(3), parse(4), parse(5), parse(6), parse(7)) {
-            (Ok(user), Ok(sys), Ok(nice), Ok(idle), Ok(iowait), Ok(irq), Ok(softirq)) => {
+            (Ok(user), Ok(nice), Ok(sys), Ok(idle), Ok(iowait), Ok(irq), Ok(softirq)) => {
                 cores.push(CpuCore {
                     id: id.to_string(),
                     user,
@@ -217,8 +222,13 @@ fn parse_df(raw: &str) -> Vec<Disk> {
             path_cache = fields[0].to_string();
             continue;
         }
+        // The buffered name belongs *in front of* this line's columns, which
+        // start at the size. Overwriting field 0 destroyed the size column and
+        // left five fields, which the `>= 6` check below then dropped — so a
+        // stock Ubuntu LVM install ("/dev/mapper/ubuntu--vg-ubuntu--lv", long
+        // enough that df wraps it) reported no root filesystem at all.
         if !path_cache.is_empty() && !fields.is_empty() {
-            fields[0] = &path_cache;
+            fields.insert(0, path_cache.as_str());
         }
         let parsed = (|| -> Option<Disk> {
             let fs = fields.first()?.to_string();
@@ -259,12 +269,17 @@ fn df_size_kib(s: &str) -> Option<u64> {
     if let Ok(v) = s.parse::<u64>() {
         return Some(v);
     }
-    let (num, unit) = s.split_at(s.len().checked_sub(1)?);
+    // By character, not by byte: `s` is whatever the remote host's `df` wrote,
+    // and splitting one byte from the end lands inside a multi-byte character
+    // and panics — which, over FFI, takes the app's process with it.
+    let mut chars = s.chars();
+    let unit = chars.next_back()?;
+    let num = chars.as_str();
     let multiplier: f64 = match unit {
-        "K" | "k" => 1.0,
-        "M" | "m" => 1024.0,
-        "G" | "g" => 1024.0 * 1024.0,
-        "T" | "t" => 1024.0 * 1024.0 * 1024.0,
+        'K' | 'k' => 1.0,
+        'M' | 'm' => 1024.0,
+        'G' | 'g' => 1024.0 * 1024.0,
+        'T' | 't' => 1024.0 * 1024.0 * 1024.0,
         _ => return None,
     };
     Some((num.parse::<f64>().ok()? * multiplier) as u64)
@@ -300,14 +315,23 @@ pub fn parse_net(raw: &str) -> Vec<NetIface> {
 /// thermal_zone type/temp segments (Dart `Temperatures.parse`):
 /// paired line by line, name is the last path segment, value divided by divisor
 /// (Linux reports millidegree Celsius → 1000)
+///
+/// The two sides come from two independent `cat` globs, so the pairing is
+/// positional and only sound while both listed the same zones. A zone whose
+/// `temp` cannot be read contributes a line to one side and not the other,
+/// which shifts every later reading onto the preceding zone's name — a
+/// plausible-looking wrong answer. Counts that disagree are therefore reported
+/// as no temperatures at all. Pairing them at the source (one line per zone)
+/// is a change to the command manifest, which every installed status script
+/// would have to be reissued for.
 pub fn parse_temps(types_raw: &str, values_raw: &str, divisor: f64) -> Temperatures {
     let mut temps = Temperatures::default();
-    let types: Vec<&str> = types_raw.split('\n').collect();
-    let values: Vec<&str> = values_raw.split('\n').collect();
+    let types: Vec<&str> = types_raw.lines().filter(|l| !l.trim().is_empty()).collect();
+    let values: Vec<&str> = values_raw.lines().filter(|l| !l.trim().is_empty()).collect();
+    if types.len() != values.len() {
+        return temps;
+    }
     for (t, v) in types.iter().zip(values.iter()) {
-        if t.is_empty() || v.is_empty() {
-            continue;
-        }
         let name = t.rsplit('/').next().unwrap_or(t);
         if let Ok(temp) = v.trim().parse::<f64>() {
             temps.0.insert(name.to_string(), temp / divisor);

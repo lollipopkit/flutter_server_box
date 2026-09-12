@@ -6,6 +6,19 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+/// Upper bound on how many cores a reported core count may claim.
+///
+/// On Bsd and Windows the count comes from the host as a bare number
+/// (`sysctl -n hw.ncpu`, WMI's `NumberOfLogicalProcessors`) and decides how
+/// many [`CpuCore`]s to allocate. A corrupt or hostile answer would otherwise
+/// allocate until the process is killed — and in the app that process is the
+/// app, since the parser runs in it over FFI rather than behind a boundary an
+/// exception could cross.
+///
+/// Set well above real hardware (the largest shipping x86 parts are in the
+/// hundreds of threads) so that the bound only ever rejects a broken reading.
+pub const MAX_CPU_CORES: u64 = 4096;
+
 /// Cumulative CPU ticks of one core (Dart `SingleCpuCore`).
 /// From /proc/stat on Linux; on BSD/Windows synthesized from one-shot percentages.
 ///
