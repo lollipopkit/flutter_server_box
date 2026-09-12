@@ -322,11 +322,14 @@ abstract class EntityStore<T extends Object> {
   /// in the backup's timestamps and not among its records.
   ///
   /// Returns whether anything changed, which is what tells a provider to
-  /// reload.
+  /// reload. [appliedIds] collects the ids the backup won — the ones written or
+  /// deleted here — for a caller that has to apply something of its own to the
+  /// same records and must not apply it to the ones this device kept.
   bool merge(
     Map<String, Object?> backupData, {
     required bool force,
     bool notify = true,
+    Set<String>? appliedIds,
   }) {
     final incoming = _timestampsOf(backupData[lastModKey]);
     final current = timestamps;
@@ -388,6 +391,7 @@ abstract class EntityStore<T extends Object> {
           }
           db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
           synced.tombstone(id, at: at);
+          appliedIds?.add(id);
           changed = true;
           continue;
         }
@@ -410,6 +414,7 @@ abstract class EntityStore<T extends Object> {
           write(resolved);
           written.add(resolved);
           synced.stamp(idOf(resolved), at: at);
+          appliedIds?.add(idOf(resolved));
           changed = true;
         } on SqliteException catch (e) {
           // One record that cannot be written must not fail the restore: a

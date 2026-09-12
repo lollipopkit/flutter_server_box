@@ -109,10 +109,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         force: force,
         notify: false,
       );
+      final appliedServerIds = <String>{};
       serversChanged = Stores.server.merge(
         restored.servers,
         force: force,
         notify: false,
+        appliedIds: appliedServerIds,
       );
       snippetsChanged = Stores.snippet.merge(
         _snippetsWithRestoredServerIds(restored.serverIds),
@@ -136,6 +138,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           if (!_isInternalStoreKey(key)) key,
       };
       for (final serverId in containerIds) {
+        // A container host is a child of its server and carries no timestamp
+        // of its own — editing one stamps the parent. So the backup speaks for
+        // it exactly where it spoke for the parent. Applied to every server
+        // instead, this deleted a host configured here after the backup was
+        // taken, on a server `merge` had just correctly decided to keep.
+        if (!appliedServerIds.contains(serverId)) continue;
         if (Stores.container.restoreOne(
           serverId,
           restoredContainer[serverId] ?? const <String, Object?>{},
@@ -429,9 +437,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           ? embedded
           : entry.key;
       final name = server['name'];
-      final restoredId = name is String
-          ? localByName[name] ?? backupId
-          : backupId;
+      // An id this device already holds is the identity. Names are not unique
+      // on servers, and `localByName` keeps one entry per name, so a device
+      // with two servers called the same thing sent both incoming records to
+      // the same local id — which the collision check below then reported as a
+      // malformed backup, failing every restore on such a device.
+      final restoredId = Stores.server.fetchOneRaw(backupId) != null
+          ? backupId
+          : (name is String ? localByName[name] ?? backupId : backupId);
       claimSourceId(entry.key, entry.key);
       claimSourceId(backupId, entry.key);
       final destinationOwner = destinationOwners[restoredId];
@@ -723,7 +736,13 @@ Set<String> _mergeSqliteStore(
     final currentHasKey = currentKeys.contains(key);
 
     if (backupHasKey && !currentHasKey) {
-      if (!force && backupTimestamp <= currentTimestamp) continue;
+      // Nothing here to protect. A key this device does not hold and has no
+      // timestamp for was never written and never deleted, so the backup's
+      // copy is the only copy — `0 <= 0` used to drop it, which is every entry
+      // of every envelope that carries no timestamps.
+      if (!force && currentTimestamp > 0 && backupTimestamp <= currentTimestamp) {
+        continue;
+      }
       final value = backupData[key];
       if (value == null) continue;
       _writeKv(store, key, value);

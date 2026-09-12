@@ -50,12 +50,21 @@ class ServerStore extends EntityStore<Spi> {
   @override
   String? nameOf(Spi item) => item.name;
 
+  /// A name stands in for an identity a record does not carry — nothing more.
+  ///
+  /// Unlike a private key's or a snippet's, a server's name is not unique, so
+  /// matching on one is ambiguous by construction. Two guards keep that from
+  /// destroying a record: an id that already exists here *is* the identity and
+  /// is never overruled by a name, and a name carried by more than one local
+  /// server resolves to nothing. Without the first, restoring a device that
+  /// has two servers of the same name pointed both incoming records at
+  /// whichever one matched first, and the second overwrote the first.
   @override
   Spi reconcile(Spi incoming) {
-    final local = fetch().firstWhereOrNull(
-      (server) => server.name == incoming.name,
-    );
-    return local == null ? incoming : incoming.copyWith(id: local.id);
+    if (fetchOneRaw(incoming.id) != null) return incoming;
+    final named = fetch().where((server) => server.name == incoming.name);
+    if (named.length != 1) return incoming;
+    return incoming.copyWith(id: named.first.id);
   }
 
   @override
@@ -556,12 +565,19 @@ class ServerStore extends EntityStore<Spi> {
         write(replacement);
         writeLinks(replacement);
 
+        // Every table whose `server_id` references this row. A table left out
+        // keeps pointing at the old id, which the DELETE below then cascades
+        // away — `server_dist` and `benchmark_run` were missing, so renaming a
+        // server discarded its recorded distribution and its whole benchmark
+        // history, including a row naming a directory with a live run in it.
         for (final table in const [
           'known_host',
           'container_host',
           'container_runtime',
           'port_forward',
           'conn_stat',
+          'server_dist',
+          'benchmark_run',
         ]) {
           db.execute('UPDATE $table SET server_id = ? WHERE server_id = ?;', [
             replacement.id,
