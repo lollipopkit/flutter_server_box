@@ -9,6 +9,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -55,6 +56,16 @@ ServerShare _share({int keys = 0}) => ServerShare(
     for (var i = 0; i < keys; i++)
       PrivateKeyInfo(id: 'k$i', name: 'key$i', key: _ed25519(i)),
   ],
+);
+
+/// The guard's own sentence, not just its type: every other way these inputs
+/// fail also raises [ServerShareUnreadableException].
+final _tooLarge = throwsA(
+  isA<ServerShareUnreadableException>().having(
+    (e) => '$e',
+    'message',
+    contains('too large'),
+  ),
 );
 
 int _modulesOf(int chars) =>
@@ -154,6 +165,38 @@ void main() {
       );
       final back = ServerShareCodec.decode(legacy, password: 'pw');
       expect(back.keys.single.key, share.keys.single.key);
+    });
+
+    test('a decompression bomb is refused rather than allocated', () {
+      // Compression is also where the size of the input stopped bounding the
+      // size of the allocation. 8 MiB of one byte deflates to a couple of
+      // kilobytes, and the envelope authenticates: whoever hands over a share
+      // hands over the password with it, so this passes every check before
+      // the one that has to catch it.
+      final bomb = ZLibCodec(
+        raw: true,
+        level: ZLibOption.maxLevel,
+      ).encode(List.filled(8 << 20, 0x41));
+      final payload = Cryptor.encryptBytes(
+        [0x01, ...bomb],
+        'pw',
+        iterations: 1000,
+      );
+      expect(payload.length, lessThan(64 * 1024));
+      expect(
+        () => ServerShareCodec.decode(payload, password: 'pw'),
+        _tooLarge,
+      );
+    });
+
+    test('an oversized payload is refused before anything is derived', () {
+      // Asserted on the message: without the cap this still throws, from
+      // `json.decode` further down, and a test that only checked the type
+      // would pass with the cap removed.
+      expect(
+        () => ServerShareCodec.decode('x' * ((1 << 20) + 1), password: 'pw'),
+        _tooLarge,
+      );
     });
 
     test('a wrong password still says so rather than blaming the format', () {

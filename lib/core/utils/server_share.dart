@@ -56,6 +56,29 @@ class ServerShareUnreadableException implements Exception {
   String toString() => 'ServerShareUnreadableException: $cause';
 }
 
+/// Collects a decompression, and refuses one that is producing too much.
+///
+/// Between the filter and the buffer, because the check has to happen while
+/// the output is still arriving in pieces: asking a finished buffer how large
+/// it is means it has already been allocated.
+final class _CappedSink implements Sink<List<int>> {
+  const _CappedSink(this._out, this._limit);
+
+  final BytesBuilder _out;
+  final int _limit;
+
+  @override
+  void add(List<int> chunk) {
+    if (_out.length + chunk.length > _limit) {
+      throw const ServerShareUnreadableException('payload too large');
+    }
+    _out.add(chunk);
+  }
+
+  @override
+  void close() {}
+}
+
 /// Packs a server into a string, and reads one back.
 abstract final class ServerShareCodec {
   /// How many digits [generateCode] produces.
@@ -102,11 +125,32 @@ abstract final class ServerShareCodec {
     ..._deflate.encode(utf8.encode(jsonText)),
   ];
 
+  /// The most a payload may decompress to.
+  ///
+  /// Deflate reaches about 1000:1, so compression is also where the size of
+  /// what this app is handed stopped bounding what it allocates — and what it
+  /// is handed is a code or a file somebody else made, decrypted with a
+  /// password that somebody else chose and read out. A real payload is a
+  /// server and at most a key or two, which is kilobytes.
+  static const _maxPlainBytes = 1 << 20;
+
+  /// The most an encrypted payload may be, checked before the key derivation
+  /// is paid.
+  ///
+  /// A QR cannot exceed [qrCapacity] by construction. A file has no natural
+  /// limit, and running 600k rounds of PBKDF2 and AES-GCM across a hundred
+  /// megabytes only to reject what comes out is work done on request.
+  static const _maxEncodedChars = 1 << 20;
+
   /// The inverse of [_pack], which also accepts what came before it.
   static String _unpack(Uint8List bytes) {
     if (bytes.isNotEmpty && bytes.first == _packedMarker) {
       try {
-        return utf8.decode(_deflate.decode(bytes.sublist(1)));
+        return utf8.decode(_inflate(bytes.sublist(1)));
+      } on ServerShareUnreadableException {
+        // Already the sentence this should throw. Falling into the catch below
+        // would wrap it in a second one.
+        rethrow;
       } catch (e) {
         throw ServerShareUnreadableException('$e');
       }
@@ -119,6 +163,22 @@ abstract final class ServerShareCodec {
       // sends the user to change something that was right.
       throw ServerShareUnreadableException('$e');
     }
+  }
+
+  /// Decompresses, and stops if the output runs away.
+  ///
+  /// Chunked rather than `ZLibCodec.decode`, which answers one buffer and so
+  /// has already allocated whatever it was asked for by the time its size can
+  /// be looked at. The filter hands its output over as it produces it, so the
+  /// running total can be checked while there is still something to refuse.
+  static Uint8List _inflate(Uint8List body) {
+    final out = BytesBuilder(copy: false);
+    final sink = _deflate.decoder.startChunkedConversion(
+      _CappedSink(out, _maxPlainBytes),
+    );
+    sink.add(body);
+    sink.close();
+    return out.takeBytes();
   }
 
   static String encode(
@@ -208,21 +268,23 @@ abstract final class ServerShareCodec {
 
   /// Reads [text] into a payload, or throws saying why it could not.
   ///
-  /// Accepts three shapes, in this order:
+  /// Accepts two shapes, in this order:
   /// - an encrypted [ServerShare], compressed or not — this build writes the
   ///   compressed form, and a build between the format landing and compression
   ///   arriving wrote the other;
-  /// - a bare `ServerShare` JSON, which nothing writes and which exists so a
-  ///   payload can be inspected in a test without a password;
   /// - a bare `Spi` JSON, which is every QR code shared before this format.
   ///
-  /// The last one is why this cannot simply parse and throw: dropping it would
-  /// mean a code printed and stuck on a rack stopped working on upgrade. The
-  /// compatibility runs one way only — a build that predates [_packedMarker]
-  /// reads a compressed payload as a failure to decrypt — which is what the
-  /// ten-minute deadline on a QR share makes affordable.
+  /// A clear-text `ServerShare` is **not** one of them, and [_fromPlain] says
+  /// why. The second shape is why this cannot simply parse and throw: dropping
+  /// it would mean a code printed and stuck on a rack stopped working on
+  /// upgrade. The compatibility runs one way only — a build that predates
+  /// [_packedMarker] reads a compressed payload as a failure to decrypt —
+  /// which is what the ten-minute deadline on a QR share makes affordable.
   static ServerShare decode(String text, {String? password}) {
     final trimmed = text.trim();
+    if (trimmed.length > _maxEncodedChars) {
+      throw const ServerShareUnreadableException('payload too large');
+    }
 
     String plain;
     if (Cryptor.isEncrypted(trimmed)) {
@@ -245,6 +307,9 @@ abstract final class ServerShareCodec {
     String? password,
   }) async {
     final trimmed = text.trim();
+    if (trimmed.length > _maxEncodedChars) {
+      throw const ServerShareUnreadableException('payload too large');
+    }
     if (!Cryptor.isEncrypted(trimmed)) {
       return _fromPlain(trimmed, wasEncrypted: false);
     }
