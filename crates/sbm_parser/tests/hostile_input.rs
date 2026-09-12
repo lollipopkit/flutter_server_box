@@ -6,6 +6,7 @@
 //! server either: each is also a shape a broken tool or a corrupt reading
 //! produces.
 
+use sbm_parser::types::MAX_CPU_CORES;
 use sbm_parser::{bsd, linux, windows};
 
 /// `Size` is rejected at zero, but anything under a KiB floors to zero after
@@ -46,6 +47,38 @@ fn an_absurd_logical_processor_count_is_refused() {
 fn a_broken_processor_entry_does_not_take_the_others_with_it() {
     let cores = windows::parse_cpu(
         r#"[{"LoadPercentage":50,"NumberOfCores":1,"NumberOfLogicalProcessors":100000000000},
+            {"LoadPercentage":50,"NumberOfCores":2,"NumberOfLogicalProcessors":2}]"#,
+        &[],
+    );
+    let ids: Vec<&str> = cores.iter().map(|c| c.id.as_str()).collect();
+    assert_eq!(ids, ["cpu", "cpu0", "cpu1"]);
+}
+
+/// A bound on one entry is not a bound on the reply: entries each well inside
+/// it still add up. 100 sockets of 128 threads is not a machine, and every
+/// core allocated carries a heap-allocated id.
+#[test]
+fn processor_entries_cannot_add_up_past_the_bound() {
+    let entry = r#"{"LoadPercentage":50,"NumberOfCores":64,"NumberOfLogicalProcessors":128}"#;
+    let raw = format!("[{}]", [entry; 100].join(","));
+
+    let cores = windows::parse_cpu(&raw, &[]);
+    // The summary row is not one of the machine's cores.
+    let per_core = cores.len() as u64 - 1;
+    assert!(
+        per_core <= MAX_CPU_CORES,
+        "allocated {per_core} cores, bound is {MAX_CPU_CORES}"
+    );
+    // 32 entries of 128 reach the bound exactly; the 33rd would pass it.
+    assert_eq!(per_core, MAX_CPU_CORES);
+}
+
+/// An entry reporting no logical processors is a real answer for a socket that
+/// is present and unpopulated, and contributes nothing rather than stopping.
+#[test]
+fn a_zero_logical_entry_is_not_a_broken_one() {
+    let cores = windows::parse_cpu(
+        r#"[{"LoadPercentage":50,"NumberOfCores":0,"NumberOfLogicalProcessors":0},
             {"LoadPercentage":50,"NumberOfCores":2,"NumberOfLogicalProcessors":2}]"#,
         &[],
     );

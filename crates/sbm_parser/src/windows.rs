@@ -58,6 +58,13 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
         if logical > MAX_CPU_CORES {
             continue;
         }
+        // The bound belongs to the machine, not to one entry: enough entries
+        // each just inside it still add up to an allocation no machine could
+        // have. No later entry can bring the running total back down, so this
+        // stops rather than skipping — what was read before it is kept.
+        if cores.len() as u64 + logical > MAX_CPU_CORES {
+            break;
+        }
         let logical = logical as usize;
         let idle = 100 - load;
 
