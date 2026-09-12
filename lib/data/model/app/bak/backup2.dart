@@ -68,6 +68,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     /// has to keep decoding.
     @Default(<String, Object?>{}) Map<String, Object?> portForwards,
 
+    /// Absent from files written before built-in RDP/VNC support.
+    @Default(<String, Object?>{}) Map<String, Object?> remoteDesktopProfiles,
+
     /// Same reason as [portForwards]: no file written before BMC support has
     /// one. A server whose `bmc.credId` names an account this map does not
     /// carry restores with the address and no account, which the editor shows.
@@ -94,6 +97,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     late bool serversChanged;
     late bool snippetsChanged;
     late bool forwardsChanged;
+    late bool remoteDesktopsChanged;
     late bool containerChanged;
     late Set<String> historyNotifications;
     late Set<String> settingNotifications;
@@ -121,6 +125,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       );
       forwardsChanged = Stores.portForward.merge(
         _portForwardsWithRestoredServerIds(restored.serverIds),
+        force: force,
+        notify: false,
+      );
+      remoteDesktopsChanged = Stores.remoteDesktop.merge(
+        _remoteDesktopsWithRestoredServerIds(restored.serverIds),
         force: force,
         notify: false,
       );
@@ -190,10 +199,14 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       // A server tombstone cascades these rows even when their own merge pass
       // has no later write to announce.
       Stores.portForward.invalidate();
+      Stores.remoteDesktop.invalidate();
       Stores.snippet.invalidate();
     }
     if (snippetsChanged && !serversChanged) Stores.snippet.invalidate();
     if (forwardsChanged && !serversChanged) Stores.portForward.invalidate();
+    if (remoteDesktopsChanged && !serversChanged) {
+      Stores.remoteDesktop.invalidate();
+    }
     _notifySqliteStore(Stores.history, historyNotifications);
     _notifySqliteStore(Stores.setting, settingNotifications);
 
@@ -227,6 +240,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       keys: Stores.key.getAllMap(),
       bmcCredentials: Stores.bmcCredential.getAllMap(),
       portForwards: Stores.portForward.getAllMap(),
+      remoteDesktopProfiles: Stores.remoteDesktop.getAllMap(),
       container: Stores.container.getAllMap(),
       history: _backupStore(Stores.history),
       settings: includeSettings
@@ -377,6 +391,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _validateRestorableStore('snippets', snippets);
     _validateRestorableStore('keys', keys);
     _validateRestorableStore('portForwards', portForwards);
+    _validateRestorableStore('remoteDesktopProfiles', remoteDesktopProfiles);
     _validateRestorableStore('bmcCredentials', bmcCredentials);
   }
 
@@ -513,6 +528,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     Map<String, String> serverIds,
   ) => {
     for (final entry in portForwards.entries)
+      entry.key: _recordWithRestoredServerId(entry.value, serverIds),
+  };
+
+  Map<String, Object?> _remoteDesktopsWithRestoredServerIds(
+    Map<String, String> serverIds,
+  ) => {
+    for (final entry in remoteDesktopProfiles.entries)
       entry.key: _recordWithRestoredServerId(entry.value, serverIds),
   };
 

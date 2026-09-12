@@ -93,7 +93,10 @@ abstract final class SchemaVersion {
   ///      retired with the per-lookup requests it existed for
   /// v21: the old five-button home arrangement becomes four buttons plus
   ///      the "more" destination
-  static const current = 23;
+  /// v22: the home tab selection is stored as enum names instead of indexes
+  /// v23: AI endpoints store the API version previously appended at request time
+  /// v24: saved RDP and VNC profiles become a syncable server child
+  static const current = 24;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

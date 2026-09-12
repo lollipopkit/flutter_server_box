@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
+import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/port_forward.dart';
+import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/snippet.dart';
 
@@ -16,6 +18,7 @@ import 'helpers/test_db.dart';
 void main() {
   late ServerStore servers;
   late PortForwardStore forwards;
+  late RemoteDesktopStore remoteDesktops;
   late SnippetStore snippets;
   late AgentConversationStore conversations;
 
@@ -36,6 +39,13 @@ void main() {
     type: PortForwardType.local,
     localPort: 15432,
   );
+  const remoteDesktop = RemoteDesktopProfile(
+    id: 'desktop-1',
+    serverId: 'server-old',
+    name: 'Windows',
+    protocol: RemoteDesktopProtocol.rdp,
+    port: 3389,
+  );
   const snippet = Snippet(
     id: 'snippet-1',
     name: 'deploy',
@@ -46,16 +56,19 @@ void main() {
   setUp(() async {
     await openTestDb();
     forwards = PortForwardStore();
+    remoteDesktops = RemoteDesktopStore();
     snippets = SnippetStore();
     conversations = AgentConversationStore();
     servers = ServerStore(
       portForwards: forwards,
+      remoteDesktops: remoteDesktops,
       snippets: snippets,
       conversations: conversations,
     );
     servers.put(original);
     servers.put(jumpOwner);
     forwards.put(forward);
+    remoteDesktops.put(remoteDesktop);
     snippets.put(snippet);
     servers.trustHost(original.id, 'ssh-ed25519', 'SHA256:old');
     SqliteDb.instance.execute('INSERT INTO container_host VALUES (?, ?, ?);', [
@@ -99,8 +112,10 @@ void main() {
   test('renaming moves every dependent row in one committed state', () async {
     // Prime the caches that a raw foreign-key update used to leave stale.
     expect(forwards.fetch().single.serverId, original.id);
+    expect(remoteDesktops.fetch().single.serverId, original.id);
     expect(snippets.fetch().single.autoRunOn, [original.id]);
     final forwardChanged = forwards.watch().first;
+    final remoteDesktopChanged = remoteDesktops.watch().first;
     final snippetChanged = snippets.watch().first;
     final conversationChanged = conversations.watch().first;
 
@@ -114,6 +129,12 @@ void main() {
               snippet.id,
             ]).single['rev']
             as int;
+    final oldRemoteDesktopRev =
+        SqliteDb.instance.select(
+              'SELECT rev FROM remote_desktop_profile WHERE id = ?;',
+              [remoteDesktop.id],
+            ).single['rev']
+            as int;
     final oldOwnerRev =
         SqliteDb.instance.select('SELECT rev FROM server WHERE id = ?;', [
               jumpOwner.id,
@@ -124,6 +145,7 @@ void main() {
     servers.rename(original, replacement);
     await Future.wait([
       forwardChanged,
+      remoteDesktopChanged,
       snippetChanged,
       conversationChanged,
     ]).timeout(const Duration(seconds: 1));
@@ -132,6 +154,7 @@ void main() {
     expect(servers.fetchOneRaw(replacement.id), replacement);
     expect(servers.knownHosts(replacement.id), {'ssh-ed25519': 'SHA256:old'});
     expect(forwards.fetch().single.serverId, replacement.id);
+    expect(remoteDesktops.fetch().single.serverId, replacement.id);
     expect(snippets.fetch().single.autoRunOn, [replacement.id]);
     expect(
       SqliteDb.instance
@@ -181,6 +204,13 @@ void main() {
       greaterThan(oldSnippetRev),
     );
     expect(
+      SqliteDb.instance.select(
+        'SELECT rev FROM remote_desktop_profile WHERE id = ?;',
+        [remoteDesktop.id],
+      ).single['rev'],
+      greaterThan(oldRemoteDesktopRev),
+    );
+    expect(
       SqliteDb.instance.select('SELECT rev FROM server WHERE id = ?;', [
         jumpOwner.id,
       ]).single['rev'],
@@ -209,6 +239,7 @@ void main() {
     servers.dropCache();
     expect(servers.fetchOneRaw(original.id), original);
     expect(forwards.fetchForServer(original.id), [forward]);
+    expect(remoteDesktops.fetchForServer(original.id), [remoteDesktop]);
     expect(snippets.fetch().single.autoRunOn, [original.id]);
     expect(servers.knownHosts(original.id), isNotEmpty);
     expect(
@@ -224,8 +255,10 @@ void main() {
     'direct deletion invalidates child caches and stamps removed links',
     () async {
       expect(forwards.fetch(), [forward]);
+      expect(remoteDesktops.fetch(), [remoteDesktop]);
       expect(snippets.fetch().single.autoRunOn, [original.id]);
       final forwardChanged = forwards.watch().first;
+      final remoteDesktopChanged = remoteDesktops.watch().first;
       final snippetChanged = snippets.watch().first;
       final oldSnippetRev =
           SqliteDb.instance.select('SELECT rev FROM snippet WHERE id = ?;', [
@@ -236,10 +269,20 @@ void main() {
       servers.deleteById(original.id);
       await Future.wait([
         forwardChanged,
+        remoteDesktopChanged,
         snippetChanged,
       ]).timeout(const Duration(seconds: 1));
 
       expect(forwards.fetch(), isEmpty);
+      expect(remoteDesktops.fetch(), isEmpty);
+      expect(
+        SqliteDb.instance.select(
+          "SELECT count(*) AS n FROM tombstone "
+          "WHERE tbl = 'remote_desktop_profile' AND row_id = ?;",
+          [remoteDesktop.id],
+        ).single['n'],
+        1,
+      );
       expect(snippets.fetch().single.autoRunOn, anyOf(isNull, isEmpty));
       expect(
         SqliteDb.instance.select('SELECT rev FROM snippet WHERE id = ?;', [
