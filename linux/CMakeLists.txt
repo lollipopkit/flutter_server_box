@@ -141,11 +141,11 @@ endforeach(bundled_library)
 # AppImage, which is meant to be a single file that runs.
 #
 # The chain rather than the one name: appindicator pulls in the ayatana
-# indicator library and both halves of dbusmenu, and bundling only the first
-# moves the failure one library along. Resolved by SONAME and skipped when not
-# found, because which of these a distribution splits out varies and a missing
-# one here should not fail the build — the deb and rpm paths do not need any of
-# this.
+# indicator and ido libraries and both halves of dbusmenu, and bundling only
+# the first moves the failure one library along. Resolved by SONAME and
+# skipped when not found, because which of these a distribution splits out
+# varies and a missing one here should not fail the build — the deb and rpm
+# paths do not need any of this.
 function(INSTALL_TRAY_LIBRARY library_path)
   if(NOT IS_SYMLINK "${library_path}")
     install(FILES "${library_path}"
@@ -216,6 +216,7 @@ endfunction()
 foreach(soname
   "libayatana-appindicator3.so.1"
   "libayatana-indicator3.so.7"
+  "libayatana-ido3-0.4.so.0"
   "libdbusmenu-glib.so.4"
   "libdbusmenu-gtk3.so.4"
 )
