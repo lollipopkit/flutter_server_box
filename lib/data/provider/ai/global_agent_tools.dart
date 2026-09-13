@@ -180,16 +180,17 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
       ],
       'properties': {
         'server_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The exact ServerBox server ID from the instructions. Null when '
-              'targeting an ad-hoc connection instead.',
+              'The exact ServerBox server ID from the instructions. Use an '
+              'empty string when targeting an ad-hoc connection instead.',
         },
         'session_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The id returned by ssh_connect. Null when targeting a '
-              'configured server instead. Give exactly one of the two.',
+              'The id returned by ssh_connect. Use an empty string when '
+              'targeting a configured server instead. Give exactly one of '
+              'the two.',
         },
         'command': {
           'type': 'string',
@@ -234,16 +235,17 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
       ],
       'properties': {
         'server_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The exact ServerBox server ID from the instructions. Null when '
-              'targeting an ad-hoc connection instead.',
+              'The exact ServerBox server ID from the instructions. Use an '
+              'empty string when targeting an ad-hoc connection instead.',
         },
         'session_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The id returned by ssh_connect. Null when targeting a '
-              'configured server instead. Give exactly one of the two.',
+              'The id returned by ssh_connect. Use an empty string when '
+              'targeting a configured server instead. Give exactly one of '
+              'the two.',
         },
         'path': {
           'type': 'string',
@@ -278,16 +280,17 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
       ],
       'properties': {
         'server_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The exact ServerBox server ID from the instructions. Null when '
-              'targeting an ad-hoc connection instead.',
+              'The exact ServerBox server ID from the instructions. Use an '
+              'empty string when targeting an ad-hoc connection instead.',
         },
         'session_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The id returned by ssh_connect. Null when targeting a '
-              'configured server instead. Give exactly one of the two.',
+              'The id returned by ssh_connect. Use an empty string when '
+              'targeting a configured server instead. Give exactly one of '
+              'the two.',
         },
         'path': {
           'type': 'string',
@@ -398,28 +401,29 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
               'connection as a configured server.',
         },
         'session_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
               'For add_server: the ad-hoc connection to keep, from '
-              'ssh_connect. Null for every other action.',
+              'ssh_connect. Use an empty string for every other action.',
         },
         'name': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
               'For add_server: a suggested name. The user confirms or changes '
-              'it. Null for every other action.',
+              'it. Use an empty string for every other action.',
         },
         'monitor_addr': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
               'For add_server: the monitor agent\'s base URL if one was '
               'installed, e.g. http://127.0.0.1:3770. Never its credentials — '
-              'the app asks the user for those. Null otherwise.',
+              'the app asks the user for those. Use an empty string otherwise.',
         },
         'server_id': {
-          'type': ['string', 'null'],
+          'type': 'string',
           'description':
-              'The exact server ID, or null only when listing all servers.',
+              'The exact server ID, or an empty string only when listing all '
+              'servers or adding an ad-hoc connection.',
         },
         'description': {
           'type': 'string',
@@ -465,7 +469,7 @@ String buildGlobalAgentInstructions({
       'A host that is not in that list is not out of reach. Do not ask the user to add it first — call ssh_connect with its address and work through the session_id it returns.',
     )
     ..writeln(
-      'Name a configured server by its exact ID from the list, never by name, which is descriptive and may not be unique. Name an ad-hoc connection by its session_id. Give a shell or file tool one or the other, never both.',
+      'Name a configured server by its exact ID from the list, never by name, which is descriptive and may not be unique. Name an ad-hoc connection by its session_id. Give a shell or file tool one or the other, never both, and use an empty string for the unused identifier. Never use JSON null for tool arguments.',
     )
     ..writeln('Propose exactly one tool call at a time.')
     ..writeln(
@@ -499,7 +503,7 @@ String buildGlobalAgentInstructions({
       'One tool call per turn. Every call is reviewed by the user, one at a time, so a turn carrying several asks them to decide all of it before you have seen a single result.',
     )
     ..writeln(
-      'A server already listed as connected needs no connect action; call the shell or file tool directly.',
+      'A configured server whose connection is "finished" is already connected. Do not call serverbox connect for it; call the shell or file tool directly.',
     )
     // A failed command reached the user as "I need you to tell me which file",
     // over a machine the model could have listed in one more call. Said here
