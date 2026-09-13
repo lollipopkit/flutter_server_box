@@ -82,27 +82,58 @@ enum ServerFuncBtn {
 
   /// The entry a stored row names.
   ///
-  /// The row used to be an `Enum.index`, and three cases have been removed
-  /// over the years — every removal shifted the meaning of every value after
-  /// it, so a row written before one of them named an entry the user never
-  /// chose. An `int` is still accepted, because `EnumNamesMigration` is not
-  /// the only way one can arrive: a device still running an older build syncs
-  /// this setting in the shape that build writes.
-  static ServerFuncBtn? byStored(Object? stored) => switch (stored) {
-    final String name => values.firstWhereOrNull((btn) => btn.name == name),
-    final int idx when idx >= 0 && idx < values.length => values[idx],
-    _ => null,
-  };
+  /// The enum order used by releases before the name migration.
+  ///
+  /// This is deliberately separate from [values]. An integer from an older
+  /// build must be resolved against the order that wrote it, never today's
+  /// declaration order, or a removed entry silently selects another button.
+  static const legacyIndexNamesBeforeM021 = <String>[
+    'terminal',
+    'files',
+    'container',
+    'process',
+    'snippet',
+    'iperf',
+    'systemd',
+    'portForward',
+    'power',
+  ];
+
+  /// Resolves a stored name or current-layout index.
+  ///
+  /// Pass [legacyIntegerNames] when decoding a row written before the enum
+  /// name migration. Once supplied, out-of-range legacy integers are rejected
+  /// instead of falling through to the current enum layout.
+  static ServerFuncBtn? byStored(
+    Object? stored, {
+    List<String>? legacyIntegerNames,
+  }) {
+    if (stored is String) {
+      return values.firstWhereOrNull((btn) => btn.name == stored);
+    }
+    if (stored is! int) return null;
+    if (legacyIntegerNames case final names?) {
+      if (stored < 0 || stored >= names.length) return null;
+      final name = names[stored];
+      return values.firstWhereOrNull((btn) => btn.name == name);
+    }
+    return stored >= 0 && stored < values.length ? values[stored] : null;
+  }
 
   /// A stored list in either shape, as names this build knows.
   ///
   /// An entry that resolves to nothing is dropped rather than shifting the
   /// ones after it, which is the whole point of the change.
-  static List<String> namesFromStored(Object? stored) {
+  static List<String> namesFromStored(
+    Object? stored, {
+    List<String>? legacyIntegerNames,
+  }) {
     if (stored is! Iterable) return defaultNames;
     return [
       for (final entry in stored)
-        if (byStored(entry) case final btn?) btn.name,
+        if (byStored(entry, legacyIntegerNames: legacyIntegerNames)
+            case final btn?)
+          btn.name,
     ];
   }
 

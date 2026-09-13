@@ -37,7 +37,10 @@ class EnumNamesMigration implements SchemaMigration {
 
     final btns = store.get<Object>(btnsKey);
     if (btns is List) {
-      final names = ServerFuncBtn.namesFromStored(btns);
+      final names = ServerFuncBtn.namesFromStored(
+        btns,
+        legacyIntegerNames: ServerFuncBtn.legacyIndexNamesBeforeM021,
+      );
       // Only when it says something different, so a store already holding
       // names is untouched and the step stays safe to run twice.
       if (!_sameList(btns, names)) {

@@ -74,6 +74,7 @@ void main() {
         ServerFuncBtn.terminal.index,
         ServerFuncBtn.values.length + 5,
         ServerFuncBtn.files.index,
+        ServerFuncBtn.users.index,
       ], updateLastUpdateTsOnSet: false);
 
       EnumNamesMigration(store: store).applySync();
@@ -107,6 +108,13 @@ void main() {
       expect(
         ServerFuncBtn.byStored(ServerFuncBtn.power.index),
         ServerFuncBtn.power,
+      );
+      expect(
+        ServerFuncBtn.byStored(
+          ServerFuncBtn.users.index,
+          legacyIntegerNames: ServerFuncBtn.legacyIndexNamesBeforeM021,
+        ),
+        isNull,
       );
       expect(ServerFuncBtn.byStored('nothing-of-the-sort'), isNull);
       expect(ServerFuncBtn.byStored(ServerFuncBtn.values.length), isNull);
