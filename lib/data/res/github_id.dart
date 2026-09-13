@@ -209,8 +209,6 @@ abstract final class GithubIds {
     'GT-610',
     'Infinifar',
     'Jamfly',
-    'lilarcor',
-    'lollipopkit',
     'mc-yzy15',
     'MiguelDLM',
     'MushuScript',
