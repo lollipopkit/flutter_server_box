@@ -46,7 +46,7 @@ native-tls = [
     "dep:x509-cert",
     "tokio/io-util",
 ]
-rustls = ["rustls-aws-lc-rs"]
+rustls = ["rustls-ring"]
 rustls-aws-lc-rs = [
     "rustls-no-provider",
     "tokio-rustls/aws_lc_rs",
