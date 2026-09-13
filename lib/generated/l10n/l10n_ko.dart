@@ -99,6 +99,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiNoResponse => '응답 없음';
 
   @override
+  String get remoteDesktop => 'Remote desktop';
+
+  @override
   String get askAiAgentWelcome => '이 서버에서 무엇을 할까요?';
 
   @override

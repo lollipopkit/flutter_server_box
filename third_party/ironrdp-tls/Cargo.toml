@@ -63,7 +63,7 @@ rustls-ring = [
     "rustls-no-provider",
     "tokio-rustls/ring",
 ]
-stub = []
+stub = ["dep:x509-cert"]
 
 [lib]
 name = "ironrdp_tls"

@@ -154,6 +154,6 @@ enum ServerFuncBtn {
     power => l10n.power,
     users => l10n.systemUsers,
     scheduledTasks => l10n.scheduledTasks,
-    remoteDesktop => 'Remote desktop',
+    remoteDesktop => l10n.remoteDesktop,
   };
 }

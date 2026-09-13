@@ -29,7 +29,7 @@ impl<S> AsyncWrite for TlsStream<S> {
     }
 }
 
-pub async fn upgrade<S>(stream: S, server_name: &str) -> io::Result<(TlsStream<S>, Vec<u8>)>
+pub async fn upgrade<S>(stream: S, server_name: &str) -> io::Result<(TlsStream<S>, x509_cert::Certificate)>
 where
     S: Unpin + AsyncRead + AsyncWrite,
 {

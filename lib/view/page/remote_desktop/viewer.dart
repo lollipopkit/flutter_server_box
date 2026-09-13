@@ -70,6 +70,10 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _input?.releaseAll();
     _input = null;
     _remotePointer = Offset.zero;
+    _resizeTimer?.cancel();
+    _resizeTimer = null;
+    _lastResizeViewport = null;
+    _frame.reset();
   }
 
   @override
@@ -560,7 +564,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         ? transform.toRemote(_remotePointer, clamp: true)
         : transform.toRemote(event.localPosition);
     if (point == null) return;
-    _remotePointer = event.localPosition;
+    if (!trackpad) _remotePointer = event.localPosition;
     _buttons = trackpad ? 0 : _buttonMask(event.buttons);
     _sendPointer(session, point);
   }

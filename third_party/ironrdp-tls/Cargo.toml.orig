@@ -29,7 +29,7 @@ rustls-ring = ["rustls-no-provider", "tokio-rustls/ring"]
 # building the client configuration panics.
 rustls-no-provider = ["dep:tokio-rustls", "dep:rustls-native-certs", "dep:x509-cert", "tokio/io-util", "tokio-rustls/logging", "tokio-rustls/tls12"]
 native-tls = ["dep:tokio-native-tls", "dep:x509-cert", "tokio/io-util"]
-stub = []
+stub = ["dep:x509-cert"]
 
 [dependencies]
 tokio = { version = "1.52" }

@@ -19,11 +19,23 @@ class RemoteDesktopFrameDecoder extends ChangeNotifier {
   _PendingFrame? _pending;
   bool _decoding = false;
   bool _disposed = false;
+  int _generation = 0;
   ui.Image? _image;
   BigInt _sequence = BigInt.from(-1);
 
   ui.Image? get image => _image;
   BigInt get sequence => _sequence;
+
+  /// Drops all pending and decoded state before a different session is shown.
+  void reset() {
+    if (_disposed) return;
+    _generation++;
+    _pending = null;
+    _image?.dispose();
+    _image = null;
+    _sequence = BigInt.from(-1);
+    notifyListeners();
+  }
 
   void submit({
     required Uint8List pixels,
@@ -41,7 +53,9 @@ class RemoteDesktopFrameDecoder extends ChangeNotifier {
 
   Future<void> _drain() async {
     _decoding = true;
+    var generation = _generation;
     while (!_disposed) {
+      if (generation != _generation) generation = _generation;
       final frame = _pending;
       if (frame == null) break;
       _pending = null;
@@ -57,6 +71,11 @@ class RemoteDesktopFrameDecoder extends ChangeNotifier {
         continue;
       }
       if (_disposed || _pending != null) {
+        decoded.dispose();
+        continue;
+      }
+      if (generation != _generation) {
+        generation = _generation;
         decoded.dispose();
         continue;
       }

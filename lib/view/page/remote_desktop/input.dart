@@ -6,6 +6,15 @@ class RemoteDesktopKey {
 
   final int code;
   final bool extended;
+
+  @override
+  bool operator ==(Object other) =>
+      other is RemoteDesktopKey &&
+      other.code == code &&
+      other.extended == extended;
+
+  @override
+  int get hashCode => Object.hash(code, extended);
 }
 
 /// Converts Flutter key events into RDP scan codes or X11 keysyms.
@@ -154,7 +163,8 @@ RemoteDesktopKey? _vncKey(LogicalKeyboardKey key) {
   final code = special[key];
   if (code != null) return RemoteDesktopKey(code);
   final id = key.keyId;
-  return id <= 0x10ffff ? RemoteDesktopKey(id) : null;
+  if (id > 0x10ffff) return null;
+  return RemoteDesktopKey(id > 0xff ? id | 0x01000000 : id);
 }
 
 class RemoteDesktopInputController {

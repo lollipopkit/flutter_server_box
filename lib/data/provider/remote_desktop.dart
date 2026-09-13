@@ -457,12 +457,13 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       ),
     );
 
+    SshLocalTunnel? tunnel;
     try {
       final client = await ref
           .read(serverProvider(entry.profile.serverId).notifier)
           .ensureShellClient();
       if (!_isCurrent(entry, generation)) return;
-      final tunnel = await SshLocalTunnel.loopback(
+      tunnel = await SshLocalTunnel.loopback(
         client: client,
         remoteHost: entry.profile.host,
         remotePort: entry.profile.port,
@@ -512,6 +513,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       );
       await _pump(entry, generation, handle);
     } catch (error, stackTrace) {
+      final failedTunnel = tunnel;
+      if (failedTunnel != null && !identical(entry.tunnel, failedTunnel)) {
+        await failedTunnel.close().catchError((_) {});
+      }
       if (!_isCurrent(entry, generation)) return;
       Loggers.app.warning('Remote desktop session failed', error, stackTrace);
       Diag.crumb(

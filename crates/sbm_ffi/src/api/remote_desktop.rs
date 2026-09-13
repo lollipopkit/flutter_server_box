@@ -5,6 +5,7 @@
 //! so a slow Flutter image conversion cannot grow a native frame queue.
 
 use std::io::Cursor;
+use std::collections::{HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -25,12 +26,14 @@ use sha2::{Digest as _, Sha256};
 use smallvec::SmallVec;
 use tokio::net::TcpStream;
 use tokio::runtime::Builder;
-use tokio::sync::{mpsc, watch};
+use tokio::sync::{mpsc, watch, Notify};
 use vnc::{ClientKeyEvent, ClientMouseEvent, PixelFormat, Rect, VncConnector, VncEncoding, VncEvent, X11Event};
 
 const MAX_WIDTH: u32 = 8192;
 const MAX_HEIGHT: u32 = 8192;
+const MAX_FRAME_BYTES: usize = 64 * 1024 * 1024;
 const FRAME_INTERVAL: Duration = Duration::from_millis(33);
+const CHANNEL_CAPACITY: usize = 64;
 
 #[derive(Clone, Debug)]
 pub struct RdpSessionParams {
@@ -158,14 +161,157 @@ enum SessionCommand {
     ReleaseAll,
 }
 
+struct CommandQueue {
+    queue: Mutex<VecDeque<SessionCommand>>,
+    notify: Notify,
+    closed: Mutex<bool>,
+}
+
+impl CommandQueue {
+    fn new() -> Arc<Self> {
+        Arc::new(Self {
+            queue: Mutex::new(VecDeque::with_capacity(CHANNEL_CAPACITY)),
+            notify: Notify::new(),
+            closed: Mutex::new(false),
+        })
+    }
+
+    fn send(&self, command: SessionCommand) -> Result<(), ()> {
+        let mut queue = self.queue.lock().map_err(|_| ())?;
+        if *self.closed.lock().map_err(|_| ())? {
+            return Err(());
+        }
+        if queue.len() >= CHANNEL_CAPACITY {
+            if let Some(existing) = queue.iter_mut().rev().find(|item| {
+                matches!(item, SessionCommand::Pointer { .. } | SessionCommand::Wheel { .. } | SessionCommand::Resize { .. } | SessionCommand::SetVisible(_))
+            }) {
+                if matches!(&command, SessionCommand::Pointer { .. } | SessionCommand::Wheel { .. } | SessionCommand::Resize { .. } | SessionCommand::SetVisible(_)) {
+                    *existing = command;
+                    self.notify.notify_one();
+                    return Ok(());
+                }
+            }
+            if let Some(index) = queue.iter().position(|item| {
+                matches!(item, SessionCommand::Pointer { .. } | SessionCommand::Wheel { .. } | SessionCommand::Resize { .. } | SessionCommand::SetVisible(_))
+            }) {
+                queue.remove(index);
+            } else if matches!(&command, SessionCommand::Close) {
+                queue.clear();
+            } else {
+                return Err(());
+            }
+        }
+        queue.push_back(command);
+        self.notify.notify_one();
+        Ok(())
+    }
+
+    async fn recv(&self) -> Option<SessionCommand> {
+        loop {
+            let notified = self.notify.notified();
+            if let Ok(mut queue) = self.queue.lock() {
+                if let Some(command) = queue.pop_front() {
+                    return Some(command);
+                }
+                if self.closed.lock().map(|closed| *closed).unwrap_or(true) {
+                    return None;
+                }
+            } else {
+                return None;
+            }
+            notified.await;
+        }
+    }
+
+    fn try_recv(&self) -> Option<SessionCommand> {
+        self.queue.lock().ok()?.pop_front()
+    }
+
+    fn close(&self) {
+        if let Ok(mut closed) = self.closed.lock() {
+            *closed = true;
+        }
+        self.notify.notify_waiters();
+    }
+
+}
+
 struct EventReceiver {
-    events: mpsc::UnboundedReceiver<RemoteDesktopEvent>,
+    events: Arc<EventQueue>,
     frames: watch::Receiver<Option<Arc<Frame>>>,
 }
 
 #[derive(Debug)]
+struct EventQueue {
+    queue: Mutex<VecDeque<RemoteDesktopEvent>>,
+    notify: Notify,
+    closed: Mutex<bool>,
+}
+
+impl EventQueue {
+    fn new() -> Arc<Self> {
+        Arc::new(Self {
+            queue: Mutex::new(VecDeque::with_capacity(CHANNEL_CAPACITY)),
+            notify: Notify::new(),
+            closed: Mutex::new(false),
+        })
+    }
+
+    fn send(&self, event: RemoteDesktopEvent) {
+        let Ok(mut queue) = self.queue.lock() else { return };
+        if self.closed.lock().map(|closed| *closed).unwrap_or(true) {
+            return;
+        }
+        let replaceable = matches!(&event, RemoteDesktopEvent::CursorPosition { .. });
+        if queue.len() >= CHANNEL_CAPACITY {
+            if replaceable {
+                if let Some(existing) = queue.iter_mut().rev().find(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. })) {
+                    *existing = event;
+                }
+                return;
+            }
+            if let Some(index) = queue.iter().position(|item| matches!(item, RemoteDesktopEvent::CursorPosition { .. })) {
+                queue.remove(index);
+            } else {
+                return;
+            }
+        }
+        queue.push_back(event);
+        self.notify.notify_one();
+    }
+
+    async fn recv(&self) -> Option<RemoteDesktopEvent> {
+        loop {
+            let notified = self.notify.notified();
+            if let Ok(mut queue) = self.queue.lock() {
+                if let Some(event) = queue.pop_front() {
+                    return Some(event);
+                }
+                if self.closed.lock().map(|closed| *closed).unwrap_or(true) {
+                    return None;
+                }
+            } else {
+                return None;
+            }
+            notified.await;
+        }
+    }
+
+    fn close(&self) {
+        if let Ok(mut closed) = self.closed.lock() {
+            *closed = true;
+        }
+        self.notify.notify_waiters();
+    }
+
+    fn is_closed(&self) -> bool {
+        self.closed.lock().map(|closed| *closed).unwrap_or(true)
+    }
+}
+
+#[derive(Debug)]
 struct Frame {
-    bgra: Vec<u8>,
+    bgra: Arc<Vec<u8>>,
     width: u32,
     height: u32,
     sequence: u64,
@@ -173,17 +319,21 @@ struct Frame {
 
 #[derive(Clone, Debug)]
 struct EventSender {
-    events: mpsc::UnboundedSender<RemoteDesktopEvent>,
+    events: Arc<EventQueue>,
     frames: watch::Sender<Option<Arc<Frame>>>,
     sequence: Arc<std::sync::atomic::AtomicU64>,
 }
 
 impl EventSender {
     fn event(&self, event: RemoteDesktopEvent) {
-        let _ = self.events.send(event);
+        self.events.send(event);
     }
 
     fn frame(&self, bgra: Vec<u8>, width: u32, height: u32) {
+        self.frame_shared(Arc::new(bgra), width, height);
+    }
+
+    fn frame_shared(&self, bgra: Arc<Vec<u8>>, width: u32, height: u32) {
         let sequence = self
             .sequence
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed)
@@ -200,7 +350,7 @@ impl EventSender {
 /// Opaque native session. Only commands and one-at-a-time event reads cross FFI.
 #[flutter_rust_bridge::frb(opaque)]
 pub struct RemoteDesktopSessionHandle {
-    commands: mpsc::UnboundedSender<SessionCommand>,
+    commands: Arc<CommandQueue>,
     receiver: tokio::sync::Mutex<EventReceiver>,
 }
 
@@ -234,17 +384,19 @@ impl RemoteDesktopSessionHandle {
 
     fn spawn<F, Fut>(run: F) -> Result<Self, String>
     where
-        F: FnOnce(mpsc::UnboundedReceiver<SessionCommand>, EventSender) -> Fut + Send + 'static,
+        F: FnOnce(Arc<CommandQueue>, EventSender) -> Fut + Send + 'static,
         Fut: std::future::Future<Output = ()> + 'static,
     {
-        let (command_tx, command_rx) = mpsc::unbounded_channel();
-        let (event_tx, event_rx) = mpsc::unbounded_channel();
+        let command_tx = CommandQueue::new();
+        let event_queue = EventQueue::new();
         let (frame_tx, frame_rx) = watch::channel(None);
         let events = EventSender {
-            events: event_tx,
+            events: event_queue.clone(),
             frames: frame_tx,
             sequence: Arc::new(std::sync::atomic::AtomicU64::new(0)),
         };
+        let worker_commands = command_tx.clone();
+        let worker_events = event_queue.clone();
         std::thread::Builder::new()
             .name("server-box-remote-desktop".to_owned())
             .spawn(move || {
@@ -252,13 +404,15 @@ impl RemoteDesktopSessionHandle {
                     .enable_all()
                     .build()
                     .expect("remote desktop runtime");
-                runtime.block_on(run(command_rx, events));
+                runtime.block_on(run(worker_commands.clone(), events));
+                worker_commands.close();
+                worker_events.close();
             })
             .map_err(|error| format!("failed to start remote desktop worker: {error}"))?;
         Ok(Self {
             commands: command_tx,
             receiver: tokio::sync::Mutex::new(EventReceiver {
-                events: event_rx,
+                events: event_queue,
                 frames: frame_rx,
             }),
         })
@@ -270,7 +424,7 @@ impl RemoteDesktopSessionHandle {
         let EventReceiver { events, frames } = &mut *receiver;
         loop {
             tokio::select! {
-                event = events.recv() => return event,
+                    event = events.recv() => return event,
                 changed = frames.changed() => {
                     if changed.is_err() {
                         if events.is_closed() {
@@ -281,7 +435,7 @@ impl RemoteDesktopSessionHandle {
                     let frame = frames.borrow_and_update().clone();
                     if let Some(frame) = frame {
                         return Some(RemoteDesktopEvent::Frame {
-                            bgra: frame.bgra.clone(),
+                            bgra: frame.bgra.as_ref().clone(),
                             width: frame.width,
                             height: frame.height,
                             sequence: frame.sequence,
@@ -386,9 +540,18 @@ fn validate_endpoint(host: &str, port: u16) -> Result<(), String> {
 }
 
 fn validate_size(width: u32, height: u32) -> Result<(), String> {
-    if width == 0 || height == 0 || width > MAX_WIDTH || height > MAX_HEIGHT {
+    let frame_bytes = usize::try_from(width)
+        .ok()
+        .and_then(|width| usize::try_from(height).ok().and_then(|height| width.checked_mul(height)))
+        .and_then(|pixels| pixels.checked_mul(4));
+    if width == 0
+        || height == 0
+        || width > MAX_WIDTH
+        || height > MAX_HEIGHT
+        || frame_bytes.is_none_or(|bytes| bytes > MAX_FRAME_BYTES)
+    {
         return Err(format!(
-            "remote desktop size must be between 1x1 and {MAX_WIDTH}x{MAX_HEIGHT}"
+            "remote desktop size must be between 1x1 and {MAX_WIDTH}x{MAX_HEIGHT}, with at most {MAX_FRAME_BYTES} framebuffer bytes"
         ));
     }
     Ok(())
@@ -396,7 +559,7 @@ fn validate_size(width: u32, height: u32) -> Result<(), String> {
 
 async fn run_rdp(
     params: RdpSessionParams,
-    mut commands: mpsc::UnboundedReceiver<SessionCommand>,
+    commands: Arc<CommandQueue>,
     events: EventSender,
 ) {
     events.event(RemoteDesktopEvent::ConnectionState {
@@ -479,7 +642,7 @@ async fn run_rdp(
     tokio::pin!(client_run);
     let mut input = RdpInputDatabase::new();
     let mut visible = true;
-    let mut latest_frame: Option<(Vec<u8>, u32, u32)> = None;
+    let mut latest_frame: Option<(Arc<Vec<u8>>, u32, u32)> = None;
     let mut frame_dirty = false;
     let mut connected_sent = false;
     let mut client_done = false;
@@ -494,7 +657,33 @@ async fn run_rdp(
                     Some(RdpOutputEvent::Image { buffer, width, height }) => {
                         let width = u32::from(width.get());
                         let height = u32::from(height.get());
-                        latest_frame = Some((rdp_pixels_to_bgra(&buffer), width, height));
+                        if let Err(message) = validate_size(width, height) {
+                            events.event(RemoteDesktopEvent::Error {
+                                message: message.clone(),
+                                retryable: false,
+                            });
+                            events.event(RemoteDesktopEvent::Ended {
+                                reason: RemoteDesktopEndReason::ConfigurationError,
+                                message: Some(message),
+                            });
+                            break;
+                        }
+                        let expected_pixels = usize::try_from(width)
+                            .ok()
+                            .and_then(|width| usize::try_from(height).ok().and_then(|height| width.checked_mul(height)));
+                        if expected_pixels != Some(buffer.len()) {
+                            let message = "RDP frame dimensions do not match its pixel buffer".to_owned();
+                            events.event(RemoteDesktopEvent::Error {
+                                message: message.clone(),
+                                retryable: false,
+                            });
+                            events.event(RemoteDesktopEvent::Ended {
+                                reason: RemoteDesktopEndReason::ConfigurationError,
+                                message: Some(message),
+                            });
+                            break;
+                        }
+                        latest_frame = Some((Arc::new(rdp_pixels_to_bgra(&buffer)), width, height));
                         frame_dirty = true;
                         if !connected_sent {
                             events.event(RemoteDesktopEvent::ConnectionState {
@@ -598,9 +787,9 @@ async fn run_rdp(
     }
 }
 
-fn publish_latest_frame(events: &EventSender, latest: &Option<(Vec<u8>, u32, u32)>) {
+fn publish_latest_frame(events: &EventSender, latest: &Option<(Arc<Vec<u8>>, u32, u32)>) {
     if let Some((bgra, width, height)) = latest {
-        events.frame(bgra.clone(), *width, *height);
+        events.frame_shared(Arc::clone(bgra), *width, *height);
     }
 }
 
@@ -847,51 +1036,95 @@ impl CliprdrBackend for RdpClipboardBackend {
 
 async fn run_vnc(
     params: VncSessionParams,
-    mut commands: mpsc::UnboundedReceiver<SessionCommand>,
+    commands: Arc<CommandQueue>,
     events: EventSender,
 ) {
+    const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+    const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(15);
     events.event(RemoteDesktopEvent::ConnectionState {
         state: RemoteDesktopConnectionState::Connecting,
         attempt: 0,
     });
     let endpoint = format_endpoint(&params.connect_host, params.connect_port);
-    let stream = match TcpStream::connect(endpoint).await {
-        Ok(stream) => stream,
-        Err(error) => {
-            finish_vnc_error(&events, error.to_string(), true);
-            return;
+    let mut pending_commands = VecDeque::new();
+    let connect = TcpStream::connect(endpoint.as_str());
+    tokio::pin!(connect);
+    let connect_timeout = tokio::time::sleep(CONNECT_TIMEOUT);
+    tokio::pin!(connect_timeout);
+    let stream = loop {
+        tokio::select! {
+            result = &mut connect => {
+                match result {
+                    Ok(stream) => break stream,
+                    Err(error) => {
+                        finish_vnc_error(&events, error.to_string(), true);
+                        return;
+                    }
+                }
+            }
+            _ = &mut connect_timeout => {
+                finish_vnc_error(&events, "VNC TCP connection timed out".to_owned(), true);
+                return;
+            }
+            command = commands.recv() => match command {
+                Some(SessionCommand::Close) | None => {
+                    events.event(RemoteDesktopEvent::Ended {
+                        reason: RemoteDesktopEndReason::ClosedByUser,
+                        message: None,
+                    });
+                    return;
+                }
+                Some(command) => pending_commands.push_back(command),
+            }
         }
     };
     let password = params.password.unwrap_or_default();
-    let client = match VncConnector::new(stream)
-        .set_auth_method(async move { Ok(password) })
-        .add_encoding(VncEncoding::Tight)
-        .add_encoding(VncEncoding::Zrle)
-        .add_encoding(VncEncoding::CopyRect)
-        .add_encoding(VncEncoding::Raw)
-        .add_encoding(VncEncoding::CursorPseudo)
-        .add_encoding(VncEncoding::DesktopSizePseudo)
-        .allow_shared(params.shared)
-        .set_pixel_format(PixelFormat::bgra())
-        .build()
-    {
-        Ok(state) => match state.try_start().await {
-            Ok(state) => match state.finish() {
-                Ok(client) => client,
-                Err(error) => {
-                    finish_vnc_error(&events, error.to_string(), false);
+    let shared = params.shared;
+    let handshake = async move {
+        let state = VncConnector::new(stream)
+            .set_auth_method(async move { Ok(password) })
+            .add_encoding(VncEncoding::Tight)
+            .add_encoding(VncEncoding::Zrle)
+            .add_encoding(VncEncoding::CopyRect)
+            .add_encoding(VncEncoding::Raw)
+            .add_encoding(VncEncoding::CursorPseudo)
+            .add_encoding(VncEncoding::DesktopSizePseudo)
+            .allow_shared(shared)
+            .set_pixel_format(PixelFormat::bgra())
+            .build()
+            .map_err(|error| (error.to_string(), false))?;
+        let state = state.try_start().await.map_err(|error| {
+            let retryable = !matches!(error, vnc::VncError::WrongPassword | vnc::VncError::NoPassword);
+            (error.to_string(), retryable)
+        })?;
+        state.finish().map_err(|error| (error.to_string(), false))
+    };
+    tokio::pin!(handshake);
+    let handshake_timeout = tokio::time::sleep(HANDSHAKE_TIMEOUT);
+    tokio::pin!(handshake_timeout);
+    let client = loop {
+        tokio::select! {
+            result = &mut handshake => match result {
+                Ok(client) => break client,
+                Err((message, retryable)) => {
+                    finish_vnc_error(&events, message, retryable);
                     return;
                 }
             },
-            Err(error) => {
-                let retryable = !matches!(error, vnc::VncError::WrongPassword | vnc::VncError::NoPassword);
-                finish_vnc_error(&events, error.to_string(), retryable);
+            command = commands.recv() => match command {
+                Some(SessionCommand::Close) | None => {
+                    events.event(RemoteDesktopEvent::Ended {
+                        reason: RemoteDesktopEndReason::ClosedByUser,
+                        message: None,
+                    });
+                    return;
+                }
+                Some(command) => pending_commands.push_back(command),
+            },
+            _ = &mut handshake_timeout => {
+                finish_vnc_error(&events, "VNC handshake timed out".to_owned(), true);
                 return;
             }
-        },
-        Err(error) => {
-            finish_vnc_error(&events, error.to_string(), false);
-            return;
         }
     };
 
@@ -900,14 +1133,30 @@ async fn run_vnc(
         attempt: 0,
     });
     let mut framebuffer = Framebuffer::default();
+    let mut pressed_keys = HashSet::new();
     let mut visible = true;
     let mut dirty = false;
     let mut last_frame_sent = tokio::time::Instant::now() - FRAME_INTERVAL;
     let mut ticker = tokio::time::interval(Duration::from_millis(5));
     ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
+    while let Some(command) = pending_commands.pop_front() {
+        match command {
+            SessionCommand::Close => {
+                let _ = client.close().await;
+                events.event(RemoteDesktopEvent::Ended {
+                    reason: RemoteDesktopEndReason::ClosedByUser,
+                    message: None,
+                });
+                return;
+            }
+            SessionCommand::SetVisible(value) => visible = value,
+            command => handle_vnc_command(command, &client, &events, &mut pressed_keys).await,
+        }
+    }
+
     'session: loop {
-        while let Ok(command) = commands.try_recv() {
+        while let Some(command) = commands.try_recv() {
             match command {
                 SessionCommand::Close => {
                     let _ = client.close().await;
@@ -928,7 +1177,7 @@ async fn run_vnc(
                         }
                     }
                 }
-                command => handle_vnc_command(command, &client, &events).await,
+                command => handle_vnc_command(command, &client, &events, &mut pressed_keys).await,
             }
         }
 
@@ -959,12 +1208,21 @@ async fn run_vnc(
     }
 }
 
-async fn handle_vnc_command(command: SessionCommand, client: &vnc::VncClient, events: &EventSender) {
+async fn handle_vnc_command(
+    command: SessionCommand,
+    client: &vnc::VncClient,
+    events: &EventSender,
+    pressed_keys: &mut HashSet<u32>,
+) {
     let input = match command {
-        SessionCommand::Key { code, down, .. } => Some(X11Event::KeyEvent(ClientKeyEvent {
-            keycode: code,
-            down,
-        })),
+        SessionCommand::Key { code, down, .. } => {
+            if down {
+                pressed_keys.insert(code);
+            } else {
+                pressed_keys.remove(&code);
+            }
+            Some(X11Event::KeyEvent(ClientKeyEvent { keycode: code, down }))
+        }
         SessionCommand::UnicodeText(text) => {
             for character in text.chars() {
                 let keycode = character as u32;
@@ -998,7 +1256,14 @@ async fn handle_vnc_command(command: SessionCommand, client: &vnc::VncClient, ev
                 Some(X11Event::CopyText(text))
             }
         }
-        SessionCommand::ReleaseAll => None,
+        SessionCommand::ReleaseAll => {
+            for code in pressed_keys.drain() {
+                let _ = client
+                    .input(X11Event::KeyEvent(ClientKeyEvent { keycode: code, down: false }))
+                    .await;
+            }
+            None
+        }
         SessionCommand::Resize { .. } | SessionCommand::Close | SessionCommand::SetVisible(_) => None,
     };
     if let Some(input) = input {
@@ -1283,6 +1548,12 @@ mod tests {
     }
 
     #[test]
+    fn framebuffer_size_is_limited_by_total_bytes() {
+        assert!(validate_size(8192, 8192).is_err());
+        assert!(validate_size(4096, 4096).is_ok());
+    }
+
+    #[test]
     fn vnc_password_limit_is_enforced_before_spawning() {
         let result = RemoteDesktopSessionHandle::start_vnc(VncSessionParams {
             connect_host: "127.0.0.1".to_owned(),
@@ -1310,7 +1581,7 @@ mod tests {
 
     #[tokio::test]
     async fn latest_frame_replaces_an_unread_frame() {
-        let (event_tx, _event_rx) = mpsc::unbounded_channel();
+        let event_tx = EventQueue::new();
         let (frame_tx, mut frame_rx) = watch::channel(None);
         let sender = EventSender {
             events: event_tx,
@@ -1321,14 +1592,14 @@ mod tests {
         sender.frame(vec![2; 4], 1, 1);
         frame_rx.changed().await.unwrap();
         let frame = frame_rx.borrow_and_update().clone().unwrap();
-        assert_eq!(frame.bgra, vec![2; 4]);
+        assert_eq!(frame.bgra.as_ref(), &vec![2; 4]);
         assert_eq!(frame.sequence, 2);
     }
 
     #[tokio::test]
     #[ignore = "60-second 1080p frame-queue stress test"]
     async fn synthetic_thirty_fps_frames_keep_one_native_buffer() {
-        let (event_tx, _event_rx) = mpsc::unbounded_channel();
+        let event_tx = EventQueue::new();
         let (frame_tx, mut frame_rx) = watch::channel(None);
         let sender = EventSender {
             events: event_tx,

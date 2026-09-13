@@ -216,7 +216,15 @@ impl RdpClient {
 
                 #[cfg(feature = "gateway")]
                 Transport::Gateway(gw) => {
-                    match connect_gateway(&self.config, gw, &self.input_event_sender, cliprdr_factory).await {
+                    match connect_gateway(
+                        &self.config,
+                        gw,
+                        &self.input_event_sender,
+                        &self.output_event_sender,
+                        cliprdr_factory,
+                    )
+                    .await
+                    {
                         Ok(r) => r,
                         Err(e) => {
                             let _ = self
@@ -470,6 +478,7 @@ async fn connect_gateway(
     config: &Config,
     gw: &crate::config::GatewayConfig,
     input_sender: &mpsc::UnboundedSender<RdpInputEvent>,
+    output_sender: &mpsc::Sender<RdpOutputEvent>,
     cliprdr_factory: CliprdrFactoryRef<'_>,
 ) -> ConnectorResult<(ConnectionResult, UpgradedFramed)> {
     use ironrdp_mstsgu::GwConnectTarget;
@@ -491,7 +500,7 @@ async fn connect_gateway(
 
     let connector = build_connector(config, client_addr, input_sender, cliprdr_factory);
 
-    tls_handshake_and_finalize(framed, connector, config).await
+    tls_handshake_and_finalize(framed, connector, config, output_sender).await
 }
 
 /// RDCleanPath WebSocket → RDCleanPath handshake connection.

@@ -97,6 +97,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiNoResponse => '无回复内容';
 
   @override
+  String get remoteDesktop => 'Remote desktop';
+
+  @override
   String get askAiAgentWelcome => '想在这台服务器上做什么？';
 
   @override

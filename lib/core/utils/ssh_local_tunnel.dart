@@ -41,6 +41,7 @@ class SshLocalTunnel {
   final ServerSocket _listener;
   final SshTunnelDialer _dialer;
   final Set<Socket> _pendingSockets = {};
+  final Set<Future<SshTunnelChannel>> _pendingChannels = {};
   final Set<_TunnelConnection> _connections = {};
   final Set<Future<void>> _bridges = {};
   final Completer<void> _done = Completer<void>();
@@ -110,8 +111,23 @@ class SshLocalTunnel {
 
   Future<void> _bridge(Socket socket) async {
     SshTunnelChannel? channel;
+    late final Future<SshTunnelChannel> opening;
     try {
-      channel = await _dialer();
+      opening = _dialer();
+      _pendingChannels.add(opening);
+      try {
+        channel = await opening.timeout(const Duration(seconds: 15));
+      } on TimeoutException {
+        // A direct-tcpip open cannot be cancelled through dartssh2. If it
+        // completes after the timeout (or after close), close the channel as
+        // soon as it arrives instead of leaking it.
+        unawaited(
+          opening.then<void>((lateChannel) => lateChannel.close()).catchError((_) {}),
+        );
+        rethrow;
+      } finally {
+        _pendingChannels.remove(opening);
+      }
       _pendingSockets.remove(socket);
       if (_closed) {
         socket.destroy();
@@ -160,6 +176,12 @@ class SshLocalTunnel {
       socket.destroy();
     }
     _pendingSockets.clear();
+
+    for (final opening in _pendingChannels.toList()) {
+      unawaited(
+        opening.then<void>((channel) => channel.close()).catchError((_) {}),
+      );
+    }
 
     final connections = _connections.toList();
     _connections.clear();

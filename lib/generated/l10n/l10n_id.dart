@@ -102,6 +102,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiNoResponse => 'Tidak ada respons';
 
   @override
+  String get remoteDesktop => 'Remote desktop';
+
+  @override
   String get askAiAgentWelcome => 'Apa yang akan kita lakukan di server ini?';
 
   @override
