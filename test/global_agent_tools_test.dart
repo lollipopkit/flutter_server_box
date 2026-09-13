@@ -29,7 +29,54 @@ void main() {
     expect(instructions, contains('"id":"server-a"'));
     expect(instructions, contains('"id":"server-b"'));
     expect(instructions, contains('Propose exactly one tool call at a time'));
+    expect(instructions, contains('Never use JSON null for tool arguments'));
     expect(instructions, contains('zh-CN'));
+  });
+
+  test('finished servers are described as ready for direct tool use', () {
+    final instructions = buildGlobalAgentInstructions(
+      servers: const [
+        GlobalAgentServerContext(
+          id: 'server-a',
+          name: 'Production',
+          connection: 'finished',
+          system: 'linux',
+        ),
+      ],
+    );
+
+    expect(
+      instructions,
+      contains('connection is "finished" is already connected'),
+    );
+    expect(instructions, contains('Do not call serverbox connect for it'));
+  });
+
+  test('tool schemas use strings instead of JSON null', () {
+    for (final tool in globalAgentToolDefinitions) {
+      final properties = tool.parameters['properties'] as Map<String, dynamic>;
+      for (final entry in properties.entries) {
+        final property = entry.value as Map<String, dynamic>;
+        expect(
+          property['type'],
+          isNot(contains('null')),
+          reason: '${tool.name}.${entry.key}',
+        );
+      }
+      if (!properties.keys.toSet().containsAll({'server_id', 'session_id'})) {
+        continue;
+      }
+      for (final name in const ['server_id', 'session_id']) {
+        final property = properties[name] as Map<String, dynamic>;
+
+        expect(property['type'], 'string', reason: '${tool.name}.$name');
+        expect(
+          property['description'],
+          contains('empty string'),
+          reason: '${tool.name}.$name',
+        );
+      }
+    }
   });
 
   test('Agent tool results round-trip through conversation output', () {
@@ -235,8 +282,8 @@ void main() {
     });
 
     test('an explicit null session id still names the server', () {
-      // What the schema produces for "the other one": both fields are always
-      // present, and one of them is null.
+      // Older stored calls and non-conforming providers may still send JSON
+      // null. Treat it like the empty placeholder instead of crashing.
       final target = AgentSshTarget.fromArguments(
         shell({
           'server_id': 'server-a',
@@ -246,6 +293,23 @@ void main() {
       );
 
       expect((target as ConfiguredServerTarget).serverId, 'server-a');
+    });
+
+    test('an explicit null server id still names the ad-hoc session', () {
+      final target = AgentSshTarget.fromArguments(
+        shell({'server_id': null, 'session_id': 'sess-1', 'command': 'uptime'}),
+      );
+
+      expect((target as AdHocSessionTarget).sessionId, 'sess-1');
+    });
+
+    test('two explicit null identifiers still name no machine', () {
+      expect(
+        () => AgentSshTarget.fromArguments(
+          shell({'server_id': null, 'session_id': null, 'command': 'uptime'}),
+        ),
+        throwsA(isA<FormatException>()),
+      );
     });
 
     test('nothing runs unattended on a host met this conversation', () {
