@@ -31,7 +31,7 @@
     "@testing-library/svelte": "^5.4.2",
     "@tsconfig/svelte": "^5.0.4",
     "@vitest/coverage-v8": "5.0.0",
-    "eslint": "^10.9.1",
+    "eslint": "^10.10.0",
     "eslint-plugin-svelte": "^3.23.0",
     "globals": "^17.12.0",
     "jsdom": "^30.0.1",
