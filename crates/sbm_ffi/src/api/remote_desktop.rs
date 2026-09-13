@@ -1444,7 +1444,7 @@ impl Framebuffer {
         let mut bgra = Vec::with_capacity(usize::from(rect.width) * usize::from(rect.height) * 4);
         match info.pixel_format {
             JpegPixelFormat::RGB24 => {
-                for pixel in decoded.chunks_exact(3) {
+                for pixel in decoded.as_chunks::<3>().0 {
                     bgra.extend_from_slice(&[pixel[2], pixel[1], pixel[0], 0xff]);
                 }
             }
@@ -1454,7 +1454,7 @@ impl Framebuffer {
                 }
             }
             JpegPixelFormat::CMYK32 => {
-                for pixel in decoded.chunks_exact(4) {
+                for pixel in decoded.as_chunks::<4>().0 {
                     let convert = |component: u8, black: u8| {
                         255_u16.saturating_sub(u16::from(component).saturating_add(u16::from(black)).min(255)) as u8
                     };
@@ -1494,7 +1494,7 @@ fn frame_len(width: u32, height: u32) -> Result<usize, String> {
 
 fn bgra_to_rgba(data: &[u8]) -> Vec<u8> {
     let mut rgba = Vec::with_capacity(data.len());
-    for pixel in data.chunks_exact(4) {
+    for pixel in data.as_chunks::<4>().0 {
         rgba.extend_from_slice(&[pixel[2], pixel[1], pixel[0], pixel[3]]);
     }
     rgba
