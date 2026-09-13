@@ -19,7 +19,6 @@ export class Poller<T> {
 
   start() {
     this.stop()
-    this.loading = this.data === null
     const generation = ++this.#generation
     void this.#tick(generation)
   }
