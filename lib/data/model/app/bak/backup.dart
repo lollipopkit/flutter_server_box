@@ -83,9 +83,18 @@ class Backup implements Mergeable {
 
     final settings_ = settings;
 
+    // `replaceAll` reconciles an incoming key onto a local one of the same
+    // name, so the id a server points at is not always the id the key lands
+    // under. Resolved before anything is written, because reconciliation reads
+    // the very rows the restore is about to delete — and left unresolved the
+    // server's `ssh_key_id` names a row that was never inserted, which the
+    // foreign key rejects and which takes the whole restore down with it.
+    // `BackupV2` does this through `_restoredServerGraph`.
+    final restoredSpis = _withRestoredKeyIds(spis);
+
     SqliteStore.transact(() {
       Stores.key.replaceAll(keys);
-      Stores.server.replaceAll(spis);
+      Stores.server.replaceAll(restoredSpis);
       Stores.snippet.replaceAll(snippets);
       Stores.container.restoreLegacyMap(container);
       _restoreInto(Stores.history, history);
@@ -123,6 +132,29 @@ class Backup implements Mergeable {
     RNodes.app.notify();
 
     _logger.info('Restore success');
+  }
+
+  /// [spis] with every key reference pointing at the id its key will land
+  /// under, for the keys `PrivateKeyStore.reconcile` is about to re-id.
+  ///
+  /// An id already present here is left alone — that is the identity, and
+  /// reconcile leaves it alone too.
+  List<Spi> _withRestoredKeyIds(List<Spi> spis) {
+    final restored = <String, String>{};
+    for (final key in keys) {
+      if (Stores.key.fetchOneRaw(key.id) != null) continue;
+      final local = Stores.key.fetchByName(key.name)?.id;
+      if (local != null && local != key.id) restored[key.id] = local;
+    }
+    if (restored.isEmpty) return spis;
+
+    return [
+      for (final spi in spis)
+        if (restored[spi.ssh?.keyId] case final keyId?)
+          spi.copyWith(ssh: spi.ssh?.copyWith(keyId: keyId))
+        else
+          spi,
+    ];
   }
 
   factory Backup.fromJsonString(String raw) =>

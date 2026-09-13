@@ -20,9 +20,18 @@ enum ServerSortField {
   name,
   status;
 
-  static ServerSortField fromStored(int index) {
-    return index >= 0 && index < values.length ? values[index] : manual;
-  }
+  /// The field a stored value names.
+  ///
+  /// Stored by name; the `Enum.index` this used to be is still read, because a
+  /// device on an older build syncs the setting in that shape. An index means
+  /// whatever this build's [values] order says, which is exactly the problem
+  /// with keeping one.
+  static ServerSortField fromStored(Object? stored) => switch (stored) {
+    final String name =>
+      values.firstWhereOrNull((field) => field.name == name) ?? manual,
+    final int index when index >= 0 && index < values.length => values[index],
+    _ => manual,
+  };
 
   /// Whether reversing this field means anything.
   ///
@@ -57,7 +66,7 @@ class ServerSortOrder {
   }
 
   void save() {
-    Stores.setting.serverPageSortBy.put(field.index);
+    Stores.setting.serverPageSortBy.put(field.name);
     Stores.setting.serverPageSortAsc.put(ascending);
   }
 

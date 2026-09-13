@@ -108,13 +108,27 @@ final class MonitorClient: NSObject {
 
     // MARK: - monitor /api/v1
 
+    private static func percent(used: UInt64, of total: UInt64) -> Double {
+        guard total > 0 else { return 0 }
+        return Double(used) / Double(total) * 100
+    }
+
     private func loadMetrics() async throws -> MonitorReading {
         let metrics: Metrics = try await get("/api/v1/metrics")
         return MonitorReading(
             name: metrics.server_name,
-            cpu: Double(metrics.cpu_usage),
-            mem: Double(metrics.memory.usage_percent),
-            disk: Double(metrics.disk.usage_percent),
+            // A field the agent did not send must not cost the whole reading.
+            // Every one of these was required here while the home widget's
+            // copy of the same struct had them optional, so one absent number
+            // failed the decode and the watch showed nothing at all — where
+            // the widget on the same phone, reading the same agent, drew the
+            // rest. A percentage the agent omitted is recomputed from the two
+            // byte counts beside it, which is what it is.
+            cpu: metrics.cpu_usage ?? 0,
+            mem: metrics.memory.usage_percent
+                ?? Self.percent(used: metrics.memory.used, of: metrics.memory.total),
+            disk: metrics.disk.usage_percent
+                ?? Self.percent(used: metrics.disk.used, of: metrics.disk.total),
             memText: "\(formatBytes(Double(metrics.memory.used))) / \(formatBytes(Double(metrics.memory.total)))",
             diskText: "\(formatBytes(Double(metrics.disk.used))) / \(formatBytes(Double(metrics.disk.total)))",
             netText: "\(formatBytes(Double(metrics.network.rx_bytes))) / \(formatBytes(Double(metrics.network.tx_bytes)))",
@@ -171,6 +185,16 @@ final class MonitorClient: NSObject {
         }
 
         guard let http = response as? HTTPURLResponse else { return data }
+        if http.statusCode == 401 || http.statusCode == 403 {
+            // The agent refused this credential: it was revoked, or the agent
+            // no longer has the record of it. Kept, it is resent on every
+            // refresh for as long as the watch runs, and each one is refused
+            // the same way — while `WatchStore` goes on reporting a token, so
+            // nothing asks the phone for a replacement. Dropping it is what
+            // makes the next sync mint one, which is what the home widget
+            // already does with the same status (`WidgetApi.kt`).
+            WatchStore.setToken(nil, for: server.id)
+        }
         guard (200 ..< 300).contains(http.statusCode) else {
             // The agent answers errors as `{"error": "..."}`; anything else is
             // shown as the bare status code.
@@ -209,13 +233,13 @@ private struct Metrics: Decodable {
     struct Memory: Decodable {
         let total: UInt64
         let used: UInt64
-        let usage_percent: Double
+        let usage_percent: Double?
     }
 
     struct Disk: Decodable {
         let total: UInt64
         let used: UInt64
-        let usage_percent: Double
+        let usage_percent: Double?
     }
 
     struct Network: Decodable {
@@ -224,7 +248,7 @@ private struct Metrics: Decodable {
     }
 
     let server_name: String
-    let cpu_usage: Double
+    let cpu_usage: Double?
     let memory: Memory
     let disk: Disk
     let network: Network

@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/all.dart';
-import 'package:server_box/data/store/migrations/m023_remote_desktop_profiles.dart';
+import 'package:server_box/data/store/migrations/m024_remote_desktop_profiles.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/tables.dart';
 
@@ -26,8 +26,8 @@ void main() {
   });
 
   test('is the registered final step', () {
-    expect(const RemoteDesktopProfilesMigration().from, 23);
-    expect(SchemaVersion.current, 24);
+    expect(const RemoteDesktopProfilesMigration().from, 24);
+    expect(SchemaVersion.current, 25);
     expect(kSchemaMigrations.last, isA<RemoteDesktopProfilesMigration>());
     expect(kSchemaMigrations.last.from, SchemaVersion.current - 1);
   });

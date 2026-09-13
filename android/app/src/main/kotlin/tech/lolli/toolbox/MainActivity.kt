@@ -551,7 +551,21 @@ class MainActivity: FlutterFragmentActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
             notificationPermissionRequestInFlight = false
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            // An empty result is Android's word for "the dialog went away
+            // without an answer" — the user switched apps while it was on
+            // screen. The flag is written *before* the request, so that a
+            // lifecycle-driven re-sync cannot launch a second permission
+            // activity; left set here it would also mean never asking again,
+            // and with no notification permission there is no foreground
+            // service and no background operation, for good and with nothing
+            // said about it. A dialog nobody answered was not a decision.
+            if (grantResults.isEmpty()) {
+                android.util.Log.i("MainActivity", "Notification permission dialog dismissed")
+                getSharedPreferences(NOTIFICATION_PERMISSION_PREFS, Context.MODE_PRIVATE)
+                    .edit()
+                    .remove(KEY_NOTIFICATION_PERMISSION_REQUESTED)
+                    .apply()
+            } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 android.util.Log.i("MainActivity", "Notification permission granted")
                 // The permission request is asynchronous and `updateSessions`
                 // test the permission the moment after asking for it, so the

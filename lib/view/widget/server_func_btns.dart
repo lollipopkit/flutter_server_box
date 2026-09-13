@@ -125,9 +125,9 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
       try {
         final vals = <ServerFuncBtn>[];
         final list = Stores.setting.serverFuncBtns.fetch();
-        for (final idx in list) {
-          if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
-          vals.add(ServerFuncBtn.values[idx]);
+        for (final stored in list) {
+          final btn = ServerFuncBtn.byStored(stored);
+          if (btn != null) vals.add(btn);
         }
         return vals;
       } catch (e) {

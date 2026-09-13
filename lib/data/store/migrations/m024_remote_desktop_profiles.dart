@@ -6,7 +6,7 @@ class RemoteDesktopProfilesMigration implements SchemaMigration {
   const RemoteDesktopProfilesMigration();
 
   @override
-  int get from => 23;
+  int get from => 24;
 
   @override
   Future<void> apply() async {

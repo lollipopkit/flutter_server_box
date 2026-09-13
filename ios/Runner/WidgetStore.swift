@@ -219,7 +219,14 @@ enum WidgetStore {
         // pocket, so anything stricter than this would fail exactly when the
         // widget is meant to be updating.
         attrs[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-        SecItemAdd(attrs as CFDictionary, nil)
+        // A refused write leaves no token and the widget reports that it cannot
+        // reach the agent — which looks like the agent's fault and is not. The
+        // status is the only thing that names the real cause, and a wrong
+        // access group (`-34018`) is the one that has happened.
+        let status = SecItemAdd(attrs as CFDictionary, nil)
+        if status != errSecSuccess {
+            NSLog("[WidgetStore] Could not store a widget token: OSStatus \(status)")
+        }
     }
 
     private static func tokenAccounts() -> [String] {

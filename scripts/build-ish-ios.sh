@@ -68,7 +68,11 @@ die() { printf '\033[0;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 run_step() {
   local what="$1"; shift
   local out
-  out="$(mktemp "$WORK_DIR/step.XXXXXX.log")"
+  # `XXXXXX` last: BSD mktemp only substitutes a trailing run of them, so a
+  # template with a suffix after it creates a file called exactly
+  # `step.XXXXXX.log` — one name shared by every step and every concurrent
+  # build, which is the opposite of what this call is for.
+  out="$(mktemp "$WORK_DIR/step.log.XXXXXX")"
   if "$@" >"$out" 2>&1; then
     rm -f "$out"
     return 0

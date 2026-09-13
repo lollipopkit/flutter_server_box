@@ -7,7 +7,7 @@ part of 'ask_ai_config.dart';
 // **************************************************************************
 
 AskAiConfig _$AskAiConfigFromJson(Map<String, dynamic> json) => AskAiConfig(
-  baseUrl: json['baseUrl'] as String? ?? 'https://api.openai.com',
+  baseUrl: json['baseUrl'] as String? ?? 'https://api.openai.com/v1',
   apiKey: json['apiKey'] as String? ?? '',
   model: json['model'] as String? ?? 'gpt-5.6-luna',
   protocol: json['protocol'] as String? ?? 'auto',

@@ -95,8 +95,11 @@ abstract final class SchemaVersion {
   ///      the "more" destination
   /// v22: the home tab selection is stored as enum names instead of indexes
   /// v23: AI endpoints store the API version previously appended at request time
-  /// v24: saved RDP and VNC profiles become a syncable server child
-  static const current = 24;
+  /// v24: the server function row and the server sort field stored by enum
+  ///      name rather than by index, which shifted meaning every time a case
+  ///      was removed
+  /// v25: saved RDP and VNC profiles become a syncable server child
+  static const current = 25;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the
