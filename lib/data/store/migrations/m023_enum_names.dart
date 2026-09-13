@@ -37,10 +37,12 @@ class EnumNamesMigration implements SchemaMigration {
 
     final btns = store.get<Object>(btnsKey);
     if (btns is List) {
-      final names = ServerFuncBtn.namesFromStored(
-        btns,
-        legacyIntegerNames: ServerFuncBtn.legacyIndexNamesBeforeM021,
-      );
+      // This row is at the post-feature schema boundary.  The first nine
+      // entries happen to match the pre-feature order, while indices 9 and
+      // 10 are users and scheduledTasks and must not be discarded.  A
+      // pre-feature mapping is only safe when the caller has provenance for
+      // that older layout; this migration does not.
+      final names = ServerFuncBtn.namesFromStored(btns);
       // Only when it says something different, so a store already holding
       // names is untouched and the step stays safe to run twice.
       if (!_sameList(btns, names)) {

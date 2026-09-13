@@ -54,6 +54,21 @@ void main() {
       ]);
     });
 
+    test('preserves post-feature users and scheduled tasks indexes', () {
+      store.set(
+        EnumNamesMigration.btnsKey,
+        [9, 10],
+        updateLastUpdateTsOnSet: false,
+      );
+
+      EnumNamesMigration(store: store).applySync();
+
+      expect(store.get<List>(EnumNamesMigration.btnsKey), [
+        ServerFuncBtn.users.name,
+        ServerFuncBtn.scheduledTasks.name,
+      ]);
+    });
+
     test('converts the sort field', () {
       store.set(
         EnumNamesMigration.sortKey,
@@ -74,13 +89,28 @@ void main() {
         ServerFuncBtn.terminal.index,
         ServerFuncBtn.values.length + 5,
         ServerFuncBtn.files.index,
-        ServerFuncBtn.users.index,
       ], updateLastUpdateTsOnSet: false);
 
       EnumNamesMigration(store: store).applySync();
 
       expect(store.get<List>(EnumNamesMigration.btnsKey), ['terminal', 'files']);
     });
+
+    test(
+      'settings decoding preserves post-feature users and scheduled tasks',
+      () {
+        store.set(
+          EnumNamesMigration.btnsKey,
+          [9, 10],
+          updateLastUpdateTsOnSet: false,
+        );
+
+        expect(store.serverFuncBtns.fetch(), [
+          ServerFuncBtn.users.name,
+          ServerFuncBtn.scheduledTasks.name,
+        ]);
+      },
+    );
 
     test('runs twice without changing what it wrote', () {
       store.set(EnumNamesMigration.btnsKey, [

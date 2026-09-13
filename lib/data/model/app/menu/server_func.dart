@@ -101,9 +101,12 @@ enum ServerFuncBtn {
 
   /// Resolves a stored name or current-layout index.
   ///
-  /// Pass [legacyIntegerNames] when decoding a row written before the enum
-  /// name migration. Once supplied, out-of-range legacy integers are rejected
-  /// instead of falling through to the current enum layout.
+  /// Pass [legacyIntegerNames] only when the row's provenance proves that it
+  /// was written in that older layout. Without provenance, current-layout
+  /// decoding is the only safe choice: the first nine entries are compatible
+  /// with the old order, while later post-feature entries must be retained.
+  /// Once supplied, out-of-range legacy integers are rejected instead of
+  /// falling through to the current enum layout.
   static ServerFuncBtn? byStored(
     Object? stored, {
     List<String>? legacyIntegerNames,

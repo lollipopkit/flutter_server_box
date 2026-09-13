@@ -604,11 +604,11 @@ class SettingStore extends SqliteStore {
     'serverBtns',
     defaultValue: ServerFuncBtn.defaultNames,
     // Tolerates the `Enum.index` list this used to hold, which a device on an
-    // older build still syncs over.
-    fromObj: (raw) => ServerFuncBtn.namesFromStored(
-      raw,
-      legacyIntegerNames: ServerFuncBtn.legacyIndexNamesBeforeM021,
-    ),
+    // older build still syncs over.  The current layout is used here because
+    // a synced row has no trustworthy release provenance; its first nine
+    // indices are compatible with the older layout, and indices 9 and 10 are
+    // the post-feature users and scheduledTasks entries.
+    fromObj: ServerFuncBtn.namesFromStored,
   );
 
   /// Docker is more popular than podman, set to `false` to use docker
