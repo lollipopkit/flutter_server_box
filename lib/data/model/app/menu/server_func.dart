@@ -99,14 +99,28 @@ enum ServerFuncBtn {
     'power',
   ];
 
+  static const _storedLayoutKey = 'layout';
+  static const _storedValuesKey = 'values';
+  static const _currentLayout = 'current';
+  static const _legacyLayoutBeforeM021 = 'preM021';
+
+  /// Wraps newly synchronized rows with the layout that wrote them.
+  static Map<String, Object?>? toStored(List<String>? names) => names == null
+      ? null
+      : {
+          _storedLayoutKey: _currentLayout,
+          _storedValuesKey: List<String>.from(names),
+        };
+
   /// Resolves a stored name or current-layout index.
   ///
   /// Pass [legacyIntegerNames] only when the row's provenance proves that it
-  /// was written in that older layout. Without provenance, current-layout
-  /// decoding is the only safe choice: the first nine entries are compatible
-  /// with the old order, while later post-feature entries must be retained.
-  /// Once supplied, out-of-range legacy integers are rejected instead of
-  /// falling through to the current enum layout.
+  /// was written in that older layout. Tagged rows select their own mapping;
+  /// untagged integer rows are retained for old backups and use the legacy
+  /// mapping only when every integer fits that nine-entry layout. A row with
+  /// index 9 or above therefore remains on the current layout, preserving
+  /// post-feature entries. Once supplied, out-of-range legacy integers are
+  /// rejected instead of falling through to the current enum layout.
   static ServerFuncBtn? byStored(
     Object? stored, {
     List<String>? legacyIntegerNames,
@@ -131,10 +145,31 @@ enum ServerFuncBtn {
     Object? stored, {
     List<String>? legacyIntegerNames,
   }) {
-    if (stored is! Iterable) return defaultNames;
+    var values = stored;
+    var integerNames = legacyIntegerNames;
+    if (stored is Map && stored[_storedValuesKey] is Iterable) {
+      values = stored[_storedValuesKey];
+      switch (stored[_storedLayoutKey]) {
+        case _legacyLayoutBeforeM021:
+          integerNames = legacyIndexNamesBeforeM021;
+        case _currentLayout:
+          integerNames = null;
+      }
+    }
+    if (values is! Iterable) return defaultNames;
+    if (integerNames == null) {
+      final ints = values.whereType<int>().toList();
+      if (ints.isNotEmpty &&
+          ints.every(
+            (index) =>
+                index >= 0 && index < legacyIndexNamesBeforeM021.length,
+          )) {
+        integerNames = legacyIndexNamesBeforeM021;
+      }
+    }
     return [
-      for (final entry in stored)
-        if (byStored(entry, legacyIntegerNames: legacyIntegerNames)
+      for (final entry in values)
+        if (byStored(entry, legacyIntegerNames: integerNames)
             case final btn?)
           btn.name,
     ];
