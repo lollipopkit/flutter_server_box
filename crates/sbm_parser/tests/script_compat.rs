@@ -633,9 +633,10 @@ fn extended_commands_split_out_of_status_windows() {
     assert!(!status.contains("amd-smi"));
     assert!(ext.contains("Get-StorageReliabilityCounter"));
     assert!(ext.contains("amd-smi"));
-    // The Windows disk-IO sample costs two seconds of Start-Sleep but feeds a
-    // live chart, so it stays in the fast poll
-    assert!(status.contains("Win32_PerfRawData_PerfDisk_PhysicalDisk"));
+    // Disk I/O is a single cumulative sample, so the app computes exactly one
+    // delta between status polls and the keys match Win32_LogicalDisk.
+    assert!(status.contains("Win32_PerfRawData_PerfDisk_LogicalDisk"));
+    assert!(!status.contains("Win32_PerfRawData_PerfDisk_PhysicalDisk"));
 }
 
 /// Disabling every command of one half must not emit an empty `then`/`else`

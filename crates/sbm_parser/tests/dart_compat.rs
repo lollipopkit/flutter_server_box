@@ -931,6 +931,24 @@ fn diskio_parse() {
     assert_eq!(pieces[1].dev, "sda");
 }
 
+#[test]
+fn diskio_parse_windows_cumulative_logical_drives() {
+    let raw = r#"[
+        {"Name":"HarddiskVolume1","DiskReadBytesPersec":1024,"DiskWriteBytesPersec":2048},
+        {"Name":"c:","DiskReadBytesPersec":4096,"DiskWriteBytesPersec":8192},
+        {"Name":"D:","DiskReadBytesPersec":"16384","DiskWriteBytesPersec":"32768"},
+        {"Name":"_Total","DiskReadBytesPersec":99999,"DiskWriteBytesPersec":99999}
+    ]"#;
+    let pieces = windows::parse_diskio(raw);
+    assert_eq!(pieces.len(), 2);
+    assert_eq!(pieces[0].dev, "C:");
+    assert_eq!(pieces[0].sectors_read, 8);
+    assert_eq!(pieces[0].sectors_write, 16);
+    assert_eq!(pieces[1].dev, "D:");
+    assert_eq!(pieces[1].sectors_read, 32);
+    assert_eq!(pieces[1].sectors_write, 64);
+}
+
 // ---------- Battery: battery_test.dart ----------
 
 /// Dart 'parse battery': all 7 power_supply blocks parsed (no filtering)

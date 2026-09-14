@@ -260,10 +260,8 @@ pub fn sample(state: &mut State) -> ServerStatus {
             let usage = d.usage();
             DiskIoPiece {
                 dev: id.clone(),
-                // Genuinely cumulative (sysinfo's total_*_bytes), unlike the
-                // Windows script path's diskio which is a rate mislabeled as
-                // sectors (see ServerStatus.diskio's doc comment) — this
-                // native path doesn't inherit that mismatch
+                // Keep the shared 512-byte cumulative-counter contract used
+                // by the script parsers and the app's rolling delta model.
                 sectors_read: (usage.total_read_bytes / 512) as i64,
                 sectors_write: (usage.total_written_bytes / 512) as i64,
             }

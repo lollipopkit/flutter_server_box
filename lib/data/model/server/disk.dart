@@ -1,6 +1,7 @@
 
 import 'package:equatable/equatable.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/time_seq.dart';
 
 
@@ -73,11 +74,13 @@ class Disk extends Equatable {
 }
 
 class DiskIO extends TimeSeq<DiskIOPiece> {
-  DiskIO();
+  DiskIO({SystemType system = SystemType.linux}) : _system = system;
 
-  DiskIO.copy(DiskIO source) : super.copy(source) {
+  DiskIO.copy(DiskIO source) : _system = source._system, super.copy(source) {
     cachedAllSpeed = source.cachedAllSpeed;
   }
+
+  SystemType _system;
 
   /// `/proc/diskstats` reports in 512-byte units regardless of the drive's
   /// physical sector size
@@ -96,6 +99,11 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
   void onUpdate() {
     final (read, write) = allSpeedBytes;
     cachedAllSpeed = (_fmt(read), _fmt(write));
+  }
+
+  void updateForSystem(List<DiskIOPiece> next, SystemType system) {
+    _system = system;
+    update(next);
   }
 
   /// Bytes per second for [dev]. Either both components are present or both
@@ -128,7 +136,14 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
   (double?, double?) get allSpeedBytes {
     double? read, write;
     for (final item in now) {
-      if (!_devPrefixes.any(item.dev.startsWith)) continue;
+      // `/proc/diskstats` also contains loop, ram and device-mapper rows; the
+      // Linux prefix filter keeps those out. Windows and BSD samplers already
+      // return the logical disks the UI shows, whose names do not use Linux
+      // block-device prefixes (`C:`, `D:`, mount paths, ...).
+      if (_system == SystemType.linux &&
+          !_devPrefixes.any(item.dev.startsWith)) {
+        continue;
+      }
       final (r, w) = speedBytes(item.dev);
       if (r == null || w == null) continue;
       read = (read ?? 0) + r;
