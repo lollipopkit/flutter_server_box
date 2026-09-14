@@ -293,15 +293,27 @@ pub fn parse_batteries(raw: &str) -> Vec<Battery> {
         .collect()
 }
 
-/// WMI disk IO two-sample delta (Dart `_parseWindowsDiskIO`):
-/// rates converted to sector counts (512B), aligned with Linux diskstats counters
+/// Cumulative WMI logical-disk byte counters, converted to the 512-byte sector
+/// units used by Linux `/proc/diskstats` and the app's rolling delta model.
 pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
-    parse_wmi_delta(raw, "DiskReadBytesPersec", "DiskWriteBytesPersec")
+    let Some(json) = decode(raw) else {
+        return Vec::new();
+    };
+    as_list(json)
         .into_iter()
-        .map(|(name, read, write)| DiskIoPiece {
-            dev: name,
-            sectors_read: (read / 512.0).round() as i64,
-            sectors_write: (write / 512.0).round() as i64,
+        .filter_map(|disk| {
+            let name = disk["Name"].as_str()?.trim();
+            let bytes = name.as_bytes();
+            if bytes.len() != 2 || !bytes[0].is_ascii_alphabetic() || bytes[1] != b':' {
+                return None;
+            }
+            let read = json_u64(&disk["DiskReadBytesPersec"])? / 512;
+            let write = json_u64(&disk["DiskWriteBytesPersec"])? / 512;
+            Some(DiskIoPiece {
+                dev: name.to_ascii_uppercase(),
+                sectors_read: i64::try_from(read).ok()?,
+                sectors_write: i64::try_from(write).ok()?,
+            })
         })
         .collect()
 }

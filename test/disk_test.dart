@@ -2,9 +2,51 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/system.dart';
 
 // Parsing tests migrated to crates/sbm_parser/tests/dart_compat.rs
 void main() {
+  group('DiskIO', () {
+    DiskIOPiece piece(String dev, int read, int write, int time) =>
+        DiskIOPiece(
+          dev: dev,
+          sectorsRead: read,
+          sectorsWrite: write,
+          time: time,
+        );
+
+    test('Windows aggregates logical drives after the second sample', () {
+      final io = DiskIO();
+      io.updateForSystem(
+        [piece('C:', 100, 200, 10), piece('D:', 300, 400, 10)],
+        SystemType.windows,
+      );
+      expect(io.allSpeedBytes, (null, null));
+
+      io.updateForSystem(
+        [piece('C:', 104, 206, 12), piece('D:', 310, 408, 12)],
+        SystemType.windows,
+      );
+
+      expect(io.speedBytes('C:'), (1024.0, 1536.0));
+      expect(io.allSpeedBytes, (3584.0, 3584.0));
+    });
+
+    test('Linux aggregate still excludes virtual block devices', () {
+      final io = DiskIO();
+      io.updateForSystem(
+        [piece('sda', 10, 20, 1), piece('loop0', 1000, 2000, 1)],
+        SystemType.linux,
+      );
+      io.updateForSystem(
+        [piece('sda', 12, 24, 2), piece('loop0', 2000, 4000, 2)],
+        SystemType.linux,
+      );
+
+      expect(io.allSpeedBytes, (1024.0, 2048.0));
+    });
+  });
+
   group('DiskUsage', () {
     test('DiskUsage does not double-count parent and child filesystems', () {
       final usage = DiskUsage.parse([

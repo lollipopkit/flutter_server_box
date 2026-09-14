@@ -353,7 +353,7 @@ void _applyDiskIO(ServerStatus ss, MonitorMetrics m, int time) {
         ),
       )
       .toList();
-  ss.diskIO.update(pieces);
+  ss.diskIO.updateForSystem(pieces, ss.system);
 }
 
 void _applyBatteries(ServerStatus ss, MonitorMetrics m) {
