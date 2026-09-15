@@ -771,6 +771,10 @@ type RootTranslation = {
 	 * S​i​z​e​ ​c​a​p​ ​(​M​B​)
 	 */
 	retentionMaxDbSizeMb: string
+	/**
+	 * i​s​ ​n​o​t​ ​a​ ​v​a​l​i​d​ ​v​a​l​u​e
+	 */
+	retentionInvalid: string
 }
 
 export type TranslationFunctions = {
@@ -1518,6 +1522,10 @@ export type TranslationFunctions = {
 	 * Size cap (MB)
 	 */
 	retentionMaxDbSizeMb: () => LocalizedString
+	/**
+	 * is not a valid value
+	 */
+	retentionInvalid: () => LocalizedString
 }
 
 export type Formatters = {}

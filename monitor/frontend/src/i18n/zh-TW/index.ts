@@ -187,6 +187,7 @@ const zh_TW = {
 	retentionAlertsDays: '告警保留（天）',
 	retentionCleanupHours: '執行間隔（小時）',
 	retentionMaxDbSizeMb: '容量上限（MB）',
+	retentionInvalid: '不是有效的值',
 } satisfies Translation
 
 export default zh_TW

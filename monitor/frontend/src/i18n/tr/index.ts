@@ -187,6 +187,7 @@ const tr = {
 	retentionAlertsDays: 'Uyarıları sakla (gün)',
 	retentionCleanupHours: 'Çalıştırma aralığı (saat)',
 	retentionMaxDbSizeMb: 'Boyut sınırı (MB)',
+	retentionInvalid: 'geçerli bir değer değil',
 } satisfies Translation
 
 export default tr

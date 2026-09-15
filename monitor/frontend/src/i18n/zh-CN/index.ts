@@ -187,6 +187,7 @@ const zh_CN = {
 	retentionAlertsDays: '告警保留（天）',
 	retentionCleanupHours: '执行间隔（小时）',
 	retentionMaxDbSizeMb: '体积上限（MB）',
+	retentionInvalid: '不是有效的值',
 } satisfies Translation
 
 export default zh_CN

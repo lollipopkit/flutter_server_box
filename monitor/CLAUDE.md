@@ -291,8 +291,10 @@ keys and moved into sections; `Config::legacy` still reads the Go agent's flat
 Both the panel and the app edit `config.toml` through three endpoints, all
 behind `require_jwt!` and all reading the file fresh off disk rather than
 `AppState.config` (a startup snapshot, so a GET right after a save would show
-stale values). Every one of them **replaces** what it names, so a client that
-omits a field clears it.
+stale values). **A `PUT` replaces the whole of what it names**, so a client
+that omits a field clears it — `PUT /settings` and `PUT /push` each take
+their entire payload at once. The reads do not: `GET /settings`, `GET /push`
+and `POST /push/test` write nothing.
 
 - **`GET/PUT /api/v1/settings`** — the whitelist: intervals, idle pause, rules,
   data retention, CORS origins. `jwt_secret`, `database_url` and the

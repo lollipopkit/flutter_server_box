@@ -187,6 +187,7 @@ const nl = {
 	retentionAlertsDays: 'Waarschuwingen bewaren (dagen)',
 	retentionCleanupHours: 'Uitvoeren elke (uren)',
 	retentionMaxDbSizeMb: 'Groottelimiet (MB)',
+	retentionInvalid: 'is geen geldige waarde',
 } satisfies Translation
 
 export default nl

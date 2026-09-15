@@ -234,6 +234,7 @@ extension on _MonitorPushEditPageState {
   }
 
   Widget _buildField(_Field field) {
+    if (field.kind == _FieldKind.boolean) return _buildBool(field);
     return Input(
       controller: field.ctrl,
       label: field.key,
@@ -249,6 +250,22 @@ extension on _MonitorPushEditPageState {
             )
           : null,
     );
+  }
+
+  /// A switch rather than a text box, so the only two values a TOML boolean
+  /// has are the only two that can be typed. Free text here read anything but
+  /// `true` as `false` — "yes" saved as off, without a word.
+  Widget _buildBool(_Field field) {
+    final on = field.ctrl.text.toLowerCase() == 'true';
+    return ListTile(
+      leading: const Icon(Icons.toggle_on_outlined),
+      title: Text(field.key, style: const TextStyle(fontFamily: 'monospace')),
+      trailing: Switch(
+        value: on,
+        onChanged: (value) =>
+            setState(() => field.ctrl.text = value ? 'true' : 'false'),
+      ),
+    ).cardx;
   }
 
   List<Widget> _buildHeaders(List<_Header> headers) {

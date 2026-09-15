@@ -114,6 +114,26 @@ fn secrets(push_type: &str) -> &'static [Secret] {
     }
 }
 
+/// The key that decides *where* a channel's credential is sent, for the types
+/// that have one.
+///
+/// A withheld credential may be kept only while this is unchanged. Without
+/// that, a caller who cannot read the stored value can still have the agent
+/// deliver it somewhere they control: a Bark key rides in the request path, so
+/// pointing `server` at another host hands it over, and a webhook's
+/// `Authorization` header goes to whatever `url` names. Keeping the credential
+/// is a claim that the channel is the same channel, and it is not.
+///
+/// `serverchan` posts to a fixed host and `ios` to a fixed address, so neither
+/// has a destination a request can move.
+fn destination_key(push_type: &str) -> Option<&'static str> {
+    match canonical_type(push_type) {
+        Some("webhook") => Some("url"),
+        Some("bark") => Some("server"),
+        _ => None,
+    }
+}
+
 /// The keys one of which must hold a value for the channel to deliver
 /// anything. Checked on save so clearing a field is reported then, rather than
 /// leaving a channel that looks configured and silently sends nothing.
@@ -473,6 +493,27 @@ fn keep_withheld(entry: &mut PushEntry, existing: &[PushConfig]) -> Result<(), S
         .and_then(|index| existing.get(index))
         .filter(|source| canonical_type(&source.push_type) == canonical_type(&entry.push_type));
 
+    // Keeping a credential is a claim that this is the same channel, so it may
+    // not arrive with the destination moved — see [`destination_key`]. Checked
+    // before anything is filled in, and on the presence of a `null` rather than
+    // on which key holds it: every `null` here is a withheld credential, which
+    // is what the check below the loop enforces.
+    if let Some(key) = destination_key(&entry.push_type)
+        && first_null(&entry.config).is_some()
+    {
+        let submitted = entry.config.get(key).cloned();
+        let stored = source.and_then(|source| source.config.get(key)).and_then(to_json);
+        // A `null` destination is not a move: it is refused below, with the
+        // message about nulls, which is the more useful of the two.
+        if !matches!(submitted, Some(JsonValue::Null)) && submitted != stored {
+            return Err(format!(
+                "'{}' changes its '{key}' while keeping a credential it was not shown; \
+                 send the credential along with the new '{key}'",
+                entry.name
+            ));
+        }
+    }
+
     for secret in secrets(&entry.push_type) {
         match secret {
             Secret::Key(key) => {
@@ -727,6 +768,84 @@ mod tests {
         )
         .expect_err("a new channel has nothing to keep");
         assert!(error.contains("no stored 'key'"), "{error}");
+    }
+
+    #[test]
+    fn a_bark_key_cannot_be_kept_while_its_server_moves() {
+        let existing = vec![stored(
+            "phone",
+            "bark",
+            "key = \"secret\"\nserver = \"https://api.day.app\"",
+        )];
+        let error = resolve_all(
+            vec![entry(
+                "phone",
+                "bark",
+                serde_json::json!({ "key": null, "server": "https://attacker.invalid" }),
+                Some(0),
+            )],
+            &existing,
+        )
+        .expect_err("the key rides in the request path, so this would hand it over");
+        assert!(error.contains("changes its 'server'"), "{error}");
+    }
+
+    #[test]
+    fn a_webhook_header_cannot_be_kept_while_its_url_moves() {
+        let existing = vec![stored(
+            "hook",
+            "webhook",
+            "url = \"https://example.invalid/\"\n[headers]\nAuthorization = \"Bearer t\"",
+        )];
+        let error = resolve_all(
+            vec![entry(
+                "hook",
+                "webhook",
+                serde_json::json!({
+                    "url": "https://attacker.invalid/",
+                    "headers": { "Authorization": null },
+                }),
+                Some(0),
+            )],
+            &existing,
+        )
+        .expect_err("the header would be sent to whatever the url names");
+        assert!(error.contains("changes its 'url'"), "{error}");
+    }
+
+    #[test]
+    fn a_destination_may_move_when_the_credential_comes_with_it() {
+        let existing = vec![stored("phone", "bark", "key = \"secret\"")];
+        let resolved = resolve_all(
+            vec![entry(
+                "phone",
+                "bark",
+                serde_json::json!({ "key": "typed-again", "server": "https://elsewhere.invalid" }),
+                Some(0),
+            )],
+            &existing,
+        )
+        .expect("nothing is being kept, so nothing is being carried anywhere");
+        assert_eq!(resolved[0].config["key"].as_str(), Some("typed-again"));
+    }
+
+    /// Bark's `server` defaults to `api.day.app` when absent, so "unchanged"
+    /// has to mean absent-stays-absent rather than comparing against a filled
+    /// in default that is not in the file.
+    #[test]
+    fn an_absent_destination_left_absent_is_not_a_move() {
+        let existing = vec![stored("phone", "bark", "key = \"secret\"")];
+        let resolved = resolve_all(
+            vec![entry(
+                "phone",
+                "bark",
+                serde_json::json!({ "key": null, "title": "Alerts" }),
+                Some(0),
+            )],
+            &existing,
+        )
+        .expect("neither side names a server");
+        assert_eq!(resolved[0].config["key"].as_str(), Some("secret"));
     }
 
     #[test]

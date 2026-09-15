@@ -187,6 +187,7 @@ const pt = {
 	retentionAlertsDays: 'Guardar alertas (dias)',
 	retentionCleanupHours: 'Executar a cada (horas)',
 	retentionMaxDbSizeMb: 'Limite de tamanho (MB)',
+	retentionInvalid: 'não é um valor válido',
 } satisfies Translation
 
 export default pt

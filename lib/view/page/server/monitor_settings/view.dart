@@ -87,7 +87,12 @@ final class MonitorSettingsView extends StatefulWidget {
 }
 
 final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
-  late final _client = MonitorHttpClient(widget.monitor);
+  late var _client = MonitorHttpClient(widget.monitor);
+
+  /// Bumped by every [_load]. An answer that comes back from an earlier one —
+  /// after the credential was edited under this view, which the tab's key does
+  /// not catch because the server is the same — must not land in the form.
+  var _loadGeneration = 0;
 
   final _intervalCtrl = TextEditingController();
   final _extendedCtrl = TextEditingController();
@@ -162,6 +167,23 @@ final class _MonitorSettingsViewState extends State<MonitorSettingsView> {
       ctrl.addListener(_markSettingsDirty);
     }
     _pushRateCtrl.addListener(_markPushDirty);
+    // The controller outlives any one view — the tab keeps one per server — so
+    // a fresh view has to say so, or the bar goes on showing the save button
+    // and the dirty flag the previous one left behind.
+    _syncController();
+    Future.microtask(_load);
+  }
+
+  /// The same server can arrive with a different address, login or TLS
+  /// setting — edited in the server editor while this view is alive behind
+  /// another tab. The key the tab gives this widget is the server's id, so
+  /// that case rebuilds nothing and the old session would go on being used.
+  @override
+  void didUpdateWidget(covariant MonitorSettingsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.monitor == oldWidget.monitor) return;
+    _client.dispose();
+    _client = MonitorHttpClient(widget.monitor);
     Future.microtask(_load);
   }
 
@@ -282,6 +304,7 @@ extension on _MonitorSettingsViewState {
             }),
           ),
         ).cardx,
+        _effectNote(settings, 'idle_pause_enabled'),
         Input(
           controller: _idleThresholdCtrl,
           label: '${l10n.idlePauseThreshold} (${libL10n.second})',
@@ -289,7 +312,11 @@ extension on _MonitorSettingsViewState {
           type: TextInputType.number,
           suggestion: false,
         ),
-        _effectNote(settings, 'idle_pause_enabled'),
+        // Its own field, not the switch's. Both are live today and the two
+        // notes read the same, which is exactly why the wrong one went
+        // unnoticed — `live_fields` is the agent's answer and has changed
+        // before.
+        _effectNote(settings, 'idle_pause_threshold_secs'),
       ],
     );
   }
@@ -435,6 +462,8 @@ extension on _MonitorSettingsViewState {
 
 extension on _MonitorSettingsViewState {
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
+    final client = _client;
     setState(() {
       _err = null;
       _settings = null;
@@ -444,16 +473,16 @@ extension on _MonitorSettingsViewState {
       // Sequential rather than concurrent: both go through the same session,
       // and a first request that has to log in is what the second one waits
       // for anyway.
-      final settings = await _client.fetchSettings();
-      final push = await _client.fetchPush();
-      if (!mounted) return;
+      final settings = await client.fetchSettings();
+      final push = await client.fetchPush();
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _settings = settings;
         _push = push;
         _apply(settings, push);
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() => _err = '$e');
     }
     _syncController();
@@ -462,12 +491,22 @@ extension on _MonitorSettingsViewState {
   Future<void> _save() async {
     final settings = _settings;
     if (settings == null) return;
+
+    // Before either request: a rejected field must not leave the push half
+    // saved and the settings half not, which is what validating inside the
+    // first request would do.
+    final retention = _retention();
+    if (retention.invalid case final field?) {
+      Toast.show('${libL10n.invalid}: $field');
+      return;
+    }
+
     setState(() => _saving = true);
 
     final failures = <String>[];
     if (_settingsDirty) {
       try {
-        await _client.saveSettings(_collectSettings(settings));
+        await _client.saveSettings(_collectSettings(settings, retention.value));
         _settingsDirty = false;
       } catch (e) {
         failures.add('$e');
@@ -652,7 +691,50 @@ extension on _MonitorSettingsViewState {
     _pushDirty = false;
   }
 
-  MonitorSettings _collectSettings(MonitorSettings loaded) {
+  /// The retention fields, or the label of the first one the agent would
+  /// refuse.
+  ///
+  /// No local fallbacks. A blank box used to become a hardcoded 30/90/24 — a
+  /// second copy of the agent's defaults, which is what `dataRetentionDefaults`
+  /// exists to avoid — and a blank size cap became 0, which is not a default
+  /// but *no cap at all*. The bounds mirror `DataRetentionConfig::validate`;
+  /// the agent checks them again, and would have, but never saw the blank.
+  ({MonitorDataRetention? value, String? invalid}) _retention() {
+    if (!_retentionEnabled) return (value: null, invalid: null);
+
+    final metrics = int.tryParse(_metricsDaysCtrl.text.trim());
+    if (metrics == null || metrics < 1) {
+      return (value: null, invalid: l10n.retentionMetrics);
+    }
+    final alerts = int.tryParse(_alertsDaysCtrl.text.trim());
+    if (alerts == null || alerts < 1) {
+      return (value: null, invalid: l10n.retentionAlerts);
+    }
+    final cleanup = int.tryParse(_cleanupHoursCtrl.text.trim());
+    if (cleanup == null || cleanup < 1) {
+      return (value: null, invalid: l10n.retentionCleanup);
+    }
+    // 0 is the one legitimate zero here: it turns the cap off.
+    final maxDb = int.tryParse(_maxDbSizeCtrl.text.trim());
+    if (maxDb == null || maxDb < 0) {
+      return (value: null, invalid: l10n.retentionMaxDbSize);
+    }
+
+    return (
+      value: MonitorDataRetention(
+        metricsDays: metrics,
+        alertsDays: alerts,
+        cleanupIntervalHours: cleanup,
+        maxDbSizeMb: maxDb,
+      ),
+      invalid: null,
+    );
+  }
+
+  MonitorSettings _collectSettings(
+    MonitorSettings loaded,
+    MonitorDataRetention? retention,
+  ) {
     return loaded.copyWith(
       intervalSeconds:
           int.tryParse(_intervalCtrl.text.trim()) ?? loaded.intervalSeconds,
@@ -660,15 +742,7 @@ extension on _MonitorSettingsViewState {
       idlePauseEnabled: _idlePause,
       idlePauseThresholdSecs: () => int.tryParse(_idleThresholdCtrl.text.trim()),
       rules: _rules,
-      dataRetention: () => _retentionEnabled
-          ? MonitorDataRetention(
-              metricsDays: int.tryParse(_metricsDaysCtrl.text.trim()) ?? 30,
-              alertsDays: int.tryParse(_alertsDaysCtrl.text.trim()) ?? 90,
-              cleanupIntervalHours:
-                  int.tryParse(_cleanupHoursCtrl.text.trim()) ?? 24,
-              maxDbSizeMb: int.tryParse(_maxDbSizeCtrl.text.trim()) ?? 0,
-            )
-          : null,
+      dataRetention: () => retention,
       corsAllowedOrigins: _cors,
     );
   }

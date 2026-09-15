@@ -187,6 +187,7 @@ const ru = {
 	retentionAlertsDays: 'Хранить оповещения (дней)',
 	retentionCleanupHours: 'Запускать каждые (часов)',
 	retentionMaxDbSizeMb: 'Ограничение размера (МБ)',
+	retentionInvalid: '— недопустимое значение',
 } satisfies Translation
 
 export default ru

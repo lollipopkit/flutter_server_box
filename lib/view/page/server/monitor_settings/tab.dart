@@ -222,8 +222,20 @@ extension on _MonitorSettingsTabPageState {
 // --- Actions ---
 
 extension on _MonitorSettingsTabPageState {
-  void _select(String id) {
+  /// Choosing another agent replaces the column, and the view in it holds the
+  /// edits — so this is the tab's version of the page's `PopScope`, and the
+  /// only thing standing between an unsaved form and a tap on the list.
+  Future<void> _select(String id) async {
     if (id == _selectedId) return;
+    final current = _selectedId;
+    if (current != null && (_ctrls[current]?.dirty ?? false)) {
+      final ok = await context.showRoundDialog<bool>(
+        title: libL10n.attention,
+        child: Text(libL10n.askContinue(libL10n.delete)),
+        actions: Btnx.cancelRedOk,
+      );
+      if (ok != true || !mounted) return;
+    }
     setState(() => _selectedId = id);
   }
 
@@ -256,6 +268,6 @@ extension on _MonitorSettingsTabPageState {
       ),
     );
     if (picked == null || !mounted) return;
-    _select(picked);
+    await _select(picked);
   }
 }

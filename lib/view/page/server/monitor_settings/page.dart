@@ -36,6 +36,13 @@ final class MonitorSettingsPage extends StatefulWidget {
 final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
   final _ctrl = MonitorSettingsController();
 
+  /// Set once the user has agreed to lose the edits.
+  ///
+  /// The view still reports dirty — nothing here can clear its form — so
+  /// without this the pop that follows the confirmation is intercepted by the
+  /// same `canPop` that asked for it, and the dialog reopens itself.
+  bool _discarding = false;
+
   @override
   void dispose() {
     _ctrl.dispose();
@@ -47,7 +54,7 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
     return ListenableBuilder(
       listenable: _ctrl,
       builder: (context, _) => PopScope(
-        canPop: !_ctrl.dirty,
+        canPop: _discarding || !_ctrl.dirty,
         onPopInvokedWithResult: (didPop, _) {
           if (!didPop) _confirmDiscard();
         },
@@ -94,6 +101,11 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
+    setState(() => _discarding = true);
+    // `canPop` is read while the route builds, so the pop has to come after
+    // the frame that rebuilds it with the flag set.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     context.pop();
   }
 }

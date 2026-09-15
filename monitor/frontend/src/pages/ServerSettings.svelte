@@ -175,8 +175,39 @@
     }
   }
 
+  /// The label of the first retention field the agent would refuse, or null.
+  ///
+  /// The agent checks three of these itself and answers a clear 400 — but
+  /// `max_db_size_mb` accepts 0, and 0 is what `Number('')` gives, so a blank
+  /// box would quietly switch the size cap off rather than being reported.
+  function retentionError(): string | null {
+    if (!retentionEnabled) return null
+    const fields: [string, string, number][] = [
+      [$LL.retentionMetricsDays(), retentionMetricsDays, 1],
+      [$LL.retentionAlertsDays(), retentionAlertsDays, 1],
+      [$LL.retentionCleanupHours(), retentionCleanupHours, 1],
+      // The one legitimate zero: it turns the cap off.
+      [$LL.retentionMaxDbSizeMb(), retentionMaxDbSizeMb, 0],
+    ]
+    for (const [label, raw, min] of fields) {
+      const value = Number(raw)
+      if (raw.trim() === '' || !Number.isInteger(value) || value < min) {
+        return `${label} ${$LL.retentionInvalid()}`
+      }
+    }
+    return null
+  }
+
   async function save() {
     if (!settings) return
+
+    const invalid = retentionError()
+    if (invalid) {
+      saveError = invalid
+      saveOk = false
+      return
+    }
+
     saving = true
     saveError = null
     saveOk = false

@@ -187,6 +187,7 @@ const ko = {
 	retentionAlertsDays: '알림 보관 (일)',
 	retentionCleanupHours: '실행 주기 (시간)',
 	retentionMaxDbSizeMb: '크기 상한 (MB)',
+	retentionInvalid: '은(는) 올바른 값이 아닙니다',
 } satisfies Translation
 
 export default ko

@@ -187,6 +187,7 @@ const id = {
 	retentionAlertsDays: 'Simpan peringatan (hari)',
 	retentionCleanupHours: 'Jalankan setiap (jam)',
 	retentionMaxDbSizeMb: 'Batas ukuran (MB)',
+	retentionInvalid: 'bukan nilai yang sah',
 } satisfies Translation
 
 export default id

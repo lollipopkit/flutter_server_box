@@ -187,6 +187,7 @@ const uk = {
 	retentionAlertsDays: 'Зберігати сповіщення (днів)',
 	retentionCleanupHours: 'Запускати кожні (годин)',
 	retentionMaxDbSizeMb: 'Обмеження розміру (МБ)',
+	retentionInvalid: '— неприпустиме значення',
 } satisfies Translation
 
 export default uk

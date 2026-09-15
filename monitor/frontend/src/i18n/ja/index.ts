@@ -187,6 +187,7 @@ const ja = {
 	retentionAlertsDays: 'アラートの保持（日）',
 	retentionCleanupHours: '実行間隔（時間）',
 	retentionMaxDbSizeMb: 'サイズ上限（MB）',
+	retentionInvalid: 'は有効な値ではありません',
 } satisfies Translation
 
 export default ja

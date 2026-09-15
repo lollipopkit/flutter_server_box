@@ -187,6 +187,7 @@ const en = {
 	retentionAlertsDays: 'Keep alerts (days)',
 	retentionCleanupHours: 'Run every (hours)',
 	retentionMaxDbSizeMb: 'Size cap (MB)',
+	retentionInvalid: 'is not a valid value',
 } satisfies BaseTranslation
 
 export default en
