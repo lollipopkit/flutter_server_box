@@ -23,16 +23,16 @@ Server Box 使用代码生成处理 immutable model、JSON 序列化、Riverpod 
 ### 常规生成
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ### 清理后重新生成
 
-仅当生成缓存异常或结果不一致时使用：
+当生成缓存与当前代码不一致时使用，最常见的触发是 merge 引入了新的生成源文件。`.dart_tool/build/asset_graph.json` 过期时不会有任何报错：构建在某个 phase 中途停住，CPU 占用 0%，一直等下去 —— 它遇到的错误被等待该步骤的代码吞掉了。
 
 ```bash
 dart run build_runner clean
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ## 生成文件
@@ -117,7 +117,7 @@ flutter gen-l10n
 
 ## 注意事项
 
-- 使用 `--delete-conflicting-outputs` 处理生成文件冲突。
+- `--delete-conflicting-outputs` 在 build_runner 2.15 中已移除，传入只会打印 warning 并被忽略。改用上面的清理缓存步骤。
 - 生成文件已纳入版本控制时，请将生成结果一并提交。
 - 不要手动编辑 `*.g.dart`、`*.freezed.dart` 或 `lib/generated/` 下的文件。
 - 修改 model 后，先完成代码生成，再运行 analyze 和测试。

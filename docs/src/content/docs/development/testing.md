@@ -10,7 +10,7 @@ description: Run and write tests for Server Box
 flutter test
 
 # A specific test file
-flutter test test/disk_test.dart
+flutter test test/unit/server/disk_test.dart
 
 # Generate a coverage report
 flutter test --coverage
@@ -18,7 +18,9 @@ flutter test --coverage
 
 ## Test structure
 
-Dart tests live in `test/` and are grouped by parser, model, store, and utility behavior. Tests should verify behavior and input/output without depending on an external network or a real server.
+Dart tests live in `test/` and are grouped into `unit/`, `widget/`, `platform/`, and `migration/`. Shared helpers and release fixtures live in `helpers/` and `fixtures/`. Tests should verify behavior and input/output without depending on an external network or a real server.
+
+`unit/` is divided again by feature domain: `ssh/`, `terminal/`, `file/`, `server/`, `store/`, `ai/`, `geo/`, `rootfs/`, `monitor/`, `benchmark/`, `remote_desktop/`, and `app/`. A test belongs to the feature it covers rather than to the layer it reaches — a store, a provider, and a model of the same feature sit together. `store/` holds storage infrastructure that belongs to no one feature (the database, the schema, backup and restore, settings), and `app/` holds the rest: version, localization, crash reporting, diagnostics, and build checks.
 
 ## Rust tests
 
@@ -28,7 +30,7 @@ cargo test --workspace
 
 # FFI parity test: build the FFI crate first
 cargo build -p sbm_ffi
-flutter test test/frb_parser_test.dart
+flutter test test/unit/app/frb_parser_test.dart
 ```
 
 `crates/sbm_parser/tests/dart_compat.rs` uses the same fixtures as the Dart tests to lock parser behavior on both sides.
@@ -117,10 +119,10 @@ Every migration must keep a permanent regression test using bytes written by the
 
 | File | Purpose |
 |---|---|
-| `test/hive_release_migration_test.dart` | Runs Hive import and the registered migrations against each release fixture |
+| `test/migration/hive_release_migration_test.dart` | Runs Hive import and the registered migrations against each release fixture |
 | `test/fixtures/hive_v{1466,1480,1491}/` | Boxes written by those releases, plus their generators and documentation |
-| `test/hive_import_test.dart` | Verifies import retry, idempotency, and per-box progress |
-| `test/m0NN_*_test.dart` | One per schema migration, verifying that step's behavior |
+| `test/migration/hive_import_test.dart` | Verifies import retry, idempotency, and per-box progress |
+| `test/migration/m0NN_*_test.dart` | One per schema migration, verifying that step's behavior |
 
 A fixture generated with the current adapter only proves that the current code agrees with itself. It cannot prove that the current decoder still reads the format written by an old release. Once a fixture is used for regression coverage, never regenerate it to make a failing test pass.
 

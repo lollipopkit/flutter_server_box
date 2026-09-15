@@ -143,7 +143,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// Plain fields. They were `Restorable*`, which in this app is the same
   /// thing with extra ceremony: `restoreState` runs, registration succeeds,
   /// and a relaunch has nothing, because the route `MaterialApp.home` builds
-  /// hands its subtree no bucket — `test/restoration_bucket_test.dart`. What
+  /// hands its subtree no bucket — `test/widget/restoration_bucket_test.dart`. What
   /// they did in practice was hold this within one page across a reconnect,
   /// which is what these still do.
   ///

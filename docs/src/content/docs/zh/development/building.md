@@ -104,7 +104,7 @@ release 产物由 `monitor-release.yml` workflow 构建。该 workflow 只支持
 ```bash
 flutter clean
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 `flutter clean` 会删除 `build/` 下的构建产物，包括启用 iOS Linux engine 时需要的 engine libraries。此时需要重新运行相应的 `scripts/build-ish-ios.sh device`、`simulator` 或 `macos`，否则链接阶段会找不到文件。

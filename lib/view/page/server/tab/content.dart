@@ -1,49 +1,68 @@
 part of 'tab.dart';
 
 extension on _ServerPageState {
+  /// The most of the title row the status on the right may take.
+  ///
+  /// It has to be a share of the row rather than a flex, because the name is
+  /// `Expanded`: two flex children split the row evenly whatever they hold, so
+  /// a one-word status would leave half the row empty and the name elided
+  /// beside it.
+  static const _kTopRightMaxFraction = 0.6;
+
   Widget _buildServerCardTitle(ServerState s) {
     return Padding(
       padding: const EdgeInsets.only(left: 7, right: 13),
-      child: Row(
-        children: [
-          // The name and its arrow take what is left after the status on the
-          // right, and no more. `overflow: ellipsis` on the text alone did
-          // nothing: in a row a text is given its own intrinsic width, so a
-          // long server name never got to elide — it pushed the row past the
-          // card and struck it through with the overflow stripe instead.
-          Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Before the name, at the size of it: which distribution a
-                // machine runs is the thing you scan a list of servers for,
-                // and it reads faster as a shape than as a word.
-                //
-                // The gap goes with it. Marks switched off has to mean no
-                // pixels, and a six-pixel indent on every row is pixels.
-                ...?switch (distIcon(s.spi.id, size: 15)) {
-                  final mark? => [mark, const SizedBox(width: 6)],
-                  null => null,
-                },
-                Flexible(
-                  child: Text(
-                    s.spi.name,
-                    style: UIs.text13Bold,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: LayoutBuilder(
+        builder: (_, cons) => Row(
+          children: [
+            // The name and its arrow take what is left after the status on the
+            // right, and no more. `overflow: ellipsis` on the text alone did
+            // nothing: in a row a text is given its own intrinsic width, so a
+            // long server name never got to elide — it pushed the row past the
+            // card and struck it through with the overflow stripe instead.
+            //
+            // Which is also why the status is capped: it is the unbounded one
+            // now, and its length is not ours to choose — a long uptime, or
+            // whatever `server_card_top_right` prints.
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Before the name, at the size of it: which distribution a
+                  // machine runs is the thing you scan a list of servers for,
+                  // and it reads faster as a shape than as a word.
+                  //
+                  // The gap goes with it. Marks switched off has to mean no
+                  // pixels, and a six-pixel indent on every row is pixels.
+                  ...?switch (distIcon(s.spi.id, size: 15)) {
+                    final mark? => [mark, const SizedBox(width: 6)],
+                    null => null,
+                  },
+                  Flexible(
+                    child: Text(
+                      s.spi.name,
+                      style: UIs.text13Bold,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.keyboard_arrow_right,
-                  size: 17,
-                  color: Colors.grey,
-                ),
-              ],
+                  const Icon(
+                    Icons.keyboard_arrow_right,
+                    size: 17,
+                    color: Colors.grey,
+                  ),
+                ],
+              ),
             ),
-          ),
-          _buildTopRightText(s),
-          _buildTopRightWidget(s),
-        ],
+            _buildTopRightText(
+              s,
+              maxWidth: cons.maxWidth.isFinite
+                  ? cons.maxWidth * _kTopRightMaxFraction
+                  : double.infinity,
+            ),
+            _buildTopRightWidget(s),
+          ],
+        ),
       ),
     );
   }
@@ -95,10 +114,10 @@ extension on _ServerPageState {
     ).paddingOnly(left: 5);
   }
 
-  Widget _buildTopRightText(ServerState s) {
+  Widget _buildTopRightText(ServerState s, {required double maxWidth}) {
     final hasErr = s.status.err != null;
     if (s.needsInteractiveAuth) {
-      return Text(libL10n.tapToAuth, style: UIs.text13Grey);
+      return _topRightText(libL10n.tapToAuth, maxWidth);
     }
     final str = s._getTopRightStr(s.spi);
     if (str == null) return UIs.placeholder;
@@ -107,7 +126,19 @@ extension on _ServerPageState {
         if (!hasErr) return;
         _showFailReason(s.status);
       },
-      child: Text(str, style: UIs.text13Grey),
+      child: _topRightText(str, maxWidth),
+    );
+  }
+
+  Widget _topRightText(String str, double maxWidth) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Text(
+        str,
+        style: UIs.text13Grey,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 

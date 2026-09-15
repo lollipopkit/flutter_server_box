@@ -10,7 +10,7 @@ import 'package:server_box/hive/spi_legacy_adapter.dart';
 /// trap: the generator emits `fields[n] as String` for every non-nullable
 /// field, so **adding one to a model makes every box written before it
 /// unreadable** — the field is absent, the cast gets null, and the box fails to
-/// open. `test/hive_release_migration_test.dart` is what catches it, and it
+/// open. `test/migration/hive_release_migration_test.dart` is what catches it, and it
 /// caught exactly this when `Snippet` gained an id and `PrivateKeyInfo` gained
 /// a name.
 ///

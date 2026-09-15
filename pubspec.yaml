@@ -109,7 +109,11 @@ dev_dependencies:
     sdk: flutter
   flutter_native_splash: ^2.1.6
   hive_ce_generator: ^1.11.0
-  build_runner: ^2.4.15
+  # 2.15 is the floor, not the lockfile's opinion: `--delete-conflicting-outputs`
+  # was removed there, and every command this repo documents omits it. On an
+  # earlier resolution that flag is live, and without it a conflicting output
+  # is a y/n prompt — or a failed build when nothing is there to answer.
+  build_runner: ^2.15.0
   drift_dev: ^2.34.0
   # drift_dev 2.34.0 still calls DartPlaceholder.when(), removed by sqlparser
   # 0.44.6. Keep its companion parser at the last compatible release.

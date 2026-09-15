@@ -30,14 +30,14 @@ help:
 		'  run-device         Run app on a specific device: make run-device DEVICE=<id>' \
 		'  analyze            Run static analysis for lib/, test/ and integration_test/' \
 		'  test               Run all tests' \
-		'  test-one           Run a single test: make test-one TEST=test/foo_test.dart' \
+		'  test-one           Run a single test: make test-one TEST=test/unit/server/disk_test.dart' \
 		'  coverage           Run tests with coverage output' \
 		'  test-cla           Test the CLA check in .github/workflows/cla.yml (needs node)' \
 		'' \
 		'Code generation:' \
 		'  gen                Run build_runner and gen-l10n' \
-		'  gen-build          Run build_runner build --delete-conflicting-outputs' \
-		'  gen-build-clean    Run build_runner build with --clean' \
+		'  gen-build          Run build_runner build' \
+		'  gen-build-clean    Clear the build cache, then run build_runner build' \
 		'  gen-l10n           Regenerate localization files' \
 		'  gen-proto          Regenerate the tombstone protobuf reader (needs protoc)' \
 		'' \
@@ -90,7 +90,7 @@ test:
 
 test-one:
 	@if [ -z "$(TEST)" ]; then \
-		echo 'TEST is required. Example: make test-one TEST=test/disk_test.dart'; \
+		echo 'TEST is required. Example: make test-one TEST=test/unit/server/disk_test.dart'; \
 		exit 1; \
 	fi
 	$(CARGO) build -p sbm_ffi
@@ -106,10 +106,15 @@ test-cla:
 gen: gen-build gen-l10n
 
 gen-build:
-	$(DART) run build_runner build --delete-conflicting-outputs
+	$(DART) run build_runner build
 
+# For a build cache that no longer matches the tree — after a merge that adds
+# generated sources, most of all. A stale `.dart_tool/build/asset_graph.json`
+# does not report anything: the build stops mid-phase at 0% CPU and waits
+# forever, because the failure it hits is swallowed by the step awaiting it.
 gen-build-clean:
-	$(DART) run build_runner build --delete-conflicting-outputs --clean
+	$(DART) run build_runner clean
+	$(DART) run build_runner build
 
 gen-l10n:
 	$(FLUTTER) gen-l10n

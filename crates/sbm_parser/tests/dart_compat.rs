@@ -1394,7 +1394,7 @@ fn cpu_brand_parse() {
     assert_eq!(brands[0].1, 2);
 }
 
-/// Ported from `test/windows_test.dart`, which upstream added while this
+/// Ported from `test/platform/windows_test.dart`, which upstream added while this
 /// branch had already replaced `WindowsParser` with this module. The Dart
 /// tests are the spec; the behaviour they pin down was missing here, and the
 /// `free > size` case underflowed `size - free`.
@@ -1434,7 +1434,7 @@ fn windows_disks_accept_full_volumes_and_reject_bad_ranges() {
     );
 }
 
-/// Also ported from `test/windows_test.dart`. A processor entry whose load is
+/// Also ported from `test/platform/windows_test.dart`. A processor entry whose load is
 /// out of range is dropped rather than clamped: 150 and -1 both mean the query
 /// failed, and both a pegged and an idle reading would be invented.
 #[test]
@@ -1448,7 +1448,7 @@ fn windows_cpu_rejects_invalid_ranges_and_core_counts() {
     }
 }
 
-/// Ported from `test/server_status_update_req_test.dart`. Win32_Battery's
+/// Ported from `test/unit/server/server_status_update_req_test.dart`. Win32_Battery's
 /// enumeration has a distinct "fully charged" state; folding it into
 /// discharging reported a battery on mains at 100% as draining.
 #[test]

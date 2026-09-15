@@ -567,6 +567,12 @@ ${err.message ?? 'null'}
       title: Text(libL10n.about),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
       children: [
+        // Not counted by `_getInitExpand` above, for the same reason the
+        // public address below is not: the threshold is about how much the
+        // machine had to say, and a row this card adds on its own would flip
+        // every phone from open to collapsed by arriving.
+        if (si.latencyMs != null)
+          _buildAboutRow(libL10n.delay, '${si.latencyMs}ms'),
         for (final e in ss.more.entries) _buildAboutRow(e.key.i18n, e.value),
         // Absent rather than blank when there is none: an empty value here
         // would read as the machine having no address, when the ordinary
@@ -671,9 +677,17 @@ ${err.message ?? 'null'}
         children: [
           _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
           UIs.width7,
-          Text(
-            'of ${(ss.mem.total * 1024).bytes2Str}',
-            style: UIs.text13Grey,
+          // Flexible, because a `ListTile` gives its title what the trailing
+          // does not take: on a 320pt phone that is 77pt for a 27pt figure and
+          // this line together, and an unelided text there is the overflow
+          // stripe across the memory card.
+          Flexible(
+            child: Text(
+              'of ${(ss.mem.total * 1024).bytes2Str}',
+              style: UIs.text13Grey,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
