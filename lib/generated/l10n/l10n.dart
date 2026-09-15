@@ -3897,6 +3897,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For example: 0 2 * * * or @reboot'**
   String get scheduledTaskScheduleHint;
+
+  /// No description provided for @monitorSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor settings'**
+  String get monitorSettings;
+
+  /// No description provided for @monitorAgentDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent default'**
+  String get monitorAgentDefault;
+
+  /// No description provided for @monitorAppliesNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes effect on save'**
+  String get monitorAppliesNow;
+
+  /// No description provided for @monitorNeedsRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes effect after the agent restarts'**
+  String get monitorNeedsRestart;
+
+  /// No description provided for @extendedInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Extended cycle interval'**
+  String get extendedInterval;
+
+  /// No description provided for @idlePause.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause when nothing is watching'**
+  String get idlePause;
+
+  /// No description provided for @idlePauseTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.'**
+  String get idlePauseTip;
+
+  /// No description provided for @idlePauseThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Idle after'**
+  String get idlePauseThreshold;
+
+  /// No description provided for @monitoringRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert rules'**
+  String get monitoringRules;
+
+  /// No description provided for @ruleMonitorType.
+  ///
+  /// In en, this message translates to:
+  /// **'Metric'**
+  String get ruleMonitorType;
+
+  /// No description provided for @ruleThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold'**
+  String get ruleThreshold;
+
+  /// No description provided for @ruleMatcher.
+  ///
+  /// In en, this message translates to:
+  /// **'Matcher'**
+  String get ruleMatcher;
+
+  /// No description provided for @ruleTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.'**
+  String get ruleTip;
+
+  /// No description provided for @pushChannels.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification channels'**
+  String get pushChannels;
+
+  /// No description provided for @pushType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get pushType;
+
+  /// No description provided for @pushRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate limit'**
+  String get pushRate;
+
+  /// No description provided for @pushHeaders.
+  ///
+  /// In en, this message translates to:
+  /// **'Headers'**
+  String get pushHeaders;
+
+  /// No description provided for @pushSecretSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set on the agent, not shown'**
+  String get pushSecretSet;
+
+  /// No description provided for @pushSecretKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to keep'**
+  String get pushSecretKeep;
+
+  /// No description provided for @pushTestTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends one notification through this channel as it stands here, saved or not.'**
+  String get pushTestTip;
+
+  /// No description provided for @pushTestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'The channel accepted it'**
+  String get pushTestSent;
+
+  /// No description provided for @pushTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The channel refused it'**
+  String get pushTestFailed;
+
+  /// No description provided for @pushTestMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Test notification from ServerBox Monitor'**
+  String get pushTestMessage;
+
+  /// No description provided for @pushUnknownType.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.'**
+  String get pushUnknownType;
+
+  /// No description provided for @pushJsonInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'is not valid JSON'**
+  String get pushJsonInvalid;
+
+  /// No description provided for @dataRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'Data retention'**
+  String get dataRetention;
+
+  /// No description provided for @dataRetentionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Off means the agent never deletes anything and its database grows without limit.'**
+  String get dataRetentionTip;
+
+  /// No description provided for @retentionMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep metrics'**
+  String get retentionMetrics;
+
+  /// No description provided for @retentionAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep alerts'**
+  String get retentionAlerts;
+
+  /// No description provided for @retentionCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Run cleanup every'**
+  String get retentionCleanup;
+
+  /// No description provided for @retentionMaxDbSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Database size cap'**
+  String get retentionMaxDbSize;
+
+  /// No description provided for @corsOrigins.
+  ///
+  /// In en, this message translates to:
+  /// **'CORS allowed origins'**
+  String get corsOrigins;
+
+  /// No description provided for @corsOriginsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
+  String get corsOriginsTip;
 }
 
 class _AppLocalizationsDelegate

@@ -286,6 +286,46 @@ keys and moved into sections; `Config::legacy` still reads the Go agent's flat
 `config.json` keys once, at the `config.json` → `config.toml` migration, and
 `normalize()` clears them so they are never written back.
 
+#### Editing it over the API
+
+Both the panel and the app edit `config.toml` through three endpoints, all
+behind `require_jwt!` and all reading the file fresh off disk rather than
+`AppState.config` (a startup snapshot, so a GET right after a save would show
+stale values). Every one of them **replaces** what it names, so a client that
+omits a field clears it.
+
+- **`GET/PUT /api/v1/settings`** — the whitelist: intervals, idle pause, rules,
+  data retention, CORS origins. `jwt_secret`, `database_url` and the
+  `remote_access` grants are deliberately not in it. GET adds `live_fields`
+  (which of them the running process picks up; everything else waits for a
+  restart) and `data_retention_defaults` — absent retention means *no cleanup
+  runs at all* rather than "the defaults apply", so an editor offering to
+  switch it on needs values to put in, and copying `DataRetentionConfig::default`
+  into each editor is how the two would drift.
+- **`GET/PUT /api/v1/push`** and **`POST /api/v1/push/test`** (`api/push.rs`) —
+  the notification channels and `[monitoring] push_rate`. Split out of
+  `/settings` for the reason `/card-order` is, plus one of its own: **a
+  credential here is write-only.** A GET answers `null` at every credential key
+  (`sc_key`, a Bark `key`, an iOS `token`, every `headers` value), a PUT sending
+  that `null` back keeps what is on disk, and a `null` anywhere else is refused
+  — so the merge cannot be used to read a stored value out through a field that
+  gets transmitted. What "on disk" refers to is `from_index`, the position the
+  entry was loaded from: matching by name loses the credential of a renamed
+  channel, matching by submitted position loses it on a reorder. A webhook's
+  `url` is deliberately *not* treated as a credential even though a Slack one
+  is — it is the channel's identity in an editor, and hiding it would mean
+  retyping the endpoint to change one header.
+  - The other half of the same rule: an unknown `push_type` has its whole
+    config withheld (the agent cannot know which of its keys are credentials)
+    and cannot be saved at all, since nothing would ever deliver through it.
+  - Saved channels reach `rules.rs` on the next start, like the rules
+    themselves — `applies_on_restart` says so rather than leaving both editors
+    to assume it. TODO: make both live, the way `LiveSettings` already is for
+    the intervals.
+  - `tests/push_api.rs` asserts the credential is not in the response *bytes*
+    and survives a rename plus a reorder; the unit tests in `api::push` cover
+    the merge rules on their own.
+
 ### Database Schema
 
 SQLite database with migrations in `migrations/`:

@@ -5,11 +5,18 @@
   import Disclosure from '../components/Disclosure.svelte'
   import Markdown from '../components/Markdown.svelte'
   import PageHeader from '../components/PageHeader.svelte'
+  import PushChannels from '../components/PushChannels.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { api, ApiError } from '../lib/api'
   import { serverNames } from '../lib/serverNames.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
-  import type { CustomCmd, MonitoringRule, SettingsPayload, SettingsView } from '../types'
+  import type {
+    CustomCmd,
+    DataRetentionConfig,
+    MonitoringRule,
+    SettingsPayload,
+    SettingsView,
+  } from '../types'
 
   interface Props {
     onback: () => void
@@ -34,6 +41,14 @@
   let rules = $state<MonitoringRule[]>([])
   let corsOrigins = $state<string[]>([])
   let newOrigin = $state('')
+  // Absent means no cleanup runs at all, not "the defaults apply" — so this is
+  // a switch with four numbers behind it, and the numbers it starts from when
+  // it is switched on come from the agent (`data_retention_defaults`).
+  let retentionEnabled = $state(false)
+  let retentionMetricsDays = $state('')
+  let retentionAlertsDays = $state('')
+  let retentionCleanupHours = $state('')
+  let retentionMaxDbSizeMb = $state('')
 
   // Its own endpoint and its own save: these are files in a directory, not a
   // field of the config file, and a failure to write one should not read as
@@ -52,6 +67,26 @@
     idlePauseThresholdSecs = v.idle_pause_threshold_secs != null ? String(v.idle_pause_threshold_secs) : ''
     rules = v.rules.map((r) => ({ ...r }))
     corsOrigins = [...v.cors_allowed_origins]
+    // Switched off, the numbers shown are the agent's own defaults, so
+    // switching it on is a save away rather than four fields to fill in.
+    retentionEnabled = v.data_retention != null
+    const retention = v.data_retention ?? v.data_retention_defaults
+    retentionMetricsDays = String(retention.metrics_days)
+    retentionAlertsDays = String(retention.alerts_days)
+    retentionCleanupHours = String(retention.cleanup_interval_hours)
+    retentionMaxDbSizeMb = String(retention.max_db_size_mb)
+  }
+
+  /// The four inputs as the agent wants them, or `null` when retention is off
+  /// — which means no cleanup runs at all, not that the defaults apply.
+  function retentionPayload(): DataRetentionConfig | null {
+    if (!retentionEnabled) return null
+    return {
+      metrics_days: Number(retentionMetricsDays),
+      alerts_days: Number(retentionAlertsDays),
+      cleanup_interval_hours: Number(retentionCleanupHours),
+      max_db_size_mb: Number(retentionMaxDbSizeMb),
+    }
   }
 
   async function load() {
@@ -151,9 +186,7 @@
       idle_pause_enabled: idlePauseEnabled,
       idle_pause_threshold_secs: idlePauseThresholdSecs.trim() ? Number(idlePauseThresholdSecs) : null,
       rules,
-      // No editor for retention this round — round-trip whatever was loaded
-      // rather than risk silently clearing it
-      data_retention: settings.data_retention,
+      data_retention: retentionPayload(),
       cors_allowed_origins: corsOrigins,
     }
     try {
@@ -296,6 +329,43 @@
       <Button variant="secondary" size="sm" onclick={addRule}>
         <Plus class="w-4 h-4 mr-1" />{$LL.addRule()}
       </Button>
+    </Card>
+
+    <!-- Next to the rules because it is what a rule that fires delivers
+         through, but its own endpoint and its own save: a credential must not
+         have to travel through the payload above to be kept. -->
+    <PushChannels />
+
+    <Card class="space-y-4">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.dataRetention()}</h2>
+        {@render liveBadge('data_retention')}
+      </div>
+      <Disclosure summary={$LL.moreDetails()}>
+        <Markdown text={$LL.dataRetentionNote()} class="text-xs text-faint-fg" />
+      </Disclosure>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" bind:checked={retentionEnabled} class="w-4 h-4" />
+        {$LL.dataRetentionEnabled()}
+      </label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="space-y-1">
+          <span class="text-xs text-muted-fg">{$LL.retentionMetricsDays()}</span>
+          <Input type="number" min="1" disabled={!retentionEnabled} bind:value={retentionMetricsDays} />
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs text-muted-fg">{$LL.retentionAlertsDays()}</span>
+          <Input type="number" min="1" disabled={!retentionEnabled} bind:value={retentionAlertsDays} />
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs text-muted-fg">{$LL.retentionCleanupHours()}</span>
+          <Input type="number" min="1" disabled={!retentionEnabled} bind:value={retentionCleanupHours} />
+        </div>
+        <div class="space-y-1">
+          <span class="text-xs text-muted-fg">{$LL.retentionMaxDbSizeMb()}</span>
+          <Input type="number" min="0" disabled={!retentionEnabled} bind:value={retentionMaxDbSizeMb} />
+        </div>
+      </div>
     </Card>
 
     <Card class="space-y-4">

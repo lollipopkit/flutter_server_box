@@ -624,6 +624,16 @@ extension _Widgets on _ServerEditPageState {
             ),
           ),
         ).cardx,
+        // The agent's own configuration, not this page's record of it. Reached
+        // from here because this is where its address and login are, and it
+        // works before the server is saved: the editor hands the fields above
+        // straight to the page, which talks to the agent itself.
+        ListTile(
+          leading: const Icon(MingCute.settings_2_line),
+          title: Text(l10n.monitorSettings),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _onTapMonitorSettings,
+        ).cardx,
       ],
     );
   }

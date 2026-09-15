@@ -679,6 +679,98 @@ type RootTranslation = {
 	 * N​a​m​e
 	 */
 	filesName: string
+	/**
+	 * N​o​t​i​f​i​c​a​t​i​o​n​ ​c​h​a​n​n​e​l​s
+	 */
+	pushChannels: string
+	/**
+	 * A​ ​r​u​l​e​ ​t​h​a​t​ ​f​i​r​e​s​ ​d​e​l​i​v​e​r​s​ ​t​h​r​o​u​g​h​ ​e​v​e​r​y​ ​c​h​a​n​n​e​l​ ​l​i​s​t​e​d​ ​h​e​r​e​.​ ​K​e​y​s​ ​a​n​d​ ​t​o​k​e​n​s​ ​a​r​e​ ​n​e​v​e​r​ ​s​e​n​t​ ​b​a​c​k​ ​t​o​ ​t​h​i​s​ ​p​a​n​e​l​:​ ​a​ ​f​i​e​l​d​ ​m​a​r​k​e​d​ ​S​e​t​ ​a​l​r​e​a​d​y​ ​h​o​l​d​s​ ​o​n​e​,​ ​a​n​d​ ​l​e​a​v​i​n​g​ ​i​t​ ​b​l​a​n​k​ ​k​e​e​p​s​ ​i​t​.​ ​S​e​t​t​i​n​g​s​ ​b​e​y​o​n​d​ ​t​h​e​ ​f​i​e​l​d​s​ ​s​h​o​w​n​ ​c​a​n​ ​b​e​ ​a​d​d​e​d​ ​t​o​ ​`​c​o​n​f​i​g​.​t​o​m​l​`​,​ ​a​n​d​ ​a​p​p​e​a​r​ ​h​e​r​e​ ​o​n​c​e​ ​t​h​e​y​ ​a​r​e​.
+	 */
+	pushNote: string
+	/**
+	 * A​d​d​ ​c​h​a​n​n​e​l
+	 */
+	addPush: string
+	/**
+	 * R​e​m​o​v​e​ ​c​h​a​n​n​e​l
+	 */
+	removePush: string
+	/**
+	 * R​a​t​e​ ​l​i​m​i​t
+	 */
+	pushRate: string
+	/**
+	 * e​.​g​.​ ​1​/​1​m​ ​—​ ​a​t​ ​m​o​s​t​ ​o​n​e​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​a​ ​m​i​n​u​t​e
+	 */
+	pushRatePlaceholder: string
+	/**
+	 * S​e​t
+	 */
+	pushSecretSet: string
+	/**
+	 * L​e​a​v​e​ ​b​l​a​n​k​ ​t​o​ ​k​e​e​p
+	 */
+	pushSecretKeep: string
+	/**
+	 * S​e​n​d​ ​a​ ​t​e​s​t
+	 */
+	pushTest: string
+	/**
+	 * T​h​e​ ​c​h​a​n​n​e​l​ ​a​c​c​e​p​t​e​d​ ​i​t​.
+	 */
+	pushTestOk: string
+	/**
+	 * T​h​e​ ​c​h​a​n​n​e​l​ ​r​e​f​u​s​e​d​ ​i​t​.
+	 */
+	pushTestFailed: string
+	/**
+	 * T​e​s​t​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​f​r​o​m​ ​S​e​r​v​e​r​B​o​x​ ​M​o​n​i​t​o​r
+	 */
+	pushTestMessage: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​s​e​n​d​e​r​ ​f​o​r​ ​t​h​i​s​ ​t​y​p​e​,​ ​s​o​ ​i​t​s​ ​s​e​t​t​i​n​g​s​ ​a​r​e​ ​n​o​t​ ​s​h​o​w​n​.​ ​I​t​ ​c​a​n​ ​b​e​ ​r​e​m​o​v​e​d​ ​h​e​r​e​,​ ​o​r​ ​e​d​i​t​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 */
+	pushUnknownType: string
+	/**
+	 * A​d​d​ ​h​e​a​d​e​r
+	 */
+	pushAddHeader: string
+	/**
+	 * R​e​m​o​v​e​ ​h​e​a​d​e​r
+	 */
+	pushRemoveHeader: string
+	/**
+	 * i​s​ ​n​o​t​ ​v​a​l​i​d​ ​J​S​O​N
+	 */
+	pushJsonInvalid: string
+	/**
+	 * D​a​t​a​ ​r​e​t​e​n​t​i​o​n
+	 */
+	dataRetention: string
+	/**
+	 * O​f​f​ ​m​e​a​n​s​ ​n​o​t​h​i​n​g​ ​i​s​ ​e​v​e​r​ ​d​e​l​e​t​e​d​ ​a​n​d​ ​t​h​e​ ​d​a​t​a​b​a​s​e​ ​g​r​o​w​s​ ​w​i​t​h​o​u​t​ ​l​i​m​i​t​.​ ​T​h​e​ ​s​i​z​e​ ​c​a​p​ ​d​r​o​p​s​ ​t​h​e​ ​o​l​d​e​s​t​ ​s​a​m​p​l​e​s​ ​o​n​c​e​ ​t​h​e​ ​l​i​v​e​ ​d​a​t​a​b​a​s​e​ ​p​a​s​s​e​s​ ​i​t​;​ ​0​ ​r​e​m​o​v​e​s​ ​t​h​e​ ​c​a​p​.
+	 */
+	dataRetentionNote: string
+	/**
+	 * D​e​l​e​t​e​ ​o​l​d​ ​d​a​t​a​ ​o​n​ ​a​ ​s​c​h​e​d​u​l​e
+	 */
+	dataRetentionEnabled: string
+	/**
+	 * K​e​e​p​ ​m​e​t​r​i​c​s​ ​(​d​a​y​s​)
+	 */
+	retentionMetricsDays: string
+	/**
+	 * K​e​e​p​ ​a​l​e​r​t​s​ ​(​d​a​y​s​)
+	 */
+	retentionAlertsDays: string
+	/**
+	 * R​u​n​ ​e​v​e​r​y​ ​(​h​o​u​r​s​)
+	 */
+	retentionCleanupHours: string
+	/**
+	 * S​i​z​e​ ​c​a​p​ ​(​M​B​)
+	 */
+	retentionMaxDbSizeMb: string
 }
 
 export type TranslationFunctions = {
@@ -1334,6 +1426,98 @@ export type TranslationFunctions = {
 	 * Name
 	 */
 	filesName: () => LocalizedString
+	/**
+	 * Notification channels
+	 */
+	pushChannels: () => LocalizedString
+	/**
+	 * A rule that fires delivers through every channel listed here. Keys and tokens are never sent back to this panel: a field marked Set already holds one, and leaving it blank keeps it. Settings beyond the fields shown can be added to `config.toml`, and appear here once they are.
+	 */
+	pushNote: () => LocalizedString
+	/**
+	 * Add channel
+	 */
+	addPush: () => LocalizedString
+	/**
+	 * Remove channel
+	 */
+	removePush: () => LocalizedString
+	/**
+	 * Rate limit
+	 */
+	pushRate: () => LocalizedString
+	/**
+	 * e.g. 1/1m — at most one notification a minute
+	 */
+	pushRatePlaceholder: () => LocalizedString
+	/**
+	 * Set
+	 */
+	pushSecretSet: () => LocalizedString
+	/**
+	 * Leave blank to keep
+	 */
+	pushSecretKeep: () => LocalizedString
+	/**
+	 * Send a test
+	 */
+	pushTest: () => LocalizedString
+	/**
+	 * The channel accepted it.
+	 */
+	pushTestOk: () => LocalizedString
+	/**
+	 * The channel refused it.
+	 */
+	pushTestFailed: () => LocalizedString
+	/**
+	 * Test notification from ServerBox Monitor
+	 */
+	pushTestMessage: () => LocalizedString
+	/**
+	 * This agent has no sender for this type, so its settings are not shown. It can be removed here, or edited in config.toml.
+	 */
+	pushUnknownType: () => LocalizedString
+	/**
+	 * Add header
+	 */
+	pushAddHeader: () => LocalizedString
+	/**
+	 * Remove header
+	 */
+	pushRemoveHeader: () => LocalizedString
+	/**
+	 * is not valid JSON
+	 */
+	pushJsonInvalid: () => LocalizedString
+	/**
+	 * Data retention
+	 */
+	dataRetention: () => LocalizedString
+	/**
+	 * Off means nothing is ever deleted and the database grows without limit. The size cap drops the oldest samples once the live database passes it; 0 removes the cap.
+	 */
+	dataRetentionNote: () => LocalizedString
+	/**
+	 * Delete old data on a schedule
+	 */
+	dataRetentionEnabled: () => LocalizedString
+	/**
+	 * Keep metrics (days)
+	 */
+	retentionMetricsDays: () => LocalizedString
+	/**
+	 * Keep alerts (days)
+	 */
+	retentionAlertsDays: () => LocalizedString
+	/**
+	 * Run every (hours)
+	 */
+	retentionCleanupHours: () => LocalizedString
+	/**
+	 * Size cap (MB)
+	 */
+	retentionMaxDbSizeMb: () => LocalizedString
 }
 
 export type Formatters = {}

@@ -48,6 +48,10 @@ The agent runs as an ordinary user by default. This limits the scope of `full_ac
 
 The configuration file is `config.toml` next to the binary. Every option is documented in [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml). The agent listens on `0.0.0.0:3770`; when `frontend/dist` exists, it also serves the web panel there.
 
+Part of that file can be edited without opening it. Collection intervals, alert rules, notification channels, data retention and the allowed panel origins are editable from the web panel's **Server Settings** page and from the App, under the server's **Monitor HTTP** section. Both reach the same agent and write the same file. What is not editable this way is deliberate: the JWT secret, the database path and the `[remote_access]` switches stay in the file, so a panel password can never widen what the agent exposes.
+
+Keys and tokens already in the file — a ServerChan key, a Bark key, an iOS push token, an `Authorization` header — are never sent back to an editor. They show as *set* with an empty box; leaving it empty keeps the stored value, and typing into it replaces it. Most changes made this way take effect when the agent restarts, and each field says which it is.
+
 If the agent must be reachable from another device, use HTTPS: configure built-in TLS with `[server.tls]`, or put the agent behind a reverse proxy. The App supports self-signed certificates when you explicitly enable that option.
 
 ## Add it in the App
@@ -96,7 +100,7 @@ These features read directly from Monitor agent and do not depend on the App bei
 
 - **Home-screen widgets**: Configure the server in the App after installing Monitor agent. The widget selects from the server list published by the App; you do not enter a URL manually.
 - **Watch app**: It can show only servers with Monitor agent configured. These servers sync by default, and you can exclude individual servers in the iOS settings.
-- **Push alerts**: Configure them in the agent with `[[monitoring.rules]]` and `[[push]]`.
+- **Push alerts**: A rule decides when to alert and a channel decides where it goes — `[[monitoring.rules]]` and `[[push]]` in `config.toml`, or the same two lists in the App and the web panel, where a channel also has a **Send a test** button.
 
 ## Troubleshooting
 

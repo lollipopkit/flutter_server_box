@@ -111,6 +111,14 @@ A server is reached over SSH, over a `monitor` agent's HTTP API, **or both**. Wh
 - `ServerNotifier.ensureExec()` is the one place that decides how a command reaches a server: SSH gets an `SshExec`, a monitor server gets `POST /api/v1/exec`. A monitor server never falls back to sshd — that would mean asking for credentials the user chose not to give this app. `ensureShellClient()` is SSH-only and uses a separate `TryLimiter` key (`${id}#shell`), so a shell that won't open doesn't stop the status page refreshing.
 - Where the SSH byte stream comes from is a separate axis, resolved in `genClient` (`lib/core/utils/server.dart`): direct, jump server, or `ProxyCommand`. The last two are mutually exclusive and `Spix.validate()` enforces it. Everything above `SSHSocket` is unchanged either way, and the app verifies the host key itself in every case.
 
+#### Editing the agent's own settings
+
+`MonitorSettingsPage` (`lib/view/page/server/monitor_settings/`) edits a monitor agent's `config.toml` — intervals, alert rules, data retention, CORS origins, notification channels — through `GET/PUT /api/v1/settings` and `GET/PUT /api/v1/push`. The panel edits the same two endpoints, so the two UIs are peers over one contract; `monitor/CLAUDE.md`'s "Editing it over the API" is the authority on what they are allowed to do.
+
+- **It is reached from the server editor, not from a server**, and builds its `MonitorHttpCredential` out of the fields on screen. So it works before the server is saved, which is when someone is most likely to want it — and it needs no `ServerNotifier`, which does not exist yet at that point. It owns its own `MonitorHttpClient` and disposes it.
+- **A push credential is write-only and the app never holds one.** `null` in `MonitorPushEntry.config` means "set on the agent, not disclosed"; sending it back keeps the stored value, which the agent resolves against `fromIndex`. `test/unit/monitor/monitor_settings_test.dart` asserts that null survives `jsonEncode` — a model that dropped it would make every save from the app clear the channel's key.
+- One Save button, two requests, each sent only if its half changed: the endpoints are separate so that an edit to a collection interval can never be what drops a credential. A failure in one is reported without claiming the other did not happen.
+
 #### File transport
 
 A third axis: `SshCredential.fileTransport`, stored per server, read only in `openSshFileBackend` (`lib/core/utils/ssh_file_backend.dart`). Every caller goes through it rather than naming a backend class.

@@ -743,6 +743,33 @@ impl Config {
     }
 }
 
+/// Whether [`Config::get_push_rate`] would read `rate` as written, rather than
+/// warn and fall back to its default.
+///
+/// Kept beside that function so the API cannot come to accept a string the
+/// loader silently discards — a rate the user set and the agent ignores is
+/// invisible until an alert storm. A file that already holds one still loads;
+/// this only stops a new one being written through `PUT /api/v1/push`.
+pub fn validate_push_rate(rate: &str) -> std::result::Result<(), String> {
+    let Some((times, duration)) = rate.split_once('/') else {
+        return Err(format!("Invalid push rate '{rate}', expected N/duration (e.g. 1/1m)"));
+    };
+    match times.parse::<usize>() {
+        Ok(0) => return Err("Push rate must allow at least one notification".to_string()),
+        Ok(_) => {}
+        Err(_) => return Err(format!("Invalid push rate count in '{rate}'")),
+    }
+    match parse_go_duration(duration) {
+        Some(d) if d.is_zero() => {
+            Err(format!("Push rate window in '{rate}' must be longer than zero"))
+        }
+        Some(_) => Ok(()),
+        None => Err(format!(
+            "Invalid push rate window in '{rate}', expected a count of s/m/h (e.g. 1m)"
+        )),
+    }
+}
+
 /// Finds the JSON source from a pre-Rust monitor installation. The current
 /// directory wins for the short-lived Rust JSON format; Go wrote exclusively
 /// to `$HOME/.config/server_box/config.json`, while the current installer runs
