@@ -15,23 +15,64 @@ pub async fn check_rules_with_velocity(
     Ok(())
 }
 
+/// What a rule's `monitor_type` names.
+///
+/// Its own type rather than arms inside the dispatch below, because the set of
+/// spellings is the thing worth testing and an `async` dispatch reports
+/// nothing about which arm it took — an unrecognised one is a `warn!` and a
+/// rule that never fires again.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RuleKind {
+    Cpu,
+    Memory,
+    Swap,
+    Disk,
+    Network,
+    Temperature,
+}
+
+impl RuleKind {
+    /// `None` when nothing here evaluates that type.
+    ///
+    /// The short spellings are the Go agent's, and are what its `config.json`
+    /// holds. `Config::legacy` carries a rule's `type` across verbatim, so a
+    /// migrated install arrives with `mem` and `net`, and every rule using one
+    /// silently never fired — a line in the log and nothing else, for as long
+    /// as the agent had been running. Accepted here rather than rewritten
+    /// during migration: an install that already migrated is past that point,
+    /// and repairing it would mean editing a config file the user owns.
+    /// `temp` was always here, for the same reason.
+    pub fn parse(monitor_type: &str) -> Option<Self> {
+        match monitor_type {
+            "cpu" => Some(Self::Cpu),
+            "memory" | "mem" => Some(Self::Memory),
+            "swap" => Some(Self::Swap),
+            "disk" => Some(Self::Disk),
+            "network" | "net" => Some(Self::Network),
+            "temperature" | "temp" => Some(Self::Temperature),
+            _ => None,
+        }
+    }
+}
+
 async fn check_enhanced_rule(
     rule: &MonitoringRule, 
     metrics: &SystemMetrics, 
     config: &Config, 
     velocity_manager: &VelocityManager
 ) -> Result<()> {
-    let (should_alert, _current_value, formatted_value) = match rule.monitor_type.as_str() {
-        "cpu" => check_cpu_rule(rule, metrics).await?,
-        "memory" => check_memory_rule(rule, metrics).await?,
-        "swap" => check_swap_rule(rule, metrics).await?,
-        "disk" => check_disk_rule(rule, metrics).await?,
-        "network" => check_network_rule(rule, metrics, velocity_manager).await?,
-        "temperature" | "temp" => check_temperature_rule(rule, metrics).await?,
-        _ => {
-            warn!("Unknown monitor type: {}", rule.monitor_type);
-            return Ok(());
-        }
+    let Some(kind) = RuleKind::parse(&rule.monitor_type) else {
+        warn!("Unknown monitor type: {}", rule.monitor_type);
+        return Ok(());
+    };
+
+    let (should_alert, _current_value, formatted_value) = match kind {
+        RuleKind::Cpu => check_cpu_rule(rule, metrics).await?,
+        RuleKind::Memory => check_memory_rule(rule, metrics).await?,
+        RuleKind::Swap => check_swap_rule(rule, metrics).await?,
+        RuleKind::Disk => check_disk_rule(rule, metrics).await?,
+        RuleKind::Network => check_network_rule(rule, metrics, velocity_manager).await?,
+        RuleKind::Temperature => check_temperature_rule(rule, metrics).await?,
     };
 
     if should_alert {
@@ -535,5 +576,38 @@ mod tests {
         assert!(!should_trigger_alert("invalid", 50.0).unwrap());
         assert!(!should_trigger_alert("", 50.0).unwrap());
         assert!(!should_trigger_alert("50", 60.0).unwrap()); // Missing operator
+    }
+
+    /// The spellings a migrated Go `config.json` arrives with. Each one that
+    /// stops being recognised is a rule that goes on sitting in the config,
+    /// looking configured, and never firing again.
+    #[test]
+    fn the_go_agent_spellings_still_name_a_check() {
+        for (spelling, expected) in [
+            ("cpu", RuleKind::Cpu),
+            ("mem", RuleKind::Memory),
+            ("memory", RuleKind::Memory),
+            ("swap", RuleKind::Swap),
+            ("disk", RuleKind::Disk),
+            ("net", RuleKind::Network),
+            ("network", RuleKind::Network),
+            ("temp", RuleKind::Temperature),
+            ("temperature", RuleKind::Temperature),
+        ] {
+            assert_eq!(
+                RuleKind::parse(spelling),
+                Some(expected),
+                "'{spelling}' should evaluate as {expected:?}",
+            );
+        }
+    }
+
+    #[test]
+    fn a_type_nothing_evaluates_is_refused_rather_than_guessed() {
+        assert_eq!(RuleKind::parse("nonsense"), None);
+        // Neither a prefix nor a case variation: guessing here would attach a
+        // rule to a metric its author did not name.
+        assert_eq!(RuleKind::parse("Memory"), None);
+        assert_eq!(RuleKind::parse("netw"), None);
     }
 }

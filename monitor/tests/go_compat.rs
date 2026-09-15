@@ -6,6 +6,7 @@
 use server_box_monitor::core::config::Config;
 use server_box_monitor::monitoring::parse_disk_metrics;
 use server_box_monitor::monitoring::push::PushRateLimiter;
+use server_box_monitor::monitoring::rules::RuleKind;
 use server_box_monitor::monitoring::size::Size;
 use server_box_monitor::monitoring::threshold::{CompareType, Threshold, ThresholdType};
 use std::time::Duration;
@@ -145,6 +146,20 @@ fn test_go_config_json_normalize() {
     assert_eq!(rules[0].monitor_type, "cpu");
     assert_eq!(rules[0].threshold, ">=77%");
     assert_eq!(rules[1].matcher, "eth0-in");
+
+    // The migration carries `type` across verbatim, so what it produces has to
+    // be something the rule engine evaluates. It did not: Go writes `net` and
+    // `mem`, the engine knew only `network` and `memory`, and a migrated rule
+    // using either sat in the config looking configured while never firing.
+    // This fixture already contained `net` and only checked its matcher.
+    for rule in &rules {
+        assert!(
+            RuleKind::parse(&rule.monitor_type).is_some(),
+            "migrated rule '{}' has type '{}', which nothing evaluates",
+            rule.name,
+            rule.monitor_type,
+        );
+    }
 
     let pushes = config.get_push();
     assert_eq!(pushes.len(), 2);
