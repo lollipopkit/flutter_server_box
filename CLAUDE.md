@@ -11,7 +11,9 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 - **The app is normally already running from the user's IDE. Do not start a second `flutter run`** — it competes for the same window and you end up looking at an instance the user is not. Apply changes through the dart MCP server: `dtd` → `listDtdUris` → `connect` to the instance whose workspace root is this repo → `hot_reload` with the URI from `listConnectedApps`.
   - Changes to `main()` or anything before `runApp` need `hot_restart`.
   - `flutter run` is right only when no such instance exists, or when the launch path itself is the subject (first-launch migration, `_initApp` ordering).
-- `dart run build_runner build --delete-conflicting-outputs` after changing any annotated model (freezed, json_serializable, hive, riverpod).
+- `dart run build_runner build` after changing any annotated model (freezed, json_serializable, hive, riverpod). `--delete-conflicting-outputs` was removed in build_runner 2.15 and is ignored with a warning.
+  - **A build cache older than the tree hangs instead of failing**, which is what a merge that adds generated sources leaves behind. `AssetContent.bytes` throws on a node deserialized from `asset_graph.json` with only its digest, the step awaiting it never completes, and the build parks mid-phase at 0% CPU with no output and no timeout. `--verbose` names the last generator it entered; `dart run build_runner clean` is the fix (`make gen-build-clean`).
+  - A run killed with SIGKILL leaves `.dart_tool/build/lock/build_runner.lock`, and the next one waits on it silently.
 - `flutter run --release -PallowDebugReleaseSigning=true` — local Android release verification only.
 - Use dart mcp to hot restart/reload
 
