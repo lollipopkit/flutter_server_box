@@ -1,6 +1,6 @@
 # Hive boxes as the released builds wrote them
 
-Input for `test/hive_release_migration_test.dart`, which runs the whole upgrade
+Input for `test/migration/hive_release_migration_test.dart`, which runs the whole upgrade
 against them: `HiveImport` into `kv`, then `KvToTablesMigration` into the entity
 tables. Asserting between the two would only prove the data reached a shape no
 build ships.

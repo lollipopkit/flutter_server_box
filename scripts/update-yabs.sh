@@ -4,7 +4,7 @@
 # The script is shipped as an asset rather than fetched by the server at run
 # time, so updating it is a commit here. This fetches one pinned revision,
 # writes it to assets/, and prints the three constants that have to move with
-# it — `test/yabs_script_test.dart` fails until they agree with the file.
+# it — `test/unit/yabs_script_test.dart` fails until they agree with the file.
 #
 # Usage:
 #   scripts/update-yabs.sh              # latest revision touching yabs.sh
@@ -67,5 +67,5 @@ Update lib/data/model/server/benchmark/yabs_script.dart:
   static const upstreamVersion = '$version';
   static const sha256Hex = '$digest';
 
-Then run: flutter test test/yabs_script_test.dart
+Then run: flutter test test/unit/yabs_script_test.dart
 EOF

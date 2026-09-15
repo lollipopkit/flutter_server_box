@@ -6,7 +6,7 @@ This document tracks every `TODO` that exists as intentional migration residue. 
 
 ## Hive (keep per Q1)
 
-Data has been on SQLite since before `1.0.1538`. However upgrades from `1466`/`1480`/`1491` and earlier still rely on `HiveImport`. Fixtures under `test/fixtures/hive_v{1466,1480,1491}/` and `test/hive_release_migration_test.dart` guard this path. **Do not delete `lib/hive/` or `hive_ce` dependencies until `SchemaVersion.oldestSupported` is advanced past the Hive era and fixtures confirm no install can still carry a Hive box.**
+Data has been on SQLite since before `1.0.1538`. However upgrades from `1466`/`1480`/`1491` and earlier still rely on `HiveImport`. Fixtures under `test/fixtures/hive_v{1466,1480,1491}/` and `test/migration/hive_release_migration_test.dart` guard this path. **Do not delete `lib/hive/` or `hive_ce` dependencies until `SchemaVersion.oldestSupported` is advanced past the Hive era and fixtures confirm no install can still carry a Hive box.**
 
 | Area | File:Line | Since | Retire when | Notes |
 |---|---|---|---|---|
@@ -77,7 +77,7 @@ Data has been on SQLite since before `1.0.1538`. However upgrades from `1466`/`1
 
 ## How to retire
 
-1. **Hive retirements only:** Confirm `test/hive_release_migration_test.dart` + `test/fixtures/*` expectation. Other retirements skip this.
+1. **Hive retirements only:** Confirm `test/migration/hive_release_migration_test.dart` + `test/fixtures/*` expectation. Other retirements skip this.
 2. **Persisted-schema changes only:** Bump `SchemaVersion.current` in `lib/data/store/schema.dart` and add entry in `lib/data/store/migrations/all.dart`. ARB, platform, and code-only retirements skip this — no schema step needed.
 3. Remove code + update this file (move row to `Retired` below).
 4. Run the checks that match the change: `dart run build_runner build --delete-conflicting-outputs` if models changed, `flutter gen-l10n` if ARB touched, `flutter analyze`, `cargo test --workspace` if Rust changed, `flutter test --timeout 30s` (always).

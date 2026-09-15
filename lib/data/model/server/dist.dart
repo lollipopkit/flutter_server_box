@@ -243,7 +243,7 @@ bool _isWordChar(int? unit) =>
 /// over everything else.
 ///
 /// A duplicated id cannot be written here at all — two equal keys in a `const`
-/// map is a compile error — and `test/dist_icon_test.dart` carries the same
+/// map is a compile error — and `test/unit/dist_icon_test.dart` carries the same
 /// table the other way round, so an id that stops resolving is a failure
 /// rather than a `{DIST}` that quietly expands to nothing.
 const _byOsId = <String, Dist>{
@@ -348,7 +348,7 @@ const _byOsId = <String, Dist>{
 /// alone matches "Devoid", `mx` matches any name with those letters adjacent.
 /// Those carry the word that disambiguates them.
 ///
-/// `test/dist_icon_test.dart` asserts that every case appears here exactly
+/// `test/unit/dist_icon_test.dart` asserts that every case appears here exactly
 /// once, which is what catches a case added to the enum and forgotten here —
 /// it would otherwise never match anything at all.
 const _matchers = <(Dist, List<String>)>[

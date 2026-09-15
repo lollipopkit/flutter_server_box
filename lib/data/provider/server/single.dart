@@ -60,6 +60,21 @@ abstract class ServerState with _$ServerState {
     required Spi spi,
     required ServerStatus status,
     @Default(ServerConn.disconnected) ServerConn conn,
+
+    /// How long the last successful status read took, in milliseconds.
+    ///
+    /// The read, not the connect: a handshake happens once and then never
+    /// again, so showing it would pin a number taken minutes ago — and over a
+    /// jump chain it measures the whole chain rather than this server. Both
+    /// transports therefore time the same thing, the one request that asks the
+    /// machine for its status, so the two are comparable.
+    ///
+    /// Null when there has been no successful read since the server was last
+    /// reachable. Every path that gives up on a connection clears it, because
+    /// a latency left behind reads as a live measurement of a machine that is
+    /// no longer answering — and survives an edit pointing the server at a
+    /// different host.
+    int? latencyMs,
     SSHClient? client,
 
     /// What the agent said it allows, or null before it has been asked.
@@ -154,9 +169,18 @@ class ServerNotifier extends _$ServerNotifier {
     state = state.copyWith(conn: conn);
   }
 
-  // Update server status
-  void updateStatus(ServerStatus status) {
-    state = state.copyWith(status: status);
+  /// Update server status.
+  ///
+  /// [latencyMs] rides along rather than being published on its own: a status
+  /// and the time it took to fetch are one answer, and two assignments to
+  /// [state] are two rebuilds of every card watching this server.
+  /// Null leaves the previous reading alone — most callers here are clearing
+  /// an error rather than reporting a read.
+  void updateStatus(ServerStatus status, {int? latencyMs}) {
+    state = state.copyWith(
+      status: status,
+      latencyMs: latencyMs ?? state.latencyMs,
+    );
     _rememberDist(status);
   }
 
@@ -297,6 +321,8 @@ class ServerNotifier extends _$ServerNotifier {
       spi: spi,
       client: null,
       conn: ServerConn.disconnected,
+      // The edit may have pointed this server at another machine entirely.
+      latencyMs: null,
     );
   }
 
@@ -313,6 +339,7 @@ class ServerNotifier extends _$ServerNotifier {
       status: status,
       client: closeClient ? null : client,
       conn: ServerConn.failed,
+      latencyMs: null,
     );
   }
 
@@ -322,7 +349,11 @@ class ServerNotifier extends _$ServerNotifier {
     unawaited(_disposePersistentShell());
     state.client?.close();
     _scriptWritten = false;
-    state = state.copyWith(client: null, conn: ServerConn.disconnected);
+    state = state.copyWith(
+      client: null,
+      conn: ServerConn.disconnected,
+      latencyMs: null,
+    );
   }
 
   // Refresh server status
@@ -462,9 +493,14 @@ class ServerNotifier extends _$ServerNotifier {
     );
 
     try {
+      // Around the request and nothing else. Stopping it after [updateStatus]
+      // would fold in a synchronous SQLite write and a full rebuild pass, and
+      // report the sum as a network reading.
+      final stopwatch = Stopwatch()..start();
       final status = await source.fetchStatus(_copyStatus(state.status));
+      stopwatch.stop();
       if (!_isRefreshCurrent(operation, spi)) return;
-      updateStatus(status);
+      updateStatus(status, latencyMs: stopwatch.elapsedMilliseconds);
       // Alongside the status rather than once at connect: what the agent
       // allows is its own config, which can change under a running app, and
       // this poll is already authenticated and periodic. A failure here is
@@ -974,7 +1010,13 @@ class ServerNotifier extends _$ServerNotifier {
         if (!_isRefreshCurrent(operation, spi)) return;
       }
 
+      // Two clocks on purpose. [time1] is when this happened and is stored as
+      // such; [elapsed] is how long it took. Reading the wall clock twice and
+      // subtracting gets the second answer wrong whenever the first one moves
+      // — an NTP step during a connect is not rare, since a reconnect is what
+      // a device does on waking, and it lands in `durationMs` as a negative.
       final time1 = DateTime.now();
+      final elapsed = Stopwatch()..start();
       try {
         final client = await genClient(
           spi,
@@ -992,8 +1034,7 @@ class ServerNotifier extends _$ServerNotifier {
         }
         _setClient(client);
 
-        final time2 = DateTime.now();
-        final spentTime = time2.difference(time1).inMilliseconds;
+        final spentTime = elapsed.elapsedMilliseconds;
         if (spi.resolvedJumpIds.isEmpty) {
           Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
         } else {
@@ -1033,7 +1074,7 @@ class ServerNotifier extends _$ServerNotifier {
           TryLimiter.inc(sid);
         }
 
-        final durationMs = DateTime.now().difference(time1).inMilliseconds;
+        final durationMs = elapsed.elapsedMilliseconds;
 
         ConnectionResult failureResult;
         final errStr = e.toString().toLowerCase();
@@ -1195,6 +1236,10 @@ class ServerNotifier extends _$ServerNotifier {
     }
 
     String? raw;
+    // The status command and nothing after it: the extended commands below
+    // take seconds by design and run once every few minutes, so including
+    // them would report one poll in five as an unreachable machine.
+    int? latencyMs;
 
     try {
       final statusCmd = ShellFunc.status.exec(
@@ -1202,7 +1247,10 @@ class ServerNotifier extends _$ServerNotifier {
         systemType: state.status.system,
         customDir: spi.custom?.scriptDir,
       );
+      final elapsed = Stopwatch()..start();
       raw = await _runStatusCommand(statusCmd);
+      elapsed.stop();
+      latencyMs = elapsed.elapsedMilliseconds;
       if (!_isRefreshCurrent(operation, spi)) return;
 
       // Output carrying no segment marker parses into an empty status: the
@@ -1287,7 +1335,7 @@ class ServerNotifier extends _$ServerNotifier {
       // commands take seconds by design. A refresh that started before the
       // server was edited arrives here holding the old host's status.
       if (!_isRefreshCurrent(operation, spi)) return;
-      updateStatus(status);
+      updateStatus(status, latencyMs: latencyMs);
     } catch (e, trace) {
       _failSsh(
         SSHErrType.getStatus,

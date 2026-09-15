@@ -244,7 +244,7 @@ class BmcNotifier extends _$BmcNotifier {
   /// Asks the machine to change state, and waits to see whether it did.
   ///
   /// Never called by a test against real hardware — see the header of
-  /// `test/bmc_power_test.dart`. What the caller must not skip is the
+  /// `packages/redfish/test/e2e_test.dart`. What the caller must not skip is the
   /// confirmation: this is the one thing in the app that can take a running
   /// server away from whoever is using it.
   Future<BmcPowerResult> power(PowerIntent intent) async {

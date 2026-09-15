@@ -30,7 +30,7 @@ help:
 		'  run-device         Run app on a specific device: make run-device DEVICE=<id>' \
 		'  analyze            Run static analysis for lib/, test/ and integration_test/' \
 		'  test               Run all tests' \
-		'  test-one           Run a single test: make test-one TEST=test/foo_test.dart' \
+		'  test-one           Run a single test: make test-one TEST=test/unit/foo_test.dart' \
 		'  coverage           Run tests with coverage output' \
 		'  test-cla           Test the CLA check in .github/workflows/cla.yml (needs node)' \
 		'' \
@@ -90,7 +90,7 @@ test:
 
 test-one:
 	@if [ -z "$(TEST)" ]; then \
-		echo 'TEST is required. Example: make test-one TEST=test/disk_test.dart'; \
+		echo 'TEST is required. Example: make test-one TEST=test/unit/disk_test.dart'; \
 		exit 1; \
 	fi
 	$(CARGO) build -p sbm_ffi

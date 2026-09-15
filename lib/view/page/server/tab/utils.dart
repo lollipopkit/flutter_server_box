@@ -280,6 +280,7 @@ extension _ServerX on ServerState {
         }();
         final upTime = status.more[StatusCmdType.uptime];
         final items = [
+          if (latencyMs != null) '${libL10n.delay}: ${latencyMs}ms',
           cmdTemp ??
               (temperatureVal != null
                   ? '${temperatureVal.toStringAsFixed(1)}°C'

@@ -493,7 +493,7 @@ pub const WINDOWS_INSTALL_EOF: &str = "SrvBoxSep.__install_eof__";
 /// Reading lines until [`WINDOWS_INSTALL_EOF`] needs no EOF: the same 256 KiB
 /// that never once got through goes in every time, in about a second.
 ///
-/// `test/windows_install_ssh_e2e_test.dart` is the regression test, over the
+/// `test/platform/windows_install_ssh_e2e_test.dart` is the regression test, over the
 /// same client the app uses.
 fn shell_quote_unix(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))

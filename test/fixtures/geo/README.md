@@ -16,6 +16,6 @@ written from the specification, and this one is the other repository's actual
 output.
 
 Refresh with `python3 tests/make_vectors.py` in that repository, then copy the
-directory across. `test/geo_bundle_test.dart` reads them and checks the format
+directory across. `test/unit/geo_bundle_test.dart` reads them and checks the format
 version in each header, so a change on that side that this one has not caught
 up with fails here rather than passing quietly.
