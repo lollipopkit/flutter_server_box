@@ -47,11 +47,28 @@ void main() {
 
       EnumNamesMigration(store: store).applySync();
 
-      expect(store.get<List>(EnumNamesMigration.btnsKey), [
-        'terminal',
-        'container',
-        'power',
-      ]);
+      expect(store.get<Object>(EnumNamesMigration.btnsKey), {
+        'layout': 'current',
+        'values': ['terminal', 'container', 'power'],
+      });
+    });
+
+    test('preserves post-feature users and scheduled tasks indexes', () {
+      store.set(
+        EnumNamesMigration.btnsKey,
+        [9, 10],
+        updateLastUpdateTsOnSet: false,
+      );
+
+      EnumNamesMigration(store: store).applySync();
+
+      expect(store.get<Object>(EnumNamesMigration.btnsKey), {
+        'layout': 'current',
+        'values': [
+          ServerFuncBtn.users.name,
+          ServerFuncBtn.scheduledTasks.name,
+        ],
+      });
     });
 
     test('converts the sort field', () {
@@ -78,7 +95,41 @@ void main() {
 
       EnumNamesMigration(store: store).applySync();
 
-      expect(store.get<List>(EnumNamesMigration.btnsKey), ['terminal', 'files']);
+      expect(store.get<Object>(EnumNamesMigration.btnsKey), {
+        'layout': 'current',
+        'values': ['terminal', 'files'],
+      });
+    });
+
+    test(
+      'settings decoding preserves post-feature users and scheduled tasks',
+      () {
+        store.set(
+          EnumNamesMigration.btnsKey,
+          [9, 10],
+          updateLastUpdateTsOnSet: false,
+        );
+
+        expect(store.serverFuncBtns.fetch(), [
+          ServerFuncBtn.users.name,
+          ServerFuncBtn.scheduledTasks.name,
+        ]);
+      },
+    );
+
+    test('writes a current layout marker for synchronized rows', () {
+      store.serverFuncBtns.put([
+        ServerFuncBtn.users.name,
+        ServerFuncBtn.scheduledTasks.name,
+      ]);
+
+      expect(store.get<Object>(EnumNamesMigration.btnsKey), {
+        'layout': 'current',
+        'values': [
+          ServerFuncBtn.users.name,
+          ServerFuncBtn.scheduledTasks.name,
+        ],
+      });
     });
 
     test('runs twice without changing what it wrote', () {
@@ -87,10 +138,10 @@ void main() {
       ], updateLastUpdateTsOnSet: false);
 
       EnumNamesMigration(store: store).applySync();
-      final once = store.get<List>(EnumNamesMigration.btnsKey);
+      final once = store.get<Object>(EnumNamesMigration.btnsKey);
       EnumNamesMigration(store: store).applySync();
 
-      expect(store.get<List>(EnumNamesMigration.btnsKey), once);
+      expect(store.get<Object>(EnumNamesMigration.btnsKey), once);
     });
 
     test('leaves a store that holds nothing alone', () {
@@ -107,6 +158,27 @@ void main() {
       expect(
         ServerFuncBtn.byStored(ServerFuncBtn.power.index),
         ServerFuncBtn.power,
+      );
+      expect(
+        ServerFuncBtn.byStored(
+          ServerFuncBtn.users.index,
+          legacyIntegerNames: ServerFuncBtn.legacyIndexNamesBeforeM021,
+        ),
+        isNull,
+      );
+      expect(
+        ServerFuncBtn.namesFromStored({
+          'layout': 'preM021',
+          'values': [5, 6, 7, 8],
+        }),
+        ['iperf', 'systemd', 'portForward', 'power'],
+      );
+      expect(
+        ServerFuncBtn.namesFromStored({
+          'layout': 'current',
+          'values': [5, 6, 7, 8],
+        }),
+        ['iperf', 'systemd', 'portForward', 'power'],
       );
       expect(ServerFuncBtn.byStored('nothing-of-the-sort'), isNull);
       expect(ServerFuncBtn.byStored(ServerFuncBtn.values.length), isNull);

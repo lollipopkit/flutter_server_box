@@ -44,6 +44,7 @@ abstract final class Tables {
     'server',
     'snippet',
     'port_forward',
+    'remote_desktop_profile',
   ];
 
   /// Every table the app owns, dependants after what they depend on.
@@ -66,6 +67,7 @@ abstract final class Tables {
     'snippet_tag',
     'snippet_auto_run_on',
     'port_forward',
+    'remote_desktop_profile',
     'conn_stat',
     'server_dist',
     'benchmark_run',

@@ -56,6 +56,7 @@ export default defineConfig({
 					},
 					items: [
 						{ label: 'Monitor Agent', translations: { zh: 'Monitor Agent' }, slug: 'advanced/monitor-agent' },
+						{ label: 'Remote Desktop', translations: { zh: '远程桌面' }, slug: 'advanced/remote-desktop' },
 						{ label: 'Agent', translations: { zh: 'Agent' }, slug: 'advanced/agent' },
 						{ label: 'Terminal on This Device', translations: { zh: '本机终端' }, slug: 'advanced/local-terminal' },
 						{ label: 'BMC (Redfish)', translations: { zh: 'BMC(Redfish)' }, slug: 'advanced/bmc' },

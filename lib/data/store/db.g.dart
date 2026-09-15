@@ -5700,6 +5700,806 @@ class PortForwardsCompanion extends UpdateCompanion<PortForwardRow> {
   }
 }
 
+class $RemoteDesktopProfilesTable extends RemoteDesktopProfiles
+    with TableInfo<$RemoteDesktopProfilesTable, RemoteDesktopProfileRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $RemoteDesktopProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _revMeta = const VerificationMeta('rev');
+  @override
+  late final GeneratedColumn<int> rev = GeneratedColumn<int>(
+    'rev',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES server (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _protocolMeta = const VerificationMeta(
+    'protocol',
+  );
+  @override
+  late final GeneratedColumn<String> protocol = GeneratedColumn<String>(
+    'protocol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _hostMeta = const VerificationMeta('host');
+  @override
+  late final GeneratedColumn<String> host = GeneratedColumn<String>(
+    'host',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('127.0.0.1'),
+  );
+  static const VerificationMeta _portMeta = const VerificationMeta('port');
+  @override
+  late final GeneratedColumn<int> port = GeneratedColumn<int>(
+    'port',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _usernameMeta = const VerificationMeta(
+    'username',
+  );
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+    'username',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _passwordMeta = const VerificationMeta(
+    'password',
+  );
+  @override
+  late final GeneratedColumn<String> password = GeneratedColumn<String>(
+    'password',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _domainMeta = const VerificationMeta('domain');
+  @override
+  late final GeneratedColumn<String> domain = GeneratedColumn<String>(
+    'domain',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _viewOnlyMeta = const VerificationMeta(
+    'viewOnly',
+  );
+  @override
+  late final GeneratedColumn<bool> viewOnly = GeneratedColumn<bool>(
+    'view_only',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("view_only" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _sharedMeta = const VerificationMeta('shared');
+  @override
+  late final GeneratedColumn<bool> shared = GeneratedColumn<bool>(
+    'shared',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("shared" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _trustedCertSha256Meta = const VerificationMeta(
+    'trustedCertSha256',
+  );
+  @override
+  late final GeneratedColumn<String> trustedCertSha256 =
+      GeneratedColumn<String>(
+        'trusted_cert_sha256',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    updatedAt,
+    rev,
+    id,
+    serverId,
+    name,
+    protocol,
+    host,
+    port,
+    username,
+    password,
+    domain,
+    viewOnly,
+    shared,
+    trustedCertSha256,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'remote_desktop_profile';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<RemoteDesktopProfileRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('rev')) {
+      context.handle(
+        _revMeta,
+        rev.isAcceptableOrUnknown(data['rev']!, _revMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('protocol')) {
+      context.handle(
+        _protocolMeta,
+        protocol.isAcceptableOrUnknown(data['protocol']!, _protocolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_protocolMeta);
+    }
+    if (data.containsKey('host')) {
+      context.handle(
+        _hostMeta,
+        host.isAcceptableOrUnknown(data['host']!, _hostMeta),
+      );
+    }
+    if (data.containsKey('port')) {
+      context.handle(
+        _portMeta,
+        port.isAcceptableOrUnknown(data['port']!, _portMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_portMeta);
+    }
+    if (data.containsKey('username')) {
+      context.handle(
+        _usernameMeta,
+        username.isAcceptableOrUnknown(data['username']!, _usernameMeta),
+      );
+    }
+    if (data.containsKey('password')) {
+      context.handle(
+        _passwordMeta,
+        password.isAcceptableOrUnknown(data['password']!, _passwordMeta),
+      );
+    }
+    if (data.containsKey('domain')) {
+      context.handle(
+        _domainMeta,
+        domain.isAcceptableOrUnknown(data['domain']!, _domainMeta),
+      );
+    }
+    if (data.containsKey('view_only')) {
+      context.handle(
+        _viewOnlyMeta,
+        viewOnly.isAcceptableOrUnknown(data['view_only']!, _viewOnlyMeta),
+      );
+    }
+    if (data.containsKey('shared')) {
+      context.handle(
+        _sharedMeta,
+        shared.isAcceptableOrUnknown(data['shared']!, _sharedMeta),
+      );
+    }
+    if (data.containsKey('trusted_cert_sha256')) {
+      context.handle(
+        _trustedCertSha256Meta,
+        trustedCertSha256.isAcceptableOrUnknown(
+          data['trusted_cert_sha256']!,
+          _trustedCertSha256Meta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  RemoteDesktopProfileRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return RemoteDesktopProfileRow(
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      rev: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}rev'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      protocol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}protocol'],
+      )!,
+      host: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}host'],
+      )!,
+      port: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}port'],
+      )!,
+      username: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}username'],
+      ),
+      password: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}password'],
+      ),
+      domain: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}domain'],
+      ),
+      viewOnly: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}view_only'],
+      )!,
+      shared: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}shared'],
+      )!,
+      trustedCertSha256: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}trusted_cert_sha256'],
+      ),
+    );
+  }
+
+  @override
+  $RemoteDesktopProfilesTable createAlias(String alias) {
+    return $RemoteDesktopProfilesTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get withoutRowId => true;
+}
+
+class RemoteDesktopProfileRow extends DataClass
+    implements Insertable<RemoteDesktopProfileRow> {
+  final int updatedAt;
+  final int rev;
+  final String id;
+  final String serverId;
+  final String name;
+  final String protocol;
+  final String host;
+  final int port;
+  final String? username;
+  final String? password;
+  final String? domain;
+  final bool viewOnly;
+  final bool shared;
+  final String? trustedCertSha256;
+  const RemoteDesktopProfileRow({
+    required this.updatedAt,
+    required this.rev,
+    required this.id,
+    required this.serverId,
+    required this.name,
+    required this.protocol,
+    required this.host,
+    required this.port,
+    this.username,
+    this.password,
+    this.domain,
+    required this.viewOnly,
+    required this.shared,
+    this.trustedCertSha256,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['rev'] = Variable<int>(rev);
+    map['id'] = Variable<String>(id);
+    map['server_id'] = Variable<String>(serverId);
+    map['name'] = Variable<String>(name);
+    map['protocol'] = Variable<String>(protocol);
+    map['host'] = Variable<String>(host);
+    map['port'] = Variable<int>(port);
+    if (!nullToAbsent || username != null) {
+      map['username'] = Variable<String>(username);
+    }
+    if (!nullToAbsent || password != null) {
+      map['password'] = Variable<String>(password);
+    }
+    if (!nullToAbsent || domain != null) {
+      map['domain'] = Variable<String>(domain);
+    }
+    map['view_only'] = Variable<bool>(viewOnly);
+    map['shared'] = Variable<bool>(shared);
+    if (!nullToAbsent || trustedCertSha256 != null) {
+      map['trusted_cert_sha256'] = Variable<String>(trustedCertSha256);
+    }
+    return map;
+  }
+
+  RemoteDesktopProfilesCompanion toCompanion(bool nullToAbsent) {
+    return RemoteDesktopProfilesCompanion(
+      updatedAt: Value(updatedAt),
+      rev: Value(rev),
+      id: Value(id),
+      serverId: Value(serverId),
+      name: Value(name),
+      protocol: Value(protocol),
+      host: Value(host),
+      port: Value(port),
+      username: username == null && nullToAbsent
+          ? const Value.absent()
+          : Value(username),
+      password: password == null && nullToAbsent
+          ? const Value.absent()
+          : Value(password),
+      domain: domain == null && nullToAbsent
+          ? const Value.absent()
+          : Value(domain),
+      viewOnly: Value(viewOnly),
+      shared: Value(shared),
+      trustedCertSha256: trustedCertSha256 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trustedCertSha256),
+    );
+  }
+
+  factory RemoteDesktopProfileRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return RemoteDesktopProfileRow(
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      rev: serializer.fromJson<int>(json['rev']),
+      id: serializer.fromJson<String>(json['id']),
+      serverId: serializer.fromJson<String>(json['serverId']),
+      name: serializer.fromJson<String>(json['name']),
+      protocol: serializer.fromJson<String>(json['protocol']),
+      host: serializer.fromJson<String>(json['host']),
+      port: serializer.fromJson<int>(json['port']),
+      username: serializer.fromJson<String?>(json['username']),
+      password: serializer.fromJson<String?>(json['password']),
+      domain: serializer.fromJson<String?>(json['domain']),
+      viewOnly: serializer.fromJson<bool>(json['viewOnly']),
+      shared: serializer.fromJson<bool>(json['shared']),
+      trustedCertSha256: serializer.fromJson<String?>(
+        json['trustedCertSha256'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'rev': serializer.toJson<int>(rev),
+      'id': serializer.toJson<String>(id),
+      'serverId': serializer.toJson<String>(serverId),
+      'name': serializer.toJson<String>(name),
+      'protocol': serializer.toJson<String>(protocol),
+      'host': serializer.toJson<String>(host),
+      'port': serializer.toJson<int>(port),
+      'username': serializer.toJson<String?>(username),
+      'password': serializer.toJson<String?>(password),
+      'domain': serializer.toJson<String?>(domain),
+      'viewOnly': serializer.toJson<bool>(viewOnly),
+      'shared': serializer.toJson<bool>(shared),
+      'trustedCertSha256': serializer.toJson<String?>(trustedCertSha256),
+    };
+  }
+
+  RemoteDesktopProfileRow copyWith({
+    int? updatedAt,
+    int? rev,
+    String? id,
+    String? serverId,
+    String? name,
+    String? protocol,
+    String? host,
+    int? port,
+    Value<String?> username = const Value.absent(),
+    Value<String?> password = const Value.absent(),
+    Value<String?> domain = const Value.absent(),
+    bool? viewOnly,
+    bool? shared,
+    Value<String?> trustedCertSha256 = const Value.absent(),
+  }) => RemoteDesktopProfileRow(
+    updatedAt: updatedAt ?? this.updatedAt,
+    rev: rev ?? this.rev,
+    id: id ?? this.id,
+    serverId: serverId ?? this.serverId,
+    name: name ?? this.name,
+    protocol: protocol ?? this.protocol,
+    host: host ?? this.host,
+    port: port ?? this.port,
+    username: username.present ? username.value : this.username,
+    password: password.present ? password.value : this.password,
+    domain: domain.present ? domain.value : this.domain,
+    viewOnly: viewOnly ?? this.viewOnly,
+    shared: shared ?? this.shared,
+    trustedCertSha256: trustedCertSha256.present
+        ? trustedCertSha256.value
+        : this.trustedCertSha256,
+  );
+  RemoteDesktopProfileRow copyWithCompanion(
+    RemoteDesktopProfilesCompanion data,
+  ) {
+    return RemoteDesktopProfileRow(
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      rev: data.rev.present ? data.rev.value : this.rev,
+      id: data.id.present ? data.id.value : this.id,
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      name: data.name.present ? data.name.value : this.name,
+      protocol: data.protocol.present ? data.protocol.value : this.protocol,
+      host: data.host.present ? data.host.value : this.host,
+      port: data.port.present ? data.port.value : this.port,
+      username: data.username.present ? data.username.value : this.username,
+      password: data.password.present ? data.password.value : this.password,
+      domain: data.domain.present ? data.domain.value : this.domain,
+      viewOnly: data.viewOnly.present ? data.viewOnly.value : this.viewOnly,
+      shared: data.shared.present ? data.shared.value : this.shared,
+      trustedCertSha256: data.trustedCertSha256.present
+          ? data.trustedCertSha256.value
+          : this.trustedCertSha256,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RemoteDesktopProfileRow(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rev: $rev, ')
+          ..write('id: $id, ')
+          ..write('serverId: $serverId, ')
+          ..write('name: $name, ')
+          ..write('protocol: $protocol, ')
+          ..write('host: $host, ')
+          ..write('port: $port, ')
+          ..write('username: $username, ')
+          ..write('password: $password, ')
+          ..write('domain: $domain, ')
+          ..write('viewOnly: $viewOnly, ')
+          ..write('shared: $shared, ')
+          ..write('trustedCertSha256: $trustedCertSha256')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    updatedAt,
+    rev,
+    id,
+    serverId,
+    name,
+    protocol,
+    host,
+    port,
+    username,
+    password,
+    domain,
+    viewOnly,
+    shared,
+    trustedCertSha256,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is RemoteDesktopProfileRow &&
+          other.updatedAt == this.updatedAt &&
+          other.rev == this.rev &&
+          other.id == this.id &&
+          other.serverId == this.serverId &&
+          other.name == this.name &&
+          other.protocol == this.protocol &&
+          other.host == this.host &&
+          other.port == this.port &&
+          other.username == this.username &&
+          other.password == this.password &&
+          other.domain == this.domain &&
+          other.viewOnly == this.viewOnly &&
+          other.shared == this.shared &&
+          other.trustedCertSha256 == this.trustedCertSha256);
+}
+
+class RemoteDesktopProfilesCompanion
+    extends UpdateCompanion<RemoteDesktopProfileRow> {
+  final Value<int> updatedAt;
+  final Value<int> rev;
+  final Value<String> id;
+  final Value<String> serverId;
+  final Value<String> name;
+  final Value<String> protocol;
+  final Value<String> host;
+  final Value<int> port;
+  final Value<String?> username;
+  final Value<String?> password;
+  final Value<String?> domain;
+  final Value<bool> viewOnly;
+  final Value<bool> shared;
+  final Value<String?> trustedCertSha256;
+  const RemoteDesktopProfilesCompanion({
+    this.updatedAt = const Value.absent(),
+    this.rev = const Value.absent(),
+    this.id = const Value.absent(),
+    this.serverId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.protocol = const Value.absent(),
+    this.host = const Value.absent(),
+    this.port = const Value.absent(),
+    this.username = const Value.absent(),
+    this.password = const Value.absent(),
+    this.domain = const Value.absent(),
+    this.viewOnly = const Value.absent(),
+    this.shared = const Value.absent(),
+    this.trustedCertSha256 = const Value.absent(),
+  });
+  RemoteDesktopProfilesCompanion.insert({
+    this.updatedAt = const Value.absent(),
+    this.rev = const Value.absent(),
+    required String id,
+    required String serverId,
+    required String name,
+    required String protocol,
+    this.host = const Value.absent(),
+    required int port,
+    this.username = const Value.absent(),
+    this.password = const Value.absent(),
+    this.domain = const Value.absent(),
+    this.viewOnly = const Value.absent(),
+    this.shared = const Value.absent(),
+    this.trustedCertSha256 = const Value.absent(),
+  }) : id = Value(id),
+       serverId = Value(serverId),
+       name = Value(name),
+       protocol = Value(protocol),
+       port = Value(port);
+  static Insertable<RemoteDesktopProfileRow> custom({
+    Expression<int>? updatedAt,
+    Expression<int>? rev,
+    Expression<String>? id,
+    Expression<String>? serverId,
+    Expression<String>? name,
+    Expression<String>? protocol,
+    Expression<String>? host,
+    Expression<int>? port,
+    Expression<String>? username,
+    Expression<String>? password,
+    Expression<String>? domain,
+    Expression<bool>? viewOnly,
+    Expression<bool>? shared,
+    Expression<String>? trustedCertSha256,
+  }) {
+    return RawValuesInsertable({
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rev != null) 'rev': rev,
+      if (id != null) 'id': id,
+      if (serverId != null) 'server_id': serverId,
+      if (name != null) 'name': name,
+      if (protocol != null) 'protocol': protocol,
+      if (host != null) 'host': host,
+      if (port != null) 'port': port,
+      if (username != null) 'username': username,
+      if (password != null) 'password': password,
+      if (domain != null) 'domain': domain,
+      if (viewOnly != null) 'view_only': viewOnly,
+      if (shared != null) 'shared': shared,
+      if (trustedCertSha256 != null) 'trusted_cert_sha256': trustedCertSha256,
+    });
+  }
+
+  RemoteDesktopProfilesCompanion copyWith({
+    Value<int>? updatedAt,
+    Value<int>? rev,
+    Value<String>? id,
+    Value<String>? serverId,
+    Value<String>? name,
+    Value<String>? protocol,
+    Value<String>? host,
+    Value<int>? port,
+    Value<String?>? username,
+    Value<String?>? password,
+    Value<String?>? domain,
+    Value<bool>? viewOnly,
+    Value<bool>? shared,
+    Value<String?>? trustedCertSha256,
+  }) {
+    return RemoteDesktopProfilesCompanion(
+      updatedAt: updatedAt ?? this.updatedAt,
+      rev: rev ?? this.rev,
+      id: id ?? this.id,
+      serverId: serverId ?? this.serverId,
+      name: name ?? this.name,
+      protocol: protocol ?? this.protocol,
+      host: host ?? this.host,
+      port: port ?? this.port,
+      username: username ?? this.username,
+      password: password ?? this.password,
+      domain: domain ?? this.domain,
+      viewOnly: viewOnly ?? this.viewOnly,
+      shared: shared ?? this.shared,
+      trustedCertSha256: trustedCertSha256 ?? this.trustedCertSha256,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rev.present) {
+      map['rev'] = Variable<int>(rev.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (protocol.present) {
+      map['protocol'] = Variable<String>(protocol.value);
+    }
+    if (host.present) {
+      map['host'] = Variable<String>(host.value);
+    }
+    if (port.present) {
+      map['port'] = Variable<int>(port.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (password.present) {
+      map['password'] = Variable<String>(password.value);
+    }
+    if (domain.present) {
+      map['domain'] = Variable<String>(domain.value);
+    }
+    if (viewOnly.present) {
+      map['view_only'] = Variable<bool>(viewOnly.value);
+    }
+    if (shared.present) {
+      map['shared'] = Variable<bool>(shared.value);
+    }
+    if (trustedCertSha256.present) {
+      map['trusted_cert_sha256'] = Variable<String>(trustedCertSha256.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('RemoteDesktopProfilesCompanion(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rev: $rev, ')
+          ..write('id: $id, ')
+          ..write('serverId: $serverId, ')
+          ..write('name: $name, ')
+          ..write('protocol: $protocol, ')
+          ..write('host: $host, ')
+          ..write('port: $port, ')
+          ..write('username: $username, ')
+          ..write('password: $password, ')
+          ..write('domain: $domain, ')
+          ..write('viewOnly: $viewOnly, ')
+          ..write('shared: $shared, ')
+          ..write('trustedCertSha256: $trustedCertSha256')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ContainerHostsTable extends ContainerHosts
     with TableInfo<$ContainerHostsTable, ContainerHostRow> {
   @override
@@ -8548,6 +9348,8 @@ abstract class _$AppDb extends GeneratedDatabase {
     this,
   );
   late final $PortForwardsTable portForwards = $PortForwardsTable(this);
+  late final $RemoteDesktopProfilesTable remoteDesktopProfiles =
+      $RemoteDesktopProfilesTable(this);
   late final $ContainerHostsTable containerHosts = $ContainerHostsTable(this);
   late final $ContainerRuntimesTable containerRuntimes =
       $ContainerRuntimesTable(this);
@@ -8578,6 +9380,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     snippetTags,
     snippetAutoRunOn,
     portForwards,
+    remoteDesktopProfiles,
     containerHosts,
     containerRuntimes,
     connStats,
@@ -8680,6 +9483,13 @@ abstract class _$AppDb extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('port_forward', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'server',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('remote_desktop_profile', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
@@ -9616,6 +10426,30 @@ final class $$ServersTableReferences
     );
   }
 
+  static MultiTypedResultKey<
+    $RemoteDesktopProfilesTable,
+    List<RemoteDesktopProfileRow>
+  >
+  _remoteDesktopProfilesRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.remoteDesktopProfiles,
+    aliasName: 'server__id__remote_desktop_profile__server_id',
+  );
+
+  $$RemoteDesktopProfilesTableProcessedTableManager
+  get remoteDesktopProfilesRefs {
+    final manager = $$RemoteDesktopProfilesTableTableManager(
+      $_db,
+      $_db.remoteDesktopProfiles,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _remoteDesktopProfilesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ContainerHostsTable, List<ContainerHostRow>>
   _containerHostsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
     db.containerHosts,
@@ -10110,6 +10944,32 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
                 $removeJoinBuilderFromRootComposer,
           ),
     );
+    return f(composer);
+  }
+
+  Expression<bool> remoteDesktopProfilesRefs(
+    Expression<bool> Function($$RemoteDesktopProfilesTableFilterComposer f) f,
+  ) {
+    final $$RemoteDesktopProfilesTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.remoteDesktopProfiles,
+          getReferencedColumn: (t) => t.serverId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RemoteDesktopProfilesTableFilterComposer(
+                $db: $db,
+                $table: $db.remoteDesktopProfiles,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
     return f(composer);
   }
 
@@ -10837,6 +11697,32 @@ class $$ServersTableAnnotationComposer
     return f(composer);
   }
 
+  Expression<T> remoteDesktopProfilesRefs<T extends Object>(
+    Expression<T> Function($$RemoteDesktopProfilesTableAnnotationComposer a) f,
+  ) {
+    final $$RemoteDesktopProfilesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.remoteDesktopProfiles,
+          getReferencedColumn: (t) => t.serverId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$RemoteDesktopProfilesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.remoteDesktopProfiles,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> containerHostsRefs<T extends Object>(
     Expression<T> Function($$ContainerHostsTableAnnotationComposer a) f,
   ) {
@@ -10987,6 +11873,7 @@ class $$ServersTableTableManager
             bool knownHostsRefs,
             bool snippetAutoRunOnRefs,
             bool portForwardsRefs,
+            bool remoteDesktopProfilesRefs,
             bool containerHostsRefs,
             bool containerRuntimesRefs,
             bool connStatsRefs,
@@ -11180,6 +12067,7 @@ class $$ServersTableTableManager
                 knownHostsRefs = false,
                 snippetAutoRunOnRefs = false,
                 portForwardsRefs = false,
+                remoteDesktopProfilesRefs = false,
                 containerHostsRefs = false,
                 containerRuntimesRefs = false,
                 connStatsRefs = false,
@@ -11196,6 +12084,7 @@ class $$ServersTableTableManager
                     if (knownHostsRefs) db.knownHosts,
                     if (snippetAutoRunOnRefs) db.snippetAutoRunOn,
                     if (portForwardsRefs) db.portForwards,
+                    if (remoteDesktopProfilesRefs) db.remoteDesktopProfiles,
                     if (containerHostsRefs) db.containerHosts,
                     if (containerRuntimesRefs) db.containerRuntimes,
                     if (connStatsRefs) db.connStats,
@@ -11396,6 +12285,27 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (remoteDesktopProfilesRefs)
+                        await $_getPrefetchedData<
+                          ServerRow,
+                          $ServersTable,
+                          RemoteDesktopProfileRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._remoteDesktopProfilesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).remoteDesktopProfilesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (containerHostsRefs)
                         await $_getPrefetchedData<
                           ServerRow,
@@ -11531,6 +12441,7 @@ typedef $$ServersTableProcessedTableManager =
         bool knownHostsRefs,
         bool snippetAutoRunOnRefs,
         bool portForwardsRefs,
+        bool remoteDesktopProfilesRefs,
         bool containerHostsRefs,
         bool containerRuntimesRefs,
         bool connStatsRefs,
@@ -14648,6 +15559,512 @@ typedef $$PortForwardsTableProcessedTableManager =
       PortForwardRow,
       PrefetchHooks Function({bool serverId})
     >;
+typedef $$RemoteDesktopProfilesTableCreateCompanionBuilder =
+    RemoteDesktopProfilesCompanion Function({
+      Value<int> updatedAt,
+      Value<int> rev,
+      required String id,
+      required String serverId,
+      required String name,
+      required String protocol,
+      Value<String> host,
+      required int port,
+      Value<String?> username,
+      Value<String?> password,
+      Value<String?> domain,
+      Value<bool> viewOnly,
+      Value<bool> shared,
+      Value<String?> trustedCertSha256,
+    });
+typedef $$RemoteDesktopProfilesTableUpdateCompanionBuilder =
+    RemoteDesktopProfilesCompanion Function({
+      Value<int> updatedAt,
+      Value<int> rev,
+      Value<String> id,
+      Value<String> serverId,
+      Value<String> name,
+      Value<String> protocol,
+      Value<String> host,
+      Value<int> port,
+      Value<String?> username,
+      Value<String?> password,
+      Value<String?> domain,
+      Value<bool> viewOnly,
+      Value<bool> shared,
+      Value<String?> trustedCertSha256,
+    });
+
+final class $$RemoteDesktopProfilesTableReferences
+    extends
+        BaseReferences<
+          _$AppDb,
+          $RemoteDesktopProfilesTable,
+          RemoteDesktopProfileRow
+        > {
+  $$RemoteDesktopProfilesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) =>
+      db.servers.createAlias('remote_desktop_profile__server_id__server__id');
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$RemoteDesktopProfilesTableFilterComposer
+    extends Composer<_$AppDb, $RemoteDesktopProfilesTable> {
+  $$RemoteDesktopProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get rev => $composableBuilder(
+    column: $table.rev,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get protocol => $composableBuilder(
+    column: $table.protocol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get port => $composableBuilder(
+    column: $table.port,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get password => $composableBuilder(
+    column: $table.password,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get domain => $composableBuilder(
+    column: $table.domain,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get viewOnly => $composableBuilder(
+    column: $table.viewOnly,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get shared => $composableBuilder(
+    column: $table.shared,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get trustedCertSha256 => $composableBuilder(
+    column: $table.trustedCertSha256,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RemoteDesktopProfilesTableOrderingComposer
+    extends Composer<_$AppDb, $RemoteDesktopProfilesTable> {
+  $$RemoteDesktopProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get rev => $composableBuilder(
+    column: $table.rev,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get protocol => $composableBuilder(
+    column: $table.protocol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get host => $composableBuilder(
+    column: $table.host,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get port => $composableBuilder(
+    column: $table.port,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get username => $composableBuilder(
+    column: $table.username,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get password => $composableBuilder(
+    column: $table.password,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get domain => $composableBuilder(
+    column: $table.domain,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get viewOnly => $composableBuilder(
+    column: $table.viewOnly,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get shared => $composableBuilder(
+    column: $table.shared,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get trustedCertSha256 => $composableBuilder(
+    column: $table.trustedCertSha256,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RemoteDesktopProfilesTableAnnotationComposer
+    extends Composer<_$AppDb, $RemoteDesktopProfilesTable> {
+  $$RemoteDesktopProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get rev =>
+      $composableBuilder(column: $table.rev, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get protocol =>
+      $composableBuilder(column: $table.protocol, builder: (column) => column);
+
+  GeneratedColumn<String> get host =>
+      $composableBuilder(column: $table.host, builder: (column) => column);
+
+  GeneratedColumn<int> get port =>
+      $composableBuilder(column: $table.port, builder: (column) => column);
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get password =>
+      $composableBuilder(column: $table.password, builder: (column) => column);
+
+  GeneratedColumn<String> get domain =>
+      $composableBuilder(column: $table.domain, builder: (column) => column);
+
+  GeneratedColumn<bool> get viewOnly =>
+      $composableBuilder(column: $table.viewOnly, builder: (column) => column);
+
+  GeneratedColumn<bool> get shared =>
+      $composableBuilder(column: $table.shared, builder: (column) => column);
+
+  GeneratedColumn<String> get trustedCertSha256 => $composableBuilder(
+    column: $table.trustedCertSha256,
+    builder: (column) => column,
+  );
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$RemoteDesktopProfilesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $RemoteDesktopProfilesTable,
+          RemoteDesktopProfileRow,
+          $$RemoteDesktopProfilesTableFilterComposer,
+          $$RemoteDesktopProfilesTableOrderingComposer,
+          $$RemoteDesktopProfilesTableAnnotationComposer,
+          $$RemoteDesktopProfilesTableCreateCompanionBuilder,
+          $$RemoteDesktopProfilesTableUpdateCompanionBuilder,
+          (RemoteDesktopProfileRow, $$RemoteDesktopProfilesTableReferences),
+          RemoteDesktopProfileRow,
+          PrefetchHooks Function({bool serverId})
+        > {
+  $$RemoteDesktopProfilesTableTableManager(
+    _$AppDb db,
+    $RemoteDesktopProfilesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$RemoteDesktopProfilesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$RemoteDesktopProfilesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$RemoteDesktopProfilesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rev = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> serverId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> protocol = const Value.absent(),
+                Value<String> host = const Value.absent(),
+                Value<int> port = const Value.absent(),
+                Value<String?> username = const Value.absent(),
+                Value<String?> password = const Value.absent(),
+                Value<String?> domain = const Value.absent(),
+                Value<bool> viewOnly = const Value.absent(),
+                Value<bool> shared = const Value.absent(),
+                Value<String?> trustedCertSha256 = const Value.absent(),
+              }) => RemoteDesktopProfilesCompanion(
+                updatedAt: updatedAt,
+                rev: rev,
+                id: id,
+                serverId: serverId,
+                name: name,
+                protocol: protocol,
+                host: host,
+                port: port,
+                username: username,
+                password: password,
+                domain: domain,
+                viewOnly: viewOnly,
+                shared: shared,
+                trustedCertSha256: trustedCertSha256,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rev = const Value.absent(),
+                required String id,
+                required String serverId,
+                required String name,
+                required String protocol,
+                Value<String> host = const Value.absent(),
+                required int port,
+                Value<String?> username = const Value.absent(),
+                Value<String?> password = const Value.absent(),
+                Value<String?> domain = const Value.absent(),
+                Value<bool> viewOnly = const Value.absent(),
+                Value<bool> shared = const Value.absent(),
+                Value<String?> trustedCertSha256 = const Value.absent(),
+              }) => RemoteDesktopProfilesCompanion.insert(
+                updatedAt: updatedAt,
+                rev: rev,
+                id: id,
+                serverId: serverId,
+                name: name,
+                protocol: protocol,
+                host: host,
+                port: port,
+                username: username,
+                password: password,
+                domain: domain,
+                viewOnly: viewOnly,
+                shared: shared,
+                trustedCertSha256: trustedCertSha256,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$RemoteDesktopProfilesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$RemoteDesktopProfilesTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$RemoteDesktopProfilesTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$RemoteDesktopProfilesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $RemoteDesktopProfilesTable,
+      RemoteDesktopProfileRow,
+      $$RemoteDesktopProfilesTableFilterComposer,
+      $$RemoteDesktopProfilesTableOrderingComposer,
+      $$RemoteDesktopProfilesTableAnnotationComposer,
+      $$RemoteDesktopProfilesTableCreateCompanionBuilder,
+      $$RemoteDesktopProfilesTableUpdateCompanionBuilder,
+      (RemoteDesktopProfileRow, $$RemoteDesktopProfilesTableReferences),
+      RemoteDesktopProfileRow,
+      PrefetchHooks Function({bool serverId})
+    >;
 typedef $$ContainerHostsTableCreateCompanionBuilder =
     ContainerHostsCompanion Function({
       required String serverId,
@@ -17137,6 +18554,8 @@ class $AppDbManager {
       $$SnippetAutoRunOnTableTableManager(_db, _db.snippetAutoRunOn);
   $$PortForwardsTableTableManager get portForwards =>
       $$PortForwardsTableTableManager(_db, _db.portForwards);
+  $$RemoteDesktopProfilesTableTableManager get remoteDesktopProfiles =>
+      $$RemoteDesktopProfilesTableTableManager(_db, _db.remoteDesktopProfiles);
   $$ContainerHostsTableTableManager get containerHosts =>
       $$ContainerHostsTableTableManager(_db, _db.containerHosts);
   $$ContainerRuntimesTableTableManager get containerRuntimes =>

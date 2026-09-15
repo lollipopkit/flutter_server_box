@@ -8,6 +8,7 @@ import 'dart:convert';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/remote_desktop.dart';
 import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/api/ssh_asym.dart';
 import 'package:server_box/src/rust/api/ssh_crypto.dart';
@@ -70,7 +71,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1621534510;
+  int get rustContentHash => 1361367070;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -82,6 +83,75 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleClose({
+    required RemoteDesktopSessionHandle that,
+  });
+
+  Future<RemoteDesktopEvent?>
+  crateApiRemoteDesktopRemoteDesktopSessionHandleNextEvent({
+    required RemoteDesktopSessionHandle that,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleReleaseAllKeys({
+    required RemoteDesktopSessionHandle that,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleResize({
+    required RemoteDesktopSessionHandle that,
+    required int width,
+    required int height,
+    required int scaleFactor,
+    int? physicalWidthMm,
+    int? physicalHeightMm,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendClipboardText({
+    required RemoteDesktopSessionHandle that,
+    required String text,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendKey({
+    required RemoteDesktopSessionHandle that,
+    required int code,
+    required bool down,
+    required bool extended,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendPointer({
+    required RemoteDesktopSessionHandle that,
+    required int x,
+    required int y,
+    required int buttons,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendUnicodeText({
+    required RemoteDesktopSessionHandle that,
+    required String text,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendWheel({
+    required RemoteDesktopSessionHandle that,
+    required int x,
+    required int y,
+    required int deltaX,
+    required int deltaY,
+  });
+
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSetVisible({
+    required RemoteDesktopSessionHandle that,
+    required bool visible,
+  });
+
+  RemoteDesktopSessionHandle
+  crateApiRemoteDesktopRemoteDesktopSessionHandleStartRdp({
+    required RdpSessionParams params,
+  });
+
+  RemoteDesktopSessionHandle
+  crateApiRemoteDesktopRemoteDesktopSessionHandleStartVnc({
+    required VncSessionParams params,
+  });
+
   int crateApiSshCryptoSshBlockCipherBlockSize({required SshBlockCipher that});
 
   SshBlockCipher crateApiSshCryptoSshBlockCipherNew({
@@ -212,6 +282,15 @@ abstract class RustLibApi extends BaseApi {
   });
 
   RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_RemoteDesktopSessionHandle;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_RemoteDesktopSessionHandle;
+
+  CrossPlatformFinalizerArg
+  get rust_arc_decrement_strong_count_RemoteDesktopSessionHandlePtr;
+
+  RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_SshBlockCipher;
 
   RustArcDecrementStrongCountFnType
@@ -236,6 +315,456 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleClose({
+    required RemoteDesktopSessionHandle that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleCloseConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleCloseConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_close',
+        argNames: ['that'],
+      );
+
+  @override
+  Future<RemoteDesktopEvent?>
+  crateApiRemoteDesktopRemoteDesktopSessionHandleNextEvent({
+    required RemoteDesktopSessionHandle that,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 2,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_box_autoadd_remote_desktop_event,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleNextEventConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleNextEventConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_next_event',
+        argNames: ['that'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleReleaseAllKeys({
+    required RemoteDesktopSessionHandle that,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleReleaseAllKeysConstMeta,
+        argValues: [that],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleReleaseAllKeysConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_release_all_keys',
+        argNames: ['that'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleResize({
+    required RemoteDesktopSessionHandle that,
+    required int width,
+    required int height,
+    required int scaleFactor,
+    int? physicalWidthMm,
+    int? physicalHeightMm,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_u_16(width, serializer);
+          sse_encode_u_16(height, serializer);
+          sse_encode_u_32(scaleFactor, serializer);
+          sse_encode_opt_box_autoadd_u_32(physicalWidthMm, serializer);
+          sse_encode_opt_box_autoadd_u_32(physicalHeightMm, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleResizeConstMeta,
+        argValues: [
+          that,
+          width,
+          height,
+          scaleFactor,
+          physicalWidthMm,
+          physicalHeightMm,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleResizeConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_resize',
+        argNames: [
+          'that',
+          'width',
+          'height',
+          'scaleFactor',
+          'physicalWidthMm',
+          'physicalHeightMm',
+        ],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendClipboardText({
+    required RemoteDesktopSessionHandle that,
+    required String text,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_String(text, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendClipboardTextConstMeta,
+        argValues: [that, text],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendClipboardTextConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_send_clipboard_text',
+        argNames: ['that', 'text'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendKey({
+    required RemoteDesktopSessionHandle that,
+    required int code,
+    required bool down,
+    required bool extended,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_u_32(code, serializer);
+          sse_encode_bool(down, serializer);
+          sse_encode_bool(extended, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendKeyConstMeta,
+        argValues: [that, code, down, extended],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendKeyConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_send_key',
+        argNames: ['that', 'code', 'down', 'extended'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendPointer({
+    required RemoteDesktopSessionHandle that,
+    required int x,
+    required int y,
+    required int buttons,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_u_16(x, serializer);
+          sse_encode_u_16(y, serializer);
+          sse_encode_u_8(buttons, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendPointerConstMeta,
+        argValues: [that, x, y, buttons],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendPointerConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_send_pointer',
+        argNames: ['that', 'x', 'y', 'buttons'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendUnicodeText({
+    required RemoteDesktopSessionHandle that,
+    required String text,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_String(text, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendUnicodeTextConstMeta,
+        argValues: [that, text],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendUnicodeTextConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_send_unicode_text',
+        argNames: ['that', 'text'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSendWheel({
+    required RemoteDesktopSessionHandle that,
+    required int x,
+    required int y,
+    required int deltaX,
+    required int deltaY,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_u_16(x, serializer);
+          sse_encode_u_16(y, serializer);
+          sse_encode_i_16(deltaX, serializer);
+          sse_encode_i_16(deltaY, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendWheelConstMeta,
+        argValues: [that, x, y, deltaX, deltaY],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleSendWheelConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_send_wheel',
+        argNames: ['that', 'x', 'y', 'deltaX', 'deltaY'],
+      );
+
+  @override
+  void crateApiRemoteDesktopRemoteDesktopSessionHandleSetVisible({
+    required RemoteDesktopSessionHandle that,
+    required bool visible,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+            that,
+            serializer,
+          );
+          sse_encode_bool(visible, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleSetVisibleConstMeta,
+        argValues: [that, visible],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleSetVisibleConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_set_visible',
+        argNames: ['that', 'visible'],
+      );
+
+  @override
+  RemoteDesktopSessionHandle
+  crateApiRemoteDesktopRemoteDesktopSessionHandleStartRdp({
+    required RdpSessionParams params,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_rdp_session_params(params, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleStartRdpConstMeta,
+        argValues: [params],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleStartRdpConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_start_rdp',
+        argNames: ['params'],
+      );
+
+  @override
+  RemoteDesktopSessionHandle
+  crateApiRemoteDesktopRemoteDesktopSessionHandleStartVnc({
+    required VncSessionParams params,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_vnc_session_params(params, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData:
+              sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta:
+            kCrateApiRemoteDesktopRemoteDesktopSessionHandleStartVncConstMeta,
+        argValues: [params],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta
+  get kCrateApiRemoteDesktopRemoteDesktopSessionHandleStartVncConstMeta =>
+      const TaskConstMeta(
+        debugName: 'RemoteDesktopSessionHandle_start_vnc',
+        argNames: ['params'],
+      );
+
+  @override
   int crateApiSshCryptoSshBlockCipherBlockSize({required SshBlockCipher that}) {
     return handler.executeSync(
       SyncTask(
@@ -245,7 +774,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_u_32,
@@ -279,7 +808,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_list_prim_u_8_loose(key, serializer);
           sse_encode_list_prim_u_8_loose(iv, serializer);
           sse_encode_bool(forEncryption, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -313,7 +842,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_list_prim_u_8_loose(data, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -346,7 +875,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             serializer,
           );
           sse_encode_list_prim_u_8_loose(data, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -375,7 +904,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             that,
             serializer,
           );
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_u_32,
@@ -404,7 +933,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(algorithm, serializer);
           sse_encode_list_prim_u_8_loose(key, serializer);
           sse_encode_u_32(macSize, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
         },
         codec: SseCodec(
           decodeSuccessData:
@@ -438,7 +967,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_list_prim_u_8_loose(salt, serializer);
           sse_encode_u_32(rounds, serializer);
           sse_encode_u_32(outputLen, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 19)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -469,7 +998,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(system, serializer);
           sse_encode_list_String(disabled, serializer);
           sse_encode_String(buildNumber, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -494,7 +1023,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_command_spec,
@@ -517,7 +1046,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -543,7 +1072,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -569,7 +1098,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 24)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -592,7 +1121,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(key, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 25)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_String,
@@ -621,7 +1150,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(curve, serializer);
           sse_encode_list_prim_u_8_loose(privateKey, serializer);
           sse_encode_list_prim_u_8_loose(message, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_ecdsa_signature,
@@ -656,7 +1185,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_list_prim_u_8_loose(message, serializer);
           sse_encode_list_prim_u_8_loose(r, serializer);
           sse_encode_list_prim_u_8_loose(s, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 15)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -685,7 +1214,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_prim_u_8_loose(privateKey, serializer);
           sse_encode_list_prim_u_8_loose(message, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 16)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -716,7 +1245,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_list_prim_u_8_loose(publicKey, serializer);
           sse_encode_list_prim_u_8_loose(message, serializer);
           sse_encode_list_prim_u_8_loose(signature, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 17)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -748,7 +1277,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(system, serializer);
           sse_encode_String(scriptPath, serializer);
           sse_encode_shell_func_kind(func, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 18)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -775,7 +1304,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 19,
+            funcId: 31,
             port: port_,
           );
         },
@@ -806,7 +1335,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(system, serializer);
           sse_encode_String(scriptDir, serializer);
           sse_encode_String(scriptPath, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 20)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 32)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -836,7 +1365,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
           sse_encode_list_custom_cmd(cmds, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 21)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 33)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -866,7 +1395,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
           sse_encode_String(content, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 22)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 34)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -892,7 +1421,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 23)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 35)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_opt_list_custom_cmd,
@@ -923,7 +1452,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 24,
+            funcId: 36,
             port: port_,
           );
         },
@@ -960,7 +1489,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 25,
+            funcId: 37,
             port: port_,
           );
         },
@@ -988,7 +1517,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 26)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 38)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1014,7 +1543,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 27)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 39)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1044,7 +1573,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(key, serializer);
           sse_encode_bool(custom, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 28)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 40)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1070,7 +1599,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_shell_func_kind(func, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 29)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 41)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -1092,7 +1621,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 30)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 42)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_x_25519_key_pair,
@@ -1119,7 +1648,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_list_prim_u_8_loose(privateKey, serializer);
           sse_encode_list_prim_u_8_loose(peerPublicKey, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 31)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 43)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_prim_u_8_strict,
@@ -1139,6 +1668,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   RustArcIncrementStrongCountFnType
+  get rust_arc_increment_strong_count_RemoteDesktopSessionHandle => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle;
+
+  RustArcDecrementStrongCountFnType
+  get rust_arc_decrement_strong_count_RemoteDesktopSessionHandle => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle;
+
+  RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_SshBlockCipher => wire
       .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher;
 
@@ -1153,6 +1690,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RustArcDecrementStrongCountFnType
   get rust_arc_decrement_strong_count_SshMac => wire
       .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshMac;
+
+  @protected
+  RemoteDesktopSessionHandle
+  dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RemoteDesktopSessionHandleImpl.frbInternalDcoDecode(
+      raw as List<dynamic>,
+    );
+  }
 
   @protected
   SshBlockCipher
@@ -1179,6 +1727,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return SshBlockCipherImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  RemoteDesktopSessionHandle
+  dco_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RemoteDesktopSessionHandleImpl.frbInternalDcoDecode(
+      raw as List<dynamic>,
+    );
   }
 
   @protected
@@ -1210,6 +1769,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopSessionHandle
+  dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RemoteDesktopSessionHandleImpl.frbInternalDcoDecode(
+      raw as List<dynamic>,
+    );
+  }
+
+  @protected
   SshBlockCipher
   dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     dynamic raw,
@@ -1237,6 +1807,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   bool dco_decode_bool(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as bool;
+  }
+
+  @protected
+  RdpSessionParams dco_decode_box_autoadd_rdp_session_params(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_rdp_session_params(raw);
+  }
+
+  @protected
+  RemoteDesktopEvent dco_decode_box_autoadd_remote_desktop_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_remote_desktop_event(raw);
+  }
+
+  @protected
+  int dco_decode_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
+  VncSessionParams dco_decode_box_autoadd_vnc_session_params(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_vnc_session_params(raw);
   }
 
   @protected
@@ -1279,6 +1873,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   double dco_decode_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
+  }
+
+  @protected
+  int dco_decode_i_16(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
   }
 
   @protected
@@ -1336,9 +1936,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopEvent? dco_decode_opt_box_autoadd_remote_desktop_event(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null
+        ? null
+        : dco_decode_box_autoadd_remote_desktop_event(raw);
+  }
+
+  @protected
+  int? dco_decode_opt_box_autoadd_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_u_32(raw);
+  }
+
+  @protected
   List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_list_custom_cmd(raw);
+  }
+
+  @protected
+  RdpSessionParams dco_decode_rdp_session_params(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return RdpSessionParams(
+      connectHost: dco_decode_String(arr[0]),
+      connectPort: dco_decode_u_16(arr[1]),
+      serverName: dco_decode_String(arr[2]),
+      serverPort: dco_decode_u_16(arr[3]),
+      username: dco_decode_String(arr[4]),
+      password: dco_decode_String(arr[5]),
+      domain: dco_decode_opt_String(arr[6]),
+      trustedCertSha256: dco_decode_opt_String(arr[7]),
+      width: dco_decode_u_16(arr[8]),
+      height: dco_decode_u_16(arr[9]),
+      scaleFactor: dco_decode_u_32(arr[10]),
+    );
   }
 
   @protected
@@ -1349,6 +1986,86 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('Expected 2 elements, got ${arr.length}');
     }
     return (dco_decode_String(arr[0]), dco_decode_String(arr[1]));
+  }
+
+  @protected
+  RemoteDesktopConnectionState dco_decode_remote_desktop_connection_state(
+    dynamic raw,
+  ) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RemoteDesktopConnectionState.values[raw as int];
+  }
+
+  @protected
+  RemoteDesktopEndReason dco_decode_remote_desktop_end_reason(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RemoteDesktopEndReason.values[raw as int];
+  }
+
+  @protected
+  RemoteDesktopEvent dco_decode_remote_desktop_event(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return RemoteDesktopEvent_ConnectionState(
+          state: dco_decode_remote_desktop_connection_state(raw[1]),
+          attempt: dco_decode_u_8(raw[2]),
+        );
+      case 1:
+        return RemoteDesktopEvent_Frame(
+          bgra: dco_decode_list_prim_u_8_strict(raw[1]),
+          width: dco_decode_u_32(raw[2]),
+          height: dco_decode_u_32(raw[3]),
+          sequence: dco_decode_u_64(raw[4]),
+        );
+      case 2:
+        return RemoteDesktopEvent_Resolution(
+          width: dco_decode_u_32(raw[1]),
+          height: dco_decode_u_32(raw[2]),
+        );
+      case 3:
+        return RemoteDesktopEvent_CursorDefault();
+      case 4:
+        return RemoteDesktopEvent_CursorHidden();
+      case 5:
+        return RemoteDesktopEvent_CursorPosition(
+          x: dco_decode_u_32(raw[1]),
+          y: dco_decode_u_32(raw[2]),
+        );
+      case 6:
+        return RemoteDesktopEvent_CursorBitmap(
+          rgba: dco_decode_list_prim_u_8_strict(raw[1]),
+          width: dco_decode_u_32(raw[2]),
+          height: dco_decode_u_32(raw[3]),
+          hotspotX: dco_decode_u_32(raw[4]),
+          hotspotY: dco_decode_u_32(raw[5]),
+        );
+      case 7:
+        return RemoteDesktopEvent_ClipboardText(
+          text: dco_decode_String(raw[1]),
+        );
+      case 8:
+        return RemoteDesktopEvent_CertificateRequest(
+          sha256: dco_decode_String(raw[1]),
+          subject: dco_decode_String(raw[2]),
+          issuer: dco_decode_String(raw[3]),
+          validFrom: dco_decode_String(raw[4]),
+          validTo: dco_decode_String(raw[5]),
+          previousSha256: dco_decode_opt_String(raw[6]),
+        );
+      case 9:
+        return RemoteDesktopEvent_Error(
+          message: dco_decode_String(raw[1]),
+          retryable: dco_decode_bool(raw[2]),
+        );
+      case 10:
+        return RemoteDesktopEvent_Ended(
+          reason: dco_decode_remote_desktop_end_reason(raw[1]),
+          message: dco_decode_opt_String(raw[2]),
+        );
+      default:
+        throw Exception('unreachable');
+    }
   }
 
   @protected
@@ -1370,9 +2087,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int dco_decode_u_16(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   int dco_decode_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
+  }
+
+  @protected
+  BigInt dco_decode_u_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeU64(raw);
   }
 
   @protected
@@ -1394,6 +2123,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VncSessionParams dco_decode_vnc_session_params(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return VncSessionParams(
+      connectHost: dco_decode_String(arr[0]),
+      connectPort: dco_decode_u_16(arr[1]),
+      password: dco_decode_opt_String(arr[2]),
+      shared: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
   X25519KeyPair dco_decode_x_25519_key_pair(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1402,6 +2145,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return X25519KeyPair(
       privateKey: dco_decode_list_prim_u_8_strict(arr[0]),
       publicKey: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  RemoteDesktopSessionHandle
+  sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return RemoteDesktopSessionHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
     );
   }
 
@@ -1442,6 +2197,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopSessionHandle
+  sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return RemoteDesktopSessionHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
+  }
+
+  @protected
   SshBlockCipher
   sse_decode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SseDeserializer deserializer,
@@ -1472,6 +2239,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final inner = sse_decode_list_record_string_string(deserializer);
     return Map.fromEntries(inner.map((e) => MapEntry(e.$1, e.$2)));
+  }
+
+  @protected
+  RemoteDesktopSessionHandle
+  sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return RemoteDesktopSessionHandleImpl.frbInternalSseDecode(
+      sse_decode_usize(deserializer),
+      sse_decode_i_32(deserializer),
+    );
   }
 
   @protected
@@ -1512,6 +2291,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RdpSessionParams sse_decode_box_autoadd_rdp_session_params(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_rdp_session_params(deserializer);
+  }
+
+  @protected
+  RemoteDesktopEvent sse_decode_box_autoadd_remote_desktop_event(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_remote_desktop_event(deserializer);
+  }
+
+  @protected
+  int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_u_32(deserializer);
+  }
+
+  @protected
+  VncSessionParams sse_decode_box_autoadd_vnc_session_params(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return sse_decode_vnc_session_params(deserializer);
+  }
+
+  @protected
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_key = sse_decode_String(deserializer);
@@ -1539,6 +2348,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   double sse_decode_f_64(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getFloat64();
+  }
+
+  @protected
+  int sse_decode_i_16(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getInt16();
   }
 
   @protected
@@ -1637,6 +2452,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RemoteDesktopEvent? sse_decode_opt_box_autoadd_remote_desktop_event(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_remote_desktop_event(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_box_autoadd_u_32(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   List<CustomCmd>? sse_decode_opt_list_custom_cmd(
     SseDeserializer deserializer,
   ) {
@@ -1650,6 +2489,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RdpSessionParams sse_decode_rdp_session_params(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_connectHost = sse_decode_String(deserializer);
+    final var_connectPort = sse_decode_u_16(deserializer);
+    final var_serverName = sse_decode_String(deserializer);
+    final var_serverPort = sse_decode_u_16(deserializer);
+    final var_username = sse_decode_String(deserializer);
+    final var_password = sse_decode_String(deserializer);
+    final var_domain = sse_decode_opt_String(deserializer);
+    final var_trustedCertSha256 = sse_decode_opt_String(deserializer);
+    final var_width = sse_decode_u_16(deserializer);
+    final var_height = sse_decode_u_16(deserializer);
+    final var_scaleFactor = sse_decode_u_32(deserializer);
+    return RdpSessionParams(
+      connectHost: var_connectHost,
+      connectPort: var_connectPort,
+      serverName: var_serverName,
+      serverPort: var_serverPort,
+      username: var_username,
+      password: var_password,
+      domain: var_domain,
+      trustedCertSha256: var_trustedCertSha256,
+      width: var_width,
+      height: var_height,
+      scaleFactor: var_scaleFactor,
+    );
+  }
+
+  @protected
   (String, String) sse_decode_record_string_string(
     SseDeserializer deserializer,
   ) {
@@ -1657,6 +2525,117 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_field0 = sse_decode_String(deserializer);
     final var_field1 = sse_decode_String(deserializer);
     return (var_field0, var_field1);
+  }
+
+  @protected
+  RemoteDesktopConnectionState sse_decode_remote_desktop_connection_state(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return RemoteDesktopConnectionState.values[inner];
+  }
+
+  @protected
+  RemoteDesktopEndReason sse_decode_remote_desktop_end_reason(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final inner = sse_decode_i_32(deserializer);
+    return RemoteDesktopEndReason.values[inner];
+  }
+
+  @protected
+  RemoteDesktopEvent sse_decode_remote_desktop_event(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        final var_state = sse_decode_remote_desktop_connection_state(
+          deserializer,
+        );
+        final var_attempt = sse_decode_u_8(deserializer);
+        return RemoteDesktopEvent_ConnectionState(
+          state: var_state,
+          attempt: var_attempt,
+        );
+      case 1:
+        final var_bgra = sse_decode_list_prim_u_8_strict(deserializer);
+        final var_width = sse_decode_u_32(deserializer);
+        final var_height = sse_decode_u_32(deserializer);
+        final var_sequence = sse_decode_u_64(deserializer);
+        return RemoteDesktopEvent_Frame(
+          bgra: var_bgra,
+          width: var_width,
+          height: var_height,
+          sequence: var_sequence,
+        );
+      case 2:
+        final var_width = sse_decode_u_32(deserializer);
+        final var_height = sse_decode_u_32(deserializer);
+        return RemoteDesktopEvent_Resolution(
+          width: var_width,
+          height: var_height,
+        );
+      case 3:
+        return RemoteDesktopEvent_CursorDefault();
+      case 4:
+        return RemoteDesktopEvent_CursorHidden();
+      case 5:
+        final var_x = sse_decode_u_32(deserializer);
+        final var_y = sse_decode_u_32(deserializer);
+        return RemoteDesktopEvent_CursorPosition(x: var_x, y: var_y);
+      case 6:
+        final var_rgba = sse_decode_list_prim_u_8_strict(deserializer);
+        final var_width = sse_decode_u_32(deserializer);
+        final var_height = sse_decode_u_32(deserializer);
+        final var_hotspotX = sse_decode_u_32(deserializer);
+        final var_hotspotY = sse_decode_u_32(deserializer);
+        return RemoteDesktopEvent_CursorBitmap(
+          rgba: var_rgba,
+          width: var_width,
+          height: var_height,
+          hotspotX: var_hotspotX,
+          hotspotY: var_hotspotY,
+        );
+      case 7:
+        final var_text = sse_decode_String(deserializer);
+        return RemoteDesktopEvent_ClipboardText(text: var_text);
+      case 8:
+        final var_sha256 = sse_decode_String(deserializer);
+        final var_subject = sse_decode_String(deserializer);
+        final var_issuer = sse_decode_String(deserializer);
+        final var_validFrom = sse_decode_String(deserializer);
+        final var_validTo = sse_decode_String(deserializer);
+        final var_previousSha256 = sse_decode_opt_String(deserializer);
+        return RemoteDesktopEvent_CertificateRequest(
+          sha256: var_sha256,
+          subject: var_subject,
+          issuer: var_issuer,
+          validFrom: var_validFrom,
+          validTo: var_validTo,
+          previousSha256: var_previousSha256,
+        );
+      case 9:
+        final var_message = sse_decode_String(deserializer);
+        final var_retryable = sse_decode_bool(deserializer);
+        return RemoteDesktopEvent_Error(
+          message: var_message,
+          retryable: var_retryable,
+        );
+      case 10:
+        final var_reason = sse_decode_remote_desktop_end_reason(deserializer);
+        final var_message = sse_decode_opt_String(deserializer);
+        return RemoteDesktopEvent_Ended(
+          reason: var_reason,
+          message: var_message,
+        );
+      default:
+        throw UnimplementedError('');
+    }
   }
 
   @protected
@@ -1675,9 +2654,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int sse_decode_u_16(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint16();
+  }
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint32();
+  }
+
+  @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getBigUint64();
   }
 
   @protected
@@ -1698,11 +2689,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  VncSessionParams sse_decode_vnc_session_params(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_connectHost = sse_decode_String(deserializer);
+    final var_connectPort = sse_decode_u_16(deserializer);
+    final var_password = sse_decode_opt_String(deserializer);
+    final var_shared = sse_decode_bool(deserializer);
+    return VncSessionParams(
+      connectHost: var_connectHost,
+      connectPort: var_connectPort,
+      password: var_password,
+      shared: var_shared,
+    );
+  }
+
+  @protected
   X25519KeyPair sse_decode_x_25519_key_pair(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     final var_privateKey = sse_decode_list_prim_u_8_strict(deserializer);
     final var_publicKey = sse_decode_list_prim_u_8_strict(deserializer);
     return X25519KeyPair(privateKey: var_privateKey, publicKey: var_publicKey);
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    RemoteDesktopSessionHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as RemoteDesktopSessionHandleImpl).frbInternalSseEncode(move: true),
+      serializer,
+    );
   }
 
   @protected
@@ -1740,6 +2759,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_usize(
       (self as SshBlockCipherImpl).frbInternalSseEncode(move: false),
+      serializer,
+    );
+  }
+
+  @protected
+  void
+  sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    RemoteDesktopSessionHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as RemoteDesktopSessionHandleImpl).frbInternalSseEncode(
+        move: false,
+      ),
       serializer,
     );
   }
@@ -1784,6 +2818,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @protected
   void
+  sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerRemoteDesktopSessionHandle(
+    RemoteDesktopSessionHandle self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize(
+      (self as RemoteDesktopSessionHandleImpl).frbInternalSseEncode(move: null),
+      serializer,
+    );
+  }
+
+  @protected
+  void
   sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerSshBlockCipher(
     SshBlockCipher self,
     SseSerializer serializer,
@@ -1821,6 +2868,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_rdp_session_params(
+    RdpSessionParams self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_rdp_session_params(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_remote_desktop_event(
+    RemoteDesktopEvent self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_remote_desktop_event(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_vnc_session_params(
+    VncSessionParams self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_vnc_session_params(self, serializer);
+  }
+
+  @protected
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.key, serializer);
@@ -1848,6 +2928,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_f_64(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putFloat64(self);
+  }
+
+  @protected
+  void sse_encode_i_16(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putInt16(self);
   }
 
   @protected
@@ -1946,6 +3032,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_remote_desktop_event(
+    RemoteDesktopEvent? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_remote_desktop_event(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_u_32(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_list_custom_cmd(
     List<CustomCmd>? self,
     SseSerializer serializer,
@@ -1959,6 +3068,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_rdp_session_params(
+    RdpSessionParams self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.connectHost, serializer);
+    sse_encode_u_16(self.connectPort, serializer);
+    sse_encode_String(self.serverName, serializer);
+    sse_encode_u_16(self.serverPort, serializer);
+    sse_encode_String(self.username, serializer);
+    sse_encode_String(self.password, serializer);
+    sse_encode_opt_String(self.domain, serializer);
+    sse_encode_opt_String(self.trustedCertSha256, serializer);
+    sse_encode_u_16(self.width, serializer);
+    sse_encode_u_16(self.height, serializer);
+    sse_encode_u_32(self.scaleFactor, serializer);
+  }
+
+  @protected
   void sse_encode_record_string_string(
     (String, String) self,
     SseSerializer serializer,
@@ -1966,6 +3094,112 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.$1, serializer);
     sse_encode_String(self.$2, serializer);
+  }
+
+  @protected
+  void sse_encode_remote_desktop_connection_state(
+    RemoteDesktopConnectionState self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_remote_desktop_end_reason(
+    RemoteDesktopEndReason self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_remote_desktop_event(
+    RemoteDesktopEvent self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case RemoteDesktopEvent_ConnectionState(
+        state: final state,
+        attempt: final attempt,
+      ):
+        sse_encode_i_32(0, serializer);
+        sse_encode_remote_desktop_connection_state(state, serializer);
+        sse_encode_u_8(attempt, serializer);
+      case RemoteDesktopEvent_Frame(
+        bgra: final bgra,
+        width: final width,
+        height: final height,
+        sequence: final sequence,
+      ):
+        sse_encode_i_32(1, serializer);
+        sse_encode_list_prim_u_8_strict(bgra, serializer);
+        sse_encode_u_32(width, serializer);
+        sse_encode_u_32(height, serializer);
+        sse_encode_u_64(sequence, serializer);
+      case RemoteDesktopEvent_Resolution(
+        width: final width,
+        height: final height,
+      ):
+        sse_encode_i_32(2, serializer);
+        sse_encode_u_32(width, serializer);
+        sse_encode_u_32(height, serializer);
+      case RemoteDesktopEvent_CursorDefault():
+        sse_encode_i_32(3, serializer);
+      case RemoteDesktopEvent_CursorHidden():
+        sse_encode_i_32(4, serializer);
+      case RemoteDesktopEvent_CursorPosition(x: final x, y: final y):
+        sse_encode_i_32(5, serializer);
+        sse_encode_u_32(x, serializer);
+        sse_encode_u_32(y, serializer);
+      case RemoteDesktopEvent_CursorBitmap(
+        rgba: final rgba,
+        width: final width,
+        height: final height,
+        hotspotX: final hotspotX,
+        hotspotY: final hotspotY,
+      ):
+        sse_encode_i_32(6, serializer);
+        sse_encode_list_prim_u_8_strict(rgba, serializer);
+        sse_encode_u_32(width, serializer);
+        sse_encode_u_32(height, serializer);
+        sse_encode_u_32(hotspotX, serializer);
+        sse_encode_u_32(hotspotY, serializer);
+      case RemoteDesktopEvent_ClipboardText(text: final text):
+        sse_encode_i_32(7, serializer);
+        sse_encode_String(text, serializer);
+      case RemoteDesktopEvent_CertificateRequest(
+        sha256: final sha256,
+        subject: final subject,
+        issuer: final issuer,
+        validFrom: final validFrom,
+        validTo: final validTo,
+        previousSha256: final previousSha256,
+      ):
+        sse_encode_i_32(8, serializer);
+        sse_encode_String(sha256, serializer);
+        sse_encode_String(subject, serializer);
+        sse_encode_String(issuer, serializer);
+        sse_encode_String(validFrom, serializer);
+        sse_encode_String(validTo, serializer);
+        sse_encode_opt_String(previousSha256, serializer);
+      case RemoteDesktopEvent_Error(
+        message: final message,
+        retryable: final retryable,
+      ):
+        sse_encode_i_32(9, serializer);
+        sse_encode_String(message, serializer);
+        sse_encode_bool(retryable, serializer);
+      case RemoteDesktopEvent_Ended(
+        reason: final reason,
+        message: final message,
+      ):
+        sse_encode_i_32(10, serializer);
+        sse_encode_remote_desktop_end_reason(reason, serializer);
+        sse_encode_opt_String(message, serializer);
+    }
   }
 
   @protected
@@ -1985,9 +3219,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_u_16(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint16(self);
+  }
+
+  @protected
   void sse_encode_u_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putUint32(self);
+  }
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putBigUint64(self);
   }
 
   @protected
@@ -2008,6 +3254,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_vnc_session_params(
+    VncSessionParams self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.connectHost, serializer);
+    sse_encode_u_16(self.connectPort, serializer);
+    sse_encode_opt_String(self.password, serializer);
+    sse_encode_bool(self.shared, serializer);
+  }
+
+  @protected
   void sse_encode_x_25519_key_pair(
     X25519KeyPair self,
     SseSerializer serializer,
@@ -2016,6 +3274,116 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_prim_u_8_strict(self.privateKey, serializer);
     sse_encode_list_prim_u_8_strict(self.publicKey, serializer);
   }
+}
+
+@sealed
+class RemoteDesktopSessionHandleImpl extends RustOpaque
+    implements RemoteDesktopSessionHandle {
+  // Not to be used by end users
+  RemoteDesktopSessionHandleImpl.frbInternalDcoDecode(List<dynamic> wire)
+    : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  RemoteDesktopSessionHandleImpl.frbInternalSseDecode(
+    BigInt ptr,
+    int externalSizeOnNative,
+  ) : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_increment_strong_count_RemoteDesktopSessionHandle,
+    rustArcDecrementStrongCount: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_RemoteDesktopSessionHandle,
+    rustArcDecrementStrongCountPtr: RustLib
+        .instance
+        .api
+        .rust_arc_decrement_strong_count_RemoteDesktopSessionHandlePtr,
+  );
+
+  void close() => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleClose(that: this);
+
+  /// Wait for the next state/input event or the newest complete frame.
+  Future<RemoteDesktopEvent?> nextEvent() => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleNextEvent(that: this);
+
+  void releaseAllKeys() => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleReleaseAllKeys(
+        that: this,
+      );
+
+  void resize({
+    required int width,
+    required int height,
+    required int scaleFactor,
+    int? physicalWidthMm,
+    int? physicalHeightMm,
+  }) => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleResize(
+        that: this,
+        width: width,
+        height: height,
+        scaleFactor: scaleFactor,
+        physicalWidthMm: physicalWidthMm,
+        physicalHeightMm: physicalHeightMm,
+      );
+
+  void sendClipboardText({required String text}) => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleSendClipboardText(
+        that: this,
+        text: text,
+      );
+
+  void sendKey({
+    required int code,
+    required bool down,
+    required bool extended,
+  }) => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleSendKey(
+        that: this,
+        code: code,
+        down: down,
+        extended: extended,
+      );
+
+  void sendPointer({required int x, required int y, required int buttons}) =>
+      RustLib.instance.api
+          .crateApiRemoteDesktopRemoteDesktopSessionHandleSendPointer(
+            that: this,
+            x: x,
+            y: y,
+            buttons: buttons,
+          );
+
+  void sendUnicodeText({required String text}) => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleSendUnicodeText(
+        that: this,
+        text: text,
+      );
+
+  void sendWheel({
+    required int x,
+    required int y,
+    required int deltaX,
+    required int deltaY,
+  }) => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleSendWheel(
+        that: this,
+        x: x,
+        y: y,
+        deltaX: deltaX,
+        deltaY: deltaY,
+      );
+
+  void setVisible({required bool visible}) => RustLib.instance.api
+      .crateApiRemoteDesktopRemoteDesktopSessionHandleSetVisible(
+        that: this,
+        visible: visible,
+      );
 }
 
 @sealed

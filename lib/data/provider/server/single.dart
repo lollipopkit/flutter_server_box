@@ -1454,8 +1454,13 @@ class ServerNotifier extends _$ServerNotifier {
     bool isWindows = false,
   }) async {
     final spi = state.spi;
+    // Windows PowerShell serializes progress and information records (including
+    // Write-Host) as CLIXML on stderr when invoked with -EncodedCommand. Status
+    // parsing is a stdout protocol: merging stderr lets those records land in
+    // whichever SrvBoxSep section happened to be current when the SSH chunks
+    // arrived, so an <Objs> document could become the system name or an IP.
     final execResult = await client
-        .run(statusCmd)
+        .run(statusCmd, stderr: false)
         .timeout(const Duration(seconds: 30));
     return SSHDecoder.decode(
       execResult,

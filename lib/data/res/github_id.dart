@@ -198,7 +198,27 @@ abstract final class GithubIds {
     'LiuShu3',
     'rayangl',
     'openwrt-jichang-core',
-    'panjinxin01'
+    'panjinxin01',
+    '666diabolus',
+    'BaiXiaoTao520',
+    'ccmd16',
+    'ck629',
+    'damle90',
+    'devhunk',
+    'Explainfuture',
+    'GT-610',
+    'Infinifar',
+    'Jamfly',
+    'mc-yzy15',
+    'MiguelDLM',
+    'MushuScript',
+    'tioners',
+    'WhyVPS',
+    'x19810000',
+    'YangYuS8',
+    'yj1028-bit',
+    'yrmuq',
+    'zsdili'
   };
 }
 

@@ -351,7 +351,7 @@ void _applyDiskIO(
       )
       .toList();
   if (pieces.isNotEmpty) {
-    ss.diskIO.update(pieces);
+    ss.diskIO.updateForSystem(pieces, system);
   }
 }
 

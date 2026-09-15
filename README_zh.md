@@ -115,7 +115,7 @@
 
 ## 特点
 
-- 支持 CPU、传感器、GPU 等状态图表，SSH 终端，SFTP，Docker、进程和服务管理，以及 S.M.A.R.T。
+- 支持 CPU、传感器、GPU 等状态图表，SSH 终端，SFTP，[通过 SSH 使用 RDP 和 VNC](https://serverbox.lolli.tech/docs/zh/advanced/remote-desktop/)，Docker、进程和服务管理，以及 S.M.A.R.T。
 - 支持生物认证、推送通知、桌面小组件、watchOS App 和跟随系统颜色。
 - 支持 16 种语言。当前清单见 `lib/l10n/`，译者信息记录在该目录的 git history 中。
 

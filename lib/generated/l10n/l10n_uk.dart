@@ -102,6 +102,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiNoResponse => 'Відповідь відсутня';
 
   @override
+  String get remoteDesktop => 'Remote desktop';
+
+  @override
   String get askAiAgentWelcome => 'Що зробимо на цьому сервері?';
 
   @override

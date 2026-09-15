@@ -71,6 +71,7 @@ void main() {
       (1491, ServerFuncBtn.power),
       (1579, ServerFuncBtn.users),
       (1579, ServerFuncBtn.scheduledTasks),
+      (1617, ServerFuncBtn.remoteDesktop),
     ];
 
     for (final (boundary, button) in boundaries) {
@@ -91,6 +92,17 @@ void main() {
     ServerFuncBtn.autoAddNewFuncs(1580, 1600);
 
     expect(row(), [ServerFuncBtn.terminal.name]);
+  });
+
+  test('adds remote desktop after the last build without it', () async {
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
+
+    ServerFuncBtn.autoAddNewFuncs(1617, 1618);
+
+    expect(row(), [
+      ServerFuncBtn.terminal.name,
+      ServerFuncBtn.remoteDesktop.name,
+    ]);
   });
 
   test('leaves an entry the user removed removed', () async {
@@ -153,6 +165,7 @@ void main() {
         ServerFuncBtn.power.name,
         ServerFuncBtn.users.name,
         ServerFuncBtn.scheduledTasks.name,
+        ServerFuncBtn.remoteDesktop.name,
       ]),
     );
   });

@@ -1,5 +1,7 @@
+import { render, waitFor } from '@testing-library/svelte'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Poller } from '../lib/poller.svelte'
+import PollerEffectHarness from './fixtures/PollerEffectHarness.svelte'
 
 describe('Poller', () => {
   afterEach(() => {
@@ -28,6 +30,20 @@ describe('Poller', () => {
     await vi.advanceTimersByTimeAsync(1)
     expect(fetcher).toHaveBeenCalledTimes(2)
     poller.stop()
+  })
+
+  it('does not subscribe an enclosing effect to fetched data', async () => {
+    const fetcher = vi
+      .fn<() => Promise<number>>()
+      .mockResolvedValueOnce(1)
+      .mockImplementation(() => new Promise(() => {}))
+    const poller = new Poller(fetcher, 60_000)
+
+    const view = render(PollerEffectHarness, { poller })
+
+    await waitFor(() => expect(poller.data).toBe(1))
+    expect(fetcher).toHaveBeenCalledTimes(1)
+    view.unmount()
   })
 
   it('aborts an in-flight request and ignores its late result', async () => {

@@ -103,6 +103,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiNoResponse => 'Yanıt yok';
 
   @override
+  String get remoteDesktop => 'Remote desktop';
+
+  @override
   String get askAiAgentWelcome => 'Bu sunucuda ne yapalım?';
 
   @override

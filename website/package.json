@@ -17,7 +17,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "clsx": "^2.1.1",
-    "shadcn-svelte": "^1.6.0",
+    "shadcn-svelte": "^1.6.1",
     "svelte": "^5.57.0",
     "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2",

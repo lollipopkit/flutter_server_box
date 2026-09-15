@@ -27,6 +27,7 @@
   "askAiDisclaimer": "AI may be incorrect. Review carefully before applying.",
   "askAiInsertTerminal": "Insert into terminal",
   "askAiNoResponse": "No response",
+  "remoteDesktop": "Remote desktop",
   "askAiAgentWelcome": "What should we do on this server?",
   "askAiAgentPromptHint": "Ask the Agent to inspect or fix something...",
   "askAiAnalyzeSelectionPrompt": "Analyse the selected terminal output and explain what happened",

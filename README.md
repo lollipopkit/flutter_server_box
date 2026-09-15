@@ -117,7 +117,7 @@ Download packages only from sources you trust.
 
 ## Features
 
-- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; Docker, process, and service management; and S.M.A.R.T.
+- Status charts for CPU, sensors, GPU, and other metrics; an SSH terminal; SFTP; [RDP and VNC through SSH](https://serverbox.lolli.tech/docs/advanced/remote-desktop/); Docker, process, and service management; and S.M.A.R.T.
 - Platform features include biometric authentication, push notifications, home-screen widgets, watchOS support, and system color themes.
 - 16 languages. The current list is in `lib/l10n/`; its git history records the translators.
 

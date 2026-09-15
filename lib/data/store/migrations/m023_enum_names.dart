@@ -36,12 +36,16 @@ class EnumNamesMigration implements SchemaMigration {
     final store = _store ?? SettingStore.instance;
 
     final btns = store.get<Object>(btnsKey);
-    if (btns is List) {
+    if (btns is List || btns is Map) {
+      // The first nine entries happen to match the pre-feature order, while
+      // indices 9 and 10 are users and scheduledTasks and must not be
+      // discarded. The decoder uses an explicit marker when one is present,
+      // and otherwise applies the safe legacy fallback for old integer rows.
       final names = ServerFuncBtn.namesFromStored(btns);
       // Only when it says something different, so a store already holding
       // names is untouched and the step stays safe to run twice.
       if (!_sameList(btns, names)) {
-        _write(store, btnsKey, names);
+        _write(store, btnsKey, ServerFuncBtn.toStored(names)!);
       }
     }
 
@@ -51,7 +55,13 @@ class EnumNamesMigration implements SchemaMigration {
     }
   }
 
-  static bool _sameList(List stored, List<String> names) {
+  static bool _sameList(Object? stored, List<String> names) {
+    if (stored is Map &&
+        stored['layout'] == 'current' &&
+        stored['values'] is List) {
+      stored = stored['values'];
+    }
+    if (stored is! List) return false;
     if (stored.length != names.length) return false;
     for (var i = 0; i < names.length; i++) {
       if (stored[i] != names[i]) return false;

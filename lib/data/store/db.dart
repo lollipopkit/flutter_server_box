@@ -372,6 +372,39 @@ class PortForwards extends Table with SyncMeta {
   ];
 }
 
+/// A desktop endpoint reached through the SSH server named by [serverId].
+@DataClassName('RemoteDesktopProfileRow')
+class RemoteDesktopProfiles extends Table with SyncMeta {
+  @override
+  String get tableName => 'remote_desktop_profile';
+  @override
+  bool get withoutRowId => true;
+
+  TextColumn get id => text()();
+  TextColumn get serverId =>
+      text().references(Servers, #id, onDelete: KeyAction.cascade)();
+  TextColumn get name => text()();
+  TextColumn get protocol => text()();
+  TextColumn get host => text().withDefault(const Constant('127.0.0.1'))();
+  IntColumn get port => integer()();
+  TextColumn get username => text().nullable()();
+  TextColumn get password => text().nullable()();
+  TextColumn get domain => text().nullable()();
+  BoolColumn get viewOnly => boolean().withDefault(const Constant(false))();
+  BoolColumn get shared => boolean().withDefault(const Constant(true))();
+  TextColumn get trustedCertSha256 => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+
+  @override
+  List<String> get customConstraints => [
+    "CHECK (protocol IN ('rdp', 'vnc'))",
+    'CHECK (port BETWEEN 1 AND 65535)',
+    'UNIQUE (server_id, name)',
+  ];
+}
+
 /// `DOCKER_HOST` (or the podman equivalent) for one server.
 ///
 /// A child of `server` rather than a record of its own: it is per-server
@@ -661,6 +694,7 @@ class SyncStates extends Table {
     SnippetTags,
     SnippetAutoRunOn,
     PortForwards,
+    RemoteDesktopProfiles,
     ContainerHosts,
     ContainerRuntimes,
     ConnStats,
@@ -710,6 +744,8 @@ class AppDb extends _$AppDb {
         'ON snippet_auto_run_on(server_id);',
     'CREATE INDEX IF NOT EXISTS idx_port_forward_server '
         'ON port_forward(server_id);',
+    'CREATE INDEX IF NOT EXISTS idx_remote_desktop_profile_server '
+        'ON remote_desktop_profile(server_id);',
     // Every read is "this server, newest first"; the per-server cap is the
     // same order with a LIMIT.
     'CREATE INDEX IF NOT EXISTS idx_conn_stat_server_ts '

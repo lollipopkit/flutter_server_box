@@ -1,0 +1,41 @@
+[package]
+name = "ironrdp-tls"
+version = "0.2.2"
+readme = "README.md"
+description = "TLS boilerplate common with most IronRDP clients"
+edition.workspace = true
+rust-version = "1.89"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lib]
+doctest = false
+test = false
+
+[features]
+default = [] # No default feature, the user must choose a TLS backend by enabling the appropriate feature.
+# The rustls backend uses ring for the application's cross-platform static builds.
+# AWS-LC remains available as an explicit opt-in feature for downstream consumers.
+rustls = ["rustls-ring"]
+rustls-aws-lc-rs = ["rustls-no-provider", "tokio-rustls/aws_lc_rs"]
+rustls-ring = ["rustls-no-provider", "tokio-rustls/ring"]
+# rustls backend without a bundled crypto provider: the downstream must install a
+# rustls CryptoProvider as the process default before opening a connection, otherwise
+# building the client configuration panics.
+rustls-no-provider = ["dep:tokio-rustls", "dep:rustls-native-certs", "dep:x509-cert", "tokio/io-util", "tokio-rustls/logging", "tokio-rustls/tls12"]
+native-tls = ["dep:tokio-native-tls", "dep:x509-cert", "tokio/io-util"]
+stub = ["dep:x509-cert"]
+
+[dependencies]
+tokio = { version = "1.52" }
+x509-cert = { version = "0.2", default-features = false, features = ["std"], optional = true } # public
+tokio-native-tls = { version = "0.3", optional = true } # public
+tokio-rustls = { version = "0.26", default-features = false, optional = true } # public
+rustls-native-certs = { version = "0.8", optional = true }
+
+[lints]
+workspace = true

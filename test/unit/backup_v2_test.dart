@@ -9,6 +9,7 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -298,6 +299,33 @@ void main() {
       expect(backup.settings['timeOut'], 11);
     });
 
+    test('exports and restores remote desktop profiles', () async {
+      const server = Spi(
+        id: 'server-1',
+        name: 'desktop host',
+        ssh: SshCredential(ip: '10.0.0.1'),
+      );
+      const profile = RemoteDesktopProfile(
+        id: 'desktop-1',
+        serverId: 'server-1',
+        name: 'Windows',
+        protocol: RemoteDesktopProtocol.rdp,
+        port: 3389,
+        username: 'admin',
+        password: 'saved-secret',
+      );
+      Stores.server.put(server);
+      Stores.remoteDesktop.put(profile);
+
+      final backup = BackupV2.fromJsonString(
+        (await BackupV2.loadFromStore()).toJsonString(),
+      );
+      Stores.remoteDesktop.delete(profile);
+      await backup.merge(force: true);
+
+      expect(Stores.remoteDesktop.fetchForServer(server.id), [profile]);
+    });
+
     test('leaves the Agent local-exec permission out of the file', () async {
       Stores.setting.agentLocalExec.put(true);
 
@@ -523,6 +551,13 @@ void main() {
           type: PortForwardType.local,
           localPort: 8080,
         );
+        const remoteDesktop = RemoteDesktopProfile(
+          id: 'desktop-1',
+          serverId: 'backup-server-id',
+          name: 'Windows',
+          protocol: RemoteDesktopProtocol.rdp,
+          port: 3389,
+        );
         final backup = BackupV2(
           version: BackupV2.formatVer,
           date: 1,
@@ -537,6 +572,9 @@ void main() {
           snippets: {'snippet-1': snippet.toJson()},
           keys: const {},
           portForwards: {'forward-1': forward.toJson()},
+          remoteDesktopProfiles: {
+            'desktop-1': remoteDesktop.toJson(),
+          },
           container: const {
             'backup-server-id': {'host_docker': 'tcp://10.0.0.2:2375'},
           },
@@ -558,6 +596,10 @@ void main() {
         expect(
           Stores.portForward.fetchForServer(local.id).single.id,
           forward.id,
+        );
+        expect(
+          Stores.remoteDesktop.fetchForServer(local.id).single.id,
+          remoteDesktop.id,
         );
         expect(
           Stores.container.fetch(local.id, ContainerType.docker),

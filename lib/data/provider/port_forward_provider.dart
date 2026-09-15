@@ -5,6 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/utils/ssh_local_tunnel.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -49,20 +50,6 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   String get _serverId => state.serverId;
-
-  /// The connected client, without waiting for one.
-  ///
-  /// Used where a forward is already running and needs the live client per
-  /// connection; [_connectedClient] is the one to call when starting a
-  /// forward, since a monitor-backed server may not have connected yet.
-  SSHClient get _client {
-    final serverState = ref.read(serverProvider(_serverId));
-    final client = serverState.client;
-    if (client == null) {
-      throw StateError('SSH client is not connected');
-    }
-    return client;
-  }
 
   /// Connects the shell if it isn't already, then returns the client.
   ///
@@ -227,26 +214,20 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception('Invalid local port forward: remote destination not set');
     }
-    // Connect before binding: the listener accepts connections lazily and
-    // resolves the client per connection, so without this a forward would
-    // appear to start on a server SSH can't reach and only fail later, once
-    // something connected to the local port.
-    await _connectedClient();
-    final serverSocket = await ServerSocket.bind(
-      config.localHost ?? 'localhost',
-      config.localPort,
-    );
-    Loggers.app.info(
-      'Local port forward started: ${config.localHost ?? "localhost"}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}',
-    );
-    final entry = _LocalForwardEntry(
-      serverSocket: serverSocket,
+    // Connect before binding so a forward cannot look active when there is no
+    // authenticated SSH transport behind its listener.
+    final tunnel = await SshLocalTunnel.bind(
+      client: await _connectedClient(),
       remoteHost: config.remoteHost!,
       remotePort: config.remotePort!,
-      clientGetter: () => _client,
+      bindHost: config.localHost ?? 'localhost',
+      bindPort: config.localPort,
     );
-    entry.start();
-    return entry;
+    Loggers.app.info(
+      'Local port forward started: ${tunnel.address.address}:${tunnel.port} '
+      '-> ${config.remoteHost}:${config.remotePort}',
+    );
+    return _LocalForwardEntry(tunnel);
   }
 
   Future<_ForwardEntry> _startRemoteForward(PortForwardConfig config) async {
@@ -327,58 +308,12 @@ abstract class _ForwardEntry {
 }
 
 class _LocalForwardEntry extends _ForwardEntry {
-  final ServerSocket serverSocket;
-  final String remoteHost;
-  final int remotePort;
-  final SSHClient Function() clientGetter;
-  final List<_ActiveConnection> _connections = [];
-  StreamSubscription<Socket>? _subscription;
+  _LocalForwardEntry(this.tunnel);
 
-  _LocalForwardEntry({
-    required this.serverSocket,
-    required this.remoteHost,
-    required this.remotePort,
-    required this.clientGetter,
-  });
-
-  void start() {
-    _subscription = serverSocket.listen((socket) async {
-      try {
-        final forward = await clientGetter().forwardLocal(
-          remoteHost,
-          remotePort,
-        );
-        final conn = _ActiveConnection(socket: socket, forward: forward);
-        _connections.add(conn);
-        final pipe1 = forward.stream
-            .cast<List<int>>()
-            .pipe(socket)
-            .catchError((_) {});
-        final pipe2 = socket
-            .cast<List<int>>()
-            .pipe(forward.sink)
-            .catchError((_) {});
-        Future.wait([pipe1, pipe2]).whenComplete(() {
-          _connections.remove(conn);
-          conn.close();
-        });
-      } catch (e, s) {
-        Loggers.app.warning('Port forward connection failed', e, s);
-        socket.destroy();
-      }
-    });
-  }
+  final SshLocalTunnel tunnel;
 
   @override
-  Future<void> close() async {
-    await _subscription?.cancel();
-    await serverSocket.close();
-    final connections = _connections.toList();
-    for (final conn in connections) {
-      await conn.close();
-    }
-    _connections.clear();
-  }
+  Future<void> close() => tunnel.close();
 }
 
 class _RemoteForwardEntry extends _ForwardEntry {

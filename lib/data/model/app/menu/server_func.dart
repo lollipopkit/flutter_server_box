@@ -21,7 +21,8 @@ enum ServerFuncBtn {
   portForward(1340),
   power(1491),
   users(1579),
-  scheduledTasks(1579);
+  scheduledTasks(1579),
+  remoteDesktop(1617);
 
   /// The last released build that did not contain this entry.
   ///
@@ -44,7 +45,7 @@ enum ServerFuncBtn {
   /// time they could have chosen is added.
   ///
   /// [from] is the build this install last ran, 0 on a fresh one — where
-  /// [defaultIdxs] already lists every entry that carries a boundary, so
+  /// [defaultNames] already lists every entry that carries a boundary, so
   /// nothing here fires. An entry left out of the defaults must therefore also
   /// have no [introducedAfterBuild], or a fresh install would be the only kind
   /// that never gets it.
@@ -76,31 +77,101 @@ enum ServerFuncBtn {
     power,
     users,
     scheduledTasks,
+    remoteDesktop,
   ].map((e) => e.name).toList();
 
   /// The entry a stored row names.
   ///
-  /// The row used to be an `Enum.index`, and three cases have been removed
-  /// over the years — every removal shifted the meaning of every value after
-  /// it, so a row written before one of them named an entry the user never
-  /// chose. An `int` is still accepted, because `EnumNamesMigration` is not
-  /// the only way one can arrive: a device still running an older build syncs
-  /// this setting in the shape that build writes.
-  static ServerFuncBtn? byStored(Object? stored) => switch (stored) {
-    final String name => values.firstWhereOrNull((btn) => btn.name == name),
-    final int idx when idx >= 0 && idx < values.length => values[idx],
-    _ => null,
-  };
+  /// The enum order used by releases before the name migration.
+  ///
+  /// This is deliberately separate from [values]. An integer from an older
+  /// build must be resolved against the order that wrote it, never today's
+  /// declaration order, or a removed entry silently selects another button.
+  static const legacyIndexNamesBeforeM021 = <String>[
+    'terminal',
+    'files',
+    'container',
+    'process',
+    'snippet',
+    'iperf',
+    'systemd',
+    'portForward',
+    'power',
+  ];
+
+  static const _storedLayoutKey = 'layout';
+  static const _storedValuesKey = 'values';
+  static const _currentLayout = 'current';
+  static const _legacyLayoutBeforeM021 = 'preM021';
+
+  /// Wraps newly synchronized rows with the layout that wrote them.
+  static Map<String, Object?>? toStored(List<String>? names) => names == null
+      ? null
+      : {
+          _storedLayoutKey: _currentLayout,
+          _storedValuesKey: List<String>.from(names),
+        };
+
+  /// Resolves a stored name or current-layout index.
+  ///
+  /// Pass [legacyIntegerNames] only when the row's provenance proves that it
+  /// was written in that older layout. Tagged rows select their own mapping;
+  /// untagged integer rows are retained for old backups and use the legacy
+  /// mapping only when every integer fits that nine-entry layout. A row with
+  /// index 9 or above therefore remains on the current layout, preserving
+  /// post-feature entries. Once supplied, out-of-range legacy integers are
+  /// rejected instead of falling through to the current enum layout.
+  static ServerFuncBtn? byStored(
+    Object? stored, {
+    List<String>? legacyIntegerNames,
+  }) {
+    if (stored is String) {
+      return values.firstWhereOrNull((btn) => btn.name == stored);
+    }
+    if (stored is! int) return null;
+    if (legacyIntegerNames case final names?) {
+      if (stored < 0 || stored >= names.length) return null;
+      final name = names[stored];
+      return values.firstWhereOrNull((btn) => btn.name == name);
+    }
+    return stored >= 0 && stored < values.length ? values[stored] : null;
+  }
 
   /// A stored list in either shape, as names this build knows.
   ///
   /// An entry that resolves to nothing is dropped rather than shifting the
   /// ones after it, which is the whole point of the change.
-  static List<String> namesFromStored(Object? stored) {
-    if (stored is! Iterable) return defaultNames;
+  static List<String> namesFromStored(
+    Object? stored, {
+    List<String>? legacyIntegerNames,
+  }) {
+    var values = stored;
+    var integerNames = legacyIntegerNames;
+    if (stored is Map && stored[_storedValuesKey] is Iterable) {
+      values = stored[_storedValuesKey];
+      switch (stored[_storedLayoutKey]) {
+        case _legacyLayoutBeforeM021:
+          integerNames = legacyIndexNamesBeforeM021;
+        case _currentLayout:
+          integerNames = null;
+      }
+    }
+    if (values is! Iterable) return defaultNames;
+    if (integerNames == null) {
+      final ints = values.whereType<int>().toList();
+      if (ints.isNotEmpty &&
+          ints.every(
+            (index) =>
+                index >= 0 && index < legacyIndexNamesBeforeM021.length,
+          )) {
+        integerNames = legacyIndexNamesBeforeM021;
+      }
+    }
     return [
-      for (final entry in stored)
-        if (byStored(entry) case final btn?) btn.name,
+      for (final entry in values)
+        if (byStored(entry, legacyIntegerNames: integerNames)
+            case final btn?)
+          btn.name,
     ];
   }
 
@@ -117,6 +188,7 @@ enum ServerFuncBtn {
     power => Icons.power_settings_new,
     users => Icons.manage_accounts_outlined,
     scheduledTasks => Icons.schedule,
+    remoteDesktop => Icons.desktop_windows_outlined,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -134,7 +206,7 @@ enum ServerFuncBtn {
     // without growing a stream this app can point anywhere.
     files => caps.files,
     // A forwarded connection is a byte stream, not a command's output.
-    portForward => caps.byteStream,
+    portForward || remoteDesktop => caps.byteStream,
   };
 
   String get toStr => switch (this) {
@@ -151,5 +223,6 @@ enum ServerFuncBtn {
     power => l10n.power,
     users => l10n.systemUsers,
     scheduledTasks => l10n.scheduledTasks,
+    remoteDesktop => l10n.remoteDesktop,
   };
 }

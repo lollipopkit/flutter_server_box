@@ -287,6 +287,12 @@ abstract class AppLocalizations {
   /// **'No response'**
   String get askAiNoResponse;
 
+  /// No description provided for @remoteDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote desktop'**
+  String get remoteDesktop;
+
   /// No description provided for @askAiAgentWelcome.
   ///
   /// In en, this message translates to:

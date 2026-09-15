@@ -13,7 +13,6 @@ import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -25,6 +24,7 @@ import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
+import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/scheduled_tasks.dart';
 import 'package:server_box/view/page/services.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
@@ -138,8 +138,8 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
     // An entry the connection cannot serve would open a page that can never
     // load. Filtered rather than disabled: nothing the user could do on this
     // row would make it work — it is the agent's decision, or the transport's.
-    final caps = ServerCapabilities.of(
-      ServerConnectCredential.fromSpi(spi),
+    final caps = ServerCapabilities.ofSpi(
+      spi,
       granted: granted,
     );
     return ordered.where((e) => e.availableWith(caps)).toList();
@@ -282,6 +282,11 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         ScheduledTasksPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.remoteDesktop:
+        if (!await _ensureSshClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi));
         break;
     }
   }
