@@ -1448,7 +1448,7 @@ fn windows_cpu_rejects_invalid_ranges_and_core_counts() {
     }
 }
 
-/// Ported from `test/unit/server_status_update_req_test.dart`. Win32_Battery's
+/// Ported from `test/unit/server/server_status_update_req_test.dart`. Win32_Battery's
 /// enumeration has a distinct "fully charged" state; folding it into
 /// discharging reported a battery on mains at 100% as draining.
 #[test]

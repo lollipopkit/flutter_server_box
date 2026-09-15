@@ -99,7 +99,7 @@ user configures.
 
 Then: drop the file in named after its `Dist` case, add the case to `_bundled`
 in `dist.dart`, add a row to the table above, and add its notice to
-`dist_license.dart`. `test/unit/dist_icon_test.dart` fails if any of those is
+`dist_license.dart`. `test/unit/server/dist_icon_test.dart` fails if any of those is
 missing.
 
 **Ship the file unmodified**, as far as it will go. Not tidied, not
@@ -117,7 +117,7 @@ threw on load and flutter_svg drew an empty box — no exception reaching the
 app, nothing in the log, just a gap where the swirl should be. What fixed it is
 recorded with the file below.
 
-`test/unit/dist_asset_render_test.dart` compiles each of these the way flutter_svg
+`test/unit/server/dist_asset_render_test.dart` compiles each of these the way flutter_svg
 does and fails if one yields no geometry or no paint. It is the only test here
 that would have caught that, and four others passed straight through it: the
 file existed, the enum named it, the README listed it and the widget built.

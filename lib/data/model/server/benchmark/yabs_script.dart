@@ -20,7 +20,7 @@ import 'package:server_box/data/model/server/benchmark/yabs_options.dart';
 /// `cdn.geekbench.com` when explicitly enabled.
 ///
 /// Refresh with `scripts/update-yabs.sh`, which prints the three constants
-/// below; the `vendored asset` group in `test/unit/yabs_script_test.dart` fails
+/// below; the `vendored asset` group in `test/unit/benchmark/yabs_script_test.dart` fails
 /// until they match the file.
 class YabsScript {
   const YabsScript._();

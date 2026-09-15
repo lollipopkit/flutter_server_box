@@ -10,7 +10,7 @@ description: 运行和编写 Server Box 测试
 flutter test
 
 # 指定测试文件
-flutter test test/unit/disk_test.dart
+flutter test test/unit/server/disk_test.dart
 
 # 生成覆盖率报告
 flutter test --coverage
@@ -20,6 +20,8 @@ flutter test --coverage
 
 Dart 测试位于 `test/`，按 `unit/`、`widget/`、`platform/` 和 `migration/` 分类。共享 helper 和 release fixture 分别位于 `helpers/` 和 `fixtures/`。测试应验证行为和输入输出，不依赖外部网络或真实服务器。
 
+`unit/` 内部再按功能域划分：`ssh/`、`terminal/`、`file/`、`server/`、`store/`、`ai/`、`geo/`、`rootfs/`、`monitor/`、`benchmark/`、`remote_desktop/` 和 `app/`。测试按所覆盖的功能归类，而不是按所处的层级——同一功能的 store、provider 和 model 放在一起。`store/` 存放不属于单个功能的存储设施（数据库、schema、备份恢复、设置），`app/` 存放其余部分：版本、本地化、崩溃上报、诊断和构建检查。
+
 ## Rust 测试
 
 ```bash
@@ -28,7 +30,7 @@ cargo test --workspace
 
 # FFI parity test：先构建 FFI crate
 cargo build -p sbm_ffi
-flutter test test/unit/frb_parser_test.dart
+flutter test test/unit/app/frb_parser_test.dart
 ```
 
 `crates/sbm_parser/tests/dart_compat.rs` 使用与 Dart 相同的 fixture，锁定两侧 parser 的行为。
