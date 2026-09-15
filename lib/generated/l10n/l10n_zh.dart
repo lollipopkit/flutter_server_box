@@ -2056,6 +2056,115 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
+
+  @override
+  String get monitorSettings => 'Monitor 设置';
+
+  @override
+  String get monitorAgentDefault => 'agent 默认值';
+
+  @override
+  String get monitorAppliesNow => '保存后立即生效';
+
+  @override
+  String get monitorNeedsRestart => 'agent 重启后生效';
+
+  @override
+  String get extendedInterval => '扩展采集周期';
+
+  @override
+  String get idlePause => '无人查看时暂停';
+
+  @override
+  String get idlePauseTip =>
+      '扩展采集会调用 smartctl、sensors 和 amd-smi。没有客户端轮询时暂停，可以避免为无人查看的数据唤醒硬盘。';
+
+  @override
+  String get idlePauseThreshold => '闲置判定时长';
+
+  @override
+  String get monitoringRules => '告警规则';
+
+  @override
+  String get ruleMonitorType => '指标';
+
+  @override
+  String get ruleThreshold => '阈值';
+
+  @override
+  String get ruleMatcher => '匹配对象';
+
+  @override
+  String get ruleTip =>
+      '指标：cpu / memory / swap / disk / network / temperature。匹配对象：cpu0 指定单核，memory 用 used / free / avail，network 用 rx / tx；disk 和 temperature 忽略此项。阈值：比较符加数值，例如 >=80%、>=70c 或 >10m/s。';
+
+  @override
+  String get pushChannels => '通知渠道';
+
+  @override
+  String get pushType => '类型';
+
+  @override
+  String get pushRate => '发送频率限制';
+
+  @override
+  String get pushHeaders => 'Headers';
+
+  @override
+  String get pushSecretSet => '已在 agent 上设置，不显示';
+
+  @override
+  String get pushSecretKeep => '留空则保持不变';
+
+  @override
+  String get pushTestTip => '按当前页面上的配置发送一条通知，无论是否已保存。';
+
+  @override
+  String get pushTestSent => '渠道已接受';
+
+  @override
+  String get pushTestFailed => '渠道拒绝了这条通知';
+
+  @override
+  String get pushTestMessage => '来自 ServerBox Monitor 的测试通知';
+
+  @override
+  String get pushUnknownType =>
+      '此 agent 没有该类型的发送实现，因此不显示其配置。可以在这里删除，或在 agent 的 config.toml 中编辑。';
+
+  @override
+  String get pushJsonInvalid => '不是合法的 JSON';
+
+  @override
+  String get dataRetention => '数据保留';
+
+  @override
+  String get dataRetentionTip => '关闭表示 agent 不会删除任何数据，其数据库会无限增长。';
+
+  @override
+  String get retentionMetrics => '指标保留';
+
+  @override
+  String get retentionAlerts => '告警保留';
+
+  @override
+  String get retentionCleanup => '清理执行间隔';
+
+  @override
+  String get retentionMaxDbSize => '数据库体积上限';
+
+  @override
+  String get corsOrigins => 'CORS 允许来源';
+
+  @override
+  String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。';
+
+  @override
+  String get monitorSettingsTip => '编辑这台 agent 自身的配置';
+
+  @override
+  String get monitorNoAgent =>
+      '还没有配置了 monitor agent 的服务器。在某台服务器的设置里加上，就能在这里编辑它。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4106,4 +4215,113 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
+
+  @override
+  String get monitorSettings => 'Monitor 設定';
+
+  @override
+  String get monitorAgentDefault => 'agent 預設值';
+
+  @override
+  String get monitorAppliesNow => '儲存後立即生效';
+
+  @override
+  String get monitorNeedsRestart => 'agent 重啟後生效';
+
+  @override
+  String get extendedInterval => '延伸採集週期';
+
+  @override
+  String get idlePause => '無人檢視時暫停';
+
+  @override
+  String get idlePauseTip =>
+      '延伸採集會呼叫 smartctl、sensors 與 amd-smi。沒有用戶端輪詢時暫停，可以避免為無人檢視的資料喚醒硬碟。';
+
+  @override
+  String get idlePauseThreshold => '閒置判定時長';
+
+  @override
+  String get monitoringRules => '告警規則';
+
+  @override
+  String get ruleMonitorType => '指標';
+
+  @override
+  String get ruleThreshold => '閾值';
+
+  @override
+  String get ruleMatcher => '比對對象';
+
+  @override
+  String get ruleTip =>
+      '指標：cpu / memory / swap / disk / network / temperature。比對對象：cpu0 指定單核，memory 用 used / free / avail，network 用 rx / tx；disk 與 temperature 會忽略此項。閾值：比較符加數值，例如 >=80%、>=70c 或 >10m/s。';
+
+  @override
+  String get pushChannels => '通知管道';
+
+  @override
+  String get pushType => '類型';
+
+  @override
+  String get pushRate => '發送頻率限制';
+
+  @override
+  String get pushHeaders => 'Headers';
+
+  @override
+  String get pushSecretSet => '已在 agent 上設定，不顯示';
+
+  @override
+  String get pushSecretKeep => '留空則保持不變';
+
+  @override
+  String get pushTestTip => '依目前頁面上的設定發送一則通知，無論是否已儲存。';
+
+  @override
+  String get pushTestSent => '管道已接受';
+
+  @override
+  String get pushTestFailed => '管道拒絕了這則通知';
+
+  @override
+  String get pushTestMessage => '來自 ServerBox Monitor 的測試通知';
+
+  @override
+  String get pushUnknownType =>
+      '此 agent 沒有該類型的發送實作，因此不顯示其設定。可以在這裡刪除，或在 agent 的 config.toml 中編輯。';
+
+  @override
+  String get pushJsonInvalid => '不是合法的 JSON';
+
+  @override
+  String get dataRetention => '資料保留';
+
+  @override
+  String get dataRetentionTip => '關閉表示 agent 不會刪除任何資料，其資料庫會無限成長。';
+
+  @override
+  String get retentionMetrics => '指標保留';
+
+  @override
+  String get retentionAlerts => '告警保留';
+
+  @override
+  String get retentionCleanup => '清理執行間隔';
+
+  @override
+  String get retentionMaxDbSize => '資料庫容量上限';
+
+  @override
+  String get corsOrigins => 'CORS 允許來源';
+
+  @override
+  String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。';
+
+  @override
+  String get monitorSettingsTip => '編輯這台 agent 自身的設定';
+
+  @override
+  String get monitorNoAgent =>
+      '還沒有設定了 monitor agent 的伺服器。在某台伺服器的設定裡加上，就能在這裡編輯它。';
 }

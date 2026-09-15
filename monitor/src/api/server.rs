@@ -287,6 +287,26 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::get().to(crate::api::custom_cmds::list))
                     .route(web::put().to(crate::api::custom_cmds::replace)),
             )
+            .service(
+                // Its own payload limit, like `/custom-cmds`: the body is
+                // every notification channel at once, and a webhook's
+                // `body_template` is a document the user pastes in.
+                web::resource("/push")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::push::MAX_REQUEST),
+                    )
+                    .route(web::get().to(crate::api::push::list))
+                    .route(web::put().to(crate::api::push::replace)),
+            )
+            .service(
+                web::resource("/push/test")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::push::MAX_REQUEST),
+                    )
+                    .route(web::post().to(crate::api::push::test)),
+            )
             .route("/settings", web::get().to(get_settings))
             .route("/settings", web::put().to(update_settings))
             .route("/card-order", web::get().to(get_card_order))
@@ -830,6 +850,13 @@ struct SettingsView {
     #[serde(flatten)]
     settings: SettingsPayload,
     live_fields: &'static [&'static str],
+    /// What `data_retention` should become when an editor offers to switch it
+    /// on. `null` there means *no cleanup runs at all* — `cli.rs` only starts
+    /// the scheduler when the section is present — rather than "the defaults
+    /// apply", so an editor cannot express turning it on without values to put
+    /// in it. They belong here rather than copied into each editor, where they
+    /// would drift from `DataRetentionConfig::default` unnoticed.
+    data_retention_defaults: crate::core::config::DataRetentionConfig,
 }
 
 const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
@@ -858,6 +885,7 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
             cors_allowed_origins: file_config.get_server().cors_allowed_origins,
         },
         live_fields: SETTINGS_LIVE_FIELDS,
+        data_retention_defaults: crate::core::config::DataRetentionConfig::default(),
     }))
 }
 

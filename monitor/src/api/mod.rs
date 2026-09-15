@@ -1,6 +1,7 @@
 pub mod custom_cmds;
 pub mod exec;
 pub mod fs;
+pub mod push;
 pub mod cors;
 pub mod auth;
 pub mod ratelimit;

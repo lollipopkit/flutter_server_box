@@ -2241,4 +2241,116 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
+
+  @override
+  String get monitorSettings => 'Monitor settings';
+
+  @override
+  String get monitorAgentDefault => 'Agent default';
+
+  @override
+  String get monitorAppliesNow => 'Takes effect on save';
+
+  @override
+  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+
+  @override
+  String get extendedInterval => 'Extended cycle interval';
+
+  @override
+  String get idlePause => 'Pause when nothing is watching';
+
+  @override
+  String get idlePauseTip =>
+      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+
+  @override
+  String get idlePauseThreshold => 'Idle after';
+
+  @override
+  String get monitoringRules => 'Alert rules';
+
+  @override
+  String get ruleMonitorType => 'Metric';
+
+  @override
+  String get ruleThreshold => 'Threshold';
+
+  @override
+  String get ruleMatcher => 'Matcher';
+
+  @override
+  String get ruleTip =>
+      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+
+  @override
+  String get pushChannels => 'Notification channels';
+
+  @override
+  String get pushType => 'Type';
+
+  @override
+  String get pushRate => 'Rate limit';
+
+  @override
+  String get pushHeaders => 'Headers';
+
+  @override
+  String get pushSecretSet => 'Set on the agent, not shown';
+
+  @override
+  String get pushSecretKeep => 'Leave blank to keep';
+
+  @override
+  String get pushTestTip =>
+      'Sends one notification through this channel as it stands here, saved or not.';
+
+  @override
+  String get pushTestSent => 'The channel accepted it';
+
+  @override
+  String get pushTestFailed => 'The channel refused it';
+
+  @override
+  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+
+  @override
+  String get pushUnknownType =>
+      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+
+  @override
+  String get pushJsonInvalid => 'is not valid JSON';
+
+  @override
+  String get dataRetention => 'Data retention';
+
+  @override
+  String get dataRetentionTip =>
+      'Off means the agent never deletes anything and its database grows without limit.';
+
+  @override
+  String get retentionMetrics => 'Keep metrics';
+
+  @override
+  String get retentionAlerts => 'Keep alerts';
+
+  @override
+  String get retentionCleanup => 'Run cleanup every';
+
+  @override
+  String get retentionMaxDbSize => 'Database size cap';
+
+  @override
+  String get corsOrigins => 'CORS allowed origins';
+
+  @override
+  String get corsOriginsTip =>
+      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+
+  @override
+  String get monitorSettingsTip => 'Edit this agent\'s own configuration';
+
+  @override
+  String get monitorNoAgent =>
+      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

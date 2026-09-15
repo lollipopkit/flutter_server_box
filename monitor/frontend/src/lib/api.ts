@@ -8,6 +8,10 @@ import type {
   HistoryPoint,
   LoginRequest,
   LoginResponse,
+  PushEntry,
+  PushListView,
+  PushPayload,
+  PushTestResult,
   SettingsPayload,
   SettingsView,
   StatusResponse,
@@ -311,6 +315,26 @@ export const api = {
       '/custom-cmds',
       { method: 'PUT', body: JSON.stringify({ commands }) },
       'Failed to save custom commands',
+    ),
+  getPush: () => request<PushListView>('/push', {}, 'Failed to fetch push channels'),
+  /// The whole set, in order, like the custom commands. Each entry carries the
+  /// `from_index` it was loaded at, which is the only thing a withheld
+  /// credential (a `null` value) can be resolved against — see `PushEntry`.
+  updatePush: (payload: PushPayload) =>
+    request<PushListView>(
+      '/push',
+      { method: 'PUT', body: JSON.stringify(payload) },
+      'Failed to save push channels',
+    ),
+  /// Sends one notification now, through the channel as currently edited. A
+  /// channel that cannot be tried is one whose first real alert is where it
+  /// gets found out. The agent answers 200 with `ok: false` for a delivery
+  /// that failed, so only a refused *request* throws here.
+  testPush: (push: PushEntry, message: string) =>
+    request<PushTestResult>(
+      '/push/test',
+      { method: 'POST', body: JSON.stringify({ push, message }) },
+      'Failed to send the test notification',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

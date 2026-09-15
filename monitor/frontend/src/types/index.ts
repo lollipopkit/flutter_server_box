@@ -274,8 +274,52 @@ export interface DataRetentionConfig {
   max_db_size_mb: number;
 }
 
+/// One notification channel. `config` is the channel's own free-form settings
+/// — a webhook's url/method/headers, a bark key, an iOS token — and carries
+/// keys this panel knows nothing about (`legacy_go_format`, a webhook's
+/// `expected_http_status`), so an editor must send the loaded object back with
+/// its edits applied rather than rebuild it from the fields it renders.
+///
+/// A `null` value means "set on the agent, not disclosed"; the key being
+/// absent means it is not set at all. Sending the `null` back keeps the stored
+/// value — which is only possible with `from_index`, the position the entry was
+/// loaded from, so a rename or a reorder does not lose a credential.
+export interface PushEntry {
+  name: string;
+  push_type: string;
+  config: Record<string, unknown>;
+  from_index: number | null;
+}
+
+export interface PushView extends PushEntry {
+  /// False when the agent has no sender for `push_type` and therefore cannot
+  /// know which of the entry's keys are credentials: `config` comes back empty
+  /// and the channel can be removed but not edited here.
+  editable: boolean;
+}
+
+export interface PushPayload {
+  pushes: PushEntry[];
+  /// "N/duration", e.g. "1/1m". null = the agent's default of one per minute.
+  push_rate: string | null;
+}
+
+export interface PushListView extends PushPayload {
+  pushes: PushView[];
+  /// The channel types this agent can actually deliver through.
+  push_types: string[];
+  /// Whether a saved channel only reaches the rule engine on the next restart.
+  applies_on_restart: boolean;
+}
+
+export interface PushTestResult {
+  ok: boolean;
+  error?: string;
+}
+
 /// Whitelisted, writable subset of config.toml — see monitor's settings-page
-/// plan for why jwt_secret/database_url/push are deliberately excluded
+/// plan for why jwt_secret/database_url are deliberately excluded. The push
+/// channels have their own endpoint, for the reason card order does.
 export interface SettingsPayload {
   interval_seconds: number;
   extended_interval_secs: number | null;
@@ -290,6 +334,11 @@ export interface SettingsPayload {
 /// immediately vs. require a monitor restart
 export interface SettingsView extends SettingsPayload {
   live_fields: string[];
+  /// What `data_retention` becomes when an editor switches it on. `null` there
+  /// means no cleanup runs at all rather than "the defaults apply", so the
+  /// values have to come from somewhere — and from the agent rather than from
+  /// a copy in each editor.
+  data_retention_defaults: DataRetentionConfig;
 }
 
 /// Home-grid card order — kept out of SettingsPayload; see the dedicated

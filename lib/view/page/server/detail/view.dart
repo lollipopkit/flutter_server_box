@@ -33,6 +33,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -346,7 +347,11 @@ ${err.message ?? 'null'}
     // row too, and `btns` decides what belongs in it
     final buildFuncs = si.capabilities.terminal;
     final logo = _buildLogo(si);
-    final children = <Widget>[?logo, ?_buildErrCard(si)];
+    final children = <Widget>[
+      ?logo,
+      ?_buildErrCard(si),
+      ?_buildMonitorSettingsEntry(si),
+    ];
     for (final card in _cardsOrder) {
       final child = _cardBuildMap[ServerDetailCards.fromName(card)]
           ?.call(si);
@@ -523,6 +528,34 @@ ${err.message ?? 'null'}
   /// may be drawn here is a wider set than what may be drawn there. Recolouring
   /// is a modification, and at least one project — Rocky Linux — forbids
   /// altering its mark "in any way", which is why no mark ships for it.
+  /// The way into the agent's own configuration, for a server that has one.
+  ///
+  /// Null for every other server, and asked of `spi.monitorHttp` rather than of
+  /// [ServerState.capabilities]: what this opens is *the agent's* settings, and
+  /// a server with both transports answers capability questions as the union of
+  /// the two — so a capability check would show this for an SSH-only server
+  /// that happens to share a capability with an agent.
+  ///
+  /// Above the cards rather than in the function bar below them: that row is
+  /// things done *to* the machine, and this is the machine's own configuration.
+  Widget? _buildMonitorSettingsEntry(ServerState si) {
+    final monitor = si.spi.monitorHttp;
+    if (monitor == null) return null;
+
+    return CardX(
+      child: ListTile(
+        leading: const Icon(MingCute.settings_2_line),
+        title: Text(l10n.monitorSettings),
+        subtitle: Text(l10n.monitorSettingsTip, style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => MonitorSettingsPage.route.go(
+          context,
+          MonitorSettingsArgs(monitor: monitor, subtitle: si.spi.name),
+        ),
+      ),
+    );
+  }
+
   Widget? _buildLogo(ServerState si) {
     final logoUrl = si.getLogoUrl(context);
     // Null, not an empty placeholder: the wrapping Padding was laid out either
