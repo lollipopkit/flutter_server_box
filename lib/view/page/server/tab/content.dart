@@ -22,7 +22,8 @@ extension on _ServerPageState {
             // card and struck it through with the overflow stripe instead.
             //
             // Which is also why the status is capped: it is the unbounded one
-            // now, and it grew a third segment when latency joined it.
+            // now, and its length is not ours to choose — a long uptime, or
+            // whatever `server_card_top_right` prints.
             Expanded(
               child: Row(
                 mainAxisSize: MainAxisSize.min,

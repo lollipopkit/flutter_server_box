@@ -26,9 +26,9 @@ import '../helpers/test_db.dart';
 /// How long the last status read took, where it is shown and when it is not.
 ///
 /// Three things here are invisible in the code that produces the number:
-/// adding a row to the About card decides whether that card starts open,
-/// adding a segment to the card's status line decides where a server name
-/// elides, and a reading nothing clears outlives the machine it was taken
+/// adding a row to the About card decides whether that card starts open, the
+/// server card's status line is deliberately not one of the places it is
+/// shown, and a reading nothing clears outlives the machine it was taken
 /// from.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -162,20 +162,22 @@ void main() {
       return notifierOf(tester, ServerPage);
     }
 
-    testWidgets('puts the reading in front of the rest of the status', (
-      tester,
-    ) async {
+    testWidgets('keeps the reading out of the status line', (tester) async {
+      // The status line is temperature and uptime. It is read while scanning a
+      // list of machines, and the latency is a detail-page figure.
       final notifier = await pumpTab(tester, size: const Size(1200, 900));
 
       notifier.updateStatus(fullStatus(), latencyMs: 41);
       notifier.updateConnection(ServerConn.finished);
       await tester.pump();
 
+      expect(find.textContaining('up 12 days'), findsOneWidget);
       expect(
-        find.textContaining('${libL10n.delay}: 41ms'),
-        findsOneWidget,
-        reason: 'the card does not say how long the last read took',
+        find.textContaining('41ms'),
+        findsNothing,
+        reason: 'the reading is back on the server card',
       );
+      expect(find.textContaining(libL10n.delay), findsNothing);
     });
 
     testWidgets('elides rather than overflowing beside a long name', (
@@ -183,7 +185,7 @@ void main() {
     ) async {
       // The card title is one Row: the name is `Expanded` and the status takes
       // its intrinsic width, so an unbounded status pushes the row past the
-      // card. A third segment is what made that reachable.
+      // card. A long uptime alone is enough to reach it.
       const longName =
           'production-database-replica-eu-central-1b-standby-node-07';
       Stores.server.put(
