@@ -1,12 +1,12 @@
-import 'dart:io';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -41,10 +41,7 @@ void main() {
     user: 'u',
     autoConnect: false,
   );
-  late Directory tempDir;
-
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-latency-');
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
@@ -58,7 +55,6 @@ void main() {
   tearDown(() async {
     await getIt.reset();
     await SqliteDb.close();
-    await tempDir.delete(recursive: true);
   });
 
   /// A status with as much to say as a connected machine has: exactly the
@@ -145,6 +141,33 @@ void main() {
         reason: 'the latency row collapsed a card that used to start open',
       );
       expect(find.text('41ms'), findsOneWidget);
+    });
+
+    testWidgets('and a real memory total still fits the memory card', (
+      tester,
+    ) async {
+      // A `ListTile` gives its title what the trailing does not take, which on
+      // a 320pt phone is 77pt for the 27pt figure and the `of <total>` line
+      // together. `InitStatus.status` reports 1 KB of memory, which fits
+      // anything — so without a machine-sized total here, removing the
+      // memory card's ellipsis leaves the whole suite green.
+      final notifier = await pumpDetail(tester, size: const Size(320, 900));
+
+      final status = fullStatus()
+        ..mem = const Memory(
+          total: 134217728,
+          free: 8388608,
+          avail: 16777216,
+        );
+      notifier.updateStatus(status, latencyMs: 41);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'the memory card title overflowed',
+      );
     });
   });
 
@@ -254,6 +277,29 @@ void main() {
         container.read(serverProvider(sid)).latencyMs,
         isNull,
         reason: 'the new host was given the old one\'s latency',
+      );
+    });
+
+    test('when the status that arrives carries an error', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final n = notifier(container);
+
+      n.updateStatus(fullStatus(), latencyMs: 41);
+
+      // What a status read that timed out publishes. It leaves the session up
+      // on purpose, so none of the paths that clear a connection runs, and the
+      // last good figure used to sit in the About card beside the error that
+      // replaced the status it was taken from.
+      n.updateStatus(
+        fullStatus()
+          ..err = SSHErr(type: SSHErrType.getStatus, message: 'timed out'),
+      );
+
+      expect(
+        container.read(serverProvider(sid)).latencyMs,
+        isNull,
+        reason: 'an errored read is still reported as a reading',
       );
     });
 

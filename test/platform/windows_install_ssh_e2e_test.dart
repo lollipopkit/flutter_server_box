@@ -84,9 +84,23 @@ class _SshTarget {
   final String user;
   final List<String> identityFiles;
 
-  static Future<_SshTarget?> resolve(String host) async {
-    final result = await Process.run('ssh', ['-G', host]);
-    if (result.exitCode != 0) return null;
+  /// The target, or why there is none — and never a throw.
+  ///
+  /// `ssh` not being on PATH is a `ProcessException`, and this runs from
+  /// `main()`: uncaught, the runner reports the *file* as having failed to
+  /// load, with a stack trace, no test name and no mention of `ssh`.
+  static Future<({_SshTarget? target, String? problem})> resolve(
+    String host,
+  ) async {
+    final ProcessResult result;
+    try {
+      result = await Process.run('ssh', ['-G', host]);
+    } on ProcessException catch (e) {
+      return (target: null, problem: 'could not run `ssh -G $host`: ${e.message}');
+    }
+    if (result.exitCode != 0) {
+      return (target: null, problem: 'ssh -G could not resolve $host');
+    }
 
     String? hostname, user;
     var port = 22;
@@ -111,12 +125,17 @@ class _SshTarget {
           );
       }
     }
-    if (hostname == null || user == null) return null;
-    return _SshTarget(
-      hostname: hostname,
-      port: port,
-      user: user,
-      identityFiles: identities,
+    if (hostname == null || user == null) {
+      return (target: null, problem: 'ssh -G named no hostname or user for $host');
+    }
+    return (
+      target: _SshTarget(
+        hostname: hostname,
+        port: port,
+        user: user,
+        identityFiles: identities,
+      ),
+      problem: null,
     );
   }
 
@@ -132,9 +151,18 @@ class _SshTarget {
   /// identically — and the failure the runner printed was a guess written into
   /// the `reason:` of an `expect`. Every one of those has a different fix, and
   /// the loader is the only place that knows which it was.
-  ({List<SSHKeyPair> pairs, List<String> reasons}) loadIdentities() {
+  ///
+  /// [failures] is the subset of [reasons] for keys that were *tried* and did
+  /// not open: a wrong passphrase, or a format this fork cannot read. Those are
+  /// a broken setup rather than an opt-out — a rotated passphrase would
+  /// otherwise leave this suite green with the regression it exists for no
+  /// longer running — so the caller fails on them. A key that is absent, or
+  /// encrypted with no passphrase configured, is an opt-out and only skips.
+  ({List<SSHKeyPair> pairs, List<String> reasons, List<String> failures})
+  loadIdentities() {
     final passphrase = _env('SBM_E2E_SSH_KEY_PASSPHRASE');
     final reasons = <String>[];
+    final failures = <String>[];
     for (final path in identityFiles) {
       // The basename, never the path: `ssh -G` resolves `~`, and a home
       // directory is a username. This text ends up in CI logs.
@@ -150,6 +178,11 @@ class _SshTarget {
         // The case that cost an afternoon: `.env` carried the key with an
         // empty value, which `_env` reads as unset — correctly — and the
         // failure then blamed the identity file.
+        //
+        // A skip, not a failure: this is the one case answerable without
+        // trying, and it says the secret was never configured. Every ordinary
+        // machine has an encrypted key in `~/.ssh`, so failing here would turn
+        // `flutter test` red for anyone who named a host and nothing else.
         reasons.add(
           '$name: encrypted, and SBM_E2E_SSH_KEY_PASSPHRASE is empty or unset',
         );
@@ -157,15 +190,21 @@ class _SshTarget {
       }
       try {
         final pairs = SSHKeyPair.fromPem(pem, encrypted ? passphrase : null);
-        if (pairs.isNotEmpty) return (pairs: pairs, reasons: reasons);
-        reasons.add('$name: parsed, but carried no key pair');
+        if (pairs.isNotEmpty) {
+          return (pairs: pairs, reasons: reasons, failures: failures);
+        }
+        final reason = '$name: parsed, but carried no key pair';
+        reasons.add(reason);
+        failures.add(reason);
       } catch (e) {
         // The message, not the object: a wrong passphrase and a format this
         // fork cannot read both arrive here and read differently.
-        reasons.add('$name: $e');
+        final reason = '$name: $e';
+        reasons.add(reason);
+        failures.add(reason);
       }
     }
-    return (pairs: const [], reasons: reasons);
+    return (pairs: const [], reasons: reasons, failures: failures);
   }
 }
 
@@ -224,8 +263,12 @@ Future<({int? exitCode, String stdout, String stderr})> _exec(
 /// normal shape of a dedicated test key, and skipped the regression test for a
 /// hang that shipped to users. The question is never which variables are set,
 /// it is whether an identity loads — [_SshTarget.loadIdentities] answers that
-/// per key and says why for each, so its reasons are the skip message rather
-/// than a guess written above it.
+/// per key and says why for each, so its reasons are the message rather than a
+/// guess written above it.
+///
+/// Which message depends on where the answer came from. Nothing configured to
+/// load is an opt-out and skips; a key that was tried and would not open is a
+/// broken setup and fails, on the same reasoning as an unresolvable host.
 Future<void> main() async {
   final host = _env('SBM_E2E_SSH_HOST_WINDOWS');
   if (host == null) {
@@ -239,11 +282,12 @@ Future<void> main() async {
 
   // A host that is named and cannot be resolved is a typo, not an opt-out:
   // somebody asked for this test and it is not going to run. That is a
-  // failure, and the only one in this block.
-  final target = await _SshTarget.resolve(host);
+  // failure.
+  final resolved = await _SshTarget.resolve(host);
+  final target = resolved.target;
   if (target == null) {
     test('windows install e2e', () {
-      fail('ssh -G could not resolve $host');
+      fail(resolved.problem ?? 'ssh -G could not resolve $host');
     });
     return;
   }
@@ -251,12 +295,25 @@ Future<void> main() async {
   final loaded = target.loadIdentities();
   final identities = loaded.pairs;
   if (identities.isEmpty) {
+    // Same rule as the host: a key that was tried and would not open is a
+    // broken setup, not an opt-out. Skipping it means a rotated passphrase
+    // leaves the suite green with this regression no longer run, which is what
+    // the rewrite above set out to stop.
+    if (loaded.failures.isNotEmpty) {
+      test('windows install e2e', () {
+        fail(
+          'every identity ssh -G named for $host failed to load: '
+          '${loaded.failures.join('; ')}',
+        );
+      });
+      return;
+    }
     test(
       'windows install e2e',
       () {},
       skip: loaded.reasons.isEmpty
           ? 'ssh -G named no identity files for $host'
-          : 'no identity ssh -G named could be loaded: '
+          : 'no identity ssh -G named is available here: '
                 '${loaded.reasons.join('; ')}',
     );
     return;

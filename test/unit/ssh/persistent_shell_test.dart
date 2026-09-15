@@ -32,6 +32,27 @@ void main() {
     expect(factory.session.writes, hasLength(2));
   });
 
+  test('PersistentShell.ensureSession opens the session before run', () async {
+    // What the status poll times is the command, and the session is opened on
+    // the first `run` after every connect — a channel open plus the remote
+    // shell's startup. Asking for it first is how that cost is kept out of the
+    // first reading of every connection.
+    final factory = _FakeSessionFactory();
+    final shell = PersistentShell(null, sessionFactory: factory.call);
+
+    await shell.ensureSession();
+    expect(factory.createCount, 1);
+
+    final future = shell.run('echo first');
+    await Future<void>.delayed(Duration.zero);
+    factory.session.stdoutController.add(
+      Uint8List.fromList(utf8.encode('first\n__SERVER_BOX_DONE__1:0\n')),
+    );
+
+    expect((await future).output, 'first');
+    expect(factory.createCount, 1, reason: 'run opened a second session');
+  });
+
   test('PersistentShell combines stderr with stdout output', () async {
     final factory = _FakeSessionFactory();
     final shell = PersistentShell(null, sessionFactory: factory.call);

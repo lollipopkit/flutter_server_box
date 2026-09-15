@@ -65,15 +65,23 @@ abstract class ServerState with _$ServerState {
     ///
     /// The read, not the connect: a handshake happens once and then never
     /// again, so showing it would pin a number taken minutes ago — and over a
-    /// jump chain it measures the whole chain rather than this server. Both
-    /// transports therefore time the same thing, the one request that asks the
-    /// machine for its status, so the two are comparable.
+    /// jump chain it measures the whole chain rather than this server.
+    ///
+    /// What the read *is* differs by transport, and the two figures are not
+    /// interchangeable. Over SSH it is the status script running on the
+    /// machine, so it carries that machine's load as well as the network; over
+    /// a monitor agent it is one HTTP request for a sample the agent had
+    /// already taken, so it carries little but the network. A server reachable
+    /// both ways reports whichever transport led that poll. What neither
+    /// includes is the work of turning the answer into a [ServerStatus], which
+    /// happens on the isolate drawing frames and is not the machine's doing.
     ///
     /// Null when there has been no successful read since the server was last
-    /// reachable. Every path that gives up on a connection clears it, because
-    /// a latency left behind reads as a live measurement of a machine that is
-    /// no longer answering — and survives an edit pointing the server at a
-    /// different host.
+    /// reachable. Every path that gives up on a connection clears it, and so
+    /// does publishing a status that carries an error, because a latency left
+    /// behind reads as a live measurement of a machine that is no longer
+    /// answering — and survives an edit pointing the server at a different
+    /// host.
     int? latencyMs,
     SSHClient? client,
 
@@ -176,10 +184,16 @@ class ServerNotifier extends _$ServerNotifier {
   /// [state] are two rebuilds of every card watching this server.
   /// Null leaves the previous reading alone — most callers here are clearing
   /// an error rather than reporting a read.
+  ///
+  /// A [status] carrying an error drops it instead, whatever was passed. A
+  /// read that errored is not a reading, and the paths that report one are not
+  /// the paths that clear the connection: a status read that timed out leaves
+  /// the session up, so nothing else was going to, and the last good figure
+  /// sat in the About card beside the error that replaced it.
   void updateStatus(ServerStatus status, {int? latencyMs}) {
     state = state.copyWith(
       status: status,
-      latencyMs: latencyMs ?? state.latencyMs,
+      latencyMs: status.err != null ? null : (latencyMs ?? state.latencyMs),
     );
     _rememberDist(status);
   }
@@ -493,14 +507,16 @@ class ServerNotifier extends _$ServerNotifier {
     );
 
     try {
-      // Around the request and nothing else. Stopping it after [updateStatus]
-      // would fold in a synchronous SQLite write and a full rebuild pass, and
-      // report the sum as a network reading.
-      final stopwatch = Stopwatch()..start();
       final status = await source.fetchStatus(_copyStatus(state.status));
-      stopwatch.stop();
       if (!_isRefreshCurrent(operation, spi)) return;
-      updateStatus(status, latencyMs: stopwatch.elapsedMilliseconds);
+      // Timed by the source, which is the only place that can tell the request
+      // apart from the mapping it does on the answer. Timed from here it would
+      // be the sum of the two, plus — had the stopwatch run past this line —
+      // a synchronous SQLite write and a full rebuild pass.
+      updateStatus(
+        status,
+        latencyMs: source is MonitorHttpDataSource ? source.lastRequestMs : null,
+      );
       // Alongside the status rather than once at connect: what the agent
       // allows is its own config, which can change under a running app, and
       // this poll is already authenticated and periodic. A failure here is
@@ -1247,10 +1263,9 @@ class ServerNotifier extends _$ServerNotifier {
         systemType: state.status.system,
         customDir: spi.custom?.scriptDir,
       );
-      final elapsed = Stopwatch()..start();
-      raw = await _runStatusCommand(statusCmd);
-      elapsed.stop();
-      latencyMs = elapsed.elapsedMilliseconds;
+      final read = await _runStatusCommand(statusCmd);
+      raw = read.raw;
+      latencyMs = read.elapsedMs;
       if (!_isRefreshCurrent(operation, spi)) return;
 
       // Output carrying no segment marker parses into an empty status: the
@@ -1271,7 +1286,11 @@ class ServerNotifier extends _$ServerNotifier {
       final hasSegment = ffi.containsScriptSegment(raw: raw);
       if (!hasSegment && _hasEnabledStatusCommands(spi, state.status.system)) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
-          // Keep previous server status when error occurs
+          // Keep previous server status when error occurs.
+          //
+          // The latency goes with it, deliberately: this setting asks for the
+          // last good reading to stay on screen, and the delay is part of that
+          // reading rather than a separate claim about right now.
           if (state.conn != ServerConn.failed && state.status.more.isNotEmpty) {
             return;
           }
@@ -1384,7 +1403,9 @@ class ServerNotifier extends _$ServerNotifier {
         systemType: state.status.system,
         customDir: spi.custom?.scriptDir,
       );
-      final raw = await _runStatusCommandWithExec(
+      // Timing discarded: the extended commands take seconds by design, and
+      // what this method is after is their output.
+      final (:raw, elapsedMs: _) = await _runStatusCommandWithExec(
         client,
         cmd,
         isWindows: state.status.system == SystemType.windows,
@@ -1402,7 +1423,19 @@ class ServerNotifier extends _$ServerNotifier {
     return _extendedRaw;
   }
 
-  Future<String> _runStatusCommand(String statusCmd) async {
+  /// The status command's output, and how long the command itself took.
+  ///
+  /// Timed here rather than around the call, because this is the only place
+  /// that knows which of the steps it takes is the request. The persistent
+  /// shell opens its session on the first `run` after every connect — a
+  /// channel open plus the remote shell's startup — and timed with the command
+  /// that made the first reading of every connection a multiple of the ones
+  /// after it, with nothing on screen explaining the drop.
+  ///
+  /// [elapsedMs] is null when there was nothing to time.
+  Future<({String raw, int? elapsedMs})> _runStatusCommand(
+    String statusCmd,
+  ) async {
     final client = state.client;
     final spi = state.spi;
 
@@ -1410,7 +1443,7 @@ class ServerNotifier extends _$ServerNotifier {
       Loggers.app.warning(
         'Client for ${spi.name} is null, skipping status fetch',
       );
-      return '';
+      return (raw: '', elapsedMs: null);
     }
 
     if (state.status.system == SystemType.windows) {
@@ -1423,8 +1456,11 @@ class ServerNotifier extends _$ServerNotifier {
 
     try {
       final shell = await _getPersistentShell();
+      await shell.ensureSession();
+      final elapsed = Stopwatch()..start();
       final result = await shell.run(statusCmd, timeout: _timeout);
-      return result.output;
+      elapsed.stop();
+      return (raw: result.output, elapsedMs: elapsed.elapsedMilliseconds);
     } on TimeoutException catch (e, s) {
       _usePersistentShellForStatus = false;
       await _disposePersistentShell();
@@ -1448,7 +1484,10 @@ class ServerNotifier extends _$ServerNotifier {
     return commands.any((command) => !disabled.contains(command.displayName));
   }
 
-  Future<String> _runStatusCommandWithExec(
+  /// The whole call is timed, unlike the persistent shell's: `run` opens a
+  /// channel per command here, so that cost is part of every reading rather
+  /// than of the first one.
+  Future<({String raw, int? elapsedMs})> _runStatusCommandWithExec(
     SSHClient client,
     String statusCmd, {
     bool isWindows = false,
@@ -1459,13 +1498,18 @@ class ServerNotifier extends _$ServerNotifier {
     // parsing is a stdout protocol: merging stderr lets those records land in
     // whichever SrvBoxSep section happened to be current when the SSH chunks
     // arrived, so an <Objs> document could become the system name or an IP.
+    final elapsed = Stopwatch()..start();
     final execResult = await client
         .run(statusCmd, stderr: false)
         .timeout(const Duration(seconds: 30));
-    return SSHDecoder.decode(
-      execResult,
-      isWindows: isWindows,
-      context: 'GetStatus<${spi.name}>',
+    elapsed.stop();
+    return (
+      raw: SSHDecoder.decode(
+        execResult,
+        isWindows: isWindows,
+        context: 'GetStatus<${spi.name}>',
+      ),
+      elapsedMs: elapsed.elapsedMilliseconds,
     );
   }
 

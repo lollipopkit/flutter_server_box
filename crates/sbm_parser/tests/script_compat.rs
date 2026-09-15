@@ -1,6 +1,8 @@
 //! Behavior-parity tests for script generation, ported from the app's Dart
-//! tests (`test/script_builder_test.dart`, `test/disabled_cmd_types_test.dart`)
-//! per the "tests as spec" migration rule.
+//! tests per the "tests as spec" migration rule. The two files they came from
+//! — `script_builder_test.dart` and `disabled_cmd_types_test.dart` — were
+//! deleted with the Dart implementation in 5457d7c6; this is what replaced
+//! them.
 
 use sbm_parser::SystemType;
 use sbm_parser::script;
