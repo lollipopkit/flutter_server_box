@@ -690,5 +690,7 @@
   "retentionCleanup": "清理执行间隔",
   "retentionMaxDbSize": "数据库体积上限",
   "corsOrigins": "CORS 允许来源",
-  "corsOriginsTip": "允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。"
+  "corsOriginsTip": "允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。",
+  "monitorSettingsTip": "编辑这台 agent 自身的配置",
+  "monitorNoAgent": "还没有配置了 monitor agent 的服务器。在某台服务器的设置里加上，就能在这里编辑它。"
 }

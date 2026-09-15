@@ -34,7 +34,6 @@ import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/view/page/bmc_credential/edit.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/custom_cmds.dart';
-import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
 
 part 'actions.dart';

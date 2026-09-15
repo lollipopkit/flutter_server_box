@@ -2158,6 +2158,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。';
+
+  @override
+  String get monitorSettingsTip => '编辑这台 agent 自身的配置';
+
+  @override
+  String get monitorNoAgent =>
+      '还没有配置了 monitor agent 的服务器。在某台服务器的设置里加上，就能在这里编辑它。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -4310,4 +4317,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。';
+
+  @override
+  String get monitorSettingsTip => '編輯這台 agent 自身的設定';
+
+  @override
+  String get monitorNoAgent =>
+      '還沒有設定了 monitor agent 的伺服器。在某台伺服器的設定裡加上，就能在這裡編輯它。';
 }

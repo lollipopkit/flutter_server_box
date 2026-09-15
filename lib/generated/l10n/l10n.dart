@@ -4095,6 +4095,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
   String get corsOriginsTip;
+
+  /// No description provided for @monitorSettingsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this agent\'s own configuration'**
+  String get monitorSettingsTip;
+
+  /// No description provided for @monitorNoAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.'**
+  String get monitorNoAgent;
 }
 
 class _AppLocalizationsDelegate

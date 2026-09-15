@@ -2349,4 +2349,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get corsOriginsTip =>
       'Origins a browser panel may call this agent from. Empty means same-origin only.';
+
+  @override
+  String get monitorSettingsTip => 'Edit this agent\'s own configuration';
+
+  @override
+  String get monitorNoAgent =>
+      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

@@ -17,7 +17,14 @@ enum AppTab {
   @HiveField(5)
   benchmark,
   @HiveField(6)
-  remoteDesktop;
+  remoteDesktop,
+
+  /// A `monitor` agent's own configuration. A tab because it is the one thing
+  /// here that is not about a server so much as about the program running on
+  /// it, and because an operator editing intervals and alert rules is moving
+  /// between agents rather than staying on one server's page.
+  @HiveField(7)
+  monitorSettings;
 
   /// The tabs a fresh install puts in the bar, and the fallback when a stored
   /// list cannot be read.

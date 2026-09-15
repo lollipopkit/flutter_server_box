@@ -18,6 +18,7 @@ void main() {
         AppTab.snippet,
         AppTab.benchmark,
         AppTab.remoteDesktop,
+        AppTab.monitorSettings,
       ]);
     });
 
@@ -133,13 +134,19 @@ void main() {
       AppTab.agent,
       AppTab.benchmark,
       AppTab.remoteDesktop,
+      AppTab.monitorSettings,
     ]);
   });
 
-  test('appends remote desktop without changing legacy enum indices', () {
+  /// A stored list may hold plain integers — `_parseAppTabFromElement`
+  /// resolves one against `values` by position — so a new tab may only ever be
+  /// appended. Inserting one would silently re-point every integer after it at
+  /// a different tab.
+  test('appends new tabs without changing earlier enum indices', () {
     expect(AppTab.server.index, 0);
     expect(AppTab.benchmark.index, 5);
     expect(AppTab.remoteDesktop.index, 6);
+    expect(AppTab.monitorSettings.index, 7);
   });
 
   group('reorderHomeTabs', () {

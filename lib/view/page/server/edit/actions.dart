@@ -328,33 +328,6 @@ extension _Actions on _ServerEditPageState {
     await CustomCmdsPage.route.go(context, SpiRequiredArgs(spi));
   }
 
-  /// Opens the agent's own settings, built from the fields on screen rather
-  /// than from a saved [Spi]: the address and login being typed are exactly
-  /// what reaches the agent, and requiring a save first would mean writing a
-  /// server record to look at one.
-  void _onTapMonitorSettings() async {
-    final addr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
-    if (addr == null) {
-      Toast.show('${libL10n.invalid}: Monitor URL');
-      return;
-    }
-    await MonitorSettingsPage.route.go(
-      context,
-      MonitorSettingsArgs(
-        monitor: MonitorHttpCredential(
-          addr: addr,
-          user: _monitorUserCtrl.text.selfNotEmptyOrNull,
-          pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
-          ignoreCert: _monitorIgnoreCert.value,
-          allowInsecure: _monitorAllowInsecure.value,
-        ),
-        // The server's name once it has one; the address is what identifies it
-        // while it is still being added.
-        subtitle: _nameController.text.selfNotEmptyOrNull ?? addr,
-      ),
-    );
-  }
-
   void _onTapDisabledCmdTypes() async {
     final allCmdTypes = ShellCmdType.all;
 

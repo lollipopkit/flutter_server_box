@@ -45,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 配置文件位于二进制文件旁边的 `config.toml`。所有配置项都在 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) 中说明。agent 默认监听 `0.0.0.0:3770`；如果存在 `frontend/dist`，还会在该地址提供网页面板。
 
-其中一部分不必打开文件也能修改。采集间隔、告警规则、通知渠道、数据保留和允许的面板来源，可以在网页面板的 **Server Settings** 页编辑，也可以在 App 里该服务器的 **Monitor HTTP** 一节编辑。两者连的是同一个 agent，写的是同一个文件。不开放编辑的部分是有意为之：JWT secret、数据库路径和 `[remote_access]` 开关只能改文件，这样面板密码永远无法扩大 agent 的暴露面。
+其中一部分不必打开文件也能修改。采集间隔、告警规则、通知渠道、数据保留和允许的面板来源，可以在网页面板的 **Server Settings** 页编辑；App 里有两个入口：服务器自己页面靠上位置的一个入口，以及一个覆盖所有 agent 的 **Monitor settings** 标签页。标签页默认不显示，在排列标签栏的地方打开即可。两者连的是同一个 agent，写的是同一个文件。不开放编辑的部分是有意为之：JWT secret、数据库路径和 `[remote_access]` 开关只能改文件，这样面板密码永远无法扩大 agent 的暴露面。
 
 文件中已有的密钥和 token —— ServerChan key、Bark key、iOS push token、`Authorization` header —— 不会回传给编辑器。它们显示为「已设置」且输入框为空；留空即保持原值，输入新值则替换。以这种方式所做的修改多数在 agent 重启后生效，每个字段会标明属于哪一种。
 
