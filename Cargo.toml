@@ -22,6 +22,22 @@ sspi = { git = "https://github.com/Devolutions/sspi-rs.git", rev = "847304fe3585
 # Smaller release binaries for the shipped container / native packages
 strip = true
 
+# A proc-macro is a dylib the compiler dlopens while it is building, not
+# something that ships — so stripping one buys nothing, and on macOS 26+ it
+# costs the build outright. `strip` above otherwise applies to them too, and
+# the stripped result is rejected by the loader:
+#
+#   error: .../libsqlx_macros-<hash>.dylib: dlopen(...): tried:
+#     '...' (mis-aligned LINKEDIT string pool, fileOffset=0x005B195C)
+#   error: could not compile `sqlx` (lib) due to 1 previous error
+#
+# Which makes `cargo build --release -p server_box_monitor` — and every
+# profile inheriting this one, `release-monitor` included — fail on a
+# developer machine while CI, on older linkers, goes on passing. Build
+# scripts are in the same override and equally not shipped.
+[profile.release.build-override]
+strip = false
+
 # The one exception, and it is not about size.
 #
 # `sbm_ffi` is linked into the app, where it is one of the few things that can
