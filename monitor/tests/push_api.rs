@@ -14,7 +14,7 @@
 //! all write the same `config.toml`.
 
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex, MutexGuard, Once, OnceLock};
+use std::sync::{Arc, Once, OnceLock};
 
 use ntex::web::App;
 use ntex::web::test::{self as web_test, TestServer};
@@ -23,6 +23,7 @@ use serde_json::{Value, json};
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::{AppState, configure_api};
 use server_box_monitor::core::config::Config;
+use tokio::sync::{Mutex, MutexGuard};
 
 const SECRET: &str = "test-secret-that-is-long-enough-32ch";
 const BARK_KEY: &str = "bark-key-not-to-be-disclosed";
@@ -37,7 +38,12 @@ fn ensure_crypto_provider() {
 
 /// Moves the process into a directory of its own, once, and hands out the lock
 /// that keeps these tests from writing each other's `config.toml`.
-fn workspace() -> MutexGuard<'static, PathBuf> {
+///
+/// `tokio::sync::Mutex` rather than the one in `std`: every test below holds
+/// this across the `await` that starts its server, which is what
+/// `clippy::await_holding_lock` refuses. The lock is contended for the whole
+/// length of a test by design, so "drop it before the await" is not available.
+async fn workspace() -> MutexGuard<'static, PathBuf> {
     static DIR: OnceLock<Mutex<PathBuf>> = OnceLock::new();
     let dir = DIR.get_or_init(|| {
         let dir = std::env::temp_dir().join(format!("sbm-push-api-{}", std::process::id()));
@@ -45,7 +51,7 @@ fn workspace() -> MutexGuard<'static, PathBuf> {
         std::env::set_current_dir(&dir).unwrap();
         Mutex::new(dir)
     });
-    dir.lock().unwrap_or_else(|e| e.into_inner())
+    dir.lock().await
 }
 
 fn write_config(contents: &str) {
@@ -112,7 +118,7 @@ Content-Type = "application/json"
 
 #[ntex::test]
 async fn a_credential_is_withheld_and_survives_an_edit_that_never_saw_it() {
-    let _dir = workspace();
+    let _dir = workspace().await;
     write_config(CONFIG_WITH_SECRETS);
     let srv = test_server().await;
 
@@ -211,7 +217,7 @@ async fn a_credential_is_withheld_and_survives_an_edit_that_never_saw_it() {
 
 #[ntex::test]
 async fn a_value_the_editor_does_supply_replaces_the_stored_one() {
-    let _dir = workspace();
+    let _dir = workspace().await;
     write_config(CONFIG_WITH_SECRETS);
     let srv = test_server().await;
 
@@ -238,7 +244,7 @@ async fn a_value_the_editor_does_supply_replaces_the_stored_one() {
 
 #[ntex::test]
 async fn a_withheld_credential_with_nothing_behind_it_is_refused_whole() {
-    let _dir = workspace();
+    let _dir = workspace().await;
     write_config(CONFIG_WITH_SECRETS);
     let srv = test_server().await;
 
@@ -266,7 +272,7 @@ async fn a_withheld_credential_with_nothing_behind_it_is_refused_whole() {
 
 #[ntex::test]
 async fn a_rate_the_loader_would_ignore_is_refused() {
-    let _dir = workspace();
+    let _dir = workspace().await;
     write_config(CONFIG_WITH_SECRETS);
     let srv = test_server().await;
 
