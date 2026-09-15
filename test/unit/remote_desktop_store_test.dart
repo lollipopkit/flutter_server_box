@@ -4,7 +4,7 @@ import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 
-import 'helpers/test_db.dart';
+import '../helpers/test_db.dart';
 
 void main() {
   late RemoteDesktopStore store;
