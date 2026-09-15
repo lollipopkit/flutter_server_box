@@ -940,12 +940,13 @@ fn certificate_event(
     let certificate = x509_cert::Certificate::from_der(der)
         .map_err(|error| format!("RDP certificate could not be decoded: {error}"))?;
     let fingerprint: [u8; 32] = Sha256::digest(der).into();
+    let tbs = certificate.tbs_certificate();
     Ok(RemoteDesktopEvent::CertificateRequest {
         sha256: format_sha256(&fingerprint),
-        subject: certificate.tbs_certificate.subject.to_string(),
-        issuer: certificate.tbs_certificate.issuer.to_string(),
-        valid_from: certificate.tbs_certificate.validity.not_before.to_string(),
-        valid_to: certificate.tbs_certificate.validity.not_after.to_string(),
+        subject: tbs.subject().to_string(),
+        issuer: tbs.issuer().to_string(),
+        valid_from: tbs.validity().not_before.to_string(),
+        valid_to: tbs.validity().not_after.to_string(),
         previous_sha256: previous_sha256.as_ref().map(format_sha256),
     })
 }
