@@ -122,7 +122,7 @@ abstract final class GeoDataInstall {
       // to a disposed notifier for the length of it. It survives today only
       // because `removeListener` tolerates the call; anything that wrote
       // `progress.value` on the way out would assert. This repo has the same
-      // trap written down at `test/file_browser_test.dart`.
+      // trap written down at `test/widget/file_browser_test.dart`.
       unawaited(closed.whenComplete(progress.dispose));
     }
   }

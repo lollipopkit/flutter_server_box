@@ -38,9 +38,21 @@ class MonitorHttpDataSource implements ServerDataSource {
   Future<MonitorCapabilities> fetchCapabilities() =>
       _client.fetchCapabilities();
 
+  /// How long the last [fetchStatus] spent on its request, in milliseconds.
+  ///
+  /// The request and nothing else. What follows it here — the mapping and the
+  /// history append — is Dart on the isolate drawing frames, and counting it
+  /// as a network reading reports a fast agent on a fast network as a slow
+  /// one. Null until the first call, and describes the last one.
+  int? get lastRequestMs => _lastRequestMs;
+  int? _lastRequestMs;
+
   @override
   Future<ServerStatus> fetchStatus(ServerStatus into) async {
+    final request = Stopwatch()..start();
     final metrics = await _client.fetchStatus();
+    request.stop();
+    _lastRequestMs = request.elapsedMilliseconds;
     final status = applyMonitorMetrics(into, metrics);
     status.history.add(
       // The agent's own sampling instant, not now(): it refreshes its metrics

@@ -148,7 +148,7 @@ final class RemoteDesktopSessionsProvider
 }
 
 String _$remoteDesktopSessionsHash() =>
-    r'01515e1e473488953198f8cf45341c1b115ac7d5';
+    r'096ad829b825db7f577ef85900d2f458c0b31efb';
 
 abstract class _$RemoteDesktopSessions
     extends $Notifier<RemoteDesktopSessionsState> {

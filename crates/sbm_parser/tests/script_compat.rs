@@ -1,6 +1,8 @@
 //! Behavior-parity tests for script generation, ported from the app's Dart
-//! tests (`test/script_builder_test.dart`, `test/disabled_cmd_types_test.dart`)
-//! per the "tests as spec" migration rule.
+//! tests per the "tests as spec" migration rule. The two files they came from
+//! — `script_builder_test.dart` and `disabled_cmd_types_test.dart` — were
+//! deleted with the Dart implementation in 5457d7c6; this is what replaced
+//! them.
 
 use sbm_parser::SystemType;
 use sbm_parser::script;
@@ -633,9 +635,10 @@ fn extended_commands_split_out_of_status_windows() {
     assert!(!status.contains("amd-smi"));
     assert!(ext.contains("Get-StorageReliabilityCounter"));
     assert!(ext.contains("amd-smi"));
-    // The Windows disk-IO sample costs two seconds of Start-Sleep but feeds a
-    // live chart, so it stays in the fast poll
-    assert!(status.contains("Win32_PerfRawData_PerfDisk_PhysicalDisk"));
+    // Disk I/O is a single cumulative sample, so the app computes exactly one
+    // delta between status polls and the keys match Win32_LogicalDisk.
+    assert!(status.contains("Win32_PerfRawData_PerfDisk_LogicalDisk"));
+    assert!(!status.contains("Win32_PerfRawData_PerfDisk_PhysicalDisk"));
 }
 
 /// Disabling every command of one half must not emit an empty `then`/`else`

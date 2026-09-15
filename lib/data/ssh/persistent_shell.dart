@@ -138,6 +138,21 @@ final class PersistentShell {
     }
   }
 
+  /// Opens the shell session if it is not open already.
+  ///
+  /// [run] does this on its first call after every connect, which puts a
+  /// channel open and the remote shell's startup inside whatever that call is
+  /// being timed for. A caller that times a command asks for the session
+  /// first, so what it measures is the command.
+  Future<void> ensureSession() async {
+    await _withStateLock(() async {
+      if (_closed) {
+        throw StateError('Persistent shell already closed');
+      }
+      await _ensureSessionLocked();
+    });
+  }
+
   Future<void> close() async {
     _closed = true;
     await _withStateLock(() async {

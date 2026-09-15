@@ -279,6 +279,9 @@ extension _ServerX on ServerState {
           return null;
         }();
         final upTime = status.more[StatusCmdType.uptime];
+        // Temperature and uptime, and nothing else. The latency belongs to the
+        // detail page's About card: this line is read while scanning a list of
+        // machines, and a number that changes on every poll is noise there.
         final items = [
           cmdTemp ??
               (temperatureVal != null

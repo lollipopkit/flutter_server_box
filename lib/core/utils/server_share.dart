@@ -225,7 +225,7 @@ abstract final class ServerShareCodec {
   /// The most bytes that fits in [qrMaxModules] at error correction level L,
   /// which is the level the share dialog asks `QrView` for.
   ///
-  /// Held against the real encoder by `test/server_share_qr_test.dart`, since
+  /// Held against the real encoder by `test/unit/server/server_share_qr_test.dart`, since
   /// this pair is two numbers out of a table that has to agree.
   static const qrCapacity = 1465;
 

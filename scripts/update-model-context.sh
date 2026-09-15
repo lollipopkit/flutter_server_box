@@ -61,4 +61,4 @@ with open(out, 'w') as handle:
 print(f'{len(by_id)} models -> {out}')
 PY
 
-echo "Remember: test/model_context_test.dart asserts the shape, not the values."
+echo "Remember: test/unit/ai/model_context_test.dart asserts the shape, not the values."

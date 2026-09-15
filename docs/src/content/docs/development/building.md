@@ -105,7 +105,7 @@ Release artifacts are built by the `monitor-release.yml` workflow. It supports `
 ```bash
 flutter clean
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 `flutter clean` removes `build/`, including the iOS Linux engine libraries when that engine is enabled. Rebuild the required target with `scripts/build-ish-ios.sh device`, `simulator`, or `macos`; otherwise the linker will report missing engine files.

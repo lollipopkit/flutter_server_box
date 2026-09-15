@@ -23,16 +23,16 @@ The frozen adapters in `lib/hive/legacy_adapters.dart` are not part of the gener
 ### Normal generation
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ### Clean and regenerate
 
-Use this only when the build cache is inconsistent:
+Use this when the build cache no longer matches the tree, which most often follows a merge that adds generated sources. A stale `.dart_tool/build/asset_graph.json` does not report anything: the build stops part-way through a phase at 0% CPU and waits forever, because the error it hits is swallowed by the step awaiting it.
 
 ```bash
 dart run build_runner clean
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
 ```
 
 ## Generated files
@@ -117,7 +117,7 @@ The generated code is written to `lib/generated/l10n/`.
 
 ## Notes
 
-- Use `--delete-conflicting-outputs` when generated files conflict.
+- `--delete-conflicting-outputs` was removed in build_runner 2.15 and is now ignored with a warning. Clear the cache instead, as above.
 - Commit generated files that are tracked by this repository.
 - Never manually edit `*.g.dart`, `*.freezed.dart`, or files under `lib/generated/`.
 - Finish code generation before running analyze and tests after a model change.

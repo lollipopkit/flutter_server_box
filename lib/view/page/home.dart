@@ -64,7 +64,7 @@ const _kRailChromeHeight = 72.0;
 /// An estimate rather than a measurement, because the count has to be made
 /// *before* the destinations are built. Erring high is a rail with a spare
 /// slot; erring low is a rail that overflows its box, which is why the rail is
-/// also `scrollable`. `test/home_rail_tabs_test.dart` holds it against what
+/// also `scrollable`. `test/widget/home_rail_tabs_test.dart` holds it against what
 /// Flutter actually lays out.
 ///
 /// Rounded **up**, and that is the whole reason the ceiling is here: a text
@@ -127,7 +127,7 @@ class _HomePageState extends ConsumerState<HomePage>
   /// `restoreState` runs, registration succeeds, the value reads back within
   /// the session, and a relaunch has nothing, because the route
   /// `MaterialApp.home` builds hands its subtree no bucket
-  /// (`test/restoration_bucket_test.dart`). So this always came back to the
+  /// (`test/widget/restoration_bucket_test.dart`). So this always came back to the
   /// first tab, and nothing said so.
   final _lastTab = Stores.history.homeTab;
 

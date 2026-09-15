@@ -261,7 +261,11 @@ pub const WINDOWS: &[CommandSpec] = &[
     CommandSpec { key: HOST, cmd: r#"Write-Output $env:COMPUTERNAME"# },
     CommandSpec {
         key: DISKIO,
-        cmd: r#"$s1 = @(Get-WmiObject Win32_PerfRawData_PerfDisk_PhysicalDisk | Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec, Timestamp_Sys100NS); Start-Sleep -Seconds 1; $s2 = @(Get-WmiObject Win32_PerfRawData_PerfDisk_PhysicalDisk | Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec, Timestamp_Sys100NS); @($s1, $s2) | ConvertTo-Json -Depth 5"#,
+        // PerfRawData fields are cumulative despite their `Persec` names. A
+        // single logical-disk sample therefore has the same semantics as
+        // Linux `/proc/diskstats`, and its `C:` keys line up with the disk
+        // usage command instead of requiring a physical-to-logical mapping.
+        cmd: "Get-WmiObject Win32_PerfRawData_PerfDisk_LogicalDisk | Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec | ConvertTo-Json",
     },
     CommandSpec {
         key: BATTERY,
