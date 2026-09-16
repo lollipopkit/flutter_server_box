@@ -2232,7 +2232,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '이 agent는 측정값만 제공합니다. 터미널 액세스, 명령 실행, 파일 탐색은 사용할 수 없습니다. agent의 config.toml에 있는 [remote_access]에서 활성화할 수 있지만, 여기서는 변경할 수 없습니다.';
+      '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
 
   @override
   String get monitorNoAgent =>

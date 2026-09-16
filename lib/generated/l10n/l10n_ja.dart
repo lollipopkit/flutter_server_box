@@ -2225,7 +2225,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'この agent は計測値だけを提供します。ターミナル、コマンド実行、ファイル閲覧は利用できません。agent の config.toml にある [remote_access] で有効にできますが、ここからは変更できません。';
+      'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
 
   @override
   String get monitorNoAgent =>

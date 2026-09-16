@@ -4105,7 +4105,7 @@ abstract class AppLocalizations {
   /// No description provided for @monitorNoRemoteAccess.
   ///
   /// In en, this message translates to:
-  /// **'This agent only provides readings. Terminal access, command execution, and file browsing are unavailable. They can be enabled under [remote_access] in the agent\'s config.toml, but not from here.'**
+  /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
   String get monitorNoRemoteAccess;
 
   /// No description provided for @monitorNoAgent.

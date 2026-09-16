@@ -2340,7 +2340,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Agen ini hanya menyediakan pembacaan. Akses terminal, eksekusi perintah, dan penjelajahan berkas tidak tersedia. Fitur tersebut dapat diaktifkan di bawah [remote_access] dalam config.toml agen, tetapi tidak dari sini.';
+      'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.';
 
   @override
   String get monitorNoAgent =>

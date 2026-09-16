@@ -2164,7 +2164,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 仅提供监控读数，未启用终端、命令执行和文件浏览。可在 agent 的 config.toml 的 [remote_access] 下开启，但无法从这里修改。';
+      '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
 
   @override
   String get monitorNoAgent =>
@@ -4327,7 +4327,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorNoRemoteAccess =>
-      '此 agent 僅提供監控讀數，未啟用終端、命令執行和檔案瀏覽。可在 agent 的 config.toml 的 [remote_access] 下開啟，但無法從這裡修改。';
+      '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
 
   @override
   String get monitorNoAgent =>

@@ -151,7 +151,7 @@ const it = {
 	files: 'File',
 	filesUnavailable: 'L\'accesso ai file non è abilitato su questo agente. Attiva remote_access.fs.enabled in config.toml e indica le sue radici; serve anche TLS, o un proxy sullo stesso host.',
 	remoteAccessOffTitle: 'L\'accesso remoto è disabilitato',
-	remoteAccessOffBody: 'Questo agent fornisce solo letture. L\'accesso al terminale, l\'esecuzione di comandi e la navigazione dei file non sono disponibili. Queste opzioni si configurano in [remote_access], nel suo config.toml, e non possono essere modificate qui; la password del pannello non può quindi concedere più accesso di quello esposto dall\'agent.',
+	remoteAccessOffBody: 'Questo agent è configurato solo per il monitoraggio. Qui non puoi aprire un terminale, eseguire comandi o sfogliare i file. Per attivare queste funzioni, modifica [remote_access] nel config.toml dell\'agent.',
 	filesRoots: 'Radici',
 	filesEmpty: 'Non c’è nulla qui',
 	filesSize: 'Dimensione',

@@ -2336,7 +2336,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Bu agent yalnızca ölçüm verileri sağlar. Terminal erişimi, komut çalıştırma ve dosya gezintisi kullanılamaz. Bunlar agent\'ın config.toml dosyasındaki [remote_access] bölümünden etkinleştirilebilir, ancak buradan değiştirilemez.';
+      'Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent\'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin.';
 
   @override
   String get monitorNoAgent =>

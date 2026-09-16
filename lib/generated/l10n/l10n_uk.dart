@@ -2355,7 +2355,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Цей агент надає лише показники. Доступ до термінала, виконання команд і перегляд файлів недоступні. Їх можна ввімкнути в розділі [remote_access] файла config.toml агента, але не звідси.';
+      'Цей агент налаштовано лише для моніторингу. Тут не можна відкрити термінал, виконувати команди чи переглядати файли. Щоб увімкнути ці функції, відредагуйте розділ [remote_access] у config.toml агента.';
 
   @override
   String get monitorNoAgent =>

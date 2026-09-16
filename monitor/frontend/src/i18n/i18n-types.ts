@@ -624,11 +624,11 @@ type RootTranslation = {
 	 */
 	filesUnavailable: string
 	/**
-	 * R​e​m​o​t​e​ ​a​c​c​e​s​s​ ​i​s​ ​d​i​s​a​b​l​e​d
+	 * R​e​m​o​t​e​ ​f​e​a​t​u​r​e​s​ ​a​r​e​ ​o​f​f
 	 */
 	remoteAccessOffTitle: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​o​n​l​y​ ​p​r​o​v​i​d​e​s​ ​r​e​a​d​i​n​g​s​.​ ​T​e​r​m​i​n​a​l​ ​a​c​c​e​s​s​,​ ​c​o​m​m​a​n​d​ ​e​x​e​c​u​t​i​o​n​,​ ​a​n​d​ ​f​i​l​e​ ​b​r​o​w​s​i​n​g​ ​a​r​e​ ​u​n​a​v​a​i​l​a​b​l​e​.​ ​T​h​e​s​e​ ​s​w​i​t​c​h​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​ ​u​n​d​e​r​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​i​t​s​ ​c​o​n​f​i​g​.​t​o​m​l​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​c​h​a​n​g​e​d​ ​h​e​r​e​,​ ​s​o​ ​a​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​c​a​n​n​o​t​ ​g​r​a​n​t​ ​a​c​c​e​s​s​ ​b​e​y​o​n​d​ ​w​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​e​x​p​o​s​e​s​.
+	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​m​o​n​i​t​o​r​i​n​g​ ​o​n​l​y​.​ ​Y​o​u​ ​c​a​n​’​t​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​,​ ​r​u​n​ ​c​o​m​m​a​n​d​s​,​ ​o​r​ ​b​r​o​w​s​e​ ​f​i​l​e​s​ ​h​e​r​e​.​ ​T​o​ ​e​n​a​b​l​e​ ​t​h​e​s​e​ ​f​e​a​t​u​r​e​s​,​ ​e​d​i​t​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
 	 */
 	remoteAccessOffBody: string
 	/**
@@ -1383,11 +1383,11 @@ export type TranslationFunctions = {
 	 */
 	filesUnavailable: () => LocalizedString
 	/**
-	 * Remote access is disabled
+	 * Remote features are off
 	 */
 	remoteAccessOffTitle: () => LocalizedString
 	/**
-	 * This agent only provides readings. Terminal access, command execution, and file browsing are unavailable. These switches are configured under [remote_access] in its config.toml and cannot be changed here, so a panel password cannot grant access beyond what the agent exposes.
+	 * This agent is set up for monitoring only. You can’t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent’s config.toml.
 	 */
 	remoteAccessOffBody: () => LocalizedString
 	/**

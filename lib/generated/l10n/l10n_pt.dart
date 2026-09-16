@@ -2349,7 +2349,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Este agente fornece apenas leituras. O acesso ao terminal, a execução de comandos e a navegação de ficheiros não estão disponíveis. Podem ser ativados em [remote_access], no config.toml do agente, mas não a partir daqui.';
+      'Este agente está configurado apenas para monitorização. Não pode abrir um terminal, executar comandos ou navegar pelos ficheiros a partir daqui. Para ativar estas funções, edite [remote_access] no config.toml do agente.';
 
   @override
   String get monitorNoAgent =>

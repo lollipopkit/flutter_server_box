@@ -2352,7 +2352,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get monitorNoRemoteAccess =>
-      'Deze agent levert alleen metingen. Terminaltoegang, het uitvoeren van opdrachten en bestandsbeheer zijn niet beschikbaar. Ze kunnen worden ingeschakeld onder [remote_access] in de config.toml van de agent, maar niet hier.';
+      'Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.';
 
   @override
   String get monitorNoAgent =>

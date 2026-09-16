@@ -151,7 +151,7 @@ const tr = {
 	files: 'Dosyalar',
 	filesUnavailable: 'Bu aracıda dosya erişimi etkin değil. config.toml içinde remote_access.fs.enabled seçeneğini açın ve köklerini belirtin; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
 	remoteAccessOffTitle: 'Uzaktan erişim devre dışı',
-	remoteAccessOffBody: 'Bu agent yalnızca ölçüm verileri sağlar. Terminal erişimi, komut çalıştırma ve dosya gezintisi kullanılamaz. Bu seçenekler agent\'ın config.toml dosyasındaki [remote_access] bölümünde yapılandırılır ve buradan değiştirilemez; panel parolası agent\'ın sunduğu erişim kapsamını genişletemez.',
+	remoteAccessOffBody: 'Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent\'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin.',
 	filesRoots: 'Kökler',
 	filesEmpty: 'Burada bir şey yok',
 	filesSize: 'Boyut',
