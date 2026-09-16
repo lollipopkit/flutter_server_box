@@ -740,6 +740,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ungrouped => '未分组';
 
   @override
+  String get containerReclaimable => '可回收';
+
+  @override
   String get unused => '未使用';
 
   @override
@@ -2011,6 +2014,45 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get userUid => 'UID';
+
+  @override
+  String get userLoginStatus => '状态';
+
+  @override
+  String get userLoginEnabled => '可登录';
+
+  @override
+  String get userDetailAccount => '账户';
+
+  @override
+  String get userDetailSecurity => '安全';
+
+  @override
+  String get userSshKeys => 'SSH 密钥';
+
+  @override
+  String get userExpires => '过期';
+
+  @override
+  String get userNever => '永不';
+
+  @override
+  String get userPasswordSet => '已设置';
+
+  @override
+  String get userPasswordLocked => '已锁定';
+
+  @override
+  String get userPasswordNone => '无';
+
+  @override
+  String get userSuperuser => '超级用户';
+
+  @override
+  String get userOpenShell => '打开 Shell';
+
+  @override
+  String get userRootChangesWarning => 'root 的改动会立即作用于所有会话。';
 
   @override
   String get userComment => '备注';

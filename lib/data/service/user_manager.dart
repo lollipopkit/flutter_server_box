@@ -37,6 +37,196 @@ elif [ -r /etc/group ]; then
 fi
 ''';
 
+  static const detailShadowMarker = 'SrvBoxUserDetail.Shadow';
+  static const detailStatusMarker = 'SrvBoxUserDetail.Status';
+  static const detailKeysMarker = 'SrvBoxUserDetail.Keys';
+  static const detailSudoMarker = 'SrvBoxUserDetail.Sudo';
+
+  /// Written only when `authorized_keys` was actually read. Its absence is
+  /// what tells "could not read it" from "read it, there were none" — a
+  /// distinction `|| true` used to swallow, reporting an unreadable file as an
+  /// account with no keys at all.
+  static const detailKeysReadMarker = 'SrvBoxUserDetail.KeysRead';
+
+  /// Prints the key-type token of each line and nothing else.
+  ///
+  /// `authorized_keys` is written by whoever owns the account, and the section
+  /// markers above travel as plain text on the same stream. Passing its lines
+  /// through meant an unprivileged user could put `SrvBoxUserDetail.Sudo` in
+  /// their own file and fabricate the sudo rule this page then displayed. A
+  /// token matching this pattern cannot collide with a marker.
+  static const _keyTypeFilter =
+      r"awk '{ for (i = 1; i <= NF; i++) "
+      r"if ($i ~ /^(ssh-|ecdsa-|sk-)/) { print $i; break } }'";
+
+  /// Reads what `/etc/shadow`, `authorized_keys` and sudoers hold for one
+  /// account.
+  ///
+  /// Every command is allowed to fail. All three are root-only on a normal
+  /// system, and the page this feeds shows what it could read rather than
+  /// asking for a password: looking at an account is not an action taken on
+  /// it.
+  ///
+  /// `getent shadow` rather than `passwd -S` or `chage -l`, whose dates are
+  /// written in the server's locale. Shadow's third and eighth fields are days
+  /// since the epoch, which need no parsing rule that differs by language.
+  static String detailScript(ServerUser user) {
+    if (!validName(user.name)) {
+      throw const UserManagerException('Invalid user name');
+    }
+    final name = shellSingleQuote(user.name);
+    final keys = shellSingleQuote('${user.home}/.ssh/authorized_keys');
+    return [
+      "printf '$detailShadowMarker\\n'",
+      'getent shadow $name 2>/dev/null || true',
+      "printf '$detailStatusMarker\\n'",
+      'passwd -S $name 2>/dev/null || true',
+      "printf '$detailKeysMarker\\n'",
+      'if [ -r $keys ]; then',
+      "printf '$detailKeysReadMarker\\n'",
+      '$_keyTypeFilter $keys 2>/dev/null',
+      'fi',
+      "printf '$detailSudoMarker\\n'",
+      'sudo -nlU $name 2>/dev/null || true',
+      '',
+    ].join('\n');
+  }
+
+  static Future<ServerUserDetail> detail(
+    ServerExec exec,
+    ServerUser user,
+  ) async {
+    final result = await exec.run(detailScript(user));
+    return parseDetail(result.stdout);
+  }
+
+  static ServerUserDetail parseDetail(String output) {
+    const markers = {
+      detailShadowMarker,
+      detailStatusMarker,
+      detailKeysMarker,
+      detailSudoMarker,
+    };
+    final sections = <String, List<String>>{};
+    var section = '';
+    for (final rawLine in output.replaceAll('\r\n', '\n').split('\n')) {
+      final line = rawLine.trimRight();
+      if (markers.contains(line)) {
+        section = line;
+        sections[section] = [];
+        continue;
+      }
+      if (section.isEmpty) continue;
+      sections[section]!.add(line);
+    }
+
+    ServerUserPasswordState? state;
+    DateTime? changed;
+    DateTime? expires;
+    var neverExpires = false;
+
+    final shadow = sections[detailShadowMarker]?.firstWhere(
+      (line) => line.contains(':'),
+      orElse: () => '',
+    );
+    if (shadow != null && shadow.isNotEmpty) {
+      final fields = shadow.split(':');
+      if (fields.length >= 2) state = _passwordState(fields[1]);
+      if (fields.length >= 3) changed = _daysToDate(fields[2]);
+      if (fields.length >= 8) {
+        final raw = fields[7].trim();
+        // Empty is the only thing that means never. A field that will not
+        // parse - zero, negative, garbage - means the record could not be
+        // read, and "Never" is the wrong half of that to guess: it is a claim
+        // about an account's expiry made from no evidence.
+        neverExpires = raw.isEmpty;
+        if (!neverExpires) expires = _daysToDate(raw);
+      }
+    } else {
+      // `passwd -S` answers P / L / NP without the hash, and a shell is
+      // sometimes allowed it for its own account.
+      final status = sections[detailStatusMarker]?.firstWhere(
+        (line) => line.trim().isNotEmpty,
+        orElse: () => '',
+      );
+      final fields = status?.trim().split(RegExp(r'\s+')) ?? const <String>[];
+      if (fields.length >= 2) {
+        state = switch (fields[1].toUpperCase()) {
+          'P' => ServerUserPasswordState.set,
+          'L' => ServerUserPasswordState.locked,
+          'NP' => ServerUserPasswordState.none,
+          _ => null,
+        };
+      }
+    }
+
+    List<String>? keyTypes;
+    final keyLines = sections[detailKeysMarker];
+    if (keyLines != null &&
+        keyLines.isNotEmpty &&
+        keyLines.first.trim() == detailKeysReadMarker) {
+      keyTypes = <String>[];
+      for (final line in keyLines.skip(1)) {
+        final type = _sshKeyType(line);
+        if (type != null && !keyTypes.contains(type)) keyTypes.add(type);
+      }
+    }
+
+    String? sudoRule;
+    for (final line in sections[detailSudoMarker] ?? const <String>[]) {
+      final match = RegExp(r'^\s*\(([^)]*)\)\s*(.+)$').firstMatch(line);
+      if (match == null) continue;
+      sudoRule = match.group(2)!.trim();
+      break;
+    }
+
+    return ServerUserDetail(
+      passwordState: state,
+      passwordChanged: changed,
+      expires: expires,
+      neverExpires: neverExpires,
+      sshKeyTypes: keyTypes,
+      sudoRule: sudoRule,
+    );
+  }
+
+  /// `!`, `!!` and `*` are the three ways a distribution writes "cannot log in
+  /// with a password". An empty field is no password at all, which is a very
+  /// different thing and must not read as locked.
+  static ServerUserPasswordState _passwordState(String hash) {
+    final value = hash.trim();
+    if (value.isEmpty) return ServerUserPasswordState.none;
+    if (value == '*' || value.startsWith('!')) {
+      return ServerUserPasswordState.locked;
+    }
+    return ServerUserPasswordState.set;
+  }
+
+  static DateTime? _daysToDate(String raw) {
+    final days = int.tryParse(raw.trim());
+    if (days == null || days <= 0) return null;
+    return DateTime.fromMillisecondsSinceEpoch(
+      days * Duration.millisecondsPerDay,
+      isUtc: true,
+    );
+  }
+
+  /// The type field of one `authorized_keys` line, skipping the options that
+  /// may precede it. Comments, blank lines and anything unrecognised answer
+  /// null.
+  static String? _sshKeyType(String line) {
+    final value = line.trim();
+    if (value.isEmpty || value.startsWith('#')) return null;
+    for (final token in value.split(RegExp(r'\s+'))) {
+      final type = token.toLowerCase();
+      if (type.startsWith('sk-ssh-')) return 'sk-${type.substring(7)}';
+      if (type.startsWith('sk-ecdsa-')) return 'sk-ecdsa';
+      if (type.startsWith('ssh-')) return type.substring(4);
+      if (type.startsWith('ecdsa-')) return 'ecdsa';
+    }
+    return null;
+  }
+
   static Future<ServerUserCatalog> list(ServerExec exec) async {
     final result = await exec.run(listScript);
     if (!result.succeeded) {

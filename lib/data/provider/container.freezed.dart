@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ContainerState {
 
- List<ContainerPs>? get items; List<ContainerImg>? get images; String? get version; ContainerErr? get containersError; ContainerErr? get imagesError; String? get runLog; ContainerType get type; bool get isBusy;
+ List<ContainerPs>? get items; List<ContainerImg>? get images; String? get version; ContainerErr? get containersError; ContainerErr? get imagesError; String? get runLog; ContainerDiskUsage? get diskUsage; ContainerType get type; bool get isBusy;
 /// Create a copy of ContainerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ContainerStateCopyWith<ContainerState> get copyWith => _$ContainerStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ContainerState&&const DeepCollectionEquality().equals(other.items, items)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ContainerState&&const DeepCollectionEquality().equals(other.items, items)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.diskUsage, diskUsage) || other.diskUsage == diskUsage)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),const DeepCollectionEquality().hash(images),version,containersError,imagesError,runLog,type,isBusy);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(items),const DeepCollectionEquality().hash(images),version,containersError,imagesError,runLog,diskUsage,type,isBusy);
 
 @override
 String toString() {
-  return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, type: $type, isBusy: $isBusy)';
+  return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, diskUsage: $diskUsage, type: $type, isBusy: $isBusy)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ContainerStateCopyWith<$Res>  {
   factory $ContainerStateCopyWith(ContainerState value, $Res Function(ContainerState) _then) = _$ContainerStateCopyWithImpl;
 @useResult
 $Res call({
- List<ContainerPs>? items, List<ContainerImg>? images, String? version, ContainerErr? containersError, ContainerErr? imagesError, String? runLog, ContainerType type, bool isBusy
+ List<ContainerPs>? items, List<ContainerImg>? images, String? version, ContainerErr? containersError, ContainerErr? imagesError, String? runLog, ContainerDiskUsage? diskUsage, ContainerType type, bool isBusy
 });
 
 
@@ -62,7 +62,7 @@ class _$ContainerStateCopyWithImpl<$Res>
 
 /// Create a copy of ContainerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? items = freezed,Object? images = freezed,Object? version = freezed,Object? containersError = freezed,Object? imagesError = freezed,Object? runLog = freezed,Object? type = null,Object? isBusy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? items = freezed,Object? images = freezed,Object? version = freezed,Object? containersError = freezed,Object? imagesError = freezed,Object? runLog = freezed,Object? diskUsage = freezed,Object? type = null,Object? isBusy = null,}) {
   return _then(_self.copyWith(
 items: freezed == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<ContainerPs>?,images: freezed == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,8 @@ as List<ContainerImg>?,version: freezed == version ? _self.version : version // 
 as String?,containersError: freezed == containersError ? _self.containersError : containersError // ignore: cast_nullable_to_non_nullable
 as ContainerErr?,imagesError: freezed == imagesError ? _self.imagesError : imagesError // ignore: cast_nullable_to_non_nullable
 as ContainerErr?,runLog: freezed == runLog ? _self.runLog : runLog // ignore: cast_nullable_to_non_nullable
-as String?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String?,diskUsage: freezed == diskUsage ? _self.diskUsage : diskUsage // ignore: cast_nullable_to_non_nullable
+as ContainerDiskUsage?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as ContainerType,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<ContainerPs>? items,  List<ContainerImg>? images,  String? version,  ContainerErr? containersError,  ContainerErr? imagesError,  String? runLog,  ContainerType type,  bool isBusy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<ContainerPs>? items,  List<ContainerImg>? images,  String? version,  ContainerErr? containersError,  ContainerErr? imagesError,  String? runLog,  ContainerDiskUsage? diskUsage,  ContainerType type,  bool isBusy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ContainerState() when $default != null:
-return $default(_that.items,_that.images,_that.version,_that.containersError,_that.imagesError,_that.runLog,_that.type,_that.isBusy);case _:
+return $default(_that.items,_that.images,_that.version,_that.containersError,_that.imagesError,_that.runLog,_that.diskUsage,_that.type,_that.isBusy);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.items,_that.images,_that.version,_that.containersError,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<ContainerPs>? items,  List<ContainerImg>? images,  String? version,  ContainerErr? containersError,  ContainerErr? imagesError,  String? runLog,  ContainerType type,  bool isBusy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<ContainerPs>? items,  List<ContainerImg>? images,  String? version,  ContainerErr? containersError,  ContainerErr? imagesError,  String? runLog,  ContainerDiskUsage? diskUsage,  ContainerType type,  bool isBusy)  $default,) {final _that = this;
 switch (_that) {
 case _ContainerState():
-return $default(_that.items,_that.images,_that.version,_that.containersError,_that.imagesError,_that.runLog,_that.type,_that.isBusy);case _:
+return $default(_that.items,_that.images,_that.version,_that.containersError,_that.imagesError,_that.runLog,_that.diskUsage,_that.type,_that.isBusy);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.items,_that.images,_that.version,_that.containersError,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<ContainerPs>? items,  List<ContainerImg>? images,  String? version,  ContainerErr? containersError,  ContainerErr? imagesError,  String? runLog,  ContainerType type,  bool isBusy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<ContainerPs>? items,  List<ContainerImg>? images,  String? version,  ContainerErr? containersError,  ContainerErr? imagesError,  String? runLog,  ContainerDiskUsage? diskUsage,  ContainerType type,  bool isBusy)?  $default,) {final _that = this;
 switch (_that) {
 case _ContainerState() when $default != null:
-return $default(_that.items,_that.images,_that.version,_that.containersError,_that.imagesError,_that.runLog,_that.type,_that.isBusy);case _:
+return $default(_that.items,_that.images,_that.version,_that.containersError,_that.imagesError,_that.runLog,_that.diskUsage,_that.type,_that.isBusy);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.items,_that.images,_that.version,_that.containersError,_th
 
 
 class _ContainerState implements ContainerState {
-  const _ContainerState({final  List<ContainerPs>? items = null, final  List<ContainerImg>? images = null, this.version = null, this.containersError = null, this.imagesError = null, this.runLog = null, this.type = ContainerType.docker, this.isBusy = false}): _items = items,_images = images;
+  const _ContainerState({final  List<ContainerPs>? items = null, final  List<ContainerImg>? images = null, this.version = null, this.containersError = null, this.imagesError = null, this.runLog = null, this.diskUsage = null, this.type = ContainerType.docker, this.isBusy = false}): _items = items,_images = images;
   
 
  final  List<ContainerPs>? _items;
@@ -238,6 +239,7 @@ class _ContainerState implements ContainerState {
 @override@JsonKey() final  ContainerErr? containersError;
 @override@JsonKey() final  ContainerErr? imagesError;
 @override@JsonKey() final  String? runLog;
+@override@JsonKey() final  ContainerDiskUsage? diskUsage;
 @override@JsonKey() final  ContainerType type;
 @override@JsonKey() final  bool isBusy;
 
@@ -251,16 +253,16 @@ _$ContainerStateCopyWith<_ContainerState> get copyWith => __$ContainerStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ContainerState&&const DeepCollectionEquality().equals(other._items, _items)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ContainerState&&const DeepCollectionEquality().equals(other._items, _items)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.version, version) || other.version == version)&&(identical(other.containersError, containersError) || other.containersError == containersError)&&(identical(other.imagesError, imagesError) || other.imagesError == imagesError)&&(identical(other.runLog, runLog) || other.runLog == runLog)&&(identical(other.diskUsage, diskUsage) || other.diskUsage == diskUsage)&&(identical(other.type, type) || other.type == type)&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),const DeepCollectionEquality().hash(_images),version,containersError,imagesError,runLog,type,isBusy);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_items),const DeepCollectionEquality().hash(_images),version,containersError,imagesError,runLog,diskUsage,type,isBusy);
 
 @override
 String toString() {
-  return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, type: $type, isBusy: $isBusy)';
+  return 'ContainerState(items: $items, images: $images, version: $version, containersError: $containersError, imagesError: $imagesError, runLog: $runLog, diskUsage: $diskUsage, type: $type, isBusy: $isBusy)';
 }
 
 
@@ -271,7 +273,7 @@ abstract mixin class _$ContainerStateCopyWith<$Res> implements $ContainerStateCo
   factory _$ContainerStateCopyWith(_ContainerState value, $Res Function(_ContainerState) _then) = __$ContainerStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<ContainerPs>? items, List<ContainerImg>? images, String? version, ContainerErr? containersError, ContainerErr? imagesError, String? runLog, ContainerType type, bool isBusy
+ List<ContainerPs>? items, List<ContainerImg>? images, String? version, ContainerErr? containersError, ContainerErr? imagesError, String? runLog, ContainerDiskUsage? diskUsage, ContainerType type, bool isBusy
 });
 
 
@@ -288,7 +290,7 @@ class __$ContainerStateCopyWithImpl<$Res>
 
 /// Create a copy of ContainerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? items = freezed,Object? images = freezed,Object? version = freezed,Object? containersError = freezed,Object? imagesError = freezed,Object? runLog = freezed,Object? type = null,Object? isBusy = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? items = freezed,Object? images = freezed,Object? version = freezed,Object? containersError = freezed,Object? imagesError = freezed,Object? runLog = freezed,Object? diskUsage = freezed,Object? type = null,Object? isBusy = null,}) {
   return _then(_ContainerState(
 items: freezed == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<ContainerPs>?,images: freezed == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
@@ -296,7 +298,8 @@ as List<ContainerImg>?,version: freezed == version ? _self.version : version // 
 as String?,containersError: freezed == containersError ? _self.containersError : containersError // ignore: cast_nullable_to_non_nullable
 as ContainerErr?,imagesError: freezed == imagesError ? _self.imagesError : imagesError // ignore: cast_nullable_to_non_nullable
 as ContainerErr?,runLog: freezed == runLog ? _self.runLog : runLog // ignore: cast_nullable_to_non_nullable
-as String?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String?,diskUsage: freezed == diskUsage ? _self.diskUsage : diskUsage // ignore: cast_nullable_to_non_nullable
+as ContainerDiskUsage?,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as ContainerType,isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

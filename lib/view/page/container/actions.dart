@@ -374,20 +374,6 @@ extension on _ContainerPageState {
     }
   }
 
-  Future<void> _openMergedLogs(String project, String? workingDir) async {
-    if (workingDir == null || workingDir.isEmpty) return;
-    final runtime = _containerState.type.name;
-    final projectQuoted = shellSingleQuote(project);
-    final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
-    final prepared = await _containerNotifier.prepareInteractiveCommand(cmd);
-    if (!mounted || prepared == null) return;
-    final initCmd = 'cd ${shellSingleQuote(workingDir)} && $prepared';
-    SSHPage.route.go(
-      context,
-      SshPageArgs(source: ServerSource(widget.args.spi), initCmd: initCmd),
-    );
-  }
-
   void _initAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = null;
