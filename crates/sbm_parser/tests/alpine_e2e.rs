@@ -122,16 +122,36 @@ fn alpine_busybox_status_and_process() {
         Some(&content),
         false,
     );
-    let first = proc_out.lines().next().unwrap_or_default();
+    let mut proc_lines = proc_out.lines();
+    let load = proc_lines.next().unwrap_or_default();
     assert!(
-        first.contains("PID") && first.contains("COMMAND"),
-        "expected busybox ps header, got: {first:?}"
+        load.starts_with(script::PROCESS_LOAD_MARKER),
+        "expected the load average first, got: {load:?}"
+    );
+    let header = proc_lines.next().unwrap_or_default();
+    assert!(
+        header.contains("PID") && header.ends_with("COMMAND"),
+        "expected busybox ps header, got: {header:?}"
     );
     assert!(
-        !proc_out.contains("READ_BYTES"),
-        "READ_BYTES header means the non-busybox branch ran"
+        !header.contains("%CPU"),
+        "%CPU means the procps branch ran: {header:?}"
     );
-    assert!(proc_out.lines().count() > 1, "at least one process listed");
+    // Busybox `ps` knows none of these; they come from /proc/<pid>/stat.
+    for column in ["PPID", "START_ID"] {
+        assert!(header.contains(column), "no {column} in {header:?}");
+    }
+    let start_id = header
+        .split_whitespace()
+        .position(|h| h == "START_ID")
+        .unwrap();
+    assert!(
+        proc_lines.any(|row| row
+            .split_whitespace()
+            .nth(start_id)
+            .is_some_and(|v| v != "-")),
+        "no row carries a START_ID:\n{proc_out}"
+    );
 
     eprintln!(
         "alpine e2e ok: host={:?} cores={} mem_total={}KiB disks={} (df fallback), busybox ps branch taken",

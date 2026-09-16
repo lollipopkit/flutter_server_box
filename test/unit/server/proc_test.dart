@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:server_box/data/model/server/proc.dart';
 import 'package:test/test.dart';
+
+String _fixture(String name) =>
+    File('test/fixtures/process/$name').readAsStringSync();
 
 void main() {
   test('parse process', () {
@@ -563,5 +568,180 @@ root 0.0 /sbin/procd
       contains('Unsupported process output header'),
     );
     expect(result.sampledAtMillis, 4321);
+  });
+
+  group('script output', () {
+    test('procps: identity, parentage and spacing survive', () {
+      final result = PsResult.parse(_fixture('linux_procps.txt'));
+
+      expect(result.issue, isNull);
+      expect(result.load, (one: 0.01, five: 0.02, fifteen: 0.0));
+      expect(result.procs.map((p) => p.startId), everyElement(isNotNull));
+
+      final shell = result.procs.singleWhere(
+        (p) => p.command == 'sh -c sleep  31; :',
+      );
+      final child = result.procs.singleWhere((p) => p.command == 'sleep 31');
+      expect(child.ppid, shell.pid);
+      expect(child.threads, 1);
+      expect(child.nice, 0);
+      expect(child.elapsedSeconds, 0);
+      expect(child.name, 'sleep');
+      expect(result.procs.where((p) => p.isKernelThread), isEmpty);
+    });
+
+    test('busybox: the columns busybox ps lacks are read from /proc', () {
+      final result = PsResult.parse(_fixture('linux_busybox.txt'));
+
+      expect(result.issue, isNull);
+      expect(result.load, isNotNull);
+      final shell = result.procs.singleWhere(
+        (p) => p.command == 'sh -c sleep  31; :',
+      );
+      final child = result.procs.singleWhere((p) => p.command == 'sleep 31');
+      expect(child.ppid, shell.pid);
+      expect(child.startId, isNotNull);
+      expect(child.time, '0:00');
+      // Busybox reports no elapsed time and no CPU share.
+      expect(child.elapsedSeconds, isNull);
+      expect(child.cpu, isNull);
+
+      // `ps` itself had exited by the time its /proc entry was read.
+      final ps = result.procs.singleWhere((p) => p.command == 'ps w');
+      expect(ps.ppid, isNull);
+      expect(ps.startId, isNull);
+    });
+
+    test('macOS: lstart is the identity and etime counts days', () {
+      final result = PsResult.parse(_fixture('macos.txt'));
+
+      expect(result.issue, isNull);
+      expect(result.load, (one: 4.51, five: 4.0, fifteen: 3.83));
+      final launchd = result.procs.singleWhere((p) => p.pid == 1);
+      expect(launchd.ppid, 0);
+      expect(launchd.startId, 'Tue_Sep_15_02:35:59_2026');
+      expect(launchd.elapsedSeconds, 86400 + 22 * 3600 + 19 * 60 + 56);
+      expect(launchd.name, 'launchd');
+      expect(launchd.threads, isNull);
+    });
+  });
+
+  group('load line', () {
+    const table = '''
+PID USER COMMAND
+1 root /sbin/init
+''';
+
+    test('is taken out before the header is looked for', () {
+      final result = PsResult.parse('$kProcessLoadMarker 1.5 0.25 3\n$table');
+
+      expect(result.issue, isNull);
+      expect(result.load, (one: 1.5, five: 0.25, fifteen: 3.0));
+      expect(result.procs.single.command, '/sbin/init');
+    });
+
+    test('absent or malformed means no load, and the table still parses', () {
+      expect(PsResult.parse(table).load, isNull);
+
+      final malformed = PsResult.parse('$kProcessLoadMarker 1.5 x\n$table');
+      expect(malformed.load, isNull);
+      expect(malformed.issue, isNull);
+      expect(malformed.procs, hasLength(1));
+    });
+
+    test('is kept by sortedBy', () {
+      final result = PsResult.parse(
+        '$kProcessLoadMarker 1 2 3\n$table',
+      ).sortedBy(ProcSortMode.pid);
+
+      expect(result.load, (one: 1.0, five: 2.0, fifteen: 3.0));
+    });
+  });
+
+  test('elapsed time reads every etime form and refuses nonsense', () {
+    int? elapsed(String value) =>
+        PsResult.parse('PID ELAPSED COMMAND\n1 $value init\n')
+            .procs
+            .single
+            .elapsedSeconds;
+
+    expect(elapsed('05:03'), 303);
+    expect(elapsed('1:02:03'), 3723);
+    expect(elapsed('2-01:02:03'), 2 * 86400 + 3723);
+    expect(elapsed('-'), isNull);
+    expect(elapsed('1:2:3:4'), isNull);
+    // procps in a container whose boot time is not its host's.
+    expect(elapsed('441077234-00:18:40'), isNull);
+  });
+
+  group('kernel threads', () {
+    const header =
+        'PID PPID USER %CPU %MEM VSZ RSS TTY STAT NI NLWP TIME ELAPSED '
+        'START_ID READ_BYTES WRITE_BYTES COMMAND';
+    Proc row(String line) => PsResult.parse('$header\n$line\n').procs.single;
+
+    test('kthreadd and its children are', () {
+      expect(
+        row(
+          '2 0 root 0.0 0.0 0 0 ? S 0 1 00:00:00 31-00:00:00 2 - - [kthreadd]',
+        ).isKernelThread,
+        isTrue,
+      );
+      expect(
+        row(
+          '48 2 root 0.0 0.0 0 0 ? I< -20 1 00:00:00 31-00:00:00 9 - - '
+          '[kworker/0:1H-kblockd]',
+        ).isKernelThread,
+        isTrue,
+      );
+    });
+
+    test('PID 2 in a container, and its children, are not', () {
+      expect(
+        row(
+          '2 1 root 0.0 0.0 3120 1920 ? Sl 0 2 00:00:00 2-01:46:59 225 - - /init',
+        ).isKernelThread,
+        isFalse,
+      );
+      expect(
+        row(
+          '7 2 lk 0.0 0.0 3120 1920 ? S 0 1 00:00:00 01:00 300 - - -bash',
+        ).isKernelThread,
+        isFalse,
+      );
+    });
+  });
+
+  test('name is the executable, without a rewritten title', () {
+    String name(String command) => Proc(pid: 9, command: command).name;
+
+    expect(name('nginx: worker process'), 'nginx');
+    expect(name('/usr/lib/systemd/systemd-journald'), 'systemd-journald');
+    expect(name('dockerd -H fd://'), 'dockerd');
+    expect(name('[kworker/0:1-events]'), '[kworker/0:1-events]');
+    expect(name('(sd-pam)'), '(sd-pam)');
+    expect(
+      Proc(
+        pid: 9,
+        command: r'"C:\Program Files\nginx\nginx.exe" -g daemon',
+        processName: 'nginx.exe',
+      ).name,
+      'nginx.exe',
+    );
+  });
+
+  test('Windows rows carry parent, threads and elapsed time', () {
+    const raw = '''
+[{"ProcessName":"svc.exe","Id":40,"ParentId":4,"Threads":12,"ElapsedSeconds":90,"StartId":"1","CommandLine":"svc.exe"},
+ {"ProcessName":"bad.exe","Id":41,"ElapsedSeconds":-5,"StartId":"2","CommandLine":"bad.exe"}]
+''';
+    final procs = PsResult.parse(raw, sort: ProcSortMode.pid).procs;
+
+    expect(procs.first.ppid, 4);
+    expect(procs.first.threads, 12);
+    expect(procs.first.elapsedSeconds, 90);
+    expect(procs.first.name, 'svc.exe');
+    expect(procs.last.elapsedSeconds, isNull);
+    expect(procs.last.ppid, isNull);
   });
 }

@@ -5,6 +5,7 @@ final _nonWhitespaceRegExp = RegExp(r'\S+');
 
 class _ProcValIdxMap {
   final int pid;
+  final int? ppid;
   final int? user;
   final int? cpu;
   final int? mem;
@@ -12,15 +13,19 @@ class _ProcValIdxMap {
   final int? rss;
   final int? tty;
   final int? stat;
+  final int? nice;
+  final int? threads;
   final int? start;
   final int? startId;
   final int? time;
+  final int? elapsed;
   final int? readBytes;
   final int? writeBytes;
   final int command;
 
   const _ProcValIdxMap({
     required this.pid,
+    this.ppid,
     this.user,
     this.cpu,
     this.mem,
@@ -28,55 +33,101 @@ class _ProcValIdxMap {
     this.rss,
     this.tty,
     this.stat,
+    this.nice,
+    this.threads,
     this.start,
     this.startId,
     this.time,
+    this.elapsed,
     this.readBytes,
     this.writeBytes,
     required this.command,
   });
 }
 
+/// The first line of the process function's output when the machine has a
+/// load average. Mirrors `script::PROCESS_LOAD_MARKER` in `sbm_parser`, whose
+/// output the fixtures under `test/fixtures/process/` were captured from.
+const kProcessLoadMarker = 'SrvBoxProc.Load';
+
+/// Beyond this an elapsed time is not a measurement. A container whose boot
+/// time disagrees with its host's makes procps print a start date thousands
+/// of years back, and "running for 1.2 million years" says nothing true.
+const _kMaxElapsedSeconds = 100 * 365 * 24 * 3600;
+
 /// Some field can be null due to incompatible format on `BSD` and `Alpine`
 class Proc {
   final String? user;
   final int pid;
+
+  /// Null where the platform did not say, which is not the same as 0: PID 0
+  /// is the parent a Linux kernel reports for `init` and `kthreadd`.
+  final int? ppid;
   final double? cpu;
   final double? mem;
   final String? vsz;
   final String? rss;
   final String? tty;
   final String? stat;
+  final int? nice;
+  final int? threads;
   final String? start;
   final String? startId;
   final String? time;
+
+  /// Seconds since the process started, as the server counted them.
+  final int? elapsedSeconds;
   final int? readBytes;
   final int? writeBytes;
   final double? readSpeed;
   final double? writeSpeed;
   final String command;
 
+  /// The image name Windows reports (`nginx.exe`). A Windows command line
+  /// starts with a path that may hold spaces and quotes, so splitting it on
+  /// whitespace would name the process `"C:\Program`.
+  final String? processName;
+
   late final binary = _parseBinary();
   late final args = _parseArgs();
   late final rssKb = _parseRssKb();
 
+  /// What to call the process where its whole command line does not fit: the
+  /// last path component of the executable, without the colon a process that
+  /// rewrites its title leaves after its own name (`nginx: worker process`).
+  late final name = _parseName();
+
+  /// A Linux kernel thread: `kthreadd` itself, or one of its children.
+  ///
+  /// The command is checked too, because PPID 2 only means `kthreadd` in the
+  /// root PID namespace. Inside a container PID 2 is whatever started second,
+  /// and its children are ordinary processes — whose command lines, unlike a
+  /// kernel thread's, are not a name in brackets.
+  bool get isKernelThread =>
+      (pid == 2 || ppid == 2) && command.trimLeft().startsWith('[');
+
   Proc({
     this.user,
     required this.pid,
+    this.ppid,
     this.cpu,
     this.mem,
     this.vsz,
     this.rss,
     this.tty,
     this.stat,
+    this.nice,
+    this.threads,
     this.start,
     this.startId,
     this.time,
+    this.elapsedSeconds,
     this.readBytes,
     this.writeBytes,
     this.readSpeed,
     this.writeSpeed,
     required this.command,
+    this.processName,
   });
 
   // Value equality based on all parsed fields lets ListView skip rebuilding
@@ -91,40 +142,50 @@ class Proc {
           runtimeType == other.runtimeType &&
           user == other.user &&
           pid == other.pid &&
+          ppid == other.ppid &&
           cpu == other.cpu &&
           mem == other.mem &&
           vsz == other.vsz &&
           rss == other.rss &&
           tty == other.tty &&
           stat == other.stat &&
+          nice == other.nice &&
+          threads == other.threads &&
           start == other.start &&
           startId == other.startId &&
           time == other.time &&
+          elapsedSeconds == other.elapsedSeconds &&
           readBytes == other.readBytes &&
           writeBytes == other.writeBytes &&
           readSpeed == other.readSpeed &&
           writeSpeed == other.writeSpeed &&
-          command == other.command;
+          command == other.command &&
+          processName == other.processName;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
     user,
     pid,
+    ppid,
     cpu,
     mem,
     vsz,
     rss,
     tty,
     stat,
+    nice,
+    threads,
     start,
     startId,
     time,
+    elapsedSeconds,
     readBytes,
     writeBytes,
     readSpeed,
     writeSpeed,
     command,
-  );
+    processName,
+  ]);
 
   factory Proc._parse(
     String raw,
@@ -164,15 +225,21 @@ class Proc {
     return Proc(
       user: map.user == null ? null : parts[map.user!],
       pid: pid,
+      ppid: _parseNullableInt(parts, map.ppid, nonNegative: true),
       cpu: _parseNullableDouble(parts, map.cpu),
       mem: _parseNullableDouble(parts, map.mem),
       vsz: map.vsz == null ? null : parts[map.vsz!],
       rss: map.rss == null ? null : parts[map.rss!],
       tty: map.tty == null ? null : parts[map.tty!],
       stat: map.stat == null ? null : parts[map.stat!],
+      nice: _parseNullableInt(parts, map.nice),
+      threads: _parseNullableInt(parts, map.threads, nonNegative: true),
       start: start,
       startId: startId,
       time: map.time == null ? null : parts[map.time!],
+      elapsedSeconds: map.elapsed == null
+          ? null
+          : _parseElapsed(parts[map.elapsed!]),
       readBytes: readBytes,
       writeBytes: writeBytes,
       readSpeed: readSpeed,
@@ -210,8 +277,15 @@ class Proc {
       raw['WorkingSet'],
       raw['WorkingSetSize'],
     ], nonNegative: true);
+    final elapsed = _parseDynamicInt(raw['ElapsedSeconds']);
     return Proc(
       pid: pid,
+      ppid: _firstParsedInt([raw['ParentId']], nonNegative: true),
+      threads: _firstParsedInt([raw['Threads']], nonNegative: true),
+      elapsedSeconds:
+          elapsed != null && elapsed >= 0 && elapsed <= _kMaxElapsedSeconds
+          ? elapsed
+          : null,
       cpu: _firstParsedDouble([raw['CPUPercent'], raw['PercentProcessorTime']]),
       // Unix `ps` reports RSS in KiB. Normalize the Windows byte count to the
       // same unit so sorting and display stay consistent across platforms.
@@ -224,11 +298,28 @@ class Proc {
       writeSpeed: writeSpeed,
       startId: startId,
       command: command,
+      processName: name,
     );
   }
 
   String _parseBinary() {
     return _nonWhitespaceRegExp.firstMatch(command)?.group(0) ?? '';
+  }
+
+  String _parseName() {
+    if (processName case final name? when name.trim().isNotEmpty) {
+      return name.trim();
+    }
+    final bin = binary;
+    if (bin.startsWith('[')) return command.trim();
+    final slash = bin.lastIndexOf('/');
+    var base = slash >= 0 && slash < bin.length - 1
+        ? bin.substring(slash + 1)
+        : bin;
+    if (base.length > 1 && base.endsWith(':')) {
+      base = base.substring(0, base.length - 1);
+    }
+    return base.isEmpty ? command.trim() : base;
   }
 
   String _parseArgs() {
@@ -260,12 +351,24 @@ class PsParseIssue {
   const PsParseIssue({required this.failure, required this.diagnostics});
 }
 
+/// The 1, 5 and 15 minute load averages.
+typedef ProcLoad = ({double one, double five, double fifteen});
+
 class PsResult {
   final List<Proc> procs;
   final PsParseIssue? issue;
   final int sampledAtMillis;
 
-  const PsResult({required this.procs, this.issue, this.sampledAtMillis = 0});
+  /// Null where the machine has none to report — Windows — or ran a script
+  /// older than the line that carries it.
+  final ProcLoad? load;
+
+  const PsResult({
+    required this.procs,
+    this.issue,
+    this.sampledAtMillis = 0,
+    this.load,
+  });
 
   factory PsResult.parse(
     String raw, {
@@ -297,8 +400,13 @@ class PsResult {
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
+    final load = _takeLoad(lines);
     if (lines.isEmpty) {
-      return PsResult(procs: const [], sampledAtMillis: currentSampledAtMillis);
+      return PsResult(
+        procs: const [],
+        sampledAtMillis: currentSampledAtMillis,
+        load: load,
+      );
     }
 
     final header = lines[0];
@@ -315,10 +423,12 @@ class PsResult {
           diagnostics: 'Unsupported process output header: $header',
         ),
         sampledAtMillis: currentSampledAtMillis,
+        load: load,
       );
     }
     final map = _ProcValIdxMap(
       pid: pidIdx,
+      ppid: parts.indexOfOrNull('PPID'),
       user: parts.indexOfOrNull('USER'),
       cpu: parts.indexOfOrNull('%CPU'),
       mem: parts.indexOfOrNull('%MEM'),
@@ -326,9 +436,12 @@ class PsResult {
       rss: parts.indexOfOrNull('RSS'),
       tty: parts.indexOfOrNull('TTY'),
       stat: parts.indexOfOrNull('STAT'),
+      nice: parts.indexOfOrNull('NI'),
+      threads: parts.indexOfOrNull('NLWP'),
       start: parts.indexOfOrNull('START'),
       startId: parts.indexOfOrNull('START_ID'),
       time: parts.indexOfOrNull('TIME'),
+      elapsed: parts.indexOfOrNull('ELAPSED'),
       readBytes: parts.indexOfOrNull('READ_BYTES'),
       writeBytes: parts.indexOfOrNull('WRITE_BYTES'),
       command: commandIdx,
@@ -368,7 +481,30 @@ class PsResult {
               diagnostics: errs.join('\n'),
             ),
       sampledAtMillis: currentSampledAtMillis,
+      load: load,
     );
+  }
+
+  /// Removes the load line from [lines] and answers what it said.
+  ///
+  /// Taken out before the header is looked for, because the table's header is
+  /// whatever line comes first.
+  static ProcLoad? _takeLoad(List<String> lines) {
+    final index = lines.indexWhere(
+      (line) => line.startsWith('$kProcessLoadMarker '),
+    );
+    if (index < 0) return null;
+    final values = lines
+        .removeAt(index)
+        .substring(kProcessLoadMarker.length)
+        .trim()
+        .split(_whitespaceRegExp)
+        .map(double.tryParse)
+        .toList();
+    if (values.length != 3 || values.any((v) => v == null || v < 0)) {
+      return null;
+    }
+    return (one: values[0]!, five: values[1]!, fifteen: values[2]!);
   }
 
   static PsResult? _parseWindowsJsonResult(
@@ -468,6 +604,7 @@ class PsResult {
       procs: sorted,
       issue: issue,
       sampledAtMillis: sampledAtMillis,
+      load: load,
     );
   }
 
@@ -630,6 +767,30 @@ String? _firstNonEmptyString(List<Object?> values) {
     if (string != null && string.trim().isNotEmpty) return string;
   }
   return null;
+}
+
+/// `etime`: `[[dd-]hh:]mm:ss`.
+int? _parseElapsed(String raw) {
+  if (raw.isEmpty || raw == '-') return null;
+  var days = 0;
+  var rest = raw;
+  final dash = raw.indexOf('-');
+  if (dash >= 0) {
+    final parsed = int.tryParse(raw.substring(0, dash));
+    if (parsed == null || parsed < 0) return null;
+    days = parsed;
+    rest = raw.substring(dash + 1);
+  }
+  final fields = rest.split(':');
+  if (fields.length < 2 || fields.length > 3) return null;
+  var seconds = 0;
+  for (final field in fields) {
+    final value = int.tryParse(field);
+    if (value == null || value < 0) return null;
+    seconds = seconds * 60 + value;
+  }
+  final total = days * 86400 + seconds;
+  return total <= _kMaxElapsedSeconds ? total : null;
 }
 
 String? _parseProcessIdentity(Object? value) {

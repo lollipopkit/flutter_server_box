@@ -869,6 +869,167 @@ fn or_noop(segments: String) -> String {
     }
 }
 
+/// First line of the process function's output when the machine reports a
+/// load average: `SrvBoxProc.Load <1m> <5m> <15m>`. The table follows it, so
+/// a reader that does not know the line has to skip it before the header.
+pub const PROCESS_LOAD_MARKER: &str = "SrvBoxProc.Load";
+
+/// The process table, one header line and one row per process, read by column
+/// name rather than position.
+///
+/// **Every row is built with shell builtins.** The loop runs once per process
+/// on every refresh, and the version this replaced spawned two `awk`s per row
+/// to read `/proc/<pid>/io` — four hundred processes cost eight hundred
+/// spawns a poll. `read`, `set --` and parameter expansion cost none.
+///
+/// `START_ID` is `/proc/<pid>/stat`'s `starttime` (Linux) or `lstart` (BSD):
+/// what stopping a process checks before it signals, so a PID the kernel
+/// handed to something else in the meantime is refused rather than killed.
+/// Without it the app has no way to stop a process at all. It was dropped
+/// once already, when this script moved here from Dart, and every stop on
+/// Linux answered "not available" until it came back.
+///
+/// `PPID`, `NI` and `NLWP` come out of the same `stat` line on Linux, which is
+/// also what makes the busybox branch able to report them: busybox `ps` knows
+/// none of the three. A kernel thread is a child of `kthreadd` (PID 2), which
+/// is how the app tells one apart without a column of its own.
+///
+/// Which Linux branch runs is asked of `ps` itself, not of `/bin/sh`. Alpine
+/// with procps installed has a busybox shell and a procps `ps`, whose `ps w`
+/// lists only processes attached to a terminal — none, for a script run over
+/// SSH — so the page was empty there. Busybox `ps` has no `%cpu` field.
+///
+/// `COMMAND` keeps its own spacing: `srvbox_tail` strips the leading fields
+/// from the line rather than re-joining the words `set --` split it into.
+const UNIX_PROCESS: &str = r#"srvbox_tail() {
+	srvbox_rest=$1
+	srvbox_count=$2
+	while [ "$srvbox_count" -gt 0 ]; do
+		srvbox_rest=${srvbox_rest#"${srvbox_rest%%[![:space:]]*}"}
+		srvbox_rest=${srvbox_rest#"${srvbox_rest%%[[:space:]]*}"}
+		srvbox_count=$((srvbox_count - 1))
+	done
+	srvbox_rest=${srvbox_rest#"${srvbox_rest%%[![:space:]]*}"}
+}
+srvbox_proc_extra() {
+	ppid='-'; nice='-'; threads='-'; start_id='-'; read_bytes='-'; write_bytes='-'
+	srvbox_io=/proc/$1/io
+	srvbox_stat=
+	[ -r "/proc/$1/stat" ] && IFS= read -r srvbox_stat < "/proc/$1/stat"
+	if [ -n "$srvbox_stat" ]; then
+		set -f
+		set -- ${srvbox_stat##*") "}
+		set +f
+		if [ "$#" -ge 20 ]; then
+			ppid=$2; nice=${17}; threads=${18}; start_id=${20}
+		fi
+	fi
+	if [ -r "$srvbox_io" ]; then
+		while read -r srvbox_key srvbox_value; do
+			case $srvbox_key in
+			read_bytes:) read_bytes=$srvbox_value ;;
+			write_bytes:) write_bytes=$srvbox_value ;;
+			esac
+		done < "$srvbox_io"
+	fi
+}
+
+if [ "$macSign" = "" ] && [ "$bsdSign" = "" ]; then
+	if [ -r /proc/loadavg ] && read -r srvbox_l1 srvbox_l5 srvbox_l15 srvbox_rest < /proc/loadavg; then
+		printf 'SrvBoxProc.Load %s %s %s\n' "$srvbox_l1" "$srvbox_l5" "$srvbox_l15"
+	fi
+	if ! ps -o %cpu= -p $$ >/dev/null; then
+		ps w | {
+			IFS= read -r srvbox_header
+			set -f
+			set -- $srvbox_header
+			set +f
+			srvbox_cols=$(($# - 1))
+			printf '%s PPID NI NLWP START_ID READ_BYTES WRITE_BYTES COMMAND\n' "${srvbox_header%COMMAND*}"
+			while IFS= read -r line; do
+				set -f
+				set -- $line
+				set +f
+				[ "$#" -gt "$srvbox_cols" ] || continue
+				pid=$1
+				srvbox_tail "$line" "$srvbox_cols"
+				srvbox_head=${line%"$srvbox_rest"}
+				srvbox_proc_extra "$pid"
+				printf '%s %s %s %s %s %s %s %s\n' "$srvbox_head" "$ppid" "$nice" "$threads" "$start_id" "$read_bytes" "$write_bytes" "$srvbox_rest"
+			done
+		}
+	else
+		printf 'PID PPID USER %%CPU %%MEM VSZ RSS TTY STAT NI NLWP TIME ELAPSED START_ID READ_BYTES WRITE_BYTES COMMAND\n'
+		ps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,stat=,time=,etime=,args= | while IFS= read -r line; do
+			set -f
+			set -- $line
+			set +f
+			[ "$#" -ge 11 ] || continue
+			pid=$1; user=$2; cpu=$3; mem=$4; vsz=$5; rss=$6; tty=$7; stat=$8; time=$9; elapsed=${10}
+			srvbox_tail "$line" 10
+			srvbox_proc_extra "$pid"
+			printf '%s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n' "$pid" "$ppid" "$user" "$cpu" "$mem" "$vsz" "$rss" "$tty" "$stat" "$nice" "$threads" "$time" "$elapsed" "$start_id" "$read_bytes" "$write_bytes" "$srvbox_rest"
+		done
+	fi
+else
+	if srvbox_load=$(sysctl -n vm.loadavg); then
+		set -f
+		set -- $srvbox_load
+		set +f
+		[ "$#" -ge 4 ] && printf 'SrvBoxProc.Load %s %s %s\n' "$2" "$3" "$4"
+	fi
+	printf 'PID PPID USER %%CPU %%MEM VSZ RSS TTY STAT NI TIME ELAPSED START_ID COMMAND\n'
+	ps -axo pid=,ppid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,nice=,time=,etime=,lstart=,command= | while IFS= read -r line; do
+		set -f
+		set -- $line
+		set +f
+		[ "$#" -ge 18 ] || continue
+		srvbox_tail "$line" 17
+		printf '%s %s %s %s %s %s %s %s %s %s %s %s %s_%s_%s_%s_%s %s\n' "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "$srvbox_rest"
+	done
+fi"#;
+
+/// Win32_Process rather than `Get-Process`: the latter has no command line and
+/// no parent, and its `CPU` is seconds of processor time since the process
+/// started rather than a share of anything.
+///
+/// `StartId` is the creation time in UTC ticks, which the stop command compares
+/// before it terminates — the same guard `START_ID` is on Unix.
+/// `PercentProcessorTime` counts every core, like `ps`'s `%CPU`.
+const WINDOWS_PROCESS: &str = r#"$cpuByPid = @{}
+try {
+    Get-CimInstance Win32_PerfFormattedData_PerfProc_Process -ErrorAction Stop |
+        Where-Object { $_.IDProcess -gt 0 } |
+        ForEach-Object { $cpuByPid[[int]$_.IDProcess] = [double]$_.PercentProcessorTime }
+} catch {}
+$now = Get-Date
+$processes = @()
+try {
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction Stop | ForEach-Object {
+        $process = $_
+        $startId = $null
+        $elapsed = $null
+        try {
+            $startId = $process.CreationDate.ToUniversalTime().Ticks
+            $elapsed = [long]($now - $process.CreationDate).TotalSeconds
+        } catch {}
+        [PSCustomObject]@{
+            ProcessName = $process.Name
+            Id = $process.ProcessId
+            ParentId = $process.ParentProcessId
+            CPUPercent = $cpuByPid[[int]$process.ProcessId]
+            WorkingSet = $process.WorkingSetSize
+            IOReadBytes = $process.ReadTransferCount
+            IOWriteBytes = $process.WriteTransferCount
+            Threads = $process.ThreadCount
+            StartId = $startId
+            ElapsedSeconds = $elapsed
+            CommandLine = $process.CommandLine
+        }
+    })
+} catch {}
+ConvertTo-Json -InputObject $processes -Compress"#;
+
 fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     match func {
         ShellFunc::Status | ShellFunc::StatusExt => {
@@ -880,31 +1041,7 @@ fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
                 "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n\t{linux}\nelse\n\t{bsd}\nfi"
             )
         }
-        ShellFunc::Process => "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then
-\tif [ \"$isBusybox\" != \"\" ]; then
-\t\tps w
-\telse
-\t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND\\n'
-\t\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,stat=,time=,args= | while IFS= read -r line; do
-\t\t\tset -f
-\t\t\tset -- $line
-\t\t\tset +f
-\t\t\tpid=$1; user=$2; cpu=$3; mem=$4; vsz=$5; rss=$6; tty=$7; stat=$8; time=$9
-\t\t\tshift 9
-\t\t\tcmd=$*
-\t\t\tread_bytes='-'
-\t\t\twrite_bytes='-'
-\t\t\tif [ -r \"/proc/$pid/io\" ]; then
-\t\t\t\tread_bytes=$(awk '/^read_bytes:/ {print $2}' \"/proc/$pid/io\")
-\t\t\t\twrite_bytes=$(awk '/^write_bytes:/ {print $2}' \"/proc/$pid/io\")
-\t\t\tfi
-\t\t\tprintf '%s %s %s %s %s %s %s %s %s %s %s %s\\n' \"$pid\" \"$user\" \"$cpu\" \"$mem\" \"$vsz\" \"$rss\" \"$tty\" \"$stat\" \"$time\" \"$read_bytes\" \"$write_bytes\" \"$cmd\"
-\t\tdone
-\tfi
-else
-\tps -ax
-fi"
-        .to_string(),
+        ShellFunc::Process => UNIX_PROCESS.to_string(),
         ShellFunc::Shutdown => {
             "if [ \"$userId\" = \"0\" ]; then\n\tshutdown -h now\nelse\n\tsudo -S shutdown -h now\nfi"
                 .to_string()
@@ -1013,10 +1150,7 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
             func == ShellFunc::StatusExt,
             |key| format!("\n    Write-Host \"{}\"\n    ", cmd_marker(key)),
         ),
-        ShellFunc::Process => "Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet,
-    @{Name='IOReadBytes';Expression={$_.IOReadBytes}},
-    @{Name='IOWriteBytes';Expression={$_.IOWriteBytes}} | ConvertTo-Json"
-            .to_string(),
+        ShellFunc::Process => WINDOWS_PROCESS.to_string(),
         ShellFunc::Shutdown => "Stop-Computer -Force".to_string(),
         ShellFunc::Reboot => "Restart-Computer -Force".to_string(),
         ShellFunc::Suspend => {
