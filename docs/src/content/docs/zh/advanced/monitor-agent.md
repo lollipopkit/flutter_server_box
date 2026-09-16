@@ -45,9 +45,9 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 配置文件位于二进制文件旁边的 `config.toml`。所有配置项都在 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) 中说明。agent 默认监听 `0.0.0.0:3770`；如果存在 `frontend/dist`，还会在该地址提供网页面板。
 
-其中一部分不必打开文件也能修改。采集间隔、告警规则、通知渠道、数据保留和允许的面板来源，可以在网页面板的 **Server Settings** 页编辑；App 里打开配置了 agent 的服务器，点右上角的设置按钮即可。两者连的是同一个 agent，写的是同一个文件。不开放编辑的部分是有意为之：JWT secret、数据库路径和 `[remote_access]` 开关只能改文件，这样面板密码永远无法扩大 agent 的暴露面。
+其中一部分不必打开文件也能修改。采集间隔、告警规则、通知渠道、数据保留和允许的面板来源，可以在网页面板的 **Server Settings** 页编辑；App 里打开配置了 agent 的服务器，点右上角的设置按钮即可。两者连的是同一个 agent，写的是同一个文件。不开放编辑的部分是有意为之：JWT secret、`database_url` 和 `[remote_access]` 开关只能改文件，这样面板密码永远无法扩大 agent 的暴露面。
 
-文件中已有的密钥和 token —— ServerChan key、Bark key、iOS push token、`Authorization` header —— 不会回传给编辑器。它们显示为「已设置」且输入框为空；留空即保持原值，输入新值则替换。以这种方式所做的修改多数在 agent 重启后生效，每个字段会标明属于哪一种。
+文件中已有的密钥和 token —— ServerChan key、Bark key、iOS push token、`Authorization` header —— 不会回传给编辑器。它们显示为「已设置」且输入框为空；留空即保持原值，输入新值则替换。保存后的通知渠道要等 agent 下次启动才进入规则引擎，告警规则、采集间隔、数据保留和允许来源同理。只有扩展采集周期和两个闲置暂停设置是立即生效的。App 会标出需要重启的字段。
 
 如果 agent 需要从其他设备访问，请使用 HTTPS：可以配置内置 TLS（`[server.tls]`），也可以放在反向代理后面。App 支持自签名证书，但必须由你明确开启相关选项。
 
