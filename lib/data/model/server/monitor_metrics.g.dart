@@ -213,18 +213,22 @@ Map<String, dynamic> _$MonitorNetworkMetricsToJson(
 
 MonitorGpuMetrics _$MonitorGpuMetricsFromJson(Map<String, dynamic> json) =>
     MonitorGpuMetrics(
+      id: json['id'] as String?,
       name: json['name'] as String,
-      usagePercent: (json['usage_percent'] as num).toDouble(),
-      temperature: (json['temperature'] as num).toInt(),
-      power: json['power'] as String,
-      memoryUsed: (json['memory_used'] as num).toInt(),
-      memoryTotal: (json['memory_total'] as num).toInt(),
-      memoryUnit: json['memory_unit'] as String,
+      usagePercent: (json['usage_percent'] as num?)?.toDouble(),
+      temperature: (json['temperature'] as num?)?.toInt(),
+      power: json['power'] as String?,
+      memoryUsed: (json['memory_used'] as num?)?.toInt(),
+      memoryTotal: (json['memory_total'] as num?)?.toInt(),
+      memoryUnit: json['memory_unit'] as String?,
+      fanSpeed: (json['fan_speed'] as num?)?.toInt(),
+      clockSpeed: (json['clock_speed'] as num?)?.toInt(),
       vendor: json['vendor'] as String?,
     );
 
 Map<String, dynamic> _$MonitorGpuMetricsToJson(MonitorGpuMetrics instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'name': instance.name,
       'usage_percent': instance.usagePercent,
       'temperature': instance.temperature,
@@ -232,6 +236,8 @@ Map<String, dynamic> _$MonitorGpuMetricsToJson(MonitorGpuMetrics instance) =>
       'memory_used': instance.memoryUsed,
       'memory_total': instance.memoryTotal,
       'memory_unit': instance.memoryUnit,
+      'fan_speed': instance.fanSpeed,
+      'clock_speed': instance.clockSpeed,
       'vendor': instance.vendor,
     };
 
