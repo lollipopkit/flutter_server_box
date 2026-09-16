@@ -13,6 +13,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/self_addr.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
@@ -340,12 +341,16 @@ ${err.message ?? 'null'}
   }
 
   Widget _buildMainPage(ServerState si) {
-    // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
-    // iperf / services / portForward) needs a shell. Hide the whole row on
-    // transports without one instead of offering buttons that can only fail.
-    // `terminal` rather than `shell`: an agent's passwordless PTY earns the
-    // row too, and `btns` decides what belongs in it
-    final buildFuncs = si.capabilities.terminal;
+    // What this connection can actually serve, asked once and used twice: to
+    // decide whether the row is drawn at all, and then as the row's content.
+    //
+    // Asked of the entries rather than of one capability. `capabilities
+    // .terminal` was the gate, and it hid the whole row on a monitor server
+    // whose agent grants `[remote_access.fs]` but not `full_access` — that
+    // server has a Files button and nothing else, and it went missing from its
+    // own page while the Files tab went on listing it.
+    final funcBtns = serverFuncBtnsFor(si.spi, si.remoteAccess);
+    final buildFuncs = funcBtns.isNotEmpty;
     final logo = _buildLogo(si);
     final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {
@@ -376,7 +381,7 @@ ${err.message ?? 'null'}
                 bottom: 0,
                 child: HideOnScroll(
                   controller: _scrollCtrl,
-                  child: _buildFuncBar(si),
+                  child: _buildFuncBar(si, funcBtns),
                 ),
               ),
           ],
@@ -386,7 +391,10 @@ ${err.message ?? 'null'}
   }
 
   /// The row of things that can be done to this server, floating over it.
-  Widget _buildFuncBar(ServerState si) {
+  ///
+  /// Takes the entries rather than working them out, so that what is drawn is
+  /// the same list `_buildMainPage` decided there was room for.
+  Widget _buildFuncBar(ServerState si, List<ServerFuncBtn> btns) {
     return LayoutBuilder(
       builder: (_, cons) => Center(
         child: Padding(
@@ -411,7 +419,7 @@ ${err.message ?? 'null'}
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
                 height: _kFuncBarHeight,
-                child: ServerFuncBtns(spi: si.spi, granted: si.remoteAccess),
+                child: ServerFuncBtns(spi: si.spi, btns: btns),
               ),
             ),
           ),

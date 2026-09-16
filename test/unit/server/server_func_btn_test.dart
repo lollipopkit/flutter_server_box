@@ -1,12 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/view/widget/server_func_btns.dart';
 
 import '../../helpers/test_db.dart';
 
-/// What `ServerFuncBtn.autoAddNewFuncs` does to a row the user has already
-/// arranged, across an upgrade.
+/// Two questions about the row of things that can be done to a server: what
+/// `ServerFuncBtn.autoAddNewFuncs` does to an arrangement across an upgrade,
+/// and which entries a given connection can actually serve.
 void main() {
   late SettingStore setting;
 
@@ -168,5 +174,71 @@ void main() {
         ServerFuncBtn.remoteDesktop.name,
       ]),
     );
+  });
+
+  /// Which entries survive for a connection, and in particular that the row is
+  /// not an all-or-nothing question.
+  ///
+  /// `ServerDetailPage` used to draw the row only when `capabilities.terminal`
+  /// was true, which is `full_access` for a monitor server. An agent that
+  /// grants `[remote_access.fs]` and nothing else has a Files button and no
+  /// others, and that server lost its whole row — while the Files tab, which
+  /// asks `caps.files`, went on listing it.
+  group('serverFuncBtnsFor', () {
+    const monitorOnly = Spi(
+      id: 'm',
+      name: 'm',
+      monitorHttp: MonitorHttpCredential(addr: 'https://agent.example'),
+    );
+
+    setUp(() {
+      // Everything on, so what comes back is the capability filter's doing and
+      // not the user's arrangement.
+      setting.serverFuncBtns.put([
+        for (final btn in ServerFuncBtn.values) btn.name,
+      ]);
+    });
+
+    test('an agent granting only files keeps the Files button', () {
+      final btns = serverFuncBtnsFor(
+        monitorOnly,
+        const MonitorRemoteAccess(files: true),
+      );
+
+      expect(btns, [ServerFuncBtn.files]);
+    });
+
+    test('an agent granting nothing keeps no button', () {
+      expect(serverFuncBtnsFor(monitorOnly, MonitorRemoteAccess.none), isEmpty);
+      // Before the first poll the agent has said nothing, which is not a grant.
+      expect(serverFuncBtnsFor(monitorOnly, null), isEmpty);
+    });
+
+    test('full access keeps everything but the two that need a byte stream', () {
+      final btns = serverFuncBtnsFor(
+        monitorOnly,
+        const MonitorRemoteAccess(fullAccess: true, terminal: true, files: true),
+      );
+
+      // No endpoint relays a connection to an address this app names, so port
+      // forwarding and remote desktop stay out however much else is granted.
+      expect(btns, isNot(contains(ServerFuncBtn.portForward)));
+      expect(btns, isNot(contains(ServerFuncBtn.remoteDesktop)));
+      expect(btns, contains(ServerFuncBtn.terminal));
+      expect(btns, contains(ServerFuncBtn.files));
+      expect(btns, contains(ServerFuncBtn.container));
+    });
+
+    test('an SSH server is not asked the agent anything', () {
+      const ssh = Spi(
+        id: 's',
+        name: 's',
+        ssh: SshCredential(ip: '10.0.0.1', port: 22, user: 'root'),
+      );
+
+      // Null grant, and still everything: `granted` describes an agent, and
+      // this server has none.
+      expect(serverFuncBtnsFor(ssh, null), ServerFuncBtn.values);
+    });
   });
 }
