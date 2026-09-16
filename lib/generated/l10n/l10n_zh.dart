@@ -2064,10 +2064,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorAgentDefault => 'agent 默认值';
 
   @override
-  String get monitorAppliesNow => '保存后立即生效';
+  String get monitorNeedsRestart => 'agent 重启后生效';
 
   @override
-  String get monitorNeedsRestart => 'agent 重启后生效';
+  String get monitorCollection => '采集';
 
   @override
   String get extendedInterval => '扩展采集周期';
@@ -2081,6 +2081,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get idlePauseThreshold => '闲置判定时长';
+
+  @override
+  String get monitorAlerts => '告警';
 
   @override
   String get monitoringRules => '告警规则';
@@ -2158,9 +2161,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。';
-
-  @override
-  String get monitorSettingsTip => '编辑这台 agent 自身的配置';
 
   @override
   String get monitorNoAgent =>
@@ -4223,10 +4223,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get monitorAgentDefault => 'agent 預設值';
 
   @override
-  String get monitorAppliesNow => '儲存後立即生效';
+  String get monitorNeedsRestart => 'agent 重啟後生效';
 
   @override
-  String get monitorNeedsRestart => 'agent 重啟後生效';
+  String get monitorCollection => '採集';
 
   @override
   String get extendedInterval => '延伸採集週期';
@@ -4240,6 +4240,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get idlePauseThreshold => '閒置判定時長';
+
+  @override
+  String get monitorAlerts => '告警';
 
   @override
   String get monitoringRules => '告警規則';
@@ -4317,9 +4320,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。';
-
-  @override
-  String get monitorSettingsTip => '編輯這台 agent 自身的設定';
 
   @override
   String get monitorNoAgent =>

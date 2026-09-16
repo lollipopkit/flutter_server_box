@@ -18,7 +18,6 @@ void main() {
         AppTab.snippet,
         AppTab.benchmark,
         AppTab.remoteDesktop,
-        AppTab.monitorSettings,
       ]);
     });
 
@@ -134,7 +133,6 @@ void main() {
       AppTab.agent,
       AppTab.benchmark,
       AppTab.remoteDesktop,
-      AppTab.monitorSettings,
     ]);
   });
 
@@ -146,7 +144,20 @@ void main() {
     expect(AppTab.server.index, 0);
     expect(AppTab.benchmark.index, 5);
     expect(AppTab.remoteDesktop.index, 6);
-    expect(AppTab.monitorSettings.index, 7);
+  });
+
+  /// 7 was the Monitor settings tab. `values` is positional, so the next case
+  /// appended takes that index — and without the retired list an install that
+  /// had the old tab in its bar would silently get the new tab in its place.
+  test('drops a retired tab index instead of resolving it', () {
+    expect(AppTab.parseAppTabsFromObj([0, 7, 1]), [AppTab.server, AppTab.ssh]);
+    // Nothing left is nothing stored, which is what the default is for.
+    expect(AppTab.parseAppTabsFromObj([7]), AppTab.defaultOrder);
+    // The name is gone from `values` too, so a record that spelled it out is
+    // dropped by the same path.
+    expect(AppTab.parseAppTabsFromObj(['server', 'monitorSettings']), [
+      AppTab.server,
+    ]);
   });
 
   group('reorderHomeTabs', () {

@@ -660,12 +660,13 @@
   "scheduledTaskScheduleHint": "例如：0 2 * * * 或 @reboot",
   "monitorSettings": "Monitor 設定",
   "monitorAgentDefault": "agent 預設值",
-  "monitorAppliesNow": "儲存後立即生效",
   "monitorNeedsRestart": "agent 重啟後生效",
+  "monitorCollection": "採集",
   "extendedInterval": "延伸採集週期",
   "idlePause": "無人檢視時暫停",
   "idlePauseTip": "延伸採集會呼叫 smartctl、sensors 與 amd-smi。沒有用戶端輪詢時暫停，可以避免為無人檢視的資料喚醒硬碟。",
   "idlePauseThreshold": "閒置判定時長",
+  "monitorAlerts": "告警",
   "monitoringRules": "告警規則",
   "ruleMonitorType": "指標",
   "ruleThreshold": "閾值",
@@ -691,6 +692,5 @@
   "retentionMaxDbSize": "資料庫容量上限",
   "corsOrigins": "CORS 允許來源",
   "corsOriginsTip": "允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。",
-  "monitorSettingsTip": "編輯這台 agent 自身的設定",
   "monitorNoAgent": "還沒有設定了 monitor agent 的伺服器。在某台伺服器的設定裡加上，就能在這裡編輯它。"
 }

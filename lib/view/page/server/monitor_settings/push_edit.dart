@@ -167,10 +167,10 @@ final class _MonitorPushEditPageState extends State<MonitorPushEditPage> {
           down: entry.name.isEmpty ? libL10n.add : entry.name,
         ),
         actions: [
-          Btn.icon(
-            text: libL10n.save,
+          IconButton(
+            tooltip: libL10n.save,
             icon: const Icon(Icons.save),
-            onTap: _onSave,
+            onPressed: _onSave,
           ),
         ],
       ),
@@ -196,15 +196,44 @@ extension on _MonitorPushEditPageState {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.only(left: 7, right: 7, top: 7, bottom: 27),
+    // Grouped, then laid out in the server editor's grid. One field per grid
+    // entry would scatter a channel's settings across the columns: the grid
+    // fills them in turn, so `url` and `method` would end up side by side in
+    // different columns rather than one under the other.
+    //
+    // A group is added only when it has something in it — an entry that
+    // renders to nothing still takes the grid's spacing on both sides, which
+    // is a gap belonging to no card.
+    final headers = _headers;
+    return PageColumns(
       children: [
-        Input(controller: _nameCtrl, label: libL10n.name, suggestion: false),
-        _buildType(),
-        ..._fields.map(_buildField),
-        if (_headers case final headers?) ..._buildHeaders(headers),
-        ..._jsons.map(_buildJson),
-        UIs.height13,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              controller: _nameCtrl,
+              label: libL10n.name,
+              icon: BoxIcons.bx_rename,
+              suggestion: false,
+            ),
+            _buildType(),
+          ],
+        ),
+        if (_fields.isNotEmpty)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _fields.map(_buildField).toList(),
+          ),
+        if (headers != null)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _buildHeaders(headers),
+          ),
+        if (_jsons.isNotEmpty)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: _jsons.map(_buildJson).toList(),
+          ),
         _buildTest(),
       ],
     );
@@ -306,7 +335,11 @@ extension on _MonitorPushEditPageState {
             ),
           ),
         ),
-      Btn.text(text: libL10n.add, onTap: _onAddHeader),
+      Btn.icon(
+        icon: const Icon(Icons.add, size: 20),
+        text: libL10n.add,
+        onTap: _onAddHeader,
+      ),
     ];
   }
 

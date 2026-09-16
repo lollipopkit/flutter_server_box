@@ -8,7 +8,8 @@ import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_push.dart';
 import 'package:server_box/data/model/server/monitor_settings.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
-import 'package:server_box/view/page/server/monitor_settings/push_edit.dart';
+import 'package:server_box/view/page/server/monitor_settings/lists.dart';
+import 'package:server_box/view/page/server/monitor_settings/widgets.dart';
 
 /// The bar's half of [MonitorSettingsView].
 ///
@@ -219,13 +220,25 @@ extension on _MonitorSettingsViewState {
     final settings = _settings;
     if (settings == null) return UIs.centerLoading;
 
-    return ListView(
-      padding: const EdgeInsets.only(left: 7, right: 7, top: 7, bottom: 27),
+    // The same grid the server editor lays its form out in, rather than a
+    // full-width list. This is a form of the same kind and the same length, and
+    // on a tablet or a desktop window one column of it spanning the whole
+    // surface is a line of text nobody can follow from end to end.
+    //
+    // Each entry below is one group. A group rather than a field, because the
+    // grid places its children across the columns in turn — field by field,
+    // a section's heading and the boxes under it would land in different
+    // columns.
+    //
+    // Each carries a heading, and the heading names the category rather than
+    // the first row under it: a title that repeats the label below it is the
+    // reason these were dropped once. It is also what makes the grid's own
+    // spacing between two groups readable — without it, the extra four points
+    // where one group ends is a gap belonging to nothing.
+    return PageColumns(
       children: [
         _buildCollection(settings),
-        _buildIdlePause(settings),
-        _buildRules(settings),
-        _buildPush(),
+        _buildAlerts(settings),
         _buildRetention(),
         _buildCors(),
       ],
@@ -250,49 +263,28 @@ extension on _MonitorSettingsViewState {
     );
   }
 
-  /// Says whether the field above it is picked up by the running agent or
-  /// waits for a restart. Read off what the agent reported rather than a copy
-  /// here: the set has changed before, and a wrong answer here is one the user
-  /// only finds out about by an alert that never comes.
-  Widget _effectNote(MonitorSettings settings, String field) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 17, bottom: 7),
-      child: Text(
-        settings.isLive(field) ? l10n.monitorAppliesNow : l10n.monitorNeedsRestart,
-        style: UIs.textGrey,
-      ),
-    );
-  }
-
   Widget _buildCollection(MonitorSettings settings) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CenterGreyTitle(l10n.updateServerStatusInterval),
+        CenterGreyTitle(l10n.monitorCollection),
         Input(
           controller: _intervalCtrl,
           label: '${l10n.updateServerStatusInterval} (${libL10n.second})',
+          icon: Icons.timer_outlined,
           type: TextInputType.number,
           suggestion: false,
         ),
-        _effectNote(settings, 'interval_seconds'),
+        MonitorUi.effectNote(settings, 'interval_seconds'),
         Input(
           controller: _extendedCtrl,
           label: '${l10n.extendedInterval} (${libL10n.second})',
           hint: l10n.monitorAgentDefault,
+          icon: Icons.more_time,
           type: TextInputType.number,
           suggestion: false,
         ),
-        _effectNote(settings, 'extended_interval_secs'),
-      ],
-    );
-  }
-
-  Widget _buildIdlePause(MonitorSettings settings) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CenterGreyTitle(l10n.idlePause),
+        MonitorUi.effectNote(settings, 'extended_interval_secs'),
         ListTile(
           leading: const Icon(Icons.pause_circle_outline),
           title: TipText(l10n.idlePause, l10n.idlePauseTip),
@@ -304,83 +296,99 @@ extension on _MonitorSettingsViewState {
             }),
           ),
         ).cardx,
-        _effectNote(settings, 'idle_pause_enabled'),
+        MonitorUi.effectNote(settings, 'idle_pause_enabled'),
         Input(
           controller: _idleThresholdCtrl,
           label: '${l10n.idlePauseThreshold} (${libL10n.second})',
           hint: l10n.monitorAgentDefault,
+          icon: Icons.hourglass_empty,
           type: TextInputType.number,
           suggestion: false,
         ),
-        // Its own field, not the switch's. Both are live today and the two
-        // notes read the same, which is exactly why the wrong one went
-        // unnoticed — `live_fields` is the agent's answer and has changed
-        // before.
-        _effectNote(settings, 'idle_pause_threshold_secs'),
+        // Its own field, not the switch's. Both are live today, so both draw
+        // nothing and passing the wrong one here would look identical —
+        // `live_fields` is the agent's answer and has changed before, and the
+        // day it moves one of these two the mark has to land on the right box.
+        MonitorUi.effectNote(settings, 'idle_pause_threshold_secs'),
       ],
     );
   }
 
-  Widget _buildRules(MonitorSettings settings) {
+  /// When to alert, and where the alert goes.
+  ///
+  /// One group because they are one decision split in two: a rule decides that
+  /// something is wrong and a channel decides who hears about it, and either
+  /// one alone does nothing. Each is a row that opens a page — laid out here
+  /// the two lists were most of the form.
+  Widget _buildAlerts(MonitorSettings settings) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CenterGreyTitle(l10n.monitoringRules),
-        for (final (idx, rule) in _rules.indexed)
-          ListTile(
-            leading: const Icon(MingCute.alert_line),
-            title: Text(rule.name.isEmpty ? libL10n.empty : rule.name),
-            subtitle: Text(
-              '${rule.monitorType} ${rule.matcher} ${rule.threshold}',
-              style: UIs.textGrey,
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, size: 19),
-              onPressed: () => setState(() {
-                _rules.removeAt(idx);
+        CenterGreyTitle(l10n.monitorAlerts),
+        MonitorUi.navTile(
+          icon: MingCute.alert_line,
+          title: l10n.monitoringRules,
+          names: [for (final rule in _rules) rule.name],
+          onTap: () => MonitorRulesPage.route.go(
+            context,
+            MonitorRulesArgs(
+              rules: _rules,
+              settings: settings,
+              onChanged: (rules) => setState(() {
+                _rules = rules;
                 _settingsDirty = true;
               }),
             ),
-            onTap: () => _editRule(idx),
-          ).cardx,
-        Btn.text(text: libL10n.add, onTap: () => _editRule(null)),
-        _effectNote(settings, 'rules'),
+          ),
+        ),
+        MonitorUi.navTile(
+          icon: MingCute.notification_line,
+          title: l10n.pushChannels,
+          names: [for (final entry in _pushes) entry.name],
+          onTap: () => MonitorPushListPage.route.go(
+            context,
+            MonitorPushListArgs(
+              pushes: _pushes,
+              push: _push,
+              rateCtrl: _pushRateCtrl,
+              client: _client,
+              onChanged: (pushes) => setState(() {
+                _pushes = pushes;
+                _pushDirty = true;
+              }),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildPush() {
-    final push = _push;
+  /// Who may reach this agent from a browser.
+  ///
+  /// Its own group rather than a row among the alert lists: what it decides is
+  /// which origins the agent answers, which is nothing to do with when it
+  /// alerts. One row under a heading is what the server editor gives PVE and
+  /// BMC too.
+  Widget _buildCors() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CenterGreyTitle(l10n.pushChannels),
-        Input(
-          controller: _pushRateCtrl,
-          label: l10n.pushRate,
-          hint: '1/1m',
-          suggestion: false,
-        ),
-        for (final (idx, entry) in _pushes.indexed)
-          ListTile(
-            leading: const Icon(MingCute.notification_line),
-            title: Text(entry.name.isEmpty ? libL10n.empty : entry.name),
-            subtitle: Text(entry.pushType, style: UIs.textGrey),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, size: 19),
-              onPressed: () => setState(() {
-                _pushes.removeAt(idx);
-                _pushDirty = true;
+        CenterGreyTitle(libL10n.network),
+        MonitorUi.navTile(
+          icon: MingCute.web_line,
+          title: l10n.corsOrigins,
+          names: _cors,
+          onTap: () => MonitorCorsPage.route.go(
+            context,
+            MonitorCorsArgs(
+              origins: _cors,
+              onChanged: (origins) => setState(() {
+                _cors = origins;
+                _settingsDirty = true;
               }),
             ),
-            onTap: () => _editPush(idx),
-          ).cardx,
-        Btn.text(text: libL10n.add, onTap: () => _editPush(null)),
-        if (push?.appliesOnRestart ?? true)
-          Padding(
-            padding: const EdgeInsets.only(left: 17, bottom: 7),
-            child: Text(l10n.monitorNeedsRestart, style: UIs.textGrey),
           ),
+        ),
       ],
     );
   }
@@ -389,7 +397,7 @@ extension on _MonitorSettingsViewState {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CenterGreyTitle(l10n.dataRetention),
+        CenterGreyTitle(libL10n.storage),
         ListTile(
           leading: const Icon(Icons.auto_delete_outlined),
           title: TipText(l10n.dataRetention, l10n.dataRetentionTip),
@@ -405,24 +413,28 @@ extension on _MonitorSettingsViewState {
           Input(
             controller: _metricsDaysCtrl,
             label: '${l10n.retentionMetrics} (${libL10n.day})',
+            icon: Icons.show_chart,
             type: TextInputType.number,
             suggestion: false,
           ),
           Input(
             controller: _alertsDaysCtrl,
             label: '${l10n.retentionAlerts} (${libL10n.day})',
+            icon: MingCute.alert_line,
             type: TextInputType.number,
             suggestion: false,
           ),
           Input(
             controller: _cleanupHoursCtrl,
             label: '${l10n.retentionCleanup} (${libL10n.hour})',
+            icon: Icons.cleaning_services_outlined,
             type: TextInputType.number,
             suggestion: false,
           ),
           Input(
             controller: _maxDbSizeCtrl,
             label: '${l10n.retentionMaxDbSize} (MB)',
+            icon: Icons.storage,
             type: TextInputType.number,
             suggestion: false,
           ),
@@ -431,31 +443,6 @@ extension on _MonitorSettingsViewState {
     );
   }
 
-  Widget _buildCors() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CenterGreyTitle(l10n.corsOrigins),
-        for (final (idx, origin) in _cors.indexed)
-          ListTile(
-            leading: const Icon(MingCute.web_line),
-            title: Text(origin),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, size: 19),
-              onPressed: () => setState(() {
-                _cors.removeAt(idx);
-                _settingsDirty = true;
-              }),
-            ),
-          ).cardx,
-        Btn.text(text: libL10n.add, onTap: _addOrigin),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 17),
-          child: Text(l10n.corsOriginsTip, style: UIs.textGrey),
-        ),
-      ],
-    );
-  }
 }
 
 // --- Actions ---
@@ -544,117 +531,6 @@ extension on _MonitorSettingsViewState {
         actions: Btnx.oks,
       );
     }
-  }
-
-  Future<void> _editRule(int? idx) async {
-    final rule = idx == null ? null : _rules[idx];
-    final name = TextEditingController(text: rule?.name ?? '');
-    final type = TextEditingController(text: rule?.monitorType ?? 'cpu');
-    final threshold = TextEditingController(text: rule?.threshold ?? '>=80%');
-    final matcher = TextEditingController(text: rule?.matcher ?? 'cpu');
-
-    final ok = await context.showRoundDialog<bool>(
-      title: l10n.monitoringRules,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Input(controller: name, label: libL10n.name, suggestion: false),
-            Input(
-              controller: type,
-              label: l10n.ruleMonitorType,
-              hint: 'cpu / memory / disk / network / temperature',
-              suggestion: false,
-            ),
-            Input(
-              controller: threshold,
-              label: l10n.ruleThreshold,
-              hint: '>=80%',
-              suggestion: false,
-            ),
-            Input(
-              controller: matcher,
-              label: l10n.ruleMatcher,
-              hint: 'cpu / used / rx',
-              suggestion: false,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Text(l10n.ruleTip, style: UIs.textGrey),
-            ),
-          ],
-        ),
-      ),
-      actions: Btnx.cancelOk,
-    );
-
-    final edited = MonitorRule(
-      name: name.text.trim(),
-      monitorType: type.text.trim(),
-      threshold: threshold.text.trim(),
-      matcher: matcher.text.trim(),
-    );
-    for (final ctrl in [name, type, threshold, matcher]) {
-      ctrl.dispose();
-    }
-    if (ok != true || !mounted) return;
-
-    setState(() {
-      if (idx == null) {
-        _rules.add(edited);
-      } else {
-        _rules[idx] = edited;
-      }
-      _settingsDirty = true;
-    });
-  }
-
-  Future<void> _editPush(int? idx) async {
-    final push = _push;
-    final entry =
-        idx == null
-            ? const MonitorPushEntry(name: '', pushType: 'webhook')
-            : _pushes[idx];
-    final edited = await MonitorPushEditPage.route.go(
-      context,
-      MonitorPushEditArgs(
-        entry: entry,
-        pushTypes: push?.pushTypes ?? const [],
-        client: _client,
-      ),
-    );
-    if (edited == null || !mounted) return;
-    setState(() {
-      if (idx == null) {
-        _pushes.add(edited);
-      } else {
-        _pushes[idx] = edited;
-      }
-      _pushDirty = true;
-    });
-  }
-
-  Future<void> _addOrigin() async {
-    final ctrl = TextEditingController();
-    final ok = await context.showRoundDialog<bool>(
-      title: l10n.corsOrigins,
-      child: Input(
-        controller: ctrl,
-        label: 'URL',
-        hint: 'https://panel.example.com',
-        type: TextInputType.url,
-        suggestion: false,
-      ),
-      actions: Btnx.cancelOk,
-    );
-    final origin = ctrl.text.trim();
-    ctrl.dispose();
-    if (ok != true || origin.isEmpty || !mounted) return;
-    if (_cors.contains(origin)) return;
-    setState(() {
-      _cors.add(origin);
-      _settingsDirty = true;
-    });
   }
 
 }

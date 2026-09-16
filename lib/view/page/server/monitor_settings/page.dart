@@ -68,18 +68,26 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
             actions: [
               if (_ctrl.ready)
                 if (_ctrl.saving)
+                  // Sized to the button it stands in for, so the bar does not
+                  // twitch when a save starts.
                   const Padding(
-                    padding: EdgeInsets.all(13),
+                    padding: EdgeInsets.all(12),
                     child: SizedBox.square(
-                      dimension: 17,
+                      dimension: 24,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
                 else
-                  Btn.icon(
-                    text: libL10n.save,
-                    icon: const Icon(Icons.save, size: 18),
-                    onTap: _ctrl.save,
+                  // `IconButton`, which is what every other route's bar here
+                  // uses — `Btn.icon` draws the icon at whatever size it is
+                  // given inside 7 points of padding, so at 18 the whole target
+                  // was 32 square, under both platforms' minimum. The 18pt rule
+                  // in CLAUDE.md is about a *tab's* bar, which is shorter than
+                  // this one.
+                  IconButton(
+                    tooltip: libL10n.save,
+                    icon: const Icon(Icons.save),
+                    onPressed: _ctrl.save,
                   ),
             ],
           ),

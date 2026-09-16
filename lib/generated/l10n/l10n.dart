@@ -3910,17 +3910,17 @@ abstract class AppLocalizations {
   /// **'Agent default'**
   String get monitorAgentDefault;
 
-  /// No description provided for @monitorAppliesNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Takes effect on save'**
-  String get monitorAppliesNow;
-
   /// No description provided for @monitorNeedsRestart.
   ///
   /// In en, this message translates to:
   /// **'Takes effect after the agent restarts'**
   String get monitorNeedsRestart;
+
+  /// No description provided for @monitorCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get monitorCollection;
 
   /// No description provided for @extendedInterval.
   ///
@@ -3945,6 +3945,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Idle after'**
   String get idlePauseThreshold;
+
+  /// No description provided for @monitorAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get monitorAlerts;
 
   /// No description provided for @monitoringRules.
   ///
@@ -4095,12 +4101,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
   String get corsOriginsTip;
-
-  /// No description provided for @monitorSettingsTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit this agent\'s own configuration'**
-  String get monitorSettingsTip;
 
   /// No description provided for @monitorNoAgent.
   ///

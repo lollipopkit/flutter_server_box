@@ -29,6 +29,17 @@ abstract final class Urls {
   /// convey on its own.
   static const monitorAgentDoc = '$docs/advanced/monitor-agent/';
 
+  /// How an alert rule is written: what a metric, a matcher and a threshold
+  /// are, which combinations the agent actually evaluates, and when a rule
+  /// stays quiet.
+  ///
+  /// Linked from the rule list rather than restated there. A rule that the
+  /// agent cannot parse is a `warn!` in its own log and an alert that never
+  /// arrives, so the parts worth knowing are the ones a form cannot show — a
+  /// threshold with no comparator means `<`, and a unit that does not fit its
+  /// metric never fires.
+  static const monitorRulesDoc = '$monitorAgentDoc#alert-rules';
+
   /// What is collected at each diagnostics level, and what is not.
   ///
   /// Linked from the intro page that asks the question and from the setting

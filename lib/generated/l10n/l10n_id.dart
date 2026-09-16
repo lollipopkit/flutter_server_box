@@ -2237,10 +2237,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorAgentDefault => 'Agent default';
 
   @override
-  String get monitorAppliesNow => 'Takes effect on save';
+  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorCollection => 'Collection';
 
   @override
   String get extendedInterval => 'Extended cycle interval';
@@ -2254,6 +2254,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get idlePauseThreshold => 'Idle after';
+
+  @override
+  String get monitorAlerts => 'Alerts';
 
   @override
   String get monitoringRules => 'Alert rules';
@@ -2334,9 +2337,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get corsOriginsTip =>
       'Origins a browser panel may call this agent from. Empty means same-origin only.';
-
-  @override
-  String get monitorSettingsTip => 'Edit this agent\'s own configuration';
 
   @override
   String get monitorNoAgent =>

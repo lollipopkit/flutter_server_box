@@ -347,11 +347,7 @@ ${err.message ?? 'null'}
     // row too, and `btns` decides what belongs in it
     final buildFuncs = si.capabilities.terminal;
     final logo = _buildLogo(si);
-    final children = <Widget>[
-      ?logo,
-      ?_buildErrCard(si),
-      ?_buildMonitorSettingsEntry(si),
-    ];
+    final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {
       final child = _cardBuildMap[ServerDetailCards.fromName(card)]
           ?.call(si);
@@ -499,7 +495,13 @@ ${err.message ?? 'null'}
           tooltip: libL10n.share,
           onPressed: () => ServerShareUi.send(context, si.spi),
         ),
-        IconButton(tooltip: libL10n.edit, 
+        // Beside Edit rather than to the right of it: the two are neighbours
+        // because they are the same kind of thing at different ends of the
+        // wire — Edit is this app's record of the server, this is the agent's
+        // own configuration — and Edit stays the rightmost, where the primary
+        // action belongs.
+        ?_buildMonitorSettingsBtn(si),
+        IconButton(tooltip: libL10n.edit,
           icon: const Icon(Icons.edit),
           onPressed: () async {
             final delete = await ServerEditPage.route.go(
@@ -536,22 +538,26 @@ ${err.message ?? 'null'}
   /// the two — so a capability check would show this for an SSH-only server
   /// that happens to share a capability with an agent.
   ///
-  /// Above the cards rather than in the function bar below them: that row is
-  /// things done *to* the machine, and this is the machine's own configuration.
-  Widget? _buildMonitorSettingsEntry(ServerState si) {
+  /// In the bar, not above the cards.
+  ///
+  /// It was a full-width card with a title and a line of explanation, sitting
+  /// on top of the readings this page exists to show — and it is a way out of
+  /// the page rather than anything about the machine, which is what the bar
+  /// holds. It also read as a card whose content had failed to load, since
+  /// every other card here has a measurement in it.
+  ///
+  /// Not in the function bar below the cards either: that row is things done
+  /// *to* the machine, and this is the agent's own configuration.
+  Widget? _buildMonitorSettingsBtn(ServerState si) {
     final monitor = si.spi.monitorHttp;
     if (monitor == null) return null;
 
-    return CardX(
-      child: ListTile(
-        leading: const Icon(MingCute.settings_2_line),
-        title: Text(l10n.monitorSettings),
-        subtitle: Text(l10n.monitorSettingsTip, style: UIs.textGrey),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () => MonitorSettingsPage.route.go(
-          context,
-          MonitorSettingsArgs(monitor: monitor, subtitle: si.spi.name),
-        ),
+    return IconButton(
+      icon: const Icon(MingCute.settings_2_line),
+      tooltip: l10n.monitorSettings,
+      onPressed: () => MonitorSettingsPage.route.go(
+        context,
+        MonitorSettingsArgs(monitor: monitor, subtitle: si.spi.name),
       ),
     );
   }

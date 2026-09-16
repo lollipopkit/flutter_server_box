@@ -660,12 +660,13 @@
   "scheduledTaskScheduleHint": "例如：0 2 * * * 或 @reboot",
   "monitorSettings": "Monitor 设置",
   "monitorAgentDefault": "agent 默认值",
-  "monitorAppliesNow": "保存后立即生效",
   "monitorNeedsRestart": "agent 重启后生效",
+  "monitorCollection": "采集",
   "extendedInterval": "扩展采集周期",
   "idlePause": "无人查看时暂停",
   "idlePauseTip": "扩展采集会调用 smartctl、sensors 和 amd-smi。没有客户端轮询时暂停，可以避免为无人查看的数据唤醒硬盘。",
   "idlePauseThreshold": "闲置判定时长",
+  "monitorAlerts": "告警",
   "monitoringRules": "告警规则",
   "ruleMonitorType": "指标",
   "ruleThreshold": "阈值",
@@ -691,6 +692,5 @@
   "retentionMaxDbSize": "数据库体积上限",
   "corsOrigins": "CORS 允许来源",
   "corsOriginsTip": "允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。",
-  "monitorSettingsTip": "编辑这台 agent 自身的配置",
   "monitorNoAgent": "还没有配置了 monitor agent 的服务器。在某台服务器的设置里加上，就能在这里编辑它。"
 }

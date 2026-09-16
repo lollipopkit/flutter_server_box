@@ -873,12 +873,13 @@
   "scheduledTaskScheduleHint": "For example: 0 2 * * * or @reboot",
   "monitorSettings": "Monitor settings",
   "monitorAgentDefault": "Agent default",
-  "monitorAppliesNow": "Takes effect on save",
   "monitorNeedsRestart": "Takes effect after the agent restarts",
+  "monitorCollection": "Collection",
   "extendedInterval": "Extended cycle interval",
   "idlePause": "Pause when nothing is watching",
   "idlePauseTip": "The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.",
   "idlePauseThreshold": "Idle after",
+  "monitorAlerts": "Alerts",
   "monitoringRules": "Alert rules",
   "ruleMonitorType": "Metric",
   "ruleThreshold": "Threshold",
@@ -904,6 +905,5 @@
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
   "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
-  "monitorSettingsTip": "Edit this agent's own configuration",
   "monitorNoAgent": "No server here has a monitor agent configured. Add one in a server's settings to edit it from here."
 }

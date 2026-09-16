@@ -17,14 +17,21 @@ enum AppTab {
   @HiveField(5)
   benchmark,
   @HiveField(6)
-  remoteDesktop,
+  remoteDesktop;
 
-  /// A `monitor` agent's own configuration. A tab because it is the one thing
-  /// here that is not about a server so much as about the program running on
-  /// it, and because an operator editing intervals and alert rules is moving
-  /// between agents rather than staying on one server's page.
-  @HiveField(7)
-  monitorSettings;
+  /// Indices that named a tab which no longer exists.
+  ///
+  /// 7 was `monitorSettings`, a whole tab for a `monitor` agent's own
+  /// configuration. It is reached from the agent's server instead — one button
+  /// in that page's bar — which is where someone already is when they want it.
+  ///
+  /// Listed rather than held open by a placeholder case, which would need a
+  /// branch in every exhaustive switch to say it is not a real tab. It has to
+  /// be listed at all because [values] is positional: the next case appended
+  /// below `remoteDesktop` becomes index 7, and without this an install that
+  /// had the old tab in its bar would silently get that new tab in its place.
+  // TODO(migration): drop once no stored tab order can still hold it.
+  static const _retiredIndices = {7};
 
   /// The tabs a fresh install puts in the bar, and the fallback when a stored
   /// list cannot be read.
@@ -94,6 +101,7 @@ enum AppTab {
         if (tab.name == e) return tab;
       }
     } else if (e is int) {
+      if (_retiredIndices.contains(e)) return null;
       if (e >= 0 && e < AppTab.values.length) {
         return AppTab.values[e];
       }
