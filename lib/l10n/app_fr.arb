@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Supprimer toutes les données",
   "schemaTooNewWipeConfirm": "Tous les serveurs, clés, extraits et réglages de cet appareil seront supprimés, sans possibilité d’annulation. Une sauvegarde exportée ici serait la seule copie restante.",
   "schemaTooNewWipeDone": "Données supprimées. Rouvrez l’application pour repartir de zéro.",
-  "schemaTooNewWipeFailed": "Certaines données n’ont pas pu être supprimées et cette version ne peut toujours pas ouvrir ce qui reste. Réinstallez la version plus récente pour y accéder."
+  "schemaTooNewWipeFailed": "Certaines données n’ont pas pu être supprimées et cette version ne peut toujours pas ouvrir ce qui reste. Réinstallez la version plus récente pour y accéder.",
+  "monitorNoRemoteAccess": "Cet agent est configuré pour la surveillance uniquement. Vous ne pouvez pas ouvrir de terminal, exécuter de commandes ni parcourir les fichiers ici. Pour activer ces fonctions, modifiez [remote_access] dans le config.toml de l'agent."
 }

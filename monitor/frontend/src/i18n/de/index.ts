@@ -150,6 +150,8 @@ const de = {
 	terminalPasswordlessDisable: 'Abschalten',
 	files: 'Dateien',
 	filesUnavailable: 'Der Dateizugriff ist auf diesem Agenten nicht aktiviert. Aktiviere remote_access.fs.enabled in der config.toml und gib die Wurzelverzeichnisse an; außerdem wird TLS oder ein Proxy auf demselben Host benötigt.',
+	remoteAccessOffTitle: 'Fernzugriff ist deaktiviert',
+	remoteAccessOffBody: 'Dieser Agent liefert nur Messwerte. Terminalzugriff, Befehlsausführung und Dateizugriff sind nicht verfügbar. Die Schalter werden unter [remote_access] in seiner config.toml festgelegt und können hier nicht geändert werden. Ein Panel-Passwort kann daher nie mehr Zugriff gewähren, als der Agent bereitstellt.',
 	filesRoots: 'Wurzelverzeichnisse',
 	filesEmpty: 'Nichts vorhanden',
 	filesSize: 'Größe',

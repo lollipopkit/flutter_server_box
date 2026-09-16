@@ -150,6 +150,8 @@ const ja = {
 	terminalPasswordlessDisable: '無効にする',
 	files: 'ファイル',
 	filesUnavailable: 'このエージェントではファイルアクセスが有効になっていません。config.toml の remote_access.fs.enabled を有効にし、ルートを指定してください。TLS、または同一ホスト上のプロキシも必要です。',
+	remoteAccessOffTitle: 'リモートアクセスは無効です',
+	remoteAccessOffBody: 'この agent は計測値だけを提供します。ターミナル、コマンド実行、ファイル閲覧は利用できません。これらの設定は config.toml の [remote_access] で行い、ここからは変更できません。そのため、パネルのパスワードだけで agent の公開範囲が広がることはありません。',
 	filesRoots: 'ルート',
 	filesEmpty: '何もありません',
 	filesSize: 'サイズ',

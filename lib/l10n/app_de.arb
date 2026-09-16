@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Alle Daten löschen",
   "schemaTooNewWipeConfirm": "Alle Server, Schlüssel, Snippets und Einstellungen auf diesem Gerät werden gelöscht. Das kann nicht rückgängig gemacht werden. Eine hier exportierte Sicherung wäre die einzige verbleibende Kopie.",
   "schemaTooNewWipeDone": "Daten gelöscht. Öffne die App erneut, um neu zu beginnen.",
-  "schemaTooNewWipeFailed": "Ein Teil der Daten konnte nicht gelöscht werden, und diese Version kann die verbleibenden Daten weiterhin nicht öffnen. Installiere die neuere Version erneut, um darauf zuzugreifen."
+  "schemaTooNewWipeFailed": "Ein Teil der Daten konnte nicht gelöscht werden, und diese Version kann die verbleibenden Daten weiterhin nicht öffnen. Installiere die neuere Version erneut, um darauf zuzugreifen.",
+  "monitorNoRemoteAccess": "Dieser Agent ist nur für die Überwachung eingerichtet. Hier können Sie kein Terminal öffnen, keine Befehle ausführen und keine Dateien durchsuchen. Aktivieren Sie diese Funktionen unter [remote_access] in der config.toml des Agenten."
 }

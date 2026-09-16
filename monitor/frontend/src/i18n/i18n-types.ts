@@ -624,6 +624,14 @@ type RootTranslation = {
 	 */
 	filesUnavailable: string
 	/**
+	 * R​e​m​o​t​e​ ​a​c​c​e​s​s​ ​i​s​ ​d​i​s​a​b​l​e​d
+	 */
+	remoteAccessOffTitle: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​o​n​l​y​ ​p​r​o​v​i​d​e​s​ ​r​e​a​d​i​n​g​s​.​ ​T​e​r​m​i​n​a​l​ ​a​c​c​e​s​s​,​ ​c​o​m​m​a​n​d​ ​e​x​e​c​u​t​i​o​n​,​ ​a​n​d​ ​f​i​l​e​ ​b​r​o​w​s​i​n​g​ ​a​r​e​ ​u​n​a​v​a​i​l​a​b​l​e​.​ ​T​h​e​s​e​ ​s​w​i​t​c​h​e​s​ ​a​r​e​ ​c​o​n​f​i​g​u​r​e​d​ ​u​n​d​e​r​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​i​t​s​ ​c​o​n​f​i​g​.​t​o​m​l​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​c​h​a​n​g​e​d​ ​h​e​r​e​,​ ​s​o​ ​a​ ​p​a​n​e​l​ ​p​a​s​s​w​o​r​d​ ​c​a​n​n​o​t​ ​g​r​a​n​t​ ​a​c​c​e​s​s​ ​b​e​y​o​n​d​ ​w​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​e​x​p​o​s​e​s​.
+	 */
+	remoteAccessOffBody: string
+	/**
 	 * R​o​o​t​s
 	 */
 	filesRoots: string
@@ -1374,6 +1382,14 @@ export type TranslationFunctions = {
 	 * File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	filesUnavailable: () => LocalizedString
+	/**
+	 * Remote access is disabled
+	 */
+	remoteAccessOffTitle: () => LocalizedString
+	/**
+	 * This agent only provides readings. Terminal access, command execution, and file browsing are unavailable. These switches are configured under [remote_access] in its config.toml and cannot be changed here, so a panel password cannot grant access beyond what the agent exposes.
+	 */
+	remoteAccessOffBody: () => LocalizedString
 	/**
 	 * Roots
 	 */

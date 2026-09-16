@@ -150,6 +150,8 @@ const en = {
 	terminalPasswordlessDisable: 'Turn it off',
 	files: 'Files',
 	filesUnavailable: 'File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.',
+	remoteAccessOffTitle: 'Remote access is disabled',
+	remoteAccessOffBody: 'This agent only provides readings. Terminal access, command execution, and file browsing are unavailable. These switches are configured under [remote_access] in its config.toml and cannot be changed here, so a panel password cannot grant access beyond what the agent exposes.',
 	filesRoots: 'Roots',
 	filesEmpty: 'Nothing here',
 	filesSize: 'Size',

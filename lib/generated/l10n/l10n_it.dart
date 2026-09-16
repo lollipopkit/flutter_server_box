@@ -2362,6 +2362,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Origins a browser panel may call this agent from. Empty means same-origin only.';
 
   @override
+  String get monitorNoRemoteAccess =>
+      'Questo agent fornisce solo letture. L\'accesso al terminale, l\'esecuzione di comandi e la navigazione dei file non sono disponibili. Possono essere attivati in [remote_access], nel config.toml dell\'agent, ma non da qui.';
+
+  @override
   String get monitorNoAgent =>
       'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

@@ -44,6 +44,20 @@
   })
   const capabilities = $derived(capabilitiesStore.byServer[servers.currentId])
 
+  /// Whether this agent grants no way in at all — no terminal, no shell, no
+  /// file API — which is what removes every entry from the header beside
+  /// Settings and Refresh.
+  ///
+  /// Only once `capabilities` has arrived: undefined is "not fetched yet, or
+  /// the fetch failed", and neither is "you are not allowed". `full_access` is
+  /// not tested because the agent already gates it on the terminal being
+  /// available, so it can never be the only one on.
+  const noRemoteAccess = $derived(
+    capabilities !== undefined &&
+      !capabilities.remote_access?.terminal &&
+      !capabilities.remote_access?.files,
+  )
+
   // Home-grid card order, synced server-side (not localStorage) so every
   // client viewing this agent sees the same arrangement — see card-order.ts
   const ALL_CARD_IDS = ['cpu', 'memory', 'disk', 'network', 'gpu', 'battery', 'sensors', 'smart'] as const
@@ -279,6 +293,19 @@
           </div>
         </div>
       </div>
+    {/if}
+
+    <!-- Informational, not a warning: every switch under `[remote_access]` is
+         off until someone edits the file, and the docs recommend leaving them
+         that way. Most agents are in this state on purpose, so this says what
+         is off and where the switches are, and stops there. -->
+    {#if noRemoteAccess}
+      <Card class="mb-6 space-y-1">
+        <h2 class="text-sm font-semibold font-display text-fg-strong">
+          {$LL.remoteAccessOffTitle()}
+        </h2>
+        <p class="text-sm text-muted-fg">{$LL.remoteAccessOffBody()}</p>
+      </Card>
     {/if}
 
     {#key detail}

@@ -4102,6 +4102,12 @@ abstract class AppLocalizations {
   /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
   String get corsOriginsTip;
 
+  /// No description provided for @monitorNoRemoteAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent only provides readings. Terminal access, command execution, and file browsing are unavailable. They can be enabled under [remote_access] in the agent\'s config.toml, but not from here.'**
+  String get monitorNoRemoteAccess;
+
   /// No description provided for @monitorNoAgent.
   ///
   /// In en, this message translates to:

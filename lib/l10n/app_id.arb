@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Hapus semua data",
   "schemaTooNewWipeConfirm": "Semua server, kunci, cuplikan, dan pengaturan di perangkat ini akan dihapus dan tidak dapat dibatalkan. Cadangan yang diekspor di sini akan menjadi satu-satunya salinan yang tersisa.",
   "schemaTooNewWipeDone": "Data dihapus. Buka kembali aplikasi untuk memulai dari awal.",
-  "schemaTooNewWipeFailed": "Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya."
+  "schemaTooNewWipeFailed": "Sebagian data tidak dapat dihapus, dan versi ini masih tidak dapat membuka data yang tersisa. Instal kembali versi yang lebih baru untuk mengaksesnya.",
+  "monitorNoRemoteAccess": "Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen."
 }

@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Alle gegevens verwijderen",
   "schemaTooNewWipeConfirm": "Alle servers, sleutels, snippets en instellingen op dit apparaat worden verwijderd. Dit kan niet ongedaan worden gemaakt. Een hier geëxporteerde back-up zou de enige overgebleven kopie zijn.",
   "schemaTooNewWipeDone": "Gegevens verwijderd. Open de app opnieuw om opnieuw te beginnen.",
-  "schemaTooNewWipeFailed": "Sommige gegevens konden niet worden verwijderd en deze versie kan de resterende gegevens nog steeds niet openen. Installeer de nieuwere versie opnieuw om erbij te kunnen."
+  "schemaTooNewWipeFailed": "Sommige gegevens konden niet worden verwijderd en deze versie kan de resterende gegevens nog steeds niet openen. Installeer de nieuwere versie opnieuw om erbij te kunnen.",
+  "monitorNoRemoteAccess": "Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen."
 }
