@@ -74,6 +74,28 @@ void main() {
     expect(kill, contains('kill -s KILL'));
   });
 
+  test('Windows compares the start time the table was read from', () {
+    final command = ProcKill.command(proc(), SystemType.windows, ProcSignal.kill)!;
+    final encoded = command.split(' ').last;
+    final bytes = base64Decode(encoded);
+    final script = String.fromCharCodes([
+      for (var i = 0; i + 1 < bytes.length; i += 2) bytes[i] | bytes[i + 1] << 8,
+    ]);
+
+    // CIM's CreationDate, like the table's StartId: Get-Process's StartTime
+    // is the same instant at a finer precision, and never compared equal.
+    expect(script, contains("Win32_Process -Filter 'ProcessId=12345'"));
+    expect(script, contains('CreationDate.ToUniversalTime().Ticks'));
+    expect(script, isNot(contains('StartTime')));
+    // The handle is taken before the check, so the PID cannot be reused
+    // between the two.
+    expect(
+      script.indexOf(r'$handle = $p.Handle'),
+      lessThan(script.indexOf('CreationDate')),
+    );
+    expect(script, contains("-ne '4242'"));
+  });
+
   group('under /bin/sh', () {
     test('parses, and refuses a target it cannot prove', () async {
       final script = ProcKill.command(proc(), SystemType.linux, ProcSignal.kill)!;

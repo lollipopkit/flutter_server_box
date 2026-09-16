@@ -29,6 +29,10 @@ abstract interface class ServiceManagerBackend {
 
   /// A command that prints the unit's definition, null where there is none.
   String? definitionCommand(ServiceUnit unit);
+
+  /// What the manager itself says about the unit, for a terminal. For OpenRC
+  /// this is the only thing a unit has to read: it keeps no log by name.
+  String unitStatusCommand(ServiceUnit unit);
 }
 
 /// [command] as typed into a terminal: prefixed with `sudo` when it needs root

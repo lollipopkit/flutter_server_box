@@ -899,6 +899,9 @@ pub const PROCESS_LOAD_MARKER: &str = "SrvBoxProc.Load";
 /// lists only processes attached to a terminal — none, for a script run over
 /// SSH — so the page was empty there. Busybox `ps` has no `%cpu` field.
 ///
+/// `vm.loadavg` is `{ 1.42 0.98 0.71 }` on macOS and FreeBSD and the bare
+/// three numbers on OpenBSD and NetBSD.
+///
 /// `COMMAND` keeps its own spacing: `srvbox_tail` strips the leading fields
 /// from the line rather than re-joining the words `set --` split it into.
 const UNIX_PROCESS: &str = r#"srvbox_tail() {
@@ -976,7 +979,8 @@ else
 		set -f
 		set -- $srvbox_load
 		set +f
-		[ "$#" -ge 4 ] && printf 'SrvBoxProc.Load %s %s %s\n' "$2" "$3" "$4"
+		[ "$1" = "{" ] && shift
+		[ "$#" -ge 3 ] && printf 'SrvBoxProc.Load %s %s %s\n' "$1" "$2" "$3"
 	fi
 	printf 'PID PPID USER %%CPU %%MEM VSZ RSS TTY STAT NI TIME ELAPSED START_ID COMMAND\n'
 	ps -axo pid=,ppid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,nice=,time=,etime=,lstart=,command= | while IFS= read -r line; do

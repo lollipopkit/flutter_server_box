@@ -30,46 +30,76 @@ final class SystemdServiceManager implements ServiceManagerBackend {
   Future<ServiceListing> list(ServerExec exec) async {
     // All four started before any is awaited: each is its own round trip, and
     // nothing about one depends on another.
-    final systemList = _listScope(exec, ServiceScope.system);
-    final systemDetails = exec.run(detailsCommand(ServiceScope.system));
-    final userList = _listScope(exec, ServiceScope.user);
-    final userDetails = exec.run(detailsCommand(ServiceScope.user));
+    //
+    // Each is settled as it is started. Awaited one after another, the first
+    // to throw — a dropped connection, a refused channel — would leave the
+    // others' errors unobserved, and an unobserved Future error reaches the
+    // zone handler and is reported as a crash.
+    final systemList = _settle(_listScope(exec, ServiceScope.system));
+    final systemDetails = _settle(exec.run(detailsCommand(ServiceScope.system)));
+    final userList = _settle(_listScope(exec, ServiceScope.user));
+    final userDetails = _settle(exec.run(detailsCommand(ServiceScope.user)));
 
     final system = await systemList;
-    if (system.failed) throw ServiceManagerLoadException(system.raw);
     final user = await userList;
+    final details = [await systemDetails, await userDetails];
 
-    final details = <String, SystemdUnitDetails>{};
+    // The system listing is the page: without it there is nothing to show.
+    if (system.error case final error?) {
+      Error.throwWithStackTrace(error, system.stack!);
+    }
+    final systemUnits = system.value!;
+    if (systemUnits.failed) throw ServiceManagerLoadException(systemUnits.raw);
+
+    // The user scope is optional, and missing it has a notice of its own
+    // whether the command failed or could not be run at all.
+    final userUnits =
+        user.value ??
+        (units: const <ServiceUnit>[], failed: true, raw: '${user.error}');
+
+    final byKey = <String, SystemdUnitDetails>{};
     var detailsFailed = false;
     final now = DateTime.now();
-    for (final (scope, pending) in [
-      (ServiceScope.system, systemDetails),
-      (ServiceScope.user, userDetails),
+    for (final (scope, settled) in [
+      (ServiceScope.system, details[0]),
+      (ServiceScope.user, details[1]),
     ]) {
-      final result = await pending;
-      if (!result.succeeded) {
+      final result = settled.value;
+      if (result == null || !result.succeeded) {
         // The user scope's details fail for the same reason its listing does,
         // which already has a notice of its own.
-        if (scope == ServiceScope.system || !user.failed) detailsFailed = true;
+        if (scope == ServiceScope.system || !userUnits.failed) {
+          detailsFailed = true;
+        }
         continue;
       }
       for (final entry in parseDetails(result.stdout, now: now).entries) {
-        details['${scope.name}:${entry.key}'] = entry.value;
+        byKey['${scope.name}:${entry.key}'] = entry.value;
       }
     }
 
     final units = [
-      for (final unit in [...user.units, ...system.units])
-        withDetails(unit, details[unit.key]),
+      for (final unit in [...userUnits.units, ...systemUnits.units])
+        withDetails(unit, byKey[unit.key]),
     ]..sort(compareServices);
     return ServiceListing(
       units: units,
-      notice: user.failed
+      notice: userUnits.failed
           ? ServiceListingNotice.userScopeUnavailable
           : detailsFailed
           ? ServiceListingNotice.detailsUnavailable
           : null,
-      detail: user.failed ? user.raw : null,
+      detail: userUnits.failed ? userUnits.raw : null,
+    );
+  }
+
+  static Future<({T? value, Object? error, StackTrace? stack})> _settle<T>(
+    Future<T> future,
+  ) {
+    return future.then(
+      (value) => (value: value, error: null, stack: null),
+      onError: (Object error, StackTrace stack) =>
+          (value: null, error: error, stack: stack),
     );
   }
 
@@ -299,6 +329,11 @@ final class SystemdServiceManager implements ServiceManagerBackend {
   @override
   String? definitionCommand(ServiceUnit unit) =>
       '${_systemctl(unit.scope)} cat ${quotedServiceName(unit.fullName)}';
+
+  @override
+  String unitStatusCommand(ServiceUnit unit) =>
+      '${_systemctl(unit.scope)} status --no-pager --full '
+      '${quotedServiceName(unit.fullName)}';
 }
 
 /// What `systemctl show` said about one unit.

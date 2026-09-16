@@ -39,6 +39,28 @@ ExecResult _result({
   return ExecResult(exitCode: exitCode, stdout: stdout, stderr: stderr);
 }
 
+final class _ThrowingExec implements ServerExec {
+  _ThrowingExec(this.answer);
+
+  /// A result, or null to throw — the way a dropped connection does rather
+  /// than a command that exits non-zero.
+  final ExecResult? Function(String script) answer;
+
+  @override
+  Future<ExecResult> run(
+    String script, {
+    String? entry,
+    Map<String, String>? env,
+    String? stdin,
+    OnExecOutput? onStdout,
+    OnExecOutput? onStderr,
+    Future<void>? cancel,
+  }) async {
+    await Future<void>.delayed(Duration.zero);
+    return answer(script) ?? (throw StateError('channel closed: $script'));
+  }
+}
+
 void main() {
   group('ServiceManagerDetector', () {
     test('recognizes every supported manager', () {
@@ -201,6 +223,69 @@ unsupported.target loaded active active A target
         "journalctl --user -e -u 'gpg-agent.socket'",
       );
     });
+  });
+
+  group('systemd listing when a call throws', () {
+    const listed = 'sshd.service loaded active running OpenSSH server daemon\n';
+    ExecResult ok([String stdout = '']) => _result(stdout: stdout);
+
+    test('a details call that throws keeps the list and says so', () async {
+      final exec = _ThrowingExec(
+        (script) => script.contains(' show ')
+            ? null
+            : ok(script.contains('--user') ? '' : listed),
+      );
+
+      final listing = await const SystemdServiceManager().list(exec);
+
+      expect(listing.units.single.name, 'sshd');
+      expect(listing.notice, ServiceListingNotice.detailsUnavailable);
+    });
+
+    test('a user listing that throws is the missing user scope', () async {
+      final exec = _ThrowingExec(
+        (script) => script.contains('--user') ? null : ok(listed),
+      );
+
+      final listing = await const SystemdServiceManager().list(exec);
+
+      expect(listing.units, hasLength(1));
+      expect(listing.notice, ServiceListingNotice.userScopeUnavailable);
+      expect(listing.detail, contains('channel closed'));
+    });
+
+    test('a system listing that throws fails the page, and only once', () async {
+      // Every call throws. Any error left unobserved would fail this test on
+      // its own, as it would reach the zone as a crash in the app.
+      final exec = _ThrowingExec((_) => null);
+
+      await expectLater(
+        const SystemdServiceManager().list(exec),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
+
+  test('status is what each manager prints about a unit, sudo only where due', () {
+    const system = ServiceUnit(
+      name: 'nginx',
+      type: ServiceUnitType.service,
+      scope: ServiceScope.system,
+      state: ServiceState.failed,
+      actions: [],
+    );
+    expect(
+      const SystemdServiceManager().unitStatusCommand(system),
+      "systemctl status --no-pager --full 'nginx.service'",
+    );
+    expect(
+      const OpenRcServiceManager().unitStatusCommand(system),
+      "rc-service 'nginx' status",
+    );
+    expect(
+      const ProcdServiceManager().unitStatusCommand(system),
+      "'/etc/init.d/nginx' status",
+    );
   });
 
   group('systemd details, read from a real systemd 258', () {

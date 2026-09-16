@@ -156,6 +156,10 @@ done
   }
 
   @override
+  String unitStatusCommand(ServiceUnit unit) =>
+      '${quotedServiceName('/etc/init.d/${unit.name}')} status';
+
+  @override
   String? logCommand(ServiceUnit unit) =>
       'logread -e ${quotedServiceName(unit.name)}';
 

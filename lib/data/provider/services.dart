@@ -170,6 +170,21 @@ class ServicesNotifier extends _$ServicesNotifier {
     );
   }
 
+  /// What to type into a terminal to see the manager's own status for the unit.
+  ///
+  /// `systemctl status` answers without root; OpenRC's and procd's scripts
+  /// are run the way their start and stop are.
+  String? statusTerminalCommand(ServiceUnit unit) {
+    final manager = _manager;
+    if (manager == null) return null;
+    return terminalCommand(
+      manager.unitStatusCommand(unit),
+      needsRoot:
+          manager.type != ServiceManagerType.systemd && manager.needsRoot(unit),
+      isRoot: _spi.isRoot,
+    );
+  }
+
   /// What to type into a terminal to read the unit's definition. Unit files
   /// and init scripts are world-readable, so never through sudo.
   String? definitionTerminalCommand(ServiceUnit unit) =>

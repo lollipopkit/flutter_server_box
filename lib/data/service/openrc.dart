@@ -141,4 +141,8 @@ done
   @override
   String? definitionCommand(ServiceUnit unit) =>
       'cat ${quotedServiceName('/etc/init.d/${unit.name}')}';
+
+  @override
+  String unitStatusCommand(ServiceUnit unit) =>
+      'rc-service ${quotedServiceName(unit.name)} status';
 }

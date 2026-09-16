@@ -630,6 +630,7 @@ abstract final class ServiceUi {
     bool compact = false,
   }) {
     final notifier = ref.read(servicesProvider(spi).notifier);
+    final status = notifier.statusTerminalCommand(unit);
     final log = notifier.logTerminalCommand(unit);
     final definition = notifier.definitionTerminalCommand(unit);
     return PopupMenuButton<VoidCallback>(
@@ -651,8 +652,14 @@ abstract final class ServiceUi {
             value: () => runAction(context, ref, spi, unit, action),
             child: menuRow(action.icon, action.displayName),
           ),
-        if (unit.actions.isNotEmpty && (log != null || definition != null))
+        if (unit.actions.isNotEmpty &&
+            (status != null || log != null || definition != null))
           const PopupMenuDivider(),
+        if (status != null)
+          PopupMenuItem(
+            value: () => openInTerminal(context, spi, status),
+            child: menuRow(Icons.info_outline, l10n.status),
+          ),
         if (log != null)
           PopupMenuItem(
             value: () => openInTerminal(context, spi, log),

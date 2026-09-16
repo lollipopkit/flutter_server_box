@@ -268,7 +268,10 @@ extension on _ServicesPageState {
             : '${count(_StatusFilter.inactive)}',
         false,
       ),
-      if (table && count(_StatusFilter.disabled) > 0)
+      // Offered where there is room for it, and kept wherever it is the
+      // filter in force: a filter with no chip is one there is no way out of.
+      if ((table && count(_StatusFilter.disabled) > 0) ||
+          _statusFilter == _StatusFilter.disabled)
         _statusChip(
           _StatusFilter.disabled,
           '${count(_StatusFilter.disabled)} disabled',

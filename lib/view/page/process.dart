@@ -837,6 +837,10 @@ extension _ProcessPageWidgets on _ProcessPageState {
       if (proc.nice case final nice?) ('nice', '$nice'),
       if (proc.stat case final stat? when stat.isNotEmpty)
         (context.l10n.status, _stateLabel(stat)),
+      if (proc.time case final time? when time.isNotEmpty) ('TIME', time),
+      if (proc.vsz != null) ('VSZ', _formatVsz(proc)),
+      if (proc.tty case final tty? when tty != '?' && tty != '??')
+        ('TTY', tty),
       if (!wide && proc.readSpeed != null)
         ('R/s', _formatNullableSpeed(proc.readSpeed)),
       if (!wide && proc.writeSpeed != null)
@@ -1040,6 +1044,14 @@ extension _ProcessPageUtils on _ProcessPageState {
     final rssKb = proc.rssKb;
     if (rssKb == null) return '—';
     return (rssKb * 1024).bytes2Str;
+  }
+
+  /// Busybox prints a large VSZ with a unit suffix (`12m`), which is not a
+  /// number of KiB and is shown as it came.
+  String _formatVsz(Proc proc) {
+    final raw = proc.vsz!;
+    final kib = int.tryParse(raw);
+    return kib == null ? raw : (kib * 1024).bytes2Str;
   }
 
   String _formatNullableSpeed(double? bytes) =>

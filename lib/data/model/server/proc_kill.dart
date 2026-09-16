@@ -160,6 +160,14 @@ esac
 ''';
   }
 
+  /// The handle is opened before the start time is read, which is what
+  /// makes the check hold: Windows does not reuse a process ID while a handle
+  /// to the process is open.
+  ///
+  /// The start time is read from `Win32_Process.CreationDate`, the same place
+  /// the process table's `StartId` came from. `Get-Process`'s `StartTime` is
+  /// the same instant at 100ns, where CIM_DATETIME stops at microseconds, and
+  /// comparing the two refused nine stops in ten as a changed target.
   static String _windows(int pid, String startId) {
     final expected = "'${startId.replaceAll("'", "''")}'";
     final script =
@@ -171,7 +179,10 @@ esac
         '\$p = Get-Process -Id $pid -ErrorAction SilentlyContinue; '
         'if (\$null -eq \$p) { Write-Output \'$_targetChanged\' } '
         'else { try { \$handle = \$p.Handle; '
-        'if (\$p.StartTime.ToUniversalTime().Ticks.ToString() -ne $expected) '
+        '\$c = Get-CimInstance Win32_Process -Filter \'ProcessId=$pid\' '
+        '-ErrorAction Stop; '
+        'if (\$null -eq \$c -or '
+        '\$c.CreationDate.ToUniversalTime().Ticks.ToString() -ne $expected) '
         '{ Write-Output \'$_targetChanged\' } '
         'elseif ([SrvBoxNative]::TerminateProcess(\$handle, 1)) { '
         '\$p.WaitForExit(); Write-Output \'$_succeeded\' } '
