@@ -34,21 +34,14 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _onTapNvidiaGpuItem(NvidiaSmiItem item) {
-    final processes = item.memory.processes;
+  void _onTapGpuItem(GpuItem item) {
+    final memory = item.memory;
+    if (memory == null) return;
+    final processes = memory.processes;
     _showGpuProcessesDialog(
       title: item.name,
       itemCount: processes.length,
       itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
-    );
-  }
-
-  void _onTapAmdGpuItem(AmdSmiItem item) {
-    final processes = item.memory.processes;
-    _showGpuProcessesDialog(
-      title: item.name,
-      itemCount: processes.length,
-      itemBuilder: (_, idx) => _buildAmdGpuProcessItem(processes[idx]),
     );
   }
 
@@ -68,21 +61,6 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _onTapAmdGpuProcessItem(GpuSmiMemProcess process) {
-    _showClosableDetailDialog(
-      title: '${process.pid}',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          UIs.height13,
-          Text('${libL10n.memory}: ${_formatAmdGpuProcessMemory(process.memory)}'),
-          UIs.height13,
-          Text('${libL10n.process}: ${process.name}'),
-        ],
-      ),
-    );
-  }
 
   void _onTapCustomItem(MapEntry<String, String> cmd) {
     _showClosableDetailDialog(
@@ -538,14 +516,6 @@ String _formatPercent(double v) =>
 String _formatTemp(double v) =>
     '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}°C';
 String _formatSpeed(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
-
-String _formatAmdGpuProcessMemory(int rawMemory) {
-  final valueInMiB = rawMemory / 1024;
-  final formatted = valueInMiB.truncateToDouble() == valueInMiB
-      ? valueInMiB.toStringAsFixed(0)
-      : valueInMiB.toStringAsFixed(1);
-  return '$formatted MiB';
-}
 
 extension _ViewUtils on String {
   bool get isSvgUrl {

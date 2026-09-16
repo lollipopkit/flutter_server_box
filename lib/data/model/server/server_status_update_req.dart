@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
@@ -74,6 +75,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   _apply('sensors', () => _applySensors(ss, status));
   _apply('nvidia', () => _applyNvidia(ss, status));
   _apply('amd', () => _applyAmd(ss, status));
+  _apply('gpus', () => _applyGpus(ss, status));
   _apply('smart', () => _applySmart(ss, status));
   // Taken from what the script printed, not from a list the app holds: the
   // commands live on the server now, so their names and their order are only
@@ -440,6 +442,12 @@ void _applyAmd(ServerStatus ss, Map<String, dynamic> status) {
       ),
     );
   }).toList();
+}
+
+void _applyGpus(ServerStatus ss, Map<String, dynamic> status) {
+  ss.gpus = (status['gpus'] as List)
+      .map((gpu) => GpuItem.fromJson(gpu as Map<String, dynamic>))
+      .toList();
 }
 
 void _applySmart(ServerStatus ss, Map<String, dynamic> status) {

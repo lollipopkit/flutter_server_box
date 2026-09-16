@@ -7,6 +7,7 @@ import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/dist.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
@@ -29,6 +30,7 @@ class ServerStatus {
   List<DiskSmart> diskSmart;
   List<NvidiaSmiItem>? nvidia;
   List<AmdSmiItem>? amd;
+  List<GpuItem> gpus;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
   final List<SensorItem> sensors = [];
@@ -93,6 +95,7 @@ class ServerStatus {
     this.diskSmart = const [],
     this.err,
     this.nvidia,
+    this.gpus = const [],
     this.diskUsage,
     StatusHistory? history,
   }) : history = history ?? StatusHistory();
