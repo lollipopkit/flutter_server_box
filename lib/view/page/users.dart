@@ -10,10 +10,22 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/system_user.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/service/user_manager.dart';
+import 'package:server_box/view/page/user_detail.dart';
 
-enum _UserFilter { all, regular, system }
+enum _UserFilter { all, regular, system, disabled }
+
+enum _UserSort { uid, name }
 
 enum _UserAction { edit, delete }
+
+/// Below this the Status column is dropped and the mono line loses the group,
+/// which is the narrow layout the design draws at 393pt.
+const _kWideWidth = 600.0;
+
+/// Groups that make an account an administrator on the distributions this app
+/// talks to. Shown as a badge because it is the one thing about an account
+/// that the shell and home path do not say.
+const _kAdminGroups = {'sudo', 'wheel', 'admin'};
 
 final class UsersPage extends ConsumerStatefulWidget {
   const UsersPage({super.key, required this.args});
@@ -31,9 +43,14 @@ final class UsersPage extends ConsumerStatefulWidget {
 
 final class _UsersPageState extends ConsumerState<UsersPage> {
   late final _provider = serverProvider(widget.args.spi.id);
+  final _searchCtrl = TextEditingController();
 
   ServerUserCatalog? _catalog;
   _UserFilter _filter = _UserFilter.all;
+  _UserSort _sort = _UserSort.uid;
+  bool _searching = false;
+  String _query = '';
+  bool _systemExpanded = true;
   bool _busy = false;
   bool _unsupported = false;
   String? _failure;
@@ -42,6 +59,12 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
   void initState() {
     super.initState();
     Future.microtask(_refresh);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   void _rebuild(VoidCallback update) => setState(update);
@@ -55,19 +78,8 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
-        title: TwoLineText(
-          up: l10n.systemUsers,
-          down: widget.args.spi.name,
-        ),
-        actions: isDesktop
-            ? [
-                Btn.icon(
-                  text: libL10n.refresh,
-                  icon: const Icon(Icons.refresh),
-                  onTap: _busy ? null : _refresh,
-                ),
-              ]
-            : null,
+        title: TwoLineText(up: l10n.systemUsers, down: widget.args.spi.name),
+        actions: _buildActions(canMutate),
       ),
       body: RefreshIndicator(onRefresh: _refresh, child: _buildBody()),
       floatingActionButton: canMutate
@@ -84,6 +96,33 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
 // --- Widget builders ---
 
 extension on _UsersPageState {
+  List<Widget> _buildActions(bool canMutate) {
+    return [
+      Btn.icon(
+        text: libL10n.search,
+        icon: Icon(_searching ? Icons.search_off : Icons.search, size: 18),
+        onTap: canMutate ? _toggleSearch : null,
+      ),
+      PopupMenuButton<_UserSort>(
+        tooltip: libL10n.sort,
+        enabled: canMutate,
+        icon: const Icon(Icons.sort, size: 18),
+        initialValue: _sort,
+        itemBuilder: (_) => [
+          PopupMenuItem(value: _UserSort.uid, child: Text(l10n.userUid)),
+          PopupMenuItem(value: _UserSort.name, child: Text(libL10n.sortByName)),
+        ],
+        onSelected: (sort) => _rebuild(() => _sort = sort),
+      ),
+      if (isDesktop)
+        Btn.icon(
+          text: libL10n.refresh,
+          icon: const Icon(Icons.refresh, size: 18),
+          onTap: _busy ? null : _refresh,
+        ),
+    ];
+  }
+
   Widget _buildBody() {
     if (_unsupported) {
       return _issueBody(
@@ -107,37 +146,29 @@ extension on _UsersPageState {
       );
     }
 
-    final users = switch (_filter) {
-      _UserFilter.all => catalog.users,
-      _UserFilter.regular => catalog.users
-          .where((user) => !user.isSystem(catalog.uidMin))
-          .toList(),
-      _UserFilter.system => catalog.users
-          .where((user) => user.isSystem(catalog.uidMin))
-          .toList(),
-    };
-
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(child: _buildFilters(catalog)),
-        if (_busy)
-          const SliverToBoxAdapter(
-            child: LinearProgressIndicator(minHeight: 2),
-          ),
-        if (users.isEmpty)
-          SliverToBoxAdapter(
-            child: CenterGreyTitle(libL10n.empty).paddingOnly(top: 80),
-          )
-        else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildUser(users[index], catalog),
-              childCount: users.length,
-            ),
-          ),
-        const SliverToBoxAdapter(child: SizedBox(height: 90)),
-      ],
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final wide = constraints.maxWidth >= _kWideWidth;
+        final users = _visibleUsers(catalog);
+        return CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildSearchField()),
+            SliverToBoxAdapter(child: _buildFilters(catalog, wide: wide)),
+            if (_busy)
+              const SliverToBoxAdapter(
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+            if (users.isEmpty)
+              SliverToBoxAdapter(
+                child: CenterGreyTitle(libL10n.empty).paddingOnly(top: 80),
+              )
+            else
+              ..._buildSections(catalog, users, wide: wide),
+            const SliverToBoxAdapter(child: SizedBox(height: 90)),
+          ],
+        );
+      },
     );
   }
 
@@ -164,110 +195,484 @@ extension on _UsersPageState {
     );
   }
 
-  Widget _buildFilters(ServerUserCatalog catalog) {
+  /// Grows and shrinks rather than appearing, so the list below it is seen to
+  /// move down for the field instead of jumping.
+  ///
+  /// The field is built only while searching, which is what keeps its autofocus
+  /// honest and keeps a hidden text field out of the focus order. [AnimatedSize]
+  /// animates the swap either way, so nothing has to be kept in the tree for
+  /// the sake of the exit.
+  Widget _buildSearchField() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: _searching
+          ? SizedBox(
+              height: 40,
+              child: InlineSearchField(
+                controller: _searchCtrl,
+                onChanged: (value) => _rebuild(() => _query = value),
+                onClose: _toggleSearch,
+              ),
+            )
+          : const SizedBox(width: double.infinity),
+    );
+  }
+
+  /// The same segmented control the Container page switches tabs with: these
+  /// are four views of one list, and a row of chips read as four independent
+  /// toggles when only one of them can be on.
+  ///
+  /// Narrow offers three segments, not four — Disabled is the filter whose
+  /// answer the Status column gave, and narrow has no Status column. One
+  /// chosen while wide is still offered after a rotation, or there would be no
+  /// way back out of it.
+  ///
+  /// No current-account segment at either width: that account's row is
+  /// highlighted and carries its own badge, so it would repeat on every screen
+  /// what one row already says.
+  Widget _buildFilters(ServerUserCatalog catalog, {required bool wide}) {
+    final filters = _UserFilter.values
+        .where(
+          (filter) =>
+              wide || filter != _UserFilter.disabled || _filter == filter,
+        )
+        .toList(growable: false);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          for (final filter in _UserFilter.values)
-            FilterChip(
-              selected: filter == _filter,
-              label: Text(switch (filter) {
-                _UserFilter.all => libL10n.all,
-                _UserFilter.regular => l10n.userRegularAccount,
-                _UserFilter.system => libL10n.system,
-              }),
-              onSelected: (_) => _rebuild(() => _filter = filter),
+      child: SegmentedTabs<_UserFilter>(
+        expand: true,
+        segments: [
+          for (final filter in filters)
+            SegmentedTab(
+              value: filter,
+              label: '${_filterLabel(filter)} ${_filterCount(catalog, filter)}',
             ),
-          Chip(
-            avatar: const Icon(Icons.login, size: 17),
-            label: Text('${l10n.userCurrentAccount}: ${catalog.currentUser}'),
-          ),
         ],
+        selected: _filter,
+        onSelected: (filter) => _rebuild(() => _filter = filter),
       ),
     );
   }
 
-  Widget _buildUser(ServerUser user, ServerUserCatalog catalog) {
-    final isCurrent = user.name == catalog.currentUser;
-    final isSystem = user.isSystem(catalog.uidMin);
-    final editable = UserManager.validName(user.name);
-    return ListTile(
-      leading: CircleAvatar(
-        child: Text(user.name.isEmpty ? '?' : user.name[0].toUpperCase()),
-      ),
-      title: Wrap(
-        spacing: 7,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(user.name),
-          if (isCurrent) _tag(l10n.userCurrentAccount, Colors.green),
-          if (user.isRoot) _tag('root', Colors.red),
-          if (isSystem && !user.isRoot) _tag(libL10n.system, null),
-          if (user.loginDisabled) _tag(libL10n.disabled, Colors.orange),
-        ],
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 5),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${l10n.userUid}: ${user.uid}  ·  '
-              '${l10n.userPrimaryGroup}: ${user.primaryGroup ?? user.gid}',
-            ),
-            Text('${l10n.homeDir}: ${user.home}'),
-            Text('${l10n.userLoginShell}: ${user.shell}'),
-            if (user.comment.isNotEmpty)
-              Text('${l10n.userComment}: ${user.comment}'),
-            if (user.supplementaryGroups.isNotEmpty)
-              Text(
-                '${l10n.userSupplementaryGroups}: '
-                '${user.supplementaryGroups.join(', ')}',
+  /// One card per section, so the System block can collapse without leaving a
+  /// gap inside a card that is still drawing its own background.
+  List<Widget> _buildSections(
+    ServerUserCatalog catalog,
+    List<ServerUser> users, {
+    required bool wide,
+  }) {
+    // Sections say what a filter has already said, so they only earn their
+    // place when everything is on screen.
+    if (_filter != _UserFilter.all) {
+      return [_buildSectionCard(catalog, null, users, wide: wide)];
+    }
+
+    final regular = users
+        .where((user) => !user.isSystem(catalog.uidMin))
+        .toList(growable: false);
+    final system = users
+        .where((user) => user.isSystem(catalog.uidMin))
+        .toList(growable: false);
+
+    return [
+      if (regular.isNotEmpty)
+        _buildSectionCard(
+          catalog,
+          _SectionSpec(title: l10n.userRegularAccount, users: regular),
+          regular,
+          wide: wide,
+        ),
+      if (system.isNotEmpty)
+        _buildSectionCard(
+          catalog,
+          _SectionSpec(
+            title: libL10n.system,
+            users: system,
+            collapsible: true,
+            expanded: _systemExpanded,
+          ),
+          _systemExpanded ? system : const [],
+          wide: wide,
+        ),
+    ];
+  }
+
+  Widget _buildSectionCard(
+    ServerUserCatalog catalog,
+    _SectionSpec? section,
+    List<ServerUser> users, {
+    required bool wide,
+  }) {
+    final theme = Theme.of(context);
+    final cardColor =
+        theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLow;
+    const radius = BorderRadius.all(Radius.circular(13));
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(13, 0, 13, 10),
+      sliver: DecoratedSliver(
+        decoration: BoxDecoration(color: cardColor, borderRadius: radius),
+        sliver: SliverMainAxisGroup(
+          slivers: [
+            if (wide) SliverToBoxAdapter(child: _buildColumnHeader()),
+            if (section != null)
+              SliverToBoxAdapter(
+                child: _buildSectionHeader(section, rounded: !wide),
               ),
+            SliverList.builder(
+              itemCount: users.length,
+              itemBuilder: (_, index) => _buildUser(
+                users[index],
+                catalog,
+                wide: wide,
+                last: index == users.length - 1,
+              ),
+            ),
           ],
         ),
       ),
-      trailing: editable && !_busy
-          ? PopupMenu<_UserAction>(
-              items: [
-                PopupMenuItem(
-                  value: _UserAction.edit,
-                  child: Text(libL10n.edit),
-                ),
-                if (!user.isRoot && !isCurrent)
-                  PopupMenuItem(
-                    value: _UserAction.delete,
-                    child: Text(libL10n.delete),
-                  ),
-              ],
-              onSelected: (action) => switch (action) {
-                _UserAction.edit => _editUser(user),
-                _UserAction.delete => _deleteUser(user),
-              },
-            )
-          : null,
-    ).cardx.paddingSymmetric(horizontal: 13);
+    );
   }
 
-  Widget _tag(String text, Color? color) {
+  Widget _buildColumnHeader() {
+    final style = UIs.text11Grey;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
       decoration: BoxDecoration(
-        color: color?.withValues(alpha: 0.14) ??
-            Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(6),
+        border: Border(bottom: BorderSide(color: _hairline)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 11, color: color),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 44,
+            child: Text(l10n.userUid, textAlign: TextAlign.end, style: style),
+          ),
+          const SizedBox(width: 13),
+          Expanded(child: Text(libL10n.user, style: style)),
+          const SizedBox(width: 13),
+          SizedBox(width: 150, child: Text(l10n.userLoginStatus, style: style)),
+          const SizedBox(width: 24),
+        ],
       ),
     );
   }
+
+  Widget _buildSectionHeader(_SectionSpec section, {required bool rounded}) {
+    final scheme = Theme.of(context).colorScheme;
+    final disabled = section.users.where((user) => user.loginDisabled).length;
+    final header = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: rounded
+            ? const BorderRadius.vertical(top: Radius.circular(13))
+            : null,
+      ),
+      child: Row(
+        children: [
+          Text(
+            '${section.title} · ${section.users.length}',
+            style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
+          ),
+          if (disabled > 0) ...[
+            const SizedBox(width: 7),
+            Text('$disabled ${libL10n.disabled}', style: UIs.text11Grey),
+          ],
+          const Spacer(),
+          if (section.collapsible)
+            Icon(
+              section.expanded ? Icons.expand_less : Icons.expand_more,
+              size: 15,
+              color: UIs.textGrey.color,
+            ),
+        ],
+      ),
+    );
+    if (!section.collapsible) return header;
+    return InkWell(
+      onTap: () => _rebuild(() => _systemExpanded = !_systemExpanded),
+      child: header,
+    );
+  }
+
+  Widget _buildUser(
+    ServerUser user,
+    ServerUserCatalog catalog, {
+    required bool wide,
+    required bool last,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final isCurrent = user.name == catalog.currentUser;
+    final isSystem = user.isSystem(catalog.uidMin);
+    final nameColor = isSystem && !user.isRoot ? scheme.onSurfaceVariant : null;
+
+    final row = Container(
+      decoration: BoxDecoration(
+        color: isCurrent ? scheme.surfaceContainerHigh : null,
+        border: last
+            ? null
+            : Border(bottom: BorderSide(color: _hairline)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      child: Row(
+        children: [
+          SizedBox(
+            width: wide ? 44 : 38,
+            child: Text(
+              '${user.uid}',
+              textAlign: TextAlign.end,
+              style: _monoStyle(12),
+            ),
+          ),
+          SizedBox(width: wide ? 13 : 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildUserTitle(user, isCurrent: isCurrent, color: nameColor),
+                const SizedBox(height: 2),
+                Text(
+                  _detailLine(user, wide: wide),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _monoStyle(11),
+                ),
+              ],
+            ),
+          ),
+          if (wide) ...[
+            const SizedBox(width: 13),
+            SizedBox(
+              width: 150,
+              child: Text(
+                user.loginDisabled ? libL10n.disabled : l10n.userLoginEnabled,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: user.loginDisabled
+                      ? UIs.textGrey.color
+                      : scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
+          if (wide)
+            _buildUserMenu(user, isCurrent: isCurrent)
+          else
+            SizedBox(
+              width: 24,
+              child: Icon(
+                Icons.chevron_right,
+                size: 17,
+                color: UIs.textGrey.color,
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (wide) return row;
+    return InkWell(
+      key: ValueKey('user-row-${user.uid}'),
+      onTap: () => _openDetail(user, catalog),
+      child: row,
+    );
+  }
+
+  Widget _buildUserTitle(
+    ServerUser user, {
+    required bool isCurrent,
+    required Color? color,
+  }) {
+    final adminGroup = user.supplementaryGroups.firstWhereOrNull(
+      (group) => _kAdminGroups.contains(group.toLowerCase()),
+    );
+    final scheme = Theme.of(context).colorScheme;
+    return Wrap(
+      spacing: 7,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          user.name,
+          style: TextStyle(fontWeight: FontWeight.w500, color: color),
+        ),
+        if (user.isRoot)
+          _tag('root', scheme.onErrorContainer, scheme.errorContainer),
+        if (isCurrent)
+          _tag(
+            l10n.userCurrentAccount,
+            scheme.onPrimaryContainer,
+            scheme.primaryContainer,
+          ),
+        if (adminGroup != null)
+          _tag(
+            adminGroup,
+            scheme.onSurfaceVariant,
+            scheme.surfaceContainerHighest,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildUserMenu(ServerUser user, {required bool isCurrent}) {
+    if (!UserManager.validName(user.name) || _busy) {
+      return const SizedBox(width: 24);
+    }
+    return SizedBox(
+      width: 24,
+      child: PopupMenu<_UserAction>(
+        items: [
+          PopupMenuItem(value: _UserAction.edit, child: Text(libL10n.edit)),
+          if (!user.isRoot && !isCurrent)
+            PopupMenuItem(
+              value: _UserAction.delete,
+              child: Text(libL10n.delete),
+            ),
+        ],
+        onSelected: (action) => switch (action) {
+          _UserAction.edit => _editUser(user),
+          _UserAction.delete => _deleteUser(user),
+        },
+      ),
+    );
+  }
+
+  Widget _tag(String text, Color foreground, Color background) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(text, style: TextStyle(fontSize: 11, color: foreground)),
+    );
+  }
+
+  TextStyle _monoStyle(double size) => TextStyle(
+    fontFamily: 'monospace',
+    fontSize: size,
+    color: UIs.textGrey.color,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+
+  Color get _hairline =>
+      Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.35);
+}
+
+// --- Utils ---
+
+extension on _UsersPageState {
+  void _openDetail(ServerUser user, ServerUserCatalog catalog) {
+    UserDetailPage.route.go(
+      context,
+      UserDetailPageArgs(
+        spi: widget.args.spi,
+        user: user,
+        catalog: catalog,
+        onEdit: _editUser,
+        onDelete: _deleteUser,
+      ),
+    );
+  }
+
+  void _toggleSearch() {
+    _rebuild(() {
+      _searching = !_searching;
+      if (!_searching) {
+        _searchCtrl.clear();
+        _query = '';
+      }
+    });
+  }
+
+  String _filterLabel(_UserFilter filter) => switch (filter) {
+    _UserFilter.all => libL10n.all,
+    _UserFilter.regular => l10n.userRegularAccount,
+    _UserFilter.system => libL10n.system,
+    _UserFilter.disabled => libL10n.disabled,
+  };
+
+  int _filterCount(ServerUserCatalog catalog, _UserFilter filter) {
+    return switch (filter) {
+      _UserFilter.all => catalog.users.length,
+      _UserFilter.regular => catalog.users
+          .where((user) => !user.isSystem(catalog.uidMin))
+          .length,
+      _UserFilter.system => catalog.users
+          .where((user) => user.isSystem(catalog.uidMin))
+          .length,
+      _UserFilter.disabled => catalog.users
+          .where((user) => user.loginDisabled)
+          .length,
+    };
+  }
+
+  List<ServerUser> _visibleUsers(ServerUserCatalog catalog) {
+    final filtered = switch (_filter) {
+      _UserFilter.all => catalog.users,
+      _UserFilter.regular => catalog.users
+          .where((user) => !user.isSystem(catalog.uidMin))
+          .toList(),
+      _UserFilter.system => catalog.users
+          .where((user) => user.isSystem(catalog.uidMin))
+          .toList(),
+      _UserFilter.disabled => catalog.users
+          .where((user) => user.loginDisabled)
+          .toList(),
+    };
+
+    final query = _query.trim().toLowerCase();
+    final matched = query.isEmpty
+        ? [...filtered]
+        : filtered
+              .where(
+                (user) =>
+                    user.name.toLowerCase().contains(query) ||
+                    '${user.uid}'.contains(query),
+              )
+              .toList();
+
+    matched.sort(switch (_sort) {
+      _UserSort.uid => (a, b) => a.uid.compareTo(b.uid),
+      _UserSort.name => (a, b) =>
+          a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    });
+    return matched;
+  }
+
+  /// `group · home · shell` on wide, `home · shell` on narrow — the group is
+  /// what the Status column's width buys back.
+  ///
+  /// A disabled account's shell is shown as its basename: every one of them is
+  /// some path ending in `nologin`, and the paths differ between distributions
+  /// without the difference meaning anything.
+  String _detailLine(ServerUser user, {required bool wide}) {
+    final shell = user.loginDisabled
+        ? user.shell.split('/').last
+        : user.shell;
+    final parts = [
+      if (wide) user.primaryGroup ?? '${user.gid}',
+      user.home,
+      shell,
+    ];
+    return parts.join(' · ');
+  }
+}
+
+final class _SectionSpec {
+  const _SectionSpec({
+    required this.title,
+    required this.users,
+    this.collapsible = false,
+    this.expanded = true,
+  });
+
+  final String title;
+  final List<ServerUser> users;
+  final bool collapsible;
+  final bool expanded;
 }
 
 // --- Actions ---
@@ -303,16 +708,18 @@ extension on _UsersPageState {
     }
   }
 
-  Future<void> _editUser([ServerUser? user]) async {
+  Future<bool> _editUser([ServerUser? user]) async {
     final draft = await _showEditor(user);
-    if (draft == null || !mounted) return;
+    if (draft == null || !mounted) return false;
     final script = user == null
         ? UserManager.createScript(draft)
         : UserManager.editScript(user, draft);
-    if (await _runMutation(script)) await _refresh();
+    if (!await _runMutation(script)) return false;
+    await _refresh();
+    return true;
   }
 
-  Future<void> _deleteUser(ServerUser user) async {
+  Future<bool> _deleteUser(ServerUser user) async {
     var removeHome = false;
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
@@ -334,9 +741,11 @@ extension on _UsersPageState {
       ),
       actions: Btnx.cancelRedOk,
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !mounted) return false;
     final script = UserManager.deleteScript(user, removeHome: removeHome);
-    if (await _runMutation(script)) await _refresh();
+    if (!await _runMutation(script)) return false;
+    await _refresh();
+    return true;
   }
 
   Future<bool> _runMutation(String script) async {
@@ -383,7 +792,7 @@ extension on _UsersPageState {
   }
 }
 
-// --- Utils ---
+// --- Editor ---
 
 extension on _UsersPageState {
   Future<ServerUserDraft?> _showEditor(ServerUser? user) async {
@@ -531,13 +940,12 @@ extension on _UsersPageState {
           system: systemAccount,
           password: password.isEmpty ? null : password,
         );
-        final duplicate = user == null &&
+        final duplicate =
+            user == null &&
             catalog.users.any((existing) => existing.name == draft.name);
         final validation = UserManager.validateDraft(draft);
         if (validation != null || duplicate) {
-          Toast.error(
-            validation ?? l10n.nameAlreadyExistsFmt(draft.name),
-          );
+          Toast.error(validation ?? l10n.nameAlreadyExistsFmt(draft.name));
           continue;
         }
         return draft;
