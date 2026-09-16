@@ -213,6 +213,14 @@ If the agent must be reachable from another device, use HTTPS: configure built-i
 
 A server added through Monitor HTTP contains **no SSH credentials**. The App has no other way to reach the machine beyond the capabilities explicitly provided by the agent.
 
+## Integrated GPU monitoring
+
+On Linux, AMD integrated GPUs are read from the kernel's DRM/sysfs interfaces. ROCm, `amd-smi`, and `rocm-smi` are not required for an APU to report utilization. Intel integrated GPU utilization requires `intel_gpu_top`, normally provided by the `intel-gpu-tools` package.
+
+The App and Monitor agent never invoke interactive `sudo` during collection. If the account running the SSH command or Monitor agent cannot access Intel's GPU performance counters, the device still appears but unavailable values are omitted instead of shown as zero. Grant that account the distribution-appropriate permission for the GPU PMU if utilization is needed.
+
+Each Linux GPU is labelled with its PCI address, such as `0000:00:02.0`, so systems with several integrated or discrete GPUs show separate, stable entries.
+
 ## Permission switches
 
 The agent reports its current capabilities through `GET /api/v1/capabilities`, and the App shows only those capabilities. The file API and web-panel terminal are disabled by default and can only be enabled by the operator in `config.toml`.

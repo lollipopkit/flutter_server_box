@@ -194,6 +194,14 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 通过 Monitor HTTP 添加的服务器**不包含 SSH 凭据**。除了 agent 明确提供的功能外，App 没有其他方式访问这台服务器。
 
+## 集成显卡监控
+
+Linux 上的 AMD 集成显卡直接通过内核 DRM/sysfs 接口读取。APU 不需要安装 ROCm、`amd-smi` 或 `rocm-smi` 就能报告利用率。Intel 集成显卡的利用率需要 `intel_gpu_top`，它通常由 `intel-gpu-tools` 包提供。
+
+App 和 Monitor agent 在采集时都不会调用交互式 `sudo`。如果执行 SSH 命令或运行 Monitor agent 的账户无权访问 Intel GPU 性能计数器，设备仍会显示，但不可读取的指标会省略，而不会显示成 0。如需利用率，请按发行版的方式为该账户授予 GPU PMU 访问权限。
+
+每块 Linux GPU 都会显示 PCI 地址，例如 `0000:00:02.0`。因此机器上有多块集成或独立 GPU 时，会显示为独立且稳定的条目。
+
 ## 权限开关
 
 agent 会通过 `GET /api/v1/capabilities` 告诉 App 当前允许的功能，App 只显示这些功能。网页面板中的文件 API 和终端默认关闭，只能由运维人员在 `config.toml` 中开启。
