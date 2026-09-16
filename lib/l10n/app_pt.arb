@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Excluir todos os dados",
   "schemaTooNewWipeConfirm": "Todos os servidores, chaves, snippets e configurações deste dispositivo serão excluídos, sem possibilidade de desfazer. Um backup exportado aqui seria a única cópia restante.",
   "schemaTooNewWipeDone": "Dados excluídos. Abra o app novamente para começar do zero.",
-  "schemaTooNewWipeFailed": "Não foi possível excluir alguns dados, e esta versão ainda não consegue abrir o que restou. Reinstale a versão mais recente para acessá-los."
+  "schemaTooNewWipeFailed": "Não foi possível excluir alguns dados, e esta versão ainda não consegue abrir o que restou. Reinstale a versão mais recente para acessá-los.",
+  "monitorNoRemoteAccess": "Este agente está configurado apenas para monitorização. Não pode abrir um terminal, executar comandos ou navegar pelos ficheiros a partir daqui. Para ativar estas funções, edite [remote_access] no config.toml do agente."
 }

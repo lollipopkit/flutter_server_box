@@ -29,6 +29,15 @@ abstract final class Urls {
   /// convey on its own.
   static const monitorAgentDoc = '$docs/advanced/monitor-agent/';
 
+  /// What `[remote_access]` grants, and that every switch under it is off
+  /// until the agent's operator edits `config.toml`.
+  ///
+  /// Linked from the server page of an agent that grants nothing, which is the
+  /// one place where the absence of the whole function bar needs explaining —
+  /// and from where the reader cannot act on it, since they may not be the
+  /// person with the file.
+  static const monitorPermissionsDoc = '$monitorAgentDoc#permission-switches';
+
   /// How an alert rule is written: what a metric, a matcher and a threshold
   /// are, which combinations the agent actually evaluates, and when a rule
   /// stays quiet.

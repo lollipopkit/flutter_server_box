@@ -150,6 +150,8 @@ const tr = {
 	terminalPasswordlessDisable: 'Kapat',
 	files: 'Dosyalar',
 	filesUnavailable: 'Bu aracıda dosya erişimi etkin değil. config.toml içinde remote_access.fs.enabled seçeneğini açın ve köklerini belirtin; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
+	remoteAccessOffTitle: 'Uzaktan erişim devre dışı',
+	remoteAccessOffBody: 'Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent\'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin.',
 	filesRoots: 'Kökler',
 	filesEmpty: 'Burada bir şey yok',
 	filesSize: 'Boyut',

@@ -150,6 +150,8 @@ const zh_CN = {
 	terminalPasswordlessDisable: '关闭',
 	files: '文件',
 	filesUnavailable: '此 Monitor 未启用文件功能。请在 config.toml 中开启 remote_access.fs.enabled 并指定其根目录；同时需要 TLS，或同主机上的代理。',
+	remoteAccessOffTitle: '远程功能未开启',
+	remoteAccessOffBody: '这个 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。',
 	filesRoots: '根目录',
 	filesEmpty: '这里没有内容',
 	filesSize: '大小',

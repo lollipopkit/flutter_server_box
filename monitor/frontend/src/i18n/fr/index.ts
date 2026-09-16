@@ -150,6 +150,8 @@ const fr = {
 	terminalPasswordlessDisable: 'Le désactiver',
 	files: 'Fichiers',
 	filesUnavailable: 'L\'accès aux fichiers n\'est pas activé sur cet agent. Activez remote_access.fs.enabled dans config.toml et indiquez ses racines ; TLS, ou un proxy sur le même hôte, est également requis.',
+	remoteAccessOffTitle: 'L\'accès à distance est désactivé',
+	remoteAccessOffBody: 'Cet agent est configuré pour la surveillance uniquement. Vous ne pouvez pas ouvrir de terminal, exécuter de commandes ni parcourir les fichiers ici. Pour activer ces fonctions, modifiez [remote_access] dans le config.toml de l\'agent.',
 	filesRoots: 'Racines',
 	filesEmpty: 'Rien ici',
 	filesSize: 'Taille',

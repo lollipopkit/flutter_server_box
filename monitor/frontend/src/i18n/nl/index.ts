@@ -150,6 +150,8 @@ const nl = {
 	terminalPasswordlessDisable: 'Uitschakelen',
 	files: 'Bestanden',
 	filesUnavailable: 'Bestandstoegang is niet ingeschakeld op deze agent. Zet remote_access.fs.enabled aan in config.toml en geef de roots op; er is ook TLS nodig, of een proxy op dezelfde host.',
+	remoteAccessOffTitle: 'Toegang op afstand is uitgeschakeld',
+	remoteAccessOffBody: 'Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.',
 	filesRoots: 'Roots',
 	filesEmpty: 'Hier staat niets',
 	filesSize: 'Grootte',

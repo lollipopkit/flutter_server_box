@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Tüm verileri sil",
   "schemaTooNewWipeConfirm": "Bu cihazdaki tüm sunucular, anahtarlar, snippet’ler ve ayarlar silinecek; bu işlem geri alınamaz. Burada dışa aktarılan bir yedek, geriye kalan tek kopya olur.",
   "schemaTooNewWipeDone": "Veriler silindi. Baştan başlamak için uygulamayı yeniden açın.",
-  "schemaTooNewWipeFailed": "Bazı veriler silinemedi ve bu sürüm geriye kalanları hâlâ açamıyor. Erişmek için daha yeni sürümü yeniden yükleyin."
+  "schemaTooNewWipeFailed": "Bazı veriler silinemedi ve bu sürüm geriye kalanları hâlâ açamıyor. Erişmek için daha yeni sürümü yeniden yükleyin.",
+  "monitorNoRemoteAccess": "Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin."
 }

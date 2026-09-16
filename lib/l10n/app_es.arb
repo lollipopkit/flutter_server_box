@@ -618,5 +618,6 @@
   "schemaTooNewWipe": "Eliminar todos los datos",
   "schemaTooNewWipeConfirm": "Se eliminarán todos los servidores, claves, fragmentos y ajustes de este dispositivo, y no se podrá deshacer. Una copia de seguridad exportada aquí sería la única copia restante.",
   "schemaTooNewWipeDone": "Datos eliminados. Abre la aplicación de nuevo para empezar desde cero.",
-  "schemaTooNewWipeFailed": "No se han podido eliminar algunos datos y esta versión aún no puede abrir lo que queda. Vuelve a instalar la versión más reciente para acceder a ellos."
+  "schemaTooNewWipeFailed": "No se han podido eliminar algunos datos y esta versión aún no puede abrir lo que queda. Vuelve a instalar la versión más reciente para acceder a ellos.",
+  "monitorNoRemoteAccess": "Este agente está configurado solo para supervisar. Aquí no puedes abrir un terminal, ejecutar comandos ni explorar archivos. Para activar estas funciones, edita [remote_access] en el config.toml del agente."
 }

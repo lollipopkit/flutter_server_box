@@ -150,6 +150,8 @@ const ko = {
 	terminalPasswordlessDisable: '끈다',
 	files: '파일',
 	filesUnavailable: '이 에이전트에서는 파일 접근이 활성화되어 있지 않습니다. config.toml에서 remote_access.fs.enabled를 켜고 루트를 지정하세요. TLS 또는 같은 호스트의 프록시도 필요합니다.',
+	remoteAccessOffTitle: '원격 액세스가 비활성화되었습니다',
+	remoteAccessOffBody: '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.',
 	filesRoots: '루트',
 	filesEmpty: '아무것도 없습니다',
 	filesSize: '크기',

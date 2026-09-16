@@ -150,6 +150,8 @@ const uk = {
 	terminalPasswordlessDisable: 'Вимкнути',
 	files: 'Файли',
 	filesUnavailable: 'Доступ до файлів не увімкнено на цьому агенті. Увімкніть remote_access.fs.enabled у config.toml і вкажіть кореневі каталоги; також потрібен TLS або проксі на тому самому хості.',
+	remoteAccessOffTitle: 'Віддалений доступ вимкнено',
+	remoteAccessOffBody: 'Цей агент налаштовано лише для моніторингу. Тут не можна відкрити термінал, виконувати команди чи переглядати файли. Щоб увімкнути ці функції, відредагуйте розділ [remote_access] у config.toml агента.',
 	filesRoots: 'Кореневі каталоги',
 	filesEmpty: 'Тут нічого немає',
 	filesSize: 'Розмір',

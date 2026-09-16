@@ -2163,6 +2163,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get corsOriginsTip => '允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。';
 
   @override
+  String get monitorNoRemoteAccess =>
+      '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+
+  @override
   String get monitorNoAgent =>
       '还没有配置了 monitor agent 的服务器。在某台服务器的设置里加上，就能在这里编辑它。';
 }
@@ -4320,6 +4324,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get corsOriginsTip => '允許瀏覽器面板從哪些來源呼叫此 agent。留空表示僅同源。';
+
+  @override
+  String get monitorNoRemoteAccess =>
+      '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
 
   @override
   String get monitorNoAgent =>

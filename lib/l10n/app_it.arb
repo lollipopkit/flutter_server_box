@@ -621,5 +621,6 @@
   "schemaTooNewWipe": "Elimina tutti i dati",
   "schemaTooNewWipeConfirm": "Tutti i server, le chiavi, gli snippet e le impostazioni su questo dispositivo verranno eliminati senza possibilità di annullare l’operazione. Un backup esportato qui sarebbe l’unica copia rimasta.",
   "schemaTooNewWipeDone": "Dati eliminati. Riapri l’app per ricominciare da zero.",
-  "schemaTooNewWipeFailed": "Non è stato possibile eliminare alcuni dati e questa versione non può ancora aprire ciò che rimane. Reinstalla la versione più recente per accedervi."
+  "schemaTooNewWipeFailed": "Non è stato possibile eliminare alcuni dati e questa versione non può ancora aprire ciò che rimane. Reinstalla la versione più recente per accedervi.",
+  "monitorNoRemoteAccess": "Questo agent è configurato solo per il monitoraggio. Qui non puoi aprire un terminale, eseguire comandi o sfogliare i file. Per attivare queste funzioni, modifica [remote_access] nel config.toml dell'agent."
 }

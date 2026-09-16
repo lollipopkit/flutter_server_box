@@ -3,7 +3,138 @@ title: Monitor Agent
 description: 通过 Monitor agent 访问服务器
 ---
 
-Server Box Monitor 是安装在服务器上的轻量级监控服务。App 通过 HTTP 与它通信，因此可以在不开放 SSH 端口的情况下访问服务器。Monitor agent 也是推送告警、主屏幕小组件和 Watch App 获取数据的基础；这些功能可以在 App 未打开时继续工作。
+Server Box Monitor 是运行在服务器上的小型监控服务，会把服务器状态报告给 App。这样无需开放 SSH 端口，也能查看服务器；即使 App 没有打开，它仍能为推送告警、主屏幕小组件和 Watch App 提供数据。
+
+## 给 AI agent 的 prompt
+
+下面的 prompt 可以直接交给能通过 SSH 访问服务器的 AI agent。里面写清了不该靠猜的部分：规则语法和权限开关出错时可能不会直接报错，配置看起来没问题，但告警就是收不到。
+
+发送前请先替换尖括号里的内容。
+
+<details>
+<summary>安装 agent</summary>
+
+```text
+通过 SSH 在 <host> 上安装 ServerBox Monitor agent。
+
+安装脚本是
+https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh
+它会自动识别 init 系统。通过管道交给 `sh` 时，它会安装为以我的账户运行的
+`systemctl --user` 服务。Alpine 上需要 `sudo sh` 才能写入 /etc/init.d，但 agent
+仍然以执行 sudo 的用户运行。
+
+不要把它装成 root 系统服务。agent 以 root 运行，正是之后 `full_access`
+变得危险的原因。
+
+请保持 `[remote_access]` 下的所有开关关闭，并在那里显式写上
+`full_access = false`。
+
+它是该小节里唯一不是默认关闭的开关：不写时取平台默认值，Linux 上就是开。它自
+己不会造成什么，因为它以终端启用为前提，而终端是关的——但之后打开终端的人，会
+在没有任何地方写过 `true` 的情况下打开一个免密 shell。文件里显式写 `false` 还
+有粘性：`SBM_FULL_ACCESS=1` 也无法把它重新打开。
+
+其余开关是否开启我会另行决定。
+
+安装完成后请告诉我：
+- config.toml 的路径，以及旁边 SQLite 数据库的路径
+- 它监听的地址和端口
+- `loginctl show-user <user> -p Linger` 的结果。没有 linger,--user 服务会
+  在我登出时停止。
+- config.toml 和数据库的权限位。配置里可能有推送凭据，数据库里有面板用户表，
+  两者都不应该对同组或其他用户可读。
+```
+
+</details>
+
+<details>
+<summary>开启 remote access</summary>
+
+```text
+配置 <host> 上的 ServerBox Monitor agent，让 app 和面板可以
+<打开终端 / 浏览文件 / 执行命令>。
+
+修改前先说明这样做的风险，并等我同意：`full_access = true` 会让拿到面板密码的
+人直接获得 agent 运行账户的 shell，中间没有 SSH 认证。
+
+请特别注意：
+
+- 这些开关只存在于 agent 的 config.toml 里。没有任何 API 或面板控件能打开
+  它们；面板只能关闭 `full_access`。只有修改配置文件才能开启这些功能。
+- `full_access` 以 `[remote_access.terminal] enabled` 为前提。只设
+  full_access 不起任何作用。
+- 终端和文件 API 会拒绝从网络上到达的明文请求,但对 loopback 调用方——包括
+  同机反向代理——无需 TLS 即可服务。所以如果 agent 绑定在 127.0.0.1,或者由
+  同机代理终结 TLS,就不需要 `allow_insecure`。只有当 agent 能被另一台机器
+  直接以明文访问时才考虑它,并且动手前先说。
+- `[remote_access.fs]` 没有 `roots` 就什么都不做。只写真正需要浏览的目录。
+  `roots = ["/"]` 会让面板密码等价于一个 shell,因为能写
+  ~/.ssh/authorized_keys 的人就有 shell,agent 启动时也会对此告警。
+
+修改后重启 agent，并把日志里的 `Remote access:` 那一行发给我。这一行会说明实际
+开启了哪些功能；如果全部关闭，就不会出现这一行。
+```
+
+</details>
+
+<details>
+<summary>添加告警规则和通知渠道</summary>
+
+```text
+给 <host> 上的 ServerBox Monitor agent 添加一条告警规则。
+
+我想在什么情况下收到告警：<描述>
+
+请严格使用下面的规则格式：
+
+- 一条规则是一个 `[[monitoring.rules]]` 表,含 `name`、`monitor_type`、
+  `matcher` 和 `threshold`。
+- `monitor_type` 取 cpu、memory、swap、disk、network、temperature 之一。
+  `mem`、`net`、`temp` 也可以使用。填入其他值时，agent 只会记录日志，这条规则
+  不会触发。
+- `matcher` 选取指标的哪一部分：`cpu0` 表示单个核心，memory 和 swap 用
+  `used`/`free`/`avail`，network 用 `rx`/`tx`。disk 和 temperature 完全忽略
+  它。
+- `matcher` **不是**网卡名，也不是挂载点。写成 `matcher = "eth0"` 的 network
+  规则会静默地改为测量 rx+tx 总量，而不是那块网卡。
+- `threshold` 是比较符 + 数值 + 单位：`>=80%`、`<10%`、`>10m/s`、`>=70c`。
+  不写比较符等于 `<`，所以 `80%` 的含义是「低于 80%」。
+- 单位必须与指标相符：cpu/memory/swap/disk 用 `%`，temperature 用 `c`，
+  network 用体积或体积加 `/s`。体积按 1024 进制、单位小写。不相符的组合会被
+  记录到日志且永不触发。
+
+如果我还要求配置通知渠道，请加上对应的 `[[push]]` 表。`push_rate` 在
+config.toml 中按渠道限流，而不是按规则限流。
+
+agent 只在启动时读取规则和渠道，所以修改后要重启。然后把实际写入的内容原样发给我。
+```
+
+</details>
+
+<details>
+<summary>排查 app 里某个功能为什么不出现</summary>
+
+```text
+ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查清原因，
+不要直接修改配置；先告诉我你的结论。
+
+请先检查这些地方：
+
+- app 只显示 agent 在 `GET /api/v1/capabilities` 上声明的内容。终端、命令、
+  容器、进程、systemd、电源和计划任务都需要 `full_access`,而它本身以
+  `[remote_access.terminal] enabled` 为前提。文件浏览需要
+  `[remote_access.fs] enabled` 加上非空的 `roots`。
+- SFTP 和端口转发在 agent 上根本不存在。没有任何 endpoint 能把连接中继到
+  app 指定的地址,所以这两项需要在 app 里为同一台服务器另行配置 SSH。
+- 终端和文件 API 会拒绝从网络上到达的明文请求。loopback 调用方和同机反向
+  代理无需 TLS。
+- 只要该小节下有任何开关开启，agent 启动时就会记录一行 `Remote access:`
+  汇总；全部关闭时则不会记录。
+- agent 的 SQLite 数据库里的 `access_log` 表记录访问者、时间、来源、请求的
+  资源和结果，不记录凭据。
+```
+
+</details>
 
 ## 选择 SSH 还是 Monitor agent
 

@@ -32,6 +32,7 @@ import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
@@ -360,6 +361,13 @@ ${err.message ?? 'null'}
         children.add(child);
       }
     }
+    // After the readings, because that is what this page came to show and the
+    // notice is about what it cannot show. Nothing is drawn while the func bar
+    // is there — this only explains a bar that is missing.
+    if (!buildFuncs) {
+      final noAccess = _buildNoRemoteAccessCard(si);
+      if (noAccess != null) children.add(noAccess);
+    }
 
     return Scaffold(
       appBar: _buildAppBar(si),
@@ -386,6 +394,36 @@ ${err.message ?? 'null'}
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Why there is no row of things to do, for a server whose agent grants
+  /// nothing.
+  ///
+  /// Only when the agent has answered: `remoteAccess` is null before the first
+  /// poll and for an agent too old to have `/capabilities`, and "we have not
+  /// asked yet" must not be drawn as "you are not allowed".
+  ///
+  /// Only for a server reached *only* through an agent. One that also has SSH
+  /// has the row anyway, so there is nothing to explain — and a server with no
+  /// agent at all is not what this is about.
+  ///
+  /// Informational, not a warning. Every switch under `[remote_access]` is off
+  /// by default and the docs recommend leaving them that way, so most agents
+  /// are in this state on purpose and a red card would be nagging the people
+  /// who got it right. What was missing was not a warning but an answer to
+  /// "why is there nothing here".
+  Widget? _buildNoRemoteAccessCard(ServerState si) {
+    if (si.spi.monitorHttp == null || si.spi.ssh != null) return null;
+    if (si.remoteAccess == null) return null;
+
+    return CardX(
+      child: ListTile(
+        leading: const Icon(MingCute.lock_line, size: 20),
+        title: Text(l10n.monitorNoRemoteAccess, style: UIs.text12Grey),
+        trailing: const Icon(Icons.open_in_new, size: 17),
+        onTap: Urls.monitorPermissionsDoc.launchUrl,
       ),
     );
   }

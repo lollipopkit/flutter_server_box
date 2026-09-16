@@ -150,6 +150,8 @@ const id = {
 	terminalPasswordlessDisable: 'Matikan',
 	files: 'Berkas',
 	filesUnavailable: 'Akses berkas tidak diaktifkan pada agen ini. Nyalakan remote_access.fs.enabled di config.toml dan tentukan root-nya; juga membutuhkan TLS, atau proxy di host yang sama.',
+	remoteAccessOffTitle: 'Akses jarak jauh dinonaktifkan',
+	remoteAccessOffBody: 'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.',
 	filesRoots: 'Root',
 	filesEmpty: 'Tidak ada apa-apa di sini',
 	filesSize: 'Ukuran',

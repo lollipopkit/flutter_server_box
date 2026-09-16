@@ -150,6 +150,8 @@ const ru = {
 	terminalPasswordlessDisable: 'Отключить',
 	files: 'Файлы',
 	filesUnavailable: 'Доступ к файлам не включён на этом агенте. Включите remote_access.fs.enabled в config.toml и укажите корневые каталоги; также нужен TLS или прокси на том же хосте.',
+	remoteAccessOffTitle: 'Удалённый доступ отключён',
+	remoteAccessOffBody: 'Этот агент настроен только для мониторинга. Здесь нельзя открыть терминал, выполнять команды и просматривать файлы. Чтобы включить эти функции, измените раздел [remote_access] в config.toml агента.',
 	filesRoots: 'Корневые каталоги',
 	filesEmpty: 'Здесь ничего нет',
 	filesSize: 'Размер',

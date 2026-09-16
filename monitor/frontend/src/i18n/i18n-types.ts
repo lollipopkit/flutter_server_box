@@ -624,6 +624,14 @@ type RootTranslation = {
 	 */
 	filesUnavailable: string
 	/**
+	 * R​e​m​o​t​e​ ​f​e​a​t​u​r​e​s​ ​a​r​e​ ​o​f​f
+	 */
+	remoteAccessOffTitle: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​i​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​m​o​n​i​t​o​r​i​n​g​ ​o​n​l​y​.​ ​Y​o​u​ ​c​a​n​’​t​ ​o​p​e​n​ ​a​ ​t​e​r​m​i​n​a​l​,​ ​r​u​n​ ​c​o​m​m​a​n​d​s​,​ ​o​r​ ​b​r​o​w​s​e​ ​f​i​l​e​s​ ​h​e​r​e​.​ ​T​o​ ​e​n​a​b​l​e​ ​t​h​e​s​e​ ​f​e​a​t​u​r​e​s​,​ ​e​d​i​t​ ​[​r​e​m​o​t​e​_​a​c​c​e​s​s​]​ ​i​n​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​.​t​o​m​l​.
+	 */
+	remoteAccessOffBody: string
+	/**
 	 * R​o​o​t​s
 	 */
 	filesRoots: string
@@ -1374,6 +1382,14 @@ export type TranslationFunctions = {
 	 * File access is not enabled on this agent. Turn on remote_access.fs.enabled and name its roots in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	filesUnavailable: () => LocalizedString
+	/**
+	 * Remote features are off
+	 */
+	remoteAccessOffTitle: () => LocalizedString
+	/**
+	 * This agent is set up for monitoring only. You can’t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent’s config.toml.
+	 */
+	remoteAccessOffBody: () => LocalizedString
 	/**
 	 * Roots
 	 */
