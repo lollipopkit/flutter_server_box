@@ -340,24 +340,24 @@ impl SensorItem {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NvidiaSmiItem {
     pub name: String,
-    pub temp: i64,
-    /// e.g. "24.55 W / 350.00 W"; "null / null" when missing, matching Dart
-    pub power: String,
-    pub memory: GpuMem,
-    pub percent: i64,
-    pub fan_speed: i64,
+    pub temp: Option<i64>,
+    /// e.g. "24.55 W / 350.00 W"; absent when both readings are missing
+    pub power: Option<String>,
+    pub memory: Option<GpuMem>,
+    pub percent: Option<i64>,
+    pub fan_speed: Option<i64>,
 }
 
 /// AMD GPU(Dart `AmdSmiItem`)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AmdSmiItem {
     pub name: String,
-    pub temp: i64,
-    pub power: String,
-    pub memory: GpuMem,
-    pub utilization: i64,
-    pub fan_speed: i64,
-    pub clock_speed: i64,
+    pub temp: Option<i64>,
+    pub power: Option<String>,
+    pub memory: Option<GpuMem>,
+    pub utilization: Option<i64>,
+    pub fan_speed: Option<i64>,
+    pub clock_speed: Option<i64>,
 }
 
 /// Vendor-neutral GPU reading used by Linux DRM discovery and by consumers

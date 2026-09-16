@@ -4,11 +4,11 @@ use crate::types::*;
 use serde_json::Value;
 use std::collections::HashMap;
 
-/// Dart `_parseFirstInt`: parse the first space-separated segment as an integer, 0 on failure
-fn parse_first_int(s: Option<&str>) -> i64 {
+/// Dart `_parseFirstInt`: parse the first space-separated segment as an integer.
+/// Missing or malformed telemetry stays absent; a textual zero remains `Some(0)`.
+fn parse_first_int(s: Option<&str>) -> Option<i64> {
     s.and_then(|s| s.split(' ').next())
         .and_then(|s| s.parse().ok())
-        .unwrap_or(0)
 }
 
 /// nvidia-smi -q -x output (Dart `NvidiaSmi.fromXml`).
@@ -58,9 +58,9 @@ pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
                             let name = child_text(proc, "process_name")?;
                             let memory = child_text(proc, "used_memory")?;
                             Some(GpuMemProcess {
-                                pid: pid.parse().unwrap_or(0),
+                                pid: pid.parse().ok()?,
                                 name,
-                                memory: parse_first_int(Some(&memory)),
+                                memory: parse_first_int(Some(&memory))?,
                             })
                         })
                         .collect()
@@ -77,16 +77,25 @@ pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
                 name,
                 temp: parse_first_int(Some(&temp)),
                 percent: parse_first_int(percent.as_deref()),
-                power: format!(
-                    "{} / {}",
-                    power_draw.as_deref().unwrap_or("null"),
-                    power_limit.as_deref().unwrap_or("null")
-                ),
-                memory: GpuMem {
-                    total: parse_first_int(mem_total.as_deref()),
-                    used: parse_first_int(mem_used.as_deref()),
-                    unit: "MiB".to_string(),
-                    processes,
+                power: match (power_draw, power_limit) {
+                    (None, None) => None,
+                    (draw, limit) => Some(format!(
+                        "{} / {}",
+                        draw.as_deref().unwrap_or("null"),
+                        limit.as_deref().unwrap_or("null")
+                    )),
+                },
+                memory: match (
+                    parse_first_int(mem_total.as_deref()),
+                    parse_first_int(mem_used.as_deref()),
+                ) {
+                    (Some(total), Some(used)) => Some(GpuMem {
+                        total,
+                        used,
+                        unit: "MiB".to_string(),
+                        processes,
+                    }),
+                    _ => None,
                 },
                 fan_speed: parse_first_int(fan_speed.as_deref()),
             })
@@ -112,40 +121,50 @@ fn parse_amd_gpu(gpu: &Value) -> Option<AmdSmiItem> {
     let power_draw = amd_int(pick(&["power_draw", "current_power"]).as_ref());
     let power_cap = amd_int(pick(&["power_cap", "power_limit", "max_power"]).as_ref());
     let power = match (power_draw, power_cap) {
-        (0, 0) => "N/A".to_string(),
-        (d, 0) => format!("{}W", d),
-        (d, c) => format!("{}W / {}W", d, c),
+        (None, None) => None,
+        (Some(d), None) => Some(format!("{}W", d)),
+        (draw, cap) => Some(format!(
+            "{}W / {}W",
+            draw.map_or_else(|| "N/A".to_string(), |value| value.to_string()),
+            cap.map_or_else(|| "N/A".to_string(), |value| value.to_string()),
+        )),
     };
 
     let mem = pick(&["memory", "vram"]).unwrap_or_else(|| Value::Object(Default::default()));
-    let memory = GpuMem {
-        total: amd_int(mem.get("total").or_else(|| mem.get("total_memory"))),
-        used: amd_int(mem.get("used").or_else(|| mem.get("used_memory"))),
-        unit: mem.get("unit").and_then(|v| v.as_str()).unwrap_or("MB").to_string(),
-        processes: mem
-            .get("processes")
-            .and_then(|v| v.as_array())
-            .map(|list| {
-                list.iter()
-                    .filter_map(|proc| {
-                        let pid = amd_int(proc.get("pid"));
-                        if pid == 0 {
-                            return None;
-                        }
-                        Some(GpuMemProcess {
-                            pid,
-                            name: proc
-                                .get("name")
-                                .or_else(|| proc.get("process_name"))
-                                .and_then(|v| v.as_str())
-                                .unwrap_or("Unknown")
-                                .to_string(),
-                            memory: amd_int(proc.get("memory").or_else(|| proc.get("used_memory"))),
+    let memory = match (
+        amd_int(mem.get("total").or_else(|| mem.get("total_memory"))),
+        amd_int(mem.get("used").or_else(|| mem.get("used_memory"))),
+    ) {
+        (Some(total), Some(used)) => Some(GpuMem {
+            total,
+            used,
+            unit: mem.get("unit").and_then(|v| v.as_str()).unwrap_or("MB").to_string(),
+            processes: mem
+                .get("processes")
+                .and_then(|v| v.as_array())
+                .map(|list| {
+                    list.iter()
+                        .filter_map(|proc| {
+                            let pid = amd_int(proc.get("pid"))?;
+                            let memory = amd_int(
+                                proc.get("memory").or_else(|| proc.get("used_memory")),
+                            )?;
+                            Some(GpuMemProcess {
+                                pid,
+                                name: proc
+                                    .get("name")
+                                    .or_else(|| proc.get("process_name"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("Unknown")
+                                    .to_string(),
+                                memory,
+                            })
                         })
-                    })
-                    .collect()
-            })
-            .unwrap_or_default(),
+                        .collect()
+                })
+                .unwrap_or_default(),
+        }),
+        _ => None,
     };
 
     Some(AmdSmiItem {
@@ -159,15 +178,16 @@ fn parse_amd_gpu(gpu: &Value) -> Option<AmdSmiItem> {
     })
 }
 
-/// Dart `AmdSmi._parseIntValue`: ints taken as-is; strings parsed after stripping non-digits ("45°C" → 45)
-fn amd_int(value: Option<&Value>) -> i64 {
+/// Dart `AmdSmi._parseIntValue`: ints taken as-is; strings parsed after stripping non-digits
+/// ("45°C" → 45). Invalid or absent values stay absent, while "0" remains `Some(0)`.
+fn amd_int(value: Option<&Value>) -> Option<i64> {
     match value {
-        Some(Value::Number(n)) => n.as_i64().unwrap_or(0),
+        Some(Value::Number(n)) => n.as_i64().or_else(|| n.as_f64().map(|value| value as i64)),
         Some(Value::String(s)) => {
             let digits: String = s.chars().filter(|c| c.is_ascii_digit()).collect();
-            digits.parse().unwrap_or(0)
+            (!digits.is_empty()).then(|| digits.parse().ok()).flatten()
         }
-        _ => 0,
+        _ => None,
     }
 }
 
@@ -230,9 +250,10 @@ fn parse_drm_block(block: &str) -> Option<GpuItem> {
             clock_speed: None,
         }),
         "intel" => {
-            let sample = last_intel_sample(&payload.join("\n"))?;
+            let sample = last_intel_sample(&payload.join("\n"));
             let utilization = sample
-                .get("engines")
+                .as_ref()
+                .and_then(|sample| sample.get("engines"))
                 .and_then(Value::as_object)
                 .and_then(|engines| {
                     engines
@@ -241,12 +262,14 @@ fn parse_drm_block(block: &str) -> Option<GpuItem> {
                         .reduce(f64::max)
                 });
             let power = sample
-                .get("power")
+                .as_ref()
+                .and_then(|sample| sample.get("power"))
                 .and_then(|v| v.get("GPU"))
                 .and_then(Value::as_f64)
                 .map(|v| format!("{v:.2} W"));
             let clock_speed = sample
-                .get("frequency")
+                .as_ref()
+                .and_then(|sample| sample.get("frequency"))
                 .and_then(|v| v.get("actual"))
                 .and_then(Value::as_f64)
                 .map(|v| v.round() as i64);
@@ -273,12 +296,12 @@ fn drm_memory(fields: &HashMap<&str, &str>) -> Option<GpuMem> {
     let total = fields
         .get("memory_total_bytes")
         .and_then(|v| v.parse::<i64>().ok());
-    if used.is_none() && total.is_none() {
+    let (Some(used), Some(total)) = (used, total) else {
         return None;
-    }
+    };
     Some(GpuMem {
-        used: used.unwrap_or(0) / 1_048_576,
-        total: total.unwrap_or(0) / 1_048_576,
+        used: used / 1_048_576,
+        total: total / 1_048_576,
         unit: "MiB".to_string(),
         processes: Vec::new(),
     })
@@ -352,11 +375,11 @@ pub fn nvidia_as_gpu(items: &[NvidiaSmiItem]) -> Vec<GpuItem> {
             id: format!("nvidia:{index}"),
             vendor: "nvidia".to_string(),
             name: item.name.clone(),
-            utilization: Some(item.percent as f64),
-            temperature: Some(item.temp),
-            power: (item.power != "null / null").then(|| item.power.clone()),
-            memory: Some(item.memory.clone()),
-            fan_speed: Some(item.fan_speed),
+            utilization: item.percent.map(|value| value as f64),
+            temperature: item.temp,
+            power: item.power.clone(),
+            memory: item.memory.clone(),
+            fan_speed: item.fan_speed,
             clock_speed: None,
         })
         .collect()
@@ -370,12 +393,12 @@ pub fn amd_as_gpu(items: &[AmdSmiItem]) -> Vec<GpuItem> {
             id: format!("amd:{index}"),
             vendor: "amd".to_string(),
             name: item.name.clone(),
-            utilization: Some(item.utilization as f64),
-            temperature: (item.temp != 0).then_some(item.temp),
-            power: (item.power != "N/A").then(|| item.power.clone()),
-            memory: Some(item.memory.clone()),
-            fan_speed: (item.fan_speed != 0).then_some(item.fan_speed),
-            clock_speed: (item.clock_speed != 0).then_some(item.clock_speed),
+            utilization: item.utilization.map(|value| value as f64),
+            temperature: item.temp,
+            power: item.power.clone(),
+            memory: item.memory.clone(),
+            fan_speed: item.fan_speed,
+            clock_speed: item.clock_speed,
         })
         .collect()
 }

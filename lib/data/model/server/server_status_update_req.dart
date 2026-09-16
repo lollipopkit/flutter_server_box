@@ -401,45 +401,49 @@ typedef GpuMemProcessJson = ({int pid, String name, int memory});
 
 void _applyNvidia(ServerStatus ss, Map<String, dynamic> status) {
   ss.nvidia = (status['nvidia'] as List).map((g) {
-    final mem = g['memory'] as Map<String, dynamic>;
+    final mem = g['memory'] as Map<String, dynamic>?;
     return NvidiaSmiItem(
       name: g['name'] as String,
-      temp: g['temp'] as int,
-      power: g['power'] as String,
-      percent: g['percent'] as int,
-      fanSpeed: g['fan_speed'] as int,
-      memory: NvidiaSmiMem(
-        mem['total'] as int,
-        mem['used'] as int,
-        mem['unit'] as String,
-        (mem['processes'] as List).map((p) {
-          final proc = _gpuProcess(p as Map<String, dynamic>);
-          return NvidiaSmiMemProcess(proc.pid, proc.name, proc.memory);
-        }).toList(),
-      ),
+      temp: g['temp'] as int?,
+      power: g['power'] as String?,
+      percent: g['percent'] as int?,
+      fanSpeed: g['fan_speed'] as int?,
+      memory: mem == null
+          ? null
+          : NvidiaSmiMem(
+              mem['total'] as int,
+              mem['used'] as int,
+              mem['unit'] as String,
+              (mem['processes'] as List).map((p) {
+                final proc = _gpuProcess(p as Map<String, dynamic>);
+                return NvidiaSmiMemProcess(proc.pid, proc.name, proc.memory);
+              }).toList(),
+            ),
     );
   }).toList();
 }
 
 void _applyAmd(ServerStatus ss, Map<String, dynamic> status) {
   ss.amd = (status['amd'] as List).map((g) {
-    final mem = g['memory'] as Map<String, dynamic>;
+    final mem = g['memory'] as Map<String, dynamic>?;
     return AmdSmiItem(
       name: g['name'] as String,
-      temp: g['temp'] as int,
-      power: g['power'] as String,
-      utilization: g['utilization'] as int,
-      fanSpeed: g['fan_speed'] as int,
-      clockSpeed: g['clock_speed'] as int,
-      memory: AmdSmiMem(
-        mem['total'] as int,
-        mem['used'] as int,
-        mem['unit'] as String,
-        (mem['processes'] as List).map((p) {
-          final proc = _gpuProcess(p as Map<String, dynamic>);
-          return AmdSmiMemProcess(proc.pid, proc.name, proc.memory);
-        }).toList(),
-      ),
+      temp: g['temp'] as int?,
+      power: g['power'] as String?,
+      utilization: g['utilization'] as int?,
+      fanSpeed: g['fan_speed'] as int?,
+      clockSpeed: g['clock_speed'] as int?,
+      memory: mem == null
+          ? null
+          : AmdSmiMem(
+              mem['total'] as int,
+              mem['used'] as int,
+              mem['unit'] as String,
+              (mem['processes'] as List).map((p) {
+                final proc = _gpuProcess(p as Map<String, dynamic>);
+                return AmdSmiMemProcess(proc.pid, proc.name, proc.memory);
+              }).toList(),
+            ),
     );
   }).toList();
 }
