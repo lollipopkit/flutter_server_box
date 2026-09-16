@@ -1773,6 +1773,29 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het proces is gewijzigd of beëindigd. Vernieuw de lijst en probeer het opnieuw.';
 
   @override
+  String get processSearchHint => 'Name, user or PID';
+
+  @override
+  String processShowKernelThreads(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count kernel threads',
+      one: 'Show 1 kernel thread',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get processForceKill => 'Force kill';
+
+  @override
+  String get processStarted => 'Started';
+
+  @override
+  String get processThreads => 'Threads';
+
+  @override
   String get watchServers => 'Servers op de watch';
 
   @override
@@ -1840,6 +1863,83 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get systemdUserScopeMissingTip =>
       'Dit account heeft geen gebruikerssessiebus op de server, dus alleen systeem-units worden getoond.';
+
+  @override
+  String get serviceSearchHint => 'Unit name';
+
+  @override
+  String get serviceNeedsAttention => 'Needs attention';
+
+  @override
+  String serviceOtherUnits(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count other units',
+      one: '1 other unit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get serviceUnit => 'Unit';
+
+  @override
+  String get serviceUnitType => 'Type';
+
+  @override
+  String get serviceScope => 'Scope';
+
+  @override
+  String get serviceStartup => 'Startup';
+
+  @override
+  String serviceUpFor(String duration) {
+    return 'up $duration';
+  }
+
+  @override
+  String serviceDownFor(String duration) {
+    return 'down $duration';
+  }
+
+  @override
+  String serviceNextIn(String duration) {
+    return 'next $duration';
+  }
+
+  @override
+  String serviceStoppedAgo(String duration) {
+    return 'Stopped $duration ago';
+  }
+
+  @override
+  String serviceExitStatus(String code) {
+    return 'exit status $code';
+  }
+
+  @override
+  String get serviceFullJournal => 'Full journal';
+
+  @override
+  String get serviceUnitFile => 'Unit file';
+
+  @override
+  String serviceJournalRecent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Last $count lines',
+      one: 'Last line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get serviceJournalUnreadable => 'This account cannot read the journal';
+
+  @override
+  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => 'Kon geen opdracht uitvoeren op deze server';

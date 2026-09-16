@@ -1619,6 +1619,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get processKillTargetChanged => '该进程已变化或退出，请刷新后重试。';
 
   @override
+  String get processSearchHint => '名称、用户或 PID';
+
+  @override
+  String processShowKernelThreads(int count) {
+    return '显示 $count 个内核线程';
+  }
+
+  @override
+  String get processForceKill => '强制结束';
+
+  @override
+  String get processStarted => '启动';
+
+  @override
+  String get processThreads => '线程';
+
+  @override
   String get watchServers => '手表上的服务器';
 
   @override
@@ -1681,6 +1698,71 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get systemdUserScopeMissingTip => '该账户在服务器上没有用户会话总线，因此只显示系统 unit。';
+
+  @override
+  String get serviceSearchHint => '单元名';
+
+  @override
+  String get serviceNeedsAttention => '需要处理';
+
+  @override
+  String serviceOtherUnits(int count) {
+    return '其余 $count 个单元';
+  }
+
+  @override
+  String get serviceUnit => '单元';
+
+  @override
+  String get serviceUnitType => '类型';
+
+  @override
+  String get serviceScope => '作用域';
+
+  @override
+  String get serviceStartup => '开机自启';
+
+  @override
+  String serviceUpFor(String duration) {
+    return '运行 $duration';
+  }
+
+  @override
+  String serviceDownFor(String duration) {
+    return '停止 $duration';
+  }
+
+  @override
+  String serviceNextIn(String duration) {
+    return '下次 $duration';
+  }
+
+  @override
+  String serviceStoppedAgo(String duration) {
+    return '$duration前停止';
+  }
+
+  @override
+  String serviceExitStatus(String code) {
+    return '退出状态 $code';
+  }
+
+  @override
+  String get serviceFullJournal => '完整日志';
+
+  @override
+  String get serviceUnitFile => '单元文件';
+
+  @override
+  String serviceJournalRecent(int count) {
+    return '最近 $count 行';
+  }
+
+  @override
+  String get serviceJournalUnreadable => '当前账户无法读取 journal';
+
+  @override
+  String get serviceSelectHint => '选择一个单元查看详情';
 
   @override
   String get serverUnreachable => '无法在此服务器上执行命令';

@@ -651,6 +651,18 @@
   "processParseInvalidWindowsJson": "The Windows process response could not be read.",
   "processParseInvalidWindowsRows": "Some Windows process entries could not be read.",
   "processKillTargetChanged": "The process changed or exited. Refresh and try again.",
+  "processSearchHint": "Name, user or PID",
+  "processShowKernelThreads": "{count, plural, one{Show 1 kernel thread} other{Show {count} kernel threads}}",
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "processForceKill": "Force kill",
+  "processStarted": "Started",
+  "processThreads": "Threads",
   "watchServers": "Servers on the watch",
   "watchServersTip": "The watch fetches from the monitor on its own, so only servers with one can be picked.",
   "watchNoMonitorServer": "No server has a monitor agent configured",
@@ -678,6 +690,72 @@
   "serviceEnabled": "Enabled at startup",
   "systemdUserScopeMissing": "User units are not listed",
   "systemdUserScopeMissingTip": "This account has no user session bus on the server, so only system units are shown.",
+  "serviceSearchHint": "Unit name",
+  "serviceNeedsAttention": "Needs attention",
+  "serviceOtherUnits": "{count, plural, one{1 other unit} other{{count} other units}}",
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serviceUnit": "Unit",
+  "serviceUnitType": "Type",
+  "serviceScope": "Scope",
+  "serviceStartup": "Startup",
+  "serviceUpFor": "up {duration}",
+  "@serviceUpFor": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceDownFor": "down {duration}",
+  "@serviceDownFor": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceNextIn": "next {duration}",
+  "@serviceNextIn": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceStoppedAgo": "Stopped {duration} ago",
+  "@serviceStoppedAgo": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceExitStatus": "exit status {code}",
+  "@serviceExitStatus": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "serviceFullJournal": "Full journal",
+  "serviceUnitFile": "Unit file",
+  "serviceJournalRecent": "{count, plural, one{Last line} other{Last {count} lines}}",
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serviceJournalUnreadable": "This account cannot read the journal",
+  "serviceSelectHint": "Select a unit to see its details",
   "serverUnreachable": "Could not run a command on this server",
   "containerNoRuntime": "No container runtime here",
   "containerNoRuntimeTip": "Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.",
