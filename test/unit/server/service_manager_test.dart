@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -94,8 +95,8 @@ unsupported.target loaded active active A target
       expect(sshd.state, ServiceState.running);
       expect(sshd.scope, ServiceScope.system);
       expect(sshd.description, 'OpenSSH server daemon');
-      expect(sshd.actions, [ServiceAction.stop, ServiceAction.restart,
-        ServiceAction.status]);
+      expect(sshd.subState, 'running');
+      expect(sshd.actions, [ServiceAction.stop, ServiceAction.restart]);
 
       expect(units[1].state, ServiceState.stopped);
       expect(units[2].state, ServiceState.failed);
@@ -106,10 +107,12 @@ unsupported.target loaded active active A target
     test('keeps system units when the user scope is unavailable', () async {
       final exec = _QueueExec([
         _result(stdout: output),
+        _result(),
         _result(
           exitCode: 1,
           stderr: 'Failed to connect to bus: No medium found',
         ),
+        _result(exitCode: 1),
       ]);
 
       final listing = await const SystemdServiceManager().list(exec);
@@ -118,13 +121,17 @@ unsupported.target loaded active active A target
       expect(listing.notice, ServiceListingNotice.userScopeUnavailable);
       expect(exec.scripts, [
         SystemdServiceManager.listCommand(ServiceScope.system),
+        SystemdServiceManager.detailsCommand(ServiceScope.system),
         SystemdServiceManager.listCommand(ServiceScope.user),
+        SystemdServiceManager.detailsCommand(ServiceScope.user),
       ]);
     });
 
     test('ignores stderr warnings from successful listings', () async {
       final exec = _QueueExec([
         _result(stderr: 'fake.service loaded active running warning'),
+        _result(),
+        _result(),
         _result(),
       ]);
 
@@ -137,6 +144,9 @@ unsupported.target loaded active active A target
     test('treats a non-zero result as failed even with parsed units', () async {
       final exec = _QueueExec([
         _result(exitCode: 1, stdout: output, stderr: 'partial failure'),
+        _result(),
+        _result(),
+        _result(),
       ]);
 
       await expectLater(
@@ -145,20 +155,184 @@ unsupported.target loaded active active A target
       );
     });
 
-    test('builds scoped and privileged commands', () {
-      const unit = ServiceUnit(
+    test('builds scoped commands, and only system units need root', () {
+      const system = ServiceUnit(
         name: 'sshd',
         type: ServiceUnitType.service,
         scope: ServiceScope.system,
         state: ServiceState.running,
         actions: [ServiceAction.restart],
       );
+      const user = ServiceUnit(
+        name: 'gpg-agent',
+        type: ServiceUnitType.socket,
+        scope: ServiceScope.user,
+        state: ServiceState.running,
+        actions: [ServiceAction.restart],
+      );
       final manager = const SystemdServiceManager();
 
       expect(
-        manager.commandFor(unit, ServiceAction.restart, isRoot: false),
+        manager.commandFor(system, ServiceAction.restart),
+        "systemctl restart 'sshd.service'",
+      );
+      expect(manager.needsRoot(system), isTrue);
+      expect(
+        terminalCommand(
+          manager.commandFor(system, ServiceAction.restart),
+          needsRoot: manager.needsRoot(system),
+          isRoot: false,
+        ),
         "sudo systemctl restart 'sshd.service'",
       );
+
+      // `sudo systemctl --user` would reach root's user manager.
+      expect(
+        manager.commandFor(user, ServiceAction.restart),
+        "systemctl --user restart 'gpg-agent.socket'",
+      );
+      expect(manager.needsRoot(user), isFalse);
+      expect(
+        manager.definitionCommand(user),
+        "systemctl --user cat 'gpg-agent.socket'",
+      );
+      expect(
+        manager.logCommand(user),
+        "journalctl --user -e -u 'gpg-agent.socket'",
+      );
+    });
+  });
+
+  group('systemd details, read from a real systemd 258', () {
+    String fixture(String name) =>
+        File('test/fixtures/systemd/$name').readAsStringSync();
+
+    // The device's clock is an hour ahead of the server's.
+    final serverNow = DateTime.fromMillisecondsSinceEpoch(
+      int.parse(fixture('show.txt').split('\n').first) * 1000,
+      isUtc: true,
+    );
+    final deviceNow = serverNow.add(const Duration(hours: 1));
+
+    Future<Map<String, ServiceUnit>> listing() async {
+      final exec = _QueueExec([
+        _result(stdout: fixture('list_units.txt')),
+        _result(stdout: fixture('show.txt')),
+        _result(),
+        _result(),
+      ]);
+      final units = SystemdServiceManager.parseListUnits(
+        fixture('list_units.txt'),
+        ServiceScope.system,
+      );
+      final details = SystemdServiceManager.parseDetails(
+        fixture('show.txt'),
+        now: deviceNow,
+      );
+      // The same merge list() does, with the device clock pinned.
+      final listed = await const SystemdServiceManager().list(exec);
+      expect(listed.units.map((u) => u.key).toSet(), units.map((u) => u.key).toSet());
+      expect(listed.notice, isNull);
+      return {
+        for (final unit in units)
+          unit.fullName: SystemdServiceManager.withDetails(
+            unit,
+            details[unit.fullName],
+          ),
+      };
+    }
+
+    test('a failed unit keeps why, and when on this device\'s clock', () async {
+      final unit = (await listing())['sbfail.service']!;
+
+      expect(unit.state, ServiceState.failed);
+      expect(unit.result, 'exit-code');
+      expect(unit.exitStatus, 3);
+      expect(unit.unitFileState, 'transient');
+      // Neither enabled nor disabled, so neither is offered.
+      expect(unit.enabled, isNull);
+      expect(unit.actions, [ServiceAction.restart]);
+      expect(
+        unit.since,
+        DateTime.utc(2026, 9, 16, 17, 12, 26).add(const Duration(hours: 1)),
+      );
+    });
+
+    test('a running unit has memory; success is not a result', () async {
+      final units = await listing();
+      final journald = units['systemd-journald.service']!;
+
+      expect(journald.memoryBytes, 12386304);
+      expect(journald.result, isNull);
+      expect(journald.unitFileState, 'enabled');
+      expect(journald.enabled, isTrue);
+      expect(journald.actions, contains(ServiceAction.disable));
+      expect(journald.startup, 'enabled');
+
+      // `[not set]` is not zero bytes.
+      expect(units['dbus.socket']!.memoryBytes, isNull);
+    });
+
+    test('a timer with no calendar has no next elapse', () async {
+      final timer = (await listing())['sbtimer.timer']!;
+
+      expect(timer.state, ServiceState.running);
+      expect(timer.subState, 'waiting');
+      expect(timer.nextElapse, isNull);
+    });
+
+    test('odd values do not become measurements', () {
+      expect(SystemdUnitDetails.parseMemory('18446744073709551615'), isNull);
+      expect(SystemdUnitDetails.parseMemory('[not set]'), isNull);
+      expect(SystemdUnitDetails.parseTimestamp(''), isNull);
+      expect(SystemdUnitDetails.parseTimestamp('n/a'), isNull);
+      // Only UTC is unambiguous; a zone abbreviation is refused.
+      expect(
+        SystemdUnitDetails.parseTimestamp('Wed 2026-09-16 12:04:31 CST'),
+        isNull,
+      );
+    });
+
+    test('details without the clock line are taken as they are', () {
+      final details = SystemdServiceManager.parseDetails(
+        'Id=a.service\nActiveEnterTimestamp=Wed 2026-09-16 17:12:26 UTC\n',
+        now: deviceNow,
+      );
+      expect(details['a.service']!.activeEnter, DateTime.utc(2026, 9, 16, 17, 12, 26));
+    });
+
+    test('the journal loses its date and host, and says when it is unreadable', () {
+      final log = SystemdServiceManager.parseJournal(fixture('journal.txt'));
+
+      expect(log.unreadable, isFalse);
+      expect(log.lines, hasLength(4));
+      expect(log.lines.first.time, '01:12:26');
+      expect(log.lines.first.text, 'systemd[1]: Started Fails on purpose.');
+
+      final hidden = SystemdServiceManager.parseJournal(
+        '-- No entries --\n',
+        stderr:
+            'Hint: You are currently not seeing messages from other users '
+            'and the system.\n',
+      );
+      expect(hidden.lines, isEmpty);
+      expect(hidden.unreadable, isTrue);
+
+      expect(SystemdServiceManager.parseJournal('-- No entries --\n').unreadable, isFalse);
+    });
+
+    test('a failing details call keeps the list and says so', () async {
+      final exec = _QueueExec([
+        _result(stdout: fixture('list_units.txt')),
+        _result(exitCode: 1, stderr: 'Unknown command verb show.'),
+        _result(),
+        _result(),
+      ]);
+
+      final listing = await const SystemdServiceManager().list(exec);
+
+      expect(listing.units, hasLength(11));
+      expect(listing.notice, ServiceListingNotice.detailsUnavailable);
     });
   });
 
@@ -229,13 +403,22 @@ uhttpd\t0
       );
 
       expect(
-        const ProcdServiceManager().commandFor(
-          unit,
-          ServiceAction.restart,
-          isRoot: false,
-        ),
-        "sudo '/etc/init.d/dropbear' restart",
+        const ProcdServiceManager().commandFor(unit, ServiceAction.restart),
+        "'/etc/init.d/dropbear' restart",
       );
+      expect(const ProcdServiceManager().needsRoot(unit), isTrue);
+    });
+
+    test('reads logread lines', () {
+      final lines = ProcdServiceManager.parseLogread(
+        'Wed Sep 16 21:09:58 2026 daemon.err dnsmasq[1234]: failed to bind\n'
+        'garbage\n',
+      );
+
+      expect(lines.first.time, '21:09:58');
+      expect(lines.first.text, 'dnsmasq[1234]: failed to bind');
+      expect(lines.last.time, isNull);
+      expect(lines.last.text, 'garbage');
     });
   });
 
@@ -292,17 +475,18 @@ sshd
       final manager = const OpenRcServiceManager();
 
       expect(
-        manager.commandFor(unit, ServiceAction.start, isRoot: true),
+        manager.commandFor(unit, ServiceAction.start),
         "rc-service 'chronyd' start",
       );
       expect(
-        manager.commandFor(unit, ServiceAction.enable, isRoot: false),
-        "sudo rc-update add 'chronyd' default",
+        manager.commandFor(unit, ServiceAction.enable),
+        "rc-update add 'chronyd' default",
       );
       expect(
-        manager.commandFor(unit, ServiceAction.disable, isRoot: false),
-        "sudo rc-update --all delete 'chronyd'",
+        manager.commandFor(unit, ServiceAction.disable),
+        "rc-update --all delete 'chronyd'",
       );
+      expect(manager.needsRoot(unit), isTrue);
     });
   });
 }

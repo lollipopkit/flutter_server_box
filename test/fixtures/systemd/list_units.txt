@@ -1,0 +1,11 @@
+dbus.service                                                                                            loaded    active   running   D-Bus System Message Bus
+nscd.service                                                                                            loaded    active   running   Name Service Cache Daemon (nsncd)
+sbfail.service                                                                                          loaded    failed   failed    Fails on purpose
+sbrun.service                                                                                           loaded    active   running   Runs
+sbtimer.service                                                                                         loaded    inactive dead      Later
+systemd-journald.service                                                                                loaded    active   running   Journal Service
+systemd-tmpfiles-clean.service                                                                          loaded    inactive dead      Cleanup of Temporary Directories
+dbus.socket                                                                                             loaded    active   running   D-Bus System Message Bus Socket
+systemd-journald.socket                                                                                 loaded    active   running   Journal Sockets
+sbtimer.timer                                                                                           loaded    active   waiting   Later
+systemd-tmpfiles-clean.timer                                                                            loaded    active   waiting   Daily Cleanup of Temporary Directories

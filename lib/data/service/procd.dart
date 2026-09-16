@@ -112,15 +112,54 @@ done
   }
 
   @override
-  String commandFor(
-    ServiceUnit unit,
-    ServiceAction action, {
-    required bool isRoot,
-  }) {
+  String commandFor(ServiceUnit unit, ServiceAction action) {
     final script = quotedServiceName('/etc/init.d/${unit.name}');
-    return privilegedCommand(
-      '$script ${action.name}',
-      isRoot: isRoot,
-    );
+    return '$script ${action.name}';
   }
+
+  @override
+  bool needsRoot(ServiceUnit unit) => true;
+
+  /// `logread`'s ring buffer, filtered to lines naming the service. OpenWrt
+  /// tags a service's lines with its process name, which is the init script's
+  /// name for nearly every package — close enough for "what did it last say",
+  /// and the full buffer is one tap away.
+  @override
+  Future<ServiceLog?> recentLog(
+    ServerExec exec,
+    ServiceUnit unit, {
+    int lines = 5,
+  }) async {
+    final result = await exec.run(
+      'logread -e ${quotedServiceName(unit.name)} | tail -n $lines',
+    );
+    if (!result.succeeded) return null;
+    return ServiceLog(lines: parseLogread(result.stdout));
+  }
+
+  /// `Wed Sep 16 21:09:58 2026 daemon.err dnsmasq[1234]: message`.
+  static List<ServiceLogLine> parseLogread(String output) {
+    final pattern = RegExp(
+      r'^\w{3} \w{3} +\d+ (\d{2}:\d{2}:\d{2}) \d{4} \S+ (.*)$',
+    );
+    return [
+      for (final line in output.split('\n'))
+        if (line.trim().isNotEmpty)
+          switch (pattern.firstMatch(line)) {
+            final match? => ServiceLogLine(
+              time: match.group(1),
+              text: match.group(2)!,
+            ),
+            null => ServiceLogLine(text: line),
+          },
+    ];
+  }
+
+  @override
+  String? logCommand(ServiceUnit unit) =>
+      'logread -e ${quotedServiceName(unit.name)}';
+
+  @override
+  String? definitionCommand(ServiceUnit unit) =>
+      'cat ${quotedServiceName('/etc/init.d/${unit.name}')}';
 }

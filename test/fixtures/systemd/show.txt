@@ -1,0 +1,95 @@
+1789578763
+Id=dbus.socket
+SubState=running
+UnitFileState=linked
+InactiveExitTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+Result=success
+MemoryCurrent=[not set]
+
+Id=sbfail.service
+SubState=failed
+UnitFileState=transient
+InactiveExitTimestamp=Wed 2026-09-16 17:12:26 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:26 UTC
+ActiveExitTimestamp=Wed 2026-09-16 17:12:26 UTC
+InactiveEnterTimestamp=Wed 2026-09-16 17:12:26 UTC
+Result=exit-code
+ExecMainStatus=3
+MemoryCurrent=[not set]
+
+Id=nscd.service
+SubState=running
+UnitFileState=enabled
+InactiveExitTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+Result=success
+ExecMainStatus=0
+MemoryCurrent=7925760
+
+Id=dbus.service
+SubState=running
+UnitFileState=linked
+InactiveExitTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+Result=success
+ExecMainStatus=0
+MemoryCurrent=5009408
+
+Id=systemd-tmpfiles-clean.timer
+SubState=waiting
+UnitFileState=enabled
+InactiveExitTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:15 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+NextElapseUSecRealtime=
+Result=success
+
+Id=sbtimer.timer
+SubState=waiting
+UnitFileState=transient
+InactiveExitTimestamp=Wed 2026-09-16 17:12:26 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:26 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+NextElapseUSecRealtime=
+Result=success
+
+Id=sbrun.service
+SubState=running
+UnitFileState=transient
+InactiveExitTimestamp=Wed 2026-09-16 17:12:26 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:26 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+Result=success
+ExecMainStatus=0
+MemoryCurrent=950272
+
+Id=systemd-journald.service
+SubState=running
+UnitFileState=enabled
+InactiveExitTimestamp=Wed 2026-09-16 17:12:14 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:14 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+Result=success
+ExecMainStatus=0
+MemoryCurrent=12386304
+
+Id=systemd-journald.socket
+SubState=running
+UnitFileState=enabled
+InactiveExitTimestamp=Wed 2026-09-16 17:12:14 UTC
+ActiveEnterTimestamp=Wed 2026-09-16 17:12:14 UTC
+ActiveExitTimestamp=
+InactiveEnterTimestamp=
+Result=success
+MemoryCurrent=[not set]

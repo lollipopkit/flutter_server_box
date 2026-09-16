@@ -1,0 +1,4 @@
+2026-09-17T01:12:26+08:00 nixos systemd[1]: Started Fails on purpose.
+2026-09-17T01:12:26+08:00 nixos sh[373]: bind failed
+2026-09-17T01:12:26+08:00 nixos systemd[1]: sbfail.service: Main process exited, code=exited, status=3/NOTIMPLEMENTED
+2026-09-17T01:12:26+08:00 nixos systemd[1]: sbfail.service: Failed with result 'exit-code'.
