@@ -154,17 +154,21 @@ docker:x:998:admin,deploy
   });
 
   group('parseDetail', () {
+    /// [keysRead] false leaves the read-marker out, which is what the script
+    /// does when `authorized_keys` could not be opened.
     String out({
       String shadow = '',
       String status = '',
       String keys = '',
       String sudo = '',
+      bool keysRead = true,
     }) => [
       UserManager.detailShadowMarker,
       shadow,
       UserManager.detailStatusMarker,
       status,
       UserManager.detailKeysMarker,
+      if (keysRead) UserManager.detailKeysReadMarker,
       keys,
       UserManager.detailSudoMarker,
       sudo,
@@ -209,6 +213,19 @@ docker:x:998:admin,deploy
       expect(expiring.neverExpires, false);
     });
 
+    // Empty is the only thing that means never. Anything that will not parse
+    // means the record could not be read, and answering Never there would be
+    // a claim about an account's expiry made from no evidence.
+    test('an unreadable expiry field is not never', () {
+      for (final field in ['0', '-1', 'garbage']) {
+        final detail = UserManager.parseDetail(
+          out(shadow: 'temp:x:20000:0:99999:7::$field:'),
+        );
+        expect(detail.neverExpires, false, reason: field);
+        expect(detail.expires, isNull, reason: field);
+      }
+    });
+
     test('falls back to passwd -S when shadow is unreadable', () {
       final detail = UserManager.parseDetail(
         out(status: 'lk L 09/28/2026 0 99999 7 -1'),
@@ -217,16 +234,17 @@ docker:x:998:admin,deploy
       expect(detail.passwordChanged, isNull);
     });
 
-    test('collects distinct key types and skips comments and options', () {
+    // The script's awk pass has already reduced each line to its type token,
+    // which is what keeps the file's free-form contents off this stream.
+    test('collects distinct key types in file order', () {
       final detail = UserManager.parseDetail(
         out(
           keys: [
-            '# work laptop',
+            'ssh-ed25519',
+            'ssh-rsa',
+            'ssh-ed25519',
+            'ecdsa-sha2-nistp256',
             '',
-            'ssh-ed25519 AAAAC3Nz lk@laptop',
-            'no-pty,command="x" ssh-rsa AAAAB3Nz lk@box',
-            'ssh-ed25519 AAAAC3Nz lk@phone',
-            'ecdsa-sha2-nistp256 AAAAE2 lk@yubi',
           ].join('\n'),
         ),
       );
@@ -234,14 +252,40 @@ docker:x:998:admin,deploy
     });
 
     // An empty list is "read it, there are none"; null is "could not read it".
-    // Reporting the second as the first would tell the user an account with
-    // keys has none.
-    test('no keys file is null, an empty one is an empty list', () {
+    // Reporting the second as the first would tell the user that an account
+    // with keys has none.
+    test('an unread keys file is null, an empty one is an empty list', () {
       expect(UserManager.parseDetail(out(keys: '')).sshKeyTypes, isEmpty);
+      expect(
+        UserManager.parseDetail(out(keysRead: false)).sshKeyTypes,
+        isNull,
+      );
       expect(
         UserManager.parseDetail(UserManager.detailShadowMarker).sshKeyTypes,
         isNull,
       );
+    });
+
+    // The file belongs to the account being looked at, and the markers travel
+    // as plain text on the same stream. Reducing each line to a token that
+    // cannot spell one is what stops its owner fabricating the sudo rule this
+    // page displays.
+    test('the script never lets a keys line reach the parser whole', () {
+      const user = ServerUser(
+        name: 'lk',
+        uid: 1000,
+        gid: 1000,
+        comment: '',
+        home: '/home/lk',
+        shell: '/bin/bash',
+        supplementaryGroups: [],
+      );
+      final script = UserManager.detailScript(user);
+
+      expect(script, contains(r'if ($i ~ /^(ssh-|ecdsa-|sk-)/)'));
+      expect(script, contains("if [ -r '/home/lk/.ssh/authorized_keys' ]"));
+      // The read has to report its own failure rather than be swallowed.
+      expect(script, isNot(contains('authorized_keys\' 2>/dev/null || true')));
     });
 
     test('takes the first sudoers rule and drops the host part', () {

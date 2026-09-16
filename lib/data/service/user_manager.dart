@@ -42,6 +42,23 @@ fi
   static const detailKeysMarker = 'SrvBoxUserDetail.Keys';
   static const detailSudoMarker = 'SrvBoxUserDetail.Sudo';
 
+  /// Written only when `authorized_keys` was actually read. Its absence is
+  /// what tells "could not read it" from "read it, there were none" — a
+  /// distinction `|| true` used to swallow, reporting an unreadable file as an
+  /// account with no keys at all.
+  static const detailKeysReadMarker = 'SrvBoxUserDetail.KeysRead';
+
+  /// Prints the key-type token of each line and nothing else.
+  ///
+  /// `authorized_keys` is written by whoever owns the account, and the section
+  /// markers above travel as plain text on the same stream. Passing its lines
+  /// through meant an unprivileged user could put `SrvBoxUserDetail.Sudo` in
+  /// their own file and fabricate the sudo rule this page then displayed. A
+  /// token matching this pattern cannot collide with a marker.
+  static const _keyTypeFilter =
+      r"awk '{ for (i = 1; i <= NF; i++) "
+      r"if ($i ~ /^(ssh-|ecdsa-|sk-)/) { print $i; break } }'";
+
   /// Reads what `/etc/shadow`, `authorized_keys` and sudoers hold for one
   /// account.
   ///
@@ -65,7 +82,10 @@ fi
       "printf '$detailStatusMarker\\n'",
       'passwd -S $name 2>/dev/null || true',
       "printf '$detailKeysMarker\\n'",
-      'cat $keys 2>/dev/null || true',
+      'if [ -r $keys ]; then',
+      "printf '$detailKeysReadMarker\\n'",
+      '$_keyTypeFilter $keys 2>/dev/null',
+      'fi',
       "printf '$detailSudoMarker\\n'",
       'sudo -nlU $name 2>/dev/null || true',
       '',
@@ -115,12 +135,12 @@ fi
       if (fields.length >= 3) changed = _daysToDate(fields[2]);
       if (fields.length >= 8) {
         final raw = fields[7].trim();
-        if (raw.isEmpty) {
-          neverExpires = true;
-        } else {
-          expires = _daysToDate(raw);
-          neverExpires = expires == null;
-        }
+        // Empty is the only thing that means never. A field that will not
+        // parse - zero, negative, garbage - means the record could not be
+        // read, and "Never" is the wrong half of that to guess: it is a claim
+        // about an account's expiry made from no evidence.
+        neverExpires = raw.isEmpty;
+        if (!neverExpires) expires = _daysToDate(raw);
       }
     } else {
       // `passwd -S` answers P / L / NP without the hash, and a shell is
@@ -142,9 +162,11 @@ fi
 
     List<String>? keyTypes;
     final keyLines = sections[detailKeysMarker];
-    if (keyLines != null) {
+    if (keyLines != null &&
+        keyLines.isNotEmpty &&
+        keyLines.first.trim() == detailKeysReadMarker) {
       keyTypes = <String>[];
-      for (final line in keyLines) {
+      for (final line in keyLines.skip(1)) {
         final type = _sshKeyType(line);
         if (type != null && !keyTypes.contains(type)) keyTypes.add(type);
       }
