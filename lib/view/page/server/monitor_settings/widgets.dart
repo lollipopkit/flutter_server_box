@@ -34,10 +34,17 @@ abstract final class MonitorUi {
   /// set has changed before, and a wrong answer is one the user only finds out
   /// about by an alert that never comes.
   ///
-  /// Nothing is drawn for a field that takes effect on save, which is almost
-  /// all of them: saying so under every box put a column of identical grey
-  /// lines down the page whose only job was to hide the one line worth reading.
-  /// Silence is now the ordinary case and the mark means "not this one".
+  /// Nothing is drawn for a field that takes effect on save. Saying so under
+  /// every box meant a grey line under every box, and the one that mattered
+  /// read the same as the three that did not.
+  ///
+  /// Silence is not the majority case, and the mark is not an exception. The
+  /// agent's `SETTINGS_LIVE_FIELDS` is three entries — the extended interval
+  /// and the two idle-pause settings — so the collection interval, the rules,
+  /// retention and the origins all wait for a restart, as does the whole push
+  /// half. What silence buys is that a *group* of fields no longer carries one
+  /// line per field: the collection group is three live fields and one that is
+  /// not, and only the one that is not now says anything.
   ///
   /// The cost is that a `field` this app spells differently from the agent is
   /// not live and not known, and [MonitorSettings.isLive] cannot tell those
