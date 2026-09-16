@@ -9,6 +9,7 @@ import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/container/disk_usage.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
@@ -246,6 +247,7 @@ abstract class ContainerState with _$ContainerState {
     @Default(null) ContainerErr? containersError,
     @Default(null) ContainerErr? imagesError,
     @Default(null) String? runLog,
+    @Default(null) ContainerDiskUsage? diskUsage,
     @Default(ContainerType.docker) ContainerType type,
     @Default(false) bool isBusy,
   }) = _ContainerState;
@@ -278,7 +280,15 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (_cachedPassword != null) return _cachedPassword;
 
     if (!context.mounted) return null;
-    final pwd = await context.showPwdDialog(title: userName, id: hostId);
+    // The title says what is being asked for; the user name is the label
+    // under the field. It used to be the title, which left the dialog with no
+    // title at all on a server whose SSH user this app does not hold — a
+    // monitor-only one, or one reached as the default user.
+    final pwd = await context.showPwdDialog(
+      title: libL10n.sudoPassword,
+      label: userName,
+      id: hostId,
+    );
 
     if (pwd != null && pwd.isNotEmpty) {
       _cachedPassword = pwd;
@@ -384,6 +394,43 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   Future<void> refreshImages({bool isAuto = false}) =>
       refresh(ContainerRefreshTarget.images, isAuto: isAuto);
+
+  /// Fetches `system df` on its own connection turn, outside [refresh].
+  ///
+  /// It feeds two numbers in the overview and nothing else, while on a host
+  /// with a large image store the command walks all of it — several hundred
+  /// milliseconds that has no business sitting in front of the container
+  /// list. So it neither sets [ContainerState.isBusy] nor records a refresh
+  /// error: a failure here leaves two slots undrawn and the page working.
+  ///
+  /// It also never asks for a sudo password. The dialog belongs to an action
+  /// the user took, and this runs by itself on first open; where a password is
+  /// already cached from a refresh it is reused, and where it is not the fetch
+  /// is skipped rather than escalated.
+  Future<void> refreshDiskUsage() async {
+    final type = state.type;
+    final containerHost = Stores.container.fetch(hostId, type);
+    final sudo = _sudoCompleters[ContainerRefreshTarget.containers]!;
+    final needSudo = sudo.isCompleted && await sudo.future;
+    if (needSudo && _cachedPassword == null) return;
+
+    try {
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final result = await exec.runWithSudo(
+        _wrap(
+          ContainerCmdType.df.exec(type),
+          sudo: needSudo,
+          type: type,
+          containerHost: containerHost,
+        ),
+        password: needSudo ? _cachedPassword : null,
+      );
+      final usage = ContainerDiskUsage.parse(result.stdout);
+      if (usage != null) state = state.copyWith(diskUsage: usage);
+    } catch (e, trace) {
+      Loggers.app.warning('Container disk usage failed', e, trace);
+    }
+  }
 
   Future<void> refresh(
     ContainerRefreshTarget target, {
@@ -1140,7 +1187,8 @@ enum ContainerCmdType {
   version,
   ps,
   stats,
-  images;
+  images,
+  df;
 
   String exec(ContainerType type) {
     final baseCmd = switch (this) {
@@ -1150,13 +1198,15 @@ enum ContainerCmdType {
           '${type.name} ps -a --format '
               '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
               '{{.Label \\"com.docker.compose.project\\"}}\\t'
-              '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
+              '{{.Label \\"com.docker.compose.project.working_dir\\"}}\\t'
+              '{{.Ports}}"',
         ContainerType.podman =>
           '${type.name} ps -a --format '
               '"{{json .}}\\t{{.Status}}"',
       },
       ContainerCmdType.stats => '${type.name} stats --no-stream $_jsonFmt',
       ContainerCmdType.images => '${type.name} image ls --digests $_jsonFmt',
+      ContainerCmdType.df => '${type.name} system df $_jsonFmt',
     };
 
     return baseCmd;

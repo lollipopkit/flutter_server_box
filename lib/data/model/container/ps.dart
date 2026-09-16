@@ -12,6 +12,10 @@ sealed class ContainerPs {
   String? get project;
   String? get workingDir;
 
+  /// Published ports condensed to `host→container`, or null when the runtime
+  /// reported none. See [formatDockerPorts].
+  String? get ports;
+
   /// Human-readable lifecycle text reported by the runtime's STATUS field.
   String? get rawStatus;
   ContainerStatus get status;
@@ -39,6 +43,8 @@ final class PodmanPs implements ContainerPs {
   final String? project;
   @override
   final String? workingDir;
+  @override
+  final String? ports;
 
   @override
   String? cpu;
@@ -57,6 +63,7 @@ final class PodmanPs implements ContainerPs {
     this.rawStatus,
     this.project,
     this.workingDir,
+    this.ports,
   });
 
   @override
@@ -131,6 +138,7 @@ final class PodmanPs implements ContainerPs {
       json['Labels'],
       'com.docker.compose.project.working_dir',
     ),
+    ports: formatPodmanPorts(json['Ports']),
   );
 }
 
@@ -173,6 +181,8 @@ final class DockerPs implements ContainerPs {
   final String? project;
   @override
   final String? workingDir;
+  @override
+  final String? ports;
 
   @override
   String? cpu;
@@ -190,6 +200,7 @@ final class DockerPs implements ContainerPs {
     this.state,
     this.project,
     this.workingDir,
+    this.ports,
   });
 
   @override
@@ -215,8 +226,11 @@ final class DockerPs implements ContainerPs {
         '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
-  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tWORKING_DIR
-  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent\t/opt/torrent
+  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tWORKING_DIR\tPORTS
+  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent\t/opt/torrent\t0.0.0.0:6800->6800/tcp
+  ///
+  /// Fields are read by position and every one past the fourth is optional, so
+  /// a row written by a build whose format string was shorter still parses.
   factory DockerPs.parse(String raw) {
     final parts = raw.split('\t');
     if (parts.length < 4) {
@@ -232,8 +246,57 @@ final class DockerPs implements ContainerPs {
       image: parts[3],
       project: parts.length > 4 ? _nonEmpty(parts[4]) : null,
       workingDir: parts.length > 5 ? _nonEmpty(parts[5]) : null,
+      ports: parts.length > 6 ? formatDockerPorts(parts[6]) : null,
     );
   }
+}
+
+/// `0.0.0.0:8080->80/tcp, :::8080->80/tcp` becomes `8080→80`.
+///
+/// Docker prints one entry per address family, so a single published port
+/// arrives twice and a container with four of them overruns any row it is put
+/// in. The bind address is dropped with them: it is almost always the
+/// wildcard, and where it is not, the page that can act on it is the port
+/// forward editor rather than this list.
+///
+/// An entry Docker wrote in a shape this does not recognise is kept verbatim
+/// rather than dropped — being unable to condense it is not a reason to claim
+/// the container publishes nothing.
+String? formatDockerPorts(String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty) return null;
+
+  final published = RegExp(r'^(?:.*:)?(\d+)->(\d+)(?:/\w+)?$');
+  final exposed = RegExp(r'^(\d+)(?:/\w+)?$');
+  final condensed = <String>{};
+  for (final entry in value.split(',')) {
+    final part = entry.trim();
+    if (part.isEmpty) continue;
+    if (published.firstMatch(part) case final match?) {
+      condensed.add('${match.group(1)}→${match.group(2)}');
+      continue;
+    }
+    if (exposed.firstMatch(part) case final match?) {
+      condensed.add(match.group(1)!);
+      continue;
+    }
+    condensed.add(part);
+  }
+  return condensed.isEmpty ? null : condensed.join(', ');
+}
+
+/// Podman answers `Ports` as structured entries rather than Docker's string.
+String? formatPodmanPorts(dynamic raw) {
+  if (raw is! List) return null;
+  final condensed = <String>{};
+  for (final entry in raw) {
+    if (entry is! Map) continue;
+    final containerPort = _asInt(entry['container_port']);
+    if (containerPort == 0) continue;
+    final hostPort = _asInt(entry['host_port']);
+    condensed.add(hostPort == 0 ? '$containerPort' : '$hostPort→$containerPort');
+  }
+  return condensed.isEmpty ? null : condensed.join(', ');
 }
 
 String? _nonEmpty(String? value) =>

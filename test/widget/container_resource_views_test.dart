@@ -9,71 +9,27 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
-import 'package:server_box/view/widget/percent_circle.dart';
 
 void main() {
   Widget containerView(
     List<ContainerPs> items, {
-    VoidCallback? onPrune,
-    VoidCallback? onRefresh,
+    ContainerQuickActionHandler? onQuickAction,
   }) {
     return ContainerItemsView(
       items: items,
-      type: ContainerType.docker,
-      version: '27.1.1',
-      summaryAction: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            key: const ValueKey('test-prune-containers'),
-            tooltip: 'Prune containers',
-            onPressed: onPrune ?? () {},
-            icon: const Icon(Icons.cleaning_services_outlined),
-          ),
-          IconButton(
-            key: const ValueKey('test-refresh-containers'),
-            tooltip: 'Refresh containers',
-            onPressed: onRefresh ?? () {},
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      onQuickAction: onQuickAction,
       trailingBuilder: (item) => SizedBox(
         key: ValueKey('container-trailing-${item.id}'),
         width: 32,
         height: 32,
         child: const Icon(Icons.more_vert),
       ),
-      groupTrailingBuilder: (_) => null,
     );
   }
 
-  Widget imageView(
-    List<ContainerImg> images, {
-    VoidCallback? onPrune,
-    VoidCallback? onRefresh,
-  }) {
+  Widget imageView(List<ContainerImg> images) {
     return ContainerImagesView(
       images: images,
-      type: ContainerType.docker,
-      version: '27.1.1',
-      summaryAction: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            key: const ValueKey('test-prune-images'),
-            tooltip: 'Prune images',
-            onPressed: onPrune ?? () {},
-            icon: const Icon(Icons.cleaning_services_outlined),
-          ),
-          IconButton(
-            key: const ValueKey('test-refresh-images'),
-            tooltip: 'Refresh images',
-            onPressed: onRefresh ?? () {},
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
       trailingBuilder: (image) => SizedBox(
         key: ValueKey('image-trailing-${image.id}'),
         width: 32,
@@ -150,58 +106,31 @@ void main() {
     await _pumpAt(tester, width: 390, child: containerView([item]));
 
     expect(
-      find.byKey(const ValueKey('container-row-compact-0-mobile-container')),
+      find.byKey(const ValueKey('container-row-mobile-container')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('container-row-wide-0-mobile-container')),
+      find.byKey(const ValueKey('container-table-row-mobile-container')),
       findsNothing,
     );
-    expect(find.text('CPU'), findsOneWidget);
-    expect(find.text('MEM'), findsOneWidget);
-    expect(find.byType(PercentCircle), findsNWidgets(2));
+    // Narrow folds the four metrics into one line instead of giving each of
+    // them a labelled cell, so there is no grid to measure here.
     expect(
-      find.byKey(
-        const ValueKey('container-resource-module-mobile-container-disk'),
-      ),
-      findsOneWidget,
+      find.byKey(const ValueKey('container-metrics-mobile-container')),
+      findsNothing,
     );
-    expect(
-      find.byKey(
-        const ValueKey('container-resource-module-mobile-container-network'),
-      ),
-      findsOneWidget,
+    final metrics = find.byKey(
+      const ValueKey('container-metrics-line-mobile-container'),
     );
-    expect(find.text('31.3%'), findsOneWidget);
+    expect(metrics, findsOneWidget);
+    final metricsText = tester.widget<Text>(metrics).data!;
+    expect(metricsText, contains('CPU 13.7%'));
+    expect(metricsText, contains('Mem 31.3%'));
+    expect(tester.widget<Text>(metrics).overflow, TextOverflow.ellipsis);
 
-    final panelCenter = tester.getCenter(
-      find.byKey(
-        const ValueKey('container-resource-panel-mobile-container'),
-      ),
-    );
-    final slotCenters = [
-      'container-resource-circle-mobile-container-cpu',
-      'container-resource-circle-mobile-container-memory',
-      'container-resource-module-mobile-container-network',
-      'container-resource-module-mobile-container-disk',
-    ]
-        .map((key) => tester.getCenter(find.byKey(ValueKey(key))))
-        .toList(growable: false);
-    final firstGap = slotCenters[1].dx - slotCenters[0].dx;
-    expect(slotCenters[2].dx - slotCenters[1].dx, closeTo(firstGap, 0.1));
-    expect(slotCenters[3].dx - slotCenters[2].dx, closeTo(firstGap, 0.1));
-    expect(
-      (slotCenters.first.dx + slotCenters.last.dx) / 2,
-      closeTo(panelCenter.dx, 0.1),
-    );
-
-    final labelTop = tester.getTopLeft(find.text('CPU')).dy;
-    for (final label in ['MEM', 'NET', 'DISK']) {
-      expect(tester.getTopLeft(find.text(label)).dy, closeTo(labelTop, 0.1));
-    }
     expect(find.text(longName), findsOneWidget);
     expect(find.text(longImage), findsOneWidget);
-    expect(find.text('Up 3 hours'), findsOneWidget);
+    expect(find.text('3 h'), findsOneWidget);
     final status = find.byKey(
       const ValueKey('container-status-mobile-container'),
     );
@@ -235,9 +164,11 @@ void main() {
 
     await _pumpAt(tester, width: 390, child: containerView([item]));
 
-    final status = find.text('Exited (0) 7 seconds ago');
+    // The lifecycle text is split: the time goes to the Uptime column and
+    // what happened stays beside the name.
+    final status = find.text('7 s ago');
     expect(status, findsOneWidget);
-    expect(tester.widget<Text>(status).maxLines, 2);
+    expect(tester.widget<Text>(status).maxLines, 1);
     expect(
       tester.getCenter(status).dx,
       lessThan(
@@ -254,16 +185,28 @@ void main() {
   testWidgets('unknown container state is not summarized as stopped', (
     tester,
   ) async {
-    final item = PodmanPs(
-      id: 'unknown-container',
-      names: ['worker'],
-      rawStatus: 'Unexpected state',
-    );
+    // Counted in the group header: the runtime-wide summary is built by the
+    // page now, so this view only totals a compose project.
+    final items = [
+      PodmanPs(
+        id: 'unknown-container',
+        names: ['worker'],
+        rawStatus: 'Unexpected state',
+        project: 'stack',
+      ),
+      DockerPs(
+        id: 'running-container',
+        names: 'api',
+        image: 'example/api:latest',
+        state: 'Up 2 minutes',
+        project: 'stack',
+      ),
+    ];
 
-    await _pumpAt(tester, width: 390, child: containerView([item]));
+    await _pumpAt(tester, width: 390, child: containerView(items));
 
-    expect(find.text('1 Unknown'), findsOneWidget);
-    expect(find.text('1 Stopped'), findsNothing);
+    expect(find.text('1 Running · 1 Unknown'), findsOneWidget);
+    expect(find.textContaining('Stopped'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -284,17 +227,17 @@ void main() {
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
     expect(
-      find.byKey(const ValueKey('container-row-wide-0-desktop-container')),
+      find.byKey(const ValueKey('container-table-row-desktop-container')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('container-row-compact-0-desktop-container')),
+      find.byKey(const ValueKey('container-row-desktop-container')),
       findsNothing,
     );
-    for (final label in ['CPU', 'MEM', 'NET', 'DISK']) {
+    for (final label in ['CPU', 'Mem', 'Net ↓ / ↑', 'Disk R / W']) {
       expect(find.text(label), findsOneWidget);
     }
-    expect(find.byType(PercentCircle), findsNWidgets(2));
+    expect(find.byType(LinearProgressIndicator), findsNWidgets(2));
     expect(find.text('2.5%'), findsOneWidget);
     expect(find.text('12.5%'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -314,33 +257,31 @@ void main() {
       ..net = 'not available / garbage'
       ..disk = 'garbage / not available';
 
-    await _pumpAt(tester, width: 390, child: containerView([item]));
+    await _pumpAt(tester, width: 1280, child: containerView([item]));
 
+    expect(find.text('4.2%'), findsOneWidget);
     expect(
-      find.byKey(
-        const ValueKey('container-resource-circle-partial-stats-cpu'),
+      find.descendant(
+        of: find.byKey(const ValueKey('container-metric-partial-stats-memory')),
+        matching: find.text('—'),
       ),
       findsOneWidget,
     );
     expect(
-      find.byKey(
-        const ValueKey('container-resource-circle-partial-stats-memory'),
+      find.descendant(
+        of: find.byKey(const ValueKey('container-metric-partial-stats-disk')),
+        matching: find.text('—'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
-      find.byKey(
-        const ValueKey('container-resource-module-partial-stats-disk'),
+      find.descendant(
+        of: find.byKey(const ValueKey('container-metric-partial-stats-network')),
+        matching: find.text('—'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
-    expect(
-      find.byKey(
-        const ValueKey('container-resource-module-partial-stats-network'),
-      ),
-      findsNothing,
-    );
-    expect(find.byType(PercentCircle), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -358,15 +299,15 @@ void main() {
       ..net = '12 MB / garbage'
       ..disk = '1 GB / -2 MB';
 
-    await _pumpAt(tester, width: 390, child: containerView([item]));
+    await _pumpAt(tester, width: 1280, child: containerView([item]));
 
     expect(
       find.byKey(
-        const ValueKey('container-resource-panel-malformed-stats'),
+        const ValueKey('container-metrics-malformed-stats'),
       ),
       findsNothing,
     );
-    expect(find.byType(PercentCircle), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -379,11 +320,11 @@ void main() {
       rawStatus: 'Up 4 minutes',
     )..cpu = '12.5% / Avg 3.0%';
 
-    await _pumpAt(tester, width: 390, child: containerView([item]));
+    await _pumpAt(tester, width: 1280, child: containerView([item]));
 
     expect(
       find.byKey(
-        const ValueKey('container-resource-circle-averaged-cpu-cpu'),
+        const ValueKey('container-metric-averaged-cpu-cpu'),
       ),
       findsOneWidget,
     );
@@ -399,7 +340,7 @@ void main() {
         mem: '1 GiB / 2 GiB',
         net: '1 MiB / 2 MiB',
         disk: '3 MiB / 4 MiB',
-        missingKey: 'container-resource-circle-negative-cpu-cpu',
+        missingKey: 'container-metric-negative-cpu-cpu',
       ),
       (
         id: 'negative-memory',
@@ -407,7 +348,7 @@ void main() {
         mem: '-1 GiB / 2 GiB',
         net: '1 MiB / 2 MiB',
         disk: '3 MiB / 4 MiB',
-        missingKey: 'container-resource-circle-negative-memory-memory',
+        missingKey: 'container-metric-negative-memory-memory',
       ),
       (
         id: 'negative-network',
@@ -415,7 +356,7 @@ void main() {
         mem: '1 GiB / 2 GiB',
         net: '-1 MiB / 2 MiB',
         disk: '3 MiB / 4 MiB',
-        missingKey: 'container-resource-module-negative-network-network',
+        missingKey: 'container-metric-negative-network-network',
       ),
       (
         id: 'negative-disk',
@@ -423,7 +364,7 @@ void main() {
         mem: '1 GiB / 2 GiB',
         net: '1 MiB / 2 MiB',
         disk: '-3 MiB / 4 MiB',
-        missingKey: 'container-resource-module-negative-disk-disk',
+        missingKey: 'container-metric-negative-disk-disk',
       ),
     ];
 
@@ -439,24 +380,24 @@ void main() {
         ..net = data.net
         ..disk = data.disk;
 
-      await _pumpAt(tester, width: 390, child: containerView([item]));
+      await _pumpAt(tester, width: 1280, child: containerView([item]));
 
-      final metricKeys = [
-        'container-resource-circle-${data.id}-cpu',
-        'container-resource-circle-${data.id}-memory',
-        'container-resource-module-${data.id}-network',
-        'container-resource-module-${data.id}-disk',
-      ];
-      for (final key in metricKeys) {
+      // Every column is drawn; the unreadable one is a dash.
+      for (final key in [
+        'container-metric-${data.id}-cpu',
+        'container-metric-${data.id}-memory',
+        'container-metric-${data.id}-network',
+        'container-metric-${data.id}-disk',
+      ]) {
+        expect(find.byKey(ValueKey(key)), findsOneWidget);
         expect(
-          find.byKey(ValueKey(key)),
-          key == data.missingKey ? findsNothing : findsOneWidget,
+          find.descendant(
+            of: find.byKey(ValueKey(key)),
+            matching: find.text('—'),
+          ),
+          key == data.missingKey ? findsOneWidget : findsNothing,
         );
       }
-      expect(
-        find.byKey(ValueKey('container-resource-panel-${data.id}')),
-        findsOneWidget,
-      );
       expect(tester.takeException(), isNull);
     }
   });
@@ -473,11 +414,11 @@ void main() {
       ..cpu = '150%'
       ..mem = '3 GiB / 2 GiB';
 
-    await _pumpAt(tester, width: 390, child: containerView([item]));
+    await _pumpAt(tester, width: 1280, child: containerView([item]));
 
     expect(find.text('100.0%'), findsNWidgets(2));
     expect(find.text('150.0%'), findsNothing);
-    expect(find.byType(PercentCircle), findsNWidgets(2));
+    expect(find.byType(LinearProgressIndicator), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 
@@ -504,7 +445,9 @@ void main() {
       find.byKey(const ValueKey('image-row-wide-0-sha256:image-switch')),
       findsNothing,
     );
-    expect(find.text(image.createdAt), findsOneWidget);
+    expect(find.byKey(const ValueKey('image-table-header')), findsNothing);
+    // Narrow has no column for the age, so it folds onto the id's line.
+    expect(find.textContaining(image.createdAt), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await _pumpAt(tester, width: 900, child: imageView([image]));
@@ -518,6 +461,8 @@ void main() {
       ),
       findsNothing,
     );
+    // Wide gives it a column of its own, under a header.
+    expect(find.byKey(const ValueKey('image-table-header')), findsOneWidget);
     expect(find.text(image.createdAt), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -588,7 +533,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('compose groups are collapsed by default and can expand', (
+  testWidgets('compose groups are open by default and can be folded', (
     tester,
   ) async {
     final items = [
@@ -611,10 +556,10 @@ void main() {
     await _pumpAt(tester, width: 900, child: containerView(items));
 
     expect(find.text('production-stack'), findsOneWidget);
-    expect(find.byIcon(Icons.folder_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.folder_open), findsOneWidget);
     expect(find.text('1 Running · 1 Stopped'), findsOneWidget);
-    expect(find.text('web'), findsNothing);
-    expect(find.text('db'), findsNothing);
+    expect(find.text('web'), findsOneWidget);
+    expect(find.text('db'), findsOneWidget);
 
     final arrow = find.byKey(
       const ValueKey('container-group-arrow-production-stack'),
@@ -629,8 +574,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('web'), findsOneWidget);
-    expect(find.text('db'), findsOneWidget);
+    // The rows stay in the tree so the fold can animate in both directions;
+    // what changes is the height they are given.
+    final folded = find
+        .ancestor(of: find.text('web'), matching: find.byType(ClipRect))
+        .first;
+    expect(tester.getSize(folded).height, 0);
     expect(tester.widget<AnimatedRotation>(arrow).turns, 0.5);
     expect(tester.takeException(), isNull);
   });
@@ -656,7 +605,7 @@ void main() {
 
     await _pumpAt(tester, width: 390, child: containerView(items));
 
-    expect(find.text('web'), findsNothing);
+    expect(find.text('web'), findsOneWidget);
     expect(find.text('worker'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('container-group-arrow-Other')),
@@ -693,7 +642,7 @@ void main() {
       );
       expect(
         find.byKey(
-          const ValueKey('container-row-compact-0-container-alpha'),
+          const ValueKey('container-row-container-alpha'),
         ),
         findsOneWidget,
       );
@@ -725,67 +674,59 @@ void main() {
 
     await _pumpAt(tester, width: 900, child: imageView(images));
 
+    // Per-image badges only. The unused total moved to the page's summary
+    // card, which is above the tabs rather than inside this view.
     expect(find.text('Dangling'), findsOneWidget);
     expect(find.text('Unused'), findsOneWidget);
-    expect(find.text('2 Unused'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('summary refresh actions follow prune and are tappable', (
+  testWidgets('the runtime header folds its totals instead of wrapping', (
     tester,
   ) async {
-    var containerPrunes = 0;
-    var containerRefreshes = 0;
-    await _pumpAt(
-      tester,
-      width: 390,
-      child: containerView(
-        const [],
-        onPrune: () => containerPrunes++,
-        onRefresh: () => containerRefreshes++,
-      ),
+    Widget header() => ContainerRuntimeHeader(
+      type: ContainerType.docker,
+      version: '27.1.1',
+      summary: '3 Running · 1 Stopped · 12 Image · 809 MB Reclaimable',
+      compactSummary: '27.1.1 · 3 Running · 1 Stopped',
+      selector: (expand) => Text('selector expand=$expand'),
     );
 
-    final containerAction = find.byKey(
-      const ValueKey('test-prune-containers'),
-    );
-    final containerRefresh = find.byKey(
-      const ValueKey('test-refresh-containers'),
-    );
-    expect(containerAction, findsOneWidget);
+    await _pumpAt(tester, width: 1280, child: header());
+    expect(find.text('Docker'), findsOneWidget);
+    expect(find.text('27.1.1'), findsOneWidget);
     expect(
-      tester.getCenter(containerRefresh).dx,
-      greaterThan(tester.getCenter(containerAction).dx),
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('container-runtime-summary')),
+          )
+          .data,
+      '3 Running · 1 Stopped · 12 Image · 809 MB Reclaimable',
     );
-    await tester.tap(containerAction);
-    await tester.tap(containerRefresh);
-    expect(containerPrunes, 1);
-    expect(containerRefreshes, 1);
+    // Inline: the selector shares the line with the totals and sizes to its
+    // own labels.
+    expect(find.text('selector expand=false'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.textContaining('selector')).dy,
+      closeTo(tester.getTopLeft(find.text('Docker')).dy, 6),
+    );
     expect(tester.takeException(), isNull);
 
-    var imagePrunes = 0;
-    var imageRefreshes = 0;
-    await _pumpAt(
-      tester,
-      width: 900,
-      child: imageView(
-        const [],
-        onPrune: () => imagePrunes++,
-        onRefresh: () => imageRefreshes++,
-      ),
-    );
-
-    final imageAction = find.byKey(const ValueKey('test-prune-images'));
-    final imageRefresh = find.byKey(const ValueKey('test-refresh-images'));
-    expect(imageAction, findsOneWidget);
+    await _pumpAt(tester, width: 390, child: header());
     expect(
-      tester.getCenter(imageRefresh).dx,
-      greaterThan(tester.getCenter(imageAction).dx),
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('container-runtime-summary')),
+          )
+          .data,
+      '27.1.1 · 3 Running · 1 Stopped',
     );
-    await tester.tap(imageAction);
-    await tester.tap(imageRefresh);
-    expect(imagePrunes, 1);
-    expect(imageRefreshes, 1);
+    // Folded: the selector drops to its own row and spreads across it.
+    expect(find.text('selector expand=true'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.textContaining('selector')).dy,
+      greaterThan(tester.getTopLeft(find.text('Docker')).dy),
+    );
     expect(tester.takeException(), isNull);
   });
 
