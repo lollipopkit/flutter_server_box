@@ -5,6 +5,144 @@ description: Reach a server through Monitor agent
 
 Server Box Monitor is a lightweight monitoring service installed on a server. The App communicates with it over HTTP, so the server can be reached without exposing an SSH port. Monitor agent also powers push alerts, home-screen widgets, and the Watch app when the App is not open.
 
+## Prompts for an AI agent
+
+Each of these is written to be handed to an agent that can reach the server over SSH. They carry the parts an agent gets wrong by guessing — the rule grammar and the permission switches both fail silently, so a wrong guess looks like a working configuration until an alert never arrives.
+
+Fill in what is in angle brackets before sending.
+
+<details>
+<summary>Install the agent</summary>
+
+```text
+Install the ServerBox Monitor agent on <host> over SSH.
+
+The installer is
+https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/install.sh
+and it detects the init system itself. Piped to `sh` it installs a
+`systemctl --user` service running as me. On Alpine it needs `sudo sh` to
+write /etc/init.d, but the agent still runs as the user who ran sudo.
+
+Do not install it as a root system service. The agent running as root is
+what makes `full_access` dangerous later.
+
+Do not turn on anything under `[remote_access]`. Every switch there is off
+by default and I will decide about them separately.
+
+When you are done, tell me:
+- the path of config.toml and of the SQLite database beside it
+- the address and port it listens on
+- what `loginctl show-user <user> -p Linger` says. Without linger a --user
+  service stops when I log out.
+- the mode of config.toml and of the database. The config can hold push
+  credentials and the database holds the panel user table, so neither
+  should be group- or world-readable.
+```
+
+</details>
+
+<details>
+<summary>Turn on remote access</summary>
+
+```text
+Turn on remote access for the ServerBox Monitor agent on <host>, so the app
+and the panel can <open a terminal / browse files / run commands>.
+
+Tell me what it will mean and wait for me to agree before editing anything:
+`full_access = true` makes the panel password equivalent to a shell as the
+account the agent runs as, with no SSH authentication in between.
+
+Things that are easy to get wrong:
+
+- These switches exist only in the agent's config.toml. No API and no panel
+  control turns them on; the panel can only turn `full_access` off. Editing
+  the file is the only way in.
+- `full_access` is gated on `[remote_access.terminal] enabled`. Setting
+  full_access by itself does nothing.
+- The terminal and the file API refuse plaintext requests that arrive over
+  the network, and serve loopback callers — including a reverse proxy on the
+  same host — without TLS. So if the agent binds 127.0.0.1, or a same-host
+  proxy terminates TLS, `allow_insecure` is not needed. Only consider it if
+  the agent is reachable directly over plaintext from another machine, and
+  say so before you do.
+- `[remote_access.fs]` does nothing without `roots`. Name the directories
+  that actually need browsing. `roots = ["/"]` makes the panel password
+  worth a shell, because anyone who can write ~/.ssh/authorized_keys has
+  one, and the agent warns about it at startup.
+
+Restart the agent afterwards and show me the `Remote access:` line from its
+log. That line is the agent's own summary of what ended up on; if nothing
+is on, there is no such line at all.
+```
+
+</details>
+
+<details>
+<summary>Add an alert rule and a notification channel</summary>
+
+```text
+Add an alert rule to the ServerBox Monitor agent on <host>.
+
+What I want to be alerted about: <describe it>
+
+The rule grammar, which is not guessable:
+
+- A rule is a `[[monitoring.rules]]` table with `name`, `monitor_type`,
+  `matcher` and `threshold`.
+- `monitor_type` is one of cpu, memory, swap, disk, network, temperature.
+  `mem`, `net` and `temp` are accepted as well. Anything else is one line
+  in the agent's log and a rule that never fires.
+- `matcher` picks part of the metric: `cpu0` for a single core,
+  `used`/`free`/`avail` for memory and swap, `rx`/`tx` for network. Disk
+  and temperature ignore it entirely.
+- `matcher` is NOT an interface name or a mount point. A network rule with
+  `matcher = "eth0"` silently measures total rx+tx instead of that
+  interface.
+- `threshold` is a comparator, a value and a unit: `>=80%`, `<10%`,
+  `>10m/s`, `>=70c`. A threshold with no comparator means `<`, so `80%`
+  reads as "below 80 percent".
+- The unit has to fit the metric: `%` for cpu/memory/swap/disk, `c` for
+  temperature, a size or a size with `/s` for network. Sizes are base 1024
+  and lowercase. A mismatch is logged and never fires.
+
+If I also asked for a notification channel, add a `[[push]]` table for it.
+Rate limiting is per channel, not per rule: `push_rate` in config.toml.
+
+Rules and channels are read when the agent starts, so restart it. Then show
+me exactly what you wrote.
+```
+
+</details>
+
+<details>
+<summary>Work out why a feature is missing in the app</summary>
+
+```text
+The ServerBox app does not offer <what> for the server running the Monitor
+agent at <host>. Work out why, and tell me what you found before changing
+anything.
+
+Where to look:
+
+- The app shows what the agent reports on `GET /api/v1/capabilities` and
+  nothing else. A terminal, commands, containers, processes, systemd, power
+  and scheduled tasks all need `full_access`, which is itself gated on
+  `[remote_access.terminal] enabled`. File browsing needs
+  `[remote_access.fs] enabled` together with a non-empty `roots`.
+- SFTP and port forwarding are never available through the agent at all. No
+  endpoint relays a connection to an address the app names, so those need
+  SSH configured for the same server in the app.
+- The terminal and the file API refuse plaintext requests arriving over the
+  network. Loopback callers and a same-host reverse proxy are fine without
+  TLS.
+- The agent logs a `Remote access:` summary at startup when anything under
+  that section is on, and logs nothing at all when everything is off.
+- The `access_log` table in the agent's SQLite database records the visitor,
+  time, source, requested resource and result. It never records credentials.
+```
+
+</details>
+
 ## SSH or Monitor agent?
 
 | | SSH | Monitor agent |
