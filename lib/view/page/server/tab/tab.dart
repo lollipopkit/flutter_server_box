@@ -1008,6 +1008,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
         height: height,
         // Use [OverflowBox] to dismiss the warning of [Column] overflow.
         child: OverflowBox(
+          // Zero rather than the parent's minimum, which the AnimatedContainer
+          // makes tight at whatever height the 377ms tween is currently at.
+          // Flipping a card walks that from 110 to 99 while `maxHeight` below
+          // is already the target 99, so every frame of the shrink handed
+          // `110.0<=h<=99.0` to the Column and tripped the box-constraint
+          // assertion.
+          minHeight: 0,
           // If `height == _kCardHeightMin`, the `maxHeight` will be ignored.
           //
           // You can comment the `maxHeight` then connect&disconnect the server
