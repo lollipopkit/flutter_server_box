@@ -619,18 +619,31 @@ abstract final class ServiceUi {
   }
 
   /// A unit's actions, then what can be read about it in a terminal.
+  ///
+  /// [compact] gives up the 48pt tap target for 32, for a row that would
+  /// otherwise be as tall as its button rather than its text.
   static Widget unitMenu(
     BuildContext context,
     WidgetRef ref,
     Spi spi,
-    ServiceUnit unit,
-  ) {
+    ServiceUnit unit, {
+    bool compact = false,
+  }) {
     final notifier = ref.read(servicesProvider(spi).notifier);
     final log = notifier.logTerminalCommand(unit);
     final definition = notifier.definitionTerminalCommand(unit);
     return PopupMenuButton<VoidCallback>(
       tooltip: libL10n.more,
       icon: const Icon(Icons.more_vert, size: 18),
+      padding: compact ? EdgeInsets.zero : const EdgeInsets.all(8),
+      style: compact
+          ? IconButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const Size.square(32),
+              fixedSize: const Size.square(32),
+            )
+          : null,
       onSelected: (callback) => callback(),
       itemBuilder: (_) => [
         for (final action in unit.actions)

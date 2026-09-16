@@ -649,12 +649,20 @@ extension on _ServicesPageState {
     required bool split,
   }) {
     final time = ServiceUi.timeLabel(context, unit);
+    // A unit that needs attention is tinted already; it does not also need
+    // the room a 48pt menu button would give it.
+    final compact = attention && !split;
     return _rowFrame(
       unit,
       attention: attention,
       selected: split && _selected == unit.key,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(_kPad, 9, split ? _kPad : 4, 9),
+        padding: EdgeInsets.fromLTRB(
+          _kPad,
+          compact ? 7 : 9,
+          split ? _kPad : 4,
+          compact ? 7 : 9,
+        ),
         child: Row(
           children: [
             ServiceStatusDot(unit: unit),
@@ -676,7 +684,16 @@ extension on _ServicesPageState {
                 ),
               ),
             ] else if (!split)
-              ServiceUi.unitMenu(context, ref, widget.args.spi, unit),
+              Padding(
+                padding: EdgeInsets.only(right: compact ? 4 : 0),
+                child: ServiceUi.unitMenu(
+                  context,
+                  ref,
+                  widget.args.spi,
+                  unit,
+                  compact: compact,
+                ),
+              ),
           ],
         ),
       ),
@@ -685,49 +702,60 @@ extension on _ServicesPageState {
 
   /// A failed unit on a narrow column: why, and the two things one does about
   /// it — restart it, or read what it said.
+  ///
+  /// Kept as short as the lines in it allow. The menu sits outside the text
+  /// column, top-aligned, so its tap area overlaps the padding instead of
+  /// adding a row's worth of height to the name; the buttons are compact for
+  /// the same reason, since a card this size is already the loudest thing in
+  /// the list.
   Widget _buildFailedCard(ServiceUnit unit) {
     final scheme = Theme.of(context).colorScheme;
     final time = ServiceUi.timeLabel(context, unit);
     final canRestart = unit.actions.contains(ServiceAction.restart);
+    const buttonPadding = EdgeInsets.symmetric(horizontal: 11);
+    const buttonSize = Size(0, 30);
+    final buttonText = Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(fontSize: 13);
     return _rowFrame(
       unit,
       attention: true,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(_kPad, 7, 4, 11),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                ServiceStatusDot(unit: unit),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    unit.fullName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-                ServiceUi.unitMenu(context, ref, widget.args.spi, unit),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(_kPad, 7, 0, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Row(
+                    children: [
+                      ServiceStatusDot(unit: unit),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Text(
+                          unit.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 1),
                   Text(
                     ServiceUi.problemLine(context, unit),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: ServiceUi.failed,
                     ),
                   ),
-                  const SizedBox(height: 5),
                   Row(
                     children: [
                       Expanded(
@@ -741,23 +769,37 @@ extension on _ServicesPageState {
                       if (time != null) Text(time, style: UIs.text12Grey),
                     ],
                   ),
-                  const SizedBox(height: 9),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       if (canRestart) ...[
                         FilledButton.icon(
                           onPressed: () => _run(unit, ServiceAction.restart),
-                          icon: const Icon(Icons.restart_alt, size: 17),
+                          style: FilledButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: buttonPadding,
+                            minimumSize: buttonSize,
+                            textStyle: buttonText,
+                            iconSize: 15,
+                          ),
+                          icon: const Icon(Icons.restart_alt),
                           label: Text(ServiceAction.restart.displayName),
                         ),
-                        const SizedBox(width: 9),
+                        const SizedBox(width: 7),
                       ],
                       OutlinedButton.icon(
                         onPressed: () => _open(unit),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: scheme.onSurface,
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: buttonPadding,
+                          minimumSize: buttonSize,
+                          textStyle: buttonText,
+                          iconSize: 15,
                         ),
-                        icon: const Icon(Icons.receipt_long, size: 17),
+                        icon: const Icon(Icons.receipt_long),
                         label: Text(libL10n.logs),
                       ),
                     ],
@@ -765,8 +807,18 @@ extension on _ServicesPageState {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+            child: ServiceUi.unitMenu(
+              context,
+              ref,
+              widget.args.spi,
+              unit,
+              compact: true,
+            ),
+          ),
+        ],
       ),
     );
   }
