@@ -33,17 +33,20 @@ import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
 class ServerFuncBtns extends StatelessWidget {
-  const ServerFuncBtns({super.key, required this.spi, this.granted});
+  const ServerFuncBtns({super.key, required this.spi, required this.btns});
 
   final Spi spi;
 
-  /// What the server's agent said it allows, for a monitor server. Null for an
-  /// SSH server, which answers everything, and before the first status poll.
-  final MonitorRemoteAccess? granted;
+  /// What this connection can actually serve, from [serverFuncBtnsFor].
+  ///
+  /// Passed in rather than worked out here, because the page that hosts this
+  /// row has to know whether there will be any of them before it lays out room
+  /// for it. Answering that question twice is how the two answers came to
+  /// disagree.
+  final List<ServerFuncBtn> btns;
 
   @override
   Widget build(BuildContext context) {
-    final btns = btnsWith(granted);
     if (btns.isEmpty) return UIs.placeholder;
 
     final items = [
@@ -119,31 +122,35 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
   }
 }
 
-extension ServerFuncBtnsUtils on ServerFuncBtns {
-  List<ServerFuncBtn> btnsWith(MonitorRemoteAccess? granted) {
-    final ordered = () {
-      try {
-        final vals = <ServerFuncBtn>[];
-        final list = Stores.setting.serverFuncBtns.fetch();
-        for (final stored in list) {
-          final btn = ServerFuncBtn.byStored(stored);
-          if (btn != null) vals.add(btn);
-        }
-        return vals;
-      } catch (e) {
-        return ServerFuncBtn.values;
+/// Which entries a connection can actually serve, in the order the user
+/// arranged them.
+///
+/// A function rather than a method on the row, because the page that hosts the
+/// row needs the same answer before it builds one — and it used to ask a
+/// coarser question of its own (`capabilities.terminal`), which hid the whole
+/// row on a monitor server whose agent serves files but grants no shell. That
+/// server could still be browsed from the Files tab, so the row was the only
+/// thing missing, and nothing said why.
+List<ServerFuncBtn> serverFuncBtnsFor(Spi spi, MonitorRemoteAccess? granted) {
+  final ordered = () {
+    try {
+      final vals = <ServerFuncBtn>[];
+      final list = Stores.setting.serverFuncBtns.fetch();
+      for (final stored in list) {
+        final btn = ServerFuncBtn.byStored(stored);
+        if (btn != null) vals.add(btn);
       }
-    }();
+      return vals;
+    } catch (e) {
+      return ServerFuncBtn.values;
+    }
+  }();
 
-    // An entry the connection cannot serve would open a page that can never
-    // load. Filtered rather than disabled: nothing the user could do on this
-    // row would make it work — it is the agent's decision, or the transport's.
-    final caps = ServerCapabilities.ofSpi(
-      spi,
-      granted: granted,
-    );
-    return ordered.where((e) => e.availableWith(caps)).toList();
-  }
+  // An entry the connection cannot serve would open a page that can never
+  // load. Filtered rather than disabled: nothing the user could do on this
+  // row would make it work — it is the agent's decision, or the transport's.
+  final caps = ServerCapabilities.ofSpi(spi, granted: granted);
+  return ordered.where((e) => e.availableWith(caps)).toList();
 }
 
 extension ServerFuncBtnsActions on ServerFuncBtns {

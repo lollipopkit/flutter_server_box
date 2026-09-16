@@ -136,10 +136,28 @@ void main() {
     ]);
   });
 
-  test('appends remote desktop without changing legacy enum indices', () {
+  /// A stored list may hold plain integers — `_parseAppTabFromElement`
+  /// resolves one against `values` by position — so a new tab may only ever be
+  /// appended. Inserting one would silently re-point every integer after it at
+  /// a different tab.
+  test('appends new tabs without changing earlier enum indices', () {
     expect(AppTab.server.index, 0);
     expect(AppTab.benchmark.index, 5);
     expect(AppTab.remoteDesktop.index, 6);
+  });
+
+  /// 7 was the Monitor settings tab. `values` is positional, so the next case
+  /// appended takes that index — and without the retired list an install that
+  /// had the old tab in its bar would silently get the new tab in its place.
+  test('drops a retired tab index instead of resolving it', () {
+    expect(AppTab.parseAppTabsFromObj([0, 7, 1]), [AppTab.server, AppTab.ssh]);
+    // Nothing left is nothing stored, which is what the default is for.
+    expect(AppTab.parseAppTabsFromObj([7]), AppTab.defaultOrder);
+    // The name is gone from `values` too, so a record that spelled it out is
+    // dropped by the same path.
+    expect(AppTab.parseAppTabsFromObj(['server', 'monitorSettings']), [
+      AppTab.server,
+    ]);
   });
 
   group('reorderHomeTabs', () {

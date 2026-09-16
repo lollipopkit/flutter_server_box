@@ -18,15 +18,23 @@ mixin _$ServerState {
 ///
 /// The read, not the connect: a handshake happens once and then never
 /// again, so showing it would pin a number taken minutes ago — and over a
-/// jump chain it measures the whole chain rather than this server. Both
-/// transports therefore time the same thing, the one request that asks the
-/// machine for its status, so the two are comparable.
+/// jump chain it measures the whole chain rather than this server.
+///
+/// What the read *is* differs by transport, and the two figures are not
+/// interchangeable. Over SSH it is the status script running on the
+/// machine, so it carries that machine's load as well as the network; over
+/// a monitor agent it is one HTTP request for a sample the agent had
+/// already taken, so it carries little but the network. A server reachable
+/// both ways reports whichever transport led that poll. What neither
+/// includes is the work of turning the answer into a [ServerStatus], which
+/// happens on the isolate drawing frames and is not the machine's doing.
 ///
 /// Null when there has been no successful read since the server was last
-/// reachable. Every path that gives up on a connection clears it, because
-/// a latency left behind reads as a live measurement of a machine that is
-/// no longer answering — and survives an edit pointing the server at a
-/// different host.
+/// reachable. Every path that gives up on a connection clears it, and so
+/// does publishing a status that carries an error, because a latency left
+/// behind reads as a live measurement of a machine that is no longer
+/// answering — and survives an edit pointing the server at a different
+/// host.
  int? get latencyMs; SSHClient? get client;/// What the agent said it allows, or null before it has been asked.
 ///
 /// Asked rather than configured: whether this app can reach the machine
@@ -252,15 +260,23 @@ class _ServerState extends ServerState {
 ///
 /// The read, not the connect: a handshake happens once and then never
 /// again, so showing it would pin a number taken minutes ago — and over a
-/// jump chain it measures the whole chain rather than this server. Both
-/// transports therefore time the same thing, the one request that asks the
-/// machine for its status, so the two are comparable.
+/// jump chain it measures the whole chain rather than this server.
+///
+/// What the read *is* differs by transport, and the two figures are not
+/// interchangeable. Over SSH it is the status script running on the
+/// machine, so it carries that machine's load as well as the network; over
+/// a monitor agent it is one HTTP request for a sample the agent had
+/// already taken, so it carries little but the network. A server reachable
+/// both ways reports whichever transport led that poll. What neither
+/// includes is the work of turning the answer into a [ServerStatus], which
+/// happens on the isolate drawing frames and is not the machine's doing.
 ///
 /// Null when there has been no successful read since the server was last
-/// reachable. Every path that gives up on a connection clears it, because
-/// a latency left behind reads as a live measurement of a machine that is
-/// no longer answering — and survives an edit pointing the server at a
-/// different host.
+/// reachable. Every path that gives up on a connection clears it, and so
+/// does publishing a status that carries an error, because a latency left
+/// behind reads as a live measurement of a machine that is no longer
+/// answering — and survives an edit pointing the server at a different
+/// host.
 @override final  int? latencyMs;
 @override final  SSHClient? client;
 /// What the agent said it allows, or null before it has been asked.

@@ -11,6 +11,8 @@ import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor_push.dart';
+import 'package:server_box/data/model/server/monitor_settings.dart';
 
 /// Talks to one server's `monitor` HTTP API. One instance is owned per
 /// `ServerNotifier` (see `single.dart`), mirroring how `PveNotifier` owns its
@@ -461,6 +463,78 @@ class MonitorHttpClient {
         '/api/v1/fs/remove',
         data: {'path': path, 'recursive': recursive},
         options: Options(method: 'DELETE'),
+      );
+    });
+  }
+
+  // ------------------------------------------------------------ settings
+  //
+  // The agent's own configuration, not this app's record of the server. Two
+  // endpoints rather than one: a notification channel holds a credential the
+  // agent will not disclose, and keeping that on its own save means an edit to
+  // an interval can never be what drops one. See `monitor_push.dart`.
+
+  Future<MonitorSettings> fetchSettings() {
+    return _authed(() async {
+      return MonitorSettings.fromJson(await _object('/api/v1/settings'));
+    });
+  }
+
+  /// Replaces every field the payload names. Nothing here merges: the agent
+  /// takes the whole whitelist at once, so [settings] must be what was loaded
+  /// with the edits applied.
+  Future<void> saveSettings(MonitorSettings settings) {
+    return _authed(() async {
+      await _session().put<dynamic>(
+        '/api/v1/settings',
+        data: settings.toPayload(),
+      );
+    });
+  }
+
+  Future<MonitorPushList> fetchPush() {
+    return _authed(() async {
+      return MonitorPushList.fromJson(await _object('/api/v1/push'));
+    });
+  }
+
+  /// Answers with the saved set read back, not with what was sent: after a
+  /// reorder the `from_index` positions an editor needs next are the new ones.
+  Future<MonitorPushList> savePush(MonitorPushList pushes) {
+    return _authed(() async {
+      final resp = await _session().put<dynamic>(
+        '/api/v1/push',
+        data: pushes.toPayload(),
+      );
+      final data = resp.data;
+      if (data is! Map<String, dynamic>) {
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message:
+              '/api/v1/push answered with ${data.runtimeType}, '
+              'not a JSON object',
+        );
+      }
+      return MonitorPushList.fromJson(data);
+    });
+  }
+
+  /// Sends one notification through [entry] as it stands, saved or not.
+  ///
+  /// A withheld credential is resolved against `entry.fromIndex` on the
+  /// agent's side, so a channel can be tested without the app ever holding its
+  /// key. [message] travels with the request so it arrives in the user's
+  /// language; the agent caps its length.
+  Future<MonitorPushTestResult> testPush(
+    MonitorPushEntry entry,
+    String message,
+  ) {
+    return _authed(() async {
+      return MonitorPushTestResult.fromJson(
+        await _object(
+          '/api/v1/push/test',
+          post: {'push': entry.toJson(), 'message': message},
+        ),
       );
     });
   }

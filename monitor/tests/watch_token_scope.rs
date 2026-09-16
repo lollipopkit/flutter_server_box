@@ -189,6 +189,26 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/custom-cmds",
             Some(json!({ "commands": [] })),
         ),
+        (Method::GET, "/api/v1/push", None),
+        // Both bodies name a channel type this agent has no sender for, so the
+        // panel-login half of this test stops at validation. Auth is checked
+        // before that, so these still prove the gate; a body that passed
+        // validation would rewrite the config.toml the test runs next to, and
+        // a test send would really make a request to wherever it pointed.
+        (
+            Method::PUT,
+            "/api/v1/push",
+            Some(json!({
+                "pushes": [{ "name": "scope", "push_type": "telegram", "config": {} }],
+            })),
+        ),
+        (
+            Method::POST,
+            "/api/v1/push/test",
+            Some(json!({
+                "push": { "name": "scope", "push_type": "telegram", "config": {} },
+            })),
+        ),
         (Method::GET, "/api/v1/settings", None),
         (
             Method::PUT,

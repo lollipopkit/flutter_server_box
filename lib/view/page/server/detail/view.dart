@@ -13,6 +13,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/self_addr.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
@@ -33,6 +34,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -339,12 +341,16 @@ ${err.message ?? 'null'}
   }
 
   Widget _buildMainPage(ServerState si) {
-    // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
-    // iperf / services / portForward) needs a shell. Hide the whole row on
-    // transports without one instead of offering buttons that can only fail.
-    // `terminal` rather than `shell`: an agent's passwordless PTY earns the
-    // row too, and `btns` decides what belongs in it
-    final buildFuncs = si.capabilities.terminal;
+    // What this connection can actually serve, asked once and used twice: to
+    // decide whether the row is drawn at all, and then as the row's content.
+    //
+    // Asked of the entries rather than of one capability. `capabilities
+    // .terminal` was the gate, and it hid the whole row on a monitor server
+    // whose agent grants `[remote_access.fs]` but not `full_access` — that
+    // server has a Files button and nothing else, and it went missing from its
+    // own page while the Files tab went on listing it.
+    final funcBtns = serverFuncBtnsFor(si.spi, si.remoteAccess);
+    final buildFuncs = funcBtns.isNotEmpty;
     final logo = _buildLogo(si);
     final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {
@@ -375,7 +381,7 @@ ${err.message ?? 'null'}
                 bottom: 0,
                 child: HideOnScroll(
                   controller: _scrollCtrl,
-                  child: _buildFuncBar(si),
+                  child: _buildFuncBar(si, funcBtns),
                 ),
               ),
           ],
@@ -385,7 +391,10 @@ ${err.message ?? 'null'}
   }
 
   /// The row of things that can be done to this server, floating over it.
-  Widget _buildFuncBar(ServerState si) {
+  ///
+  /// Takes the entries rather than working them out, so that what is drawn is
+  /// the same list `_buildMainPage` decided there was room for.
+  Widget _buildFuncBar(ServerState si, List<ServerFuncBtn> btns) {
     return LayoutBuilder(
       builder: (_, cons) => Center(
         child: Padding(
@@ -410,7 +419,7 @@ ${err.message ?? 'null'}
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
                 height: _kFuncBarHeight,
-                child: ServerFuncBtns(spi: si.spi, granted: si.remoteAccess),
+                child: ServerFuncBtns(spi: si.spi, btns: btns),
               ),
             ),
           ),
@@ -494,7 +503,13 @@ ${err.message ?? 'null'}
           tooltip: libL10n.share,
           onPressed: () => ServerShareUi.send(context, si.spi),
         ),
-        IconButton(tooltip: libL10n.edit, 
+        // Beside Edit rather than to the right of it: the two are neighbours
+        // because they are the same kind of thing at different ends of the
+        // wire — Edit is this app's record of the server, this is the agent's
+        // own configuration — and Edit stays the rightmost, where the primary
+        // action belongs.
+        ?_buildMonitorSettingsBtn(si),
+        IconButton(tooltip: libL10n.edit,
           icon: const Icon(Icons.edit),
           onPressed: () async {
             final delete = await ServerEditPage.route.go(
@@ -510,6 +525,37 @@ ${err.message ?? 'null'}
     );
   }
 
+  /// The way into the agent's own configuration, for a server that has one.
+  ///
+  /// Null for every other server, and asked of `spi.monitorHttp` rather than of
+  /// [ServerState.capabilities]: what this opens is *the agent's* settings, and
+  /// a server with both transports answers capability questions as the union of
+  /// the two — so a capability check would show this for an SSH-only server
+  /// that happens to share a capability with an agent.
+  ///
+  /// In the bar, not above the cards.
+  ///
+  /// It was a full-width card with a title and a line of explanation, sitting
+  /// on top of the readings this page exists to show — and it is a way out of
+  /// the page rather than anything about the machine, which is what the bar
+  /// holds. It also read as a card whose content had failed to load, since
+  /// every other card here has a measurement in it.
+  ///
+  /// Not in the function bar below the cards either: that row is things done
+  /// *to* the machine, and this is the agent's own configuration.
+  Widget? _buildMonitorSettingsBtn(ServerState si) {
+    final monitor = si.spi.monitorHttp;
+    if (monitor == null) return null;
+
+    return IconButton(
+      icon: const Icon(MingCute.settings_2_line),
+      tooltip: l10n.monitorSettings,
+      onPressed: () => MonitorSettingsPage.route.go(
+        context,
+        MonitorSettingsArgs(monitor: monitor, subtitle: si.spi.name),
+      ),
+    );
+  }
 
   /// The large image at the top of a server's page, as published.
   ///

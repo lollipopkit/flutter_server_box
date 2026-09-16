@@ -34,6 +34,10 @@ pub enum Kind {
     /// `Exec` because it amounts to the same thing on the next cycle; the
     /// subject is the names, never the command bodies.
     CustomCmd,
+    /// A change to the notification channels, or a test sent through one. The
+    /// subject is the channel names and types, plus the host a test webhook
+    /// went to — never a key, a token or a header value.
+    Push,
 }
 
 impl Kind {
@@ -44,6 +48,7 @@ impl Kind {
             Kind::Exec => "exec",
             Kind::Fs => "fs",
             Kind::CustomCmd => "custom_cmd",
+            Kind::Push => "push",
         }
     }
 }
