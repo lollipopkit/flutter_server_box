@@ -324,7 +324,10 @@ final class _MonitorPushListPageState extends State<MonitorPushListPage> {
       child: Text(
         libL10n.askContinue('${libL10n.delete} ${l10n.pushChannels}($name)'),
       ),
-      actions: Btn.ok(red: true).toList,
+      // Cancel as well as the red confirm. Without it, declining means tapping
+      // outside the dialog, which is the one gesture nobody makes on purpose —
+      // on the one action here that cannot be undone from what is on screen.
+      actions: Btnx.cancelRedOk,
     );
     if (ok != true || !mounted) return;
     _edited(() => _pushes.removeAt(idx));
