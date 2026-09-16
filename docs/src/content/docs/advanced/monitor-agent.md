@@ -26,8 +26,17 @@ write to /etc/init.d; the agent still runs as the user who invoked sudo.
 Do not install it as a root system service. Running the agent as root makes
 `full_access` much more dangerous.
 
-Leave every switch under `[remote_access]` turned off. They are all disabled
-by default; I will decide separately whether to enable any of them.
+Leave every switch under `[remote_access]` turned off, and write
+`full_access = false` there explicitly.
+
+It is the one switch in that section that is not off by default: unset, it
+follows the platform, and on Linux that means on. Nothing comes of it on
+its own, because it is gated on the terminal being enabled and the terminal
+is off — but whoever turns the terminal on later would be opening a
+passwordless shell without having written `true` anywhere. An explicit
+`false` in the file is also sticky: `SBM_FULL_ACCESS=1` cannot reopen it.
+
+I will decide separately whether to enable any of the others.
 
 When you finish, report:
 - the path of config.toml and of the SQLite database beside it

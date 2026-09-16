@@ -26,8 +26,15 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
 不要把它装成 root 系统服务。agent 以 root 运行，正是之后 `full_access`
 变得危险的原因。
 
-请保持 `[remote_access]` 下的所有开关关闭。它们默认都是关闭的，是否开启我会
-另行决定。
+请保持 `[remote_access]` 下的所有开关关闭，并在那里显式写上
+`full_access = false`。
+
+它是该小节里唯一不是默认关闭的开关：不写时取平台默认值，Linux 上就是开。它自
+己不会造成什么，因为它以终端启用为前提，而终端是关的——但之后打开终端的人，会
+在没有任何地方写过 `true` 的情况下打开一个免密 shell。文件里显式写 `false` 还
+有粘性：`SBM_FULL_ACCESS=1` 也无法把它重新打开。
+
+其余开关是否开启我会另行决定。
 
 安装完成后请告诉我：
 - config.toml 的路径，以及旁边 SQLite 数据库的路径
