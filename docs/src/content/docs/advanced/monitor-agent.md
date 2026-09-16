@@ -100,7 +100,105 @@ These features read directly from Monitor agent and do not depend on the App bei
 
 - **Home-screen widgets**: Configure the server in the App after installing Monitor agent. The widget selects from the server list published by the App; you do not enter a URL manually.
 - **Watch app**: It can show only servers with Monitor agent configured. These servers sync by default, and you can exclude individual servers in the iOS settings.
-- **Push alerts**: A rule decides when to alert and a channel decides where it goes — `[[monitoring.rules]]` and `[[push]]` in `config.toml`, or the same two lists in the App and the web panel, where a channel also has a **Send a test** button.
+- **Push alerts**: A rule decides when to alert and a channel decides where it goes — `[[monitoring.rules]]` and `[[push]]` in `config.toml`, or the same two lists in the App and the web panel, where a channel also has a **Send a test** button. See [Alert rules](#alert-rules) for how a rule is written.
+
+## Alert rules
+
+A rule has four fields. **Metric** picks what is read, **matcher** picks which part of it, and **threshold** decides when that reading is worth an alert.
+
+```toml
+[[monitoring.rules]]
+name = "CPU busy"
+monitor_type = "cpu"
+matcher = "cpu"
+threshold = ">=80%"
+```
+
+### Metric and matcher
+
+| Metric | Matcher | Reading |
+| --- | --- | --- |
+| `cpu` | `cpu` or blank | Usage across all cores |
+| `cpu` | `cpu0`, `cpu1`, … | Usage of one core |
+| `memory` | `used`, `memory` or blank | Percent used |
+| `memory` | `free` | Percent not used |
+| `memory` | `avail` | Percent available |
+| `swap` | `used`, `swap` or blank | Percent used |
+| `swap` | `free` | Percent not used |
+| `disk` | Ignored | Percent used across all filesystems |
+| `network` | `rx` or `in` | Receive speed |
+| `network` | `tx` or `out` | Transmit speed |
+| `network` | Blank or anything else | Receive plus transmit |
+| `temperature` | Ignored | The reading the agent reports as the machine's temperature |
+
+`mem`, `net` and `temp` are accepted as well, so a configuration migrated from the Go agent keeps working. Any other metric is written to the agent's log once per cycle and the rule never fires.
+
+### Threshold
+
+A comparator, a value, and a unit: `>=80%`, `<10%`, `>10m/s`, `>=70c`.
+
+| Comparator | Fires when the reading is |
+| --- | --- |
+| `>=` | At or above the value |
+| `>` | Above the value |
+| `<=` | At or below the value |
+| `<` | Below the value |
+| `=` | Exactly the value |
+
+**A threshold with no comparator means `<`.** `80%` is "below 80 percent", not "above" — write `>=80%` for the usual case.
+
+The unit decides what kind of threshold it is, and it has to match the metric:
+
+| Unit | Kind | Use with |
+| --- | --- | --- |
+| `%` | Percent | `cpu`, `memory`, `swap`, `disk` |
+| `c` | Temperature | `temperature` |
+| `/s` after a size, as in `10m/s` | Speed | `network` |
+| `b`, `k`, `m`, `g`, `t` | Size | `network` |
+
+Sizes are base 1024 and lowercase. A threshold whose unit does not fit its metric — `>=80%` on a `network` rule — is written to the log and never fires, so the rule is silently inactive rather than wrong.
+
+### Examples
+
+```toml
+[[monitoring.rules]]
+name = "Core 0 pinned"
+monitor_type = "cpu"
+matcher = "cpu0"
+threshold = ">=95%"
+
+[[monitoring.rules]]
+name = "Memory running out"
+monitor_type = "memory"
+matcher = "avail"
+threshold = "<10%"
+
+[[monitoring.rules]]
+name = "Disk filling up"
+monitor_type = "disk"
+matcher = ""
+threshold = ">=90%"
+
+[[monitoring.rules]]
+name = "Download burst"
+monitor_type = "network"
+matcher = "rx"
+threshold = ">10m/s"
+
+[[monitoring.rules]]
+name = "Running hot"
+monitor_type = "temperature"
+matcher = ""
+threshold = ">=70c"
+```
+
+### When a rule stays quiet
+
+- **A network rule does not fire on the first cycle** after the agent starts, after a gap in collection, or for an interface that has just appeared. A speed is the difference between two samples, and there is no speed until the second one lands.
+- **A cycle with no reading is skipped, not judged.** If memory or disk cannot be read, the rule is passed over rather than evaluated against a zero — otherwise a `>=90%` rule would go quiet on a machine that is filling up, and a `<10%` rule would fire on one that is fine.
+- **A temperature rule needs a temperature.** Not every machine reports one.
+
+Rate limiting applies per channel, not per rule: see `push_rate` in `config.toml`, or **Rate limit** in the App.
 
 ## Troubleshooting
 

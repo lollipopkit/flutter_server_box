@@ -97,7 +97,105 @@ agent 会将请求解析为真实路径，跟随 symlink，并拒绝 `..` 路径
 
 - **主屏幕小组件**：安装 Monitor agent 后，在 App 中配置服务器；小组件从 App 发布的服务器列表中选择目标，不需要手动填写 URL。
 - **Watch App**：只能显示已配置 Monitor agent 的服务器。默认会同步这些服务器，也可以在 iOS 设置中排除指定服务器。
-- **推送告警**：规则决定何时告警，渠道决定发往哪里 —— 即 `config.toml` 中的 `[[monitoring.rules]]` 和 `[[push]]`，也可以在 App 和网页面板里编辑这两个列表，渠道还带一个 **发送测试** 按钮。
+- **推送告警**：规则决定何时告警，渠道决定发往哪里 —— 即 `config.toml` 中的 `[[monitoring.rules]]` 和 `[[push]]`，也可以在 App 和网页面板里编辑这两个列表，渠道还带一个 **发送测试** 按钮。规则怎么写见 [告警规则](#告警规则)。
+
+## 告警规则
+
+一条规则有四个字段。**指标** 决定读什么，**匹配** 决定读它的哪一部分，**阈值** 决定这个读数何时值得告警。
+
+```toml
+[[monitoring.rules]]
+name = "CPU busy"
+monitor_type = "cpu"
+matcher = "cpu"
+threshold = ">=80%"
+```
+
+### 指标与匹配
+
+| 指标 | 匹配 | 读数 |
+| --- | --- | --- |
+| `cpu` | `cpu` 或留空 | 全部核心的占用率 |
+| `cpu` | `cpu0`、`cpu1`…… | 单个核心的占用率 |
+| `memory` | `used`、`memory` 或留空 | 已用百分比 |
+| `memory` | `free` | 未用百分比 |
+| `memory` | `avail` | 可用百分比 |
+| `swap` | `used`、`swap` 或留空 | 已用百分比 |
+| `swap` | `free` | 未用百分比 |
+| `disk` | 忽略 | 全部文件系统合计的已用百分比 |
+| `network` | `rx` 或 `in` | 接收速度 |
+| `network` | `tx` 或 `out` | 发送速度 |
+| `network` | 留空或其他值 | 接收加发送 |
+| `temperature` | 忽略 | agent 上报的机器温度 |
+
+`mem`、`net`、`temp` 同样被接受，因此从 Go agent 迁移过来的配置可以继续使用。其他指标每个采集周期在 agent 日志里记录一次，规则不会触发。
+
+### 阈值
+
+一个比较符、一个数值、一个单位：`>=80%`、`<10%`、`>10m/s`、`>=70c`。
+
+| 比较符 | 触发条件：读数 |
+| --- | --- |
+| `>=` | 大于等于该值 |
+| `>` | 大于该值 |
+| `<=` | 小于等于该值 |
+| `<` | 小于该值 |
+| `=` | 等于该值 |
+
+**不写比较符等于 `<`。** `80%` 的含义是「低于 80%」而不是「高于」——常见写法应该是 `>=80%`。
+
+单位决定阈值的类型，类型必须与指标相符：
+
+| 单位 | 类型 | 适用指标 |
+| --- | --- | --- |
+| `%` | 百分比 | `cpu`、`memory`、`swap`、`disk` |
+| `c` | 温度 | `temperature` |
+| 体积后加 `/s`，如 `10m/s` | 速度 | `network` |
+| `b`、`k`、`m`、`g`、`t` | 体积 | `network` |
+
+体积按 1024 进制，单位小写。单位与指标不符的阈值 —— 例如 `network` 规则写 `>=80%` —— 会被写入日志且永不触发，也就是说这条规则处于静默失效状态，而不是判断错误。
+
+### 示例
+
+```toml
+[[monitoring.rules]]
+name = "Core 0 pinned"
+monitor_type = "cpu"
+matcher = "cpu0"
+threshold = ">=95%"
+
+[[monitoring.rules]]
+name = "Memory running out"
+monitor_type = "memory"
+matcher = "avail"
+threshold = "<10%"
+
+[[monitoring.rules]]
+name = "Disk filling up"
+monitor_type = "disk"
+matcher = ""
+threshold = ">=90%"
+
+[[monitoring.rules]]
+name = "Download burst"
+monitor_type = "network"
+matcher = "rx"
+threshold = ">10m/s"
+
+[[monitoring.rules]]
+name = "Running hot"
+monitor_type = "temperature"
+matcher = ""
+threshold = ">=70c"
+```
+
+### 规则不触发的情况
+
+- **network 规则在第一个采集周期不会触发**：agent 刚启动、采集中断过、或网卡刚出现时都是如此。速度是两次采样之差，第二次采样落地之前没有速度可言。
+- **读不到数据的周期会被跳过，而不是按 0 判断。** 内存或磁盘读不到时规则直接跳过；否则 `>=90%` 的规则会在磁盘正在写满的机器上保持沉默，`<10%` 的规则会在正常机器上误报。
+- **temperature 规则需要有温度读数。** 并非所有机器都上报温度。
+
+限流按渠道计算，不按规则计算：见 `config.toml` 中的 `push_rate`，或 App 里的 **限流**。
 
 ## 故障排除
 
