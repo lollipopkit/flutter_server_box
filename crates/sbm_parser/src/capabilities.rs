@@ -44,6 +44,7 @@ pub struct Capabilities {
     pub sensors: FieldSupport,
     pub nvidia: FieldSupport,
     pub amd: FieldSupport,
+    pub gpu: FieldSupport,
     pub disk_smart: FieldSupport,
 }
 
@@ -92,6 +93,7 @@ pub fn capabilities(system: SystemType) -> Capabilities {
         sensors: hw_from_commands(system, &[commands::SENSORS]),
         nvidia: hw_from_commands(system, &[commands::NVIDIA]),
         amd: hw_from_commands(system, &[commands::AMD]),
+        gpu: hw_from_commands(system, &[commands::GPU, commands::NVIDIA, commands::AMD]),
         disk_smart: hw_from_commands(system, &[commands::DISK_SMART]),
     }
 }
@@ -120,6 +122,7 @@ mod tests {
         assert_eq!(c.sensors, Hw);
         assert_eq!(c.nvidia, Hw);
         assert_eq!(c.amd, Hw);
+        assert_eq!(c.gpu, Hw);
         assert_eq!(c.disk_smart, Hw);
     }
 
@@ -142,6 +145,7 @@ mod tests {
         assert_eq!(c.sensors, No);
         assert_eq!(c.nvidia, No);
         assert_eq!(c.amd, No);
+        assert_eq!(c.gpu, No);
         assert_eq!(c.disk_smart, Hw);
     }
 
@@ -167,6 +171,7 @@ mod tests {
         assert_eq!(c.sensors, Hw);
         assert_eq!(c.nvidia, Hw);
         assert_eq!(c.amd, Hw);
+        assert_eq!(c.gpu, Hw);
         assert_eq!(c.disk_smart, Hw);
     }
 }

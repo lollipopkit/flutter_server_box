@@ -98,6 +98,7 @@ pub struct ServerStatus {
     pub sensors: Vec<SensorItem>,
     pub nvidia: Vec<NvidiaSmiItem>,
     pub amd: Vec<AmdSmiItem>,
+    pub gpus: Vec<GpuItem>,
     pub disk_smart: Vec<DiskSmart>,
 }
 
@@ -126,14 +127,20 @@ pub fn parse_status_opts(
     opts: ParseOptions,
 ) -> ServerStatus {
     let get = |key: &str| raw.get(key).map(String::as_str).unwrap_or("");
+    let nvidia = gpu::nvidia_from_xml(get(commands::NVIDIA));
+    let amd = gpu::amd_from_json(get(commands::AMD));
+    let mut gpus = gpu::linux_drm_from_output(get(commands::GPU));
+    gpus.extend(gpu::nvidia_as_gpu(&nvidia));
+    gpus.extend(gpu::amd_as_gpu(&amd));
     let mut status = ServerStatus {
         uptime: common::parse_uptime(get(commands::UPTIME)),
         host: common::parse_hostname(get(commands::HOST)),
         // Cross-platform, like `host`: three different commands produce it,
         // and one tolerant parser reads all three.
         ips: common::parse_ips(get(commands::IP)),
-        nvidia: gpu::nvidia_from_xml(get(commands::NVIDIA)),
-        amd: gpu::amd_from_json(get(commands::AMD)),
+        nvidia,
+        amd,
+        gpus,
         ..ServerStatus::default()
     };
 

@@ -33,6 +33,7 @@ pub const BATTERY: &str = "battery";
 pub const SENSORS: &str = "sensors";
 pub const DISK_SMART: &str = "diskSmart";
 pub const NVIDIA: &str = "nvidia";
+pub const GPU: &str = "gpu";
 pub const AMD: &str = "amd";
 /// The machine's own interface addresses, so a server reached at a private
 /// address can still say where it is — see `common::parse_ips`
@@ -52,7 +53,8 @@ pub struct CommandSpec {
 ///   spins up / wakes one that is in standby. Polling it every few seconds
 ///   means a disk with spin-down configured never stays spun down, and every
 ///   wake costs a `Start_Stop_Count` / `Load_Cycle_Count` tick.
-/// - `amd-smi`/`rocm-smi` fork through several tools per invocation.
+/// - Windows' `amd-smi` probe forks through several tools per invocation.
+///   Linux AMD utilization uses the cheap DRM sysfs command in the fast path.
 ///
 /// - `IP` answers a question whose answer changes when a machine moves or its
 ///   lease does. Asking every few seconds spends a process spawn on a value
@@ -121,8 +123,21 @@ pub const LINUX: &[CommandSpec] = &[
         cmd: "if command -v nvidia-smi >/dev/null 2>&1; then nvidia-smi -q -x; elif [ -x /usr/lib/wsl/lib/nvidia-smi ]; then /usr/lib/wsl/lib/nvidia-smi -q -x; fi",
     },
     CommandSpec {
+        key: GPU,
+        // DRM exposes AMD utilization directly through sysfs, including APUs
+        // that have no ROCm userspace installed. Intel's drivers do not expose
+        // an equivalent whole-device percentage, so use intel_gpu_top when it
+        // is installed and permitted. `-n 2` deliberately discards neither
+        // sample here: the parser takes the last one because the first PMU
+        // reading is commonly an initialization spike.
+        cmd: r#"for card in /sys/class/drm/card[0-9]*; do card_name=${card##*/}; case "$card_name" in *-*) continue;; esac; device="$card/device"; [ -r "$device/vendor" ] || continue; vendor=$(cat "$device/vendor" 2>/dev/null); pci=$(basename "$(readlink -f "$device" 2>/dev/null)"); name=$(lspci -s "$pci" 2>/dev/null | sed 's/^[^ ]* [^:]*: //'); case "$vendor" in 0x1002) [ -n "$name" ] || name="AMD GPU"; printf '__SBM_GPU_BEGIN__\nvendor=amd\nid=%s\nname=%s\n' "$pci" "$name"; [ -r "$device/gpu_busy_percent" ] && printf 'usage=%s\n' "$(cat "$device/gpu_busy_percent" 2>/dev/null)"; for f in "$device"/hwmon/hwmon*/temp1_input; do [ -r "$f" ] && { printf 'temperature_millidegrees=%s\n' "$(cat "$f" 2>/dev/null)"; break; }; done; for f in "$device"/hwmon/hwmon*/power1_average; do [ -r "$f" ] && { printf 'power_microwatts=%s\n' "$(cat "$f" 2>/dev/null)"; break; }; done; for f in "$device"/hwmon/hwmon*/fan1_input; do [ -r "$f" ] && { printf 'fan_rpm=%s\n' "$(cat "$f" 2>/dev/null)"; break; }; done; [ -r "$device/mem_info_vram_used" ] && printf 'memory_used_bytes=%s\n' "$(cat "$device/mem_info_vram_used" 2>/dev/null)"; [ -r "$device/mem_info_vram_total" ] && printf 'memory_total_bytes=%s\n' "$(cat "$device/mem_info_vram_total" 2>/dev/null)"; printf '__SBM_GPU_END__\n';; 0x8086) command -v intel_gpu_top >/dev/null 2>&1 || continue; [ -n "$name" ] || name="Intel GPU"; printf '__SBM_GPU_BEGIN__\nvendor=intel\nid=%s\nname=%s\nsource=intel_gpu_top\n' "$pci" "$name"; timeout 3s intel_gpu_top -d "drm:/dev/dri/$card_name" -J -s 500 -n 2 -o - 2>/dev/null || true; printf '\n__SBM_GPU_END__\n';; esac; done"#,
+    },
+    CommandSpec {
         key: AMD,
-        cmd: "if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo \"No AMD GPU monitoring tools found\"; fi",
+        // Linux AMD devices are sampled by the fast DRM probe above. Keep the
+        // legacy wire segment as a no-op so installed scripts and older clients
+        // retain the same command ordering.
+        cmd: ":",
     },
     CommandSpec { key: SENSORS, cmd: "sensors" },
     CommandSpec {

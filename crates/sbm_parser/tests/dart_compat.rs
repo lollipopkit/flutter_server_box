@@ -1152,6 +1152,76 @@ fn amd_parse_invalid() {
     assert!(sbm_parser::gpu::amd_from_json("No AMD GPU monitoring tools found").is_empty());
 }
 
+#[test]
+fn linux_drm_parses_amd_apu_sysfs() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=amd
+id=0000:04:00.0
+name=AMD Radeon 780M
+usage=37
+temperature_millidegrees=51250
+power_microwatts=8240000
+memory_used_bytes=1073741824
+memory_total_bytes=2147483648
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus.len(), 1);
+    let gpu = &gpus[0];
+    assert_eq!(gpu.id, "0000:04:00.0");
+    assert_eq!(gpu.vendor, "amd");
+    assert_eq!(gpu.name, "AMD Radeon 780M");
+    assert_eq!(gpu.utilization, Some(37.0));
+    assert_eq!(gpu.temperature, Some(51));
+    assert_eq!(gpu.power.as_deref(), Some("8.24 W"));
+    let memory = gpu.memory.as_ref().unwrap();
+    assert_eq!(memory.used, 1024);
+    assert_eq!(memory.total, 2048);
+    assert_eq!(memory.unit, "MiB");
+}
+
+#[test]
+fn linux_drm_uses_the_second_intel_sample_and_busiest_engine() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel Corporation Alder Lake-N Integrated Graphics Controller
+source=intel_gpu_top
+[
+  {"frequency":{"actual":300},"power":{"GPU":0.2},"engines":{"Render/3D/0":{"busy":99.0}}},
+  {"frequency":{"actual":750},"power":{"GPU":1.5},"engines":{"Render/3D/0":{"busy":12.5},"Video/0":{"busy":68.25}}}
+]
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus.len(), 1);
+    let gpu = &gpus[0];
+    assert_eq!(gpu.vendor, "intel");
+    assert_eq!(gpu.utilization, Some(68.25));
+    assert_eq!(gpu.clock_speed, Some(750));
+    assert_eq!(gpu.power.as_deref(), Some("1.50 W"));
+    assert!(gpu.memory.is_none());
+}
+
+#[test]
+fn linux_drm_accepts_an_unclosed_intel_gpu_top_array() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel GPU
+source=intel_gpu_top
+[
+  {"engines":{"Render/3D/0":{"busy":4.0}}},
+  {"engines":{"Video/0":{"busy":44.0}}}
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus[0].utilization, Some(44.0));
+}
+
 // ---------- SMART:disk_smart_test.dart ----------
 
 #[test]

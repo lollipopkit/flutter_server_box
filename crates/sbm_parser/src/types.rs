@@ -360,6 +360,27 @@ pub struct AmdSmiItem {
     pub clock_speed: i64,
 }
 
+/// Vendor-neutral GPU reading used by Linux DRM discovery and by consumers
+/// that need to present several vendors in one device list.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GpuItem {
+    /// Stable device identity where available: PCI BDF on Linux, UUID/index on
+    /// vendor tools elsewhere.
+    pub id: String,
+    /// Lower-case vendor name (`intel`, `amd`, `nvidia`).
+    pub vendor: String,
+    pub name: String,
+    /// Whole-device utilization percentage. Optional because discovering a
+    /// DRM device does not imply the current account may read its PMU.
+    pub utilization: Option<f64>,
+    pub temperature: Option<i64>,
+    /// Preformatted live/limit value, e.g. `24.55 W / 350.00 W`.
+    pub power: Option<String>,
+    pub memory: Option<GpuMem>,
+    pub fan_speed: Option<i64>,
+    pub clock_speed: Option<i64>,
+}
+
 /// GPU memory (Dart `NvidiaSmiMem`/`AmdSmiMem`)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GpuMem {

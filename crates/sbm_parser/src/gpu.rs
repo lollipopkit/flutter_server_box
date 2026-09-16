@@ -2,6 +2,7 @@
 
 use crate::types::*;
 use serde_json::Value;
+use std::collections::HashMap;
 
 /// Dart `_parseFirstInt`: parse the first space-separated segment as an integer, 0 on failure
 fn parse_first_int(s: Option<&str>) -> i64 {
@@ -168,4 +169,213 @@ fn amd_int(value: Option<&Value>) -> i64 {
         }
         _ => 0,
     }
+}
+
+/// Parse the marker-delimited output of the Linux DRM GPU probe.
+///
+/// AMD blocks contain cheap sysfs key/value readings. Intel blocks carry the
+/// raw JSON emitted by `intel_gpu_top`; the last sample is used because its
+/// first PMU sample is frequently an initialization spike.
+pub fn linux_drm_from_output(raw: &str) -> Vec<GpuItem> {
+    raw.split("__SBM_GPU_BEGIN__")
+        .skip(1)
+        .filter_map(|block| block.split("__SBM_GPU_END__").next())
+        .filter_map(parse_drm_block)
+        .collect()
+}
+
+fn parse_drm_block(block: &str) -> Option<GpuItem> {
+    let mut fields = HashMap::new();
+    let mut payload = Vec::new();
+    let mut in_payload = false;
+    for line in block.lines().map(str::trim).filter(|line| !line.is_empty()) {
+        if !in_payload {
+            if line.starts_with('[') || line.starts_with('{') {
+                in_payload = true;
+            } else if let Some((key, value)) = line.split_once('=') {
+                fields.insert(key, value);
+                continue;
+            }
+        }
+        if in_payload {
+            payload.push(line);
+        }
+    }
+
+    let vendor = fields.get("vendor")?.to_string();
+    let id = fields.get("id").copied().unwrap_or("unknown").to_string();
+    let name = fields
+        .get("name")
+        .copied()
+        .filter(|name| !name.is_empty())
+        .unwrap_or("Unknown GPU")
+        .to_string();
+
+    match vendor.as_str() {
+        "amd" => Some(GpuItem {
+            id,
+            vendor,
+            name,
+            utilization: fields.get("usage").and_then(|v| v.parse().ok()),
+            temperature: fields
+                .get("temperature_millidegrees")
+                .and_then(|v| v.parse::<i64>().ok())
+                .map(|v| v / 1000),
+            power: fields
+                .get("power_microwatts")
+                .and_then(|v| v.parse::<f64>().ok())
+                .map(|v| format!("{:.2} W", v / 1_000_000.0)),
+            memory: drm_memory(&fields),
+            fan_speed: fields.get("fan_rpm").and_then(|v| v.parse().ok()),
+            clock_speed: None,
+        }),
+        "intel" => {
+            let sample = last_intel_sample(&payload.join("\n"))?;
+            let utilization = sample
+                .get("engines")
+                .and_then(Value::as_object)
+                .and_then(|engines| {
+                    engines
+                        .values()
+                        .filter_map(|engine| engine.get("busy").and_then(Value::as_f64))
+                        .reduce(f64::max)
+                });
+            let power = sample
+                .get("power")
+                .and_then(|v| v.get("GPU"))
+                .and_then(Value::as_f64)
+                .map(|v| format!("{v:.2} W"));
+            let clock_speed = sample
+                .get("frequency")
+                .and_then(|v| v.get("actual"))
+                .and_then(Value::as_f64)
+                .map(|v| v.round() as i64);
+            Some(GpuItem {
+                id,
+                vendor,
+                name,
+                utilization,
+                temperature: None,
+                power,
+                memory: None,
+                fan_speed: None,
+                clock_speed,
+            })
+        }
+        _ => None,
+    }
+}
+
+fn drm_memory(fields: &HashMap<&str, &str>) -> Option<GpuMem> {
+    let used = fields
+        .get("memory_used_bytes")
+        .and_then(|v| v.parse::<i64>().ok());
+    let total = fields
+        .get("memory_total_bytes")
+        .and_then(|v| v.parse::<i64>().ok());
+    if used.is_none() && total.is_none() {
+        return None;
+    }
+    Some(GpuMem {
+        used: used.unwrap_or(0) / 1_048_576,
+        total: total.unwrap_or(0) / 1_048_576,
+        unit: "MiB".to_string(),
+        processes: Vec::new(),
+    })
+}
+
+fn last_intel_sample(raw: &str) -> Option<Value> {
+    if let Ok(value) = serde_json::from_str::<Value>(raw) {
+        return match value {
+            Value::Array(values) => values.into_iter().rev().find(Value::is_object),
+            Value::Object(_) => Some(value),
+            _ => None,
+        };
+    }
+
+    json_objects(raw)
+        .into_iter()
+        .filter_map(|object| serde_json::from_str::<Value>(object).ok())
+        .last()
+}
+
+/// `timeout` can stop older intel_gpu_top builds after they emitted complete
+/// samples but before closing the surrounding JSON array. Extract balanced
+/// objects without being confused by braces inside strings.
+fn json_objects(raw: &str) -> Vec<&str> {
+    let mut result = Vec::new();
+    let mut start = None;
+    let mut depth = 0usize;
+    let mut in_string = false;
+    let mut escaped = false;
+    for (index, ch) in raw.char_indices() {
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+        if ch == '"' {
+            in_string = true;
+            continue;
+        }
+        match ch {
+            '{' => {
+                if depth == 0 {
+                    start = Some(index);
+                }
+                depth += 1;
+            }
+            '}' if depth > 0 => {
+                depth -= 1;
+                if depth == 0 {
+                    if let Some(start) = start.take() {
+                        result.push(&raw[start..=index]);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    result
+}
+
+pub fn nvidia_as_gpu(items: &[NvidiaSmiItem]) -> Vec<GpuItem> {
+    items
+        .iter()
+        .enumerate()
+        .map(|(index, item)| GpuItem {
+            id: format!("nvidia:{index}"),
+            vendor: "nvidia".to_string(),
+            name: item.name.clone(),
+            utilization: Some(item.percent as f64),
+            temperature: Some(item.temp),
+            power: (item.power != "null / null").then(|| item.power.clone()),
+            memory: Some(item.memory.clone()),
+            fan_speed: Some(item.fan_speed),
+            clock_speed: None,
+        })
+        .collect()
+}
+
+pub fn amd_as_gpu(items: &[AmdSmiItem]) -> Vec<GpuItem> {
+    items
+        .iter()
+        .enumerate()
+        .map(|(index, item)| GpuItem {
+            id: format!("amd:{index}"),
+            vendor: "amd".to_string(),
+            name: item.name.clone(),
+            utilization: Some(item.utilization as f64),
+            temperature: (item.temp != 0).then_some(item.temp),
+            power: (item.power != "N/A").then(|| item.power.clone()),
+            memory: Some(item.memory.clone()),
+            fan_speed: (item.fan_speed != 0).then_some(item.fan_speed),
+            clock_speed: (item.clock_speed != 0).then_some(item.clock_speed),
+        })
+        .collect()
 }
