@@ -4,8 +4,11 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
+
+import '../../helpers/local_http.dart';
 
 void main() {
   test('monitor file backends share login and roots probes', () async {
@@ -92,6 +95,93 @@ void main() {
       await server.close(force: true);
     }
   });
+  test('failed roots probes can be retried', () async {
+    var probes = 0;
+    final server = await _serve((request) async {
+      if (request.uri.path.endsWith('/login')) {
+        return _json(request.response, {'token': 'token'});
+      }
+      if (++probes == 1) {
+        request.response.statusCode = 503;
+        await request.response.close();
+      } else {
+        await _json(request.response, {
+          'roots': ['/srv'],
+        });
+      }
+    });
+    final backend = MonitorFileBackend(_credential(server));
+    try {
+      await expectLater(
+        backend.reachableRoots(),
+        throwsA(isA<MonitorHttpErr>()),
+      );
+      expect(await backend.reachableRoots(), ['/srv']);
+      expect(probes, 2);
+    } finally {
+      await backend.close();
+      await server.close(force: true);
+    }
+  });
+
+  test(
+    'the last backend releases the shared HTTP client exactly once',
+    () async {
+      final server = await _serve(
+        (request) => _json(
+          request.response,
+          request.uri.path.endsWith('/login')
+              ? {'token': 'token'}
+              : {
+                  'roots': ['/srv'],
+                },
+        ),
+      );
+      final http = LocalHttp(server);
+      try {
+        await HttpOverrides.runWithHttpOverrides(() async {
+          final first = MonitorFileBackend(_credential(server));
+          final second = MonitorFileBackend(_credential(server));
+          await first.reachableRoots();
+          expect(http.created, 1);
+          await first.close();
+          await first.close();
+          expect(http.closed, 0);
+          expect(await second.reachableRoots(), ['/srv']);
+          await second.close();
+          await second.close();
+          expect(http.closed, 1);
+        }, http);
+      } finally {
+        await server.close(force: true);
+      }
+    },
+  );
+
+  test(
+    'an interrupted download fails instead of accepting a partial file',
+    () async {
+      final server = await _serve((request) async {
+        if (request.uri.path.endsWith('/login')) {
+          return _json(request.response, {'token': 'token'});
+        }
+        final socket = await request.response.detachSocket(writeHeaders: false);
+        socket.write('HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\nabc');
+        await socket.flush();
+        socket.destroy();
+      });
+      final backend = MonitorFileBackend(_credential(server));
+      try {
+        await expectLater(
+          backend.read('/srv/file').drain<void>(),
+          throwsA(anything),
+        );
+      } finally {
+        await backend.close();
+        await server.close(force: true);
+      }
+    },
+  );
 }
 
 Future<HttpServer> _serve(
