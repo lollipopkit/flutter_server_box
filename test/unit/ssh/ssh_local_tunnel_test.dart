@@ -122,7 +122,6 @@ void main() {
     await channel.closedSignal.future.timeout(const Duration(seconds: 1));
     await ended.timeout(const Duration(seconds: 1));
   });
-
 }
 
 Future<List<int>> _echo(Socket socket, List<int> bytes) async {

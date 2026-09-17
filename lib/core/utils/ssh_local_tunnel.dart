@@ -30,18 +30,12 @@ class SshLocalTunnel {
   }) : _listener = listener,
        _dialer = dialer {
     _subscription = _listener.listen(_accept, onError: _listenerError);
-    unawaited(
-      sshDone.then<void>(
-        (_) => close(),
-        onError: (_, _) => close(),
-      ),
-    );
+    unawaited(sshDone.then<void>((_) => close(), onError: (_, _) => close()));
   }
 
   final ServerSocket _listener;
   final SshTunnelDialer _dialer;
   final Set<Socket> _pendingSockets = {};
-  final Set<Future<SshTunnelChannel>> _pendingChannels = {};
   final Set<_TunnelConnection> _connections = {};
   final Set<Future<void>> _bridges = {};
   final _stopping = Completer<void>();
@@ -115,27 +109,32 @@ class SshLocalTunnel {
     late final Future<SshTunnelChannel> opening;
     try {
       opening = _dialer();
-      _pendingChannels.add(opening);
       try {
         channel = await Future.any([
           opening,
-          _stopping.future.then<SshTunnelChannel>((_) => throw StateError('Tunnel closed')),
+          _stopping.future.then<SshTunnelChannel>(
+            (_) => throw StateError('Tunnel closed'),
+          ),
         ]).timeout(const Duration(seconds: 15));
       } on TimeoutException {
         // A direct-tcpip open cannot be cancelled through dartssh2. If it
         // completes after the timeout (or after close), close the channel as
         // soon as it arrives instead of leaking it.
         unawaited(
-          opening.then<void>((lateChannel) => lateChannel.close()).catchError((_) {}),
+          opening
+              .then<void>((lateChannel) => lateChannel.close())
+              .catchError((_) {}),
         );
         rethrow;
       } catch (_) {
         if (_closed) {
-          unawaited(opening.then<void>((lateChannel) => lateChannel.close()).catchError((_) {}));
+          unawaited(
+            opening
+                .then<void>((lateChannel) => lateChannel.close())
+                .catchError((_) {}),
+          );
         }
         rethrow;
-      } finally {
-        _pendingChannels.remove(opening);
       }
       _pendingSockets.remove(socket);
       if (_closed) {
@@ -186,12 +185,6 @@ class SshLocalTunnel {
       socket.destroy();
     }
     _pendingSockets.clear();
-
-    for (final opening in _pendingChannels.toList()) {
-      unawaited(
-        opening.then<void>((channel) => channel.close()).catchError((_) {}),
-      );
-    }
 
     final connections = _connections.toList();
     _connections.clear();
