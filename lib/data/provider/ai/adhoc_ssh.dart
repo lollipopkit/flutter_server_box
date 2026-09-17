@@ -108,14 +108,6 @@ class AdHocSshSessions extends _$AdHocSshSessions {
     if (!keepHostKey) forgetHostKeyFingerprints(session.spi.id);
   }
 
-  void closeAll() {
-    if (_open.isEmpty) return;
-    final ids = _open.values.map((s) => s.spi.id).toList(growable: false);
-    _closeEveryClient();
-    _publish();
-    ids.forEach(forgetHostKeyFingerprints);
-  }
-
   void _publish() => state = Map.unmodifiable(_open);
 
   void _closeEveryClient() {

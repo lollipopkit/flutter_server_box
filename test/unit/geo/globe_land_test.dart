@@ -58,7 +58,9 @@ void main() {
     for (final ring in land.rings) {
       for (var i = 0; i < ring.length; i += 3) {
         final length = math.sqrt(
-          ring[i] * ring[i] + ring[i + 1] * ring[i + 1] + ring[i + 2] * ring[i + 2],
+          ring[i] * ring[i] +
+              ring[i + 1] * ring[i + 1] +
+              ring[i + 2] * ring[i + 2],
         );
         expect(length, closeTo(1, 1e-4));
       }
@@ -121,31 +123,22 @@ void main() {
 
   group('the loader', () {
     setUpAll(TestWidgetsFlutterBinding.ensureInitialized);
-    setUp(() => BundledLand.resetForTest());
-    tearDown(() => BundledLand.resetForTest());
+    late BundledLand bundle;
+    setUp(() => bundle = BundledLand());
 
     test('reads the asset, and answers before it has', () async {
-      expect(BundledLand.loaded, isNull);
-      final land = await BundledLand.load();
+      expect(bundle.loaded, isNull);
+      final land = await bundle.load();
       expect(land, isNotNull);
       expect(land!.rings.length, greaterThan(50));
-      expect(BundledLand.loaded, same(land));
+      expect(bundle.loaded, same(land));
     });
 
     test('is loaded once', () async {
       // Five thousand vertices converted to unit vectors; doing it twice is
       // work nobody asked for.
-      final first = await BundledLand.load();
-      expect(identical(first, await BundledLand.load()), isTrue);
-    });
-
-    test('a test can hand it one directly', () async {
-      final made = GlobeLand.tryParse(buildLand([
-        [(0, 0), (1, 1), (2, 2), (3, 3)],
-      ]))!;
-      BundledLand.resetForTest(made);
-      expect(BundledLand.loaded, same(made));
-      expect(await BundledLand.load(), same(made));
+      final first = await bundle.load();
+      expect(identical(first, await bundle.load()), isTrue);
     });
   });
 

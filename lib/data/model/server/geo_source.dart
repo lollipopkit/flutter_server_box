@@ -11,7 +11,7 @@ import 'package:server_box/data/model/server/geo.dart';
 /// **The case order is the chain's order, and nothing compares it.** It used to
 /// carry a `beats` method, which decided whether a newly arrived answer could
 /// overwrite a stored one — a question that only existed while answers were
-/// stored. `IpGeo.locate` asks each link in turn and stops at the first that
+/// stored. `IpGeo.shared.locate` asks each link in turn and stops at the first that
 /// answers, so precedence is control flow now and cannot disagree with itself.
 enum GeoSource {
   /// The user typed it. Nothing overrides this.

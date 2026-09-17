@@ -291,7 +291,7 @@ void main() {
       expect(status.temps.isEmpty, isTrue);
     });
 
-    test('and a GPU with no vendor field is still placed by its name', () {
+    test('and GPUs with no vendor field retain inferred identities', () {
       final status = applyMonitorMetrics(
         InitStatus.status,
         MonitorMetrics.fromJson(
@@ -320,12 +320,15 @@ void main() {
         ),
       );
 
-      expect(status.nvidia?.single.name, 'NVIDIA GeForce RTX 4090');
-      expect(status.amd?.single.name, 'AMD Radeon RX 7900 XTX');
+      expect(status.gpus, hasLength(2));
+      expect(status.gpus[0].vendor, 'nvidia');
+      expect(status.gpus[0].id, 'nvidia:0');
+      expect(status.gpus[1].vendor, 'amd');
+      expect(status.gpus[1].id, 'amd:1');
     });
   });
 
-  test('the vendor the agent reports wins over the name', () {
+  test('the vendor and stable id the agent reports win over inference', () {
     final status = applyMonitorMetrics(
       InitStatus.status,
       MonitorMetrics.fromJson({
@@ -344,6 +347,7 @@ void main() {
         'gpus': const [
           {
             // Named after neither vendor, which is why the field exists.
+            'id': '0000:04:00.0',
             'name': 'Instinct MI300X',
             'vendor': 'amd',
             'usage_percent': 5.0,
@@ -357,7 +361,44 @@ void main() {
       }),
     );
 
-    expect(status.nvidia, isNull);
-    expect(status.amd?.single.name, 'Instinct MI300X');
+    expect(status.gpus.single.id, '0000:04:00.0');
+    expect(status.gpus.single.vendor, 'amd');
+    expect(status.gpus.single.name, 'Instinct MI300X');
+  });
+
+  test('an Intel GPU keeps unavailable metrics null', () {
+    final status = applyMonitorMetrics(
+      InitStatus.status,
+      MonitorMetrics.fromJson({
+        'timestamp': '2026-08-22T00:00:00Z',
+        'server_name': 'test-server',
+        'cpu_usage': 0.0,
+        'memory': const {
+          'total': 1,
+          'used': 0,
+          'free': 1,
+          'usage_percent': 0.0,
+        },
+        'swap': const {'total': 0, 'used': 0, 'usage_percent': 0.0},
+        'disk': const {'total': 1, 'used': 0, 'free': 1, 'usage_percent': 0.0},
+        'network': const {'rx_bytes': 0, 'tx_bytes': 0},
+        'gpus': const [
+          {
+            'id': '0000:00:02.0',
+            'vendor': 'intel',
+            'name': 'Intel Integrated Graphics',
+            'usage_percent': 68.25,
+            'clock_speed': 750,
+          },
+        ],
+      }),
+    );
+
+    final gpu = status.gpus.single;
+    expect(gpu.id, '0000:00:02.0');
+    expect(gpu.utilization, 68.25);
+    expect(gpu.clockSpeed, 750);
+    expect(gpu.temperature, isNull);
+    expect(gpu.memory, isNull);
   });
 }

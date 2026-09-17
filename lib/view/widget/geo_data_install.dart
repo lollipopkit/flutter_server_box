@@ -58,7 +58,7 @@ abstract final class GeoDataInstall {
     // Indeterminate: nothing knows the size until the manifest is here, and
     // this request is a couple of hundred bytes rather than the download.
     onProgress?.call(0, 0);
-    final manifest = await GeoData.fetchManifest();
+    final manifest = await GeoData.shared.fetchManifest();
     if (!context.mounted) return false;
 
     if (manifest == null) {
@@ -66,7 +66,7 @@ abstract final class GeoDataInstall {
       return false;
     }
 
-    final installed = GeoData.installed();
+    final installed = GeoData.shared.installed();
     if (installed != null && installed.generated == manifest.generated) {
       await context.showRoundDialog(
         title: l10n.geoData,
@@ -96,7 +96,7 @@ abstract final class GeoDataInstall {
   ) async {
     if (onProgress != null) {
       onProgress(0, manifest.downloadBytes);
-      return GeoData.install(manifest, onProgress: onProgress);
+      return GeoData.shared.install(manifest, onProgress: onProgress);
     }
 
     final progress = ValueNotifier((0, manifest.downloadBytes));
@@ -110,7 +110,7 @@ abstract final class GeoDataInstall {
       barrierDismiss: false,
     );
     try {
-      return await GeoData.install(
+      return await GeoData.shared.install(
         manifest,
         onProgress: (got, total) => progress.value = (got, total),
       );

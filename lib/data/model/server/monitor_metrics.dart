@@ -235,43 +235,48 @@ class MonitorNetworkMetrics {
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class MonitorGpuMetrics {
+  final String? id;
   final String name;
-  final double usagePercent;
-  final int temperature;
-  final String power;
-  final int memoryUsed;
-  final int memoryTotal;
-  final String memoryUnit;
+  final double? usagePercent;
+  final int? temperature;
+  final String? power;
+  final int? memoryUsed;
+  final int? memoryTotal;
+  final String? memoryUnit;
+  final int? fanSpeed;
+  final int? clockSpeed;
 
-  /// `nvidia` or `amd` — which tool reported it.
+  /// Lower-case vendor (`nvidia`, `amd` or `intel`).
   ///
-  /// The agent flattens its two lists into one, and the app draws them under
-  /// separate headings, so without this there is no way back. Null on agents
-  /// predating the field; [MonitorGpuMetrics.isAmd] falls back to the name.
+  /// Null on agents predating the field; [resolvedVendor] falls back to the
+  /// device name for those responses.
   final String? vendor;
 
   const MonitorGpuMetrics({
+    this.id,
     required this.name,
-    required this.usagePercent,
-    required this.temperature,
-    required this.power,
-    required this.memoryUsed,
-    required this.memoryTotal,
-    required this.memoryUnit,
+    this.usagePercent,
+    this.temperature,
+    this.power,
+    this.memoryUsed,
+    this.memoryTotal,
+    this.memoryUnit,
+    this.fanSpeed,
+    this.clockSpeed,
     this.vendor,
   });
 
-  /// Whether this is an AMD card, for the two lists the status page keeps.
-  ///
   /// The name is the fallback for an agent that sends no [vendor]: `amd-smi`
-  /// and `rocm-smi` name their cards "AMD ..." or "Radeon ...", and
-  /// `nvidia-smi` never does. A wrong guess puts the card under the other
-  /// heading; dropping it, which is what happened before, showed nothing.
-  bool get isAmd {
+  /// and `rocm-smi` name their cards "AMD ..." or "Radeon ...", while Intel
+  /// devices conventionally include "Intel". Anything else is the legacy
+  /// NVIDIA case.
+  String get resolvedVendor {
     final v = vendor;
-    if (v != null && v.isNotEmpty) return v.toLowerCase() == 'amd';
+    if (v != null && v.isNotEmpty) return v.toLowerCase();
     final n = name.toLowerCase();
-    return n.contains('amd') || n.contains('radeon');
+    if (n.contains('amd') || n.contains('radeon')) return 'amd';
+    if (n.contains('intel')) return 'intel';
+    return 'nvidia';
   }
 
   factory MonitorGpuMetrics.fromJson(Map<String, dynamic> json) =>

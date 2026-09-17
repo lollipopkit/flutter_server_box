@@ -91,6 +91,8 @@ export interface Capabilities {
   diskio: FieldSupport
   batteries: FieldSupport
   sensors: FieldSupport
+  /** Vendor-neutral per-device GPU support. Absent on older agents. */
+  gpu?: FieldSupport
   nvidia: FieldSupport
   amd: FieldSupport
   disk_smart: FieldSupport
@@ -164,15 +166,17 @@ export interface DiskSmartMetrics {
 }
 
 export interface GpuMetrics {
-  name: string;
-  usage_percent: number;
-  temperature: number;
-  power: string;
-  memory_used: number;
-  memory_total: number;
-  memory_unit: string;
-  /** Which tool reported it: `nvidia` or `amd`. Absent on older agents. */
+  id?: string;
   vendor?: string;
+  name: string;
+  usage_percent: number | null;
+  temperature: number | null;
+  power: string | null;
+  memory_used: number | null;
+  memory_total: number | null;
+  memory_unit: string | null;
+  fan_speed?: number | null;
+  clock_speed?: number | null;
 }
 
 export interface DiskDetail {

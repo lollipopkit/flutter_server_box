@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 
+import 'package:server_box/core/utils/file_transfer_timeout.dart';
+
 Duration sftpOperationTimeout(int seconds) {
   return Duration(seconds: seconds <= 0 ? 5 : seconds);
 }
@@ -34,9 +36,7 @@ Future<T> withSftpOpTimeout<T>(
 /// below a minute it stops describing a stall.
 class SftpIdleWatchdog {
   SftpIdleWatchdog(this.what, Duration idle)
-    : idle = idle < minIdle ? minIdle : idle;
-
-  static const minIdle = Duration(seconds: 60);
+    : idle = transferStreamTimeout(idle)!;
 
   final String what;
   final Duration idle;

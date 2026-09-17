@@ -92,7 +92,7 @@ testWidgets('shows the server name', (tester) async {
 });
 ```
 
-会写入 store 的 Widget test 必须在 `setUp` 使用 `openTestDb()` 打开内存数据库，并在 `tearDown` 调用 `SqliteDb.close`；使用 store 的 `forTest()` constructor，避免测试共享 singleton cache 或写入真实文件。
+会写入 store 的 Widget test 必须在 `setUp` 使用 `openTestDb()`，并在 `tearDown` 调用 `closeTestDb()`，先排空待写入操作再关闭 SQLite。通过正常构造函数访问隔离数据库，迁移测试使用生产的 `setting` 存储名。不要向生产代码添加测试专用构造、重置方法或可变网络工厂；有状态服务使用正常实例生命周期，HTTP、文件系统替身放在 `test/helpers/`。
 
 不要对包含 text field 或其他持续调度 frame 的 Widget 使用 `pumpAndSettle()`。使用定次数的 `pump(duration)`，并为测试命令设置合理的 timeout。
 
@@ -180,3 +180,13 @@ flutter drive --publish-port \
 3. 对关键行为添加足够断言，同时保持测试专注。
 4. 使用 fake 或 fixture 隔离外部依赖。
 5. 覆盖空列表、缺失值、无效输入和权限错误等边界情况。
+
+## 审查回归检查
+
+rootfs 签名 fixture 必须保留原始字节：`.gitattributes` 为 JSON 固定 LF，将签名标为二进制。不能为通过测试而重新签名。
+
+模型表测试读取真实缓存和打包资源，并通过本地 HTTP 服务刷新；地理数据 fixture 走生产安装流程。SFTP 测试验证读取取消、操作失败和迟到句柄清理，Monitor 测试使用本地 HTTP 连接验证共享客户端释放。
+
+前端 `format`、`fsPath`、`agentUrl` 测试使用 Node，其余浏览器测试保留隔离的 jsdom 环境。Android 服务通道测试需要 Android 运行环境，在桌面明确跳过；源码字符串断言不能替代原生运行验证。manifest 和 entitlement 打包契约检查仍然保留。
+
+性能记录、验证结果及依赖设备环境的覆盖缺口见仓库中的 `docs/audits/code-health-2026-09.md`。

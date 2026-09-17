@@ -11,13 +11,21 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/material.dart'
+    show FilledButton, LinearProgressIndicator;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'
+    show FlutterSecureStorage;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helpers/deny_file_deletion.dart';
+
+import '../helpers/test_db.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -57,45 +65,72 @@ void main() {
     await SqliteDb.open(dbDir.path);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
-  /// Paths handed to the share sheet, and what was in the file at that moment.
-  ///
-  /// Captured rather than found on disk afterwards: the copy lives in a
-  /// temporary directory that is removed as soon as the share returns.
-  late List<String> shared;
-  late List<int> sharedSizes;
+  late _FakeDirectoryPicker picker;
+  final original = FilePickerPlatform.instance;
 
   setUp(() {
-    shared = [];
-    sharedSizes = [];
-    SchemaTooNewPage.shareForTest = (path) async {
-      shared.add(path);
-      sharedSizes.add(File(path).lengthSync());
-    };
+    final out = Directory('${tmp.path}/chosen')..createSync();
+    picker = _FakeDirectoryPicker(out);
+    FilePickerPlatform.instance = picker;
   });
 
-  tearDown(() => SchemaTooNewPage.shareForTest = null);
+  tearDown(() => FilePickerPlatform.instance = original);
 
-  /// Lets real asynchronous work finish.
+  /// The page's own temp directories that exist right now.
+  Set<String> rescueTemps() => Directory.systemTemp
+      .listSync()
+      .map((e) => e.path)
+      .where((p) => p.split(Platform.pathSeparator).last.startsWith('sbx-rescue-'))
+      .toSet();
+
+  /// What the export left in the directory the user picked.
+  List<File> saved() => picker.dir.listSync().whereType<File>().toList();
+
+  /// Lets real asynchronous work run for a moment.
   ///
   /// The export runs under `Isolate.run`, which a `testWidgets` fake-async zone
-  /// does not drive on its own — without this the copy never completes and the
-  /// share is never reached.
-  Future<void> settle(WidgetTester tester, {bool waitForShare = false}) async {
-    await tester.runAsync(() async {
-      if (!waitForShare) {
-        await Future<void>.delayed(const Duration(milliseconds: 200));
-        return;
-      }
-
-      final deadline = DateTime.now().add(const Duration(seconds: 5));
-      while (shared.isEmpty && DateTime.now().isBefore(deadline)) {
-        await Future<void>.delayed(const Duration(milliseconds: 50));
-      }
-    });
+  /// does not drive on its own.
+  Future<void> settle(WidgetTester tester) async {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 200)),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  /// Drives both clocks until [done], or gives up after a few seconds.
+  ///
+  /// Both, alternately: the isolate finishes in real time, but what the page
+  /// does after it — the copy, the cleanup, the dialog — is a continuation in
+  /// the fake zone, which only a pump runs.
+  Future<void> settleUntil(WidgetTester tester, bool Function() done) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
+    while (!done() && DateTime.now().isBefore(deadline)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  /// Whether the export has finished and said so, either way.
+  ///
+  /// Not "a file is in the directory": the destination is created before the
+  /// bytes are copied into it.
+  bool answered() =>
+      find.text(libL10n.success).evaluate().isNotEmpty ||
+      find.text(libL10n.fail).evaluate().isNotEmpty;
+
+  /// Taps through to a plain export: the warning, then its OK.
+  Future<void> exportPlain(WidgetTester tester) async {
+    await tester.tap(find.text(l10n.schemaTooNewExportPlain));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text(libL10n.ok).last);
+    await tester.pump();
   }
 
   Future<void> pump(WidgetTester tester) async {
@@ -144,30 +179,145 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text(l10n.schemaTooNewPlainWarn), findsOneWidget);
-    expect(shared, isEmpty, reason: 'a copy was made before the user answered');
+    expect(
+      picker.asked,
+      0,
+      reason: 'the export began before the user answered',
+    );
   });
 
-  testWidgets('and writes one when the warning is accepted', (tester) async {
+  testWidgets('and saves one where the user chose when it is accepted', (
+    tester,
+  ) async {
+    final tempsBefore = rescueTemps();
     await pump(tester);
 
-    await tester.tap(find.text(l10n.schemaTooNewExportPlain));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await exportPlain(tester);
+    await settleUntil(tester, answered);
+
+    expect(tester.takeException(), isNull);
+    expect(picker.asked, 1);
+    // The file is where the user pointed once the export returns. This page
+    // used to reveal a temp copy and delete it in the same breath, so the file
+    // manager opened on nothing.
+    final files = saved();
+    expect(files, hasLength(1));
+    final name = files.single.path.split(Platform.pathSeparator).last;
+    // Named for the version that wrote the data, which is what a future reader
+    // has to match it against. One extension: a save panel on macOS made this
+    // `.db.db`.
+    expect(name, matches(RegExp(r'^serverbox-rescue-v23-\d{8}-\d{6}-plain\.db$')));
+    // A whole SQLite file, readable by any tool, since this is the plain path.
+    final head = files.single.readAsBytesSync().take(15).toList();
+    expect(utf8.decode(head), 'SQLite format 3');
+    // Nothing left in the temp directory: the only copy that outlives the
+    // export is the one the user put somewhere.
+    expect(rescueTemps().difference(tempsBefore), isEmpty);
+    // Nor beside `store.db`, for the same reason: this is the whole database,
+    // in the clear on this path.
+    final strays = tmp
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.parent.path != picker.dir.path)
+        .where(
+          (f) => f.path
+              .split(Platform.pathSeparator)
+              .last
+              .startsWith('serverbox-rescue-'),
+        );
+    expect(strays, isEmpty);
+    // And the screen says where it went, since nothing else on it changes.
+    expect(find.text(libL10n.success), findsOneWidget);
+    expect(find.text(files.single.path), findsOneWidget);
+    expect(find.text(libL10n.fail), findsNothing);
+  });
+
+  testWidgets('an export never replaces a file already there', (tester) async {
+    // The name carries the second it was made, so two exports in one second,
+    // or a clock set back, meet a file that is already the user's backup.
+    // Every name this export could take in the next few seconds is taken up
+    // front, so the clash is certain rather than a matter of timing.
+    final now = DateTime.now();
+    final sentinels = <File>[
+      for (var i = -1; i <= 15; i++)
+        File(
+          picker.dir.path.joinPath(
+            'serverbox-rescue-v23-'
+            '${now.add(Duration(seconds: i)).ymdhms(ymdSep: '', hmsSep: '', sep: '-')}'
+            '-plain.db',
+          ),
+        )..writeAsStringSync('the user\'s backup'),
+    ];
+    await pump(tester);
+
+    await exportPlain(tester);
+    await settleUntil(tester, answered);
+
+    expect(find.text(libL10n.fail), findsNothing);
+    for (final f in sentinels) {
+      expect(f.readAsStringSync(), 'the user\'s backup', reason: f.path);
+    }
+    final added = saved().where((f) => !sentinels.any((s) => s.path == f.path));
+    expect(added, hasLength(1));
+    expect(added.single.path, endsWith('-plain-2.db'));
+    final head = added.single.readAsBytesSync().take(15).toList();
+    expect(utf8.decode(head), 'SQLite format 3');
+  });
+
+  testWidgets('a temp directory that will not delete still ends the export', (
+    tester,
+  ) async {
+    // A file still held open elsewhere refuses deletion on Windows. When the
+    // cleanup threw, the page stayed busy with every button disabled, and the
+    // dialog saying where the copy went never showed.
+    final tempsBefore = rescueTemps();
+    final denied = _DenyRescueTempDeletion();
+    final previous = IOOverrides.current;
+    IOOverrides.global = denied;
+    addTearDown(() {
+      IOOverrides.global = previous;
+      for (final path in rescueTemps().difference(tempsBefore)) {
+        Directory(path).deleteSync(recursive: true);
+      }
+    });
+    await pump(tester);
+
+    await exportPlain(tester);
+    await settleUntil(tester, answered);
+
+    expect(denied.attempted, isTrue);
+    expect(tester.takeException(), isNull);
+    expect(saved(), hasLength(1));
+    expect(find.text(libL10n.success), findsOneWidget);
+    expect(find.text(libL10n.fail), findsNothing);
+
     await tester.tap(find.text(libL10n.ok).last);
     await tester.pump();
-    await settle(tester, waitForShare: true);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    final backup = tester.widget<FilledButton>(
+      find.byWidgetPredicate((w) => w is FilledButton),
+    );
+    expect(backup.onPressed, isNotNull);
+  });
 
-    expect(shared, hasLength(1));
-    // Named for the version that wrote the data, which is what a future reader
-    // has to match it against.
-    expect(shared.single, contains('v23'));
-    expect(shared.single, endsWith('-plain.db'));
-    expect(sharedSizes.single, greaterThan(0));
-    // Not beside `store.db`: `sharePaths` reveals the file on desktop, and this
-    // one is the whole database in the clear.
-    expect(shared.single, isNot(startsWith(Paths.doc)));
-    // And gone once the sheet has been answered.
-    expect(File(shared.single).existsSync(), isFalse);
+  testWidgets('cancelling the directory picker exports nothing', (
+    tester,
+  ) async {
+    picker.cancel = true;
+    final tempsBefore = rescueTemps();
+    await pump(tester);
+
+    await exportPlain(tester);
+    await settle(tester);
+
+    expect(picker.asked, 1);
+    expect(saved(), isEmpty);
+    expect(rescueTemps().difference(tempsBefore), isEmpty);
+    // A cancel is an answer, not a failure.
+    expect(find.text(libL10n.fail), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text(libL10n.backup), findsOneWidget);
   });
 
   testWidgets('the wipe asks first, and says what is left afterwards', (
@@ -202,15 +352,11 @@ void main() {
     // offering Backup again is offering a button that can only report "the
     // database is not open" — and it was the user's last chance at the data.
     await pump(tester);
-    // A directory the delete cannot write to. `wipe` skips a file that is
-    // merely absent, so removing it first would let the wipe *succeed* — which
-    // is how this case used to pass while asserting nothing about the message.
-    // `runSync`, not `run`: real async I/O started in a `testWidgets`
-    // fake-async zone completes on a callback the zone never pumps, and the
-    // test simply hangs.
-    final holding = Directory(SqliteDb.path!).parent;
-    Process.runSync('chmod', ['500', holding.path]);
-    addTearDown(() => Process.runSync('chmod', ['700', holding.path]));
+    // Exercise the real wipe failure path on every OS, including root.
+    final denied = DenyFileDeletion(File(SqliteDb.path!));
+    final previous = IOOverrides.current;
+    IOOverrides.global = denied;
+    addTearDown(() => IOOverrides.global = previous);
 
     await tester.tap(find.text(l10n.schemaTooNewWipe));
     await tester.pump();
@@ -226,6 +372,7 @@ void main() {
     // wrong in both directions.
     expect(find.text(l10n.schemaTooNewWipeDone), findsNothing);
     expect(find.text(l10n.schemaTooNewWipeFailed), findsOneWidget);
+    expect(denied.attempted, isTrue);
   });
 
   testWidgets('declining the wipe leaves everything alone', (tester) async {
@@ -242,4 +389,72 @@ void main() {
     expect(find.text(libL10n.backup), findsOneWidget);
     expect(SqliteDb.isOpen, isTrue);
   });
+}
+
+/// Stands in for the platform's directory picker.
+///
+/// Replaces the platform rather than the page's call, so the page's own desktop
+/// path runs: the picker answers, and the copy into that directory is the
+/// page's.
+class _FakeDirectoryPicker extends FilePickerPlatform {
+  _FakeDirectoryPicker(this.dir);
+
+  /// Where the user "chose" to save.
+  final Directory dir;
+
+  /// Answers as a user who dismissed the picker.
+  bool cancel = false;
+
+  /// How many times the picker was opened.
+  int asked = 0;
+
+  @override
+  Future<String?> getDirectoryPath({
+    String? dialogTitle,
+    String? initialDirectory,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    asked++;
+    return cancel ? null : dir.path;
+  }
+}
+
+/// Refuses deletion of the page's temp directories, as a file still held open
+/// by another process does on Windows.
+final class _DenyRescueTempDeletion extends IOOverrides {
+  bool attempted = false;
+
+  @override
+  Directory createDirectory(String path) {
+    final dir = super.createDirectory(path);
+    final name = path.split(Platform.pathSeparator).last;
+    return name.startsWith('sbx-rescue-')
+        ? _UndeletableDirectory(dir, () => attempted = true)
+        : dir;
+  }
+}
+
+class _UndeletableDirectory implements Directory {
+  _UndeletableDirectory(this.dir, this.onDelete);
+
+  final Directory dir;
+  final void Function() onDelete;
+
+  @override
+  String get path => dir.path;
+
+  @override
+  bool existsSync() => dir.existsSync();
+
+  @override
+  void deleteSync({bool recursive = false}) {
+    onDelete();
+    throw FileSystemException('Deletion refused by the filesystem', dir.path);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

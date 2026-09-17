@@ -108,13 +108,13 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
     // page in another tab — and every answer this holds was reached against the
     // data that changed. `_resolvedFrom` is cleared with it so the pass is not
     // a no-op for every server it already settled.
-    GeoData.revision.addListener(_onGeoData);
+    GeoData.shared.revision.addListener(_onGeoData);
     unawaited(_resolve());
   }
 
   @override
   void dispose() {
-    GeoData.revision.removeListener(_onGeoData);
+    GeoData.shared.revision.removeListener(_onGeoData);
     super.dispose();
   }
 
@@ -230,7 +230,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
       // What the answer on hand was derived from. The manual coordinate is the
       // first link in the resolution chain, so changing or removing it is as
       // significant as editing the address below it.
-      final from = (host: IpGeo.geoHostOf(spi), manual: spi.custom?.geo);
+      final from = (host: IpGeo.shared.geoHostOf(spi), manual: spi.custom?.geo);
       final known = _resolvedFrom[id] == from;
       // A settled answer is not asked about again — except a private miss on a
       // server that can now be asked where it is, or a self-reported answer
@@ -244,16 +244,16 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
           (_unplaceable.containsKey(id) && !canReadWhereItIs);
       if (known && settled) continue;
 
-      // `IpGeo.locate` reads the stored self address before returning. Replace
+      // `IpGeo.shared.locate` reads the stored self address before returning. Replace
       // an expired one first, otherwise this pass would faithfully resolve the
       // same stale address and mark it settled for another seven days.
       if (refreshSelfReported) _readWhereItIs(id);
-      var found = await IpGeo.locate(spi);
+      var found = await IpGeo.shared.locate(spi);
       // A LAN address places nothing, and this is the first point at which
       // that is known. What the machine said about its own interfaces is
       // already in hand by then — the status poll collected it.
       if (found.miss == GeoMiss.private && _readWhereItIs(id)) {
-        found = await IpGeo.locate(spi);
+        found = await IpGeo.shared.locate(spi);
       }
       if (!mounted) return;
       resolvedFrom[id] = from;
@@ -391,7 +391,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
       unplacedAction:
           unplaced.isEmpty ||
               !misses.contains(GeoMiss.noData) ||
-              GeoData.installed() != null
+              GeoData.shared.installed() != null
           ? null
           : Btn.text(
               text: libL10n.download,
@@ -559,7 +559,7 @@ class _ServerGlobeState extends ConsumerState<ServerGlobe> {
   /// but a caption naming both is wrong about neither, and each chip carries the
   /// icon that says which of them it is.
   String _unplacedLabel(Set<GeoMiss> misses) {
-    if (misses.contains(GeoMiss.noData) && GeoData.installed() == null) {
+    if (misses.contains(GeoMiss.noData) && GeoData.shared.installed() == null) {
       return '${l10n.geoData} · ${l10n.geoDataMissing}';
     }
     return [

@@ -6,7 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 ///
 /// **Keyed by server id, and that is the whole reason this store exists.**
 /// The host this answer belongs to is the private one the app connects at,
-/// which `IpGeo.locateHost` refuses before doing anything — so an entry keyed
+/// which `IpGeo.shared.locateHost` refuses before doing anything — so an entry keyed
 /// by it could be written and never read. Keying by the *public* address
 /// instead loses the thing that matters: nothing would remember which server
 /// that address belongs to, so the next launch would have to ask again to find
@@ -22,7 +22,7 @@ import 'package:fl_lib/fl_lib.dart';
 /// **The address, deliberately, and not the coordinate.** This is the only
 /// thing the globe remembers now: the store that held where each *host* was
 /// went with the per-lookup network requests it existed for — see
-/// `IpGeo.resolve`. What is kept here is the half that cannot be worked out
+/// `IpGeo.shared.locate`. What is kept here is the half that cannot be worked out
 /// again, since only the machine knows which public address is assigned to one
 /// of its interfaces. The coordinate is looked up fresh every time, so it
 /// follows the installed month rather than outliving it.

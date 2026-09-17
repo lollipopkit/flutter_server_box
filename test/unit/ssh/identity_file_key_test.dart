@@ -103,7 +103,7 @@ void main() {
       keys = PrivateKeyStore();
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     /// One row of the shape m004 reads: the key-value layout m003 leaves.
     void seed(String store, String key, Map<String, Object?> value) {
@@ -222,7 +222,7 @@ void main() {
 
       final ssh = SshCredential(ip: 'a', keyPath: file.path);
       expect(
-        resolvePrivateKey(ssh),
+        resolvePrivateKeys(ssh).values.single,
         startsWith('-----BEGIN OPENSSH PRIVATE KEY-----'),
       );
     });
@@ -259,7 +259,7 @@ void main() {
       // The old failure was `privateKeyNotFoundFmt` with a path in it, which
       // reads as "no such key" and sends the user looking in the wrong place
       expect(
-        () => resolvePrivateKey(ssh),
+        () => resolvePrivateKeys(ssh),
         throwsA(
           predicate(
             (e) => e.toString().contains('${tempDir.path}/absent'),
@@ -270,7 +270,7 @@ void main() {
     });
 
     test('no key configured is not an error', () {
-      expect(resolvePrivateKey(const SshCredential(ip: 'a')), isNull);
+      expect(resolvePrivateKeys(const SshCredential(ip: 'a')), isEmpty);
     });
 
     // The size check threw inside a `catch (_)` meant for a failed stat, so
@@ -281,7 +281,7 @@ void main() {
 
       final ssh = SshCredential(ip: 'a', keyPath: file.path);
       expect(
-        () => resolvePrivateKey(ssh),
+        () => resolvePrivateKeys(ssh),
         throwsA(
           predicate(
             (e) => e.toString().contains('${tempDir.path}/huge'),
@@ -297,7 +297,7 @@ void main() {
 
       final ssh = SshCredential(ip: 'a', keyPath: file.path);
       await expectLater(
-        resolvePrivateKeyAsync(ssh),
+        resolvePrivateKeysAsync(ssh),
         throwsA(
           predicate(
             (e) => e.toString().contains('${tempDir.path}/huge'),
@@ -315,7 +315,13 @@ void main() {
         keyPath: '${tempDir.path}/%n-%p',
       );
 
-      expect(await resolvePrivateKeyAsync(ssh, originalHost: 'alias'), 'KEY');
+      expect(
+        (await resolvePrivateKeysAsync(
+          ssh,
+          originalHost: 'alias',
+        )).values.single,
+        'KEY',
+      );
       expect(file.existsSync(), isTrue);
     });
   });

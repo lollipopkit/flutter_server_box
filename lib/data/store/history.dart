@@ -62,24 +62,7 @@ class HistoryStore extends SqliteStore {
 
   static final instance = HistoryStore();
 
-  final Map<String, String> _serverIdAliases = {};
-
-  String resolveSshServerId(String id) {
-    var current = id;
-    final seen = <String>{};
-    while (seen.add(current)) {
-      final next = _serverIdAliases[current];
-      if (next == null) break;
-      current = next;
-    }
-    return current;
-  }
-
   void renameSshServer(String oldId, String newId) {
-    for (final entry in _serverIdAliases.entries.toList()) {
-      if (entry.value == oldId) _serverIdAliases[entry.key] = newId;
-    }
-    _serverIdAliases[oldId] = newId;
     sshServerHistory.replace(oldId, newId);
 
     final saved = sshTabs.fetch();

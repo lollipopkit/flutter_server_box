@@ -16,14 +16,12 @@ import 'package:server_box/core/service/self_addr.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
-import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
-import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/system.dart';
@@ -942,69 +940,50 @@ ${err.message ?? 'null'}
   }
 
   Widget? _buildGpuView(ServerState si) {
-    final ss = si.status;
-    final hasNvidia = ss.nvidia != null && ss.nvidia!.isNotEmpty;
-    final hasAmd = ss.amd != null && ss.amd!.isNotEmpty;
-
-    if (!hasNvidia && !hasAmd) return null;
-
-    final children = <Widget>[];
-
-    // Add NVIDIA GPUs
-    if (hasNvidia) {
-      children.addAll(ss.nvidia!.map((e) => _buildNvidiaGpuItem(e)));
-    }
-
-    // Add AMD GPUs
-    if (hasAmd) {
-      children.addAll(ss.amd!.map((e) => _buildAmdGpuItem(e)));
-    }
+    final gpus = si.status.gpus;
+    if (gpus.isEmpty) return null;
 
     return ExpandTile(
       title: const Text('GPU'),
       leading: const Icon(Icons.memory, size: 17),
-      controller: _expand('gpu', _getInitExpand(children.length, 3)),
-      children: children,
+      controller: _expand('gpu', _getInitExpand(gpus.length, 3)),
+      children: gpus.map(_buildGpuItem).toList(),
     ).cardx;
   }
 
-  Widget _buildNvidiaGpuItem(NvidiaSmiItem item) {
+  Widget _buildGpuItem(GpuItem item) {
     final mem = item.memory;
+    final leading = [
+      if (item.utilization != null)
+        '${item.utilization!.toStringAsFixed(item.utilization! % 1 == 0 ? 0 : 1)}%',
+      if (item.temperature != null) '${item.temperature} °C',
+    ];
+    final details = [
+      if (item.power != null) item.power!,
+      if (item.fanSpeed != null)
+        'FAN ${item.fanSpeed}${item.vendor == 'nvidia' ? '%' : ' RPM'}',
+      if (item.clockSpeed != null) '${item.clockSpeed} MHz',
+      if (mem != null) '${mem.used} / ${mem.total} ${mem.unit}',
+    ];
     return ListTile(
-      title: Text(item.name, style: UIs.text13),
+      title: Text('${item.name} · ${item.id}', style: UIs.text13),
       leading: Text(
-        '${item.percent}%\n${item.temp} °C',
+        leading.isEmpty ? '—' : leading.join('\n'),
         style: UIs.text12Grey,
         textScaler: _textFactor,
         textAlign: TextAlign.center,
       ),
-      subtitle: Text(
-        '${item.power} - FAN ${item.fanSpeed}%\n${mem.used} / ${mem.total} ${mem.unit}',
-        style: UIs.text12Grey,
-        textScaler: _textFactor,
-      ),
+      subtitle: details.isEmpty
+          ? null
+          : Text(
+              details.join(' · '),
+              style: UIs.text12Grey,
+              textScaler: _textFactor,
+            ),
       contentPadding: const EdgeInsets.only(left: 17, right: 17),
-      trailing: _buildGpuInfoButton(() => _onTapNvidiaGpuItem(item)),
-    );
-  }
-
-  Widget _buildAmdGpuItem(AmdSmiItem item) {
-    final mem = item.memory;
-    return ListTile(
-      title: Text('${item.name} (AMD)', style: UIs.text13),
-      leading: Text(
-        '${item.utilization}%\n${item.temp} °C',
-        style: UIs.text12Grey,
-        textScaler: _textFactor,
-        textAlign: TextAlign.center,
-      ),
-      subtitle: Text(
-        '${item.power} - FAN ${item.fanSpeed} RPM\n${item.clockSpeed} MHz\n${mem.used} / ${mem.total} ${mem.unit}',
-        style: UIs.text12Grey,
-        textScaler: _textFactor,
-      ),
-      contentPadding: const EdgeInsets.only(left: 17, right: 17),
-      trailing: _buildGpuInfoButton(() => _onTapAmdGpuItem(item)),
+      trailing: mem != null && mem.processes.isNotEmpty
+          ? _buildGpuInfoButton(() => _onTapGpuItem(item))
+          : null,
     );
   }
 
@@ -1013,15 +992,6 @@ ${err.message ?? 'null'}
       name: process.name,
       subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
       onTap: () => _onTapGpuProcessItem(process),
-    );
-  }
-
-  Widget _buildAmdGpuProcessItem(GpuSmiMemProcess process) {
-    return _buildGpuProcessTile(
-      name: process.name,
-      subtitle:
-          'PID: ${process.pid} - ${_formatAmdGpuProcessMemory(process.memory)}',
-      onTap: () => _onTapAmdGpuProcessItem(process),
     );
   }
 

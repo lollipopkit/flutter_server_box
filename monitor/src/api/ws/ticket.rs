@@ -96,11 +96,6 @@ impl TicketStore {
         self.issue_at(purpose, subject, Instant::now())
     }
 
-    /// Validates and burns a ticket, returning the subject it was issued to.
-    pub fn consume(&self, raw: &str, purpose: Purpose) -> TicketResult {
-        self.consume_at(raw, purpose, Instant::now())
-    }
-
     /// Claims a ticket while an HTTP upgrade is attempted.
     pub fn reserve(
         &self,
@@ -168,11 +163,6 @@ impl TicketStore {
             },
         );
         Ok(format!("{id}.{secret}"))
-    }
-
-    fn consume_at(&self, raw: &str, purpose: Purpose, now: Instant) -> TicketResult {
-        let reservation = self.reserve_at(raw, purpose, now)?;
-        Ok(self.commit(reservation))
     }
 
     fn reserve_at(
@@ -256,9 +246,9 @@ mod tests {
     fn a_ticket_works_exactly_once() {
         let store = TicketStore::new();
         let ticket = store.issue(Purpose::Terminal, "admin").unwrap();
-        assert_eq!(store.consume(&ticket, Purpose::Terminal).unwrap(), "admin");
+        assert_eq!(store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)).unwrap(), "admin");
         assert_eq!(
-            store.consume(&ticket, Purpose::Terminal),
+            store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)),
             Err(TicketError::Unknown)
         );
     }
@@ -269,7 +259,7 @@ mod tests {
         let now = Instant::now();
         let ticket = store.issue_at(Purpose::Terminal, "admin", now).unwrap();
         assert_eq!(
-            store.consume_at(&ticket, Purpose::Terminal, now + TTL + Duration::from_secs(1)),
+            store.reserve_at(&ticket, Purpose::Terminal, now + TTL + Duration::from_secs(1)).map(|reservation| store.commit(reservation)),
             Err(TicketError::Expired)
         );
     }
@@ -282,12 +272,12 @@ mod tests {
         let forged = format!("{id}.{}", "0".repeat(SECRET_BYTES * 2));
 
         assert_eq!(
-            store.consume(&forged, Purpose::Terminal),
+            store.reserve(&forged, Purpose::Terminal).map(|reservation| store.commit(reservation)),
             Err(TicketError::BadSecret)
         );
         // Guessing the secret gets one shot, not unlimited attempts
         assert_eq!(
-            store.consume(&ticket, Purpose::Terminal),
+            store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)),
             Err(TicketError::Unknown)
         );
     }
@@ -297,11 +287,11 @@ mod tests {
         let store = TicketStore::new();
         let ticket = store.issue(Purpose::Terminal, "admin").unwrap();
         assert_eq!(
-            store.consume("no-separator", Purpose::Terminal),
+            store.reserve("no-separator", Purpose::Terminal).map(|reservation| store.commit(reservation)),
             Err(TicketError::Malformed)
         );
         assert_eq!(store.len(), 1);
-        assert!(store.consume(&ticket, Purpose::Terminal).is_ok());
+        assert!(store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)).is_ok());
     }
 
     #[test]
@@ -365,7 +355,7 @@ mod tests {
     fn the_subject_survives_the_round_trip() {
         let store = TicketStore::new();
         let ticket = store.issue(Purpose::Terminal, "someone").unwrap();
-        assert_eq!(store.consume(&ticket, Purpose::Terminal).unwrap(), "someone");
+        assert_eq!(store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)).unwrap(), "someone");
     }
 
     #[test]
@@ -379,6 +369,6 @@ mod tests {
             Some(TicketError::Unknown)
         );
         store.rollback(reservation);
-        assert_eq!(store.consume(&ticket, Purpose::Terminal).unwrap(), "admin");
+        assert_eq!(store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)).unwrap(), "admin");
     }
 }

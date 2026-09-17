@@ -162,10 +162,44 @@ void main() {
     expect((status['sensors'] as List).length, 4);
     expect(status['sensors'][0]['device'], 'coretemp-isa-0000');
     expect((status['nvidia'] as List).length, 4);
+    expect((status['gpus'] as List).length, 4);
+    expect(status['gpus'][0]['vendor'], 'nvidia');
     final smartList = status['disk_smart'] as List;
     expect(smartList.length, 1);
     expect(smartList[0]['device'], '/dev/sda');
     expect(smartList[0]['temperature'], 35.0);
+  });
+
+  test('linux DRM GPU fields preserve identity and unavailable metrics', () async {
+    final status = await parseViaFfi({
+      'gpu': '''
+__SBM_GPU_BEGIN__
+vendor=amd
+id=0000:04:00.0
+name=AMD Radeon 780M
+usage=37
+memory_used_bytes=1073741824
+memory_total_bytes=2147483648
+__SBM_GPU_END__
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel Integrated Graphics
+source=intel_gpu_top
+[{"engines":{"Video/0":{"busy":68.25}}}]
+__SBM_GPU_END__
+''',
+    });
+
+    final gpus = status['gpus'] as List;
+    expect(gpus, hasLength(2));
+    expect(gpus[0]['id'], '0000:04:00.0');
+    expect(gpus[0]['utilization'], 37.0);
+    expect(gpus[0]['memory']['used'], 1024);
+    expect(gpus[1]['id'], '0000:00:02.0');
+    expect(gpus[1]['utilization'], 68.25);
+    expect(gpus[1]['temperature'], isNull);
+    expect(gpus[1]['memory'], isNull);
   });
 
   test('diskio section', () async {

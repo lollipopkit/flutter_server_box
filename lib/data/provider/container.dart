@@ -883,21 +883,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     refreshTarget: ContainerRefreshTarget.containers,
   );
 
-  Future<ContainerErr?> startAll(Iterable<String> ids) async =>
-      await _runBulk('start', ids);
-
-  Future<ContainerErr?> stopAll(Iterable<String> ids) async =>
-      await _runBulk('stop', ids);
-
-  Future<ContainerErr?> restartAll(Iterable<String> ids) async =>
-      await _runBulk('restart', ids);
-
-  Future<ContainerErr?> _runBulk(String action, Iterable<String> ids) async {
-    final cmd = buildContainerBulkCmd(action, ids);
-    if (cmd == null) return null;
-    return await run(cmd, refreshTarget: ContainerRefreshTarget.containers);
-  }
-
   Future<ContainerErr?> pruneImages({bool allUnused = false}) async =>
       await run(
         buildContainerImagePruneCmd(allUnused: allUnused),

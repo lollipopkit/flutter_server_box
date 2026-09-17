@@ -1,8 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/db.dart';
-import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
+
+import '../../helpers/table_names.dart';
 
 /// What the schema itself guarantees, rather than what the Dart above it
 /// remembers to do.
@@ -11,6 +12,7 @@ import 'package:sqlite3/sqlite3.dart';
 /// exclusivity in `Spix.validate()`, the orphan cleanup in `delServer`, the
 /// uniqueness of a snippet name in whatever dialog last checked. A rule in one
 /// call site is a rule until someone adds a second call site.
+
 void main() {
   late Database db;
 
@@ -98,7 +100,9 @@ void main() {
     db.execute("INSERT INTO server_env VALUES ('srv', 'TERM', 'xterm');");
     db.execute("INSERT INTO server_disabled_cmd VALUES ('srv', 'sensors');");
     db.execute("INSERT INTO server_custom_cmd VALUES ('srv', 'up', 'uptime');");
-    db.execute("INSERT INTO known_host VALUES ('srv', 'ssh-ed25519', 'SHA256:x');");
+    db.execute(
+      "INSERT INTO known_host VALUES ('srv', 'ssh-ed25519', 'SHA256:x');",
+    );
     db.execute(
       'INSERT INTO port_forward (id, server_id, name, type, local_port) '
       "VALUES ('pf', 'srv', 'pg', 'local', 15432);",
@@ -138,8 +142,10 @@ void main() {
   });
 
   test('deleting a private key keeps the servers that used it', () {
-    db.execute('INSERT INTO private_key (id, name, key) '
-        "VALUES ('k1', 'work', 'PRIVATE');");
+    db.execute(
+      'INSERT INTO private_key (id, name, key) '
+      "VALUES ('k1', 'work', 'PRIVATE');",
+    );
     addServer('srv', keyId: 'k1');
 
     db.execute("DELETE FROM private_key WHERE id = 'k1';");
@@ -157,14 +163,18 @@ void main() {
     db.execute("DELETE FROM server WHERE id = 'b';");
 
     expect(db.select('SELECT count(*) AS n FROM server_jump;').single['n'], 0);
-    expect(db.select("SELECT count(*) AS n FROM server WHERE id = 'a';")
-        .single['n'], 1);
+    expect(
+      db.select("SELECT count(*) AS n FROM server WHERE id = 'a';").single['n'],
+      1,
+    );
   });
 
   test('an auto-run target that is deleted stops being one', () {
     addServer('srv');
-    db.execute('INSERT INTO snippet (id, name, script) '
-        "VALUES ('s1', 'deploy', 'echo');");
+    db.execute(
+      'INSERT INTO snippet (id, name, script) '
+      "VALUES ('s1', 'deploy', 'echo');",
+    );
     db.execute("INSERT INTO snippet_auto_run_on VALUES ('s1', 'srv');");
 
     db.execute("DELETE FROM server WHERE id = 'srv';");
@@ -173,23 +183,32 @@ void main() {
       db.select('SELECT count(*) AS n FROM snippet_auto_run_on;').single['n'],
       0,
     );
-    expect(db.select('SELECT count(*) AS n FROM snippet;').single['n'], 1,
-        reason: 'the snippet itself is not a per-server thing');
+    expect(
+      db.select('SELECT count(*) AS n FROM snippet;').single['n'],
+      1,
+      reason: 'the snippet itself is not a per-server thing',
+    );
   });
 
   test('a name the user typed is not a key, but is still unique', () {
-    db.execute('INSERT INTO snippet (id, name, script) '
-        "VALUES ('s1', 'deploy', 'echo a');");
+    db.execute(
+      'INSERT INTO snippet (id, name, script) '
+      "VALUES ('s1', 'deploy', 'echo a');",
+    );
     // A different snippet, same name.
     expect(
-      () => db.execute('INSERT INTO snippet (id, name, script) '
-          "VALUES ('s2', 'deploy', 'b');"),
+      () => db.execute(
+        'INSERT INTO snippet (id, name, script) '
+        "VALUES ('s2', 'deploy', 'b');",
+      ),
       throwsA(isA<SqliteException>()),
     );
     // Renaming is one column, and s1 keeps its identity.
     db.execute("UPDATE snippet SET name = 'release' WHERE id = 's1';");
-    expect(db.select("SELECT name FROM snippet WHERE id = 's1';")
-        .single['name'], 'release');
+    expect(
+      db.select("SELECT name FROM snippet WHERE id = 's1';").single['name'],
+      'release',
+    );
   });
 
   test('a port forward names a real server and a real type', () {
@@ -223,39 +242,42 @@ void main() {
     );
   });
 
-  test('a remote desktop profile has a valid protocol, port, and local name', () {
-    addServer('srv');
-    db.execute(
-      'INSERT INTO remote_desktop_profile '
-      '(id, server_id, name, protocol, port) '
-      "VALUES ('rdp', 'srv', 'desktop', 'rdp', 3389);",
-    );
-    expect(
-      () => db.execute(
+  test(
+    'a remote desktop profile has a valid protocol, port, and local name',
+    () {
+      addServer('srv');
+      db.execute(
         'INSERT INTO remote_desktop_profile '
         '(id, server_id, name, protocol, port) '
-        "VALUES ('vnc', 'srv', 'desktop', 'vnc', 5900);",
-      ),
-      throwsA(isA<SqliteException>()),
-      reason: 'names are unique for one server',
-    );
-    expect(
-      () => db.execute(
-        'INSERT INTO remote_desktop_profile '
-        '(id, server_id, name, protocol, port) '
-        "VALUES ('bad-protocol', 'srv', 'other', 'spice', 5900);",
-      ),
-      throwsA(isA<SqliteException>()),
-    );
-    expect(
-      () => db.execute(
-        'INSERT INTO remote_desktop_profile '
-        '(id, server_id, name, protocol, port) '
-        "VALUES ('bad-port', 'srv', 'third', 'vnc', 0);",
-      ),
-      throwsA(isA<SqliteException>()),
-    );
-  });
+        "VALUES ('rdp', 'srv', 'desktop', 'rdp', 3389);",
+      );
+      expect(
+        () => db.execute(
+          'INSERT INTO remote_desktop_profile '
+          '(id, server_id, name, protocol, port) '
+          "VALUES ('vnc', 'srv', 'desktop', 'vnc', 5900);",
+        ),
+        throwsA(isA<SqliteException>()),
+        reason: 'names are unique for one server',
+      );
+      expect(
+        () => db.execute(
+          'INSERT INTO remote_desktop_profile '
+          '(id, server_id, name, protocol, port) '
+          "VALUES ('bad-protocol', 'srv', 'other', 'spice', 5900);",
+        ),
+        throwsA(isA<SqliteException>()),
+      );
+      expect(
+        () => db.execute(
+          'INSERT INTO remote_desktop_profile '
+          '(id, server_id, name, protocol, port) '
+          "VALUES ('bad-port', 'srv', 'third', 'vnc', 0);",
+        ),
+        throwsA(isA<SqliteException>()),
+      );
+    },
+  );
 
   group('sync metadata', () {
     test('every sync root carries updated_at and rev', () {
@@ -285,7 +307,9 @@ void main() {
       db.execute("UPDATE server SET updated_at = 300 WHERE id = 'b';");
 
       final since = db
-          .select('SELECT id FROM server WHERE updated_at > ? ORDER BY id;', [200])
+          .select('SELECT id FROM server WHERE updated_at > ? ORDER BY id;', [
+            200,
+          ])
           .map((r) => r['id'])
           .toList();
       expect(since, ['b'], reason: 'only what changed since the watermark');
@@ -298,26 +322,33 @@ void main() {
       db.execute("INSERT INTO tombstone VALUES ('server', 'gone', 500);");
 
       final deleted = db
-          .select('SELECT row_id FROM tombstone WHERE tbl = ? AND deleted_at > ?;',
-              ['server', 400])
+          .select(
+            'SELECT row_id FROM tombstone WHERE tbl = ? AND deleted_at > ?;',
+            ['server', 400],
+          )
           .map((r) => r['row_id'])
           .toList();
-      expect(deleted, ['gone'],
-          reason: 'without this a peer re-adds the row it still has');
+      expect(deleted, [
+        'gone',
+      ], reason: 'without this a peer re-adds the row it still has');
     });
   });
 
   test('tags are queryable, not decodable', () {
     addServer('a');
     addServer('b');
-    db.execute("INSERT INTO server_tag VALUES ('a', 'prod'), ('b', 'prod'), "
-        "('a', 'db');");
+    db.execute(
+      "INSERT INTO server_tag VALUES ('a', 'prod'), ('b', 'prod'), "
+      "('a', 'db');",
+    );
 
     // The question the server list asks, as one statement rather than a decode
     // of every record.
     final tagged = db
-        .select("SELECT server_id FROM server_tag WHERE tag = 'prod' "
-            'ORDER BY server_id;')
+        .select(
+          "SELECT server_id FROM server_tag WHERE tag = 'prod' "
+          'ORDER BY server_id;',
+        )
         .map((r) => r['server_id'])
         .toList();
     expect(tagged, ['a', 'b']);

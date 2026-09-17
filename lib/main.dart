@@ -185,7 +185,7 @@ Future<void> _initApp() async {
   // Read once, off the path of the first Agent turn: the table decides when a
   // conversation is summarised, and loading it there would put an asset read
   // between the user and their first answer.
-  unawaited(ModelContextTable.ensureLoaded());
+  unawaited(ModelContextTable.shared.ensureLoaded());
   await _initData();
   await _initWindow();
 
@@ -317,7 +317,7 @@ Future<void> _doPlatformRelated() async {
   // record there is — nothing in Dart ran to write one. After the stores are
   // open, since it remembers which record it has already reported, and after
   // `CrashLog.attach`, whose answer about the previous run it may correct.
-  await NativeExitReport.collect();
+  await NativeExitReport.shared.collect();
 
   // Adds the upload sink beside the local one, if this build has a DSN and the
   // user asked for it. Neither is true by default. Not awaited: the local sink
@@ -330,7 +330,7 @@ Future<void> _doPlatformRelated() async {
   // and two analytics clients, so on a slow endpoint the row was missing from a
   // page opened straight after launch. `CrashReport.report` files the error and
   // has nowhere to send it until the sink is in. Both are after
-  // `NativeExitReport.collect` above, which is what may decide the previous run
+  // `NativeExitReport.shared.collect` above, which is what may decide the previous run
   // ended badly at all.
   unawaited(() async {
     await CrashReport.keep();

@@ -111,7 +111,6 @@ void main() {
       'server-new',
       'server-new',
     ]);
-    expect(Stores.history.resolveSshServerId('server-old'), 'server-new');
   });
 
   testWidgets('two shells on one server come back as two tabs', (tester) async {

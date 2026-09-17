@@ -93,7 +93,10 @@ void main() {
         for (final release in distro.releases) {
           if (!release.source.followsMirror) continue;
           expect(
-            distro.rootfsUrl('https://mirror.example/x', release: release),
+            release.source.urlOn(
+              'https://mirror.example/x',
+              distro.defaultMirror,
+            ),
             startsWith('https://mirror.example/x/'),
             reason:
                 '${distro.id} ${release.version} must honour a mirror, or '
@@ -112,9 +115,9 @@ void main() {
         for (final release in distro.releases) {
           if (release.source.followsMirror) continue;
           final where = '${distro.id} ${release.version}';
-          final url = distro.rootfsUrl(
+          final url = release.source.urlOn(
             'https://mirror.example/x',
-            release: release,
+            distro.defaultMirror,
           );
           expect(url, isNot(contains('mirror.example')), reason: where);
           expect(Uri.parse(url).isScheme('https'), isTrue, reason: where);
@@ -246,7 +249,7 @@ void main() {
       for (final distro in LinuxDistro.values) {
         for (final release in distro.releases) {
           expect(
-            distro.rootfsUrl(distro.defaultMirror, release: release),
+            release.source.urlOn(distro.defaultMirror, distro.defaultMirror),
             endsWith(switch (release.source.compression) {
               LinuxRootfsCompression.gzip => '.tar.gz',
               LinuxRootfsCompression.xz => '.tar.xz',
@@ -316,7 +319,10 @@ void main() {
       // The same directory offers `Rocky-9-Container-Base.latest.…`, whose
       // bytes change whenever Rocky rebuilds. The pinned digest does not, so
       // every install would start failing until the app shipped an update.
-      final url = LinuxDistro.rocky.rootfsUrl(LinuxDistro.rocky.defaultMirror);
+      final url = LinuxDistro.rocky.preferred.source.urlOn(
+        LinuxDistro.rocky.defaultMirror,
+        LinuxDistro.rocky.defaultMirror,
+      );
       expect(url, isNot(contains('.latest.')));
       expect(url, contains('9.8-20260525.0'));
     });

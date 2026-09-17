@@ -32,7 +32,7 @@ void main() {
       }
     }
   });
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   bool notice() => SettingStore.instance.legacyStatusNoticePending.fetch();
 

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:server_box/data/ssh/persistent_shell.dart';
-import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_scanner.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
@@ -36,11 +35,9 @@ final class TmuxAttachSkip extends TmuxAttachChoice {
 final class TmuxSession {
   final PersistentShell _shell;
   final TmuxSessionScanner _scanner;
-  final String? _lang;
 
   TmuxSession(PersistentShell shell, {String? lang})
     : _shell = shell,
-      _lang = lang,
       _scanner = TmuxSessionScanner(shell, lang: lang);
 
   TmuxSessionScanner get scanner => _scanner;
@@ -63,39 +60,6 @@ final class TmuxSession {
       _scanner.killWindow(sessionName, windowIndex);
 
   Future<bool> newWindow(String sessionName) => _scanner.newWindow(sessionName);
-
-  /// Generate the shell command to execute for tmux attachment.
-  ///
-  /// Returns the command string to prepend to the terminal session.
-  /// For existing sessions: `tmux -u attach-session -t <name>`
-  /// For new sessions: `tmux -u new-session -s <name>`
-  /// For skip: returns null (no tmux command).
-  String? buildAttachCommand(
-    TmuxAttachChoice choice, {
-    String tmuxBin = 'tmux',
-  }) {
-    return switch (choice) {
-      TmuxAttachExisting(sessionName: final name, windowIndex: final win) =>
-        win != null
-            ? TmuxCommandBuilder.attachSessionWindow(
-                name,
-                win,
-                tmuxBin: tmuxBin,
-                lang: _lang,
-              )
-            : TmuxCommandBuilder.attachSession(
-                name,
-                tmuxBin: tmuxBin,
-                lang: _lang,
-              ),
-      TmuxAttachNew(sessionName: final name) => TmuxCommandBuilder.newSession(
-        name,
-        tmuxBin: tmuxBin,
-        lang: _lang,
-      ),
-      TmuxAttachSkip() => null,
-    };
-  }
 
   /// Kill a tmux session.
   Future<bool> killSession(String name) => _scanner.killSession(name);

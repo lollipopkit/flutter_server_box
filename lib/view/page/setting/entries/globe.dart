@@ -38,7 +38,7 @@ extension _Globe on _AppSettingsPageState {
           // Reaches few people on purpose: the switch is on by default, so this
           // is the path of somebody who turned it off and changed their mind.
           // What covers the rest is the globe itself — see [GeoDataInstall].
-          if (!on || GeoData.installed() != null) return;
+          if (!on || GeoData.shared.installed() != null) return;
           if (!mounted) return;
           await GeoDataInstall.run(context);
         },
@@ -80,21 +80,21 @@ class _GeoDataTileState extends State<_GeoDataTile> {
     // The switch above can install too, and the globe can install while this
     // page is not even built. Without this the row went on saying "Not
     // downloaded" over 52 MB of data.
-    GeoData.revision.addListener(_onRevision);
+    GeoData.shared.revision.addListener(_onRevision);
     unawaited(_refresh());
   }
 
   @override
   void dispose() {
-    GeoData.revision.removeListener(_onRevision);
+    GeoData.shared.revision.removeListener(_onRevision);
     super.dispose();
   }
 
   void _onRevision() => unawaited(_refresh());
 
   Future<void> _refresh() async {
-    final installed = GeoData.installed();
-    final onDisk = await GeoData.sizeOnDisk();
+    final installed = GeoData.shared.installed();
+    final onDisk = await GeoData.shared.sizeOnDisk();
     if (!mounted) return;
     setState(() {
       _installed = installed;
@@ -190,7 +190,7 @@ class _GeoDataTileState extends State<_GeoDataTile> {
       actions: Btnx.cancelRedOk,
     );
     if (ok != true) return;
-    final removed = await GeoData.remove();
+    final removed = await GeoData.shared.remove();
     Diag.crumb(SbDiag.globe, removed ? 'data removed' : 'data remove failed');
     await _refresh();
     if (!removed && mounted) {

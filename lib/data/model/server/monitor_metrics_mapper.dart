@@ -1,15 +1,14 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
-import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 
@@ -241,63 +240,33 @@ void _applyTemps(ServerStatus ss, MonitorMetrics m) {
   ss.temps.setAll(t == null ? const {} : {'cpu_thermal': t});
 }
 
-/// The agent's flattened `gpus`, split back into the two lists the status page
-/// draws.
-///
-/// It was decoded and then dropped: a server reached over the agent showed no
-/// GPU card at all, while the same machine over SSH showed every one of them.
-/// Which list a card belongs in is [MonitorGpuMetrics.isAmd].
-///
-/// `fanSpeed` and `clockSpeed` are 0 because the agent carries neither — the
-/// same kind of known, stated loss as SMART's `rawData`. Null rather than an
-/// empty list when the agent reports none, since that is what the status page
-/// reads as "this machine has no card".
+/// The agent's vendor-neutral GPU list. Every metric remains optional so a
+/// discovered iGPU with an unreadable PMU is shown as unavailable rather than
+/// as an invented zero.
 void _applyGpus(ServerStatus ss, MonitorMetrics m) {
-  if (m.gpus.isEmpty) {
-    ss.nvidia = null;
-    ss.amd = null;
-    return;
-  }
-  final nvidia = <NvidiaSmiItem>[];
-  final amd = <AmdSmiItem>[];
-  for (final g in m.gpus) {
-    if (g.isAmd) {
-      amd.add(
-        AmdSmiItem(
-          name: g.name,
-          temp: g.temperature,
-          power: g.power,
-          memory: AmdSmiMem(
-            g.memoryTotal,
-            g.memoryUsed,
-            g.memoryUnit,
-            const [],
-          ),
-          utilization: g.usagePercent.round(),
-          fanSpeed: 0,
-          clockSpeed: 0,
-        ),
-      );
-    } else {
-      nvidia.add(
-        NvidiaSmiItem(
-          name: g.name,
-          temp: g.temperature,
-          power: g.power,
-          memory: NvidiaSmiMem(
-            g.memoryTotal,
-            g.memoryUsed,
-            g.memoryUnit,
-            const [],
-          ),
-          percent: g.usagePercent.round(),
-          fanSpeed: 0,
-        ),
-      );
-    }
-  }
-  ss.nvidia = nvidia.isEmpty ? null : nvidia;
-  ss.amd = amd.isEmpty ? null : amd;
+  ss.gpus = [
+    for (final (index, gpu) in m.gpus.indexed)
+      GpuItem(
+        id: gpu.id ?? '${gpu.resolvedVendor}:$index',
+        vendor: gpu.resolvedVendor,
+        name: gpu.name,
+        utilization: gpu.usagePercent,
+        temperature: gpu.temperature,
+        power: gpu.power,
+        memory: gpu.memoryUsed != null &&
+                gpu.memoryTotal != null &&
+                gpu.memoryUnit != null
+            ? GpuSmiMem(
+                gpu.memoryTotal!,
+                gpu.memoryUsed!,
+                gpu.memoryUnit!,
+                const [],
+              )
+            : null,
+        fanSpeed: gpu.fanSpeed,
+        clockSpeed: gpu.clockSpeed,
+      ),
+  ];
 }
 
 void _applyConn(ServerStatus ss, MonitorMetrics m) {

@@ -17,9 +17,7 @@ void main() {
   /// attempt does not need microseconds, but a test comparing `DateTime`s does
   /// need to compare the same precision.
   final base = DateTime.fromMillisecondsSinceEpoch(
-    DateTime.now()
-        .subtract(const Duration(days: 1))
-        .millisecondsSinceEpoch,
+    DateTime.now().subtract(const Duration(days: 1)).millisecondsSinceEpoch,
   );
 
   setUp(() async {
@@ -37,7 +35,7 @@ void main() {
     await store.init();
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   ConnectionStat stat(
     String serverId, {
@@ -52,6 +50,14 @@ void main() {
     durationMs: 1,
   );
 
+  List<ConnectionStat> history(String id) =>
+      store
+          .getAllServerStats()
+          .where((summary) => summary.serverId == id)
+          .firstOrNull
+          ?.recentConnections ??
+      const [];
+
   test('history comes back newest first', () async {
     for (var i = 0; i < 3; i++) {
       await store.recordConnection(
@@ -59,18 +65,18 @@ void main() {
       );
     }
 
-    final history = store.getConnectionHistory('a');
-    expect(history.length, 3);
-    expect(history.first.timestamp, base.add(const Duration(minutes: 2)));
-    expect(history.last.timestamp, base);
+    final recent = history('a');
+    expect(recent.length, 3);
+    expect(recent.first.timestamp, base.add(const Duration(minutes: 2)));
+    expect(recent.last.timestamp, base);
   });
 
   test('one server does not see another', () async {
     await store.recordConnection(stat('a', at: base));
     await store.recordConnection(stat('b', at: base));
 
-    expect(store.getConnectionHistory('a').single.serverId, 'a');
-    expect(store.getConnectionHistory('b').single.serverId, 'b');
+    expect(history('a').single.serverId, 'a');
+    expect(history('b').single.serverId, 'b');
   });
 
   test('a server keeps its newest 100 and no more', () async {
@@ -80,11 +86,22 @@ void main() {
       );
     }
 
-    final history = store.getConnectionHistory('a');
-    expect(history.length, 100);
-    // The 30 oldest went, not an arbitrary 30.
-    expect(history.last.timestamp, base.add(const Duration(minutes: 30)));
-    expect(history.first.timestamp, base.add(const Duration(minutes: 129)));
+    final summary = store.getAllServerStats().single;
+    expect(summary.totalAttempts, 100);
+    expect(summary.recentConnections, hasLength(20));
+    final bounds = SqliteDb.instance
+        .select(
+          "SELECT MIN(timestamp) AS oldest, MAX(timestamp) AS newest FROM conn_stat WHERE server_id = 'a';",
+        )
+        .single;
+    expect(
+      bounds['oldest'],
+      base.add(const Duration(minutes: 30)).millisecondsSinceEpoch,
+    );
+    expect(
+      bounds['newest'],
+      base.add(const Duration(minutes: 129)).millisecondsSinceEpoch,
+    );
   });
 
   test('the cap is per server, not overall', () async {
@@ -95,8 +112,14 @@ void main() {
     }
     await store.recordConnection(stat('b', at: base));
 
-    expect(store.getConnectionHistory('a').length, 100);
-    expect(store.getConnectionHistory('b').length, 1);
+    expect(
+      store
+          .getAllServerStats()
+          .firstWhere((s) => s.serverId == 'a')
+          .totalAttempts,
+      100,
+    );
+    expect(history('b').length, 1);
   });
 
   test('anything older than 30 days is swept at init', () async {
@@ -108,11 +131,11 @@ void main() {
       stat('a', at: DateTime.now().subtract(const Duration(days: 31))),
     );
     await store.recordConnection(stat('a', at: base));
-    expect(store.getConnectionHistory('a'), hasLength(2));
+    expect(history('a'), hasLength(2));
 
     await store.init();
 
-    final kept = store.getConnectionHistory('a');
+    final kept = history('a');
     expect(kept, hasLength(1));
     expect(kept.single.timestamp, base);
   });
@@ -125,16 +148,16 @@ void main() {
     await store.recordConnection(stat('a', at: at));
     await store.recordConnection(stat('a', at: at, name: 'renamed'));
 
-    final history = store.getConnectionHistory('a');
-    expect(history.length, 2);
-    expect(history.map((e) => e.serverName), containsAll(['srv', 'renamed']));
+    final recent = history('a');
+    expect(recent.length, 2);
+    expect(recent.map((e) => e.serverName), containsAll(['srv', 'renamed']));
   });
 
   test('an attempt against a server that is gone is not recorded', () async {
     // `server_id` is a foreign key. A status refresh can land after the user
     // deleted the server, and the row would only ever be orphaned statistics.
     await store.recordConnection(stat('deleted-server', at: base));
-    expect(store.getConnectionHistory('deleted-server'), isEmpty);
+    expect(history('deleted-server'), isEmpty);
   });
 
   test('the summary counts both outcomes', () async {
@@ -161,17 +184,20 @@ void main() {
     expect(summary.lastFailureTime, base.add(const Duration(minutes: 1)));
   });
 
-  test('a server with no attempts is absent from the list, not an error', () async {
-    // Rows for `a` only, so the list is non-empty and the assertion is about
-    // `b` being left out of it. With nothing recorded at all `getAllServerStats`
-    // returns early on `totals.isEmpty`, and every server is absent from the
-    // empty list — which a stub answering `[]` would pass just as well.
-    await store.recordConnection(stat('a', at: base));
+  test(
+    'a server with no attempts is absent from the list, not an error',
+    () async {
+      // Rows for `a` only, so the list is non-empty and the assertion is about
+      // `b` being left out of it. With nothing recorded at all `getAllServerStats`
+      // returns early on `totals.isEmpty`, and every server is absent from the
+      // empty list — which a stub answering `[]` would pass just as well.
+      await store.recordConnection(stat('a', at: base));
 
-    final all = store.getAllServerStats();
-    expect(all.map((e) => e.serverId), ['a']);
-    expect(all.where((e) => e.serverId == 'b'), isEmpty);
-  });
+      final all = store.getAllServerStats();
+      expect(all.map((e) => e.serverId), ['a']);
+      expect(all.where((e) => e.serverId == 'b'), isEmpty);
+    },
+  );
 
   test('the overall list names each server as it was named last', () async {
     await store.recordConnection(stat('a', at: base, name: 'old-name'));
@@ -195,8 +221,8 @@ void main() {
 
     await store.clearServerStats('a');
 
-    expect(store.getConnectionHistory('a'), isEmpty);
-    expect(store.getConnectionHistory('b'), hasLength(1));
+    expect(history('a'), isEmpty);
+    expect(history('b'), hasLength(1));
   });
 
   test('clearing everything leaves nothing', () async {
@@ -205,85 +231,89 @@ void main() {
     expect(store.getAllServerStats(), isEmpty);
   });
 
-  group('the overall list, which is two queries regardless of server count', () {
-    test('the overall list aggregates each server correctly', () async {
-      for (var server = 0; server < 4; server++) {
-        for (var i = 0; i < 25; i++) {
-          await store.recordConnection(
-            stat(
-              's$server',
-              at: base.add(Duration(minutes: i)),
-              result: i.isEven
-                  ? ConnectionResult.success
-                  : ConnectionResult.timeout,
-              name: 'name-$server',
-            ),
-          );
+  group(
+    'the overall list, which is two queries regardless of server count',
+    () {
+      test('the overall list aggregates each server correctly', () async {
+        for (var server = 0; server < 4; server++) {
+          for (var i = 0; i < 25; i++) {
+            await store.recordConnection(
+              stat(
+                's$server',
+                at: base.add(Duration(minutes: i)),
+                result: i.isEven
+                    ? ConnectionResult.success
+                    : ConnectionResult.timeout,
+                name: 'name-$server',
+              ),
+            );
+          }
         }
-      }
 
-      final all = {
-        for (final e in store.getAllServerStats()) e.serverId: e,
-      };
-      expect(all.keys, hasLength(4));
+        final all = {for (final e in store.getAllServerStats()) e.serverId: e};
+        expect(all.keys, hasLength(4));
 
-      // Even minutes succeeded and odd ones timed out, so the aggregates are
-      // known up front rather than agreed between two implementations.
-      for (var server = 0; server < 4; server++) {
-        final id = 's$server';
-        final summary = all[id]!;
+        // Even minutes succeeded and odd ones timed out, so the aggregates are
+        // known up front rather than agreed between two implementations.
+        for (var server = 0; server < 4; server++) {
+          final id = 's$server';
+          final summary = all[id]!;
 
-        expect(summary.serverName, 'name-$server', reason: id);
-        expect(summary.totalAttempts, 25, reason: id);
-        expect(summary.successCount, 13, reason: id);
-        expect(summary.failureCount, 12, reason: id);
-        expect(summary.successRate, closeTo(13 / 25, 1e-12), reason: id);
-        expect(
-          summary.lastSuccessTime,
-          base.add(const Duration(minutes: 24)),
-          reason: id,
-        );
-        expect(
-          summary.lastFailureTime,
-          base.add(const Duration(minutes: 23)),
-          reason: id,
-        );
-        expect(summary.recentConnections, hasLength(20), reason: id);
-      }
-    });
+          expect(summary.serverName, 'name-$server', reason: id);
+          expect(summary.totalAttempts, 25, reason: id);
+          expect(summary.successCount, 13, reason: id);
+          expect(summary.failureCount, 12, reason: id);
+          expect(summary.successRate, closeTo(13 / 25, 1e-12), reason: id);
+          expect(
+            summary.lastSuccessTime,
+            base.add(const Duration(minutes: 24)),
+            reason: id,
+          );
+          expect(
+            summary.lastFailureTime,
+            base.add(const Duration(minutes: 23)),
+            reason: id,
+          );
+          expect(summary.recentConnections, hasLength(20), reason: id);
+        }
+      });
 
-    test('each server carries at most 20 recent attempts, newest first', () async {
-      for (var i = 0; i < 40; i++) {
+      test(
+        'each server carries at most 20 recent attempts, newest first',
+        () async {
+          for (var i = 0; i < 40; i++) {
+            await store.recordConnection(
+              stat('a', at: base.add(Duration(minutes: i))),
+            );
+          }
+
+          final recent = store.getAllServerStats().single.recentConnections;
+          expect(recent, hasLength(20));
+          expect(recent.first.timestamp, base.add(const Duration(minutes: 39)));
+          expect(recent.last.timestamp, base.add(const Duration(minutes: 20)));
+        },
+      );
+
+      test('a rename shows the newest name, not the oldest row\'s', () async {
+        await store.recordConnection(stat('a', at: base, name: 'before'));
         await store.recordConnection(
-          stat('a', at: base.add(Duration(minutes: i))),
+          stat('a', at: base.add(const Duration(minutes: 1)), name: 'after'),
         );
-      }
 
-      final recent = store.getAllServerStats().single.recentConnections;
-      expect(recent, hasLength(20));
-      expect(recent.first.timestamp, base.add(const Duration(minutes: 39)));
-      expect(recent.last.timestamp, base.add(const Duration(minutes: 20)));
-    });
+        expect(store.getAllServerStats().single.serverName, 'after');
+      });
 
-    test('a rename shows the newest name, not the oldest row\'s', () async {
-      await store.recordConnection(stat('a', at: base, name: 'before'));
-      await store.recordConnection(
-        stat('a', at: base.add(const Duration(minutes: 1)), name: 'after'),
-      );
+      test('a server with only failures reports no last success', () async {
+        await store.recordConnection(
+          stat('a', at: base, result: ConnectionResult.authFailed),
+        );
 
-      expect(store.getAllServerStats().single.serverName, 'after');
-    });
-
-    test('a server with only failures reports no last success', () async {
-      await store.recordConnection(
-        stat('a', at: base, result: ConnectionResult.authFailed),
-      );
-
-      final summary = store.getAllServerStats().single;
-      expect(summary.successCount, 0);
-      expect(summary.successRate, 0.0);
-      expect(summary.lastSuccessTime, isNull);
-      expect(summary.lastFailureTime, base);
-    });
-  });
+        final summary = store.getAllServerStats().single;
+        expect(summary.successCount, 0);
+        expect(summary.successRate, 0.0);
+        expect(summary.lastSuccessTime, isNull);
+        expect(summary.lastFailureTime, base);
+      });
+    },
+  );
 }

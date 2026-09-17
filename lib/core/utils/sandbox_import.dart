@@ -213,14 +213,7 @@ abstract final class SandboxImport {
   /// converter here would keep straight. Only the keys in [_prefKeys] and the
   /// legacy box key are asked for, and only where this install has nothing of
   /// its own to lose.
-  /// - [write] takes each value that survived, so a test can watch this run
-  ///   against a plist of its own without writing into the preferences of the
-  ///   machine it runs on. Defaults to [PrefStore.shared].
-  @visibleForTesting
-  static Future<void> importPrefs(
-    String plistPathWithoutExt, {
-    Future<void> Function(String key, Object value)? write,
-  }) async {
+  static Future<void> importPrefs(String plistPathWithoutExt) async {
     if (!isMacOS) return;
     if (!await File('$plistPathWithoutExt.plist').exists()) return;
 
@@ -235,11 +228,7 @@ abstract final class SandboxImport {
       if (raw == null) continue;
       final value = parsePref(raw, entry.value);
       if (value == null) continue;
-      if (write != null) {
-        await write(key, value);
-      } else {
-        await PrefStore.shared.set(key, value);
-      }
+      await PrefStore.shared.set(key, value);
     }
   }
 

@@ -10,6 +10,7 @@ library;
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -138,16 +139,17 @@ void main() {
 
   group('bounds', () {
     test('a bomb is refused as it decompresses, not after', () {
-      // 8 MiB of zeroes in a few KiB of gzip. The cap is checked as the output
-      // arrives, because gzip's own length field sits at the end of the stream
-      // and nothing authenticates it.
-      final bomb = gzip.encode(List.filled(8 * 1024 * 1024, 0));
-      expect(bomb.length, lessThan(64 * 1024), reason: 'the input is small');
-
-      // The cap is injected rather than the default asserted: a test that fed
-      // this to the 256 MiB default would pass with no cap at all.
+      // Generate a stream just beyond the real 256 MiB production limit.
+      final packed = BytesBuilder();
+      final encoder = gzip.encoder.startChunkedConversion(
+        ByteConversionSink.withCallback(packed.add));
+      final chunk = Uint8List(1024 * 1024);
+      for (var i = 0; i < 257; i++) { encoder.add(chunk); }
+      encoder.close();
+      final bomb = packed.takeBytes();
+      expect(bomb.length, lessThan(512 * 1024));
       expect(
-        () => BackupV2.gunzipCapped(bomb, maxBytes: 1024),
+        () => BackupV2.gunzipCapped(bomb),
         throwsA(
           isA<FormatException>().having(
             (e) => e.message,

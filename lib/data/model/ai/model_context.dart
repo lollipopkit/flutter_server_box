@@ -63,7 +63,9 @@ Map<String, int> _tableFromApiDocument(String raw) {
 /// releases. That is the reason for [fallbackContext] rather than for a
 /// download: a model nobody has heard of still has to be usable, and a wrong
 /// answer here only decides when a conversation gets summarised.
-abstract final class ModelContextTable {
+final class ModelContextTable {
+  static final shared = ModelContextTable();
+
   /// What an unrecognised model is assumed to hold.
   ///
   /// Low on purpose. Too low costs a summary that was not needed yet; too high
@@ -78,18 +80,18 @@ abstract final class ModelContextTable {
   /// for rather than something that happens on its own.
   static const sourceUrl = 'https://models.dev/api.json';
 
-  static Map<String, int>? _models;
-  static String? _generated;
+  Map<String, int>? _models;
+  String? _generated;
 
   /// The fetch in flight, so a second caller joins it rather than starting
   /// another. Held here rather than in the row that shows it: that row is
   /// rebuilt whenever any AI setting changes, and a flag living in its build
   /// method came back false mid-fetch — spinner gone, button live again.
-  static Future<int>? _inFlight;
+  Future<int>? _inFlight;
 
   /// Whether a fetch is running. A `ValueListenable` so the row can follow it
   /// across those rebuilds.
-  static final refreshing = ValueNotifier(false);
+  final refreshing = ValueNotifier(false);
 
   /// How far along that fetch is, or null while there is no measure of it.
   ///
@@ -97,35 +99,26 @@ abstract final class ModelContextTable {
   /// answers chunked, so there is no length to divide by, and the parse that
   /// follows the download has no progress at all. The bar says "still going"
   /// in those stretches rather than inventing a number.
-  static final progress = ValueNotifier<double?>(null);
+  final progress = ValueNotifier<double?>(null);
 
   /// When the table in use was generated, or null before it is loaded.
   ///
   /// The shipped date for the asset, the download's date after a refresh —
   /// which is the one thing that tells a user whether refreshing did anything.
-  static String? get generated => _generated;
+  String? get generated => _generated;
 
-  static int get modelCount => _models?.length ?? 0;
-
-  @visibleForTesting
-  static void loadForTest(Map<String, int> models) => _models = models;
-
-  @visibleForTesting
-  static void resetForTest() {
-    _models = null;
-    _generated = null;
-  }
+  int get modelCount => _models?.length ?? 0;
 
   /// Where a refreshed table is kept. The asset cannot be written to, and a
   /// table the user asked for should outlive the launch that fetched it.
-  static File _cacheFile() => File('${Paths.doc}/model_context.json');
+  File _cacheFile() => File('${Paths.doc}/model_context.json');
 
   /// Reads the table once. Safe to call again; it answers from memory after.
   ///
   /// The downloaded copy wins over the shipped one. If it is unreadable — a
   /// partial write, a format from a later release — the asset still answers,
   /// which is the reason the asset stays in the app after a refresh.
-  static Future<void> ensureLoaded() async {
+  Future<void> ensureLoaded() async {
     if (_models != null) return;
     try {
       final cached = _cacheFile();
@@ -146,72 +139,71 @@ abstract final class ModelContextTable {
   /// Throws what the network threw. The caller is a button the user pressed,
   /// so a failure has somewhere to be reported — unlike [ensureLoaded], which
   /// runs at launch and must not be able to stop one.
-  static Future<int> refresh({Dio? dio}) {
+  Future<int> refresh() {
     // Joining rather than refusing: two taps mean the same thing, and the
     // second should get the same answer rather than a second download.
-    return _inFlight ??= _refresh(dio).whenComplete(() {
+    return _inFlight ??= _refresh().whenComplete(() {
       _inFlight = null;
       refreshing.value = false;
       progress.value = null;
     });
   }
 
-  static Future<int> _refresh(Dio? dio) async {
+  Future<int> _refresh() async {
     refreshing.value = true;
     progress.value = null;
-    final client = dio ?? Dio();
-    final response = await client.get<String>(
-      sourceUrl,
-      options: Options(
-        responseType: ResponseType.plain,
-        // Both halves. A standalone `Dio` has no connect timeout by default,
-        // so a host that accepts nothing leaves the button spinning forever.
-        connectTimeout: const Duration(seconds: 20),
-        receiveTimeout: const Duration(minutes: 2),
-      ),
-      onReceiveProgress: (received, total) {
-        // `total` is -1 when the response is chunked, which this one is.
-        progress.value = total > 0 ? received / total : null;
-      },
-    );
-    final body = response.data;
-    if (body == null || body.isEmpty) {
-      throw const FormatException('models.dev returned nothing');
-    }
+    final client = Dio();
+    try {
+      final response = await client.get<String>(
+        sourceUrl,
+        options: Options(
+          responseType: ResponseType.plain,
+          // Both halves. A standalone `Dio` has no connect timeout by default,
+          // so a host that accepts nothing leaves the button spinning forever.
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+        onReceiveProgress: (received, total) {
+          // `total` is -1 when the response is chunked, which this one is.
+          progress.value = total > 0 ? received / total : null;
+        },
+      );
+      final body = response.data;
+      if (body == null || body.isEmpty) {
+        throw const FormatException('models.dev returned nothing');
+      }
 
-    // Back to unmeasured for the parse, which has no progress to report.
-    progress.value = null;
-    // On another isolate: 4.5 MB of JSON is tens of milliseconds of parsing
-    // and this is a button on a page that is still drawing. `compute` copies
-    // the string across, which is cheaper than the frames it would otherwise
-    // drop.
-    final table = await compute(_tableFromApiDocument, body);
-    if (table.isEmpty) {
-      throw const FormatException('models.dev returned no context limits');
-    }
+      // Back to unmeasured for the parse, which has no progress to report.
+      progress.value = null;
+      // On another isolate: 4.5 MB of JSON is tens of milliseconds of parsing
+      // and this is a button on a page that is still drawing. `compute` copies
+      // the string across, which is cheaper than the frames it would otherwise
+      // drop.
+      final table = await compute(_tableFromApiDocument, body);
+      if (table.isEmpty) {
+        throw const FormatException('models.dev returned no context limits');
+      }
 
-    final generated = DateTime.now().toIso8601String().split('T').first;
-    final document = jsonEncode({
-      'source': sourceUrl,
-      'generated': generated,
-      'models': table,
-    });
-    // Written before it is adopted: a table in memory that is not on disk
-    // would be gone at the next launch with nothing to say why.
-    await _cacheFile().writeAsString(document, flush: true);
-    _models = table;
-    _generated = generated;
-    return table.length;
+      final generated = DateTime.now().toIso8601String().split('T').first;
+      final document = jsonEncode({
+        'source': sourceUrl,
+        'generated': generated,
+        'models': table,
+      });
+      // Written before it is adopted: a table in memory that is not on disk
+      // would be gone at the next launch with nothing to say why.
+      await _cacheFile().writeAsString(document, flush: true);
+      _models = table;
+      _generated = generated;
+      return table.length;
+    } finally {
+      client.close();
+    }
   }
-
-  /// Turns models.dev's document into the two columns this needs.
-  @visibleForTesting
-  static Map<String, int> tableFromApiDocument(String raw) =>
-      _tableFromApiDocument(raw);
 
   /// Reads one of this app's own documents — the asset or the cache. Answers
   /// whether it was usable.
-  static bool _adopt(String raw) {
+  bool _adopt(String raw) {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return false;
@@ -231,17 +223,14 @@ abstract final class ModelContextTable {
       // while the one in its own assets sat there unread.
       if (table.isEmpty) return false;
 
+      final generated = decoded['generated'] as String?;
       _models = table;
-      _generated = decoded['generated'] as String?;
+      _generated = generated;
       return true;
     } catch (_) {
       return false;
     }
   }
-
-  /// [_adopt], for the test that a broken document is refused.
-  @visibleForTesting
-  static bool adoptForTest(String raw) => _adopt(raw);
 
   /// The context window for [model], or null when nothing matched.
   ///
@@ -263,7 +252,7 @@ abstract final class ModelContextTable {
   /// longest first, is four hash lookups; scanning every entry was 3370
   /// `endsWith` calls, on a path that runs once a turn and again on every
   /// rebuild of the settings row that shows the answer.
-  static int? lookup(String model) {
+  int? lookup(String model) {
     final models = _models;
     if (models == null || models.isEmpty) return null;
     final needle = model.trim().toLowerCase();
@@ -283,7 +272,7 @@ abstract final class ModelContextTable {
   }
 
   /// What sits between a prefix and the model's own id.
-  static bool _isSeparator(int codeUnit) =>
+  bool _isSeparator(int codeUnit) =>
       codeUnit == 0x2F || // /
       codeUnit == 0x3A || // :
       codeUnit == 0x2E; // .
@@ -293,7 +282,7 @@ abstract final class ModelContextTable {
   /// [override] wins outright. A user who has typed a number knows something
   /// the table cannot: their provider serves this model with a shorter window
   /// than the model has, or a longer one than it had when the app shipped.
-  static int contextFor(String model, {int? override}) {
+  int contextFor(String model, {int? override}) {
     if (override != null && override > 0) return override;
     return lookup(model) ?? fallbackContext;
   }

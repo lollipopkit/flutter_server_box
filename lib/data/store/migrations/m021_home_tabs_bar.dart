@@ -10,9 +10,8 @@ import 'package:server_box/data/store/setting.dart';
 /// once. A custom order is preserved; only the old set of five tabs is
 /// recognized, which keeps this migration from changing a newer arrangement.
 class HomeTabsBarMigration implements SchemaMigration {
-  const HomeTabsBarMigration({SettingStore? store}) : _store = store;
+  const HomeTabsBarMigration();
 
-  final SettingStore? _store;
 
   static const appliedAt = 21;
   static const key = 'homeTabs';
@@ -31,7 +30,7 @@ class HomeTabsBarMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
     final raw = store.get<Object>(key);
     if (raw is! List) return;
 

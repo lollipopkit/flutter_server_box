@@ -14,6 +14,8 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/tables.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -27,11 +29,11 @@ void main() {
     // the real one would be.
     SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
     await createTables(SqliteDb.instance);
-    store = SettingStore('setting_test');
-    migration = KnownHostsToSettingsMigration(store: store);
+    store = SettingStore.instance;
+    migration = KnownHostsToSettingsMigration();
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   void seedServer(String id) => SqliteDb.instance.execute(
     'INSERT INTO server (id, name, ssh_ip, ssh_port, ssh_user, ssh_pwd, '

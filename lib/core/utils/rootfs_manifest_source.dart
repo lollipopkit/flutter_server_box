@@ -79,10 +79,10 @@ abstract final class RootfsManifestSource {
   /// what was in force stays in force. They are logged apart because "no
   /// network" and "a signature that did not verify" want very different
   /// reactions from whoever reads the log.
-  static Future<bool> refresh({Dio? dio}) {
+  static Future<bool> refresh() {
     final running = _inFlight;
     if (running != null) return running;
-    final started = _refresh(dio: dio);
+    final started = _refresh();
     _inFlight = started;
     return started.whenComplete(() {
       // Only if it is still ours. A caller that started the next one already
@@ -91,8 +91,10 @@ abstract final class RootfsManifestSource {
     });
   }
 
-  static Future<bool> _refresh({Dio? dio}) async {
-    final client = dio ?? Dio();
+  static Future<bool> _refresh() async {
+    final client = Dio(
+      BaseOptions(connectTimeout: const Duration(seconds: 20)),
+    );
     final Uint8List source;
     final Uint8List signature;
     try {
@@ -101,6 +103,8 @@ abstract final class RootfsManifestSource {
     } catch (e) {
       Loggers.app.info('rootfs manifest: not fetched ($e)');
       return false;
+    } finally {
+      client.close();
     }
 
     final RootfsManifest fetched;

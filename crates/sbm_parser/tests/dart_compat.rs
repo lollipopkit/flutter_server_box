@@ -1050,12 +1050,13 @@ fn nvidia_parse_inline() {
     assert_eq!(items.len(), 1);
     let item = &items[0];
     assert_eq!(item.name, "NVIDIA GeForce RTX 3080 Ti");
-    assert_eq!(item.temp, 34);
-    assert_eq!(item.power, "24.55 W / 350.00 W");
-    assert_eq!(item.memory.total, 12288);
-    assert_eq!(item.memory.used, 352);
-    assert_eq!(item.memory.unit, "MiB");
-    let procs = &item.memory.processes;
+    assert_eq!(item.temp, Some(34));
+    assert_eq!(item.power.as_deref(), Some("24.55 W / 350.00 W"));
+    let memory = item.memory.as_ref().unwrap();
+    assert_eq!(memory.total, 12288);
+    assert_eq!(memory.used, 352);
+    assert_eq!(memory.unit, "MiB");
+    let procs = &memory.processes;
     assert_eq!(procs.len(), 3);
     assert_eq!(procs[0].pid, 1575);
     assert_eq!(procs[0].name, "/usr/lib/xorg/Xorg");
@@ -1120,28 +1121,30 @@ fn amd_parse_two_gpus() {
 
     let g1 = &gpus[0];
     assert_eq!(g1.name, "AMD Radeon RX 7900 XTX");
-    assert_eq!(g1.temp, 45);
-    assert_eq!(g1.power, "120W / 355W");
-    assert_eq!(g1.memory.total, 24576);
-    assert_eq!(g1.memory.used, 1024);
-    assert_eq!(g1.memory.unit, "MB");
-    assert_eq!(g1.memory.processes.len(), 2);
-    assert_eq!(g1.memory.processes[0].pid, 2456);
-    assert_eq!(g1.memory.processes[0].name, "firefox");
-    assert_eq!(g1.memory.processes[0].memory, 512);
-    assert_eq!(g1.utilization, 75);
-    assert_eq!(g1.fan_speed, 1200);
-    assert_eq!(g1.clock_speed, 2400);
+    assert_eq!(g1.temp, Some(45));
+    assert_eq!(g1.power.as_deref(), Some("120W / 355W"));
+    let memory = g1.memory.as_ref().unwrap();
+    assert_eq!(memory.total, 24576);
+    assert_eq!(memory.used, 1024);
+    assert_eq!(memory.unit, "MB");
+    assert_eq!(memory.processes.len(), 2);
+    assert_eq!(memory.processes[0].pid, 2456);
+    assert_eq!(memory.processes[0].name, "firefox");
+    assert_eq!(memory.processes[0].memory, 512);
+    assert_eq!(g1.utilization, Some(75));
+    assert_eq!(g1.fan_speed, Some(1200));
+    assert_eq!(g1.clock_speed, Some(2400));
 
     let g2 = &gpus[1];
     assert_eq!(g2.name, "AMD Radeon RX 6800 XT");
-    assert_eq!(g2.temp, 38);
-    assert_eq!(g2.power, "85W / 300W");
-    assert_eq!(g2.memory.total, 16384);
-    assert_eq!(g2.memory.used, 512);
-    assert_eq!(g2.memory.unit, "MB");
-    assert!(g2.memory.processes.is_empty());
-    assert_eq!(g2.utilization, 25);
+    assert_eq!(g2.temp, Some(38));
+    assert_eq!(g2.power.as_deref(), Some("85W / 300W"));
+    let memory = g2.memory.as_ref().unwrap();
+    assert_eq!(memory.total, 16384);
+    assert_eq!(memory.used, 512);
+    assert_eq!(memory.unit, "MB");
+    assert!(memory.processes.is_empty());
+    assert_eq!(g2.utilization, Some(25));
 }
 
 /// Dart: non-array / invalid JSON → empty
@@ -1150,6 +1153,130 @@ fn amd_parse_invalid() {
     assert!(sbm_parser::gpu::amd_from_json("not json").is_empty());
     assert!(sbm_parser::gpu::amd_from_json(r#"{"name": "x"}"#).is_empty());
     assert!(sbm_parser::gpu::amd_from_json("No AMD GPU monitoring tools found").is_empty());
+}
+
+#[test]
+fn amd_parse_keeps_unavailable_fields_optional_and_zero_values_valid() {
+    let gpus = sbm_parser::gpu::amd_from_json(
+        r#"[{"name":"AMD APU","temperature":0.0,"utilization":0,"memory":{"used":0}}]"#,
+    );
+    let gpu = &gpus[0];
+    assert_eq!(gpu.temp, Some(0));
+    assert_eq!(gpu.utilization, Some(0));
+    assert_eq!(gpu.memory, None);
+    assert_eq!(gpu.power, None);
+}
+
+#[test]
+fn linux_drm_parses_amd_apu_sysfs() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=amd
+id=0000:04:00.0
+name=AMD Radeon 780M
+usage=37
+temperature_millidegrees=51250
+power_microwatts=8240000
+memory_used_bytes=1073741824
+memory_total_bytes=2147483648
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus.len(), 1);
+    let gpu = &gpus[0];
+    assert_eq!(gpu.id, "0000:04:00.0");
+    assert_eq!(gpu.vendor, "amd");
+    assert_eq!(gpu.name, "AMD Radeon 780M");
+    assert_eq!(gpu.utilization, Some(37.0));
+    assert_eq!(gpu.temperature, Some(51));
+    assert_eq!(gpu.power.as_deref(), Some("8.24 W"));
+    let memory = gpu.memory.as_ref().unwrap();
+    assert_eq!(memory.used, 1024);
+    assert_eq!(memory.total, 2048);
+    assert_eq!(memory.unit, "MiB");
+}
+
+#[test]
+fn linux_drm_uses_the_second_intel_sample_and_busiest_engine() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel Corporation Alder Lake-N Integrated Graphics Controller
+source=intel_gpu_top
+[
+  {"frequency":{"actual":300},"power":{"GPU":0.2},"engines":{"Render/3D/0":{"busy":99.0}}},
+  {"frequency":{"actual":750},"power":{"GPU":1.5},"engines":{"Render/3D/0":{"busy":12.5},"Video/0":{"busy":68.25}}}
+]
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus.len(), 1);
+    let gpu = &gpus[0];
+    assert_eq!(gpu.vendor, "intel");
+    assert_eq!(gpu.utilization, Some(68.25));
+    assert_eq!(gpu.clock_speed, Some(750));
+    assert_eq!(gpu.power.as_deref(), Some("1.50 W"));
+    assert!(gpu.memory.is_none());
+}
+
+#[test]
+fn linux_drm_accepts_an_unclosed_intel_gpu_top_array() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel GPU
+source=intel_gpu_top
+[
+  {"engines":{"Render/3D/0":{"busy":4.0}}},
+  {"engines":{"Video/0":{"busy":44.0}}}
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus[0].utilization, Some(44.0));
+}
+
+#[test]
+fn linux_drm_retains_intel_device_when_pmu_output_is_invalid() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel Integrated Graphics
+source=intel_gpu_top
+not valid json
+__SBM_GPU_END__
+"#;
+    let gpus = sbm_parser::gpu::linux_drm_from_output(raw);
+    assert_eq!(gpus.len(), 1);
+    let gpu = &gpus[0];
+    assert_eq!(gpu.id, "0000:00:02.0");
+    assert_eq!(gpu.vendor, "intel");
+    assert_eq!(gpu.name, "Intel Integrated Graphics");
+    assert_eq!(gpu.utilization, None);
+    assert_eq!(gpu.power, None);
+    assert_eq!(gpu.clock_speed, None);
+}
+
+#[test]
+fn linux_drm_requires_both_memory_values_and_keeps_zero_usage() {
+    let raw = r#"
+__SBM_GPU_BEGIN__
+vendor=amd
+id=0000:04:00.0
+name=AMD APU
+usage=0
+temperature_millidegrees=0
+power_microwatts=0
+memory_used_bytes=0
+__SBM_GPU_END__
+"#;
+    let gpu = &sbm_parser::gpu::linux_drm_from_output(raw)[0];
+    assert_eq!(gpu.utilization, Some(0.0));
+    assert_eq!(gpu.temperature, Some(0));
+    assert_eq!(gpu.power.as_deref(), Some("0.00 W"));
+    assert_eq!(gpu.memory, None);
 }
 
 // ---------- SMART:disk_smart_test.dart ----------

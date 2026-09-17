@@ -254,7 +254,10 @@ void main() {
 
   test('deleting takes the child rows with it', () {
     store.put(rich);
-    store.trustHost('srv-1', 'ssh-ed25519', 'SHA256:x');
+    SqliteDb.instance.execute(
+      'INSERT INTO known_host (server_id, key_type, fingerprint) VALUES (?, ?, ?);',
+      ['srv-1', 'ssh-ed25519', 'SHA256:x'],
+    );
     store.deleteById('srv-1');
 
     for (final t in const ['server_tag', 'server_env', 'known_host']) {
@@ -302,7 +305,15 @@ void main() {
       ),
     );
 
-    expect(store.idsWithTag('prod')..sort(), ['srv-1', 'srv-2']);
+    expect(
+      store
+          .fetch()
+          .where((s) => s.tags?.contains('prod') == true)
+          .map((s) => s.id)
+          .toList()
+        ..sort(),
+      ['srv-1', 'srv-2'],
+    );
     expect(store.allTags(), ['db', 'prod']);
   });
 

@@ -178,13 +178,13 @@ class ServersStore {
     this.#persist()
   }
 
-  logout() {
-    const entry = this.current
+  logout(id = this.currentId, expected?: Pick<ServerEntry, 'url' | 'token'>) {
+    const entry = this.list.find((server) => server.id === id)
     if (!entry) return
+    if (expected && (entry.url !== expected.url || entry.token !== expected.token)) return
     entry.token = null
     entry.username = null
     this.#persist()
-    this.#persistSessions()
   }
 
   #persist() {

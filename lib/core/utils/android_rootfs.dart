@@ -331,7 +331,7 @@ abstract final class AndroidRootfs {
       final id = entry.path.split(Platform.pathSeparator).last;
       if (id.startsWith('.')) continue;
       final marker = File(entry.path.joinPath(LinuxProfile.marker));
-      // The marker rather than [looksUnpacked]: here it is written last and its
+      // The marker rather than the rootfs readiness check: here it is written last and its
       // presence is what says the extraction finished.
       if (!await marker.exists()) continue;
       found.add(LinuxProfile.decode(id, await marker.readAsString()));

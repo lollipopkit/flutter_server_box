@@ -6,6 +6,8 @@ import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 /// The path completion used to insert `v1` into any address that did not have
 /// it. Removing the guess is what fixes #1465 — and would break every address
 /// that was working because of it, with a 404 and nothing to say why. This
@@ -66,13 +68,13 @@ void main() {
 
     setUp(() {
       SqliteDb.openInMemory();
-      store = SettingStore('setting_test');
+      store = SettingStore.instance;
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     test('is registered as the step after the current schema', () {
-      final migration = AiEndpointVersionMigration(store: store);
+      final migration = AiEndpointVersionMigration();
       expect(migration.from, 22);
       // Relative on purpose: an absolute number here fails the day the next
       // step is added, which is not what this test is about.
@@ -100,7 +102,7 @@ void main() {
         updateLastUpdateTsOnSet: false,
       );
 
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       final raw = store.get<Object>(AiEndpointVersionMigration.key);
       final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw! as Map));
@@ -117,7 +119,7 @@ void main() {
         updateLastUpdateTsOnSet: false,
       );
 
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       final raw = store.get<Object>(AiEndpointVersionMigration.key);
       final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw! as Map));
@@ -125,7 +127,7 @@ void main() {
     });
 
     test('an install that never configured one is not given a row', () {
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       expect(store.get<Object>(AiEndpointVersionMigration.key), isNull);
     });
@@ -138,7 +140,7 @@ void main() {
       );
       final before = store.lastUpdateTs;
 
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       // Stamping it would carry a rewrite nobody made to every other device.
       expect(store.lastUpdateTs, before);
