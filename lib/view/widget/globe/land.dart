@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:server_box/data/model/server/geo.dart';
 
@@ -120,22 +119,23 @@ final class GlobeLand {
 }
 
 /// Loads the outlines once, and remembers the answer including a failure.
-abstract final class BundledLand {
+final class BundledLand {
+  static final shared = BundledLand();
   static const assetKey = 'assets/geo/land_110m.bin';
 
-  static Future<GlobeLand?>? _pending;
-  static GlobeLand? _loaded;
-  static bool _tried = false;
+  Future<GlobeLand?>? _pending;
+  GlobeLand? _loaded;
+  bool _tried = false;
 
   /// Null until [load] has finished, so a painter can ask without awaiting.
-  static GlobeLand? get loaded => _loaded;
+  GlobeLand? get loaded => _loaded;
 
-  static Future<GlobeLand?> load() {
+  Future<GlobeLand?> load() {
     if (_tried) return Future.value(_loaded);
     return _pending ??= _load();
   }
 
-  static Future<GlobeLand?> _load() async {
+  Future<GlobeLand?> _load() async {
     try {
       final data = await rootBundle.load(assetKey);
       _loaded = GlobeLand.tryParse(data.buffer.asUint8List());
@@ -148,11 +148,5 @@ abstract final class BundledLand {
     return _loaded;
   }
 
-  /// For tests, which need each case to start from nothing.
-  @visibleForTesting
-  static void resetForTest([GlobeLand? land]) {
-    _loaded = land;
-    _tried = land != null;
-    _pending = null;
-  }
+
 }
