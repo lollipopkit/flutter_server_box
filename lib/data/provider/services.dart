@@ -95,13 +95,22 @@ class ServicesNotifier extends _$ServicesNotifier {
 
   /// The command [action] runs, as the confirmation shows it. Null before a
   /// listing has said which manager this is.
-  String? commandFor(ServiceUnit unit, ServiceAction action) {
+  ///
+  /// Whether it carries `sudo` is decided by the account [runAction] runs as,
+  /// asked of the server, not by [Spi.isRoot]: through a monitor agent, or as
+  /// a uid-0 account with another name, the two differ, and the confirmation
+  /// would show a command other than the one that runs.
+  Future<String?> commandFor(ServiceUnit unit, ServiceAction action) async {
     final manager = _manager;
     if (manager == null) return null;
+    final needsRoot = manager.needsRoot(unit);
+    final exec = needsRoot
+        ? await ref.read(serverProvider(_spi.id).notifier).ensureExec()
+        : null;
     return terminalCommand(
       manager.commandFor(unit, action),
-      needsRoot: manager.needsRoot(unit),
-      isRoot: _spi.isRoot,
+      needsRoot: needsRoot,
+      isRoot: exec != null && await _isRoot(exec),
     );
   }
 

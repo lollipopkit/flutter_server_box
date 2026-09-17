@@ -696,8 +696,14 @@ abstract final class ServiceUi {
     ServiceAction action,
   ) async {
     final notifier = ref.read(servicesProvider(spi).notifier);
-    final command = notifier.commandFor(unit, action);
-    if (command == null) return;
+    final String? command;
+    try {
+      command = await notifier.commandFor(unit, action);
+    } catch (e, s) {
+      if (context.mounted) context.showErrDialog(e, s, libL10n.fail);
+      return;
+    }
+    if (command == null || !context.mounted) return;
 
     if (action.destructive) {
       final sure = await context.showRoundDialog<bool>(
