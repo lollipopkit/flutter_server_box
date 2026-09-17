@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
@@ -18,7 +19,11 @@ class FileTransferStatus {
     this.completer,
   }) : id = _nextId++ {
     if (job.needsIsolate) {
-      worker = FileTransferWorker(onNotify: onNotify, job: job);
+      worker = FileTransferWorker(
+        onNotify: onNotify,
+        job: job,
+        worker: Worker(),
+      );
       unawaited(_initWorker());
     } else {
       unawaited(_runHere());

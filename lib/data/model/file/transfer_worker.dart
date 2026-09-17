@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/file_transfer_timeout.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -24,8 +25,6 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 const _sftpChunkSize = 32 * 1024;
 
 const _sftpDownloadMaxPendingRequests = 64;
-
-const _sftpMinIdleTimeout = Duration(seconds: 60);
 
 const _sftpUploadMaxBytesOnTheWire = _sftpChunkSize * 64;
 
@@ -103,9 +102,7 @@ Duration _prepareTimeout(FileTransfer job) =>
 Duration _idleTimeout(FileTransfer job) {
   final seconds = job.timeoutSeconds;
   final timeout = Duration(seconds: seconds <= 0 ? 60 : seconds);
-  return timeout < _sftpMinIdleTimeout
-      ? _sftpMinIdleTimeout
-      : timeout;
+  return transferStreamTimeout(timeout)!;
 }
 
 Future<SSHClient> _connectSsh(
@@ -199,8 +196,8 @@ class FileTransferWorker {
   FileTransferWorker({
     required this.onNotify,
     required this.job,
-    Worker? worker,
-  }) : worker = worker ?? Worker();
+    required this.worker,
+  });
 
   void dispose() {
     if (_disposed) return;
