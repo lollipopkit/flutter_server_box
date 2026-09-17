@@ -1499,6 +1499,12 @@ abstract class AppLocalizations {
   /// **'Ungrouped'**
   String get ungrouped;
 
+  /// No description provided for @containerReclaimable.
+  ///
+  /// In en, this message translates to:
+  /// **'Reclaimable'**
+  String get containerReclaimable;
+
   /// No description provided for @unused.
   ///
   /// In en, this message translates to:
@@ -3807,6 +3813,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'UID'**
   String get userUid;
+
+  /// No description provided for @userLoginStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get userLoginStatus;
+
+  /// No description provided for @userLoginEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Login enabled'**
+  String get userLoginEnabled;
+
+  /// No description provided for @userDetailAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get userDetailAccount;
+
+  /// No description provided for @userDetailSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get userDetailSecurity;
+
+  /// No description provided for @userSshKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH keys'**
+  String get userSshKeys;
+
+  /// No description provided for @userExpires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get userExpires;
+
+  /// No description provided for @userNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get userNever;
+
+  /// No description provided for @userPasswordSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Set'**
+  String get userPasswordSet;
+
+  /// No description provided for @userPasswordLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get userPasswordLocked;
+
+  /// No description provided for @userPasswordNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get userPasswordNone;
+
+  /// No description provided for @userSuperuser.
+  ///
+  /// In en, this message translates to:
+  /// **'Superuser'**
+  String get userSuperuser;
+
+  /// No description provided for @userOpenShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Open shell'**
+  String get userOpenShell;
+
+  /// No description provided for @userRootChangesWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes to root take effect in every session at once.'**
+  String get userRootChangesWarning;
 
   /// No description provided for @userComment.
   ///

@@ -66,3 +66,45 @@ final class ServerUserDraft {
   final bool system;
   final String? password;
 }
+
+/// Whether an account can be logged into with a password.
+enum ServerUserPasswordState { set, locked, none }
+
+/// What `/etc/shadow`, `authorized_keys` and sudoers say about one account.
+///
+/// Every field is nullable and null means "not readable from here", never
+/// "absent": all three sources are root-only on a normal system, and an
+/// unprivileged session would otherwise report every account as having no
+/// password and no keys.
+final class ServerUserDetail {
+  const ServerUserDetail({
+    this.passwordState,
+    this.passwordChanged,
+    this.expires,
+    this.neverExpires = false,
+    this.sshKeyTypes,
+    this.sudoRule,
+  });
+
+  final ServerUserPasswordState? passwordState;
+  final DateTime? passwordChanged;
+
+  /// Null when shadow was unreadable; absent-from-the-record is [neverExpires].
+  final DateTime? expires;
+  final bool neverExpires;
+
+  /// Distinct key types in the account's `authorized_keys`, in file order.
+  /// An empty list means the file was read and held none.
+  final List<String>? sshKeyTypes;
+
+  /// The right-hand side of the account's sudoers entry, e.g. `NOPASSWD: ALL`.
+  final String? sudoRule;
+
+  bool get isEmpty =>
+      passwordState == null &&
+      passwordChanged == null &&
+      expires == null &&
+      !neverExpires &&
+      sshKeyTypes == null &&
+      sudoRule == null;
+}

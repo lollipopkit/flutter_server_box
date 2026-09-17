@@ -152,4 +152,162 @@ docker:x:998:admin,deploy
       throwsArgumentError,
     );
   });
+
+  group('parseDetail', () {
+    /// [keysRead] false leaves the read-marker out, which is what the script
+    /// does when `authorized_keys` could not be opened.
+    String out({
+      String shadow = '',
+      String status = '',
+      String keys = '',
+      String sudo = '',
+      bool keysRead = true,
+    }) => [
+      UserManager.detailShadowMarker,
+      shadow,
+      UserManager.detailStatusMarker,
+      status,
+      UserManager.detailKeysMarker,
+      if (keysRead) UserManager.detailKeysReadMarker,
+      keys,
+      UserManager.detailSudoMarker,
+      sudo,
+    ].join('\n');
+
+    test('reads shadow rather than the locale-formatted commands', () {
+      final detail = UserManager.parseDetail(
+        out(shadow: r'lk:$y$j9T$abc:20355:0:99999:7:::'),
+      );
+      expect(detail.passwordState, ServerUserPasswordState.set);
+      expect(
+        detail.passwordChanged,
+        DateTime.utc(2025, 9, 24),
+      );
+      expect(detail.neverExpires, true);
+      expect(detail.expires, isNull);
+    });
+
+    // `!`, `!!` and `*` all mean "no password login". An empty field means no
+    // password at all, which lets anyone in and must not read as locked.
+    test('tells a locked password from an absent one', () {
+      for (final hash in ['!', '!!', '*', r'!$y$abc']) {
+        expect(
+          UserManager.parseDetail(out(shadow: 'svc:$hash:20000:0:99999:7:::'))
+              .passwordState,
+          ServerUserPasswordState.locked,
+          reason: hash,
+        );
+      }
+      expect(
+        UserManager.parseDetail(out(shadow: 'svc::20000:0:99999:7:::'))
+            .passwordState,
+        ServerUserPasswordState.none,
+      );
+    });
+
+    test('an expiry date is a date, an empty field is never', () {
+      final expiring = UserManager.parseDetail(
+        out(shadow: 'temp:x:20000:0:99999:7::20500:'),
+      );
+      expect(expiring.expires, DateTime.utc(2026, 2, 16));
+      expect(expiring.neverExpires, false);
+    });
+
+    // Empty is the only thing that means never. Anything that will not parse
+    // means the record could not be read, and answering Never there would be
+    // a claim about an account's expiry made from no evidence.
+    test('an unreadable expiry field is not never', () {
+      for (final field in ['0', '-1', 'garbage']) {
+        final detail = UserManager.parseDetail(
+          out(shadow: 'temp:x:20000:0:99999:7::$field:'),
+        );
+        expect(detail.neverExpires, false, reason: field);
+        expect(detail.expires, isNull, reason: field);
+      }
+    });
+
+    test('falls back to passwd -S when shadow is unreadable', () {
+      final detail = UserManager.parseDetail(
+        out(status: 'lk L 09/28/2026 0 99999 7 -1'),
+      );
+      expect(detail.passwordState, ServerUserPasswordState.locked);
+      expect(detail.passwordChanged, isNull);
+    });
+
+    // The script's awk pass has already reduced each line to its type token,
+    // which is what keeps the file's free-form contents off this stream.
+    test('collects distinct key types in file order', () {
+      final detail = UserManager.parseDetail(
+        out(
+          keys: [
+            'ssh-ed25519',
+            'ssh-rsa',
+            'ssh-ed25519',
+            'ecdsa-sha2-nistp256',
+            '',
+          ].join('\n'),
+        ),
+      );
+      expect(detail.sshKeyTypes, ['ed25519', 'rsa', 'ecdsa']);
+    });
+
+    // An empty list is "read it, there are none"; null is "could not read it".
+    // Reporting the second as the first would tell the user that an account
+    // with keys has none.
+    test('an unread keys file is null, an empty one is an empty list', () {
+      expect(UserManager.parseDetail(out(keys: '')).sshKeyTypes, isEmpty);
+      expect(
+        UserManager.parseDetail(out(keysRead: false)).sshKeyTypes,
+        isNull,
+      );
+      expect(
+        UserManager.parseDetail(UserManager.detailShadowMarker).sshKeyTypes,
+        isNull,
+      );
+    });
+
+    // The file belongs to the account being looked at, and the markers travel
+    // as plain text on the same stream. Reducing each line to a token that
+    // cannot spell one is what stops its owner fabricating the sudo rule this
+    // page displays.
+    test('the script never lets a keys line reach the parser whole', () {
+      const user = ServerUser(
+        name: 'lk',
+        uid: 1000,
+        gid: 1000,
+        comment: '',
+        home: '/home/lk',
+        shell: '/bin/bash',
+        supplementaryGroups: [],
+      );
+      final script = UserManager.detailScript(user);
+
+      expect(script, contains(r'if ($i ~ /^(ssh-|ecdsa-|sk-)/)'));
+      expect(script, contains("if [ -r '/home/lk/.ssh/authorized_keys' ]"));
+      // The read has to report its own failure rather than be swallowed.
+      expect(script, isNot(contains('authorized_keys\' 2>/dev/null || true')));
+    });
+
+    test('takes the first sudoers rule and drops the host part', () {
+      final detail = UserManager.parseDetail(
+        out(
+          sudo: [
+            'Matching Defaults entries for lk on box:',
+            '    env_reset, mail_badpass',
+            '',
+            'User lk may run the following commands on box:',
+            '    (ALL : ALL) NOPASSWD: ALL',
+          ].join('\n'),
+        ),
+      );
+      expect(detail.sudoRule, 'NOPASSWD: ALL');
+    });
+
+    test('nothing readable is an empty detail, not a wrong one', () {
+      final detail = UserManager.parseDetail(UserManager.detailShadowMarker);
+      expect(detail.isEmpty, true);
+      expect(detail.passwordState, isNull);
+      expect(detail.sudoRule, isNull);
+    });
+  });
 }

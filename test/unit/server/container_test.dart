@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/container.dart';
+import 'package:server_box/data/model/container/disk_usage.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/status.dart';
@@ -276,7 +277,8 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       'docker ps -a --format '
       '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
       '{{.Label \\"com.docker.compose.project\\"}}\\t'
-      '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
+      '{{.Label \\"com.docker.compose.project.working_dir\\"}}\\t'
+      '{{.Ports}}"',
     );
   });
 
@@ -932,6 +934,126 @@ not-json
       );
 
       expect(containerExecErrorDetail(result), isNot(contains('partial')));
+    });
+  });
+
+  group('port formatting', () {
+    test('docker collapses one mapping repeated per address family', () {
+      expect(
+        formatDockerPorts('0.0.0.0:8080->80/tcp, :::8080->80/tcp'),
+        '8080→80',
+      );
+    });
+
+    test('docker keeps distinct mappings and drops the bind address', () {
+      expect(
+        formatDockerPorts(
+          '0.0.0.0:443->443/tcp, :::443->443/tcp, 0.0.0.0:80->80/tcp',
+        ),
+        '443→443, 80→80',
+      );
+    });
+
+    test('docker reports an exposed-only port as the port alone', () {
+      expect(formatDockerPorts('5432/tcp'), '5432');
+    });
+
+    // Being unable to condense an entry is not a reason to claim the
+    // container publishes nothing.
+    test('docker keeps a shape it cannot condense', () {
+      expect(formatDockerPorts('weird-entry'), 'weird-entry');
+    });
+
+    test('docker reports no ports as null, not an empty string', () {
+      expect(formatDockerPorts(''), isNull);
+      expect(formatDockerPorts('   '), isNull);
+      expect(formatDockerPorts(null), isNull);
+    });
+
+    test('podman reads structured entries', () {
+      expect(
+        formatPodmanPorts([
+          {'container_port': 80, 'host_port': 8080, 'protocol': 'tcp'},
+          {'container_port': 5432, 'host_port': 0, 'protocol': 'tcp'},
+        ]),
+        '8080→80, 5432',
+      );
+    });
+
+    test('podman ignores entries with no container port', () {
+      expect(formatPodmanPorts([{'host_port': 8080}]), isNull);
+      expect(formatPodmanPorts(null), isNull);
+    });
+
+    test('docker ps row carries ports through', () {
+      final item = DockerPs.parse(
+        'abc\tUp 2 days\tweb\tnginx:alpine\tstack\t/opt/stack\t'
+        '0.0.0.0:8080->80/tcp, :::8080->80/tcp',
+      );
+      expect(item.ports, '8080→80');
+    });
+
+    test('a ps row written without the ports field still parses', () {
+      final item = DockerPs.parse(
+        'abc\tUp 2 days\tweb\tnginx:alpine\tstack\t/opt/stack',
+      );
+      expect(item.ports, isNull);
+      expect(item.name, 'web');
+    });
+  });
+
+  group('ContainerDiskUsage', () {
+    test('reads Docker newline-delimited rows and sums every type', () {
+      final usage = ContainerDiskUsage.parse(
+        '{"Type":"Images","TotalCount":"12","Active":"3","Size":"1.4GB",'
+        '"Reclaimable":"809MB (56%)"}\n'
+        '{"Type":"Containers","TotalCount":"4","Active":"3","Size":"0B",'
+        '"Reclaimable":"0B"}\n'
+        '{"Type":"Local Volumes","TotalCount":"2","Active":"1","Size":"200MB",'
+        '"Reclaimable":"100MB (50%)"}',
+      );
+      expect(usage, isNotNull);
+      expect(usage!.imageCount, 12);
+      expect(usage.reclaimableBytes, 909000000);
+    });
+
+    test('reads Podman JSON array with numeric totals', () {
+      final usage = ContainerDiskUsage.parse(
+        '[{"Type":"Images","Total":7,"Active":2,"Size":"1GB",'
+        '"Reclaimable":"512MB (50%)"}]',
+      );
+      expect(usage!.imageCount, 7);
+      expect(usage.reclaimableBytes, 512000000);
+    });
+
+    test('a row it cannot read is skipped rather than failing the rest', () {
+      final usage = ContainerDiskUsage.parse(
+        'not json\n{"Type":"Images","TotalCount":"3","Reclaimable":"1MB"}',
+      );
+      expect(usage!.imageCount, 3);
+      expect(usage.reclaimableBytes, 1000000);
+    });
+
+    test('nothing readable answers null, not a zeroed record', () {
+      expect(ContainerDiskUsage.parse(''), isNull);
+      expect(ContainerDiskUsage.parse('garbage'), isNull);
+    });
+
+    // Both runtimes print through Go's units.HumanSize, so a bare unit is
+    // 1000-based and only the `i` forms are 1024-based. Reading one as the
+    // other misreports reclaimable space by 7% per order of magnitude.
+    test('decimal and binary units are told apart', () {
+      expect(ContainerDiskUsage.parseSize('809MB (56%)'), 809000000);
+      expect(ContainerDiskUsage.parseSize('1.5GiB'), 1610612736);
+      expect(ContainerDiskUsage.parseSize('2kB'), 2000);
+      expect(ContainerDiskUsage.parseSize('512B'), 512);
+      expect(ContainerDiskUsage.parseSize('0B'), 0);
+    });
+
+    test('an unreadable size is null, which is not zero', () {
+      expect(ContainerDiskUsage.parseSize('N/A'), isNull);
+      expect(ContainerDiskUsage.parseSize(''), isNull);
+      expect(ContainerDiskUsage.parseSize(null), isNull);
     });
   });
 }

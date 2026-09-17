@@ -757,6 +757,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get ungrouped => '그룹 없음';
 
   @override
+  String get containerReclaimable => 'Reclaimable';
+
+  @override
   String get unused => '미사용';
 
   @override
@@ -2070,6 +2073,46 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get userUid => 'UID';
+
+  @override
+  String get userLoginStatus => 'Status';
+
+  @override
+  String get userLoginEnabled => 'Login enabled';
+
+  @override
+  String get userDetailAccount => 'Account';
+
+  @override
+  String get userDetailSecurity => 'Security';
+
+  @override
+  String get userSshKeys => 'SSH keys';
+
+  @override
+  String get userExpires => 'Expires';
+
+  @override
+  String get userNever => 'Never';
+
+  @override
+  String get userPasswordSet => 'Set';
+
+  @override
+  String get userPasswordLocked => 'Locked';
+
+  @override
+  String get userPasswordNone => 'None';
+
+  @override
+  String get userSuperuser => 'Superuser';
+
+  @override
+  String get userOpenShell => 'Open shell';
+
+  @override
+  String get userRootChangesWarning =>
+      'Changes to root take effect in every session at once.';
 
   @override
   String get userComment => 'Comment';

@@ -12,6 +12,7 @@ import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/app/menu/image.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
+import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/res/store.dart';
@@ -41,6 +42,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   );
   var _lastTabIndex = _ContainerTabs.ps.index;
   var _lastResourceTab = _ContainerTabs.ps;
+
   Timer? _autoRefreshTimer;
 
   @override
@@ -62,7 +64,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     _tabCtrl.addListener(_onContainerTabChanged);
     _initAutoRefresh();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(_refreshContainerTab(_ContainerTabs.ps));
+      if (!mounted) return;
+      unawaited(_refreshContainerTab(_ContainerTabs.ps));
+      // Started beside the list rather than before it: `system df` walks the
+      // whole image store, and the two numbers it feeds are not worth holding
+      // the page for.
+      unawaited(_containerNotifier.refreshDiskUsage());
     });
   }
 
@@ -72,54 +79,123 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
 
 extension _ContainerPageWidgets on _ContainerPageState {
   Widget _buildPage() {
-    final hasItems = ref.watch(
-      _provider.select((state) => state.items != null),
-    );
+    // Read once here: everything below runs inside this element's build, and
+    // the tab-driven parts are rebuilt by a ListenableBuilder that must not
+    // reach for `ref` of its own.
+    final containerState = _containerState;
+    final busy = _containerActionsBusy;
 
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: SafeArea(child: _buildMain()),
-      floatingActionButton: hasItems ? _buildFAB() : null,
+      appBar: _buildAppBar(busy),
+      body: SafeArea(child: _buildMain(containerState)),
     );
   }
 
-  CustomAppBar _buildAppBar() {
+  CustomAppBar _buildAppBar(bool busy) {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(up: libL10n.container, down: widget.args.spi.name),
-      bottom: TabBar(
-        controller: _tabCtrl,
-        dividerHeight: 0,
-        tabAlignment: TabAlignment.center,
-        isScrollable: true,
-        tabs: _ContainerTabs.values
-            .map((e) => Tab(text: e.i18n))
-            .toList(growable: false),
+      actions: [
+        ListenableBuilder(
+          listenable: _tabCtrl,
+          builder: (_, _) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: _buildBarActions(busy),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// What is done *to* the runtime, for the tab that is showing.
+  ///
+  /// Add lives here rather than in a floating button: the button covered the
+  /// last card in a two-column grid, and on this page it is one of four
+  /// actions that belong together rather than the page's single purpose.
+  List<Widget> _buildBarActions(bool busy) {
+    final tab = _ContainerTabs.values[_tabCtrl.index];
+    return switch (tab) {
+      _ContainerTabs.ps => [
+        _barBtn(
+          key: const ValueKey('prune-containers-button'),
+          icon: Icons.cleaning_services_outlined,
+          tooltip: '${libL10n.prune} ${libL10n.container}',
+          onTap: busy
+              ? null
+              : () => _showPruneDialog(
+                  title: libL10n.container,
+                  onConfirm: _containerNotifier.pruneContainers,
+                ),
+        ),
+        _barBtn(
+          key: const ValueKey('refresh-containers-button'),
+          icon: Icons.refresh,
+          tooltip: libL10n.refresh,
+          onTap: busy ? null : () => _refreshResourcesAndUsage(_ContainerTabs.ps),
+        ),
+        _barBtn(
+          key: const ValueKey('add-container-button'),
+          icon: Icons.add,
+          tooltip: libL10n.add,
+          emphasized: true,
+          onTap: busy ? null : () => _showAddFAB(),
+        ),
+      ],
+      _ContainerTabs.images => [
+        _barBtn(
+          key: const ValueKey('prune-images-button'),
+          icon: Icons.cleaning_services_outlined,
+          tooltip: '${libL10n.prune} ${l10n.image}',
+          onTap: busy ? null : _showImagePruneDialog,
+        ),
+        _barBtn(
+          key: const ValueKey('refresh-images-button'),
+          icon: Icons.refresh,
+          tooltip: libL10n.refresh,
+          onTap: busy
+              ? null
+              : () => _refreshResourcesAndUsage(_ContainerTabs.images),
+        ),
+      ],
+      _ContainerTabs.settings => const [],
+    };
+  }
+
+  Widget _barBtn({
+    required Key key,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onTap,
+    bool emphasized = false,
+  }) {
+    return IconButton(
+      key: key,
+      tooltip: tooltip,
+      onPressed: onTap,
+      icon: Icon(
+        icon,
+        size: 18,
+        color: emphasized ? context.theme.colorScheme.primary : null,
       ),
     );
   }
 
-  Widget _buildFAB() {
-    return ListenableBuilder(
-      listenable: _tabCtrl,
-      builder: (_, _) {
-        if (_tabCtrl.index != _ContainerTabs.ps.index) {
-          return const SizedBox.shrink();
-        }
-        return FloatingActionButton(
-          onPressed: _containerActionsBusy ? null : () => _showAddFAB(),
-          child: const Icon(Icons.add),
-        );
-      },
-    );
-  }
-
-  Widget _buildMain() {
-    final containerState = _containerState;
-
+  Widget _buildMain(ContainerState containerState) {
     return Column(
       children: [
         _buildLoading(containerState),
+        ContainerGutter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 13),
+            child: ContainerRuntimeHeader(
+              type: containerState.type,
+              version: containerState.version,
+              summary: _summaryLine(containerState, compact: false),
+              compactSummary: _summaryLine(containerState, compact: true),
+              selector: _buildSelector,
+            ),
+          ),
+        ),
         Expanded(
           child: TabBarView(
             controller: _tabCtrl,
@@ -134,33 +210,60 @@ extension _ContainerPageWidgets on _ContainerPageState {
     );
   }
 
+  /// `3 running · 1 stopped · 12 images · 809 MB`.
+  ///
+  /// A total that has not been measured is left out rather than printed as a
+  /// zero: `system df` answers after the list does, and a zero that means
+  /// "not asked yet" is the one number worth never showing.
+  String _summaryLine(ContainerState containerState, {required bool compact}) {
+    final items = containerState.items;
+    final running = items?.where((e) => e.status.isRunning).length;
+    final stopped = items?.where((e) => e.status.isStopped).length;
+    final unknown = items
+        ?.where((e) => e.status == ContainerStatus.unknown)
+        .length;
+    final imageCount =
+        containerState.diskUsage?.imageCount ?? containerState.images?.length;
+    final reclaimable = containerState.diskUsage?.reclaimableBytes;
+
+    return [
+      // The version is the title's neighbour on one line, and folds into this
+      // one when the header stacks.
+      if (compact) containerState.version ?? libL10n.unknown,
+      if (running != null) '$running ${libL10n.running}',
+      if (stopped != null && stopped > 0) '$stopped ${libL10n.stopped}',
+      if (unknown != null && unknown > 0) '$unknown ${libL10n.unknown}',
+      // Dropped when the line folds: the least urgent two, and the two the
+      // Image tab says again.
+      if (!compact && imageCount != null) '$imageCount ${l10n.image}',
+      if (!compact && reclaimable != null)
+        '${reclaimable.bytes2Str} ${l10n.containerReclaimable}',
+    ].join(' · ');
+  }
+
+  Widget _buildSelector(bool expand) {
+    return ListenableBuilder(
+      listenable: _tabCtrl,
+      builder: (_, _) => SegmentedTabs<_ContainerTabs>(
+        expand: expand,
+        segments: _ContainerTabs.values
+            .map((tab) => SegmentedTab(value: tab, label: tab.i18n))
+            .toList(growable: false),
+        selected: _ContainerTabs.values[_tabCtrl.index],
+        onSelected: (tab) => _tabCtrl.animateTo(tab.index),
+      ),
+    );
+  }
+
   Widget _buildPsTab(ContainerState containerState) {
     if (containerState.items == null) {
       return _buildResourceLoadState(containerState, _ContainerTabs.ps);
     }
     return ContainerItemsView(
       items: containerState.items!,
-      type: containerState.type,
-      version: containerState.version,
       trailingBuilder: _buildMoreBtn,
-      groupTrailingBuilder: _buildGroupMoreBtn,
       emptyState: _buildEmptyStateMessage(containerState),
-      summaryAction: _buildResourceActions(
-        pruneAction: _buildPruneAction(
-          key: const ValueKey('prune-containers-button'),
-          label: '${libL10n.prune} ${libL10n.container}',
-          onPressed: _containerActionsBusy
-              ? null
-              : () => _showPruneDialog(
-                  title: libL10n.container,
-                  onConfirm: _containerNotifier.pruneContainers,
-                ),
-        ),
-        refreshKey: const ValueKey('refresh-containers-button'),
-        onRefresh: _containerActionsBusy
-            ? null
-            : () => _refreshContainerTab(_ContainerTabs.ps, showLoading: true),
-      ),
+      onQuickAction: _containerActionsBusy ? null : _onTapMoreBtn,
     );
   }
 
@@ -170,24 +273,16 @@ extension _ContainerPageWidgets on _ContainerPageState {
     }
     return ContainerImagesView(
       images: containerState.images!,
-      type: containerState.type,
-      version: containerState.version,
       trailingBuilder: _buildImageMoreBtn,
-      summaryAction: _buildResourceActions(
-        pruneAction: _buildPruneAction(
-          key: const ValueKey('prune-images-button'),
-          label: '${libL10n.prune} ${l10n.image}',
-          onPressed: _containerActionsBusy ? null : _showImagePruneDialog,
-        ),
-        refreshKey: const ValueKey('refresh-images-button'),
-        onRefresh: _containerActionsBusy
-            ? null
-            : () => _refreshContainerTab(
-                _ContainerTabs.images,
-                showLoading: true,
-              ),
-      ),
     );
+  }
+
+  /// A manual refresh takes the disk usage with it: it is the one moment the
+  /// user has asked for current numbers, and the overview's two slots are as
+  /// stale as the list was.
+  Future<void> _refreshResourcesAndUsage(_ContainerTabs tab) async {
+    unawaited(_containerNotifier.refreshDiskUsage());
+    await _refreshContainerTab(tab, showLoading: true);
   }
 
   Widget _buildResourceLoadState(
@@ -217,45 +312,20 @@ extension _ContainerPageWidgets on _ContainerPageState {
     );
   }
 
-  Widget _buildResourceActions({
-    required Widget pruneAction,
-    required Key refreshKey,
-    required VoidCallback? onRefresh,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        pruneAction,
-        IconButton(
-          key: refreshKey,
-          tooltip: libL10n.refresh,
-          onPressed: onRefresh,
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPruneAction({
-    required Key key,
-    required String label,
-    required VoidCallback? onPressed,
-  }) {
-    return IconButton(
-      key: key,
-      tooltip: label,
-      onPressed: onPressed,
-      icon: const Icon(Icons.cleaning_services_outlined),
-    );
-  }
-
   Widget _buildSettingsTab(ContainerState containerState) {
     return PageColumns(
       children: <Widget>[
-        ..._SettingsMenuItems.values.map(
-          (item) => _buildSettingCard(item, containerState),
+        CardX(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ..._SettingsMenuItems.values.map(
+                (item) => _buildSettingTile(item, containerState),
+              ),
+              ..._PruneTypes.values.map(_buildPruneTile),
+            ],
+          ),
         ),
-        ..._PruneTypes.values.map(_buildPruneCard),
       ],
     );
   }
@@ -290,28 +360,6 @@ extension _ContainerPageWidgets on _ContainerPageState {
     return ContainerRunLogView(log: containerState.runLog!);
   }
 
-  Widget? _buildGroupMoreBtn(List<ContainerPs> groupItems) {
-    final project = groupItems.firstOrNull?.project;
-    if (project == null) return null;
-    final hasWorkingDir = groupItems.any(
-      (e) => e.workingDir?.isNotEmpty ?? false,
-    );
-    return IgnorePointer(
-      ignoring: _containerActionsBusy,
-      child: PopupMenu(
-        items:
-            ContainerGroupMenu.items(
-                  anyRunning: groupItems.any((e) => e.status.isRunning),
-                  anyStopped: groupItems.any((e) => e.status.isStopped),
-                )
-                .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
-                .map((e) => PopMenu.build(e, e.icon, e.toStr))
-                .toList(),
-        onSelected: (item) => _onTapGroupMenu(item, groupItems),
-      ),
-    );
-  }
-
   Widget _buildMoreBtn(ContainerPs dItem) {
     return IgnorePointer(
       ignoring: _containerActionsBusy,
@@ -324,39 +372,31 @@ extension _ContainerPageWidgets on _ContainerPageState {
     );
   }
 
-  Widget _buildPruneCard(_PruneTypes type) {
+  Widget _buildPruneTile(_PruneTypes type) {
     final title = type.label;
     final containerNotifier = _containerNotifier;
-    return CardX(
-      child: ListTile(
-        key: ValueKey('container-setting-prune-${type.name}'),
-        leading: Icon(type.icon),
-        onTap: _containerActionsBusy
-            ? null
-            : () async {
-                switch (type) {
-                  case _PruneTypes.volumes:
-                    await _showPruneDialog(
-                      title: title,
-                      onConfirm: containerNotifier.pruneVolumes,
-                    );
-                    break;
-                  case _PruneTypes.unusedData:
-                    await _showSystemPruneDialog();
-                    break;
-                }
-              },
-        title: Text(title),
-        trailing: const Icon(Icons.keyboard_arrow_right),
-      ),
+    return ListTile(
+      visualDensity: VisualDensity.compact,
+      key: ValueKey('container-setting-prune-${type.name}'),
+      leading: Icon(type.icon),
+      onTap: _containerActionsBusy
+          ? null
+          : () async {
+              switch (type) {
+                case _PruneTypes.volumes:
+                  await _showPruneDialog(
+                    title: title,
+                    onConfirm: containerNotifier.pruneVolumes,
+                  );
+                  break;
+                case _PruneTypes.unusedData:
+                  await _showSystemPruneDialog();
+                  break;
+              }
+            },
+      title: Text(title),
+      trailing: const Icon(Icons.keyboard_arrow_right),
     );
-  }
-
-  Widget _buildSettingCard(
-    _SettingsMenuItems item,
-    ContainerState containerState,
-  ) {
-    return CardX(child: _buildSettingTile(item, containerState));
   }
 
   Widget _buildSettingTile(
@@ -378,6 +418,7 @@ extension _ContainerPageWidgets on _ContainerPageState {
         break;
     }
     return ListTile(
+      visualDensity: VisualDensity.compact,
       key: ValueKey('container-setting-${item.name}'),
       leading: Icon(item.icon),
       onTap: _containerActionsBusy
@@ -407,70 +448,3 @@ extension _ContainerPageWidgets on _ContainerPageState {
   }
 }
 
-extension _ContainerPageActions on _ContainerPageState {
-  void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
-    final runningIds = groupItems
-        .where((e) => e.status.isRunning)
-        .map((e) => e.id)
-        .whereType<String>()
-        .toList();
-    final stoppedIds = groupItems
-        .where((e) => e.status.isStopped)
-        .map((e) => e.id)
-        .whereType<String>()
-        .toList();
-    switch (item) {
-      case ContainerGroupMenu.start:
-        if (stoppedIds.isEmpty) {
-          Toast.show(libL10n.empty);
-          return;
-        }
-        _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
-        break;
-      case ContainerGroupMenu.stop:
-        if (runningIds.isEmpty) {
-          Toast.show(libL10n.empty);
-          return;
-        }
-        _execContainerAction(() => _containerNotifier.stopAll(runningIds));
-        break;
-      case ContainerGroupMenu.restart:
-        if (runningIds.isEmpty) {
-          Toast.show(libL10n.empty);
-          return;
-        }
-        _execContainerAction(() => _containerNotifier.restartAll(runningIds));
-        break;
-      case ContainerGroupMenu.logs:
-        final project = groupItems.firstOrNull?.project;
-        if (project == null) return;
-        final workingDir = _mostCommonWorkingDir(groupItems);
-        if (workingDir == null) return;
-        unawaited(_openMergedLogs(project, workingDir));
-        break;
-    }
-  }
-}
-
-extension _ContainerPageUtils on _ContainerPageState {
-  String? _mostCommonWorkingDir(List<ContainerPs> groupItems) {
-    final counts = <String, int>{};
-    for (final e in groupItems) {
-      final dir = e.workingDir;
-      if (dir == null || dir.isEmpty) continue;
-      counts[dir] = (counts[dir] ?? 0) + 1;
-    }
-    if (counts.isEmpty) return null;
-    final entries = counts.entries.toList()
-      ..sort((a, b) {
-        final countComparison = b.value.compareTo(a.value);
-        if (countComparison != 0) return countComparison;
-        final lowerComparison = a.key.toLowerCase().compareTo(
-          b.key.toLowerCase(),
-        );
-        if (lowerComparison != 0) return lowerComparison;
-        return a.key.compareTo(b.key);
-      });
-    return entries.first.key;
-  }
-}

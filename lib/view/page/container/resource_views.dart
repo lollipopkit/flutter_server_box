@@ -3,17 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
-import 'package:server_box/view/widget/percent_circle.dart';
 
 typedef ContainerItemTrailingBuilder = Widget Function(ContainerPs item);
-typedef ContainerGroupTrailingBuilder = Widget? Function(
-  List<ContainerPs> items,
-);
 typedef ContainerImageTrailingBuilder = Widget Function(ContainerImg image);
+typedef ContainerQuickActionHandler =
+    void Function(ContainerMenu action, ContainerPs item);
 
 /// Displays the output of a running container command without allowing a long
 /// log to consume the page's remaining layout space.
@@ -48,128 +47,86 @@ class ContainerRunLogView extends StatelessWidget {
   }
 }
 
-/// Responsive container list used by [ContainerPage].
+/// The container list: one card holding every compose project and every
+/// container, as a table where the columns fit and as stacked rows where they
+/// do not.
 ///
-/// The view intentionally owns presentation only. Container actions are
-/// supplied by the page so the existing provider and confirmation flow stay
-/// unchanged.
+/// A table rather than cards because the question this page is opened with is
+/// which container is busy, and that is answered by reading one column down
+/// the page rather than by reading each container in turn.
 class ContainerItemsView extends StatelessWidget {
   final List<ContainerPs> items;
-  final ContainerType type;
-  final String? version;
   final ContainerItemTrailingBuilder trailingBuilder;
-  final ContainerGroupTrailingBuilder groupTrailingBuilder;
   final Widget? emptyState;
-  final Widget? summaryAction;
+
+  /// Quick actions offered on a container that is not running, where its
+  /// absent metrics leave the stacked row half empty. The table has no room
+  /// for them and shows a dash per column instead.
+  final ContainerQuickActionHandler? onQuickAction;
 
   const ContainerItemsView({
     required this.items,
-    required this.type,
-    required this.version,
     required this.trailingBuilder,
-    required this.groupTrailingBuilder,
     this.emptyState,
-    this.summaryAction,
+    this.onQuickAction,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final groups = _groupContainers(items);
-    final running = items.where((e) => e.status.isRunning).length;
-    final stopped = items.where((e) => e.status.isStopped).length;
-    final unknown = items
-        .where((e) => e.status == ContainerStatus.unknown)
-        .length;
-    return _ResourceList(
-      children: [
-        _RuntimeSummaryCard(
-          icon: _runtimeIcon(type),
-          title: type.name.capitalize,
-          subtitle: version ?? libL10n.unknown,
-          action: summaryAction,
-          badges: [
-            _SummaryBadge(
-              label: '$running ${context.libL10n.running}',
-              emphasized: running > 0,
-            ),
-            if (stopped > 0)
-              _SummaryBadge(
-                label: '$stopped ${context.libL10n.stopped}',
-              ),
-            if (unknown > 0)
-              _SummaryBadge(
-                label: '$unknown ${libL10n.unknown}',
-              ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (items.isEmpty)
+    if (items.isEmpty) {
+      return _ResourceList(
+        children: [
           emptyState ??
               _EmptyResourceCard(
                 icon: OctIcons.container,
                 message: context.libL10n.empty,
-              )
-        else
-          for (var index = 0; index < groups.length; index++) ...[
-            _ContainerGroupCard(
-              key: ValueKey(
-                groups[index].project == null
-                    ? 'container-group-standalone'
-                    : 'container-group-compose:${groups[index].project}',
               ),
-              group: groups[index],
-              showHeader: groups.length > 1 || groups[index].project != null,
-              trailingBuilder: trailingBuilder,
-              groupTrailingBuilder: groupTrailingBuilder,
-            ),
-            if (index != groups.length - 1) const SizedBox(height: 10),
-          ],
+        ],
+      );
+    }
+
+    return _ResourceList(
+      children: [
+        _ContainerTable(
+          groups: _groupContainers(items),
+          showGroupHeaders: true,
+          trailingBuilder: trailingBuilder,
+          onQuickAction: onQuickAction,
+        ),
       ],
     );
   }
 }
 
-/// Responsive image list used by [ContainerPage].
+/// The image list, laid out like the container table beside it: one card, a
+/// column header where the columns fit, and no rule between rows.
+///
+/// Still built lazily rather than as one Column — an image store with two
+/// hundred entries in it is normal, and only the rows on screen are worth
+/// building.
+///
+/// The runtime summary above it belongs to the page rather than to this view:
+/// it is the same header on every tab. See [ContainerRuntimeHeader].
 class ContainerImagesView extends StatelessWidget {
   final List<ContainerImg> images;
-  final ContainerType type;
-  final String? version;
   final ContainerImageTrailingBuilder trailingBuilder;
-  final Widget? summaryAction;
 
   const ContainerImagesView({
     required this.images,
-    required this.type,
-    required this.version,
     required this.trailingBuilder,
-    this.summaryAction,
     super.key,
   });
 
+  /// Below this the size and age columns leave the reference nothing, and the
+  /// age folds under it instead.
+  static const wideWidth = 620.0;
+
   @override
   Widget build(BuildContext context) {
-    final unused = images.where((e) => e.isUnused).length;
-    final summary = _RuntimeSummaryCard(
-      icon: MingCute.clapperboard_line,
-      title: type.name.capitalize,
-      subtitle: version ?? libL10n.unknown,
-      action: summaryAction,
-      badges: [
-        _SummaryBadge(
-          label: context.l10n.dockerImagesFmt(images.length),
-          emphasized: images.isNotEmpty,
-        ),
-        if (unused > 0)
-          _SummaryBadge(label: '$unused ${context.l10n.unused}'),
-      ],
-    );
-
     if (images.isEmpty) {
       return _ResourceList(
         children: [
-          summary,
-          const SizedBox(height: 10),
           _EmptyResourceCard(
             icon: MingCute.clapperboard_line,
             message: context.libL10n.empty,
@@ -178,19 +135,23 @@ class ContainerImagesView extends StatelessWidget {
       );
     }
 
-    return _ResourceBuilderList(
-      itemCount: images.length + 2,
-      itemBuilder: (context, index) {
-        if (index == 0) return summary;
-        if (index == 1) return const SizedBox(height: 10);
-        final imageIndex = index - 2;
-        return _ImageRowCardSegment(
-          index: imageIndex,
-          itemCount: images.length,
-          child: _ContainerImageRow(
-            index: imageIndex,
-            image: images[imageIndex],
-            trailing: trailingBuilder(images[imageIndex]),
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final wide = constraints.maxWidth >= wideWidth;
+        final headerCount = wide ? 1 : 0;
+        return _ResourceBuilderList(
+          itemCount: images.length + headerCount,
+          itemBuilder: (context, index) => _ImageRowCardSegment(
+            index: index,
+            itemCount: images.length + headerCount,
+            child: wide && index == 0
+                ? const _ImageColumnHeader()
+                : _ContainerImageRow(
+                    index: index - headerCount,
+                    image: images[index - headerCount],
+                    trailing: trailingBuilder(images[index - headerCount]),
+                    wide: wide,
+                  ),
           ),
         );
       },
@@ -408,6 +369,30 @@ class _PruneCommandPreview extends StatelessWidget {
   }
 }
 
+/// Keeps the list off the window edges, and off a 27-inch monitor's middle.
+double _gutter(double maxWidth) =>
+    maxWidth > 1226 ? (maxWidth - 1200) / 2 : 13.0;
+
+/// The same gutter as the lists below it, for chrome that has to line up with
+/// them — the runtime summary and the tab selector.
+class ContainerGutter extends StatelessWidget {
+  final Widget child;
+
+  const ContainerGutter({required this.child, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, constraints) => Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: _gutter(constraints.maxWidth),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
 class _ResourceList extends StatelessWidget {
   final List<Widget> children;
 
@@ -417,9 +402,7 @@ class _ResourceList extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
-        final horizontal = constraints.maxWidth > 1226
-            ? (constraints.maxWidth - 1200) / 2
-            : 13.0;
+        final horizontal = _gutter(constraints.maxWidth);
         return ListView(
           padding: EdgeInsets.fromLTRB(horizontal, 13, horizontal, 96),
           children: children,
@@ -442,9 +425,7 @@ class _ResourceBuilderList extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
-        final horizontal = constraints.maxWidth > 1226
-            ? (constraints.maxWidth - 1200) / 2
-            : 13.0;
+        final horizontal = _gutter(constraints.maxWidth);
         return ListView.builder(
           padding: EdgeInsets.fromLTRB(horizontal, 13, horizontal, 96),
           itemCount: itemCount,
@@ -480,153 +461,125 @@ class _ImageRowCardSegment extends StatelessWidget {
           bottom: last ? const Radius.circular(13) : Radius.zero,
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            child,
-            if (!last) const Divider(height: 1, indent: 15, endIndent: 15),
-          ],
-        ),
+        child: child,
       ),
     );
   }
 }
 
-class _RuntimeSummaryCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final List<Widget> badges;
-  final Widget? action;
+/// One number in [ContainerSummaryCard].
+/// The runtime and its totals, above whatever tab is showing: one line where
+/// there is room, two where there is not.
+///
+/// Not a card. It labels the table under it and the bar over it, and a card
+/// here read as a third thing to get past before reaching the list the page
+/// exists for.
+///
+/// The title is the runtime rather than the page. The bar already says
+/// Container, and what the icon, the version and the counts all belong to is
+/// Docker.
+class ContainerRuntimeHeader extends StatelessWidget {
+  final ContainerType type;
+  final String? version;
 
-  const _RuntimeSummaryCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.badges,
-    this.action,
+  /// `3 running · 1 stopped · 12 images · 809 MB`, assembled by the page,
+  /// which is what knows which of those it has.
+  final String summary;
+
+  /// What survives when the line has to fold. Narrow drops the totals that do
+  /// not fit rather than wrapping them onto a third line.
+  final String compactSummary;
+
+  /// Container / Image / Settings. Built here rather than passed in, because
+  /// only this widget knows whether the line folded — and a selector sharing a
+  /// line sizes to its labels while one with a row to itself spreads across
+  /// it.
+  final Widget Function(bool expand) selector;
+
+  const ContainerRuntimeHeader({
+    required this.type,
+    required this.version,
+    required this.summary,
+    required this.compactSummary,
+    required this.selector,
+    super.key,
   });
+
+  /// Below this the line cannot hold the counts and the selector at once.
+  static const wideWidth = 620.0;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.theme.colorScheme;
-    final identity = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: scheme.primaryContainer.withValues(alpha: 0.7),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, size: 21, color: scheme.onPrimaryContainer),
-        ),
-        UIs.width13,
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.theme.textTheme.titleMedium,
-              ),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: UIs.text13Grey,
-              ),
-            ],
-          ),
-        ),
-      ],
+    final icon = Icon(_runtimeIcon(type), size: 19, color: scheme.primary);
+    final title = Text(
+      type.name.capitalize,
+      style: const TextStyle(fontWeight: FontWeight.w500),
     );
 
-    return CardX(
-      child: LayoutBuilder(
-        builder: (_, constraints) {
-          final badgeWrap = Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            alignment: WrapAlignment.end,
-            children: badges,
-          );
-          if (constraints.maxWidth < 520) {
-            return Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        if (constraints.maxWidth < wideWidth) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
                 children: [
-                  identity,
-                  UIs.height13,
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: badgeWrap,
+                  icon,
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        title,
+                        Text(
+                          compactSummary,
+                          key: const ValueKey('container-runtime-summary'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: UIs.text11Grey,
                         ),
-                      ),
-                      if (action != null) ...[
-                        UIs.width7,
-                        action!,
                       ],
-                    ],
+                    ),
                   ),
                 ],
               ),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.all(15),
-            child: Row(
-              children: [
-                Expanded(child: identity),
-                UIs.width13,
-                badgeWrap,
-                if (action != null) ...[
-                  UIs.width7,
-                  action!,
-                ],
-              ],
-            ),
+              UIs.height13,
+              selector(true),
+            ],
           );
-        },
-      ),
+        }
+
+        return Row(
+          children: [
+            icon,
+            const SizedBox(width: 9),
+            title,
+            const SizedBox(width: 9),
+            Text(version ?? libL10n.unknown, style: _monoGrey(12)),
+            const SizedBox(width: 9),
+            Container(width: 1, height: 15, color: _hairlineOf(context)),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(
+                summary,
+                key: const ValueKey('container-runtime-summary'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: UIs.textGrey.color),
+              ),
+            ),
+            const SizedBox(width: 9),
+            selector(false),
+          ],
+        );
+      },
     );
   }
 }
 
-class _SummaryBadge extends StatelessWidget {
-  final String label;
-  final bool emphasized;
-
-  const _SummaryBadge({required this.label, this.emphasized = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.theme.colorScheme;
-    final color = emphasized
-        ? scheme.primaryContainer.withValues(alpha: 0.7)
-        : scheme.surfaceContainerHighest;
-    final textColor = emphasized
-        ? scheme.onPrimaryContainer
-        : scheme.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: UIs.text11.copyWith(color: textColor, fontWeight: FontWeight.w500),
-      ),
-    );
-  }
-}
+Color _hairlineOf(BuildContext context) =>
+    context.theme.colorScheme.outlineVariant.withValues(alpha: 0.35);
 
 class _ContainerGroup {
   final String? project;
@@ -677,58 +630,190 @@ int _compareContainerText(String? a, String? b) {
   return aValue.compareTo(bValue);
 }
 
-class _ContainerGroupCard extends StatefulWidget {
-  final _ContainerGroup group;
-  final bool showHeader;
-  final ContainerItemTrailingBuilder trailingBuilder;
-  final ContainerGroupTrailingBuilder groupTrailingBuilder;
+/// Lays containers out as a grid of cards, or as rows in one card when the
+/// column is too narrow for a card to hold its metrics.
+/// The column widths the header and every row share.
+///
+/// Sharing them is the whole point: this is a table rather than a list of
+/// cards so that a column of percentages can be read straight down without
+/// reading any of the names beside them.
+const _kColCpu = 84.0;
+const _kColMem = 84.0;
+const _kColNet = 104.0;
+const _kColDisk = 104.0;
+const _kColUptime = 88.0;
+const _kColMenu = 24.0;
+const _kColGap = 13.0;
 
-  const _ContainerGroupCard({
-    required this.group,
-    required this.showHeader,
+/// Below this the fixed columns leave the name nothing to live in, and the
+/// table gives way to one stacked row per container.
+const _kTableWideWidth = 780.0;
+
+Widget _tableLine({
+  required Widget name,
+  required Widget cpu,
+  required Widget mem,
+  required Widget net,
+  required Widget disk,
+  required Widget uptime,
+  required Widget menu,
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Expanded(child: name),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColCpu, child: cpu),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColMem, child: mem),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColNet, child: net),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColDisk, child: disk),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColUptime, child: uptime),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColMenu, child: menu),
+    ],
+  );
+}
+
+/// Every container on the server in one card: a column header, a bar per
+/// compose project, and a line per container.
+class _ContainerTable extends StatefulWidget {
+  final List<_ContainerGroup> groups;
+  final bool showGroupHeaders;
+  final ContainerItemTrailingBuilder trailingBuilder;
+  final ContainerQuickActionHandler? onQuickAction;
+
+  const _ContainerTable({
+    required this.groups,
+    required this.showGroupHeaders,
     required this.trailingBuilder,
-    required this.groupTrailingBuilder,
-    super.key,
+    required this.onQuickAction,
   });
 
   @override
-  State<_ContainerGroupCard> createState() => _ContainerGroupCardState();
+  State<_ContainerTable> createState() => _ContainerTableState();
 }
 
-class _ContainerGroupCardState extends State<_ContainerGroupCard> {
-  var _expanded = false;
+class _ContainerTableState extends State<_ContainerTable> {
+  /// Folded projects, so the default is open. A page whose every group had to
+  /// be opened before it said anything was a page that said nothing.
+  final _collapsed = <String>{};
 
   @override
   Widget build(BuildContext context) {
-    final group = widget.group;
-    final collapsible = widget.showHeader && group.project != null;
-    final showItems = !collapsible || _expanded;
-    final groupTrailing = widget.groupTrailingBuilder(group.items);
-    return CardX(
-      child: Column(
-        children: [
-          if (widget.showHeader) ...[
-            _ContainerGroupHeader(
-              project: group.project ?? context.l10n.dockerProjectOther,
-              items: group.items,
-              trailing: groupTrailing,
-              collapsible: collapsible,
-              expanded: _expanded,
-              onToggle: () => setState(() => _expanded = !_expanded),
-            ),
-            if (showItems) const Divider(height: 1),
-          ],
-          if (showItems)
-            for (var index = 0; index < group.items.length; index++) ...[
-              _ContainerItemRow(
-                index: index,
-                item: group.items[index],
-                trailing: widget.trailingBuilder(group.items[index]),
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final wide = constraints.maxWidth >= _kTableWideWidth;
+        final children = <Widget>[];
+        if (wide) children.add(_buildColumnHeader(context));
+
+        for (final group in widget.groups) {
+          final key = group.project;
+          final headed =
+              widget.showGroupHeaders &&
+              (widget.groups.length > 1 || key != null);
+          final collapsed = key != null && _collapsed.contains(key);
+
+          if (headed) {
+            children.add(
+              _ContainerGroupHeader(
+                project: key ?? context.l10n.dockerProjectOther,
+                items: group.items,
+                collapsible: key != null,
+                expanded: !collapsed,
+                onToggle: key == null
+                    ? null
+                    : () => setState(() {
+                        if (!_collapsed.remove(key)) _collapsed.add(key);
+                      }),
               ),
-              if (index != group.items.length - 1)
-                const Divider(height: 1, indent: 15, endIndent: 15),
-            ],
-        ],
+            );
+          }
+          children.add(
+            _Collapsible(
+              collapsed: collapsed,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final item in group.items)
+                    wide
+                        ? _ContainerTableRow(
+                            item: item,
+                            trailing: widget.trailingBuilder(item),
+                          )
+                        : _ContainerRow(
+                            item: item,
+                            trailing: widget.trailingBuilder(item),
+                            onQuickAction: widget.onQuickAction,
+                          ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return CardX(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildColumnHeader(BuildContext context) {
+    Widget label(String text, {bool trailing = true}) => Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: trailing ? TextAlign.end : TextAlign.start,
+      style: UIs.text11Grey,
+    );
+
+    return Container(
+      key: const ValueKey('container-table-header'),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: _hairlineOf(context))),
+      ),
+      child: _tableLine(
+        name: label(libL10n.name, trailing: false),
+        cpu: label('CPU'),
+        mem: label('Mem'),
+        net: label('Net ↓ / ↑'),
+        disk: label('Disk R / W'),
+        uptime: label(libL10n.uptime),
+        menu: const SizedBox.shrink(),
+      ),
+    );
+  }
+}
+
+/// Folds a group's rows away over the same 200ms its chevron turns in.
+///
+/// The rows stay built while folded — this animates the height they are given
+/// rather than whether they exist, which is what keeps the fold smooth in both
+/// directions and is what an ExpansionTile does too. [ClipRect] is what stops
+/// the half-height rows painting past the card's edge on the way.
+class _Collapsible extends StatelessWidget {
+  final bool collapsed;
+  final Widget child;
+
+  const _Collapsible({required this.collapsed, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: AnimatedAlign(
+        alignment: Alignment.topCenter,
+        heightFactor: collapsed ? 0 : 1,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        child: child,
       ),
     );
   }
@@ -737,15 +822,13 @@ class _ContainerGroupCardState extends State<_ContainerGroupCard> {
 class _ContainerGroupHeader extends StatelessWidget {
   final String project;
   final List<ContainerPs> items;
-  final Widget? trailing;
   final bool collapsible;
   final bool expanded;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
 
   const _ContainerGroupHeader({
     required this.project,
     required this.items,
-    required this.trailing,
     required this.collapsible,
     required this.expanded,
     required this.onToggle,
@@ -753,118 +836,433 @@ class _ContainerGroupHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
     final running = items.where((e) => e.status.isRunning).length;
     final stopped = items.where((e) => e.status.isStopped).length;
     final unknown = items
         .where((e) => e.status == ContainerStatus.unknown)
         .length;
     final summary = [
-      '$running ${context.libL10n.running}',
+      if (running > 0) '$running ${context.libL10n.running}',
       if (stopped > 0) '$stopped ${context.libL10n.stopped}',
       if (unknown > 0) '$unknown ${libL10n.unknown}',
     ].join(' · ');
-    return ListTile(
+
+    final bar = Container(
       key: ValueKey('container-group-header-$project'),
-      contentPadding: const EdgeInsets.only(left: 15, right: 5),
-      leading: Icon(
-        Icons.folder_outlined,
-        size: 18,
-        color: context.theme.colorScheme.onSurfaceVariant,
-      ),
-      title: Text(
-        project,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: context.theme.textTheme.titleSmall,
-      ),
-      subtitle: Text(summary, style: UIs.text11Grey),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      color: scheme.surfaceContainer,
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      child: Row(
         children: [
-          ?trailing,
+          Icon(Icons.folder_open, size: 15, color: UIs.textGrey.color),
+          UIs.width7,
+          // One Expanded holding both labels, rather than a Flexible label
+          // beside a Spacer: those two share the free space one to one, which
+          // left the buttons stranded half way across the bar.
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    project,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                UIs.width7,
+                Flexible(
+                  child: Text(
+                    summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: UIs.text11Grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (collapsible)
             AnimatedRotation(
               key: ValueKey('container-group-arrow-$project'),
-              turns: expanded ? 0.5 : 0,
+              turns: expanded ? 0 : 0.5,
               duration: const Duration(milliseconds: 200),
-              child: const Icon(Icons.expand_more),
+              child: Icon(
+                Icons.expand_less,
+                size: 15,
+                color: UIs.textGrey.color,
+              ),
             ),
         ],
       ),
-      onTap: collapsible ? onToggle : null,
+    );
+
+    if (!collapsible) return bar;
+    return InkWell(onTap: onToggle, child: bar);
+  }
+}
+
+/// One container as a table line, its numbers under the header's columns.
+class _ContainerTableRow extends StatelessWidget {
+  final ContainerPs item;
+  final Widget trailing;
+
+  const _ContainerTableRow({required this.item, required this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    final id = item.id ?? item.name ?? 'unknown';
+    final running = item.status.isRunning;
+    final data = _ContainerResourceData.from(item);
+    final badge = _stateBadge(item);
+
+    return Padding(
+      key: ValueKey('container-table-row-$id'),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      child: _tableLine(
+        name: Row(
+          children: [
+            _StatusDot(running: running),
+            const SizedBox(width: 9),
+            Flexible(
+              flex: 2,
+              child: Text(
+                item.name ?? libL10n.unknown,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: running ? null : scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(width: 9),
+            Flexible(
+              flex: 3,
+              child: Text(
+                item.ports == null
+                    ? (item.image ?? libL10n.unknown)
+                    : '${item.image ?? libL10n.unknown} · ${item.ports}',
+                key: ValueKey('container-identity-$id'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _monoGrey(11),
+              ),
+            ),
+            if (badge != null) ...[
+              const SizedBox(width: 9),
+              _StateBadge(
+                key: ValueKey('container-state-badge-$id'),
+                label: badge,
+              ),
+            ],
+          ],
+        ),
+        cpu: _PercentCell(
+          key: ValueKey('container-metric-$id-cpu'),
+          percent: data.cpuPercent,
+        ),
+        mem: _PercentCell(
+          key: ValueKey('container-metric-$id-memory'),
+          percent: data.memoryPercent,
+        ),
+        net: _PairCell(
+          key: ValueKey('container-metric-$id-network'),
+          values: data.network,
+        ),
+        disk: _PairCell(
+          key: ValueKey('container-metric-$id-disk'),
+          values: data.disk,
+        ),
+        uptime: Text(
+          _uptimeLabel(item),
+          key: ValueKey('container-status-$id'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.end,
+          style: TextStyle(
+            fontSize: 12,
+            color: scheme.onSurfaceVariant,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        menu: trailing,
+      ),
     );
   }
 }
 
-class _ContainerItemRow extends StatelessWidget {
-  final int index;
+/// The same container stacked, for a column too narrow for the table: the
+/// four metrics become one line, and the actions a stopped one needs take the
+/// place of the numbers it has none of.
+class _ContainerRow extends StatelessWidget {
   final ContainerPs item;
   final Widget trailing;
+  final ContainerQuickActionHandler? onQuickAction;
 
-  const _ContainerItemRow({
-    required this.index,
+  const _ContainerRow({
     required this.item,
     required this.trailing,
+    required this.onQuickAction,
   });
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
     final id = item.id ?? item.name ?? 'unknown';
-    final resources = _ContainerResourceData.from(item);
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final wide = constraints.maxWidth >= 1040;
-        return KeyedSubtree(
-          key: ValueKey(
-            'container-row-${wide ? 'wide' : 'compact'}-$index-$id',
-          ),
+    final running = item.status.isRunning;
+    final metrics = running
+        ? _ContainerResourceData.from(item).compactLine()
+        : null;
+
+    // The menu button is 38pt tall against a 20pt name, so leaving it inside
+    // the first line made the line 38 and pushed the name 9pt down — the row
+    // then had 18 above its text and 9 below it. Keeping it in the outer row,
+    // top-aligned, lets its own tap padding overlap the row's instead of
+    // adding to it, and the column's padding is what spaces the text.
+    return Row(
+      key: ValueKey('container-row-$id'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
+            padding: const EdgeInsets.fromLTRB(13, 9, 0, 9),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(context, wide: wide),
-                if (resources.isNotEmpty) ...[
-                  UIs.height13,
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: _ContainerResourcePanel(
-                      id: id,
-                      data: resources,
+                Row(
+                  children: [
+                    _StatusDot(running: running),
+                    UIs.width7,
+                    Expanded(
+                      child: Text(
+                        item.name ?? libL10n.unknown,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: running ? null : scheme.onSurfaceVariant,
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  item.ports == null
+                      ? (item.image ?? libL10n.unknown)
+                      : '${item.image ?? libL10n.unknown} · ${item.ports}',
+                  key: ValueKey('container-identity-$id'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _monoGrey(11),
+                ),
+                if (metrics != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    metrics,
+                    key: ValueKey('container-metrics-line-$id'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: scheme.onSurfaceVariant,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ] else if (!running) ...[
+                  const SizedBox(height: 5),
+                  _ContainerQuickActions(
+                    item: item,
+                    onQuickAction: onQuickAction,
+                    includeRemove: false,
                   ),
                 ],
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, {required bool wide}) {
-    return Row(
-      children: [
-        _StatusIcon(running: item.status.isRunning),
-        UIs.width13,
-        Expanded(child: _ContainerIdentity(item: item)),
+        ),
         UIs.width7,
-        SizedBox(
-          width: wide ? 128 : 100,
-          child: Text(
-            _statusLabel(item),
-            key: ValueKey('container-status-${item.id ?? item.name}'),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
-            style: UIs.text13Grey,
+        Padding(
+          padding: const EdgeInsets.only(right: 5),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _uptimeLabel(item),
+                key: ValueKey('container-status-$id'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: UIs.text11Grey.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              trailing,
+            ],
           ),
         ),
-        trailing,
       ],
     );
   }
 }
+
+class _StatusDot extends StatelessWidget {
+  final bool running;
+
+  const _StatusDot({required this.running});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return Container(
+      width: 7,
+      height: 7,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: running ? scheme.primary : scheme.outline,
+      ),
+    );
+  }
+}
+
+/// `Exited (0)` beside the name of a container that is not running, where the
+/// table has taken its lifecycle text away to make the Uptime column line up.
+class _StateBadge extends StatelessWidget {
+  final String label;
+
+  const _StateBadge({required this.label, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: context.theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(7),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: UIs.text11Grey,
+      ),
+    );
+  }
+}
+
+/// Start / Logs, offered where a stopped container's metrics would be.
+///
+/// Remove is left off: it is the one action here that cannot be undone, and
+/// it would sit a chip's width from Start.
+class _ContainerQuickActions extends StatelessWidget {
+  final ContainerPs item;
+  final ContainerQuickActionHandler? onQuickAction;
+  final bool includeRemove;
+
+  const _ContainerQuickActions({
+    required this.item,
+    required this.onQuickAction,
+    required this.includeRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final handler = onQuickAction;
+    if (handler == null) return UIs.placeholder;
+
+    final scheme = context.theme.colorScheme;
+    final offered = ContainerMenu.items(item.status);
+    final actions = [
+      if (offered.contains(ContainerMenu.start)) ContainerMenu.start,
+      if (offered.contains(ContainerMenu.logs)) ContainerMenu.logs,
+      if (includeRemove && offered.contains(ContainerMenu.rm)) ContainerMenu.rm,
+    ];
+    if (actions.isEmpty) return UIs.placeholder;
+
+    return Wrap(
+      spacing: 7,
+      runSpacing: 7,
+      children: [
+        for (final action in actions)
+          ActionChip(
+            key: ValueKey(
+              'container-quick-${action.name}-${item.id ?? item.name}',
+            ),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            avatar: Icon(
+              action.icon,
+              size: 15,
+              color: action == ContainerMenu.rm ? scheme.error : null,
+            ),
+            label: Text(action.toStr),
+            labelStyle: TextStyle(
+              fontSize: 12,
+              color: action == ContainerMenu.rm ? scheme.error : null,
+            ),
+            backgroundColor: action == ContainerMenu.start
+                ? scheme.primaryContainer
+                : null,
+            side: action == ContainerMenu.start ? BorderSide.none : null,
+            onPressed: () => handler(action, item),
+          ),
+      ],
+    );
+  }
+}
+
+/// `Up 11 days` → `11 d`, `Exited (0) 2 days ago` → `2 d ago`.
+///
+/// Both runtimes write this in English whatever the server's locale is, so
+/// matching the unit word is safe. Anything unrecognised is returned as the
+/// runtime wrote it: a status this cannot shorten is still a status worth
+/// reading.
+String _uptimeLabel(ContainerPs item) {
+  final raw = _statusLabel(item).trim();
+  final match = RegExp(
+    r'(\d+)\s+(second|minute|hour|day|week|month|year)s?(\s+ago)?',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (match == null) return raw;
+  const units = {
+    'second': 's',
+    'minute': 'm',
+    'hour': 'h',
+    'day': 'd',
+    'week': 'w',
+    'month': 'mo',
+    'year': 'y',
+  };
+  final unit = units[match.group(2)!.toLowerCase()];
+  if (unit == null) return raw;
+  return '${match.group(1)} $unit${match.group(3) == null ? '' : ' ago'}';
+}
+
+/// The lifecycle half of a stopped container's status, with the time part
+/// [_uptimeLabel] moved to its own column removed.
+String? _stateBadge(ContainerPs item) {
+  if (item.status.isRunning) return null;
+  final raw = _statusLabel(item).trim();
+  final match = RegExp(
+    r'\s*\d+\s+(second|minute|hour|day|week|month|year)s?(\s+ago)?\s*$',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (match == null) return raw.isEmpty ? null : raw;
+  final prefix = raw.substring(0, match.start).trim();
+  return prefix.isEmpty ? null : prefix;
+}
+
+TextStyle _monoGrey(double size) => TextStyle(
+  fontFamily: 'monospace',
+  fontSize: size,
+  color: UIs.textGrey.color,
+);
 
 class _ContainerResourceData {
   final double? cpuPercent;
@@ -893,6 +1291,22 @@ class _ContainerResourceData {
       memoryPercent != null ||
       network != null ||
       disk != null;
+
+  /// The metrics as one line, for a row too narrow to give each of them a
+  /// column. Null when nothing was measured.
+  ///
+  /// Disk is left out. It is the least urgent of the four and the only one
+  /// whose two values are both large enough to push the line past a phone's
+  /// width, which turned every row's last metric into an ellipsis.
+  String? compactLine() {
+    final parts = [
+      if (cpuPercent case final value?) 'CPU ${value.toStringAsFixed(1)}%',
+      if (memoryPercent case final value?) 'Mem ${value.toStringAsFixed(1)}%',
+      if (network case final values?)
+        '↓ ${values.first}${values.second == null ? '' : ' ↑ ${values.second}'}',
+    ];
+    return parts.isEmpty ? null : parts.join(' · ');
+  }
 }
 
 class _MetricPair {
@@ -902,331 +1316,263 @@ class _MetricPair {
   const _MetricPair({required this.first, required this.second});
 }
 
-class _ContainerResourcePanel extends StatelessWidget {
-  final String id;
-  final _ContainerResourceData data;
+/// Four cells across the foot of a card: CPU and memory as a percentage over
+/// a bar, network and disk as their two counters.
+///
+/// A bar rather than the ring this used to draw. At two cards to a row the
+/// ring was the widest thing on the card and the least readable: a percentage
+/// is a number, and the only comparison worth making is against the other
+/// containers in the column, which a left-aligned bar gives and a centred ring
+/// does not.
+/// A percentage over its own bar, right-aligned under the column header.
+///
+/// The bar is the comparison: the number says what this container is doing,
+/// and the bars down the column say which one to look at.
+class _PercentCell extends StatelessWidget {
+  final double? percent;
 
-  const _ContainerResourcePanel({required this.id, required this.data});
+  const _PercentCell({required this.percent, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final slots = <Widget?>[
-      data.cpuPercent == null
-          ? null
-          : _ResourceMetricSlot(
-              key: ValueKey('container-resource-circle-$id-cpu'),
-              label: 'CPU',
-              child: PercentCircle(
-                percent: data.cpuPercent!,
-                centerText: '${data.cpuPercent!.toStringAsFixed(1)}%',
-              ),
-            ),
-      data.memoryPercent == null
-          ? null
-          : _ResourceMetricSlot(
-              key: ValueKey('container-resource-circle-$id-memory'),
-              label: 'MEM',
-              child: PercentCircle(
-                percent: data.memoryPercent!,
-                centerText: '${data.memoryPercent!.toStringAsFixed(1)}%',
-              ),
-            ),
-      data.network == null
-          ? null
-          : _ResourceMetricSlot(
-              key: ValueKey('container-resource-module-$id-network'),
-              label: 'NET',
-              child: _ResourcePairValues(
-                firstLabel: '↓',
-                secondLabel: '↑',
-                values: data.network!,
-              ),
-            ),
-      data.disk == null
-          ? null
-          : _ResourceMetricSlot(
-              key: ValueKey('container-resource-module-$id-disk'),
-              label: 'DISK',
-              child: _ResourcePairValues(
-                firstLabel: context.l10n.read,
-                secondLabel: context.l10n.write,
-                values: data.disk!,
-              ),
-            ),
-    ];
-    return Align(
-      key: ValueKey('container-resource-panel-$id'),
-      alignment: Alignment.center,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: slots
-              .map(
-                (slot) => Expanded(
-                  child: Center(child: slot ?? const SizedBox.shrink()),
-                ),
-              )
-              .toList(growable: false),
+    final value = percent;
+    if (value == null) return const _MetricDash();
+
+    final scheme = context.theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${value.toStringAsFixed(1)}%',
+          maxLines: 1,
+          textAlign: TextAlign.end,
+          style: const TextStyle(
+            fontSize: 13,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
         ),
+        const SizedBox(height: 3),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: (value / 100).clamp(0.0, 1.0),
+            minHeight: 3,
+            backgroundColor: scheme.surfaceContainerHighest,
+            color: scheme.primary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Two counters stacked, the second in grey: down over up, read over written.
+class _PairCell extends StatelessWidget {
+  final _MetricPair? values;
+
+  const _PairCell({required this.values, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final pair = values;
+    if (pair == null) return const _MetricDash();
+
+    final scheme = context.theme.colorScheme;
+    TextStyle style(Color? color) => TextStyle(
+      fontSize: 12,
+      color: color,
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          pair.first,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.end,
+          style: style(scheme.onSurfaceVariant),
+        ),
+        if (pair.second case final second?)
+          Text(
+            second,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: style(UIs.textGrey.color),
+          ),
+      ],
+    );
+  }
+}
+
+/// Not measured. A dash rather than a blank, so the column still reads as a
+/// column, and rather than a zero, which would be a measurement.
+class _MetricDash extends StatelessWidget {
+  const _MetricDash();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('—', textAlign: TextAlign.end, style: UIs.textGrey);
+  }
+}
+
+/// Image columns, sized the way the container table's are and for the same
+/// reason: a size is worth comparing down the page, and it can only be
+/// compared if it starts in the same place on every row.
+const _kColImgSize = 88.0;
+const _kColImgCreated = 140.0;
+
+Widget _imageLine({
+  required Widget name,
+  required Widget size,
+  required Widget created,
+  required Widget menu,
+  required bool wide,
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Expanded(child: name),
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColImgSize, child: size),
+      if (wide) ...[
+        const SizedBox(width: _kColGap),
+        SizedBox(width: _kColImgCreated, child: created),
+      ],
+      const SizedBox(width: _kColGap),
+      SizedBox(width: _kColMenu, child: menu),
+    ],
+  );
+}
+
+class _ImageColumnHeader extends StatelessWidget {
+  const _ImageColumnHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget label(String text, {bool trailing = true}) => Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: trailing ? TextAlign.end : TextAlign.start,
+      style: UIs.text11Grey,
+    );
+
+    return Container(
+      key: const ValueKey('image-table-header'),
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: _hairlineOf(context))),
+      ),
+      child: _imageLine(
+        wide: true,
+        name: label(libL10n.name, trailing: false),
+        size: label(libL10n.size),
+        created: label(libL10n.time),
+        menu: const SizedBox.shrink(),
       ),
     );
   }
 }
 
-class _ResourceMetricSlot extends StatelessWidget {
-  final String label;
-  final Widget child;
-
-  const _ResourceMetricSlot({
-    required this.label,
-    required this.child,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          height: 70,
-          child: Center(child: child),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 13,
-          child: Center(
-            child: Text(
-              label,
-              style: UIs.text11Grey,
-              strutStyle: const StrutStyle(
-                fontSize: 11,
-                height: 1,
-                forceStrutHeight: true,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ResourcePairValues extends StatelessWidget {
-  final String firstLabel;
-  final String secondLabel;
-  final _MetricPair values;
-
-  const _ResourcePairValues({
-    required this.firstLabel,
-    required this.secondLabel,
-    required this.values,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _ResourcePairValue(label: firstLabel, value: values.first),
-        if (values.second != null) ...[
-          const SizedBox(height: 3),
-          _ResourcePairValue(label: secondLabel, value: values.second!),
-        ],
-      ],
-    );
-  }
-}
-
-class _ResourcePairValue extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _ResourcePairValue({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      '$label:\n$value',
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      textAlign: TextAlign.center,
-      style: UIs.text11Grey,
-    );
-  }
-}
-
-class _ContainerIdentity extends StatelessWidget {
-  final ContainerPs item;
-
-  const _ContainerIdentity({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          item.name ?? libL10n.unknown,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: UIs.text15,
-        ),
-        const SizedBox(height: 2),
-        Text(
-          item.image ?? libL10n.unknown,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: UIs.text13Grey,
-        ),
-      ],
-    );
-  }
-}
-
-class _StatusIcon extends StatelessWidget {
-  final bool running;
-
-  const _StatusIcon({required this.running});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.theme.colorScheme;
-    return Icon(
-      running ? Icons.play_circle_outline : Icons.stop_circle_outlined,
-      size: 20,
-      color: running ? scheme.primary : scheme.onSurfaceVariant,
-    );
-  }
-}
-
+/// One image: its reference and id, with size and age in their own columns
+/// where there is room and folded under the name where there is not.
+///
+/// No leading icon. Every row of this list would carry the same one, and what
+/// distinguishes a row — being unused, being dangling — is already a badge
+/// beside the name.
 class _ContainerImageRow extends StatelessWidget {
   final int index;
   final ContainerImg image;
   final Widget trailing;
+  final bool wide;
 
   const _ContainerImageRow({
     required this.index,
     required this.image,
     required this.trailing,
+    required this.wide,
   });
 
   @override
   Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
     final id = image.id ?? _imageReference(image);
-    final createdLabel = _imageCreatedLabel(
-      image,
-      Localizations.localeOf(context),
+    final created = _imageCreatedLabel(image, Localizations.localeOf(context));
+    final shortId = _shortId(image.id) ?? libL10n.unknown;
+    final unused = image.isUnused;
+
+    final sizeText = Text(
+      image.sizeMB ?? '—',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.end,
+      style: TextStyle(
+        fontSize: 13,
+        color: unused ? UIs.textGrey.color : null,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
     );
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final wide = constraints.maxWidth >= 760;
-        return KeyedSubtree(
-          key: ValueKey(
-            'image-row-${wide ? 'wide' : 'compact'}-$index-$id',
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
-            child: Row(
-              children: [
-                Icon(
-                  image.isDangling
-                      ? Icons.broken_image_outlined
-                      : Icons.image_outlined,
-                  size: 20,
-                  color: image.isUnused
-                      ? context.theme.colorScheme.onSurfaceVariant
-                      : context.theme.colorScheme.primary,
-                ),
-                UIs.width13,
-                Expanded(child: _ImageIdentity(image: image, wide: wide)),
-                SizedBox(
-                  width: 82,
-                  child: Text(
-                    image.sizeMB ?? '—',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: UIs.text13,
-                  ),
-                ),
-                if (wide) ...[
-                  UIs.width13,
-                  SizedBox(
-                    width: 180,
+
+    // The menu sits in the outer row so its tap padding overlaps the row's
+    // rather than adding to it — the same reason the container row does it.
+    return KeyedSubtree(
+      key: ValueKey('image-row-${wide ? 'wide' : 'compact'}-$index-$id'),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(13, 9, 5, 9),
+        child: _imageLine(
+          wide: wide,
+          name: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
                     child: Text(
-                      createdLabel ?? '—',
+                      _imageReference(image),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: UIs.text11Grey,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: unused ? scheme.onSurfaceVariant : null,
+                      ),
                     ),
                   ),
+                  if (image.isDangling) ...[
+                    UIs.width7,
+                    _ImageBadge(label: context.l10n.dangling),
+                  ] else if (unused) ...[
+                    UIs.width7,
+                    _ImageBadge(label: context.l10n.unused),
+                  ],
                 ],
-                trailing,
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ImageIdentity extends StatelessWidget {
-  final ContainerImg image;
-  final bool wide;
-
-  const _ImageIdentity({required this.image, required this.wide});
-
-  @override
-  Widget build(BuildContext context) {
-    final id = _shortId(image.id) ?? libL10n.unknown;
-    final createdLabel = _imageCreatedLabel(
-      image,
-      Localizations.localeOf(context),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Flexible(
-              child: Text(
-                _imageReference(image),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                wide || created == null ? shortId : '$shortId · $created',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: UIs.text15,
+                style: _monoGrey(11),
               ),
-            ),
-            if (image.isDangling) ...[
-              UIs.width7,
-              _ImageBadge(label: context.l10n.dangling),
-            ] else if (image.isUnused) ...[
-              UIs.width7,
-              _ImageBadge(label: context.l10n.unused),
             ],
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          id,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: UIs.text13Grey,
-        ),
-        if (!wide && createdLabel != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            createdLabel,
+          ),
+          size: sizeText,
+          created: Text(
+            created ?? '—',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: UIs.text11Grey,
+            textAlign: TextAlign.end,
+            style: UIs.text11Grey.copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
-        ],
-      ],
+          menu: trailing,
+        ),
+      ),
     );
   }
 }
