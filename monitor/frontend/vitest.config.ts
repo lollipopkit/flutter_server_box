@@ -7,8 +7,14 @@ export default defineConfig({
   resolve: { dedupe: ['svelte'] },
   plugins: [svelte(), svelteTesting()],
   test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/tests/setup.ts'],
+    projects: [
+      { test: { name: 'node', environment: 'node', include: ['src/tests/{format,fsPath,agentUrl}.test.ts'] } },
+      { extends: true, test: {
+        name: 'browser', globals: true, environment: 'jsdom',
+        include: ['src/**/*.test.ts'],
+        exclude: ['src/tests/{format,fsPath,agentUrl}.test.ts'],
+        setupFiles: ['./src/tests/setup.ts'],
+      } },
+    ],
   },
 })
