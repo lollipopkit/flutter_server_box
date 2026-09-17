@@ -80,9 +80,9 @@ void main() {
       // field having been lost.
       Stores.setting.globeEnabled.put(false);
       final coord = GeoCoord.tryNew(51.5072, -0.1276)!;
-      final resolved = await geo.resolve(
+      final resolved = (await geo.locate(
         sshServer('8.8.8.8', custom: ServerCustom(geo: coord)),
-      );
+      )).geo;
       expect(resolved?.coord, coord);
       expect(resolved?.source, GeoSource.manual);
     });
@@ -91,21 +91,15 @@ void main() {
       expect(Stores.setting.globeEnabled.fetch(), isTrue);
     });
 
-    test('but nothing is placed until the data is installed', () {
-      // There is no bundled fallback any more, so the globe with the feature
-      // on and nothing downloaded places only what was typed by hand. That is
-      // also what makes this opt-in *and* off by default without a switch,
-      // which is what F-Droid's Tracking anti-feature asks for.
-      expect(Stores.setting.globeEnabled.fetch(), isTrue);
-    });
+
   });
 
   group('the chain', () {
     test('a manual coordinate wins over the database', () async {
       final coord = GeoCoord.tryNew(51.5072, -0.1276)!;
-      final resolved = await geo.resolve(
+      final resolved = (await geo.locate(
         sshServer('8.8.8.8', custom: ServerCustom(geo: coord)),
-      );
+      )).geo;
       expect(resolved?.coord, coord, reason: 'not the US capital');
       expect(resolved?.source, GeoSource.manual);
     });
@@ -427,7 +421,7 @@ void main() {
       await installGeoVectors(data: data);
 
       expect(
-        ((await geo.locateHost('8.8.8.8')).geo)?.coord.lon,
+        (await geo.locateHost('8.8.8.8')).geo?.coord.lon,
         closeTo(-122.0838, 0.01),
       );
     });

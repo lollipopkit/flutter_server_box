@@ -7,7 +7,7 @@ import 'package:server_box/data/model/server/geo_source.dart';
 /// Much smaller than it was, because this type is much smaller than it was.
 /// `beats`, `isExact`, `fromName` and `ResolvedGeo`'s two JSON members all
 /// existed for the store that held where each host was; the store is gone —
-/// see `IpGeo.shared.resolve` — and they went with it rather than staying as API a
+/// see `IpGeo.shared.locate` — and they went with it rather than staying as API a
 /// test file was the only caller of.
 void main() {
   final coord = GeoCoord.tryNew(39.9042, 116.4074)!;

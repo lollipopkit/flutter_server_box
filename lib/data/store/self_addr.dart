@@ -22,7 +22,7 @@ import 'package:fl_lib/fl_lib.dart';
 /// **The address, deliberately, and not the coordinate.** This is the only
 /// thing the globe remembers now: the store that held where each *host* was
 /// went with the per-lookup network requests it existed for — see
-/// `IpGeo.shared.resolve`. What is kept here is the half that cannot be worked out
+/// `IpGeo.shared.locate`. What is kept here is the half that cannot be worked out
 /// again, since only the machine knows which public address is assigned to one
 /// of its interfaces. The coordinate is looked up fresh every time, so it
 /// follows the installed month rather than outliving it.

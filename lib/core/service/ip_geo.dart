@@ -55,9 +55,7 @@ final class IpGeo {
   /// string it could not notice a name resolving somewhere new, and it answered
   /// from itself rather than from the installed month, so a coordinate never
   /// changed after a data update.
-  Future<ResolvedGeo?> resolve(Spi spi) async => (await locate(spi)).geo;
-
-  /// [resolve], and why there is no coordinate when there is none.
+  /// Includes the reason when no coordinate is available.
   ///
   /// Both halves in one pass because the reason is only knowable from inside
   /// the chain: by the time a caller has a null it can no longer tell a
