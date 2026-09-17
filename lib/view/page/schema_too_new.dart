@@ -235,7 +235,7 @@ extension _Actions on _SchemaTooNewPageState {
       if (destDir == null) {
         await Pfs.sharePaths(paths: [path], title: libL10n.backup);
       } else {
-        savedTo = _copyInto(path, destDir, name);
+        savedTo = await _copyInto(path, destDir, name);
       }
     } catch (e, s) {
       Loggers.app.warning('Rescue export failed', e, s);
@@ -273,25 +273,67 @@ extension _Actions on _SchemaTooNewPageState {
   /// two exports in one second, or a clock set back, would otherwise replace a
   /// backup the user already has — with a copy of the same data at best.
   ///
-  /// Sync for the reason the temp directory is. Copying a finished file is
-  /// plain I/O, milliseconds even at tens of megabytes; reading and
-  /// re-encrypting every table is the part that needed its own isolate.
-  String _copyInto(String src, String destDir, String name) {
-    final stem = name.substring(0, name.length - '.db'.length);
-    var dest = destDir.joinPath(name);
-    for (var n = 2; File(dest).existsSync(); n++) {
-      dest = destDir.joinPath('$stem-$n.db');
-    }
+  /// Asynchronous and streamed, so the progress bar keeps moving while the
+  /// bytes go across: the copy is as large as the database.
+  Future<String> _copyInto(String src, String destDir, String name) async {
+    final (dest, out) = await _reserve(destDir, name);
     try {
-      File(src).copySync(dest);
+      await for (final chunk in File(src).openRead()) {
+        await out.writeFrom(chunk);
+      }
+      await out.close();
     } catch (_) {
-      // Half a database in the user's directory looks like a backup. The path
-      // was free a moment ago, so what is there now is this attempt's.
-      final partial = File(dest);
-      if (partial.existsSync()) partial.deleteSync();
+      // Half a database in the user's directory looks like a backup. The file
+      // is this attempt's: `_reserve` created it, so removing it cannot take
+      // anything that was there before.
+      await _discard(out, dest);
       rethrow;
     }
     return dest;
+  }
+
+  /// Creates the first free name for [name] in [destDir] and opens it.
+  ///
+  /// Exclusive creation is the check. Asking whether a path exists and then
+  /// writing to it leaves a gap in which another writer can take the name, and
+  /// the write would then replace that file.
+  Future<(String, RandomAccessFile)> _reserve(
+    String destDir,
+    String name,
+  ) async {
+    final stem = name.substring(0, name.length - '.db'.length);
+    for (var n = 1; ; n++) {
+      final dest = destDir.joinPath(n == 1 ? name : '$stem-$n.db');
+      final file = File(dest);
+      try {
+        await file.create(exclusive: true);
+      } on PathExistsException {
+        continue;
+      }
+      try {
+        return (dest, await file.open(mode: FileMode.writeOnly));
+      } catch (_) {
+        // Created a moment ago by this call, and empty.
+        try {
+          await file.delete();
+        } catch (_) {}
+        rethrow;
+      }
+    }
+  }
+
+  /// Closes [out] and removes [dest], both best effort: this runs while an
+  /// error is already on its way to the user, and that error is the one worth
+  /// reporting.
+  Future<void> _discard(RandomAccessFile out, String dest) async {
+    try {
+      await out.close();
+    } catch (_) {}
+    try {
+      await File(dest).delete();
+    } catch (e, s) {
+      Loggers.app.warning('Could not remove a partial rescue copy', e, s);
+    }
   }
 
   /// Ends the process, which is the only thing left that helps.

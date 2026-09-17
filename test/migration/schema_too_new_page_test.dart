@@ -115,6 +115,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
+  /// Whether the export has finished and said so, either way.
+  ///
+  /// Not "a file is in the directory": the destination is created before the
+  /// bytes are copied into it.
+  bool answered() =>
+      find.text(libL10n.success).evaluate().isNotEmpty ||
+      find.text(libL10n.fail).evaluate().isNotEmpty;
+
   /// Taps through to a plain export: the warning, then its OK.
   Future<void> exportPlain(WidgetTester tester) async {
     await tester.tap(find.text(l10n.schemaTooNewExportPlain));
@@ -184,7 +192,7 @@ void main() {
     await pump(tester);
 
     await exportPlain(tester);
-    await settleUntil(tester, () => saved().isNotEmpty);
+    await settleUntil(tester, answered);
 
     expect(tester.takeException(), isNull);
     expect(picker.asked, 1);
@@ -223,22 +231,36 @@ void main() {
     expect(find.text(libL10n.fail), findsNothing);
   });
 
-  testWidgets('a second export sits beside the first', (tester) async {
-    // Two in the same second get the same name. Replacing the first would be
-    // replacing a backup the user already has.
+  testWidgets('an export never replaces a file already there', (tester) async {
+    // The name carries the second it was made, so two exports in one second,
+    // or a clock set back, meet a file that is already the user's backup.
+    // Every name this export could take in the next few seconds is taken up
+    // front, so the clash is certain rather than a matter of timing.
+    final now = DateTime.now();
+    final sentinels = <File>[
+      for (var i = -1; i <= 15; i++)
+        File(
+          picker.dir.path.joinPath(
+            'serverbox-rescue-v23-'
+            '${now.add(Duration(seconds: i)).ymdhms(ymdSep: '', hmsSep: '', sep: '-')}'
+            '-plain.db',
+          ),
+        )..writeAsStringSync('the user\'s backup'),
+    ];
     await pump(tester);
 
     await exportPlain(tester);
-    await settleUntil(tester, () => saved().isNotEmpty);
-    await tester.tap(find.text(libL10n.ok).last);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await settleUntil(tester, answered);
 
-    await exportPlain(tester);
-    await settleUntil(tester, () => saved().length > 1);
-
-    expect(saved(), hasLength(2));
     expect(find.text(libL10n.fail), findsNothing);
+    for (final f in sentinels) {
+      expect(f.readAsStringSync(), 'the user\'s backup', reason: f.path);
+    }
+    final added = saved().where((f) => !sentinels.any((s) => s.path == f.path));
+    expect(added, hasLength(1));
+    expect(added.single.path, endsWith('-plain-2.db'));
+    final head = added.single.readAsBytesSync().take(15).toList();
+    expect(utf8.decode(head), 'SQLite format 3');
   });
 
   testWidgets('cancelling the directory picker exports nothing', (
