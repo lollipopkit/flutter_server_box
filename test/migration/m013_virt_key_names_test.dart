@@ -21,8 +21,8 @@ void main() {
 
   setUp(() {
     SqliteDb.openInMemory();
-    store = SettingStore('setting_test');
-    migration = VirtKeyNamesMigration(store: store);
+    store = SettingStore.instance;
+    migration = VirtKeyNamesMigration();
   });
 
   tearDown(closeTestDb);

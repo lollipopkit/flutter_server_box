@@ -22,12 +22,8 @@ import 'package:server_box/data/store/setting.dart';
 /// written before this carries the indices, and the version has long since
 /// moved past the point where the migrator would look.
 class VirtKeyNamesMigration implements SchemaMigration {
-  const VirtKeyNamesMigration({SettingStore? store}) : _store = store;
+  const VirtKeyNamesMigration();
 
-  /// Which store to convert. Null is the app's own; a test hands in a
-  /// caller-provided one, since the singleton is bound to the real store name and an
-  /// in-memory database has no rows under it.
-  final SettingStore? _store;
 
   static const appliedAt = 13;
 
@@ -42,7 +38,7 @@ class VirtKeyNamesMigration implements SchemaMigration {
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
     _convert(store, orderKey);
     _convert(store, disabledKey);
   }

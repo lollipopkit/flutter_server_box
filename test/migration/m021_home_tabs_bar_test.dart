@@ -14,8 +14,8 @@ void main() {
 
   setUp(() {
     SqliteDb.openInMemory();
-    store = SettingStore('setting_test');
-    migration = HomeTabsBarMigration(store: store);
+    store = SettingStore.instance;
+    migration = HomeTabsBarMigration();
   });
 
   tearDown(closeTestDb);

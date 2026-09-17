@@ -32,11 +32,8 @@ import 'package:server_box/data/store/setting.dart';
 /// with the real values sitting in rows no code looks at. `Backup.restore`
 /// and `BackupV2.merge` call [apply] for that reason.
 class GroupedSettingsMigration implements SchemaMigration {
-  const GroupedSettingsMigration({SettingStore? store}) : _store = store;
+  const GroupedSettingsMigration();
 
-  /// Which store to convert. Null is the app's own; a test hands in a
-  /// caller-provided one, since the singleton is bound to the real store name.
-  final SettingStore? _store;
 
   @override
   int get from => 9;
@@ -50,7 +47,7 @@ class GroupedSettingsMigration implements SchemaMigration {
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
     _groupAskAi(store);
     _groupAgentShell(store);
   }

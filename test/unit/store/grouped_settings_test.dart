@@ -22,7 +22,7 @@ import '../../helpers/test_db.dart';
 String? _rawValue(String key) {
   final rows = SqliteDb.instance.select(
     'SELECT value FROM kv WHERE store = ? AND key = ?;',
-    ['setting_test', key],
+    ['setting', key],
   );
   return rows.isEmpty ? null : rows.first['value'] as String?;
 }
@@ -33,8 +33,8 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    store = SettingStore('setting_test');
-    migration = GroupedSettingsMigration(store: store);
+    store = SettingStore.instance;
+    migration = GroupedSettingsMigration();
   });
 
   tearDown(closeTestDb);

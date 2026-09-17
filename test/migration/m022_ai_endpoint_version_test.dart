@@ -68,13 +68,13 @@ void main() {
 
     setUp(() {
       SqliteDb.openInMemory();
-      store = SettingStore('setting_test');
+      store = SettingStore.instance;
     });
 
     tearDown(closeTestDb);
 
     test('is registered as the step after the current schema', () {
-      final migration = AiEndpointVersionMigration(store: store);
+      final migration = AiEndpointVersionMigration();
       expect(migration.from, 22);
       // Relative on purpose: an absolute number here fails the day the next
       // step is added, which is not what this test is about.
@@ -102,7 +102,7 @@ void main() {
         updateLastUpdateTsOnSet: false,
       );
 
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       final raw = store.get<Object>(AiEndpointVersionMigration.key);
       final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw! as Map));
@@ -119,7 +119,7 @@ void main() {
         updateLastUpdateTsOnSet: false,
       );
 
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       final raw = store.get<Object>(AiEndpointVersionMigration.key);
       final config = AskAiConfig.fromJson(Map<String, dynamic>.from(raw! as Map));
@@ -127,7 +127,7 @@ void main() {
     });
 
     test('an install that never configured one is not given a row', () {
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       expect(store.get<Object>(AiEndpointVersionMigration.key), isNull);
     });
@@ -140,7 +140,7 @@ void main() {
       );
       final before = store.lastUpdateTs;
 
-      AiEndpointVersionMigration(store: store).applySync();
+      AiEndpointVersionMigration().applySync();
 
       // Stamping it would carry a rewrite nobody made to every other device.
       expect(store.lastUpdateTs, before);

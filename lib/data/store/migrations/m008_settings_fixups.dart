@@ -38,12 +38,8 @@ import 'package:server_box/data/store/setting.dart';
 /// TODO: drop the flag reads here and the two keys from `removeRetiredKeys`
 /// once no install and no backup can still be carrying them.
 class SettingsFixupsMigration implements SchemaMigration {
-  const SettingsFixupsMigration({SettingStore? store}) : _store = store;
+  const SettingsFixupsMigration();
 
-  /// Which store to convert. Null is the app's own; a test hands in a
-  /// caller-provided one, since the singleton is bound to the real store name and
-  /// an in-memory database has no rows under it.
-  final SettingStore? _store;
 
   /// The version this step converts *from*. Named so `removeRetiredKeys` can
   /// ask whether the step has had its pass without repeating the number.
@@ -61,7 +57,7 @@ class SettingsFixupsMigration implements SchemaMigration {
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
     _migrateSshConnectionMode(store);
     _migrateHomeTabsAgent(store);
   }

@@ -29,8 +29,8 @@ void main() {
     // the real one would be.
     SqliteDb.instance.execute('PRAGMA foreign_keys = ON;');
     await createTables(SqliteDb.instance);
-    store = SettingStore('setting_test');
-    migration = KnownHostsToSettingsMigration(store: store);
+    store = SettingStore.instance;
+    migration = KnownHostsToSettingsMigration();
   });
 
   tearDown(closeTestDb);
