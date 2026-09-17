@@ -10,6 +10,7 @@ final class _QueueExec implements ServerExec {
 
   final Queue<ExecResult> results;
   final scripts = <String>[];
+  final entries = <String?>[];
   final stdins = <String?>[];
 
   @override
@@ -23,6 +24,7 @@ final class _QueueExec implements ServerExec {
     Future<void>? cancel,
   }) async {
     scripts.add(script);
+    entries.add(entry);
     stdins.add(stdin);
     return results.removeFirst();
   }
@@ -115,6 +117,10 @@ MAILTO=ops@example.com
     await CronManager.save(exec, document);
 
     expect(exec.scripts, [CronManager.listScript, 'crontab -']);
+    // The listing is a POSIX script and must reach `sh`: run as the command
+    // it is parsed by the login shell, and fish refused `LC_ALL=C`. The save
+    // is one command whose stdin is the document, so it has no entry.
+    expect(exec.entries, ['sh', null]);
     expect(exec.stdins.last, '0 * * * * /usr/local/bin/hourly\n');
   });
 
@@ -124,6 +130,53 @@ MAILTO=ops@example.com
         exitCode: 1,
         stdout: 'SrvBoxCron.User\tadmin\nSrvBoxCron.Body\n',
         stderr: 'no crontab for admin\n',
+      ),
+    ]);
+
+    final catalog = await CronManager.list(exec);
+
+    expect(catalog.user, 'admin');
+    expect(catalog.document.lines, isEmpty);
+  });
+
+  // Every crontab exits 1 for an account with no crontab, the same as for a
+  // real failure, and each says it differently. Reading any of them as an
+  // error leaves the page unable to add the first job.
+  test('reads each implementation\'s "no crontab" message as empty', () {
+    // vixie, cronie
+    expect(CronManager.isNoCrontab('no crontab for admin'), isTrue);
+    // BSD, macOS
+    expect(CronManager.isNoCrontab('crontab: no crontab for admin'), isTrue);
+    // busybox: `-l` is a cat of the spool file
+    expect(
+      CronManager.isNoCrontab(
+        "crontab: can't open 'admin': No such file or directory",
+      ),
+      isTrue,
+    );
+
+    // A spool directory that is not there, or one this account may not read,
+    // is a failure to show.
+    expect(
+      CronManager.isNoCrontab(
+        "crontab: can't change directory to '/etc/crontabs': "
+        'No such file or directory',
+      ),
+      isFalse,
+    );
+    expect(
+      CronManager.isNoCrontab("crontab: can't open 'admin': Permission denied"),
+      isFalse,
+    );
+    expect(CronManager.isNoCrontab(''), isFalse);
+  });
+
+  test('treats busybox\'s missing spool file as an empty document', () async {
+    final exec = _QueueExec([
+      const ExecResult(
+        exitCode: 1,
+        stdout: 'SrvBoxCron.User\tadmin\nSrvBoxCron.Body\n',
+        stderr: "crontab: can't open 'admin': No such file or directory\n",
       ),
     ]);
 

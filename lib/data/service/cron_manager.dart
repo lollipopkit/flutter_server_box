@@ -28,11 +28,14 @@ printf 'SrvBoxCron.Body\n'
 crontab -l
 ''';
 
+  /// Handed to `sh` rather than run as the command: without an entry the
+  /// script is parsed by the account's login shell, and fish rejects
+  /// `LC_ALL=C` and `|| { ... }` outright — which the page reported as
+  /// "crontab is not available" with fish's own diagnostic under it.
   static Future<CronCatalog> list(ServerExec exec) async {
-    final result = await exec.run(listScript);
+    final result = await exec.run(listScript, entry: 'sh');
     final error = result.stderr.trim();
-    final hasNoCrontab = result.exitCode == 1 &&
-        error.toLowerCase().startsWith('no crontab for ');
+    final hasNoCrontab = result.exitCode == 1 && isNoCrontab(error);
     if (!result.succeeded && !hasNoCrontab) {
       final detail = error.isEmpty ? result.stdout.trim() : error;
       throw CronManagerException(
@@ -41,6 +44,24 @@ crontab -l
       );
     }
     return parse(result.stdout);
+  }
+
+  /// Whether `crontab -l` exiting 1 meant "this account has no crontab yet".
+  ///
+  /// That is the state of every server before its first job, and it has to be
+  /// an empty document the user can add to, not an error. Each implementation
+  /// says it differently and all of them exit 1, the same as a real failure:
+  /// vixie and cronie print `no crontab for NAME`, BSD's prefixes it with
+  /// `crontab: `, and busybox's `-l` is a `cat` of the spool file, so Alpine
+  /// and OpenWrt say `crontab: can't open 'NAME': No such file or directory`.
+  /// dcron prints the first form but exits 0, so it never gets
+  /// here. Anything else — the spool directory missing, a permission refusal
+  /// — is reported as what it said.
+  static bool isNoCrontab(String stderr) {
+    final line = stderr.trim().toLowerCase();
+    if (line.contains('no crontab for ')) return true;
+    return line.startsWith("crontab: can't open '") &&
+        line.endsWith('no such file or directory');
   }
 
   static CronCatalog parse(String output) {

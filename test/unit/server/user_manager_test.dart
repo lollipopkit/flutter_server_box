@@ -10,6 +10,7 @@ final class _QueueExec implements ServerExec {
 
   final Queue<ExecResult> results;
   final scripts = <String>[];
+  final entries = <String?>[];
 
   @override
   Future<ExecResult> run(
@@ -22,6 +23,7 @@ final class _QueueExec implements ServerExec {
     Future<void>? cancel,
   }) async {
     scripts.add(script);
+    entries.add(entry);
     return results.removeFirst();
   }
 }
@@ -66,6 +68,33 @@ docker:x:998:admin,deploy
 
     expect(catalog.currentUser, 'admin');
     expect(exec.scripts, [UserManager.listScript]);
+    // Through `sh`, not the login shell: the script has an `if`, which fish
+    // does not read.
+    expect(exec.entries, ['sh']);
+  });
+
+  test('detail reads the account through sh as well', () async {
+    const user = ServerUser(
+      name: 'admin',
+      uid: 1000,
+      gid: 1000,
+      comment: '',
+      home: '/home/admin',
+      shell: '/usr/bin/fish',
+      supplementaryGroups: [],
+    );
+    final exec = _QueueExec([
+      const ExecResult(
+        exitCode: 0,
+        stdout: 'SrvBoxUserDetail.Shadow\n',
+        stderr: '',
+      ),
+    ]);
+
+    await UserManager.detail(exec, user);
+
+    expect(exec.scripts, [UserManager.detailScript(user)]);
+    expect(exec.entries, ['sh']);
   });
 
   test('builds a quoted create script and sets the password through stdin', () {
