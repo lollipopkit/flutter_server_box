@@ -93,6 +93,20 @@ void main() {
 
   String out(String name) => '${dbDir.path}/$name';
 
+  test('exports quoted table and column names without changing rows', () async {
+    final db = SqliteDb.instance;
+    db.execute('CREATE TABLE "quoted""table" ("quoted""column" TEXT);');
+    db.execute('INSERT INTO "quoted""table" VALUES (?);', ['preserved']);
+    await DbRescue.exportTo(out('quoted.db'));
+    final copy = sqlite3.open(out('quoted.db'));
+    addTearDown(copy.close);
+    expect(
+      copy.select('SELECT "quoted""column" FROM "quoted""table";').single.values,
+      ['preserved'],
+    );
+    expect(db.select('SELECT * FROM "quoted""table";').single.values, ['preserved']);
+  });
+
   test('the isolate can open what SqliteDb wrote', () async {
     // The whole reason these run against a file. The copy opens the store on a
     // second connection and nothing in `DbRescue` names the cipher — so this

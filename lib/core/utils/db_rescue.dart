@@ -247,13 +247,17 @@ abstract final class DbRescue {
     final cols = db
         .select('SELECT name, hidden FROM pragma_table_xinfo(?);', [table])
         .where((r) => r['hidden'] == 0)
-        .map((r) => '"${r['name']}"')
+        .map((r) => _quoteIdentifier(r['name'] as String))
         .join(', ');
     if (cols.isEmpty) return;
     db.execute(
-      'INSERT INTO $_alias."$table" ($cols) SELECT $cols FROM main."$table";',
+      'INSERT INTO $_alias.${_quoteIdentifier(table)} ($cols) '
+      'SELECT $cols FROM main.${_quoteIdentifier(table)};',
     );
   }
+
+  static String _quoteIdentifier(String name) =>
+      '"${name.replaceAll('"', '""')}"';
 
   /// The cipher an encrypted export is written with. See [_exportSync].
   static const _exportCipher = 'chacha20';
