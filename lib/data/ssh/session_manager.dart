@@ -119,6 +119,7 @@ abstract final class TermSessionManager {
   static void add({
     required String id,
     required String title,
+
     /// What the title is not enough to tell apart — `user@ip:port` for a
     /// server. Empty where there is nothing to add, which is what a terminal
     /// on this device has.
@@ -278,10 +279,7 @@ abstract final class TermSessionManager {
           await MethodChans.stopLiveActivity();
         case IosLiveActivityAction.update:
           // Start timer if not already running
-          _updateTimer ??= Timer.periodic(
-            _updateInterval,
-            (_) => _sync(),
-          );
+          _updateTimer ??= Timer.periodic(_updateInterval, (_) => _sync());
           // Immediately update for immediate feedback
           await _updateLiveActivity();
       }
@@ -356,20 +354,6 @@ abstract final class TermSessionManager {
       _activeId = null;
     }
     _sync();
-  }
-
-  /// Stop Live Activity when app is closed/terminated (iOS only).
-  static Future<void> stopLiveActivityOnAppClose() async {
-    if (!isIOS) return;
-
-    // Cancel any running timers
-    _updateTimer?.cancel();
-    _updateTimer = null;
-
-    await _syncing;
-
-    // Stop the Live Activity
-    await MethodChans.stopLiveActivity();
   }
 }
 

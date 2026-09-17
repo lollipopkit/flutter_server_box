@@ -252,8 +252,7 @@ extension Spix on Spi {
   /// The pre-1155 storage key.
   ///
   /// SSH-only by construction: no install old enough to still be keyed this
-  /// way could have had a monitor server, so [migrateId] bails out rather
-  /// than inventing a key for one.
+  /// way could have had a monitor server.
   String get oldId {
     final s = ssh;
     return s == null ? id : '${s.user}@${s.ip}:${s.port}';
@@ -261,20 +260,6 @@ extension Spix on Spi {
 
   /// Save the [Spi] to the local storage.
   void save() => ServerStore.instance.put(this);
-
-  /// Migrate the [oldId] to the new generated [id] by [ShortId.generate].
-  ///
-  /// Returns:
-  /// - `null` if the [id] is not empty.
-  /// - The new [id] if the [id] is empty.
-  String? migrateId() {
-    if (id.isNotEmpty) return null;
-    if (ssh == null) return null;
-    ServerStore.instance.deleteById(oldId);
-    final newSpi = copyWith(id: ShortId.generate());
-    newSpi.save();
-    return newSpi.id;
-  }
 
   /// Json encode to string.
   String toJsonString() => json.encode(toJson());

@@ -31,15 +31,13 @@ class ScopedToken {
   /// channel answers with the endpoint and the deadline only — everything the
   /// renewal decision needs, without carrying the bytes back across. [token]
   /// is then a placeholder.
-  const ScopedToken.held({
-    required String endpoint,
-    required int expiresAt,
-  }) : this(
-         token: _heldPlaceholder,
-         endpoint: endpoint,
-         expiresAt: expiresAt,
-         opaque: true,
-       );
+  const ScopedToken.held({required String endpoint, required int expiresAt})
+    : this(
+        token: _heldPlaceholder,
+        endpoint: endpoint,
+        expiresAt: expiresAt,
+        opaque: true,
+      );
 
   static const _heldPlaceholder = 'held';
 
@@ -86,18 +84,12 @@ class ScopedToken {
     if (isEmpty) return false;
     if (this.endpoint != normalizeAgentEndpoint(endpoint)) return false;
     if (expiresAt <= 0) return false;
-    final remaining =
-        DateTime.fromMillisecondsSinceEpoch(
-          expiresAt * 1000,
-          isUtc: true,
-        ).difference(now.toUtc());
+    final remaining = DateTime.fromMillisecondsSinceEpoch(
+      expiresAt * 1000,
+      isUtc: true,
+    ).difference(now.toUtc());
     return remaining > renewBefore;
   }
-
-  Map<String, dynamic> toEntry() => {
-    'token': token,
-    'expiresAt': expiresAt,
-  };
 
   @override
   bool operator ==(Object other) =>

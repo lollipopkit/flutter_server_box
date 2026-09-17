@@ -17,10 +17,7 @@ abstract final class TmuxCommandBuilder {
   }
 
   /// Build the tmux prefix for commands attached to ServerBox's UTF-8 terminal.
-  static String _tmuxClientPrefix({
-    String tmuxBin = 'tmux',
-    String? lang,
-  }) {
+  static String _tmuxClientPrefix({String tmuxBin = 'tmux', String? lang}) {
     return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} -u';
   }
 
@@ -108,15 +105,6 @@ abstract final class TmuxCommandBuilder {
     String? lang,
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} kill-window -t ${escapeArg('$sessionName:$windowIndex')}';
-
-  /// Build the select-window command.
-  static String selectWindow(
-    String sessionName,
-    int windowIndex, {
-    String tmuxBin = 'tmux',
-    String? lang,
-  }) =>
-      '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} select-window -t ${escapeArg('$sessionName:$windowIndex')}';
 
   /// Build the new-window command.
   static String newWindow(

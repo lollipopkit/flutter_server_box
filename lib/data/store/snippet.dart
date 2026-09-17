@@ -110,18 +110,6 @@ class SnippetStore extends EntityStore<Snippet> {
     return existing == null ? incoming : incoming.copyWith(id: existing.id);
   }
 
-
-
-  /// Snippets to run when [serverId] connects, as a query rather than a decode
-  /// of every record.
-  List<String> autoRunIdsFor(String serverId) => db
-      .select(
-        'SELECT snippet_id FROM snippet_auto_run_on WHERE server_id = ?;',
-        [serverId],
-      )
-      .map((r) => r['snippet_id'] as String)
-      .toList();
-
   /// Every tag in use, for the filter bar.
   List<String> allTags() => db
       .select('SELECT DISTINCT tag FROM snippet_tag ORDER BY tag;')
