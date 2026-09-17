@@ -2,6 +2,7 @@
 
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
@@ -164,13 +165,15 @@ class _SchemaTooNewPageState extends State<SchemaTooNewPage> {
 }
 
 extension _Actions on _SchemaTooNewPageState {
-  /// The copy's name, which is all this decides — the directory is a temporary
-  /// one made per export.
+  /// The copy's name.
   ///
   /// Named for the version that wrote the data, since that is what a future
-  /// reader has to match it against.
-  String _outName(String suffix) =>
-      'serverbox-rescue-v${widget.err.stored}$suffix.db';
+  /// reader has to match it against, and for when it was made, so a second
+  /// export into the same directory sits beside the first.
+  String _outName(String suffix) {
+    final at = DateTime.now().ymdhms(ymdSep: '', hmsSep: '', sep: '-');
+    return 'serverbox-rescue-v${widget.err.stored}-$at$suffix.db';
+  }
 
   Future<void> _onExportEncrypted() async {
     final pwd = await context.showPwdDialog(title: libL10n.pwd);
@@ -189,43 +192,158 @@ extension _Actions on _SchemaTooNewPageState {
     await _export(password: null, suffix: '-plain');
   }
 
-  /// Writes the copy and hands it to the system share sheet.
+  /// Writes the copy and hands it to the user: into a directory they pick on
+  /// desktop, through the share sheet on mobile.
   ///
-  /// Shared rather than merely written, because a file inside the app's
+  /// Handed over rather than merely written, because a file inside the app's
   /// container is not somewhere the user can reach on iOS — and reaching it is
   /// the entire point of making it.
   Future<void> _export({required String? password, required String suffix}) async {
+    // Asked before the export, so a cancel costs nothing and no copy of the
+    // database exists while the picker is open.
+    //
+    // Not `Pfs.sharePaths`, which on desktop only *reveals* the file and
+    // returns at once, so removing the temp copy afterwards left the file
+    // manager opening on a file that was already gone.
+    //
+    // Not a save panel either: file_picker_darwin sets the panel's content
+    // type after its file name, and for an extension no app has registered —
+    // `db` is one — macOS then appends it a second time and saves `.db.db`.
+    final String? destDir;
+    if (isDesktop) {
+      destDir = await FilePicker.getDirectoryPath(dialogTitle: libL10n.backup);
+      if (destDir == null) return;
+    } else {
+      destDir = null;
+    }
+
+    // Both callers reach here after awaiting a dialog, and desktop has awaited
+    // the picker as well.
+    if (!mounted) return;
     setState(() => _busy = true);
-    // A temp directory, not `Paths.doc`, and removed afterwards. `sharePaths`
-    // *reveals* the file on desktop rather than sending it, so writing it
-    // beside `store.db` points the user's file manager straight at the app's
-    // private data — and this file is the entire database, unencrypted on the
-    // plain path. `server_share.dart` learned the same thing about a single
-    // encrypted server record.
+    String? savedTo;
+    Object? error;
+    // A temp directory, not `Paths.doc`, and removed on every platform: this
+    // file is the entire database, unencrypted on the plain path, and the only
+    // copy that should outlive this call is the one the user put somewhere.
     // Sync, and symmetric with the sync delete in `finally`. Also what keeps
     // this reachable from a `testWidgets` body: real async file I/O started in
     // that fake-async zone completes on a callback the zone never pumps.
     final dir = Directory.systemTemp.createTempSync('sbx-rescue-');
     try {
-      final path = dir.path.joinPath(_outName(suffix));
+      final name = _outName(suffix);
+      final path = dir.path.joinPath(name);
       // Awaited: it runs on its own isolate, so the page keeps drawing.
       await DbRescue.exportTo(path, password: password);
-      await Pfs.sharePaths(paths: [path], title: libL10n.backup);
+      if (destDir == null) {
+        await Pfs.sharePaths(paths: [path], title: libL10n.backup);
+      } else {
+        savedTo = await _copyInto(path, destDir, name);
+      }
     } catch (e, s) {
       Loggers.app.warning('Rescue export failed', e, s);
-      if (mounted) {
-        await context.showRoundDialog(
-          title: libL10n.fail,
-          child: Text('$e'),
-        );
-      }
+      error = e;
     } finally {
-      // Once the sheet has been answered. On iOS the share is a copy, so
-      // nothing downstream still needs this; on desktop the reveal has already
-      // happened and a window pointing at a directory that is about to go is
-      // the price of not leaving the database in one.
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      // Before either dialog below, which waits on the user: the sheet or the
+      // copy has taken what it needs, and the database should not sit in the
+      // temp directory for as long as a dialog stays open.
+      //
+      // Best effort. A delete that throws here would skip everything after it:
+      // the page would stay busy with every button disabled, and the dialog
+      // saying where the copy went would never show.
+      try {
+        if (dir.existsSync()) dir.deleteSync(recursive: true);
+      } catch (e, s) {
+        Loggers.app.warning('Could not remove the rescue temp directory', e, s);
+      }
       if (mounted) setState(() => _busy = false);
+    }
+
+    if (!mounted) return;
+    if (error != null) {
+      await context.showRoundDialog(
+        title: libL10n.fail,
+        child: Text('$error'),
+        actions: Btnx.oks,
+      );
+    } else if (savedTo != null) {
+      // Nothing else on this screen changes once the copy has landed, and there
+      // is no toast host in this app to say so. The path is the answer to
+      // "where did it go".
+      await context.showRoundDialog(
+        title: libL10n.success,
+        child: SelectableText(savedTo),
+        actions: Btnx.oks,
+      );
+    }
+  }
+
+  /// Copies [src] into [destDir] as [name], and answers the path it took.
+  ///
+  /// Never over an existing file. The name carries the second it was made, but
+  /// two exports in one second, or a clock set back, would otherwise replace a
+  /// backup the user already has — with a copy of the same data at best.
+  ///
+  /// Asynchronous and streamed, so the progress bar keeps moving while the
+  /// bytes go across: the copy is as large as the database.
+  Future<String> _copyInto(String src, String destDir, String name) async {
+    final (dest, out) = await _reserve(destDir, name);
+    try {
+      await for (final chunk in File(src).openRead()) {
+        await out.writeFrom(chunk);
+      }
+      await out.close();
+    } catch (_) {
+      // Half a database in the user's directory looks like a backup. The file
+      // is this attempt's: `_reserve` created it, so removing it cannot take
+      // anything that was there before.
+      await _discard(out, dest);
+      rethrow;
+    }
+    return dest;
+  }
+
+  /// Creates the first free name for [name] in [destDir] and opens it.
+  ///
+  /// Exclusive creation is the check. Asking whether a path exists and then
+  /// writing to it leaves a gap in which another writer can take the name, and
+  /// the write would then replace that file.
+  Future<(String, RandomAccessFile)> _reserve(
+    String destDir,
+    String name,
+  ) async {
+    final stem = name.substring(0, name.length - '.db'.length);
+    for (var n = 1; ; n++) {
+      final dest = destDir.joinPath(n == 1 ? name : '$stem-$n.db');
+      final file = File(dest);
+      try {
+        await file.create(exclusive: true);
+      } on PathExistsException {
+        continue;
+      }
+      try {
+        return (dest, await file.open(mode: FileMode.writeOnly));
+      } catch (_) {
+        // Created a moment ago by this call, and empty.
+        try {
+          await file.delete();
+        } catch (_) {}
+        rethrow;
+      }
+    }
+  }
+
+  /// Closes [out] and removes [dest], both best effort: this runs while an
+  /// error is already on its way to the user, and that error is the one worth
+  /// reporting.
+  Future<void> _discard(RandomAccessFile out, String dest) async {
+    try {
+      await out.close();
+    } catch (_) {}
+    try {
+      await File(dest).delete();
+    } catch (e, s) {
+      Loggers.app.warning('Could not remove a partial rescue copy', e, s);
     }
   }
 
