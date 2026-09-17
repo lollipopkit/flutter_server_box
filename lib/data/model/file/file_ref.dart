@@ -181,7 +181,7 @@ class SshTransferCreds {
     final ssh = spi.ssh;
     if (ssh != null && ssh.keyRefs.isNotEmpty) {
       try {
-        final keys = resolvePrivateKeyss(ssh, originalHost: spi.name);
+        final keys = resolvePrivateKeys(ssh, originalHost: spi.name);
         privateKeysByKeyId!.addAll(keys);
         privateKey = keys[ssh.keyRefs.first];
       } catch (e) {
@@ -244,7 +244,7 @@ class SshTransferCreds {
   /// one, and one unusable candidate must not take the others with it.
   static Map<String, String> _tryResolveAll(Spi spi) {
     try {
-      return resolvePrivateKeyss(spi.ssh!, originalHost: spi.name);
+      return resolvePrivateKeys(spi.ssh!, originalHost: spi.name);
     } catch (e) {
       Loggers.app.warning('Jump server key unavailable', e);
       return const {};
