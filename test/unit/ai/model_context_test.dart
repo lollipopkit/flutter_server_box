@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:fl_lib/fl_lib.dart';
-import '../../helpers/local_http.dart';
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/ai/model_context.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+
+import '../../helpers/local_http.dart';
 
 /// The table decides when a conversation is summarised. A wrong answer is
 /// survivable — too low spends a summary early, too high spends a turn — so
@@ -160,6 +162,21 @@ void main() {
       }
     },
   );
+
+  test('an invalid cache cannot leak into memory when the asset is unavailable', () async {
+    await cache.writeAsString('{"generated":42,"models":{"poison":100}}');
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMessageHandler('flutter/assets', (_) async => null);
+    rootBundle.evict('assets/model_context.json');
+    addTearDown(() {
+      messenger.setMockMessageHandler('flutter/assets', null);
+      rootBundle.evict('assets/model_context.json');
+    });
+    final fresh = ModelContextTable();
+    await fresh.ensureLoaded();
+    expect(fresh.lookup('poison'), isNull);
+    expect(fresh.modelCount, 0);
+  });
 
   test('loading filters invalid entries and accepts whole floats', () async {
     await cache.writeAsString(
