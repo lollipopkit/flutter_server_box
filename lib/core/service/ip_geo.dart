@@ -51,12 +51,7 @@ abstract final class IpGeo {
   /// string it could not notice a name resolving somewhere new, and it answered
   /// from itself rather than from the installed month, so a coordinate never
   /// changed after a data update.
-  static Future<ResolvedGeo?> resolve(Spi spi) async =>
-      (await locate(spi)).geo;
-
-  /// [resolve] for a bare host, which is what the tests use.
-  static Future<ResolvedGeo?> resolveHost(String host) async =>
-      (await locateHost(host)).geo;
+  static Future<ResolvedGeo?> resolve(Spi spi) async => (await locate(spi)).geo;
 
   /// [resolve], and why there is no coordinate when there is none.
   ///
@@ -147,10 +142,7 @@ abstract final class IpGeo {
 
     final city = _cityOf(addr);
     if (city == null) return (geo: null, miss: GeoMiss.noData);
-    return (
-      geo: ResolvedGeo(coord: city, source: GeoSource.city),
-      miss: null,
-    );
+    return (geo: ResolvedGeo(coord: city, source: GeoSource.city), miss: null);
   }
 
   /// The city-level answer for [addr], from whichever family covers it.

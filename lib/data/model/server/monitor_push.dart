@@ -70,9 +70,6 @@ class MonitorPushEntry {
     'from_index': fromIndex,
   };
 
-  /// Whether [key] holds a credential the agent withheld.
-  bool isWithheld(String key) => config.containsKey(key) && config[key] == null;
-
   MonitorPushEntry copyWith({
     String? name,
     String? pushType,

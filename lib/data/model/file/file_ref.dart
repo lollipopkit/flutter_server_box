@@ -174,14 +174,14 @@ class SshTransferCreds {
   SshTransferCreds.forServer(this.spi) {
     privateKeysByKeyId = {};
 
-    // `resolvePrivateKey`, not `Stores.key` directly: a key may be a file this
+    // `resolvePrivateKeys`, not `Stores.key` directly: a key may be a file this
     // machine holds rather than one the store does, and reading it has to
     // happen here, where there is a filesystem the user granted and a UI to
     // report a refusal to. The isolate has neither.
     final ssh = spi.ssh;
     if (ssh != null && ssh.keyRefs.isNotEmpty) {
       try {
-        final keys = resolvePrivateKeys(ssh, originalHost: spi.name);
+        final keys = resolvePrivateKeyss(ssh, originalHost: spi.name);
         privateKeysByKeyId!.addAll(keys);
         privateKey = keys[ssh.keyRefs.first];
       } catch (e) {
@@ -237,14 +237,14 @@ class SshTransferCreds {
     }
   }
 
-  /// [resolvePrivateKey] for a hop, or null if it could not be had.
+  /// [resolvePrivateKeys] for a hop, or null if it could not be had.
   ///
   /// The target server's key is allowed to throw — a transfer to a host whose
   /// key is gone should say so at once. A jump server's is not: it may not need
   /// one, and one unusable candidate must not take the others with it.
   static Map<String, String> _tryResolveAll(Spi spi) {
     try {
-      return resolvePrivateKeys(spi.ssh!, originalHost: spi.name);
+      return resolvePrivateKeyss(spi.ssh!, originalHost: spi.name);
     } catch (e) {
       Loggers.app.warning('Jump server key unavailable', e);
       return const {};

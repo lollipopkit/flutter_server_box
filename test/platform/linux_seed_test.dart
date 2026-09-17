@@ -140,52 +140,6 @@ void main() {
     });
   });
 
-  group('whether a tree is an unpacked system', () {
-    Future<void> unpackLikeAlpine() async {
-      await Directory('${root.path}/bin').create(recursive: true);
-      await Directory('${root.path}/usr/lib').create(recursive: true);
-      await File(
-        '${root.path}/usr/lib/os-release',
-      ).writeAsString('ID=alpine\n');
-      // Exactly what the tarball carries, and the whole point of this group:
-      // `/bin/busybox` is a path inside the *guest*. Followed from the host it
-      // names a file that is not there — on iOS, never there.
-      await Link('${root.path}/bin/sh').create('/bin/busybox');
-      await Link('${root.path}/etc/os-release').create('../usr/lib/os-release');
-    }
-
-    setUp(() => Directory('${root.path}/etc').create(recursive: true));
-
-    test('an absolute guest symlink still counts', () async {
-      await unpackLikeAlpine();
-
-      // The trap this locks, stated as a property of the link rather than of
-      // the machine running the test: the target is absolute *in the guest*,
-      // so following it from the host leaves the tree altogether. Where the
-      // host has no `/bin/busybox` that reads as absent, and every existing
-      // install looks uninstalled — which is the bug. Where the host has one,
-      // and a Linux runner does, it reads as present for a file in the wrong
-      // tree. Neither answer is about this one, which is why [looksUnpacked]
-      // does not follow links.
-      //
-      // Asserting the first of those two — `File(...).exists()` is false — is
-      // what this used to do, and it passed on macOS and failed on CI.
-      expect(await Link('${root.path}/bin/sh').target(), startsWith('/'));
-      expect(await looksUnpacked(root.path), isTrue);
-    });
-
-    test('an empty directory does not', () async {
-      expect(await looksUnpacked(root.path), isFalse);
-    });
-
-    test('neither does half of one', () async {
-      await Directory('${root.path}/bin').create(recursive: true);
-      await Link('${root.path}/bin/sh').create('/bin/busybox');
-
-      expect(await looksUnpacked(root.path), isFalse);
-    });
-  });
-
   group('the repositories', () {
     test('are pinned to the branch the rootfs came from', () async {
       await seedRepositories(

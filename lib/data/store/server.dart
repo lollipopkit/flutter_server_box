@@ -442,58 +442,11 @@ class ServerStore extends EntityStore<Spi> {
     }
   }
 
-  /// Servers carrying [tag], as a query rather than a decode of every record.
-  List<String> idsWithTag(String tag) => db
-      .select('SELECT server_id FROM server_tag WHERE tag = ?;', [tag])
-      .map((r) => r['server_id'] as String)
-      .toList();
-
   /// Every tag in use, for the filter bar.
   List<String> allTags() => db
       .select('SELECT DISTINCT tag FROM server_tag ORDER BY tag;')
       .map((r) => r['tag'] as String)
       .toList();
-
-  /// The trusted host keys for [serverId], as rows written by builds between
-  /// v5 and v13.
-  ///
-  /// Not where the app keeps them: `persistHostKeyFingerprint` and the
-  /// known-hosts page both read `Stores.setting.sshKnownHostFingerprints`, and
-  /// this table cannot hold an ad-hoc connection's fingerprint at all — its
-  /// `server_id` is a foreign key onto a server row that such a connection has
-  /// none of. [KnownHostsToSettingsMigration] is the only reader left.
-  ///
-  /// TODO: delete these three and the `known_host` table with that migration.
-  Map<String, String> knownHosts(String serverId) => {
-    for (final row in db.select(
-      'SELECT key_type, fingerprint FROM known_host WHERE server_id = ?;',
-      [serverId],
-    ))
-      row['key_type'] as String: row['fingerprint'] as String,
-  };
-
-  void trustHost(String serverId, String keyType, String fingerprint) {
-    SqliteStore.transact(() {
-      db.execute('INSERT OR REPLACE INTO known_host VALUES (?, ?, ?);', [
-        serverId,
-        keyType,
-        fingerprint,
-      ]);
-      synced.stamp(serverId);
-    });
-    invalidate();
-  }
-
-  void forgetHost(String serverId, String keyType) {
-    SqliteStore.transact(() {
-      db.execute(
-        'DELETE FROM known_host WHERE server_id = ? AND key_type = ?;',
-        [serverId, keyType],
-      );
-      synced.stamp(serverId);
-    });
-    invalidate();
-  }
 
   @override
   void deleteById(String id) {
@@ -502,10 +455,9 @@ class ServerStore extends EntityStore<Spi> {
         .map((r) => r['id'] as String)
         .toList();
     final remoteDesktopIds = db
-        .select(
-          'SELECT id FROM remote_desktop_profile WHERE server_id = ?;',
-          [id],
-        )
+        .select('SELECT id FROM remote_desktop_profile WHERE server_id = ?;', [
+          id,
+        ])
         .map((r) => r['id'] as String)
         .toList();
     final snippetIds = _referencingIds(
@@ -538,7 +490,9 @@ class ServerStore extends EntityStore<Spi> {
         if (ownerId != id) synced.stamp(ownerId, at: at);
       }
       db.execute('DELETE FROM port_forward WHERE server_id = ?;', [id]);
-      db.execute('DELETE FROM remote_desktop_profile WHERE server_id = ?;', [id]);
+      db.execute('DELETE FROM remote_desktop_profile WHERE server_id = ?;', [
+        id,
+      ]);
       db.execute('DELETE FROM $table WHERE $idColumn = ?;', [id]);
       synced.tombstone(id, at: at);
     });

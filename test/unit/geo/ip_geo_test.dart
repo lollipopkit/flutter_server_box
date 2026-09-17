@@ -64,7 +64,7 @@ void main() {
       // off has to mean the feature is not there, not that it stopped
       // refreshing while still answering from what it has.
       Stores.setting.globeEnabled.put(false);
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNull);
     });
 
     test('off still does not hide a coordinate the user typed', () async {
@@ -104,41 +104,47 @@ void main() {
     });
 
     test('the bundled database answers when nothing else does', () async {
-      final resolved = await IpGeo.resolveHost('8.8.8.8');
+      final resolved = (await IpGeo.locateHost('8.8.8.8')).geo;
       expect(resolved?.source, GeoSource.city);
       expect(resolved?.coord.lon, closeTo(-122.0838, 0.01));
     });
 
-    test('an IPv4 address carried inside a v6 one reaches the v4 data', () async {
-      // `::ffff:8.8.8.8` has `type` IPv6, so choosing the family from that
-      // asked the v6 file for a key whose leading 48 bits are zero — bucket 0,
-      // no record, and a placeable server reported as having no data.
-      // `isPrivateAddress` has always unwrapped, so the chain got this far.
-      final found = await IpGeo.locateHost('::ffff:8.8.8.8');
+    test(
+      'an IPv4 address carried inside a v6 one reaches the v4 data',
+      () async {
+        // `::ffff:8.8.8.8` has `type` IPv6, so choosing the family from that
+        // asked the v6 file for a key whose leading 48 bits are zero — bucket 0,
+        // no record, and a placeable server reported as having no data.
+        // `isPrivateAddress` has always unwrapped, so the chain got this far.
+        final found = await IpGeo.locateHost('::ffff:8.8.8.8');
 
-      expect(found.miss, isNull);
-      expect(found.geo?.source, GeoSource.city);
-      expect(found.geo?.coord.lon, closeTo(-122.0838, 0.01));
-    });
+        expect(found.miss, isNull);
+        expect(found.geo?.source, GeoSource.city);
+        expect(found.geo?.coord.lon, closeTo(-122.0838, 0.01));
+      },
+    );
 
-    test('and one wins a dual-stack answer, as a bare v4 address would', () async {
-      // The tie-break reads `type` too. Without the unwrap the mapped address
-      // looked like v6, so the server was placed by whichever the resolver
-      // happened to list first.
-      IpGeo.resolver = (_) async => [
-        InternetAddress('2400:cb00::1'),
-        InternetAddress('::ffff:8.8.8.8'),
-      ];
+    test(
+      'and one wins a dual-stack answer, as a bare v4 address would',
+      () async {
+        // The tie-break reads `type` too. Without the unwrap the mapped address
+        // looked like v6, so the server was placed by whichever the resolver
+        // happened to list first.
+        IpGeo.resolver = (_) async => [
+          InternetAddress('2400:cb00::1'),
+          InternetAddress('::ffff:8.8.8.8'),
+        ];
 
-      final found = await IpGeo.resolveHost('example.com');
+        final found = (await IpGeo.locateHost('example.com')).geo;
 
-      expect(found?.coord.lon, closeTo(-122.0838, 0.01));
-    });
+        expect(found?.coord.lon, closeTo(-122.0838, 0.01));
+      },
+    );
 
     test('an address the database has never heard of is nowhere', () async {
       // 8/8 is the only bucket the vector fills; everything else is empty.
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNotNull);
-      expect(await IpGeo.resolveHost('200.1.2.3'), isNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNotNull);
+      expect((await IpGeo.locateHost('200.1.2.3')).geo, isNull);
     });
 
     test('no database at all is not an error', () async {
@@ -146,7 +152,7 @@ void main() {
       // bundled fallback underneath it any more, so the globe places only
       // what was typed by hand and says so for everything else.
       await removeGeoVectors();
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNull);
     });
 
     test('a bundle from a different month is refused', () async {
@@ -157,7 +163,7 @@ void main() {
       await manifestFile.writeAsString(jsonEncode(manifest));
       await GeoData.resetForTest();
 
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNull);
     });
   });
 
@@ -304,7 +310,7 @@ void main() {
         asked.add(host);
         return [InternetAddress('8.8.8.8')];
       };
-      final resolved = await IpGeo.resolveHost('example.com');
+      final resolved = (await IpGeo.locateHost('example.com')).geo;
       expect(asked, ['example.com']);
       expect(resolved?.coord.lon, closeTo(-122.0838, 0.01));
     });
@@ -318,7 +324,7 @@ void main() {
         InternetAddress('2606:4700::1111'),
         InternetAddress('8.8.8.8'),
       ];
-      final resolved = await IpGeo.resolveHost('example.com');
+      final resolved = (await IpGeo.locateHost('example.com')).geo;
       expect(resolved?.coord.lon, closeTo(-122.0838, 0.01));
     });
 
@@ -326,7 +332,7 @@ void main() {
       // And it is answered by the v6 bundle, which the sharded build had no
       // equivalent of — IPv6 was country level then and is city level now.
       IpGeo.resolver = (_) async => [InternetAddress('2620:fe::fe')];
-      final found = await IpGeo.resolveHost('example.com');
+      final found = (await IpGeo.locateHost('example.com')).geo;
       expect(found?.coord.lat, closeTo(37.8793, 0.01));
     });
 
@@ -334,17 +340,17 @@ void main() {
       // Split-horizon DNS: a public name pointing at a machine on this LAN.
       // The name passed the gate; the address it points at must not.
       IpGeo.resolver = (_) async => [InternetAddress('192.168.1.10')];
-      expect(await IpGeo.resolveHost('nas.example.com'), isNull);
+      expect((await IpGeo.locateHost('nas.example.com')).geo, isNull);
     });
 
     test('a name that will not resolve is not an error', () async {
       IpGeo.resolver = (_) async => throw const SocketException('no such host');
-      expect(await IpGeo.resolveHost('nope.example.com'), isNull);
+      expect((await IpGeo.locateHost('nope.example.com')).geo, isNull);
     });
 
     test('a resolver answering nothing is not an error either', () async {
       IpGeo.resolver = (_) async => [];
-      expect(await IpGeo.resolveHost('empty.example.com'), isNull);
+      expect((await IpGeo.locateHost('empty.example.com')).geo, isNull);
     });
 
     test('a literal never reaches the resolver', () async {
@@ -353,7 +359,7 @@ void main() {
         asked = true;
         return const [];
       };
-      await IpGeo.resolveHost('8.8.8.8');
+      (await IpGeo.locateHost('8.8.8.8')).geo;
       expect(asked, isFalse);
     });
   });
@@ -373,7 +379,7 @@ void main() {
         asked = true;
         return const [];
       };
-      expect(await IpGeo.resolveHost('nas.local'), isNull);
+      expect((await IpGeo.locateHost('nas.local')).geo, isNull);
       expect(asked, isFalse);
     });
   });
@@ -389,7 +395,7 @@ void main() {
   /// data currently on disk.
   group('nothing is cached', () {
     test('an answer does not survive the data it came from', () async {
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNotNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNotNull);
 
       await removeGeoVectors();
 
@@ -405,12 +411,12 @@ void main() {
       // remembered miss either. Both directions are the same property — every
       // answer comes from what is on disk at the moment it is asked for.
       await removeGeoVectors();
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNull);
 
       await installGeoVectors();
 
       expect(
-        (await IpGeo.resolveHost('8.8.8.8'))?.coord.lon,
+        ((await IpGeo.locateHost('8.8.8.8')).geo)?.coord.lon,
         closeTo(-122.0838, 0.01),
       );
     });
@@ -421,13 +427,13 @@ void main() {
         lookups++;
         return [InternetAddress('8.8.8.8')];
       };
-      await IpGeo.resolveHost('example.com');
-      await IpGeo.resolveHost('example.com');
+      (await IpGeo.locateHost('example.com')).geo;
+      (await IpGeo.locateHost('example.com')).geo;
       expect(lookups, 2);
     });
 
     test('and a lookup writes nothing anywhere', () async {
-      expect(await IpGeo.resolveHost('8.8.8.8'), isNotNull);
+      expect((await IpGeo.locateHost('8.8.8.8')).geo, isNotNull);
       // `self_addr` is the only store the globe still writes, and only the
       // globe widget writes it — from what a server reported, never from a
       // lookup this made.

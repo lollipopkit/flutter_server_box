@@ -14,13 +14,13 @@ void main() {
       expect(buffer.hasPending, isFalse);
     });
 
-    test('drainAll returns the remaining buffered output', () {
+    test('takes all remaining output and ignores empty chunks', () {
       final buffer = TerminalOutputBuffer()
         ..add('hello')
         ..add('')
         ..add(' world');
 
-      expect(buffer.drainAll(), 'hello world');
+      expect(buffer.take(buffer.pendingChars), 'hello world');
       expect(buffer.pendingChars, 0);
       expect(buffer.hasPending, isFalse);
     });
@@ -42,7 +42,7 @@ void main() {
 
       expect(buffer.pendingChars, TerminalOutputBuffer.maxBufferedChars);
       expect(buffer.droppedChars, 3);
-      expect(buffer.drainAll(), '${prefix.substring(3)}bcdef');
+      expect(buffer.take(buffer.pendingChars), '${prefix.substring(3)}bcdef');
     });
 
     test('preserves surrogate pairs when trimming oversized input', () {
@@ -53,7 +53,7 @@ void main() {
       expect(buffer.pendingChars, TerminalOutputBuffer.maxBufferedChars);
       expect(buffer.droppedChars, 1);
       expect(
-        buffer.drainAll(),
+        buffer.take(buffer.pendingChars),
         'a' * (TerminalOutputBuffer.maxBufferedChars - 2) + '😀',
       );
     });

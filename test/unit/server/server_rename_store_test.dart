@@ -70,7 +70,10 @@ void main() {
     forwards.put(forward);
     remoteDesktops.put(remoteDesktop);
     snippets.put(snippet);
-    servers.trustHost(original.id, 'ssh-ed25519', 'SHA256:old');
+    SqliteDb.instance.execute(
+      'INSERT INTO known_host (server_id, key_type, fingerprint) VALUES (?, ?, ?);',
+      [original.id, 'ssh-ed25519', 'SHA256:old'],
+    );
     SqliteDb.instance.execute('INSERT INTO container_host VALUES (?, ?, ?);', [
       original.id,
       'docker',
@@ -162,7 +165,16 @@ void main() {
 
     expect(servers.fetchOneRaw(original.id), isNull);
     expect(servers.fetchOneRaw(replacement.id), replacement);
-    expect(servers.knownHosts(replacement.id), {'ssh-ed25519': 'SHA256:old'});
+    expect(
+      {
+        for (final row in SqliteDb.instance.select(
+          'SELECT key_type, fingerprint FROM known_host WHERE server_id = ?;',
+          [replacement.id],
+        ))
+          row['key_type']: row['fingerprint'],
+      },
+      {'ssh-ed25519': 'SHA256:old'},
+    );
     expect(forwards.fetch().single.serverId, replacement.id);
     expect(remoteDesktops.fetch().single.serverId, replacement.id);
     expect(snippets.fetch().single.autoRunOn, [replacement.id]);
@@ -266,7 +278,13 @@ void main() {
     expect(forwards.fetchForServer(original.id), [forward]);
     expect(remoteDesktops.fetchForServer(original.id), [remoteDesktop]);
     expect(snippets.fetch().single.autoRunOn, [original.id]);
-    expect(servers.knownHosts(original.id), isNotEmpty);
+    expect({
+      for (final row in SqliteDb.instance.select(
+        'SELECT key_type, fingerprint FROM known_host WHERE server_id = ?;',
+        [original.id],
+      ))
+        row['key_type']: row['fingerprint'],
+    }, isNotEmpty);
     expect(
       SqliteDb.instance.select(
         'SELECT count(*) AS n FROM server WHERE id = ?;',
@@ -321,19 +339,4 @@ void main() {
       );
     },
   );
-
-  test('known-host change rolls back when the server stamp fails', () {
-    servers.forgetHost(original.id, 'ssh-ed25519');
-    SqliteDb.instance.execute(
-      'CREATE TRIGGER reject_server_stamp '
-      'BEFORE UPDATE OF updated_at ON server '
-      "BEGIN SELECT RAISE(ABORT, 'stamp failed'); END;",
-    );
-
-    expect(
-      () => servers.trustHost(original.id, 'ssh-rsa', 'SHA256:new'),
-      throwsA(anything),
-    );
-    expect(servers.knownHosts(original.id), isEmpty);
-  });
 }

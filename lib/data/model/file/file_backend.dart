@@ -69,13 +69,6 @@ class FileEntry {
 /// a transfer whose isolate was killed runs no `catch` of its own.
 const kStagingSuffix = '.sb-part-';
 
-/// Whether [name] is a staged copy of [destination]'s basename.
-bool isStagingOf(String name, String destination) {
-  final slash = destination.replaceAll(r'\', '/').lastIndexOf('/');
-  final base = slash < 0 ? destination : destination.substring(slash + 1);
-  return name.startsWith('$base$kStagingSuffix');
-}
-
 /// Where to park a write to [destination] until it can be renamed into place.
 ///
 /// The counter alone was unique only within the isolate holding it, and every

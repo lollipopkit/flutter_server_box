@@ -177,7 +177,7 @@ bool isShellPathValid(String value) =>
 /// Checked before the setting is stored rather than after a terminal fails to
 /// open. Under `realfs` the guest's `/bin/fish` really is `<root>/bin/fish` on
 /// the host, so this is one `stat` — and links are not followed for the reason
-/// [looksUnpacked] does not follow them.
+/// the rootfs readiness check does not follow them.
 Future<bool> shellExistsIn(String root, String shell) async {
   if (!isShellPathValid(shell)) return false;
   final type = await FileSystemEntity.type(
@@ -369,30 +369,6 @@ final _chmod = () {
     return null;
   }
 }();
-
-/// Whether [root] holds an unpacked Linux system rather than a directory.
-///
-/// `bin/sh` and `etc/os-release` rather than anything of one distribution's:
-/// every distribution ships both, and the question here is whether *a* system
-/// is there. There is no manifest to consult — under `realfs` the tree is all
-/// there is.
-///
-/// **Nothing here is followed.** Alpine's `/bin/sh` is an absolute symlink to
-/// `/bin/busybox`, which is a path inside the *guest*; resolved against the
-/// host it names a file iOS does not have, so `File.exists()` answers false for
-/// a tree that is perfectly fine. Measured against a device's own rootfs: every
-/// existing install would have read as absent, been offered for reinstall, and
-/// taken everything in it.
-Future<bool> looksUnpacked(String root) async {
-  for (final path in const ['bin/sh', 'etc/os-release']) {
-    final type = await FileSystemEntity.type(
-      root.joinPath(path),
-      followLinks: false,
-    );
-    if (type == FileSystemEntityType.notFound) return false;
-  }
-  return true;
-}
 
 /// A resolver, because a minirootfs ships without `/etc/resolv.conf` and
 /// neither platform exposes one a guest can read.

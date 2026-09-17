@@ -20,6 +20,7 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/tables.dart';
 
 import '../../helpers/test_db.dart';
+import '../../helpers/table_names.dart';
 
 /// See `server_dist_store_test.dart`: the constraints are the half that matters
 /// and the half a column list cannot see.
@@ -174,11 +175,13 @@ void main() {
     test('a second write updates rather than replacing the row', () {
       store.put(_run('a', status: BenchmarkStatus.running));
       store.put(
-        store.get('a')!.copyWith(
-          status: BenchmarkStatus.completed,
-          resultJson: '{"version":"v2"}',
-          exitCode: 0,
-        ),
+        store
+            .get('a')!
+            .copyWith(
+              status: BenchmarkStatus.completed,
+              resultJson: '{"version":"v2"}',
+              exitCode: 0,
+            ),
       );
 
       expect(store.forServer('srv').length, 1);

@@ -253,23 +253,6 @@ String _decodeCapped(String path, List<int> bytes) {
   return utf8.decode(bytes);
 }
 
-/// The PEM [ssh] authenticates with, or null when it has no key at all.
-///
-/// Two sources that are not interchangeable, which is the whole point of them
-/// being two fields: a key the user imported lives in `Stores.key` and is named
-/// by [SshCredential.keyId], while a key `~/.ssh/config` pointed at stays on
-/// disk and is named by [SshCredential.keyPath]. Reading the file here rather
-/// than copying it into the store at import time is what leaves the user's own
-/// key management intact.
-///
-/// Runs where there are stores, a filesystem the user granted, and a UI to
-/// report a failure to. `SshTransferCreds` calls it on the main isolate and
-/// hands the result across, because the transfer isolate has none of those.
-String? resolvePrivateKey(SshCredential ssh, {String? originalHost}) {
-  final keys = resolvePrivateKeys(ssh, originalHost: originalHost);
-  return keys.isEmpty ? null : keys.values.first;
-}
-
 Map<String, String> resolvePrivateKeys(
   SshCredential ssh, {
   String? originalHost,
@@ -328,15 +311,6 @@ Map<String, String> resolvePrivateKeys(
   }
   if (keys.isEmpty && lastError != null) throw lastError;
   return keys;
-}
-
-/// Async variant of [resolvePrivateKey] for callers that can await.
-Future<String?> resolvePrivateKeyAsync(
-  SshCredential ssh, {
-  String? originalHost,
-}) async {
-  final keys = await resolvePrivateKeysAsync(ssh, originalHost: originalHost);
-  return keys.isEmpty ? null : keys.values.first;
 }
 
 Future<Map<String, String>> resolvePrivateKeysAsync(

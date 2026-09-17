@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -54,23 +53,6 @@ class ConnectionStatsStore {
       rethrow;
     }
     _prune(stat.serverId);
-  }
-
-  /// One server's attempts, newest first.
-  ///
-  /// No production reader since the connection-stats page moved to
-  /// [getAllServerStats], which aggregates in SQL. Kept and annotated rather
-  /// than deleted: it is how a test says what is actually in the table, and the
-  /// migration regression test needs exactly that — [getAllServerStats] answers
-  /// a summary, which cannot distinguish a row that was written wrong from one
-  /// that was not written at all.
-  @visibleForTesting
-  List<ConnectionStat> getConnectionHistory(String serverId) {
-    final rows = _db.select(
-      'SELECT * FROM conn_stat WHERE server_id = ? ORDER BY timestamp DESC;',
-      [serverId],
-    );
-    return rows.map(_fromRow).toList();
   }
 
   /// Every server's summary, in two queries.
