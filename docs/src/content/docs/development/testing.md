@@ -93,7 +93,7 @@ testWidgets('shows the server name', (tester) async {
 });
 ```
 
-A Widget test that writes to a store must call `openTestDb()` in `setUp` to open an in-memory database, use the store's `forTest()` constructor, and call `SqliteDb.close` in `tearDown`. This prevents tests from sharing singleton caches or writing to a real file.
+A widget test that writes to a store must call `openTestDb()` in `setUp` and `closeTestDb()` in `tearDown`. The latter drains pending writes before closing SQLite. Construct the normal store against the isolated database; migration tests use the production `setting` store name. Do not add production reset methods, test-only constructors, or mutable network factories. Stateful services use their normal instance lifecycle; HTTP and filesystem substitutes belong in `test/helpers/`.
 
 Do not use `pumpAndSettle()` on a tree containing a text field or another Widget that continually schedules frames. Count frames explicitly with `pump(duration)` instead, and use a reasonable test timeout.
 
@@ -182,3 +182,13 @@ The device may request local-network permission on the first run. Allow it for t
 3. Add enough assertions for important behavior while keeping each test focused.
 4. Isolate external dependencies with fakes or fixtures.
 5. Cover empty lists, missing values, invalid input, and permission failures.
+
+## Audit regression checks
+
+Signed rootfs fixtures must retain their original bytes: JSON uses LF and signatures are binary in `.gitattributes`. Never re-sign a fixture to make a test pass.
+
+Model context tests load real cache files and bundled assets, then refresh through a local HTTP server. Geographic fixtures go through the production installer. SFTP tests verify read cancellation, failed operations and late handle cleanup; Monitor tests use local HTTP sockets and check shared-client disposal. Keep these behavior assertions when refactoring their implementations.
+
+The frontend's `format`, `fsPath` and `agentUrl` suites run in Node; browser suites use isolated jsdom environments. Native Android service channel checks require an Android runtime and report an explicit skip on desktop. Source text searches are not substitutes for native execution; manifest and entitlement contract checks remain useful.
+
+See the repository audit record at `docs/audits/code-health-2026-09.md` for measured performance, validation results and remaining environment-dependent coverage.
