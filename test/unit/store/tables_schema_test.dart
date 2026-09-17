@@ -1,8 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/db.dart';
-import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
+
+import '../../helpers/table_names.dart';
 
 /// What the schema itself guarantees, rather than what the Dart above it
 /// remembers to do.
@@ -11,7 +12,6 @@ import 'package:sqlite3/sqlite3.dart';
 /// exclusivity in `Spix.validate()`, the orphan cleanup in `delServer`, the
 /// uniqueness of a snippet name in whatever dialog last checked. A rule in one
 /// call site is a rule until someone adds a second call site.
-import '../../helpers/table_names.dart';
 
 void main() {
   late Database db;

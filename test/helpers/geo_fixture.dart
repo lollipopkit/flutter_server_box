@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:server_box/data/model/app/geo_manifest.dart';
-import 'local_http.dart';
 import 'package:server_box/core/service/geo_data.dart';
+import 'package:server_box/data/model/app/geo_manifest.dart';
+
+import 'local_http.dart';
 
 /// Puts the shared vectors on disk as if they had been downloaded.
 ///

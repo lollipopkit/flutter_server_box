@@ -11,8 +11,8 @@ import 'package:server_box/data/model/app/rootfs_manifest.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
-import '../../helpers/test_db.dart';
 import '../../helpers/local_http.dart';
+import '../../helpers/test_db.dart';
 
 /// Which of the manifests on hand gets believed.
 ///
@@ -85,11 +85,12 @@ void main() {
       );
     } finally {
       expect(http.closed, http.created);
-      if (http.created > 0)
+      if (http.created > 0) {
         expect(
           http.connectionTimeouts,
           everyElement(const Duration(seconds: 20)),
         );
+      }
       dio.close();
       await server.close(force: true);
     }

@@ -72,7 +72,9 @@ abstract final class Tombstone {
       lines.add("Abort message: '${t.abortMessage}'");
     }
     for (final cause in t.causes) {
-      if (cause.humanReadable.isNotEmpty) lines.add('Cause: ${cause.humanReadable}');
+      if (cause.humanReadable.isNotEmpty) {
+        lines.add('Cause: ${cause.humanReadable}');
+      }
     }
 
     final found = _crashingThread(t);

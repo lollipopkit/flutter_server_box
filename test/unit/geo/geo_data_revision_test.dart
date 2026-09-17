@@ -1,10 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import '../../helpers/local_http.dart';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +11,7 @@ import 'package:server_box/data/model/app/geo_manifest.dart';
 import 'package:server_box/data/res/url.dart';
 
 import '../../helpers/geo_fixture.dart';
+import '../../helpers/local_http.dart';
 
 /// An endpoint that is not there, so an install fails without a network.
 class _DeadAdapter implements HttpClientAdapter {

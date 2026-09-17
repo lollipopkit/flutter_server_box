@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// What `flutter test` cannot answer about taking over the sandboxed build's
 /// data.
