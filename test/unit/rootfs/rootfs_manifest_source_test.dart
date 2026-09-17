@@ -12,6 +12,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import '../../helpers/test_db.dart';
+import '../../helpers/local_http.dart';
 
 /// Which of the manifests on hand gets believed.
 ///
@@ -58,6 +59,40 @@ void main() {
     final dio = Dio();
     dio.httpClientAdapter = _Adapter(body: body, sig: sig, error: error);
     return dio;
+  }
+
+  Future<bool> refresh({required Dio dio}) async {
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) async {
+      try {
+        final response = await dio.httpClientAdapter.fetch(
+          RequestOptions(path: request.uri.path),
+          null,
+          null,
+        );
+        request.response.statusCode = response.statusCode;
+        await request.response.addStream(response.stream);
+      } catch (_) {
+        request.response.statusCode = 503;
+      }
+      await request.response.close();
+    });
+    final http = LocalHttp(server);
+    try {
+      return await HttpOverrides.runWithHttpOverrides(
+        RootfsManifestSource.refresh,
+        http,
+      );
+    } finally {
+      expect(http.closed, http.created);
+      if (http.created > 0)
+        expect(
+          http.connectionTimeouts,
+          everyElement(const Duration(seconds: 20)),
+        );
+      dio.close();
+      await server.close(force: true);
+    }
   }
 
   group('refresh', () {
@@ -156,10 +191,7 @@ void main() {
       // settings page twice in quick succession is all it takes.
       final dio = _Counting(fakeDio(body: signed, sig: signature));
 
-      final results = await Future.wait([
-        RootfsManifestSource.refresh(dio: dio),
-        RootfsManifestSource.refresh(dio: dio),
-      ]);
+      final results = await Future.wait([refresh(dio: dio), refresh(dio: dio)]);
 
       expect(results, [false, false]);
       // Two requests — the manifest and its signature — not four.
@@ -172,17 +204,15 @@ void main() {
       // tomorrow has to be able to see a newer manifest.
       final dio = _Counting(fakeDio(body: signed, sig: signature));
 
-      await RootfsManifestSource.refresh(dio: dio);
-      await RootfsManifestSource.refresh(dio: dio);
+      await refresh(dio: dio);
+      await refresh(dio: dio);
 
       expect(dio.requests, 4);
     });
 
     test('a fetch that cannot happen leaves what was in force', () async {
       final before = LinuxDistros.current.serial;
-      final changed = await RootfsManifestSource.refresh(
-        dio: fakeDio(error: 'no network'),
-      );
+      final changed = await refresh(dio: fakeDio(error: 'no network'));
       expect(changed, isFalse);
       expect(LinuxDistros.current.serial, before);
       // Nothing was cached, so a later launch does not read a half-fetch.
@@ -193,7 +223,7 @@ void main() {
       final tampered = Uint8List.fromList(signed);
       tampered[tampered.length ~/ 2] ^= 0x01;
 
-      final changed = await RootfsManifestSource.refresh(
+      final changed = await refresh(
         dio: fakeDio(body: tampered, sig: signature),
       );
       expect(changed, isFalse);
@@ -204,7 +234,7 @@ void main() {
     });
 
     test('a verified manifest is cached and its serial recorded', () async {
-      final changed = await RootfsManifestSource.refresh(
+      final changed = await refresh(
         dio: fakeDio(body: signed, sig: signature),
       );
       // Same serial as the bundled copy, so nothing is displaced...
@@ -218,7 +248,7 @@ void main() {
       // The device has already seen something newer.
       Stores.setting.rootfsManifestSerial.put(99);
 
-      final changed = await RootfsManifestSource.refresh(
+      final changed = await refresh(
         dio: fakeDio(body: signed, sig: signature),
       );
       expect(changed, isFalse);
@@ -228,7 +258,7 @@ void main() {
     });
 
     test('something far too large is not read as a manifest', () async {
-      final changed = await RootfsManifestSource.refresh(
+      final changed = await refresh(
         dio: fakeDio(body: List.filled(512 * 1024, 0x20), sig: signature),
       );
       expect(changed, isFalse);
