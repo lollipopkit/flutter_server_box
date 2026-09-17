@@ -70,16 +70,18 @@ void main() {
   late List<String> shared;
   late List<int> sharedSizes;
 
+  IOOverrides? previousIO;
   setUp(() {
+    previousIO = IOOverrides.current;
     shared = [];
     sharedSizes = [];
-    SchemaTooNewPage.shareForTest = (path) async {
+    IOOverrides.global = _CaptureExport((path) {
       shared.add(path);
       sharedSizes.add(File(path).lengthSync());
-    };
+    });
   });
 
-  tearDown(() => SchemaTooNewPage.shareForTest = null);
+  tearDown(() => IOOverrides.global = previousIO);
 
   /// Lets real asynchronous work finish.
   ///
@@ -243,4 +245,33 @@ void main() {
     expect(find.text(libL10n.backup), findsOneWidget);
     expect(SqliteDb.isOpen, isTrue);
   });
+}
+
+/// Capture the file at the desktop reveal boundary without launching Explorer.
+final class _CaptureExport extends IOOverrides {
+  _CaptureExport(this.capture);
+  final void Function(String) capture;
+  @override
+  File createFile(String path) {
+    final file = super.createFile(path);
+    return path.contains('sbx-rescue-') ? _ExportFile(file, capture) : file;
+  }
+}
+final class _ExportFile implements File {
+  _ExportFile(this.file, this.capture);
+  final File file;
+  final void Function(String) capture;
+  @override
+  Future<bool> exists() async {
+    capture(file.path);
+    return false;
+  }
+  @override
+  int lengthSync() => file.lengthSync();
+  @override
+  bool existsSync() => file.existsSync();
+  @override
+  void deleteSync({bool recursive = false}) => file.deleteSync(recursive: recursive);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
