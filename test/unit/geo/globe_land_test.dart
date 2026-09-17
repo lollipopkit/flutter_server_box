@@ -58,7 +58,9 @@ void main() {
     for (final ring in land.rings) {
       for (var i = 0; i < ring.length; i += 3) {
         final length = math.sqrt(
-          ring[i] * ring[i] + ring[i + 1] * ring[i + 1] + ring[i + 2] * ring[i + 2],
+          ring[i] * ring[i] +
+              ring[i + 1] * ring[i + 1] +
+              ring[i + 2] * ring[i + 2],
         );
         expect(length, closeTo(1, 1e-4));
       }
@@ -138,8 +140,6 @@ void main() {
       final first = await bundle.load();
       expect(identical(first, await bundle.load()), isTrue);
     });
-
-
   });
 
   group('the asset the build script wrote', () {

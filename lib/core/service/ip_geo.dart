@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/core/service/geo_data.dart';
 import 'package:server_box/core/utils/private_address.dart';
 import 'package:server_box/data/model/server/geo.dart';
@@ -39,7 +38,12 @@ import 'package:server_box/data/res/store.dart';
 /// 3. the city-level data, once it has been downloaded — [GeoSource.city]
 ///
 /// That order is [GeoSource]'s own case order, which is what `beats` compares.
-abstract final class IpGeo {
+final class IpGeo {
+  IpGeo(this.data, this._lookup);
+  static final shared = IpGeo(GeoData.shared, InternetAddress.lookup);
+  final GeoData data;
+  final Future<List<InternetAddress>> Function(String) _lookup;
+
   /// The coordinate for [spi], or null if nothing can place it.
   ///
   /// **Nothing is cached, and that is a decision rather than an omission.**
@@ -51,7 +55,7 @@ abstract final class IpGeo {
   /// string it could not notice a name resolving somewhere new, and it answered
   /// from itself rather than from the installed month, so a coordinate never
   /// changed after a data update.
-  static Future<ResolvedGeo?> resolve(Spi spi) async => (await locate(spi)).geo;
+  Future<ResolvedGeo?> resolve(Spi spi) async => (await locate(spi)).geo;
 
   /// [resolve], and why there is no coordinate when there is none.
   ///
@@ -62,7 +66,7 @@ abstract final class IpGeo {
   ///
   /// [GeoMiss] is null when the globe is switched off, which is neither an
   /// answer nor a failure — nothing was asked.
-  static Future<({ResolvedGeo? geo, GeoMiss? miss})> locate(Spi spi) async {
+  Future<({ResolvedGeo? geo, GeoMiss? miss})> locate(Spi spi) async {
     // Ahead of the switch, because it is not a lookup. A coordinate the user
     // typed is theirs, stored on the record, and showing it involves nothing
     // outside this device.
@@ -102,9 +106,7 @@ abstract final class IpGeo {
   /// it somewhere, and neither key works — under the server it duplicates the
   /// address, and under the public address it would label that host
   /// `selfReported` for every other server reached at it.
-  static Future<({ResolvedGeo? geo, GeoMiss? miss})?> _fromSelfAddr(
-    String id,
-  ) async {
+  Future<({ResolvedGeo? geo, GeoMiss? miss})?> _fromSelfAddr(String id) async {
     final addr = Stores.selfAddr.addrOf(id);
     if (addr == null) return null;
     // The same lookup [locateHost] makes, but the source names how the address
@@ -119,9 +121,7 @@ abstract final class IpGeo {
   }
 
   /// [locate] for a bare host.
-  static Future<({ResolvedGeo? geo, GeoMiss? miss})> locateHost(
-    String host,
-  ) async {
+  Future<({ResolvedGeo? geo, GeoMiss? miss})> locateHost(String host) async {
     if (!Stores.setting.globeEnabled.fetch()) return (geo: null, miss: null);
 
     if (isPrivateHost(host)) return (geo: null, miss: GeoMiss.private);
@@ -151,13 +151,13 @@ abstract final class IpGeo {
   /// someone accepts the download — there is no longer a bundled fallback
   /// underneath it, so a globe with the feature on and nothing fetched places
   /// nothing and says so.
-  static GeoCoord? _cityOf(InternetAddress addr) {
+  GeoCoord? _cityOf(InternetAddress addr) {
     // Unwrapped first. `::ffff:8.8.8.8` has `type` IPv6, so without this the
     // v6 file is asked for a key whose leading 48 bits are zero — bucket 0,
     // no record, and a placeable server reported as having no data.
     final bare = unwrapV4Mapped(addr);
     final family = bare.type == InternetAddressType.IPv6 ? 6 : 4;
-    return GeoData.bundle(family)?.lookup(bare);
+    return data.bundle(family)?.lookup(bare);
   }
 
   /// Which of a server's addresses to place it by.
@@ -166,7 +166,7 @@ abstract final class IpGeo {
   /// `ServerConnectCredential.fromSpi` uses, so the globe draws the server
   /// where the app would reach it. Null when neither is usable, which for a
   /// monitor address means one that is not a URL.
-  static String? geoHostOf(Spi spi) {
+  String? geoHostOf(Spi spi) {
     final hosts = spi.transport == ServerTransport.monitorHttp
         ? [_monitorHost(spi), spi.ssh?.ip]
         : [spi.ssh?.ip, _monitorHost(spi)];
@@ -176,34 +176,23 @@ abstract final class IpGeo {
     return null;
   }
 
-  static String? _monitorHost(Spi spi) {
+  String? _monitorHost(Spi spi) {
     final addr = spi.monitorHttp?.addr;
     if (addr == null) return null;
     final host = Uri.tryParse(addr)?.host;
     return host == null || host.isEmpty ? null : host;
   }
 
-  /// How a name becomes an address.
-  ///
-  /// A seam, because the alternative is a test suite that asks a real resolver
-  /// — which makes the network the thing under test, and makes the answer
-  /// depend on which machine is running it. The behaviour worth pinning is
-  /// what happens *to* the result: a dual-stack host offers both families and
-  /// this has to pick one.
-  @visibleForTesting
-  static Future<List<InternetAddress>> Function(String host) resolver =
-      InternetAddress.lookup;
-
   /// The address for [host], resolving a name if it is one.
   ///
   /// Only reached for a host that already passed [isPrivateHost], so the
   /// query goes to a public name — the same one the app resolves whenever it
   /// connects to this server.
-  static Future<InternetAddress?> _addressOf(String host) async {
+  Future<InternetAddress?> _addressOf(String host) async {
     final literal = InternetAddress.tryParse(host);
     if (literal != null) return literal;
     try {
-      final found = await resolver(host);
+      final found = await _lookup(host);
       // IPv4 first when both are offered. It used to be a coverage argument —
       // the bundled database was almost entirely IPv4 — and it is not one any
       // more: the two downloaded files hold 3.5M and 3.8M records. What it is

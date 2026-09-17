@@ -22,9 +22,9 @@ final class _Client implements HttpClient {
   final LocalHttp owner;
 
   @override
-  Future<HttpClientRequest> openUrl(String method, Uri url) {
+  Future<HttpClientRequest> openUrl(String method, Uri url) async {
     owner.requests++;
-    return inner.openUrl(
+    final request = await inner.openUrl(
       method,
       url.replace(
         scheme: 'http',
@@ -32,6 +32,8 @@ final class _Client implements HttpClient {
         port: owner.server.port,
       ),
     );
+    request.headers.set('x-fixture-url', url.toString());
+    return request;
   }
 
   @override

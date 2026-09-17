@@ -22,22 +22,19 @@ import 'package:server_box/data/res/url.dart';
 /// It costs about 25 MB to fetch and 52 MB on disk, which is why it is opt-in
 /// and why the dialog that asks quotes both numbers from the manifest rather
 /// than from a constant that would go stale every month.
-abstract final class GeoData {
-  /// Where the unpacked bundles live.
-  static String get dir => Paths.doc.joinPath('geo');
+final class GeoData {
+  static final shared = GeoData();
 
-  static String get _stagingDir => '$dir.installing';
-  static String get _backupDir => '$dir.previous';
+  /// Where the unpacked bundles live.
+  String get dir => Paths.doc.joinPath('geo');
+
+  String get _stagingDir => '$dir.installing';
+  String get _backupDir => '$dir.previous';
   static const _endpoints = [Urls.geoData, Urls.geoDataFallback];
 
-  static String _manifestAt(String root) => root.joinPath('installed.json');
+  String _manifestAt(String root) => root.joinPath('installed.json');
 
-  /// Replaced in tests. Nothing here should reach the network in a test run,
-  /// and a seam is how that is enforced rather than hoped for.
-  @visibleForTesting
-  static Dio Function() clientFactory = _defaultClient;
-
-  static Dio _defaultClient() => Dio(
+  Dio _defaultClient() => Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 15),
       // Two files of a dozen megabytes each, possibly on a phone network.
@@ -47,9 +44,9 @@ abstract final class GeoData {
     ),
   );
 
-  static GeoManifest? _installed;
-  static bool _readInstalled = false;
-  static final _open = <int, GeoBundle>{};
+  GeoManifest? _installed;
+  bool _readInstalled = false;
+  final _open = <int, GeoBundle>{};
 
   /// Bumped whenever what is installed changes.
   ///
@@ -59,7 +56,7 @@ abstract final class GeoData {
   /// A counter rather than the manifest: the question every listener asks is
   /// "is what I drew still true", and a value that always differs answers it
   /// without anyone comparing manifests.
-  static final revision = ValueNotifier(0);
+  final revision = ValueNotifier(0);
 
   /// What is completely and readably installed, or null when nothing is.
   ///
@@ -74,7 +71,7 @@ abstract final class GeoData {
   /// on family and month. That makes a damaged installation look absent to all
   /// three download entry points, so the user can repair it by installing the
   /// same month again.
-  static GeoManifest? installed() {
+  GeoManifest? installed() {
     if (_readInstalled) return _installed;
     _readInstalled = true;
     _installed = _readInstalledAt(dir);
@@ -104,7 +101,7 @@ abstract final class GeoData {
   }
 
   /// Reads and validates one complete installation directory.
-  static GeoManifest? _readInstalledAt(String root) {
+  GeoManifest? _readInstalledAt(String root) {
     try {
       final file = File(_manifestAt(root));
       if (!file.existsSync()) return null;
@@ -134,7 +131,7 @@ abstract final class GeoData {
     }
   }
 
-  static void _discardDirectorySync(String path) {
+  void _discardDirectorySync(String path) {
     try {
       final handle = Directory(path);
       if (handle.existsSync()) handle.deleteSync(recursive: true);
@@ -148,7 +145,7 @@ abstract final class GeoData {
   /// Kept open because a lookup is a handful of small reads into it — see
   /// [GeoBundle] for why it is not read into memory — and reopening per
   /// lookup would make the syscall count the cost rather than the reads.
-  static GeoBundle? bundle(int family) {
+  GeoBundle? bundle(int family) {
     final held = _open[family];
     if (held != null) return held;
     final manifest = installed();
@@ -177,7 +174,7 @@ abstract final class GeoData {
   /// This is the one request made before consent, and it is a couple hundred
   /// bytes — it exists so the dialog can say what the download actually costs
   /// this month instead of quoting a number compiled into the app.
-  static Future<GeoManifest?> fetchManifest() async {
+  Future<GeoManifest?> fetchManifest() async {
     for (final endpoint in _endpoints) {
       final manifest = await _fetchManifestFrom(endpoint);
       if (manifest != null) return manifest;
@@ -185,7 +182,7 @@ abstract final class GeoData {
     return null;
   }
 
-  static Future<GeoManifest?> _fetchManifestFrom(String endpoint) async {
+  Future<GeoManifest?> _fetchManifestFrom(String endpoint) async {
     final bytes = await _fetchFrom(endpoint, 'manifest.json', 64 * 1024);
     if (bytes == null) return null;
     try {
@@ -207,10 +204,7 @@ abstract final class GeoData {
   /// consent dialog or needed to identify the data remains fixed, including
   /// both packed and unpacked sizes. The successful endpoint's own digest is
   /// then used to verify its bytes.
-  static bool _matchesConfirmedOffer(
-    GeoManifest confirmed,
-    GeoManifest offered,
-  ) {
+  bool _matchesConfirmedOffer(GeoManifest confirmed, GeoManifest offered) {
     // Both values have passed [GeoManifest.tryFromJson], which fixes the
     // supported version and guarantees exactly one asset for each family.
     if (offered.generated != confirmed.generated ||
@@ -242,7 +236,7 @@ abstract final class GeoData {
   /// Returns whether everything arrived, verified and unpacked. A failure
   /// discards only the staging directory: one family is never published on its
   /// own, and an installation that was working before the attempt stays so.
-  static Future<bool> install(
+  Future<bool> install(
     GeoManifest manifest, {
     void Function(int received, int total)? onProgress,
   }) async {
@@ -271,7 +265,7 @@ abstract final class GeoData {
     return false;
   }
 
-  static Future<bool> _installFromEndpoint(
+  Future<bool> _installFromEndpoint(
     String endpoint,
     GeoManifest manifest,
     void Function(int received, int total)? onProgress,
@@ -340,7 +334,7 @@ abstract final class GeoData {
 
   /// Swaps a validated staging directory into place, rolling the old one back
   /// if the promotion fails.
-  static Future<bool> _activateStaging(GeoManifest manifest) async {
+  Future<bool> _activateStaging(GeoManifest manifest) async {
     final active = Directory(dir);
     final staging = Directory(_stagingDir);
     final backup = Directory(_backupDir);
@@ -394,7 +388,7 @@ abstract final class GeoData {
   /// Offered because 52 MB is worth being able to reclaim, and because it is
   /// data this app went and got — somebody who turns the feature off should be
   /// able to take it back rather than be told it will expire eventually.
-  static Future<bool> remove() async {
+  Future<bool> remove() async {
     try {
       return await _erase();
     } finally {
@@ -409,7 +403,7 @@ abstract final class GeoData {
   ///
   /// Includes interrupted staging and backup directories so the explicit
   /// remove action reclaims every byte this service may have written.
-  static Future<bool> _erase() async {
+  Future<bool> _erase() async {
     _closeBundles();
     _installed = null;
     _readInstalled = false;
@@ -423,14 +417,14 @@ abstract final class GeoData {
     return removed;
   }
 
-  static void _closeBundles() {
+  void _closeBundles() {
     for (final open in _open.values) {
       open.close();
     }
     _open.clear();
   }
 
-  static Future<bool> _discardDirectory(String path) async {
+  Future<bool> _discardDirectory(String path) async {
     try {
       final handle = Directory(path);
       if (await handle.exists()) await handle.delete(recursive: true);
@@ -453,7 +447,7 @@ abstract final class GeoData {
   /// Exact, not a bound: a bundle that unpacks to anything other than what the
   /// manifest says is not the bundle the manifest describes.
   @visibleForTesting
-  static Uint8List gunzipCapped(Uint8List packed, int expected, String name) {
+  Uint8List gunzipCapped(Uint8List packed, int expected, String name) {
     final out = _CappedBytes(expected, name);
     final sink = gzip.decoder.startChunkedConversion(out);
     sink.add(packed);
@@ -470,7 +464,7 @@ abstract final class GeoData {
   }
 
   /// How much is on disk, in bytes.
-  static Future<int> sizeOnDisk() async {
+  Future<int> sizeOnDisk() async {
     final handle = Directory(dir);
     if (!await handle.exists()) return 0;
     var total = 0;
@@ -485,14 +479,14 @@ abstract final class GeoData {
   /// Source selection belongs to the manifest/install transaction, so this
   /// method must never switch endpoints independently. Null for every failure,
   /// since there is nothing a caller would do differently.
-  static Future<Uint8List?> _fetchFrom(
+  Future<Uint8List?> _fetchFrom(
     String endpoint,
     String path,
     int maxBytes, {
     void Function(int received)? onReceive,
   }) async {
     final url = '$endpoint/$path';
-    final dio = clientFactory();
+    final dio = _defaultClient();
     try {
       // A `cancel` future was threaded through here and through `install`
       // and never passed by anyone. It also registered a derived future per
@@ -532,15 +526,6 @@ abstract final class GeoData {
     } finally {
       dio.close();
     }
-  }
-
-  /// For tests, which need each case to start from nothing.
-  @visibleForTesting
-  static Future<void> resetForTest() async {
-    _closeBundles();
-    _installed = null;
-    _readInstalled = false;
-    clientFactory = _defaultClient;
   }
 }
 

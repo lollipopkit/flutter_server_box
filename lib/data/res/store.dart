@@ -56,7 +56,7 @@ abstract final class Stores {
   ///
   /// The only thing about the globe that is remembered. There was a second
   /// store beside it holding where each *host* was, and it went with the
-  /// per-lookup network requests it existed for — see [IpGeo.resolve]. This one
+  /// per-lookup network requests it existed for — see [IpGeo.shared.resolve]. This one
   /// stays because it is not a cache of a computation: only the machine knows
   /// which public address is assigned to one of its interfaces, so nothing
   /// here can work it out again.

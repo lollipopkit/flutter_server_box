@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import '../../helpers/local_http.dart';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
@@ -53,13 +54,18 @@ class _RouteAdapter implements HttpClientAdapter {
 
 /// **When listeners are told the installed data changed.**
 ///
-/// `GeoData.revision` is the only thing keeping the settings row, the switch
+/// `data.revision` is the only thing keeping the settings row, the switch
 /// and the globe in step, and each of them acts on it: the globe throws away
 /// everything it has resolved and runs a full pass. So *when* it fires is a
 /// behaviour, not an implementation detail — one announcement too many is a
 /// screenful of servers dropping into the unplaced strip and a burst of name
 /// lookups for an answer that cannot exist yet.
 void main() {
+  late GeoData data;
+  late HttpServer server;
+  HttpOverrides? previousHttp;
+  Dio Function() clientFactory = _defaultForTest;
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tmp;
@@ -74,16 +80,39 @@ void main() {
   tearDownAll(() => tmp.delete(recursive: true));
 
   setUp(() async {
-    await installGeoVectors();
+    data = GeoData();
+    await installGeoVectors(data: data);
+    previousHttp = HttpOverrides.current;
+    server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    server.listen((request) async {
+      final dio = clientFactory();
+      try {
+        final response = await dio.httpClientAdapter.fetch(
+          RequestOptions(path: request.headers.value('x-fixture-url')!),
+          null,
+          null,
+        );
+        request.response.statusCode = response.statusCode;
+        await request.response.addStream(response.stream);
+      } catch (_) {
+        request.response.statusCode = 503;
+      } finally {
+        dio.close();
+      }
+      await request.response.close();
+    });
+    HttpOverrides.global = LocalHttp(server);
     seen = 0;
     listener = () => seen++;
-    GeoData.revision.addListener(listener);
+    data.revision.addListener(listener);
   });
 
   tearDown(() async {
-    GeoData.revision.removeListener(listener);
-    GeoData.clientFactory = _defaultForTest;
-    await removeGeoVectors();
+    data.revision.removeListener(listener);
+    clientFactory = _defaultForTest;
+    await removeGeoVectors(data: data);
+    HttpOverrides.global = previousHttp;
+    await server.close(force: true);
   });
 
   /// A manifest naming files the dead endpoint will never serve.
@@ -176,7 +205,7 @@ void main() {
     ({GeoManifest manifest, Map<String, Uint8List> bodies}) fallback,
   ) async {
     final requests = <String>[];
-    GeoData.clientFactory = () => Dio()
+    clientFactory = () => Dio()
       ..httpClientAdapter = _RouteAdapter({
         // The primary offer is still the one the user confirmed, but its
         // assets are unavailable so installation reaches the fallback.
@@ -184,8 +213,8 @@ void main() {
         ...routesFor(Urls.geoDataFallback, fallback.bodies),
       }, requests: requests);
 
-    expect(await GeoData.install(confirmed.manifest), isFalse);
-    expect(GeoData.installed()?.generated, '2026-09');
+    expect(await data.install(confirmed.manifest), isFalse);
+    expect(data.installed()?.generated, '2026-09');
     expect(seen, 0);
     expect(requests.where((url) => url.startsWith(Urls.geoDataFallback)), [
       '${Urls.geoDataFallback}/manifest.json',
@@ -205,7 +234,7 @@ void main() {
     final bomb = Uint8List.fromList(gzip.encode(Uint8List(64 * 1024)));
 
     expect(
-      () => GeoData.gunzipCapped(bomb, 640, 'ip4_city_v1.bin.gz'),
+      () => data.gunzipCapped(bomb, 640, 'ip4_city_v1.bin.gz'),
       throwsA(
         isA<StateError>().having(
           (e) => e.message,
@@ -218,7 +247,7 @@ void main() {
 
   test('and an archive of the declared size decodes', () {
     final honest = Uint8List.fromList(gzip.encode(Uint8List(640)));
-    expect(GeoData.gunzipCapped(honest, 640, 'x').length, 640);
+    expect(data.gunzipCapped(honest, 640, 'x').length, 640);
   });
 
   test('a truncated one is refused too, from the other side', () {
@@ -226,7 +255,7 @@ void main() {
     // stops — so the length is still compared once it is done.
     final short = Uint8List.fromList(gzip.encode(Uint8List(320)));
     expect(
-      () => GeoData.gunzipCapped(short, 640, 'x'),
+      () => data.gunzipCapped(short, 640, 'x'),
       throwsA(isA<StateError>()),
     );
   });
@@ -255,66 +284,65 @@ void main() {
       ),
       for (final asset in manifest.assets) asset.name: bomb,
     };
-    GeoData.clientFactory = () =>
-        Dio()..httpClientAdapter = _RouteAdapter(bodies);
+    clientFactory = () => Dio()..httpClientAdapter = _RouteAdapter(bodies);
 
-    expect(await GeoData.install(manifest), isFalse);
-    expect(GeoData.installed()?.generated, '2026-09');
+    expect(await data.install(manifest), isFalse);
+    expect(data.installed()?.generated, '2026-09');
     expect(seen, 0);
   });
 
   test('a manifest without both readable bundles is not installed', () async {
-    await File(GeoData.dir.joinPath('ip6_city_v1.bin')).delete();
-    await GeoData.resetForTest();
+    await File(data.dir.joinPath('ip6_city_v1.bin')).delete();
+    data = GeoData();
 
-    expect(GeoData.installed(), isNull);
+    expect(data.installed(), isNull);
   });
 
   test('a structurally corrupt bundle is not installed', () async {
-    final file = File(GeoData.dir.joinPath('ip4_city_v1.bin'));
+    final file = File(data.dir.joinPath('ip4_city_v1.bin'));
     await file.writeAsBytes(Uint8List(await file.length()), flush: true);
-    await GeoData.resetForTest();
+    data = GeoData();
 
-    expect(GeoData.installed(), isNull);
+    expect(data.installed(), isNull);
   });
 
   test(
     'a previous installation is restored after an interrupted swap',
     () async {
-      await GeoData.resetForTest();
-      final backupPath = '${GeoData.dir}.previous';
-      await Directory(GeoData.dir).rename(backupPath);
+      data = GeoData();
+      final backupPath = '${data.dir}.previous';
+      await Directory(data.dir).rename(backupPath);
 
-      expect(GeoData.installed()?.generated, '2026-09');
-      expect(await Directory(GeoData.dir).exists(), isTrue);
+      expect(data.installed()?.generated, '2026-09');
+      expect(await Directory(data.dir).exists(), isTrue);
       expect(await Directory(backupPath).exists(), isFalse);
     },
   );
 
   test('a removal is announced once', () async {
-    expect(await GeoData.remove(), isTrue);
+    expect(await data.remove(), isTrue);
     expect(seen, 1);
   });
 
   test('a failed update keeps the previous installation', () async {
-    GeoData.clientFactory = () => Dio()..httpClientAdapter = _DeadAdapter();
+    clientFactory = () => Dio()..httpClientAdapter = _DeadAdapter();
 
-    expect(await GeoData.install(manifestOf('2026-10')), isFalse);
+    expect(await data.install(manifestOf('2026-10')), isFalse);
 
     expect(seen, 0, reason: 'the installed data did not change');
-    expect(GeoData.installed()?.generated, '2026-09');
+    expect(data.installed()?.generated, '2026-09');
   });
 
   test('and nothing is announced before the download is attempted', () async {
     // The half that matters on screen: whatever a listener does with the
     // announcement must not happen while the download is still running.
     var seenBeforeFetch = -1;
-    GeoData.clientFactory = () {
+    clientFactory = () {
       seenBeforeFetch = seen;
       return Dio()..httpClientAdapter = _DeadAdapter();
     };
 
-    await GeoData.install(manifestOf('2026-10'));
+    await data.install(manifestOf('2026-10'));
 
     expect(
       seenBeforeFetch,
@@ -327,42 +355,42 @@ void main() {
     'a partial staged update is discarded without touching the old one',
     () async {
       final offer = await offerOf('2026-10');
-      GeoData.clientFactory = () => Dio()
+      clientFactory = () => Dio()
         ..httpClientAdapter = _RouteAdapter({
           'ip4_city_v1.bin.gz': offer.bodies['ip4_city_v1.bin.gz']!,
         });
 
-      expect(await GeoData.install(offer.manifest), isFalse);
+      expect(await data.install(offer.manifest), isFalse);
 
-      expect(GeoData.installed()?.generated, '2026-09');
-      expect(await Directory('${GeoData.dir}.installing').exists(), isFalse);
+      expect(data.installed()?.generated, '2026-09');
+      expect(await Directory('${data.dir}.installing').exists(), isFalse);
       expect(seen, 0);
     },
   );
 
   test('a complete staged update replaces the old data once', () async {
     final offer = await offerOf('2026-10');
-    GeoData.clientFactory = () =>
+    clientFactory = () =>
         Dio()..httpClientAdapter = _RouteAdapter(offer.bodies);
 
-    expect(await GeoData.install(offer.manifest), isTrue);
+    expect(await data.install(offer.manifest), isTrue);
 
-    expect(GeoData.installed()?.generated, '2026-10');
-    expect(await Directory('${GeoData.dir}.installing').exists(), isFalse);
-    expect(await Directory('${GeoData.dir}.previous').exists(), isFalse);
+    expect(data.installed()?.generated, '2026-10');
+    expect(await Directory('${data.dir}.installing').exists(), isFalse);
+    expect(await Directory('${data.dir}.previous').exists(), isFalse);
     expect(seen, 1);
   });
 
   test('an invalid primary manifest falls back to a readable one', () async {
     final fallback = await offerOf('2026-10');
-    GeoData.clientFactory = () => Dio()
+    clientFactory = () => Dio()
       ..httpClientAdapter = _RouteAdapter({
         '${Urls.geoData}/manifest.json': Uint8List.fromList(utf8.encode('{')),
         '${Urls.geoDataFallback}/manifest.json':
             fallback.bodies['manifest.json']!,
       });
 
-    expect((await GeoData.fetchManifest())?.generated, '2026-10');
+    expect((await data.fetchManifest())?.generated, '2026-10');
   });
 
   test(
@@ -380,16 +408,16 @@ void main() {
       expect(primaryV4.sha256, isNot(fallbackV4.sha256));
 
       final requests = <String>[];
-      GeoData.clientFactory = () => Dio()
+      clientFactory = () => Dio()
         ..httpClientAdapter = _RouteAdapter({
           '${Urls.geoData}/manifest.json': primary.bodies['manifest.json']!,
           '${Urls.geoData}/${primaryV4.name}': primary.bodies[primaryV4.name]!,
           ...routesFor(Urls.geoDataFallback, fallback.bodies),
         }, requests: requests);
 
-      expect(await GeoData.install(primary.manifest), isTrue);
+      expect(await data.install(primary.manifest), isTrue);
 
-      final installedV4 = GeoData.installed()!.assets.firstWhere(
+      final installedV4 = data.installed()!.assets.firstWhere(
         (asset) => asset.family == 4,
       );
       expect(installedV4.sha256, fallbackV4.sha256);
