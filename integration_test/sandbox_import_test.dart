@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/res/build_data.dart';
 
@@ -91,11 +92,13 @@ void main() {
     // full of this app's pre-Hive settings and macOS's own window state.
     await write('setting.locale', ['-string', 'zh']);
 
-    final imported = <String, Object>{};
-    await SandboxImport.importPrefs(
-      plist,
-      write: (key, value) async => imported[key] = value,
-    );
+    SharedPreferences.setMockInitialValues({});
+    await PrefStore.shared.init();
+    await SandboxImport.importPrefs(plist);
+    final imported = {
+      for (final key in PrefStore.shared.keys(includeInternalKeys: true))
+        key: PrefStore.shared.get<Object>(key),
+    };
 
     expect(imported['webdav_url'], 'https://dav.example/remote.php');
     expect(imported['webdav_sync'], true);
