@@ -114,17 +114,35 @@ done
   }
 
   @override
-  String commandFor(
-    ServiceUnit unit,
-    ServiceAction action, {
-    required bool isRoot,
-  }) {
+  String commandFor(ServiceUnit unit, ServiceAction action) {
     final name = quotedServiceName(unit.name);
-    final command = switch (action) {
+    return switch (action) {
       ServiceAction.enable => 'rc-update add $name default',
       ServiceAction.disable => 'rc-update --all delete $name',
       _ => 'rc-service $name ${action.name}',
     };
-    return privilegedCommand(command, isRoot: isRoot);
   }
+
+  @override
+  bool needsRoot(ServiceUnit unit) => true;
+
+  /// OpenRC hands a service's output to whatever it was configured to log to,
+  /// and there is no one place to read it back from by name.
+  @override
+  Future<ServiceLog?> recentLog(
+    ServerExec exec,
+    ServiceUnit unit, {
+    int lines = 5,
+  }) async => null;
+
+  @override
+  String? logCommand(ServiceUnit unit) => null;
+
+  @override
+  String? definitionCommand(ServiceUnit unit) =>
+      'cat ${quotedServiceName('/etc/init.d/${unit.name}')}';
+
+  @override
+  String unitStatusCommand(ServiceUnit unit) =>
+      'rc-service ${quotedServiceName(unit.name)} status';
 }

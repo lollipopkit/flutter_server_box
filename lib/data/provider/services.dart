@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/service.dart';
@@ -62,6 +63,11 @@ class ServicesNotifier extends _$ServicesNotifier {
   late final Spi _spi;
   ServiceManagerBackend? _manager;
 
+  /// Whether the account commands run as is root, asked of the server once.
+  /// [Spi.isRoot] only knows the SSH user, and a server reached through its
+  /// monitor agent runs commands as whoever the agent runs as.
+  bool? _root;
+
   @override
   ServicesState build(Spi spi) {
     _spi = spi;
@@ -87,24 +93,115 @@ class ServicesNotifier extends _$ServicesNotifier {
     state = state.copyWith(scopeFilter: filter);
   }
 
-  String? commandFor(ServiceUnit unit, ServiceAction action) {
+  /// The command [action] runs, as the confirmation shows it. Null before a
+  /// listing has said which manager this is.
+  ///
+  /// Whether it carries `sudo` is decided by the account [runAction] runs as,
+  /// asked of the server, not by [Spi.isRoot]: through a monitor agent, or as
+  /// a uid-0 account with another name, the two differ, and the confirmation
+  /// would show a command other than the one that runs.
+  Future<String?> commandFor(ServiceUnit unit, ServiceAction action) async {
+    final manager = _manager;
+    if (manager == null) return null;
+    final needsRoot = manager.needsRoot(unit);
+    final exec = needsRoot
+        ? await ref.read(serverProvider(_spi.id).notifier).ensureExec()
+        : null;
+    return terminalCommand(
+      manager.commandFor(unit, action),
+      needsRoot: needsRoot,
+      isRoot: exec != null && await _isRoot(exec),
+    );
+  }
+
+  /// Runs [action] on [unit] here, as root where the unit needs it.
+  ///
+  /// Answers the result for the page to read: a [kSudoPasswordRejected] exit
+  /// is the page's cue to ask for a password and call again with it. Null
+  /// before a listing has said which manager this is.
+  Future<ExecResult?> runAction(
+    ServiceUnit unit,
+    ServiceAction action, {
+    String? password,
+  }) async {
+    final manager = _manager;
+    if (manager == null) return null;
     // The verb and the init system, never the unit's name — that is what runs
-    // on the user's machine.
-    //
-    // This is where an action is *chosen*. A destructive one (stop, restart,
-    // disable) then goes through a confirmation the user can still decline, so
-    // this counts intent rather than execution. The page below is where the
-    // two diverge, and it has no manager to name.
+    // on the user's machine. Counted when it runs, after any confirmation.
     Diag.crumb(
       SbDiag.service,
       'action',
-      data: {
-        'action': action.name,
-        'via': _manager == null ? 'none' : state.manager?.name ?? '-',
-      },
+      data: {'action': action.name, 'via': state.manager?.name ?? '-'},
     );
-    return _manager?.commandFor(unit, action, isRoot: _spi.isRoot);
+    final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
+    final command = manager.commandFor(unit, action);
+    if (!manager.needsRoot(unit)) return exec.run(command);
+    return PrivilegedExec.run(
+      exec,
+      command,
+      isRoot: password == null && await _isRoot(exec),
+      password: password,
+    );
   }
+
+  Future<bool> _isRoot(ServerExec exec) async {
+    if (_spi.isRoot) return true;
+    if (_root case final root?) return root;
+    final result = await exec.run('id -u');
+    return _root = result.succeeded && result.stdout.trim() == '0';
+  }
+
+  /// The unit's last few log lines. Null where the manager keeps no log it can
+  /// read by unit, and where reading failed outright.
+  Future<ServiceLog?> recentLog(ServiceUnit unit, {int lines = 5}) async {
+    final manager = _manager;
+    if (manager == null) return null;
+    try {
+      final exec = await ref
+          .read(serverProvider(_spi.id).notifier)
+          .ensureExec();
+      return await manager.recentLog(exec, unit, lines: lines);
+    } catch (e, s) {
+      dprint('Service log', e, s);
+      return null;
+    }
+  }
+
+  /// What to type into a terminal to read the whole log.
+  String? logTerminalCommand(ServiceUnit unit) {
+    final manager = _manager;
+    final command = manager?.logCommand(unit);
+    if (manager == null || command == null) return null;
+    return terminalCommand(
+      command,
+      needsRoot: manager.needsRoot(unit),
+      isRoot: _spi.isRoot,
+    );
+  }
+
+  /// What to type into a terminal to see the manager's own status for the unit.
+  ///
+  /// `systemctl status` answers without root; OpenRC's and procd's scripts
+  /// are run the way their start and stop are.
+  String? statusTerminalCommand(ServiceUnit unit) {
+    final manager = _manager;
+    if (manager == null) return null;
+    return terminalCommand(
+      manager.unitStatusCommand(unit),
+      needsRoot:
+          manager.type != ServiceManagerType.systemd && manager.needsRoot(unit),
+      isRoot: _spi.isRoot,
+    );
+  }
+
+  /// What to type into a terminal to read the unit's definition. Unit files
+  /// and init scripts are world-readable, so never through sudo.
+  String? definitionTerminalCommand(ServiceUnit unit) =>
+      _manager?.definitionCommand(unit);
+
+  /// The listed unit with [key], as of the latest listing.
+  ServiceUnit? unitFor(String key) =>
+      state.units.firstWhereOrNull((unit) => unit.key == key);
 
   /// Lists the units, and writes nothing once this provider is gone.
   ///

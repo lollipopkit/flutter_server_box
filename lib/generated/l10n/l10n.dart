@@ -3100,6 +3100,36 @@ abstract class AppLocalizations {
   /// **'The process changed or exited. Refresh and try again.'**
   String get processKillTargetChanged;
 
+  /// No description provided for @processSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, user or PID'**
+  String get processSearchHint;
+
+  /// No description provided for @processShowKernelThreads.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Show 1 kernel thread} other{Show {count} kernel threads}}'**
+  String processShowKernelThreads(int count);
+
+  /// No description provided for @processForceKill.
+  ///
+  /// In en, this message translates to:
+  /// **'Force kill'**
+  String get processForceKill;
+
+  /// No description provided for @processStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Started'**
+  String get processStarted;
+
+  /// No description provided for @processThreads.
+  ///
+  /// In en, this message translates to:
+  /// **'Threads'**
+  String get processThreads;
+
   /// No description provided for @watchServers.
   ///
   /// In en, this message translates to:
@@ -3219,6 +3249,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This account has no user session bus on the server, so only system units are shown.'**
   String get systemdUserScopeMissingTip;
+
+  /// No description provided for @serviceSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit name'**
+  String get serviceSearchHint;
+
+  /// No description provided for @serviceNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get serviceNeedsAttention;
+
+  /// No description provided for @serviceOtherUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 other unit} other{{count} other units}}'**
+  String serviceOtherUnits(int count);
+
+  /// No description provided for @serviceUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit'**
+  String get serviceUnit;
+
+  /// No description provided for @serviceUnitType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get serviceUnitType;
+
+  /// No description provided for @serviceScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Scope'**
+  String get serviceScope;
+
+  /// No description provided for @serviceStartup.
+  ///
+  /// In en, this message translates to:
+  /// **'Startup'**
+  String get serviceStartup;
+
+  /// No description provided for @serviceUpFor.
+  ///
+  /// In en, this message translates to:
+  /// **'up {duration}'**
+  String serviceUpFor(String duration);
+
+  /// No description provided for @serviceDownFor.
+  ///
+  /// In en, this message translates to:
+  /// **'down {duration}'**
+  String serviceDownFor(String duration);
+
+  /// No description provided for @serviceNextIn.
+  ///
+  /// In en, this message translates to:
+  /// **'next {duration}'**
+  String serviceNextIn(String duration);
+
+  /// No description provided for @serviceStoppedAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped {duration} ago'**
+  String serviceStoppedAgo(String duration);
+
+  /// No description provided for @serviceExitStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'exit status {code}'**
+  String serviceExitStatus(String code);
+
+  /// No description provided for @serviceFullJournal.
+  ///
+  /// In en, this message translates to:
+  /// **'Full journal'**
+  String get serviceFullJournal;
+
+  /// No description provided for @serviceUnitFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit file'**
+  String get serviceUnitFile;
+
+  /// No description provided for @serviceJournalRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{Last line} other{Last {count} lines}}'**
+  String serviceJournalRecent(int count);
+
+  /// No description provided for @serviceJournalUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'This account cannot read the journal'**
+  String get serviceJournalUnreadable;
+
+  /// No description provided for @serviceSelectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a unit to see its details'**
+  String get serviceSelectHint;
 
   /// No description provided for @serverUnreachable.
   ///

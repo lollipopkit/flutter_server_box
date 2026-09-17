@@ -599,15 +599,20 @@ fn ssh_e2e_unix_process_function() {
     .expect("run process function");
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
 
-    let lines: Vec<&str> = raw.lines().collect();
+    // The load average comes first where the machine has one; the table's
+    // header is the first line after it.
+    let lines: Vec<&str> = raw
+        .lines()
+        .skip_while(|l| l.starts_with(script::PROCESS_LOAD_MARKER))
+        .collect();
     assert!(
         lines.len() > 3,
         "expected a process list, got {} lines",
         lines.len()
     );
     assert!(
-        lines[0].contains("PID"),
-        "first line should be a ps header, got: {:?}",
+        lines[0].contains("PID") && lines[0].contains("START_ID"),
+        "first line should be the process table's header, got: {:?}",
         lines[0]
     );
 }

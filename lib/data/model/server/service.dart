@@ -6,26 +6,30 @@ enum ServiceAction {
   start,
   stop,
   restart,
-  status,
   enable,
   disable;
 
   IconData get icon => switch (this) {
     start => Icons.play_arrow,
     stop => Icons.stop,
-    restart => Icons.refresh,
-    status => Icons.info,
+    restart => Icons.restart_alt,
     enable => Icons.power_settings_new,
-    disable => Icons.power_off,
+    disable => Icons.block,
   };
 
   String get displayName => switch (this) {
     start => libL10n.start,
     stop => libL10n.stop,
     restart => libL10n.restart,
-    status => l10n.status,
     enable => l10n.enable,
     disable => l10n.disable,
+  };
+
+  /// Whether taking it can interrupt something that is working. Asked before
+  /// it runs; starting or enabling a unit is not.
+  bool get destructive => switch (this) {
+    stop || restart || disable => true,
+    start || enable => false,
   };
 }
 
@@ -84,6 +88,12 @@ enum ServiceState {
   stopping,
   unknown;
 
+  /// Failed, or on its way somewhere. What a list shows first.
+  bool get needsAttention => switch (this) {
+    failed || starting || stopping => true,
+    running || stopped || unknown => false,
+  };
+
   Color? get color => switch (this) {
     failed => Colors.red,
     starting || stopping => Colors.orange,
@@ -109,6 +119,13 @@ final class ServiceUnit {
     required this.actions,
     this.description,
     this.enabled,
+    this.unitFileState,
+    this.subState,
+    this.result,
+    this.exitStatus,
+    this.memoryBytes,
+    this.since,
+    this.nextElapse,
   });
 
   final String name;
@@ -122,7 +139,65 @@ final class ServiceUnit {
   /// that this service is not registered for startup.
   final bool? enabled;
 
+  /// systemd's own word for startup registration, which says more than
+  /// [enabled] can: `static` and `masked` units cannot be enabled at all, and
+  /// offering to would fail.
+  final String? unitFileState;
+
+  /// systemd's finer state: `running`, `exited`, `dead`, `start-pre`.
+  final String? subState;
+
+  /// Why the last run ended, where systemd says: `exit-code`, `signal`,
+  /// `timeout`. `success` is not kept — it explains nothing.
+  final String? result;
+
+  /// The main process's exit status, kept only when [result] is `exit-code`:
+  /// otherwise it is a zero, or the number of a signal already named there.
+  final int? exitStatus;
+
+  final int? memoryBytes;
+
+  /// When the unit entered its current state, on this device's clock.
+  final DateTime? since;
+
+  /// When a timer next fires, on this device's clock.
+  final DateTime? nextElapse;
+
   final List<ServiceAction> actions;
+
+  String get fullName => '$name.${type.name}';
+
+  /// Tells apart a system and a user unit of the same name.
+  String get key => '${scope.name}:$fullName';
+
+  /// [unitFileState] where the manager has one, [enabled] in the same words
+  /// where it does not.
+  String? get startup =>
+      unitFileState ??
+      switch (enabled) {
+        true => 'enabled',
+        false => 'disabled',
+        null => null,
+      };
+}
+
+/// One line of a unit's log.
+final class ServiceLogLine {
+  const ServiceLogLine({this.time, required this.text});
+
+  /// `HH:MM:SS` as the server printed it, in the server's time zone.
+  final String? time;
+  final String text;
+}
+
+final class ServiceLog {
+  const ServiceLog({required this.lines, this.unreadable = false});
+
+  final List<ServiceLogLine> lines;
+
+  /// This account may not read the log it asked for. Not the same as an empty
+  /// log, which a unit that has never run has.
+  final bool unreadable;
 }
 
 enum ServiceListingNotice {

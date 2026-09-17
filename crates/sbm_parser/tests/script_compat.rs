@@ -532,7 +532,7 @@ fn disabled_filters_windows() {
     let script = build_script(SystemType::Windows, &o);
     assert!(!script.contains("LastBootUpTime"));
     assert!(!script.contains("MSAcpi_ThermalZoneTemperature"));
-    assert!(script.contains("Get-Process"));
+    assert!(script.contains("Get-CimInstance Win32_Process"));
     assert!(script.contains("Get-WmiObject -Class Win32_OperatingSystem"));
 }
 
@@ -862,6 +862,69 @@ fn e2e_unix_status_script_runs() {
         sign.contains("__linux") || sign.contains("__bsd"),
         "echo: {sign}"
     );
+}
+
+/// Runs the process function through `sh` on this machine — the BSD branch on
+/// macOS, the procps one on Linux — and reads the table the way the app does:
+/// by header name.
+///
+/// What it holds is `START_ID`, which is what stopping a process needs and
+/// what was silently dropped once already. A row whose `START_ID` is `-` for
+/// the test's own shell would mean every stop answers "not available".
+#[cfg(unix)]
+#[test]
+fn e2e_unix_process_table_has_identity_and_load() {
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!(
+        "sbm_process_table_{}_{}",
+        std::process::id(),
+        nonce
+    ));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("status.sh");
+    std::fs::write(&path, build_script(SystemType::Linux, &opts())).unwrap();
+    let output = Command::new("sh").arg(&path).arg("-p").output().unwrap();
+    std::fs::remove_dir_all(&dir).ok();
+
+    let raw = String::from_utf8(output.stdout).unwrap();
+    let mut lines = raw.lines();
+    let load = lines.next().unwrap_or_default();
+    assert!(
+        load.starts_with(&format!("{} ", script::PROCESS_LOAD_MARKER)),
+        "first line: {load:?}"
+    );
+    assert_eq!(load.split_whitespace().count(), 4, "{load:?}");
+
+    let header: Vec<&str> = lines.next().unwrap_or_default().split_whitespace().collect();
+    let column = |name: &str| {
+        header
+            .iter()
+            .position(|h| *h == name)
+            .unwrap_or_else(|| panic!("no {name} in {header:?}"))
+    };
+    let (pid, ppid, start_id, command) =
+        (column("PID"), column("PPID"), column("START_ID"), column("COMMAND"));
+    assert_eq!(command, header.len() - 1, "COMMAND must be last: {header:?}");
+    column("ELAPSED");
+
+    let rows: Vec<Vec<&str>> = lines.map(|l| l.split_whitespace().collect()).collect();
+    assert!(rows.len() > 1, "{raw}");
+    for row in &rows {
+        assert!(row.len() > command, "short row {row:?} for {header:?}");
+    }
+    let own = rows
+        .iter()
+        .find(|row| row[command..].join(" ").contains("status.sh -p"))
+        .unwrap_or_else(|| panic!("the script's own shell is not listed:\n{raw}"));
+    assert_ne!(own[start_id], "-", "{own:?}");
+    assert_ne!(own[ppid], "-", "{own:?}");
+    assert!(own[pid].parse::<u32>().is_ok(), "{own:?}");
 }
 
 /// A command that prints no newline must not inherit the separator newline
