@@ -132,9 +132,11 @@ async fn velocity_survives_a_concurrent_collection_cycle() {
 
     let outcome = requests.await;
     stop.store(true, Ordering::Relaxed);
+    let writer_result = timeout(Duration::from_secs(5), writer).await;
+    assert!(writer_result.is_ok(), "writer did not stop");
     assert!(
-        timeout(Duration::from_secs(5), writer).await.is_ok(),
-        "writer did not stop"
+        writer_result.unwrap().is_ok(),
+        "writer task did not complete successfully"
     );
 
     assert!(

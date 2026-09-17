@@ -102,11 +102,12 @@ void main() {
   );
   test('a channel stream error releases both directions', () async {
     final ready = Completer<_FailureChannel>();
+    final listening = Completer<void>();
     final tunnel = await SshLocalTunnel.bindWithDialer(
       bindHost: InternetAddress.loopbackIPv4.address,
       sshDone: Completer<void>().future,
       dialer: () async {
-        final channel = _FailureChannel();
+        final channel = _FailureChannel(listening);
         ready.complete(channel);
         return channel;
       },
@@ -116,8 +117,7 @@ void main() {
     addTearDown(socket.destroy);
     final ended = socket.drain<void>();
     final channel = await ready.future;
-    // Wait for pipe to subscribe, while the local-to-SSH direction stays open.
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await listening.future;
     channel._controller.addError(const SocketException('SSH stream failed'));
     await channel.closedSignal.future.timeout(const Duration(seconds: 1));
     await ended.timeout(const Duration(seconds: 1));
@@ -132,8 +132,16 @@ Future<List<int>> _echo(Socket socket, List<int> bytes) async {
 }
 
 class _EchoChannel implements SshTunnelChannel {
-  final StreamController<List<int>> _controller =
-      StreamController<List<int>>.broadcast();
+  _EchoChannel({Completer<void>? onListen})
+    : _controller = StreamController<List<int>>.broadcast(
+        onListen: () {
+          if (onListen != null && !onListen.isCompleted) {
+            onListen.complete();
+          }
+        },
+      );
+
+  final StreamController<List<int>> _controller;
   bool closed = false;
   final closedSignal = Completer<void>();
 
@@ -153,6 +161,8 @@ class _EchoChannel implements SshTunnelChannel {
 }
 
 class _FailureChannel extends _EchoChannel {
+  _FailureChannel(Completer<void> onListen) : super(onListen: onListen);
+
   final input = StreamController<List<int>>()..stream.listen((_) {});
   @override
   StreamSink<List<int>> get sink => input.sink;
