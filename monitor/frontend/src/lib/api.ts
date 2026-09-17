@@ -53,7 +53,7 @@ async function request<T>(
   fallback = 'Request failed',
   signal?: AbortSignal,
 ): Promise<T> {
-  const server = servers.current
+  const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
@@ -71,7 +71,7 @@ async function request<T>(
 
   if (res.status === 401 && path !== '/login') {
     // Expired/invalid token: drop this server's session, App falls back to login
-    servers.logout()
+    if (server) servers.logout(server.id, server)
     throw new ApiError('Session expired', 401)
   }
   if (!res.ok) {
@@ -100,7 +100,7 @@ async function fsBytes(
   fallback: string,
   signal?: AbortSignal,
 ): Promise<Response> {
-  const server = servers.current
+  const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
   const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
@@ -112,7 +112,7 @@ async function fsBytes(
     throw new ApiError(fallback)
   }
   if (res.status === 401) {
-    servers.logout()
+    if (server) servers.logout(server.id, server)
     throw new ApiError('Session expired', 401)
   }
   if (!res.ok) {
