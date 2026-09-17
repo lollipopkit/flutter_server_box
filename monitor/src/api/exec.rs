@@ -22,13 +22,13 @@ use std::sync::Arc;
 
 use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::process::Command;
 
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use super::server::verify_auth;
 use super::ws;
+use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 
 /// The bounds on one command — how long it may run and how much of it is kept.
 ///
@@ -192,13 +192,20 @@ async fn run(
         }
     };
 
-    // Inside the timeout with the wait, not before it. A command that never
-    // reads its stdin leaves a write of more than a pipe buffer — 64 KiB on
-    // Linux, and the status script is larger than that — blocked forever, and
-    // nothing above was bounding it.
+    let stdout = child.stdout.take().expect("piped stdout");
+    let stderr = child.stderr.take().expect("piped stderr");
+    // All pipes must make progress together. Feeding stdin first can deadlock
+    // with a child that fills stdout before consuming its input.
     let output = match tokio::time::timeout(limits.timeout, async {
-        feed.await;
-        child.wait_with_output().await
+        tokio::try_join!(
+            async {
+                feed.await;
+                Ok::<_, std::io::Error>(())
+            },
+            read_capped(stdout, limits.max_output_bytes),
+            read_capped(stderr, limits.max_output_bytes),
+            child.wait(),
+        )
     })
     .await
     {
@@ -216,15 +223,34 @@ async fn run(
         }
     };
 
-    let (stdout, out_cut) = cap(output.stdout, limits.max_output_bytes);
-    let (stderr, err_cut) = cap(output.stderr, limits.max_output_bytes);
+    let (_, (stdout, out_cut), (stderr, err_cut), status) = output;
     Ok(ExecResponse {
-        exit_code: output.status.code(),
+        exit_code: status.code(),
         stdout,
         stderr,
         truncated: out_cut || err_cut,
         timed_out: false,
     })
+}
+
+/// Keep only a prefix, but drain the rest so the child can still exit.
+async fn read_capped(
+    mut reader: impl AsyncRead + Unpin,
+    max: usize,
+) -> std::io::Result<(String, bool)> {
+    // One lookahead byte preserves cap's UTF-8 boundary behavior.
+    let limit = max.saturating_add(1);
+    let mut kept = Vec::new();
+    let mut chunk = [0u8; 8192];
+    loop {
+        let count = reader.read(&mut chunk).await?;
+        if count == 0 {
+            break;
+        }
+        let take = count.min(limit.saturating_sub(kept.len()));
+        kept.extend_from_slice(&chunk[..take]);
+    }
+    Ok(cap(kept, max))
 }
 
 /// Lossy on purpose: a command's output is bytes, and refusing to report
