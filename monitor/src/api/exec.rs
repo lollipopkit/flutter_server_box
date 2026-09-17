@@ -280,3 +280,37 @@ fn shell() -> (&'static str, &'static str) {
         ("/bin/sh", "-c")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::AsyncWriteExt;
+
+    #[tokio::test]
+    async fn capped_reads_preserve_utf8_and_lossy_boundaries() {
+        let bytes = b"a\xe4\xb8\xad\xffz";
+        for max in 0..=bytes.len() + 1 {
+            assert_eq!(
+                read_capped(bytes.as_slice(), max).await.unwrap(),
+                cap(bytes.to_vec(), max)
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn capped_reads_drain_output_beyond_the_pipe_capacity() {
+        let (mut writer, reader) = tokio::io::duplex(128);
+        let writing = async move {
+            for _ in 0..1024 {
+                writer.write_all(&[b'x'; 1024]).await.unwrap();
+            }
+        };
+        let reading = read_capped(reader, 32);
+        let ((), result) = tokio::time::timeout(std::time::Duration::from_secs(5), async {
+            tokio::join!(writing, reading)
+        })
+        .await
+        .unwrap();
+        assert_eq!(result.unwrap(), ("x".repeat(32), true));
+    }
+}
