@@ -92,11 +92,14 @@ fi
     ].join('\n');
   }
 
+  /// Handed to `sh`, like [list]: the script has an `if`, and the account's
+  /// login shell — which is what runs a command given without an entry — may
+  /// be fish, which does not read one.
   static Future<ServerUserDetail> detail(
     ServerExec exec,
     ServerUser user,
   ) async {
-    final result = await exec.run(detailScript(user));
+    final result = await exec.run(detailScript(user), entry: 'sh');
     return parseDetail(result.stdout);
   }
 
@@ -227,8 +230,13 @@ fi
     return null;
   }
 
+  /// Handed to `sh` rather than run as the command. Without an entry the
+  /// script is parsed by the account's login shell, and fish stops at the
+  /// first `if ...; then` — so the page showed fish's diagnostic where the
+  /// user list should have been. The create, edit and delete scripts already
+  /// reach `sh` through `PrivilegedExec`.
   static Future<ServerUserCatalog> list(ServerExec exec) async {
-    final result = await exec.run(listScript);
+    final result = await exec.run(listScript, entry: 'sh');
     if (!result.succeeded) {
       final detail = result.combined.trim();
       throw UserManagerException(

@@ -1,0 +1,19 @@
+[
+  {
+    "label": "Flutter: macOS (debug)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "macos"
+  },
+  {
+    "label": "Flutter: macOS (profile)",
+    "adapter": "Dart",
+    "type": "flutter",
+    "request": "launch",
+    "program": "lib/main.dart",
+    "deviceId": "macos",
+    "toolArgs": ["--profile"]
+  }
+]

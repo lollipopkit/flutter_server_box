@@ -72,6 +72,13 @@ abstract interface class ServerExec {
   /// is (`mkdir -p; cat > path; chmod`). Then [entry] is the command and
   /// [stdin] followed by [script] is what it reads.
   ///
+  /// "The server's own shell" is the account's login shell, and nothing says
+  /// that is a POSIX one: fish rejects `VAR=value cmd`, `if ...; then` and a
+  /// heredoc, and a syntax error there is not an exception but a diagnostic
+  /// on stderr and none of the output the caller is looking for. So a
+  /// [script] written in POSIX syntax goes through `entry: 'sh'`; only a
+  /// single command with quoted arguments is safe to run as the command.
+  ///
   /// [cancel] completing means the caller has stopped waiting: the result is
   /// whatever had arrived by then, and the command is stopped where that is
   /// possible. Only some sources can actually stop one — see the note on each
