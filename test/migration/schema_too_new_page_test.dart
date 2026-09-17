@@ -19,6 +19,8 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/deny_file_deletion.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -202,15 +204,11 @@ void main() {
     // offering Backup again is offering a button that can only report "the
     // database is not open" — and it was the user's last chance at the data.
     await pump(tester);
-    // A directory the delete cannot write to. `wipe` skips a file that is
-    // merely absent, so removing it first would let the wipe *succeed* — which
-    // is how this case used to pass while asserting nothing about the message.
-    // `runSync`, not `run`: real async I/O started in a `testWidgets`
-    // fake-async zone completes on a callback the zone never pumps, and the
-    // test simply hangs.
-    final holding = Directory(SqliteDb.path!).parent;
-    Process.runSync('chmod', ['500', holding.path]);
-    addTearDown(() => Process.runSync('chmod', ['700', holding.path]));
+    // Exercise the real wipe failure path on every OS, including root.
+    final denied = DenyFileDeletion(File(SqliteDb.path!));
+    final previous = IOOverrides.current;
+    IOOverrides.global = denied;
+    addTearDown(() => IOOverrides.global = previous);
 
     await tester.tap(find.text(l10n.schemaTooNewWipe));
     await tester.pump();
@@ -226,6 +224,7 @@ void main() {
     // wrong in both directions.
     expect(find.text(l10n.schemaTooNewWipeDone), findsNothing);
     expect(find.text(l10n.schemaTooNewWipeFailed), findsOneWidget);
+    expect(denied.attempted, isTrue);
   });
 
   testWidgets('declining the wipe leaves everything alone', (tester) async {
