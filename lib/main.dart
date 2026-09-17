@@ -185,7 +185,7 @@ Future<void> _initApp() async {
   // Read once, off the path of the first Agent turn: the table decides when a
   // conversation is summarised, and loading it there would put an asset read
   // between the user and their first answer.
-  unawaited(ModelContextTable.ensureLoaded());
+  unawaited(ModelContextTable.shared.ensureLoaded());
   await _initData();
   await _initWindow();
 

@@ -148,7 +148,7 @@ extension _AI on _AppSettingsPageState {
       final baseUrl = config.baseUrl;
       final model = config.model;
       final override = config.contextOverrideFor(baseUrl, model);
-      final resolved = ModelContextTable.contextFor(model, override: override);
+      final resolved = ModelContextTable.shared.contextFor(model, override: override);
 
       return ListTile(
         leading: const Icon(Icons.straighten, size: _kIconSize),
@@ -159,7 +159,7 @@ extension _AI on _AppSettingsPageState {
         subtitle: Text(
           override > 0
               ? '$resolved'
-              : '$resolved · ${ModelContextTable.lookup(model) == null ? l10n.askAiContextFallback : libL10n.auto}',
+              : '$resolved · ${ModelContextTable.shared.lookup(model) == null ? l10n.askAiContextFallback : libL10n.auto}',
           style: UIs.textGrey,
         ),
         trailing: const Icon(Icons.keyboard_arrow_right),
@@ -228,8 +228,8 @@ extension _AI on _AppSettingsPageState {
     // Followed from the table rather than kept here. This row is rebuilt
     // whenever any AI setting changes, and a flag in this method came back
     // false mid-fetch — the spinner vanished and the button went live again.
-    return ModelContextTable.refreshing.listenVal((refreshing) {
-      final generated = ModelContextTable.generated;
+    return ModelContextTable.shared.refreshing.listenVal((refreshing) {
+      final generated = ModelContextTable.shared.generated;
       return ListTile(
         leading: const Icon(Icons.dataset_outlined, size: _kIconSize),
         title: TipText(l10n.askAiModelTable, l10n.askAiModelTableTip),
@@ -243,12 +243,12 @@ extension _AI on _AppSettingsPageState {
             Text(
               generated == null
                   ? libL10n.empty
-                  : '${ModelContextTable.modelCount} · $generated',
+                  : '${ModelContextTable.shared.modelCount} · $generated',
               style: UIs.textGrey,
             ),
             if (refreshing) ...[
               const SizedBox(height: 7),
-              ModelContextTable.progress.listenVal(
+              ModelContextTable.shared.progress.listenVal(
                 (value) => ProgressLine(value: value),
               ),
             ],
@@ -261,7 +261,7 @@ extension _AI on _AppSettingsPageState {
             ? null
             : () async {
                 try {
-                  final count = await ModelContextTable.refresh();
+                  final count = await ModelContextTable.shared.refresh();
                   Toast.success('${l10n.askAiModelTable}: $count');
                 } catch (error) {
                   // Reported, not swallowed: the user pressed a button and is
