@@ -319,7 +319,7 @@ fn last_intel_sample(raw: &str) -> Option<Value> {
     json_objects(raw)
         .into_iter()
         .filter_map(|object| serde_json::from_str::<Value>(object).ok())
-        .last()
+        .next_back()
 }
 
 /// `timeout` can stop older intel_gpu_top builds after they emitted complete
@@ -355,10 +355,10 @@ fn json_objects(raw: &str) -> Vec<&str> {
             }
             '}' if depth > 0 => {
                 depth -= 1;
-                if depth == 0 {
-                    if let Some(start) = start.take() {
-                        result.push(&raw[start..=index]);
-                    }
+                if depth == 0
+                    && let Some(start) = start.take()
+                {
+                    result.push(&raw[start..=index]);
                 }
             }
             _ => {}
