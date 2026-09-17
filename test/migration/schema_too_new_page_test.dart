@@ -13,7 +13,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/material.dart' show LinearProgressIndicator;
+import 'package:flutter/material.dart'
+    show FilledButton, LinearProgressIndicator;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'
     show FlutterSecureStorage;
 import 'package:flutter_test/flutter_test.dart';
@@ -263,6 +264,43 @@ void main() {
     expect(utf8.decode(head), 'SQLite format 3');
   });
 
+  testWidgets('a temp directory that will not delete still ends the export', (
+    tester,
+  ) async {
+    // A file still held open elsewhere refuses deletion on Windows. When the
+    // cleanup threw, the page stayed busy with every button disabled, and the
+    // dialog saying where the copy went never showed.
+    final tempsBefore = rescueTemps();
+    final denied = _DenyRescueTempDeletion();
+    final previous = IOOverrides.current;
+    IOOverrides.global = denied;
+    addTearDown(() {
+      IOOverrides.global = previous;
+      for (final path in rescueTemps().difference(tempsBefore)) {
+        Directory(path).deleteSync(recursive: true);
+      }
+    });
+    await pump(tester);
+
+    await exportPlain(tester);
+    await settleUntil(tester, answered);
+
+    expect(denied.attempted, isTrue);
+    expect(tester.takeException(), isNull);
+    expect(saved(), hasLength(1));
+    expect(find.text(libL10n.success), findsOneWidget);
+    expect(find.text(libL10n.fail), findsNothing);
+
+    await tester.tap(find.text(libL10n.ok).last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    final backup = tester.widget<FilledButton>(
+      find.byWidgetPredicate((w) => w is FilledButton),
+    );
+    expect(backup.onPressed, isNotNull);
+  });
+
   testWidgets('cancelling the directory picker exports nothing', (
     tester,
   ) async {
@@ -382,4 +420,41 @@ class _FakeDirectoryPicker extends FilePickerPlatform {
     asked++;
     return cancel ? null : dir.path;
   }
+}
+
+/// Refuses deletion of the page's temp directories, as a file still held open
+/// by another process does on Windows.
+final class _DenyRescueTempDeletion extends IOOverrides {
+  bool attempted = false;
+
+  @override
+  Directory createDirectory(String path) {
+    final dir = super.createDirectory(path);
+    final name = path.split(Platform.pathSeparator).last;
+    return name.startsWith('sbx-rescue-')
+        ? _UndeletableDirectory(dir, () => attempted = true)
+        : dir;
+  }
+}
+
+class _UndeletableDirectory implements Directory {
+  _UndeletableDirectory(this.dir, this.onDelete);
+
+  final Directory dir;
+  final void Function() onDelete;
+
+  @override
+  String get path => dir.path;
+
+  @override
+  bool existsSync() => dir.existsSync();
+
+  @override
+  void deleteSync({bool recursive = false}) {
+    onDelete();
+    throw FileSystemException('Deletion refused by the filesystem', dir.path);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

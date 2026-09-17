@@ -212,11 +212,14 @@ extension _Actions on _SchemaTooNewPageState {
     final String? destDir;
     if (isDesktop) {
       destDir = await FilePicker.getDirectoryPath(dialogTitle: libL10n.backup);
-      if (destDir == null || !mounted) return;
+      if (destDir == null) return;
     } else {
       destDir = null;
     }
 
+    // Both callers reach here after awaiting a dialog, and desktop has awaited
+    // the picker as well.
+    if (!mounted) return;
     setState(() => _busy = true);
     String? savedTo;
     Object? error;
@@ -244,7 +247,15 @@ extension _Actions on _SchemaTooNewPageState {
       // Before either dialog below, which waits on the user: the sheet or the
       // copy has taken what it needs, and the database should not sit in the
       // temp directory for as long as a dialog stays open.
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      //
+      // Best effort. A delete that throws here would skip everything after it:
+      // the page would stay busy with every button disabled, and the dialog
+      // saying where the copy went would never show.
+      try {
+        if (dir.existsSync()) dir.deleteSync(recursive: true);
+      } catch (e, s) {
+        Loggers.app.warning('Could not remove the rescue temp directory', e, s);
+      }
       if (mounted) setState(() => _busy = false);
     }
 
