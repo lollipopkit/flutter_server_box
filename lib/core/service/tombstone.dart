@@ -41,7 +41,7 @@ abstract final class Tombstone {
   ///
   /// Where this runs is the other half of the argument. It is the launch after
   /// a crash, inside the code whose job is to report that crash: throwing
-  /// would abandon the rest of `NativeExitReport.apply`, and the crash the
+  /// would abandon the rest of `NativeExitReport.shared.apply`, and the crash the
   /// user actually hit would go unreported because its *stack* could not be
   /// read. A report with no stack is what an evicted tombstone gives too, and
   /// it is still worth having.

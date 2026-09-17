@@ -94,13 +94,13 @@ abstract final class CrashReport {
     os: '${Pfs.type.name} ${Platform.operatingSystemVersion}',
     locale: Platform.localeName,
     identifiers: KnownIdentifiers.of(Stores.server.fetch()),
-    previousExit: NativeExitReport.lastExit,
-    previousExitTrace: NativeExitReport.lastExitTrace,
+    previousExit: NativeExitReport.shared.lastExit,
+    previousExitTrace: NativeExitReport.shared.lastExitTrace,
   );
 
   /// Keeps the previous run's report, and sends the part that may be sent.
   ///
-  /// Called once at launch, after `NativeExitReport.collect` has had its say
+  /// Called once at launch, after `NativeExitReport.shared.collect` has had its say
   /// about how the process died and after `DiagnosticsUpload.sync` has put the
   /// sink in — the first decides whether there is anything to report, the
   /// second decides whether it goes anywhere.
@@ -181,7 +181,7 @@ abstract final class CrashReport {
   /// Two things keep this from reporting a crash twice. [CrashLog.lastRunError]
   /// is null for a crash a sink already uploaded live — see
   /// [CrashLog.uploadsNow] — and it is null for one the platform reported,
-  /// which `NativeExitReport.reportPending` sends on its own path. What is
+  /// which `NativeExitReport.shared.reportPending` sends on its own path. What is
   /// left is the case neither reaches: an error early in startup, before there
   /// was a sink to hand it to. That was previously reported by nobody, and it
   /// is the class of failure a user can say least about.

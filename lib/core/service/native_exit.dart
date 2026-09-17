@@ -20,7 +20,8 @@ import 'package:server_box/data/res/store.dart';
 /// app that is not a small point: the iOS Linux engine interrupts its guest
 /// threads with SIGUSR1, and a reporter fighting over signal disposition is a
 /// class of bug avoided rather than debugged.
-abstract final class NativeExitReport {
+final class NativeExitReport {
+  static final shared = NativeExitReport();
   /// The reasons that mean something went wrong.
   ///
   /// The point of the list is what is *not* on it. Being reclaimed for memory,
@@ -40,7 +41,7 @@ abstract final class NativeExitReport {
   /// after every aggressive task-kill on the ROMs where that is routine —
   /// which is the same mistake the reason list exists to avoid.
   @visibleForTesting
-  static bool isCrash(String reason, Object? status) {
+  bool isCrash(String reason, Object? status) {
     if (!_crashReasons.contains(reason)) return false;
     if (reason == 'signaled' && status == 9) return false;
     return true;
@@ -53,7 +54,7 @@ abstract final class NativeExitReport {
   /// run but is written into *this* run's log, while a report is built from
   /// the previous run's file. Without somewhere for it to be read from, the
   /// one thing a crash report would leave out is why the app crashed.
-  static Map<String, String>? lastExit;
+  Map<String, String>? lastExit;
 
   /// The crash the platform reported, held until there is a sink to report it
   /// to.
@@ -81,14 +82,14 @@ abstract final class NativeExitReport {
 
   /// This run's copy, so the common case never touches storage: a crash held
   /// and reported within one launch is read straight back from here.
-  static ({Object error, StackTrace? trace})? _pending;
+  ({Object error, StackTrace? trace})? _pending;
 
   /// The trace is deliberately not kept here. A decoded tombstone runs to tens
   /// of kilobytes and `SharedPreferences` is the wrong place for it; the run
   /// that produced it already wrote it to the log file, which is what a manual
   /// report quotes. What survives is the fact and the reason — enough to know
   /// a native crash happened at all, which is what was missing.
-  static void _holdCrash(String reason, Object? status, String? trace) {
+  void _holdCrash(String reason, Object? status, String? trace) {
     _pending = (
       error: NativeExitError(reason, status: status),
       trace: trace == null || trace.isEmpty ? null : StackTrace.fromString(trace),
@@ -106,13 +107,13 @@ abstract final class NativeExitReport {
   /// report as a block rather than as a field. Held for the same reason: it
   /// describes the run that died and is only learned about after that run's
   /// log has been closed.
-  static String? lastExitTrace;
+  String? lastExitTrace;
 
   /// Folds the system's record into this run's log.
   ///
   /// Best effort throughout. Every failure costs one report, and none of them
   /// is a reason for the app not to start.
-  static Future<void> collect() async {
+  Future<void> collect() async {
     try {
       final info = await MethodChans.lastExitInfo();
       if (info != null) apply(info);
@@ -135,7 +136,7 @@ abstract final class NativeExitReport {
   /// says "last time" and will occasionally be wrong about *when*; it will not
   /// be wrong about *whether*, which is the part that matters.
   @visibleForTesting
-  static void applyDiagnostics(List<Map<String, Object?>> records) {
+  void applyDiagnostics(List<Map<String, Object?>> records) {
     if (records.isEmpty) return;
     var crashed = false;
 
@@ -210,7 +211,7 @@ abstract final class NativeExitReport {
   /// the reason set wrong shows a crash prompt after an ordinary launch, or
   /// hides a real one.
   @visibleForTesting
-  static void apply(Map<String, Object?> info) {
+  void apply(Map<String, Object?> info) {
     try {
       // The record is handed back on every launch until another replaces it,
       // and carries no id, so the timestamp is what tells two apart.
@@ -289,7 +290,7 @@ abstract final class NativeExitReport {
   /// Called by `DiagnosticsUpload` once it has one, and by nothing else: a
   /// level that does not upload never calls this, so the record stays held and
   /// dies with the process — which is the same thing as not reporting it.
-  static void reportPending() {
+  void reportPending() {
     final pending = _pending ?? _readPersisted();
     if (pending == null) return;
     _pending = null;
@@ -297,16 +298,12 @@ abstract final class NativeExitReport {
     Diag.error(pending.error, pending.trace, 'native exit');
   }
 
-  /// Drops the in-memory copy, leaving only what was persisted — which is
-  /// what a process death does. Tests only.
-  @visibleForTesting
-  static void debugForgetPending() => _pending = null;
 
   /// A crash held by a launch that never reached a sink.
   ///
   /// No trace: see [_holdCrash]. The reason alone still answers the question
   /// nothing else can, which is whether the app died in native code.
-  static ({Object error, StackTrace? trace})? _readPersisted() {
+  ({Object error, StackTrace? trace})? _readPersisted() {
     final raw = PrefStore.shared.get<String>(_pendingKey);
     if (raw == null || raw.isEmpty) return null;
     final parts = raw.split('\u0000');
