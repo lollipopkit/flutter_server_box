@@ -10,3 +10,7 @@
 # SHA-384 from ac7a765b… to 1ca2d91b…. Pin the bytes so every platform hashes
 # the same file.
 monitor/migrations/*.sql text eol=lf
+
+# Ed25519 verifies the original bytes, including line endings.
+test/fixtures/rootfs_manifest/signed.json text eol=lf
+test/fixtures/rootfs_manifest/*.sig -text
