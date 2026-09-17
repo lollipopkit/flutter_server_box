@@ -4,11 +4,11 @@ import 'package:server_box/data/model/server/gpu.dart';
 
 class NvidiaSmiItem {
   final String name;
-  final int temp;
-  final String power;
-  final GpuSmiMem memory;
-  final int percent;
-  final int fanSpeed;
+  final int? temp;
+  final String? power;
+  final GpuSmiMem? memory;
+  final int? percent;
+  final int? fanSpeed;
 
   const NvidiaSmiItem({
     required this.name,

@@ -173,7 +173,9 @@
   // never collecting the field — avoids the old "empty array = hidden" logic
   // treating "not supported here" and "no hardware detected" the same way
   const showGpu = $derived(
-    (capabilities?.nvidia !== 'not_implemented' || capabilities?.amd !== 'not_implemented') &&
+    (capabilities?.gpu != null
+      ? capabilities.gpu !== 'not_implemented'
+      : capabilities?.nvidia !== 'not_implemented' || capabilities?.amd !== 'not_implemented') &&
       !!m?.gpus?.length,
   )
   const showBattery = $derived(capabilities?.batteries !== 'not_implemented' && !!m?.batteries?.length)
@@ -374,7 +376,7 @@
           icon={Gpu}
           iconClass="text-rose-500"
           label={$LL.gpu()}
-          value={`${m.gpus[0].usage_percent.toFixed(0)}%`}
+          value={m.gpus[0].usage_percent != null ? `${m.gpus[0].usage_percent.toFixed(0)}%` : '--'}
           detail={m.gpus[0].name}
           onclick={() => (detail = 'gpu')}
         />

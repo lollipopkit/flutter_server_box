@@ -8,12 +8,12 @@ import 'package:server_box/data/model/server/gpu.dart';
 
 class AmdSmiItem {
   final String name;
-  final int temp;
-  final String power;
-  final GpuSmiMem memory;
-  final int utilization;
-  final int fanSpeed;
-  final int clockSpeed;
+  final int? temp;
+  final String? power;
+  final GpuSmiMem? memory;
+  final int? utilization;
+  final int? fanSpeed;
+  final int? clockSpeed;
 
   const AmdSmiItem({
     required this.name,

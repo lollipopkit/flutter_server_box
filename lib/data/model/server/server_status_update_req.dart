@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
@@ -74,6 +75,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   _apply('sensors', () => _applySensors(ss, status));
   _apply('nvidia', () => _applyNvidia(ss, status));
   _apply('amd', () => _applyAmd(ss, status));
+  _apply('gpus', () => _applyGpus(ss, status));
   _apply('smart', () => _applySmart(ss, status));
   // Taken from what the script printed, not from a list the app holds: the
   // commands live on the server now, so their names and their order are only
@@ -399,47 +401,57 @@ typedef GpuMemProcessJson = ({int pid, String name, int memory});
 
 void _applyNvidia(ServerStatus ss, Map<String, dynamic> status) {
   ss.nvidia = (status['nvidia'] as List).map((g) {
-    final mem = g['memory'] as Map<String, dynamic>;
+    final mem = g['memory'] as Map<String, dynamic>?;
     return NvidiaSmiItem(
       name: g['name'] as String,
-      temp: g['temp'] as int,
-      power: g['power'] as String,
-      percent: g['percent'] as int,
-      fanSpeed: g['fan_speed'] as int,
-      memory: NvidiaSmiMem(
-        mem['total'] as int,
-        mem['used'] as int,
-        mem['unit'] as String,
-        (mem['processes'] as List).map((p) {
-          final proc = _gpuProcess(p as Map<String, dynamic>);
-          return NvidiaSmiMemProcess(proc.pid, proc.name, proc.memory);
-        }).toList(),
-      ),
+      temp: g['temp'] as int?,
+      power: g['power'] as String?,
+      percent: g['percent'] as int?,
+      fanSpeed: g['fan_speed'] as int?,
+      memory: mem == null
+          ? null
+          : NvidiaSmiMem(
+              mem['total'] as int,
+              mem['used'] as int,
+              mem['unit'] as String,
+              (mem['processes'] as List).map((p) {
+                final proc = _gpuProcess(p as Map<String, dynamic>);
+                return NvidiaSmiMemProcess(proc.pid, proc.name, proc.memory);
+              }).toList(),
+            ),
     );
   }).toList();
 }
 
 void _applyAmd(ServerStatus ss, Map<String, dynamic> status) {
   ss.amd = (status['amd'] as List).map((g) {
-    final mem = g['memory'] as Map<String, dynamic>;
+    final mem = g['memory'] as Map<String, dynamic>?;
     return AmdSmiItem(
       name: g['name'] as String,
-      temp: g['temp'] as int,
-      power: g['power'] as String,
-      utilization: g['utilization'] as int,
-      fanSpeed: g['fan_speed'] as int,
-      clockSpeed: g['clock_speed'] as int,
-      memory: AmdSmiMem(
-        mem['total'] as int,
-        mem['used'] as int,
-        mem['unit'] as String,
-        (mem['processes'] as List).map((p) {
-          final proc = _gpuProcess(p as Map<String, dynamic>);
-          return AmdSmiMemProcess(proc.pid, proc.name, proc.memory);
-        }).toList(),
-      ),
+      temp: g['temp'] as int?,
+      power: g['power'] as String?,
+      utilization: g['utilization'] as int?,
+      fanSpeed: g['fan_speed'] as int?,
+      clockSpeed: g['clock_speed'] as int?,
+      memory: mem == null
+          ? null
+          : AmdSmiMem(
+              mem['total'] as int,
+              mem['used'] as int,
+              mem['unit'] as String,
+              (mem['processes'] as List).map((p) {
+                final proc = _gpuProcess(p as Map<String, dynamic>);
+                return AmdSmiMemProcess(proc.pid, proc.name, proc.memory);
+              }).toList(),
+            ),
     );
   }).toList();
+}
+
+void _applyGpus(ServerStatus ss, Map<String, dynamic> status) {
+  ss.gpus = (status['gpus'] as List)
+      .map((gpu) => GpuItem.fromJson(gpu as Map<String, dynamic>))
+      .toList();
 }
 
 void _applySmart(ServerStatus ss, Map<String, dynamic> status) {

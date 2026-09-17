@@ -62,6 +62,7 @@ enum StatusCmdType implements ShellCmdType {
   diskio,
   battery,
   nvidia,
+  gpu,
   amd,
   sensors,
   diskSmart,

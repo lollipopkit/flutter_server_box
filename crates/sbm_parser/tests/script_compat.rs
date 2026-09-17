@@ -614,13 +614,15 @@ fn extended_commands_split_out_of_status() {
     assert!(!status.contains("smartctl"));
     assert!(!status.contains("amd-smi"));
     assert!(ext.contains("smartctl"));
-    assert!(ext.contains("amd-smi"));
+    assert!(!ext.contains("amd-smi"));
 
     // Everything else stays in the fast poll: cheap to run, and wanted at the
     // status interval rather than minutes apart
     assert!(status.contains(&format!("echo {}", script::cmd_marker("sensors"))));
     assert!(status.contains(&format!("echo {}", script::cmd_marker("battery"))));
     assert!(status.contains("nvidia-smi -q -x"));
+    assert!(status.contains("gpu_busy_percent"));
+    assert!(status.contains("intel_gpu_top"));
     assert!(!ext.contains(&format!("echo {}", script::cmd_marker("sensors"))));
     assert!(!ext.contains("nvidia-smi"));
 }

@@ -364,14 +364,30 @@
       </Card>
     {/if}
   {:else if kind === 'gpu'}
-    {#each m?.gpus ?? [] as gpu (gpu.name)}
+    {#each m?.gpus ?? [] as gpu (gpu.id ?? gpu.name)}
       <Card>
-        <h3 class="text-sm font-semibold text-fg-strong mb-3 truncate">{gpu.name}</h3>
+        <h3 class="text-sm font-semibold text-fg-strong mb-3 truncate">
+          {gpu.name}{gpu.id ? ` · ${gpu.id}` : ''}
+        </h3>
         <div class="space-y-4">
-          {@render labeledBar($LL.usage(), `${gpu.usage_percent.toFixed(0)}%`, gpu.usage_percent)}
-          {@render row($LL.memory(), `${gpu.memory_used} / ${gpu.memory_total} ${gpu.memory_unit}`)}
-          {@render row($LL.temperature(), `${gpu.temperature} °C`)}
-          {@render row($LL.power(), fmtGpuPower(gpu.power))}
+          {#if gpu.usage_percent != null}
+            {@render labeledBar($LL.usage(), `${gpu.usage_percent.toFixed(0)}%`, gpu.usage_percent)}
+          {/if}
+          {#if gpu.memory_used != null && gpu.memory_total != null && gpu.memory_unit != null}
+            {@render row($LL.memory(), `${gpu.memory_used} / ${gpu.memory_total} ${gpu.memory_unit}`)}
+          {/if}
+          {#if gpu.temperature != null}
+            {@render row($LL.temperature(), `${gpu.temperature} °C`)}
+          {/if}
+          {#if gpu.power != null}
+            {@render row($LL.power(), fmtGpuPower(gpu.power))}
+          {/if}
+          {#if gpu.fan_speed != null}
+            {@render row('Fan', `${gpu.fan_speed}${gpu.vendor === 'nvidia' ? '%' : ' RPM'}`)}
+          {/if}
+          {#if gpu.clock_speed != null}
+            {@render row('Clock', `${gpu.clock_speed} MHz`)}
+          {/if}
         </div>
       </Card>
     {/each}

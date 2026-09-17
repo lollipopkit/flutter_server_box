@@ -125,8 +125,9 @@ pub struct SystemMetrics {
     /// extended cycle, since that is the one that runs the script.
     #[serde(default)]
     pub custom_cmds: Vec<CustomCmdOutput>,
-    /// Last AMD reading, kept only to re-merge into `gpus` on cycles the
-    /// (expensive, extended-only) AMD command wasn't run — not part of the API
+    /// Last legacy AMD CLI reading, kept only on platforms where it remains an
+    /// extended command. Linux DRM/sysfs GPUs are sampled every cycle instead.
+    /// Not part of the API.
     #[serde(skip, default)]
     pub amd_cache: Vec<sbm_parser::types::AmdSmiItem>,
 }
@@ -205,24 +206,47 @@ pub struct NetworkMetrics {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GpuMetrics {
+    pub id: String,
+    pub vendor: String,
     pub name: String,
-    pub usage_percent: f32,
-    pub temperature: i64,
+    pub usage_percent: Option<f32>,
+    pub temperature: Option<i64>,
     /// e.g. "24.55 W / 350.00 W"
-    pub power: String,
-    pub memory_used: i64,
-    pub memory_total: i64,
+    pub power: Option<String>,
+    pub memory_used: Option<i64>,
+    pub memory_total: Option<i64>,
     /// Unit of the memory figures as reported by the tool (MiB usually)
-    pub memory_unit: String,
-    /// Which tool reported it: `nvidia` or `amd`.
-    ///
-    /// The two lists are flattened into one here, and without this the
-    /// consumer cannot tell them apart again — the app draws them under
-    /// separate headings, and had to drop them all rather than guess.
-    /// `Option`, and skipped when absent, so a client written against the
-    /// older shape still decodes.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vendor: Option<String>,
+    pub memory_unit: Option<String>,
+    pub fan_speed: Option<i64>,
+    pub clock_speed: Option<i64>,
+}
+
+impl From<sbm_parser::types::GpuItem> for GpuMetrics {
+    fn from(gpu: sbm_parser::types::GpuItem) -> Self {
+        let (memory_used, memory_total, memory_unit) = gpu
+            .memory
+            .map(|memory| {
+                (
+                    Some(memory.used),
+                    Some(memory.total),
+                    Some(memory.unit),
+                )
+            })
+            .unwrap_or((None, None, None));
+        Self {
+            id: gpu.id,
+            vendor: gpu.vendor,
+            name: gpu.name,
+            usage_percent: gpu.utilization.map(|value| value as f32),
+            temperature: gpu.temperature,
+            power: gpu.power,
+            memory_used,
+            memory_total,
+            memory_unit,
+            fan_speed: gpu.fan_speed,
+            clock_speed: gpu.clock_speed,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -439,12 +463,18 @@ async fn collect_metrics(
     // the shared script (a single targeted `nvidia-smi` call, same output
     // shape `gpu::nvidia_from_xml` already parses either way). Runs every
     // cycle, same cadence as before native sampling existed.
-    status.nvidia = sample_nvidia().await;
+    let (nvidia, linux_gpus) = tokio::join!(sample_nvidia(), sample_linux_gpus(system));
+    status.nvidia = nvidia;
+    status.gpus = linux_gpus;
+    status
+        .gpus
+        .extend(sbm_parser::gpu::nvidia_as_gpu(&status.nvidia));
 
-    // amd/sensors/batteries/disk_smart have no native path (CLI-tool-bound —
-    // amd-smi/rocm-smi, `sensors`, smartctl, platform battery queries) and
-    // only refresh on the slower extended cycle; `adapt_status`'s
-    // carry_forward keeps the last known values on the cycles in between.
+    // sensors/batteries/disk_smart and legacy Windows AMD have no native path
+    // (CLI-tool-bound — `sensors`, smartctl, platform battery queries, AMD
+    // userspace tools) and only refresh on the slower extended cycle;
+    // `adapt_status`'s carry_forward keeps the last known values on the cycles
+    // in between. Linux AMD/Intel DRM readings above refresh every cycle.
     // Windows' `conn` also has no native implementation yet (would need
     // `GetExtendedTcpTable` FFI) so it rides along on the same schedule;
     // Linux/native already fills `status.conn` and this leaves it alone.
@@ -489,6 +519,10 @@ async fn collect_metrics(
             let nvidia = std::mem::take(&mut status.nvidia);
             status = scripted;
             status.nvidia = nvidia;
+            status.gpus.retain(|gpu| gpu.vendor != "nvidia");
+            status
+                .gpus
+                .extend(sbm_parser::gpu::nvidia_as_gpu(&status.nvidia));
         }
     }
 
@@ -569,6 +603,33 @@ async fn sample_nvidia() -> Vec<sbm_parser::types::NvidiaSmiItem> {
         .map(|output| String::from_utf8_lossy(&output.stdout).into_owned())
         .unwrap_or_default();
     sbm_parser::gpu::nvidia_from_xml(&raw)
+}
+
+/// Run the Linux DRM probe from the shared command manifest every cycle.
+/// AMD uses kernel sysfs, while Intel delegates per device to `intel_gpu_top`.
+/// Keeping the command here targeted avoids running sensors, batteries and
+/// user custom commands at the fast monitoring cadence.
+async fn sample_linux_gpus(system: SystemType) -> Vec<sbm_parser::types::GpuItem> {
+    if system != SystemType::Linux {
+        return Vec::new();
+    }
+    let Some(spec) = sbm_parser::commands::commands(system)
+        .iter()
+        .find(|spec| spec.key == sbm_parser::commands::GPU)
+    else {
+        return Vec::new();
+    };
+    let mut command = TokioCommand::new("sh");
+    command.args(["-c", spec.cmd]);
+    let output = match command_output(command, "Linux GPU collection").await {
+        Ok(Some(output)) if output.status.success() => output,
+        Ok(_) => return Vec::new(),
+        Err(error) => {
+            tracing::warn!("Linux GPU collection failed: {error}");
+            return Vec::new();
+        }
+    };
+    sbm_parser::gpu::linux_drm_from_output(&String::from_utf8_lossy(&output.stdout))
 }
 
 /// Build the status script shared with the app (`sbm_parser::script`). Only
@@ -1036,30 +1097,9 @@ fn adapt_status(
             .unwrap_or_default()
     };
 
-    let gpus = status
-        .nvidia
-        .iter()
-        .map(|g| GpuMetrics {
-            name: g.name.clone(),
-            usage_percent: g.percent as f32,
-            temperature: g.temp,
-            power: g.power.clone(),
-            memory_used: g.memory.used,
-            memory_total: g.memory.total,
-            memory_unit: g.memory.unit.clone(),
-            vendor: Some("nvidia".to_string()),
-        })
-        .chain(amd.iter().map(|g| GpuMetrics {
-            name: g.name.clone(),
-            usage_percent: g.utilization as f32,
-            temperature: g.temp,
-            power: g.power.clone(),
-            memory_used: g.memory.used,
-            memory_total: g.memory.total,
-            memory_unit: g.memory.unit.clone(),
-            vendor: Some("amd".to_string()),
-        }))
-        .collect();
+    let mut gpu_items = status.gpus;
+    gpu_items.extend(sbm_parser::gpu::amd_as_gpu(&amd));
+    let gpus = gpu_items.into_iter().map(GpuMetrics::from).collect();
 
     let disk_details = flatten_disks(system, &status.disks);
 
@@ -1869,6 +1909,39 @@ mod tests {
         assert_eq!(metrics.batteries.len(), 1);
         assert_eq!(metrics.sensors.len(), 1);
         assert_eq!(metrics.disk_smart.len(), 1);
+    }
+
+    #[test]
+    fn adapt_status_preserves_per_device_gpu_identity_and_optional_metrics() {
+        let mut status = empty_status();
+        status.gpus = vec![sbm_parser::types::GpuItem {
+            id: "0000:00:02.0".to_string(),
+            vendor: "intel".to_string(),
+            name: "Intel Integrated Graphics".to_string(),
+            utilization: Some(68.25),
+            temperature: None,
+            power: Some("1.50 W".to_string()),
+            memory: None,
+            fan_speed: None,
+            clock_speed: Some(750),
+        }];
+
+        let metrics = adapt_status(
+            SystemType::Linux,
+            status,
+            &Config::default(),
+            None,
+            None,
+            false,
+        );
+
+        let gpu = &metrics.gpus[0];
+        assert_eq!(gpu.id, "0000:00:02.0");
+        assert_eq!(gpu.vendor, "intel");
+        assert_eq!(gpu.usage_percent, Some(68.25));
+        assert_eq!(gpu.temperature, None);
+        assert_eq!(gpu.memory_used, None);
+        assert_eq!(gpu.clock_speed, Some(750));
     }
 
     #[test]

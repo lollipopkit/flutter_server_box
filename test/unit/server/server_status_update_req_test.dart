@@ -104,6 +104,36 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.diskUsage!.used, greaterThan(BigInt.zero));
     });
 
+    test('generic GPU readings map optional fields without zero filling', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.linux,
+          ss: InitStatus.status,
+          parsedOutput: {
+            StatusCmdType.gpu.name: '''
+__SBM_GPU_BEGIN__
+vendor=intel
+id=0000:00:02.0
+name=Intel Integrated Graphics
+source=intel_gpu_top
+[{"frequency":{"actual":750},"engines":{"Video/0":{"busy":68.25}}}]
+__SBM_GPU_END__
+''',
+          },
+        ),
+      );
+
+      expect(result.gpus, hasLength(1));
+      final gpu = result.gpus.single;
+      expect(gpu.id, '0000:00:02.0');
+      expect(gpu.vendor, 'intel');
+      expect(gpu.utilization, 68.25);
+      expect(gpu.clockSpeed, 750);
+      expect(gpu.temperature, isNull);
+      expect(gpu.memory, isNull);
+      expect(gpu.fanSpeed, isNull);
+    });
+
     test('status parsing copies rolling history objects', () async {
       final previous = InitStatus.status;
 
