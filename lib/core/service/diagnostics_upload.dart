@@ -196,7 +196,7 @@ abstract final class DiagnosticsUpload {
       // runs and has been waiting for a sink that uploads. Without this the
       // one class of crash Dart cannot see at all -- a SIGSEGV in the Rust
       // FFI, in proot or in sqlite -- reached the local log and stopped there.
-      NativeExitReport.reportPending();
+      NativeExitReport.shared.reportPending();
     } catch (e, s) {
       // A bad DSN or an unreachable server must not stop the app, and must
       // not take the local log down with it.

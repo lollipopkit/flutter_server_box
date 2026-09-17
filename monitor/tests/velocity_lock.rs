@@ -101,30 +101,46 @@ async fn velocity_survives_a_concurrent_collection_cycle() {
                     .await
                     .update_server_metrics(&server_name, rx, rx, vec![], chrono::Utc::now())
                     .await;
+                // Real collection cycles yield to timers and IO. Keep pressure on
+                // the lock without starving the request driver's event loop.
+                tokio::task::yield_now().await;
             }
         })
     };
 
+    // A deadline belongs to each lock acquisition/request, not the aggregate
+    // throughput of 200 HTTP round trips on a Windows CI runner.
     let requests = async {
         for i in 0..200 {
-            let resp = srv
-                .get("/api/v1/velocity")
-                .header("Authorization", format!("Bearer {token}"))
-                .send()
-                .await
-                .unwrap_or_else(|e| {
-                    panic!("request {i} never answered ({e}) — deadlocked against the writer")
-                });
+            let resp = timeout(
+                Duration::from_secs(5),
+                srv.get("/api/v1/velocity")
+                    .header("Authorization", format!("Bearer {token}"))
+                    .send(),
+            )
+            .await
+            .map_err(|_| i)?
+            .unwrap_or_else(|e| panic!("request {i} failed ({e})"));
             assert!(resp.status().is_success(), "request {i}: {}", resp.status());
+            timeout(Duration::from_secs(5), resp.body())
+                .await
+                .map_err(|_| i)?
+                .unwrap();
         }
+        Ok::<(), i32>(())
     };
 
-    let outcome = timeout(Duration::from_secs(30), requests).await;
+    let outcome = requests.await;
     stop.store(true, Ordering::Relaxed);
-    let _ = writer.await;
+    let writer_result = timeout(Duration::from_secs(5), writer).await;
+    assert!(writer_result.is_ok(), "writer did not stop");
+    assert!(
+        writer_result.unwrap().is_ok(),
+        "writer task did not complete successfully"
+    );
 
     assert!(
         outcome.is_ok(),
-        "/velocity deadlocked against the collection cycle's writer"
+        "/velocity request stalled against the collection cycle writer: {outcome:?}"
     );
 }

@@ -569,7 +569,7 @@ class AgentSession extends _$AgentSession {
     if (!AskAiRepository.shouldCompact(
       history,
       promptTokens: state.promptTokens,
-      contextTokens: ModelContextTable.contextFor(
+      contextTokens: ModelContextTable.shared.contextFor(
         settings.askAiModel.fetch(),
         override: settings.askAi.fetch().contextOverrideFor(
           settings.askAiBaseUrl.fetch(),

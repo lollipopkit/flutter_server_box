@@ -618,10 +618,7 @@ class AskAiRepository {
       terminalContext: '',
       serverName: '',
       localeHint: localeHint,
-      conversation: [
-        ...items,
-        const AskAiMessageItem.user(_kSummariseRequest),
-      ],
+      conversation: [...items, const AskAiMessageItem.user(_kSummariseRequest)],
       customInstructions: _kSummariserInstructions,
       tools: const [],
     )) {
@@ -630,15 +627,6 @@ class AskAiRepository {
     }
     return '';
   }
-
-  /// One tool call's arguments, decoded the way a stream decodes them.
-  @visibleForTesting
-  static AskAiCommand? parseToolArgumentsForTest(String rawArguments) =>
-      _parseCommand(
-        id: 'call-test',
-        name: 'run_shell_command',
-        rawArguments: rawArguments,
-      );
 
   /// Whether the conversation should be summarised before the next turn.
   ///
@@ -860,8 +848,7 @@ class AskAiRepository {
       // a command printed is no longer all there, and a model that says "as
       // we saw earlier" should know it is working from an excerpt. So does
       // standing on a summary, for the same reason.
-      complete:
-          droppedSinceSummary == 0 && !shortenedSomething && !summarised,
+      complete: droppedSinceSummary == 0 && !shortenedSomething && !summarised,
       keptFrom: base + droppedSinceSummary,
       droppedSinceSummary: droppedSinceSummary,
     );

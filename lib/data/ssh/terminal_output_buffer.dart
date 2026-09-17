@@ -67,10 +67,6 @@ final class TerminalOutputBuffer {
     return buffer.toString();
   }
 
-  String drainAll() {
-    return take(_pendingChars);
-  }
-
   bool _isHighSurrogateBoundary(String value, int index) {
     if (index <= 0 || index >= value.length) {
       return false;

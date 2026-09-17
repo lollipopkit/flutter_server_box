@@ -174,7 +174,7 @@ class SshTransferCreds {
   SshTransferCreds.forServer(this.spi) {
     privateKeysByKeyId = {};
 
-    // `resolvePrivateKey`, not `Stores.key` directly: a key may be a file this
+    // `resolvePrivateKeys`, not `Stores.key` directly: a key may be a file this
     // machine holds rather than one the store does, and reading it has to
     // happen here, where there is a filesystem the user granted and a UI to
     // report a refusal to. The isolate has neither.
@@ -237,7 +237,7 @@ class SshTransferCreds {
     }
   }
 
-  /// [resolvePrivateKey] for a hop, or null if it could not be had.
+  /// [resolvePrivateKeys] for a hop, or null if it could not be had.
   ///
   /// The target server's key is allowed to throw — a transfer to a host whose
   /// key is gone should say so at once. A jump server's is not: it may not need

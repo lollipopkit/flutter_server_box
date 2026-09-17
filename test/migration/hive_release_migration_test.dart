@@ -84,332 +84,365 @@ void main() {
         Hive.init(tempDir.path);
       });
 
-    test('the fixture is present and encrypted', () {
-      expect(fixtureDir.existsSync(), isTrue);
-      final names = fixtureDir
-          .listSync()
-          .whereType<File>()
-          .map((f) => f.uri.pathSegments.last)
-          .where((n) => n.endsWith('.hive'))
-          .toList()
-        ..sort();
-      expect(names, [
-        // 1491 shipped one more box than the two before it.
-        if (version == '1491') 'agent_conversation_enc.hive',
-        'conn_stats_index.hive',
-        'connection_stats_enc.hive',
-        'docker_enc.hive',
-        'history_enc.hive',
-        'key_enc.hive',
-        'port_forward_enc.hive',
-        'server_enc.hive',
-        'setting_enc.hive',
-        'snippet_enc.hive',
-      ]);
+      test('the fixture is present and encrypted', () {
+        expect(fixtureDir.existsSync(), isTrue);
+        final names =
+            fixtureDir
+                .listSync()
+                .whereType<File>()
+                .map((f) => f.uri.pathSegments.last)
+                .where((n) => n.endsWith('.hive'))
+                .toList()
+              ..sort();
+        expect(names, [
+          // 1491 shipped one more box than the two before it.
+          if (version == '1491') 'agent_conversation_enc.hive',
+          'conn_stats_index.hive',
+          'connection_stats_enc.hive',
+          'docker_enc.hive',
+          'history_enc.hive',
+          'key_enc.hive',
+          'port_forward_enc.hive',
+          'server_enc.hive',
+          'setting_enc.hive',
+          'snippet_enc.hive',
+        ]);
 
-      // The one box 1466 wrote without a cipher, and the reason the others are
-      // worth keeping encrypted: this one is readable as text.
-      final index = File(fixtureDir.path.joinPath('conn_stats_index.hive'));
-      expect(index.readAsStringSync(), contains('srv-pwd'));
-      // An encrypted box is not.
-      final server = File(fixtureDir.path.joinPath('server_enc.hive'));
-      expect(
-        utf8.decode(server.readAsBytesSync(), allowMalformed: true),
-        isNot(contains('password auth')),
-        reason: 'the server name must not be readable in the file',
-      );
-    });
-
-    /// The whole upgrade, not half of it: `HiveImport` leaves the records as
-    /// rows in `kv`, and `KvToTablesMigration` is what turns them into the
-    /// tables the app reads. Asserting between the two would only prove the
-    /// data reached an intermediate shape no build ever ships.
-    group('after importing the boxes and migrating', () {
-      setUp(() async {
-        await Stores.init();
-        await SchemaVersion.migrate(kSchemaMigrations);
+        // The one box 1466 wrote without a cipher, and the reason the others are
+        // worth keeping encrypted: this one is readable as text.
+        final index = File(fixtureDir.path.joinPath('conn_stats_index.hive'));
+        expect(index.readAsStringSync(), contains('srv-pwd'));
+        // An encrypted box is not.
+        final server = File(fixtureDir.path.joinPath('server_enc.hive'));
+        expect(
+          utf8.decode(server.readAsBytesSync(), allowMalformed: true),
+          isNot(contains('password auth')),
+          reason: 'the server name must not be readable in the file',
+        );
       });
 
-      test('every server arrives with its SSH fields nested', () {
-        final ids = Stores.server.fetch().map((e) => e.id).toList();
-        expect(ids.length, 5);
+      /// The whole upgrade, not half of it: `HiveImport` leaves the records as
+      /// rows in `kv`, and `KvToTablesMigration` is what turns them into the
+      /// tables the app reads. Asserting between the two would only prove the
+      /// data reached an intermediate shape no build ever ships.
+      group('after importing the boxes and migrating', () {
+        setUp(() async {
+          await Stores.init();
+          await SchemaVersion.migrate(kSchemaMigrations);
+        });
 
-        final pwd = Stores.server.fetchOneRaw('srv-pwd')!;
-        expect(pwd.name, 'password auth');
-        // Sorted, because a tag is a row and (server_id, tag) is its key. The
-        // order a tag was added in was never meaningful and is not kept.
-        expect(pwd.tags, ['db', 'prod']);
-        expect(pwd.autoConnect, isTrue);
-        expect(pwd.ssh?.ip, '10.0.0.1');
-        expect(pwd.ssh?.port, 22);
-        expect(pwd.ssh?.user, 'root');
-        expect(pwd.ssh?.pwd, 'hunter2');
-        expect(pwd.ssh?.keyId, isNull);
-        // 1466 had no monitor support, so no record can carry one.
-        expect(pwd.monitorHttp, isNull);
-      });
+        test('every server arrives with its SSH fields nested', () {
+          final ids = Stores.server.fetch().map((e) => e.id).toList();
+          expect(ids.length, 5);
 
-      test('the richest record keeps every optional field', () {
-        final spi = Stores.server.fetchOneRaw('srv-key')!;
-        expect(spi.name, 'key auth + custom');
-        expect(spi.autoConnect, isFalse);
-        expect(spi.tags, ['staging']);
-        expect(spi.envs, {'TERM': 'xterm-256color', 'LANG': 'en_US.UTF-8'});
-        expect(spi.customSystemType, SystemType.linux);
-        expect(spi.disabledCmdTypes, ['sensors', 'smartctl']);
+          final pwd = Stores.server.fetchOneRaw('srv-pwd')!;
+          expect(pwd.name, 'password auth');
+          // Sorted, because a tag is a row and (server_id, tag) is its key. The
+          // order a tag was added in was never meaningful and is not kept.
+          expect(pwd.tags, ['db', 'prod']);
+          expect(pwd.autoConnect, isTrue);
+          expect(pwd.ssh?.ip, '10.0.0.1');
+          expect(pwd.ssh?.port, 22);
+          expect(pwd.ssh?.user, 'root');
+          expect(pwd.ssh?.pwd, 'hunter2');
+          expect(pwd.ssh?.keyId, isNull);
+          // 1466 had no monitor support, so no record can carry one.
+          expect(pwd.monitorHttp, isNull);
+        });
 
-        expect(spi.ssh?.ip, '10.0.0.2');
-        expect(spi.ssh?.port, 2222);
-        expect(spi.ssh?.user, 'admin');
-        // The key's id is generated now; its name is what the user typed.
-        expect(spi.ssh?.keyId, Stores.key.fetchByName('key-ed25519')!.id);
-        expect(spi.ssh?.pwd, isNull);
-        expect(spi.ssh?.alterUrl, 'admin@alt.example.com:2200');
+        test('the richest record keeps every optional field', () {
+          final spi = Stores.server.fetchOneRaw('srv-key')!;
+          expect(spi.name, 'key auth + custom');
+          expect(spi.autoConnect, isFalse);
+          expect(spi.tags, ['staging']);
+          expect(spi.envs, {'TERM': 'xterm-256color', 'LANG': 'en_US.UTF-8'});
+          expect(spi.customSystemType, SystemType.linux);
+          expect(spi.disabledCmdTypes, ['sensors', 'smartctl']);
 
-        final custom = spi.custom!;
-        expect(custom.pveAddr, 'https://pve.example.com:8006');
-        expect(custom.pveIgnoreCert, isTrue);
-        expect(custom.cmds, {'uptime': 'uptime -p', 'who': 'w'});
-        expect(custom.preferTempDev, 'coretemp');
-        expect(custom.tempIsCelsius, isFalse);
-        expect(custom.logoUrl, 'https://example.com/logo.png');
-        expect(custom.netDev, 'eth0');
-        expect(custom.scriptDir, '/opt/sbm');
+          expect(spi.ssh?.ip, '10.0.0.2');
+          expect(spi.ssh?.port, 2222);
+          expect(spi.ssh?.user, 'admin');
+          // The key's id is generated now; its name is what the user typed.
+          expect(spi.ssh?.keyId, Stores.key.fetchByName('key-ed25519')!.id);
+          expect(spi.ssh?.pwd, isNull);
+          expect(spi.ssh?.alterUrl, 'admin@alt.example.com:2200');
 
-        final wol = spi.wolCfg!;
-        expect(wol.mac, 'AA:BB:CC:DD:EE:FF');
-        expect(wol.ip, '10.0.0.255');
-        expect(wol.pwd, 'wolpwd');
-      });
+          final custom = spi.custom!;
+          expect(custom.pveAddr, 'https://pve.example.com:8006');
+          expect(custom.pveIgnoreCert, isTrue);
+          expect(custom.cmds, {'uptime': 'uptime -p', 'who': 'w'});
+          expect(custom.preferTempDev, 'coretemp');
+          expect(custom.tempIsCelsius, isFalse);
+          expect(custom.logoUrl, 'https://example.com/logo.png');
+          expect(custom.netDev, 'eth0');
+          expect(custom.scriptDir, '/opt/sbm');
 
-      test('jump hosts and proxy command land on the credential', () {
-        final jump = Stores.server.fetchOneRaw('srv-jump')!;
-        expect(jump.ssh?.jumpId, 'srv-pwd');
-        expect(jump.ssh?.jumpIds, ['srv-pwd', 'srv-key']);
-        expect(jump.ssh?.proxyCommand, isNull);
+          final wol = spi.wolCfg!;
+          expect(wol.mac, 'AA:BB:CC:DD:EE:FF');
+          expect(wol.ip, '10.0.0.255');
+          expect(wol.pwd, 'wolpwd');
+        });
 
-        final proxy = Stores.server.fetchOneRaw('srv-proxy')!;
-        expect(proxy.ssh?.proxyCommand, 'nc -X 5 -x 127.0.0.1:1080 %h %p');
-        expect(proxy.ssh?.jumpIds, isNull);
-      });
+        test('jump hosts and proxy command land on the credential', () {
+          final jump = Stores.server.fetchOneRaw('srv-jump')!;
+          expect(jump.ssh?.jumpId, 'srv-pwd');
+          expect(jump.ssh?.jumpIds, ['srv-pwd', 'srv-key']);
+          expect(jump.ssh?.proxyCommand, isNull);
 
-      test('a record with nothing optional set survives', () {
-        // 1466 wrote an empty id for a record predating them, so this one is
-        // found by name: an empty primary key is not a thing the table can
-        // hold, and the migration is where it is given a real id.
-        final bare = Stores.server.fetch().firstWhere((e) => e.name == 'bare');
-        expect(bare.ssh?.ip, '10.0.0.9');
-        expect(bare.custom, isNull);
-        expect(bare.wolCfg, isNull);
-        expect(bare.tags, isNull);
-        expect(bare.id, isNotEmpty);
-      });
+          final proxy = Stores.server.fetchOneRaw('srv-proxy')!;
+          expect(proxy.ssh?.proxyCommand, 'nc -X 5 -x 127.0.0.1:1080 %h %p');
+          expect(proxy.ssh?.jumpIds, isNull);
+        });
 
-      test('the records are columns, and `kv` no longer holds them', () {
-        final row = SqliteDb.instance
-            .select(
-              'SELECT ssh_ip, ssh_port, ssh_user, monitor_addr FROM server '
-              'WHERE id = ?;',
-              ['srv-key'],
-            )
-            .single;
-        expect(row['ssh_ip'], '10.0.0.2');
-        expect(row['ssh_port'], 2222);
-        expect(row['ssh_user'], 'admin');
-        expect(row['monitor_addr'], isNull);
+        test('a record with nothing optional set survives', () {
+          // 1466 wrote an empty id for a record predating them, so this one is
+          // found by name: an empty primary key is not a thing the table can
+          // hold, and the migration is where it is given a real id.
+          final bare = Stores.server.fetch().firstWhere(
+            (e) => e.name == 'bare',
+          );
+          expect(bare.ssh?.ip, '10.0.0.9');
+          expect(bare.custom, isNull);
+          expect(bare.wolCfg, isNull);
+          expect(bare.tags, isNull);
+          expect(bare.id, isNotEmpty);
+        });
 
-        for (final store in const ['server', 'key', 'snippet', 'docker']) {
+        test('the records are columns, and `kv` no longer holds them', () {
+          final row = SqliteDb.instance.select(
+            'SELECT ssh_ip, ssh_port, ssh_user, monitor_addr FROM server '
+            'WHERE id = ?;',
+            ['srv-key'],
+          ).single;
+          expect(row['ssh_ip'], '10.0.0.2');
+          expect(row['ssh_port'], 2222);
+          expect(row['ssh_user'], 'admin');
+          expect(row['monitor_addr'], isNull);
+
+          for (final store in const ['server', 'key', 'snippet', 'docker']) {
+            expect(
+              SqliteDb.instance.select(
+                'SELECT count(*) AS n FROM kv WHERE store = ?;',
+                [store],
+              ).single['n'],
+              0,
+              reason: 'a second copy of "$store" that a backup would carry',
+            );
+          }
+        });
+
+        test('private keys and snippets come across whole', () {
+          expect(
+            Stores.key.fetchByName('key-ed25519')?.key,
+            contains('BEGIN OPENSSH PRIVATE KEY'),
+          );
+          expect(
+            Stores.key.fetchByName('key-rsa')?.key,
+            contains('BEGIN RSA PRIVATE KEY'),
+          );
+
+          final deploy = Stores.snippet.fetchByName('deploy')!;
+          expect(deploy.script, contains('systemctl restart app'));
+          expect(deploy.tags, ['ops', 'risky']);
+          expect(deploy.note, 'run on the app hosts only');
+          // Sorted, like tags: an auto-run target is a row keyed by the pair.
+          expect(deploy.autoRunOn, ['srv-key', 'srv-pwd']);
+
+          // Non-ASCII, quotes, backslashes and newlines through Hive bytes and
+          // then through JSON and into a column.
+          final unicode = Stores.snippet.fetchByName('日本語 / emoji 🚀')!;
+          expect(unicode.note, 'ünïcödé');
+          expect(unicode.script, contains(r'引号 "双" \\ 反斜杠'));
+          expect(unicode.script.split('\n').length, 2);
+        });
+
+        test('settings keep their type, not just their value', () {
+          expect(Stores.setting.timeout.get(), 9);
+          expect(Stores.setting.textFactor.get(), 1.25);
+          expect(Stores.setting.recordHistory.get(), isFalse);
+          expect(Stores.setting.useBioAuth.get(), isTrue);
+          expect(Stores.setting.locale.get(), 'zh');
+          expect(Stores.setting.colorSeed.get(), 4287106639);
+          expect(Stores.setting.termFontSize.get(), 13.0);
+          expect(Stores.setting.maxRetryCount.get(), 2);
+
+          expect(Stores.setting.homeTabs.get().map((e) => e.name), [
+            'server',
+            'ssh',
+            'snippet',
+          ]);
+          // Written as `[0, 1, 2, 13, 14]` by that release and converted to
+          // names by m013 — an index stops meaning the same key the moment a
+          // case is inserted into `VirtKey`.
+          expect(Stores.setting.sshVirtKeys.get(), [
+            'esc',
+            'alt',
+            'home',
+            'ime',
+            'shift',
+          ]);
+          expect(Stores.setting.serverOrder.get(), [
+            'srv-key',
+            'srv-pwd',
+            'srv-jump',
+          ]);
+          expect(Stores.setting.detailCardDisabled.get(), ['temperature']);
+
+          // Stored by name in 1466 and still read by name — an index would have
+          // changed meaning silently.
+          expect(Stores.setting.netViewType.get().name, 'speed');
+
+          // Still a setting, which is the only place anything reads them from.
+          // Re-keyed onto the ids m004 hands out, so a fingerprint filed under
+          // an old `user@ip:port` id is still found for the same server.
+          expect(Stores.setting.sshKnownHostFingerprints.get(), {
+            'srv-pwd::ssh-ed25519': 'SHA256:AAAA',
+            'srv-key::ssh-rsa': 'SHA256:BBBB',
+          });
+        });
+
+        test('history, container hosts and port forwards come across', () {
+          expect(Stores.history.sftpGoPath.all, [
+            '/etc',
+            '/var/log',
+            '/home/ops',
+          ]);
+
+          // The global entry belonged to no server, and both container tables
+          // are children of one now — so it has nowhere to live and is dropped.
+          expect(Stores.container.fetch('', ContainerType.docker), isNull);
+          expect(
+            Stores.container.fetch('srv-key', ContainerType.docker),
+            'tcp://10.0.0.2:2375',
+          );
+          expect(
+            Stores.container.fetch('srv-jump', ContainerType.podman),
+            'unix:///run/podman.sock',
+          );
+
+          final forwards = Stores.portForward.fetchForServer('srv-pwd');
+          expect(forwards.length, 1);
+          expect(forwards.single.name, 'postgres');
+          expect(forwards.single.type, PortForwardType.local);
+          expect(forwards.single.localPort, 15432);
+          expect(forwards.single.remoteHost, '10.0.0.50');
+          expect(forwards.single.remotePort, 5432);
+
+          expect(
+            Stores.portForward.fetchForServer('srv-key').single.type,
+            PortForwardType.remote,
+          );
+        });
+
+        test('every connection stat row lands in its table', () {
+          // 60 per server, none dropped on the way in. The per-server cap is
+          // applied when recording, not when importing.
+          final rows = SqliteDb.instance
+              .select('SELECT count(*) AS n FROM conn_stat;')
+              .single['n'];
+          expect(rows, 120);
+
+          // Looked up rather than `firstWhere`d: a migration that stopped writing
+          // this server's rows is the regression this test exists for, and
+          // `firstWhere` answers it with `Bad state: No element`, naming nothing
+          // and skipping the three counts below that would say what went wrong.
+          final stats = Stores.connectionStats
+              .getAllServerStats()
+              .firstWhereOrNull((e) => e.serverId == 'srv-pwd');
+          expect(
+            stats,
+            isNotNull,
+            reason: 'srv-pwd has no conn_stat rows at all',
+          );
+          expect(stats!.totalAttempts, 60);
+          // The generator made one in five a success.
+          expect(stats.successCount, 12);
+          expect(stats.failureCount, 48);
+          expect(stats.successRate, closeTo(0.2, 0.001));
+
+          // Every failure kind survives the round trip by name.
+          final kinds = SqliteDb.instance
+              .select('SELECT DISTINCT result FROM conn_stat ORDER BY result;')
+              .map((r) => r['result'] as String)
+              .toList();
+          expect(kinds, [
+            'authFailed',
+            'networkError',
+            'success',
+            'timeout',
+            'unknownError',
+          ]);
+
+          final one = Stores.connectionStats
+              .getAllServerStats()
+              .firstWhere((s) => s.serverId == 'srv-key')
+              .recentConnections
+              .first;
+          expect(one.serverName, 'key auth + custom');
+          expect(one.durationMs, greaterThan(0));
+
+          // Every id is generated: the old `<serverId>_<millis>` collided when
+          // two attempts landed in the same millisecond.
+          final ids = SqliteDb.instance
+              .select('SELECT id FROM conn_stat;')
+              .map((r) => r['id'] as String);
+          expect(ids.every((id) => !id.contains('_')), isTrue);
+
+          // Nothing of the two stats boxes is left in `kv`.
           expect(
             SqliteDb.instance
-                .select('SELECT count(*) AS n FROM kv WHERE store = ?;', [store])
+                .select(
+                  "SELECT count(*) AS n FROM kv WHERE store LIKE 'conn%';",
+                )
                 .single['n'],
             0,
-            reason: 'a second copy of "$store" that a backup would carry',
           );
-        }
-      });
+        });
 
-      test('private keys and snippets come across whole', () {
-        expect(Stores.key.fetchByName('key-ed25519')?.key,
-            contains('BEGIN OPENSSH PRIVATE KEY'));
-        expect(Stores.key.fetchByName('key-rsa')?.key,
-            contains('BEGIN RSA PRIVATE KEY'));
+        test('the plaintext index is deleted and the rest kept', () {
+          expect(
+            File(tempDir.path.joinPath('conn_stats_index.hive')).existsSync(),
+            isFalse,
+          );
+          expect(
+            File(tempDir.path.joinPath('server_enc.hive')).existsSync(),
+            isTrue,
+            reason: 'kept so a bad import can be rolled back to',
+          );
+        });
 
-        final deploy = Stores.snippet.fetchByName('deploy')!;
-        expect(deploy.script, contains('systemctl restart app'));
-        expect(deploy.tags, ['ops', 'risky']);
-        expect(deploy.note, 'run on the app hosts only');
-        // Sorted, like tags: an auto-run target is a row keyed by the pair.
-        expect(deploy.autoRunOn, ['srv-key', 'srv-pwd']);
+        test('the schema is up to date, and nothing reads as a local edit', () {
+          expect(SchemaVersion.stored, SchemaVersion.current);
+          // `Stores.lastModTime` decides which side of a sync wins; a device that
+          // has just read its own disk must not claim the newer copy.
+          expect(Stores.lastModTime, 0);
+        });
 
-        // Non-ASCII, quotes, backslashes and newlines through Hive bytes and
-        // then through JSON and into a column.
-        final unicode = Stores.snippet.fetchByName('日本語 / emoji 🚀')!;
-        expect(unicode.note, 'ünïcödé');
-        expect(unicode.script, contains(r'引号 "双" \\ 反斜杠'));
-        expect(unicode.script.split('\n').length, 2);
-      });
+        test('a second launch changes nothing', () async {
+          Stores.setting.timeout.put(42);
+          final before = Stores.server.fetchOneRaw('srv-key')!;
+          await getIt.reset();
 
-      test('settings keep their type, not just their value', () {
-        expect(Stores.setting.timeout.get(), 9);
-        expect(Stores.setting.textFactor.get(), 1.25);
-        expect(Stores.setting.recordHistory.get(), isFalse);
-        expect(Stores.setting.useBioAuth.get(), isTrue);
-        expect(Stores.setting.locale.get(), 'zh');
-        expect(Stores.setting.colorSeed.get(), 4287106639);
-        expect(Stores.setting.termFontSize.get(), 13.0);
-        expect(Stores.setting.maxRetryCount.get(), 2);
+          await Stores.init();
+          await SchemaVersion.migrate(kSchemaMigrations);
 
-        expect(Stores.setting.homeTabs.get().map((e) => e.name),
-            ['server', 'ssh', 'snippet']);
-        // Written as `[0, 1, 2, 13, 14]` by that release and converted to
-        // names by m013 — an index stops meaning the same key the moment a
-        // case is inserted into `VirtKey`.
-        expect(Stores.setting.sshVirtKeys.get(), [
-          'esc',
-          'alt',
-          'home',
-          'ime',
-          'shift',
-        ]);
-        expect(Stores.setting.serverOrder.get(),
-            ['srv-key', 'srv-pwd', 'srv-jump']);
-        expect(Stores.setting.detailCardDisabled.get(), ['temperature']);
+          expect(Stores.setting.timeout.get(), 42, reason: 'no re-import');
+          expect(Stores.server.fetchOneRaw('srv-key')!.ssh?.ip, before.ssh?.ip);
+          expect(Stores.server.fetch().length, 5, reason: 'no duplicates');
 
-        // Stored by name in 1466 and still read by name — an index would have
-        // changed meaning silently.
-        expect(Stores.setting.netViewType.get().name, 'speed');
-
-        // Still a setting, which is the only place anything reads them from.
-        // Re-keyed onto the ids m004 hands out, so a fingerprint filed under
-        // an old `user@ip:port` id is still found for the same server.
-        expect(Stores.setting.sshKnownHostFingerprints.get(), {
-          'srv-pwd::ssh-ed25519': 'SHA256:AAAA',
-          'srv-key::ssh-rsa': 'SHA256:BBBB',
+          // The stats are gone, and that is the retention policy rather than a
+          // loss: `ConnectionStatsStore.init` sweeps anything past 30 days, and
+          // the fixture is stamped in the past for good. On the importing launch
+          // they survive only because that sweep runs before `HiveImport`.
+          expect(
+            SqliteDb.instance
+                .select('SELECT count(*) AS n FROM conn_stat;')
+                .single['n'],
+            0,
+          );
         });
       });
 
-      test('history, container hosts and port forwards come across', () {
-        expect(Stores.history.sftpGoPath.all, ['/etc', '/var/log', '/home/ops']);
-
-        // The global entry belonged to no server, and both container tables
-        // are children of one now — so it has nowhere to live and is dropped.
-        expect(Stores.container.fetch('', ContainerType.docker), isNull);
-        expect(Stores.container.fetch('srv-key', ContainerType.docker),
-            'tcp://10.0.0.2:2375');
-        expect(Stores.container.fetch('srv-jump', ContainerType.podman),
-            'unix:///run/podman.sock');
-
-        final forwards = Stores.portForward.fetchForServer('srv-pwd');
-        expect(forwards.length, 1);
-        expect(forwards.single.name, 'postgres');
-        expect(forwards.single.type, PortForwardType.local);
-        expect(forwards.single.localPort, 15432);
-        expect(forwards.single.remoteHost, '10.0.0.50');
-        expect(forwards.single.remotePort, 5432);
-
-        expect(Stores.portForward.fetchForServer('srv-key').single.type,
-            PortForwardType.remote);
-      });
-
-      test('every connection stat row lands in its table', () {
-        // 60 per server, none dropped on the way in. The per-server cap is
-        // applied when recording, not when importing.
-        final rows = SqliteDb.instance
-            .select('SELECT count(*) AS n FROM conn_stat;')
-            .single['n'];
-        expect(rows, 120);
-
-        // Looked up rather than `firstWhere`d: a migration that stopped writing
-        // this server's rows is the regression this test exists for, and
-        // `firstWhere` answers it with `Bad state: No element`, naming nothing
-        // and skipping the three counts below that would say what went wrong.
-        final stats = Stores.connectionStats
-            .getAllServerStats()
-            .firstWhereOrNull((e) => e.serverId == 'srv-pwd');
-        expect(stats, isNotNull, reason: 'srv-pwd has no conn_stat rows at all');
-        expect(stats!.totalAttempts, 60);
-        // The generator made one in five a success.
-        expect(stats.successCount, 12);
-        expect(stats.failureCount, 48);
-        expect(stats.successRate, closeTo(0.2, 0.001));
-
-        // Every failure kind survives the round trip by name.
-        final kinds = SqliteDb.instance
-            .select('SELECT DISTINCT result FROM conn_stat ORDER BY result;')
-            .map((r) => r['result'] as String)
-            .toList();
-        expect(kinds, [
-          'authFailed',
-          'networkError',
-          'success',
-          'timeout',
-          'unknownError',
-        ]);
-
-        final one = Stores.connectionStats.getConnectionHistory('srv-key').first;
-        expect(one.serverName, 'key auth + custom');
-        expect(one.durationMs, greaterThan(0));
-
-        // Every id is generated: the old `<serverId>_<millis>` collided when
-        // two attempts landed in the same millisecond.
-        final ids = SqliteDb.instance
-            .select('SELECT id FROM conn_stat;')
-            .map((r) => r['id'] as String);
-        expect(ids.every((id) => !id.contains('_')), isTrue);
-
-        // Nothing of the two stats boxes is left in `kv`.
-        expect(
-          SqliteDb.instance
-              .select("SELECT count(*) AS n FROM kv WHERE store LIKE 'conn%';")
-              .single['n'],
-          0,
-        );
-      });
-
-      test('the plaintext index is deleted and the rest kept', () {
-        expect(
-          File(tempDir.path.joinPath('conn_stats_index.hive')).existsSync(),
-          isFalse,
-        );
-        expect(
-          File(tempDir.path.joinPath('server_enc.hive')).existsSync(),
-          isTrue,
-          reason: 'kept so a bad import can be rolled back to',
-        );
-      });
-
-      test('the schema is up to date, and nothing reads as a local edit', () {
-        expect(SchemaVersion.stored, SchemaVersion.current);
-        // `Stores.lastModTime` decides which side of a sync wins; a device that
-        // has just read its own disk must not claim the newer copy.
-        expect(Stores.lastModTime, 0);
-      });
-
-      test('a second launch changes nothing', () async {
-        Stores.setting.timeout.put(42);
-        final before = Stores.server.fetchOneRaw('srv-key')!;
-        await getIt.reset();
-
-        await Stores.init();
-        await SchemaVersion.migrate(kSchemaMigrations);
-
-        expect(Stores.setting.timeout.get(), 42, reason: 'no re-import');
-        expect(Stores.server.fetchOneRaw('srv-key')!.ssh?.ip, before.ssh?.ip);
-        expect(Stores.server.fetch().length, 5, reason: 'no duplicates');
-
-        // The stats are gone, and that is the retention policy rather than a
-        // loss: `ConnectionStatsStore.init` sweeps anything past 30 days, and
-        // the fixture is stamped in the past for good. On the importing launch
-        // they survive only because that sweep runs before `HiveImport`.
-        expect(
-          SqliteDb.instance
-              .select('SELECT count(*) AS n FROM conn_stat;')
-              .single['n'],
-          0,
-        );
-      });
-    });
       /// What `m004_id_remap_test` seeds by hand, checked against the bytes a
       /// release actually wrote.
       ///
@@ -426,35 +459,42 @@ void main() {
           "SELECT value FROM kv WHERE store = 'server';",
         );
         final decoded = rows
-            .map((r) => json.decode(r['value'] as String) as Map<String, dynamic>)
+            .map(
+              (r) => json.decode(r['value'] as String) as Map<String, dynamic>,
+            )
             .toList();
         final bare = decoded.firstWhere((e) => e['name'] == 'bare');
         expect(bare['id'], '');
         expect(bare['ssh'], isA<Map>());
         // And every other record does have one, so an empty id is the
         // exception the remapping exists for rather than the norm.
-        expect(
-          decoded.where((e) => (e['id'] as String).isEmpty),
-          hasLength(1),
-        );
+        expect(decoded.where((e) => (e['id'] as String).isEmpty), hasLength(1));
       });
 
-      test('the agent conversations come across when the release had them', () async {
-        await Stores.init();
-        await SchemaVersion.migrate(kSchemaMigrations);
-        final had = version == '1491';
-        final convs = Stores.agentConversation.fetchForServer('srv-key');
-        expect(convs.length, had ? 1 : 0,
+      test(
+        'the agent conversations come across when the release had them',
+        () async {
+          await Stores.init();
+          await SchemaVersion.migrate(kSchemaMigrations);
+          final had = version == '1491';
+          final convs = Stores.agentConversation.fetchForServer('srv-key');
+          expect(
+            convs.length,
+            had ? 1 : 0,
             reason: had
                 ? '1491 shipped the box, so its rows must arrive'
-                : 'the box does not exist in this release');
-        if (had) {
-          expect(convs.single.title, '磁盘快满了');
-          expect(convs.single.items.length, 2);
-          expect(Stores.agentConversation.activeConversationId('srv-key'),
-              'conv-1');
-        }
-      });
+                : 'the box does not exist in this release',
+          );
+          if (had) {
+            expect(convs.single.title, '磁盘快满了');
+            expect(convs.single.items.length, 2);
+            expect(
+              Stores.agentConversation.activeConversationId('srv-key'),
+              'conv-1',
+            );
+          }
+        },
+      );
     });
   }
 }

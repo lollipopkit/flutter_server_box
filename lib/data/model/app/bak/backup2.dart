@@ -368,14 +368,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   /// Chunked, because the size is only knowable as the output arrives: gzip's
   /// trailer carries a length, it is at the *end*, and it is not authenticated
   /// by anything. Counting as we go is the only bound that holds.
-  /// [maxBytes] is injectable so the bound can be asserted without building a
-  /// [_maxPlainBytes]-sized bomb — a test that only checks the default would
-  /// pass just as well with no cap at all.
   @visibleForTesting
-  static Uint8List gunzipCapped(List<int> bytes, {int? maxBytes}) {
+  static Uint8List gunzipCapped(List<int> bytes) {
     final out = BytesBuilder(copy: false);
     final decoder = gzip.decoder.startChunkedConversion(
-      _CountingSink(out, maxBytes ?? _maxPlainBytes),
+      _CountingSink(out, _maxPlainBytes),
     );
     try {
       decoder.add(bytes);

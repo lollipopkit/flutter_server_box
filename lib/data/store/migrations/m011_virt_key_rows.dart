@@ -12,12 +12,8 @@ import 'package:server_box/data/store/setting.dart';
 /// [legacyKey], and the key itself, once no install and no backup can still be
 /// carrying it.
 class VirtKeyRowsMigration implements SchemaMigration {
-  const VirtKeyRowsMigration({SettingStore? store}) : _store = store;
+  const VirtKeyRowsMigration();
 
-  /// Which store to convert. Null is the app's own; a test hands in a
-  /// caller-provided one, since the singleton is bound to the real store name and an
-  /// in-memory database has no rows under it.
-  final SettingStore? _store;
 
   /// The version this step converts *from*. Named so `removeRetiredKeys` can
   /// ask whether the step has had its pass without repeating the number.
@@ -35,7 +31,7 @@ class VirtKeyRowsMigration implements SchemaMigration {
 
   /// Runs the conversion inside a caller-owned SQLite transaction.
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
     // Already converted, or set by hand since. A second pass is what a process
     // stopped between this returning and the version being recorded comes back
     // to, and without this it would put the count back to 1 over whatever the

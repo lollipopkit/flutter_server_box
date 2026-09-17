@@ -85,11 +85,13 @@ void main() {
     test('a withheld credential is null, and says so', () {
       final list = MonitorPushList.fromJson(_pushResponse);
       final bark = list.pushes.first;
-      expect(bark.isWithheld('key'), isTrue);
-      expect(bark.isWithheld('server'), isFalse);
+      expect(bark.config.containsKey('key'), isTrue);
+      expect(bark.config['key'], isNull);
+      expect(bark.config['server'], isNotNull);
       // Absent is not the same answer: it means the agent has no such value,
       // where null means it has one and will not say what.
-      expect(bark.isWithheld('title'), isFalse);
+      expect(bark.config['title'], 'ServerBox Monitor');
+      expect(bark.config.containsKey('missing'), isFalse);
     });
 
     test('from_index is the position loaded, not the position sent', () {
@@ -136,7 +138,12 @@ void main() {
       final list = MonitorPushList.fromJson(_pushResponse);
       final unknown = MonitorPushList.fromJson({
         'pushes': [
-          {'name': 'tg', 'push_type': 'telegram', 'config': {}, 'editable': false},
+          {
+            'name': 'tg',
+            'push_type': 'telegram',
+            'config': {},
+            'editable': false,
+          },
         ],
       });
       expect(list.pushes.first.editable, isTrue);

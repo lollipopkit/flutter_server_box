@@ -7,6 +7,8 @@ import 'package:server_box/data/store/migrations/m023_enum_names.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 /// Two settings held an enum as `Enum.index`. An index means whatever the
 /// build reading it says it means, and cases have been removed from
 /// `ServerFuncBtn` — each removal shifting every value after it, silently,
@@ -19,13 +21,13 @@ void main() {
 
     setUp(() {
       SqliteDb.openInMemory();
-      store = SettingStore('setting_test');
+      store = SettingStore.instance;
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     test('is registered as the step after the current schema', () {
-      final migration = EnumNamesMigration(store: store);
+      final migration = EnumNamesMigration();
       expect(migration.from, 23);
       expect(SchemaVersion.current, greaterThan(migration.from));
       // Missing from the list throws `Missing schema migration from v23` at
@@ -45,7 +47,7 @@ void main() {
         ServerFuncBtn.power.index,
       ], updateLastUpdateTsOnSet: false);
 
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
 
       expect(store.get<Object>(EnumNamesMigration.btnsKey), {
         'layout': 'current',
@@ -60,7 +62,7 @@ void main() {
         updateLastUpdateTsOnSet: false,
       );
 
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
 
       expect(store.get<Object>(EnumNamesMigration.btnsKey), {
         'layout': 'current',
@@ -78,7 +80,7 @@ void main() {
         updateLastUpdateTsOnSet: false,
       );
 
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
 
       expect(store.get<Object>(EnumNamesMigration.sortKey), 'status');
     });
@@ -93,7 +95,7 @@ void main() {
         ServerFuncBtn.files.index,
       ], updateLastUpdateTsOnSet: false);
 
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
 
       expect(store.get<Object>(EnumNamesMigration.btnsKey), {
         'layout': 'current',
@@ -137,15 +139,15 @@ void main() {
         ServerFuncBtn.terminal.index,
       ], updateLastUpdateTsOnSet: false);
 
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
       final once = store.get<Object>(EnumNamesMigration.btnsKey);
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
 
       expect(store.get<Object>(EnumNamesMigration.btnsKey), once);
     });
 
     test('leaves a store that holds nothing alone', () {
-      EnumNamesMigration(store: store).applySync();
+      EnumNamesMigration().applySync();
 
       expect(store.get<Object>(EnumNamesMigration.btnsKey), isNull);
       expect(store.get<Object>(EnumNamesMigration.sortKey), isNull);

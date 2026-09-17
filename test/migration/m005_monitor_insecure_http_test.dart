@@ -2,9 +2,11 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m005_monitor_insecure_http.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('adds the monitor plaintext opt-in without changing existing rows',
       () async {

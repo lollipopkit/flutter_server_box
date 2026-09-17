@@ -18,18 +18,9 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 
-/// Must put this func out of any Class.
-///
-/// Because of this function is called by [compute].
-///
-/// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
-List<SSHKeyPair> loadIdentity(String key) {
-  return SSHKeyPair.fromPem(key);
-}
-
 /// What each of [keys] decoded to, in order: its key pairs, or why it failed.
 ///
-/// Top-level for the same reason [loadIdentity] is, and reporting the failure
+/// Top-level for isolate execution, and reporting the failure
 /// as a string for a related one: this runs in an isolate, whatever
 /// `SSHKeyPair.fromPem` throws is not required to be sendable across one, and
 /// the only thing the caller does with it is put it in a message.
@@ -195,7 +186,7 @@ class PrivateKeyParseException implements Exception {
 /// Decrypts an encrypted PEM private key.
 ///
 /// Must also be a top-level function because it is called via [Computer]
-/// (isolate) — see comment on [loadIdentity].
+/// (isolate).
 ///
 /// [args] : [key, pwd]
 String decryptPem(List<String> args) {
@@ -262,23 +253,6 @@ String _decodeCapped(String path, List<int> bytes) {
   return utf8.decode(bytes);
 }
 
-/// The PEM [ssh] authenticates with, or null when it has no key at all.
-///
-/// Two sources that are not interchangeable, which is the whole point of them
-/// being two fields: a key the user imported lives in `Stores.key` and is named
-/// by [SshCredential.keyId], while a key `~/.ssh/config` pointed at stays on
-/// disk and is named by [SshCredential.keyPath]. Reading the file here rather
-/// than copying it into the store at import time is what leaves the user's own
-/// key management intact.
-///
-/// Runs where there are stores, a filesystem the user granted, and a UI to
-/// report a failure to. `SshTransferCreds` calls it on the main isolate and
-/// hands the result across, because the transfer isolate has none of those.
-String? resolvePrivateKey(SshCredential ssh, {String? originalHost}) {
-  final keys = resolvePrivateKeys(ssh, originalHost: originalHost);
-  return keys.isEmpty ? null : keys.values.first;
-}
-
 Map<String, String> resolvePrivateKeys(
   SshCredential ssh, {
   String? originalHost,
@@ -337,15 +311,6 @@ Map<String, String> resolvePrivateKeys(
   }
   if (keys.isEmpty && lastError != null) throw lastError;
   return keys;
-}
-
-/// Async variant of [resolvePrivateKey] for callers that can await.
-Future<String?> resolvePrivateKeyAsync(
-  SshCredential ssh, {
-  String? originalHost,
-}) async {
-  final keys = await resolvePrivateKeysAsync(ssh, originalHost: originalHost);
-  return keys.isEmpty ? null : keys.values.first;
 }
 
 Future<Map<String, String>> resolvePrivateKeysAsync(
@@ -475,11 +440,15 @@ Future<SSHClient> genClient(
     _ => 'direct',
   };
   if (Diag.enabled) {
-    Diag.crumb(SbDiag.server, 'ssh connect', data: {
-      'server': Redact.id(spi.id),
-      'host': Redact.host(ssh.ip),
-      'via': via,
-    });
+    Diag.crumb(
+      SbDiag.server,
+      'ssh connect',
+      data: {
+        'server': Redact.id(spi.id),
+        'host': Redact.host(ssh.ip),
+        'via': via,
+      },
+    );
   }
 
   /// The other end of the crumb above, which on its own says only that a
@@ -512,120 +481,124 @@ Future<SSHClient> genClient(
 
   String? alterUser;
 
-  final socket = await () async {
-    // Proxy
-    final jumpSpis = _resolveJumpCandidates(
-      spi: spi,
-      preloadedJumpSpi: jumpSpi,
-      jumpSpisById: jumpSpisById,
-    );
-    final jumpIds = spi.resolvedJumpIds;
-    if (jumpIds.isNotEmpty && jumpSpis.isEmpty) {
-      final message = l10n.jumpServersNotFoundFmt(spi.name, jumpIds.join(', '));
-      Loggers.app.warning(message);
-      throw SSHErr(type: SSHErrType.connect, message: message);
-    }
-    if (jumpSpis.isNotEmpty) {
-      Object? lastNetworkError;
-      StackTrace? lastNetworkStack;
-
-      for (final jumpSpi_ in jumpSpis) {
-        SSHClient? jumpClient;
-        try {
-          String? nextJumpPrivateKey;
-          final jumpSpiKeyRef = jumpSpi_.ssh?.keyRef;
-          if (jumpSpi != null &&
-              jumpSpi.id == jumpSpi_.id &&
-              jumpPrivateKey != null) {
-            // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
-            nextJumpPrivateKey = jumpPrivateKey;
-          } else if (jumpSpiKeyRef != null) {
-            nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyRef];
-          }
-
-          jumpClient = await genClient(
-            jumpSpi_,
-            privateKey: nextJumpPrivateKey,
-            privateKeysByKeyId: privateKeysByKeyId,
-            jumpSpisById: jumpSpisById,
-            timeout: timeout,
-            onKeyboardInteractive: onKeyboardInteractive,
-            knownHostFingerprints: hostKeyCache,
-            onHostKeyAccepted: hostKeyPersist,
-            onHostKeyPrompt: hostKeyPrompt,
-            visitedServerIds: {...chainVisitedServerIds},
+  final socket =
+      await () async {
+        // Proxy
+        final jumpSpis = _resolveJumpCandidates(
+          spi: spi,
+          preloadedJumpSpi: jumpSpi,
+          jumpSpisById: jumpSpisById,
+        );
+        final jumpIds = spi.resolvedJumpIds;
+        if (jumpIds.isNotEmpty && jumpSpis.isEmpty) {
+          final message = l10n.jumpServersNotFoundFmt(
+            spi.name,
+            jumpIds.join(', '),
           );
+          Loggers.app.warning(message);
+          throw SSHErr(type: SSHErrType.connect, message: message);
+        }
+        if (jumpSpis.isNotEmpty) {
+          Object? lastNetworkError;
+          StackTrace? lastNetworkStack;
 
-          final forwarded = await jumpClient
-              .forwardLocal(ssh.ip, ssh.port)
-              .timeout(
-                timeout,
-                onTimeout: () => throw TimeoutException(
-                  'forwardLocal timed out after ${timeout.inSeconds}s',
-                ),
+          for (final jumpSpi_ in jumpSpis) {
+            SSHClient? jumpClient;
+            try {
+              String? nextJumpPrivateKey;
+              final jumpSpiKeyRef = jumpSpi_.ssh?.keyRef;
+              if (jumpSpi != null &&
+                  jumpSpi.id == jumpSpi_.id &&
+                  jumpPrivateKey != null) {
+                // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
+                nextJumpPrivateKey = jumpPrivateKey;
+              } else if (jumpSpiKeyRef != null) {
+                nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyRef];
+              }
+
+              jumpClient = await genClient(
+                jumpSpi_,
+                privateKey: nextJumpPrivateKey,
+                privateKeysByKeyId: privateKeysByKeyId,
+                jumpSpisById: jumpSpisById,
+                timeout: timeout,
+                onKeyboardInteractive: onKeyboardInteractive,
+                knownHostFingerprints: hostKeyCache,
+                onHostKeyAccepted: hostKeyPersist,
+                onHostKeyPrompt: hostKeyPrompt,
+                visitedServerIds: {...chainVisitedServerIds},
               );
-          return _JumpSocket(forwarded, jumpClient);
-        } catch (e, stack) {
-          try {
-            jumpClient?.close();
-          } catch (_) {}
-          if (!isJumpFailoverError(e)) {
-            rethrow;
+
+              final forwarded = await jumpClient
+                  .forwardLocal(ssh.ip, ssh.port)
+                  .timeout(
+                    timeout,
+                    onTimeout: () => throw TimeoutException(
+                      'forwardLocal timed out after ${timeout.inSeconds}s',
+                    ),
+                  );
+              return _JumpSocket(forwarded, jumpClient);
+            } catch (e, stack) {
+              try {
+                jumpClient?.close();
+              } catch (_) {}
+              if (!isJumpFailoverError(e)) {
+                rethrow;
+              }
+              lastNetworkError = e;
+              lastNetworkStack = stack;
+              Loggers.app.warning(
+                'Jump server ${jumpSpi_.name} failed, trying next candidate',
+                e,
+                stack,
+              );
+            }
           }
-          lastNetworkError = e;
-          lastNetworkStack = stack;
-          Loggers.app.warning(
-            'Jump server ${jumpSpi_.name} failed, trying next candidate',
-            e,
-            stack,
+
+          Error.throwWithStackTrace(
+            lastNetworkError ??
+                SSHErr(
+                  type: SSHErrType.connect,
+                  message: l10n.noJumpServerAvailable,
+                ),
+            lastNetworkStack ?? StackTrace.current,
           );
         }
-      }
 
-      Error.throwWithStackTrace(
-        lastNetworkError ??
-            SSHErr(
-              type: SSHErrType.connect,
-              message: l10n.noJumpServerAvailable,
-            ),
-        lastNetworkStack ?? StackTrace.current,
-      );
-    }
+        final proxyCommand = ssh.proxyCommand;
+        if (proxyCommand != null && proxyCommand.trim().isNotEmpty) {
+          return await ProxyCommandSocket.connect(
+            command: proxyCommand,
+            host: ssh.ip,
+            port: ssh.port,
+            user: ssh.user,
+            originalHost: spi.name,
+            jump: ssh.resolvedJumpIds.join(','),
+            timeout: timeout,
+          );
+        }
 
-    final proxyCommand = ssh.proxyCommand;
-    if (proxyCommand != null && proxyCommand.trim().isNotEmpty) {
-      return await ProxyCommandSocket.connect(
-        command: proxyCommand,
-        host: ssh.ip,
-        port: ssh.port,
-        user: ssh.user,
-        originalHost: spi.name,
-        jump: ssh.resolvedJumpIds.join(','),
-        timeout: timeout,
-      );
-    }
-
-    // Direct
-    try {
-      return await SSHSocket.connect(ssh.ip, ssh.port, timeout: timeout);
-    } catch (e) {
-      Loggers.app.warning('genClient', e);
-      if (ssh.alterUrl == null) rethrow;
-      try {
-        final res = ssh.parseAlterUrl();
-        alterUser = res.$2;
-        return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
-      } catch (e) {
-        Loggers.app.warning('genClient alterUrl', e);
-        rethrow;
-      }
-    }
-  }().onError((Object e, s) {
-    // Attached rather than wrapping the closure in a `try`, so the body above
-    // keeps its indentation and stays reviewable against its own history.
-    connectFailed('socket', e);
-    Error.throwWithStackTrace(e, s);
-  });
+        // Direct
+        try {
+          return await SSHSocket.connect(ssh.ip, ssh.port, timeout: timeout);
+        } catch (e) {
+          Loggers.app.warning('genClient', e);
+          if (ssh.alterUrl == null) rethrow;
+          try {
+            final res = ssh.parseAlterUrl();
+            alterUser = res.$2;
+            return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
+          } catch (e) {
+            Loggers.app.warning('genClient alterUrl', e);
+            rethrow;
+          }
+        }
+      }().onError((Object e, s) {
+        // Attached rather than wrapping the closure in a `try`, so the body above
+        // keeps its indentation and stays reviewable against its own history.
+        connectFailed('socket', e);
+        Error.throwWithStackTrace(e, s);
+      });
 
   // Everything past here can throw with the socket already open, and the
   // caller is given a key error and no handle — so nobody can close it. A

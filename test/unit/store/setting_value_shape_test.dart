@@ -36,7 +36,7 @@ void main() {
     store = SettingStore('setting_test');
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   group('windowState', () {
     const state = WindowState(Size(1323, 817), Offset(605, 268));

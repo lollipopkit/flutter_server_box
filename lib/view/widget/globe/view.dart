@@ -334,7 +334,7 @@ class _GlobeViewState extends State<GlobeView> with TickerProviderStateMixin {
   }
 
   Future<void> _loadLand() async {
-    final land = await BundledLand.load();
+    final land = await BundledLand.shared.load();
     if (!mounted || land == null) return;
     setState(() => _land = land);
   }

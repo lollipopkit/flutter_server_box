@@ -4,6 +4,7 @@ import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m024_remote_desktop_profiles.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/tables.dart';
+import '../helpers/table_names.dart';
 
 List<(String, String, bool, int)> _columns() => [
   for (final row in SqliteDb.instance.select(

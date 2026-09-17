@@ -44,7 +44,7 @@ void main() {
     servers = ServerStore();
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   void seed(String store, String key, Object value) {
     SqliteDb.instance.execute(

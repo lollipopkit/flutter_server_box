@@ -2,6 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m019_drop_geo_cache.dart';
 
+import '../helpers/test_db.dart';
+
 /// The step that takes the retired geo cache off the device.
 ///
 /// It has one job and one way to get it wrong, and that way is silent: `kv` is
@@ -10,7 +12,7 @@ import 'package:server_box/data/store/migrations/m019_drop_geo_cache.dart';
 /// up looking like a fresh one. Nothing else in the file would notice.
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   // `kv` itself is not created here: `SqliteDb.openInMemory` makes it, which
   // is the definition the app actually runs against rather than one this file

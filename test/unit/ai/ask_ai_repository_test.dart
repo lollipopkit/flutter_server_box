@@ -281,15 +281,18 @@ void main() {
       expect(localOnly.risk, AskAiCommandRisk.destructive);
     });
 
-    test('a model that only withholds safe_to_run is not calling it dangerous', () {
-      // Everything that writes anything sets `safe_to_run` false. Reading that
-      // as "dangerous" would put the confirmation in front of `mkdir` and
-      // teach people to tap through it.
-      const ordinary = AskAiCommand(command: 'systemctl restart nginx');
-      expect(ordinary.modelSafeToRun, isFalse);
-      expect(ordinary.risk, AskAiCommandRisk.caution);
-      expect(ordinary.canAutoRun, isFalse);
-    });
+    test(
+      'a model that only withholds safe_to_run is not calling it dangerous',
+      () {
+        // Everything that writes anything sets `safe_to_run` false. Reading that
+        // as "dangerous" would put the confirmation in front of `mkdir` and
+        // teach people to tap through it.
+        const ordinary = AskAiCommand(command: 'systemctl restart nginx');
+        expect(ordinary.modelSafeToRun, isFalse);
+        expect(ordinary.risk, AskAiCommandRisk.caution);
+        expect(ordinary.canAutoRun, isFalse);
+      },
+    );
 
     test('the model cannot talk the app out of what the list caught', () {
       const insistent = AskAiCommand(
@@ -367,27 +370,32 @@ void main() {
       expect(window.complete, isTrue);
     });
 
-    test('a turn bigger than the whole budget does not erase the ones before it', () {
-      // The reported shape (#1464): one task that printed far more than a
-      // request can hold, and then a follow-up that depends on it.
-      final huge = 'x' * 90000;
-      final conversation = [
-        ...turn('one', 'the answer was 41'),
-        ...turn('two', huge),
-        const AskAiMessageItem.user('do that again'),
-      ];
+    test(
+      'a turn bigger than the whole budget does not erase the ones before it',
+      () {
+        // The reported shape (#1464): one task that printed far more than a
+        // request can hold, and then a follow-up that depends on it.
+        final huge = 'x' * 90000;
+        final conversation = [
+          ...turn('one', 'the answer was 41'),
+          ...turn('two', huge),
+          const AskAiMessageItem.user('do that again'),
+        ];
 
-      final window = AskAiRepository.conversationWindow(conversation);
+        final window = AskAiRepository.conversationWindow(conversation);
 
-      // The earlier turns are still there, which is the whole point: before
-      // this, the window was the last user message and nothing else.
-      expect(
-        window.items.whereType<AskAiMessageItem>().map((item) => item.content),
-        contains('one'),
-      );
-      expect(window.items.length, greaterThan(1));
-      expect(window.complete, isFalse);
-    });
+        // The earlier turns are still there, which is the whole point: before
+        // this, the window was the last user message and nothing else.
+        expect(
+          window.items.whereType<AskAiMessageItem>().map(
+            (item) => item.content,
+          ),
+          contains('one'),
+        );
+        expect(window.items.length, greaterThan(1));
+        expect(window.complete, isFalse);
+      },
+    );
 
     test('an earlier turn keeps both ends of what it printed', () {
       final output = '${'head' * 3000}MIDDLE${'tail' * 3000}';
@@ -402,10 +410,7 @@ void main() {
       expect(carried.output, contains('tail'));
       expect(carried.output, isNot(contains('MIDDLE')));
       // Still the document the tool returned, not a cut string.
-      expect(
-        (jsonDecode(carried.output) as Map)['exit_code'],
-        0,
-      );
+      expect((jsonDecode(carried.output) as Map)['exit_code'], 0);
       expect(window.complete, isFalse);
     });
 
@@ -450,9 +455,9 @@ void main() {
       final window = AskAiRepository.conversationWindow(conversation);
 
       // Nothing from before the summary is sent...
-      final sent = window.items
-          .whereType<AskAiMessageItem>()
-          .map((item) => item.content);
+      final sent = window.items.whereType<AskAiMessageItem>().map(
+        (item) => item.content,
+      );
       expect(sent, isNot(contains('one')));
       expect(sent, isNot(contains('two')));
       expect(sent, contains('three'));
@@ -473,10 +478,9 @@ void main() {
 
       final window = AskAiRepository.conversationWindow(conversation);
 
-      expect(
-        window.items.whereType<AskAiSummaryItem>().map((e) => e.summary),
-        ['second summary'],
-      );
+      expect(window.items.whereType<AskAiSummaryItem>().map((e) => e.summary), [
+        'second summary',
+      ]);
     });
 
     test('a summary reaches the model as a marked user message', () {
@@ -516,15 +520,15 @@ void main() {
     test('summarising is for what fell out, not for being long', () {
       // Fits: nothing to gain, and a request spent to lose detail.
       expect(
-        AskAiRepository.shouldCompact([...turn('one', 'a'), ...turn('two', 'b')]),
+        AskAiRepository.shouldCompact([
+          ...turn('one', 'a'),
+          ...turn('two', 'b'),
+        ]),
         isFalse,
       );
       // One enormous turn does not fit, but it is carried whole by design and
       // summarising the nothing behind it would not shrink the request.
-      expect(
-        AskAiRepository.shouldCompact(turn('one', 'x' * 90000)),
-        isFalse,
-      );
+      expect(AskAiRepository.shouldCompact(turn('one', 'x' * 90000)), isFalse);
       // Long enough that turns are being dropped: now it is worth a request.
       expect(
         AskAiRepository.shouldCompact([
@@ -588,10 +592,33 @@ void main() {
       );
     });
 
-    test('a flag spelled loosely does not cost the whole tool call', () {
+    test('a flag spelled loosely does not cost the whole tool call', () async {
+      Future<AskAiCommand> decode(String raw) async {
+        final chunk = jsonEncode({
+          'choices': [
+            {
+              'delta': {
+                'tool_calls': [
+                  {
+                    'index': 0,
+                    'id': 'call-1',
+                    'function': {'name': 'run_shell_command', 'arguments': raw},
+                  },
+                ],
+              },
+              'finish_reason': 'tool_calls',
+            },
+          ],
+        });
+        final events = await AskAiRepository.decodeSse(
+          Stream.value(utf8.encode('data: $chunk\n\ndata: [DONE]\n\n')),
+        ).toList();
+        return events.whereType<AskAiCompleted>().single.commands.single;
+      }
+
       // `as bool?` throws on these, and the throw reads as "not a tool call".
       for (final written in ['true', 1, true]) {
-        final decoded = AskAiRepository.parseToolArgumentsForTest(
+        final decoded = await decode(
           jsonEncode({
             'command': 'rm -rf /tmp/x',
             'description': 'Remove it',
@@ -599,14 +626,14 @@ void main() {
             'destructive': written,
           }),
         );
-        expect(decoded?.command, 'rm -rf /tmp/x', reason: '$written');
-        expect(decoded?.modelDestructive, isTrue, reason: '$written');
+        expect(decoded.command, 'rm -rf /tmp/x', reason: '$written');
+        expect(decoded.modelDestructive, isTrue, reason: '$written');
       }
       // And anything unrecognisable falls back rather than throwing.
-      final odd = AskAiRepository.parseToolArgumentsForTest(
+      final odd = await decode(
         jsonEncode({'command': 'uptime', 'destructive': 'perhaps'}),
       );
-      expect(odd?.modelDestructive, isFalse);
+      expect(odd.modelDestructive, isFalse);
     });
 
     test('a stream asks for its usage, since it is not reported unasked', () {
@@ -620,23 +647,26 @@ void main() {
       expect(body['stream_options'], {'include_usage': true});
     });
 
-    test('a second compaction does not summarise what the first already did', () {
-      // The window stands on the newest summary, so the prefix behind it is
-      // already accounted for. Counting it again made every turn report a
-      // dozen dropped items and insert another summary of the same history.
-      final settled = <AskAiConversationItem>[
-        for (var i = 0; i < 20; i++) ...turn('old $i', 'x' * 4000),
-        const AskAiSummaryItem(summary: 'Goal: the earlier work.'),
-        ...turn('recent', 'a line'),
-      ];
+    test(
+      'a second compaction does not summarise what the first already did',
+      () {
+        // The window stands on the newest summary, so the prefix behind it is
+        // already accounted for. Counting it again made every turn report a
+        // dozen dropped items and insert another summary of the same history.
+        final settled = <AskAiConversationItem>[
+          for (var i = 0; i < 20; i++) ...turn('old $i', 'x' * 4000),
+          const AskAiSummaryItem(summary: 'Goal: the earlier work.'),
+          ...turn('recent', 'a line'),
+        ];
 
-      expect(AskAiRepository.shouldCompact(settled), isFalse);
+        expect(AskAiRepository.shouldCompact(settled), isFalse);
 
-      final window = AskAiRepository.conversationWindow(settled);
-      expect(window.droppedSinceSummary, 0);
-      // And the kept part starts at the summary, not before it.
-      expect(settled[window.keptFrom], isA<AskAiSummaryItem>());
-    });
+        final window = AskAiRepository.conversationWindow(settled);
+        expect(window.droppedSinceSummary, 0);
+        // And the kept part starts at the summary, not before it.
+        expect(settled[window.keptFrom], isA<AskAiSummaryItem>());
+      },
+    );
 
     test('what is summarised next covers the summary before it', () {
       final grown = <AskAiConversationItem>[

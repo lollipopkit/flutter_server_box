@@ -233,7 +233,7 @@ void main() {
 
     test('and nothing for a crash the platform reported on its own path',
         () async {
-      // `NativeExitReport.reportPending` sends that one. It leaves no marker
+      // `NativeExitReport.shared.reportPending` sends that one. It leaves no marker
       // detail, so there is nothing here to send a second time.
       Stores.setting.diagnosticsLevel.put(DiagnosticsLevel.basic.name);
       await launch();

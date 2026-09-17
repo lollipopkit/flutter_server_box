@@ -18,9 +18,8 @@ import 'package:server_box/data/store/setting.dart';
 /// converts under today's meaning, which is the one the app has been acting on
 /// anyway, and stops the next removal from doing it again.
 class EnumNamesMigration implements SchemaMigration {
-  const EnumNamesMigration({SettingStore? store}) : _store = store;
+  const EnumNamesMigration();
 
-  final SettingStore? _store;
 
   static const appliedAt = 23;
   static const btnsKey = 'serverBtns';
@@ -33,7 +32,7 @@ class EnumNamesMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
 
     final btns = store.get<Object>(btnsKey);
     if (btns is List || btns is Map) {

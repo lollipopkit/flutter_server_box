@@ -19,6 +19,10 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/view/page/schema_too_new.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/deny_file_deletion.dart';
+
+import '../helpers/test_db.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -57,7 +61,7 @@ void main() {
     await SqliteDb.open(dbDir.path);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// Paths handed to the share sheet, and what was in the file at that moment.
   ///
@@ -66,16 +70,18 @@ void main() {
   late List<String> shared;
   late List<int> sharedSizes;
 
+  IOOverrides? previousIO;
   setUp(() {
+    previousIO = IOOverrides.current;
     shared = [];
     sharedSizes = [];
-    SchemaTooNewPage.shareForTest = (path) async {
+    IOOverrides.global = _CaptureExport((path) {
       shared.add(path);
       sharedSizes.add(File(path).lengthSync());
-    };
+    });
   });
 
-  tearDown(() => SchemaTooNewPage.shareForTest = null);
+  tearDown(() => IOOverrides.global = previousIO);
 
   /// Lets real asynchronous work finish.
   ///
@@ -202,15 +208,11 @@ void main() {
     // offering Backup again is offering a button that can only report "the
     // database is not open" — and it was the user's last chance at the data.
     await pump(tester);
-    // A directory the delete cannot write to. `wipe` skips a file that is
-    // merely absent, so removing it first would let the wipe *succeed* — which
-    // is how this case used to pass while asserting nothing about the message.
-    // `runSync`, not `run`: real async I/O started in a `testWidgets`
-    // fake-async zone completes on a callback the zone never pumps, and the
-    // test simply hangs.
-    final holding = Directory(SqliteDb.path!).parent;
-    Process.runSync('chmod', ['500', holding.path]);
-    addTearDown(() => Process.runSync('chmod', ['700', holding.path]));
+    // Exercise the real wipe failure path on every OS, including root.
+    final denied = DenyFileDeletion(File(SqliteDb.path!));
+    final previous = IOOverrides.current;
+    IOOverrides.global = denied;
+    addTearDown(() => IOOverrides.global = previous);
 
     await tester.tap(find.text(l10n.schemaTooNewWipe));
     await tester.pump();
@@ -226,6 +228,7 @@ void main() {
     // wrong in both directions.
     expect(find.text(l10n.schemaTooNewWipeDone), findsNothing);
     expect(find.text(l10n.schemaTooNewWipeFailed), findsOneWidget);
+    expect(denied.attempted, isTrue);
   });
 
   testWidgets('declining the wipe leaves everything alone', (tester) async {
@@ -242,4 +245,33 @@ void main() {
     expect(find.text(libL10n.backup), findsOneWidget);
     expect(SqliteDb.isOpen, isTrue);
   });
+}
+
+/// Capture the file at the desktop reveal boundary without launching Explorer.
+final class _CaptureExport extends IOOverrides {
+  _CaptureExport(this.capture);
+  final void Function(String) capture;
+  @override
+  File createFile(String path) {
+    final file = super.createFile(path);
+    return path.contains('sbx-rescue-') ? _ExportFile(file, capture) : file;
+  }
+}
+final class _ExportFile implements File {
+  _ExportFile(this.file, this.capture);
+  final File file;
+  final void Function(String) capture;
+  @override
+  Future<bool> exists() async {
+    capture(file.path);
+    return false;
+  }
+  @override
+  int lengthSync() => file.lengthSync();
+  @override
+  bool existsSync() => file.existsSync();
+  @override
+  void deleteSync({bool recursive = false}) => file.deleteSync(recursive: recursive);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

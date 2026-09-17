@@ -36,6 +36,7 @@ const ENTRY_TTL: Duration = Duration::from_secs(3600);
 /// Only walk the map to prune once it is big enough to be worth it — an
 /// unthrottled attacker rotating source addresses is the only way to get here.
 const PRUNE_THRESHOLD: usize = 1024;
+const PRUNE_INTERVAL: Duration = Duration::from_secs(60);
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Key {
@@ -73,6 +74,7 @@ impl Entry {
 
 #[derive(Default)]
 pub struct LoginThrottle {
+    last_prune: Mutex<Option<Instant>>,
     entries: Arc<Mutex<HashMap<Key, Entry>>>,
 }
 
@@ -106,9 +108,13 @@ impl LoginThrottle {
         let attempt_keys = keys(ip, username);
         let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         if entries.len() > PRUNE_THRESHOLD {
-            entries.retain(|_, e| {
-                e.in_flight > 0 || now.saturating_duration_since(e.last_seen) < ENTRY_TTL
-            });
+            let mut last = self.last_prune.lock().unwrap_or_else(|e| e.into_inner());
+            if last.is_none_or(|at| now.saturating_duration_since(at) >= PRUNE_INTERVAL) {
+                entries.retain(|_, e| {
+                    e.in_flight > 0 || now.saturating_duration_since(e.last_seen) < ENTRY_TTL
+                });
+                *last = Some(now);
+            }
         }
 
         let wait = attempt_keys
@@ -362,5 +368,42 @@ mod tests {
 
         drop(attempts);
         assert_admitted(&throttle, ip(1), "admin");
+    }
+    #[test]
+    fn rotating_sources_workload() {
+        let throttle = LoginThrottle::new();
+        let started = Instant::now();
+        for n in 0..10_000 {
+            let attempt = throttle.begin(None, &format!("user-{n}")).unwrap();
+            throttle.record_failure(attempt);
+        }
+        eprintln!("10,000 rotating usernames: {:?}", started.elapsed());
+        assert_eq!(throttle.entries.lock().unwrap().len(), 10_000);
+    }
+
+    #[test]
+    fn sweeps_are_periodic_and_preserve_reservations() {
+        let throttle = LoginThrottle::new();
+        for n in 0..PRUNE_THRESHOLD + 2 {
+            let attempt = throttle.begin(None, &format!("user-{n}")).unwrap();
+            throttle.record_failure(attempt);
+        }
+        let pending = throttle.begin(None, "pending").unwrap();
+        age_entries(&throttle, ENTRY_TTL + Duration::from_secs(1));
+        assert_admitted(&throttle, None, "fresh");
+        assert!(
+            throttle
+                .entries
+                .lock()
+                .unwrap()
+                .contains_key(&Key::User("user-0".into()))
+        );
+        *throttle.last_prune.lock().unwrap() = Some(Instant::now() - PRUNE_INTERVAL);
+        assert_admitted(&throttle, None, "fresh");
+        let entries = throttle.entries.lock().unwrap();
+        assert!(!entries.contains_key(&Key::User("user-0".into())));
+        assert_eq!(entries[&Key::User("pending".into())].in_flight, 1);
+        drop(entries);
+        drop(pending);
     }
 }

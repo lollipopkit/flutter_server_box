@@ -18,9 +18,8 @@ import 'package:server_box/data/store/setting.dart';
 /// Only an address that has no version and is not already a complete endpoint.
 /// `…/api/paas/v4` and `…/v1/chat/completions` are left exactly as they are.
 class AiEndpointVersionMigration implements SchemaMigration {
-  const AiEndpointVersionMigration({SettingStore? store}) : _store = store;
+  const AiEndpointVersionMigration();
 
-  final SettingStore? _store;
 
   static const appliedAt = 22;
   static const key = 'askAi';
@@ -32,7 +31,7 @@ class AiEndpointVersionMigration implements SchemaMigration {
   Future<void> apply() async => applySync();
 
   void applySync() {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
     final raw = store.get<Object>(key);
     if (raw is! Map) return;
 

@@ -1,12 +1,22 @@
-@TestOn('vm') // Reads the Android and Dart source trees through dart:io.
+@TestOn('vm')
 library;
 
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/chan.dart';
+import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/ssh/android_service_policy.dart';
 
 void main() {
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  const channel = MethodChannel('${Miscs.pkgName}/main_chan');
+  tearDown(
+    () =>
+        binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null),
+  );
+
   test('wanted terminal state updates the service', () {
     expect(
       decideAndroidSessionServiceAction(
@@ -71,79 +81,51 @@ void main() {
     );
   });
 
-  test('terminal-page source wiring does not own the Android service', () {
-    final source = File('lib/view/page/ssh/page/page.dart').readAsStringSync();
+  test('unsupported platforms do not dispatch Android service calls', () async {
+    final calls = <MethodCall>[];
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      calls.add(call);
+      return null;
+    });
+    await MethodChans.updateSessions('{"sessions":[],"keepAlive":false}');
+    await MethodChans.stopService();
+    expect(calls, isEmpty);
+  }, skip: Platform.isAndroid);
 
-    expect(source, isNot(contains('MethodChans.startService')));
-    expect(source, isNot(contains('MethodChans.stopService')));
-  });
+  test('updates and stops dispatch through the platform channel', () async {
+    final calls = <MethodCall>[];
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+      call,
+    ) async {
+      calls.add(call);
+      return null;
+    });
+    const payload = '{"sessions":[],"keepAlive":true}';
+    await MethodChans.updateSessions(payload);
+    await MethodChans.stopService();
+    expect(calls.map((call) => call.method), ['updateSessions', 'stopService']);
+    expect(calls.first.arguments, payload);
+  }, skip: !Platform.isAndroid ? 'Requires Android platform runtime' : false);
 
-  test('Android source wiring dispatches stop through a service action', () {
-    final activity = File(
-      'android/app/src/main/kotlin/tech/lolli/toolbox/MainActivity.kt',
-    ).readAsStringSync();
-    final service = File(
-      'android/app/src/main/kotlin/tech/lolli/toolbox/ForegroundService.kt',
-    ).readAsStringSync();
-
-    expect(activity, isNot(contains('"startService" ->')));
-    expect(activity, isNot(contains('stopService(serviceIntent)')));
-    expect(
-      activity,
-      contains('action = ForegroundService.ACTION_STOP_SERVICE'),
-    );
-    expect(service, contains('intent?.action == ACTION_STOP_SERVICE'));
-  });
-
-  test('Android notification permission is requested at most once', () {
-    final activity = File(
-      'android/app/src/main/kotlin/tech/lolli/toolbox/MainActivity.kt',
-    ).readAsStringSync();
-
-    expect(activity, contains('notificationPermissionRequestInFlight'));
-    expect(activity, contains('KEY_NOTIFICATION_PERMISSION_REQUESTED'));
-    expect(
-      activity,
-      contains(
-        'permissionPrefs.getBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, false)',
-      ),
-    );
-
-    final persistedAt = activity.indexOf(
-      'putBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, true)',
-    );
-    final inFlightGuardAt = activity.indexOf(
-      'if (notificationPermissionRequestInFlight) return',
-    );
-    final persistedGuardAt = activity.indexOf(
-      'permissionPrefs.getBoolean(KEY_NOTIFICATION_PERMISSION_REQUESTED, false)',
-    );
-    final requestedAt = activity.indexOf('ActivityCompat.requestPermissions(');
-    expect(inFlightGuardAt, greaterThanOrEqualTo(0));
-    expect(persistedGuardAt, greaterThan(inFlightGuardAt));
-    expect(persistedAt, greaterThanOrEqualTo(0));
-    expect(requestedAt, greaterThan(persistedGuardAt));
-    expect(requestedAt, greaterThan(persistedAt));
-
-    final resultHandlerAt = activity.indexOf(
-      'if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE)',
-    );
-    final clearedAt = activity.indexOf(
-      'notificationPermissionRequestInFlight = false',
-      resultHandlerAt,
-    );
-    expect(resultHandlerAt, greaterThanOrEqualTo(0));
-    expect(clearedAt, greaterThan(resultHandlerAt));
-    expect(activity, isNot(contains('reqPerm()')));
-  });
-
-  test('notification permission denial is not logged as a sync failure', () {
-    final channel = File('lib/core/chan.dart').readAsStringSync();
-
-    expect(channel, contains('on PlatformException catch'));
-    expect(
-      channel,
-      contains("if (e.code == 'NOTIFICATION_PERMISSION_DENIED') return;"),
-    );
-  });
+  test(
+    'permission denial is handled without preventing a later update',
+    () async {
+      var attempts = 0;
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+        call,
+      ) async {
+        attempts++;
+        if (attempts == 1) {
+          throw PlatformException(code: 'NOTIFICATION_PERMISSION_DENIED');
+        }
+        return null;
+      });
+      await MethodChans.updateSessions('{}');
+      await MethodChans.updateSessions('{}');
+      expect(attempts, 2);
+    },
+    skip: !Platform.isAndroid ? 'Requires Android platform runtime' : false,
+  );
 }

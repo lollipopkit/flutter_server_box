@@ -79,10 +79,6 @@ enum LinuxDistro {
     return it;
   }
 
-  /// Where [release] (or the preferred one) is fetched from, on [mirror].
-  String rootfsUrl(String mirror, {RootfsRelease? release}) =>
-      (release ?? preferred).source.urlOn(mirror, defaultMirror);
-
   /// Every release offered, in the order the manifest gives them.
   List<RootfsRelease> get releases => info.releases;
 
@@ -103,7 +99,7 @@ enum LinuxDistro {
   ///
   /// The *package* host, and one per distribution rather than per release:
   /// Ubuntu's suites all live on the same archive. For Alpine and Rocky it
-  /// serves the rootfs too, so [rootfsUrl] builds on it; Ubuntu publishes its
+  /// serves the rootfs too, so [LinuxDistroRelease.source] builds on it; Ubuntu publishes its
   /// base tarballs on `cdimage.ubuntu.com` and its packages on
   /// `archive.ubuntu.com`, and the mirror someone sets is the one they want
   /// packages from.
@@ -141,8 +137,10 @@ enum LinuxDistro {
     return _repositories(mirror, branch);
   }
 
-  ({String path, String content}) _repositories(String mirror, String branch) =>
-      switch (this) {
+  ({String path, String content}) _repositories(
+    String mirror,
+    String branch,
+  ) => switch (this) {
     LinuxDistro.alpine => (
       path: 'etc/apk/repositories',
       content: '$mirror/$branch/main\n$mirror/$branch/community\n',
@@ -175,7 +173,7 @@ enum LinuxDistro {
   };
 }
 
-/// How the bytes at [LinuxDistro.rootfsUrl] are compressed.
+/// How the bytes at [LinuxDistroRelease.source] are compressed.
 ///
 /// Its own axis rather than something read off the file name: what decompresses
 /// a download is a decision the unpacking code has to make before it has a

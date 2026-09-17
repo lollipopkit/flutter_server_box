@@ -20,8 +20,8 @@ void main() {
 
   setUp(() async {
     await openTestDb();
-    store = SettingStore('setting_test');
-    migration = SettingsFixupsMigration(store: store);
+    store = SettingStore.instance;
+    migration = SettingsFixupsMigration();
   });
 
   tearDown(closeTestDb);

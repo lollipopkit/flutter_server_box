@@ -3,7 +3,7 @@
 /// Commands answer at once or not at all; transfers are bounded by the gap
 /// between bytes. Five seconds of silence on a slow link is not a stall.
 /// Both SFTP and SCP backends therefore floor their stream timeout at 60s
-/// (see SftpIdleWatchdog.minIdle).
+/// through this shared bound.
 library;
 
 const kMinTransferStreamTimeout = Duration(seconds: 60);

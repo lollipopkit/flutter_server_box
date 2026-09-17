@@ -25,12 +25,8 @@ import 'package:sqlite3/sqlite3.dart';
 /// TODO: delete this step and the `known_host` table together, once no install
 /// can still be carrying rows in it.
 class KnownHostsToSettingsMigration implements SchemaMigration {
-  const KnownHostsToSettingsMigration({SettingStore? store}) : _store = store;
+  const KnownHostsToSettingsMigration();
 
-  /// Which store to convert. Null is the app's own; a test hands in a
-  /// caller-provided one, since the singleton is bound to the real store name and an
-  /// in-memory database has no rows under it.
-  final SettingStore? _store;
 
   static const appliedAt = 12;
 
@@ -43,7 +39,7 @@ class KnownHostsToSettingsMigration implements SchemaMigration {
 
   @override
   Future<void> apply() async {
-    final store = _store ?? SettingStore.instance;
+    final store = SettingStore.instance;
 
     final rows = _db.select(
       'SELECT server_id, key_type, fingerprint FROM known_host;',

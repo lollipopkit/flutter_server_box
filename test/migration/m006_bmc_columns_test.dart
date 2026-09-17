@@ -2,13 +2,15 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m006_bmc_columns.dart';
 
+import '../helpers/test_db.dart';
+
 /// The columns the step adds to `server`. The account itself is a table, not a
 /// column: see `BmcCredential`.
 const _added = ['bmc_addr', 'bmc_cert_sha256', 'bmc_cred_id'];
 
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// The v6 shape: everything up to the monitor plaintext opt-in, and no BMC.
   void createV6Server() {

@@ -34,18 +34,6 @@ class SchemaTooNewPage extends StatefulWidget {
 
   final SchemaTooNewException err;
 
-  /// Stands in for the share sheet in tests.
-  ///
-  /// `Pfs.sharePaths` *reveals* the file on desktop — `Process.run('open',
-  /// ['--reveal', ...])` — so a suite run on a developer's machine pops a
-  /// Finder window per test, and on Linux CI spawns something that may not
-  /// exist. It is also the only moment the copy exists: the directory holding
-  /// it is temporary and goes as soon as the share returns, so a test that
-  /// wants to look at the file has to look from here. Nothing in a shipped
-  /// build assigns this.
-  @visibleForTesting
-  static Future<void> Function(String path)? shareForTest;
-
   @override
   State<SchemaTooNewPage> createState() => _SchemaTooNewPageState();
 }
@@ -222,12 +210,7 @@ extension _Actions on _SchemaTooNewPageState {
       final path = dir.path.joinPath(_outName(suffix));
       // Awaited: it runs on its own isolate, so the page keeps drawing.
       await DbRescue.exportTo(path, password: password);
-      final share = SchemaTooNewPage.shareForTest;
-      if (share != null) {
-        await share(path);
-      } else {
-        await Pfs.sharePaths(paths: [path], title: libL10n.backup);
-      }
+      await Pfs.sharePaths(paths: [path], title: libL10n.backup);
     } catch (e, s) {
       Loggers.app.warning('Rescue export failed', e, s);
       if (mounted) {

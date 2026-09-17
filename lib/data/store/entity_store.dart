@@ -28,7 +28,7 @@ class DuplicateNameException implements Exception {
 class SyncedTable {
   const SyncedTable(this.table, {this.idColumn = 'id'});
 
-  /// One of `Tables.syncRoots`.
+  /// One of `the synchronized root tables`.
   final String table;
 
   /// The column a row is addressed by, and what a tombstone records.
@@ -121,7 +121,7 @@ class SyncedTable {
 /// Change notification replaces what `box.watch()` and `SqliteStore.watch()`
 /// gave: SQLite has no change feed, so writes announce themselves.
 abstract class EntityStore<T extends Object> {
-  /// The table this store owns, one of `Tables.syncRoots`.
+  /// The table this store owns, one of `the synchronized root tables`.
   ///
   /// A getter rather than a constructor argument: the name is fixed by the
   /// schema Drift owns, so there is nothing for a caller to choose.

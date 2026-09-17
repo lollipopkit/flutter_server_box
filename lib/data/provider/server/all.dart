@@ -287,20 +287,6 @@ class ServersNotifier extends _$ServersNotifier {
 
   bool get isAutoRefreshOn => state.autoRefreshTimer != null;
 
-  void setDisconnected() {
-    for (final serverId in state.servers.keys) {
-      final serverNotifier = ref.read(serverProvider(serverId).notifier);
-      serverNotifier.updateConnection(ServerConn.disconnected);
-
-      // Update SSH session status to disconnected
-      final sessionId = 'ssh_$serverId';
-      TermSessionManager.updateStatus(
-        sessionId,
-        TermSessionStatus.disconnected,
-      );
-    }
-  }
-
   void closeServer({String? id}) {
     if (id == null) {
       for (final serverId in state.servers.keys) {
@@ -431,70 +417,6 @@ class ServersNotifier extends _$ServersNotifier {
     final sessionId = 'ssh_$id';
     TermSessionManager.remove(sessionId);
 
-    bakSync.sync(milliDelay: 1000);
-  }
-
-  Future<void> deleteAll() => _mutate(_deleteAll);
-
-  Future<void> _deleteAll() async {
-    final serverIds = state.servers.keys.toList();
-
-    for (final id in serverIds) {
-      await ref.read(remoteDesktopSessionsProvider.notifier).closeForServer(id);
-    }
-
-    // Remove all SSH sessions before clearing servers
-    for (final id in serverIds) {
-      final sessionId = 'ssh_$id';
-      TermSessionManager.remove(sessionId);
-    }
-
-    // Revoke every one first, while the records are still there to
-    // authenticate with; the single push comes after the store is empty.
-    //
-    // All at once, because one at a time made an unreachable agent cost the
-    // whole ten-second connect timeout and the next server wait behind it —
-    // a confirmed "delete everything" sat there for `2N` timeouts with
-    // nothing on screen explaining why. Both calls swallow their own errors,
-    // so this settles whatever the agents answer.
-    await Future.wait([
-      for (final spi in state.servers.values) ...[
-        WatchSync.instance.revokeServer(spi),
-        WidgetSync.instance.revokeServer(spi),
-      ],
-    ]);
-    for (final id in serverIds) {
-      await _clearServerData(id);
-    }
-    final bool cleared;
-    try {
-      cleared = await Stores.server.clear();
-    } catch (e, s) {
-      Loggers.app.warning('Failed to clear servers', e, s);
-      return;
-    }
-    if (!cleared) {
-      Loggers.app.warning('Failed to clear servers');
-      return;
-    }
-    Stores.setting.serverOrder.put([]);
-    state = const ServersState();
-    // One push, once the store is empty. Pushing per server inside the loop
-    // above would rebuild from a store that still held the rest and re-issue
-    // tokens for servers on their way out.
-    await WatchSync.instance.push();
-    await WidgetSync.instance.push();
-    await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
-    for (final id in serverIds) {
-      ref.invalidate(serverProvider(id));
-      forgetHostKeyFingerprints(id);
-      // The rows went with the servers — the foreign key cascades — but the
-      // map this store keeps in memory did not, so a list drawn afterwards
-      // read a mark for a server that no longer exists. `delServer` does the
-      // same for the one it deletes.
-      Stores.serverDist.remove(id);
-    }
-    ref.read(serverSelectionProvider.notifier).select(null);
     bakSync.sync(milliDelay: 1000);
   }
 
