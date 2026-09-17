@@ -5,6 +5,8 @@ import 'package:server_box/data/store/migrations/m014_ssh_file_transport.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
 
+import '../helpers/test_db.dart';
+
 /// The step that gives `server` somewhere to record which protocol carries its
 /// files.
 ///
@@ -14,7 +16,7 @@ import 'package:server_box/data/store/tables.dart';
 /// the builds that wrote those rows, none of which could do anything else.
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// The v14 shape: the current one, less the column this step adds.
   ///

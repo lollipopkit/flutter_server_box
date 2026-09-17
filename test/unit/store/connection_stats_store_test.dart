@@ -37,7 +37,7 @@ void main() {
     await store.init();
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   ConnectionStat stat(
     String serverId, {

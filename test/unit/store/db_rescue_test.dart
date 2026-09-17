@@ -25,6 +25,8 @@ import 'package:server_box/core/utils/db_rescue.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../../helpers/test_db.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -57,7 +59,7 @@ void main() {
     await SqliteDb.open(dbDir.path);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// Rows a newer build would have written: a table with no counterpart in this
   /// one, an index on it, and a blob — the shapes a model-driven backup drops.

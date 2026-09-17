@@ -2,6 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m007_private_key_comment.dart';
 
+import '../helpers/test_db.dart';
+
 /// The step that gives `private_key` somewhere to put a label.
 ///
 /// It gets one pass over a user's records and is not repeatable, so the thing
@@ -10,7 +12,7 @@ import 'package:server_box/data/store/migrations/m007_private_key_comment.dart';
 /// lose a key.
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// The v7 shape.
   ///

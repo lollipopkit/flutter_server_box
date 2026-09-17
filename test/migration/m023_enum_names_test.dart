@@ -7,6 +7,8 @@ import 'package:server_box/data/store/migrations/m023_enum_names.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 /// Two settings held an enum as `Enum.index`. An index means whatever the
 /// build reading it says it means, and cases have been removed from
 /// `ServerFuncBtn` — each removal shifting every value after it, silently,
@@ -22,7 +24,7 @@ void main() {
       store = SettingStore('setting_test');
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     test('is registered as the step after the current schema', () {
       final migration = EnumNamesMigration(store: store);

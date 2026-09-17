@@ -14,7 +14,7 @@ void main() {
     store = AgentConversationStore();
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('round-trips protocol-complete conversation items', () async {
     const command = AskAiCommand(

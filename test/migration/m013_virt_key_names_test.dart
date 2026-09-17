@@ -13,6 +13,8 @@ import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m013_virt_key_names.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   late SettingStore store;
   late VirtKeyNamesMigration migration;
@@ -23,7 +25,7 @@ void main() {
     migration = VirtKeyNamesMigration(store: store);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('it is the step that follows the one before it', () {
     expect(migration.from, 13);

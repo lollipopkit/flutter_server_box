@@ -103,7 +103,7 @@ void main() {
       keys = PrivateKeyStore();
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     /// One row of the shape m004 reads: the key-value layout m003 leaves.
     void seed(String store, String key, Map<String, Object?> value) {

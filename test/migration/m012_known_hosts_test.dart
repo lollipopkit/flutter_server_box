@@ -14,6 +14,8 @@ import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/tables.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -31,7 +33,7 @@ void main() {
     migration = KnownHostsToSettingsMigration(store: store);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   void seedServer(String id) => SqliteDb.instance.execute(
     'INSERT INTO server (id, name, ssh_ip, ssh_port, ssh_user, ssh_pwd, '

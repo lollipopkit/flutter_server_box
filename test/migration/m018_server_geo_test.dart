@@ -2,11 +2,13 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m018_server_geo.dart';
 
+import '../helpers/test_db.dart';
+
 const _added = ['geo_lat', 'geo_lon'];
 
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// The v18 shape, as far as this step is concerned: a `server` table with
   /// nothing on it about where the machine is.

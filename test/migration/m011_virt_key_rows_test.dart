@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   late SettingStore store;
   late VirtKeyRowsMigration migration;
@@ -21,7 +23,7 @@ void main() {
     migration = VirtKeyRowsMigration(store: store);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('it is the step that follows the one before it', () {
     expect(migration.from, 11);

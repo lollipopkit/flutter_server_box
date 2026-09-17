@@ -6,6 +6,8 @@ import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 /// The path completion used to insert `v1` into any address that did not have
 /// it. Removing the guess is what fixes #1465 — and would break every address
 /// that was working because of it, with a 404 and nothing to say why. This
@@ -69,7 +71,7 @@ void main() {
       store = SettingStore('setting_test');
     });
 
-    tearDown(SqliteDb.close);
+    tearDown(closeTestDb);
 
     test('is registered as the step after the current schema', () {
       final migration = AiEndpointVersionMigration(store: store);

@@ -117,7 +117,7 @@ void main() {
     );
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('renaming moves every dependent row in one committed state', () async {
     // Prime the caches that a raw foreign-key update used to leave stale.

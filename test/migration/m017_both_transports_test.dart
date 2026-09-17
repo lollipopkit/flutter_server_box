@@ -18,9 +18,11 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   setUp(SqliteDb.openInMemory);
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// The v17 shape: the current one, less the column this step adds and with
   /// the exclusivity check it relaxes put back.

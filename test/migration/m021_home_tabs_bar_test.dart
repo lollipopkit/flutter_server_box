@@ -6,6 +6,8 @@ import 'package:server_box/data/store/migrations/m021_home_tabs_bar.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/setting.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   late SettingStore store;
   late HomeTabsBarMigration migration;
@@ -16,7 +18,7 @@ void main() {
     migration = HomeTabsBarMigration(store: store);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   test('is registered as the step after the current schema', () {
     expect(migration.from, 21);

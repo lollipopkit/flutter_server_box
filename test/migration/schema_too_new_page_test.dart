@@ -21,6 +21,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/deny_file_deletion.dart';
 
+import '../helpers/test_db.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -59,7 +61,7 @@ void main() {
     await SqliteDb.open(dbDir.path);
   });
 
-  tearDown(SqliteDb.close);
+  tearDown(closeTestDb);
 
   /// Paths handed to the share sheet, and what was in the file at that moment.
   ///
