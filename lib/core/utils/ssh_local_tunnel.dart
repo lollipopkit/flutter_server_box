@@ -44,6 +44,7 @@ class SshLocalTunnel {
   final Set<Future<SshTunnelChannel>> _pendingChannels = {};
   final Set<_TunnelConnection> _connections = {};
   final Set<Future<void>> _bridges = {};
+  final _stopping = Completer<void>();
   final Completer<void> _done = Completer<void>();
   StreamSubscription<Socket>? _subscription;
   Future<void>? _closing;
@@ -116,7 +117,10 @@ class SshLocalTunnel {
       opening = _dialer();
       _pendingChannels.add(opening);
       try {
-        channel = await opening.timeout(const Duration(seconds: 15));
+        channel = await Future.any([
+          opening,
+          _stopping.future.then<SshTunnelChannel>((_) => throw StateError('Tunnel closed')),
+        ]).timeout(const Duration(seconds: 15));
       } on TimeoutException {
         // A direct-tcpip open cannot be cancelled through dartssh2. If it
         // completes after the timeout (or after close), close the channel as
@@ -124,6 +128,11 @@ class SshLocalTunnel {
         unawaited(
           opening.then<void>((lateChannel) => lateChannel.close()).catchError((_) {}),
         );
+        rethrow;
+      } catch (_) {
+        if (_closed) {
+          unawaited(opening.then<void>((lateChannel) => lateChannel.close()).catchError((_) {}));
+        }
         rethrow;
       } finally {
         _pendingChannels.remove(opening);
@@ -169,6 +178,7 @@ class SshLocalTunnel {
 
   Future<void> _close() async {
     _closed = true;
+    _stopping.complete();
     await _subscription?.cancel();
     await _listener.close();
 
@@ -217,8 +227,8 @@ class _TunnelConnection {
   bool _closed = false;
 
   Future<void> pipe() => Future.wait([
-    channel.stream.pipe(socket).catchError((_) {}),
-    socket.cast<List<int>>().pipe(channel.sink).catchError((_) {}),
+    channel.stream.pipe(socket).catchError((_) => close()),
+    socket.cast<List<int>>().pipe(channel.sink).catchError((_) => close()),
   ]);
 
   Future<void> close() async {

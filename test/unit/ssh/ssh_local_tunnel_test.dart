@@ -87,8 +87,9 @@ void main() {
       await dialStarted.future.timeout(const Duration(seconds: 1));
 
       final closing = tunnel.close();
-      channelReady.complete(channel);
       await closing.timeout(const Duration(seconds: 1));
+      channelReady.complete(channel);
+      await channel.closedSignal.future.timeout(const Duration(seconds: 1));
       socket.destroy();
 
       expect(channel.closed, isTrue);
@@ -99,6 +100,29 @@ void main() {
       await rebound.close();
     },
   );
+  test('a channel stream error releases both directions', () async {
+    final ready = Completer<_FailureChannel>();
+    final tunnel = await SshLocalTunnel.bindWithDialer(
+      bindHost: InternetAddress.loopbackIPv4.address,
+      sshDone: Completer<void>().future,
+      dialer: () async {
+        final channel = _FailureChannel();
+        ready.complete(channel);
+        return channel;
+      },
+    );
+    addTearDown(tunnel.close);
+    final socket = await Socket.connect(tunnel.address, tunnel.port);
+    addTearDown(socket.destroy);
+    final ended = socket.drain<void>();
+    final channel = await ready.future;
+    // Wait for pipe to subscribe, while the local-to-SSH direction stays open.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    channel._controller.addError(const SocketException('SSH stream failed'));
+    await channel.closedSignal.future.timeout(const Duration(seconds: 1));
+    await ended.timeout(const Duration(seconds: 1));
+  });
+
 }
 
 Future<List<int>> _echo(Socket socket, List<int> bytes) async {
@@ -112,6 +136,7 @@ class _EchoChannel implements SshTunnelChannel {
   final StreamController<List<int>> _controller =
       StreamController<List<int>>.broadcast();
   bool closed = false;
+  final closedSignal = Completer<void>();
 
   @override
   Stream<List<int>> get stream => _controller.stream;
@@ -123,6 +148,13 @@ class _EchoChannel implements SshTunnelChannel {
   Future<void> close() async {
     if (closed) return;
     closed = true;
+    closedSignal.complete();
     await _controller.close();
   }
+}
+
+class _FailureChannel extends _EchoChannel {
+  final input = StreamController<List<int>>()..stream.listen((_) {});
+  @override
+  StreamSink<List<int>> get sink => input.sink;
 }
