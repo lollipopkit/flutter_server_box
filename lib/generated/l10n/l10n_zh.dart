@@ -2199,6 +2199,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noData => '无数据';
 
   @override
+  String get from => '起';
+
+  @override
+  String get to => '止';
+
+  @override
+  String get beyondRetention => '超出这个 agent 保留的范围';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent 保留 $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '最早的采样在 $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '区间的结束必须晚于开始。';
+
+  @override
+  String get samples => '采样';
+
+  @override
   String get unavailable => '不可用';
 
   @override
@@ -4833,6 +4858,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noData => '無資料';
+
+  @override
+  String get from => '起';
+
+  @override
+  String get to => '迄';
+
+  @override
+  String get beyondRetention => '超出這個 agent 保留的範圍';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent 保留 $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '最早的取樣在 $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '區間的結束必須晚於開始。';
+
+  @override
+  String get samples => '取樣';
 
   @override
   String get unavailable => '無法取得';

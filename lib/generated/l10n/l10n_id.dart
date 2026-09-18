@@ -2389,6 +2389,31 @@ class AppLocalizationsId extends AppLocalizations {
   String get noData => 'tidak ada data';
 
   @override
+  String get from => 'Dari';
+
+  @override
+  String get to => 'Sampai';
+
+  @override
+  String get beyondRetention => 'lebih lama dari yang disimpan agen ini';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agen menyimpan $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'sampel terlama $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => 'Akhir rentang harus setelah awalnya.';
+
+  @override
+  String get samples => 'sampel';
+
+  @override
   String get unavailable => 'tidak tersedia';
 
   @override

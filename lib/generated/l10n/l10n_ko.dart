@@ -2281,6 +2281,31 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noData => '데이터 없음';
 
   @override
+  String get from => '시작';
+
+  @override
+  String get to => '끝';
+
+  @override
+  String get beyondRetention => '이 agent가 보관한 범위 밖';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent 보관 기간 $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '가장 오래된 샘플 $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '범위의 끝은 시작보다 뒤여야 합니다.';
+
+  @override
+  String get samples => '샘플';
+
+  @override
   String get unavailable => '사용할 수 없음';
 
   @override

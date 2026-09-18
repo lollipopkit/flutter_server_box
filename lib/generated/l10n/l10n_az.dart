@@ -2401,6 +2401,32 @@ class AppLocalizationsAz extends AppLocalizations {
   String get noData => 'məlumat yoxdur';
 
   @override
+  String get from => 'Başlanğıc';
+
+  @override
+  String get to => 'Son';
+
+  @override
+  String get beyondRetention => 'bu agentin saxladığından uzaq';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent $kept saxlayır';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'ən köhnə ölçmə $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Aralığın sonu başlanğıcından sonra olmalıdır.';
+
+  @override
+  String get samples => 'ölçmə';
+
+  @override
   String get unavailable => 'mövcud deyil';
 
   @override

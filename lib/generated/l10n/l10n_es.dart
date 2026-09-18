@@ -2420,6 +2420,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noData => 'sin datos';
 
   @override
+  String get from => 'Desde';
+
+  @override
+  String get to => 'Hasta';
+
+  @override
+  String get beyondRetention => 'más atrás de lo que este agente guardó';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'El agente guarda $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'muestra más antigua $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'El fin del intervalo debe ser posterior a su inicio.';
+
+  @override
+  String get samples => 'muestras';
+
+  @override
   String get unavailable => 'no disponible';
 
   @override

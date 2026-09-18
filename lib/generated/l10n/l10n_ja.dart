@@ -2274,6 +2274,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noData => 'データなし';
 
   @override
+  String get from => '開始';
+
+  @override
+  String get to => '終了';
+
+  @override
+  String get beyondRetention => 'この agent の保持期間より前';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent の保持期間は $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '最も古い取得は $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '範囲の終了は開始より後である必要があります。';
+
+  @override
+  String get samples => 'サンプル';
+
+  @override
   String get unavailable => '取得できません';
 
   @override

@@ -721,6 +721,22 @@ struct CapabilitiesView {
     /// This agent's own version, so a client can say which one it is talking
     /// to — and tell an old one apart from a misconfigured one.
     version: &'static str,
+    /// How far back this agent is configured to keep readings, in days.
+    ///
+    /// What a client can ask for is this, not a number it decided: an agent
+    /// keeping three days and one keeping ninety are both ordinary, and a
+    /// client offering "30 d" to the first draws an empty chart and calls it a
+    /// machine that was idle.
+    retention_days: u32,
+    /// The instant of the oldest reading still stored, or absent on an agent
+    /// that has none.
+    ///
+    /// The other half of the answer, and the one that is true rather than
+    /// intended: retention says what is not deleted, this says what was
+    /// actually collected — an agent started yesterday under a 90-day policy
+    /// has a day.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    oldest_sample: Option<String>,
     remote_access: RemoteAccessView,
 }
 
@@ -746,10 +762,29 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
     let platform = monitoring::system_type();
     let capabilities = monitoring::effective_capabilities(platform);
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    // Indexed by timestamp, so this is a seek rather than a scan. Failure is
+    // not fatal to the answer: a client that cannot learn the oldest sample
+    // falls back to offering the fixed windows, which is what it did before
+    // this field existed.
+    let oldest_sample: Option<String> =
+        sqlx::query_scalar("SELECT min(timestamp) FROM system_metrics")
+            .fetch_one(&app_state.db)
+            .await
+            .unwrap_or(None);
     Ok(HttpResponse::Ok().json(&CapabilitiesView {
         capabilities,
         platform,
         version: env!("CARGO_PKG_VERSION"),
+        // The default is what the agent itself falls back to when the section
+        // is absent, so a client is told the policy in force rather than that
+        // there is none.
+        retention_days: app_state
+            .config
+            .get_monitoring()
+            .data_retention
+            .unwrap_or_default()
+            .metrics_days,
+        oldest_sample,
         remote_access: RemoteAccessView {
             terminal: app_state.remote_access.terminal.available(secure),
             full_access: app_state.full_access_allowed(secure),
@@ -1093,10 +1128,18 @@ struct HistoryPoint {
 
 /// Bucketed time series from system_metrics.
 ///
-/// `?minutes=` selects the window (default 60, clamped to 5..=10080) and
-/// `?max_points=` how many points to answer with (default 300, clamped to
-/// 2..=300). Rows are averaged into that many buckets and network rates are
-/// derived from consecutive cumulative counters.
+/// `?minutes=` selects a window ending now (default 60, clamped to 5..=10080),
+/// or `?from=` and `?to=` name one outright, as epoch seconds — `to` defaults
+/// to now, and `minutes` is ignored when `from` is given. `?max_points=` says
+/// how many points to answer with (default 300, clamped to 2..=300). Rows are
+/// averaged into that many buckets and network rates are derived from
+/// consecutive cumulative counters.
+///
+/// An explicit window is not clamped to the `minutes` ceiling. A client asking
+/// for more than this agent kept is not a client to correct: it gets the rows
+/// there are, and the gap between what it asked for and what came back is
+/// something only it can draw. Silently narrowing the window would report a
+/// full one.
 ///
 /// The count is the caller's to pick because it is a property of what is
 /// drawing the result, not of what is stored: a home widget a few hundred
@@ -1111,9 +1154,46 @@ async fn get_metrics_history(
     require_read_access!(&req, &app_state);
 
     let query = req.query_string();
-    let minutes: i64 = query_param(query, "minutes")
-        .unwrap_or(60)
-        .clamp(5, 7 * 24 * 60);
+    let now = chrono::Utc::now();
+    // Both bounds are bound as `DateTime<Utc>`, so sqlx encodes them with the
+    // same RFC 3339 form `store_metrics` writes the column with and the
+    // comparison is between values of one shape.
+    //
+    // It was `datetime('now', '-N minutes')`, whose output is
+    // `2026-09-08 07:28:22` while the column holds
+    // `2026-09-08T08:28:18.493098803+00:00`. Both are text, so SQLite compares
+    // them as text, and `'T'` sorts above `' '`: every row sharing the
+    // boundary's *date* compared greater regardless of its time. The window
+    // was therefore "since midnight UTC" whenever that was the longer of the
+    // two — 4255 rows scanned for a 60-minute window holding 496, and the
+    // factor grows through the UTC day to 24x.
+
+    // The window, as either of the two ways of naming one.
+    let (cutoff, until) = match query_param::<i64>(query, "from") {
+        Some(from) => {
+            let to = query_param::<i64>(query, "to").unwrap_or(now.timestamp());
+            let from = chrono::DateTime::from_timestamp(from, 0);
+            let to = chrono::DateTime::from_timestamp(to, 0);
+            match (from, to) {
+                // Refused rather than swapped or widened: an inverted window is
+                // a caller bug, and answering it with something plausible is
+                // how it stays one.
+                (Some(from), Some(to)) if to > from => (from, Some(to)),
+                _ => {
+                    return Ok(HttpResponse::BadRequest().json(&ErrorResponse {
+                        error: "from/to must be epoch seconds with to > from".to_string(),
+                    }));
+                }
+            }
+        }
+        None => {
+            let minutes: i64 = query_param(query, "minutes")
+                .unwrap_or(60)
+                .clamp(5, 7 * 24 * 60);
+            (now - chrono::Duration::minutes(minutes), None)
+        }
+    };
+    let span_secs = (until.unwrap_or(now) - cutoff).num_seconds().max(1);
 
     /// What this endpoint has always answered with, and still does for a
     /// caller that names no count.
@@ -1127,30 +1207,16 @@ async fn get_metrics_history(
     // and answers with more points than the caller said it could take —
     // `minutes=7&max_points=100` is 4-second buckets and 105 of them.
     // `i64::div_ceil` is still unstable; both operands are positive here.
-    let bucket_secs = ((minutes * 60 + max_points - 1) / max_points).max(1);
+    let bucket_secs = ((span_secs + max_points - 1) / max_points).max(1);
 
-    // Bound as a `DateTime<Utc>`, so sqlx encodes it with the same RFC 3339
-    // form `store_metrics` writes the column with and the comparison is
-    // between two values of one shape.
-    //
-    // It was `datetime('now', '-N minutes')`, whose output is
-    // `2026-09-08 07:28:22` while the column holds
-    // `2026-09-08T08:28:18.493098803+00:00`. Both are text, so SQLite compares
-    // them as text, and `'T'` sorts above `' '`: every row sharing the
-    // boundary's *date* compared greater regardless of its time. The window
-    // was therefore "since midnight UTC" whenever that was the longer of the
-    // two — 4255 rows scanned for a 60-minute window holding 496, and the
-    // factor grows through the UTC day to 24x. The answer still looked right,
-    // because the cap at the end of this function keeps the newest
-    // `max_points` buckets either way; only the work was visible.
-    let cutoff = chrono::Utc::now() - chrono::Duration::minutes(minutes);
 
     use sqlx::Row;
     let rows = sqlx::query(
-        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN swap_total > 0 THEN swap_used * 100.0 / swap_total END) AS swap,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2          GROUP BY bucket ORDER BY bucket",
+        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN swap_total > 0 THEN swap_used * 100.0 / swap_total END) AS swap,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2 AND (?3 IS NULL OR timestamp <= ?3)          GROUP BY bucket ORDER BY bucket",
     )
     .bind(bucket_secs)
     .bind(cutoff)
+    .bind(until)
     .fetch_all(&app_state.db)
     .await?;
 

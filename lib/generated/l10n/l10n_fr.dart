@@ -2420,6 +2420,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noData => 'aucune donnée';
 
   @override
+  String get from => 'Du';
+
+  @override
+  String get to => 'Au';
+
+  @override
+  String get beyondRetention => 'au-delà de ce que cet agent a conservé';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'L\'agent conserve $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'relevé le plus ancien $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'La fin de l\'intervalle doit suivre son début.';
+
+  @override
+  String get samples => 'relevés';
+
+  @override
   String get unavailable => 'indisponible';
 
   @override

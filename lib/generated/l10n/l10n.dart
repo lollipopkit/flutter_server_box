@@ -4144,6 +4144,48 @@ abstract class AppLocalizations {
   /// **'no data'**
   String get noData;
 
+  /// No description provided for @from.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get from;
+
+  /// No description provided for @to.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get to;
+
+  /// No description provided for @beyondRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'beyond what this agent kept'**
+  String get beyondRetention;
+
+  /// No description provided for @agentRetentionFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent keeps {kept}'**
+  String agentRetentionFmt(Object kept);
+
+  /// No description provided for @oldestSampleFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'oldest sample {time}'**
+  String oldestSampleFmt(Object time);
+
+  /// No description provided for @rangeEndsBeforeItStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'The end of the range has to be after its start.'**
+  String get rangeEndsBeforeItStarts;
+
+  /// No description provided for @samples.
+  ///
+  /// In en, this message translates to:
+  /// **'samples'**
+  String get samples;
+
   /// No description provided for @unavailable.
   ///
   /// In en, this message translates to:

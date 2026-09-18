@@ -201,6 +201,14 @@ Keys and tokens already in the file — a ServerChan key, a Bark key, an iOS pus
 
 If the agent must be reachable from another device, use HTTPS: configure built-in TLS with `[server.tls]`, or put the agent behind a reverse proxy. The App supports self-signed certificates when you explicitly enable that option.
 
+## How far back the App can ask
+
+The chart on a server's detail page draws the window you pick, and which windows are offered comes from the agent rather than from the App. `GET /api/v1/capabilities` reports `retention_days` — `[monitoring.data_retention] metrics_days`, what will not be deleted — and `oldest_sample`, the oldest reading actually stored. The App offers the presets that fall inside the later of the two, greys out the ones that do not, and shows both numbers at the bottom of its range picker.
+
+Beside the presets it can name a window outright, which reaches the agent as `GET /api/v1/metrics/history?from=<epoch seconds>&to=<epoch seconds>`. A window reaching back further than the agent kept is answered with the rows there are rather than with an error or a narrower window: the difference is drawn as a gap in the chart, and an agent that quietly moved the start would report a full window. `?minutes=` still works and is what an agent predating `from`/`to` receives.
+
+An agent too old to report retention is offered the fixed windows, as before.
+
 ## Panel credentials
 
 The user and password that the App and the web panel sign in with are rows in the agent's SQLite database, not settings in `config.toml`. `jwt_secret` in that file signs session tokens; it is not a login password.

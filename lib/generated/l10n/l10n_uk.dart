@@ -2404,6 +2404,32 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noData => 'немає даних';
 
   @override
+  String get from => 'Від';
+
+  @override
+  String get to => 'До';
+
+  @override
+  String get beyondRetention => 'далі, ніж зберігає цей агент';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Агент зберігає $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'найстаріший замір $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Кінець діапазону має бути пізніше за початок.';
+
+  @override
+  String get samples => 'замірів';
+
+  @override
   String get unavailable => 'недоступно';
 
   @override

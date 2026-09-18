@@ -114,6 +114,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// Absent means [_Devices.defaults], which is what a page opens on.
   final _devicePick = <_MetricKind, Set<String>>{};
 
+  /// The window the chart draws when the reader named one outright, and what
+  /// came back for it.
+  ///
+  /// Wins over [_range] while it is set: the presets are the common windows,
+  /// not the only ones an agent can answer for, and what it keeps is the
+  /// agent's to say — see `MonitorCapabilities.historyFrom`.
+  ({DateTime from, DateTime to})? _custom;
+  _RangeAnswer? _customAnswer;
+  // ignore: prefer_final_fields — set through `_rebuild` from an extension.
+  bool _customBusy = false;
+
   /// The window the chart draws, and what has been fetched for it.
   _HistoryRange _range = _HistoryRange.live;
   /// What a range answered, and when it was asked.

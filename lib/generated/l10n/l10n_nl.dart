@@ -2401,6 +2401,32 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noData => 'geen gegevens';
 
   @override
+  String get from => 'Van';
+
+  @override
+  String get to => 'Tot';
+
+  @override
+  String get beyondRetention => 'verder terug dan deze agent bewaarde';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent bewaart $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'oudste meting $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Het einde van het bereik moet na het begin liggen.';
+
+  @override
+  String get samples => 'metingen';
+
+  @override
   String get unavailable => 'niet beschikbaar';
 
   @override

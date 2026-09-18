@@ -590,7 +590,9 @@ extension on _ServerDetailPageState {
     }
     return [
       if (peak != null) (k: l10n.peak, v: _rate(peak)),
-      (k: l10n.window, v: _range.label),
+      // The length of the window, not its name: a named one has no short name
+      // and its two timestamps are the header's business.
+      (k: l10n.window, v: _windowLength()),
     ];
   }
 }
@@ -746,6 +748,10 @@ extension on _ServerDetailPageState {
   /// The window the chart is drawing, which is either what this app has seen
   /// or what the agent answered for the chosen range.
   _Window _window(ServerState si) {
+    if (_custom != null) {
+      final answer = _customAnswer;
+      return answer == null ? const _Window() : _Window.of(answer.samples);
+    }
     final minutes = _range.minutes;
     if (minutes == null) return _Window.live(si.status.history);
     final answer = _rangeWindows[_range];
@@ -795,6 +801,20 @@ extension on _ServerDetailPageState {
     if (times.isEmpty) return (window: null, bands: const []);
     final first = times.first;
     final last = times.last;
+
+    if (_custom case final window?) {
+      final from = window.from.millisecondsSinceEpoch;
+      final to = window.to.millisecondsSinceEpoch;
+      // One bucket of tolerance, as below: the agent averages the window into
+      // at most `_kRangePoints` of them.
+      final bucket = (to - from) ~/ _kRangePoints;
+      return (
+        window: (from: from, to: to),
+        bands: first - from > bucket * 2
+            ? [(from: from, to: first, label: l10n.noDataBeforeFmt(_clockOf(first)))]
+            : const [],
+      );
+    }
 
     final minutes = _range.minutes;
     if (minutes == null) {
@@ -887,6 +907,11 @@ extension on _ServerDetailPageState {
           k: l10n.stored,
           v: Duration(milliseconds: w.times.last - gap.to).toAgoStr,
         ),
+      // Only for a window the reader named: how dense it came back is a
+      // property of that window, while a preset's density is the same every
+      // time and worth no line.
+      if (_custom != null && w.times.isNotEmpty)
+        (k: l10n.samples, v: '${w.times.length}'),
     ];
     final device = _buildDeviceControl(si, m);
     // Two groups with the room between them, not five children sharing it:
@@ -1009,7 +1034,7 @@ extension on _ServerDetailPageState {
                 children: [
                   Flexible(
                     child: Text(
-                      _historyNote(si),
+                      _historyNote(si, wide: false),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: UIs.text11Grey,
@@ -1067,10 +1092,10 @@ extension on _ServerDetailPageState {
     }
     // Only the chart waits. The range is a question about the chart, and the
     // headline and the rows below go on being what the machine is doing now.
-    if (_rangeBusy.contains(_range)) {
+    if (_customBusy || (_custom == null && _rangeBusy.contains(_range))) {
       return _buildChartNotice(
         height,
-        l10n.loadingRangeFmt(_range.label),
+        l10n.loadingRangeFmt(_rangeLabel(wide: true)),
         waiting: true,
       );
     }
@@ -1508,12 +1533,37 @@ extension on _ServerDetailPageState {
   /// Where the window on screen comes from. A server with no agent has only
   /// what this app has watched since it connected, which is worth saying
   /// before someone reads a flat line as a quiet machine.
-  String _historyNote(ServerState si) {
+  String _historyNote(ServerState si, {bool wide = true}) {
     // What the window is worth saying before where it came from: a page whose
     // newest sample is minutes old is the one fact the reader needs first.
     if (_staleSince(si) case final at?) return l10n.lastSampleFmt(at.toAgoStr());
+    // Narrow, the header's chip holds only the window's length, so this line
+    // is where its two ends fit.
+    if (!wide && _custom != null) return _rangeLabel(wide: true);
     if (!si.capabilities.storedHistory) return l10n.historySinceConnect;
     return l10n.historyStored;
+  }
+
+  /// How long the window on screen is, however it was named.
+  String _windowLength() {
+    final window = _custom;
+    if (window == null) return _range.label;
+    return window.to.difference(window.from).toAgoStr;
+  }
+
+  /// What the chart's window is called.
+  ///
+  /// A named window says its own start and end where there is room for them —
+  /// which is what a reader who typed them in is looking for — and its length
+  /// where there is not: 27 characters of timestamps decide the width of a
+  /// header that has to stay one line.
+  String _rangeLabel({required bool wide}) {
+    final window = _custom;
+    if (window == null) return _range.label;
+    final span = window.to.difference(window.from).toAgoStr;
+    if (!wide) return span;
+    return '${_clockOf(window.from.millisecondsSinceEpoch)} – '
+        '${_clockOf(window.to.millisecondsSinceEpoch)}';
   }
 
   /// The ranges, and the way to the ones that are not here.
@@ -1524,8 +1574,11 @@ extension on _ServerDetailPageState {
   Widget _buildRangeChips(ServerState si, {required bool wide}) {
     final stored = si.capabilities.storedHistory;
     final scheme = Theme.of(context).colorScheme;
+    final custom = _custom;
     final selected = _range;
-    final inline = wide
+    final inline = custom != null
+        ? const <_HistoryRange>[]
+        : wide
         ? [
             ..._HistoryRange.inline,
             if (!_HistoryRange.inline.contains(selected)) selected,
@@ -1571,6 +1624,34 @@ extension on _ServerDetailPageState {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final range in inline) ...[chip(range), const SizedBox(width: 3)],
+          // The window the reader named, in the place the presets would be:
+          // it is what the chart is showing, and leaving a preset highlighted
+          // beside it would say the chart is showing that instead.
+          if (custom != null)
+            Material(
+              color: scheme.secondaryContainer,
+              shape: const StadiumBorder(),
+              child: InkWell(
+                customBorder: const StadiumBorder(),
+                onTap: () => _showRangePicker(si),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    _rangeLabel(wide: wide),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: scheme.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (custom != null) const SizedBox(width: 3),
           InkWell(
             customBorder: const StadiumBorder(),
             onTap: () => _showRangePicker(si),
@@ -1579,7 +1660,9 @@ extension on _ServerDetailPageState {
               child: Icon(
                 Icons.date_range,
                 size: 16,
-                color: UIs.textGrey.color,
+                color: custom != null
+                    ? scheme.onSecondaryContainer
+                    : UIs.textGrey.color,
               ),
             ),
           ),
@@ -1588,22 +1671,196 @@ extension on _ServerDetailPageState {
     );
   }
 
+  /// Every window this agent can answer for, and the two fields for one it
+  /// has not been asked for yet.
+  ///
+  /// The presets are the common windows, not the limit: which of them are
+  /// offered is decided by what the agent said it keeps, and the line at the
+  /// bottom is that answer in full. Writing "24 h" into the app and hoping
+  /// would draw an empty chart on an agent keeping three hours and call it a
+  /// quiet machine.
   Future<void> _showRangePicker(ServerState si) async {
     final stored = si.capabilities.storedHistory;
-    final picked = await showRowsSheet<_HistoryRange>(
+    final caps = si.agentCapabilities;
+    final earliest = caps?.historyFrom;
+    final scheme = Theme.of(context).colorScheme;
+
+    // What the fields start at: the window on screen, or the last day.
+    final now = DateTime.now();
+    var from = _custom?.from ?? now.subtract(const Duration(hours: 24));
+    var to = _custom?.to ?? now;
+
+    final picked = await showRowsSheet<({_HistoryRange? preset, bool custom})>(
       context,
       rows: (ctx) => [
-        for (final range in _HistoryRange.values)
-          SheetChoiceTile(
-            title: range.label,
-            selected: range == _range,
-            onTap: stored || range == _HistoryRange.live
-                ? () => Navigator.of(ctx).pop(range)
-                : () => Toast.show(l10n.historyNoStored),
+        StatefulBuilder(
+          builder: (_, setSheetState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final range in _HistoryRange.values)
+                () {
+                  // Beyond what the agent kept, rather than beyond what this
+                  // app offers: the row stays, greyed, with the reason — a
+                  // window that is simply missing reads as a window this app
+                  // decided you could not have.
+                  final minutes = range.minutes;
+                  final beyond =
+                      minutes != null &&
+                      earliest != null &&
+                      now.subtract(Duration(minutes: minutes)).isBefore(earliest);
+                  final offerable =
+                      (stored || range == _HistoryRange.live) && !beyond;
+                  return ListTile(
+                    enabled: offerable,
+                    selected: _custom == null && range == _range,
+                    title: Text(range.label),
+                    subtitle: beyond
+                        ? Text(l10n.beyondRetention, style: UIs.text12Grey)
+                        : null,
+                    trailing: _custom == null && range == _range
+                        ? Icon(Icons.check, color: scheme.primary)
+                        : null,
+                    onTap: offerable
+                        ? () => Navigator.of(
+                            ctx,
+                          ).pop((preset: range, custom: false))
+                        : () => Toast.show(
+                            beyond ? l10n.beyondRetention : l10n.historyNoStored,
+                          ),
+                  );
+                }(),
+              if (stored) ...[
+                const Divider(height: 17, indent: 17, endIndent: 17),
+                for (final bound in [true, false])
+                  ListTile(
+                    leading: const Icon(Icons.event, size: 20),
+                    title: Text(bound ? l10n.from : l10n.to),
+                    trailing: Text(
+                      _clockOf(
+                        (bound ? from : to).millisecondsSinceEpoch,
+                      ),
+                      style: UIs.text13,
+                    ),
+                    onTap: () async {
+                      final at = await _pickInstant(bound ? from : to);
+                      if (at == null) return;
+                      setSheetState(() {
+                        if (bound) {
+                          from = at;
+                        } else {
+                          to = at;
+                        }
+                      });
+                    },
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(17, 7, 17, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Btn.elevated(
+                        text: libL10n.ok,
+                        onTap: () => Navigator.of(
+                          ctx,
+                        ).pop((preset: null, custom: true)),
+                      ),
+                    ],
+                  ),
+                ),
+                // The fact the choice above is made against, said once and in
+                // the agent's own terms: what it keeps, and the oldest reading
+                // it actually has.
+                if (caps != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(17, 13, 17, 5),
+                    child: Text(
+                      [
+                        if (caps.retention case final kept?)
+                          l10n.agentRetentionFmt(kept.toAgoStr),
+                        if (caps.oldestSample case final oldest?)
+                          l10n.oldestSampleFmt(
+                            _clockOf(oldest.millisecondsSinceEpoch),
+                          ),
+                      ].join(' · '),
+                      style: UIs.text11Grey,
+                    ),
+                  ),
+              ],
+            ],
           ),
+        ),
       ],
     );
-    if (picked != null) await _selectRange(picked);
+
+    if (picked == null) return;
+    if (picked.preset case final range?) {
+      _rebuild(() {
+        _custom = null;
+        _customAnswer = null;
+      });
+      await _selectRange(range);
+      return;
+    }
+    if (!to.isAfter(from)) {
+      Toast.show(l10n.rangeEndsBeforeItStarts);
+      return;
+    }
+    await _selectCustom(from, to);
+  }
+
+  /// A day and a time, in that order — the two questions a platform has a
+  /// picker for, rather than a text field that has to be parsed and explained.
+  Future<DateTime?> _pickInstant(DateTime initial) async {
+    final day = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      // A window into readings that do not exist yet is not one to offer, and
+      // the far end is whatever an agent could conceivably have kept.
+      firstDate: DateTime.now().subtract(const Duration(days: 3650)),
+      lastDate: DateTime.now(),
+    );
+    if (day == null || !mounted) return null;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (time == null) return null;
+    return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+  }
+
+  /// Asks the agent for a window nobody has asked for before.
+  ///
+  /// Kept apart from the presets' cache: a named window is asked for once and
+  /// replaced by the next one, while the presets are a fixed set worth keeping
+  /// as the reader moves between them.
+  Future<void> _selectCustom(DateTime from, DateTime to) async {
+    if (!mounted) return;
+    _rebuild(() {
+      _custom = (from: from, to: to);
+      _customAnswer = null;
+      _customBusy = true;
+    });
+    try {
+      final samples = await ref
+          .read(serverProvider(widget.args.spi.id).notifier)
+          .fetchHistoryRange(
+            // Sent as well as `from`/`to` so an agent too old for them answers
+            // with a window of the same length rather than with its default.
+            minutes: to.difference(from).inMinutes.clamp(5, 7 * 24 * 60),
+            maxPoints: _kRangePoints,
+            from: from,
+            to: to,
+          );
+      if (!mounted) return;
+      _rebuild(
+        () => _customAnswer = (samples: samples, at: DateTime.now()),
+      );
+    } catch (e, s) {
+      Loggers.app.warning('History range for ${widget.args.spi.id}', e, s);
+      if (mounted) Toast.error('$e');
+    } finally {
+      _rebuild(() => _customBusy = false);
+    }
   }
 
   /// Asks the agent for the window, once. The answer is kept until the page
@@ -1612,7 +1869,11 @@ extension on _ServerDetailPageState {
   /// a chart nobody is watching change.
   Future<void> _selectRange(_HistoryRange range) async {
     if (!mounted) return;
-    _rebuild(() => _range = range);
+    _rebuild(() {
+      _range = range;
+      _custom = null;
+      _customAnswer = null;
+    });
     final minutes = range.minutes;
     if (minutes == null ||
         _rangeWindows.containsKey(range) ||

@@ -2411,6 +2411,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noData => 'нет данных';
 
   @override
+  String get from => 'С';
+
+  @override
+  String get to => 'По';
+
+  @override
+  String get beyondRetention => 'дальше, чем хранит этот агент';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Агент хранит $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'самый старый замер $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Конец диапазона должен быть позже его начала.';
+
+  @override
+  String get samples => 'замеров';
+
+  @override
   String get unavailable => 'недоступно';
 
   @override

@@ -2383,6 +2383,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noData => 'no data';
 
   @override
+  String get from => 'From';
+
+  @override
+  String get to => 'To';
+
+  @override
+  String get beyondRetention => 'beyond what this agent kept';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent keeps $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'oldest sample $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'The end of the range has to be after its start.';
+
+  @override
+  String get samples => 'samples';
+
+  @override
   String get unavailable => 'unavailable';
 
   @override

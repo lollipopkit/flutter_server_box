@@ -2385,6 +2385,32 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noData => 'veri yok';
 
   @override
+  String get from => 'Başlangıç';
+
+  @override
+  String get to => 'Bitiş';
+
+  @override
+  String get beyondRetention => 'bu agent\'ın sakladığından daha geriye';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent $kept saklıyor';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'en eski ölçüm $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Aralığın bitişi başlangıcından sonra olmalı.';
+
+  @override
+  String get samples => 'ölçüm';
+
+  @override
   String get unavailable => 'kullanılamıyor';
 
   @override

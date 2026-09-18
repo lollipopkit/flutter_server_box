@@ -38,6 +38,8 @@ abstract interface class ServerDataSource {
   Future<List<StatusHistorySample>> fetchHistory({
     int minutes = 60,
     int maxPoints = StatusHistory.capacity,
+    DateTime? from,
+    DateTime? to,
   });
 
   /// Releases transport-owned resources. Safe to call more than once.
