@@ -4576,6 +4576,60 @@ abstract class AppLocalizations {
   /// **'Certificate options belong to https:// and are not shown here.'**
   String get certOptionsHttpsOnly;
 
+  /// No description provided for @behaviour.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour'**
+  String get behaviour;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// No description provided for @optionalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here is needed to connect. Open one and its fields take over the form.'**
+  String get optionalTip;
+
+  /// No description provided for @sshAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH advanced'**
+  String get sshAdvanced;
+
+  /// No description provided for @sshAdvancedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Fallback destination, ProxyCommand, jump server, file transport, remote path'**
+  String get sshAdvancedTip;
+
+  /// No description provided for @appearanceAndPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance & location'**
+  String get appearanceAndPlace;
+
+  /// No description provided for @appearanceAndPlaceTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo, coordinates'**
+  String get appearanceAndPlaceTip;
+
+  /// No description provided for @statusCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Status collection'**
+  String get statusCollection;
+
+  /// No description provided for @statusCollectionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Which commands run, custom commands, which device to read'**
+  String get statusCollectionTip;
+
   /// No description provided for @scheduledTasks.
   ///
   /// In en, this message translates to:

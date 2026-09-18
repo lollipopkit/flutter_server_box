@@ -2653,6 +2653,36 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sertifika seçenekleri https:// içindir ve burada gösterilmez.';
 
   @override
+  String get behaviour => 'Davranış';
+
+  @override
+  String get optional => 'İsteğe bağlı';
+
+  @override
+  String get optionalTip =>
+      'Buradaki hiçbir şey bağlanmak için gerekli değil. Birini açın, alanları formun yerini alsın.';
+
+  @override
+  String get sshAdvanced => 'SSH gelişmiş';
+
+  @override
+  String get sshAdvancedTip =>
+      'Yedek hedef, ProxyCommand, atlama sunucusu, dosya aktarımı, uzak yol';
+
+  @override
+  String get appearanceAndPlace => 'Görünüm ve konum';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, koordinatlar';
+
+  @override
+  String get statusCollection => 'Durum toplama';
+
+  @override
+  String get statusCollectionTip =>
+      'Hangi komutlar çalışır, özel komutlar, hangi aygıt okunur';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

@@ -2544,6 +2544,33 @@ class AppLocalizationsKo extends AppLocalizations {
   String get certOptionsHttpsOnly => '인증서 옵션은 https:// 에 해당하므로 여기에는 표시되지 않습니다.';
 
   @override
+  String get behaviour => '동작';
+
+  @override
+  String get optional => '선택';
+
+  @override
+  String get optionalTip => '여기 있는 것은 연결에 필요하지 않습니다. 하나를 열면 그 항목이 양식을 대신합니다.';
+
+  @override
+  String get sshAdvanced => 'SSH 고급';
+
+  @override
+  String get sshAdvancedTip => '대체 대상, ProxyCommand, 점프 서버, 파일 전송, 원격 경로';
+
+  @override
+  String get appearanceAndPlace => '모양과 위치';
+
+  @override
+  String get appearanceAndPlaceTip => '로고, 좌표';
+
+  @override
+  String get statusCollection => '상태 수집';
+
+  @override
+  String get statusCollectionTip => '실행할 명령, 사용자 명령, 읽을 장치';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

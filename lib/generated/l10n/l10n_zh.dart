@@ -2460,6 +2460,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get certOptionsHttpsOnly => '证书选项属于 https://，这里不显示。';
 
   @override
+  String get behaviour => '行为';
+
+  @override
+  String get optional => '可选';
+
+  @override
+  String get optionalTip => '这里的东西都不是连接所必需的。展开一项，它的字段会接管表单。';
+
+  @override
+  String get sshAdvanced => 'SSH 高级';
+
+  @override
+  String get sshAdvancedTip => '备用地址、ProxyCommand、跳板机、文件传输、远端路径';
+
+  @override
+  String get appearanceAndPlace => '外观与位置';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo、坐标';
+
+  @override
+  String get statusCollection => '状态采集';
+
+  @override
+  String get statusCollectionTip => '运行哪些命令、自定义命令、读取哪个设备';
+
+  @override
   String get scheduledTasks => '计划任务';
 
   @override
@@ -5181,6 +5208,33 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get certOptionsHttpsOnly => '憑證選項屬於 https://，這裡不顯示。';
+
+  @override
+  String get behaviour => '行為';
+
+  @override
+  String get optional => '選用';
+
+  @override
+  String get optionalTip => '這裡的東西都不是連線所必需的。展開一項，它的欄位會接管表單。';
+
+  @override
+  String get sshAdvanced => 'SSH 進階';
+
+  @override
+  String get sshAdvancedTip => '備用位址、ProxyCommand、跳板機、檔案傳輸、遠端路徑';
+
+  @override
+  String get appearanceAndPlace => '外觀與位置';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo、座標';
+
+  @override
+  String get statusCollection => '狀態收集';
+
+  @override
+  String get statusCollectionTip => '執行哪些命令、自訂命令、讀取哪個裝置';
 
   @override
   String get scheduledTasks => '排程工作';

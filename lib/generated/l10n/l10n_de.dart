@@ -2686,6 +2686,36 @@ class AppLocalizationsDe extends AppLocalizations {
       'Zertifikatsoptionen gehören zu https:// und werden hier nicht angezeigt.';
 
   @override
+  String get behaviour => 'Verhalten';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get optionalTip =>
+      'Nichts hiervon ist zum Verbinden nötig. Öffnen Sie eines, und seine Felder übernehmen das Formular.';
+
+  @override
+  String get sshAdvanced => 'SSH erweitert';
+
+  @override
+  String get sshAdvancedTip =>
+      'Ausweichziel, ProxyCommand, Sprungserver, Dateiübertragung, entfernter Pfad';
+
+  @override
+  String get appearanceAndPlace => 'Darstellung & Ort';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, Koordinaten';
+
+  @override
+  String get statusCollection => 'Statuserfassung';
+
+  @override
+  String get statusCollectionTip =>
+      'Welche Befehle laufen, eigene Befehle, welches Gerät gelesen wird';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

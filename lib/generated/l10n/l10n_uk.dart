@@ -2674,6 +2674,36 @@ class AppLocalizationsUk extends AppLocalizations {
       'Налаштування сертифіката стосуються https:// і тут не показані.';
 
   @override
+  String get behaviour => 'Поведінка';
+
+  @override
+  String get optional => 'Необов\'язкове';
+
+  @override
+  String get optionalTip =>
+      'Нічого з цього не потрібно для під\'єднання. Відкрийте один — і його поля займуть місце форми.';
+
+  @override
+  String get sshAdvanced => 'SSH, додатково';
+
+  @override
+  String get sshAdvancedTip =>
+      'Запасна адреса, ProxyCommand, проміжний сервер, передавання файлів, шлях на сервері';
+
+  @override
+  String get appearanceAndPlace => 'Вигляд і місце';
+
+  @override
+  String get appearanceAndPlaceTip => 'Логотип, координати';
+
+  @override
+  String get statusCollection => 'Збір статусу';
+
+  @override
+  String get statusCollectionTip =>
+      'Які команди виконуються, власні команди, який пристрій читати';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

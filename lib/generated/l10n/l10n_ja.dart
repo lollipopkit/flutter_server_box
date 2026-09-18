@@ -2536,6 +2536,33 @@ class AppLocalizationsJa extends AppLocalizations {
   String get certOptionsHttpsOnly => '証明書の設定は https:// 用のため、ここには表示されません。';
 
   @override
+  String get behaviour => '動作';
+
+  @override
+  String get optional => '任意';
+
+  @override
+  String get optionalTip => '接続にはどれも必要ありません。開くと、その項目がフォームを置き換えます。';
+
+  @override
+  String get sshAdvanced => 'SSH 詳細';
+
+  @override
+  String get sshAdvancedTip => '代替の接続先、ProxyCommand、踏み台、ファイル転送、リモートのパス';
+
+  @override
+  String get appearanceAndPlace => '外観と場所';
+
+  @override
+  String get appearanceAndPlaceTip => 'ロゴ、座標';
+
+  @override
+  String get statusCollection => 'ステータス収集';
+
+  @override
+  String get statusCollectionTip => '実行するコマンド、カスタムコマンド、読み取るデバイス';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

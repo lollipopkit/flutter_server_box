@@ -2657,6 +2657,36 @@ class AppLocalizationsEn extends AppLocalizations {
       'Certificate options belong to https:// and are not shown here.';
 
   @override
+  String get behaviour => 'Behaviour';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get optionalTip =>
+      'Nothing here is needed to connect. Open one and its fields take over the form.';
+
+  @override
+  String get sshAdvanced => 'SSH advanced';
+
+  @override
+  String get sshAdvancedTip =>
+      'Fallback destination, ProxyCommand, jump server, file transport, remote path';
+
+  @override
+  String get appearanceAndPlace => 'Appearance & location';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, coordinates';
+
+  @override
+  String get statusCollection => 'Status collection';
+
+  @override
+  String get statusCollectionTip =>
+      'Which commands run, custom commands, which device to read';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

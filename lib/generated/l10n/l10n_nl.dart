@@ -2678,6 +2678,36 @@ class AppLocalizationsNl extends AppLocalizations {
       'Certificaatopties horen bij https:// en worden hier niet getoond.';
 
   @override
+  String get behaviour => 'Gedrag';
+
+  @override
+  String get optional => 'Optioneel';
+
+  @override
+  String get optionalTip =>
+      'Niets hiervan is nodig om te verbinden. Open er een en de velden ervan nemen het formulier over.';
+
+  @override
+  String get sshAdvanced => 'SSH geavanceerd';
+
+  @override
+  String get sshAdvancedTip =>
+      'Uitwijkbestemming, ProxyCommand, springserver, bestandstransport, extern pad';
+
+  @override
+  String get appearanceAndPlace => 'Weergave en locatie';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, coördinaten';
+
+  @override
+  String get statusCollection => 'Statusverzameling';
+
+  @override
+  String get statusCollectionTip =>
+      'Welke opdrachten draaien, eigen opdrachten, welk apparaat wordt gelezen';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

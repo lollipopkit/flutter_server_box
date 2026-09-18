@@ -2680,6 +2680,36 @@ class AppLocalizationsRu extends AppLocalizations {
       'Настройки сертификата относятся к https:// и здесь не показаны.';
 
   @override
+  String get behaviour => 'Поведение';
+
+  @override
+  String get optional => 'Необязательное';
+
+  @override
+  String get optionalTip =>
+      'Ничто здесь не нужно для подключения. Откройте один — и его поля займут место формы.';
+
+  @override
+  String get sshAdvanced => 'SSH, дополнительно';
+
+  @override
+  String get sshAdvancedTip =>
+      'Запасной адрес, ProxyCommand, промежуточный сервер, передача файлов, путь на сервере';
+
+  @override
+  String get appearanceAndPlace => 'Вид и место';
+
+  @override
+  String get appearanceAndPlaceTip => 'Логотип, координаты';
+
+  @override
+  String get statusCollection => 'Сбор статуса';
+
+  @override
+  String get statusCollectionTip =>
+      'Какие команды выполняются, свои команды, какое устройство читать';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

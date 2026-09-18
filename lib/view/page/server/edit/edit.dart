@@ -320,29 +320,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
                         _Method.monitorHttp => _buildMonitorHttpFields(),
                         _Method.ssh => Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildSshConnFields(),
-                            _buildAuth(),
-                            _buildSystemType(),
-                            _buildJumpServer(),
-                          ],
+                          children: [_buildSshConnFields(), _buildAuth()],
                         ),
                       }),
                   ],
                 ),
               ),
-              ListTile(
-                title: Text(l10n.autoConnect),
-                trailing: _autoConnect.listenVal(
-                  (val) => Switch(
-                    value: val,
-                    onChanged: (val) {
-                      _autoConnect.value = val;
-                    },
-                  ),
-                ),
-              ).cardx,
-              _buildMore(),
+              _buildBehaviourGroup(),
+              _buildOptionalGroup(),
             ],
           ),
         ),

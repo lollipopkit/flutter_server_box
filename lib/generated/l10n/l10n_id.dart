@@ -2658,6 +2658,36 @@ class AppLocalizationsId extends AppLocalizations {
       'Opsi sertifikat milik https:// dan tidak ditampilkan di sini.';
 
   @override
+  String get behaviour => 'Perilaku';
+
+  @override
+  String get optional => 'Opsional';
+
+  @override
+  String get optionalTip =>
+      'Tidak ada di sini yang diperlukan untuk terhubung. Buka salah satu dan kolomnya mengambil alih formulir.';
+
+  @override
+  String get sshAdvanced => 'SSH lanjutan';
+
+  @override
+  String get sshAdvancedTip =>
+      'Tujuan cadangan, ProxyCommand, server lompat, transport berkas, jalur jarak jauh';
+
+  @override
+  String get appearanceAndPlace => 'Tampilan & lokasi';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, koordinat';
+
+  @override
+  String get statusCollection => 'Pengumpulan status';
+
+  @override
+  String get statusCollectionTip =>
+      'Perintah mana yang berjalan, perintah kustom, perangkat mana yang dibaca';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

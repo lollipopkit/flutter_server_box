@@ -2670,6 +2670,36 @@ class AppLocalizationsAz extends AppLocalizations {
       'Sertifikat parametrləri https:// üçündür və burada göstərilmir.';
 
   @override
+  String get behaviour => 'Davranış';
+
+  @override
+  String get optional => 'İstəyə bağlı';
+
+  @override
+  String get optionalTip =>
+      'Burada heç nə qoşulmaq üçün lazım deyil. Birini açın, onun sahələri formanı əvəz edir.';
+
+  @override
+  String get sshAdvanced => 'SSH əlavə';
+
+  @override
+  String get sshAdvancedTip =>
+      'Ehtiyat ünvan, ProxyCommand, keçid serveri, fayl nəqli, uzaq yol';
+
+  @override
+  String get appearanceAndPlace => 'Görünüş və yer';
+
+  @override
+  String get appearanceAndPlaceTip => 'Loqo, koordinatlar';
+
+  @override
+  String get statusCollection => 'Status toplanması';
+
+  @override
+  String get statusCollectionTip =>
+      'Hansı əmrlər işləyir, fərdi əmrlər, hansı cihaz oxunur';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

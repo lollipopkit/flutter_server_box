@@ -456,33 +456,134 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  Widget _buildMore() {
-    return ExpandTile(
-      title: Text(libL10n.more),
+  /// What this server does once it is reachable.
+  ///
+  /// Separate from the connection above because none of it is about getting
+  /// there, and separate from `Optional` below because every server has an
+  /// answer to all three whether or not anybody set one.
+  Widget _buildBehaviourGroup() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildGroupTitle(l10n.behaviour),
+        ListTile(
+          leading: const Icon(Icons.bolt),
+          title: Text(l10n.autoConnect),
+          trailing: _autoConnect.listenVal(
+            (val) => Switch(
+              value: val,
+              onChanged: (val) {
+                _autoConnect.value = val;
+              },
+            ),
+          ),
+        ).cardx,
         _buildSudoPassword(),
-        Input(
-          controller: _logoUrlCtrl,
-          type: TextInputType.url,
-          icon: Icons.image,
-          label: 'Logo URL',
-          hint: 'https://example.com/logo.png',
-          suggestion: false,
-        ),
-        _buildAltUrl(),
-        _buildProxyCommand(),
-        _buildFileTransport(),
-        _buildScriptDir(),
-        _buildGeo(),
         _buildEnvs(),
-        _buildPVEs(),
-        _buildCustomCmds(),
-        _buildStorageCollection(),
-        _buildDisabledCmdTypes(),
-        _buildCustomDev(),
-        _buildBmc(),
-        _buildWOLs(),
       ],
+    );
+  }
+
+  /// Everything a server can have and most do not.
+  ///
+  /// One `More` held fifteen entries in a flat list, so finding Wake on LAN
+  /// meant reading past a logo URL and a coordinate. They are grouped by the
+  /// question they answer and each group is folded, which also gives the four
+  /// that are whole subsystems — PVE, the BMC, Wake on LAN, what the status
+  /// script collects — a name on the page instead of a row in the middle of
+  /// one.
+  ///
+  /// [ExpandTile] rather than a page each: a group's fields belong to the
+  /// server being edited, and a page would be a second form with its own save.
+  Widget _buildOptionalGroup() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildGroupTitle(l10n.optional),
+        _buildOptionalTile(
+          icon: Icons.tune,
+          title: l10n.sshAdvanced,
+          subtitle: l10n.sshAdvancedTip,
+          children: [
+            _buildAltUrl(),
+            _buildProxyCommand(),
+            _buildJumpServer(),
+            _buildFileTransport(),
+            _buildScriptDir(),
+            _buildSystemType(),
+          ],
+        ),
+        _buildOptionalTile(
+          icon: Icons.image_outlined,
+          title: l10n.appearanceAndPlace,
+          subtitle: l10n.appearanceAndPlaceTip,
+          children: [
+            Input(
+              controller: _logoUrlCtrl,
+              type: TextInputType.url,
+              icon: Icons.image,
+              label: 'Logo URL',
+              hint: 'https://example.com/logo.png',
+              suggestion: false,
+            ),
+            _buildGeo(),
+          ],
+        ),
+        // Where "remove temperature from the status script" is actually done,
+        // which is what the detail page's advice on an unreadable section
+        // points at.
+        _buildOptionalTile(
+          icon: MingCute.dashboard_line,
+          title: l10n.statusCollection,
+          subtitle: l10n.statusCollectionTip,
+          children: [
+            _buildDisabledCmdTypes(),
+            _buildCustomCmds(),
+            _buildStorageCollection(),
+            _buildCustomDev(),
+          ],
+        ),
+        _buildOptionalTile(
+          icon: MingCute.server_line,
+          title: 'PVE',
+          subtitle: 'Proxmox VE',
+          children: [_buildPVEs()],
+        ),
+        _buildOptionalTile(
+          icon: MingCute.chip_line,
+          title: 'BMC (Redfish)',
+          subtitle: l10n.betaTip,
+          children: [_buildBmc()],
+        ),
+        _buildOptionalTile(
+          icon: Icons.power_settings_new,
+          title: 'Wake on LAN',
+          subtitle: l10n.wolTip,
+          children: [_buildWOLs()],
+        ),
+        _buildGroupNote(l10n.optionalTip),
+      ],
+    );
+  }
+
+  Widget _buildOptionalTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Widget> children,
+  }) {
+    return ExpandTile(
+      leading: Icon(icon, size: 19),
+      title: Text(title, style: const TextStyle(fontSize: 14)),
+      subtitle: Text(
+        subtitle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: UIs.text11Grey,
+      ),
+      children: children,
     );
   }
 
