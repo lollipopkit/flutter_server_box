@@ -1955,6 +1955,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get power => 'Power';
 
   @override
+  String get fan => 'Fan';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Vendor';
+
+  @override
   String get continueInTerminal => 'Continue in terminal';
 
   @override

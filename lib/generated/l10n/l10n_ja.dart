@@ -1856,6 +1856,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get power => '電源';
 
   @override
+  String get fan => 'ファン';
+
+  @override
+  String get clockSpeed => 'クロック';
+
+  @override
+  String get vendor => 'ベンダー';
+
+  @override
   String get continueInTerminal => 'ターミナルで続ける';
 
   @override

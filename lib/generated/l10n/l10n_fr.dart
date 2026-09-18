@@ -1991,6 +1991,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get power => 'Alimentation';
 
   @override
+  String get fan => 'Ventilateur';
+
+  @override
+  String get clockSpeed => 'Fréquence';
+
+  @override
+  String get vendor => 'Fabricant';
+
+  @override
   String get continueInTerminal => 'Continuer dans le terminal';
 
   @override

@@ -4,6 +4,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -151,6 +152,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// Shared by the grid and the bar floating over it, which is how the bar
   /// knows to get out of the way.
   final _scrollCtrl = ScrollController();
+
+  /// The card the rows promote a metric into, so that tapping one can bring it
+  /// back on screen — see `_revealFocus`.
+  final _focusCardKey = GlobalKey();
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
@@ -1020,9 +1025,9 @@ ${err.message ?? 'null'}
     final details = [
       ?item.power,
       if (item.fanSpeed != null)
-        'FAN ${item.fanSpeed}${item.vendor == 'nvidia' ? '%' : ' RPM'}',
+        '${l10n.fan} ${item.fanSpeed}${item.vendor == 'nvidia' ? '%' : ' RPM'}',
       if (item.clockSpeed != null) '${item.clockSpeed} MHz',
-      if (mem != null) '${mem.used} / ${mem.unit == '' ? '' : ''}${mem.total} ${mem.unit}',
+      if (mem != null) '${mem.used} / ${mem.total} ${mem.unit}',
     ];
     return _buildReadoutRow(
       k: '${item.name} · ${item.id}',

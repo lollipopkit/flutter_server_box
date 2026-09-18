@@ -94,6 +94,12 @@ void main() {
     return status;
   }
 
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
   Future<ServerNotifier> pump(
     WidgetTester tester, {
     required Size size,
@@ -219,6 +225,45 @@ void main() {
       find.text(app_locale.l10n.sensorsHottestFmt(2, 'coretemp')),
       findsOneWidget,
     );
+  });
+
+  /// Nine rows and the cards under them are taller than a phone, so the row
+  /// that promotes a metric is regularly below the card it promotes it into.
+  /// From down there the tap changes a chart nobody can see.
+  testWidgets('promoting a metric brings its chart back on screen', (
+    tester,
+  ) async {
+    await pump(tester, size: const Size(390, 700), status: richStatus);
+
+    final scroll = tester.widget<SingleChildScrollView>(
+      find.byType(SingleChildScrollView).first,
+    );
+    final controller = scroll.controller!;
+    controller.jumpTo(controller.position.maxScrollExtent);
+    await settle(tester);
+    final atBottom = controller.offset;
+    expect(atBottom, greaterThan(0), reason: 'the page has to be scrollable');
+
+    // A row that is on screen down here, promoting a chart that is not.
+    await tester.tap(find.text(libL10n.battery).last);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(
+      controller.offset,
+      lessThan(atBottom),
+      reason: 'the chart the tap changed was left off screen',
+    );
+
+    // And a tap with the chart already in view leaves the page where it is.
+    final settled = controller.offset;
+    await tester.tap(find.text('CPU').last);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(controller.offset, settled);
   });
 
   /// Every card opens, not only the ones with a process in them: the row is

@@ -1793,6 +1793,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get power => '电源';
 
   @override
+  String get fan => '风扇';
+
+  @override
+  String get clockSpeed => '频率';
+
+  @override
+  String get vendor => '厂商';
+
+  @override
   String get continueInTerminal => '在终端中继续';
 
   @override
@@ -4464,6 +4473,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get power => '電源';
+
+  @override
+  String get fan => '風扇';
+
+  @override
+  String get clockSpeed => '頻率';
+
+  @override
+  String get vendor => '廠商';
 
   @override
   String get continueInTerminal => '在終端機中繼續';

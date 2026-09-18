@@ -1990,6 +1990,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get power => 'Energía';
 
   @override
+  String get fan => 'Ventilador';
+
+  @override
+  String get clockSpeed => 'Reloj';
+
+  @override
+  String get vendor => 'Fabricante';
+
+  @override
   String get continueInTerminal => 'Continuar en la terminal';
 
   @override

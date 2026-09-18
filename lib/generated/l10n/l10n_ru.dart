@@ -1982,6 +1982,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get power => 'Питание';
 
   @override
+  String get fan => 'Вентилятор';
+
+  @override
+  String get clockSpeed => 'Частота';
+
+  @override
+  String get vendor => 'Производитель';
+
+  @override
   String get continueInTerminal => 'Продолжить в терминале';
 
   @override

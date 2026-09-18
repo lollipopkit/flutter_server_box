@@ -1959,6 +1959,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get power => 'Güç';
 
   @override
+  String get fan => 'Fan';
+
+  @override
+  String get clockSpeed => 'Saat hızı';
+
+  @override
+  String get vendor => 'Üretici';
+
+  @override
   String get continueInTerminal => 'Terminalde devam et';
 
   @override

@@ -1973,6 +1973,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get power => 'Energie';
 
   @override
+  String get fan => 'Ventilator';
+
+  @override
+  String get clockSpeed => 'Klok';
+
+  @override
+  String get vendor => 'Fabrikant';
+
+  @override
   String get continueInTerminal => 'Doorgaan in terminal';
 
   @override

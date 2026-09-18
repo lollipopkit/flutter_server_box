@@ -1864,6 +1864,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get power => '전원';
 
   @override
+  String get fan => '팬';
+
+  @override
+  String get clockSpeed => '클럭';
+
+  @override
+  String get vendor => '제조사';
+
+  @override
   String get continueInTerminal => '터미널에서 계속하기';
 
   @override

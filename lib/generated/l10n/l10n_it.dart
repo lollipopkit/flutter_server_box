@@ -1982,6 +1982,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get power => 'Alimentazione';
 
   @override
+  String get fan => 'Ventola';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Produttore';
+
+  @override
   String get continueInTerminal => 'Continua nel terminale';
 
   @override

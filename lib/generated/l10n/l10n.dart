@@ -3406,6 +3406,24 @@ abstract class AppLocalizations {
   /// **'Power'**
   String get power;
 
+  /// No description provided for @fan.
+  ///
+  /// In en, this message translates to:
+  /// **'Fan'**
+  String get fan;
+
+  /// No description provided for @clockSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Clock'**
+  String get clockSpeed;
+
+  /// No description provided for @vendor.
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor'**
+  String get vendor;
+
   /// No description provided for @continueInTerminal.
   ///
   /// In en, this message translates to:

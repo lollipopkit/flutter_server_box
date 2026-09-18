@@ -1960,6 +1960,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get power => 'Daya';
 
   @override
+  String get fan => 'Kipas';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Vendor';
+
+  @override
   String get continueInTerminal => 'Lanjutkan di terminal';
 
   @override

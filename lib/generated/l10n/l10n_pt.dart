@@ -1970,6 +1970,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get power => 'Energia';
 
   @override
+  String get fan => 'Ventoinha';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Fabricante';
+
+  @override
   String get continueInTerminal => 'Continuar no terminal';
 
   @override

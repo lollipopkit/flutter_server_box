@@ -31,11 +31,12 @@ extension on _ServerDetailPageState {
         (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
       if (item.power case final power?) (k: l10n.power, v: power),
       if (item.fanSpeed case final fan?)
-        (k: 'Fan', v: '$fan${item.vendor == 'nvidia' ? '%' : ' RPM'}'),
-      if (item.clockSpeed case final clock?) (k: 'Clock', v: '$clock MHz'),
+        (k: l10n.fan, v: '$fan${item.vendor == 'nvidia' ? '%' : ' RPM'}'),
+      if (item.clockSpeed case final clock?)
+        (k: l10n.clockSpeed, v: '$clock MHz'),
       if (mem != null)
         (k: libL10n.memory, v: '${mem.used} / ${mem.total} ${mem.unit}'),
-      (k: 'Vendor', v: item.vendor),
+      (k: l10n.vendor, v: item.vendor),
     ];
     final processes = mem?.processes ?? const <GpuSmiMemProcess>[];
 

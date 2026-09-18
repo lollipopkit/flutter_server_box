@@ -1983,6 +1983,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get power => 'Energie';
 
   @override
+  String get fan => 'Lüfter';
+
+  @override
+  String get clockSpeed => 'Takt';
+
+  @override
+  String get vendor => 'Hersteller';
+
+  @override
   String get continueInTerminal => 'Im Terminal fortfahren';
 
   @override

@@ -1977,6 +1977,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get power => 'Живлення';
 
   @override
+  String get fan => 'Вентилятор';
+
+  @override
+  String get clockSpeed => 'Частота';
+
+  @override
+  String get vendor => 'Виробник';
+
+  @override
   String get continueInTerminal => 'Продовжити в терміналі';
 
   @override

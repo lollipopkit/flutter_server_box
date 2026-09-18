@@ -1971,6 +1971,15 @@ class AppLocalizationsAz extends AppLocalizations {
   String get power => 'Güc';
 
   @override
+  String get fan => 'Ventilyator';
+
+  @override
+  String get clockSpeed => 'Tezlik';
+
+  @override
+  String get vendor => 'İstehsalçı';
+
+  @override
   String get continueInTerminal => 'Terminalda davam et';
 
   @override

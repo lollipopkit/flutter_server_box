@@ -1014,61 +1014,67 @@ extension on _ServerDetailPageState {
       ),
     ];
 
-    return CardX(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(17, 13, 17, 13),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            head,
-            UIs.height7,
-            if (wide)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: headline,
-                    ),
-                  ),
-                  if (stats.isNotEmpty)
+    // The key goes on a wrapper, not on the card: `CardX` hands its own key to
+    // the `Card` it builds, and a `GlobalKey` on two widgets at once is an
+    // error rather than a duplicate.
+    return KeyedSubtree(
+      key: _focusCardKey,
+      child: CardX(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(17, 13, 17, 13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              head,
+              UIs.height7,
+              if (wide)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
                     Flexible(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: true,
-                        child: _buildStats(stats),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: headline,
                       ),
                     ),
+                    if (stats.isNotEmpty)
+                      Flexible(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          reverse: true,
+                          child: _buildStats(stats),
+                        ),
+                      ),
+                  ],
+                )
+              else ...[
+                Row(crossAxisAlignment: CrossAxisAlignment.end, children: headline),
+                if (stats.isNotEmpty) ...[
+                  UIs.height7,
+                  _buildStats(stats),
                 ],
-              )
-            else ...[
-              Row(crossAxisAlignment: CrossAxisAlignment.end, children: headline),
-              if (stats.isNotEmpty) ...[
                 UIs.height7,
-                _buildStats(stats),
-              ],
-              UIs.height7,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Text(
-                      _historyNote(si, wide: false),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: UIs.text11Grey,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        _historyNote(si, wide: false),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: UIs.text11Grey,
+                      ),
                     ),
-                  ),
-                  ?device,
-                ],
-              ),
+                    ?device,
+                  ],
+                ),
+              ],
+              chart,
+              ?_buildFocusDetail(si, m.kind),
             ],
-            chart,
-            ?_buildFocusDetail(si, m.kind),
-          ],
+          ),
         ),
       ),
     );
@@ -1386,6 +1392,39 @@ extension on _ServerDetailPageState {
     );
   }
 
+  /// Brings the chart back on screen, if tapping a row sent a metric to a card
+  /// that is no longer there.
+  ///
+  /// Nine rows and the cards under them are taller than a phone, so the row
+  /// that promotes a metric is regularly below the card it promotes it into —
+  /// and from down there the tap does nothing visible at all. Only when it is
+  /// off screen: a chart that jumps every time a row is tapped is a page that
+  /// moves under the hand that is using it.
+  void _revealFocus() {
+    final ctx = _focusCardKey.currentContext;
+    if (ctx == null || !_scrollCtrl.hasClients) return;
+    final target = ctx.findRenderObject();
+    if (target == null) return;
+    final viewport = RenderAbstractViewport.maybeOf(target);
+    if (viewport == null) return;
+
+    // The two offsets that put the card against each edge of the viewport.
+    // Anywhere between them it is already whole on screen.
+    final toTop = viewport.getOffsetToReveal(target, 0).offset;
+    final toBottom = viewport.getOffsetToReveal(target, 1).offset;
+    final position = _scrollCtrl.position;
+    final current = position.pixels;
+    if (current <= toTop && current >= toBottom) return;
+
+    _scrollCtrl.animateTo(
+      current > toTop
+          ? toTop.clamp(position.minScrollExtent, position.maxScrollExtent)
+          : toBottom.clamp(position.minScrollExtent, position.maxScrollExtent),
+      duration: Durations.medium2,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   /// A metric that is not being read: what it is at, and how to read it.
   Widget _buildMetricRow(
     _MetricView m, {
@@ -1534,7 +1573,10 @@ extension on _ServerDetailPageState {
     return CardX(
       color: selected ? scheme.secondaryContainer : null,
       child: InkWell(
-        onTap: () => _rebuild(() => _focusMetric = m.kind),
+        onTap: () {
+          _rebuild(() => _focusMetric = m.kind);
+          _revealFocus();
+        },
         child: Padding(
           padding: wide
               ? const EdgeInsets.fromLTRB(17, 11, 13, 11)
