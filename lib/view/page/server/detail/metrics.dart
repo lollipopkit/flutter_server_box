@@ -220,6 +220,31 @@ String? _sectionErr(server_model.ServerStatus ss, _MetricKind kind) {
   return null;
 }
 
+/// A row for one of the five every machine has, whose section could not be
+/// read.
+///
+/// Absence is a claim about the machine — that it has no such hardware — and
+/// for these five it is never the true one. So the row stays where it was and
+/// says what happened to the reading, rather than leaving the reader to notice
+/// that a line is gone.
+_MetricView _failedMetric(
+  _MetricKind kind,
+  String label,
+  IconData icon,
+  Color color,
+  String err,
+) => _MetricView(
+  kind: kind,
+  label: label,
+  icon: icon,
+  color: color,
+  value: '',
+  note: '',
+  bigNote: '',
+  series: const [],
+  format: _pct,
+).failing(err);
+
 /// Whether this server has said anything about itself yet.
 bool _neverSampled(ServerState si) =>
     si.status.more.isEmpty && si.status.history.isEmpty;
@@ -362,6 +387,16 @@ extension on _ServerDetailPageState {
           format: _pct,
         ),
       );
+    } else if (_sectionErr(ss, _MetricKind.mem) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.mem,
+          libL10n.memory,
+          ServerDetailCards.mem.icon,
+          _kMemColor,
+          err,
+        ),
+      );
     }
 
     if (ss.swap.total > 0) {
@@ -384,6 +419,16 @@ extension on _ServerDetailPageState {
           format: _pct,
         ),
       );
+    } else if (_sectionErr(ss, _MetricKind.swap) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.swap,
+          'Swap',
+          ServerDetailCards.swap.icon,
+          _kSwapColor,
+          err,
+        ),
+      );
     }
 
     if (ss.disk.isNotEmpty) {
@@ -401,6 +446,16 @@ extension on _ServerDetailPageState {
           percent: used / 100,
           series: [_HistorySeries(libL10n.disk, _kDiskColor, w.disk)],
           format: _pct,
+        ),
+      );
+    } else if (_sectionErr(ss, _MetricKind.disk) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.disk,
+          libL10n.disk,
+          ServerDetailCards.disk.icon,
+          _kDiskColor,
+          err,
         ),
       );
     }
@@ -470,6 +525,16 @@ extension on _ServerDetailPageState {
               ],
           format: _rateOf,
           binary: true,
+        ),
+      );
+    } else if (_sectionErr(ss, _MetricKind.net) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.net,
+          libL10n.net,
+          ServerDetailCards.net.icon,
+          _kNetTxColor,
+          err,
         ),
       );
     }
@@ -1535,7 +1600,18 @@ extension on _ServerDetailPageState {
     } else {
       body = Row(
         children: [
-          Icon(m.icon, size: 18, color: selected ? fg : m.color),
+          // Narrow has no trailing glyph, so the icon and the value are the
+          // whole of what says this row failed — the wide one says it three
+          // times over.
+          Icon(
+            m.icon,
+            size: 18,
+            color: m.error != null
+                ? scheme.error
+                : selected
+                ? fg
+                : m.color,
+          ),
           const SizedBox(width: 9),
           Expanded(
             child: Column(

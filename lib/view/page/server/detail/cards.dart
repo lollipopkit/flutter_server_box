@@ -187,6 +187,44 @@ extension on _ServerDetailPageState {
     );
   }
 
+  /// The card a section gets when its command could not be read.
+  ///
+  /// A card that hides when it is empty answers "this machine has none of
+  /// these", which is the wrong answer for a machine whose `smartctl` is not
+  /// installed or whose `sensors` is not permitted — and it is the answer this
+  /// page gave for as long as the failure was invisible. So the card is drawn,
+  /// with what the command said in place of the table.
+  ///
+  /// Not an alarm. A metric row that failed goes red because a reading
+  /// disappeared from where one had been; here nothing disappeared, and what
+  /// the card owes the reader is the reason, not a warning. The raw text is
+  /// behind the same expander the rows would have been, because it is a shell's
+  /// wording rather than this app's and it is what a bug report needs.
+  Widget _buildFailedCard({
+    required String cardKey,
+    required IconData icon,
+    required String title,
+    required String err,
+  }) {
+    return _buildReadoutCard(
+      cardKey: cardKey,
+      icon: icon,
+      title: title,
+      headline: (value: l10n.unavailable, note: err.split('\n').first),
+      extra: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 0, 17, 7),
+          child: SelectableText(
+            err,
+            style: UIs.text12Grey.copyWith(fontFamily: 'monospace'),
+          ),
+        ),
+      ],
+      footer: l10n.metricUnavailableTip,
+      initiallyExpanded: false,
+    );
+  }
+
   Widget _buildVerdictChip(
     ({String text, _Verdict tone}) verdict,
     ColorScheme scheme,

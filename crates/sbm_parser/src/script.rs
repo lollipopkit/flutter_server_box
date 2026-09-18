@@ -1041,8 +1041,21 @@ fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
             let divider = |key: &str| format!("\necho {}\n\t", cmd_marker(key));
             let linux = or_noop(segment_list(commands::LINUX, "Linux", opts, extended, divider));
             let bsd = or_noop(segment_list(commands::BSD, "BSD", opts, extended, divider));
+            // What a command says when it cannot run is the reason a reading is
+            // missing, and the only place that reason exists. The header sends
+            // stderr to /dev/null for the script's own probes; here it goes to
+            // stdout instead, which puts each command's complaint inside that
+            // command's own segment — attribution by construction, with no
+            // second channel to interleave and nothing to guess from the text.
+            //
+            // Only these two functions. The process table is read by column
+            // position, so a stray line there is a corrupt row rather than an
+            // explanation; the power functions have no segments at all.
+            //
+            // A command whose failure is routine keeps its own `2>/dev/null` in
+            // the manifest and is unaffected — see the thermal zones.
             format!(
-                "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n\t{linux}\nelse\n\t{bsd}\nfi"
+                "exec 2>&1\nif [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n\t{linux}\nelse\n\t{bsd}\nfi"
             )
         }
         ShellFunc::Process => UNIX_PROCESS.to_string(),

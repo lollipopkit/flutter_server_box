@@ -1129,7 +1129,20 @@ ${err.message ?? 'null'}
   /// are two dozen numbers and stay one tap away.
   Widget? _buildDiskSmart(ServerState si) {
     final smarts = si.status.diskSmart;
-    if (smarts.isEmpty) return null;
+    if (smarts.isEmpty) {
+      // `smartctl` is missing, or is there and refused: both are why this card
+      // was empty, and neither was ever said. A host with no drives it can read
+      // still gets nothing.
+      if (si.status.sectionErrs['smart'] case final err?) {
+        return _buildFailedCard(
+          cardKey: 'smart',
+          icon: ServerDetailCards.smart.icon,
+          title: l10n.diskHealth,
+          err: err,
+        );
+      }
+      return null;
+    }
 
     // Worst first, which is the order the rows are read in and what the
     // headline is about. A drive smartctl could not read sorts between a
@@ -1378,7 +1391,17 @@ ${err.message ?? 'null'}
   /// per chip, and the readings behind it on tap.
   Widget? _buildSensors(ServerState si) {
     final ss = si.status;
-    if (ss.sensors.isEmpty) return null;
+    if (ss.sensors.isEmpty) {
+      if (ss.sectionErrs['sensors'] case final err?) {
+        return _buildFailedCard(
+          cardKey: 'sensor',
+          icon: Icons.thermostat,
+          title: libL10n.sensors,
+          err: err,
+        );
+      }
+      return null;
+    }
 
     return _buildReadoutCard(
       cardKey: 'sensor',

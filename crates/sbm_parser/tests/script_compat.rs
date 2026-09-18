@@ -864,6 +864,79 @@ fn e2e_unix_status_script_runs() {
     );
 }
 
+/// A command that cannot run says so inside its own segment.
+///
+/// With stderr discarded, a host without `lm-sensors` and a host with no
+/// sensors are the same empty segment, and the page has nothing to tell them
+/// apart with — which is why the status functions send it to stdout instead.
+/// Emptying `PATH` makes every external command missing at once, which also
+/// puts the attribution under test: each complaint has to land in the segment
+/// of the command that made it, not in whichever one happened to be open.
+#[cfg(unix)]
+#[test]
+fn e2e_unix_a_failed_command_speaks_in_its_own_segment() {
+    use std::process::Command;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = std::env::temp_dir().join(format!(
+        "sbm_script_stderr_{}_{}",
+        std::process::id(),
+        nonce
+    ));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("status.sh");
+    std::fs::write(&path, build_script(SystemType::Linux, &opts())).unwrap();
+    // No PATH, so `uname` cannot answer either: both signs come back empty and
+    // the Linux branch runs, on this machine as on a Linux one.
+    // By absolute path: with `PATH` emptied the shell cannot be found either.
+    let output = Command::new("/bin/sh")
+        .arg(&path)
+        .arg("-s")
+        .env("PATH", "")
+        .output()
+        .unwrap();
+    std::fs::remove_dir_all(&dir).ok();
+
+    let map = parse_script_output(&String::from_utf8_lossy(&output.stdout));
+
+    // `echo` is a shell builtin, so the branch is still identifiable.
+    assert_eq!(map.get("echo").map(String::as_str), Some("__linux"));
+
+    // The wording is the shell's — dash says `not found`, bash with no PATH
+    // says `No such file or directory` — so what is asserted is that the
+    // segment is not empty and names the command that failed.
+    let sensors = map.get("sensors").map(String::as_str).unwrap_or_default();
+    assert!(sensors.contains("sensors"), "sensors: {sensors:?}");
+    // The complaint of the command before it stayed with the command before
+    // it: this segment names one command and no other.
+    assert!(!sensors.contains("diskstats"), "sensors: {sensors:?}");
+
+    let host = map.get("host").map(String::as_str).unwrap_or_default();
+    assert!(host.contains("cat"), "host: {host:?}");
+}
+
+/// The two functions that print segments keep what a command says; the two
+/// that do not, do not.
+///
+/// The process table is read by column position, so a line of shell complaint
+/// there is a corrupt row rather than an explanation.
+#[test]
+fn only_the_status_functions_keep_stderr() {
+    let script = build_script(SystemType::Linux, &opts());
+    let after_status_ext = script.split("SbStatusExt()").nth(1).unwrap();
+    let process = after_status_ext.split("SbProcess()").nth(1).unwrap();
+
+    assert_eq!(script.matches("exec 2>&1").count(), 2, "{script}");
+    assert!(!process.contains("exec 2>&1"), "{process}");
+    // The script's own probes stay quiet: they run before any segment, so
+    // their complaints would have nowhere to belong.
+    assert!(script.contains("exec 2>/dev/null"));
+}
+
 /// Runs the process function through `sh` on this machine — the BSD branch on
 /// macOS, the procps one on Linux — and reads the table the way the app does:
 /// by header name.
