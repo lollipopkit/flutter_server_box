@@ -2386,6 +2386,125 @@ class AppLocalizationsNl extends AppLocalizations {
   String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
 
   @override
+  String get scheduledTaskAdd => 'Add task';
+
+  @override
+  String get scheduledTaskNextRun => 'Next run';
+
+  @override
+  String scheduledTaskNextInFmt(Object time) {
+    return 'in $time';
+  }
+
+  @override
+  String get scheduledTaskEnabled => 'Enabled';
+
+  @override
+  String get scheduledTaskCommentedOut => 'Commented out';
+
+  @override
+  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+    return '$total tasks · $enabled enabled';
+  }
+
+  @override
+  String get scheduledTaskFilterHint => 'Filter tasks';
+
+  @override
+  String get scheduledTaskPreserved => 'Preserved lines';
+
+  @override
+  String get scheduledTaskRaw => 'Raw crontab';
+
+  @override
+  String get scheduledTaskEnableNow => 'Enable now';
+
+  @override
+  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+
+  @override
+  String scheduledTaskEmptyFmt(Object user) {
+    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+  }
+
+  @override
+  String get scheduledTaskFieldMinute => 'Minute';
+
+  @override
+  String get scheduledTaskFieldHour => 'Hour';
+
+  @override
+  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+
+  @override
+  String get scheduledTaskFieldMonth => 'Month';
+
+  @override
+  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+
+  @override
+  String get cronErrScheduleEmpty => 'A schedule is required.';
+
+  @override
+  String get cronErrCommandEmpty => 'A command is required.';
+
+  @override
+  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+
+  @override
+  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+
+  @override
+  String get cronErrFieldCount =>
+      'A cron schedule has five fields, or a macro such as @reboot.';
+
+  @override
+  String get cronAtBoot => 'At boot';
+
+  @override
+  String get cronEveryMin => 'Every minute';
+
+  @override
+  String cronEveryMinsFmt(Object minutes) {
+    return 'Every $minutes minutes';
+  }
+
+  @override
+  String cronHourlyAtFmt(Object minute) {
+    return 'Every hour at :$minute';
+  }
+
+  @override
+  String cronEveryHoursFmt(Object hours) {
+    return 'Every $hours hours';
+  }
+
+  @override
+  String cronEveryHoursAtFmt(Object hours, Object minute) {
+    return 'Every $hours hours at :$minute';
+  }
+
+  @override
+  String cronDailyAtFmt(Object time) {
+    return 'Every day at $time';
+  }
+
+  @override
+  String cronWeekdaysAtFmt(Object time) {
+    return 'On weekdays at $time';
+  }
+
+  @override
+  String cronWeekdayAtFmt(Object day, Object time) {
+    return 'Every $day at $time';
+  }
+
+  @override
+  String cronMonthlyAtFmt(Object day, Object time) {
+    return 'Day $day of every month at $time';
+  }
+
+  @override
   String get monitorSettings => 'Monitor settings';
 
   @override

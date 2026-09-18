@@ -1,3 +1,23 @@
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/cron_schedule.dart';
+
+/// Why a line was refused, in the words the editor shows.
+enum CronValidation {
+  scheduleEmpty,
+  commandEmpty,
+  lineBreak,
+  macro,
+  fieldCount;
+
+  String get message => switch (this) {
+    scheduleEmpty => l10n.cronErrScheduleEmpty,
+    commandEmpty => l10n.cronErrCommandEmpty,
+    lineBreak => l10n.cronErrLineBreak,
+    macro => l10n.cronErrMacro,
+    fieldCount => l10n.cronErrFieldCount,
+  };
+}
+
 final class CronJob {
   const CronJob({
     required this.lineIndex,
@@ -10,6 +30,9 @@ final class CronJob {
   final String schedule;
   final String command;
   final bool enabled;
+
+  /// [schedule] expanded, or `null` for a syntax this app does not read.
+  CronSchedule? get parsed => CronSchedule.tryParse(schedule);
 }
 
 final class CronDocument {
@@ -19,6 +42,20 @@ final class CronDocument {
 
   final List<String> lines;
   final List<CronJob> jobs;
+
+  /// Every line that is not a task: comments, environment assignments, and
+  /// anything this app could not read as one.
+  ///
+  /// They are what [render] writes back untouched, and the page shows them so
+  /// that a crontab another tool manages does not look like it lost them.
+  late final List<String> preserved = () {
+    final taskLines = jobs.map((job) => job.lineIndex).toSet();
+    return [
+      for (var index = 0; index < lines.length; index++)
+        if (!taskLines.contains(index) && lines[index].trim().isNotEmpty)
+          lines[index],
+    ];
+  }();
 
   factory CronDocument.parse(String raw) {
     final normalized = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
@@ -34,7 +71,7 @@ final class CronDocument {
     required bool enabled,
   }) {
     final error = validate(schedule: schedule, command: command);
-    if (error != null) throw ArgumentError(error);
+    if (error != null) throw ArgumentError(error.name);
     final next = List<String>.from(lines);
     final line = _renderJob(schedule.trim(), command.trim(), enabled);
     if (original == null) {
@@ -63,25 +100,31 @@ final class CronDocument {
 
   String render() => lines.isEmpty ? '' : '${lines.join('\n')}\n';
 
-  static String? validate({
+  /// What is wrong with the line these two would make, or `null`.
+  ///
+  /// It says nothing about whether the schedule will ever fire: `0 0 31 2 *`
+  /// is a valid line that runs never, and so is anything a crond understands
+  /// that this app does not. What it refuses is what would damage the file —
+  /// a line break splits one task into two — and what no crond accepts.
+  static CronValidation? validate({
     required String schedule,
     required String command,
   }) {
     final cleanSchedule = schedule.trim();
     final cleanCommand = command.trim();
-    if (cleanSchedule.isEmpty) return 'Schedule is required';
-    if (cleanCommand.isEmpty) return 'Command is required';
+    if (cleanSchedule.isEmpty) return CronValidation.scheduleEmpty;
+    if (cleanCommand.isEmpty) return CronValidation.commandEmpty;
     if (_hasLineBreak(cleanSchedule) || _hasLineBreak(cleanCommand)) {
-      return 'Cron fields cannot contain line breaks';
+      return CronValidation.lineBreak;
     }
     if (cleanSchedule.startsWith('@')) {
       if (!RegExp(r'^@\S+$').hasMatch(cleanSchedule)) {
-        return 'Invalid cron schedule';
+        return CronValidation.macro;
       }
       return null;
     }
     if (cleanSchedule.split(RegExp(r'\s+')).length != 5) {
-      return 'A cron schedule must contain five fields';
+      return CronValidation.fieldCount;
     }
     return null;
   }
@@ -141,8 +184,12 @@ final class CronDocument {
 }
 
 final class CronCatalog {
-  const CronCatalog({required this.user, required this.document});
+  const CronCatalog({required this.user, required this.document, this.clock});
 
   final String user;
   final CronDocument document;
+
+  /// The server's clock when this listing was read, or `null` when its `date`
+  /// could not say. Every time on the page is worked out in it.
+  final CronClock? clock;
 }
