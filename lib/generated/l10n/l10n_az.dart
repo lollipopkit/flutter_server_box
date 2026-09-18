@@ -2426,9 +2426,81 @@ class AppLocalizationsAz extends AppLocalizations {
   String get oneDeviceAtLeast => 'Qrafikdə ən azı bir cihaz qalır.';
 
   @override
-  String shownOfFmt(Object shown, Object total) {
-    return '$total elementdən $shown göstərilir';
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$total $what arasından $shown';
   }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'cihaz';
+
+  @override
+  String get unitSensors => 'sensor';
+
+  @override
+  String get unitBatteries => 'batareya';
+
+  @override
+  String get unitCommands => 'əmr';
+
+  @override
+  String get unitReadings => 'göstərici';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => 'ən isti';
+
+  @override
+  String get oldest => 'ən köhnə';
+
+  @override
+  String get notApplicable => 'tətbiq olunmur';
+
+  @override
+  String get attributes => 'atributlar';
+
+  @override
+  String get powerOnHours => 'İşləmə saatları';
+
+  @override
+  String get powerCycles => 'Açılma sayı';
+
+  @override
+  String get lifeLeft => 'Qalan resurs';
+
+  @override
+  String get lifetimeWrite => 'Ümumi yazma';
+
+  @override
+  String get lifetimeRead => 'Ümumi oxuma';
+
+  @override
+  String get averageErase => 'Orta silinmə';
+
+  @override
+  String get unsafeShutdowns => 'Təhlükəli sönmələr';
+
+  @override
+  String get diskAllPassed => 'hamısı PASSED';
+
+  @override
+  String diskWarningFmt(Object count) {
+    return '$count xəbərdarlıq';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$total cihazdan $wrong';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Ən pisdən sıralanıb';
 
   @override
   String processesFmt(Object count) {

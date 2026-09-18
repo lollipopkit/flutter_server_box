@@ -55,25 +55,41 @@ void main() {
     await SqliteDb.close();
   });
 
-  DiskSmart drive(String device, {bool? healthy, double? temperature}) =>
-      DiskSmart(
-        device: device,
-        healthy: healthy,
-        temperature: temperature,
-        rawData: const {},
-        smartAttributes: const {},
-      );
+  DiskSmart drive(
+    String device, {
+    bool? healthy,
+    double? temperature,
+    int? reallocated,
+  }) => DiskSmart(
+    device: device,
+    healthy: healthy,
+    temperature: temperature,
+    rawData: const {},
+    smartAttributes: {
+      if (reallocated != null)
+        'Reallocated_Sector_Ct': SmartAttribute(
+          name: 'Reallocated_Sector_Ct',
+          rawValue: reallocated,
+          flags: const SmartAttributeFlags(),
+        ),
+    },
+  );
 
   /// Eight drives, one of them failing and none of them the hottest by
   /// accident: `sdh` is both the failure and the coolest, so a card that led
-  /// with the wrong one would be visible.
+  /// with the wrong one would be visible. `sdb` passes SMART's own verdict
+  /// while reporting reallocated sectors, which is the drive SMART calls fine
+  /// and a person does not.
   ServerStatus statusOf() {
     final status = InitStatus.status;
     status.more[StatusCmdType.host] = 'test-host';
     status.diskSmart = [
       for (var i = 0; i < 7; i++)
-        drive('sd${String.fromCharCode(97 + i)}', healthy: true,
-            temperature: 30 + i.toDouble()),
+        if (i == 1)
+          drive('sdb', healthy: true, temperature: 44, reallocated: 2)
+        else
+          drive('sd${String.fromCharCode(97 + i)}', healthy: true,
+              temperature: 30 + i.toDouble()),
       drive('sdh', healthy: false, temperature: 22),
     ];
     return status;
@@ -122,14 +138,48 @@ void main() {
     expect(tester.takeException(), isNull);
     // The verdict, without opening anything.
     expect(find.text(app_locale.l10n.diskFailingFmt(1)), findsOneWidget);
-    // The headline: how many there are, and the one that is running hottest.
-    expect(find.text(app_locale.l10n.devicesFmt(8)), findsOneWidget);
-    expect(find.textContaining('sdg'), findsWidgets);
+    // The headline is the worst conclusion — how many drives are not fine and
+    // which one is the worst — not a count of drives.
+    expect(
+      find.text(app_locale.l10n.diskWrongOfFmt(2, 8)),
+      findsOneWidget,
+      reason: 'the failing drive and the one with reallocated sectors',
+    );
+    expect(find.textContaining('sdh · FAILING'), findsOneWidget);
     // And the footer, which is what keeps six rows from reading as six drives.
     expect(
-      find.textContaining(app_locale.l10n.shownOfFmt(6, 8)),
+      find.textContaining(
+        app_locale.l10n.shownOfFmt(6, 8, app_locale.l10n.unitDevices),
+      ),
       findsOneWidget,
     );
+  });
+
+  /// SMART's own verdict stays PASSED until a drive is nearly gone, so a card
+  /// that only reads `healthy` calls a drive with reallocated sectors fine.
+  testWidgets('a drive that passes but reports reallocated sectors is a row '
+      'with its count', (tester) async {
+    await pump(tester);
+
+    expect(find.textContaining('2 reallocated · 44°C'), findsOneWidget);
+  });
+
+  testWidgets('a row opens the drive\'s attributes, and says where they came '
+      'from', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.text('sdb'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text('sdb · ${app_locale.l10n.attributes}'),
+      findsOneWidget,
+    );
+    expect(find.text('Reallocated Sector Ct'), findsOneWidget);
+    expect(find.text('smartctl -A /dev/sdb'), findsOneWidget);
   });
 
   testWidgets('the worst drive is the first row, and only six are listed', (

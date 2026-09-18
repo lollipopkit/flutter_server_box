@@ -2446,9 +2446,81 @@ class AppLocalizationsFr extends AppLocalizations {
       'Au moins un périphérique reste sur le graphique.';
 
   @override
-  String shownOfFmt(Object shown, Object total) {
-    return '$shown sur $total affichés';
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown sur $total $what';
   }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'périphériques';
+
+  @override
+  String get unitSensors => 'capteurs';
+
+  @override
+  String get unitBatteries => 'batteries';
+
+  @override
+  String get unitCommands => 'commandes';
+
+  @override
+  String get unitReadings => 'relevés';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => 'le plus chaud';
+
+  @override
+  String get oldest => 'le plus ancien';
+
+  @override
+  String get notApplicable => 'sans objet';
+
+  @override
+  String get attributes => 'attributs';
+
+  @override
+  String get powerOnHours => 'Heures de fonctionnement';
+
+  @override
+  String get powerCycles => 'Cycles d\'allumage';
+
+  @override
+  String get lifeLeft => 'Durée de vie restante';
+
+  @override
+  String get lifetimeWrite => 'Écriture totale';
+
+  @override
+  String get lifetimeRead => 'Lecture totale';
+
+  @override
+  String get averageErase => 'Effacements moyens';
+
+  @override
+  String get unsafeShutdowns => 'Arrêts brutaux';
+
+  @override
+  String get diskAllPassed => 'tous PASSED';
+
+  @override
+  String diskWarningFmt(Object count) {
+    return '$count avertissement';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong périphériques sur $total';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Les pires d\'abord';
 
   @override
   String processesFmt(Object count) {

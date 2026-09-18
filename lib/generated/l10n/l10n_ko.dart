@@ -2306,9 +2306,81 @@ class AppLocalizationsKo extends AppLocalizations {
   String get oneDeviceAtLeast => '차트에는 장치를 최소 하나 남깁니다.';
 
   @override
-  String shownOfFmt(Object shown, Object total) {
-    return '$total개 중 $shown개 표시';
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$what $total개 중 $shown개';
   }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$what $count개';
+  }
+
+  @override
+  String get unitDevices => '장치';
+
+  @override
+  String get unitSensors => '센서';
+
+  @override
+  String get unitBatteries => '배터리';
+
+  @override
+  String get unitCommands => '명령';
+
+  @override
+  String get unitReadings => '측정값';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => '최고';
+
+  @override
+  String get oldest => '최장';
+
+  @override
+  String get notApplicable => '해당 없음';
+
+  @override
+  String get attributes => '속성';
+
+  @override
+  String get powerOnHours => '전원 켠 시간';
+
+  @override
+  String get powerCycles => '전원 사이클';
+
+  @override
+  String get lifeLeft => '남은 수명';
+
+  @override
+  String get lifetimeWrite => '총 쓰기';
+
+  @override
+  String get lifetimeRead => '총 읽기';
+
+  @override
+  String get averageErase => '평균 지우기';
+
+  @override
+  String get unsafeShutdowns => '비정상 종료';
+
+  @override
+  String get diskAllPassed => '모두 PASSED';
+
+  @override
+  String diskWarningFmt(Object count) {
+    return '경고 $count개';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$total개 중 $wrong개';
+  }
+
+  @override
+  String get diskSmartSortedTip => '나쁜 순';
 
   @override
   String processesFmt(Object count) {

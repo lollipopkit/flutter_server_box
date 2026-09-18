@@ -2435,9 +2435,81 @@ class AppLocalizationsDe extends AppLocalizations {
   String get oneDeviceAtLeast => 'Mindestens ein Gerät bleibt im Diagramm.';
 
   @override
-  String shownOfFmt(Object shown, Object total) {
-    return '$shown von $total angezeigt';
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown von $total $what';
   }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'Geräten';
+
+  @override
+  String get unitSensors => 'Sensoren';
+
+  @override
+  String get unitBatteries => 'Akkus';
+
+  @override
+  String get unitCommands => 'Befehlen';
+
+  @override
+  String get unitReadings => 'Messwerten';
+
+  @override
+  String get unitGpus => 'GPUs';
+
+  @override
+  String get hottest => 'am heißesten';
+
+  @override
+  String get oldest => 'am ältesten';
+
+  @override
+  String get notApplicable => 'nicht zutreffend';
+
+  @override
+  String get attributes => 'Attribute';
+
+  @override
+  String get powerOnHours => 'Betriebsstunden';
+
+  @override
+  String get powerCycles => 'Einschaltvorgänge';
+
+  @override
+  String get lifeLeft => 'Restlebensdauer';
+
+  @override
+  String get lifetimeWrite => 'Gesamt geschrieben';
+
+  @override
+  String get lifetimeRead => 'Gesamt gelesen';
+
+  @override
+  String get averageErase => 'Durchschnittliche Löschungen';
+
+  @override
+  String get unsafeShutdowns => 'Unsaubere Abschaltungen';
+
+  @override
+  String get diskAllPassed => 'alle PASSED';
+
+  @override
+  String diskWarningFmt(Object count) {
+    return '$count Warnung';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong von $total Geräten';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Schlechteste zuerst';
 
   @override
   String processesFmt(Object count) {

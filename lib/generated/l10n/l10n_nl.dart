@@ -2427,9 +2427,81 @@ class AppLocalizationsNl extends AppLocalizations {
       'Ten minste één apparaat blijft in de grafiek.';
 
   @override
-  String shownOfFmt(Object shown, Object total) {
-    return '$shown van $total getoond';
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown van $total $what';
   }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'apparaten';
+
+  @override
+  String get unitSensors => 'sensoren';
+
+  @override
+  String get unitBatteries => 'accu\'s';
+
+  @override
+  String get unitCommands => 'opdrachten';
+
+  @override
+  String get unitReadings => 'metingen';
+
+  @override
+  String get unitGpus => 'GPU\'s';
+
+  @override
+  String get hottest => 'het heetst';
+
+  @override
+  String get oldest => 'het oudst';
+
+  @override
+  String get notApplicable => 'niet van toepassing';
+
+  @override
+  String get attributes => 'attributen';
+
+  @override
+  String get powerOnHours => 'Bedrijfsuren';
+
+  @override
+  String get powerCycles => 'Inschakelingen';
+
+  @override
+  String get lifeLeft => 'Resterende levensduur';
+
+  @override
+  String get lifetimeWrite => 'Totaal geschreven';
+
+  @override
+  String get lifetimeRead => 'Totaal gelezen';
+
+  @override
+  String get averageErase => 'Gemiddeld gewist';
+
+  @override
+  String get unsafeShutdowns => 'Onveilige afsluitingen';
+
+  @override
+  String get diskAllPassed => 'alle PASSED';
+
+  @override
+  String diskWarningFmt(Object count) {
+    return '$count waarschuwing';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong van $total apparaten';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Slechtste eerst';
 
   @override
   String processesFmt(Object count) {

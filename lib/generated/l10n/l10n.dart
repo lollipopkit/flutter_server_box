@@ -4177,8 +4177,140 @@ abstract class AppLocalizations {
   /// No description provided for @shownOfFmt.
   ///
   /// In en, this message translates to:
-  /// **'{shown} of {total} shown'**
-  String shownOfFmt(Object shown, Object total);
+  /// **'{shown} of {total} {what}'**
+  String shownOfFmt(Object shown, Object total, Object what);
+
+  /// No description provided for @countOfFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} {what}'**
+  String countOfFmt(Object count, Object what);
+
+  /// No description provided for @unitDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'devices'**
+  String get unitDevices;
+
+  /// No description provided for @unitSensors.
+  ///
+  /// In en, this message translates to:
+  /// **'sensors'**
+  String get unitSensors;
+
+  /// No description provided for @unitBatteries.
+  ///
+  /// In en, this message translates to:
+  /// **'batteries'**
+  String get unitBatteries;
+
+  /// No description provided for @unitCommands.
+  ///
+  /// In en, this message translates to:
+  /// **'commands'**
+  String get unitCommands;
+
+  /// No description provided for @unitReadings.
+  ///
+  /// In en, this message translates to:
+  /// **'readings'**
+  String get unitReadings;
+
+  /// No description provided for @unitGpus.
+  ///
+  /// In en, this message translates to:
+  /// **'GPUs'**
+  String get unitGpus;
+
+  /// No description provided for @hottest.
+  ///
+  /// In en, this message translates to:
+  /// **'hottest'**
+  String get hottest;
+
+  /// No description provided for @oldest.
+  ///
+  /// In en, this message translates to:
+  /// **'oldest'**
+  String get oldest;
+
+  /// No description provided for @notApplicable.
+  ///
+  /// In en, this message translates to:
+  /// **'not applicable'**
+  String get notApplicable;
+
+  /// No description provided for @attributes.
+  ///
+  /// In en, this message translates to:
+  /// **'attributes'**
+  String get attributes;
+
+  /// No description provided for @powerOnHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Power-on hours'**
+  String get powerOnHours;
+
+  /// No description provided for @powerCycles.
+  ///
+  /// In en, this message translates to:
+  /// **'Power cycles'**
+  String get powerCycles;
+
+  /// No description provided for @lifeLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Life left'**
+  String get lifeLeft;
+
+  /// No description provided for @lifetimeWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime write'**
+  String get lifetimeWrite;
+
+  /// No description provided for @lifetimeRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Lifetime read'**
+  String get lifetimeRead;
+
+  /// No description provided for @averageErase.
+  ///
+  /// In en, this message translates to:
+  /// **'Average erase'**
+  String get averageErase;
+
+  /// No description provided for @unsafeShutdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsafe shutdowns'**
+  String get unsafeShutdowns;
+
+  /// No description provided for @diskAllPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'all PASSED'**
+  String get diskAllPassed;
+
+  /// No description provided for @diskWarningFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} warning'**
+  String diskWarningFmt(Object count);
+
+  /// No description provided for @diskWrongOfFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{wrong} of {total} devices'**
+  String diskWrongOfFmt(Object total, Object wrong);
+
+  /// No description provided for @diskSmartSortedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorted worst first'**
+  String get diskSmartSortedTip;
 
   /// No description provided for @processesFmt.
   ///

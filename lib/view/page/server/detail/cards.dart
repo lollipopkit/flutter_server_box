@@ -8,12 +8,17 @@ part of 'view.dart';
 enum _Verdict {
   ok,
   warn,
-  bad;
+  bad,
+
+  /// Nothing to say about this one — a RAID set has no SMART data rather than
+  /// bad SMART data, and a stopped guest is not a guest with a problem.
+  idle;
 
   Color color(ColorScheme scheme) => switch (this) {
     ok => const Color(0xFF22C55E),
     warn => const Color(0xFFF59E0B),
     bad => scheme.error,
+    idle => scheme.outline,
   };
 }
 
@@ -261,12 +266,16 @@ extension on _ServerDetailPageState {
     return InkWell(onTap: onTap, child: body);
   }
 
-  /// What a card is leaving out, or nothing when it is showing all of it.
+  /// How much of a list is on screen, said whether or not any of it is
+  /// missing.
   ///
   /// A card that lists three of six devices and says nothing about the other
-  /// three is read as a host with three devices.
-  String _hiddenNote(int total) =>
-      total <= _kCardRows ? '' : l10n.shownOfFmt(_kCardRows, total);
+  /// three is read as a host with three devices — and one that goes quiet
+  /// when it is showing everything leaves the reader counting rows to find
+  /// out. [what] is the noun the card is a list of.
+  String _countNote(int total, String what) => total <= _kCardRows
+      ? l10n.countOfFmt(total, what)
+      : l10n.shownOfFmt(_kCardRows, total, what);
 
   /// The footer line: the parts a card has, in the order it has them.
   String _cardFooter(List<String> parts) =>

@@ -801,13 +801,13 @@ ${err.message ?? 'null'}
           ? null
           : (
               value: '${mem.used} ${mem.unit}',
-              note: l10n.ofFmt('${mem.total} ${mem.unit}'),
+              note: [
+                l10n.ofFmt('${mem.total} ${mem.unit}'),
+                if (processes.isNotEmpty) l10n.processesFmt(processes.length),
+              ].join(' · '),
             ),
       rows: gpus.map(_buildGpuItem).toList(),
-      footer: _cardFooter([
-        _hiddenNote(gpus.length),
-        if (processes.isNotEmpty) l10n.processesFmt(processes.length),
-      ]),
+      footer: _countNote(gpus.length, l10n.unitGpus),
       initiallyExpanded: _getInitExpand(gpus.length, 3),
     );
   }
@@ -951,137 +951,200 @@ ${err.message ?? 'null'}
     final smarts = si.status.diskSmart;
     if (smarts.isEmpty) return null;
 
-    // null (unknown) between failing and passing: a drive smartctl could not
-    // read is not a drive that is fine.
+    // Worst first, which is the order the rows are read in and what the
+    // headline is about. A drive smartctl could not read sorts between a
+    // failing one and a passing one: it is not a drive that is fine.
     final sorted = [...smarts]
       ..sort((a, b) => _smartRank(a).compareTo(_smartRank(b)));
-    final failing = smarts.where((e) => e.healthy == false).length;
-    final unknown = smarts.where((e) => e.healthy == null).length;
+    final worst = sorted.first;
+    final wrong = smarts.where((e) => _smartRank(e) < _smartRank(_smartOk));
 
     DiskSmart? hottest;
+    int? oldest;
     for (final smart in smarts) {
       final t = smart.temperature;
-      if (t == null) continue;
-      if (hottest == null || t > hottest.temperature!) hottest = smart;
+      if (t != null && (hottest == null || t > hottest.temperature!)) {
+        hottest = smart;
+      }
+      final hours = smart.powerOnHours;
+      if (hours != null && (oldest == null || hours > oldest)) oldest = hours;
     }
 
+    final truncated = smarts.length > _kCardRows;
     return _buildReadoutCard(
       cardKey: 'smart',
       icon: ServerDetailCards.smart.icon,
       title: l10n.diskHealth,
-      verdict: failing > 0
-          ? (text: l10n.diskFailingFmt(failing), tone: _Verdict.bad)
-          : unknown > 0
-          ? (text: libL10n.unknown, tone: _Verdict.warn)
-          : (text: 'PASSED', tone: _Verdict.ok),
-      headline: (
-        value: l10n.devicesFmt(smarts.length),
-        note: hottest == null
-            ? ''
-            : '${hottest.device} ${_formatTemp(hottest.temperature!)}',
-      ),
+      verdict: _smartVerdict(smarts),
+      // The worst conclusion, not a count of drives: what this card answers is
+      // whether anything needs replacing, and on the machine where something
+      // does, which one and what it said.
+      headline: wrong.isEmpty
+          ? (
+              value: l10n.devicesFmt(smarts.length),
+              note: [
+                if (hottest?.temperature case final t?)
+                  '${l10n.hottest} ${_formatTemp(t)}',
+                if (oldest != null) '${l10n.oldest} $oldest ${libL10n.hour}',
+              ].join(' · '),
+            )
+          : (
+              value: l10n.diskWrongOfFmt(wrong.length, smarts.length),
+              note: '${worst.device} · ${_smartSummary(worst)}',
+            ),
       rows: sorted.map(_buildDiskSmartItem).toList(),
-      footer: _cardFooter([_hiddenNote(smarts.length), l10n.diskSmartOpenTip]),
+      footer: _cardFooter([
+        truncated
+            ? l10n.shownOfFmt(_kCardRows, smarts.length, l10n.unitDevices)
+            : l10n.countOfFmt(smarts.length, l10n.unitDevices),
+        truncated ? l10n.diskSmartOpenTip : l10n.diskSmartSortedTip,
+      ]),
       initiallyExpanded: _getInitExpand(smarts.length),
     );
   }
 
-  /// Worst first, which is the order the rows are read in.
-  static int _smartRank(DiskSmart smart) => switch (smart.healthy) {
-    false => 0,
-    null => 1,
-    true => 2,
-  };
+  /// A passing drive, to rank the others against.
+  static const _smartOk = DiskSmart(
+    device: '',
+    healthy: true,
+    rawData: {},
+    smartAttributes: {},
+  );
+
+  /// Worst first: failing, then whatever reports a non-zero critical count,
+  /// then a drive that answered nothing, then the ones that passed. A device
+  /// SMART does not apply to is last — it is not a drive with a problem.
+  static int _smartRank(DiskSmart smart) {
+    if (smart.notApplicable) return 4;
+    if (smart.healthy == false) return 0;
+    if (smart.faults.isNotEmpty) return 1;
+    if (smart.healthy == null) return 2;
+    return 3;
+  }
+
+  ({String text, _Verdict tone})? _smartVerdict(List<DiskSmart> smarts) {
+    final failing = smarts.where((e) => e.healthy == false).length;
+    if (failing > 0) {
+      return (text: l10n.diskFailingFmt(failing), tone: _Verdict.bad);
+    }
+    final warning = smarts
+        .where((e) => !e.notApplicable && (e.healthy == null || e.faults.isNotEmpty))
+        .length;
+    if (warning > 0) {
+      return (text: l10n.diskWarningFmt(warning), tone: _Verdict.warn);
+    }
+    return (text: l10n.diskAllPassed, tone: _Verdict.ok);
+  }
+
+  /// What a drive says about itself in one phrase: the first count that should
+  /// have been zero, or SMART's own verdict when they all are.
+  String _smartSummary(DiskSmart smart) {
+    if (smart.notApplicable) return l10n.notApplicable;
+    final fault = smart.faults.entries.firstOrNull;
+    if (fault != null) return '${fault.value} ${fault.key}';
+    return switch (smart.healthy) {
+      null => libL10n.unknown,
+      true => 'PASSED',
+      false => 'FAILING',
+    };
+  }
 
   Widget _buildDiskSmartItem(DiskSmart smart) {
-    final (text: health, tone: tone) = _diskHealth(smart);
-    final details = [
-      ?smart.model,
-      if (smart.powerOnHours case final hours?) '$hours ${libL10n.hour}',
-      if (smart.ssdLifeLeft case final left?) 'Life left: $left%',
-    ];
-
+    final applicable = !smart.notApplicable;
     return _buildReadoutRow(
       k: smart.device,
-      sub: details.isEmpty ? null : details.join(' · '),
+      sub: smart.model,
       v: [
-        health,
+        _smartSummary(smart),
         if (smart.temperature case final t?) _formatTemp(t),
       ].join(' · '),
-      dot: tone.color(Theme.of(context).colorScheme),
-      onTap: () => _onTapDiskSmartItem(smart),
+      dot: _smartTone(smart).color(Theme.of(context).colorScheme),
+      // Nothing to open for a device with no attributes, and a chevron that
+      // opens an empty sheet is worse than no chevron.
+      onTap: applicable ? () => _onTapDiskSmartItem(smart) : null,
     );
   }
 
-  ({String text, _Verdict tone}) _diskHealth(DiskSmart smart) =>
-      switch (smart.healthy) {
-        null => (text: libL10n.unknown, tone: _Verdict.warn),
-        true => (text: 'PASSED', tone: _Verdict.ok),
-        false => (text: 'FAILING', tone: _Verdict.bad),
-      };
+  _Verdict _smartTone(DiskSmart smart) {
+    if (smart.notApplicable) return _Verdict.idle;
+    if (smart.healthy == false) return _Verdict.bad;
+    if (smart.healthy == null || smart.faults.isNotEmpty) return _Verdict.warn;
+    return _Verdict.ok;
+  }
 
+  /// One drive's attributes: the readings the card has no room for.
+  ///
+  /// Two dozen numbers do not belong on the page — the card carries the
+  /// verdict and this carries the evidence, in the order it is read in: the
+  /// health line first, then the counts that should be zero, then how much
+  /// the drive has been used. Each count that is not zero keeps its dot, so
+  /// the row that made the card say "1 warning" is the one that stands out
+  /// here too.
   void _onTapDiskSmartItem(DiskSmart smart) {
-    final details = <String>[];
-
-    if (smart.model != null) details.add('Model: ${smart.model}');
-    if (smart.serial != null) details.add('Serial: ${smart.serial}');
-    if (smart.temperature != null) {
-      details.add('Temperature: ${smart.temperature!.toStringAsFixed(1)}°C');
-    }
-
-    if (smart.powerOnHours != null) {
-      details.add('Power On: ${smart.powerOnHours} ${libL10n.hour}');
-    }
-    if (smart.powerCycleCount != null) {
-      details.add('Power Cycle: ${smart.powerCycleCount}');
-    }
-
-    if (smart.ssdLifeLeft != null) {
-      details.add('Life Left: ${smart.ssdLifeLeft}%');
-    }
-    if (smart.lifetimeWritesGiB != null) {
-      details.add('Lifetime Write: ${smart.lifetimeWritesGiB} GiB');
-    }
-    if (smart.lifetimeReadsGiB != null) {
-      details.add('Lifetime Read: ${smart.lifetimeReadsGiB} GiB');
-    }
-    if (smart.averageEraseCount != null) {
-      details.add('Avg. Erase: ${smart.averageEraseCount}');
-    }
-    if (smart.unsafeShutdownCount != null) {
-      details.add('Unsafe Shutdown: ${smart.unsafeShutdownCount}');
-    }
-
-    final criticalAttrs = [
-      'Reallocated_Sector_Ct',
-      'Current_Pending_Sector',
-      'Offline_Uncorrectable',
-      'UDMA_CRC_Error_Count',
+    final scheme = Theme.of(context).colorScheme;
+    final rows = <({String k, String v, _Verdict? dot})>[
+      (
+        k: l10n.diskHealth,
+        v: switch (smart.healthy) {
+          null => libL10n.unknown,
+          true => 'PASSED',
+          false => 'FAILING',
+        },
+        dot: _smartTone(smart),
+      ),
+      for (final entry in DiskSmart.criticalAttributes.entries)
+        if (smart.getAttribute(entry.key)?.rawValue case final raw?)
+          (
+            k: entry.key.replaceAll('_', ' '),
+            v: '$raw',
+            dot: '$raw' == '0' ? null : _Verdict.warn,
+          ),
+      if (smart.powerOnHours case final hours?)
+        (k: l10n.powerOnHours, v: '$hours', dot: null),
+      if (smart.powerCycleCount case final cycles?)
+        (k: l10n.powerCycles, v: '$cycles', dot: null),
+      if (smart.ssdLifeLeft case final left?)
+        (k: l10n.lifeLeft, v: '$left%', dot: null),
+      if (smart.lifetimeWritesGiB case final written?)
+        (k: l10n.lifetimeWrite, v: '$written GiB', dot: null),
+      if (smart.lifetimeReadsGiB case final read?)
+        (k: l10n.lifetimeRead, v: '$read GiB', dot: null),
+      if (smart.averageEraseCount case final erases?)
+        (k: l10n.averageErase, v: '$erases', dot: null),
+      if (smart.unsafeShutdownCount case final unsafe?)
+        (k: l10n.unsafeShutdowns, v: '$unsafe', dot: null),
+      if (smart.temperature case final t?)
+        (k: libL10n.temperature, v: _formatTemp(t), dot: null),
+      if (smart.model case final model?) (k: 'Model', v: model, dot: null),
+      if (smart.serial case final serial?) (k: 'Serial', v: serial, dot: null),
     ];
 
-    for (final attrName in criticalAttrs) {
-      final attr = smart.getAttribute(attrName);
-      if (attr != null && attr.rawValue != null) {
-        final value = attr.rawValue.toString();
-        details.add('${attrName.replaceAll('_', ' ')}: $value');
-      }
-    }
-
-    if (details.isEmpty) {
-      return;
-    }
-
-    final markdown = details.join('\n\n- ');
-    context.showRoundDialog(
-      title: smart.device,
-      child: MarkdownBody(
-        data: '- $markdown',
-        selectable: true,
-        styleSheet: MarkdownStyleSheet.fromTheme(
-          Theme.of(context),
-        ).copyWith(p: UIs.text13Grey, h2: UIs.text15),
-      ),
-      actions: Btnx.oks,
+    showRowsSheet<void>(
+      context,
+      rows: (_) => [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 5, 17, 9),
+          child: Text(
+            '${smart.device} · ${l10n.attributes}',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+          ),
+        ),
+        for (final row in rows)
+          _buildReadoutRow(
+            k: row.k,
+            v: row.v,
+            dot: row.dot?.color(scheme),
+          ),
+        // Where the numbers came from, spelled as the command that produced
+        // them: the answer to "is this current" is the command, not a label.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 13, 17, 5),
+          child: Text(
+            'smartctl -A /dev/${smart.device}',
+            style: UIs.text11Grey.copyWith(fontFamily: 'monospace'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1102,7 +1165,7 @@ ${err.message ?? 'null'}
       icon: ServerDetailCards.battery.icon,
       title: libL10n.battery,
       rows: ss.batteries.map(_buildBatteryItem).toList(),
-      footer: _hiddenNote(ss.batteries.length),
+      footer: _countNote(ss.batteries.length, l10n.unitBatteries),
       initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
     );
   }
@@ -1129,7 +1192,7 @@ ${err.message ?? 'null'}
       icon: Icons.thermostat,
       title: libL10n.sensors,
       rows: ss.sensors.map(_buildSensorItem).toList(),
-      footer: _hiddenNote(ss.sensors.length),
+      footer: _countNote(ss.sensors.length, l10n.unitSensors),
       initiallyExpanded: _getInitExpand(ss.sensors.length, 2),
     );
   }
@@ -1232,7 +1295,7 @@ ${err.message ?? 'null'}
       // actions, and a truncated list must not be able to hide them.
       extra: [if (bmc.hasData) _buildBmcPower(si)],
       footer: _cardFooter([
-        _hiddenNote(rows.length),
+        _countNote(rows.length, l10n.unitReadings),
         // Said rather than left to look like the whole truth
         if (bmc.sensorsTruncated) l10n.bmcSensorsTruncated,
         // The same reason, for the same kind of cut: discovery takes the first
@@ -1347,7 +1410,7 @@ ${err.message ?? 'null'}
       icon: MingCute.command_line,
       title: l10n.customCmd,
       rows: ss.customCmds.entries.map(_buildCustomCmdItem).toList(),
-      footer: _hiddenNote(ss.customCmds.length),
+      footer: _countNote(ss.customCmds.length, l10n.unitCommands),
       initiallyExpanded: _getInitExpand(ss.customCmds.length),
     );
   }

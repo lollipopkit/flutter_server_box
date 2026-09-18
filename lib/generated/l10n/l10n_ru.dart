@@ -2436,9 +2436,81 @@ class AppLocalizationsRu extends AppLocalizations {
   String get oneDeviceAtLeast => 'Хотя бы одно устройство остаётся на графике.';
 
   @override
-  String shownOfFmt(Object shown, Object total) {
-    return 'показано $shown из $total';
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown из $total ($what)';
   }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$what: $count';
+  }
+
+  @override
+  String get unitDevices => 'устройства';
+
+  @override
+  String get unitSensors => 'датчики';
+
+  @override
+  String get unitBatteries => 'батареи';
+
+  @override
+  String get unitCommands => 'команды';
+
+  @override
+  String get unitReadings => 'показания';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => 'самый горячий';
+
+  @override
+  String get oldest => 'самый старый';
+
+  @override
+  String get notApplicable => 'неприменимо';
+
+  @override
+  String get attributes => 'атрибуты';
+
+  @override
+  String get powerOnHours => 'Часов работы';
+
+  @override
+  String get powerCycles => 'Циклов включения';
+
+  @override
+  String get lifeLeft => 'Остаток ресурса';
+
+  @override
+  String get lifetimeWrite => 'Всего записано';
+
+  @override
+  String get lifetimeRead => 'Всего прочитано';
+
+  @override
+  String get averageErase => 'Среднее число стираний';
+
+  @override
+  String get unsafeShutdowns => 'Аварийных выключений';
+
+  @override
+  String get diskAllPassed => 'все PASSED';
+
+  @override
+  String diskWarningFmt(Object count) {
+    return 'предупреждений: $count';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong из $total устройств';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Худшие сверху';
 
   @override
   String processesFmt(Object count) {

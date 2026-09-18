@@ -28,6 +28,40 @@ abstract class DiskSmart with _$DiskSmart {
   /// Get the specific SMART attribute by name
   SmartAttribute? getAttribute(String name) => smartAttributes[name];
 
+  /// The counts a drive is judged on beyond [healthy], worst first, each
+  /// paired with the word that names it.
+  ///
+  /// SMART's own verdict stays PASSED until a drive is nearly gone: one with
+  /// reallocated sectors answers PASSED and is the one to replace. Every one
+  /// of these should be zero, and the first non-zero one is what a card says
+  /// instead of "PASSED".
+  ///
+  /// The words are smartctl's, shortened — they are the terms the attribute
+  /// tables and every disk forum use, and translating them would leave the
+  /// reading and its name in different vocabularies.
+  static const criticalAttributes = <String, String>{
+    'Reallocated_Sector_Ct': 'reallocated',
+    'Current_Pending_Sector': 'pending',
+    'Offline_Uncorrectable': 'uncorrectable',
+    'UDMA_CRC_Error_Count': 'CRC errors',
+  };
+
+  /// Which of [criticalAttributes] this drive reports above zero, in that
+  /// order. Empty on a healthy drive and on one that reports none of them.
+  Map<String, int> get faults {
+    final out = <String, int>{};
+    for (final entry in criticalAttributes.entries) {
+      final raw = smartAttributes[entry.key]?.rawValue;
+      final count = raw is int ? raw : int.tryParse('$raw');
+      if (count != null && count > 0) out[entry.value] = count;
+    }
+    return out;
+  }
+
+  /// Whether smartctl had nothing to say about this device — a RAID set or a
+  /// mapper target, which has no SMART data rather than bad SMART data.
+  bool get notApplicable => healthy == null && smartAttributes.isEmpty;
+
   int? get ssdLifeLeft => smartAttributes['SSD_Life_Left']?.rawValue as int?;
   int? get lifetimeWritesGiB =>
       smartAttributes['Lifetime_Writes_GiB']?.rawValue as int?;

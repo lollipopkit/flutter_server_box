@@ -684,14 +684,21 @@ extension on _ServerDetailPageState {
     required bool wide,
   }) {
     final chart = _buildFocusChart(si, m, wide: wide);
+    final device = _buildDeviceControl(si, m);
     // Two groups with the room between them, not five children sharing it:
     // everything in this line is as long as the language or the machine makes
     // it, and a `Flexible` narrower than its share leaves the difference as
     // slack at the end of the row — which holds the ranges off the edge.
+    //
+    // The shares are 2:3 because that is roughly what the two sides need: the
+    // right holds the note and three chips, the left a name and a device
+    // count. At 1:3 the left was a quarter of the card and the count came out
+    // as "2 o…".
     final head = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
+          flex: 2,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -708,9 +715,13 @@ extension on _ServerDetailPageState {
                   ),
                 ),
               ),
-              if (_buildDeviceControl(si, m) case final control?) ...[
+              // Narrow, the header is a name and the ranges and nothing fits
+              // between them: the control goes on the note's line below, which
+              // is otherwise a line of grey text with the rest of the card's
+              // width to itself.
+              if (wide && device != null) ...[
                 const SizedBox(width: 13),
-                Flexible(child: control),
+                Flexible(child: device),
               ],
             ],
           ),
@@ -789,7 +800,20 @@ extension on _ServerDetailPageState {
                 _buildStats(m.stats),
               ],
               UIs.height7,
-              Text(_historyNote(si), style: UIs.text11Grey),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      _historyNote(si),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: UIs.text11Grey,
+                    ),
+                  ),
+                  ?device,
+                ],
+              ),
             ],
             chart,
             ?_buildFocusDetail(si, m.kind),
