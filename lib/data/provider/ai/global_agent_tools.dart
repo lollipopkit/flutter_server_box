@@ -962,9 +962,11 @@ class GlobalAgentToolService {
     // prompts, and this may be running while the Agent is nowhere on screen.
     // Only on the path that actually connects: a server with a client already
     // open asks nothing, and pulling the shell up on every tool call would
-    // override a user who deliberately closed it. A monitor server opens no
-    // shell at all, so it does not raise this either.
-    if (state.spi.ssh != null) {
+    // override a user who deliberately closed it. A server whose commands go
+    // to its agent opens no shell at all, so it does not raise this either —
+    // which is a question about the transport that leads, not about whether an
+    // SSH credential exists.
+    if (state.spi.transport == ServerTransport.ssh) {
       _ref.read(agentShellProvider.notifier).show();
     }
 

@@ -215,7 +215,14 @@ extension VirtKeyX on VirtKey {
     // Needs a channel that does not echo what is written into it, which only
     // an SSH exec channel is: a shell on this device runs in a pseudo-terminal,
     // and a monitor agent carries no exec channel at all.
-    VirtKey.tmux => spi?.ssh != null,
+    //
+    // Which of the two a server's shell is on is the order the user set, not
+    // whether an SSH credential exists — a server with both, agent first, gets
+    // the agent's PTY. This errs the way the rest of this predicate does: an
+    // agent that leads without granting a shell falls back to SSH and could
+    // have had the key, and a key that is missing costs less than one that is
+    // drawn and does nothing.
+    VirtKey.tmux => spi?.transport == ServerTransport.ssh,
     // Everything else is the terminal's own — keys, modifiers, the clipboard,
     // the IME, and snippets, which are a script typed into whatever is there.
     _ => true,
