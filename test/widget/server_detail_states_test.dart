@@ -8,6 +8,7 @@
 /// says when it was taken.
 library;
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
@@ -179,6 +180,29 @@ void main() {
     // figure is of.
     expect(find.textContaining(RegExp(r'^at \d')), findsWidgets);
     // The chart stops where the samples do, and says so.
-    expect(find.text(app_locale.l10n.noData), findsOneWidget);
+    final band = find.text(app_locale.l10n.noData);
+    expect(band, findsOneWidget);
+
+    // And the band is where the gap is. The samples span a couple of seconds
+    // nine minutes ago, so the window is nine minutes of which all but the
+    // first moments are empty: a band drawn from the samples' own extent, or
+    // across the whole plot, lands somewhere else entirely.
+    final chart = find.byType(LineChart);
+    final plot = tester.getRect(chart.first);
+    // The band itself, not its label: the label is centred in it and says
+    // nothing about where it starts.
+    final rect = tester.getRect(
+      find.ancestor(of: band, matching: find.byType(DecoratedBox)).first,
+    );
+    expect(
+      rect.left,
+      lessThan(plot.left + plot.width * 0.25),
+      reason: 'the band should start where the samples stop, near the left',
+    );
+    expect(
+      rect.right,
+      closeTo(plot.right, plot.width * 0.2),
+      reason: 'the band should run to the end of the window',
+    );
   });
 }

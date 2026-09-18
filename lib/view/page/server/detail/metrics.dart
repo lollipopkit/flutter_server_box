@@ -725,7 +725,10 @@ extension on _ServerDetailPageState {
   /// One line per device, or null where the aggregate is what there is: a
   /// single device, or a window that came from a store that has only totals.
   List<_HistorySeries>? _deviceSeries(ServerState si, _MetricKind kind) {
-    if (_range != _HistoryRange.live) return null;
+    // These come from the rolling buffer, whose samples are the live window's.
+    // Drawn against any other window they would be plotted at instants they
+    // were not taken at.
+    if (_custom != null || _range != _HistoryRange.live) return null;
     final devices = _devicesOf(si, kind);
     if (devices == null) return null;
     final series = [
@@ -806,14 +809,9 @@ extension on _ServerDetailPageState {
     if (_custom case final window?) {
       final from = window.from.millisecondsSinceEpoch;
       final to = window.to.millisecondsSinceEpoch;
-      // One bucket of tolerance, as below: the agent averages the window into
-      // at most `_kRangePoints` of them.
-      final bucket = (to - from) ~/ _kRangePoints;
       return (
         window: (from: from, to: to),
-        bands: first - from > bucket * 2
-            ? [(from: from, to: first, label: l10n.noDataBeforeFmt(_clockOf(first)))]
-            : const [],
+        bands: _bandsIn(from: from, to: to, first: first, last: last),
       );
     }
 
@@ -834,23 +832,45 @@ extension on _ServerDetailPageState {
     final answer = _rangeWindows[_range];
     final to = answer?.at.millisecondsSinceEpoch ?? last;
     final from = to - minutes * 60 * 1000;
-    // A window the agent could only partly fill. The tolerance is one bucket:
-    // the agent averages the window into at most `_kRangePoints` of them, so
-    // the first sample lands a bucket in even when it stored the lot.
-    final bucket = (to - from) ~/ _kRangePoints;
-    final missing = first - from;
     return (
       window: (from: from, to: to),
-      bands: missing > bucket * 2
-          ? [
-              (
-                from: from,
-                to: first,
-                label: l10n.noDataBeforeFmt(_clockOf(first)),
-              ),
-            ]
-          : const [],
+      bands: _bandsIn(from: from, to: to, first: first, last: last),
     );
+  }
+
+  /// What a stored window did not come back with, said in the band.
+  ///
+  /// Two buckets of tolerance at each end: the agent averages the window into
+  /// at most [_kRangePoints] of them, so the outermost points sit a bucket
+  /// inside the window however much it kept — and a band drawn for that is a
+  /// band on every chart.
+  List<_ChartBand> _bandsIn({
+    required int from,
+    required int to,
+    required int first,
+    required int last,
+  }) {
+    final tolerance = ((to - from) ~/ _kRangePoints) * 2;
+    return [
+      for (final gap in windowGaps(
+        from: from,
+        to: to,
+        first: first,
+        last: last,
+        leadTolerance: tolerance,
+        trailTolerance: tolerance,
+      ))
+        (
+          from: gap.from,
+          to: gap.to,
+          // Where it stops being true is the fact: a gap at the start of the
+          // window says when the readings begin, and one at the end has
+          // nothing to name — it runs to now.
+          label: gap.leading
+              ? l10n.noDataBeforeFmt(_clockOf(first))
+              : l10n.noData,
+        ),
+    ];
   }
 
   /// A sample's instant as a clock reading — the day where the window spans
@@ -1739,7 +1759,12 @@ extension on _ServerDetailPageState {
                           ),
                   );
                 }(),
-              if (stored) ...[
+              // Only for an agent that reported its retention, which is also
+              // the only one that understands `from`/`to`: an older one clamps
+              // to a week and answers for a window nobody asked for, which the
+              // chart would then draw as a week of readings inside the window
+              // that was typed in.
+              if (stored && caps?.retention != null) ...[
                 const Divider(height: 17, indent: 17, endIndent: 17),
                 for (final bound in [true, false])
                   ListTile(
@@ -1845,6 +1870,10 @@ extension on _ServerDetailPageState {
   /// as the reader moves between them.
   Future<void> _selectCustom(DateTime from, DateTime to) async {
     if (!mounted) return;
+    // Which request this is. A window picked while another is still in flight
+    // is the answer that counts, and without this the slower of the two
+    // overwrites it on arrival and clears the busy flag the newer one set.
+    final generation = ++_customGeneration;
     _rebuild(() {
       _custom = (from: from, to: to);
       _customAnswer = null;
@@ -1861,15 +1890,15 @@ extension on _ServerDetailPageState {
             from: from,
             to: to,
           );
-      if (!mounted) return;
+      if (!mounted || generation != _customGeneration) return;
       _rebuild(
         () => _customAnswer = (samples: samples, at: DateTime.now()),
       );
     } catch (e, s) {
       Loggers.app.warning('History range for ${widget.args.spi.id}', e, s);
-      if (mounted) Toast.error('$e');
+      if (mounted && generation == _customGeneration) Toast.error('$e');
     } finally {
-      _rebuild(() => _customBusy = false);
+      if (generation == _customGeneration) _rebuild(() => _customBusy = false);
     }
   }
 

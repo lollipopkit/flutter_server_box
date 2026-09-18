@@ -1102,10 +1102,19 @@ async fn update_card_order(
 /// with no encoding to undo, and every one of them is clamped at the use site
 /// anyway, so a bad value and a missing value have the same answer.
 fn query_param<T: std::str::FromStr>(query: &str, name: &str) -> Option<T> {
+    raw_param(query, name).and_then(|v| v.parse().ok())
+}
+
+/// The parameter as it was written, or `None` when it was not written at all.
+///
+/// The difference matters wherever a default is not the same answer as a
+/// refusal: `?from=yesterday` is a caller asking for a window, and reading it
+/// as "no window given" answers with the default hour and calls it what was
+/// asked for.
+fn raw_param<'a>(query: &'a str, name: &str) -> Option<&'a str> {
     query
         .split('&')
         .find_map(|kv| kv.strip_prefix(name)?.strip_prefix('='))
-        .and_then(|v| v.parse().ok())
 }
 
 #[derive(Serialize)]
@@ -1168,10 +1177,28 @@ async fn get_metrics_history(
     // two — 4255 rows scanned for a 60-minute window holding 496, and the
     // factor grows through the UTC day to 24x.
 
+    // A bound that was given but cannot be read is a refusal, not a default:
+    // the caller is asking for a window, and answering with a different one is
+    // how a client bug becomes a chart nobody questions.
+    let bound = |name: &str| -> std::result::Result<Option<i64>, ()> {
+        match raw_param(query, name) {
+            None => Ok(None),
+            Some(raw) => raw.parse::<i64>().map(Some).map_err(|_| ()),
+        }
+    };
+    let bad_request = |message: &str| {
+        Ok(HttpResponse::BadRequest().json(&ErrorResponse {
+            error: message.to_string(),
+        }))
+    };
+    let (Ok(from_param), Ok(to_param)) = (bound("from"), bound("to")) else {
+        return bad_request("from/to must be epoch seconds");
+    };
+
     // The window, as either of the two ways of naming one.
-    let (cutoff, until) = match query_param::<i64>(query, "from") {
+    let (cutoff, until) = match from_param {
         Some(from) => {
-            let to = query_param::<i64>(query, "to").unwrap_or(now.timestamp());
+            let to = to_param.unwrap_or(now.timestamp());
             let from = chrono::DateTime::from_timestamp(from, 0);
             let to = chrono::DateTime::from_timestamp(to, 0);
             match (from, to) {
@@ -1180,9 +1207,7 @@ async fn get_metrics_history(
                 // how it stays one.
                 (Some(from), Some(to)) if to > from => (from, Some(to)),
                 _ => {
-                    return Ok(HttpResponse::BadRequest().json(&ErrorResponse {
-                        error: "from/to must be epoch seconds with to > from".to_string(),
-                    }));
+                    return bad_request("from/to must be epoch seconds with to > from");
                 }
             }
         }

@@ -438,3 +438,33 @@ async fn an_inverted_window_is_refused() {
 
     assert_eq!(resp.status().as_u16(), 400);
 }
+
+/// A bound that was given but cannot be read.
+///
+/// Refused rather than defaulted: the caller is asking for a window, and
+/// answering with a different one is how a client bug becomes a chart nobody
+/// questions. A bound that is simply absent still defaults, which is what
+/// every caller predating `from`/`to` relies on.
+#[ntex::test]
+async fn a_malformed_bound_is_refused() {
+    let srv = test_server(state_with_samples(60).await).await;
+    let token = generate_token("admin", SECRET).unwrap();
+    let now = Utc::now().timestamp();
+
+    for query in [
+        "from=yesterday".to_string(),
+        format!("from={now}&to=soon"),
+        "to=".to_string(),
+    ] {
+        let resp = srv
+            .get(format!("/api/v1/metrics/history?{query}"))
+            .header("Authorization", format!("Bearer {token}"))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status().as_u16(), 400, "?{query} was not refused");
+    }
+
+    // And the window that names no bounds at all still answers.
+    assert!(!history(&srv, "minutes=60").await.is_empty());
+}

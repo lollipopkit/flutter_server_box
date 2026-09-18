@@ -33,6 +33,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
+import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
@@ -124,6 +125,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   _RangeAnswer? _customAnswer;
   // ignore: prefer_final_fields — set through `_rebuild` from an extension.
   bool _customBusy = false;
+
+  /// Which named-window request is the current one — see `_selectCustom`.
+  int _customGeneration = 0;
 
   /// The window the chart draws, and what has been fetched for it.
   _HistoryRange _range = _HistoryRange.live;

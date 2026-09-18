@@ -367,6 +367,10 @@ class ServerNotifier extends _$ServerNotifier {
       conn: ServerConn.disconnected,
       // The edit may have pointed this server at another machine entirely.
       latencyMs: null,
+      // Including at another agent, whose retention and oldest reading are
+      // not this one's. Kept, they decide which windows the range picker
+      // offers until the next capabilities fetch lands.
+      agentCapabilities: null,
     );
   }
 
