@@ -208,10 +208,11 @@ cd /opt/server-box-monitor
 
 新密码需要输入两次，不回显，至少 8 位。用户不存在时同一条命令会创建它，因此添加第二个账户也用这条命令。
 
-要从环境变量取密码——用于脚本，或避免进入 shell history：
+要从环境变量取密码——用于脚本，或避免进入 shell history。`read -s` 是 Bash 和 Zsh 的内建命令，POSIX `sh` 没有，因此下面这段要在 Bash 或 Zsh 下执行；紧跟其后的检查用于避免读取失败或输入为空时把密码设成空串：
 
-```sh
-read -rs SBM_PW
+```bash
+read -rsp 'Password: ' SBM_PW && echo
+[ -n "$SBM_PW" ] || { echo '未输入密码' >&2; exit 1; }
 SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM_PW
 ```
 

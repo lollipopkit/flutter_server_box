@@ -227,10 +227,11 @@ cd /opt/server-box-monitor
 
 The new password is asked for twice, without echo, and must be at least 8 characters. The same command creates a user that does not exist yet, so it is also how a second account is added.
 
-To take the password from the environment instead — in a script, or to keep it out of the shell history:
+To take the password from the environment instead — in a script, or to keep it out of the shell history. `read -s` is a Bash and Zsh builtin, not POSIX `sh`, so run this under one of those; the check after it is what keeps a failed or empty read from setting an empty password:
 
-```sh
-read -rs SBM_PW
+```bash
+read -rsp 'Password: ' SBM_PW && echo
+[ -n "$SBM_PW" ] || { echo 'no password entered' >&2; exit 1; }
 SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM_PW
 ```
 

@@ -532,9 +532,12 @@ ${err.message ?? 'null'}
       // Under the readings rather than in the column beside them: these are
       // tables — sensor rows, GPU processes, SMART attributes — and a 330pt
       // column is not a width any of them was written for.
-      if (wide) ...[UIs.height13, ...cards],
+      if (wide) ...[UIs.height13, _buildCardGrid(cards)],
     ];
-    final aside = <Widget>[..._buildInfoCards(si), if (!wide) ...cards];
+    final aside = <Widget>[
+      ..._buildInfoCards(si),
+      if (!wide) _buildCardGrid(cards),
+    ];
 
     return SingleChildScrollView(
       controller: _scrollCtrl,

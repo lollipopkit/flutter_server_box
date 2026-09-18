@@ -186,6 +186,38 @@ void main() {
     expect(find.text('smartctl -A /dev/sdb'), findsOneWidget);
   });
 
+  /// Two cards fit side by side where there is room for two readable columns,
+  /// and the readings line up on the card's edge rather than wherever the name
+  /// beside them happened to end.
+  testWidgets('cards share the width, and their readings are flush right', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    final card = find.ancestor(
+      of: find.text(app_locale.l10n.diskHealth),
+      matching: find.byType(CardX),
+    );
+    final cardBox = tester.getRect(card.first);
+    // Half the readings column, not all of it: the page is 1200 wide and the
+    // facts take their own column beside it.
+    expect(cardBox.width, lessThan(500));
+
+    // Two readings of different lengths, against each other rather than
+    // against an arithmetic of paddings: flush right means they end in the
+    // same place, and the layout this replaced ended each one wherever its own
+    // text ran out.
+    double rightOf(String text) => tester
+        .getRect(find.descendant(of: card, matching: find.text(text)).first)
+        .right;
+
+    expect(
+      rightOf('FAILING · 22°C'),
+      closeTo(rightOf('PASSED · 30°C'), 0.5),
+      reason: 'the readings stopped short of the edge they line up on',
+    );
+  });
+
   testWidgets('the worst drive is the first row, and only six are listed', (
     tester,
   ) async {
