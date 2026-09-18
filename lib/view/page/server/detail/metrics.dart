@@ -11,7 +11,8 @@ enum _HistoryRange {
   h1(60, '1h'),
   h6(360, '6h'),
   h24(1440, '24h'),
-  d7(10080, '7d');
+  d7(10080, '7d'),
+  d30(43200, '30d');
 
   const _HistoryRange(this.minutes, this._short);
 
@@ -902,7 +903,8 @@ extension on _ServerDetailPageState {
     final stats = [
       ...m.stats,
       if (axis.bands.firstOrNull case final gap?
-          when _range != _HistoryRange.live && w.times.isNotEmpty)
+          when (_custom != null || _range != _HistoryRange.live) &&
+              w.times.isNotEmpty)
         (
           k: l10n.stored,
           v: Duration(milliseconds: w.times.last - gap.to).toAgoStr,
@@ -1708,8 +1710,16 @@ extension on _ServerDetailPageState {
                       minutes != null &&
                       earliest != null &&
                       now.subtract(Duration(minutes: minutes)).isBefore(earliest);
+                  // A window past a week reaches the agent as `from`/`to`, and
+                  // an agent that did not report its retention is one that
+                  // predates both — it would clamp to a week and answer for a
+                  // window nobody asked for.
+                  final unaskable =
+                      minutes != null && minutes > 7 * 24 * 60 && caps?.retention == null;
                   final offerable =
-                      (stored || range == _HistoryRange.live) && !beyond;
+                      (stored || range == _HistoryRange.live) &&
+                      !beyond &&
+                      !unaskable;
                   return ListTile(
                     enabled: offerable,
                     selected: _custom == null && range == _range,
@@ -1883,9 +1893,19 @@ extension on _ServerDetailPageState {
 
     _rebuild(() => _rangeBusy.add(range));
     try {
+      final to = DateTime.now();
       final samples = await ref
           .read(serverProvider(widget.args.spi.id).notifier)
-          .fetchHistoryRange(minutes: minutes, maxPoints: _kRangePoints);
+          .fetchHistoryRange(
+            minutes: minutes,
+            maxPoints: _kRangePoints,
+            // The same window twice: `minutes` is what an agent predating
+            // `from`/`to` understands, and it clamps at a week — which is why
+            // the windows past that are offered only to an agent that answered
+            // with its retention, since only that one has the newer form.
+            from: to.subtract(Duration(minutes: minutes)),
+            to: to,
+          );
       if (!mounted) return;
       _rebuild(
         () => _rangeWindows[range] = (samples: samples, at: DateTime.now()),

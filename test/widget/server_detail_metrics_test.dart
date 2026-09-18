@@ -278,6 +278,31 @@ void main() {
     expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
+  /// The picker offers what the agent can answer for. An SSH server's agent is
+  /// no agent at all, so only the window this app kept itself is offerable —
+  /// the rest stay in the list, greyed, with the reason.
+  testWidgets('the range picker says why a window is not on offer', (
+    tester,
+  ) async {
+    await pump(tester, size: const Size(1200, 900));
+
+    await tester.tap(find.byIcon(Icons.date_range));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.takeException(), isNull);
+
+    // Every window is listed, including the ones this connection cannot fill.
+    expect(find.text('24h'), findsWidgets);
+    expect(find.text('7d'), findsWidgets);
+    // Tapping one of those says why instead of switching to an empty chart.
+    await tester.tap(find.text('7d').last);
+    for (var i = 0; i < 3; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text(app_locale.l10n.rangeLive), findsWidgets);
+  });
+
   /// Only an agent stores history, so an SSH server is offered the one window
   /// it has rather than three it cannot fill.
   testWidgets('an SSH server is told why the longer ranges are empty', (
