@@ -92,54 +92,10 @@ extension on _ServerDetailPageState {
     return len > 0 && len <= (max ?? 3);
   }
 
-  /// Trends read one buffer ([ServerStatus.history]) that both connection
-  /// methods append to, so an SSH server and a monitor HTTP server render
-  /// identically; monitor servers additionally get theirs prefilled from the
-  /// agent's stored history (`seedHistoryFromMonitor`).
-  ///
-  /// Grouping follows monitor's own panel: series sharing a unit go on one
-  /// axis so they stay comparable, rather than each getting its own
-  /// auto-scaled strip.
-  ///
-  /// These two return a bare chart, not a card: each is embedded in the CPU or
-  /// RAM card beneath the figure it plots. Both keep a fixed 0-100% axis, so
-  /// the two cards stay directly comparable even though they no longer share
-  /// one plot.
-  Widget? _buildCpuChart(ServerState si) => _percentChart(
-    'CPU',
-    const Color(0xFF3B82F6),
-    si.status.history.cpu,
-  );
-
-  Widget? _buildMemChart(ServerState si) => _percentChart(
-    'RAM',
-    const Color(0xFF22C55E),
-    si.status.history.mem,
-  );
-
   Widget? _percentChart(String label, Color color, List<double?> values) {
     final spec = _ChartSpec(
       series: [_HistorySeries(label, color, values)],
       format: _formatPercent,
-    );
-    return spec.hasData ? _buildChart(spec) : null;
-  }
-
-  /// Throughput, appended to the Disk card below its mounts.
-  ///
-  /// Only the rate is plotted. Used capacity was charted alongside it at
-  /// first, but a filesystem's fill level barely moves over the minutes this
-  /// buffer covers, so the line was flat and told nobody anything the ring
-  /// beside each mount doesn't.
-  Widget? _buildDiskChart(ServerState si) {
-    final h = si.status.history;
-    final spec = _ChartSpec(
-      series: [
-        _HistorySeries(l10n.read, const Color(0xFF0EA5E9), h.diskRead),
-        _HistorySeries(l10n.write, const Color(0xFFF97316), h.diskWrite),
-      ],
-      format: _formatSpeed,
-      binaryScale: true,
     );
     return spec.hasData ? _buildChart(spec) : null;
   }
@@ -279,20 +235,6 @@ extension on _ServerDetailPageState {
     );
   }
 
-  /// Sits at the top of the Network card, above the interface list.
-  Widget? _buildNetChart(ServerState si) {
-    final h = si.status.history;
-    final spec = _ChartSpec(
-      series: [
-        _HistorySeries('↓', const Color(0xFF8B5CF6), h.netRx),
-        _HistorySeries('↑', const Color(0xFFEC4899), h.netTx),
-      ],
-      format: _formatSpeed,
-      binaryScale: true,
-    );
-    return spec.hasData ? _buildChart(spec) : null;
-  }
-
   /// Appended to the Battery card. It used to sit in the temperature card,
   /// which stopped making sense once that card carried the sensor list too.
   Widget? _buildBatteryChart(ServerState si) => _percentChart(
@@ -323,7 +265,7 @@ extension on _ServerDetailPageState {
     if (bars.isEmpty) return UIs.placeholder;
 
     final hasLegend = spec.series.length > 1;
-    return Padding(
+    final body = Padding(
       // The extra bottom allowance is only for the axis' own overflow: fl_chart
       // centres the lowest label on the bottom gridline, so roughly half of it
       // hangs outside the plot box. A legend below already absorbs that, and
@@ -335,15 +277,17 @@ extension on _ServerDetailPageState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: 110,
-            child: _buildHistoryLineChart(
+          () {
+            final plot = _buildHistoryLineChart(
               bars,
               series: spec.series,
               format: spec.format,
               binaryScale: spec.binaryScale,
-            ),
-          ),
+            );
+            return spec.fill
+                ? Expanded(child: plot)
+                : SizedBox(height: spec.height, child: plot);
+          }(),
           // Only worth drawing when there is something to tell apart. A lone
           // line needs no key: the card already names its subject, and the
           // value is a touch away in the tooltip.
@@ -379,6 +323,7 @@ extension on _ServerDetailPageState {
         ],
       ),
     );
+    return spec.fill ? SizedBox(height: spec.height, child: body) : body;
   }
 }
 
@@ -386,6 +331,18 @@ extension on _ServerDetailPageState {
 class _ChartSpec {
   final List<_HistorySeries> series;
   final String Function(double) format;
+
+  /// How tall the plot is, which the focus card decides by how much room the
+  /// window has: a shape is only readable in so little height.
+  final double height;
+
+  /// Whether [height] is the whole block rather than the plot.
+  ///
+  /// The focus card draws one metric at a time and the metrics do not agree on
+  /// how many lines they have — a legend under two series, none under one — so
+  /// without this the card changed height as the reader moved between them.
+  /// Filling takes the difference out of the plot instead.
+  final bool fill;
 
   /// Whether the values are byte-based, so the axis should step in multiples
   /// of 1024 rather than of 10 — see [_niceAxis]
@@ -395,6 +352,8 @@ class _ChartSpec {
     required this.series,
     required this.format,
     this.binaryScale = false,
+    this.height = 110,
+    this.fill = false,
   });
 
   bool get hasData => series.any((s) => s.spots.isNotEmpty);
@@ -515,7 +474,6 @@ String _formatPercent(double v) =>
     '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}%';
 String _formatTemp(double v) =>
     '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}°C';
-String _formatSpeed(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
 
 extension _ViewUtils on String {
   bool get isSvgUrl {

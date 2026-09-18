@@ -718,6 +718,9 @@ struct CapabilitiesView {
     #[serde(flatten)]
     capabilities: Capabilities,
     platform: SystemType,
+    /// This agent's own version, so a client can say which one it is talking
+    /// to — and tell an old one apart from a misconfigured one.
+    version: &'static str,
     remote_access: RemoteAccessView,
 }
 
@@ -746,6 +749,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
     Ok(HttpResponse::Ok().json(&CapabilitiesView {
         capabilities,
         platform,
+        version: env!("CARGO_PKG_VERSION"),
         remote_access: RemoteAccessView {
             terminal: app_state.remote_access.terminal.available(secure),
             full_access: app_state.full_access_allowed(secure),

@@ -2365,6 +2365,62 @@ class AppLocalizationsNl extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func is niet beschikbaar via de verbinding van deze server.';
+  }
+
+  @override
+  String get rangeLive => 'Live';
+
+  @override
+  String get diskIo => 'Schijf-I/O';
+
+  @override
+  String get peak => 'piek';
+
+  @override
+  String get hardware => 'Hardware';
+
+  @override
+  String get cores => 'Kernen';
+
+  @override
+  String get historyStored => 'opgeslagen geschiedenis';
+
+  @override
+  String get historySinceConnect => 'sinds verbinden · niet opgeslagen';
+
+  @override
+  String get historyNoStored =>
+      'Alleen een monitor-agent slaat geschiedenis op. Deze verbinding bewaart alleen wat de app sinds het verbinden heeft gezien.';
+
+  @override
+  String get noHistoryYet => 'Nog niets gemeten';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return 'Geen opgeslagen geschiedenis voor $metric';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count apparaten';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count apparaten · $name is het drukst';
+  }
+
+  @override
+  String get window => 'venster';
+
+  @override
+  String ofFmt(Object total) {
+    return 'van $total';
+  }
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

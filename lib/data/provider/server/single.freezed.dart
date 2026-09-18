@@ -44,7 +44,9 @@ mixin _$ServerState {
 /// asking them to assert something the server knows — and being wrong
 /// either way, since a "yes" the agent refuses is a row of dead buttons
 /// and a "no" it would have allowed hides features that are there.
- MonitorRemoteAccess? get remoteAccess;
+ MonitorRemoteAccess? get remoteAccess;/// The agent's version, as it reported it, or null for a server with no
+/// agent — and for an agent built before it said so.
+ String? get agentVersion;
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -55,16 +57,16 @@ $ServerStateCopyWith<ServerState> get copyWith => _$ServerStateCopyWithImpl<Serv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess);
+int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess,agentVersion);
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, remoteAccess: $remoteAccess)';
+  return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, remoteAccess: $remoteAccess, agentVersion: $agentVersion)';
 }
 
 
@@ -75,7 +77,7 @@ abstract mixin class $ServerStateCopyWith<$Res>  {
   factory $ServerStateCopyWith(ServerState value, $Res Function(ServerState) _then) = _$ServerStateCopyWithImpl;
 @useResult
 $Res call({
- Spi spi, ServerStatus status, ServerConn conn, int? latencyMs, SSHClient? client, MonitorRemoteAccess? remoteAccess
+ Spi spi, ServerStatus status, ServerConn conn, int? latencyMs, SSHClient? client, MonitorRemoteAccess? remoteAccess, String? agentVersion
 });
 
 
@@ -92,7 +94,7 @@ class _$ServerStateCopyWithImpl<$Res>
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? latencyMs = freezed,Object? client = freezed,Object? remoteAccess = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? latencyMs = freezed,Object? client = freezed,Object? remoteAccess = freezed,Object? agentVersion = freezed,}) {
   return _then(_self.copyWith(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
@@ -100,7 +102,8 @@ as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_
 as ServerConn,latencyMs: freezed == latencyMs ? _self.latencyMs : latencyMs // ignore: cast_nullable_to_non_nullable
 as int?,client: freezed == client ? _self.client : client // ignore: cast_nullable_to_non_nullable
 as SSHClient?,remoteAccess: freezed == remoteAccess ? _self.remoteAccess : remoteAccess // ignore: cast_nullable_to_non_nullable
-as MonitorRemoteAccess?,
+as MonitorRemoteAccess?,agentVersion: freezed == agentVersion ? _self.agentVersion : agentVersion // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of ServerState
@@ -194,10 +197,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  int? latencyMs,  SSHClient? client,  MonitorRemoteAccess? remoteAccess)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  int? latencyMs,  SSHClient? client,  MonitorRemoteAccess? remoteAccess,  String? agentVersion)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerState() when $default != null:
-return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_that.remoteAccess);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_that.remoteAccess,_that.agentVersion);case _:
   return orElse();
 
 }
@@ -215,10 +218,10 @@ return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  int? latencyMs,  SSHClient? client,  MonitorRemoteAccess? remoteAccess)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  int? latencyMs,  SSHClient? client,  MonitorRemoteAccess? remoteAccess,  String? agentVersion)  $default,) {final _that = this;
 switch (_that) {
 case _ServerState():
-return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_that.remoteAccess);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_that.remoteAccess,_that.agentVersion);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -235,10 +238,10 @@ return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Spi spi,  ServerStatus status,  ServerConn conn,  int? latencyMs,  SSHClient? client,  MonitorRemoteAccess? remoteAccess)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Spi spi,  ServerStatus status,  ServerConn conn,  int? latencyMs,  SSHClient? client,  MonitorRemoteAccess? remoteAccess,  String? agentVersion)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerState() when $default != null:
-return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_that.remoteAccess);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_that.remoteAccess,_that.agentVersion);case _:
   return null;
 
 }
@@ -250,7 +253,7 @@ return $default(_that.spi,_that.status,_that.conn,_that.latencyMs,_that.client,_
 
 
 class _ServerState extends ServerState {
-  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.latencyMs, this.client, this.remoteAccess}): super._();
+  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.latencyMs, this.client, this.remoteAccess, this.agentVersion}): super._();
   
 
 @override final  Spi spi;
@@ -289,6 +292,9 @@ class _ServerState extends ServerState {
 /// either way, since a "yes" the agent refuses is a row of dead buttons
 /// and a "no" it would have allowed hides features that are there.
 @override final  MonitorRemoteAccess? remoteAccess;
+/// The agent's version, as it reported it, or null for a server with no
+/// agent — and for an agent built before it said so.
+@override final  String? agentVersion;
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
@@ -300,16 +306,16 @@ _$ServerStateCopyWith<_ServerState> get copyWith => __$ServerStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess);
+int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess,agentVersion);
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, remoteAccess: $remoteAccess)';
+  return 'ServerState(spi: $spi, status: $status, conn: $conn, latencyMs: $latencyMs, client: $client, remoteAccess: $remoteAccess, agentVersion: $agentVersion)';
 }
 
 
@@ -320,7 +326,7 @@ abstract mixin class _$ServerStateCopyWith<$Res> implements $ServerStateCopyWith
   factory _$ServerStateCopyWith(_ServerState value, $Res Function(_ServerState) _then) = __$ServerStateCopyWithImpl;
 @override @useResult
 $Res call({
- Spi spi, ServerStatus status, ServerConn conn, int? latencyMs, SSHClient? client, MonitorRemoteAccess? remoteAccess
+ Spi spi, ServerStatus status, ServerConn conn, int? latencyMs, SSHClient? client, MonitorRemoteAccess? remoteAccess, String? agentVersion
 });
 
 
@@ -337,7 +343,7 @@ class __$ServerStateCopyWithImpl<$Res>
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? latencyMs = freezed,Object? client = freezed,Object? remoteAccess = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? latencyMs = freezed,Object? client = freezed,Object? remoteAccess = freezed,Object? agentVersion = freezed,}) {
   return _then(_ServerState(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
@@ -345,7 +351,8 @@ as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_
 as ServerConn,latencyMs: freezed == latencyMs ? _self.latencyMs : latencyMs // ignore: cast_nullable_to_non_nullable
 as int?,client: freezed == client ? _self.client : client // ignore: cast_nullable_to_non_nullable
 as SSHClient?,remoteAccess: freezed == remoteAccess ? _self.remoteAccess : remoteAccess // ignore: cast_nullable_to_non_nullable
-as MonitorRemoteAccess?,
+as MonitorRemoteAccess?,agentVersion: freezed == agentVersion ? _self.agentVersion : agentVersion // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

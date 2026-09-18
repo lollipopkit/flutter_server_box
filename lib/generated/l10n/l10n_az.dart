@@ -2365,6 +2365,62 @@ class AppLocalizationsAz extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func bu serverin bağlantı üsulunda mövcud deyil.';
+  }
+
+  @override
+  String get rangeLive => 'Canlı';
+
+  @override
+  String get diskIo => 'Disk G/Ç';
+
+  @override
+  String get peak => 'pik';
+
+  @override
+  String get hardware => 'Avadanlıq';
+
+  @override
+  String get cores => 'Nüvələr';
+
+  @override
+  String get historyStored => 'saxlanılan tarixçə';
+
+  @override
+  String get historySinceConnect => 'qoşulmadan bəri · saxlanılmır';
+
+  @override
+  String get historyNoStored =>
+      'Tarixçəni yalnız monitor agenti saxlayır. Bu bağlantı yalnız tətbiqin qoşulduqdan sonra gördüyünü saxlayır.';
+
+  @override
+  String get noHistoryYet => 'Hələ ölçülməyib';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return '$metric üçün saxlanılan tarixçə yoxdur';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count cihaz';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count cihaz · ən məşğulu $name';
+  }
+
+  @override
+  String get window => 'pəncərə';
+
+  @override
+  String ofFmt(Object total) {
+    return '$total içindən';
+  }
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

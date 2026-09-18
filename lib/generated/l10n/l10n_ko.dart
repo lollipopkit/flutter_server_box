@@ -2245,6 +2245,62 @@ class AppLocalizationsKo extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func은(는) 이 서버의 연결 방식에서 사용할 수 없습니다.';
+  }
+
+  @override
+  String get rangeLive => '실시간';
+
+  @override
+  String get diskIo => '디스크 I/O';
+
+  @override
+  String get peak => '최고';
+
+  @override
+  String get hardware => '하드웨어';
+
+  @override
+  String get cores => '코어';
+
+  @override
+  String get historyStored => '저장된 기록';
+
+  @override
+  String get historySinceConnect => '연결 이후 · 저장되지 않음';
+
+  @override
+  String get historyNoStored =>
+      '기록을 저장하는 것은 monitor 에이전트뿐입니다. 이 연결은 앱이 연결한 뒤 본 것만 유지합니다.';
+
+  @override
+  String get noHistoryYet => '아직 측정값이 없습니다';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return '$metric의 저장된 기록이 없습니다';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '장치 $count개';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '장치 $count개 · 가장 바쁜 것은 $name';
+  }
+
+  @override
+  String get window => '기간';
+
+  @override
+  String ofFmt(Object total) {
+    return '$total 중';
+  }
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

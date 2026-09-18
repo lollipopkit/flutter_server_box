@@ -95,6 +95,10 @@ abstract class ServerState with _$ServerState {
     /// either way, since a "yes" the agent refuses is a row of dead buttons
     /// and a "no" it would have allowed hides features that are there.
     MonitorRemoteAccess? remoteAccess,
+
+    /// The agent's version, as it reported it, or null for a server with no
+    /// agent — and for an agent built before it said so.
+    String? agentVersion,
   }) = _ServerState;
 
   const ServerState._();
@@ -530,7 +534,10 @@ class ServerNotifier extends _$ServerNotifier {
           // case this answer describes the agent it used to point at — and the
           // platform it reports decides which script gets installed.
           if (!_isRefreshCurrent(operation, spi)) return;
-          state = state.copyWith(remoteAccess: caps.remoteAccess);
+          state = state.copyWith(
+            remoteAccess: caps.remoteAccess,
+            agentVersion: caps.version,
+          );
           // The agent knows what it is running on. Over SSH this takes a
           // command and its output; here it arrives with the answer the app
           // was already asking for, and it decides which script gets
@@ -606,6 +613,23 @@ class ServerNotifier extends _$ServerNotifier {
       if (!_isRefreshCurrent(generation, spi)) return;
       Loggers.app.warning('Seed history for ${spi.name}', e, s);
     }
+  }
+
+  /// The stored history of the last [minutes], as the source has it.
+  ///
+  /// Unlike [seedHistory] this leaves the rolling buffer alone: the page asks
+  /// for a window to draw and holds the answer itself, so a longer window on
+  /// screen never displaces what this app has watched happen. Empty when
+  /// nothing here stores history — an SSH-only server has only the buffer.
+  Future<List<StatusHistorySample>> fetchHistoryRange({
+    required int minutes,
+    int maxPoints = StatusHistory.capacity,
+  }) async {
+    final credential = _historyCredential(state.spi);
+    if (credential == null) return const [];
+    return _resolveSource(
+      credential,
+    ).fetchHistory(minutes: minutes, maxPoints: maxPoints);
   }
 
   /// The way in that keeps its own trend data, or null when neither does.

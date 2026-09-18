@@ -2368,6 +2368,62 @@ class AppLocalizationsUk extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func недоступно через це підключення до сервера.';
+  }
+
+  @override
+  String get rangeLive => 'У реальному часі';
+
+  @override
+  String get diskIo => 'Диск (введення-виведення)';
+
+  @override
+  String get peak => 'пік';
+
+  @override
+  String get hardware => 'Обладнання';
+
+  @override
+  String get cores => 'Ядра';
+
+  @override
+  String get historyStored => 'збережена історія';
+
+  @override
+  String get historySinceConnect => 'від моменту підключення · не зберігається';
+
+  @override
+  String get historyNoStored =>
+      'Історію зберігає лише агент monitor. Це підключення зберігає тільки те, що застосунок побачив після підключення.';
+
+  @override
+  String get noHistoryYet => 'Вимірювань ще немає';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return 'Немає збереженої історії для «$metric»';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return 'пристроїв: $count';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return 'пристроїв: $count · найзавантаженіший — $name';
+  }
+
+  @override
+  String get window => 'вікно';
+
+  @override
+  String ofFmt(Object total) {
+    return 'з $total';
+  }
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

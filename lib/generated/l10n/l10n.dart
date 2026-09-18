@@ -4078,6 +4078,96 @@ abstract class AppLocalizations {
   /// **'Leave the password empty to keep the existing password.'**
   String get userPasswordEditTip;
 
+  /// No description provided for @funcUnavailableFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{func} is not available over this server\'s connection.'**
+  String funcUnavailableFmt(Object func);
+
+  /// No description provided for @rangeLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get rangeLive;
+
+  /// No description provided for @diskIo.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk I/O'**
+  String get diskIo;
+
+  /// No description provided for @peak.
+  ///
+  /// In en, this message translates to:
+  /// **'peak'**
+  String get peak;
+
+  /// No description provided for @hardware.
+  ///
+  /// In en, this message translates to:
+  /// **'Hardware'**
+  String get hardware;
+
+  /// No description provided for @cores.
+  ///
+  /// In en, this message translates to:
+  /// **'Cores'**
+  String get cores;
+
+  /// No description provided for @historyStored.
+  ///
+  /// In en, this message translates to:
+  /// **'stored history'**
+  String get historyStored;
+
+  /// No description provided for @historySinceConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'since connect · not stored'**
+  String get historySinceConnect;
+
+  /// No description provided for @historyNoStored.
+  ///
+  /// In en, this message translates to:
+  /// **'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.'**
+  String get historyNoStored;
+
+  /// No description provided for @noHistoryYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing measured yet'**
+  String get noHistoryYet;
+
+  /// No description provided for @noStoredHistoryFor.
+  ///
+  /// In en, this message translates to:
+  /// **'No stored history for {metric}'**
+  String noStoredHistoryFor(Object metric);
+
+  /// No description provided for @devicesFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} devices'**
+  String devicesFmt(Object count);
+
+  /// No description provided for @devicesBusiestFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} devices · {name} busiest'**
+  String devicesBusiestFmt(Object count, Object name);
+
+  /// No description provided for @window.
+  ///
+  /// In en, this message translates to:
+  /// **'window'**
+  String get window;
+
+  /// No description provided for @ofFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'of {total}'**
+  String ofFmt(Object total);
+
   /// No description provided for @scheduledTasks.
   ///
   /// In en, this message translates to:

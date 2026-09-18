@@ -32,26 +32,30 @@ import 'package:server_box/view/page/users.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
+/// One entry of the function row, and whether this connection can serve it.
+typedef ServerFuncEntry = ({ServerFuncBtn btn, bool available});
+
 class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({super.key, required this.spi, required this.btns});
 
   final Spi spi;
 
-  /// What this connection can actually serve, from [serverFuncBtnsFor].
+  /// Every entry in the user's order, from [serverFuncBtnsFor], the ones this
+  /// connection cannot serve last.
   ///
   /// Passed in rather than worked out here, because the page that hosts this
   /// row has to know whether there will be any of them before it lays out room
   /// for it. Answering that question twice is how the two answers came to
   /// disagree.
-  final List<ServerFuncBtn> btns;
+  final List<ServerFuncEntry> btns;
 
   @override
   Widget build(BuildContext context) {
     if (btns.isEmpty) return UIs.placeholder;
 
     final items = [
-      for (final value in btns)
-        Consumer(builder: (_, ref, _) => _buildItem(context, value, ref)),
+      for (final entry in btns)
+        Consumer(builder: (_, ref, _) => _buildItem(context, entry, ref)),
     ];
 
     // It has to say how wide it is. A shrink-wrapping viewport
@@ -100,22 +104,38 @@ const _kVPadTop = 5.0;
 const _kVPadBottom = 1.0;
 
 extension ServerFuncBtnsBuild on ServerFuncBtns {
-  Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
+  Widget _buildItem(
+    BuildContext context,
+    ServerFuncEntry entry,
+    WidgetRef ref,
+  ) {
+    final e = entry.btn;
+    // An entry this connection cannot serve stays on the row, dimmed and at
+    // the end of it, and says so when tapped. Dropped, it left a row whose
+    // length changed with the server and no answer to "where did the terminal
+    // go" — which is the agent's doing, not this app's, and is worth one
+    // sentence.
+    final available = entry.available;
     // The label is part of the button, not a caption under one. An
     // `IconButton` with a `Text` beneath it left the word inert, so half of
     // what looks like a target did nothing when tapped.
     return InkWell(
-      onTap: () => _onTapMoreBtns(e, context, ref),
+      onTap: available
+          ? () => _onTapMoreBtns(e, context, ref)
+          : () => Toast.show(l10n.funcUnavailableFmt(e.toStr)),
       borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(e.icon, size: 17),
-            const SizedBox(height: 4),
-            Text(e.toStr, style: UIs.text11Grey),
-          ],
+      child: Opacity(
+        opacity: available ? 1 : 0.4,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(e.icon, size: 17),
+              const SizedBox(height: 4),
+              Text(e.toStr, style: UIs.text11Grey),
+            ],
+          ),
         ),
       ),
     );
@@ -131,7 +151,10 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 /// row on a monitor server whose agent serves files but grants no shell. That
 /// server could still be browsed from the Files tab, so the row was the only
 /// thing missing, and nothing said why.
-List<ServerFuncBtn> serverFuncBtnsFor(Spi spi, MonitorRemoteAccess? granted) {
+List<ServerFuncEntry> serverFuncBtnsFor(
+  Spi spi,
+  MonitorRemoteAccess? granted,
+) {
   final ordered = () {
     try {
       final vals = <ServerFuncBtn>[];
@@ -147,10 +170,21 @@ List<ServerFuncBtn> serverFuncBtnsFor(Spi spi, MonitorRemoteAccess? granted) {
   }();
 
   // An entry the connection cannot serve would open a page that can never
-  // load. Filtered rather than disabled: nothing the user could do on this
-  // row would make it work — it is the agent's decision, or the transport's.
+  // load, so it is dimmed and moved to the end of the row rather than opened
+  // or dropped: nothing the user could do here would make it work — it is the
+  // agent's decision, or the transport's — but a row that silently gets
+  // shorter leaves no way to ask what happened to it.
+  //
+  // The row is one line at every width and scrolls, so the entries that follow
+  // cost nothing but the scroll they are past.
   final caps = ServerCapabilities.ofSpi(spi, granted: granted);
-  return ordered.where((e) => e.availableWith(caps)).toList();
+  final available = <ServerFuncEntry>[];
+  final rest = <ServerFuncEntry>[];
+  for (final btn in ordered) {
+    final entry = (btn: btn, available: btn.availableWith(caps));
+    (entry.available ? available : rest).add(entry);
+  }
+  return [...available, ...rest];
 }
 
 extension ServerFuncBtnsActions on ServerFuncBtns {

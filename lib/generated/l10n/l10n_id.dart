@@ -2353,6 +2353,62 @@ class AppLocalizationsId extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func tidak tersedia melalui koneksi server ini.';
+  }
+
+  @override
+  String get rangeLive => 'Langsung';
+
+  @override
+  String get diskIo => 'I/O Disk';
+
+  @override
+  String get peak => 'puncak';
+
+  @override
+  String get hardware => 'Perangkat keras';
+
+  @override
+  String get cores => 'Inti';
+
+  @override
+  String get historyStored => 'riwayat tersimpan';
+
+  @override
+  String get historySinceConnect => 'sejak terhubung · tidak disimpan';
+
+  @override
+  String get historyNoStored =>
+      'Hanya agen monitor yang menyimpan riwayat. Koneksi ini hanya menyimpan apa yang dilihat aplikasi sejak terhubung.';
+
+  @override
+  String get noHistoryYet => 'Belum ada pengukuran';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return 'Tidak ada riwayat tersimpan untuk $metric';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count perangkat';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count perangkat · $name tersibuk';
+  }
+
+  @override
+  String get window => 'jendela';
+
+  @override
+  String ofFmt(Object total) {
+    return 'dari $total';
+  }
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

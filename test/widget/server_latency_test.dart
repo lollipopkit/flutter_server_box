@@ -107,16 +107,18 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('test-host'), findsOneWidget);
+      // The connection row is always there — it says how the app reaches the
+      // machine. The reading joins it once there is one.
       expect(
-        find.text('41ms'),
+        find.textContaining('41ms'),
         findsNothing,
-        reason: 'a row appeared before anything was measured',
+        reason: 'a reading appeared before anything was measured',
       );
 
       notifier.updateStatus(fullStatus(), latencyMs: 41);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.text('41ms'), findsOneWidget);
+      expect(find.textContaining('41ms'), findsOneWidget);
     });
 
     testWidgets('still starts open on a phone once a reading arrives', (
@@ -140,7 +142,7 @@ void main() {
         findsOneWidget,
         reason: 'the latency row collapsed a card that used to start open',
       );
-      expect(find.text('41ms'), findsOneWidget);
+      expect(find.textContaining('41ms'), findsOneWidget);
     });
 
     testWidgets('and a real memory total still fits the memory card', (

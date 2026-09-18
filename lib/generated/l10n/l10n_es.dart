@@ -2384,6 +2384,62 @@ class AppLocalizationsEs extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func no está disponible con la conexión de este servidor.';
+  }
+
+  @override
+  String get rangeLive => 'En vivo';
+
+  @override
+  String get diskIo => 'E/S de disco';
+
+  @override
+  String get peak => 'pico';
+
+  @override
+  String get hardware => 'Hardware';
+
+  @override
+  String get cores => 'Núcleos';
+
+  @override
+  String get historyStored => 'historial almacenado';
+
+  @override
+  String get historySinceConnect => 'desde la conexión · sin almacenar';
+
+  @override
+  String get historyNoStored =>
+      'Solo un agente monitor almacena el historial. Esta conexión conserva lo que la app ha visto desde que se conectó.';
+
+  @override
+  String get noHistoryYet => 'Aún no hay mediciones';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return 'No hay historial almacenado de $metric';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count dispositivos';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count dispositivos · $name el más ocupado';
+  }
+
+  @override
+  String get window => 'ventana';
+
+  @override
+  String ofFmt(Object total) {
+    return 'de $total';
+  }
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override
