@@ -16,7 +16,10 @@ class Cpus extends TimeSeq<SingleCpuCore> {
 
   @override
   void onUpdate() {
-    _coresCount = now.length;
+    // Everything after the first: index 0 is the aggregate "cpu" row, which
+    // both sources put there and which is not a core. Counting it reported a
+    // two-core machine as having three.
+    _coresCount = now.isEmpty ? 0 : now.length - 1;
     _user = _share((c) => c.user);
     _sys = _share((c) => c.sys);
     _iowait = _share((c) => c.iowait);

@@ -37,16 +37,30 @@ class StatusHistory {
   final diskRead = Fifo<double?>(capacity: capacity);
   final diskWrite = Fifo<double?>(capacity: capacity);
 
+  /// Percent. The busiest GPU, for hosts that report one at all.
+  final gpu = Fifo<double?>(capacity: capacity);
+
   /// Celsius. The aggregate reading, kept for sources that only expose one
   /// (and for [seed], since monitor's stored history has a single column).
   final temp = Fifo<double?>(capacity: capacity);
 
-  /// Celsius per sensor, for hosts that expose several. Every series is
-  /// index-aligned with [time] like the fixed ones: a device that appears
-  /// mid-run is backfilled with nulls, and one that disappears keeps getting
-  /// them, so index `i` means the same sample in all of them.
-  final _tempsByDevice = <String, Fifo<double?>>{};
-  Map<String, List<double?>> get tempsByDevice => _tempsByDevice;
+  /// Celsius per sensor, for hosts that expose several.
+  final _temps = _DeviceHistory();
+  Map<String, List<double?>> get tempsByDevice => _temps.byDevice;
+
+  /// Bytes per second per block device and per interface, for the chart to
+  /// draw a line each once a metric is being read in full.
+  ///
+  /// Only ever live samples: nothing stores these, so a window asked of an
+  /// agent has the totals and nothing under them.
+  final _diskReads = _DeviceHistory();
+  Map<String, List<double?>> get diskReadsByDevice => _diskReads.byDevice;
+  final _diskWrites = _DeviceHistory();
+  Map<String, List<double?>> get diskWritesByDevice => _diskWrites.byDevice;
+  final _netRx = _DeviceHistory();
+  Map<String, List<double?>> get netRxByDevice => _netRx.byDevice;
+  final _netTx = _DeviceHistory();
+  Map<String, List<double?>> get netTxByDevice => _netTx.byDevice;
 
   /// Milliseconds since epoch of each sample
   final time = Fifo<int>(capacity: capacity);
@@ -66,8 +80,13 @@ class StatusHistory {
     double? netTx,
     double? diskRead,
     double? diskWrite,
+    double? gpu,
     double? temp,
     Map<String, double>? temps,
+    Map<String, double>? diskReads,
+    Map<String, double>? diskWrites,
+    Map<String, double>? netRxs,
+    Map<String, double>? netTxs,
     double? battery,
   }) {
     // A repeated sampling instant means the source hasn't advanced (monitor
@@ -84,21 +103,17 @@ class StatusHistory {
     this.netTx.add(netTx);
     this.diskRead.add(diskRead);
     this.diskWrite.add(diskWrite);
+    this.gpu.add(gpu);
     this.temp.add(temp);
     this.battery.add(battery);
 
-    final reported = temps ?? const <String, double>{};
-    for (final device in {..._tempsByDevice.keys, ...reported.keys}) {
-      final series = _tempsByDevice.putIfAbsent(device, () {
-        // `time` already holds this sample, so pad to one short of it
-        final f = Fifo<double?>(capacity: capacity);
-        for (var i = 1; i < time.length; i++) {
-          f.add(null);
-        }
-        return f;
-      });
-      series.add(reported[device]);
-    }
+    // `time` already holds this sample, so a series appearing now is padded to
+    // one short of it.
+    _temps.add(temps, time.length);
+    _diskReads.add(diskReads, time.length);
+    _diskWrites.add(diskWrites, time.length);
+    _netRx.add(netRxs, time.length);
+    _netTx.add(netTxs, time.length);
   }
 
   /// Replaces the buffer with [samples], oldest first. Used to prefill from
@@ -121,6 +136,30 @@ class StatusHistory {
         temp: s.temp,
         battery: s.battery,
       );
+    }
+  }
+}
+
+/// One metric's value per device, index-aligned with [StatusHistory.time] like
+/// the fixed series: a device that appears mid-run is backfilled with nulls,
+/// and one that disappears keeps getting them, so index `i` means the same
+/// sample in every series of every metric.
+class _DeviceHistory {
+  final byDevice = <String, Fifo<double?>>{};
+
+  /// [sampleCount] is how many samples the buffer holds *including* the one
+  /// being added, which is what a series appearing now has to be padded to.
+  void add(Map<String, double>? reported, int sampleCount) {
+    final values = reported ?? const <String, double>{};
+    for (final device in {...byDevice.keys, ...values.keys}) {
+      final series = byDevice.putIfAbsent(device, () {
+        final f = Fifo<double?>(capacity: StatusHistory.capacity);
+        for (var i = 1; i < sampleCount; i++) {
+          f.add(null);
+        }
+        return f;
+      });
+      series.add(values[device]);
     }
   }
 }

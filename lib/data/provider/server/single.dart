@@ -138,6 +138,15 @@ class ServerNotifier extends _$ServerNotifier {
   String _extendedRaw = '';
   DateTime? _extendedFetchedAt;
 
+  /// When [_extendedRaw] was last *replaced*, which is what its segments are
+  /// as old as.
+  ///
+  /// Not when it was last read: the same copy is merged into every poll for
+  /// the length of [_extendedStatusInterval], so stamping the parse would
+  /// report a reading taken minutes ago as current — and saying how old it is
+  /// is the whole reason the page carries it.
+  DateTime? _extendedAcceptedAt;
+
   /// Reads status for whichever connection method this server uses. Rebuilt
   /// when the SPI's connection config changes.
   ServerDataSource? _source;
@@ -241,6 +250,7 @@ class ServerNotifier extends _$ServerNotifier {
       system: system ?? source.system,
       diskIO: DiskIO.copy(source.diskIO),
       diskSmart: source.diskSmart.toList(),
+      diskSmartAt: source.diskSmartAt,
       err: setErr ? err : source.err,
       nvidia: source.nvidia?.toList(),
       gpus: source.gpus.toList(),
@@ -276,6 +286,7 @@ class ServerNotifier extends _$ServerNotifier {
       // refresh re-runs the extended function against the current script
       _extendedRaw = '';
       _extendedFetchedAt = null;
+      _extendedAcceptedAt = null;
     }
     state = state.copyWith(client: client);
   }
@@ -306,6 +317,7 @@ class ServerNotifier extends _$ServerNotifier {
       _scriptWritten = false;
       _extendedRaw = '';
       _extendedFetchedAt = null;
+      _extendedAcceptedAt = null;
     }
 
     if (!reconnect) {
@@ -1375,6 +1387,9 @@ class ServerNotifier extends _$ServerNotifier {
       // ServerStatus (plus a trend sample) out
       final source = SshDataSource(spi: spi, runScript: () async => combined);
       final status = await source.fetchStatus(_copyStatus(state.status));
+      // Shell output carries no sampling instant, so the nearest thing is when
+      // the run that produced these segments came back.
+      status.diskSmartAt = _extendedAcceptedAt;
       // The last two awaits are the longest in this method — the extended
       // commands take seconds by design. A refresh that started before the
       // server was edited arrives here holding the old host's status.
@@ -1441,7 +1456,10 @@ class ServerNotifier extends _$ServerNotifier {
       // *new* one would find them still within the interval and merge them
       // into its status.
       if (!_isRefreshCurrent(operation, spi)) return _extendedRaw;
-      if (ffi.containsStatusSegment(raw: raw)) _extendedRaw = raw;
+      if (ffi.containsStatusSegment(raw: raw)) {
+        _extendedRaw = raw;
+        _extendedAcceptedAt = DateTime.now();
+      }
     } catch (e, s) {
       Loggers.app.warning('Extended status for ${spi.name} failed', e, s);
     }

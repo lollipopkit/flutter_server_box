@@ -30,7 +30,13 @@ enum _HistoryRange {
 
 /// One metric: a value now, a line over time, and — when it is the one being
 /// read — whatever else the machine says about it.
-enum _MetricKind { cpu, mem, swap, disk, diskIo, net }
+///
+/// What is here and what is a card below is one question: whether the machine
+/// reports a value that can be read off a line. Everything that can is a row,
+/// including the three the page used to draw as cards of their own (GPU load,
+/// the hottest sensor, the battery); a table or a one-off reading cannot be,
+/// and stays a card.
+enum _MetricKind { cpu, mem, swap, disk, diskIo, net, gpu, temp, battery }
 
 typedef _Stat = ({String k, String v});
 
@@ -93,6 +99,9 @@ class _Window {
     this.diskWrite = const [],
     this.netRx = const [],
     this.netTx = const [],
+    this.gpu = const [],
+    this.temp = const [],
+    this.battery = const [],
   });
 
   /// What this app has seen, which is every series it can measure.
@@ -105,11 +114,15 @@ class _Window {
     diskWrite: h.diskWrite,
     netRx: h.netRx,
     netTx: h.netTx,
+    gpu: h.gpu,
+    temp: h.temp,
+    battery: h.battery,
   );
 
   /// What the agent stored. An agent too old to report a series leaves it
   /// empty here however long the window is — see [_MetricView.hasChart],
-  /// which is what the card asks before drawing.
+  /// which is what the card asks before drawing. GPU load is empty for every
+  /// agent: nothing stores it, so the only window it has is the live one.
   factory _Window.of(List<StatusHistorySample> samples) => _Window(
     cpu: [for (final s in samples) s.cpu],
     mem: [for (final s in samples) s.mem],
@@ -119,6 +132,8 @@ class _Window {
     diskWrite: [for (final s in samples) s.diskWrite],
     netRx: [for (final s in samples) s.netRx],
     netTx: [for (final s in samples) s.netTx],
+    temp: [for (final s in samples) s.temp],
+    battery: [for (final s in samples) s.battery],
   );
 
   final List<double?> cpu;
@@ -129,6 +144,9 @@ class _Window {
   final List<double?> diskWrite;
   final List<double?> netRx;
   final List<double?> netTx;
+  final List<double?> gpu;
+  final List<double?> temp;
+  final List<double?> battery;
 }
 
 const _kCpuColor = Color(0xFF3B82F6);
@@ -138,6 +156,51 @@ const _kDiskColor = Color(0xFFF97316);
 const _kDiskReadColor = Color(0xFF0EA5E9);
 const _kNetRxColor = Color(0xFF8B5CF6);
 const _kNetTxColor = Color(0xFFEC4899);
+const _kGpuColor = Color(0xFF8B5CF6);
+const _kTempColor = Color(0xFFEF4444);
+const _kBatteryColor = Color(0xFF14B8A6);
+
+/// How a reading is written, wherever it is written: the row, the headline,
+/// the stats and the picker all say the same number the same way.
+String _pct(double? v) => v == null ? '--' : '${(v * 10).round() / 10}%';
+String _rate(double? bytesPerSec) =>
+    bytesPerSec == null ? '--' : '${bytesPerSec.bytes2Str}/s';
+String _rateOf(double v) => '${v.bytes2Str}/s';
+
+/// The GPU carrying the most work — the one the row reads, and the one the
+/// card leads with. Null on a host with no GPU at all; the first card on one
+/// whose driver reports no utilisation.
+GpuItem? _busiestGpu(server_model.ServerStatus ss) {
+  GpuItem? top;
+  for (final gpu in ss.gpus) {
+    if (top == null || (gpu.utilization ?? -1) > (top.utilization ?? -1)) {
+      top = gpu;
+    }
+  }
+  return top;
+}
+
+/// The sensor the temperature row reads: the hottest, which is the one that
+/// will be a problem. Null on a host whose sensors have no reading yet.
+(String, double)? _hottestSensor(server_model.ServerStatus ss) {
+  String? name;
+  double? top;
+  for (final device in ss.temps.devices) {
+    final value = ss.temps.get(device);
+    if (value == null) continue;
+    if (top == null || value > top) {
+      name = device;
+      top = value;
+    }
+  }
+  return name == null || top == null ? null : (name, top);
+}
+
+/// How many lines a metric's devices are drawn as at most.
+///
+/// The palette's length, and about as many as a chart this size can be read
+/// with. A host with more says so and opens the rest in the picker.
+const _kMaxDeviceLines = 6;
 
 /// The block the chart lives in, by width.
 ///
@@ -251,36 +314,41 @@ extension on _ServerDetailPageState {
           format: _pct,
         ),
       );
+    }
 
-      final (read, write) = ss.diskIO.allSpeedBytes;
-      if (read != null || write != null) {
-        views.add(
-          _MetricView(
-            kind: _MetricKind.diskIo,
-            label: l10n.diskIo,
-            icon: MingCute.transfer_3_line,
-            color: _kDiskReadColor,
-            value: _rate(write),
-            // The one that is going to be a problem, not the average of them:
-            // a machine with six disks is busy because one of them is.
-            note: _busiestNote(
-              ss.disk.length,
-              _busiest(ss.disk.map((e) => e.path), (dev) {
-                final (r, wr) = ss.diskIO.speedBytes(dev);
-                return (r ?? 0) + (wr ?? 0);
-              }),
-            ),
-            bigNote: '${l10n.write} · ${_rate(read)} ${l10n.read}',
-            stats: _rateStats(w.diskWrite),
-            series: [
-              _HistorySeries(l10n.read, _kDiskReadColor, w.diskRead),
-              _HistorySeries(l10n.write, _kDiskColor, w.diskWrite),
-            ],
-            format: _rateOf,
-            binary: true,
+    final (read, write) = ss.diskIO.allSpeedBytes;
+    if (read != null || write != null) {
+      views.add(
+        _MetricView(
+          kind: _MetricKind.diskIo,
+          label: l10n.diskIo,
+          icon: MingCute.transfer_3_line,
+          color: _kDiskReadColor,
+          value: _rate(write),
+          // The one that is going to be a problem, not the average of them:
+          // a machine with six disks is busy because one of them is.
+          note: _busiestNote(
+            ss.diskIO.devices.length,
+            _busiest(ss.diskIO.devices, (dev) {
+              final (r, wr) = ss.diskIO.speedBytes(dev);
+              return (r ?? 0) + (wr ?? 0);
+            }),
           ),
-        );
-      }
+          bigNote: '${l10n.write} · ${_rate(read)} ${l10n.read}',
+          stats: _rateStats(w.diskWrite),
+          // Per device where there is more than one, because that is the
+          // question a machine with six disks raises. With one there is
+          // nothing to tell apart and the two directions are worth more.
+          series:
+              _deviceSeries(si, _MetricKind.diskIo) ??
+              [
+                _HistorySeries(l10n.read, _kDiskReadColor, w.diskRead),
+                _HistorySeries(l10n.write, _kDiskColor, w.diskWrite),
+              ],
+          format: _rateOf,
+          binary: true,
+        ),
+      );
     }
 
     final ns = ss.netSpeed;
@@ -305,26 +373,97 @@ extension on _ServerDetailPageState {
           ),
           bigNote: '↑ · ${_rate(rx)} ↓',
           stats: _rateStats(w.netTx),
-          series: [
-            _HistorySeries('↓', _kNetRxColor, w.netRx),
-            _HistorySeries('↑', _kNetTxColor, w.netTx),
-          ],
+          series:
+              _deviceSeries(si, _MetricKind.net) ??
+              [
+                _HistorySeries('↓', _kNetRxColor, w.netRx),
+                _HistorySeries('↑', _kNetTxColor, w.netTx),
+              ],
           format: _rateOf,
           binary: true,
         ),
       );
     }
 
+    // A row rather than a card of its own, like the three above it: what a GPU
+    // is doing is one percentage with a line behind it. What it cannot be read
+    // off a line — the processes holding its memory, its clock and fans — is
+    // the card below, which is what a card is for.
+    if (_busiestGpu(ss) case final gpu?) {
+      final mem = gpu.memory;
+      final used = gpu.utilization;
+      views.add(
+        _MetricView(
+          kind: _MetricKind.gpu,
+          label: 'GPU',
+          icon: ServerDetailCards.gpu.icon,
+          color: _kGpuColor,
+          value: _pct(used),
+          note: ss.gpus.length > 1
+              ? _busiestNote(ss.gpus.length, gpu.name)
+              : gpu.name,
+          bigNote: mem == null
+              ? gpu.name
+              : '${gpu.name} · ${mem.used} ${l10n.ofFmt('${mem.total} ${mem.unit}')}',
+          percent: used == null ? null : used / 100,
+          stats: [
+            if (mem != null)
+              (k: libL10n.memory, v: '${mem.used} / ${mem.total} ${mem.unit}'),
+            if (gpu.temperature case final t?)
+              (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
+          ],
+          series: [_HistorySeries('GPU', _kGpuColor, w.gpu)],
+          format: _pct,
+        ),
+      );
+    }
+
+    if (_hottestSensor(ss) case (final sensor, final celsius)) {
+      views.add(
+        _MetricView(
+          kind: _MetricKind.temp,
+          label: libL10n.temperature,
+          icon: ServerDetailCards.temp.icon,
+          color: _kTempColor,
+          value: _formatTemp(celsius),
+          note: ss.temps.devices.length > 1
+              ? l10n.sensorsHottestFmt(ss.temps.devices.length, sensor)
+              : sensor,
+          bigNote: sensor,
+          series:
+              _deviceSeries(si, _MetricKind.temp) ??
+              [_HistorySeries(libL10n.temperature, _kTempColor, w.temp)],
+          format: _formatTemp,
+        ),
+      );
+    }
+
+    // The first battery, not every one: a laptop has one and a host reporting
+    // several is reporting its mouse and its keyboard, which the card below
+    // lists in full.
+    if (ss.batteries.firstOrNull case final battery?) {
+      final percent = battery.percent?.toDouble();
+      views.add(
+        _MetricView(
+          kind: _MetricKind.battery,
+          label: libL10n.battery,
+          icon: ServerDetailCards.battery.icon,
+          color: _kBatteryColor,
+          value: _pct(percent),
+          note: [battery.status.name, ?battery.name].join(' · '),
+          bigNote: battery.status.name,
+          percent: percent == null ? null : percent / 100,
+          stats: [
+            if (battery.cycle case final cycle?) (k: l10n.cycle, v: '$cycle'),
+          ],
+          series: [_HistorySeries(libL10n.battery, _kBatteryColor, w.battery)],
+          format: _pct,
+        ),
+      );
+    }
+
     return views;
   }
-
-  static String _pct(double? v) =>
-      v == null ? '--' : '${(v * 10).round() / 10}%';
-
-  static String _rate(double? bytesPerSec) =>
-      bytesPerSec == null ? '--' : '${bytesPerSec.bytes2Str}/s';
-
-  static String _rateOf(double v) => '${v.bytes2Str}/s';
 
   /// The device carrying the most of this metric right now.
   static String? _busiest(Iterable<String> devices, double Function(String) of) {
@@ -359,6 +498,151 @@ extension on _ServerDetailPageState {
       if (peak != null) (k: l10n.peak, v: _rate(peak)),
       (k: l10n.window, v: _range.label),
     ];
+  }
+}
+
+// --- The devices a metric is the sum of ---
+
+/// What one metric's devices are, and what is known about each of them.
+///
+/// A metric's row is a total, and a total is not what a host with six disks is
+/// read for. The focus chart draws one line per device instead, which is only
+/// possible for the window this app kept itself — nothing stores a series per
+/// device.
+class _Devices {
+  const _Devices({
+    required this.names,
+    required this.byDevice,
+    required this.defaults,
+    required this.subtitle,
+  });
+
+  /// Busiest first, which is also the order the picker lists them in.
+  final List<String> names;
+
+  /// The samples behind each of [names], as [StatusHistory] kept them.
+  final Map<String, List<double?>> byDevice;
+
+  /// Drawn when the reader has not chosen: the busiest few, or for sensors the
+  /// one per component [_ServerDetailPageState._tempSeries] settles on.
+  final List<String> defaults;
+
+  /// What the picker says under a device's name — its reading now, which is
+  /// what the choice is made on.
+  final String Function(String) subtitle;
+}
+
+extension on _ServerDetailPageState {
+  /// The devices behind [kind], or null for a metric that has none and for a
+  /// machine with only one of them — there is nothing to pick from or to tell
+  /// apart.
+  _Devices? _devicesOf(ServerState si, _MetricKind kind) {
+    final ss = si.status;
+    final h = ss.history;
+    switch (kind) {
+      case _MetricKind.diskIo:
+        final io = ss.diskIO;
+        final names = [...io.devices]
+          ..sort((a, b) {
+            double of(String d) {
+              final (r, w) = io.speedBytes(d);
+              return (r ?? 0) + (w ?? 0);
+            }
+
+            return of(b).compareTo(of(a));
+          });
+        if (names.length < 2) return null;
+        return _Devices(
+          names: names,
+          // The direction the row and the headline lead with. Six devices in
+          // both directions is twelve lines, which is a picture of nothing.
+          byDevice: h.diskWritesByDevice,
+          defaults: names.take(_kMaxDeviceLines).toList(),
+          subtitle: (d) {
+            final (r, w) = io.speedBytes(d);
+            return '${_rate(w)} ${l10n.write} · ${_rate(r)} ${l10n.read}';
+          },
+        );
+      case _MetricKind.net:
+        final ns = ss.netSpeed;
+        final names = [...ns.realIfaces]
+          ..sort((a, b) {
+            double of(String d) =>
+                (ns.speedInBytesOf(device: d) ?? 0) +
+                (ns.speedOutBytesOf(device: d) ?? 0);
+            return of(b).compareTo(of(a));
+          });
+        if (names.length < 2) return null;
+        return _Devices(
+          names: names,
+          byDevice: h.netTxByDevice,
+          defaults: names.take(_kMaxDeviceLines).toList(),
+          // The totals below the rates: they are what an interface has moved
+          // since the machine came up, which is the other thing a list of
+          // interfaces is read for.
+          subtitle: (d) =>
+              '↑ ${_rate(ns.speedOutBytesOf(device: d))} · '
+              '↓ ${_rate(ns.speedInBytesOf(device: d))}\n'
+              '${ns.sizeOut(device: d)} | ${ns.sizeIn(device: d)}',
+        );
+      case _MetricKind.temp:
+        final names = [...ss.temps.devices]
+          ..sort((a, b) => (ss.temps.get(b) ?? -1).compareTo(ss.temps.get(a) ?? -1));
+        if (names.length < 2) return null;
+        return _Devices(
+          names: names,
+          byDevice: h.tempsByDevice,
+          // Not the hottest few: a Mac reports fourteen PMU dies within a
+          // degree of each other, and picking by temperature alone draws them
+          // all and drops the SSD.
+          defaults: [
+            for (final s in _tempSeries(si))
+              if (names.contains(s.label)) s.label,
+          ],
+          subtitle: (d) {
+            final v = ss.temps.get(d);
+            return v == null ? '--' : _formatTemp(v);
+          },
+        );
+      case _MetricKind.cpu:
+      case _MetricKind.mem:
+      case _MetricKind.swap:
+      case _MetricKind.disk:
+      case _MetricKind.gpu:
+      case _MetricKind.battery:
+        return null;
+    }
+  }
+
+  /// The devices drawn for [kind], in [_Devices.names] order so a device keeps
+  /// its colour as the busiest one changes.
+  List<String> _plottedDevices(_MetricKind kind, _Devices devices) {
+    final picked = _devicePick[kind];
+    if (picked == null) return devices.defaults;
+    return [
+      for (final name in devices.names)
+        if (picked.contains(name)) name,
+    ];
+  }
+
+  /// One line per device, or null where the aggregate is what there is: a
+  /// single device, or a window that came from a store that has only totals.
+  List<_HistorySeries>? _deviceSeries(ServerState si, _MetricKind kind) {
+    if (_range != _HistoryRange.live) return null;
+    final devices = _devicesOf(si, kind);
+    if (devices == null) return null;
+    final series = [
+      for (final (i, name) in _plottedDevices(kind, devices).indexed)
+        _HistorySeries(
+          name,
+          _kDeviceColors[i % _kDeviceColors.length],
+          devices.byDevice[name] ?? const <double?>[],
+        ),
+    ];
+    // Before the first sample of a device that only just appeared there is
+    // nothing under its name, and a legend of empty lines is worse than the
+    // totals.
+    return series.any((s) => s.spots.isNotEmpty) ? series : null;
   }
 }
 
@@ -400,14 +684,21 @@ extension on _ServerDetailPageState {
     required bool wide,
   }) {
     final chart = _buildFocusChart(si, m, wide: wide);
+    final device = _buildDeviceControl(si, m);
     // Two groups with the room between them, not five children sharing it:
     // everything in this line is as long as the language or the machine makes
     // it, and a `Flexible` narrower than its share leaves the difference as
     // slack at the end of the row — which holds the ranges off the edge.
+    //
+    // The shares are 2:3 because that is roughly what the two sides need: the
+    // right holds the note and three chips, the left a name and a device
+    // count. At 1:3 the left was a quarter of the card and the count came out
+    // as "2 o…".
     final head = Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Flexible(
+          flex: 2,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -424,9 +715,13 @@ extension on _ServerDetailPageState {
                   ),
                 ),
               ),
-              if (_buildDeviceControl(si, m) case final control?) ...[
+              // Narrow, the header is a name and the ranges and nothing fits
+              // between them: the control goes on the note's line below, which
+              // is otherwise a line of grey text with the rest of the card's
+              // width to itself.
+              if (wide && device != null) ...[
                 const SizedBox(width: 13),
-                control,
+                Flexible(child: device),
               ],
             ],
           ),
@@ -505,7 +800,20 @@ extension on _ServerDetailPageState {
                 _buildStats(m.stats),
               ],
               UIs.height7,
-              Text(_historyNote(si), style: UIs.text11Grey),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      _historyNote(si),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: UIs.text11Grey,
+                    ),
+                  ),
+                  ?device,
+                ],
+              ),
             ],
             chart,
             ?_buildFocusDetail(si, m.kind),
@@ -567,6 +875,9 @@ extension on _ServerDetailPageState {
       case _MetricKind.net:
       case _MetricKind.mem:
       case _MetricKind.swap:
+      case _MetricKind.gpu:
+      case _MetricKind.temp:
+      case _MetricKind.battery:
         // The devices behind a metric are reached from the control in the
         // header, not listed under the chart. Once every device has a line of
         // its own the chart's legend is that list, and a second copy of it
@@ -575,49 +886,58 @@ extension on _ServerDetailPageState {
     }
   }
 
-  /// The devices a metric is the sum of, and how many there are.
+  /// Which of a metric's devices the chart draws, and the way to change it.
   ///
-  /// A control rather than a list: a host reports as many interfaces as it has
-  /// and most of them are idle tunnels, so the card says how many and opens
-  /// the rest on request.
+  /// A control rather than a list under the chart: once every device has a
+  /// line of its own the legend *is* that list, and the question left is which
+  /// of them are worth a line — a host reports as many interfaces as it has
+  /// and most of them are idle tunnels.
+  ///
+  /// The disk row is the exception: what a filesystem is at has no line, so
+  /// its devices are a list to read rather than a set to choose from.
   Widget? _buildDeviceControl(ServerState si, _MetricView m) {
     final ss = si.status;
-    final List<Widget> Function() rows;
-    final int count;
-    switch (m.kind) {
-      case _MetricKind.disk:
-      case _MetricKind.diskIo:
-        if (ss.disk.isEmpty) return null;
-        final disks = [...ss.disk]
-          ..sort((a, b) => b.usedPercent.compareTo(a.usedPercent));
-        count = disks.length;
-        rows = () => [
-          for (final disk in disks) _buildDiskItemWithHierarchy(disk, ss, 0),
-        ];
-      case _MetricKind.net:
-        final ns = ss.netSpeed;
-        final devices = ns.devices;
-        if (devices.isEmpty) return null;
-        devices.sort(_netSortType.value.getSortFunc(ns));
-        count = devices.length;
-        rows = () => devices.map((e) => _buildNetSpeedItem(ns, e)).toList();
-      case _MetricKind.cpu:
-      case _MetricKind.mem:
-      case _MetricKind.swap:
-        return null;
-    }
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(7),
-      onTap: () => _showClosableDetailDialog(
-        title: libL10n.device,
-        child: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: rows()),
+    if (m.kind == _MetricKind.disk) {
+      if (ss.disk.length < 2) return null;
+      final disks = [...ss.disk]
+        ..sort((a, b) => b.usedPercent.compareTo(a.usedPercent));
+      return _deviceButton(
+        l10n.devicesFmt(disks.length),
+        () => _showClosableDetailDialog(
+          title: libL10n.device,
+          child: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final disk in disks)
+                    _buildDiskItemWithHierarchy(disk, ss, 0),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
+      );
+    }
+
+    final devices = _devicesOf(si, m.kind);
+    if (devices == null) return null;
+    // What the legend is showing, out of what the machine reports. Only the
+    // live window draws a line each, so anywhere else this is the count alone.
+    final label = _range == _HistoryRange.live
+        ? l10n.devicesPlottedFmt(
+            _plottedDevices(m.kind, devices).length,
+            devices.names.length,
+          )
+        : l10n.devicesFmt(devices.names.length);
+    return _deviceButton(label, () => _showDevicePicker(si, m.kind));
+  }
+
+  Widget _deviceButton(String label, VoidCallback onTap) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(7),
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
         child: Row(
@@ -625,11 +945,84 @@ extension on _ServerDetailPageState {
           children: [
             Icon(Icons.list, size: 15, color: UIs.textGrey.color),
             UIs.width7,
-            Text(l10n.devicesFmt(count), style: UIs.text12Grey),
+            // The count is as long as the language makes it, and everything
+            // in this header is competing for one line.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: UIs.text12Grey,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// The devices, ticked where they are drawn.
+  ///
+  /// Stays open as they are ticked, and the chart behind it follows each tap:
+  /// which lines are worth drawing is a question answered by looking at them,
+  /// not by predicting them and closing a sheet.
+  Future<void> _showDevicePicker(ServerState si, _MetricKind kind) async {
+    final scheme = Theme.of(context).colorScheme;
+    await showRowsSheet<void>(
+      context,
+      rows: (_) => [
+        StatefulBuilder(
+          builder: (_, setSheetState) {
+            // Re-read on every rebuild: a poll lands while the sheet is open,
+            // and the readings under the names are what the choice is made on.
+            final devices = _devicesOf(
+              ref.read(serverProvider(widget.args.spi.id)),
+              kind,
+            );
+            if (devices == null) return UIs.placeholder;
+            final plotted = _plottedDevices(kind, devices).toSet();
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final name in devices.names)
+                  ListTile(
+                    selected: plotted.contains(name),
+                    title: Text(name),
+                    subtitle: Text(
+                      devices.subtitle(name),
+                      style: UIs.text12Grey,
+                    ),
+                    trailing: plotted.contains(name)
+                        ? Icon(Icons.check, color: scheme.primary)
+                        : null,
+                    onTap: () {
+                      _toggleDevice(kind, name, plotted);
+                      setSheetState(() {});
+                    },
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  /// Adds or removes one device from what the chart draws.
+  ///
+  /// The last one on cannot be turned off: an empty chart is not a view of
+  /// anything, and "nothing is selected" is not a state this page can explain
+  /// in the space a legend has.
+  void _toggleDevice(_MetricKind kind, String name, Set<String> plotted) {
+    if (plotted.contains(name) && plotted.length == 1) {
+      Toast.show(l10n.oneDeviceAtLeast);
+      return;
+    }
+    _rebuild(() {
+      final picked = _devicePick.putIfAbsent(kind, () => {...plotted});
+      if (!picked.remove(name)) picked.add(name);
+    });
   }
 
   Widget _buildStats(List<_Stat> stats) {
@@ -694,6 +1087,10 @@ extension on _ServerDetailPageState {
               ),
             ),
           ),
+          // The box is what lines the rows up; this is the gap. Without it a
+          // label as wide as its box — "Temperature" nearly is — ran straight
+          // into the note beside it, and the two read as one phrase.
+          UIs.width13,
           Expanded(
             child: Row(
               children: [

@@ -45,6 +45,42 @@ void main() {
 
       expect(io.allSpeedBytes, (1024.0, 2048.0));
     });
+
+    /// `/proc/diskstats` has a row for the disk and one for each of its
+    /// partitions, and they count the same bytes. Summing all of them reported
+    /// a machine as writing twice what it wrote.
+    test('Linux aggregate counts a disk once, not once per partition', () {
+      final io = DiskIO();
+      const names = ['sda', 'sda1', 'sda2', 'nvme0n1', 'nvme0n1p1'];
+      io.updateForSystem([
+        for (final name in names) piece(name, 10, 20, 1),
+      ], SystemType.linux);
+      io.updateForSystem([
+        for (final name in names) piece(name, 12, 24, 2),
+      ], SystemType.linux);
+
+      expect(io.devices, ['sda', 'nvme0n1']);
+      expect(io.allSpeedBytes, (2048.0, 4096.0));
+    });
+
+    test('a partition whose whole disk is absent is the only row it has', () {
+      final io = DiskIO();
+      io.updateForSystem([piece('vda1', 10, 20, 1)], SystemType.linux);
+      io.updateForSystem([piece('vda1', 12, 24, 2)], SystemType.linux);
+
+      expect(io.devices, ['vda1']);
+      expect(io.allSpeedBytes, (1024.0, 2048.0));
+    });
+
+    test('a Windows drive letter is never read as a partition', () {
+      final io = DiskIO();
+      io.updateForSystem(
+        [piece('C:', 100, 200, 10), piece('D:', 300, 400, 10)],
+        SystemType.windows,
+      );
+
+      expect(io.devices, ['C:', 'D:']);
+    });
   });
 
   group('DiskUsage', () {

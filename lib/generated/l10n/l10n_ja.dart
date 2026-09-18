@@ -2286,6 +2286,117 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total 台中 $plotted 台';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return 'センサー $count 個 · 最高は $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'グラフには少なくとも 1 台を残します。';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$what $total 件中 $shown 件';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$what $count 件';
+  }
+
+  @override
+  String get unitDevices => 'デバイス';
+
+  @override
+  String get unitSensors => 'センサー';
+
+  @override
+  String get unitBatteries => 'バッテリー';
+
+  @override
+  String get unitCommands => 'コマンド';
+
+  @override
+  String get unitReadings => '測定値';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => '最高';
+
+  @override
+  String get oldest => '最長';
+
+  @override
+  String get notApplicable => '対象外';
+
+  @override
+  String get attributes => '属性';
+
+  @override
+  String get powerOnHours => '通電時間';
+
+  @override
+  String get powerCycles => '電源投入回数';
+
+  @override
+  String get lifeLeft => '残り寿命';
+
+  @override
+  String get lifetimeWrite => '総書き込み';
+
+  @override
+  String get lifetimeRead => '総読み込み';
+
+  @override
+  String get averageErase => '平均消去回数';
+
+  @override
+  String get unsafeShutdowns => '異常終了回数';
+
+  @override
+  String get diskAllPassed => 'すべて PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    return '警告 $count 件';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$total 台中 $wrong 台';
+  }
+
+  @override
+  String get diskSmartSortedTip => '悪い順';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return '$agoに取得';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count 個のプロセス';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count 台が異常';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'タップすると属性を表示';
+
+  @override
+  String get cycle => 'サイクル';
+
+  @override
   String get window => '期間';
 
   @override

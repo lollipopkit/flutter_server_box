@@ -1015,11 +1015,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
           // `110.0<=h<=99.0` to the Column and tripped the box-constraint
           // assertion.
           minHeight: 0,
-          // If `height == _kCardHeightMin`, the `maxHeight` will be ignored.
-          //
-          // You can comment the `maxHeight` then connect&disconnect the server
-          // to see the difference.
-          maxHeight: height != _kCardHeightMin ? height : null,
+          // The target height, including when that target is the minimum.
+          // Passing null there left the Column on the parent's constraint,
+          // which during a 110 → 23 shrink is whatever the tween is at: at 15
+          // the title's 23pt spinner overflowed it by 8 and struck the card
+          // with the stripe for the length of the animation. The title is
+          // never taller than `_kCardHeightMin`, so this always fits.
+          maxHeight: height,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,

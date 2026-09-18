@@ -41,12 +41,15 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   /// The cards this page can switch. The metrics are not among them: they are
   /// the page itself. About is, because it was one before this and an install
   /// that switched it off is still switching this one off.
+  ///
+  /// Temperature is gone from here for the opposite reason: it is a metric row
+  /// now, and a switch for it would be a switch over part of the page the
+  /// others cannot be switched off either.
   static const _cards = [
     ServerDetailCards.about,
     ServerDetailCards.gpu,
     ServerDetailCards.smart,
     ServerDetailCards.sensor,
-    ServerDetailCards.temp,
     ServerDetailCards.battery,
     ServerDetailCards.pve,
     ServerDetailCards.bmc,

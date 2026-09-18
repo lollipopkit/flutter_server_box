@@ -2413,6 +2413,124 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted van $total apparaten';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensoren · $name het heetst';
+  }
+
+  @override
+  String get oneDeviceAtLeast =>
+      'Ten minste één apparaat blijft in de grafiek.';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown van $total $what';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'apparaten';
+
+  @override
+  String get unitSensors => 'sensoren';
+
+  @override
+  String get unitBatteries => 'accu\'s';
+
+  @override
+  String get unitCommands => 'opdrachten';
+
+  @override
+  String get unitReadings => 'metingen';
+
+  @override
+  String get unitGpus => 'GPU\'s';
+
+  @override
+  String get hottest => 'het heetst';
+
+  @override
+  String get oldest => 'het oudst';
+
+  @override
+  String get notApplicable => 'niet van toepassing';
+
+  @override
+  String get attributes => 'attributen';
+
+  @override
+  String get powerOnHours => 'Bedrijfsuren';
+
+  @override
+  String get powerCycles => 'Inschakelingen';
+
+  @override
+  String get lifeLeft => 'Resterende levensduur';
+
+  @override
+  String get lifetimeWrite => 'Totaal geschreven';
+
+  @override
+  String get lifetimeRead => 'Totaal gelezen';
+
+  @override
+  String get averageErase => 'Gemiddeld gewist';
+
+  @override
+  String get unsafeShutdowns => 'Onveilige afsluitingen';
+
+  @override
+  String get diskAllPassed => 'alle PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count waarschuwingen',
+      one: '1 waarschuwing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong van $total apparaten';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Slechtste eerst';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return 'gelezen $ago';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count processen';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count defect';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Tik voor de attributen';
+
+  @override
+  String get cycle => 'Cycli';
+
+  @override
   String get window => 'venster';
 
   @override

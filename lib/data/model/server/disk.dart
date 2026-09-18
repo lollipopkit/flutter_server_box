@@ -132,19 +132,44 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
     return (_fmt(read), _fmt(write));
   }
 
-  /// Summed across real block devices; `null` when none produced a reading
+  /// A partition of the device it is named after: `sda1`, `nvme0n1p2`.
+  static final _partition = RegExp(r'^p?\d+$');
+
+  /// The devices a rate is read from: real disks, without the partitions
+  /// sitting on them.
+  ///
+  /// `/proc/diskstats` lists `sda` and each of `sda1`, `sda2`…, and every one
+  /// of those rows counts the same bytes, so summing all of them reported a
+  /// machine as writing twice what it wrote. A partition whose whole disk is
+  /// absent from the list is kept: it is then the only row those bytes have.
+  ///
+  /// The Linux prefix filter keeps out the loop, ram and device-mapper rows.
+  /// Windows and BSD samplers already return the logical disks the UI shows,
+  /// whose names do not use Linux block-device prefixes (`C:`, `D:`, mount
+  /// paths, ...).
+  List<String> get devices {
+    if (_system != SystemType.linux) return [for (final e in now) e.dev];
+    final named = [
+      for (final e in now)
+        if (_devPrefixes.any(e.dev.startsWith)) e.dev,
+    ];
+    return [
+      for (final dev in named)
+        if (!named.any(
+          (parent) =>
+              parent.length < dev.length &&
+              dev.startsWith(parent) &&
+              _partition.hasMatch(dev.substring(parent.length)),
+        ))
+          dev,
+    ];
+  }
+
+  /// Summed across [devices]; `null` when none produced a reading
   (double?, double?) get allSpeedBytes {
     double? read, write;
-    for (final item in now) {
-      // `/proc/diskstats` also contains loop, ram and device-mapper rows; the
-      // Linux prefix filter keeps those out. Windows and BSD samplers already
-      // return the logical disks the UI shows, whose names do not use Linux
-      // block-device prefixes (`C:`, `D:`, mount paths, ...).
-      if (_system == SystemType.linux &&
-          !_devPrefixes.any(item.dev.startsWith)) {
-        continue;
-      }
-      final (r, w) = speedBytes(item.dev);
+    for (final dev in devices) {
+      final (r, w) = speedBytes(dev);
       if (r == null || w == null) continue;
       read = (read ?? 0) + r;
       write = (write ?? 0) + w;

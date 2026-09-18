@@ -43,3 +43,47 @@ abstract interface class ServerDataSource {
   /// Releases transport-owned resources. Safe to call more than once.
   void close();
 }
+
+/// Appending a sample to the rolling buffer, which both sources do identically.
+///
+/// Where the numbers came from stops mattering here: by this point the source
+/// has landed on a [ServerStatus] and what is kept of it is the same either
+/// way. The only difference is the instant, which is why it is a parameter —
+/// an agent reports its own sampling time and a shell script has none.
+extension ServerStatusHistoryX on ServerStatus {
+  void recordSample({required int timeMs}) {
+    final (diskRead, diskWrite) = diskIO.allSpeedBytes;
+    history.add(
+      timeMs: timeMs,
+      cpu: cpu.usedPercent(),
+      mem: mem.total > 0 ? mem.usedPercent * 100 : null,
+      swap: swap.total > 0 ? swap.usedPercent * 100 : null,
+      disk: diskUsage?.usedPercent,
+      netRx: netSpeed.speedInBytesOf(),
+      netTx: netSpeed.speedOutBytesOf(),
+      diskRead: diskRead,
+      diskWrite: diskWrite,
+      // The one that is going to be a problem, not the mean of them: a host
+      // with two cards is busy because one of them is.
+      gpu: gpus.map((e) => e.utilization).nonNulls.fold<double?>(
+        null,
+        (top, e) => top == null || e > top ? e : top,
+      ),
+      temp: temps.first,
+      temps: {for (final d in temps.devices) d: ?temps.get(d)},
+      diskReads: {
+        for (final d in diskIO.devices) d: ?diskIO.speedBytes(d).$1,
+      },
+      diskWrites: {
+        for (final d in diskIO.devices) d: ?diskIO.speedBytes(d).$2,
+      },
+      netRxs: {
+        for (final d in netSpeed.realIfaces) d: ?netSpeed.speedInBytesOf(device: d),
+      },
+      netTxs: {
+        for (final d in netSpeed.realIfaces) d: ?netSpeed.speedOutBytesOf(device: d),
+      },
+      battery: batteries.firstOrNull?.percent?.toDouble(),
+    );
+  }
+}

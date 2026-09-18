@@ -2397,6 +2397,117 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total aygıttan $plotted tanesi';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensör · en sıcak $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'Grafikte en az bir aygıt kalır.';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$total $what içinden $shown';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'aygıt';
+
+  @override
+  String get unitSensors => 'sensör';
+
+  @override
+  String get unitBatteries => 'pil';
+
+  @override
+  String get unitCommands => 'komut';
+
+  @override
+  String get unitReadings => 'okuma';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => 'en sıcak';
+
+  @override
+  String get oldest => 'en eski';
+
+  @override
+  String get notApplicable => 'uygulanamaz';
+
+  @override
+  String get attributes => 'öznitelikler';
+
+  @override
+  String get powerOnHours => 'Çalışma saati';
+
+  @override
+  String get powerCycles => 'Açılma sayısı';
+
+  @override
+  String get lifeLeft => 'Kalan ömür';
+
+  @override
+  String get lifetimeWrite => 'Toplam yazma';
+
+  @override
+  String get lifetimeRead => 'Toplam okuma';
+
+  @override
+  String get averageErase => 'Ortalama silme';
+
+  @override
+  String get unsafeShutdowns => 'Güvensiz kapanma';
+
+  @override
+  String get diskAllPassed => 'tümü PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    return '$count uyarı';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$total aygıttan $wrong';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'En kötüden sıralı';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return '$ago okundu';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count süreç';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count arızalı';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Özniteliklerini görmek için dokunun';
+
+  @override
+  String get cycle => 'Çevrim';
+
+  @override
   String get window => 'pencere';
 
   @override

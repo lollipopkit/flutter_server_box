@@ -2211,6 +2211,117 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total 个设备中的 $plotted 个';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count 个传感器 · 最热 $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => '图表至少保留一个设备。';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$total 个$what中的 $shown 个';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count 个$what';
+  }
+
+  @override
+  String get unitDevices => '设备';
+
+  @override
+  String get unitSensors => '传感器';
+
+  @override
+  String get unitBatteries => '电池';
+
+  @override
+  String get unitCommands => '命令';
+
+  @override
+  String get unitReadings => '读数';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => '最热';
+
+  @override
+  String get oldest => '最久';
+
+  @override
+  String get notApplicable => '不适用';
+
+  @override
+  String get attributes => '属性';
+
+  @override
+  String get powerOnHours => '通电时间';
+
+  @override
+  String get powerCycles => '通电次数';
+
+  @override
+  String get lifeLeft => '剩余寿命';
+
+  @override
+  String get lifetimeWrite => '累计写入';
+
+  @override
+  String get lifetimeRead => '累计读取';
+
+  @override
+  String get averageErase => '平均擦除次数';
+
+  @override
+  String get unsafeShutdowns => '异常断电次数';
+
+  @override
+  String get diskAllPassed => '全部 PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    return '$count 个警告';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$total 个设备中的 $wrong 个';
+  }
+
+  @override
+  String get diskSmartSortedTip => '最差的排在最前';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return '$ago读取';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count 个进程';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count 个异常';
+  }
+
+  @override
+  String get diskSmartOpenTip => '点按查看该盘的属性';
+
+  @override
+  String get cycle => '循环次数';
+
+  @override
   String get window => '窗口';
 
   @override
@@ -4694,6 +4805,117 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String devicesBusiestFmt(Object count, Object name) {
     return '$count 個裝置 · 最忙 $name';
   }
+
+  @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total 個裝置中的 $plotted 個';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count 個感測器 · 最熱 $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => '圖表至少保留一個裝置。';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$total 個$what中的 $shown 個';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count 個$what';
+  }
+
+  @override
+  String get unitDevices => '裝置';
+
+  @override
+  String get unitSensors => '感測器';
+
+  @override
+  String get unitBatteries => '電池';
+
+  @override
+  String get unitCommands => '命令';
+
+  @override
+  String get unitReadings => '讀數';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => '最熱';
+
+  @override
+  String get oldest => '最久';
+
+  @override
+  String get notApplicable => '不適用';
+
+  @override
+  String get attributes => '屬性';
+
+  @override
+  String get powerOnHours => '通電時間';
+
+  @override
+  String get powerCycles => '通電次數';
+
+  @override
+  String get lifeLeft => '剩餘壽命';
+
+  @override
+  String get lifetimeWrite => '累計寫入';
+
+  @override
+  String get lifetimeRead => '累計讀取';
+
+  @override
+  String get averageErase => '平均抹除次數';
+
+  @override
+  String get unsafeShutdowns => '異常斷電次數';
+
+  @override
+  String get diskAllPassed => '全部 PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    return '$count 個警告';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$total 個裝置中的 $wrong 個';
+  }
+
+  @override
+  String get diskSmartSortedTip => '最差的排在最前';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return '$ago讀取';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count 個處理程序';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count 個異常';
+  }
+
+  @override
+  String get diskSmartOpenTip => '點按查看該磁碟的屬性';
+
+  @override
+  String get cycle => '循環次數';
 
   @override
   String get window => '視窗';

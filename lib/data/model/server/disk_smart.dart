@@ -28,15 +28,68 @@ abstract class DiskSmart with _$DiskSmart {
   /// Get the specific SMART attribute by name
   SmartAttribute? getAttribute(String name) => smartAttributes[name];
 
-  int? get ssdLifeLeft => smartAttributes['SSD_Life_Left']?.rawValue as int?;
+  /// The counts a drive is judged on beyond [healthy], worst first, each with
+  /// the word a row uses and the name the attribute sheet lists it under.
+  ///
+  /// SMART's own verdict stays PASSED until a drive is nearly gone: one with
+  /// reallocated sectors answers PASSED and is the one to replace. Every one
+  /// of these should be zero, and the first non-zero one is what a card says
+  /// instead of "PASSED".
+  ///
+  /// The words are smartctl's, spelled out — they are the terms the attribute
+  /// tables and every disk forum use, and translating them would leave the
+  /// reading and its name in different vocabularies.
+  static const criticalAttributes = <String, ({String short, String label})>{
+    'Reallocated_Sector_Ct': (
+      short: 'reallocated',
+      label: 'Reallocated sectors',
+    ),
+    'Current_Pending_Sector': (short: 'pending', label: 'Pending sectors'),
+    'Offline_Uncorrectable': (
+      short: 'uncorrectable',
+      label: 'Offline uncorrectable',
+    ),
+    'UDMA_CRC_Error_Count': (short: 'CRC errors', label: 'CRC errors'),
+  };
+
+  /// Which of [criticalAttributes] this drive reports above zero, in that
+  /// order. Empty on a healthy drive and on one that reports none of them.
+  Map<String, int> get faults {
+    final out = <String, int>{};
+    for (final entry in criticalAttributes.entries) {
+      final count = countOf(smartAttributes[entry.key]?.rawValue);
+      if (count != null && count > 0) out[entry.value.short] = count;
+    }
+    return out;
+  }
+
+  /// A raw value as the count it is, or null when it is not one.
+  ///
+  /// `rawValue` is whatever the vendor put in the field and whatever the
+  /// transport made of it: an `int` over SSH, a JSON number that decoded as a
+  /// `double` through the agent, a string on a drive that spells its raw
+  /// values out. A whole number in any of those shapes is the same count, and
+  /// `2.5` is not a count of sectors at all.
+  static int? countOf(dynamic raw) => switch (raw) {
+    final int v => v,
+    final num v when v == v.roundToDouble() => v.toInt(),
+    final String s => int.tryParse(s.trim()),
+    _ => null,
+  };
+
+  /// Whether smartctl had nothing to say about this device — a RAID set or a
+  /// mapper target, which has no SMART data rather than bad SMART data.
+  bool get notApplicable => healthy == null && smartAttributes.isEmpty;
+
+  int? get ssdLifeLeft => countOf(smartAttributes['SSD_Life_Left']?.rawValue);
   int? get lifetimeWritesGiB =>
-      smartAttributes['Lifetime_Writes_GiB']?.rawValue as int?;
+      countOf(smartAttributes['Lifetime_Writes_GiB']?.rawValue);
   int? get lifetimeReadsGiB =>
-      smartAttributes['Lifetime_Reads_GiB']?.rawValue as int?;
+      countOf(smartAttributes['Lifetime_Reads_GiB']?.rawValue);
   int? get unsafeShutdownCount =>
-      smartAttributes['Unsafe_Shutdown_Count']?.rawValue as int?;
+      countOf(smartAttributes['Unsafe_Shutdown_Count']?.rawValue);
   int? get averageEraseCount =>
-      smartAttributes['Average_Erase_Count']?.rawValue as int?;
+      countOf(smartAttributes['Average_Erase_Count']?.rawValue);
 
   @override
   String toString() => 'DiskSmart($device)';

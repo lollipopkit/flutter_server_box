@@ -2432,6 +2432,124 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted de $total dispositivos';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensores · $name el más caliente';
+  }
+
+  @override
+  String get oneDeviceAtLeast =>
+      'Al menos un dispositivo permanece en el gráfico.';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown de $total $what';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'dispositivos';
+
+  @override
+  String get unitSensors => 'sensores';
+
+  @override
+  String get unitBatteries => 'baterías';
+
+  @override
+  String get unitCommands => 'comandos';
+
+  @override
+  String get unitReadings => 'lecturas';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => 'el más caliente';
+
+  @override
+  String get oldest => 'el más antiguo';
+
+  @override
+  String get notApplicable => 'no aplicable';
+
+  @override
+  String get attributes => 'atributos';
+
+  @override
+  String get powerOnHours => 'Horas encendido';
+
+  @override
+  String get powerCycles => 'Ciclos de encendido';
+
+  @override
+  String get lifeLeft => 'Vida restante';
+
+  @override
+  String get lifetimeWrite => 'Escritura total';
+
+  @override
+  String get lifetimeRead => 'Lectura total';
+
+  @override
+  String get averageErase => 'Borrados medios';
+
+  @override
+  String get unsafeShutdowns => 'Apagados inseguros';
+
+  @override
+  String get diskAllPassed => 'todos PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count advertencias',
+      one: '1 advertencia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong de $total dispositivos';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Peor primero';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return 'leído $ago';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count procesos';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count con fallos';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Toca uno para ver sus atributos';
+
+  @override
+  String get cycle => 'Ciclos';
+
+  @override
   String get window => 'ventana';
 
   @override

@@ -2395,6 +2395,123 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted of $total devices';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensors · $name hottest';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'At least one device stays on the chart.';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown of $total $what';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'devices';
+
+  @override
+  String get unitSensors => 'sensors';
+
+  @override
+  String get unitBatteries => 'batteries';
+
+  @override
+  String get unitCommands => 'commands';
+
+  @override
+  String get unitReadings => 'readings';
+
+  @override
+  String get unitGpus => 'GPUs';
+
+  @override
+  String get hottest => 'hottest';
+
+  @override
+  String get oldest => 'oldest';
+
+  @override
+  String get notApplicable => 'not applicable';
+
+  @override
+  String get attributes => 'attributes';
+
+  @override
+  String get powerOnHours => 'Power-on hours';
+
+  @override
+  String get powerCycles => 'Power cycles';
+
+  @override
+  String get lifeLeft => 'Life left';
+
+  @override
+  String get lifetimeWrite => 'Lifetime write';
+
+  @override
+  String get lifetimeRead => 'Lifetime read';
+
+  @override
+  String get averageErase => 'Average erase';
+
+  @override
+  String get unsafeShutdowns => 'Unsafe shutdowns';
+
+  @override
+  String get diskAllPassed => 'all PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count warnings',
+      one: '1 warning',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong of $total devices';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Sorted worst first';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return 'read $ago';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count processes';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count failing';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Open one for its attributes';
+
+  @override
+  String get cycle => 'Cycle';
+
+  @override
   String get window => 'window';
 
   @override

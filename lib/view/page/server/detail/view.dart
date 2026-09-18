@@ -20,7 +20,6 @@ import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -38,6 +37,7 @@ import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
+part 'cards.dart';
 part 'metrics.dart';
 part 'misc.dart';
 
@@ -80,16 +80,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   /// The cards that are not one of the metrics the page is built around.
   ///
-  /// CPU, memory, swap, disk and network are no longer cards: they are the
-  /// chart at the top and the rows under it, which is what this page came to
-  /// show. What is left here is everything that is a table or a one-off
-  /// reading rather than a value with a line over time.
+  /// CPU, memory, swap, disk, network, GPU load, the hottest sensor and the
+  /// battery are no longer cards: they are the chart at the top and the rows
+  /// under it, which is what this page came to show. What is left here is
+  /// everything that is a table or a one-off reading rather than a value with
+  /// a line over time — including what those metrics carry beside their
+  /// number, like the processes holding a GPU's memory.
   late final _cardBuildMap =
       <ServerDetailCards, Widget? Function(ServerState)>{
         ServerDetailCards.gpu: _buildGpuView,
         ServerDetailCards.smart: _buildDiskSmart,
         ServerDetailCards.sensor: _buildSensors,
-        ServerDetailCards.temp: _buildTemperature,
         ServerDetailCards.battery: _buildBatteries,
         ServerDetailCards.pve: _buildPve,
         ServerDetailCards.bmc: _buildBmc,
@@ -108,13 +109,16 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// The metric drawn in full. The rest are a row each.
   _MetricKind _focusMetric = _MetricKind.cpu;
 
+  /// Which of a metric's devices the chart draws, where the reader has said.
+  /// Absent means [_Devices.defaults], which is what a page opens on.
+  final _devicePick = <_MetricKind, Set<String>>{};
+
   /// The window the chart draws, and what has been fetched for it.
   _HistoryRange _range = _HistoryRange.live;
   final _rangeWindows = <_HistoryRange, List<StatusHistorySample>>{};
   final _rangeBusy = <_HistoryRange>{};
 
   final _settings = Stores.setting;
-  final _netSortType = ValueNotifier(_NetSortType.device);
 
   /// Shared by the grid and the bar floating over it, which is how the bar
   /// knows to get out of the way.
@@ -124,31 +128,21 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
   late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
-  /// Which cards are expanded, by [_expand]'s key.
+  /// Which cards are open, by their `cardKey`.
   ///
-  /// Held by the page rather than by each tile, because a tile does not
-  /// outlive a refresh. `initiallyExpanded` is applied once per tile
-  /// *element*, and cards are matched to elements by position — so anything
-  /// that changes the list or how it is laid out (a status arriving and with
-  /// it the logo, the error card appearing, a window resize changing the
-  /// column count) builds the tile again and re-applies it, undoing whatever
-  /// the user had collapsed. That is what made the About card spring open on
-  /// every poll: its key was `ValueKey(more.hashCode)`, and `more` carries
-  /// uptime, so every sample was a new key and a new tile.
-  final _expands = <String, ExpansibleController>{};
+  /// Held by the page rather than by each card, because a card does not
+  /// outlive a refresh: it is rebuilt by anything that changes the list or how
+  /// it is laid out (a status arriving and with it the logo, the error card
+  /// appearing, a window resize changing the column count), and a card that
+  /// decided for itself would re-apply its default each time — which is what
+  /// made the About card spring open on every poll.
+  final _cardsOpen = <String, bool>{};
 
-  /// The controller for the card [key], expanded on first use if [initially].
-  ///
-  /// Passed instead of `initiallyExpanded`, never alongside it:
-  /// `ExpansionTile.initState` re-applies that flag to the controller for
-  /// every tile it builds, which is the reset this exists to prevent.
-  ExpansibleController _expand(String key, bool initially) {
-    return _expands.putIfAbsent(key, () {
-      final ctrl = ExpansibleController();
-      if (initially) ctrl.expand();
-      return ctrl;
-    });
-  }
+  /// Whether the card [key] is open, opened on first use if [initially].
+  bool _cardExpanded(String key, bool initially) =>
+      _cardsOpen.putIfAbsent(key, () => initially);
+
+  void _toggleCard(String key) => _cardsOpen[key] = !(_cardsOpen[key] ?? false);
 
   /// What the parts of this page held in extensions change state through:
   /// `setState` is protected, and an extension is not a subclass.
@@ -159,11 +153,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   @override
   void dispose() {
     super.dispose();
-    _netSortType.dispose();
     _scrollCtrl.dispose();
-    for (final ctrl in _expands.values) {
-      ctrl.dispose();
-    }
   }
 
   @override
@@ -731,8 +721,8 @@ ${err.message ?? 'null'}
     final children = <Widget>[];
     final displayCpuIndexSetting = _displayCpuIndex;
 
-    if (cs.coresCount > kCoresCountThreshold) {
-      final numCoresToDisplay = cs.coresCount - 1;
+    if (cs.coresCount >= kCoresCountThreshold) {
+      final numCoresToDisplay = cs.coresCount;
       final numRows = (numCoresToDisplay + kMaxColumn - 1) ~/ kMaxColumn;
 
       for (var i = 0; i < numRows; i++) {
@@ -767,7 +757,7 @@ ${err.message ?? 'null'}
         }
       }
     } else {
-      for (var i = 1; i < cs.coresCount; i++) {
+      for (var i = 1; i <= cs.coresCount; i++) {
         children.add(
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),
@@ -794,25 +784,36 @@ ${err.message ?? 'null'}
     );
   }
 
+  /// The cards, not the load: what a GPU is doing is the row above, and what
+  /// is left is a table — the memory each card has left, its clock and fans,
+  /// and the processes holding that memory.
   Widget? _buildGpuView(ServerState si) {
     final gpus = si.status.gpus;
     if (gpus.isEmpty) return null;
+    final mem = _busiestGpu(si.status)?.memory;
+    final processes = [for (final gpu in gpus) ...?gpu.memory?.processes];
 
-    return ExpandTile(
-      title: const Text('GPU'),
-      leading: const Icon(Icons.memory, size: 17),
-      controller: _expand('gpu', _getInitExpand(gpus.length, 3)),
-      children: gpus.map(_buildGpuItem).toList(),
-    ).cardx;
+    return _buildReadoutCard(
+      cardKey: 'gpu',
+      icon: ServerDetailCards.gpu.icon,
+      title: 'GPU',
+      headline: mem == null
+          ? null
+          : (
+              value: '${mem.used} ${mem.unit}',
+              note: [
+                l10n.ofFmt('${mem.total} ${mem.unit}'),
+                if (processes.isNotEmpty) l10n.processesFmt(processes.length),
+              ].join(' · '),
+            ),
+      rows: gpus.map(_buildGpuItem).toList(),
+      footer: _countNote(gpus.length, l10n.unitGpus),
+      initiallyExpanded: _getInitExpand(gpus.length, 3),
+    );
   }
 
   Widget _buildGpuItem(GpuItem item) {
     final mem = item.memory;
-    final leading = [
-      if (item.utilization != null)
-        '${item.utilization!.toStringAsFixed(item.utilization! % 1 == 0 ? 0 : 1)}%',
-      if (item.temperature != null) '${item.temperature} °C',
-    ];
     final details = [
       if (item.power != null) item.power!,
       if (item.fanSpeed != null)
@@ -820,24 +821,15 @@ ${err.message ?? 'null'}
       if (item.clockSpeed != null) '${item.clockSpeed} MHz',
       if (mem != null) '${mem.used} / ${mem.total} ${mem.unit}',
     ];
-    return ListTile(
-      title: Text('${item.name} · ${item.id}', style: UIs.text13),
-      leading: Text(
-        leading.isEmpty ? '—' : leading.join('\n'),
-        style: UIs.text12Grey,
-        textScaler: _textFactor,
-        textAlign: TextAlign.center,
-      ),
-      subtitle: details.isEmpty
-          ? null
-          : Text(
-              details.join(' · '),
-              style: UIs.text12Grey,
-              textScaler: _textFactor,
-            ),
-      contentPadding: const EdgeInsets.only(left: 17, right: 17),
-      trailing: mem != null && mem.processes.isNotEmpty
-          ? _buildGpuInfoButton(() => _onTapGpuItem(item))
+    return _buildReadoutRow(
+      k: '${item.name} · ${item.id}',
+      sub: details.isEmpty ? null : details.join(' · '),
+      v: [
+        if (item.utilization case final util?) _pct(util),
+        if (item.temperature case final t?) _formatTemp(t.toDouble()),
+      ].join(' · '),
+      onTap: mem != null && mem.processes.isNotEmpty
+          ? () => _onTapGpuItem(item)
           : null,
     );
   }
@@ -847,19 +839,6 @@ ${err.message ?? 'null'}
       name: process.name,
       subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
       onTap: () => _onTapGpuProcessItem(process),
-    );
-  }
-
-  Widget _buildGpuInfoButton(VoidCallback onPressed) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(tooltip: libL10n.about, 
-          onPressed: onPressed,
-          icon: const Icon(Icons.info_outline, size: 17),
-        ),
-      ],
     );
   }
 
@@ -962,362 +941,294 @@ ${err.message ?? 'null'}
     );
   }
 
+  /// Every drive's health in one card, worst first.
+  ///
+  /// Six drives are not six cards: what is read off this is one conclusion —
+  /// whether anything is failing — and the rows are what to look at once the
+  /// answer is no longer "all of them passed". The attributes behind a drive
+  /// are two dozen numbers and stay one tap away.
   Widget? _buildDiskSmart(ServerState si) {
     final smarts = si.status.diskSmart;
     if (smarts.isEmpty) return null;
-    return CardX(
-      child: ExpandTile(
-        title: Text(l10n.diskHealth),
-        leading: Icon(ServerDetailCards.smart.icon, size: 17),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        controller: _expand('smart', _getInitExpand(smarts.length)),
-        children: smarts.map(_buildDiskSmartItem).toList(),
-      ),
+
+    // Worst first, which is the order the rows are read in and what the
+    // headline is about. A drive smartctl could not read sorts between a
+    // failing one and a passing one: it is not a drive that is fine.
+    final sorted = [...smarts]
+      ..sort((a, b) => _smartRank(a).compareTo(_smartRank(b)));
+    final worst = sorted.first;
+    final wrong = smarts.where((e) => _smartRank(e) < _smartRank(_smartOk));
+
+    DiskSmart? hottest;
+    int? oldest;
+    for (final smart in smarts) {
+      final t = smart.temperature;
+      if (t != null && (hottest == null || t > hottest.temperature!)) {
+        hottest = smart;
+      }
+      final hours = smart.powerOnHours;
+      if (hours != null && (oldest == null || hours > oldest)) oldest = hours;
+    }
+
+    final truncated = smarts.length > _kCardRows;
+    return _buildReadoutCard(
+      cardKey: 'smart',
+      icon: ServerDetailCards.smart.icon,
+      title: l10n.diskHealth,
+      verdict: _smartVerdict(smarts),
+      // The worst conclusion, not a count of drives: what this card answers is
+      // whether anything needs replacing, and on the machine where something
+      // does, which one and what it said.
+      headline: wrong.isEmpty
+          ? (
+              value: l10n.devicesFmt(smarts.length),
+              note: [
+                if (hottest?.temperature case final t?)
+                  '${l10n.hottest} ${_formatTemp(t)}',
+                if (oldest != null) '${l10n.oldest} $oldest ${libL10n.hour}',
+              ].join(' · '),
+            )
+          : (
+              // `(total, wrong)`: with no `@` metadata gen-l10n orders the
+              // placeholders alphabetically, not as the sentence reads them.
+              value: l10n.diskWrongOfFmt(smarts.length, wrong.length),
+              note: '${worst.device} · ${_smartSummary(worst)}',
+            ),
+      rows: sorted.map(_buildDiskSmartItem).toList(),
+      footer: _cardFooter([
+        truncated
+            ? l10n.shownOfFmt(_kCardRows, smarts.length, l10n.unitDevices)
+            : l10n.countOfFmt(smarts.length, l10n.unitDevices),
+        truncated ? l10n.diskSmartOpenTip : l10n.diskSmartSortedTip,
+      ]),
+      initiallyExpanded: _getInitExpand(smarts.length),
     );
+  }
+
+  /// A passing drive, to rank the others against.
+  static const _smartOk = DiskSmart(
+    device: '',
+    healthy: true,
+    rawData: {},
+    smartAttributes: {},
+  );
+
+  /// Worst first: failing, then whatever reports a non-zero critical count,
+  /// then a drive that answered nothing, then the ones that passed. A device
+  /// SMART does not apply to is last — it is not a drive with a problem.
+  static int _smartRank(DiskSmart smart) {
+    if (smart.notApplicable) return 4;
+    if (smart.healthy == false) return 0;
+    if (smart.faults.isNotEmpty) return 1;
+    if (smart.healthy == null) return 2;
+    return 3;
+  }
+
+  ({String text, _Verdict tone})? _smartVerdict(List<DiskSmart> smarts) {
+    final failing = smarts.where((e) => e.healthy == false).length;
+    if (failing > 0) {
+      return (text: l10n.diskFailingFmt(failing), tone: _Verdict.bad);
+    }
+    final warning = smarts
+        .where((e) => !e.notApplicable && (e.healthy == null || e.faults.isNotEmpty))
+        .length;
+    if (warning > 0) {
+      return (text: l10n.diskWarningFmt(warning), tone: _Verdict.warn);
+    }
+    return (text: l10n.diskAllPassed, tone: _Verdict.ok);
+  }
+
+  /// What a drive says about itself in one phrase: the first count that should
+  /// have been zero, or SMART's own verdict when they all are.
+  String _smartSummary(DiskSmart smart) {
+    if (smart.notApplicable) return l10n.notApplicable;
+    final fault = smart.faults.entries.firstOrNull;
+    if (fault != null) return '${fault.value} ${fault.key}';
+    return switch (smart.healthy) {
+      null => libL10n.unknown,
+      true => 'PASSED',
+      false => 'FAILING',
+    };
   }
 
   Widget _buildDiskSmartItem(DiskSmart smart) {
-    final healthStatus = _getDiskHealthStatus(smart);
-
-    return ListTile(
-      dense: true,
-      leading: healthStatus.icon,
-      title: Text(smart.device, style: UIs.text13, textScaler: _textFactor),
-      trailing: Text(
-        healthStatus.text,
-        style: UIs.text13.copyWith(fontWeight: FontWeight.bold),
-        textScaler: _textFactor,
-      ),
-      subtitle: _buildDiskSmartDetails(smart),
-      onTap: () => _onTapDiskSmartItem(smart),
+    final applicable = !smart.notApplicable;
+    return _buildReadoutRow(
+      k: smart.device,
+      sub: smart.model,
+      v: [
+        _smartSummary(smart),
+        if (smart.temperature case final t?) _formatTemp(t),
+      ].join(' · '),
+      dot: _smartTone(smart).color(Theme.of(context).colorScheme),
+      // Nothing to open for a device with no attributes, and a chevron that
+      // opens an empty sheet is worse than no chevron.
+      onTap: applicable ? () => _onTapDiskSmartItem(smart) : null,
     );
   }
 
-  ({String text, Color color, Widget icon}) _getDiskHealthStatus(
-    DiskSmart smart,
-  ) {
-    if (smart.healthy == null) {
-      return (
-        text: libL10n.unknown,
-        color: Colors.orange,
-        icon: const Icon(Icons.help_outline, color: Colors.orange, size: 18),
-      );
-    } else if (smart.healthy!) {
-      return (
-        text: 'PASS',
-        color: Colors.green,
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 18),
-      );
-    } else {
-      return (
-        text: 'FAIL',
-        color: Colors.red,
-        icon: const Icon(Icons.error, color: Colors.red, size: 18),
-      );
-    }
+  _Verdict _smartTone(DiskSmart smart) {
+    if (smart.notApplicable) return _Verdict.idle;
+    if (smart.healthy == false) return _Verdict.bad;
+    if (smart.healthy == null || smart.faults.isNotEmpty) return _Verdict.warn;
+    return _Verdict.ok;
   }
 
-  Widget? _buildDiskSmartDetails(DiskSmart smart) {
-    final details = <String>[];
-
-    if (smart.model != null) {
-      details.add(smart.model!);
-    }
-
-    if (smart.temperature != null) {
-      details.add('${smart.temperature!.toStringAsFixed(1)}°C');
-    }
-
-    if (smart.powerOnHours != null) {
-      final hours = smart.powerOnHours!;
-      details.add('$hours ${libL10n.hour}');
-    }
-
-    if (smart.ssdLifeLeft != null) {
-      details.add('Life left: ${smart.ssdLifeLeft}%');
-    }
-
-    if (details.isEmpty) return null;
-
-    return Text(
-      details.join(' | '),
-      style: UIs.text12Grey,
-      textScaler: _textFactor,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
+  /// One drive's attributes: the readings the card has no room for.
+  ///
+  /// Two dozen numbers do not belong on the page — the card carries the
+  /// verdict and this carries the evidence, in the order it is read in: the
+  /// health line first, then the counts that should be zero, then how much
+  /// the drive has been used. Each count that is not zero keeps its dot, so
+  /// the row that made the card say "1 warning" is the one that stands out
+  /// here too.
   void _onTapDiskSmartItem(DiskSmart smart) {
-    final details = <String>[];
-
-    if (smart.model != null) details.add('Model: ${smart.model}');
-    if (smart.serial != null) details.add('Serial: ${smart.serial}');
-    if (smart.temperature != null) {
-      details.add('Temperature: ${smart.temperature!.toStringAsFixed(1)}°C');
-    }
-
-    if (smart.powerOnHours != null) {
-      details.add('Power On: ${smart.powerOnHours} ${libL10n.hour}');
-    }
-    if (smart.powerCycleCount != null) {
-      details.add('Power Cycle: ${smart.powerCycleCount}');
-    }
-
-    if (smart.ssdLifeLeft != null) {
-      details.add('Life Left: ${smart.ssdLifeLeft}%');
-    }
-    if (smart.lifetimeWritesGiB != null) {
-      details.add('Lifetime Write: ${smart.lifetimeWritesGiB} GiB');
-    }
-    if (smart.lifetimeReadsGiB != null) {
-      details.add('Lifetime Read: ${smart.lifetimeReadsGiB} GiB');
-    }
-    if (smart.averageEraseCount != null) {
-      details.add('Avg. Erase: ${smart.averageEraseCount}');
-    }
-    if (smart.unsafeShutdownCount != null) {
-      details.add('Unsafe Shutdown: ${smart.unsafeShutdownCount}');
-    }
-
-    final criticalAttrs = [
-      'Reallocated_Sector_Ct',
-      'Current_Pending_Sector',
-      'Offline_Uncorrectable',
-      'UDMA_CRC_Error_Count',
+    final scheme = Theme.of(context).colorScheme;
+    final rows = <({String k, String v, _Verdict? dot})>[
+      (
+        k: l10n.diskHealth,
+        v: switch (smart.healthy) {
+          null => libL10n.unknown,
+          true => 'PASSED',
+          false => 'FAILING',
+        },
+        dot: _smartTone(smart),
+      ),
+      for (final entry in DiskSmart.criticalAttributes.entries)
+        if (smart.getAttribute(entry.key)?.rawValue case final raw?)
+          (
+            k: entry.value.label,
+            v: '$raw',
+            // Read as the count the card read it as, so a row without a dot
+            // here is never one the card counted as a fault.
+            dot: (DiskSmart.countOf(raw) ?? 0) > 0 ? _Verdict.warn : null,
+          ),
+      if (smart.powerOnHours case final hours?)
+        (k: l10n.powerOnHours, v: '$hours', dot: null),
+      if (smart.powerCycleCount case final cycles?)
+        (k: l10n.powerCycles, v: '$cycles', dot: null),
+      if (smart.ssdLifeLeft case final left?)
+        (k: l10n.lifeLeft, v: '$left%', dot: null),
+      if (smart.temperature case final t?)
+        (k: libL10n.temperature, v: _formatTemp(t), dot: null),
+      if (smart.lifetimeWritesGiB case final written?)
+        (k: l10n.lifetimeWrite, v: '$written GiB', dot: null),
+      if (smart.lifetimeReadsGiB case final read?)
+        (k: l10n.lifetimeRead, v: '$read GiB', dot: null),
+      if (smart.averageEraseCount case final erases?)
+        (k: l10n.averageErase, v: '$erases', dot: null),
+      if (smart.unsafeShutdownCount case final unsafe?)
+        (k: l10n.unsafeShutdowns, v: '$unsafe', dot: null),
+      if (smart.model case final model?) (k: 'Model', v: model, dot: null),
+      if (smart.serial case final serial?) (k: 'Serial', v: serial, dot: null),
     ];
 
-    for (final attrName in criticalAttrs) {
-      final attr = smart.getAttribute(attrName);
-      if (attr != null && attr.rawValue != null) {
-        final value = attr.rawValue.toString();
-        details.add('${attrName.replaceAll('_', ' ')}: $value');
-      }
-    }
-
-    if (details.isEmpty) {
-      return;
-    }
-
-    final markdown = details.join('\n\n- ');
-    context.showRoundDialog(
-      title: smart.device,
-      child: MarkdownBody(
-        data: '- $markdown',
-        selectable: true,
-        styleSheet: MarkdownStyleSheet.fromTheme(
-          Theme.of(context),
-        ).copyWith(p: UIs.text13Grey, h2: UIs.text15),
-      ),
-      actions: Btnx.oks,
-    );
-  }
-
-  Widget _buildNetSpeedItem(NetSpeed ns, String device) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Expanded, not intrinsic: the totals line grows with the numbers
-          // ("502.4 MB | 502.4 MB" on a busy loopback) and pushed the
-          // fixed-width speed column past the right edge
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  device,
-                  style: UIs.text12,
-                  textScaler: _textFactor,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  textAlign: TextAlign.left,
-                ),
-                Text(
-                  '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
-                  style: UIs.text12Grey,
-                  textScaler: _textFactor,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                ),
-              ],
-            ),
+    showRowsSheet<void>(
+      context,
+      rows: (_) => [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 5, 17, 9),
+          child: Text(
+            '${smart.device} · ${l10n.attributes}',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
           ),
-          SizedBox(
-            width: 170,
-            child: Text(
-              '${ns.speedOut(device: device)} ↑\n${ns.speedIn(device: device)} ↓',
-              textAlign: TextAlign.end,
-              style: UIs.text13Grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget? _buildTemperature(ServerState si) {
-    final ss = si.status;
-    if (ss.temps.isEmpty) return null;
-
-    final devices = ss.temps.devices;
-    // Chart only. Sensor names and readings are what the chart's legend
-    // carries once there is more than one line; with a single sensor there is
-    // no legend, so its reading goes in the header instead. Either way a list
-    // above the chart would restate it.
-    final chart = _buildTempChart(si);
-    if (chart == null) return null;
-
-    // The chart plots one sensor per component, so a host with more than that
-    // has readings it isn't showing. Saying "4 / 20" and opening the full set
-    // on tap keeps a curated view from reading as the whole one.
-    final plotted = _tempSeries(si).length;
-    final hidden = devices.length > plotted;
-
-    final Widget? note;
-    if (devices.length == 1) {
-      note = Text(
-        '${ss.temps.get(devices.first)?.toStringAsFixed(1)}°C',
-        style: UIs.text13Grey,
-      );
-    } else if (hidden) {
-      note = InkWell(
-        onTap: () => _showAllTemps(ss),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('$plotted / ${devices.length}', style: UIs.text13Grey),
-            UIs.width7,
-            const Icon(Icons.list, size: 15, color: Colors.grey),
-          ],
         ),
-      );
-    } else {
-      note = null;
-    }
-
-    return CardX(
-      child: ExpandTile(
-        title: Text(libL10n.temperature),
-        leading: const Icon(Icons.ac_unit, size: 20),
-        controller: _expand('temp', _getInitExpand(1)),
-        // The chart already carries whatever space its axis needs
-        childrenPadding: EdgeInsets.symmetric(vertical: 10),
-        trailing: note,
-        children: [chart],
-      ),
+        for (final (i, row) in rows.indexed) ...[
+          // A line between the readings, not around them: this is a table of
+          // numbers and the rule is what keeps a name with its own value.
+          if (i > 0) const Divider(height: 1, indent: 17, endIndent: 17),
+          _buildReadoutRow(k: row.k, v: row.v, dot: row.dot?.color(scheme)),
+        ],
+        // Where the numbers came from and when: SMART is read on the extended
+        // cadence, so these are minutes old while everything else on the page
+        // is seconds old. The command is the other half of the answer — it is
+        // what to run to see the same thing.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 13, 17, 5),
+          child: Text(
+            [
+              'smartctl -A /dev/${smart.device}',
+              if (ref.read(serverProvider(widget.args.spi.id))
+                      .status
+                      .diskSmartAt
+                  case final at?)
+                l10n.readAgoFmt(at.toAgoStr()),
+            ].join(' · '),
+            style: UIs.text11Grey.copyWith(fontFamily: 'monospace'),
+          ),
+        ),
+      ],
     );
   }
 
+
+  /// Every battery but the first, which is the row's.
+  ///
+  /// A host reporting several is reporting its peripherals — a mouse, a
+  /// keyboard, a headset — and those are a table: a name, a state and a charge
+  /// each, with no line worth drawing behind any of them. A machine with one
+  /// battery has no card at all, because the row already says everything this
+  /// would.
   Widget? _buildBatteries(ServerState si) {
     final ss = si.status;
-    if (ss.batteries.isEmpty) return null;
+    if (ss.batteries.length < 2) return null;
 
-    final children = ss.batteries.map(_buildBatteryItem).toList();
-    final chart = _buildBatteryChart(si);
-    if (chart != null) children.add(chart);
-
-    return CardX(
-      child: ExpandTile(
-        title: Text(libL10n.battery),
-        leading: const Icon(Icons.battery_charging_full, size: 17),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        controller: _expand('battery', _getInitExpand(ss.batteries.length, 2)),
-        children: children,
-      ),
+    return _buildReadoutCard(
+      cardKey: 'battery',
+      icon: ServerDetailCards.battery.icon,
+      title: libL10n.battery,
+      rows: ss.batteries.map(_buildBatteryItem).toList(),
+      footer: _countNote(ss.batteries.length, l10n.unitBatteries),
+      initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
     );
   }
 
   Widget _buildBatteryItem(Battery battery) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${battery.name}', style: UIs.text15),
-              Text(
-                '${battery.status.name} - ${battery.cycle}',
-                style: UIs.text13Grey,
-              ),
-            ],
-          ),
-          Text(
-            '${battery.percent?.toStringAsFixed(0)}%',
-            style: UIs.text13Grey,
-          ),
-        ],
-      ),
+    return _buildReadoutRow(
+      k: battery.name ?? libL10n.unknown,
+      sub: [
+        battery.status.name,
+        if (battery.cycle case final cycle?) '${l10n.cycle} $cycle',
+      ].join(' · '),
+      v: _pct(battery.percent?.toDouble()),
     );
   }
 
+  /// What `sensors` reports, which is a table and stays one: a summary line
+  /// per chip, and the readings behind it on tap.
   Widget? _buildSensors(ServerState si) {
     final ss = si.status;
-    if (ss.sensors.isEmpty) return UIs.placeholder;
-    return CardX(
-      child: ExpandTile(
-        title: Text(libL10n.sensors),
-        leading: const Icon(Icons.thermostat, size: 17),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        controller: _expand('sensor', _getInitExpand(ss.sensors.length, 2)),
-        children: ss.sensors.map(_buildSensorItem).toList(),
-      ),
+    if (ss.sensors.isEmpty) return null;
+
+    return _buildReadoutCard(
+      cardKey: 'sensor',
+      icon: Icons.thermostat,
+      title: libL10n.sensors,
+      rows: ss.sensors.map(_buildSensorItem).toList(),
+      footer: _countNote(ss.sensors.length, l10n.unitSensors),
+      initiallyExpanded: _getInitExpand(ss.sensors.length, 2),
     );
   }
 
   Widget _buildSensorItem(SensorItem si) {
-    if (si.summary == null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-        child: Text(si.device),
-      );
-    }
-
-    final itemW = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Text(si.device, style: UIs.text15),
-            UIs.width7,
-            Text('(${si.adapter.raw})', style: UIs.text13Grey),
-          ],
-        ),
-        Text(si.summary!, style: UIs.text13Grey),
-      ],
-    ).expanded();
-
-    return InkWell(
-      onTap: () => _onTapSensorItem(si),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            itemW,
-            UIs.width7,
-            const Icon(Icons.keyboard_arrow_right, color: Colors.grey),
-          ],
-        ),
-      ),
+    return _buildReadoutRow(
+      k: si.device,
+      sub: si.summary,
+      v: si.adapter.raw,
+      onTap: si.summary == null ? null : () => _onTapSensorItem(si),
     );
   }
 
   Widget? _buildPve(ServerState si) {
     final addr = si.spi.custom?.pveAddr;
     if (addr == null || addr.isEmpty) return null;
-    return CardX(
-      child: ListTile(
-        title: const Text('PVE'),
-        leading: const Icon(FontAwesome.server_solid, size: 17),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => PvePage.route.go(context, PvePageArgs(spi: si.spi)),
-      ),
+    // Nothing is read here: the guests are the PVE page's, and this card is
+    // the way to it rather than a summary of what it will say.
+    return _buildReadoutCard(
+      cardKey: 'pve',
+      icon: FontAwesome.server_solid,
+      title: 'PVE',
+      onTap: () => PvePage.route.go(context, PvePageArgs(spi: si.spi)),
     );
   }
 
@@ -1331,19 +1242,7 @@ ${err.message ?? 'null'}
     if (si.spi.bmc == null) return null;
     final bmc = ref.watch(bmcProvider(si.spi));
 
-    final subtitle = switch (bmc) {
-      BmcState(failure: final failure?) => Text(
-        _bmcFailureText(failure, bmc.failureDetail),
-        style: UIs.textGrey,
-      ),
-      BmcState(hasData: false, isBusy: true) => Text(
-        libL10n.loadingEllipsis,
-        style: UIs.textGrey,
-      ),
-      _ => Text(_bmcPowerText(bmc.powerState), style: UIs.textGrey),
-    };
-
-    final children = <Widget>[];
+    final rows = <Widget>[];
     final system = bmc.topology?.system;
     if (system != null) {
       // The service's own property names, shown as it named them: they are
@@ -1356,77 +1255,69 @@ ${err.message ?? 'null'}
         ('Health', system.health),
       ]) {
         if (value == null || value.isEmpty) continue;
-        children.add(
-          ListTile(
-            dense: true,
-            title: Text(label, style: UIs.text13),
-            trailing: Text(value, style: UIs.text13Grey),
-          ),
-        );
+        rows.add(_buildReadoutRow(k: label, v: value));
       }
     }
 
     final sensors = bmc.sensors;
-    if (sensors.watts case final watts?) {
-      children.add(
-        ListTile(
-          dense: true,
-          title: Text(l10n.power, style: UIs.text13),
-          trailing: Text('${watts.toStringAsFixed(0)} W', style: UIs.text13Grey),
-        ),
-      );
-    }
     for (final reading in [...sensors.temperatures, ...sensors.fans]) {
-      children.add(
-        ListTile(
-          dense: true,
-          title: Text(reading.name, style: UIs.text13),
-          trailing: Text(
-            '${reading.value.toStringAsFixed(reading.unit == 'Cel' ? 1 : 0)}'
-            '${reading.unit == 'Cel' ? '°C' : ' ${reading.unit ?? ''}'}',
-            style: UIs.text13Grey,
-          ),
-        ),
-      );
-    }
-    if (bmc.hasData) children.add(_buildBmcPower(si));
-
-    // Said rather than left to look like the whole truth
-    if (bmc.sensorsTruncated) {
-      children.add(
-        ListTile(
-          dense: true,
-          title: Text(l10n.bmcSensorsTruncated, style: UIs.text13Grey),
+      rows.add(
+        _buildReadoutRow(
+          k: reading.name,
+          v:
+              '${reading.value.toStringAsFixed(reading.unit == 'Cel' ? 1 : 0)}'
+              '${reading.unit == 'Cel' ? '°C' : ' ${reading.unit ?? ''}'}',
         ),
       );
     }
 
-    // The same reason, for the same kind of cut: discovery takes the first of
-    // each collection, so a blade enclosure showed node 1's power state with
-    // nothing to say the other nodes existed — and a power action there
-    // targets that node alone.
-    if (bmc.topology?.hasMultipleSystems == true) {
-      children.add(
-        ListTile(
-          dense: true,
-          title: Text(l10n.bmcMultipleSystems, style: UIs.text13Grey),
+    return _buildReadoutCard(
+      cardKey: 'bmc',
+      icon: Icons.developer_board,
+      // A suffix here and the full sentence in the editor, which is the
+      // arrangement the Linux pages already use: the list that reaches the
+      // feature carries the marker, and the place where it is turned on
+      // carries the reason. Repeating `betaTip` on a card that is expanded
+      // every time the page opens would make it wallpaper.
+      title: 'BMC (Beta)',
+      verdict: switch (bmc) {
+        BmcState(failure: final failure?) => (
+          text: _bmcFailureText(failure, bmc.failureDetail),
+          tone: _Verdict.bad,
         ),
-      );
-    }
-
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.developer_board, size: 17),
-        // A suffix here and the full sentence in the editor, which is the
-        // arrangement the Linux pages already use: the list that reaches the
-        // feature carries the marker, and the place where it is turned on
-        // carries the reason. Repeating `betaTip` on a card that is expanded
-        // every time the page opens would make it wallpaper.
-        title: const Text('BMC (Beta)'),
-        subtitle: subtitle,
-        controller: _expand('bmc', _getInitExpand(children.length)),
-        children: children,
-      ),
+        BmcState(hasData: false, isBusy: true) => null,
+        BmcState(powerState: PowerState.on) => (
+          text: l10n.bmcPowerOn,
+          tone: _Verdict.ok,
+        ),
+        _ => (text: _bmcPowerText(bmc.powerState), tone: _Verdict.warn),
+      },
+      // Draw, not state: what a BMC is asked first is how much the machine is
+      // pulling, which is the one reading the host itself cannot give.
+      headline: sensors.watts == null
+          ? null
+          : (
+              value: '${sensors.watts!.toStringAsFixed(0)} W',
+              note: [
+                for (final fan in sensors.fans.take(1))
+                  '${fan.name} ${fan.value.toStringAsFixed(0)} ${fan.unit ?? ''}',
+              ].join(),
+            ),
+      rows: rows,
+      // Below the readings and never cut off by [_kCardRows]: these are the
+      // actions, and a truncated list must not be able to hide them.
+      extra: [if (bmc.hasData) _buildBmcPower(si)],
+      footer: _cardFooter([
+        _countNote(rows.length, l10n.unitReadings),
+        // Said rather than left to look like the whole truth
+        if (bmc.sensorsTruncated) l10n.bmcSensorsTruncated,
+        // The same reason, for the same kind of cut: discovery takes the first
+        // of each collection, so a blade enclosure showed node 1's power state
+        // with nothing to say the other nodes existed — and a power action
+        // there targets that node alone.
+        if (bmc.topology?.hasMultipleSystems == true) l10n.bmcMultipleSystems,
+      ]),
+      initiallyExpanded: _getInitExpand(rows.length),
     );
   }
 
@@ -1527,30 +1418,24 @@ ${err.message ?? 'null'}
   Widget? _buildCustomCmd(ServerState si) {
     final ss = si.status;
     if (ss.customCmds.isEmpty) return null;
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(MingCute.command_line, size: 17),
-        title: Text(l10n.customCmd),
-        controller: _expand('custom', _getInitExpand(ss.customCmds.length)),
-        children: ss.customCmds.entries.map(_buildCustomCmdItem).toList(),
-      ),
+    return _buildReadoutCard(
+      cardKey: 'custom',
+      icon: MingCute.command_line,
+      title: l10n.customCmd,
+      rows: ss.customCmds.entries.map(_buildCustomCmdItem).toList(),
+      footer: _countNote(ss.customCmds.length, l10n.unitCommands),
+      initiallyExpanded: _getInitExpand(ss.customCmds.length),
     );
   }
 
   Widget _buildCustomCmdItem(MapEntry<String, String> cmd) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-      child: KvRow(
-        k: cmd.key,
-        v: cmd.value,
-        vBuilder: () {
-          if (!cmd.value.contains('\n')) return null;
-          return GestureDetector(
-            onTap: () => _onTapCustomItem(cmd),
-            child: const Icon(Icons.info_outline, size: 17, color: Colors.grey),
-          );
-        },
-      ),
+    // A command that printed several lines has only its first on the row; the
+    // rest is what tapping opens, because a row is one line by construction.
+    final lines = cmd.value.split('\n');
+    return _buildReadoutRow(
+      k: cmd.key,
+      v: lines.first,
+      onTap: lines.length > 1 ? () => _onTapCustomItem(cmd) : null,
     );
   }
 

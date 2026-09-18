@@ -92,27 +92,8 @@ extension on _ServerDetailPageState {
     return len > 0 && len <= (max ?? 3);
   }
 
-  Widget? _percentChart(String label, Color color, List<double?> values) {
-    final spec = _ChartSpec(
-      series: [_HistorySeries(label, color, values)],
-      format: _formatPercent,
-    );
-    return spec.hasData ? _buildChart(spec) : null;
-  }
-
-  /// Palette for per-sensor temperature lines. Fixed order so a sensor keeps
-  /// its colour across rebuilds, and at least as long as [_kTempCategories]
-  /// so two plotted lines never share one.
-  static const _kTempColors = [
-    Color(0xFFEF4444),
-    Color(0xFFF59E0B),
-    Color(0xFF8B5CF6),
-    Color(0xFF14B8A6),
-    Color(0xFF3B82F6),
-    Color(0xFFEC4899),
-  ];
-
-  /// What the chart plots, in order: the hottest sensor matching each group.
+  /// Which sensors the temperature metric draws by default, in order: the
+  /// hottest sensor matching each group.
   ///
   /// A Mac reports two dozen sensors through one API — fourteen of them PMU
   /// dies within a degree of each other — and a Linux box with several thermal
@@ -120,7 +101,7 @@ extension on _ServerDetailPageState {
   /// the plot and a band of indistinguishable lines; plotting simply the
   /// hottest N filled the chart with near-duplicate dies and dropped the SSD
   /// and the battery entirely. One line per component is what a temperature
-  /// chart is read for; everything else is a tap away in [_showAllTemps].
+  /// chart is read for; everything else is a tap away in the device picker.
   ///
   /// Names come from three unrelated sources, so each group has to cover all
   /// three:
@@ -165,7 +146,7 @@ extension on _ServerDetailPageState {
   List<_HistorySeries> _tempSeries(ServerState si) {
     final h = si.status.history;
     if (h.tempsByDevice.isEmpty) {
-      return [_HistorySeries(libL10n.temperature, _kTempColors.first, h.temp)];
+      return [_HistorySeries(libL10n.temperature, _kDeviceColors.first, h.temp)];
     }
 
     // Hottest first, so "the hottest match in this group" falls out of a
@@ -194,54 +175,9 @@ extension on _ServerDetailPageState {
 
     return [
       for (final (i, e) in picked.indexed)
-        _HistorySeries(e.key, _kTempColors[i % _kTempColors.length], e.value),
+        _HistorySeries(e.key, _kDeviceColors[i % _kDeviceColors.length], e.value),
     ];
   }
-
-  Widget? _buildTempChart(ServerState si) {
-    final spec = _ChartSpec(series: _tempSeries(si), format: _formatTemp);
-    return spec.hasData ? _buildChart(spec) : null;
-  }
-
-  /// Every sensor and its current reading, for the ones the chart leaves out.
-  void _showAllTemps(server_model.ServerStatus ss) {
-    final plotted = _tempSeries(
-      ref.read(serverProvider(widget.args.spi.id)),
-    ).map((e) => e.label).toSet();
-
-    final rows = ss.temps.devices
-        .map((d) {
-          final mark = plotted.contains(d) ? '●' : '';
-          final v = ss.temps.get(d)?.toStringAsFixed(1) ?? '--';
-          return '| $mark | $d | $v °C |';
-        })
-        .join('\n');
-
-    context.showRoundDialog(
-      title: libL10n.temperature,
-      child: SingleChildScrollView(
-        child: SimpleMarkdown(
-          data: '| | ${libL10n.device} | ${libL10n.temperature} |\n'
-              '|---|---|---|\n$rows',
-          styleSheet: MarkdownStyleSheet(
-            tableBorder: TableBorder.all(color: Colors.grey),
-            tableHead: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
-      ],
-    );
-  }
-
-  /// Appended to the Battery card. It used to sit in the temperature card,
-  /// which stopped making sense once that card carried the sensor list too.
-  Widget? _buildBatteryChart(ServerState si) => _percentChart(
-    libL10n.battery,
-    const Color(0xFF14B8A6),
-    si.status.history.battery,
-  );
 
   /// One chart plus the legend line carrying each series' latest value —
   /// mirrors `monitor/frontend/src/components/LineChart.svelte`.
@@ -326,6 +262,18 @@ extension on _ServerDetailPageState {
     return spec.fill ? SizedBox(height: spec.height, child: body) : body;
   }
 }
+
+/// Palette for the lines of one metric's devices — sensors, disks,
+/// interfaces. Fixed order so a device keeps its colour across rebuilds, and
+/// as long as [_kMaxDeviceLines] so two lines never share one.
+const _kDeviceColors = [
+  Color(0xFFEF4444),
+  Color(0xFFF59E0B),
+  Color(0xFF8B5CF6),
+  Color(0xFF14B8A6),
+  Color(0xFF3B82F6),
+  Color(0xFFEC4899),
+];
 
 /// One chart: the series drawn on its shared axis, and how to label that axis.
 class _ChartSpec {
@@ -470,8 +418,6 @@ double _axisWidth(
 
 /// Trailing `.0` dropped: with round ticks the axis reads 0/25/50/75/100, and
 /// the decimal was only ever noise there
-String _formatPercent(double v) =>
-    '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}%';
 String _formatTemp(double v) =>
     '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}°C';
 
@@ -480,40 +426,6 @@ extension _ViewUtils on String {
     final uri = Uri.tryParse(this);
     final path = uri?.path.toLowerCase() ?? toLowerCase();
     return path.endsWith('.svg');
-  }
-}
-
-enum _NetSortType {
-  device,
-  trans,
-  recv;
-
-  _NetSortType get next {
-    switch (this) {
-      case device:
-        return trans;
-      case _NetSortType.trans:
-        return recv;
-      case recv:
-        return device;
-    }
-  }
-
-  int Function(String, String) getSortFunc(NetSpeed ns) {
-    switch (this) {
-      case _NetSortType.device:
-        return (b, a) => a.compareTo(b);
-      // Interfaces with no reading yet sort as slowest rather than jumping
-      // around as their first sample lands
-      case _NetSortType.recv:
-        return (b, a) => (ns.speedInBytes(ns.deviceIdx(a)) ?? -1).compareTo(
-          ns.speedInBytes(ns.deviceIdx(b)) ?? -1,
-        );
-      case _NetSortType.trans:
-        return (b, a) => (ns.speedOutBytes(ns.deviceIdx(a)) ?? -1).compareTo(
-          ns.speedOutBytes(ns.deviceIdx(b)) ?? -1,
-        );
-    }
   }
 }
 

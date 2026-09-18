@@ -13,8 +13,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
@@ -65,7 +69,36 @@ void main() {
     return status;
   }
 
-  Future<ServerNotifier> pump(WidgetTester tester, {required Size size}) async {
+  /// A machine that reports everything the page can draw a row for.
+  ServerStatus richStatus() {
+    final status = statusOf();
+    status.gpus = const [
+      GpuItem(
+        id: '0',
+        vendor: 'nvidia',
+        name: 'NVIDIA T4',
+        utilization: 41,
+        temperature: 58,
+        memory: GpuSmiMem(16384, 2150, 'MiB', []),
+      ),
+    ];
+    status.temps.setAll(const {'coretemp': 62.1, 'nvme': 38.0});
+    status.batteries.add(
+      const Battery(
+        status: BatteryStatus.discharging,
+        percent: 87,
+        name: 'BAT0',
+        cycle: 41,
+      ),
+    );
+    return status;
+  }
+
+  Future<ServerNotifier> pump(
+    WidgetTester tester, {
+    required Size size,
+    ServerStatus Function()? status,
+  }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -95,7 +128,7 @@ void main() {
       tester.element(find.byType(ServerDetailPage)),
     );
     final notifier = container.read(serverProvider(sid).notifier);
-    notifier.updateStatus(statusOf(), latencyMs: 41);
+    notifier.updateStatus((status ?? statusOf)(), latencyMs: 41);
     for (var i = 0; i < 4; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
@@ -134,6 +167,18 @@ void main() {
     expect(find.text('test-host'), findsOneWidget);
   });
 
+  /// Nine rows and the cards under them, at the width where every line of the
+  /// focus card is competing for the same 390 points.
+  testWidgets('phone: every row a rich machine reports still fits', (
+    tester,
+  ) async {
+    await pump(tester, size: const Size(390, 844), status: richStatus);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('GPU'), findsWidgets);
+    expect(find.text(libL10n.battery), findsWidgets);
+  });
+
   testWidgets('a row promotes its metric to the chart', (tester) async {
     await pump(tester, size: const Size(1200, 900));
 
@@ -151,6 +196,86 @@ void main() {
     // subject rather than a second card having opened.
     expect(find.text('idle'), findsNothing);
     expect(find.text('avail'), findsOneWidget);
+  });
+
+  /// What a machine reports beyond the five: a percentage with a line behind
+  /// it is a row, and the table it comes with stays a card.
+  testWidgets('GPU load, the hottest sensor and the battery are rows', (
+    tester,
+  ) async {
+    await pump(tester, size: const Size(1200, 900), status: richStatus);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('GPU'), findsWidgets);
+    expect(find.text(libL10n.temperature), findsWidgets);
+    expect(find.text(libL10n.battery), findsWidgets);
+    // The hottest of the two, not their mean and not the first one.
+    expect(find.textContaining('62.1°C'), findsWidgets);
+    // Said once, where it is the answer: two sensors and which of them.
+    expect(
+      find.text(app_locale.l10n.sensorsHottestFmt(2, 'coretemp')),
+      findsOneWidget,
+    );
+  });
+
+  /// A machine with several disks is busy because one of them is, so the chart
+  /// draws a line each and the card says how many of them are on it.
+  testWidgets('disk I/O is drawn per device once there is more than one', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      size: const Size(1200, 900),
+      status: () {
+        final status = statusOf();
+        const names = ['sda', 'sdb'];
+        for (final (i, sectors) in [10, 1000].indexed) {
+          status.diskIO.updateForSystem([
+            for (final name in names)
+              DiskIOPiece(
+                dev: name,
+                sectorsRead: sectors,
+                sectorsWrite: sectors * (names.indexOf(name) + 1),
+                time: i + 1,
+              ),
+          ], SystemType.linux);
+        }
+        // The buffer the live window is: what the sources append on a poll.
+        for (var i = 1; i <= 3; i++) {
+          status.history.add(
+            timeMs: i,
+            diskWrites: {'sda': 1000.0 * i, 'sdb': 2000.0 * i},
+          );
+        }
+        return status;
+      },
+    );
+
+    await tester.tap(find.text(app_locale.l10n.diskIo).first);
+    for (var i = 0; i < 3; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.takeException(), isNull);
+
+    // The legend is the device list, so the names are what says the chart is
+    // per device rather than read against write.
+    expect(find.textContaining('sda'), findsWidgets);
+    expect(find.textContaining('sdb'), findsWidgets);
+    expect(find.text(app_locale.l10n.devicesPlottedFmt(2, 2)), findsOneWidget);
+
+    // And the control opens them, ticked where they are drawn.
+    await tester.tap(find.text(app_locale.l10n.devicesPlottedFmt(2, 2)));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.byIcon(Icons.check), findsNWidgets(2));
+
+    await tester.tap(find.text('sdb').last);
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
   /// Only an agent stores history, so an SSH server is offered the one window

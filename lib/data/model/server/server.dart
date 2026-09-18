@@ -28,6 +28,13 @@ class ServerStatus {
   Err? err;
   DiskIO diskIO;
   List<DiskSmart> diskSmart;
+
+  /// When [diskSmart] was last read.
+  ///
+  /// SMART is on the extended cadence — minutes apart, because asking at poll
+  /// frequency keeps a disk from spinning down — so a reading here is older
+  /// than everything else on the page, and by an amount worth saying.
+  DateTime? diskSmartAt;
   List<NvidiaSmiItem>? nvidia;
   List<AmdSmiItem>? amd;
   List<GpuItem> gpus;
@@ -93,6 +100,7 @@ class ServerStatus {
     required this.system,
     required this.diskIO,
     this.diskSmart = const [],
+    this.diskSmartAt,
     this.err,
     this.nvidia,
     this.gpus = const [],

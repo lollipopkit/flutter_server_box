@@ -2401,6 +2401,118 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted dari $total perangkat';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensor · $name paling panas';
+  }
+
+  @override
+  String get oneDeviceAtLeast =>
+      'Setidaknya satu perangkat tetap ada di grafik.';
+
+  @override
+  String shownOfFmt(Object shown, Object total, Object what) {
+    return '$shown dari $total $what';
+  }
+
+  @override
+  String countOfFmt(Object count, Object what) {
+    return '$count $what';
+  }
+
+  @override
+  String get unitDevices => 'perangkat';
+
+  @override
+  String get unitSensors => 'sensor';
+
+  @override
+  String get unitBatteries => 'baterai';
+
+  @override
+  String get unitCommands => 'perintah';
+
+  @override
+  String get unitReadings => 'pembacaan';
+
+  @override
+  String get unitGpus => 'GPU';
+
+  @override
+  String get hottest => 'paling panas';
+
+  @override
+  String get oldest => 'paling lama';
+
+  @override
+  String get notApplicable => 'tidak berlaku';
+
+  @override
+  String get attributes => 'atribut';
+
+  @override
+  String get powerOnHours => 'Jam menyala';
+
+  @override
+  String get powerCycles => 'Siklus daya';
+
+  @override
+  String get lifeLeft => 'Sisa umur';
+
+  @override
+  String get lifetimeWrite => 'Total tulis';
+
+  @override
+  String get lifetimeRead => 'Total baca';
+
+  @override
+  String get averageErase => 'Rata-rata hapus';
+
+  @override
+  String get unsafeShutdowns => 'Mati tidak aman';
+
+  @override
+  String get diskAllPassed => 'semua PASSED';
+
+  @override
+  String diskWarningFmt(num count) {
+    return '$count peringatan';
+  }
+
+  @override
+  String diskWrongOfFmt(Object total, Object wrong) {
+    return '$wrong dari $total perangkat';
+  }
+
+  @override
+  String get diskSmartSortedTip => 'Terburuk lebih dulu';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return 'dibaca $ago';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count proses';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count bermasalah';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Ketuk untuk melihat atributnya';
+
+  @override
+  String get cycle => 'Siklus';
+
+  @override
   String get window => 'jendela';
 
   @override

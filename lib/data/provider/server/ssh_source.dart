@@ -43,20 +43,7 @@ class SshDataSource implements ServerDataSource {
     );
     // Receipt time is the only timestamp available: the shell output carries
     // counters, not a sampling instant
-    status.history.add(
-      timeMs: DateTime.now().millisecondsSinceEpoch,
-      cpu: status.cpu.usedPercent(),
-      mem: status.mem.total > 0 ? status.mem.usedPercent * 100 : null,
-      swap: status.swap.total > 0 ? status.swap.usedPercent * 100 : null,
-      disk: status.diskUsage?.usedPercent,
-      netRx: status.netSpeed.speedInBytesOf(),
-      netTx: status.netSpeed.speedOutBytesOf(),
-      diskRead: status.diskIO.allSpeedBytes.$1,
-      diskWrite: status.diskIO.allSpeedBytes.$2,
-      temp: status.temps.first,
-      temps: {for (final d in status.temps.devices) d: ?status.temps.get(d)},
-      battery: status.batteries.firstOrNull?.percent?.toDouble(),
-    );
+    status.recordSample(timeMs: DateTime.now().millisecondsSinceEpoch);
     return status;
   }
 
