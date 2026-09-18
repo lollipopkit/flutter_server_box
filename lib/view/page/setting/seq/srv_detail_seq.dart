@@ -38,9 +38,11 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
 
   late Set<String> _disabled;
 
-  /// The cards this page can switch. The five metrics are not among them:
-  /// they are the page itself.
+  /// The cards this page can switch. The metrics are not among them: they are
+  /// the page itself. About is, because it was one before this and an install
+  /// that switched it off is still switching this one off.
   static const _cards = [
+    ServerDetailCards.about,
     ServerDetailCards.gpu,
     ServerDetailCards.smart,
     ServerDetailCards.sensor,

@@ -244,7 +244,7 @@ extension on _ServerDetailPageState {
           color: _kDiskColor,
           value: _pct(used),
           note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
-          bigNote: 'of ${usage.size.kb2Str}',
+          bigNote: l10n.ofFmt(usage.size.kb2Str),
           percent: used / 100,
           series: [_HistorySeries(libL10n.disk, _kDiskColor, w.disk)],
           format: _pct,
@@ -981,7 +981,10 @@ extension on _ServerDetailPageState {
     ];
 
     return [
-      if (about.isNotEmpty)
+      // Still the About card the setting knows by name: an install that
+      // switched it off keeps it off, and the switch is still in settings to
+      // put it back.
+      if (about.isNotEmpty && !_cardsOff.contains(ServerDetailCards.about.name))
         _buildInfoCard(MingCute.information_fill, libL10n.about, about),
       if (hardware.isNotEmpty)
         _buildInfoCard(Icons.developer_board, l10n.hardware, hardware),
