@@ -24,7 +24,20 @@ mixin _$Spi {
 /// `monitor` to satisfy them.
  SshCredential? get ssh;/// Reach this server via a `monitor` instance's HTTP API. A peer of
 /// [ssh]; a server may carry either one, or both.
- MonitorHttpCredential? get monitorHttp;/// Which of the two is tried first, when both are configured.
+ MonitorHttpCredential? get monitorHttp;/// Whether [ssh] is dialled at all.
+///
+/// Off is not the same as absent, which is why this exists: turning a
+/// method off used to mean the editor dropped its fields on save, so
+/// coming back to it meant typing the host, the port, the account and the
+/// key again. Off keeps all of that and stops the app using it.
+///
+/// Read through [Spix.sshOn] and [Spix.monitorOn], never on their own: a
+/// switch that is on for a method with nothing configured means nothing,
+/// and the pair of questions is one question.
+///
+/// True for every record written before the switches existed, which is
+/// what those servers were doing.
+ bool get sshEnabled; bool get monitorEnabled;/// Which of the two is tried first, when both are configured.
 ///
 /// Null on every server with only one way in, which is most of them, and
 /// on every record written before the two could coexist. Read through
@@ -55,12 +68,12 @@ $SpiCopyWith<Spi> get copyWith => _$SpiCopyWithImpl<Spi>(this as Spi, _$identity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other.envs, envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other.disabledCmdTypes, disabledCmdTypes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.sshEnabled, sshEnabled) || other.sshEnabled == sshEnabled)&&(identical(other.monitorEnabled, monitorEnabled) || other.monitorEnabled == monitorEnabled)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other.envs, envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other.disabledCmdTypes, disabledCmdTypes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,ssh,monitorHttp,preferredTransport,const DeepCollectionEquality().hash(tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(envs),id,customSystemType,const DeepCollectionEquality().hash(disabledCmdTypes));
+int get hashCode => Object.hash(runtimeType,name,ssh,monitorHttp,sshEnabled,monitorEnabled,preferredTransport,const DeepCollectionEquality().hash(tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(envs),id,customSystemType,const DeepCollectionEquality().hash(disabledCmdTypes));
 
 
 
@@ -71,7 +84,7 @@ abstract mixin class $SpiCopyWith<$Res>  {
   factory $SpiCopyWith(Spi value, $Res Function(Spi) _then) = _$SpiCopyWithImpl;
 @useResult
 $Res call({
- String name, SshCredential? ssh, MonitorHttpCredential? monitorHttp,@JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ServerTransport? preferredTransport, List<String>? tags, bool autoConnect, ServerCustom? custom, WakeOnLanCfg? wolCfg, BmcCfg? bmc, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType,@JsonKey(includeIfNull: false) List<String>? disabledCmdTypes
+ String name, SshCredential? ssh, MonitorHttpCredential? monitorHttp, bool sshEnabled, bool monitorEnabled,@JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ServerTransport? preferredTransport, List<String>? tags, bool autoConnect, ServerCustom? custom, WakeOnLanCfg? wolCfg, BmcCfg? bmc, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType,@JsonKey(includeIfNull: false) List<String>? disabledCmdTypes
 });
 
 
@@ -88,12 +101,14 @@ class _$SpiCopyWithImpl<$Res>
 
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? ssh = freezed,Object? monitorHttp = freezed,Object? preferredTransport = freezed,Object? tags = freezed,Object? autoConnect = null,Object? custom = freezed,Object? wolCfg = freezed,Object? bmc = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? ssh = freezed,Object? monitorHttp = freezed,Object? sshEnabled = null,Object? monitorEnabled = null,Object? preferredTransport = freezed,Object? tags = freezed,Object? autoConnect = null,Object? custom = freezed,Object? wolCfg = freezed,Object? bmc = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,ssh: freezed == ssh ? _self.ssh : ssh // ignore: cast_nullable_to_non_nullable
 as SshCredential?,monitorHttp: freezed == monitorHttp ? _self.monitorHttp : monitorHttp // ignore: cast_nullable_to_non_nullable
-as MonitorHttpCredential?,preferredTransport: freezed == preferredTransport ? _self.preferredTransport : preferredTransport // ignore: cast_nullable_to_non_nullable
+as MonitorHttpCredential?,sshEnabled: null == sshEnabled ? _self.sshEnabled : sshEnabled // ignore: cast_nullable_to_non_nullable
+as bool,monitorEnabled: null == monitorEnabled ? _self.monitorEnabled : monitorEnabled // ignore: cast_nullable_to_non_nullable
+as bool,preferredTransport: freezed == preferredTransport ? _self.preferredTransport : preferredTransport // ignore: cast_nullable_to_non_nullable
 as ServerTransport?,tags: freezed == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>?,autoConnect: null == autoConnect ? _self.autoConnect : autoConnect // ignore: cast_nullable_to_non_nullable
 as bool,custom: freezed == custom ? _self.custom : custom // ignore: cast_nullable_to_non_nullable
@@ -188,10 +203,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  SshCredential? ssh,  MonitorHttpCredential? monitorHttp, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ServerTransport? preferredTransport,  List<String>? tags,  bool autoConnect,  ServerCustom? custom,  WakeOnLanCfg? wolCfg,  BmcCfg? bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId)  String id, @JsonKey(includeIfNull: false)  SystemType? customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  SshCredential? ssh,  MonitorHttpCredential? monitorHttp,  bool sshEnabled,  bool monitorEnabled, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ServerTransport? preferredTransport,  List<String>? tags,  bool autoConnect,  ServerCustom? custom,  WakeOnLanCfg? wolCfg,  BmcCfg? bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId)  String id, @JsonKey(includeIfNull: false)  SystemType? customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Spi() when $default != null:
-return $default(_that.name,_that.ssh,_that.monitorHttp,_that.preferredTransport,_that.tags,_that.autoConnect,_that.custom,_that.wolCfg,_that.bmc,_that.envs,_that.id,_that.customSystemType,_that.disabledCmdTypes);case _:
+return $default(_that.name,_that.ssh,_that.monitorHttp,_that.sshEnabled,_that.monitorEnabled,_that.preferredTransport,_that.tags,_that.autoConnect,_that.custom,_that.wolCfg,_that.bmc,_that.envs,_that.id,_that.customSystemType,_that.disabledCmdTypes);case _:
   return orElse();
 
 }
@@ -209,10 +224,10 @@ return $default(_that.name,_that.ssh,_that.monitorHttp,_that.preferredTransport,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  SshCredential? ssh,  MonitorHttpCredential? monitorHttp, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ServerTransport? preferredTransport,  List<String>? tags,  bool autoConnect,  ServerCustom? custom,  WakeOnLanCfg? wolCfg,  BmcCfg? bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId)  String id, @JsonKey(includeIfNull: false)  SystemType? customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  SshCredential? ssh,  MonitorHttpCredential? monitorHttp,  bool sshEnabled,  bool monitorEnabled, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ServerTransport? preferredTransport,  List<String>? tags,  bool autoConnect,  ServerCustom? custom,  WakeOnLanCfg? wolCfg,  BmcCfg? bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId)  String id, @JsonKey(includeIfNull: false)  SystemType? customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes)  $default,) {final _that = this;
 switch (_that) {
 case _Spi():
-return $default(_that.name,_that.ssh,_that.monitorHttp,_that.preferredTransport,_that.tags,_that.autoConnect,_that.custom,_that.wolCfg,_that.bmc,_that.envs,_that.id,_that.customSystemType,_that.disabledCmdTypes);case _:
+return $default(_that.name,_that.ssh,_that.monitorHttp,_that.sshEnabled,_that.monitorEnabled,_that.preferredTransport,_that.tags,_that.autoConnect,_that.custom,_that.wolCfg,_that.bmc,_that.envs,_that.id,_that.customSystemType,_that.disabledCmdTypes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -229,10 +244,10 @@ return $default(_that.name,_that.ssh,_that.monitorHttp,_that.preferredTransport,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  SshCredential? ssh,  MonitorHttpCredential? monitorHttp, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ServerTransport? preferredTransport,  List<String>? tags,  bool autoConnect,  ServerCustom? custom,  WakeOnLanCfg? wolCfg,  BmcCfg? bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId)  String id, @JsonKey(includeIfNull: false)  SystemType? customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  SshCredential? ssh,  MonitorHttpCredential? monitorHttp,  bool sshEnabled,  bool monitorEnabled, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ServerTransport? preferredTransport,  List<String>? tags,  bool autoConnect,  ServerCustom? custom,  WakeOnLanCfg? wolCfg,  BmcCfg? bmc,  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId)  String id, @JsonKey(includeIfNull: false)  SystemType? customSystemType, @JsonKey(includeIfNull: false)  List<String>? disabledCmdTypes)?  $default,) {final _that = this;
 switch (_that) {
 case _Spi() when $default != null:
-return $default(_that.name,_that.ssh,_that.monitorHttp,_that.preferredTransport,_that.tags,_that.autoConnect,_that.custom,_that.wolCfg,_that.bmc,_that.envs,_that.id,_that.customSystemType,_that.disabledCmdTypes);case _:
+return $default(_that.name,_that.ssh,_that.monitorHttp,_that.sshEnabled,_that.monitorEnabled,_that.preferredTransport,_that.tags,_that.autoConnect,_that.custom,_that.wolCfg,_that.bmc,_that.envs,_that.id,_that.customSystemType,_that.disabledCmdTypes);case _:
   return null;
 
 }
@@ -244,7 +259,7 @@ return $default(_that.name,_that.ssh,_that.monitorHttp,_that.preferredTransport,
 
 @JsonSerializable(includeIfNull: false)
 class _Spi extends Spi {
-  const _Spi({required this.name, this.ssh, this.monitorHttp, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.preferredTransport, final  List<String>? tags, this.autoConnect = true, this.custom, this.wolCfg, this.bmc, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType, @JsonKey(includeIfNull: false) final  List<String>? disabledCmdTypes}): _tags = tags,_envs = envs,_disabledCmdTypes = disabledCmdTypes,super._();
+  const _Spi({required this.name, this.ssh, this.monitorHttp, this.sshEnabled = true, this.monitorEnabled = true, @JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.preferredTransport, final  List<String>? tags, this.autoConnect = true, this.custom, this.wolCfg, this.bmc, final  Map<String, String>? envs, @JsonKey(fromJson: Spi.parseId) this.id = '', @JsonKey(includeIfNull: false) this.customSystemType, @JsonKey(includeIfNull: false) final  List<String>? disabledCmdTypes}): _tags = tags,_envs = envs,_disabledCmdTypes = disabledCmdTypes,super._();
   factory _Spi.fromJson(Map<String, dynamic> json) => _$SpiFromJson(json);
 
 @override final  String name;
@@ -259,6 +274,21 @@ class _Spi extends Spi {
 /// Reach this server via a `monitor` instance's HTTP API. A peer of
 /// [ssh]; a server may carry either one, or both.
 @override final  MonitorHttpCredential? monitorHttp;
+/// Whether [ssh] is dialled at all.
+///
+/// Off is not the same as absent, which is why this exists: turning a
+/// method off used to mean the editor dropped its fields on save, so
+/// coming back to it meant typing the host, the port, the account and the
+/// key again. Off keeps all of that and stops the app using it.
+///
+/// Read through [Spix.sshOn] and [Spix.monitorOn], never on their own: a
+/// switch that is on for a method with nothing configured means nothing,
+/// and the pair of questions is one question.
+///
+/// True for every record written before the switches existed, which is
+/// what those servers were doing.
+@override@JsonKey() final  bool sshEnabled;
+@override@JsonKey() final  bool monitorEnabled;
 /// Which of the two is tried first, when both are configured.
 ///
 /// Null on every server with only one way in, which is most of them, and
@@ -327,12 +357,12 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other._envs, _envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other._disabledCmdTypes, _disabledCmdTypes));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Spi&&(identical(other.name, name) || other.name == name)&&(identical(other.ssh, ssh) || other.ssh == ssh)&&(identical(other.monitorHttp, monitorHttp) || other.monitorHttp == monitorHttp)&&(identical(other.sshEnabled, sshEnabled) || other.sshEnabled == sshEnabled)&&(identical(other.monitorEnabled, monitorEnabled) || other.monitorEnabled == monitorEnabled)&&(identical(other.preferredTransport, preferredTransport) || other.preferredTransport == preferredTransport)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.autoConnect, autoConnect) || other.autoConnect == autoConnect)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.wolCfg, wolCfg) || other.wolCfg == wolCfg)&&(identical(other.bmc, bmc) || other.bmc == bmc)&&const DeepCollectionEquality().equals(other._envs, _envs)&&(identical(other.id, id) || other.id == id)&&(identical(other.customSystemType, customSystemType) || other.customSystemType == customSystemType)&&const DeepCollectionEquality().equals(other._disabledCmdTypes, _disabledCmdTypes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,ssh,monitorHttp,preferredTransport,const DeepCollectionEquality().hash(_tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(_envs),id,customSystemType,const DeepCollectionEquality().hash(_disabledCmdTypes));
+int get hashCode => Object.hash(runtimeType,name,ssh,monitorHttp,sshEnabled,monitorEnabled,preferredTransport,const DeepCollectionEquality().hash(_tags),autoConnect,custom,wolCfg,bmc,const DeepCollectionEquality().hash(_envs),id,customSystemType,const DeepCollectionEquality().hash(_disabledCmdTypes));
 
 
 
@@ -343,7 +373,7 @@ abstract mixin class _$SpiCopyWith<$Res> implements $SpiCopyWith<$Res> {
   factory _$SpiCopyWith(_Spi value, $Res Function(_Spi) _then) = __$SpiCopyWithImpl;
 @override @useResult
 $Res call({
- String name, SshCredential? ssh, MonitorHttpCredential? monitorHttp,@JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ServerTransport? preferredTransport, List<String>? tags, bool autoConnect, ServerCustom? custom, WakeOnLanCfg? wolCfg, BmcCfg? bmc, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType,@JsonKey(includeIfNull: false) List<String>? disabledCmdTypes
+ String name, SshCredential? ssh, MonitorHttpCredential? monitorHttp, bool sshEnabled, bool monitorEnabled,@JsonKey(includeIfNull: false, unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ServerTransport? preferredTransport, List<String>? tags, bool autoConnect, ServerCustom? custom, WakeOnLanCfg? wolCfg, BmcCfg? bmc, Map<String, String>? envs,@JsonKey(fromJson: Spi.parseId) String id,@JsonKey(includeIfNull: false) SystemType? customSystemType,@JsonKey(includeIfNull: false) List<String>? disabledCmdTypes
 });
 
 
@@ -360,12 +390,14 @@ class __$SpiCopyWithImpl<$Res>
 
 /// Create a copy of Spi
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? ssh = freezed,Object? monitorHttp = freezed,Object? preferredTransport = freezed,Object? tags = freezed,Object? autoConnect = null,Object? custom = freezed,Object? wolCfg = freezed,Object? bmc = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? ssh = freezed,Object? monitorHttp = freezed,Object? sshEnabled = null,Object? monitorEnabled = null,Object? preferredTransport = freezed,Object? tags = freezed,Object? autoConnect = null,Object? custom = freezed,Object? wolCfg = freezed,Object? bmc = freezed,Object? envs = freezed,Object? id = null,Object? customSystemType = freezed,Object? disabledCmdTypes = freezed,}) {
   return _then(_Spi(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,ssh: freezed == ssh ? _self.ssh : ssh // ignore: cast_nullable_to_non_nullable
 as SshCredential?,monitorHttp: freezed == monitorHttp ? _self.monitorHttp : monitorHttp // ignore: cast_nullable_to_non_nullable
-as MonitorHttpCredential?,preferredTransport: freezed == preferredTransport ? _self.preferredTransport : preferredTransport // ignore: cast_nullable_to_non_nullable
+as MonitorHttpCredential?,sshEnabled: null == sshEnabled ? _self.sshEnabled : sshEnabled // ignore: cast_nullable_to_non_nullable
+as bool,monitorEnabled: null == monitorEnabled ? _self.monitorEnabled : monitorEnabled // ignore: cast_nullable_to_non_nullable
+as bool,preferredTransport: freezed == preferredTransport ? _self.preferredTransport : preferredTransport // ignore: cast_nullable_to_non_nullable
 as ServerTransport?,tags: freezed == tags ? _self._tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>?,autoConnect: null == autoConnect ? _self.autoConnect : autoConnect // ignore: cast_nullable_to_non_nullable
 as bool,custom: freezed == custom ? _self.custom : custom // ignore: cast_nullable_to_non_nullable

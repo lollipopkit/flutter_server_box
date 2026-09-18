@@ -160,7 +160,7 @@ final class WidgetSync {
   /// Servers a widget could show: it speaks to a `monitor` agent over HTTP and
   /// has no SSH client of its own.
   static List<Spi> monitorServers() =>
-      Stores.server.fetch().where((e) => e.monitor != null).toList();
+      Stores.server.fetch().where((e) => e.monitorOn != null).toList();
 
   /// What the native side is currently holding, as metadata only.
   ///

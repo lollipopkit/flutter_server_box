@@ -37,7 +37,7 @@ import 'package:xterm/core.dart';
 /// [granted] is what the agent said at the moment of use, not a stored answer:
 /// a grant that has been switched off since is a shell that will be refused.
 bool serverShellUsesAgent(Spi spi, MonitorRemoteAccess? granted) {
-  if (spi.monitor == null) return false;
+  if (spi.monitorOn == null) return false;
   if (spi.transport != ServerTransport.monitorHttp) return false;
   return granted?.fullAccess == true;
 }

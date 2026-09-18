@@ -845,11 +845,14 @@ ${err.message ?? 'null'}
 
   /// The way into the agent's own configuration, for a server that has one.
   ///
-  /// Null for every other server, and asked of `spi.monitorHttp` rather than of
+  /// Null for every other server, and asked of `spi.monitorOn` rather than of
   /// [ServerState.capabilities]: what this opens is *the agent's* settings, and
   /// a server with both transports answers capability questions as the union of
   /// the two — so a capability check would show this for an SSH-only server
   /// that happens to share a capability with an agent.
+  ///
+  /// The switch counts. An agent that is configured and switched off is one
+  /// this app does not talk to, and editing its settings is talking to it.
   ///
   /// In the bar, not above the cards.
   ///
@@ -862,7 +865,7 @@ ${err.message ?? 'null'}
   /// Not in the function bar below the cards either: that row is things done
   /// *to* the machine, and this is the agent's own configuration.
   Widget? _buildMonitorSettingsBtn(ServerState si) {
-    final monitor = si.spi.monitorHttp;
+    final monitor = si.spi.monitorOn;
     if (monitor == null) return null;
 
     return IconButton(

@@ -225,7 +225,7 @@ final class WatchSync {
     final servers =
         Stores.server
             .fetch()
-            .where((e) => e.monitor != null && !excluded.contains(e.id))
+            .where((e) => e.monitorOn != null && !excluded.contains(e.id))
             .toList()
           ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return servers.map((e) => e.id).toList();

@@ -99,7 +99,7 @@ abstract final class SchemaVersion {
   ///      name rather than by index, which shifted meaning every time a case
   ///      was removed
   /// v25: saved RDP and VNC profiles become a syncable server child
-  static const current = 25;
+  static const current = 26;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

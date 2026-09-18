@@ -75,6 +75,22 @@ abstract class Spi with _$Spi {
     /// [ssh]; a server may carry either one, or both.
     MonitorHttpCredential? monitorHttp,
 
+    /// Whether [ssh] is dialled at all.
+    ///
+    /// Off is not the same as absent, which is why this exists: turning a
+    /// method off used to mean the editor dropped its fields on save, so
+    /// coming back to it meant typing the host, the port, the account and the
+    /// key again. Off keeps all of that and stops the app using it.
+    ///
+    /// Read through [Spix.sshOn] and [Spix.monitorOn], never on their own: a
+    /// switch that is on for a method with nothing configured means nothing,
+    /// and the pair of questions is one question.
+    ///
+    /// True for every record written before the switches existed, which is
+    /// what those servers were doing.
+    @Default(true) bool sshEnabled,
+    @Default(true) bool monitorEnabled,
+
     /// Which of the two is tried first, when both are configured.
     ///
     /// Null on every server with only one way in, which is most of them, and
@@ -183,9 +199,26 @@ extension Spix on Spi {
 
   String? get firstJumpId => ssh?.firstJumpId;
 
+  /// This server's SSH credential, or null when there is none *or* when SSH is
+  /// switched off.
+  ///
+  /// The question every caller deciding how to reach the machine is actually
+  /// asking. [Spi.ssh] is the stored configuration and stays readable with the
+  /// switch off — that is the point of the switch — so it answers "is there a
+  /// host to put in the form", which is a different question and the one the
+  /// editor asks.
+  SshCredential? get sshOn => sshEnabled ? ssh : null;
+
+  /// This server's monitor agent, or null when there is none *or* when it is
+  /// switched off. The peer of [sshOn]; [Spix.monitor] is the stored one.
+  MonitorHttpCredential? get monitorOn => monitorEnabled ? monitor : null;
+
   SpiValidationError? validate() {
     final s = ssh;
-    if (s == null && monitor == null) {
+    if (sshOn == null && monitorOn == null) {
+      // Both switched off is a server that cannot be connected, and the form
+      // says so while it is being edited — but it is not a record worth
+      // keeping, so the save is what refuses it. A server is a way in.
       return SpiValidationError.noConnectionMethod;
     }
     if (s == null) return null;
@@ -227,8 +260,8 @@ extension Spix on Spi {
   /// that can do everything, so a server that gains an agent does not quietly
   /// lose its terminal.
   ServerTransport get transport {
-    final hasSsh = ssh != null;
-    final hasMonitor = monitor != null;
+    final hasSsh = sshOn != null;
+    final hasMonitor = monitorOn != null;
     if (!hasMonitor) return ServerTransport.ssh;
     if (!hasSsh) return ServerTransport.monitorHttp;
     return preferredTransport ?? ServerTransport.ssh;
@@ -236,13 +269,16 @@ extension Spix on Spi {
 
   /// The other way in, when there is one.
   ServerTransport? get fallbackTransport {
-    if (ssh == null || monitor == null) return null;
+    if (sshOn == null || monitorOn == null) return null;
     return transport == ServerTransport.ssh
         ? ServerTransport.monitorHttp
         : ServerTransport.ssh;
   }
 
-  /// This server's monitor agent, or null when it has none configured.
+  /// This server's monitor agent as configured, switch or no switch.
+  ///
+  /// What the editor and the display read. Anything deciding whether to *dial*
+  /// it wants [monitorOn].
   MonitorHttpCredential? get monitor {
     final m = monitorHttp;
     if (m == null || m.addr.trim().isEmpty) return null;

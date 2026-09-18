@@ -34,9 +34,9 @@ sealed class ServerConnectCredential {
   static ServerConnectCredential? _of(Spi spi, ServerTransport transport) {
     switch (transport) {
       case ServerTransport.ssh:
-        return spi.ssh == null ? null : ServerConnectCredentialSsh(spi: spi);
+        return spi.sshOn == null ? null : ServerConnectCredentialSsh(spi: spi);
       case ServerTransport.monitorHttp:
-        final monitor = spi.monitor;
+        final monitor = spi.monitorOn;
         return monitor == null
             ? null
             : ServerConnectCredentialMonitorHttp(spi: spi, monitor: monitor);

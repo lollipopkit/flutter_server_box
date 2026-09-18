@@ -970,6 +970,36 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _sshEnabledMeta = const VerificationMeta(
+    'sshEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> sshEnabled = GeneratedColumn<bool>(
+    'ssh_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("ssh_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _monitorEnabledMeta = const VerificationMeta(
+    'monitorEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> monitorEnabled = GeneratedColumn<bool>(
+    'monitor_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("monitor_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _monitorAddrMeta = const VerificationMeta(
     'monitorAddr',
   );
@@ -1221,6 +1251,8 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     sshProxyCommand,
     sshFileTransport,
     preferredTransport,
+    sshEnabled,
+    monitorEnabled,
     monitorAddr,
     monitorUser,
     monitorPwd,
@@ -1367,6 +1399,21 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         preferredTransport.isAcceptableOrUnknown(
           data['preferred_transport']!,
           _preferredTransportMeta,
+        ),
+      );
+    }
+    if (data.containsKey('ssh_enabled')) {
+      context.handle(
+        _sshEnabledMeta,
+        sshEnabled.isAcceptableOrUnknown(data['ssh_enabled']!, _sshEnabledMeta),
+      );
+    }
+    if (data.containsKey('monitor_enabled')) {
+      context.handle(
+        _monitorEnabledMeta,
+        monitorEnabled.isAcceptableOrUnknown(
+          data['monitor_enabled']!,
+          _monitorEnabledMeta,
         ),
       );
     }
@@ -1593,6 +1640,14 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.string,
         data['${effectivePrefix}preferred_transport'],
       ),
+      sshEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}ssh_enabled'],
+      )!,
+      monitorEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}monitor_enabled'],
+      )!,
       monitorAddr: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}monitor_addr'],
@@ -1717,6 +1772,20 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// the only answer for a server that has just one — and the only shape rows
   /// written before v18 are in, when carrying both was not possible.
   final String? preferredTransport;
+
+  /// Whether each way in is dialled at all.
+  ///
+  /// The columns beside them are the *configuration*, which survives being
+  /// switched off — that is the whole reason these exist. So the CHECK below
+  /// still asks only that a row carry an address, and "both switched off" is
+  /// refused by `Spix.validate` rather than by SQL: a row can be edited into
+  /// that state field by field, and a constraint that fired mid-edit would
+  /// fail the write instead of the form.
+  ///
+  /// True for every row written before they existed, which is what those
+  /// servers were doing.
+  final bool sshEnabled;
+  final bool monitorEnabled;
   final String? monitorAddr;
   final String? monitorUser;
   final String? monitorPwd;
@@ -1778,6 +1847,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.sshProxyCommand,
     this.sshFileTransport,
     this.preferredTransport,
+    required this.sshEnabled,
+    required this.monitorEnabled,
     this.monitorAddr,
     this.monitorUser,
     this.monitorPwd,
@@ -1841,6 +1912,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     if (!nullToAbsent || preferredTransport != null) {
       map['preferred_transport'] = Variable<String>(preferredTransport);
     }
+    map['ssh_enabled'] = Variable<bool>(sshEnabled);
+    map['monitor_enabled'] = Variable<bool>(monitorEnabled);
     if (!nullToAbsent || monitorAddr != null) {
       map['monitor_addr'] = Variable<String>(monitorAddr);
     }
@@ -1943,6 +2016,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       preferredTransport: preferredTransport == null && nullToAbsent
           ? const Value.absent()
           : Value(preferredTransport),
+      sshEnabled: Value(sshEnabled),
+      monitorEnabled: Value(monitorEnabled),
       monitorAddr: monitorAddr == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorAddr),
@@ -2029,6 +2104,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       preferredTransport: serializer.fromJson<String?>(
         json['preferredTransport'],
       ),
+      sshEnabled: serializer.fromJson<bool>(json['sshEnabled']),
+      monitorEnabled: serializer.fromJson<bool>(json['monitorEnabled']),
       monitorAddr: serializer.fromJson<String?>(json['monitorAddr']),
       monitorUser: serializer.fromJson<String?>(json['monitorUser']),
       monitorPwd: serializer.fromJson<String?>(json['monitorPwd']),
@@ -2074,6 +2151,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'sshProxyCommand': serializer.toJson<String?>(sshProxyCommand),
       'sshFileTransport': serializer.toJson<String?>(sshFileTransport),
       'preferredTransport': serializer.toJson<String?>(preferredTransport),
+      'sshEnabled': serializer.toJson<bool>(sshEnabled),
+      'monitorEnabled': serializer.toJson<bool>(monitorEnabled),
       'monitorAddr': serializer.toJson<String?>(monitorAddr),
       'monitorUser': serializer.toJson<String?>(monitorUser),
       'monitorPwd': serializer.toJson<String?>(monitorPwd),
@@ -2115,6 +2194,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> sshProxyCommand = const Value.absent(),
     Value<String?> sshFileTransport = const Value.absent(),
     Value<String?> preferredTransport = const Value.absent(),
+    bool? sshEnabled,
+    bool? monitorEnabled,
     Value<String?> monitorAddr = const Value.absent(),
     Value<String?> monitorUser = const Value.absent(),
     Value<String?> monitorPwd = const Value.absent(),
@@ -2159,6 +2240,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     preferredTransport: preferredTransport.present
         ? preferredTransport.value
         : this.preferredTransport,
+    sshEnabled: sshEnabled ?? this.sshEnabled,
+    monitorEnabled: monitorEnabled ?? this.monitorEnabled,
     monitorAddr: monitorAddr.present ? monitorAddr.value : this.monitorAddr,
     monitorUser: monitorUser.present ? monitorUser.value : this.monitorUser,
     monitorPwd: monitorPwd.present ? monitorPwd.value : this.monitorPwd,
@@ -2221,6 +2304,12 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       preferredTransport: data.preferredTransport.present
           ? data.preferredTransport.value
           : this.preferredTransport,
+      sshEnabled: data.sshEnabled.present
+          ? data.sshEnabled.value
+          : this.sshEnabled,
+      monitorEnabled: data.monitorEnabled.present
+          ? data.monitorEnabled.value
+          : this.monitorEnabled,
       monitorAddr: data.monitorAddr.present
           ? data.monitorAddr.value
           : this.monitorAddr,
@@ -2282,6 +2371,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('sshProxyCommand: $sshProxyCommand, ')
           ..write('sshFileTransport: $sshFileTransport, ')
           ..write('preferredTransport: $preferredTransport, ')
+          ..write('sshEnabled: $sshEnabled, ')
+          ..write('monitorEnabled: $monitorEnabled, ')
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
@@ -2325,6 +2416,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     sshProxyCommand,
     sshFileTransport,
     preferredTransport,
+    sshEnabled,
+    monitorEnabled,
     monitorAddr,
     monitorUser,
     monitorPwd,
@@ -2367,6 +2460,8 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.sshProxyCommand == this.sshProxyCommand &&
           other.sshFileTransport == this.sshFileTransport &&
           other.preferredTransport == this.preferredTransport &&
+          other.sshEnabled == this.sshEnabled &&
+          other.monitorEnabled == this.monitorEnabled &&
           other.monitorAddr == this.monitorAddr &&
           other.monitorUser == this.monitorUser &&
           other.monitorPwd == this.monitorPwd &&
@@ -2407,6 +2502,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> sshProxyCommand;
   final Value<String?> sshFileTransport;
   final Value<String?> preferredTransport;
+  final Value<bool> sshEnabled;
+  final Value<bool> monitorEnabled;
   final Value<String?> monitorAddr;
   final Value<String?> monitorUser;
   final Value<String?> monitorPwd;
@@ -2445,6 +2542,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.sshProxyCommand = const Value.absent(),
     this.sshFileTransport = const Value.absent(),
     this.preferredTransport = const Value.absent(),
+    this.sshEnabled = const Value.absent(),
+    this.monitorEnabled = const Value.absent(),
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
@@ -2484,6 +2583,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.sshProxyCommand = const Value.absent(),
     this.sshFileTransport = const Value.absent(),
     this.preferredTransport = const Value.absent(),
+    this.sshEnabled = const Value.absent(),
+    this.monitorEnabled = const Value.absent(),
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
@@ -2524,6 +2625,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? sshProxyCommand,
     Expression<String>? sshFileTransport,
     Expression<String>? preferredTransport,
+    Expression<bool>? sshEnabled,
+    Expression<bool>? monitorEnabled,
     Expression<String>? monitorAddr,
     Expression<String>? monitorUser,
     Expression<String>? monitorPwd,
@@ -2563,6 +2666,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (sshProxyCommand != null) 'ssh_proxy_command': sshProxyCommand,
       if (sshFileTransport != null) 'ssh_file_transport': sshFileTransport,
       if (preferredTransport != null) 'preferred_transport': preferredTransport,
+      if (sshEnabled != null) 'ssh_enabled': sshEnabled,
+      if (monitorEnabled != null) 'monitor_enabled': monitorEnabled,
       if (monitorAddr != null) 'monitor_addr': monitorAddr,
       if (monitorUser != null) 'monitor_user': monitorUser,
       if (monitorPwd != null) 'monitor_pwd': monitorPwd,
@@ -2605,6 +2710,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? sshProxyCommand,
     Value<String?>? sshFileTransport,
     Value<String?>? preferredTransport,
+    Value<bool>? sshEnabled,
+    Value<bool>? monitorEnabled,
     Value<String?>? monitorAddr,
     Value<String?>? monitorUser,
     Value<String?>? monitorPwd,
@@ -2644,6 +2751,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       sshProxyCommand: sshProxyCommand ?? this.sshProxyCommand,
       sshFileTransport: sshFileTransport ?? this.sshFileTransport,
       preferredTransport: preferredTransport ?? this.preferredTransport,
+      sshEnabled: sshEnabled ?? this.sshEnabled,
+      monitorEnabled: monitorEnabled ?? this.monitorEnabled,
       monitorAddr: monitorAddr ?? this.monitorAddr,
       monitorUser: monitorUser ?? this.monitorUser,
       monitorPwd: monitorPwd ?? this.monitorPwd,
@@ -2718,6 +2827,12 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     }
     if (preferredTransport.present) {
       map['preferred_transport'] = Variable<String>(preferredTransport.value);
+    }
+    if (sshEnabled.present) {
+      map['ssh_enabled'] = Variable<bool>(sshEnabled.value);
+    }
+    if (monitorEnabled.present) {
+      map['monitor_enabled'] = Variable<bool>(monitorEnabled.value);
     }
     if (monitorAddr.present) {
       map['monitor_addr'] = Variable<String>(monitorAddr.value);
@@ -2806,6 +2921,8 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('sshProxyCommand: $sshProxyCommand, ')
           ..write('sshFileTransport: $sshFileTransport, ')
           ..write('preferredTransport: $preferredTransport, ')
+          ..write('sshEnabled: $sshEnabled, ')
+          ..write('monitorEnabled: $monitorEnabled, ')
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
@@ -10190,6 +10307,8 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> sshProxyCommand,
       Value<String?> sshFileTransport,
       Value<String?> preferredTransport,
+      Value<bool> sshEnabled,
+      Value<bool> monitorEnabled,
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
@@ -10230,6 +10349,8 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> sshProxyCommand,
       Value<String?> sshFileTransport,
       Value<String?> preferredTransport,
+      Value<bool> sshEnabled,
+      Value<bool> monitorEnabled,
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
@@ -10623,6 +10744,16 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<String> get preferredTransport => $composableBuilder(
     column: $table.preferredTransport,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get sshEnabled => $composableBuilder(
+    column: $table.sshEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get monitorEnabled => $composableBuilder(
+    column: $table.monitorEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11182,6 +11313,16 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get sshEnabled => $composableBuilder(
+    column: $table.sshEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get monitorEnabled => $composableBuilder(
+    column: $table.monitorEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get monitorAddr => $composableBuilder(
     column: $table.monitorAddr,
     builder: (column) => ColumnOrderings(column),
@@ -11394,6 +11535,16 @@ class $$ServersTableAnnotationComposer
 
   GeneratedColumn<String> get preferredTransport => $composableBuilder(
     column: $table.preferredTransport,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get sshEnabled => $composableBuilder(
+    column: $table.sshEnabled,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get monitorEnabled => $composableBuilder(
+    column: $table.monitorEnabled,
     builder: (column) => column,
   );
 
@@ -11910,6 +12061,8 @@ class $$ServersTableTableManager
                 Value<String?> sshProxyCommand = const Value.absent(),
                 Value<String?> sshFileTransport = const Value.absent(),
                 Value<String?> preferredTransport = const Value.absent(),
+                Value<bool> sshEnabled = const Value.absent(),
+                Value<bool> monitorEnabled = const Value.absent(),
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
@@ -11948,6 +12101,8 @@ class $$ServersTableTableManager
                 sshProxyCommand: sshProxyCommand,
                 sshFileTransport: sshFileTransport,
                 preferredTransport: preferredTransport,
+                sshEnabled: sshEnabled,
+                monitorEnabled: monitorEnabled,
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
@@ -11988,6 +12143,8 @@ class $$ServersTableTableManager
                 Value<String?> sshProxyCommand = const Value.absent(),
                 Value<String?> sshFileTransport = const Value.absent(),
                 Value<String?> preferredTransport = const Value.absent(),
+                Value<bool> sshEnabled = const Value.absent(),
+                Value<bool> monitorEnabled = const Value.absent(),
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
@@ -12026,6 +12183,8 @@ class $$ServersTableTableManager
                 sshProxyCommand: sshProxyCommand,
                 sshFileTransport: sshFileTransport,
                 preferredTransport: preferredTransport,
+                sshEnabled: sshEnabled,
+                monitorEnabled: monitorEnabled,
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,

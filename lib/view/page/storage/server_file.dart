@@ -31,8 +31,8 @@ import 'package:server_box/view/page/storage/show_transfers.dart';
 /// answers true for every such server whatever the agent allows. What is being
 /// asked here is whether the *agent* can serve them.
 bool serverFilesUseAgent(Spi spi, MonitorRemoteAccess? granted) {
-  if (spi.monitor == null || granted?.files != true) return false;
-  return spi.ssh == null || spi.transport == ServerTransport.monitorHttp;
+  if (spi.monitorOn == null || granted?.files != true) return false;
+  return spi.sshOn == null || spi.transport == ServerTransport.monitorHttp;
 }
 
 /// A server's files, whichever way they are reached.
