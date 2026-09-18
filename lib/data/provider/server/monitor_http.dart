@@ -219,13 +219,24 @@ class MonitorHttpClient {
   Future<List<MonitorHistoryPoint>> fetchHistory({
     int minutes = 60,
     int maxPoints = 300,
+    DateTime? from,
+    DateTime? to,
   }) {
     return _authed(() async {
       // The endpoint answers with a bare JSON array of points, not an
       // envelope object — see `get_metrics_history` in monitor's api/server.rs
+      //
+      // `from`/`to` name a window outright and the agent ignores `minutes`
+      // when they are given; an agent too old for them falls back to it, which
+      // is why it is still sent.
       final resp = await _session().get<dynamic>(
         '/api/v1/metrics/history',
-        queryParameters: {'minutes': minutes, 'max_points': maxPoints},
+        queryParameters: {
+          'minutes': minutes,
+          'max_points': maxPoints,
+          if (from != null) 'from': from.millisecondsSinceEpoch ~/ 1000,
+          if (to != null) 'to': to.millisecondsSinceEpoch ~/ 1000,
+        },
       );
       final points = resp.data;
       if (points is! List) {

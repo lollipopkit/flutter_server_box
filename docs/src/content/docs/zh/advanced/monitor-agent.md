@@ -182,6 +182,14 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 如果 agent 需要从其他设备访问，请使用 HTTPS：可以配置内置 TLS（`[server.tls]`），也可以放在反向代理后面。App 支持自签名证书，但必须由你明确开启相关选项。
 
+## App 能回溯多久
+
+服务器详情页的图表画的是你选的窗口，而有哪些窗口可选由 agent 决定，不是 App 写死的。`GET /api/v1/capabilities` 会报告 `retention_days`（即 `[monitoring.data_retention] metrics_days`，不会被删除的范围）和 `oldest_sample`（实际存下来的最早一条读数）。App 只提供落在两者较晚者之内的预设档，超出的置灰，并把这两个数写在区间选择器底部。
+
+除了预设档，还可以直接指定一个窗口，它到达 agent 的形式是 `GET /api/v1/metrics/history?from=<epoch 秒>&to=<epoch 秒>`。请求的窗口比 agent 保留的更长时，agent 返回它有的那些行，而不是报错或悄悄缩小窗口：这个差额由客户端画成图上的留白，而一个悄悄挪动起点的 agent 会让人以为窗口是满的。`?minutes=` 仍然有效，也是老版本 agent 收到的形式。
+
+不报告 retention 的旧 agent 仍然只提供固定档，和以前一样。
+
 ## 面板凭据
 
 App 和网页面板登录用的用户名和密码是 agent SQLite 数据库里的记录，不是 `config.toml` 中的配置项。文件里的 `jwt_secret` 用于签发会话 token，不是登录密码。

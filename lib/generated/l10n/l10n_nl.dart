@@ -452,6 +452,20 @@ class AppLocalizationsNl extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP toestaan';
 
   @override
+  String get plainHttpTitle =>
+      'Deze agent wordt via onversleutelde HTTP aangeboden';
+
+  @override
+  String get plainHttpTip =>
+      'Het wachtwoord en alles wat deze app opvraagt zouden onversleuteld worden verstuurd. Er is nog niets verzonden.';
+
+  @override
+  String get allowForThisServer => 'Toestaan voor deze server';
+
+  @override
+  String get viewError => 'Fout bekijken';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale';
 
@@ -1959,6 +1973,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get power => 'Energie';
 
   @override
+  String get fan => 'Ventilator';
+
+  @override
+  String get clockSpeed => 'Klok';
+
+  @override
+  String get vendor => 'Fabrikant';
+
+  @override
   String get continueInTerminal => 'Doorgaan in terminal';
 
   @override
@@ -2399,6 +2422,32 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get noData => 'geen gegevens';
+
+  @override
+  String get from => 'Van';
+
+  @override
+  String get to => 'Tot';
+
+  @override
+  String get beyondRetention => 'verder terug dan deze agent bewaarde';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent bewaart $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'oudste meting $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Het einde van het bereik moet na het begin liggen.';
+
+  @override
+  String get samples => 'metingen';
 
   @override
   String get unavailable => 'niet beschikbaar';

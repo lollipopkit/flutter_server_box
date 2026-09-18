@@ -452,6 +452,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Дозволити HTTP';
 
   @override
+  String get plainHttpTitle => 'Цей агент віддається незашифрованим HTTP';
+
+  @override
+  String get plainHttpTip =>
+      'Пароль і все, що запитує застосунок, підуть відкритим текстом. Поки нічого не надіслано.';
+
+  @override
+  String get allowForThisServer => 'Дозволити для цього сервера';
+
+  @override
+  String get viewError => 'Переглянути помилку';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale';
 
@@ -1964,6 +1977,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get power => 'Живлення';
 
   @override
+  String get fan => 'Вентилятор';
+
+  @override
+  String get clockSpeed => 'Частота';
+
+  @override
+  String get vendor => 'Виробник';
+
+  @override
   String get continueInTerminal => 'Продовжити в терміналі';
 
   @override
@@ -2402,6 +2424,32 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get noData => 'немає даних';
+
+  @override
+  String get from => 'Від';
+
+  @override
+  String get to => 'До';
+
+  @override
+  String get beyondRetention => 'далі, ніж зберігає цей агент';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Агент зберігає $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'найстаріший замір $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Кінець діапазону має бути пізніше за початок.';
+
+  @override
+  String get samples => 'замірів';
 
   @override
   String get unavailable => 'недоступно';

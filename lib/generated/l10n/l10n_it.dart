@@ -455,6 +455,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Consenti HTTP';
 
   @override
+  String get plainHttpTitle => 'Questo agent è servito su HTTP in chiaro';
+
+  @override
+  String get plainHttpTip =>
+      'La password e tutto ciò che questa app chiede viaggerebbero in chiaro. Non è stato ancora inviato nulla.';
+
+  @override
+  String get allowForThisServer => 'Consenti per questo server';
+
+  @override
+  String get viewError => 'Vedi l\'errore';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Solo su una rete privata fidata che cifra da sé il trasporto, come Tailscale';
 
@@ -1969,6 +1982,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get power => 'Alimentazione';
 
   @override
+  String get fan => 'Ventola';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Produttore';
+
+  @override
   String get continueInTerminal => 'Continua nel terminale';
 
   @override
@@ -2410,6 +2432,32 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get noData => 'nessun dato';
+
+  @override
+  String get from => 'Da';
+
+  @override
+  String get to => 'A';
+
+  @override
+  String get beyondRetention => 'oltre quanto questo agent ha conservato';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'L\'agent conserva $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'campione più vecchio $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'La fine dell\'intervallo deve essere dopo il suo inizio.';
+
+  @override
+  String get samples => 'campioni';
 
   @override
   String get unavailable => 'non disponibile';

@@ -338,3 +338,163 @@ async fn swap_is_a_percentage_and_absent_where_there_is_none() {
     assert_eq!(points.len(), 1);
     assert_eq!(points[0]["swap"].as_f64(), Some(25.0));
 }
+
+/// A window named outright, which is what a client offering "from this day to
+/// that one" has to be able to ask for.
+///
+/// Three things are asserted here because each of them, got wrong, produces an
+/// answer that still looks like a chart: the upper bound has to actually cut
+/// (a window ending an hour ago must not include the last hour), `from` has to
+/// win over `minutes` rather than the two being combined, and a window longer
+/// than the agent kept has to come back short rather than being narrowed to
+/// something it can fill.
+#[ntex::test]
+async fn from_and_to_name_the_window() {
+    // Six hours of rows, one a minute.
+    let srv = test_server(state_with_samples_every(6 * 3600, 60).await).await;
+    let now = Utc::now();
+    let ts = |p: &serde_json::Value| {
+        DateTime::parse_from_rfc3339(p["timestamp"].as_str().unwrap()).unwrap()
+    };
+
+    // The middle two hours: nothing outside them comes back.
+    let from = now - Duration::hours(4);
+    let to = now - Duration::hours(2);
+    let points = history(
+        &srv,
+        &format!("from={}&to={}", from.timestamp(), to.timestamp()),
+    )
+    .await;
+    assert!(!points.is_empty(), "a window with rows in it came back empty");
+    let first = ts(points.first().unwrap());
+    let last = ts(points.last().unwrap());
+    assert!(
+        first >= from - Duration::minutes(2),
+        "answered with rows from before the window: {first} < {from}"
+    );
+    assert!(
+        last <= to + Duration::minutes(2),
+        "answered with rows from after the window: {last} > {to}"
+    );
+
+    // `minutes` alongside `from` is the older way of saying the same thing and
+    // does not get to narrow the window.
+    let both = history(
+        &srv,
+        &format!("from={}&to={}&minutes=5", from.timestamp(), to.timestamp()),
+    )
+    .await;
+    assert_eq!(both.len(), points.len(), "minutes overrode an explicit window");
+}
+
+/// A window reaching back further than this agent has anything for.
+///
+/// It answers with what it has rather than with an error or a narrower window:
+/// the difference between what was asked for and what came back is the gap a
+/// client draws, and an agent that quietly moved the start reports a full one.
+#[ntex::test]
+async fn a_window_longer_than_the_data_comes_back_short() {
+    let srv = test_server(state_with_samples_every(3600, 60).await).await;
+    let now = Utc::now();
+
+    let points = history(
+        &srv,
+        &format!(
+            "from={}&to={}",
+            (now - Duration::days(30)).timestamp(),
+            now.timestamp()
+        ),
+    )
+    .await;
+
+    assert!(!points.is_empty());
+    let first =
+        DateTime::parse_from_rfc3339(points.first().unwrap()["timestamp"].as_str().unwrap())
+            .unwrap();
+    assert!(
+        first > now - Duration::days(1),
+        "answered with rows the fixture never inserted: {first}"
+    );
+}
+
+/// An inverted window is a caller's bug, and answering it with something
+/// plausible is how it stays one.
+#[ntex::test]
+async fn an_inverted_window_is_refused() {
+    let srv = test_server(state_with_samples(60).await).await;
+    let now = Utc::now();
+    let token = generate_token("admin", SECRET).unwrap();
+
+    let resp = srv
+        .get(format!(
+            "/api/v1/metrics/history?from={}&to={}",
+            now.timestamp(),
+            (now - Duration::hours(1)).timestamp()
+        ))
+        .header("Authorization", format!("Bearer {token}"))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status().as_u16(), 400);
+}
+
+/// `to` on its own: a length ending somewhere other than now.
+///
+/// "The hour before the alert" is a window a client has every reason to ask
+/// for, and dropping the bound answered with the hour before the request —
+/// which looks exactly like an answer to what was asked.
+#[ntex::test]
+async fn to_without_from_ends_the_window_there() {
+    let srv = test_server(state_with_samples_every(6 * 3600, 60).await).await;
+    let now = Utc::now();
+    let to = now - Duration::hours(3);
+
+    let points = history(&srv, &format!("minutes=60&to={}", to.timestamp())).await;
+
+    assert!(!points.is_empty());
+    let last =
+        DateTime::parse_from_rfc3339(points.last().unwrap()["timestamp"].as_str().unwrap())
+            .unwrap();
+    assert!(
+        last <= to + Duration::minutes(2),
+        "answered past the end that was named: {last} > {to}"
+    );
+    let first =
+        DateTime::parse_from_rfc3339(points.first().unwrap()["timestamp"].as_str().unwrap())
+            .unwrap();
+    assert!(
+        first >= to - Duration::minutes(62),
+        "answered with more than the hour that was asked for: {first}"
+    );
+}
+
+/// A bound that was given but cannot be read.
+///
+/// Refused rather than defaulted: the caller is asking for a window, and
+/// answering with a different one is how a client bug becomes a chart nobody
+/// questions. A bound that is simply absent still defaults, which is what
+/// every caller predating `from`/`to` relies on.
+#[ntex::test]
+async fn a_malformed_bound_is_refused() {
+    let srv = test_server(state_with_samples(60).await).await;
+    let token = generate_token("admin", SECRET).unwrap();
+    let now = Utc::now().timestamp();
+
+    for query in [
+        "from=yesterday".to_string(),
+        format!("from={now}&to=soon"),
+        "to=".to_string(),
+    ] {
+        let resp = srv
+            .get(format!("/api/v1/metrics/history?{query}"))
+            .header("Authorization", format!("Bearer {token}"))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status().as_u16(), 400, "?{query} was not refused");
+    }
+
+    // And the window that names no bounds at all still answers.
+    assert!(!history(&srv, "minutes=60").await.is_empty());
+}

@@ -426,6 +426,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP を許可';
 
   @override
+  String get plainHttpTitle => 'この agent は平文 HTTP で公開されています';
+
+  @override
+  String get plainHttpTip => 'パスワードとこのアプリが取得する内容が暗号化されずに送られます。まだ何も送信していません。';
+
+  @override
+  String get allowForThisServer => 'このサーバーにだけ許可';
+
+  @override
+  String get viewError => 'エラーを見る';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'HTTP 以外で通信自体が暗号化される信頼できるプライベートネットワークでのみ。たとえば Tailscale';
 
@@ -1844,6 +1856,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get power => '電源';
 
   @override
+  String get fan => 'ファン';
+
+  @override
+  String get clockSpeed => 'クロック';
+
+  @override
+  String get vendor => 'ベンダー';
+
+  @override
   String get continueInTerminal => 'ターミナルで続ける';
 
   @override
@@ -2272,6 +2293,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noData => 'データなし';
+
+  @override
+  String get from => '開始';
+
+  @override
+  String get to => '終了';
+
+  @override
+  String get beyondRetention => 'この agent の保持期間より前';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent の保持期間は $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '最も古い取得は $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '範囲の終了は開始より後である必要があります。';
+
+  @override
+  String get samples => 'サンプル';
 
   @override
   String get unavailable => '取得できません';

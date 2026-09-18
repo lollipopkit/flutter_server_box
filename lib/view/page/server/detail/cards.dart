@@ -248,9 +248,12 @@ extension on _ServerDetailPageState {
                   textScaler: _textFactor,
                 ),
                 if (sub != null)
+                  // One line, cut where it runs out. A row that wraps is two
+                  // rows tall for one reading, and in a column of them the
+                  // next name is no longer where the eye expects it.
                   Text(
                     sub,
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: UIs.text11Grey,
                     textScaler: _textFactor,

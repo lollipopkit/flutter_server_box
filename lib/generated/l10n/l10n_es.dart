@@ -457,6 +457,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Permitir HTTP';
 
   @override
+  String get plainHttpTitle => 'Este agente se sirve por HTTP sin cifrar';
+
+  @override
+  String get plainHttpTip =>
+      'La contraseña y todo lo que esta app pide viajarían sin cifrar. Todavía no se ha enviado nada.';
+
+  @override
+  String get allowForThisServer => 'Permitir para este servidor';
+
+  @override
+  String get viewError => 'Ver el error';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Solo en una red privada de confianza que cifre el transporte por sí misma, como Tailscale';
 
@@ -1977,6 +1990,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get power => 'Energía';
 
   @override
+  String get fan => 'Ventilador';
+
+  @override
+  String get clockSpeed => 'Reloj';
+
+  @override
+  String get vendor => 'Fabricante';
+
+  @override
   String get continueInTerminal => 'Continuar en la terminal';
 
   @override
@@ -2418,6 +2440,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get noData => 'sin datos';
+
+  @override
+  String get from => 'Desde';
+
+  @override
+  String get to => 'Hasta';
+
+  @override
+  String get beyondRetention => 'más atrás de lo que este agente guardó';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'El agente guarda $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'muestra más antigua $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'El fin del intervalo debe ser posterior a su inicio.';
+
+  @override
+  String get samples => 'muestras';
 
   @override
   String get unavailable => 'no disponible';

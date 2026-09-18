@@ -454,6 +454,19 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP istifadəsinə icazə ver';
 
   @override
+  String get plainHttpTitle => 'Bu agent şifrələnməmiş HTTP üzərindən verilir';
+
+  @override
+  String get plainHttpTip =>
+      'Parol və bu tətbiqin istədiyi hər şey şifrələnmədən ötürüləcək. Hələ heç nə göndərilməyib.';
+
+  @override
+  String get allowForThisServer => 'Bu server üçün icazə ver';
+
+  @override
+  String get viewError => 'Xətaya bax';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Yalnız Tailscale kimi ötürülməni özü şifrələyən etibarlı özəl şəbəkədə';
 
@@ -1958,6 +1971,15 @@ class AppLocalizationsAz extends AppLocalizations {
   String get power => 'Güc';
 
   @override
+  String get fan => 'Ventilyator';
+
+  @override
+  String get clockSpeed => 'Tezlik';
+
+  @override
+  String get vendor => 'İstehsalçı';
+
+  @override
   String get continueInTerminal => 'Terminalda davam et';
 
   @override
@@ -2399,6 +2421,32 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get noData => 'məlumat yoxdur';
+
+  @override
+  String get from => 'Başlanğıc';
+
+  @override
+  String get to => 'Son';
+
+  @override
+  String get beyondRetention => 'bu agentin saxladığından uzaq';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent $kept saxlayır';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'ən köhnə ölçmə $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'Aralığın sonu başlanğıcından sonra olmalıdır.';
+
+  @override
+  String get samples => 'ölçmə';
 
   @override
   String get unavailable => 'mövcud deyil';

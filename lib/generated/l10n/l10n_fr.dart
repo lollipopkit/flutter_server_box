@@ -458,6 +458,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Autoriser HTTP';
 
   @override
+  String get plainHttpTitle => 'Cet agent est servi en HTTP non chiffré';
+
+  @override
+  String get plainHttpTip =>
+      'Le mot de passe et tout ce que cette app demande circuleraient en clair. Rien n\'a encore été envoyé.';
+
+  @override
+  String get allowForThisServer => 'Autoriser pour ce serveur';
+
+  @override
+  String get viewError => 'Voir l\'erreur';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Uniquement sur un réseau privé de confiance qui chiffre lui-même le transport, comme Tailscale';
 
@@ -1978,6 +1991,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get power => 'Alimentation';
 
   @override
+  String get fan => 'Ventilateur';
+
+  @override
+  String get clockSpeed => 'Fréquence';
+
+  @override
+  String get vendor => 'Fabricant';
+
+  @override
   String get continueInTerminal => 'Continuer dans le terminal';
 
   @override
@@ -2418,6 +2440,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noData => 'aucune donnée';
+
+  @override
+  String get from => 'Du';
+
+  @override
+  String get to => 'Au';
+
+  @override
+  String get beyondRetention => 'au-delà de ce que cet agent a conservé';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'L\'agent conserve $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'relevé le plus ancien $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'La fin de l\'intervalle doit suivre son début.';
+
+  @override
+  String get samples => 'relevés';
 
   @override
   String get unavailable => 'indisponible';

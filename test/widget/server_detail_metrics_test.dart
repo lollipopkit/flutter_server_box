@@ -94,6 +94,12 @@ void main() {
     return status;
   }
 
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
   Future<ServerNotifier> pump(
     WidgetTester tester, {
     required Size size,
@@ -207,6 +213,9 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('GPU'), findsWidgets);
+    // What the machine has is a fact about the machine, so it is in the card
+    // that lists what it is built of — beside the CPU and the memory.
+    expect(find.text('NVIDIA T4'), findsWidgets);
     expect(find.text(libL10n.temperature), findsWidgets);
     expect(find.text(libL10n.battery), findsWidgets);
     // The hottest of the two, not their mean and not the first one.
@@ -216,6 +225,63 @@ void main() {
       find.text(app_locale.l10n.sensorsHottestFmt(2, 'coretemp')),
       findsOneWidget,
     );
+  });
+
+  /// Nine rows and the cards under them are taller than a phone, so the row
+  /// that promotes a metric is regularly below the card it promotes it into.
+  /// From down there the tap changes a chart nobody can see.
+  testWidgets('promoting a metric brings its chart back on screen', (
+    tester,
+  ) async {
+    await pump(tester, size: const Size(390, 700), status: richStatus);
+
+    final scroll = tester.widget<SingleChildScrollView>(
+      find.byType(SingleChildScrollView).first,
+    );
+    final controller = scroll.controller!;
+    controller.jumpTo(controller.position.maxScrollExtent);
+    await settle(tester);
+    final atBottom = controller.offset;
+    expect(atBottom, greaterThan(0), reason: 'the page has to be scrollable');
+
+    // A row that is on screen down here, promoting a chart that is not.
+    await tester.tap(find.text(libL10n.battery).last);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(
+      controller.offset,
+      lessThan(atBottom),
+      reason: 'the chart the tap changed was left off screen',
+    );
+
+    // And a tap with the chart already in view leaves the page where it is.
+    final settled = controller.offset;
+    await tester.tap(find.text('CPU').last);
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(controller.offset, settled);
+  });
+
+  /// Every card opens, not only the ones with a process in them: the row is
+  /// one line of a card that reports a dozen readings.
+  testWidgets('a GPU opens its own readings', (tester) async {
+    await pump(tester, size: const Size(1200, 900), status: richStatus);
+
+    await tester.tap(find.textContaining('NVIDIA T4 · 0'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('NVIDIA T4 · 0'), findsWidgets);
+    // The readings the row had no room for.
+    expect(find.text('Vendor'), findsOneWidget);
+    expect(find.text('nvidia'), findsOneWidget);
+    expect(find.text('2150 / 16384 MiB'), findsWidgets);
   });
 
   /// A machine with several disks is busy because one of them is, so the chart
@@ -276,6 +342,31 @@ void main() {
     }
     expect(tester.takeException(), isNull);
     expect(find.byIcon(Icons.check), findsOneWidget);
+  });
+
+  /// The picker offers what the agent can answer for. An SSH server's agent is
+  /// no agent at all, so only the window this app kept itself is offerable —
+  /// the rest stay in the list, greyed, with the reason.
+  testWidgets('the range picker says why a window is not on offer', (
+    tester,
+  ) async {
+    await pump(tester, size: const Size(1200, 900));
+
+    await tester.tap(find.byIcon(Icons.date_range));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(tester.takeException(), isNull);
+
+    // Every window is listed, including the ones this connection cannot fill.
+    expect(find.text('24h'), findsWidgets);
+    expect(find.text('7d'), findsWidgets);
+    // Tapping one of those says why instead of switching to an empty chart.
+    await tester.tap(find.text('7d').last);
+    for (var i = 0; i < 3; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text(app_locale.l10n.rangeLive), findsWidgets);
   });
 
   /// Only an agent stores history, so an SSH server is offered the one window

@@ -53,6 +53,8 @@ class SshDataSource implements ServerDataSource {
   Future<List<StatusHistorySample>> fetchHistory({
     int minutes = 60,
     int maxPoints = StatusHistory.capacity,
+    DateTime? from,
+    DateTime? to,
   }) async => const [];
 
   /// The SSH client is owned by `ServerNotifier`, which closes it

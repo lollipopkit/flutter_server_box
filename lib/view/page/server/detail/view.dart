@@ -4,6 +4,7 @@ import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -33,6 +34,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
+import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
@@ -114,6 +116,26 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// Absent means [_Devices.defaults], which is what a page opens on.
   final _devicePick = <_MetricKind, Set<String>>{};
 
+  /// The window the chart draws when the reader named one outright, and what
+  /// came back for it.
+  ///
+  /// Wins over [_range] while it is set: the presets are the common windows,
+  /// not the only ones an agent can answer for, and what it keeps is the
+  /// agent's to say — see `MonitorCapabilities.historyFrom`.
+  ({DateTime from, DateTime to})? _custom;
+  _RangeAnswer? _customAnswer;
+  // ignore: prefer_final_fields — set through `_rebuild` from an extension.
+  bool _customBusy = false;
+
+  /// Which server, and which request, the history on this page belongs to.
+  ///
+  /// Bumped when a request supersedes another and when the page is handed a
+  /// different server: both make every answer still in flight one about
+  /// something that is no longer on screen. Without it the slower of two
+  /// window requests overwrites the newer one, and switching servers in a pane
+  /// draws the previous machine's readings under this machine's name.
+  int _historyGeneration = 0;
+
   /// The window the chart draws, and what has been fetched for it.
   _HistoryRange _range = _HistoryRange.live;
   /// What a range answered, and when it was asked.
@@ -130,6 +152,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// Shared by the grid and the bar floating over it, which is how the bar
   /// knows to get out of the way.
   final _scrollCtrl = ScrollController();
+
+  /// The card the rows promote a metric into, so that tapping one can bring it
+  /// back on screen — see `_revealFocus`.
+  final _focusCardKey = GlobalKey();
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
@@ -167,6 +193,33 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _size = MediaQuery.sizeOf(context);
+  }
+
+  /// The page is a widget, not a route: choosing another server in a pane
+  /// hands this same state a different one. Everything here that is about a
+  /// particular machine has to go with it — the windows fetched for it, the
+  /// devices picked out of it — and every request still in flight has to stop
+  /// counting.
+  @override
+  void didUpdateWidget(ServerDetailPage old) {
+    super.didUpdateWidget(old);
+    if (widget.args.spi.id == old.args.spi.id) return;
+    _historyGeneration++;
+    setState(() {
+      _custom = null;
+      _customAnswer = null;
+      _customBusy = false;
+      _rangeWindows.clear();
+      _rangeBusy.clear();
+      _range = _HistoryRange.live;
+      _devicePick.clear();
+    });
+    // What `initState` does for the server the page opened on: this one's
+    // buffer is empty until its own poll fills it, and the agent has the part
+    // that happened before the page arrived.
+    unawaited(
+      ref.read(serverProvider(widget.args.spi.id).notifier).seedHistory(),
+    );
   }
 
   @override
@@ -325,12 +378,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     if (monitor != null && monitor.needsInsecureOptIn) {
       return (
         glyph: Icons.no_encryption_gmailerrorred_outlined,
-        title: l10n.monitorAllowInsecureHttp,
-        text: l10n.monitorAllowInsecureHttpTip,
+        // What is true, not what the setting is called: nothing has been sent
+        // to this address yet, and what the button turns on is the sending.
+        title: l10n.plainHttpTitle,
+        text: l10n.plainHttpTip,
         mono: monitor.addr,
         actions: [
           Btn.elevated(
-            text: libL10n.ok,
+            // Says what it does to what: the switch it flips is this server's
+            // and not a default, which is the question anyone reading this
+            // screen is asking.
+            text: l10n.allowForThisServer,
             icon: const Icon(Icons.lock_open, size: 18),
             mainAxisSize: MainAxisSize.min,
             gap: 8,
@@ -338,7 +396,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
           ),
           edit,
         ],
-        hint: '',
+        hint: l10n.monitorAllowInsecureHttpTip,
       );
     }
 
@@ -348,7 +406,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         title: err.solution ?? libL10n.fail,
         text: '',
         mono: err.message ?? '',
-        actions: [retry, edit],
+        actions: [
+          retry,
+          // The message above is the error's own line; this is everything
+          // around it — what the app was doing, and the copy button a bug
+          // report needs.
+          Btn.text(
+            text: l10n.viewError,
+            onTap: () => _showErrDetail(si, err),
+          ),
+          edit,
+        ],
         hint: '',
       );
     }
@@ -454,13 +522,12 @@ ${err.message ?? 'null'}
       for (final entry in _cardBuildMap.entries)
         if (!_cardsOff.contains(entry.key.name)) ?entry.value(si),
     ];
-    // After the readings, because that is what this page came to show and the
-    // notice is about what it cannot show. Nothing is drawn while the func bar
-    // is there — this only explains a bar that is missing.
-    if (!buildFuncs) {
-      final noAccess = _buildNoRemoteAccessCard(si);
-      if (noAccess != null) cards.add(noAccess);
-    }
+    // Beside the readings rather than under them, in the column that says how
+    // this machine is reached: the readings are fine and this is about the row
+    // of things to do, so it belongs with the facts about the connection and
+    // not at the end of what the page came to show. Nothing is drawn while the
+    // func bar is there — this only explains a bar that is missing.
+    final noAccess = buildFuncs ? null : _buildNoRemoteAccessCard(si);
 
     return Scaffold(
       appBar: _buildAppBar(si),
@@ -473,6 +540,7 @@ ${err.message ?? 'null'}
                 logo: logo,
                 cards: cards,
                 bottomInset: buildFuncs ? _kFuncBarInset : 0,
+                noAccess: noAccess,
                 // Of the room this page has, not of the window: inside a pane
                 // it is the pane that has to hold two columns.
                 wide: cons.maxWidth >= _kColumnsWidth,
@@ -523,6 +591,7 @@ ${err.message ?? 'null'}
     required List<Widget> cards,
     required double bottomInset,
     required bool wide,
+    Widget? noAccess,
   }) {
     final metrics = <Widget>[
       ?logo,
@@ -536,6 +605,7 @@ ${err.message ?? 'null'}
     ];
     final aside = <Widget>[
       ..._buildInfoCards(si),
+      ?noAccess,
       if (!wide) _buildCardGrid(cards),
     ];
 
@@ -953,9 +1023,9 @@ ${err.message ?? 'null'}
   Widget _buildGpuItem(GpuItem item) {
     final mem = item.memory;
     final details = [
-      if (item.power != null) item.power!,
+      ?item.power,
       if (item.fanSpeed != null)
-        'FAN ${item.fanSpeed}${item.vendor == 'nvidia' ? '%' : ' RPM'}',
+        '${l10n.fan} ${item.fanSpeed}${item.vendor == 'nvidia' ? '%' : ' RPM'}',
       if (item.clockSpeed != null) '${item.clockSpeed} MHz',
       if (mem != null) '${mem.used} / ${mem.total} ${mem.unit}',
     ];
@@ -966,38 +1036,10 @@ ${err.message ?? 'null'}
         if (item.utilization case final util?) _pct(util),
         if (item.temperature case final t?) _formatTemp(t.toDouble()),
       ].join(' · '),
-      onTap: mem != null && mem.processes.isNotEmpty
-          ? () => _onTapGpuItem(item)
-          : null,
-    );
-  }
-
-  Widget _buildGpuProcessItem(GpuSmiMemProcess process) {
-    return _buildGpuProcessTile(
-      name: process.name,
-      subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
-      onTap: () => _onTapGpuProcessItem(process),
-    );
-  }
-
-  Widget _buildGpuProcessTile({
-    required String name,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      title: Text(
-        name,
-        style: UIs.text12,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textScaler: _textFactor,
-      ),
-      subtitle: Text(subtitle, style: UIs.text12Grey, textScaler: _textFactor),
-      trailing: InkWell(
-        onTap: onTap,
-        child: const Icon(Icons.info_outline, size: 17),
-      ),
+      // Every card, not only the ones holding a process: the row is one line
+      // of a card that has a dozen readings, and which of them fit there is
+      // not a reason to make some cards openable and others dead.
+      onTap: () => _onTapGpuItem(item),
     );
   }
 

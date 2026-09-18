@@ -418,6 +418,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorAllowInsecureHttp => '允许 HTTP';
 
   @override
+  String get plainHttpTitle => '这个 agent 走的是明文 HTTP';
+
+  @override
+  String get plainHttpTip => '密码和这个应用取的所有内容都会以明文传输。目前还没有发出任何东西。';
+
+  @override
+  String get allowForThisServer => '只对这台服务器允许';
+
+  @override
+  String get viewError => '查看错误';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
 
@@ -1781,6 +1793,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get power => '电源';
 
   @override
+  String get fan => '风扇';
+
+  @override
+  String get clockSpeed => '频率';
+
+  @override
+  String get vendor => '厂商';
+
+  @override
   String get continueInTerminal => '在终端中继续';
 
   @override
@@ -2197,6 +2218,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noData => '无数据';
+
+  @override
+  String get from => '起';
+
+  @override
+  String get to => '止';
+
+  @override
+  String get beyondRetention => '超出这个 agent 保留的范围';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent 保留 $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '最早的采样在 $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '区间的结束必须晚于开始。';
+
+  @override
+  String get samples => '采样';
 
   @override
   String get unavailable => '不可用';
@@ -3034,6 +3080,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorAllowInsecureHttp => '允許 HTTP';
+
+  @override
+  String get plainHttpTitle => '這個 agent 走的是明文 HTTP';
+
+  @override
+  String get plainHttpTip => '密碼和這個應用取的所有內容都會以明文傳輸。目前還沒有送出任何東西。';
+
+  @override
+  String get allowForThisServer => '只對這台伺服器允許';
+
+  @override
+  String get viewError => '檢視錯誤';
 
   @override
   String get monitorAllowInsecureHttpTip =>
@@ -4417,6 +4475,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get power => '電源';
 
   @override
+  String get fan => '風扇';
+
+  @override
+  String get clockSpeed => '頻率';
+
+  @override
+  String get vendor => '廠商';
+
+  @override
   String get continueInTerminal => '在終端機中繼續';
 
   @override
@@ -4833,6 +4900,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noData => '無資料';
+
+  @override
+  String get from => '起';
+
+  @override
+  String get to => '迄';
+
+  @override
+  String get beyondRetention => '超出這個 agent 保留的範圍';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'agent 保留 $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return '最早的取樣在 $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => '區間的結束必須晚於開始。';
+
+  @override
+  String get samples => '取樣';
 
   @override
   String get unavailable => '無法取得';

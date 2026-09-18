@@ -68,10 +68,14 @@ class MonitorHttpDataSource implements ServerDataSource {
   Future<List<StatusHistorySample>> fetchHistory({
     int minutes = 60,
     int maxPoints = StatusHistory.capacity,
+    DateTime? from,
+    DateTime? to,
   }) async {
     final points = await _client.fetchHistory(
       minutes: minutes,
       maxPoints: maxPoints,
+      from: from,
+      to: to,
     );
     return [
       for (final p in points)

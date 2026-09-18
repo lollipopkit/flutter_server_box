@@ -21,6 +21,7 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
@@ -99,6 +100,15 @@ abstract class ServerState with _$ServerState {
     /// The agent's version, as it reported it, or null for a server with no
     /// agent — and for an agent built before it said so.
     String? agentVersion,
+
+    /// What the agent said it can answer for: how long it keeps readings and
+    /// the oldest one it still has.
+    ///
+    /// What a window picker may offer is this, rather than a list of fixed
+    /// windows the app decided on: an agent keeping three days and one keeping
+    /// ninety are both ordinary, and offering "30 d" to the first draws an
+    /// empty chart and calls it a machine that was idle.
+    MonitorCapabilities? agentCapabilities,
   }) = _ServerState;
 
   const ServerState._();
@@ -357,6 +367,10 @@ class ServerNotifier extends _$ServerNotifier {
       conn: ServerConn.disconnected,
       // The edit may have pointed this server at another machine entirely.
       latencyMs: null,
+      // Including at another agent, whose retention and oldest reading are
+      // not this one's. Kept, they decide which windows the range picker
+      // offers until the next capabilities fetch lands.
+      agentCapabilities: null,
     );
   }
 
@@ -552,6 +566,7 @@ class ServerNotifier extends _$ServerNotifier {
           state = state.copyWith(
             remoteAccess: caps.remoteAccess,
             agentVersion: caps.version,
+            agentCapabilities: caps,
           );
           // The agent knows what it is running on. Over SSH this takes a
           // command and its output; here it arrives with the answer the app
@@ -639,12 +654,17 @@ class ServerNotifier extends _$ServerNotifier {
   Future<List<StatusHistorySample>> fetchHistoryRange({
     required int minutes,
     int maxPoints = StatusHistory.capacity,
+    DateTime? from,
+    DateTime? to,
   }) async {
     final credential = _historyCredential(state.spi);
     if (credential == null) return const [];
-    return _resolveSource(
-      credential,
-    ).fetchHistory(minutes: minutes, maxPoints: maxPoints);
+    return _resolveSource(credential).fetchHistory(
+      minutes: minutes,
+      maxPoints: maxPoints,
+      from: from,
+      to: to,
+    );
   }
 
   /// The way in that keeps its own trend data, or null when neither does.

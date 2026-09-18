@@ -449,6 +449,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Allow HTTP';
 
   @override
+  String get plainHttpTitle => 'This agent is served over plain HTTP';
+
+  @override
+  String get plainHttpTip =>
+      'The password and everything this app asks for would travel unencrypted. Nothing has been sent yet.';
+
+  @override
+  String get allowForThisServer => 'Allow for this server';
+
+  @override
+  String get viewError => 'View error';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Only on a trusted private network that encrypts the transport itself, such as Tailscale';
 
@@ -1942,6 +1955,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get power => 'Power';
 
   @override
+  String get fan => 'Fan';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Vendor';
+
+  @override
   String get continueInTerminal => 'Continue in terminal';
 
   @override
@@ -2381,6 +2403,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noData => 'no data';
+
+  @override
+  String get from => 'From';
+
+  @override
+  String get to => 'To';
+
+  @override
+  String get beyondRetention => 'beyond what this agent kept';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agent keeps $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'oldest sample $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts =>
+      'The end of the range has to be after its start.';
+
+  @override
+  String get samples => 'samples';
 
   @override
   String get unavailable => 'unavailable';

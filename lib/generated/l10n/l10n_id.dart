@@ -451,6 +451,19 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Izinkan HTTP';
 
   @override
+  String get plainHttpTitle => 'Agen ini disajikan lewat HTTP polos';
+
+  @override
+  String get plainHttpTip =>
+      'Kata sandi dan semua yang diminta aplikasi ini akan dikirim tanpa enkripsi. Belum ada yang dikirim.';
+
+  @override
+  String get allowForThisServer => 'Izinkan untuk server ini';
+
+  @override
+  String get viewError => 'Lihat kesalahan';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Hanya di jaringan privat tepercaya yang mengenkripsi transportnya sendiri, misalnya Tailscale';
 
@@ -1947,6 +1960,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get power => 'Daya';
 
   @override
+  String get fan => 'Kipas';
+
+  @override
+  String get clockSpeed => 'Clock';
+
+  @override
+  String get vendor => 'Vendor';
+
+  @override
   String get continueInTerminal => 'Lanjutkan di terminal';
 
   @override
@@ -2387,6 +2409,31 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get noData => 'tidak ada data';
+
+  @override
+  String get from => 'Dari';
+
+  @override
+  String get to => 'Sampai';
+
+  @override
+  String get beyondRetention => 'lebih lama dari yang disimpan agen ini';
+
+  @override
+  String agentRetentionFmt(Object kept) {
+    return 'Agen menyimpan $kept';
+  }
+
+  @override
+  String oldestSampleFmt(Object time) {
+    return 'sampel terlama $time';
+  }
+
+  @override
+  String get rangeEndsBeforeItStarts => 'Akhir rentang harus setelah awalnya.';
+
+  @override
+  String get samples => 'sampel';
 
   @override
   String get unavailable => 'tidak tersedia';

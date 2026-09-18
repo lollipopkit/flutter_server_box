@@ -905,6 +905,30 @@ abstract class AppLocalizations {
   /// **'Allow HTTP'**
   String get monitorAllowInsecureHttp;
 
+  /// No description provided for @plainHttpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent is served over plain HTTP'**
+  String get plainHttpTitle;
+
+  /// No description provided for @plainHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The password and everything this app asks for would travel unencrypted. Nothing has been sent yet.'**
+  String get plainHttpTip;
+
+  /// No description provided for @allowForThisServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow for this server'**
+  String get allowForThisServer;
+
+  /// No description provided for @viewError.
+  ///
+  /// In en, this message translates to:
+  /// **'View error'**
+  String get viewError;
+
   /// No description provided for @monitorAllowInsecureHttpTip.
   ///
   /// In en, this message translates to:
@@ -3382,6 +3406,24 @@ abstract class AppLocalizations {
   /// **'Power'**
   String get power;
 
+  /// No description provided for @fan.
+  ///
+  /// In en, this message translates to:
+  /// **'Fan'**
+  String get fan;
+
+  /// No description provided for @clockSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Clock'**
+  String get clockSpeed;
+
+  /// No description provided for @vendor.
+  ///
+  /// In en, this message translates to:
+  /// **'Vendor'**
+  String get vendor;
+
   /// No description provided for @continueInTerminal.
   ///
   /// In en, this message translates to:
@@ -4143,6 +4185,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no data'**
   String get noData;
+
+  /// No description provided for @from.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get from;
+
+  /// No description provided for @to.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get to;
+
+  /// No description provided for @beyondRetention.
+  ///
+  /// In en, this message translates to:
+  /// **'beyond what this agent kept'**
+  String get beyondRetention;
+
+  /// No description provided for @agentRetentionFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent keeps {kept}'**
+  String agentRetentionFmt(Object kept);
+
+  /// No description provided for @oldestSampleFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'oldest sample {time}'**
+  String oldestSampleFmt(Object time);
+
+  /// No description provided for @rangeEndsBeforeItStarts.
+  ///
+  /// In en, this message translates to:
+  /// **'The end of the range has to be after its start.'**
+  String get rangeEndsBeforeItStarts;
+
+  /// No description provided for @samples.
+  ///
+  /// In en, this message translates to:
+  /// **'samples'**
+  String get samples;
 
   /// No description provided for @unavailable.
   ///
