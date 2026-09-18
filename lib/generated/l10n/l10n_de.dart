@@ -2499,8 +2499,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get diskAllPassed => 'alle PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
-    return '$count Warnung';
+  String diskWarningFmt(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Warnungen',
+      one: '1 Warnung',
+    );
+    return '$_temp0';
   }
 
   @override

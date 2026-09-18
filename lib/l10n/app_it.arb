@@ -729,7 +729,7 @@
   "averageErase": "Cancellazioni medie",
   "unsafeShutdowns": "Spegnimenti anomali",
   "diskAllPassed": "tutti PASSED",
-  "diskWarningFmt": "{count} avviso",
+  "diskWarningFmt": "{count, plural, =1{1 avviso} other{{count} avvisi}}",
   "diskWrongOfFmt": "{wrong} di {total} dispositivi",
   "diskSmartSortedTip": "Peggiori per primi",
   "readAgoFmt": "letto {ago}",

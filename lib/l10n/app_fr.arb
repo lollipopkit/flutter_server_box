@@ -726,7 +726,7 @@
   "averageErase": "Effacements moyens",
   "unsafeShutdowns": "Arrêts brutaux",
   "diskAllPassed": "tous PASSED",
-  "diskWarningFmt": "{count} avertissement",
+  "diskWarningFmt": "{count, plural, =1{1 avertissement} other{{count} avertissements}}",
   "diskWrongOfFmt": "{wrong} périphériques sur {total}",
   "diskSmartSortedTip": "Les pires d'abord",
   "readAgoFmt": "lu {ago}",

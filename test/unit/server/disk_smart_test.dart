@@ -65,6 +65,32 @@ void main() {
     expect(smart.faults, {'reallocated': 3});
   });
 
+  test('a whole number that arrived as a double is the same count', () {
+    // The agent's JSON decodes 2 as a double; the same drive over SSH gives an
+    // int. A count read one way and not the other is a fault the card misses.
+    final smart = DiskSmart(
+      device: 'sdc',
+      healthy: true,
+      rawData: const {},
+      smartAttributes: {
+        'Reallocated_Sector_Ct': const SmartAttribute(
+          name: 'Reallocated_Sector_Ct',
+          rawValue: 2.0,
+          flags: SmartAttributeFlags(),
+        ),
+      },
+    );
+
+    expect(smart.faults, {'reallocated': 2});
+  });
+
+  test('a value that is not a count is not read as one', () {
+    expect(DiskSmart.countOf(2.5), isNull);
+    expect(DiskSmart.countOf('n/a'), isNull);
+    expect(DiskSmart.countOf(null), isNull);
+    expect(DiskSmart.countOf(' 4 '), 4);
+  });
+
   test('a device with no SMART data at all is not a device with a problem', () {
     final smart = drive(const {});
 

@@ -993,7 +993,7 @@
   "averageErase": "Average erase",
   "unsafeShutdowns": "Unsafe shutdowns",
   "diskAllPassed": "all PASSED",
-  "diskWarningFmt": "{count} warning",
+  "diskWarningFmt": "{count, plural, =1{1 warning} other{{count} warnings}}",
   "diskWrongOfFmt": "{wrong} of {total} devices",
   "diskSmartSortedTip": "Sorted worst first",
   "readAgoFmt": "read {ago}",

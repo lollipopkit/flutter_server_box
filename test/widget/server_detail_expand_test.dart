@@ -109,11 +109,19 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     // The sensor card is one of the cards that open and close, and its rows
-    // are what says which it is. The glyph is what says a card opens at all,
-    // so it is also the only one on this page.
+    // are what says which it is. Reached through the card's own title rather
+    // than through the first glyph on the page: what this holds is that *this*
+    // card stays as the user left it, and the next card with rows would
+    // otherwise silently become the subject.
     expect(find.text('coretemp'), findsOneWidget);
+    final card = find.ancestor(
+      of: find.text(libL10n.sensors),
+      matching: find.byType(CardX),
+    );
 
-    await tester.tap(find.byIcon(Icons.expand_more).first);
+    await tester.tap(
+      find.descendant(of: card, matching: find.byIcon(Icons.expand_more)),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('coretemp'), findsNothing);

@@ -4297,8 +4297,8 @@ abstract class AppLocalizations {
   /// No description provided for @diskWarningFmt.
   ///
   /// In en, this message translates to:
-  /// **'{count} warning'**
-  String diskWarningFmt(Object count);
+  /// **'{count, plural, =1{1 warning} other{{count} warnings}}'**
+  String diskWarningFmt(num count);
 
   /// No description provided for @diskWrongOfFmt.
   ///

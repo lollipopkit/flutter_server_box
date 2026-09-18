@@ -2288,7 +2288,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskAllPassed => '全部 PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return '$count 个警告';
   }
 
@@ -4884,7 +4884,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get diskAllPassed => '全部 PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return '$count 個警告';
   }
 

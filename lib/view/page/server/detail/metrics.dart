@@ -1087,6 +1087,10 @@ extension on _ServerDetailPageState {
               ),
             ),
           ),
+          // The box is what lines the rows up; this is the gap. Without it a
+          // label as wide as its box — "Temperature" nearly is — ran straight
+          // into the note beside it, and the two read as one phrase.
+          UIs.width13,
           Expanded(
             child: Row(
               children: [

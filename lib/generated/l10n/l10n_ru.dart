@@ -2500,7 +2500,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diskAllPassed => 'все PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return 'предупреждений: $count';
   }
 

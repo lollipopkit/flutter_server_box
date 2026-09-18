@@ -2490,7 +2490,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get diskAllPassed => 'hamısı PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return '$count xəbərdarlıq';
   }
 

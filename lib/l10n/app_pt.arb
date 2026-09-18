@@ -726,7 +726,7 @@
   "averageErase": "Apagamentos médios",
   "unsafeShutdowns": "Desligamentos inseguros",
   "diskAllPassed": "todos PASSED",
-  "diskWarningFmt": "{count} aviso",
+  "diskWarningFmt": "{count, plural, =1{1 aviso} other{{count} avisos}}",
   "diskWrongOfFmt": "{wrong} de {total} dispositivos",
   "diskSmartSortedTip": "Piores primeiro",
   "readAgoFmt": "lido {ago}",

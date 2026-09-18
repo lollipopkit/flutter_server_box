@@ -726,7 +726,7 @@
   "averageErase": "Gemiddeld gewist",
   "unsafeShutdowns": "Onveilige afsluitingen",
   "diskAllPassed": "alle PASSED",
-  "diskWarningFmt": "{count} waarschuwing",
+  "diskWarningFmt": "{count, plural, =1{1 waarschuwing} other{{count} waarschuwingen}}",
   "diskWrongOfFmt": "{wrong} van {total} apparaten",
   "diskSmartSortedTip": "Slechtste eerst",
   "readAgoFmt": "gelezen {ago}",

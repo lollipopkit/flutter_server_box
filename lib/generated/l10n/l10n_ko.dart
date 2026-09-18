@@ -2370,7 +2370,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get diskAllPassed => '모두 PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return '경고 $count개';
   }
 

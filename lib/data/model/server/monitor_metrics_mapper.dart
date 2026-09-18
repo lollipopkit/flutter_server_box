@@ -363,7 +363,12 @@ void _applySensors(ServerStatus ss, MonitorMetrics m) {
 /// `MonitorSmartSummary` doc) — those are set to empty, matching how the app
 /// already treats servers where SMART data hasn't been fully collected yet.
 void _applySmart(ServerStatus ss, MonitorMetrics m) {
-  ss.diskSmartAt = DateTime.now();
+  // The agent's own extended cycle, not now: this output is minutes old by
+  // design and the app re-reads the same copy on every poll.
+  ss.diskSmartAt = switch (m.extendedUpdatedAt) {
+    final iso? => DateTime.tryParse(iso)?.toLocal(),
+    null => null,
+  };
   ss.diskSmart = m.diskSmart
       .map(
         (d) => DiskSmart(

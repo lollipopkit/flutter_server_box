@@ -57,12 +57,25 @@ abstract class DiskSmart with _$DiskSmart {
   Map<String, int> get faults {
     final out = <String, int>{};
     for (final entry in criticalAttributes.entries) {
-      final raw = smartAttributes[entry.key]?.rawValue;
-      final count = raw is int ? raw : int.tryParse('$raw');
+      final count = countOf(smartAttributes[entry.key]?.rawValue);
       if (count != null && count > 0) out[entry.value.short] = count;
     }
     return out;
   }
+
+  /// A raw value as the count it is, or null when it is not one.
+  ///
+  /// `rawValue` is whatever the vendor put in the field and whatever the
+  /// transport made of it: an `int` over SSH, a JSON number that decoded as a
+  /// `double` through the agent, a string on a drive that spells its raw
+  /// values out. A whole number in any of those shapes is the same count, and
+  /// `2.5` is not a count of sectors at all.
+  static int? countOf(dynamic raw) => switch (raw) {
+    final int v => v,
+    final num v when v == v.roundToDouble() => v.toInt(),
+    final String s => int.tryParse(s.trim()),
+    _ => null,
+  };
 
   /// Whether smartctl had nothing to say about this device — a RAID set or a
   /// mapper target, which has no SMART data rather than bad SMART data.

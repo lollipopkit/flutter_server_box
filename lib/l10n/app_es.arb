@@ -726,7 +726,7 @@
   "averageErase": "Borrados medios",
   "unsafeShutdowns": "Apagados inseguros",
   "diskAllPassed": "todos PASSED",
-  "diskWarningFmt": "{count} advertencia",
+  "diskWarningFmt": "{count, plural, =1{1 advertencia} other{{count} advertencias}}",
   "diskWrongOfFmt": "{wrong} de {total} dispositivos",
   "diskSmartSortedTip": "Peor primero",
   "readAgoFmt": "leído {ago}",

@@ -726,7 +726,7 @@
   "averageErase": "Durchschnittliche Löschungen",
   "unsafeShutdowns": "Unsaubere Abschaltungen",
   "diskAllPassed": "alle PASSED",
-  "diskWarningFmt": "{count} Warnung",
+  "diskWarningFmt": "{count, plural, =1{1 Warnung} other{{count} Warnungen}}",
   "diskWrongOfFmt": "{wrong} von {total} Geräten",
   "diskSmartSortedTip": "Schlechteste zuerst",
   "readAgoFmt": "gelesen {ago}",

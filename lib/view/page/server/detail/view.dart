@@ -989,7 +989,9 @@ ${err.message ?? 'null'}
               ].join(' · '),
             )
           : (
-              value: l10n.diskWrongOfFmt(wrong.length, smarts.length),
+              // `(total, wrong)`: with no `@` metadata gen-l10n orders the
+              // placeholders alphabetically, not as the sentence reads them.
+              value: l10n.diskWrongOfFmt(smarts.length, wrong.length),
               note: '${worst.device} · ${_smartSummary(worst)}',
             ),
       rows: sorted.map(_buildDiskSmartItem).toList(),
@@ -1097,7 +1099,9 @@ ${err.message ?? 'null'}
           (
             k: entry.value.label,
             v: '$raw',
-            dot: '$raw' == '0' ? null : _Verdict.warn,
+            // Read as the count the card read it as, so a row without a dot
+            // here is never one the card counted as a fault.
+            dot: (DiskSmart.countOf(raw) ?? 0) > 0 ? _Verdict.warn : null,
           ),
       if (smart.powerOnHours case final hours?)
         (k: l10n.powerOnHours, v: '$hours', dot: null),

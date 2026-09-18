@@ -2363,7 +2363,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diskAllPassed => 'すべて PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return '警告 $count 件';
   }
 

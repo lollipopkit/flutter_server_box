@@ -2479,7 +2479,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskAllPassed => 'semua PASSED';
 
   @override
-  String diskWarningFmt(Object count) {
+  String diskWarningFmt(num count) {
     return '$count peringatan';
   }
 

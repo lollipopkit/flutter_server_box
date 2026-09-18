@@ -141,10 +141,14 @@ void main() {
     // The headline is the worst conclusion — how many drives are not fine and
     // which one is the worst — not a count of drives.
     expect(
-      find.text(app_locale.l10n.diskWrongOfFmt(2, 8)),
+      find.text(app_locale.l10n.diskWrongOfFmt(8, 2)),
       findsOneWidget,
       reason: 'the failing drive and the one with reallocated sectors',
     );
+    // Spelled out as well as composed: gen-l10n orders placeholders
+    // alphabetically, so a sentence reading "8 of 2 devices" is what getting
+    // that order wrong looks like, and the line above would agree with it.
+    expect(find.textContaining('2 of 8'), findsOneWidget);
     expect(find.textContaining('sdh · FAILING'), findsOneWidget);
     // And the footer, which is what keeps six rows from reading as six drives.
     expect(
