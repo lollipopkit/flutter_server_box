@@ -1134,7 +1134,10 @@ extension on _ServerDetailPageState {
       }
       return _buildChartNotice(
         height,
-        _range == _HistoryRange.live
+        // "Nothing measured yet" is about the buffer this app fills as it
+        // watches. A window asked of the agent that came back empty is a
+        // different answer, whatever the preset behind it happens to be.
+        _custom == null && _range == _HistoryRange.live
             ? l10n.noHistoryYet
             : l10n.noStoredHistoryFor(m.label),
       );
@@ -1885,6 +1888,11 @@ extension on _ServerDetailPageState {
     // overwrites it on arrival and clears the busy flag the newer one set.
     final generation = ++_historyGeneration;
     _rebuild(() {
+      // Every preset request in flight now belongs to a generation that has
+      // passed, so its `finally` will not run: left as it is, the range it was
+      // fetching stays marked busy, and picking that preset again shows a
+      // chart waiting for a request nobody is making.
+      _rangeBusy.clear();
       _custom = (from: from, to: to);
       _customAnswer = null;
       _customBusy = true;

@@ -14,53 +14,63 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _showGpuProcessesDialog({
-    required String title,
-    required int itemCount,
-    required IndexedWidgetBuilder itemBuilder,
-  }) {
-    final displayCount = itemCount > 5 ? 5 : itemCount;
-    final height = (displayCount > 0 ? displayCount : 1) * 47.0;
-    context.showRoundDialog(
-      title: title,
-      child: SizedBox(
-        width: double.maxFinite,
-        height: height,
-        child: itemCount == 0
-            ? Center(child: Text(libL10n.empty))
-            : ListView.builder(itemCount: itemCount, itemBuilder: itemBuilder),
-      ),
-      actions: Btnx.oks,
-    );
-  }
-
+  /// One card in full: every reading it reports, and what is holding its
+  /// memory.
+  ///
+  /// The row above carries the two figures that fit on a line — load and
+  /// temperature — and this is the rest, in the order it is read in: what the
+  /// card is, what it is doing, then who is doing it. A process list on its
+  /// own was what this used to be, which left a card reporting no processes
+  /// with nothing to open at all.
   void _onTapGpuItem(GpuItem item) {
-    final memory = item.memory;
-    if (memory == null) return;
-    final processes = memory.processes;
-    _showGpuProcessesDialog(
-      title: item.name,
-      itemCount: processes.length,
-      itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
-    );
-  }
+    final mem = item.memory;
+    final scheme = Theme.of(context).colorScheme;
+    final rows = <({String k, String v})>[
+      if (item.utilization case final util?) (k: l10n.used, v: _pct(util)),
+      if (item.temperature case final t?)
+        (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
+      if (item.power case final power?) (k: l10n.power, v: power),
+      if (item.fanSpeed case final fan?)
+        (k: 'Fan', v: '$fan${item.vendor == 'nvidia' ? '%' : ' RPM'}'),
+      if (item.clockSpeed case final clock?) (k: 'Clock', v: '$clock MHz'),
+      if (mem != null)
+        (k: libL10n.memory, v: '${mem.used} / ${mem.total} ${mem.unit}'),
+      (k: 'Vendor', v: item.vendor),
+    ];
+    final processes = mem?.processes ?? const <GpuSmiMemProcess>[];
 
-  void _onTapGpuProcessItem(GpuSmiMemProcess process) {
-    _showClosableDetailDialog(
-      title: '${process.pid}',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          UIs.height13,
-          Text('${libL10n.memory}: ${process.memory} MiB'),
-          UIs.height13,
-          Text('${libL10n.process}: ${process.name}'),
+    showRowsSheet<void>(
+      context,
+      rows: (_) => [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 5, 17, 9),
+          child: Text(
+            '${item.name} · ${item.id}',
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+          ),
+        ),
+        for (final (i, row) in rows.indexed) ...[
+          if (i > 0) const Divider(height: 1, indent: 17, endIndent: 17),
+          _buildReadoutRow(k: row.k, v: row.v),
         ],
-      ),
+        if (processes.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(17, 17, 17, 5),
+            child: Text(
+              l10n.processesFmt(processes.length),
+              style: UIs.text11Grey.copyWith(color: scheme.primary),
+            ),
+          ),
+          for (final process in processes)
+            _buildReadoutRow(
+              k: process.name,
+              sub: 'PID ${process.pid}',
+              v: '${process.memory} MiB',
+            ),
+        ],
+      ],
     );
   }
-
 
   void _onTapCustomItem(MapEntry<String, String> cmd) {
     _showClosableDetailDialog(

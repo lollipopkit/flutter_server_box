@@ -221,6 +221,24 @@ void main() {
     );
   });
 
+  /// Every card opens, not only the ones with a process in them: the row is
+  /// one line of a card that reports a dozen readings.
+  testWidgets('a GPU opens its own readings', (tester) async {
+    await pump(tester, size: const Size(1200, 900), status: richStatus);
+
+    await tester.tap(find.textContaining('NVIDIA T4 · 0'));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('NVIDIA T4 · 0'), findsWidgets);
+    // The readings the row had no room for.
+    expect(find.text('Vendor'), findsOneWidget);
+    expect(find.text('nvidia'), findsOneWidget);
+    expect(find.text('2150 / 16384 MiB'), findsWidgets);
+  });
+
   /// A machine with several disks is busy because one of them is, so the chart
   /// draws a line each and the card says how many of them are on it.
   testWidgets('disk I/O is drawn per device once there is more than one', (

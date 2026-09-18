@@ -517,13 +517,12 @@ ${err.message ?? 'null'}
       for (final entry in _cardBuildMap.entries)
         if (!_cardsOff.contains(entry.key.name)) ?entry.value(si),
     ];
-    // After the readings, because that is what this page came to show and the
-    // notice is about what it cannot show. Nothing is drawn while the func bar
-    // is there — this only explains a bar that is missing.
-    if (!buildFuncs) {
-      final noAccess = _buildNoRemoteAccessCard(si);
-      if (noAccess != null) cards.add(noAccess);
-    }
+    // Beside the readings rather than under them, in the column that says how
+    // this machine is reached: the readings are fine and this is about the row
+    // of things to do, so it belongs with the facts about the connection and
+    // not at the end of what the page came to show. Nothing is drawn while the
+    // func bar is there — this only explains a bar that is missing.
+    final noAccess = buildFuncs ? null : _buildNoRemoteAccessCard(si);
 
     return Scaffold(
       appBar: _buildAppBar(si),
@@ -536,6 +535,7 @@ ${err.message ?? 'null'}
                 logo: logo,
                 cards: cards,
                 bottomInset: buildFuncs ? _kFuncBarInset : 0,
+                noAccess: noAccess,
                 // Of the room this page has, not of the window: inside a pane
                 // it is the pane that has to hold two columns.
                 wide: cons.maxWidth >= _kColumnsWidth,
@@ -586,6 +586,7 @@ ${err.message ?? 'null'}
     required List<Widget> cards,
     required double bottomInset,
     required bool wide,
+    Widget? noAccess,
   }) {
     final metrics = <Widget>[
       ?logo,
@@ -599,6 +600,7 @@ ${err.message ?? 'null'}
     ];
     final aside = <Widget>[
       ..._buildInfoCards(si),
+      ?noAccess,
       if (!wide) _buildCardGrid(cards),
     ];
 
@@ -1016,11 +1018,11 @@ ${err.message ?? 'null'}
   Widget _buildGpuItem(GpuItem item) {
     final mem = item.memory;
     final details = [
-      if (item.power != null) item.power!,
+      ?item.power,
       if (item.fanSpeed != null)
         'FAN ${item.fanSpeed}${item.vendor == 'nvidia' ? '%' : ' RPM'}',
       if (item.clockSpeed != null) '${item.clockSpeed} MHz',
-      if (mem != null) '${mem.used} / ${mem.total} ${mem.unit}',
+      if (mem != null) '${mem.used} / ${mem.unit == '' ? '' : ''}${mem.total} ${mem.unit}',
     ];
     return _buildReadoutRow(
       k: '${item.name} · ${item.id}',
@@ -1029,38 +1031,10 @@ ${err.message ?? 'null'}
         if (item.utilization case final util?) _pct(util),
         if (item.temperature case final t?) _formatTemp(t.toDouble()),
       ].join(' · '),
-      onTap: mem != null && mem.processes.isNotEmpty
-          ? () => _onTapGpuItem(item)
-          : null,
-    );
-  }
-
-  Widget _buildGpuProcessItem(GpuSmiMemProcess process) {
-    return _buildGpuProcessTile(
-      name: process.name,
-      subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
-      onTap: () => _onTapGpuProcessItem(process),
-    );
-  }
-
-  Widget _buildGpuProcessTile({
-    required String name,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      title: Text(
-        name,
-        style: UIs.text12,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textScaler: _textFactor,
-      ),
-      subtitle: Text(subtitle, style: UIs.text12Grey, textScaler: _textFactor),
-      trailing: InkWell(
-        onTap: onTap,
-        child: const Icon(Icons.info_outline, size: 17),
-      ),
+      // Every card, not only the ones holding a process: the row is one line
+      // of a card that has a dozen readings, and which of them fit there is
+      // not a reason to make some cards openable and others dead.
+      onTap: () => _onTapGpuItem(item),
     );
   }
 
