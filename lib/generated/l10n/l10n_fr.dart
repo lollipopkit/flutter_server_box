@@ -458,6 +458,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Autoriser HTTP';
 
   @override
+  String get plainHttpTitle => 'Cet agent est servi en HTTP non chiffré';
+
+  @override
+  String get plainHttpTip =>
+      'Le mot de passe et tout ce que cette app demande circuleraient en clair. Rien n\'a encore été envoyé.';
+
+  @override
+  String get allowForThisServer => 'Autoriser pour ce serveur';
+
+  @override
+  String get viewError => 'Voir l\'erreur';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Uniquement sur un réseau privé de confiance qui chiffre lui-même le transport, comme Tailscale';
 

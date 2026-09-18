@@ -340,12 +340,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     if (monitor != null && monitor.needsInsecureOptIn) {
       return (
         glyph: Icons.no_encryption_gmailerrorred_outlined,
-        title: l10n.monitorAllowInsecureHttp,
-        text: l10n.monitorAllowInsecureHttpTip,
+        // What is true, not what the setting is called: nothing has been sent
+        // to this address yet, and what the button turns on is the sending.
+        title: l10n.plainHttpTitle,
+        text: l10n.plainHttpTip,
         mono: monitor.addr,
         actions: [
           Btn.elevated(
-            text: libL10n.ok,
+            // Says what it does to what: the switch it flips is this server's
+            // and not a default, which is the question anyone reading this
+            // screen is asking.
+            text: l10n.allowForThisServer,
             icon: const Icon(Icons.lock_open, size: 18),
             mainAxisSize: MainAxisSize.min,
             gap: 8,
@@ -353,7 +358,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
           ),
           edit,
         ],
-        hint: '',
+        hint: l10n.monitorAllowInsecureHttpTip,
       );
     }
 
@@ -363,7 +368,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         title: err.solution ?? libL10n.fail,
         text: '',
         mono: err.message ?? '',
-        actions: [retry, edit],
+        actions: [
+          retry,
+          // The message above is the error's own line; this is everything
+          // around it — what the app was doing, and the copy button a bug
+          // report needs.
+          Btn.text(
+            text: l10n.viewError,
+            onTap: () => _showErrDetail(si, err),
+          ),
+          edit,
+        ],
         hint: '',
       );
     }

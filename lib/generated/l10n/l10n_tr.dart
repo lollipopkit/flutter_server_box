@@ -452,6 +452,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP’ye izin ver';
 
   @override
+  String get plainHttpTitle =>
+      'Bu agent şifrelenmemiş HTTP üzerinden sunuluyor';
+
+  @override
+  String get plainHttpTip =>
+      'Parola ve bu uygulamanın istediği her şey şifrelenmeden iletilir. Henüz hiçbir şey gönderilmedi.';
+
+  @override
+  String get allowForThisServer => 'Bu sunucu için izin ver';
+
+  @override
+  String get viewError => 'Hatayı gör';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Yalnızca taşımayı kendisi şifreleyen güvenilir özel ağlarda, örneğin Tailscale';
 

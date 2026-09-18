@@ -452,6 +452,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Дозволити HTTP';
 
   @override
+  String get plainHttpTitle => 'Цей агент віддається незашифрованим HTTP';
+
+  @override
+  String get plainHttpTip =>
+      'Пароль і все, що запитує застосунок, підуть відкритим текстом. Поки нічого не надіслано.';
+
+  @override
+  String get allowForThisServer => 'Дозволити для цього сервера';
+
+  @override
+  String get viewError => 'Переглянути помилку';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Лише в довіреній приватній мережі, що сама шифрує транспорт, наприклад Tailscale';
 

@@ -452,6 +452,20 @@ class AppLocalizationsPt extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Permitir HTTP';
 
   @override
+  String get plainHttpTitle =>
+      'Este agente é servido por HTTP sem criptografia';
+
+  @override
+  String get plainHttpTip =>
+      'A senha e tudo o que este app pede trafegariam sem criptografia. Nada foi enviado ainda.';
+
+  @override
+  String get allowForThisServer => 'Permitir para este servidor';
+
+  @override
+  String get viewError => 'Ver o erro';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Apenas numa rede privada de confiança que cifre o transporte, como a Tailscale';
 

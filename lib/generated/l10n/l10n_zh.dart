@@ -418,6 +418,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get monitorAllowInsecureHttp => '允许 HTTP';
 
   @override
+  String get plainHttpTitle => '这个 agent 走的是明文 HTTP';
+
+  @override
+  String get plainHttpTip => '密码和这个应用取的所有内容都会以明文传输。目前还没有发出任何东西。';
+
+  @override
+  String get allowForThisServer => '只对这台服务器允许';
+
+  @override
+  String get viewError => '查看错误';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       '仅应在 HTTP 之外具备传输加密的可信私有网络中开启，例如 Tailscale';
 
@@ -3059,6 +3071,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get monitorAllowInsecureHttp => '允許 HTTP';
+
+  @override
+  String get plainHttpTitle => '這個 agent 走的是明文 HTTP';
+
+  @override
+  String get plainHttpTip => '密碼和這個應用取的所有內容都會以明文傳輸。目前還沒有送出任何東西。';
+
+  @override
+  String get allowForThisServer => '只對這台伺服器允許';
+
+  @override
+  String get viewError => '檢視錯誤';
 
   @override
   String get monitorAllowInsecureHttpTip =>

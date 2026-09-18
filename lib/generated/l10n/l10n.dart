@@ -905,6 +905,30 @@ abstract class AppLocalizations {
   /// **'Allow HTTP'**
   String get monitorAllowInsecureHttp;
 
+  /// No description provided for @plainHttpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent is served over plain HTTP'**
+  String get plainHttpTitle;
+
+  /// No description provided for @plainHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The password and everything this app asks for would travel unencrypted. Nothing has been sent yet.'**
+  String get plainHttpTip;
+
+  /// No description provided for @allowForThisServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow for this server'**
+  String get allowForThisServer;
+
+  /// No description provided for @viewError.
+  ///
+  /// In en, this message translates to:
+  /// **'View error'**
+  String get viewError;
+
   /// No description provided for @monitorAllowInsecureHttpTip.
   ///
   /// In en, this message translates to:

@@ -452,6 +452,20 @@ class AppLocalizationsNl extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP toestaan';
 
   @override
+  String get plainHttpTitle =>
+      'Deze agent wordt via onversleutelde HTTP aangeboden';
+
+  @override
+  String get plainHttpTip =>
+      'Het wachtwoord en alles wat deze app opvraagt zouden onversleuteld worden verstuurd. Er is nog niets verzonden.';
+
+  @override
+  String get allowForThisServer => 'Toestaan voor deze server';
+
+  @override
+  String get viewError => 'Fout bekijken';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Alleen op een vertrouwd privénetwerk dat het transport zelf versleutelt, zoals Tailscale';
 

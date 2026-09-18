@@ -454,6 +454,20 @@ class AppLocalizationsDe extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP erlauben';
 
   @override
+  String get plainHttpTitle =>
+      'Dieser Agent wird über unverschlüsseltes HTTP bereitgestellt';
+
+  @override
+  String get plainHttpTip =>
+      'Das Passwort und alles, was diese App abruft, würde unverschlüsselt übertragen. Bisher wurde nichts gesendet.';
+
+  @override
+  String get allowForThisServer => 'Für diesen Server erlauben';
+
+  @override
+  String get viewError => 'Fehler ansehen';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Nur in einem vertrauenswürdigen privaten Netz, das den Transport selbst verschlüsselt, etwa Tailscale';
 

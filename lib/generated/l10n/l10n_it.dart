@@ -455,6 +455,19 @@ class AppLocalizationsIt extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Consenti HTTP';
 
   @override
+  String get plainHttpTitle => 'Questo agent è servito su HTTP in chiaro';
+
+  @override
+  String get plainHttpTip =>
+      'La password e tutto ciò che questa app chiede viaggerebbero in chiaro. Non è stato ancora inviato nulla.';
+
+  @override
+  String get allowForThisServer => 'Consenti per questo server';
+
+  @override
+  String get viewError => 'Vedi l\'errore';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Solo su una rete privata fidata che cifra da sé il trasporto, come Tailscale';
 

@@ -429,6 +429,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP 허용';
 
   @override
+  String get plainHttpTitle => '이 agent는 평문 HTTP로 제공됩니다';
+
+  @override
+  String get plainHttpTip =>
+      '비밀번호와 이 앱이 요청하는 모든 내용이 암호화되지 않은 채 전송됩니다. 아직 아무것도 보내지 않았습니다.';
+
+  @override
+  String get allowForThisServer => '이 서버에만 허용';
+
+  @override
+  String get viewError => '오류 보기';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'HTTP 외에 전송 자체가 암호화되는 신뢰할 수 있는 사설망에서만. 예를 들어 Tailscale';
 

@@ -426,6 +426,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'HTTP を許可';
 
   @override
+  String get plainHttpTitle => 'この agent は平文 HTTP で公開されています';
+
+  @override
+  String get plainHttpTip => 'パスワードとこのアプリが取得する内容が暗号化されずに送られます。まだ何も送信していません。';
+
+  @override
+  String get allowForThisServer => 'このサーバーにだけ許可';
+
+  @override
+  String get viewError => 'エラーを見る';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'HTTP 以外で通信自体が暗号化される信頼できるプライベートネットワークでのみ。たとえば Tailscale';
 

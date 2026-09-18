@@ -451,6 +451,19 @@ class AppLocalizationsId extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Izinkan HTTP';
 
   @override
+  String get plainHttpTitle => 'Agen ini disajikan lewat HTTP polos';
+
+  @override
+  String get plainHttpTip =>
+      'Kata sandi dan semua yang diminta aplikasi ini akan dikirim tanpa enkripsi. Belum ada yang dikirim.';
+
+  @override
+  String get allowForThisServer => 'Izinkan untuk server ini';
+
+  @override
+  String get viewError => 'Lihat kesalahan';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Hanya di jaringan privat tepercaya yang mengenkripsi transportnya sendiri, misalnya Tailscale';
 

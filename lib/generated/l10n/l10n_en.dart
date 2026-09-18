@@ -449,6 +449,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorAllowInsecureHttp => 'Allow HTTP';
 
   @override
+  String get plainHttpTitle => 'This agent is served over plain HTTP';
+
+  @override
+  String get plainHttpTip =>
+      'The password and everything this app asks for would travel unencrypted. Nothing has been sent yet.';
+
+  @override
+  String get allowForThisServer => 'Allow for this server';
+
+  @override
+  String get viewError => 'View error';
+
+  @override
   String get monitorAllowInsecureHttpTip =>
       'Only on a trusted private network that encrypts the transport itself, such as Tailscale';
 
