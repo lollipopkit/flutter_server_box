@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} dispositivos · {name} o mais ocupado",
   "window": "janela",
   "ofFmt": "de {total}",
+  "serverDetailCards": "Cartões da página de detalhes",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

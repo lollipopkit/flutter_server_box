@@ -2431,6 +2431,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Карточки страницы сведений';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

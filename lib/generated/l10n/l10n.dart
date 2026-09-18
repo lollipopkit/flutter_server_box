@@ -4168,6 +4168,12 @@ abstract class AppLocalizations {
   /// **'of {total}'**
   String ofFmt(Object total);
 
+  /// No description provided for @serverDetailCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Detail page cards'**
+  String get serverDetailCards;
+
   /// No description provided for @scheduledTasks.
   ///
   /// In en, this message translates to:

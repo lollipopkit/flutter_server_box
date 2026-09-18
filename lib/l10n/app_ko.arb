@@ -707,6 +707,7 @@
   "devicesBusiestFmt": "장치 {count}개 · 가장 바쁜 것은 {name}",
   "window": "기간",
   "ofFmt": "{total} 중",
+  "serverDetailCards": "상세 페이지 카드",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

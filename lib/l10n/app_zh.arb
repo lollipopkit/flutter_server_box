@@ -703,6 +703,7 @@
   "devicesBusiestFmt": "{count} 个设备 · 最忙 {name}",
   "window": "窗口",
   "ofFmt": "共 {total}",
+  "serverDetailCards": "详情页卡片",
   "scheduledTasks": "计划任务",
   "scheduledTaskLinuxOnly": "计划任务管理目前仅支持 Linux 服务器。",
   "scheduledTaskUnavailable": "此服务器上没有可用的 crontab。",

@@ -2424,6 +2424,9 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Картки сторінки деталей';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

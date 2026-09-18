@@ -2405,6 +2405,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Ayrıntı sayfası kartları';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

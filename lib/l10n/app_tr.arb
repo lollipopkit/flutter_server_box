@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} aygıt · en yoğunu {name}",
   "window": "pencere",
   "ofFmt": "/ {total}",
+  "serverDetailCards": "Ayrıntı sayfası kartları",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

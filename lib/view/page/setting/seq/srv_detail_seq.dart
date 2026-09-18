@@ -66,7 +66,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     final body = SafeArea(bottom: false, child: _buildBody(context));
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.serverDetailOrder)),
+      appBar: CustomAppBar(title: Text(l10n.serverDetailCards)),
       body: body,
     );
   }

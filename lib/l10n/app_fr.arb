@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} périphériques · {name} le plus chargé",
   "window": "fenêtre",
   "ofFmt": "sur {total}",
+  "serverDetailCards": "Cartes de la page de détails",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

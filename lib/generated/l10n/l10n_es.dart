@@ -2440,6 +2440,9 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Tarjetas de la página de detalles';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

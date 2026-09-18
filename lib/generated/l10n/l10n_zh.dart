@@ -2219,6 +2219,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => '详情页卡片';
+
+  @override
   String get scheduledTasks => '计划任务';
 
   @override
@@ -4699,6 +4702,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String ofFmt(Object total) {
     return '共 $total';
   }
+
+  @override
+  String get serverDetailCards => '詳情頁卡片';
 
   @override
   String get scheduledTasks => '排程工作';

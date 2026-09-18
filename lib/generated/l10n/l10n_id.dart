@@ -2409,6 +2409,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Kartu halaman detail';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

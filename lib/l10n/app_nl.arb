@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} apparaten · {name} is het drukst",
   "window": "venster",
   "ofFmt": "van {total}",
+  "serverDetailCards": "Kaarten op de detailpagina",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

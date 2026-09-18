@@ -2421,6 +2421,9 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Ətraflı səhifəsinin kartları';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

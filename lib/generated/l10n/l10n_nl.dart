@@ -2421,6 +2421,9 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => 'Kaarten op de detailpagina';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

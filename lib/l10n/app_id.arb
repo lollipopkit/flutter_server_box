@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} perangkat · {name} tersibuk",
   "window": "jendela",
   "ofFmt": "dari {total}",
+  "serverDetailCards": "Kartu halaman detail",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

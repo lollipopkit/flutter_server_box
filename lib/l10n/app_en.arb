@@ -972,6 +972,7 @@
   "devicesBusiestFmt": "{count} devices · {name} busiest",
   "window": "window",
   "ofFmt": "of {total}",
+  "serverDetailCards": "Detail page cards",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

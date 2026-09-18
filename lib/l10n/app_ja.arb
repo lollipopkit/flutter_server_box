@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} 台のデバイス · 最も負荷が高いのは {name}",
   "window": "期間",
   "ofFmt": "{total} 中",
+  "serverDetailCards": "詳細ページのカード",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

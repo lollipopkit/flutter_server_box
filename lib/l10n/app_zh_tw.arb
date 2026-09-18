@@ -667,6 +667,7 @@
   "devicesBusiestFmt": "{count} 個裝置 · 最忙 {name}",
   "window": "視窗",
   "ofFmt": "共 {total}",
+  "serverDetailCards": "詳情頁卡片",
   "scheduledTasks": "排程工作",
   "scheduledTaskLinuxOnly": "排程工作管理目前僅支援 Linux 伺服器。",
   "scheduledTaskUnavailable": "此伺服器上沒有可用的 crontab。",

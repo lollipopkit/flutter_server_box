@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "{count} Geräte · {name} am stärksten ausgelastet",
   "window": "Zeitfenster",
   "ofFmt": "von {total}",
+  "serverDetailCards": "Karten der Detailseite",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

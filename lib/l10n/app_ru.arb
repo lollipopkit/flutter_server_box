@@ -698,6 +698,7 @@
   "devicesBusiestFmt": "устройств: {count} · самое загруженное — {name}",
   "window": "окно",
   "ofFmt": "из {total}",
+  "serverDetailCards": "Карточки страницы сведений",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

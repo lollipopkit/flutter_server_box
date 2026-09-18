@@ -2301,6 +2301,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get serverDetailCards => '상세 페이지 카드';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override
