@@ -80,8 +80,17 @@ void main() {
   });
 }
 
+/// Waits for the forward to take [port], which is what says it reached its
+/// bind stage: binding it here stops working the moment it has.
+///
+/// Generous, because the deadline is not what the test is about. A second was
+/// enough on a developer's machine and not on a loaded CI runner, where this
+/// failed as "did not reach its local bind stage" — a real bind that was
+/// simply late. The loop leaves as soon as the port is taken, so the only
+/// thing a longer deadline costs is how long a genuine failure takes to
+/// report.
 Future<void> _waitUntilPortIsBound(int port) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 1));
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
   while (DateTime.now().isBefore(deadline)) {
     try {
       final socket = await ServerSocket.bind(
