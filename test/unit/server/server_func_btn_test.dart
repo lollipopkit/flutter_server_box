@@ -199,25 +199,45 @@ void main() {
       ]);
     });
 
-    test('an agent granting only files keeps the Files button', () {
+    List<ServerFuncBtn> usable(List<ServerFuncEntry> entries) => [
+      for (final entry in entries)
+        if (entry.available) entry.btn,
+    ];
+
+    /// Every entry stays on the row, so what the grant decides is the order
+    /// and which of them can be used — not how long the row is.
+    test('an agent granting only files leaves Files the one usable button', () {
       final btns = serverFuncBtnsFor(
         monitorOnly,
         const MonitorRemoteAccess(files: true),
       );
 
-      expect(btns, [ServerFuncBtn.files]);
+      expect(usable(btns), [ServerFuncBtn.files]);
+      expect(btns.first.btn, ServerFuncBtn.files);
+      expect(btns, hasLength(ServerFuncBtn.values.length));
+      // The rest keep the user's arrangement behind it.
+      expect(btns.last.available, isFalse);
     });
 
-    test('an agent granting nothing keeps no button', () {
-      expect(serverFuncBtnsFor(monitorOnly, MonitorRemoteAccess.none), isEmpty);
+    test('an agent granting nothing leaves nothing usable', () {
+      expect(
+        usable(serverFuncBtnsFor(monitorOnly, MonitorRemoteAccess.none)),
+        isEmpty,
+      );
       // Before the first poll the agent has said nothing, which is not a grant.
-      expect(serverFuncBtnsFor(monitorOnly, null), isEmpty);
+      expect(usable(serverFuncBtnsFor(monitorOnly, null)), isEmpty);
     });
 
     test('full access keeps everything but the two that need a byte stream', () {
-      final btns = serverFuncBtnsFor(
-        monitorOnly,
-        const MonitorRemoteAccess(fullAccess: true, terminal: true, files: true),
+      final btns = usable(
+        serverFuncBtnsFor(
+          monitorOnly,
+          const MonitorRemoteAccess(
+            fullAccess: true,
+            terminal: true,
+            files: true,
+          ),
+        ),
       );
 
       // No endpoint relays a connection to an address this app names, so port
@@ -238,7 +258,7 @@ void main() {
 
       // Null grant, and still everything: `granted` describes an agent, and
       // this server has none.
-      expect(serverFuncBtnsFor(ssh, null), ServerFuncBtn.values);
+      expect(usable(serverFuncBtnsFor(ssh, null)), ServerFuncBtn.values);
     });
   });
 }

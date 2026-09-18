@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
-import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/build_features.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -26,22 +25,16 @@ void main() {
     'persists the build migration and does not repeat it on relaunch',
     () async {
       setting.lastVer.put(1491);
-      setting.detailCardOrder.put([ServerDetailCards.about.name]);
       setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
 
       migrateBuildFeatures(1536);
 
       expect(setting.lastVer.get(), 1536);
-      expect(setting.detailCardOrder.get(), [
-        ServerDetailCards.about.name,
-        ServerDetailCards.bmc.name,
-      ]);
       expect(setting.serverFuncBtns.get(), [
         ServerFuncBtn.terminal.name,
         ServerFuncBtn.power.name,
       ]);
 
-      setting.detailCardOrder.put([ServerDetailCards.about.name]);
       setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
       // Finish the store's queued timestamp writes before replacing it.
       await setting.updateLastUpdateTs(key: null);
@@ -52,7 +45,6 @@ void main() {
       migrateBuildFeatures(1536);
 
       expect(setting.lastVer.get(), 1536);
-      expect(setting.detailCardOrder.get(), [ServerDetailCards.about.name]);
       expect(setting.serverFuncBtns.get(), [ServerFuncBtn.terminal.name]);
     },
   );
@@ -61,13 +53,11 @@ void main() {
     migrateBuildFeatures(1536);
 
     expect(setting.lastVer.get(), 0);
-    expect(setting.get<List>('detailCardOrder'), isNull);
     expect(setting.get<List>('serverBtns'), isNull);
   });
 
   test('rolls back every feature write when one persistence step fails', () {
     setting.lastVer.put(1491);
-    setting.detailCardOrder.put([ServerDetailCards.about.name]);
     setting.serverFuncBtns.put([ServerFuncBtn.terminal.name]);
     SqliteDb.instance.execute('''
       CREATE TRIGGER fail_server_btn_migration
@@ -81,7 +71,6 @@ void main() {
     expect(() => migrateBuildFeatures(1536), throwsStateError);
 
     expect(setting.lastVer.get(), 1491);
-    expect(setting.detailCardOrder.get(), [ServerDetailCards.about.name]);
     expect(setting.serverFuncBtns.get(), [ServerFuncBtn.terminal.name]);
   });
 }

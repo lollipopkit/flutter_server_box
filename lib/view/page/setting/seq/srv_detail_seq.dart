@@ -4,10 +4,19 @@ import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
+/// Which cards the server detail page draws.
+///
+/// There is no order any more. The page is the metrics — one chart and a row
+/// each — and what is left are the cards for what cannot be a row: a table, or
+/// a reading with no line over time. Their order is the order they are
+/// declared in, and dragging them around was arranging a list whose length is
+/// decided by what the machine reports.
+///
+/// TODO: `SettingStore.detailCardOrder` is no longer read. Delete the key once
+/// a release has shipped without it.
 class ServerDetailOrderPage extends StatefulWidget {
-    /// Whether it is being shown inside the settings pane rather than pushed.
+  /// Whether it is being shown inside the settings pane rather than pushed.
   ///
   /// The pane already names what it is showing, in the one bar the page has;
   /// a second one under it would say it twice.
@@ -25,28 +34,29 @@ class ServerDetailOrderPage extends StatefulWidget {
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
-  final prop = Stores.setting.detailCardOrder;
   final disabledProp = Stores.setting.detailCardDisabled;
 
-  late List<String> _order;
-  late Set<String> _enabled;
+  late Set<String> _disabled;
+
+  /// The cards this page can switch. The metrics are not among them: they are
+  /// the page itself. About is, because it was one before this and an install
+  /// that switched it off is still switching this one off.
+  static const _cards = [
+    ServerDetailCards.about,
+    ServerDetailCards.gpu,
+    ServerDetailCards.smart,
+    ServerDetailCards.sensor,
+    ServerDetailCards.temp,
+    ServerDetailCards.battery,
+    ServerDetailCards.pve,
+    ServerDetailCards.bmc,
+    ServerDetailCards.custom,
+  ];
 
   @override
   void initState() {
     super.initState();
-    _loadData();
-  }
-
-  void _loadData() {
-    final keys = prop.fetch();
-    final disabled = disabledProp.fetch();
-    _order = List<String>.from(keys);
-    for (final d in disabled) {
-      if (!_order.contains(d)) {
-        _order.add(d);
-      }
-    }
-    _enabled = Set<String>.from(keys.where((k) => !disabled.contains(k)));
+    _disabled = Set<String>.from(disabledProp.fetch());
   }
 
   @override
@@ -56,82 +66,38 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     final body = SafeArea(bottom: false, child: _buildBody(context));
     if (widget.embedded) return body;
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.serverDetailOrder)),
+      appBar: CustomAppBar(title: Text(l10n.serverDetailCards)),
       body: body,
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    return ReorderableListView.builder(
+    return ListView(
       key: const PageStorageKey('srv_detail_seq'),
       padding: context.padBottom(const EdgeInsets.all(7)),
-      buildDefaultDragHandles: false,
-      itemCount: _order.length,
-      proxyDecorator: reorderProxyDecorator,
-      itemBuilder: (_, idx) => _buildListItem(_order[idx], idx),
-      onReorderItem: _handleReorder,
+      children: [
+        for (final card in _cards) _buildListItem(card),
+      ],
     );
   }
 
-  Widget _buildListItem(String key, int idx) {
-    final isEnabled = _enabled.contains(key);
-    return ReorderableDelayedDragStartListener(
-      key: ValueKey(key),
-      index: idx,
-      child: CardX(
-        child: ListTile(
-          contentPadding: const EdgeInsets.only(left: 23, right: 11),
-          leading: Icon(ServerDetailCards.fromName(key)?.icon),
-          title: Text(
-            key,
-            style: isEnabled ? null : TextStyle(color: Colors.grey),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildCheckBox(key, isEnabled),
-              ReorderableDragStartListener(
-                index: idx,
-                child: const Icon(Icons.drag_handle),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildListItem(ServerDetailCards card) {
+    final enabled = !_disabled.contains(card.name);
+    return CardX(
+      child: SwitchListTile(
+        contentPadding: const EdgeInsets.only(left: 17, right: 11),
+        secondary: Icon(card.icon),
+        title: Text(card.toStr),
+        value: enabled,
+        onChanged: (_) => _toggle(card.name),
       ),
     );
   }
 
-  Widget _buildCheckBox(String key, bool isEnabled) {
-    return Checkbox(value: isEnabled, onChanged: (_) => _toggleEnabled(key));
-  }
-
-  void _handleReorder(int oldIndex, int newIndex) {
-    final targetIndex = newIndex;
-    if (targetIndex == oldIndex) {
-      return;
-    }
-
+  void _toggle(String key) {
     setState(() {
-      final item = _order.removeAt(oldIndex);
-      _order.insert(targetIndex, item);
+      if (!_disabled.remove(key)) _disabled.add(key);
     });
-    _saveChanges();
-  }
-
-  void _toggleEnabled(String key) {
-    setState(() {
-      if (_enabled.contains(key)) {
-        _enabled.remove(key);
-      } else {
-        _enabled.add(key);
-      }
-    });
-    _saveChanges();
-  }
-
-  void _saveChanges() {
-    prop.put(_order);
-    final disabledList = _order.where((k) => !_enabled.contains(k)).toList();
-    disabledProp.put(disabledList);
+    disabledProp.put(_disabled.toList());
   }
 }

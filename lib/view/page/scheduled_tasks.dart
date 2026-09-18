@@ -88,8 +88,23 @@ final class _ScheduledTasksPageState extends ConsumerState<ScheduledTasksPage> {
         !_unavailable &&
         _failure == null &&
         catalog != null;
-    final wide = MediaQuery.sizeOf(context).width >= _kWideWidth;
+    // Of the room this page is given, not of the window: in a pane the page
+    // is narrower than the window, and asking the window put the desktop
+    // toolbar in a 556pt column and overflowed it.
+    return LayoutBuilder(
+      builder: (_, cons) => _buildScaffold(
+        catalog,
+        canMutate: canMutate,
+        wide: cons.maxWidth >= _kWideWidth,
+      ),
+    );
+  }
 
+  Widget _buildScaffold(
+    CronCatalog? catalog, {
+    required bool canMutate,
+    required bool wide,
+  }) {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,

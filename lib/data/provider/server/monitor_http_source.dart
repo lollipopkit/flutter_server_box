@@ -90,6 +90,7 @@ class MonitorHttpDataSource implements ServerDataSource {
           timeMs: _epochMs(p.timestamp) ?? 0,
           cpu: p.cpu,
           mem: p.memory,
+          swap: p.swap,
           disk: p.disk,
           netRx: p.netRxSpeed,
           netTx: p.netTxSpeed,

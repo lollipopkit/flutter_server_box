@@ -84,6 +84,29 @@ async fn state_with(at: &[DateTime<Utc>]) -> Arc<AppState> {
 /// do not compare against each other as either one compares against itself.
 /// That is what let a broken window bound sit here unnoticed: the fixture and
 /// the query agreed with each other and with nothing that ships.
+/// One row on a machine that has swap, for the series that is a percentage of
+/// a total most machines leave at zero.
+async fn insert_sample_with_swap(
+    db: &sqlx::SqlitePool,
+    at: DateTime<Utc>,
+    total: i64,
+    used: i64,
+) {
+    sqlx::query(
+        "INSERT INTO system_metrics (
+            timestamp, server_name, cpu_usage,
+            memory_total, memory_used, swap_total, swap_used,
+            disk_total, disk_used, network_rx_bytes, network_tx_bytes
+         ) VALUES (?1, 'test', 1, 100, 50, ?2, ?3, 100, 50, 0, 0)",
+    )
+    .bind(at)
+    .bind(total)
+    .bind(used)
+    .execute(db)
+    .await
+    .unwrap();
+}
+
 async fn insert_sample(db: &sqlx::SqlitePool, at: DateTime<Utc>, i: i64) {
     sqlx::query(
         "INSERT INTO system_metrics (
@@ -283,4 +306,35 @@ fn point_time(point: &serde_json::Value) -> DateTime<Utc> {
     DateTime::parse_from_rfc3339(ts)
         .unwrap_or_else(|e| panic!("point timestamp {ts:?} is not RFC 3339: {e}"))
         .with_timezone(&Utc)
+}
+
+/// Swap is a percentage of a total that most machines leave at zero, so a
+/// machine without it answers with nothing rather than with 0% — which a chart
+/// would draw as a flat line along the bottom and a reader as "swap is fine".
+#[ntex::test]
+async fn swap_is_a_percentage_and_absent_where_there_is_none() {
+    let srv = test_server(state_with_samples(60).await).await;
+    let points = history(&srv, "minutes=60").await;
+    assert!(!points.is_empty());
+    for point in &points {
+        assert!(
+            point["swap"].is_null(),
+            "a machine with no swap reported {}",
+            point["swap"]
+        );
+    }
+
+    ensure_crypto_provider();
+    let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+    sqlx::migrate!("./migrations").run(&db).await.unwrap();
+    insert_sample_with_swap(&db, Utc::now() - Duration::seconds(30), 2048, 512).await;
+    let config = Config {
+        jwt_secret: Some(SECRET.to_string()),
+        ..Default::default()
+    };
+    let srv = test_server(AppState::new(Arc::new(config), db)).await;
+
+    let points = history(&srv, "minutes=60").await;
+    assert_eq!(points.len(), 1);
+    assert_eq!(points[0]["swap"].as_f64(), Some(25.0));
 }

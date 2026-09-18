@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
@@ -62,14 +63,23 @@ void main() {
     status.more[StatusCmdType.host] = 'test-host';
     status.more[StatusCmdType.sys] = 'Ubuntu 24.04';
     status.more[StatusCmdType.uptime] = uptime;
+    // A card that opens and closes, which is what this is about. The metrics
+    // are no longer cards, so the subject has to be one of the tables.
+    status.sensors
+      ..clear()
+      ..add(
+      const SensorItem(
+        device: 'coretemp',
+        adapter: SensorAdaptor(SensorAdaptor.isaRaw),
+        details: {'temp1': '+48.2°C'},
+      ),
+    );
     return status;
   }
 
-  testWidgets('a collapsed card stays collapsed across a status refresh', (
+  testWidgets('a card left collapsed stays collapsed across a refresh', (
     tester,
   ) async {
-    // Wide enough for `_getInitExpand` to answer yes whatever the collapse
-    // setting says, so the card starts open and there is something to close.
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -98,29 +108,25 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    // The card is open: its rows are in the tree.
-    expect(find.text('test-host'), findsOneWidget);
+    // The sensor card is one of the cards that still open and close, and its
+    // rows are what says which it is.
+    final card = find.byType(ExpandTile).first;
+    expect(find.text('coretemp'), findsOneWidget);
 
-    final header = find
-        .ancestor(
-          of: find.text('test-host'),
-          matching: find.byType(ExpandTile),
-        )
-        .first;
     await tester.tap(
-      find.descendant(of: header, matching: find.byType(ListTile)).first,
+      find.descendant(of: card, matching: find.byType(ListTile)).first,
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('test-host'), findsNothing);
+    expect(find.text('coretemp'), findsNothing);
 
-    // A poll arrives, and with it a different uptime — a different `more`.
+    // A poll arrives, and with it a different uptime — a different status.
     notifier.updateStatus(statusWith('1 day, 0:01'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(
-      find.text('test-host'),
+      find.text('coretemp'),
       findsNothing,
       reason: 'the refresh re-expanded the card the user collapsed',
     );

@@ -718,6 +718,9 @@ struct CapabilitiesView {
     #[serde(flatten)]
     capabilities: Capabilities,
     platform: SystemType,
+    /// This agent's own version, so a client can say which one it is talking
+    /// to — and tell an old one apart from a misconfigured one.
+    version: &'static str,
     remote_access: RemoteAccessView,
 }
 
@@ -746,6 +749,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
     Ok(HttpResponse::Ok().json(&CapabilitiesView {
         capabilities,
         platform,
+        version: env!("CARGO_PKG_VERSION"),
         remote_access: RemoteAccessView {
             terminal: app_state.remote_access.terminal.available(secure),
             full_access: app_state.full_access_allowed(secure),
@@ -1074,6 +1078,10 @@ struct HistoryPoint {
     timestamp: String,
     cpu: f64,
     memory: f64,
+    /// Percent, or absent on a machine with no swap — which is not the same
+    /// as swap sitting at zero, and is the one a chart must not draw a line
+    /// for.
+    swap: Option<f64>,
     disk: f64,
     net_rx_speed: f64,
     net_tx_speed: f64,
@@ -1139,7 +1147,7 @@ async fn get_metrics_history(
 
     use sqlx::Row;
     let rows = sqlx::query(
-        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2          GROUP BY bucket ORDER BY bucket",
+        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN swap_total > 0 THEN swap_used * 100.0 / swap_total END) AS swap,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2          GROUP BY bucket ORDER BY bucket",
     )
     .bind(bucket_secs)
     .bind(cutoff)
@@ -1172,6 +1180,7 @@ async fn get_metrics_history(
             timestamp: row.get("ts"),
             cpu: row.try_get("cpu").unwrap_or(0.0),
             memory: row.try_get("mem").unwrap_or(0.0),
+            swap: row.try_get::<Option<f64>, _>("swap").ok().flatten(),
             disk: row.try_get("disk").unwrap_or(0.0),
             net_rx_speed,
             net_tx_speed,

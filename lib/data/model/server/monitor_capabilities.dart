@@ -14,9 +14,14 @@ class MonitorCapabilities {
   /// not know, so a newer agent is not silently read as Linux.
   final SystemType? platform;
 
+  /// The agent's own version. Null for one built before it said so, which is
+  /// shown as no version rather than as an unknown one.
+  final String? version;
+
   const MonitorCapabilities({
     this.remoteAccess = MonitorRemoteAccess.none,
     this.platform,
+    this.version,
   });
 
   factory MonitorCapabilities.fromJson(Map<String, dynamic> json) {
@@ -25,10 +30,12 @@ class MonitorCapabilities {
         json['remote_access'] as Map<String, dynamic>? ?? const {},
       ),
       platform: SystemType.fromWire(json['platform'] as String?),
+      version: json['version'] as String?,
     );
   }
 
   @override
   String toString() =>
-      'MonitorCapabilities(remoteAccess: $remoteAccess, platform: $platform)';
+      'MonitorCapabilities(remoteAccess: $remoteAccess, platform: $platform, '
+      'version: $version)';
 }

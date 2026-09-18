@@ -2164,6 +2164,64 @@ class AppLocalizationsZh extends AppLocalizations {
   String get userPasswordEditTip => '密码留空将保留现有密码。';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '此服务器的连接方式不提供$func。';
+  }
+
+  @override
+  String get rangeLive => '实时';
+
+  @override
+  String get diskIo => '磁盘读写';
+
+  @override
+  String get peak => '峰值';
+
+  @override
+  String get hardware => '硬件';
+
+  @override
+  String get cores => '核心';
+
+  @override
+  String get historyStored => '已存储的历史';
+
+  @override
+  String get historySinceConnect => '自连接以来 · 未存储';
+
+  @override
+  String get historyNoStored => '只有 monitor agent 会存储历史。此连接只保留本应用连接后看到的部分。';
+
+  @override
+  String get noHistoryYet => '还没有采样';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return '没有 $metric 的存储历史';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count 个设备';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count 个设备 · 最忙 $name';
+  }
+
+  @override
+  String get window => '窗口';
+
+  @override
+  String ofFmt(Object total) {
+    return '共 $total';
+  }
+
+  @override
+  String get serverDetailCards => '详情页卡片';
+
+  @override
   String get scheduledTasks => '计划任务';
 
   @override
@@ -4589,6 +4647,64 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get userPasswordEditTip => '密碼留空將保留現有密碼。';
+
+  @override
+  String funcUnavailableFmt(Object func) {
+    return '此伺服器的連線方式不提供$func。';
+  }
+
+  @override
+  String get rangeLive => '即時';
+
+  @override
+  String get diskIo => '磁碟讀寫';
+
+  @override
+  String get peak => '峰值';
+
+  @override
+  String get hardware => '硬體';
+
+  @override
+  String get cores => '核心';
+
+  @override
+  String get historyStored => '已儲存的歷史';
+
+  @override
+  String get historySinceConnect => '自連線以來 · 未儲存';
+
+  @override
+  String get historyNoStored => '只有 monitor agent 會儲存歷史。此連線只保留本應用連線後看到的部分。';
+
+  @override
+  String get noHistoryYet => '還沒有取樣';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return '沒有 $metric 的儲存歷史';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count 個裝置';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count 個裝置 · 最忙 $name';
+  }
+
+  @override
+  String get window => '視窗';
+
+  @override
+  String ofFmt(Object total) {
+    return '共 $total';
+  }
+
+  @override
+  String get serverDetailCards => '詳情頁卡片';
 
   @override
   String get scheduledTasks => '排程工作';

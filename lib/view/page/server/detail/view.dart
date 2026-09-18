@@ -13,7 +13,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/service/self_addr.dart';
-import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/battery.dart';
@@ -24,6 +23,8 @@ import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
@@ -37,6 +38,7 @@ import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
+part 'metrics.dart';
 part 'misc.dart';
 
 class ServerDetailPage extends ConsumerStatefulWidget {
@@ -64,24 +66,28 @@ const _kFuncBarHeight = 56.0;
 /// something that cannot be scrolled out from under it.
 const _kFuncBarInset = _kFuncBarHeight + 26;
 
+/// From here the facts sit beside the readings rather than under them.
+///
+/// Below it the chart would be left under 400pt, which is too narrow to read
+/// a shape in — and the facts are what can afford to wait, since they are the
+/// part of the page that does not move.
+const _kColumnsWidth = 800.0;
+
+/// The column the facts and the tables sit in.
+const _kAsideWidth = 330.0;
+
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
-  /// Keyed by the enum, not paired positionally with `ServerDetailCards.names`.
+  /// The cards that are not one of the metrics the page is built around.
   ///
-  /// The positional form threw `Iterables do not have same length` at runtime
-  /// whenever a card was added or removed and only one of the two lists was
-  /// updated, and a reordering of either silently paired a card with the wrong
-  /// builder. Here a mistake is at worst one missing card.
+  /// CPU, memory, swap, disk and network are no longer cards: they are the
+  /// chart at the top and the rows under it, which is what this page came to
+  /// show. What is left here is everything that is a table or a one-off
+  /// reading rather than a value with a line over time.
   late final _cardBuildMap =
       <ServerDetailCards, Widget? Function(ServerState)>{
-        ServerDetailCards.about: _buildAbout,
-        ServerDetailCards.cpu: _buildCPUView,
-        ServerDetailCards.mem: _buildMemView,
-        ServerDetailCards.swap: _buildSwapView,
         ServerDetailCards.gpu: _buildGpuView,
-        ServerDetailCards.disk: _buildDiskView,
         ServerDetailCards.smart: _buildDiskSmart,
-        ServerDetailCards.net: _buildNetView,
         ServerDetailCards.sensor: _buildSensors,
         ServerDetailCards.temp: _buildTemperature,
         ServerDetailCards.battery: _buildBatteries,
@@ -91,7 +97,21 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       };
 
   late Size _size;
-  final List<String> _cardsOrder = [];
+
+  /// Which cards the user has switched off, by [ServerDetailCards.name].
+  ///
+  /// There is no order any more: the metrics are the page and the rest follow
+  /// in the order they are declared in. What is left of the setting is whether
+  /// a card is drawn at all.
+  final _cardsOff = <String>{};
+
+  /// The metric drawn in full. The rest are a row each.
+  _MetricKind _focusMetric = _MetricKind.cpu;
+
+  /// The window the chart draws, and what has been fetched for it.
+  _HistoryRange _range = _HistoryRange.live;
+  final _rangeWindows = <_HistoryRange, List<StatusHistorySample>>{};
+  final _rangeBusy = <_HistoryRange>{};
 
   final _settings = Stores.setting;
   final _netSortType = ValueNotifier(_NetSortType.device);
@@ -130,6 +150,12 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     });
   }
 
+  /// What the parts of this page held in extensions change state through:
+  /// `setState` is protected, and an extension is not a subclass.
+  void _rebuild(VoidCallback update) {
+    if (mounted) setState(update);
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -149,12 +175,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   @override
   void initState() {
     super.initState();
-    final order = _settings.detailCardOrder.fetch();
-    final disabled = _settings.detailCardDisabled.fetch();
-    order.removeWhere(
-      (e) => !ServerDetailCards.names.contains(e) || disabled.contains(e),
-    );
-    _cardsOrder.addAll(order);
+    _cardsOff.addAll(_settings.detailCardDisabled.fetch());
 
     // Prefill the trend buffer from whatever history the source already has,
     // so the chart cards aren't blank on a freshly opened page. A no-op for
@@ -349,22 +370,24 @@ ${err.message ?? 'null'}
     // server has a Files button and nothing else, and it went missing from its
     // own page while the Files tab went on listing it.
     final funcBtns = serverFuncBtnsFor(si.spi, si.remoteAccess);
-    final buildFuncs = funcBtns.isNotEmpty;
+    // Whether any of them can be used. An entry this connection cannot serve
+    // is still on the row, dimmed and last; a row of nothing but those is not
+    // a row, and what belongs in its place is the explanation below.
+    final buildFuncs = funcBtns.any((e) => e.available);
     final logo = _buildLogo(si);
-    final children = <Widget>[?logo, ?_buildErrCard(si)];
-    for (final card in _cardsOrder) {
-      final child = _cardBuildMap[ServerDetailCards.fromName(card)]
-          ?.call(si);
-      if (child != null) {
-        children.add(child);
-      }
-    }
+
+    // Everything that is not one of the metrics: a table or a one-off reading,
+    // which is what makes it a card rather than a row.
+    final cards = <Widget>[
+      for (final entry in _cardBuildMap.entries)
+        if (!_cardsOff.contains(entry.key.name)) ?entry.value(si),
+    ];
     // After the readings, because that is what this page came to show and the
     // notice is about what it cannot show. Nothing is drawn while the func bar
     // is there — this only explains a bar that is missing.
     if (!buildFuncs) {
       final noAccess = _buildNoRemoteAccessCard(si);
-      if (noAccess != null) children.add(noAccess);
+      if (noAccess != null) cards.add(noAccess);
     }
 
     return Scaffold(
@@ -372,10 +395,16 @@ ${err.message ?? 'null'}
       body: SafeArea(
         child: Stack(
           children: [
-            PageColumns(
-              controller: _scrollCtrl,
-              bottomInset: buildFuncs ? _kFuncBarInset : 0,
-              children: children,
+            LayoutBuilder(
+              builder: (_, cons) => _buildReadings(
+                si,
+                logo: logo,
+                cards: cards,
+                bottomInset: buildFuncs ? _kFuncBarInset : 0,
+                // Of the room this page has, not of the window: inside a pane
+                // it is the pane that has to hold two columns.
+                wide: cons.maxWidth >= _kColumnsWidth,
+              ),
             ),
             // Over the page rather than at the top of it. These act on the
             // server, not on any one card, so they belong within reach the
@@ -393,6 +422,61 @@ ${err.message ?? 'null'}
           ],
         ),
       ),
+    );
+  }
+
+  /// The readings: one metric drawn in full with the rest as rows, and beside
+  /// them what the machine is and everything that is a table rather than a
+  /// trend.
+  ///
+  /// Two columns only where both fit. Below that the facts go under the rows
+  /// rather than beside them, because a 330pt column takes the chart down to
+  /// something too narrow to read a shape in.
+  Widget _buildReadings(
+    ServerState si, {
+    required Widget? logo,
+    required List<Widget> cards,
+    required double bottomInset,
+    required bool wide,
+  }) {
+    final metrics = <Widget>[
+      ?logo,
+      ?_buildErrCard(si),
+      _buildMetrics(si, wide: wide),
+      // Under the readings rather than in the column beside them: these are
+      // tables — sensor rows, GPU processes, SMART attributes — and a 330pt
+      // column is not a width any of them was written for.
+      if (wide) ...[UIs.height13, ...cards],
+    ];
+    final aside = <Widget>[..._buildInfoCards(si), if (!wide) ...cards];
+
+    return SingleChildScrollView(
+      controller: _scrollCtrl,
+      padding: EdgeInsets.fromLTRB(13, 7, 13, bottomInset + 13),
+      child: wide
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: metrics,
+                  ),
+                ),
+                UIs.width13,
+                SizedBox(
+                  width: _kAsideWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: aside,
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [...metrics, UIs.height13, ...aside],
+            ),
     );
   }
 
@@ -430,7 +514,7 @@ ${err.message ?? 'null'}
   ///
   /// Takes the entries rather than working them out, so that what is drawn is
   /// the same list `_buildMainPage` decided there was room for.
-  Widget _buildFuncBar(ServerState si, List<ServerFuncBtn> btns) {
+  Widget _buildFuncBar(ServerState si, List<ServerFuncEntry> btns) {
     return LayoutBuilder(
       builder: (_, cons) => Center(
         child: Padding(
@@ -640,203 +724,6 @@ ${err.message ?? 'null'}
     );
   }
 
-  Widget? _buildAbout(ServerState si) {
-    final ss = si.status;
-    final publicIp = SelfAddr.pick(ss.ips);
-    return ExpandTile(
-      leading: const Icon(MingCute.information_fill, size: 20),
-      controller: _expand('about', _getInitExpand(ss.more.entries.length)),
-      title: Text(libL10n.about),
-      childrenPadding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-      children: [
-        // Not counted by `_getInitExpand` above, for the same reason the
-        // public address below is not: the threshold is about how much the
-        // machine had to say, and a row this card adds on its own would flip
-        // every phone from open to collapsed by arriving.
-        if (si.latencyMs != null)
-          _buildAboutRow(libL10n.delay, '${si.latencyMs}ms'),
-        for (final e in ss.more.entries) _buildAboutRow(e.key.i18n, e.value),
-        // Absent rather than blank when there is none: an empty value here
-        // would read as the machine having no address, when the ordinary
-        // reason is that the extended poll has not landed yet — or that this
-        // machine genuinely is only on a LAN, which is not a fact about the
-        // server worth a row of its own.
-        if (publicIp != null)
-          _buildAboutRow(l10n.publicIp, publicIp.address, secret: true),
-      ],
-    ).cardx;
-  }
-
-  Widget _buildAboutRow(String label, String value, {bool secret = false}) {
-    return Padding(
-      // On the row itself, which is what the enclosing list reconciles. Keying
-      // the `_SecretText` inside did nothing: the `Padding`s are matched by
-      // index first, and a keyed child looking for its element among unkeyed
-      // ones of another type simply gets a new one — so a revealed address
-      // still hid itself the moment `ss.more` gained an entry.
-      key: ValueKey('about-$label'),
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: UIs.text13, overflow: TextOverflow.ellipsis),
-          if (secret)
-            _SecretText(value)
-          else
-            Text(value, style: UIs.text13Grey, overflow: TextOverflow.ellipsis),
-        ],
-      ),
-    );
-  }
-
-  /// CPU: the live figure, its breakdown, the per-core bars, its own trend,
-  /// and the model last.
-  ///
-  /// Separate from RAM again. They shared a card briefly, which put two 27pt
-  /// figures eight lines apart with one chart between them and never read as
-  /// a single subject. Apart, each figure is identified by what surrounds it:
-  /// the CPU breakdown here, the total beside the RAM one.
-  Widget? _buildCPUView(ServerState si) {
-    final ss = si.status;
-    final cpuPercent = ss.cpu.usedPercent(coreIdx: 0)?.toInt();
-
-    final details = [
-      _buildDetailPercent(ss.cpu.user, 'user'),
-      UIs.width13,
-      _buildDetailPercent(ss.cpu.idle, 'idle'),
-    ];
-    if (ss.system == SystemType.linux) {
-      details.addAll([
-        UIs.width13,
-        _buildDetailPercent(ss.cpu.sys, 'sys'),
-        UIs.width13,
-        _buildDetailPercent(ss.cpu.iowait, 'io'),
-      ]);
-    }
-
-    // The model string never changes while the page is open, so it sits after
-    // the readings that do
-    final children = <Widget>[
-      if (_cpuViewAsProgress) ..._buildCPUProgress(ss.cpu),
-      ?_buildCpuChart(si),
-      if (ss.cpu.brand.isNotEmpty)
-        Column(
-          children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList(),
-        ).paddingOnly(top: 13),
-    ];
-
-    return ExpandTile(
-      title: Align(
-        alignment: Alignment.centerLeft,
-        child: _buildAnimatedText(
-          ValueKey(cpuPercent),
-          cpuPercent == null ? '--' : '$cpuPercent%',
-          UIs.text27,
-        ),
-      ),
-      childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-      controller: _expand('cpu', _getInitExpand(1)),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: details),
-      children: children,
-    ).cardx;
-  }
-
-  /// RAM, laid out to mirror the CPU card so the two read as one scale.
-  ///
-  ///
-  /// No progress bar: it restated the same percentage the figure and the trend
-  /// already carried, and its full-width fill was the heaviest mark on the card.
-  Widget? _buildMemView(ServerState si) {
-    final ss = si.status;
-    if (ss.mem.total == 0) return null;
-
-    final free = ss.mem.free / ss.mem.total * 100;
-    final avail = ss.mem.availPercent * 100;
-    final usedStr = (ss.mem.usedPercent * 100).toStringAsFixed(0);
-
-    return ExpandTile(
-      title: Row(
-        children: [
-          _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
-          UIs.width7,
-          // Flexible, because a `ListTile` gives its title what the trailing
-          // does not take: on a 320pt phone that is 77pt for a 27pt figure and
-          // this line together, and an unelided text there is the overflow
-          // stripe across the memory card.
-          Flexible(
-            child: Text(
-              'of ${(ss.mem.total * 1024).bytes2Str}',
-              style: UIs.text13Grey,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-      childrenPadding: const EdgeInsets.symmetric(vertical: 13),
-      controller: _expand('mem', _getInitExpand(1)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildDetailPercent(free, 'free'),
-          UIs.width13,
-          _buildDetailPercent(avail, 'avail'),
-        ],
-      ),
-      children: [?_buildMemChart(si)],
-    ).cardx;
-  }
-
-  Widget _buildCpuModelItem(MapEntry<String, int> e) {
-    final name = e.key
-        .replaceFirst('Intel(R)', '')
-        .replaceFirst('AMD', '')
-        .replaceFirst('with Radeon Graphics', '');
-    final child = Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        LayoutBuilder(
-          builder: (_, cons) {
-            return ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: cons.maxWidth * .7),
-              child: Text(
-                name,
-                style: UIs.text13,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            );
-          },
-        ),
-        Text(
-          'x ${e.value}',
-          style: UIs.text13Grey,
-          overflow: TextOverflow.clip,
-        ),
-      ],
-    );
-    return child.paddingSymmetric(horizontal: 17);
-  }
-
-  /// [percent] is null before a second sample exists, i.e. there is no window
-  /// to compute a share over — rendered as "--" so it can't be mistaken for a
-  /// measured 0%
-  Widget _buildDetailPercent(double? percent, String timeType) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          percent == null ? '--' : '${percent.toStringAsFixed(1)}%',
-          style: UIs.text12,
-          textScaler: _textFactor,
-        ),
-        Text(timeType, style: UIs.text12Grey, textScaler: _textFactor),
-      ],
-    );
-  }
-
   List<Widget> _buildCPUProgress(Cpus cs) {
     const kMaxColumn = 2;
     const kRowThreshold = 4;
@@ -905,38 +792,6 @@ ${err.message ?? 'null'}
       backgroundColor: UIs.halfAlpha,
       color: UIs.primaryColor,
     );
-  }
-
-  Widget? _buildSwapView(ServerState si) {
-    final ss = si.status;
-    if (ss.swap.total == 0) return null;
-
-    final used = ss.swap.usedPercent * 100;
-    final cached = ss.swap.cached / ss.swap.total * 100;
-
-    final percentW = Row(
-      children: [
-        Text('${used.toStringAsFixed(0)}%', style: UIs.text27),
-        UIs.width7,
-        Text('of ${(ss.swap.total * 1024).bytes2Str} ', style: UIs.text13Grey),
-      ],
-    );
-
-    return Padding(
-      padding: UIs.roundRectCardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [percentW, _buildDetailPercent(cached, 'cached')],
-          ),
-          UIs.height13,
-          _buildProgress(used),
-        ],
-      ),
-    ).cardx;
   }
 
   Widget? _buildGpuView(ServerState si) {
@@ -1027,43 +882,6 @@ ${err.message ?? 'null'}
         child: const Icon(Icons.info_outline, size: 17),
       ),
     );
-  }
-
-  Widget? _buildDiskView(ServerState si) {
-    final ss = si.status;
-    final mounts = <Widget>[];
-
-    // Create widgets for each top-level disk
-    for (int idx = 0; idx < ss.disk.length; idx++) {
-      final disk = ss.disk[idx];
-      mounts.add(_buildDiskItemWithHierarchy(disk, ss, 0));
-    }
-
-    if (mounts.isEmpty) return null;
-
-    // Laid out like the Network card, and for the same reason: a host reports
-    // as many mounts as it has, most of them loop devices and container
-    // layers, and the throughput trend put after that list was never seen.
-    final children = <Widget>[
-      ?_buildDiskChart(si),
-      ExpandTile(
-        title: Text(libL10n.device, style: UIs.text13Grey),
-        // Its own entry: a nested tile is dropped from the tree whenever the
-        // card above it is collapsed, so it needs somewhere to be remembered
-        // just as much as the card does.
-        controller: _expand('disk.devices', false),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: mounts,
-      ),
-    ];
-
-    return ExpandTile(
-      title: Text(libL10n.disk),
-      childrenPadding: EdgeInsets.zero,
-      leading: Icon(ServerDetailCards.disk.icon, size: 17),
-      controller: _expand('disk', _getInitExpand(1)),
-      children: children,
-    ).cardx;
   }
 
   Widget _buildDiskItemWithHierarchy(
@@ -1293,60 +1111,6 @@ ${err.message ?? 'null'}
       ),
       actions: Btnx.oks,
     );
-  }
-
-  Widget? _buildNetView(ServerState si) {
-    final ss = si.status;
-    final ns = ss.netSpeed;
-    final children = <Widget>[];
-    final devices = ns.devices;
-    if (devices.isEmpty) return null;
-
-    devices.sort(_netSortType.value.getSortFunc(ns));
-
-    // Chart first, interfaces behind a disclosure that starts closed. A host
-    // routinely reports twenty-odd interfaces, nearly all of them idle
-    // tunnels; putting the trend after that list buried it.
-    final chart = _buildNetChart(si);
-    if (chart != null) children.add(chart);
-    children.add(
-      ExpandTile(
-        title: Text(libL10n.device, style: UIs.text13Grey),
-        controller: _expand('net.devices', false),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: devices.map((e) => _buildNetSpeedItem(ns, e)).toList(),
-      ),
-    );
-
-    return ExpandTile(
-      leading: Icon(ServerDetailCards.net.icon, size: 17),
-      title: Row(
-        children: [
-          Text(libL10n.net),
-          UIs.width13,
-          _netSortType.listenVal(
-            (val) => InkWell(
-              onTap: () => _netSortType.value = val.next,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 377),
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: Row(
-                  children: [
-                    const Icon(Icons.sort, size: 17),
-                    UIs.width7,
-                    Text(val.name, style: UIs.text13Grey),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      childrenPadding: EdgeInsets.zero,
-      controller: _expand('net', _getInitExpand(1)),
-      children: children,
-    ).cardx;
   }
 
   Widget _buildNetSpeedItem(NetSpeed ns, String device) {
@@ -1790,14 +1554,6 @@ ${err.message ?? 'null'}
     );
   }
 
-  Widget _buildAnimatedText(Key key, String text, TextStyle style) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 277),
-      child: Text(key: key, text, style: style, textScaler: _textFactor),
-      transitionBuilder: (child, animation) =>
-          FadeTransition(opacity: animation, child: child),
-    );
-  }
 }
 
 /// A value that is on screen only once someone asks for it.

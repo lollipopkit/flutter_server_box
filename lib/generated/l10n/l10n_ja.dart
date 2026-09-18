@@ -2238,6 +2238,65 @@ class AppLocalizationsJa extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
+  String funcUnavailableFmt(Object func) {
+    return '$func はこのサーバーの接続方法では利用できません。';
+  }
+
+  @override
+  String get rangeLive => 'リアルタイム';
+
+  @override
+  String get diskIo => 'ディスク I/O';
+
+  @override
+  String get peak => 'ピーク';
+
+  @override
+  String get hardware => 'ハードウェア';
+
+  @override
+  String get cores => 'コア数';
+
+  @override
+  String get historyStored => '保存された履歴';
+
+  @override
+  String get historySinceConnect => '接続以降 · 未保存';
+
+  @override
+  String get historyNoStored =>
+      '履歴を保存するのは monitor エージェントだけです。この接続では、アプリが接続後に見た分のみ保持します。';
+
+  @override
+  String get noHistoryYet => 'まだ計測データがありません';
+
+  @override
+  String noStoredHistoryFor(Object metric) {
+    return '$metric の保存された履歴はありません';
+  }
+
+  @override
+  String devicesFmt(Object count) {
+    return '$count 台のデバイス';
+  }
+
+  @override
+  String devicesBusiestFmt(Object count, Object name) {
+    return '$count 台のデバイス · 最も負荷が高いのは $name';
+  }
+
+  @override
+  String get window => '期間';
+
+  @override
+  String ofFmt(Object total) {
+    return '$total 中';
+  }
+
+  @override
+  String get serverDetailCards => '詳細ページのカード';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

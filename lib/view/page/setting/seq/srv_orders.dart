@@ -31,7 +31,7 @@ class ServerOrdersPage extends StatelessWidget {
     final tabs = TabBar(
       tabs: [
         Tab(text: l10n.serverOrder),
-        Tab(text: l10n.serverDetailOrder),
+        Tab(text: l10n.serverDetailCards),
         Tab(text: l10n.serverFuncBtns),
       ],
     );
