@@ -77,21 +77,82 @@ MAILTO=ops@example.com
     expect(removed.render(), contains('@daily /usr/local/bin/report\n'));
   });
 
+  test('keeps every line it does not manage as a preserved one', () {
+    final document = CronDocument.parse(source);
+
+    expect(document.preserved, [
+      '# Keep this comment',
+      'MAILTO=ops@example.com',
+      '# 0 0 * * * this ordinary comment is not managed',
+    ]);
+    // A disabled task is a task, not a comment: it is in the list with its
+    // switch off, and showing it twice would offer two ways to change it.
+    expect(
+      document.preserved,
+      isNot(contains(contains('/usr/local/bin/health-check'))),
+    );
+  });
+
+  test('reads the clock the listing reported', () async {
+    final exec = _QueueExec([
+      const ExecResult(
+        exitCode: 0,
+        stdout:
+            'SrvBoxCron.User\tadmin\n'
+            'SrvBoxCron.Clock\t1772000000 -0500\n'
+            'SrvBoxCron.Body\n',
+        stderr: '',
+      ),
+    ]);
+
+    final catalog = await CronManager.list(exec);
+
+    expect(catalog.clock?.offset, const Duration(hours: -5));
+  });
+
+  // The clock is what makes a next run the server's rather than the phone's,
+  // and it is the one part of the listing that is allowed to fail: a `date`
+  // without `%z` prints it back literally, and a build older than the marker
+  // does not print the line at all. Either way the page falls back to this
+  // device's timezone instead of showing a time from a failed parse.
+  test('treats a clock it cannot read as one the server did not say', () async {
+    final exec = _QueueExec([
+      const ExecResult(
+        exitCode: 0,
+        stdout:
+            'SrvBoxCron.User\tadmin\n'
+            'SrvBoxCron.Clock\t1772000000 %z\n'
+            'SrvBoxCron.Body\n',
+        stderr: '',
+      ),
+      const ExecResult(
+        exitCode: 0,
+        stdout: 'SrvBoxCron.User\tadmin\nSrvBoxCron.Body\n',
+        stderr: '',
+      ),
+    ]);
+
+    expect((await CronManager.list(exec)).clock, isNull);
+    expect((await CronManager.list(exec)).clock, isNull);
+  });
+
   test('validates schedules and rejects line injection', () {
     expect(
       CronDocument.validate(schedule: '* * * *', command: 'echo short'),
-      isNotNull,
+      CronValidation.fieldCount,
     );
     expect(
       CronDocument.validate(schedule: '@reboot', command: 'echo okay'),
       isNull,
     );
+    // A line break would split one task into two lines of the file, the
+    // second of which crond reads as a schedule of its own.
     expect(
       CronDocument.validate(
         schedule: '* * * * *',
         command: 'echo okay\nrm -rf /',
       ),
-      isNotNull,
+      CronValidation.lineBreak,
     );
   });
 

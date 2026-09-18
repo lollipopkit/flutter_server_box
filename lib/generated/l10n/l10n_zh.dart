@@ -2182,6 +2182,124 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
 
   @override
+  String get scheduledTaskAdd => '添加任务';
+
+  @override
+  String get scheduledTaskNextRun => '下次运行';
+
+  @override
+  String scheduledTaskNextInFmt(Object time) {
+    return '$time后';
+  }
+
+  @override
+  String get scheduledTaskEnabled => '已启用';
+
+  @override
+  String get scheduledTaskCommentedOut => '已注释';
+
+  @override
+  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+    return '$total 个任务 · $enabled 个已启用';
+  }
+
+  @override
+  String get scheduledTaskFilterHint => '筛选任务';
+
+  @override
+  String get scheduledTaskPreserved => '保留的行';
+
+  @override
+  String get scheduledTaskRaw => '原始 crontab';
+
+  @override
+  String get scheduledTaskEnableNow => '立即启用';
+
+  @override
+  String get scheduledTaskEnableNowTip => '关闭时该行以注释写入。';
+
+  @override
+  String scheduledTaskEmptyFmt(Object user) {
+    return '$user 没有计划任务。在此添加的内容会写入该账户的 crontab。';
+  }
+
+  @override
+  String get scheduledTaskFieldMinute => '分钟';
+
+  @override
+  String get scheduledTaskFieldHour => '小时';
+
+  @override
+  String get scheduledTaskFieldDayOfMonth => '日';
+
+  @override
+  String get scheduledTaskFieldMonth => '月';
+
+  @override
+  String get scheduledTaskFieldDayOfWeek => '星期';
+
+  @override
+  String get cronErrScheduleEmpty => '需要填写执行周期。';
+
+  @override
+  String get cronErrCommandEmpty => '需要填写命令。';
+
+  @override
+  String get cronErrLineBreak => 'crontab 中的一行不能包含换行。';
+
+  @override
+  String get cronErrMacro => '宏是一个单词，例如 @reboot。';
+
+  @override
+  String get cronErrFieldCount => 'cron 执行周期需要 5 个字段，或 @reboot 这样的宏。';
+
+  @override
+  String get cronAtBoot => '开机时';
+
+  @override
+  String get cronEveryMin => '每分钟';
+
+  @override
+  String cronEveryMinsFmt(Object minutes) {
+    return '每 $minutes 分钟';
+  }
+
+  @override
+  String cronHourlyAtFmt(Object minute) {
+    return '每小时的 :$minute';
+  }
+
+  @override
+  String cronEveryHoursFmt(Object hours) {
+    return '每 $hours 小时';
+  }
+
+  @override
+  String cronEveryHoursAtFmt(Object hours, Object minute) {
+    return '每 $hours 小时的 :$minute';
+  }
+
+  @override
+  String cronDailyAtFmt(Object time) {
+    return '每天 $time';
+  }
+
+  @override
+  String cronWeekdaysAtFmt(Object time) {
+    return '工作日 $time';
+  }
+
+  @override
+  String cronWeekdayAtFmt(Object day, Object time) {
+    return '每$day $time';
+  }
+
+  @override
+  String cronMonthlyAtFmt(Object day, Object time) {
+    return '每月 $day 日 $time';
+  }
+
+  @override
   String get monitorSettings => 'Monitor 设置';
 
   @override
@@ -2386,6 +2504,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiNoResponse => '無回覆內容';
+
+  @override
+  String get remoteDesktop => 'Remote desktop';
 
   @override
   String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
@@ -3026,6 +3147,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get ungrouped => '未分組';
+
+  @override
+  String get containerReclaimable => 'Reclaimable';
 
   @override
   String get unused => '未使用';
@@ -3904,6 +4028,29 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get processKillTargetChanged => '該處理程序已變更或結束，請重新整理後再試。';
 
   @override
+  String get processSearchHint => 'Name, user or PID';
+
+  @override
+  String processShowKernelThreads(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count kernel threads',
+      one: 'Show 1 kernel thread',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get processForceKill => 'Force kill';
+
+  @override
+  String get processStarted => 'Started';
+
+  @override
+  String get processThreads => 'Threads';
+
+  @override
   String get watchServers => '手錶上的伺服器';
 
   @override
@@ -3966,6 +4113,83 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get systemdUserScopeMissingTip => '該帳號在伺服器上沒有使用者工作階段匯流排，因此只顯示系統 unit。';
+
+  @override
+  String get serviceSearchHint => 'Unit name';
+
+  @override
+  String get serviceNeedsAttention => 'Needs attention';
+
+  @override
+  String serviceOtherUnits(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count other units',
+      one: '1 other unit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get serviceUnit => 'Unit';
+
+  @override
+  String get serviceUnitType => 'Type';
+
+  @override
+  String get serviceScope => 'Scope';
+
+  @override
+  String get serviceStartup => 'Startup';
+
+  @override
+  String serviceUpFor(String duration) {
+    return 'up $duration';
+  }
+
+  @override
+  String serviceDownFor(String duration) {
+    return 'down $duration';
+  }
+
+  @override
+  String serviceNextIn(String duration) {
+    return 'next $duration';
+  }
+
+  @override
+  String serviceStoppedAgo(String duration) {
+    return 'Stopped $duration ago';
+  }
+
+  @override
+  String serviceExitStatus(String code) {
+    return 'exit status $code';
+  }
+
+  @override
+  String get serviceFullJournal => 'Full journal';
+
+  @override
+  String get serviceUnitFile => 'Unit file';
+
+  @override
+  String serviceJournalRecent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Last $count lines',
+      one: 'Last line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get serviceJournalUnreadable => 'This account cannot read the journal';
+
+  @override
+  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => '無法在此伺服器上執行命令';
@@ -4300,6 +4524,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get userUid => 'UID';
 
   @override
+  String get userLoginStatus => 'Status';
+
+  @override
+  String get userLoginEnabled => 'Login enabled';
+
+  @override
+  String get userDetailAccount => 'Account';
+
+  @override
+  String get userDetailSecurity => 'Security';
+
+  @override
+  String get userSshKeys => 'SSH keys';
+
+  @override
+  String get userExpires => 'Expires';
+
+  @override
+  String get userNever => 'Never';
+
+  @override
+  String get userPasswordSet => 'Set';
+
+  @override
+  String get userPasswordLocked => 'Locked';
+
+  @override
+  String get userPasswordNone => 'None';
+
+  @override
+  String get userSuperuser => 'Superuser';
+
+  @override
+  String get userOpenShell => 'Open shell';
+
+  @override
+  String get userRootChangesWarning =>
+      'Changes to root take effect in every session at once.';
+
+  @override
   String get userComment => '備註';
 
   @override
@@ -4343,6 +4607,125 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
+
+  @override
+  String get scheduledTaskAdd => 'Add task';
+
+  @override
+  String get scheduledTaskNextRun => 'Next run';
+
+  @override
+  String scheduledTaskNextInFmt(Object time) {
+    return 'in $time';
+  }
+
+  @override
+  String get scheduledTaskEnabled => 'Enabled';
+
+  @override
+  String get scheduledTaskCommentedOut => 'Commented out';
+
+  @override
+  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+    return '$total tasks · $enabled enabled';
+  }
+
+  @override
+  String get scheduledTaskFilterHint => 'Filter tasks';
+
+  @override
+  String get scheduledTaskPreserved => 'Preserved lines';
+
+  @override
+  String get scheduledTaskRaw => 'Raw crontab';
+
+  @override
+  String get scheduledTaskEnableNow => 'Enable now';
+
+  @override
+  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+
+  @override
+  String scheduledTaskEmptyFmt(Object user) {
+    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+  }
+
+  @override
+  String get scheduledTaskFieldMinute => 'Minute';
+
+  @override
+  String get scheduledTaskFieldHour => 'Hour';
+
+  @override
+  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+
+  @override
+  String get scheduledTaskFieldMonth => 'Month';
+
+  @override
+  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+
+  @override
+  String get cronErrScheduleEmpty => 'A schedule is required.';
+
+  @override
+  String get cronErrCommandEmpty => 'A command is required.';
+
+  @override
+  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+
+  @override
+  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+
+  @override
+  String get cronErrFieldCount =>
+      'A cron schedule has five fields, or a macro such as @reboot.';
+
+  @override
+  String get cronAtBoot => 'At boot';
+
+  @override
+  String get cronEveryMin => 'Every minute';
+
+  @override
+  String cronEveryMinsFmt(Object minutes) {
+    return 'Every $minutes minutes';
+  }
+
+  @override
+  String cronHourlyAtFmt(Object minute) {
+    return 'Every hour at :$minute';
+  }
+
+  @override
+  String cronEveryHoursFmt(Object hours) {
+    return 'Every $hours hours';
+  }
+
+  @override
+  String cronEveryHoursAtFmt(Object hours, Object minute) {
+    return 'Every $hours hours at :$minute';
+  }
+
+  @override
+  String cronDailyAtFmt(Object time) {
+    return 'Every day at $time';
+  }
+
+  @override
+  String cronWeekdaysAtFmt(Object time) {
+    return 'On weekdays at $time';
+  }
+
+  @override
+  String cronWeekdayAtFmt(Object day, Object time) {
+    return 'Every $day at $time';
+  }
+
+  @override
+  String cronMonthlyAtFmt(Object day, Object time) {
+    return 'Day $day of every month at $time';
+  }
 
   @override
   String get monitorSettings => 'Monitor 設定';

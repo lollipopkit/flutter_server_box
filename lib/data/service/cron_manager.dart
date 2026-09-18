@@ -1,4 +1,5 @@
 import 'package:server_box/data/model/server/cron.dart';
+import 'package:server_box/data/model/server/cron_schedule.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 
 final class CronManagerException implements Exception {
@@ -13,8 +14,13 @@ final class CronManagerException implements Exception {
 
 abstract final class CronManager {
   static const userMarker = 'SrvBoxCron.User\t';
+  static const clockMarker = 'SrvBoxCron.Clock\t';
   static const bodyMarker = 'SrvBoxCron.Body';
 
+  /// The clock line is `date +'%s %z'` and is allowed to fail: a `date`
+  /// without `%z` prints it back literally, which [parse] reads as nothing
+  /// said. Cron matches an expression against the server's wall clock, so the
+  /// offset is what lets the page name a next run the server agrees with.
   static const listScript = r'''
 LC_ALL=C
 export LC_ALL
@@ -24,6 +30,7 @@ command -v crontab >/dev/null 2>&1 || {
 }
 printf 'SrvBoxCron.User\t'
 id -un || exit $?
+printf 'SrvBoxCron.Clock\t%s\n' "$(date +'%s %z' 2>/dev/null)"
 printf 'SrvBoxCron.Body\n'
 crontab -l
 ''';
@@ -82,8 +89,18 @@ crontab -l
     if (user.isEmpty) {
       throw const CronManagerException('Unable to determine the current user');
     }
+    final clockLine = header
+        .split('\n')
+        .firstWhere((line) => line.startsWith(clockMarker), orElse: () => '');
+    final clock = clockLine.isEmpty
+        ? null
+        : CronClock.tryParse(clockLine.substring(clockMarker.length));
     final body = normalized.substring(bodyStart + bodyMarker.length + 1);
-    return CronCatalog(user: user, document: CronDocument.parse(body));
+    return CronCatalog(
+      user: user,
+      document: CronDocument.parse(body),
+      clock: clock,
+    );
   }
 
   static Future<void> save(ServerExec exec, CronDocument document) async {

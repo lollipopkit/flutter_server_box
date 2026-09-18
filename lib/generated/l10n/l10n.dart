@@ -4114,6 +4114,198 @@ abstract class AppLocalizations {
   /// **'For example: 0 2 * * * or @reboot'**
   String get scheduledTaskScheduleHint;
 
+  /// No description provided for @scheduledTaskAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add task'**
+  String get scheduledTaskAdd;
+
+  /// No description provided for @scheduledTaskNextRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Next run'**
+  String get scheduledTaskNextRun;
+
+  /// No description provided for @scheduledTaskNextInFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'in {time}'**
+  String scheduledTaskNextInFmt(Object time);
+
+  /// No description provided for @scheduledTaskEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get scheduledTaskEnabled;
+
+  /// No description provided for @scheduledTaskCommentedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Commented out'**
+  String get scheduledTaskCommentedOut;
+
+  /// No description provided for @scheduledTaskSummaryFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{total} tasks · {enabled} enabled'**
+  String scheduledTaskSummaryFmt(Object enabled, Object total);
+
+  /// No description provided for @scheduledTaskFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter tasks'**
+  String get scheduledTaskFilterHint;
+
+  /// No description provided for @scheduledTaskPreserved.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserved lines'**
+  String get scheduledTaskPreserved;
+
+  /// No description provided for @scheduledTaskRaw.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw crontab'**
+  String get scheduledTaskRaw;
+
+  /// No description provided for @scheduledTaskEnableNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable now'**
+  String get scheduledTaskEnableNow;
+
+  /// No description provided for @scheduledTaskEnableNowTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Off writes the line commented out.'**
+  String get scheduledTaskEnableNowTip;
+
+  /// No description provided for @scheduledTaskEmptyFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled tasks for {user}. What is added here is written into that account\'s crontab.'**
+  String scheduledTaskEmptyFmt(Object user);
+
+  /// No description provided for @scheduledTaskFieldMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'Minute'**
+  String get scheduledTaskFieldMinute;
+
+  /// No description provided for @scheduledTaskFieldHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Hour'**
+  String get scheduledTaskFieldHour;
+
+  /// No description provided for @scheduledTaskFieldDayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of month'**
+  String get scheduledTaskFieldDayOfMonth;
+
+  /// No description provided for @scheduledTaskFieldMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get scheduledTaskFieldMonth;
+
+  /// No description provided for @scheduledTaskFieldDayOfWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of week'**
+  String get scheduledTaskFieldDayOfWeek;
+
+  /// No description provided for @cronErrScheduleEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'A schedule is required.'**
+  String get cronErrScheduleEmpty;
+
+  /// No description provided for @cronErrCommandEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'A command is required.'**
+  String get cronErrCommandEmpty;
+
+  /// No description provided for @cronErrLineBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'A crontab line cannot contain line breaks.'**
+  String get cronErrLineBreak;
+
+  /// No description provided for @cronErrMacro.
+  ///
+  /// In en, this message translates to:
+  /// **'A macro is one word, such as @reboot.'**
+  String get cronErrMacro;
+
+  /// No description provided for @cronErrFieldCount.
+  ///
+  /// In en, this message translates to:
+  /// **'A cron schedule has five fields, or a macro such as @reboot.'**
+  String get cronErrFieldCount;
+
+  /// No description provided for @cronAtBoot.
+  ///
+  /// In en, this message translates to:
+  /// **'At boot'**
+  String get cronAtBoot;
+
+  /// No description provided for @cronEveryMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Every minute'**
+  String get cronEveryMin;
+
+  /// No description provided for @cronEveryMinsFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {minutes} minutes'**
+  String cronEveryMinsFmt(Object minutes);
+
+  /// No description provided for @cronHourlyAtFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Every hour at :{minute}'**
+  String cronHourlyAtFmt(Object minute);
+
+  /// No description provided for @cronEveryHoursFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {hours} hours'**
+  String cronEveryHoursFmt(Object hours);
+
+  /// No description provided for @cronEveryHoursAtFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {hours} hours at :{minute}'**
+  String cronEveryHoursAtFmt(Object hours, Object minute);
+
+  /// No description provided for @cronDailyAtFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day at {time}'**
+  String cronDailyAtFmt(Object time);
+
+  /// No description provided for @cronWeekdaysAtFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'On weekdays at {time}'**
+  String cronWeekdaysAtFmt(Object time);
+
+  /// No description provided for @cronWeekdayAtFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {day} at {time}'**
+  String cronWeekdayAtFmt(Object day, Object time);
+
+  /// No description provided for @cronMonthlyAtFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {day} of every month at {time}'**
+  String cronMonthlyAtFmt(Object day, Object time);
+
   /// No description provided for @monitorSettings.
   ///
   /// In en, this message translates to:
