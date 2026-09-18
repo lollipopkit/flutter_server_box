@@ -898,8 +898,6 @@
   "peak": "pik",
   "hardware": "Avadanlıq",
   "cores": "Nüvələr",
-  "historyStored": "saxlanılan tarixçə",
-  "historySinceConnect": "qoşulmadan bəri · saxlanılmır",
   "historyNoStored": "Tarixçəni yalnız monitor agenti saxlayır. Bu bağlantı yalnız tətbiqin qoşulduqdan sonra gördüyünü saxlayır.",
   "noHistoryYet": "Hələ ölçülməyib",
   "noStoredHistoryFor": "{metric} üçün saxlanılan tarixçə yoxdur",

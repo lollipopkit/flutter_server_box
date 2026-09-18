@@ -2405,12 +2405,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get cores => 'Núcleos';
 
   @override
-  String get historyStored => 'histórico armazenado';
-
-  @override
-  String get historySinceConnect => 'desde a conexão · não armazenado';
-
-  @override
   String get historyNoStored =>
       'Apenas um agente monitor armazena histórico. Esta conexão guarda o que o app viu desde que se conectou.';
 

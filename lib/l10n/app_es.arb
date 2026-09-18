@@ -689,8 +689,6 @@
   "peak": "pico",
   "hardware": "Hardware",
   "cores": "Núcleos",
-  "historyStored": "historial almacenado",
-  "historySinceConnect": "desde la conexión · sin almacenar",
   "historyNoStored": "Solo un agente monitor almacena el historial. Esta conexión conserva lo que la app ha visto desde que se conectó.",
   "noHistoryYet": "Aún no hay mediciones",
   "noStoredHistoryFor": "No hay historial almacenado de {metric}",

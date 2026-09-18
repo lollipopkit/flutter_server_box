@@ -689,8 +689,6 @@
   "peak": "pic",
   "hardware": "Matériel",
   "cores": "Cœurs",
-  "historyStored": "historique stocké",
-  "historySinceConnect": "depuis la connexion · non stocké",
   "historyNoStored": "Seul un agent monitor stocke l'historique. Cette connexion ne garde que ce que l'app a vu depuis sa connexion.",
   "noHistoryYet": "Rien de mesuré pour l'instant",
   "noStoredHistoryFor": "Aucun historique stocké pour {metric}",

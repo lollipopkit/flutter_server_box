@@ -689,8 +689,6 @@
   "peak": "piek",
   "hardware": "Hardware",
   "cores": "Kernen",
-  "historyStored": "opgeslagen geschiedenis",
-  "historySinceConnect": "sinds verbinden · niet opgeslagen",
   "historyNoStored": "Alleen een monitor-agent slaat geschiedenis op. Deze verbinding bewaart alleen wat de app sinds het verbinden heeft gezien.",
   "noHistoryYet": "Nog niets gemeten",
   "noStoredHistoryFor": "Geen opgeslagen geschiedenis voor {metric}",

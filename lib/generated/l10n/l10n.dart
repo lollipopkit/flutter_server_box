@@ -4156,18 +4156,6 @@ abstract class AppLocalizations {
   /// **'Cores'**
   String get cores;
 
-  /// No description provided for @historyStored.
-  ///
-  /// In en, this message translates to:
-  /// **'stored history'**
-  String get historyStored;
-
-  /// No description provided for @historySinceConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'since connect · not stored'**
-  String get historySinceConnect;
-
   /// No description provided for @historyNoStored.
   ///
   /// In en, this message translates to:

@@ -689,8 +689,6 @@
   "peak": "puncak",
   "hardware": "Perangkat keras",
   "cores": "Inti",
-  "historyStored": "riwayat tersimpan",
-  "historySinceConnect": "sejak terhubung · tidak disimpan",
   "historyNoStored": "Hanya agen monitor yang menyimpan riwayat. Koneksi ini hanya menyimpan apa yang dilihat aplikasi sejak terhubung.",
   "noHistoryYet": "Belum ada pengukuran",
   "noStoredHistoryFor": "Tidak ada riwayat tersimpan untuk {metric}",

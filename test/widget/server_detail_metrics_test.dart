@@ -377,7 +377,6 @@ void main() {
     await pump(tester, size: const Size(1200, 900));
 
     expect(find.text(app_locale.l10n.rangeLive), findsOneWidget);
-    expect(find.text(app_locale.l10n.historySinceConnect), findsOneWidget);
 
     await tester.tap(find.text('24h'));
     for (var i = 0; i < 3; i++) {

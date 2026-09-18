@@ -2287,12 +2287,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cores => '코어';
 
   @override
-  String get historyStored => '저장된 기록';
-
-  @override
-  String get historySinceConnect => '연결 이후 · 저장되지 않음';
-
-  @override
   String get historyNoStored =>
       '기록을 저장하는 것은 monitor 에이전트뿐입니다. 이 연결은 앱이 연결한 뒤 본 것만 유지합니다.';
 

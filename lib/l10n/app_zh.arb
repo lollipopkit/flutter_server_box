@@ -694,8 +694,6 @@
   "peak": "峰值",
   "hardware": "硬件",
   "cores": "核心",
-  "historyStored": "已存储的历史",
-  "historySinceConnect": "自连接以来 · 未存储",
   "historyNoStored": "只有 monitor agent 会存储历史。此连接只保留本应用连接后看到的部分。",
   "noHistoryYet": "还没有采样",
   "noStoredHistoryFor": "没有 {metric} 的存储历史",

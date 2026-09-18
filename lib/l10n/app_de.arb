@@ -689,8 +689,6 @@
   "peak": "Spitze",
   "hardware": "Hardware",
   "cores": "Kerne",
-  "historyStored": "gespeicherter Verlauf",
-  "historySinceConnect": "seit der Verbindung · nicht gespeichert",
   "historyNoStored": "Nur ein Monitor-Agent speichert den Verlauf. Diese Verbindung behält nur, was die App seit dem Verbinden gesehen hat.",
   "noHistoryYet": "Noch nichts gemessen",
   "noStoredHistoryFor": "Kein gespeicherter Verlauf für {metric}",

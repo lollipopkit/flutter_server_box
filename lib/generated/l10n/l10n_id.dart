@@ -2395,12 +2395,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get cores => 'Inti';
 
   @override
-  String get historyStored => 'riwayat tersimpan';
-
-  @override
-  String get historySinceConnect => 'sejak terhubung · tidak disimpan';
-
-  @override
   String get historyNoStored =>
       'Hanya agen monitor yang menyimpan riwayat. Koneksi ini hanya menyimpan apa yang dilihat aplikasi sejak terhubung.';
 

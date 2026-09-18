@@ -698,8 +698,6 @@
   "peak": "최고",
   "hardware": "하드웨어",
   "cores": "코어",
-  "historyStored": "저장된 기록",
-  "historySinceConnect": "연결 이후 · 저장되지 않음",
   "historyNoStored": "기록을 저장하는 것은 monitor 에이전트뿐입니다. 이 연결은 앱이 연결한 뒤 본 것만 유지합니다.",
   "noHistoryYet": "아직 측정값이 없습니다",
   "noStoredHistoryFor": "{metric}의 저장된 기록이 없습니다",

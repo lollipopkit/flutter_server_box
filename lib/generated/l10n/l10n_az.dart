@@ -2407,12 +2407,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get cores => 'Nüvələr';
 
   @override
-  String get historyStored => 'saxlanılan tarixçə';
-
-  @override
-  String get historySinceConnect => 'qoşulmadan bəri · saxlanılmır';
-
-  @override
   String get historyNoStored =>
       'Tarixçəni yalnız monitor agenti saxlayır. Bu bağlantı yalnız tətbiqin qoşulduqdan sonra gördüyünü saxlayır.';
 

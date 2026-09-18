@@ -1001,6 +1001,7 @@ extension on _ServerDetailPageState {
         (k: l10n.samples, v: '${w.times.length}'),
     ];
     final device = _buildDeviceControl(si, m);
+    final note = _historyNote(si, wide: wide);
     // Two groups with the room between them, not five children sharing it:
     // everything in this line is as long as the language or the machine makes
     // it, and a `Flexible` narrower than its share leaves the difference as
@@ -1047,10 +1048,10 @@ extension on _ServerDetailPageState {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (wide) ...[
+              if (wide && note != null) ...[
                 Flexible(
                   child: Text(
-                    _historyNote(si),
+                    note,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
@@ -1120,21 +1121,22 @@ extension on _ServerDetailPageState {
                   UIs.height7,
                   _buildStats(stats),
                 ],
-                UIs.height7,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _historyNote(si, wide: false),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: UIs.text11Grey,
+                if (note != null || device != null) ...[
+                  UIs.height7,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          note ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: UIs.text11Grey,
+                        ),
                       ),
-                    ),
-                    ?device,
-                  ],
-                ),
+                      ?device,
+                    ],
+                  ),
+                ],
               ],
               chart,
               ?_buildFocusDetail(si, m.kind),
@@ -1676,18 +1678,20 @@ extension on _ServerDetailPageState {
     };
   }
 
-  /// Where the window on screen comes from. A server with no agent has only
-  /// what this app has watched since it connected, which is worth saying
-  /// before someone reads a flat line as a quiet machine.
-  String _historyNote(ServerState si, {bool wide = true}) {
-    // What the window is worth saying before where it came from: a page whose
-    // newest sample is minutes old is the one fact the reader needs first.
+  /// The one line under the header, when there is something for it to say.
+  ///
+  /// Null on an ordinary card. It used to name where the window came from —
+  /// "stored history", "since connect · not stored" — on every card of every
+  /// server, which is a line that never changes and was read once. Where the
+  /// samples come from is already answered by which ranges the header offers.
+  String? _historyNote(ServerState si, {bool wide = true}) {
+    // A page whose newest sample is minutes old is the one fact the reader
+    // needs, and the only one worth a line of its own.
     if (_staleSince(si) case final at?) return l10n.lastSampleFmt(at.toAgoStr());
     // Narrow, the header's chip holds only the window's length, so this line
     // is where its two ends fit.
     if (!wide && _custom != null) return _rangeLabel(wide: true);
-    if (!si.capabilities.storedHistory) return l10n.historySinceConnect;
-    return l10n.historyStored;
+    return null;
   }
 
   /// How long the window on screen is, however it was named.

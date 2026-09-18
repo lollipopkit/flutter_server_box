@@ -2389,12 +2389,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cores => 'Cores';
 
   @override
-  String get historyStored => 'stored history';
-
-  @override
-  String get historySinceConnect => 'since connect · not stored';
-
-  @override
   String get historyNoStored =>
       'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.';
 

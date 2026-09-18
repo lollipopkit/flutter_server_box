@@ -970,8 +970,6 @@
   "peak": "peak",
   "hardware": "Hardware",
   "cores": "Cores",
-  "historyStored": "stored history",
-  "historySinceConnect": "since connect · not stored",
   "historyNoStored": "Only a monitor agent stores history. This connection keeps what this app has seen since it connected.",
   "noHistoryYet": "Nothing measured yet",
   "noData": "no data",

@@ -2417,12 +2417,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get cores => 'Kerne';
 
   @override
-  String get historyStored => 'gespeicherter Verlauf';
-
-  @override
-  String get historySinceConnect => 'seit der Verbindung · nicht gespeichert';
-
-  @override
   String get historyNoStored =>
       'Nur ein Monitor-Agent speichert den Verlauf. Diese Verbindung behält nur, was die App seit dem Verbinden gesehen hat.';
 

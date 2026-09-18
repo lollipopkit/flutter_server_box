@@ -2410,12 +2410,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cores => 'Ядра';
 
   @override
-  String get historyStored => 'збережена історія';
-
-  @override
-  String get historySinceConnect => 'від моменту підключення · не зберігається';
-
-  @override
   String get historyNoStored =>
       'Історію зберігає лише агент monitor. Це підключення зберігає тільки те, що застосунок побачив після підключення.';
 

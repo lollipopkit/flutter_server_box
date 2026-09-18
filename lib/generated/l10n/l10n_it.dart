@@ -2418,12 +2418,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get cores => 'Core';
 
   @override
-  String get historyStored => 'cronologia archiviata';
-
-  @override
-  String get historySinceConnect => 'dalla connessione · non archiviata';
-
-  @override
   String get historyNoStored =>
       'Solo un agente monitor archivia la cronologia. Questa connessione conserva ciò che l\'app ha visto da quando si è connessa.';
 

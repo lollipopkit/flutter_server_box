@@ -2426,12 +2426,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cores => 'Cœurs';
 
   @override
-  String get historyStored => 'historique stocké';
-
-  @override
-  String get historySinceConnect => 'depuis la connexion · non stocké';
-
-  @override
   String get historyNoStored =>
       'Seul un agent monitor stocke l\'historique. Cette connexion ne garde que ce que l\'app a vu depuis sa connexion.';
 

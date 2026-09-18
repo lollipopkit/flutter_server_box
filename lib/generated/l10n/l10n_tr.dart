@@ -2392,12 +2392,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cores => 'Çekirdek';
 
   @override
-  String get historyStored => 'saklanan geçmiş';
-
-  @override
-  String get historySinceConnect => 'bağlantıdan beri · saklanmıyor';
-
-  @override
   String get historyNoStored =>
       'Geçmişi yalnızca monitor aracısı saklar. Bu bağlantı yalnızca uygulamanın bağlandıktan sonra gördüğünü tutar.';
 

@@ -689,8 +689,6 @@
   "peak": "ピーク",
   "hardware": "ハードウェア",
   "cores": "コア数",
-  "historyStored": "保存された履歴",
-  "historySinceConnect": "接続以降 · 未保存",
   "historyNoStored": "履歴を保存するのは monitor エージェントだけです。この接続では、アプリが接続後に見た分のみ保持します。",
   "noHistoryYet": "まだ計測データがありません",
   "noStoredHistoryFor": "{metric} の保存された履歴はありません",

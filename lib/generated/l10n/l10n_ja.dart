@@ -2279,12 +2279,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cores => 'コア数';
 
   @override
-  String get historyStored => '保存された履歴';
-
-  @override
-  String get historySinceConnect => '接続以降 · 未保存';
-
-  @override
   String get historyNoStored =>
       '履歴を保存するのは monitor エージェントだけです。この接続では、アプリが接続後に見た分のみ保持します。';
 

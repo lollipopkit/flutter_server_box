@@ -2417,12 +2417,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cores => 'Ядра';
 
   @override
-  String get historyStored => 'сохранённая история';
-
-  @override
-  String get historySinceConnect => 'с момента подключения · не сохраняется';
-
-  @override
   String get historyNoStored =>
       'Историю хранит только агент monitor. Это подключение хранит лишь то, что приложение увидело после подключения.';
 

@@ -692,8 +692,6 @@
   "peak": "picco",
   "hardware": "Hardware",
   "cores": "Core",
-  "historyStored": "cronologia archiviata",
-  "historySinceConnect": "dalla connessione · non archiviata",
   "historyNoStored": "Solo un agente monitor archivia la cronologia. Questa connessione conserva ciò che l'app ha visto da quando si è connessa.",
   "noHistoryYet": "Nessuna misurazione",
   "noStoredHistoryFor": "Nessuna cronologia archiviata per {metric}",

@@ -2408,12 +2408,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get cores => 'Kernen';
 
   @override
-  String get historyStored => 'opgeslagen geschiedenis';
-
-  @override
-  String get historySinceConnect => 'sinds verbinden · niet opgeslagen';
-
-  @override
   String get historyNoStored =>
       'Alleen een monitor-agent slaat geschiedenis op. Deze verbinding bewaart alleen wat de app sinds het verbinden heeft gezien.';
 

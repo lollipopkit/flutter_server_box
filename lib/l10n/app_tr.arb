@@ -689,8 +689,6 @@
   "peak": "tepe",
   "hardware": "Donanım",
   "cores": "Çekirdek",
-  "historyStored": "saklanan geçmiş",
-  "historySinceConnect": "bağlantıdan beri · saklanmıyor",
   "historyNoStored": "Geçmişi yalnızca monitor aracısı saklar. Bu bağlantı yalnızca uygulamanın bağlandıktan sonra gördüğünü tutar.",
   "noHistoryYet": "Henüz ölçüm yok",
   "noStoredHistoryFor": "{metric} için saklanan geçmiş yok",

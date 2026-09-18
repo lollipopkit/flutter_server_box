@@ -658,8 +658,6 @@
   "peak": "峰值",
   "hardware": "硬體",
   "cores": "核心",
-  "historyStored": "已儲存的歷史",
-  "historySinceConnect": "自連線以來 · 未儲存",
   "historyNoStored": "只有 monitor agent 會儲存歷史。此連線只保留本應用連線後看到的部分。",
   "noHistoryYet": "還沒有取樣",
   "noStoredHistoryFor": "沒有 {metric} 的儲存歷史",
