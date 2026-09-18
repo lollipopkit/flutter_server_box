@@ -206,7 +206,7 @@ void main() {
         hasLength(1),
       );
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -300,7 +300,7 @@ void main() {
       // Shown, rather than an empty key picker saying nothing is configured
       expect(find.text('~/.ssh/id_ed25519'), findsOneWidget);
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -397,7 +397,7 @@ void main() {
       // wrong reason.
       expect(tester.widget<Switch>(keyAuth).value, isTrue);
 
-      await tester.tap(find.byType(FloatingActionButton));
+      await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 

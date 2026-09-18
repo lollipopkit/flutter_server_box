@@ -2626,6 +2626,58 @@ class AppLocalizationsNl extends AppLocalizations {
   String get serverDetailCards => 'Kaarten op de detailpagina';
 
   @override
+  String get connection => 'Verbinding';
+
+  @override
+  String get connectionTip =>
+      'Beide kunnen tegelijk aan staan. De volgorde is de volgorde waarin ze worden gebeld.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Sleep om de volgorde te wijzigen. $first wordt eerst gebeld; antwoordt die niet, dan draagt $second de sessie alleen.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Alleen $name staat aan, dus er is niets om op terug te vallen.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Beide staan uit — deze server kan niet worden verbonden.';
+
+  @override
+  String get transportOffKept =>
+      'uit — instellingen blijven bewaard, wordt nooit gebeld';
+
+  @override
+  String get transportDialledFirst => 'eerst gebeld';
+
+  @override
+  String get transportFallback => 'terugval';
+
+  @override
+  String get transportOnlyMethod => 'enige methode';
+
+  @override
+  String get transportOff => 'uit';
+
+  @override
+  String get transportSectionOff =>
+      'Uit. De velden hieronder blijven bewaard voor wanneer u het weer aanzet.';
+
+  @override
+  String get monitorAgent => 'Monitor-agent';
+
+  @override
+  String get plainHttpEditTip =>
+      'Inloggegevens en metingen gaan onversleuteld over het netwerk. Houd het bij een LAN of een Tailscale-adres, of zet de agent achter TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Certificaatopties horen bij https:// en worden hier niet getoond.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

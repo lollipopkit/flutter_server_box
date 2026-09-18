@@ -433,30 +433,39 @@ extension _Actions on _ServerEditPageState {
       geo: geo,
     );
 
-    MonitorHttpCredential? monitorHttp;
-    if (useMonitorHttp) {
-      final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
-      if (monitorAddr == null) {
-        Toast.show('${libL10n.invalid}: Monitor URL');
-        return;
-      }
-      monitorHttp = MonitorHttpCredential(
-        addr: monitorAddr,
-        user: _monitorUserCtrl.text.selfNotEmptyOrNull,
-        pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
-        ignoreCert: _monitorIgnoreCert.value,
-        allowInsecure: _monitorAllowInsecure.value,
-      );
+    // Built from the fields whatever the switch says, and the switch travels
+    // beside it as `monitorEnabled`. Off keeps the configuration — that is the
+    // whole of what "off" means here — so turning a method back on is not a
+    // retyping exercise. Only the address is required, and only when the
+    // switch is on: there is nothing to dial without it.
+    final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
+    if (useMonitorHttp && monitorAddr == null) {
+      Toast.show('${libL10n.invalid}: Monitor URL');
+      return;
     }
+    final monitorHttp = monitorAddr == null
+        ? null
+        : MonitorHttpCredential(
+            addr: monitorAddr,
+            user: _monitorUserCtrl.text.selfNotEmptyOrNull,
+            pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
+            ignoreCert: _monitorIgnoreCert.value,
+            allowInsecure: _monitorAllowInsecure.value,
+          );
 
-    // Null when the SSH switch is off: such a server is reached through its
-    // agent, and nothing in the hidden form would have anywhere to go.
-    final ssh = !useSsh
+    // Same rule as the agent above: kept when switched off, and absent only
+    // when there is no host to keep.
+    final ssh = _ipController.text.trim().isEmpty
         ? null
         : SshCredential(
             ip: _ipController.text,
             port: int.tryParse(_portController.text) ?? 22,
-            user: _usernameController.text,
+            // Defaulted here as well as in the checks above, which only run
+            // when the switch is on: a parked configuration is still one
+            // somebody will turn back on.
+            user: _usernameController.text.isEmpty
+                ? 'root'
+                : _usernameController.text,
             pwd: _passwordController.text.selfNotEmptyOrNull,
             keyId: selectedKey?.id,
             // Carried through rather than rebuilt from the form: nothing on
@@ -535,6 +544,8 @@ extension _Actions on _ServerEditPageState {
                 ? ServerTransport.monitorHttp
                 : ServerTransport.ssh)
           : null,
+      sshEnabled: useSsh,
+      monitorEnabled: useMonitorHttp,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
       customSystemType: _systemType.value,
@@ -765,8 +776,12 @@ extension _Utils on _ServerEditPageState {
     }
 
     final monitorHttp = spi.monitorHttp;
-    _useSsh.value = spi.ssh != null;
-    _useMonitorHttp.value = monitorHttp != null;
+    // The switch, which is configuration *and* the switch: a method with
+    // nothing configured is off however the flag reads, and one that is
+    // configured and switched off shows its fields under a section that says
+    // it is off.
+    _useSsh.value = spi.sshOn != null;
+    _useMonitorHttp.value = spi.monitorOn != null;
     _preferMonitorHttp.value =
         spi.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {

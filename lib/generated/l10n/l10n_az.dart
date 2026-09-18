@@ -2618,6 +2618,58 @@ class AppLocalizationsAz extends AppLocalizations {
   String get serverDetailCards => 'Ətraflı səhifəsinin kartları';
 
   @override
+  String get connection => 'Bağlantı';
+
+  @override
+  String get connectionTip =>
+      'Hər ikisi eyni anda açıq ola bilər. Sıra, onların yığılma sırasıdır.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Sıranı dəyişmək üçün sürüşdürün. Əvvəlcə $first yığılır; cavab verməsə, sessiyanı $second təkbaşına aparır.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Yalnız $name açıqdır, ona görə də geri dönüləcək bir şey yoxdur.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Hər ikisi bağlıdır — bu serverə qoşulmaq mümkün deyil.';
+
+  @override
+  String get transportOffKept =>
+      'bağlı — parametrlər saxlanılır, heç vaxt yığılmır';
+
+  @override
+  String get transportDialledFirst => 'əvvəlcə yığılır';
+
+  @override
+  String get transportFallback => 'ehtiyat';
+
+  @override
+  String get transportOnlyMethod => 'yeganə üsul';
+
+  @override
+  String get transportOff => 'bağlı';
+
+  @override
+  String get transportSectionOff =>
+      'Bağlıdır. Aşağıdakı sahələr yenidən açanda lazım olsun deyə saxlanılır.';
+
+  @override
+  String get monitorAgent => 'Monitor agenti';
+
+  @override
+  String get plainHttpEditTip =>
+      'Giriş məlumatları və göstəricilər şəbəkədən şifrələnmədən keçir. Bunu LAN və ya Tailscale ünvanı ilə məhdudlaşdırın, ya da agenti TLS arxasına qoyun.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Sertifikat parametrləri https:// üçündür və burada göstərilmir.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

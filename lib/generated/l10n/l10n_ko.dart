@@ -2497,6 +2497,53 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverDetailCards => '상세 페이지 카드';
 
   @override
+  String get connection => '연결';
+
+  @override
+  String get connectionTip => '둘 다 동시에 켤 수 있습니다. 순서가 곧 연결을 시도하는 순서입니다.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return '끌어서 순서를 바꿉니다. $first을(를) 먼저 시도하고, 응답이 없으면 $second이(가) 세션을 단독으로 맡습니다.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '$name만 켜져 있어 대체할 것이 없습니다.';
+  }
+
+  @override
+  String get transportNoneOn => '둘 다 꺼져 있습니다 — 이 서버에는 연결할 수 없습니다.';
+
+  @override
+  String get transportOffKept => '꺼짐 — 설정은 보관되며 연결하지 않음';
+
+  @override
+  String get transportDialledFirst => '먼저 시도';
+
+  @override
+  String get transportFallback => '대체';
+
+  @override
+  String get transportOnlyMethod => '유일한 방법';
+
+  @override
+  String get transportOff => '꺼짐';
+
+  @override
+  String get transportSectionOff => '꺼져 있습니다. 다시 켤 때를 위해 아래 항목은 그대로 보관됩니다.';
+
+  @override
+  String get monitorAgent => 'Monitor 에이전트';
+
+  @override
+  String get plainHttpEditTip =>
+      '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, 에이전트를 TLS 뒤에 두세요.';
+
+  @override
+  String get certOptionsHttpsOnly => '인증서 옵션은 https:// 에 해당하므로 여기에는 표시되지 않습니다.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

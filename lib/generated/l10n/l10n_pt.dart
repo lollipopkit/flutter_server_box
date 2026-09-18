@@ -2623,6 +2623,58 @@ class AppLocalizationsPt extends AppLocalizations {
   String get serverDetailCards => 'Cartões da página de detalhes';
 
   @override
+  String get connection => 'Conexão';
+
+  @override
+  String get connectionTip =>
+      'Os dois podem estar ligados ao mesmo tempo. A ordem é a ordem em que são chamados.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Arraste para mudar a ordem. $first é chamado primeiro; se não responder, $second sustenta a sessão sozinho.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Apenas $name está ligado, então não há para onde recorrer.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Ambos estão desligados — não é possível conectar a este servidor.';
+
+  @override
+  String get transportOffKept =>
+      'desligado — configurações mantidas, nunca chamado';
+
+  @override
+  String get transportDialledFirst => 'chamado primeiro';
+
+  @override
+  String get transportFallback => 'alternativa';
+
+  @override
+  String get transportOnlyMethod => 'único método';
+
+  @override
+  String get transportOff => 'desligado';
+
+  @override
+  String get transportSectionOff =>
+      'Desligado. Os campos abaixo ficam guardados para quando você ligar de novo.';
+
+  @override
+  String get monitorAgent => 'Agente monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Credenciais e métricas atravessam a rede sem criptografia. Mantenha isso em uma LAN ou em um endereço Tailscale, ou coloque o agente atrás de TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'As opções de certificado pertencem a https:// e não aparecem aqui.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

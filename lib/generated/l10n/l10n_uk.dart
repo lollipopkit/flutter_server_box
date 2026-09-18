@@ -2622,6 +2622,58 @@ class AppLocalizationsUk extends AppLocalizations {
   String get serverDetailCards => 'Картки сторінки деталей';
 
   @override
+  String get connection => 'З\'єднання';
+
+  @override
+  String get connectionTip =>
+      'Обидва можуть бути увімкнені одночасно. Порядок — це порядок, у якому до них звертаються.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Перетягніть, щоб змінити порядок. Спершу $first; якщо він не відповідає, сеанс бере на себе $second.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Увімкнено лише $name, тож перемикатися нема на що.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Обидва вимкнені — до цього сервера неможливо під\'єднатися.';
+
+  @override
+  String get transportOffKept =>
+      'вимкнено — налаштування збережено, звернень немає';
+
+  @override
+  String get transportDialledFirst => 'звертаємось першим';
+
+  @override
+  String get transportFallback => 'запасний';
+
+  @override
+  String get transportOnlyMethod => 'єдиний спосіб';
+
+  @override
+  String get transportOff => 'вимкнено';
+
+  @override
+  String get transportSectionOff =>
+      'Вимкнено. Поля нижче збережено на той випадок, коли ви ввімкнете його знову.';
+
+  @override
+  String get monitorAgent => 'Агент monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Облікові дані й показники йдуть мережею без шифрування. Обмежтеся локальною мережею чи адресою Tailscale або поставте агента за TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Налаштування сертифіката стосуються https:// і тут не показані.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

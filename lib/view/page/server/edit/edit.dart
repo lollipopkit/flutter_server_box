@@ -253,6 +253,11 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       if (spi == null) _buildDiscoverBtn(),
       _buildWriteScriptTip(),
       if (spi != null) _buildDelBtn(),
+      // In the bar, beside the rest of what is done to this page rather than
+      // floating over its last row. A form's last field was under the button
+      // that saves it, and the agent's own settings page — the one this page's
+      // neighbour opens — has always put Save here.
+      _buildSaveBtn(),
     ];
 
     return Scaffold(
@@ -261,10 +266,17 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
         onTap: () => _focusScope.unfocus(),
         child: _buildForm(),
       ),
-      floatingActionButton: _buildFAB(),
     );
   }
 
+  /// One column, not a grid.
+  ///
+  /// This was a `PageColumns` masonry, which on a wide window put a method's
+  /// switch in one column and its URL in the other — so the two halves of one
+  /// decision were side by side with a rule between them, and collapsing
+  /// `More` left the left column empty from the fold down. A form is a
+  /// sequence of decisions; the only thing a second column can add to it is
+  /// distance between a question and its answer.
   Widget _buildForm() {
     // Read here rather than inside the group below: that one is rebuilt by a
     // notifier as well as by this method, and a `ref.watch` reached on the
@@ -272,79 +284,70 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     final tagTile =
         TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx;
 
-    final children = [
-      _buildConnMethodSwitch(),
-      // The name is in the same group of cards as the SSH fields rather than
-      // a card of its own above them. Cards within a group sit against each
-      // other; a card that is its own [PageColumns] child gets the grid's
-      // spacing on top of that, which read as a gap belonging to nothing.
-      //
-      // It also means this entry always has something in it. An entry that
-      // renders to an empty box still gets spacing on both sides of it, so
-      // the placeholder this used to be left a wider gap behind than the
-      // fields it stood in for.
-      _useSsh.listenVal(
-        (useSsh) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Input(
-              autoFocus: true,
-              controller: _nameController,
-              type: TextInputType.text,
-              node: _nameFocus,
-              // The host field is the next one in this card, and it is only
-              // in the card when SSH is on. Requesting a node attached to
-              // nothing left the keyboard up over a field that had just lost
-              // focus, with no way to tell what it was typing into.
-              onSubmitted: (_) => useSsh
-                  ? _focusScope.requestFocus(_ipFocus)
-                  : _focusScope.unfocus(),
-              hint: libL10n.example,
-              label: libL10n.name,
-              icon: BoxIcons.bx_rename,
-              obscureText: false,
-              autoCorrect: true,
-              suggestion: true,
-            ),
-            if (useSsh) _buildSshConnFields(),
-            // In the group for the same reason the name is. Its own entry took
-            // the grid's spacing on top of the card's own margins, so the one
-            // gap on this form that was 12 points was the one above it.
-            tagTile,
-          ],
-        ),
-      ),
-      ListTile(
-        title: Text(l10n.autoConnect),
-        trailing: _autoConnect.listenVal(
-          (val) => Switch(
-            value: val,
-            onChanged: (val) {
-              _autoConnect.value = val;
-            },
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(13, 7, 13, 34),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Input(
+                autoFocus: true,
+                controller: _nameController,
+                type: TextInputType.text,
+                node: _nameFocus,
+                onSubmitted: (_) => _focusScope.unfocus(),
+                hint: libL10n.example,
+                label: libL10n.name,
+                icon: BoxIcons.bx_rename,
+                obscureText: false,
+                autoCorrect: true,
+                suggestion: true,
+              ),
+              tagTile,
+              _buildConnectionGroup(),
+              // In the order they are dialled, which is the order the list
+              // above is in: a section that stayed put while its row moved
+              // would make the drag look like it had done nothing.
+              _preferMonitorHttp.listenVal(
+                (_) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final method in _methodOrder)
+                      _buildMethodSection(method, switch (method) {
+                        _Method.monitorHttp => _buildMonitorHttpFields(),
+                        _Method.ssh => Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildSshConnFields(),
+                            _buildAuth(),
+                            _buildSystemType(),
+                            _buildJumpServer(),
+                          ],
+                        ),
+                      }),
+                  ],
+                ),
+              ),
+              ListTile(
+                title: Text(l10n.autoConnect),
+                trailing: _autoConnect.listenVal(
+                  (val) => Switch(
+                    value: val,
+                    onChanged: (val) {
+                      _autoConnect.value = val;
+                    },
+                  ),
+                ),
+              ).cardx,
+              _buildMore(),
+            ],
           ),
         ),
       ),
-      // The rest of the connection fields, as one group rather than three
-      // entries. Which of them are shown is up to the two switches, and each
-      // one that was its own [PageColumns] child left the grid's spacing
-      // behind when it rendered to nothing — an SSH-only server showed a gap
-      // between the password and the system type, held open by monitor
-      // fields that were not there.
-      ListenableBuilder(
-        listenable: Listenable.merge([_useSsh, _useMonitorHttp]),
-        builder: (_, _) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_useSsh.value) _buildAuth(),
-            if (_useMonitorHttp.value) _buildMonitorHttp(),
-            if (_useSsh.value) ...[_buildSystemType(), _buildJumpServer()],
-          ],
-        ),
-      ),
-      _buildMore(),
-    ];
-    return PageColumns(children: children);
+    );
   }
 
   @override

@@ -2413,6 +2413,53 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverDetailCards => '详情页卡片';
 
   @override
+  String get connection => '连接方式';
+
+  @override
+  String get connectionTip => '两个可以同时开启。顺序就是拨号的顺序。';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return '拖动可调整顺序。先拨 $first；它不应答时，$second 独自承担会话。';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '只开启了 $name，没有可回落的对象。';
+  }
+
+  @override
+  String get transportNoneOn => '两个都关闭了 —— 这台服务器无法连接。';
+
+  @override
+  String get transportOffKept => '已关闭 —— 设置保留，不会拨号';
+
+  @override
+  String get transportDialledFirst => '先拨';
+
+  @override
+  String get transportFallback => '回落';
+
+  @override
+  String get transportOnlyMethod => '唯一方式';
+
+  @override
+  String get transportOff => '已关闭';
+
+  @override
+  String get transportSectionOff => '已关闭。下面的字段会保留，供你再次开启时使用。';
+
+  @override
+  String get monitorAgent => 'Monitor 代理';
+
+  @override
+  String get plainHttpEditTip =>
+      '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把代理放到 TLS 后面。';
+
+  @override
+  String get certOptionsHttpsOnly => '证书选项属于 https://，这里不显示。';
+
+  @override
   String get scheduledTasks => '计划任务';
 
   @override
@@ -5087,6 +5134,53 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverDetailCards => '詳情頁卡片';
+
+  @override
+  String get connection => '連線方式';
+
+  @override
+  String get connectionTip => '兩個可以同時開啟。順序就是撥接的順序。';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return '拖曳可調整順序。先撥 $first；它不回應時，$second 獨自承擔工作階段。';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '只開啟了 $name，沒有可回落的對象。';
+  }
+
+  @override
+  String get transportNoneOn => '兩個都關閉了 —— 這台伺服器無法連線。';
+
+  @override
+  String get transportOffKept => '已關閉 —— 設定保留，不會撥接';
+
+  @override
+  String get transportDialledFirst => '先撥';
+
+  @override
+  String get transportFallback => '回落';
+
+  @override
+  String get transportOnlyMethod => '唯一方式';
+
+  @override
+  String get transportOff => '已關閉';
+
+  @override
+  String get transportSectionOff => '已關閉。下面的欄位會保留，供你再次開啟時使用。';
+
+  @override
+  String get monitorAgent => 'Monitor 代理';
+
+  @override
+  String get plainHttpEditTip =>
+      '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把代理放到 TLS 後面。';
+
+  @override
+  String get certOptionsHttpsOnly => '憑證選項屬於 https://，這裡不顯示。';
 
   @override
   String get scheduledTasks => '排程工作';

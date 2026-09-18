@@ -2606,6 +2606,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverDetailCards => 'Detail page cards';
 
   @override
+  String get connection => 'Connection';
+
+  @override
+  String get connectionTip =>
+      'Both can be on at once. The order is the order they are dialled.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Drag to change the order. $first is dialled first; if it does not answer, $second carries the session on its own.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Only $name is on, so there is nothing to fall back to.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Both are off — this server cannot be connected.';
+
+  @override
+  String get transportOffKept => 'off — settings kept, never dialled';
+
+  @override
+  String get transportDialledFirst => 'dialled first';
+
+  @override
+  String get transportFallback => 'fallback';
+
+  @override
+  String get transportOnlyMethod => 'only method';
+
+  @override
+  String get transportOff => 'off';
+
+  @override
+  String get transportSectionOff =>
+      'Off. The fields below are kept for when you turn it back on.';
+
+  @override
+  String get monitorAgent => 'Monitor agent';
+
+  @override
+  String get plainHttpEditTip =>
+      'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Certificate options belong to https:// and are not shown here.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

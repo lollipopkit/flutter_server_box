@@ -4492,6 +4492,90 @@ abstract class AppLocalizations {
   /// **'Detail page cards'**
   String get serverDetailCards;
 
+  /// No description provided for @connection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get connection;
+
+  /// No description provided for @connectionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Both can be on at once. The order is the order they are dialled.'**
+  String get connectionTip;
+
+  /// No description provided for @transportOrderFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.'**
+  String transportOrderFmt(Object first, Object second);
+
+  /// No description provided for @transportOnlyFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {name} is on, so there is nothing to fall back to.'**
+  String transportOnlyFmt(Object name);
+
+  /// No description provided for @transportNoneOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Both are off — this server cannot be connected.'**
+  String get transportNoneOn;
+
+  /// No description provided for @transportOffKept.
+  ///
+  /// In en, this message translates to:
+  /// **'off — settings kept, never dialled'**
+  String get transportOffKept;
+
+  /// No description provided for @transportDialledFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'dialled first'**
+  String get transportDialledFirst;
+
+  /// No description provided for @transportFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'fallback'**
+  String get transportFallback;
+
+  /// No description provided for @transportOnlyMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'only method'**
+  String get transportOnlyMethod;
+
+  /// No description provided for @transportOff.
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get transportOff;
+
+  /// No description provided for @transportSectionOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off. The fields below are kept for when you turn it back on.'**
+  String get transportSectionOff;
+
+  /// No description provided for @monitorAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor agent'**
+  String get monitorAgent;
+
+  /// No description provided for @plainHttpEditTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.'**
+  String get plainHttpEditTip;
+
+  /// No description provided for @certOptionsHttpsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate options belong to https:// and are not shown here.'**
+  String get certOptionsHttpsOnly;
+
   /// No description provided for @scheduledTasks.
   ///
   /// In en, this message translates to:

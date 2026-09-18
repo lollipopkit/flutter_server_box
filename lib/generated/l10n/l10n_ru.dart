@@ -2628,6 +2628,58 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverDetailCards => 'Карточки страницы сведений';
 
   @override
+  String get connection => 'Подключение';
+
+  @override
+  String get connectionTip =>
+      'Оба могут быть включены одновременно. Порядок — это порядок, в котором к ним обращаются.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Перетащите, чтобы изменить порядок. Сначала — $first; если он не отвечает, сессию берёт на себя $second.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Включён только $name, поэтому переключаться не на что.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Оба выключены — к этому серверу нельзя подключиться.';
+
+  @override
+  String get transportOffKept =>
+      'выключено — настройки сохранены, обращений нет';
+
+  @override
+  String get transportDialledFirst => 'обращение первым';
+
+  @override
+  String get transportFallback => 'запасной';
+
+  @override
+  String get transportOnlyMethod => 'единственный способ';
+
+  @override
+  String get transportOff => 'выключено';
+
+  @override
+  String get transportSectionOff =>
+      'Выключено. Поля ниже сохраняются на случай, если вы включите его снова.';
+
+  @override
+  String get monitorAgent => 'Агент monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Учётные данные и метрики идут по сети без шифрования. Ограничьтесь локальной сетью или адресом Tailscale либо поставьте агента за TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Настройки сертификата относятся к https:// и здесь не показаны.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

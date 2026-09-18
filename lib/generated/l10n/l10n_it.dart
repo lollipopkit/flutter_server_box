@@ -2635,6 +2635,58 @@ class AppLocalizationsIt extends AppLocalizations {
   String get serverDetailCards => 'Schede della pagina dettagli';
 
   @override
+  String get connection => 'Connessione';
+
+  @override
+  String get connectionTip =>
+      'Possono essere attivi entrambi. L\'ordine è l\'ordine in cui vengono contattati.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Trascina per cambiare l\'ordine. $first viene contattato per primo; se non risponde, $second porta avanti la sessione da solo.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'È attivo solo $name, quindi non c\'è nulla su cui ripiegare.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Sono entrambi disattivati: questo server non può essere connesso.';
+
+  @override
+  String get transportOffKept =>
+      'disattivato — impostazioni conservate, mai contattato';
+
+  @override
+  String get transportDialledFirst => 'contattato per primo';
+
+  @override
+  String get transportFallback => 'ripiego';
+
+  @override
+  String get transportOnlyMethod => 'unico metodo';
+
+  @override
+  String get transportOff => 'disattivato';
+
+  @override
+  String get transportSectionOff =>
+      'Disattivato. I campi qui sotto restano per quando lo riattiverai.';
+
+  @override
+  String get monitorAgent => 'Agente monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Credenziali e metriche attraversano la rete non cifrate. Tienilo su una LAN o su un indirizzo Tailscale, oppure metti l\'agente dietro TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Le opzioni sul certificato appartengono a https:// e non sono mostrate qui.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

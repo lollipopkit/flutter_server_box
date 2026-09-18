@@ -2606,6 +2606,58 @@ class AppLocalizationsId extends AppLocalizations {
   String get serverDetailCards => 'Kartu halaman detail';
 
   @override
+  String get connection => 'Koneksi';
+
+  @override
+  String get connectionTip =>
+      'Keduanya bisa aktif bersamaan. Urutannya adalah urutan pemanggilan.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Seret untuk mengubah urutan. $first dipanggil lebih dulu; jika tidak menjawab, $second menanggung sesi sendirian.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Hanya $name yang aktif, jadi tidak ada cadangan.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Keduanya nonaktif — server ini tidak dapat dihubungi.';
+
+  @override
+  String get transportOffKept =>
+      'nonaktif — pengaturan disimpan, tidak pernah dipanggil';
+
+  @override
+  String get transportDialledFirst => 'dipanggil lebih dulu';
+
+  @override
+  String get transportFallback => 'cadangan';
+
+  @override
+  String get transportOnlyMethod => 'satu-satunya cara';
+
+  @override
+  String get transportOff => 'nonaktif';
+
+  @override
+  String get transportSectionOff =>
+      'Nonaktif. Kolom di bawah disimpan untuk saat Anda mengaktifkannya lagi.';
+
+  @override
+  String get monitorAgent => 'Agen monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Kredensial dan metrik melintasi jaringan tanpa enkripsi. Batasi pada LAN atau alamat Tailscale, atau tempatkan agen di belakang TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Opsi sertifikat milik https:// dan tidak ditampilkan di sini.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

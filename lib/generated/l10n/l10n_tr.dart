@@ -2603,6 +2603,56 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverDetailCards => 'Ayrıntı sayfası kartları';
 
   @override
+  String get connection => 'Bağlantı';
+
+  @override
+  String get connectionTip =>
+      'İkisi aynı anda açık olabilir. Sıra, denendikleri sıradır.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Sırayı değiştirmek için sürükleyin. Önce $first denenir; yanıt vermezse oturumu tek başına $second taşır.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Yalnızca $name açık, dolayısıyla geri dönülecek bir şey yok.';
+  }
+
+  @override
+  String get transportNoneOn => 'İkisi de kapalı — bu sunucuya bağlanılamaz.';
+
+  @override
+  String get transportOffKept => 'kapalı — ayarlar saklanıyor, hiç denenmiyor';
+
+  @override
+  String get transportDialledFirst => 'önce denenir';
+
+  @override
+  String get transportFallback => 'yedek';
+
+  @override
+  String get transportOnlyMethod => 'tek yöntem';
+
+  @override
+  String get transportOff => 'kapalı';
+
+  @override
+  String get transportSectionOff =>
+      'Kapalı. Aşağıdaki alanlar, yeniden açtığınızda kullanılmak üzere saklanıyor.';
+
+  @override
+  String get monitorAgent => 'Monitor aracısı';
+
+  @override
+  String get plainHttpEditTip =>
+      'Kimlik bilgileri ve ölçümler ağdan şifrelenmeden geçer. Bunu bir LAN veya Tailscale adresiyle sınırlayın ya da aracıyı TLS arkasına alın.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Sertifika seçenekleri https:// içindir ve burada gösterilmez.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

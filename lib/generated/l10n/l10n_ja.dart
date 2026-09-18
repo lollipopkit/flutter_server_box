@@ -2489,6 +2489,53 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serverDetailCards => '詳細ページのカード';
 
   @override
+  String get connection => '接続';
+
+  @override
+  String get connectionTip => '両方を同時に有効にできます。並び順が接続を試す順序です。';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'ドラッグで順序を変更できます。最初に $first を試し、応答がなければ $second がセッションを引き受けます。';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '$name だけが有効なので、切り替え先はありません。';
+  }
+
+  @override
+  String get transportNoneOn => 'どちらも無効です — このサーバーには接続できません。';
+
+  @override
+  String get transportOffKept => '無効 — 設定は保持され、接続は行いません';
+
+  @override
+  String get transportDialledFirst => '最初に試す';
+
+  @override
+  String get transportFallback => '予備';
+
+  @override
+  String get transportOnlyMethod => '唯一の方法';
+
+  @override
+  String get transportOff => '無効';
+
+  @override
+  String get transportSectionOff => '無効です。再び有効にするときのために、以下の項目はそのまま保持されます。';
+
+  @override
+  String get monitorAgent => 'Monitor エージェント';
+
+  @override
+  String get plainHttpEditTip =>
+      '認証情報と計測値が暗号化されずにネットワークを通ります。LAN か Tailscale のアドレスに限定するか、エージェントを TLS の背後に置いてください。';
+
+  @override
+  String get certOptionsHttpsOnly => '証明書の設定は https:// 用のため、ここには表示されません。';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override

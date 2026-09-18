@@ -2644,6 +2644,58 @@ class AppLocalizationsFr extends AppLocalizations {
   String get serverDetailCards => 'Cartes de la page de détails';
 
   @override
+  String get connection => 'Connexion';
+
+  @override
+  String get connectionTip =>
+      'Les deux peuvent être actifs en même temps. L\'ordre est celui dans lequel ils sont appelés.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Faites glisser pour changer l\'ordre. $first est appelé en premier ; s\'il ne répond pas, $second assure la session seul.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Seul $name est actif, il n\'y a donc aucun recours.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Les deux sont désactivés — ce serveur ne peut pas être connecté.';
+
+  @override
+  String get transportOffKept =>
+      'désactivé — réglages conservés, jamais appelé';
+
+  @override
+  String get transportDialledFirst => 'appelé en premier';
+
+  @override
+  String get transportFallback => 'recours';
+
+  @override
+  String get transportOnlyMethod => 'seule méthode';
+
+  @override
+  String get transportOff => 'désactivé';
+
+  @override
+  String get transportSectionOff =>
+      'Désactivé. Les champs ci-dessous sont conservés pour le jour où vous le réactiverez.';
+
+  @override
+  String get monitorAgent => 'Agent monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Les identifiants et les mesures traversent le réseau en clair. Gardez cela sur un LAN ou une adresse Tailscale, ou placez l\'agent derrière TLS.';
+
+  @override
+  String get certOptionsHttpsOnly =>
+      'Les options de certificat relèvent de https:// et ne sont pas affichées ici.';
+
+  @override
   String get scheduledTasks => 'Scheduled tasks';
 
   @override
