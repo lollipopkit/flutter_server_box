@@ -440,6 +440,10 @@ class MonitorHistoryPoint {
   final String timestamp;
   final double cpu;
   final double memory;
+
+  /// Percent, or null on a machine with no swap — and on an agent too old to
+  /// report it, which is the same "nothing to draw" either way.
+  final double? swap;
   final double disk;
   final double netRxSpeed;
   final double netTxSpeed;
@@ -452,6 +456,7 @@ class MonitorHistoryPoint {
     required this.timestamp,
     required this.cpu,
     required this.memory,
+    this.swap,
     required this.disk,
     required this.netRxSpeed,
     required this.netTxSpeed,

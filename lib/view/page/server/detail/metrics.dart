@@ -107,12 +107,13 @@ class _Window {
     netTx: h.netTx,
   );
 
-  /// What the agent stored. It keeps no swap column, so that series is empty
-  /// here however long the window is — see [_MetricView.hasChart], which is
-  /// what the card asks before drawing.
+  /// What the agent stored. An agent too old to report a series leaves it
+  /// empty here however long the window is — see [_MetricView.hasChart],
+  /// which is what the card asks before drawing.
   factory _Window.of(List<StatusHistorySample> samples) => _Window(
     cpu: [for (final s in samples) s.cpu],
     mem: [for (final s in samples) s.mem],
+    swap: [for (final s in samples) s.swap],
     disk: [for (final s in samples) s.disk],
     diskRead: [for (final s in samples) s.diskRead],
     diskWrite: [for (final s in samples) s.diskWrite],
