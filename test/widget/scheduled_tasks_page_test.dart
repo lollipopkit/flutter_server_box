@@ -35,6 +35,9 @@ SHELL=/bin/bash
 # ServerBox disabled: 15 3 * * 1-5 /opt/hk/bin/report.py --weekly-digest
 ''';
 
+/// The account the listing reports, which the toolbar draws as it comes.
+var _listUser = 'lk';
+
 final class _FakeExec implements ServerExec {
   @override
   Future<ExecResult> run(
@@ -47,10 +50,10 @@ final class _FakeExec implements ServerExec {
     Future<void>? cancel,
   }) async {
     if (script == CronManager.listScript) {
-      return const ExecResult(
+      return ExecResult(
         exitCode: 0,
         stdout:
-            'SrvBoxCron.User\tlk\n'
+            'SrvBoxCron.User\t$_listUser\n'
             'SrvBoxCron.Clock\t1772000000 +0800\n'
             'SrvBoxCron.Body\n$_crontab',
         stderr: '',
@@ -193,6 +196,27 @@ void main() {
 
     await close(tester);
   });
+
+  /// The account is whatever `id -un` said and the summary is as long as the
+  /// language makes it, and the toolbar has to hold both at any width.
+  for (final size in const [Size(360, 780), Size(760, 800)]) {
+    testWidgets('a long account name fits the toolbar at ${size.width}', (
+      tester,
+    ) async {
+      _listUser = 'deployment-service-account-with-a-long-name';
+      addTearDown(() => _listUser = 'lk');
+
+      await pump(tester, size: size);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byType(FilledButton),
+        size.width >= 720 ? findsOneWidget : findsNothing,
+      );
+
+      await close(tester);
+    });
+  }
 
   testWidgets('filtering narrows the list to what matches', (tester) async {
     await pump(tester, size: const Size(1100, 800));

@@ -210,36 +210,69 @@ extension on _ScheduledTasksPageState {
   Widget _buildToolbar(CronCatalog catalog, {required bool wide}) {
     final jobs = catalog.document.jobs;
     final enabledCount = jobs.where((job) => job.enabled).length;
+    // An account name is as long as someone made it and a translated summary
+    // as long as the language makes it, so both give way rather than either
+    // pushing the row past the window.
     final summary = Text(
       // Alphabetical, not the order the sentence reads: with no placeholder
       // declared in the ARB, that is the order gen-l10n emits, and both of
       // these are an `Object` the compiler will not tell apart.
       l10n.scheduledTaskSummaryFmt(enabledCount, jobs.length),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.right,
       style: UIs.text12Grey.copyWith(
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
 
+    if (!wide) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(_kPad, 9, _kPad, 9),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(child: _buildUserChip(catalog.user)),
+            const SizedBox(width: 9),
+            Flexible(child: summary),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(_kPad, 9, _kPad, 9),
       child: Row(
         children: [
-          _buildUserChip(catalog.user),
-          if (wide) ...[
-            const SizedBox(width: 9),
-            SizedBox(width: 240, child: _buildFilterPill()),
-          ],
-          const Spacer(),
-          const SizedBox(width: 9),
-          summary,
-          if (wide) ...[
-            const SizedBox(width: 11),
-            FilledButton.tonalIcon(
-              onPressed: _busy ? null : () => _editTask(),
-              icon: const Icon(Icons.add_alarm, size: 18),
-              label: Text(l10n.scheduledTaskAdd),
+          // The chip and the filter are one group inside a tight box, so what
+          // the chip does not use becomes the gap before the summary instead
+          // of slack at the end of the row, which would hold the button off
+          // the right edge.
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(child: _buildUserChip(catalog.user)),
+                const SizedBox(width: 9),
+                Flexible(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 240),
+                    child: _buildFilterPill(),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+          const SizedBox(width: 11),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: summary,
+          ),
+          const SizedBox(width: 11),
+          FilledButton.tonalIcon(
+            onPressed: _busy ? null : () => _editTask(),
+            icon: const Icon(Icons.add_alarm, size: 18),
+            label: Text(l10n.scheduledTaskAdd),
+          ),
         ],
       ),
     );
@@ -258,7 +291,14 @@ extension on _ScheduledTasksPageState {
         children: [
           Icon(Icons.person_outline, size: 15, color: scheme.onSurfaceVariant),
           const SizedBox(width: 6),
-          Text(user, style: const TextStyle(fontSize: 13)),
+          Flexible(
+            child: Text(
+              user,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
         ],
       ),
     );
@@ -334,7 +374,7 @@ extension on _ScheduledTasksPageState {
               label: l10n.scheduledTaskEmptyFmt(catalog.user),
               action: Btn.text(
                 text: l10n.scheduledTaskAdd,
-                onTap: () => _editTask(),
+                onTap: _busy ? null : () => _editTask(),
               ),
             ),
           ),
@@ -440,13 +480,22 @@ extension on _ScheduledTasksPageState {
         color: scheme.onSurfaceVariant,
       ),
     );
-    final when = Text(
-      '$relative · $at',
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: scheme.primary,
-        fontFeatures: const [FontFeature.tabularFigures()],
+    // Capped so that the rest of the banner keeps a column to be read in: how
+    // long "in 2 hours · Sun 04:30" is depends on the language, and on a phone
+    // it is the half that can afford to lose a word.
+    final when = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 190),
+      child: Text(
+        '$relative · $at',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: scheme.primary,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
       ),
     );
 
@@ -667,6 +716,10 @@ extension on _ScheduledTasksPageState {
 
   Widget _buildMenu(CronJob job) {
     return PopupMenu<_ScheduledTaskAction>(
+      // A save is one write of the whole file, and [_save] refuses a second
+      // one while it is in flight: left on, this would take an edit through
+      // the whole sheet and then drop it without saying so.
+      enabled: !_busy,
       items: [
         PopupMenuItem(
           value: _ScheduledTaskAction.edit,

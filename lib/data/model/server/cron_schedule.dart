@@ -296,13 +296,14 @@ final class CronSchedule {
       }
     }
 
-    // Counted from [from] rather than between the two, so that a range which
-    // wraps — `fri-mon`, `22-4` — keeps its step across the seam.
-    final period = max - min + 1;
-    final span = to >= from ? to - from : period - (from - to);
-    return [
-      for (var i = 0; i <= span; i += step) min + ((from - min + i) % period),
-    ];
+    // A descending range — `22-2`, `fri-mon` — is answered by nobody in
+    // particular: vixie and cronie refuse the file, busybox sets no bits and
+    // the line never fires, and some others wrap it round. Reading it as a
+    // wrap would put a next run on the page for a line the server may never
+    // run, which is worse than saying nothing: the page falls back to showing
+    // the expression as written, and the line is still saved untouched.
+    if (to < from) return null;
+    return [for (var v = from; v <= to; v += step) v];
   }
 
   static int? _value(String raw, Map<String, int>? names, int min, int max) {

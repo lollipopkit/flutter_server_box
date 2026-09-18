@@ -37,9 +37,13 @@ void main() {
       expect(CronSchedule.tryParse('0 0 * * 0')!.daysOfWeek, {0});
     });
 
-    test('keeps the step across a range that wraps', () {
-      expect(CronSchedule.tryParse('0 22-2 * * *')!.hours, {22, 23, 0, 1, 2});
-      expect(CronSchedule.tryParse('0 0 * * fri-mon')!.daysOfWeek, {5, 6, 0, 1});
+    // vixie and cronie refuse the file, busybox sets no bits so the line never
+    // fires, and some others wrap it round. Reading it either way would put a
+    // next run on the page for a line the server may never run.
+    test('says nothing about a range that descends', () {
+      expect(CronSchedule.tryParse('0 22-2 * * *'), isNull);
+      expect(CronSchedule.tryParse('0 0 * * fri-mon'), isNull);
+      expect(CronSchedule.tryParse('0 22-23 * * *')!.hours, {22, 23});
     });
 
     test('reads the macros as what crond expands them to', () {
