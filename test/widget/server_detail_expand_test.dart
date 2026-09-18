@@ -108,14 +108,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    // The sensor card is one of the cards that still open and close, and its
-    // rows are what says which it is.
-    final card = find.byType(ExpandTile).first;
+    // The sensor card is one of the cards that open and close, and its rows
+    // are what says which it is. The glyph is what says a card opens at all,
+    // so it is also the only one on this page.
     expect(find.text('coretemp'), findsOneWidget);
 
-    await tester.tap(
-      find.descendant(of: card, matching: find.byType(ListTile)).first,
-    );
+    await tester.tap(find.byIcon(Icons.expand_more).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('coretemp'), findsNothing);

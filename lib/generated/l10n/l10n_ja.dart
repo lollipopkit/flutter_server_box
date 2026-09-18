@@ -2286,6 +2286,40 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total 台中 $plotted 台';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return 'センサー $count 個 · 最高は $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'グラフには少なくとも 1 台を残します。';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$total 件中 $shown 件を表示';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count 個のプロセス';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count 台が異常';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'タップすると属性を表示';
+
+  @override
+  String get cycle => 'サイクル';
+
+  @override
   String get window => '期間';
 
   @override

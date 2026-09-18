@@ -2413,6 +2413,40 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total cihazdan $plotted ədədi';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensor · ən istisi $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'Qrafikdə ən azı bir cihaz qalır.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$total elementdən $shown göstərilir';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count proses';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count nasaz';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Atributları üçün toxunun';
+
+  @override
+  String get cycle => 'Dövr';
+
+  @override
   String get window => 'pəncərə';
 
   @override

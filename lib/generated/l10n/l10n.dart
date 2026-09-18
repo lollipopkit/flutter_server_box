@@ -4156,6 +4156,54 @@ abstract class AppLocalizations {
   /// **'{count} devices · {name} busiest'**
   String devicesBusiestFmt(Object count, Object name);
 
+  /// No description provided for @devicesPlottedFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{plotted} of {total} devices'**
+  String devicesPlottedFmt(Object plotted, Object total);
+
+  /// No description provided for @sensorsHottestFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sensors · {name} hottest'**
+  String sensorsHottestFmt(Object count, Object name);
+
+  /// No description provided for @oneDeviceAtLeast.
+  ///
+  /// In en, this message translates to:
+  /// **'At least one device stays on the chart.'**
+  String get oneDeviceAtLeast;
+
+  /// No description provided for @shownOfFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{shown} of {total} shown'**
+  String shownOfFmt(Object shown, Object total);
+
+  /// No description provided for @processesFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} processes'**
+  String processesFmt(Object count);
+
+  /// No description provided for @diskFailingFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} failing'**
+  String diskFailingFmt(Object count);
+
+  /// No description provided for @diskSmartOpenTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open one for its attributes'**
+  String get diskSmartOpenTip;
+
+  /// No description provided for @cycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycle'**
+  String get cycle;
+
   /// No description provided for @window.
   ///
   /// In en, this message translates to:

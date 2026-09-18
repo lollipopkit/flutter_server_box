@@ -2293,6 +2293,40 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total개 중 $plotted개 장치';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '센서 $count개 · 최고 $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => '차트에는 장치를 최소 하나 남깁니다.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$total개 중 $shown개 표시';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '프로세스 $count개';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count개 불량';
+  }
+
+  @override
+  String get diskSmartOpenTip => '탭하면 속성을 봅니다';
+
+  @override
+  String get cycle => '사이클';
+
+  @override
   String get window => '기간';
 
   @override

@@ -2211,6 +2211,40 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total 个设备中的 $plotted 个';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count 个传感器 · 最热 $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => '图表至少保留一个设备。';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '已显示 $total 项中的 $shown 项';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count 个进程';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count 个异常';
+  }
+
+  @override
+  String get diskSmartOpenTip => '点按查看该盘的属性';
+
+  @override
+  String get cycle => '循环次数';
+
+  @override
   String get window => '窗口';
 
   @override
@@ -4694,6 +4728,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String devicesBusiestFmt(Object count, Object name) {
     return '$count 個裝置 · 最忙 $name';
   }
+
+  @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total 個裝置中的 $plotted 個';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count 個感測器 · 最熱 $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => '圖表至少保留一個裝置。';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '已顯示 $total 項中的 $shown 項';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count 個處理程序';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count 個異常';
+  }
+
+  @override
+  String get diskSmartOpenTip => '點按查看該磁碟的屬性';
+
+  @override
+  String get cycle => '循環次數';
 
   @override
   String get window => '視窗';

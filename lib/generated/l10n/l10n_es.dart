@@ -2432,6 +2432,41 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted de $total dispositivos';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensores · $name el más caliente';
+  }
+
+  @override
+  String get oneDeviceAtLeast =>
+      'Al menos un dispositivo permanece en el gráfico.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$shown de $total mostrados';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count procesos';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count con fallos';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Toca uno para ver sus atributos';
+
+  @override
+  String get cycle => 'Ciclos';
+
+  @override
   String get window => 'ventana';
 
   @override

@@ -2413,6 +2413,41 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted van $total apparaten';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensoren · $name het heetst';
+  }
+
+  @override
+  String get oneDeviceAtLeast =>
+      'Ten minste één apparaat blijft in de grafiek.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$shown van $total getoond';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count processen';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count defect';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Tik voor de attributen';
+
+  @override
+  String get cycle => 'Cycli';
+
+  @override
   String get window => 'venster';
 
   @override

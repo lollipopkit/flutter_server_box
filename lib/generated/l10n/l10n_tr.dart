@@ -2397,6 +2397,40 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$total aygıttan $plotted tanesi';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensör · en sıcak $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'Grafikte en az bir aygıt kalır.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$total öğeden $shown tanesi gösteriliyor';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count süreç';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count arızalı';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Özniteliklerini görmek için dokunun';
+
+  @override
+  String get cycle => 'Çevrim';
+
+  @override
   String get window => 'pencere';
 
   @override

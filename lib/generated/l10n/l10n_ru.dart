@@ -2423,6 +2423,40 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted из $total устройств';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return 'датчиков: $count · самый горячий — $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'Хотя бы одно устройство остаётся на графике.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return 'показано $shown из $total';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return 'процессов: $count';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count с ошибками';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Нажмите, чтобы увидеть атрибуты';
+
+  @override
+  String get cycle => 'Циклы';
+
+  @override
   String get window => 'окно';
 
   @override

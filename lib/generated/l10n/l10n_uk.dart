@@ -2416,6 +2416,41 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted із $total пристроїв';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return 'датчиків: $count · найгарячіший — $name';
+  }
+
+  @override
+  String get oneDeviceAtLeast =>
+      'Щонайменше один пристрій лишається на графіку.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return 'показано $shown із $total';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return 'процесів: $count';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count з помилками';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Натисніть, щоб побачити атрибути';
+
+  @override
+  String get cycle => 'Цикли';
+
+  @override
   String get window => 'вікно';
 
   @override

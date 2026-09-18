@@ -2395,6 +2395,40 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String devicesPlottedFmt(Object plotted, Object total) {
+    return '$plotted of $total devices';
+  }
+
+  @override
+  String sensorsHottestFmt(Object count, Object name) {
+    return '$count sensors · $name hottest';
+  }
+
+  @override
+  String get oneDeviceAtLeast => 'At least one device stays on the chart.';
+
+  @override
+  String shownOfFmt(Object shown, Object total) {
+    return '$shown of $total shown';
+  }
+
+  @override
+  String processesFmt(Object count) {
+    return '$count processes';
+  }
+
+  @override
+  String diskFailingFmt(Object count) {
+    return '$count failing';
+  }
+
+  @override
+  String get diskSmartOpenTip => 'Open one for its attributes';
+
+  @override
+  String get cycle => 'Cycle';
+
+  @override
   String get window => 'window';
 
   @override

@@ -54,23 +54,12 @@ class MonitorHttpDataSource implements ServerDataSource {
     request.stop();
     _lastRequestMs = request.elapsedMilliseconds;
     final status = applyMonitorMetrics(into, metrics);
-    status.history.add(
+    status.recordSample(
       // The agent's own sampling instant, not now(): it refreshes its metrics
       // once per collection cycle and the app polls faster than that, so
       // stamping receipt time would turn repeats into distinct points
       timeMs:
           _epochMs(metrics.timestamp) ?? DateTime.now().millisecondsSinceEpoch,
-      cpu: status.cpu.usedPercent(),
-      mem: status.mem.total > 0 ? status.mem.usedPercent * 100 : null,
-      swap: status.swap.total > 0 ? status.swap.usedPercent * 100 : null,
-      disk: status.diskUsage?.usedPercent,
-      netRx: status.netSpeed.speedInBytesOf(),
-      netTx: status.netSpeed.speedOutBytesOf(),
-      diskRead: status.diskIO.allSpeedBytes.$1,
-      diskWrite: status.diskIO.allSpeedBytes.$2,
-      temp: status.temps.first,
-      temps: {for (final d in status.temps.devices) d: ?status.temps.get(d)},
-      battery: status.batteries.firstOrNull?.percent?.toDouble(),
     );
     return status;
   }
