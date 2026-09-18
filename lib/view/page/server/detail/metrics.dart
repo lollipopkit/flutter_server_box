@@ -1255,7 +1255,10 @@ extension on _ServerDetailPageState {
     if (devices == null) return null;
     // What the legend is showing, out of what the machine reports. Only the
     // live window draws a line each, so anywhere else this is the count alone.
-    final label = _range == _HistoryRange.live
+    // "6 of 8" is about the lines on the chart, and those are drawn from the
+    // rolling buffer — so only the live window has any. Anywhere else the
+    // honest answer is how many devices the machine has.
+    final label = _custom == null && _range == _HistoryRange.live
         ? l10n.devicesPlottedFmt(
             _plottedDevices(m.kind, devices).length,
             devices.names.length,
@@ -1860,7 +1863,14 @@ extension on _ServerDetailPageState {
       initialTime: TimeOfDay.fromDateTime(initial),
     );
     if (time == null) return null;
-    return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+    final at = DateTime(day.year, day.month, day.day, time.hour, time.minute);
+    // The day picker stops at today; the time picker does not know what time
+    // it is, so "today, 23:50" is reachable at 22:00. A window reaching into
+    // the future would draw the time that has not happened as a gap in the
+    // readings. Clamped rather than refused, because the row shows what it
+    // landed on — a tap that silently does nothing is the worse answer.
+    final now = DateTime.now();
+    return at.isAfter(now) ? now : at;
   }
 
   /// Asks the agent for a window nobody has asked for before.
@@ -1873,7 +1883,7 @@ extension on _ServerDetailPageState {
     // Which request this is. A window picked while another is still in flight
     // is the answer that counts, and without this the slower of the two
     // overwrites it on arrival and clears the busy flag the newer one set.
-    final generation = ++_customGeneration;
+    final generation = ++_historyGeneration;
     _rebuild(() {
       _custom = (from: from, to: to);
       _customAnswer = null;
@@ -1890,15 +1900,15 @@ extension on _ServerDetailPageState {
             from: from,
             to: to,
           );
-      if (!mounted || generation != _customGeneration) return;
+      if (!mounted || generation != _historyGeneration) return;
       _rebuild(
         () => _customAnswer = (samples: samples, at: DateTime.now()),
       );
     } catch (e, s) {
       Loggers.app.warning('History range for ${widget.args.spi.id}', e, s);
-      if (mounted && generation == _customGeneration) Toast.error('$e');
+      if (mounted && generation == _historyGeneration) Toast.error('$e');
     } finally {
-      if (generation == _customGeneration) _rebuild(() => _customBusy = false);
+      if (generation == _historyGeneration) _rebuild(() => _customBusy = false);
     }
   }
 
@@ -1920,6 +1930,7 @@ extension on _ServerDetailPageState {
       return;
     }
 
+    final generation = _historyGeneration;
     _rebuild(() => _rangeBusy.add(range));
     try {
       final to = DateTime.now();
@@ -1935,15 +1946,19 @@ extension on _ServerDetailPageState {
             from: to.subtract(Duration(minutes: minutes)),
             to: to,
           );
-      if (!mounted) return;
+      // The page may have been handed another server while this was in
+      // flight, and these samples are the previous one's.
+      if (!mounted || generation != _historyGeneration) return;
       _rebuild(
         () => _rangeWindows[range] = (samples: samples, at: DateTime.now()),
       );
     } catch (e, s) {
       Loggers.app.warning('History ${range.label} for ${widget.args.spi.id}', e, s);
-      if (mounted) Toast.error('$e');
+      if (mounted && generation == _historyGeneration) Toast.error('$e');
     } finally {
-      _rebuild(() => _rangeBusy.remove(range));
+      if (generation == _historyGeneration) {
+        _rebuild(() => _rangeBusy.remove(range));
+      }
     }
   }
 }
@@ -1996,6 +2011,10 @@ extension on _ServerDetailPageState {
         (k: 'Swap', v: (ss.swap.total * 1024).bytes2Str, secret: false),
       if (usage != null)
         (k: libL10n.disk, v: usage.size.kb2Str, secret: false),
+      // What the machine has, not what it is doing with it: the load is the
+      // GPU row above, and which cards are in the box belongs with the CPU
+      // and the memory.
+      if (ss.gpus.isNotEmpty) (k: 'GPU', v: _modelsOf(ss.gpus), secret: false),
     ];
 
     return [
@@ -2007,6 +2026,19 @@ extension on _ServerDetailPageState {
       if (hardware.isNotEmpty)
         _buildInfoCard(Icons.developer_board, l10n.hardware, hardware),
     ];
+  }
+
+  /// The models in a set of cards, counted rather than repeated: two of the
+  /// same card is one line about a machine, and four lines of the same name is
+  /// four lines of nothing.
+  String _modelsOf(List<GpuItem> gpus) {
+    final counts = <String, int>{};
+    for (final gpu in gpus) {
+      counts[gpu.name] = (counts[gpu.name] ?? 0) + 1;
+    }
+    return [
+      for (final e in counts.entries) e.value > 1 ? '${e.key} ×${e.value}' : e.key,
+    ].join(', ');
   }
 
   Widget _buildInfoCard(

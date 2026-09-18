@@ -126,8 +126,14 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   // ignore: prefer_final_fields — set through `_rebuild` from an extension.
   bool _customBusy = false;
 
-  /// Which named-window request is the current one — see `_selectCustom`.
-  int _customGeneration = 0;
+  /// Which server, and which request, the history on this page belongs to.
+  ///
+  /// Bumped when a request supersedes another and when the page is handed a
+  /// different server: both make every answer still in flight one about
+  /// something that is no longer on screen. Without it the slower of two
+  /// window requests overwrites the newer one, and switching servers in a pane
+  /// draws the previous machine's readings under this machine's name.
+  int _historyGeneration = 0;
 
   /// The window the chart draws, and what has been fetched for it.
   _HistoryRange _range = _HistoryRange.live;
@@ -182,6 +188,33 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _size = MediaQuery.sizeOf(context);
+  }
+
+  /// The page is a widget, not a route: choosing another server in a pane
+  /// hands this same state a different one. Everything here that is about a
+  /// particular machine has to go with it — the windows fetched for it, the
+  /// devices picked out of it — and every request still in flight has to stop
+  /// counting.
+  @override
+  void didUpdateWidget(ServerDetailPage old) {
+    super.didUpdateWidget(old);
+    if (widget.args.spi.id == old.args.spi.id) return;
+    _historyGeneration++;
+    setState(() {
+      _custom = null;
+      _customAnswer = null;
+      _customBusy = false;
+      _rangeWindows.clear();
+      _rangeBusy.clear();
+      _range = _HistoryRange.live;
+      _devicePick.clear();
+    });
+    // What `initState` does for the server the page opened on: this one's
+    // buffer is empty until its own poll fills it, and the agent has the part
+    // that happened before the page arrived.
+    unawaited(
+      ref.read(serverProvider(widget.args.spi.id).notifier).seedHistory(),
+    );
   }
 
   @override

@@ -207,6 +207,9 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('GPU'), findsWidgets);
+    // What the machine has is a fact about the machine, so it is in the card
+    // that lists what it is built of — beside the CPU and the memory.
+    expect(find.text('NVIDIA T4'), findsWidgets);
     expect(find.text(libL10n.temperature), findsWidgets);
     expect(find.text(libL10n.battery), findsWidgets);
     // The hottest of the two, not their mean and not the first one.

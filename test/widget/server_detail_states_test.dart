@@ -19,6 +19,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
@@ -94,6 +95,81 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
   }
+
+  /// The page is a widget, not a route: choosing another server in a pane
+  /// hands the same state a different one, and everything on it that belongs
+  /// to a particular machine has to go with it.
+  testWidgets('another server is another page, not this one with new numbers', (
+    tester,
+  ) async {
+    const other = 'srv-states-2';
+    final otherSpi = spiFixture(
+      id: other,
+      name: 'db',
+      ip: 'h2',
+      user: 'u',
+      autoConnect: false,
+    );
+    Stores.server.put(otherSpi);
+
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final shown = ValueNotifier<Spi>(spi);
+    addTearDown(shown.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: const [
+            LibLocalizations.delegate,
+            ...AppLocalizations.localizationsDelegates,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: ResponsivePoints.builder,
+          home: Builder(
+            builder: (context) {
+              app_locale.l10n = AppLocalizations.of(context)!;
+              context.setLibL10n();
+              return ValueListenableBuilder(
+                valueListenable: shown,
+                builder: (_, spi, _) =>
+                    ServerDetailPage(args: SpiRequiredArgs(spi)),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerDetailPage)),
+    );
+
+    final first = InitStatus.status;
+    first.more[StatusCmdType.host] = 'first-host';
+    container.read(serverProvider(sid).notifier).updateStatus(first);
+    await settle(tester);
+    expect(find.text('first-host'), findsOneWidget);
+
+    // The same state, a different machine.
+    final state = tester.state(find.byType(ServerDetailPage));
+    shown.value = otherSpi;
+    await settle(tester);
+
+    expect(
+      tester.state(find.byType(ServerDetailPage)),
+      same(state),
+      reason: 'the page was rebuilt rather than reused; this proves nothing',
+    );
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text('first-host'),
+      findsNothing,
+      reason: "the previous machine's readings stayed on the new one's page",
+    );
+  });
 
   testWidgets('connecting draws the rows it is waiting for', (tester) async {
     final notifier = await pump(tester);

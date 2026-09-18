@@ -439,6 +439,36 @@ async fn an_inverted_window_is_refused() {
     assert_eq!(resp.status().as_u16(), 400);
 }
 
+/// `to` on its own: a length ending somewhere other than now.
+///
+/// "The hour before the alert" is a window a client has every reason to ask
+/// for, and dropping the bound answered with the hour before the request —
+/// which looks exactly like an answer to what was asked.
+#[ntex::test]
+async fn to_without_from_ends_the_window_there() {
+    let srv = test_server(state_with_samples_every(6 * 3600, 60).await).await;
+    let now = Utc::now();
+    let to = now - Duration::hours(3);
+
+    let points = history(&srv, &format!("minutes=60&to={}", to.timestamp())).await;
+
+    assert!(!points.is_empty());
+    let last =
+        DateTime::parse_from_rfc3339(points.last().unwrap()["timestamp"].as_str().unwrap())
+            .unwrap();
+    assert!(
+        last <= to + Duration::minutes(2),
+        "answered past the end that was named: {last} > {to}"
+    );
+    let first =
+        DateTime::parse_from_rfc3339(points.first().unwrap()["timestamp"].as_str().unwrap())
+            .unwrap();
+    assert!(
+        first >= to - Duration::minutes(62),
+        "answered with more than the hour that was asked for: {first}"
+    );
+}
+
 /// A bound that was given but cannot be read.
 ///
 /// Refused rather than defaulted: the caller is asking for a window, and

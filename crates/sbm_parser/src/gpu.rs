@@ -12,7 +12,8 @@ fn parse_first_int(s: Option<&str>) -> Option<i64> {
 }
 
 /// nvidia-smi -q -x output (Dart `NvidiaSmi.fromXml`).
-/// GPUs missing name or temp are skipped; missing power yields "null / null", matching Dart
+/// GPUs missing name or temp are skipped; a power reading with one half
+/// missing says so with a dash rather than with the word "null"
 pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
     // roxmltree does not support DTDs; strip the DOCTYPE declaration from nvidia-smi output
     let cleaned: String = raw
@@ -79,10 +80,14 @@ pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
                 percent: parse_first_int(percent.as_deref()),
                 power: match (power_draw, power_limit) {
                     (None, None) => None,
+                    // Kept as a pair even when half of it is missing: a card
+                    // that reports only its limit — a Tesla T10 does — would
+                    // otherwise print it bare and be read as the draw. `--` is
+                    // what the app writes for a reading it does not have.
                     (draw, limit) => Some(format!(
                         "{} / {}",
-                        draw.as_deref().unwrap_or("null"),
-                        limit.as_deref().unwrap_or("null")
+                        draw.as_deref().unwrap_or("--"),
+                        limit.as_deref().unwrap_or("--")
                     )),
                 },
                 memory: match (

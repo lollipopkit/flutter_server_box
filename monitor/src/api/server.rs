@@ -1215,7 +1215,17 @@ async fn get_metrics_history(
             let minutes: i64 = query_param(query, "minutes")
                 .unwrap_or(60)
                 .clamp(5, 7 * 24 * 60);
-            (now - chrono::Duration::minutes(minutes), None)
+            // `to` without `from` is a length ending somewhere other than now
+            // — "the hour before the alert" — and dropping it answered with
+            // the hour before *this request* instead, which looks like an
+            // answer to the question that was asked.
+            match to_param {
+                None => (now - chrono::Duration::minutes(minutes), None),
+                Some(to) => match chrono::DateTime::from_timestamp(to, 0) {
+                    Some(to) => (to - chrono::Duration::minutes(minutes), Some(to)),
+                    None => return bad_request("to must be epoch seconds"),
+                },
+            }
         }
     };
     let span_secs = (until.unwrap_or(now) - cutoff).num_seconds().max(1);
