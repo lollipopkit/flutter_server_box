@@ -455,6 +455,7 @@ void _applyGpus(ServerStatus ss, Map<String, dynamic> status) {
 }
 
 void _applySmart(ServerStatus ss, Map<String, dynamic> status) {
+  ss.diskSmartAt = DateTime.now();
   ss.diskSmart = (status['disk_smart'] as List).map((d) {
     final attrs = <String, SmartAttribute>{};
     (d['smart_attributes'] as Map<String, dynamic>).forEach((name, a) {

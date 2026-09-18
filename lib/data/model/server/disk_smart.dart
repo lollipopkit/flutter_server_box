@@ -28,22 +28,28 @@ abstract class DiskSmart with _$DiskSmart {
   /// Get the specific SMART attribute by name
   SmartAttribute? getAttribute(String name) => smartAttributes[name];
 
-  /// The counts a drive is judged on beyond [healthy], worst first, each
-  /// paired with the word that names it.
+  /// The counts a drive is judged on beyond [healthy], worst first, each with
+  /// the word a row uses and the name the attribute sheet lists it under.
   ///
   /// SMART's own verdict stays PASSED until a drive is nearly gone: one with
   /// reallocated sectors answers PASSED and is the one to replace. Every one
   /// of these should be zero, and the first non-zero one is what a card says
   /// instead of "PASSED".
   ///
-  /// The words are smartctl's, shortened — they are the terms the attribute
+  /// The words are smartctl's, spelled out — they are the terms the attribute
   /// tables and every disk forum use, and translating them would leave the
   /// reading and its name in different vocabularies.
-  static const criticalAttributes = <String, String>{
-    'Reallocated_Sector_Ct': 'reallocated',
-    'Current_Pending_Sector': 'pending',
-    'Offline_Uncorrectable': 'uncorrectable',
-    'UDMA_CRC_Error_Count': 'CRC errors',
+  static const criticalAttributes = <String, ({String short, String label})>{
+    'Reallocated_Sector_Ct': (
+      short: 'reallocated',
+      label: 'Reallocated sectors',
+    ),
+    'Current_Pending_Sector': (short: 'pending', label: 'Pending sectors'),
+    'Offline_Uncorrectable': (
+      short: 'uncorrectable',
+      label: 'Offline uncorrectable',
+    ),
+    'UDMA_CRC_Error_Count': (short: 'CRC errors', label: 'CRC errors'),
   };
 
   /// Which of [criticalAttributes] this drive reports above zero, in that
@@ -53,7 +59,7 @@ abstract class DiskSmart with _$DiskSmart {
     for (final entry in criticalAttributes.entries) {
       final raw = smartAttributes[entry.key]?.rawValue;
       final count = raw is int ? raw : int.tryParse('$raw');
-      if (count != null && count > 0) out[entry.value] = count;
+      if (count != null && count > 0) out[entry.value.short] = count;
     }
     return out;
   }

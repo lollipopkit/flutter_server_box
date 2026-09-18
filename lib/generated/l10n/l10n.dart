@@ -4312,6 +4312,12 @@ abstract class AppLocalizations {
   /// **'Sorted worst first'**
   String get diskSmartSortedTip;
 
+  /// No description provided for @readAgoFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'read {ago}'**
+  String readAgoFmt(Object ago);
+
   /// No description provided for @processesFmt.
   ///
   /// In en, this message translates to:

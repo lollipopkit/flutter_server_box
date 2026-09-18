@@ -729,6 +729,7 @@
   "diskWarningFmt": "попереджень: {count}",
   "diskWrongOfFmt": "{wrong} із {total} пристроїв",
   "diskSmartSortedTip": "Найгірші вгорі",
+  "readAgoFmt": "прочитано {ago}",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

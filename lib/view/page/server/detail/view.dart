@@ -1095,7 +1095,7 @@ ${err.message ?? 'null'}
       for (final entry in DiskSmart.criticalAttributes.entries)
         if (smart.getAttribute(entry.key)?.rawValue case final raw?)
           (
-            k: entry.key.replaceAll('_', ' '),
+            k: entry.value.label,
             v: '$raw',
             dot: '$raw' == '0' ? null : _Verdict.warn,
           ),
@@ -1105,6 +1105,8 @@ ${err.message ?? 'null'}
         (k: l10n.powerCycles, v: '$cycles', dot: null),
       if (smart.ssdLifeLeft case final left?)
         (k: l10n.lifeLeft, v: '$left%', dot: null),
+      if (smart.temperature case final t?)
+        (k: libL10n.temperature, v: _formatTemp(t), dot: null),
       if (smart.lifetimeWritesGiB case final written?)
         (k: l10n.lifetimeWrite, v: '$written GiB', dot: null),
       if (smart.lifetimeReadsGiB case final read?)
@@ -1113,8 +1115,6 @@ ${err.message ?? 'null'}
         (k: l10n.averageErase, v: '$erases', dot: null),
       if (smart.unsafeShutdownCount case final unsafe?)
         (k: l10n.unsafeShutdowns, v: '$unsafe', dot: null),
-      if (smart.temperature case final t?)
-        (k: libL10n.temperature, v: _formatTemp(t), dot: null),
       if (smart.model case final model?) (k: 'Model', v: model, dot: null),
       if (smart.serial case final serial?) (k: 'Serial', v: serial, dot: null),
     ];
@@ -1129,18 +1129,27 @@ ${err.message ?? 'null'}
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
           ),
         ),
-        for (final row in rows)
-          _buildReadoutRow(
-            k: row.k,
-            v: row.v,
-            dot: row.dot?.color(scheme),
-          ),
-        // Where the numbers came from, spelled as the command that produced
-        // them: the answer to "is this current" is the command, not a label.
+        for (final (i, row) in rows.indexed) ...[
+          // A line between the readings, not around them: this is a table of
+          // numbers and the rule is what keeps a name with its own value.
+          if (i > 0) const Divider(height: 1, indent: 17, endIndent: 17),
+          _buildReadoutRow(k: row.k, v: row.v, dot: row.dot?.color(scheme)),
+        ],
+        // Where the numbers came from and when: SMART is read on the extended
+        // cadence, so these are minutes old while everything else on the page
+        // is seconds old. The command is the other half of the answer — it is
+        // what to run to see the same thing.
         Padding(
           padding: const EdgeInsets.fromLTRB(17, 13, 17, 5),
           child: Text(
-            'smartctl -A /dev/${smart.device}',
+            [
+              'smartctl -A /dev/${smart.device}',
+              if (ref.read(serverProvider(widget.args.spi.id))
+                      .status
+                      .diskSmartAt
+                  case final at?)
+                l10n.readAgoFmt(at.toAgoStr()),
+            ].join(' · '),
             style: UIs.text11Grey.copyWith(fontFamily: 'monospace'),
           ),
         ),

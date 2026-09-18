@@ -2492,6 +2492,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskSmartSortedTip => 'Terburuk lebih dulu';
 
   @override
+  String readAgoFmt(Object ago) {
+    return 'dibaca $ago';
+  }
+
+  @override
   String processesFmt(Object count) {
     return '$count proses';
   }

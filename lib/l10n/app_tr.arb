@@ -729,6 +729,7 @@
   "diskWarningFmt": "{count} uyarı",
   "diskWrongOfFmt": "{total} aygıttan {wrong}",
   "diskSmartSortedTip": "En kötüden sıralı",
+  "readAgoFmt": "{ago} okundu",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

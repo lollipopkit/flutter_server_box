@@ -734,6 +734,7 @@
   "diskWarningFmt": "{count} 个警告",
   "diskWrongOfFmt": "{total} 个设备中的 {wrong} 个",
   "diskSmartSortedTip": "最差的排在最前",
+  "readAgoFmt": "{ago}读取",
   "scheduledTasks": "计划任务",
   "scheduledTaskLinuxOnly": "计划任务管理目前仅支持 Linux 服务器。",
   "scheduledTaskUnavailable": "此服务器上没有可用的 crontab。",

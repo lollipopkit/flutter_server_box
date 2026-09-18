@@ -2507,6 +2507,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get diskSmartSortedTip => 'Найгірші вгорі';
 
   @override
+  String readAgoFmt(Object ago) {
+    return 'прочитано $ago';
+  }
+
+  @override
   String processesFmt(Object count) {
     return 'процесів: $count';
   }

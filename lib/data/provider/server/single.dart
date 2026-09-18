@@ -241,6 +241,7 @@ class ServerNotifier extends _$ServerNotifier {
       system: system ?? source.system,
       diskIO: DiskIO.copy(source.diskIO),
       diskSmart: source.diskSmart.toList(),
+      diskSmartAt: source.diskSmartAt,
       err: setErr ? err : source.err,
       nvidia: source.nvidia?.toList(),
       gpus: source.gpus.toList(),

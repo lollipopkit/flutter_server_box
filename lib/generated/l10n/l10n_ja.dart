@@ -2376,6 +2376,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diskSmartSortedTip => '悪い順';
 
   @override
+  String readAgoFmt(Object ago) {
+    return '$agoに取得';
+  }
+
+  @override
   String processesFmt(Object count) {
     return '$count 個のプロセス';
   }

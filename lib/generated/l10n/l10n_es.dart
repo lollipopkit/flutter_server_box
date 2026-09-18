@@ -2523,6 +2523,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get diskSmartSortedTip => 'Peor primero';
 
   @override
+  String readAgoFmt(Object ago) {
+    return 'leído $ago';
+  }
+
+  @override
   String processesFmt(Object count) {
     return '$count procesos';
   }

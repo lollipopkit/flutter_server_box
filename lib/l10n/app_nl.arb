@@ -729,6 +729,7 @@
   "diskWarningFmt": "{count} waarschuwing",
   "diskWrongOfFmt": "{wrong} van {total} apparaten",
   "diskSmartSortedTip": "Slechtste eerst",
+  "readAgoFmt": "gelezen {ago}",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

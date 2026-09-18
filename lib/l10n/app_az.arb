@@ -938,6 +938,7 @@
   "diskWarningFmt": "{count} xəbərdarlıq",
   "diskWrongOfFmt": "{total} cihazdan {wrong}",
   "diskSmartSortedTip": "Ən pisdən sıralanıb",
+  "readAgoFmt": "{ago} oxundu",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

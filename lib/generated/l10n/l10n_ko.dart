@@ -2383,6 +2383,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get diskSmartSortedTip => '나쁜 순';
 
   @override
+  String readAgoFmt(Object ago) {
+    return '$ago 읽음';
+  }
+
+  @override
   String processesFmt(Object count) {
     return '프로세스 $count개';
   }

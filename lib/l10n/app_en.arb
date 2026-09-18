@@ -996,6 +996,7 @@
   "diskWarningFmt": "{count} warning",
   "diskWrongOfFmt": "{wrong} of {total} devices",
   "diskSmartSortedTip": "Sorted worst first",
+  "readAgoFmt": "read {ago}",
   "processesFmt": "{count} processes",
   "diskFailingFmt": "{count} failing",
   "diskSmartOpenTip": "Open one for its attributes",

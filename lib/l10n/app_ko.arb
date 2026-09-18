@@ -738,6 +738,7 @@
   "diskWarningFmt": "경고 {count}개",
   "diskWrongOfFmt": "{total}개 중 {wrong}개",
   "diskSmartSortedTip": "나쁜 순",
+  "readAgoFmt": "{ago} 읽음",
   "scheduledTasks": "Scheduled tasks",
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
   "scheduledTaskUnavailable": "crontab is not available on this server.",

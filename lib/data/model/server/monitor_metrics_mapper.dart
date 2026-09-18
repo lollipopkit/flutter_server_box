@@ -363,6 +363,7 @@ void _applySensors(ServerStatus ss, MonitorMetrics m) {
 /// `MonitorSmartSummary` doc) — those are set to empty, matching how the app
 /// already treats servers where SMART data hasn't been fully collected yet.
 void _applySmart(ServerStatus ss, MonitorMetrics m) {
+  ss.diskSmartAt = DateTime.now();
   ss.diskSmart = m.diskSmart
       .map(
         (d) => DiskSmart(

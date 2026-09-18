@@ -2301,6 +2301,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskSmartSortedTip => '最差的排在最前';
 
   @override
+  String readAgoFmt(Object ago) {
+    return '$ago读取';
+  }
+
+  @override
   String processesFmt(Object count) {
     return '$count 个进程';
   }
@@ -4890,6 +4895,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get diskSmartSortedTip => '最差的排在最前';
+
+  @override
+  String readAgoFmt(Object ago) {
+    return '$ago讀取';
+  }
 
   @override
   String processesFmt(Object count) {

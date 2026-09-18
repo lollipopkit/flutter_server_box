@@ -178,7 +178,7 @@ void main() {
       find.text('sdb · ${app_locale.l10n.attributes}'),
       findsOneWidget,
     );
-    expect(find.text('Reallocated Sector Ct'), findsOneWidget);
+    expect(find.text('Reallocated sectors'), findsOneWidget);
     expect(find.text('smartctl -A /dev/sdb'), findsOneWidget);
   });
 

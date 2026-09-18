@@ -2503,6 +2503,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get diskSmartSortedTip => 'Ən pisdən sıralanıb';
 
   @override
+  String readAgoFmt(Object ago) {
+    return '$ago oxundu';
+  }
+
+  @override
   String processesFmt(Object count) {
     return '$count proses';
   }
