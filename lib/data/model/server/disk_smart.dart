@@ -81,15 +81,15 @@ abstract class DiskSmart with _$DiskSmart {
   /// mapper target, which has no SMART data rather than bad SMART data.
   bool get notApplicable => healthy == null && smartAttributes.isEmpty;
 
-  int? get ssdLifeLeft => smartAttributes['SSD_Life_Left']?.rawValue as int?;
+  int? get ssdLifeLeft => countOf(smartAttributes['SSD_Life_Left']?.rawValue);
   int? get lifetimeWritesGiB =>
-      smartAttributes['Lifetime_Writes_GiB']?.rawValue as int?;
+      countOf(smartAttributes['Lifetime_Writes_GiB']?.rawValue);
   int? get lifetimeReadsGiB =>
-      smartAttributes['Lifetime_Reads_GiB']?.rawValue as int?;
+      countOf(smartAttributes['Lifetime_Reads_GiB']?.rawValue);
   int? get unsafeShutdownCount =>
-      smartAttributes['Unsafe_Shutdown_Count']?.rawValue as int?;
+      countOf(smartAttributes['Unsafe_Shutdown_Count']?.rawValue);
   int? get averageEraseCount =>
-      smartAttributes['Average_Erase_Count']?.rawValue as int?;
+      countOf(smartAttributes['Average_Erase_Count']?.rawValue);
 
   @override
   String toString() => 'DiskSmart($device)';

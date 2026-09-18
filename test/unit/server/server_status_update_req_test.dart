@@ -199,7 +199,8 @@ __SBM_GPU_END__
       );
 
       expect(result.cpu.brand, {'Example CPU': 4});
-      expect(result.cpu.coresCount, 9);
+      // The logical processors, without the aggregate row in front of them.
+      expect(result.cpu.coresCount, 8);
     });
 
     test('Windows Celsius temperatures ignore Unix divisor settings', () async {

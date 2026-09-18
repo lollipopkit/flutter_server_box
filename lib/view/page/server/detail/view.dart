@@ -721,8 +721,8 @@ ${err.message ?? 'null'}
     final children = <Widget>[];
     final displayCpuIndexSetting = _displayCpuIndex;
 
-    if (cs.coresCount > kCoresCountThreshold) {
-      final numCoresToDisplay = cs.coresCount - 1;
+    if (cs.coresCount >= kCoresCountThreshold) {
+      final numCoresToDisplay = cs.coresCount;
       final numRows = (numCoresToDisplay + kMaxColumn - 1) ~/ kMaxColumn;
 
       for (var i = 0; i < numRows; i++) {
@@ -757,7 +757,7 @@ ${err.message ?? 'null'}
         }
       }
     } else {
-      for (var i = 1; i < cs.coresCount; i++) {
+      for (var i = 1; i <= cs.coresCount; i++) {
         children.add(
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 17),

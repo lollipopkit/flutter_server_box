@@ -286,6 +286,7 @@ class ServerNotifier extends _$ServerNotifier {
       // refresh re-runs the extended function against the current script
       _extendedRaw = '';
       _extendedFetchedAt = null;
+      _extendedAcceptedAt = null;
     }
     state = state.copyWith(client: client);
   }
@@ -316,6 +317,7 @@ class ServerNotifier extends _$ServerNotifier {
       _scriptWritten = false;
       _extendedRaw = '';
       _extendedFetchedAt = null;
+      _extendedAcceptedAt = null;
     }
 
     if (!reconnect) {
