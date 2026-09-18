@@ -2271,6 +2271,47 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noHistoryYet => 'まだ計測データがありません';
 
   @override
+  String get noData => 'データなし';
+
+  @override
+  String get unavailable => '取得できません';
+
+  @override
+  String get metricUnavailableTip =>
+      'このページの他の項目には影響ありません。ホスト側でこの値を取得するコマンドを確認してください。';
+
+  @override
+  String get waitingFirstSample => '最初の取得を待っています';
+
+  @override
+  String atTimeFmt(Object time) {
+    return '$time 時点';
+  }
+
+  @override
+  String get stored => '保存済み';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return '最新の取得は$ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return '以下はすべて $time 時点（$ago）の値です。';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return '$time より前のデータはありません';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '$range を読み込み中…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return '$metric の保存された履歴はありません';
   }

@@ -22,6 +22,13 @@ enum _Verdict {
   };
 }
 
+/// How wide a column of cards wants to be.
+///
+/// Under this they stop being readable: a card is a table of a name and a
+/// reading, and at half of it the names wrap and the readings ellipsise. The
+/// grid takes one column instead, which is what a phone gets.
+const _kCardColumnWidth = 340.0;
+
 /// How many rows a card lists before its footer takes over.
 ///
 /// A card is a summary. A host with twenty sensors or fifteen guests has a
@@ -215,6 +222,11 @@ extension on _ServerDetailPageState {
     final body = Padding(
       padding: EdgeInsets.fromLTRB(17, 7, onTap == null ? 17 : 9, 7),
       child: Row(
+        // The room between the two, not at the end of the row: with a loose
+        // value beside an `Expanded` name the row's children come to less than
+        // its width, and the difference lands after the last of them — which
+        // left every reading short of the edge it is supposed to line up on.
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (dot != null) ...[
             Container(
@@ -264,6 +276,46 @@ extension on _ServerDetailPageState {
     );
     if (onTap == null) return body;
     return InkWell(onTap: onTap, child: body);
+  }
+
+  /// The cards laid out in as many columns as there is room for.
+  ///
+  /// Round-robin rather than shortest-column-first: a card's height is not
+  /// known before it is laid out, and the balanced version moves a card to the
+  /// other column when the machine it describes grows a row — which on a page
+  /// that refreshes every few seconds is a card that will not stay still.
+  Widget _buildCardGrid(List<Widget> cards) {
+    if (cards.isEmpty) return UIs.placeholder;
+    return LayoutBuilder(
+      builder: (_, cons) {
+        const gap = 13.0;
+        final columns = ((cons.maxWidth + gap) / (_kCardColumnWidth + gap))
+            .floor()
+            .clamp(1, 2);
+        if (columns == 1) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: cards,
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var col = 0; col < columns; col++) ...[
+              if (col > 0) const SizedBox(width: gap),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = col; i < cards.length; i += columns) cards[i],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
   }
 
   /// How much of a list is on screen, said whether or not any of it is

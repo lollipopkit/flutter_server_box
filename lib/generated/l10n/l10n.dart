@@ -4138,6 +4138,66 @@ abstract class AppLocalizations {
   /// **'Nothing measured yet'**
   String get noHistoryYet;
 
+  /// No description provided for @noData.
+  ///
+  /// In en, this message translates to:
+  /// **'no data'**
+  String get noData;
+
+  /// No description provided for @unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'unavailable'**
+  String get unavailable;
+
+  /// No description provided for @metricUnavailableTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The rest of this page is unaffected. Check the command this reading comes from on the host.'**
+  String get metricUnavailableTip;
+
+  /// No description provided for @waitingFirstSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the first sample'**
+  String get waitingFirstSample;
+
+  /// No description provided for @atTimeFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'at {time}'**
+  String atTimeFmt(Object time);
+
+  /// No description provided for @stored.
+  ///
+  /// In en, this message translates to:
+  /// **'stored'**
+  String get stored;
+
+  /// No description provided for @lastSampleFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'last sample {ago}'**
+  String lastSampleFmt(Object ago);
+
+  /// No description provided for @staleSinceFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything below is from {time}, {ago}.'**
+  String staleSinceFmt(Object ago, Object time);
+
+  /// No description provided for @noDataBeforeFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'no data before {time}'**
+  String noDataBeforeFmt(Object time);
+
+  /// No description provided for @loadingRangeFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading {range}…'**
+  String loadingRangeFmt(Object range);
+
   /// No description provided for @noStoredHistoryFor.
   ///
   /// In en, this message translates to:

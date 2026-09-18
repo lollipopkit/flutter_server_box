@@ -62,25 +62,25 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   // Per-segment tolerance: one failing segment does not affect the others (matching the old per-segment try-catch semantics)
-  _apply('cpu', () => _applyCpu(ss, status, req.system));
-  _apply('mem', () => _applyMemory(ss, status));
-  _apply('swap', () => _applySwap(ss, status));
-  _apply('disk', () => _applyDisks(ss, status));
-  _apply('net', () => _applyNet(ss, status, req, time));
-  _apply('temps', () => _applyTemps(ss, status));
-  _apply('conn', () => _applyConn(ss, status));
-  _apply('more', () => _applyMore(ss, status));
-  _apply('diskio', () => _applyDiskIO(ss, status, req.system, time));
-  _apply('battery', () => _applyBatteries(ss, status));
-  _apply('sensors', () => _applySensors(ss, status));
-  _apply('nvidia', () => _applyNvidia(ss, status));
-  _apply('amd', () => _applyAmd(ss, status));
-  _apply('gpus', () => _applyGpus(ss, status));
-  _apply('smart', () => _applySmart(ss, status));
+  _apply(ss, 'cpu', () => _applyCpu(ss, status, req.system));
+  _apply(ss, 'mem', () => _applyMemory(ss, status));
+  _apply(ss, 'swap', () => _applySwap(ss, status));
+  _apply(ss, 'disk', () => _applyDisks(ss, status));
+  _apply(ss, 'net', () => _applyNet(ss, status, req, time));
+  _apply(ss, 'temps', () => _applyTemps(ss, status));
+  _apply(ss, 'conn', () => _applyConn(ss, status));
+  _apply(ss, 'more', () => _applyMore(ss, status));
+  _apply(ss, 'diskio', () => _applyDiskIO(ss, status, req.system, time));
+  _apply(ss, 'battery', () => _applyBatteries(ss, status));
+  _apply(ss, 'sensors', () => _applySensors(ss, status));
+  _apply(ss, 'nvidia', () => _applyNvidia(ss, status));
+  _apply(ss, 'amd', () => _applyAmd(ss, status));
+  _apply(ss, 'gpus', () => _applyGpus(ss, status));
+  _apply(ss, 'smart', () => _applySmart(ss, status));
   // Taken from what the script printed, not from a list the app holds: the
   // commands live on the server now, so their names and their order are only
   // knowable from the output.
-  _apply('custom', () {
+  _apply(ss, 'custom', () {
     for (final e in req.parsedOutput.entries) {
       final name = script_ffi.customResultName(key: e.key);
       if (name == null) continue;
@@ -91,11 +91,16 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   return ss;
 }
 
-void _apply(String section, void Function() fn) {
+void _apply(ServerStatus ss, String section, void Function() fn) {
   try {
     fn();
+    ss.sectionErrs.remove(section);
   } catch (e, s) {
     Loggers.app.warning('Apply $section failed', e, s);
+    // Kept for the row that has no reading because of it. The message is the
+    // exception's own: what a section failed on is not something this app can
+    // rephrase usefully, and the raw text is what a bug report needs.
+    ss.sectionErrs[section] = e.toString();
   }
 }
 

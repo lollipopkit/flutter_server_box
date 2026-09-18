@@ -68,6 +68,26 @@ comments explaining it, is in [`config.example.toml`](config.example.toml);
 `cargo run -- config` prints the resolved values. The agent listens on
 `0.0.0.0:3770` and serves its own panel there when `frontend/dist` is present.
 
+### Signing in
+
+The panel user lives in the SQLite database, not in `config.toml` — `jwt_secret`
+there signs tokens and is not a password. On the first start with an empty user
+table the agent creates `admin` with a random password and writes it beside the
+database as `initial-admin-credentials.txt` (0600). Change the password and
+delete that file:
+
+```sh
+cd /opt/server-box-monitor   # or ~/.local/share/server-box-monitor
+./server_box_monitor user set-password admin
+```
+
+It prompts twice without echo, and `--password-env VAR` reads the password from
+the environment instead; there is no argument form, since a command line reaches
+`ps` and the shell history. The same command creates a user that does not exist
+yet. Run it from the agent's own directory — `config.toml` and the database path
+are relative to the working directory, so elsewhere it silently sets a password
+in a new, empty database.
+
 ### What the ServerBox app needs
 
 A server added to the app as a **monitor** server is reached through this
