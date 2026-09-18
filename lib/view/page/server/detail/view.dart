@@ -8,6 +8,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:redfish/redfish.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
@@ -115,7 +116,13 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   /// The window the chart draws, and what has been fetched for it.
   _HistoryRange _range = _HistoryRange.live;
-  final _rangeWindows = <_HistoryRange, List<StatusHistorySample>>{};
+  /// What a range answered, and when it was asked.
+  ///
+  /// The instant is what the axis is anchored to: a window kept for the length
+  /// of a visit would otherwise slide forward against a chart that is not
+  /// being refetched, and the gap at its end would grow without anything
+  /// having happened.
+  final _rangeWindows = <_HistoryRange, _RangeAnswer>{};
   final _rangeBusy = <_HistoryRange>{};
 
   final _settings = Stores.setting;
@@ -187,13 +194,102 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return _buildMainPage(serverState);
   }
 
-  /// A server that has not reported anything yet.
+  /// A server with nothing to show, and why.
   ///
-  /// Used to be the word "empty" on its own, which was survivable when this
-  /// page could only be reached by opening it deliberately. Beside a list it
-  /// is where every server that fails to connect ends up, so it has to say why
-  /// and offer the one action that helps.
+  /// One shape for every reason — cannot connect, waiting for permission to
+  /// use a plaintext address, answered with nothing: a glyph, a sentence, the
+  /// machine's own words underneath, and the actions that change the answer.
+  /// The row of things to do stays where it is, greyed: it is not that the
+  /// entries went away, it is that nothing can be done through a connection
+  /// that is not there, and the positions are worth keeping.
   Widget _buildNothingYet(ServerState si) {
+    final notice = _noticeOf(si);
+
+    return Scaffold(
+      appBar: _buildAppBar(si),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            ListView(
+              padding: EdgeInsets.fromLTRB(26, 26, 26, _kFuncBarInset + 26),
+              children: [
+                Icon(
+                  notice.glyph,
+                  size: 56,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                UIs.height13,
+                Text(
+                  notice.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w500),
+                ),
+                if (notice.text.isNotEmpty) ...[
+                  UIs.height13,
+                  Text(
+                    notice.text,
+                    textAlign: TextAlign.center,
+                    style: UIs.textGrey,
+                  ),
+                ],
+                // What the machine said, as it said it. Selectable and in full:
+                // an address or an errno is the part someone needs to paste
+                // somewhere, and truncating it is what sends them to the logs.
+                if (notice.mono.isNotEmpty) ...[
+                  UIs.height13,
+                  CardX(
+                    child: Padding(
+                      padding: const EdgeInsets.all(13),
+                      child: SelectableText(
+                        notice.mono,
+                        textAlign: TextAlign.center,
+                        style: UIs.text12Grey.copyWith(fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ),
+                ],
+                UIs.height13,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 9,
+                  runSpacing: 9,
+                  children: notice.actions,
+                ),
+                if (notice.hint.isNotEmpty) ...[
+                  UIs.height13,
+                  Text(
+                    notice.hint,
+                    textAlign: TextAlign.center,
+                    style: UIs.text11Grey,
+                  ),
+                ],
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _buildFuncBar(si, [
+                for (final entry in serverFuncBtnsFor(si.spi, si.remoteAccess))
+                  (btn: entry.btn, available: false),
+              ]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Which of the three this is, and what it says.
+  ({
+    IconData glyph,
+    String title,
+    String text,
+    String mono,
+    List<Widget> actions,
+    String hint,
+  })
+  _noticeOf(ServerState si) {
     final err = si.status.err;
     // `connected` counts: the SSH path sits there through system detection and
     // the script install, two round trips during which there is still nothing
@@ -205,61 +301,68 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         si.conn == server_model.ServerConn.connected ||
         si.conn == server_model.ServerConn.loading;
 
-    return Scaffold(
-      appBar: _buildAppBar(si),
-      // Scrolls, and shows the error in full. The card elsewhere on this page
-      // clips to two lines because it sits above the data it is annotating;
-      // here the error is the entire content, and a truncated address or
-      // errno is the part someone needs.
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 20),
-        children: [
-          if (err != null) ...[
-            CardX(
-              child: Padding(
-                padding: const EdgeInsets.all(13),
-                child: SimpleMarkdown(data: _errMarkdown(err)),
-              ),
-            ),
-            // Under the error rather than inside it: the card says what went
-            // wrong, this says what to do about it. Only for the one failure
-            // that has a one-tap answer — a plaintext address the connection
-            // has not been allowed to use. Everything else needs the editor.
-            if (si.spi.monitorHttp?.needsInsecureOptIn == true)
-              _buildAllowInsecure(si),
-          ]
-          else
-            Padding(
-              padding: const EdgeInsets.all(13),
-              child: Text(
-                // "Empty" is what a server that answered and had nothing to
-                // say would be. One that has not answered yet is connecting,
-                // and saying so is the difference between waiting and
-                // wondering.
-                busy ? l10n.waitConnection : libL10n.empty,
-                style: UIs.textGrey,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          UIs.height13,
-          // Centred, or the column stretches it into something that reads as
-          // a list row rather than a button.
-          Center(
-            child: busy
-                ? SizedLoading.medium
-                : Btn.elevated(
-                    text: libL10n.retry,
-                    icon: const Icon(Icons.refresh, size: 18),
-                    // The icon variant lays its row out at max size, so
-                    // without this the button fills whatever it is given and
-                    // reads as a list row.
-                    mainAxisSize: MainAxisSize.min,
-                    gap: 8,
-                    onTap: () => _reconnect(si),
-                  ),
-          ),
-        ],
+    final retry = Btn.elevated(
+      text: libL10n.retry,
+      icon: const Icon(Icons.refresh, size: 18),
+      // The icon variant lays its row out at max size, so without this the
+      // button fills whatever it is given and reads as a list row.
+      mainAxisSize: MainAxisSize.min,
+      gap: 8,
+      onTap: () => _reconnect(si),
+    );
+    final edit = Btn.text(
+      text: libL10n.edit,
+      onTap: () => ServerEditPage.route.go(
+        context,
+        args: SpiRequiredArgs(si.spi),
       ),
+    );
+
+    // Asked before the error is read: a connection this app has not been
+    // allowed to make has not been tried, so whatever else is on `err` is
+    // about an earlier address or an earlier setting.
+    final monitor = si.spi.monitorHttp;
+    if (monitor != null && monitor.needsInsecureOptIn) {
+      return (
+        glyph: Icons.no_encryption_gmailerrorred_outlined,
+        title: l10n.monitorAllowInsecureHttp,
+        text: l10n.monitorAllowInsecureHttpTip,
+        mono: monitor.addr,
+        actions: [
+          Btn.elevated(
+            text: libL10n.ok,
+            icon: const Icon(Icons.lock_open, size: 18),
+            mainAxisSize: MainAxisSize.min,
+            gap: 8,
+            onTap: () => _allowInsecure(si),
+          ),
+          edit,
+        ],
+        hint: '',
+      );
+    }
+
+    if (err != null) {
+      return (
+        glyph: Icons.link_off,
+        title: err.solution ?? libL10n.fail,
+        text: '',
+        mono: err.message ?? '',
+        actions: [retry, edit],
+        hint: '',
+      );
+    }
+
+    return (
+      glyph: busy ? Icons.hourglass_empty : Icons.inbox_outlined,
+      // "Empty" is what a server that answered and had nothing to say would
+      // be. One that has not answered yet is connecting, and saying so is the
+      // difference between waiting and wondering.
+      title: busy ? l10n.waitConnection : libL10n.empty,
+      text: '',
+      mono: '',
+      actions: busy ? const [] : [retry, edit],
+      hint: '',
     );
   }
 
@@ -272,36 +375,6 @@ ${err.solution ?? libL10n.unknown}
 ${err.message ?? 'null'}
 ```
 ''';
-  }
-
-  /// Turns plaintext HTTP on for this one connection, and reconnects.
-  ///
-  /// The switch is on the editor's More section, which is three taps and a
-  /// scroll away from the error that sent you looking for it. What it costs is
-  /// stated under the button rather than behind a dialog: the tip is the same
-  /// sentence the editor shows beside the switch, and the button names the
-  /// setting it changes.
-  Widget _buildAllowInsecure(ServerState si) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 13),
-      child: Column(
-        children: [
-          Btn.elevated(
-            text: l10n.monitorAllowInsecureHttp,
-            icon: const Icon(Icons.lock_open, size: 18),
-            mainAxisSize: MainAxisSize.min,
-            gap: 8,
-            onTap: () => _allowInsecure(si),
-          ),
-          UIs.height7,
-          Text(
-            l10n.monitorAllowInsecureHttpTip,
-            style: UIs.textGrey,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
   }
 
   /// Saving is the whole of it: `Spi.shouldReconnect` counts a changed
@@ -341,6 +414,15 @@ ${err.message ?? 'null'}
   /// `ServerNotifier` already relies on that.
   bool _hasContent(ServerState state) {
     if (state.status.more.isNotEmpty) return true;
+    // Connecting is something to show: the rows every machine has, drawn with
+    // dashes, under a progress line. What this used to do instead — a spinner
+    // and "waiting for connection" — made the page arrive twice, once as a
+    // placeholder and once as itself, with everything in a different place.
+    if (state.conn == server_model.ServerConn.connecting ||
+        state.conn == server_model.ServerConn.connected ||
+        state.conn == server_model.ServerConn.loading) {
+      return true;
+    }
     // Having a connection is not having anything to show. Read as "connected
     // is enough", this page opened onto a grid of empty cards — dashes where
     // the CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch
@@ -396,6 +478,19 @@ ${err.message ?? 'null'}
                 wide: cons.maxWidth >= _kColumnsWidth,
               ),
             ),
+            // Pinned above the readings rather than scrolling with them: it is
+            // about the page, and what it says — that the first answer is on
+            // its way — stops being true the moment it arrives.
+            if (_neverSampled(si))
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: LinearProgressIndicator(
+                  minHeight: 3,
+                  backgroundColor: Colors.transparent,
+                ),
+              ),
             // Over the page rather than at the top of it. These act on the
             // server, not on any one card, so they belong within reach the
             // whole way down instead of scrolling off after the first chart.
@@ -432,6 +527,7 @@ ${err.message ?? 'null'}
     final metrics = <Widget>[
       ?logo,
       ?_buildErrCard(si),
+      ?_buildStaleCard(si),
       _buildMetrics(si, wide: wide),
       // Under the readings rather than in the column beside them: these are
       // tables — sensor rows, GPU processes, SMART attributes — and a 330pt
@@ -467,6 +563,45 @@ ${err.message ?? 'null'}
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [...metrics, UIs.height13, ...aside],
             ),
+    );
+  }
+
+  /// That every figure on this page was taken a while ago, and the way to ask
+  /// again.
+  ///
+  /// Above the readings, because it is about all of them. Not shown when the
+  /// error card is: that card already says why the numbers stopped, and two
+  /// cards saying it in different words is one of them too many.
+  Widget? _buildStaleCard(ServerState si) {
+    if (si.status.err != null) return null;
+    final at = _staleSince(si);
+    if (at == null) return null;
+
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(17, 9, 9, 9),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.pause_circle_outline,
+              size: 18,
+              color: Color(0xFFF59E0B),
+            ),
+            UIs.width13,
+            Expanded(
+              child: Text(
+                l10n.staleSinceFmt(
+                  at.toAgoStr(),
+                  _clockOf(at.millisecondsSinceEpoch),
+                ),
+                style: UIs.text12Grey,
+              ),
+            ),
+            UIs.width7,
+            Btn.text(text: libL10n.refresh, onTap: () => _reconnect(si)),
+          ],
+        ),
+      ),
     );
   }
 

@@ -201,13 +201,58 @@ Keys and tokens already in the file — a ServerChan key, a Bark key, an iOS pus
 
 If the agent must be reachable from another device, use HTTPS: configure built-in TLS with `[server.tls]`, or put the agent behind a reverse proxy. The App supports self-signed certificates when you explicitly enable that option.
 
+## Panel credentials
+
+The user and password that the App and the web panel sign in with are rows in the agent's SQLite database, not settings in `config.toml`. `jwt_secret` in that file signs session tokens; it is not a login password.
+
+Run the commands below in the agent's own directory — `/opt/server-box-monitor` for a root-owned service, `~/.local/share/server-box-monitor` otherwise — and as the account the agent runs as. `config.toml` and the database path are resolved relative to the working directory, so the same command run elsewhere writes a fresh default `config.toml`, creates an empty database, and reports success against a database that nothing reads.
+
+### The first password
+
+On its first start with an empty user table, the agent creates `admin` with a random password and writes it beside the database as `initial-admin-credentials.txt`, mode 0600 on Unix:
+
+```sh
+cd /opt/server-box-monitor
+cat initial-admin-credentials.txt
+```
+
+Change the password, then delete the file. If it is still there on a later start while the user table is empty — after the database is deleted or moved, for example — the agent stops with an error instead of writing a second set of credentials over the first.
+
+### Change or reset a password
+
+```sh
+cd /opt/server-box-monitor
+./server_box_monitor user set-password admin
+```
+
+The new password is asked for twice, without echo, and must be at least 8 characters. The same command creates a user that does not exist yet, so it is also how a second account is added.
+
+To take the password from the environment instead — in a script, or to keep it out of the shell history:
+
+```sh
+read -rs SBM_PW
+SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM_PW
+```
+
+There is no option that accepts the password as an argument, because a command line is visible in `ps` and recorded by the shell.
+
+The new password works at the next login and the agent does not need restarting; it reads the user table on every login. Sessions already signed in continue for up to an hour, the lifetime of a token. To end them at once, change `jwt_secret` in `config.toml` and restart the agent — `systemctl --user restart server_box_monitor`, or `rc-service server-box-monitor restart` under OpenRC — which invalidates every token issued so far.
+
+Then update the password in the App, by editing the server and replacing **Monitor Password**, and in anything else that stores it. Nothing tells a client that the agent's password changed; it simply stops signing in.
+
+### A forgotten password
+
+The panel has no recovery path. Reset it on the server with the command above.
+
+Failed logins are throttled per source address and per username: three failures are free, and the delay then doubles from one second up to five minutes. A forgotten password can therefore look like an agent that has stopped answering.
+
 ## Add it in the App
 
 1. Tap **+** to add a server.
 2. Enable **Monitor HTTP**. SSH and Monitor HTTP are independent switches: you can enable either one or both. When both are enabled, use **Preferred transport** to choose which one the App tries first.
 3. Enter:
    - **URL**: for example, `https://1.2.3.4:3770`
-   - **Monitor User** / **Monitor Password**: the agent's web-panel credentials
+   - **Monitor User** / **Monitor Password**: the agent's web-panel credentials — see [Panel credentials](#panel-credentials)
    - **Monitor Ignore certificate**: enable only for a self-signed certificate
 4. Save the configuration.
 
@@ -362,5 +407,7 @@ Rate limiting applies per channel, not per rule: see `push_rate` in `config.toml
 **Certificate errors.** Configure valid TLS, put the agent behind a reverse proxy, or enable **Monitor Ignore certificate** for that server.
 
 **The panel is hosted on another origin.** Add the origin to `cors_allowed_origins` in `config.toml` or to the `SBM_CORS_ORIGINS` environment variable.
+
+**Login is rejected, or the password is lost.** Reset it on the server with `user set-password`; see [Panel credentials](#panel-credentials). Repeated failures are throttled, so a wrong password can also present as a slow or unresponsive agent.
 
 **Requests receive no response.** Confirm that the agent is running and the port is reachable, then inspect `access_log` in its database. It records the visitor, time, source, requested resource, and result, but never credentials.

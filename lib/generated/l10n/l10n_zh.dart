@@ -2196,6 +2196,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noHistoryYet => '还没有采样';
 
   @override
+  String get noData => '无数据';
+
+  @override
+  String get unavailable => '不可用';
+
+  @override
+  String get metricUnavailableTip => '页面其余部分不受影响。到主机上检查这项读数所用的命令。';
+
+  @override
+  String get waitingFirstSample => '等待第一次采样';
+
+  @override
+  String atTimeFmt(Object time) {
+    return '$time 时';
+  }
+
+  @override
+  String get stored => '已存储';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return '最近采样于$ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return '以下全部是 $time 的数据，$ago。';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return '$time 之前没有数据';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '正在加载 $range…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return '没有 $metric 的存储历史';
   }
@@ -4790,6 +4830,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noHistoryYet => '還沒有取樣';
+
+  @override
+  String get noData => '無資料';
+
+  @override
+  String get unavailable => '無法取得';
+
+  @override
+  String get metricUnavailableTip => '頁面其餘部分不受影響。到主機上檢查這項讀數所用的命令。';
+
+  @override
+  String get waitingFirstSample => '等待第一次取樣';
+
+  @override
+  String atTimeFmt(Object time) {
+    return '$time 時';
+  }
+
+  @override
+  String get stored => '已儲存';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return '最近取樣於$ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return '以下全部是 $time 的資料，$ago。';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return '$time 之前沒有資料';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '正在載入 $range…';
+  }
 
   @override
   String noStoredHistoryFor(Object metric) {

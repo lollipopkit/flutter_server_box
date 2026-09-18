@@ -2278,6 +2278,47 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noHistoryYet => '아직 측정값이 없습니다';
 
   @override
+  String get noData => '데이터 없음';
+
+  @override
+  String get unavailable => '사용할 수 없음';
+
+  @override
+  String get metricUnavailableTip =>
+      '이 페이지의 나머지는 영향을 받지 않습니다. 호스트에서 이 값을 가져오는 명령을 확인하세요.';
+
+  @override
+  String get waitingFirstSample => '첫 샘플을 기다리는 중';
+
+  @override
+  String atTimeFmt(Object time) {
+    return '$time 기준';
+  }
+
+  @override
+  String get stored => '저장됨';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return '마지막 샘플 $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return '아래 값은 모두 $time 기준입니다($ago).';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return '$time 이전 데이터 없음';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '$range 불러오는 중…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return '$metric의 저장된 기록이 없습니다';
   }

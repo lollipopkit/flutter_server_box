@@ -182,13 +182,58 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 如果 agent 需要从其他设备访问，请使用 HTTPS：可以配置内置 TLS（`[server.tls]`），也可以放在反向代理后面。App 支持自签名证书，但必须由你明确开启相关选项。
 
+## 面板凭据
+
+App 和网页面板登录用的用户名和密码是 agent SQLite 数据库里的记录，不是 `config.toml` 中的配置项。文件里的 `jwt_secret` 用于签发会话 token，不是登录密码。
+
+下面的命令都要在 agent 自己的目录下执行——root 服务是 `/opt/server-box-monitor`，其余情况是 `~/.local/share/server-box-monitor`——并且以 agent 运行所用的账户执行。`config.toml` 和数据库路径都相对工作目录解析，因此同样的命令在别处执行会写出一份新的默认 `config.toml`、建一个空数据库，然后对着一个没人读的数据库报告成功。
+
+### 首个密码
+
+首次启动时用户表为空，agent 会创建 `admin` 并生成随机密码，写到数据库旁边的 `initial-admin-credentials.txt`，Unix 上权限为 0600：
+
+```sh
+cd /opt/server-box-monitor
+cat initial-admin-credentials.txt
+```
+
+改完密码后删除该文件。如果之后某次启动时用户表仍为空而文件还在——例如数据库被删除或移走——agent 会报错退出，而不是用第二份凭据覆盖第一份。
+
+### 修改或重置密码
+
+```sh
+cd /opt/server-box-monitor
+./server_box_monitor user set-password admin
+```
+
+新密码需要输入两次，不回显，至少 8 位。用户不存在时同一条命令会创建它，因此添加第二个账户也用这条命令。
+
+要从环境变量取密码——用于脚本，或避免进入 shell history：
+
+```sh
+read -rs SBM_PW
+SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM_PW
+```
+
+没有把密码作为命令行参数的选项，因为命令行在 `ps` 中可见，也会被 shell 记录。
+
+新密码在下次登录时生效，不需要重启 agent：每次登录都会读用户表。已登录的会话最多再持续一小时，也就是一个 token 的有效期。要立刻终止它们，修改 `config.toml` 中的 `jwt_secret` 并重启 agent（`systemctl --user restart server_box_monitor`，OpenRC 下是 `rc-service server-box-monitor restart`），此前签发的所有 token 都会失效。
+
+然后在 App 里更新密码——编辑该服务器，替换 **Monitor Password**——以及其他保存了这个密码的地方。没有任何机制会告知客户端 agent 的密码变了，它只是登不上去。
+
+### 忘记密码
+
+面板没有找回入口，只能在服务器上用上面的命令重置。
+
+登录失败按来源地址和用户名分别限流：前三次失败不受影响，之后延迟从 1 秒翻倍增长，上限 5 分钟。因此忘记密码的表现可能像是 agent 不响应了。
+
 ## 在 App 中添加
 
 1. 点击 **+** 添加服务器。
 2. 打开 **Monitor HTTP** 开关。
 3. 填写：
    - **URL**：例如 `https://1.2.3.4:3770`
-   - **Monitor User** / **Monitor Password**：agent 网页面板的登录凭据
+   - **Monitor User** / **Monitor Password**：agent 网页面板的登录凭据，见[面板凭据](#面板凭据)
    - **Monitor Ignore certificate**：仅在使用自签名证书时开启
 4. 保存配置。
 
@@ -343,5 +388,7 @@ threshold = ">=70c"
 **证书错误。** 配置有效的 TLS，将 agent 放在反向代理后，或为该服务器开启 **Monitor Ignore certificate**。
 
 **面板由其他 origin 提供。** 在 `config.toml` 的 `cors_allowed_origins` 或环境变量 `SBM_CORS_ORIGINS` 中明确允许该 origin。
+
+**登录被拒绝，或密码丢失。** 在服务器上用 `user set-password` 重置，见[面板凭据](#面板凭据)。连续失败会被限流，所以密码错误也可能表现为 agent 变慢或不响应。
 
 **请求没有响应。** 先确认 agent 正在运行、端口可达，再检查数据库中的 `access_log`。日志记录访问者、时间、来源、访问内容和结果，不记录凭据。

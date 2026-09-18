@@ -2409,6 +2409,47 @@ class AppLocalizationsIt extends AppLocalizations {
   String get noHistoryYet => 'Nessuna misurazione';
 
   @override
+  String get noData => 'nessun dato';
+
+  @override
+  String get unavailable => 'non disponibile';
+
+  @override
+  String get metricUnavailableTip =>
+      'Il resto della pagina non è interessato. Controlla sull\'host il comando da cui arriva questa lettura.';
+
+  @override
+  String get waitingFirstSample => 'In attesa del primo campione';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'alle $time';
+  }
+
+  @override
+  String get stored => 'memorizzato';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'ultimo campione $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Tutto qui sotto è delle $time, $ago.';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return 'nessun dato prima delle $time';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return 'Caricamento di $range…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return 'Nessuna cronologia archiviata per $metric';
   }

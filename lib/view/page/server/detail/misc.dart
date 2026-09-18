@@ -184,7 +184,7 @@ extension on _ServerDetailPageState {
   Widget _buildChart(_ChartSpec spec) {
     final bars = <LineChartBarData>[];
     for (final s in spec.series) {
-      final spots = s.spots;
+      final spots = s.spotsAgainst(spec.times);
       if (spots.isEmpty) continue;
       bars.add(
         LineChartBarData(
@@ -219,6 +219,8 @@ extension on _ServerDetailPageState {
               series: spec.series,
               format: spec.format,
               binaryScale: spec.binaryScale,
+              window: spec.window,
+              bands: spec.bands,
             );
             return spec.fill
                 ? Expanded(child: plot)
@@ -275,10 +277,31 @@ const _kDeviceColors = [
   Color(0xFFEC4899),
 ];
 
+/// A stretch of the window with nothing in it, and why.
+///
+/// The axis is the window that was asked for, so a window the samples do not
+/// fill has to say so rather than let the line span it: a chart that joins
+/// 09:37 to now through a four-minute hole draws a machine that was idle, and
+/// one that compresses three stored hours into a 24-hour axis lies about what
+/// it is showing.
+typedef _ChartBand = ({int from, int to, String label});
+
 /// One chart: the series drawn on its shared axis, and how to label that axis.
 class _ChartSpec {
   final List<_HistorySeries> series;
   final String Function(double) format;
+
+  /// The instant of each sample, shared by every series because they are
+  /// index-aligned by construction. Empty plots against the sample index,
+  /// which is what a chart with no window to honour wants.
+  final List<int> times;
+
+  /// The window the axis covers, whether or not the samples reach its edges.
+  /// Null takes the extent of the data, as a chart with no [times] must.
+  final ({int from, int to})? window;
+
+  /// The stretches of [window] no sample falls in.
+  final List<_ChartBand> bands;
 
   /// How tall the plot is, which the focus card decides by how much room the
   /// window has: a shape is only readable in so little height.
@@ -299,12 +322,15 @@ class _ChartSpec {
   const _ChartSpec({
     required this.series,
     required this.format,
+    this.times = const [],
+    this.window,
+    this.bands = const [],
     this.binaryScale = false,
     this.height = 110,
     this.fill = false,
   });
 
-  bool get hasData => series.any((s) => s.spots.isNotEmpty);
+  bool get hasData => series.any((s) => s.hasSpots);
 }
 
 /// One line. Reads straight off a [StatusHistory] ring buffer, whose gaps are
@@ -318,9 +344,23 @@ class _HistorySeries {
 
   const _HistorySeries(this.label, this.color, this.values);
 
-  List<FlSpot> get spots => [
+  /// Whether there is anything to draw, which is what every caller asking for
+  /// [spots] was really asking.
+  bool get hasSpots => values.any((e) => e != null);
+
+  /// The points, against [times] where the chart has a window to honour and
+  /// against the sample index where it does not.
+  ///
+  /// A sample with no instant is dropped rather than placed at 0: the two
+  /// lists are built together and a mismatch means the buffer moved under the
+  /// build, not that the reading happened at the epoch.
+  List<FlSpot> spotsAgainst(List<int> times) => [
     for (var i = 0; i < values.length; i++)
-      if (values[i] != null) FlSpot(i.toDouble(), values[i]!),
+      if (values[i] case final v?)
+        if (times.isEmpty)
+          FlSpot(i.toDouble(), v)
+        else if (i < times.length)
+          FlSpot(times[i].toDouble(), v),
   ];
 
   double? get latest {
@@ -441,6 +481,8 @@ Widget _buildHistoryLineChart(
   required List<_HistorySeries> series,
   required String Function(double) format,
   bool binaryScale = false,
+  ({int from, int to})? window,
+  List<_ChartBand> bands = const [],
 }) {
   // fl_chart throws a LateInitializationError on `mostLeftSpot` when handed a
   // bar with no spots at all
@@ -460,8 +502,19 @@ Widget _buildHistoryLineChart(
   final bottom = axis.bottom;
   final top = axis.top;
   final interval = axis.interval;
+  final axisWidth = _axisWidth(bottom, top, interval, format);
 
-  return LineChart(
+  // The window that was asked for, not the extent of what came back. Equal
+  // bounds would give fl_chart a zero-width axis, so a window that has
+  // collapsed to an instant falls back to the data.
+  final minX = window != null && window.to > window.from
+      ? window.from.toDouble()
+      : null;
+  final maxX = window != null && window.to > window.from
+      ? window.to.toDouble()
+      : null;
+
+  final chart = LineChart(
     LineChartData(
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
@@ -539,9 +592,88 @@ Widget _buildHistoryLineChart(
         ),
       ),
       borderData: FlBorderData(show: false),
+      minX: minX,
+      maxX: maxX,
       minY: bottom,
       maxY: top,
       lineBarsData: bars,
     ),
+  );
+
+  if (bands.isEmpty || minX == null || maxX == null) return chart;
+  return _buildBandedChart(
+    chart,
+    bands: bands,
+    minX: minX,
+    maxX: maxX,
+    axisWidth: axisWidth,
+  );
+}
+
+/// The chart with the empty stretches of its window marked on it.
+///
+/// Drawn over the plot rather than as fl_chart range annotations so the label
+/// can sit in the band: what makes a gap readable is the sentence in it, and
+/// an unlabelled grey rectangle is just a second background.
+Widget _buildBandedChart(
+  Widget chart, {
+  required List<_ChartBand> bands,
+  required double minX,
+  required double maxX,
+  required double axisWidth,
+}) {
+  return LayoutBuilder(
+    builder: (context, cons) {
+      final plotWidth = cons.maxWidth - axisWidth;
+      if (plotWidth <= 0) return chart;
+      double atX(int x) =>
+          axisWidth + plotWidth * ((x - minX) / (maxX - minX)).clamp(0.0, 1.0);
+
+      final scheme = Theme.of(context).colorScheme;
+      return Stack(
+        children: [
+          Positioned.fill(child: chart),
+          for (final band in bands)
+            () {
+              final left = atX(band.from);
+              final right = atX(band.to);
+              // The edge against the data, which is where the reading stops.
+              // The other edge is the end of the axis and needs no line.
+              final againstDataOnLeft = band.from > minX;
+              return Positioned(
+                left: left,
+                width: (right - left).clamp(0.0, plotWidth),
+                top: 0,
+                bottom: 0,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.onSurface.withValues(alpha: 0.04),
+                    border: Border(
+                      left: againstDataOnLeft
+                          ? BorderSide(color: scheme.outlineVariant)
+                          : BorderSide.none,
+                      right: againstDataOnLeft
+                          ? BorderSide.none
+                          : BorderSide(color: scheme.outlineVariant),
+                    ),
+                  ),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      child: Text(
+                        band.label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: UIs.text11Grey,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }(),
+        ],
+      );
+    },
   );
 }

@@ -2401,6 +2401,47 @@ class AppLocalizationsUk extends AppLocalizations {
   String get noHistoryYet => 'Вимірювань ще немає';
 
   @override
+  String get noData => 'немає даних';
+
+  @override
+  String get unavailable => 'недоступно';
+
+  @override
+  String get metricUnavailableTip =>
+      'Решта сторінки не зачеплена. Перевірте на хості команду, з якої береться це значення.';
+
+  @override
+  String get waitingFirstSample => 'Очікування першого заміру';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'о $time';
+  }
+
+  @override
+  String get stored => 'збережено';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'останній замір $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Усе нижче — станом на $time ($ago).';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return 'немає даних до $time';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return 'Завантаження $range…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return 'Немає збереженої історії для «$metric»';
   }

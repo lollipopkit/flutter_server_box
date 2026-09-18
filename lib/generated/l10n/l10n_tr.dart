@@ -2382,6 +2382,47 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noHistoryYet => 'Henüz ölçüm yok';
 
   @override
+  String get noData => 'veri yok';
+
+  @override
+  String get unavailable => 'kullanılamıyor';
+
+  @override
+  String get metricUnavailableTip =>
+      'Sayfanın geri kalanı etkilenmedi. Bu ölçümün geldiği komutu sunucuda kontrol edin.';
+
+  @override
+  String get waitingFirstSample => 'İlk ölçüm bekleniyor';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'saat $time';
+  }
+
+  @override
+  String get stored => 'saklanan';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'son ölçüm $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Aşağıdakilerin tamamı $time değerleri, $ago.';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return '$time öncesine ait veri yok';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '$range yükleniyor…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return '$metric için saklanan geçmiş yok';
   }

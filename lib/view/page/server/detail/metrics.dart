@@ -56,6 +56,7 @@ class _MetricView {
     this.percent,
     this.stats = const [],
     this.binary = false,
+    this.error,
   });
 
   final _MetricKind kind;
@@ -84,13 +85,37 @@ class _MetricView {
   /// Whether the axis should step in multiples of 1024.
   final bool binary;
 
-  bool get hasChart => series.any((s) => s.spots.isNotEmpty);
+  /// What this metric's section of the status said instead of a reading.
+  ///
+  /// Not a page-wide banner: the rest of the readings are fine, and a failure
+  /// that takes the whole page with it hides the nine things that did work.
+  final String? error;
+
+  bool get hasChart => series.any((s) => s.hasSpots);
+
+  /// The same metric, with what its section said instead of a reading.
+  _MetricView failing(String error) => _MetricView(
+    kind: kind,
+    label: label,
+    icon: icon,
+    color: color,
+    value: l10n.unavailable,
+    note: error,
+    bigNote: '',
+    series: const [],
+    format: format,
+    error: error,
+  );
 }
+
+/// What one range answered, and the instant it describes.
+typedef _RangeAnswer = ({List<StatusHistorySample> samples, DateTime at});
 
 /// The values of every series over one window, whichever source they came
 /// from: this app's rolling buffer, or the agent's store.
 class _Window {
   const _Window({
+    this.times = const [],
     this.cpu = const [],
     this.mem = const [],
     this.swap = const [],
@@ -106,6 +131,7 @@ class _Window {
 
   /// What this app has seen, which is every series it can measure.
   factory _Window.live(StatusHistory h) => _Window(
+    times: h.time,
     cpu: h.cpu,
     mem: h.mem,
     swap: h.swap,
@@ -124,6 +150,7 @@ class _Window {
   /// which is what the card asks before drawing. GPU load is empty for every
   /// agent: nothing stores it, so the only window it has is the live one.
   factory _Window.of(List<StatusHistorySample> samples) => _Window(
+    times: [for (final s in samples) s.timeMs],
     cpu: [for (final s in samples) s.cpu],
     mem: [for (final s in samples) s.mem],
     swap: [for (final s in samples) s.swap],
@@ -135,6 +162,9 @@ class _Window {
     temp: [for (final s in samples) s.temp],
     battery: [for (final s in samples) s.battery],
   );
+
+  /// When each sample was taken, index-aligned with every series.
+  final List<int> times;
 
   final List<double?> cpu;
   final List<double?> mem;
@@ -166,6 +196,63 @@ String _pct(double? v) => v == null ? '--' : '${(v * 10).round() / 10}%';
 String _rate(double? bytesPerSec) =>
     bytesPerSec == null ? '--' : '${bytesPerSec.bytes2Str}/s';
 String _rateOf(double v) => '${v.bytes2Str}/s';
+
+/// The status sections a metric's reading comes from, by the names both
+/// mappers record failures under. A metric is broken when any of them is.
+const _kMetricSections = <_MetricKind, List<String>>{
+  _MetricKind.cpu: ['cpu'],
+  _MetricKind.mem: ['mem'],
+  _MetricKind.swap: ['swap'],
+  _MetricKind.disk: ['disk'],
+  _MetricKind.diskIo: ['diskio'],
+  _MetricKind.net: ['net'],
+  _MetricKind.gpu: ['gpu', 'gpus'],
+  _MetricKind.temp: ['temps'],
+  _MetricKind.battery: ['battery'],
+};
+
+/// What went wrong reading [kind], if anything did.
+String? _sectionErr(server_model.ServerStatus ss, _MetricKind kind) {
+  for (final section in _kMetricSections[kind] ?? const <String>[]) {
+    if (ss.sectionErrs[section] case final err?) return err;
+  }
+  return null;
+}
+
+/// Whether this server has said anything about itself yet.
+bool _neverSampled(ServerState si) =>
+    si.status.more.isEmpty && si.status.history.isEmpty;
+
+/// The rows a machine has before it has answered.
+///
+/// Every machine has these five, so they are drawn with dashes rather than
+/// left out: what the page looks like while it waits is what it will look
+/// like, and one that grows a row at a time as the first status lands moves
+/// everything under each one. The first answer replaces them — and removes the
+/// ones this machine does not report, which is the one shape change worth
+/// making.
+List<_MetricView> _blankMetrics() {
+  _MetricView dash(_MetricKind kind, String label, IconData icon, Color color) =>
+      _MetricView(
+        kind: kind,
+        label: label,
+        icon: icon,
+        color: color,
+        value: _pct(null),
+        note: '',
+        bigNote: '',
+        series: const [],
+        format: _pct,
+      );
+
+  return [
+    dash(_MetricKind.cpu, 'CPU', ServerDetailCards.cpu.icon, _kCpuColor),
+    dash(_MetricKind.mem, libL10n.memory, ServerDetailCards.mem.icon, _kMemColor),
+    dash(_MetricKind.swap, 'Swap', ServerDetailCards.swap.icon, _kSwapColor),
+    dash(_MetricKind.disk, libL10n.disk, ServerDetailCards.disk.icon, _kDiskColor),
+    dash(_MetricKind.net, libL10n.net, ServerDetailCards.net.icon, _kNetTxColor),
+  ];
+}
 
 /// The GPU carrying the most work — the one the row reads, and the one the
 /// card leads with. Null on a host with no GPU at all; the first card on one
@@ -221,6 +308,7 @@ extension on _ServerDetailPageState {
   /// reads as broken. What is missing is said once, under the list.
   List<_MetricView> _metrics(ServerState si, _Window w) {
     final ss = si.status;
+    if (_neverSampled(si)) return _blankMetrics();
     final views = <_MetricView>[];
 
     // Always a row, even before the first sample: every machine has a CPU, so
@@ -462,7 +550,13 @@ extension on _ServerDetailPageState {
       );
     }
 
-    return views;
+    return [
+      for (final view in views)
+        if (_sectionErr(ss, view.kind) case final err?)
+          view.failing(err)
+        else
+          view,
+    ];
   }
 
   /// The device carrying the most of this metric right now.
@@ -642,7 +736,7 @@ extension on _ServerDetailPageState {
     // Before the first sample of a device that only just appeared there is
     // nothing under its name, and a legend of empty lines is worse than the
     // totals.
-    return series.any((s) => s.spots.isNotEmpty) ? series : null;
+    return series.any((s) => s.hasSpots) ? series : null;
   }
 }
 
@@ -654,14 +748,105 @@ extension on _ServerDetailPageState {
   _Window _window(ServerState si) {
     final minutes = _range.minutes;
     if (minutes == null) return _Window.live(si.status.history);
-    final samples = _rangeWindows[_range];
-    if (samples == null) return const _Window();
-    return _Window.of(samples);
+    final answer = _rangeWindows[_range];
+    if (answer == null) return const _Window();
+    return _Window.of(answer.samples);
+  }
+
+  /// How long after the last sample the live window starts showing a gap.
+  ///
+  /// Three polls, and never under half a minute: one poll running long is a
+  /// slow script, not a stopped app, and a band that appears every time a
+  /// refresh takes its time teaches the reader to ignore bands.
+  Duration get _staleAfter {
+    final seconds = _settings.serverStatusUpdateInterval.fetch();
+    final polls = Duration(seconds: (seconds > 0 ? seconds : 10) * 3);
+    return polls < const Duration(seconds: 30)
+        ? const Duration(seconds: 30)
+        : polls;
+  }
+
+  /// When the newest sample was taken, if that is long enough ago to be worth
+  /// saying — otherwise null, which is the ordinary case.
+  ///
+  /// A backgrounded app runs no timers, so a page returned to after four
+  /// minutes is showing four-minute-old numbers that look exactly like current
+  /// ones. Nothing on the page moves to say so, which is why this is said in
+  /// three places at once: here, in the rows, and as the gap at the end of the
+  /// chart.
+  DateTime? _staleSince(ServerState si) {
+    final times = si.status.history.time;
+    if (times.isEmpty) return null;
+    final at = DateTime.fromMillisecondsSinceEpoch(times.last);
+    return DateTime.now().difference(at) > _staleAfter ? at : null;
+  }
+
+  /// The axis the chart draws, and the stretches of it no sample falls in.
+  ///
+  /// The axis is the window that was *asked for*. Taking it from the samples
+  /// instead makes every window look full: three stored hours drawn on a
+  /// 24-hour request would fill the card, and a page left in the background
+  /// for four minutes would draw a line straight across the gap.
+  ({({int from, int to})? window, List<_ChartBand> bands}) _chartWindow(
+    ServerState si,
+    _Window w,
+  ) {
+    final times = w.times;
+    if (times.isEmpty) return (window: null, bands: const []);
+    final first = times.first;
+    final last = times.last;
+
+    final minutes = _range.minutes;
+    if (minutes == null) {
+      // What this app has watched, up to now. Not up to the last sample: the
+      // distance between the two is the thing worth seeing.
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final gap = now - last;
+      return (
+        window: (from: first, to: now > last ? now : last),
+        bands: gap > _staleAfter.inMilliseconds
+            ? [(from: last, to: now, label: l10n.noData)]
+            : const [],
+      );
+    }
+
+    final answer = _rangeWindows[_range];
+    final to = answer?.at.millisecondsSinceEpoch ?? last;
+    final from = to - minutes * 60 * 1000;
+    // A window the agent could only partly fill. The tolerance is one bucket:
+    // the agent averages the window into at most `_kRangePoints` of them, so
+    // the first sample lands a bucket in even when it stored the lot.
+    final bucket = (to - from) ~/ _kRangePoints;
+    final missing = first - from;
+    return (
+      window: (from: from, to: to),
+      bands: missing > bucket * 2
+          ? [
+              (
+                from: from,
+                to: first,
+                label: l10n.noDataBeforeFmt(_clockOf(first)),
+              ),
+            ]
+          : const [],
+    );
+  }
+
+  /// A sample's instant as a clock reading — the day where the window spans
+  /// one, because "no data before 11:20" is a different fact on Tuesday.
+  String _clockOf(int timeMs) {
+    final at = DateTime.fromMillisecondsSinceEpoch(timeMs);
+    final sameDay = DateTime.now().difference(at) < const Duration(hours: 12);
+    return DateFormat(
+      sameDay ? 'HH:mm' : 'MMM d HH:mm',
+      l10n.localeName,
+    ).format(at);
   }
 
   /// One metric drawn in full, the rest a line each.
   Widget _buildMetrics(ServerState si, {required bool wide}) {
-    final views = _metrics(si, _window(si));
+    final window = _window(si);
+    final views = _metrics(si, window);
     if (views.isEmpty) return UIs.placeholder;
     final focus =
         views.firstWhereOrNull((e) => e.kind == _focusMetric) ?? views.first;
@@ -669,21 +854,40 @@ extension on _ServerDetailPageState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildFocusCard(si, focus, wide: wide),
+        _buildFocusCard(si, focus, window, wide: wide),
         UIs.height7,
         // The cards bring their own margin, which is what spaces them.
         for (final view in views)
-          _buildMetricRow(view, selected: view.kind == focus.kind, wide: wide),
+          _buildMetricRow(
+            view,
+            selected: view.kind == focus.kind,
+            wide: wide,
+            staleAt: _staleSince(si),
+          ),
       ],
     );
   }
 
   Widget _buildFocusCard(
     ServerState si,
-    _MetricView m, {
+    _MetricView m,
+    _Window w, {
     required bool wide,
   }) {
-    final chart = _buildFocusChart(si, m, wide: wide);
+    final axis = _chartWindow(si, w);
+    final chart = _buildFocusChart(si, m, w, axis, wide: wide);
+    // What a window that could not be filled actually holds. Only when it is
+    // short: on a window the agent covered, "stored 24 h · window 24 h" is two
+    // ways of saying the axis.
+    final stats = [
+      ...m.stats,
+      if (axis.bands.firstOrNull case final gap?
+          when _range != _HistoryRange.live && w.times.isNotEmpty)
+        (
+          k: l10n.stored,
+          v: Duration(milliseconds: w.times.last - gap.to).toAgoStr,
+        ),
+    ];
     final device = _buildDeviceControl(si, m);
     // Two groups with the room between them, not five children sharing it:
     // everything in this line is as long as the language or the machine makes
@@ -783,21 +987,21 @@ extension on _ServerDetailPageState {
                       children: headline,
                     ),
                   ),
-                  if (m.stats.isNotEmpty)
+                  if (stats.isNotEmpty)
                     Flexible(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         reverse: true,
-                        child: _buildStats(m.stats),
+                        child: _buildStats(stats),
                       ),
                     ),
                 ],
               )
             else ...[
               Row(crossAxisAlignment: CrossAxisAlignment.end, children: headline),
-              if (m.stats.isNotEmpty) ...[
+              if (stats.isNotEmpty) ...[
                 UIs.height7,
-                _buildStats(m.stats),
+                _buildStats(stats),
               ],
               UIs.height7,
               Row(
@@ -826,34 +1030,113 @@ extension on _ServerDetailPageState {
   /// The chart, or the one line that says why there isn't one.
   Widget _buildFocusChart(
     ServerState si,
-    _MetricView m, {
+    _MetricView m,
+    _Window w,
+    ({({int from, int to})? window, List<_ChartBand> bands}) axis, {
     required bool wide,
   }) {
     final height = wide ? _kFocusChartHeight : _kFocusChartHeightNarrow;
-    if (_rangeBusy.contains(_range)) {
-      return SizedBox(height: height, child: UIs.centerLoading);
-    }
-    if (!m.hasChart) {
+    // A section that failed has no line to draw and a reason worth reading in
+    // full, so it takes the chart's place rather than being squeezed into the
+    // row's one line.
+    if (m.error case final err?) {
       return SizedBox(
         height: height,
         child: Center(
-          child: Text(
-            _range == _HistoryRange.live
-                ? l10n.noHistoryYet
-                : l10n.noStoredHistoryFor(m.label),
-            textAlign: TextAlign.center,
-            style: UIs.text12Grey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SelectableText(
+                  err,
+                  textAlign: TextAlign.center,
+                  style: UIs.text12Grey.copyWith(fontFamily: 'monospace'),
+                ),
+                UIs.height13,
+                Text(
+                  l10n.metricUnavailableTip,
+                  textAlign: TextAlign.center,
+                  style: UIs.text11Grey,
+                ),
+              ],
+            ),
           ),
         ),
+      );
+    }
+    // Only the chart waits. The range is a question about the chart, and the
+    // headline and the rows below go on being what the machine is doing now.
+    if (_rangeBusy.contains(_range)) {
+      return _buildChartNotice(
+        height,
+        l10n.loadingRangeFmt(_range.label),
+        waiting: true,
+      );
+    }
+    if (!m.hasChart) {
+      // Waiting and having nothing are different answers. Before the first
+      // sample the page is not empty, it is early — and the progress line is
+      // what says which of the two this is.
+      if (_neverSampled(si)) {
+        return _buildChartNotice(
+          height,
+          l10n.waitingFirstSample,
+          waiting: true,
+        );
+      }
+      return _buildChartNotice(
+        height,
+        _range == _HistoryRange.live
+            ? l10n.noHistoryYet
+            : l10n.noStoredHistoryFor(m.label),
       );
     }
     return _buildChart(
       _ChartSpec(
         series: m.series,
         format: m.format,
+        times: w.times,
+        window: axis.window,
+        bands: axis.bands,
         binaryScale: m.binary,
         height: height,
         fill: true,
+      ),
+    );
+  }
+
+  /// The chart's place, holding a sentence instead of a chart.
+  ///
+  /// The same block either way — a request in flight and a metric with nothing
+  /// stored are both "no line yet", and the card is one height whatever it is
+  /// showing. [waiting] adds the progress line: an indeterminate 3pt rule
+  /// rather than a spinner, because what is waiting is this strip and not the
+  /// page.
+  Widget _buildChartNotice(
+    double height,
+    String text, {
+    bool waiting = false,
+  }) {
+    return SizedBox(
+      height: height,
+      child: Column(
+        children: [
+          if (waiting)
+            const LinearProgressIndicator(minHeight: 3, backgroundColor: Colors.transparent),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 17),
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: UIs.text12Grey,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1055,24 +1338,42 @@ extension on _ServerDetailPageState {
     _MetricView m, {
     required bool selected,
     required bool wide,
+    DateTime? staleAt,
   }) {
     final scheme = Theme.of(context).colorScheme;
     final fg = selected ? scheme.onSecondaryContainer : null;
+    // A reading that is no longer current is drawn as one: the figure goes
+    // muted and the note beside it says when it was taken, rather than what
+    // the figure is of. Colour is not the only carrier — the timestamp is,
+    // and for a section that failed the note is what it said.
     final value = Text(
       m.value,
       style: TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.w500,
-        color: fg,
+        color: m.error != null
+            ? scheme.error
+            : staleAt != null
+            ? UIs.textGrey.color
+            : fg,
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
+    final note = staleAt == null ? m.note : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
 
     final Widget body;
     if (wide) {
       body = Row(
         children: [
-          Icon(m.icon, size: 18, color: selected ? fg : m.color),
+          Icon(
+            m.icon,
+            size: 18,
+            color: m.error != null
+                ? scheme.error
+                : selected
+                ? fg
+                : m.color,
+          ),
           UIs.width13,
           SizedBox(
             width: 84,
@@ -1116,7 +1417,7 @@ extension on _ServerDetailPageState {
                 ],
                 Flexible(
                   child: Text(
-                    m.note,
+                    note,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: UIs.text12Grey,
@@ -1129,9 +1430,13 @@ extension on _ServerDetailPageState {
           value,
           const SizedBox(width: 9),
           Icon(
-            selected ? Icons.show_chart : Icons.chevron_right,
+            m.error != null
+                ? Icons.error_outline
+                : selected
+                ? Icons.show_chart
+                : Icons.chevron_right,
             size: 17,
-            color: fg ?? UIs.textGrey.color,
+            color: m.error != null ? scheme.error : fg ?? UIs.textGrey.color,
           ),
         ],
       );
@@ -1154,9 +1459,9 @@ extension on _ServerDetailPageState {
                     color: fg,
                   ),
                 ),
-                if (m.note.isNotEmpty)
+                if (note.isNotEmpty)
                   Text(
-                    m.note,
+                    note,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: UIs.text11Grey,
@@ -1204,6 +1509,9 @@ extension on _ServerDetailPageState {
   /// what this app has watched since it connected, which is worth saying
   /// before someone reads a flat line as a quiet machine.
   String _historyNote(ServerState si) {
+    // What the window is worth saying before where it came from: a page whose
+    // newest sample is minutes old is the one fact the reader needs first.
+    if (_staleSince(si) case final at?) return l10n.lastSampleFmt(at.toAgoStr());
     if (!si.capabilities.storedHistory) return l10n.historySinceConnect;
     return l10n.historyStored;
   }
@@ -1318,7 +1626,9 @@ extension on _ServerDetailPageState {
           .read(serverProvider(widget.args.spi.id).notifier)
           .fetchHistoryRange(minutes: minutes, maxPoints: _kRangePoints);
       if (!mounted) return;
-      _rebuild(() => _rangeWindows[range] = samples);
+      _rebuild(
+        () => _rangeWindows[range] = (samples: samples, at: DateTime.now()),
+      );
     } catch (e, s) {
       Loggers.app.warning('History ${range.label} for ${widget.args.spi.id}', e, s);
       if (mounted) Toast.error('$e');

@@ -2398,6 +2398,47 @@ class AppLocalizationsAz extends AppLocalizations {
   String get noHistoryYet => 'Hələ ölçülməyib';
 
   @override
+  String get noData => 'məlumat yoxdur';
+
+  @override
+  String get unavailable => 'mövcud deyil';
+
+  @override
+  String get metricUnavailableTip =>
+      'Səhifənin qalanı təsirlənməyib. Bu göstəricinin gəldiyi əmri hostda yoxlayın.';
+
+  @override
+  String get waitingFirstSample => 'İlk ölçmə gözlənilir';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'saat $time';
+  }
+
+  @override
+  String get stored => 'saxlanılan';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'son ölçmə $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Aşağıdakıların hamısı $time tarixindəndir, $ago.';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return '$time tarixindən əvvəl məlumat yoxdur';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '$range yüklənir…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return '$metric üçün saxlanılan tarixçə yoxdur';
   }

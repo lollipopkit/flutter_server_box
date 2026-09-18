@@ -2398,6 +2398,47 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noHistoryYet => 'Nog niets gemeten';
 
   @override
+  String get noData => 'geen gegevens';
+
+  @override
+  String get unavailable => 'niet beschikbaar';
+
+  @override
+  String get metricUnavailableTip =>
+      'De rest van deze pagina is niet beïnvloed. Controleer op de host het commando waar deze meting vandaan komt.';
+
+  @override
+  String get waitingFirstSample => 'Wachten op de eerste meting';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'om $time';
+  }
+
+  @override
+  String get stored => 'opgeslagen';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'laatste meting $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Alles hieronder komt van $time, $ago.';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return 'geen gegevens van vóór $time';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return '$range laden…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return 'Geen opgeslagen geschiedenis voor $metric';
   }

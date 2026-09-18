@@ -2386,6 +2386,47 @@ class AppLocalizationsId extends AppLocalizations {
   String get noHistoryYet => 'Belum ada pengukuran';
 
   @override
+  String get noData => 'tidak ada data';
+
+  @override
+  String get unavailable => 'tidak tersedia';
+
+  @override
+  String get metricUnavailableTip =>
+      'Bagian lain halaman ini tidak terpengaruh. Periksa perintah sumber pembacaan ini di host.';
+
+  @override
+  String get waitingFirstSample => 'Menunggu sampel pertama';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'pukul $time';
+  }
+
+  @override
+  String get stored => 'tersimpan';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'sampel terakhir $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Semua di bawah ini berasal dari $time, $ago.';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return 'tidak ada data sebelum $time';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return 'Memuat $range…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return 'Tidak ada riwayat tersimpan untuk $metric';
   }

@@ -27,29 +27,31 @@ import 'package:server_box/data/model/server/server.dart';
 ServerStatus applyMonitorMetrics(ServerStatus ss, MonitorMetrics m) {
   final time = _parseEpochSeconds(m.timestamp);
 
-  _apply('cpu', () => _applyCpu(ss, m));
-  _apply('mem', () => _applyMemory(ss, m));
-  _apply('swap', () => _applySwap(ss, m));
-  _apply('disk', () => _applyDisks(ss, m));
-  _apply('net', () => _applyNet(ss, m, time));
-  _apply('temps', () => _applyTemps(ss, m));
-  _apply('gpu', () => _applyGpus(ss, m));
-  _apply('conn', () => _applyConn(ss, m));
-  _apply('more', () => _applyMore(ss, m));
-  _apply('diskio', () => _applyDiskIO(ss, m, time));
-  _apply('battery', () => _applyBatteries(ss, m));
-  _apply('sensors', () => _applySensors(ss, m));
-  _apply('smart', () => _applySmart(ss, m));
-  _apply('custom', () => _applyCustomCmds(ss, m));
+  _apply(ss, 'cpu', () => _applyCpu(ss, m));
+  _apply(ss, 'mem', () => _applyMemory(ss, m));
+  _apply(ss, 'swap', () => _applySwap(ss, m));
+  _apply(ss, 'disk', () => _applyDisks(ss, m));
+  _apply(ss, 'net', () => _applyNet(ss, m, time));
+  _apply(ss, 'temps', () => _applyTemps(ss, m));
+  _apply(ss, 'gpu', () => _applyGpus(ss, m));
+  _apply(ss, 'conn', () => _applyConn(ss, m));
+  _apply(ss, 'more', () => _applyMore(ss, m));
+  _apply(ss, 'diskio', () => _applyDiskIO(ss, m, time));
+  _apply(ss, 'battery', () => _applyBatteries(ss, m));
+  _apply(ss, 'sensors', () => _applySensors(ss, m));
+  _apply(ss, 'smart', () => _applySmart(ss, m));
+  _apply(ss, 'custom', () => _applyCustomCmds(ss, m));
 
   return ss;
 }
 
-void _apply(String section, void Function() fn) {
+void _apply(ServerStatus ss, String section, void Function() fn) {
   try {
     fn();
+    ss.sectionErrs.remove(section);
   } catch (e, s) {
     Loggers.app.warning('Apply monitor $section failed', e, s);
+    ss.sectionErrs[section] = e.toString();
   }
 }
 

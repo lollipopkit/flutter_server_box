@@ -40,6 +40,16 @@ class ServerStatus {
   List<GpuItem> gpus;
   final List<Battery> batteries = [];
   final Map<StatusCmdType, String> more = {};
+
+  /// What a section of the status said instead of a reading, by the section
+  /// name both mappers use.
+  ///
+  /// A status is a dozen independent readings, and one of them failing is not
+  /// the page failing: a host with no `sensors` installed still has a CPU. The
+  /// row that has no number says why it has none, and the rest are unaffected
+  /// — which is only possible if the failure is recorded against the section
+  /// it happened in rather than against the whole status.
+  final Map<String, String> sectionErrs = {};
   final List<SensorItem> sensors = [];
   DiskUsage? diskUsage;
   final Map<String, String> customCmds = {};

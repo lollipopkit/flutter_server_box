@@ -2408,6 +2408,47 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noHistoryYet => 'Измерений ещё нет';
 
   @override
+  String get noData => 'нет данных';
+
+  @override
+  String get unavailable => 'недоступно';
+
+  @override
+  String get metricUnavailableTip =>
+      'Остальная часть страницы не затронута. Проверьте на хосте команду, из которой берётся это значение.';
+
+  @override
+  String get waitingFirstSample => 'Ожидание первого замера';
+
+  @override
+  String atTimeFmt(Object time) {
+    return 'в $time';
+  }
+
+  @override
+  String get stored => 'сохранено';
+
+  @override
+  String lastSampleFmt(Object ago) {
+    return 'последний замер $ago';
+  }
+
+  @override
+  String staleSinceFmt(Object ago, Object time) {
+    return 'Всё, что ниже, — на $time ($ago).';
+  }
+
+  @override
+  String noDataBeforeFmt(Object time) {
+    return 'нет данных до $time';
+  }
+
+  @override
+  String loadingRangeFmt(Object range) {
+    return 'Загрузка $range…';
+  }
+
+  @override
   String noStoredHistoryFor(Object metric) {
     return 'Нет сохранённой истории для «$metric»';
   }

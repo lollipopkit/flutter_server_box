@@ -269,6 +269,9 @@ class ServerNotifier extends _$ServerNotifier {
     status.ips = source.ips;
     status.batteries.addAll(source.batteries);
     status.more.addAll(source.more);
+    // Carried like `more`: a section that failed stays failed until the pass
+    // that parses it again clears it, and most passes touch only some of them.
+    status.sectionErrs.addAll(source.sectionErrs);
     status.sensors.addAll(source.sensors);
     status.customCmds.addAll(source.customCmds);
     return status;
