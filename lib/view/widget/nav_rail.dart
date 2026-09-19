@@ -42,8 +42,8 @@ abstract final class NavRailMetrics {
   /// Between the icon and the name, once there is a name.
   static const labelGap = 11.0;
 
-  static const iconSize = 22.0;
-  static const expandedIconSize = 20.0;
+  static const iconSize = 24.0;
+  static const expandedIconSize = 22.0;
   static const labelSize = 13.0;
 
   /// How much one item takes vertically.
@@ -342,19 +342,22 @@ class _NavRailTile extends StatelessWidget {
       );
     }
 
-    final tile = InkWell(
-      onTap: onTap,
-      // None of it. The rail opens under the pointer and the pill moves to
-      // what was tapped; a highlight under each item on top of those two is a
-      // third thing answering one movement of the mouse.
-      hoverColor: Colors.transparent,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: _lerp(NavRailMetrics.itemGap, NavRailMetrics.expandedItemGap),
-        ),
+    final tile = Padding(
+      // Outside the ink rather than inside it, so that what lights under the
+      // pointer is the pill and not the pill plus the gap under it.
+      padding: EdgeInsets.only(
+        bottom: _lerp(NavRailMetrics.itemGap, NavRailMetrics.expandedItemGap),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        // The pill's own shape. A rectangle under a stadium reads as a second
+        // control behind the first.
+        customBorder: const StadiumBorder(),
+        // The hover and nothing else: the rail opens under the pointer and the
+        // pill moves to what was tapped, so a ripple on top of those two is a
+        // third thing answering one movement of the mouse.
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         child: indicator,
       ),
     );
