@@ -2814,6 +2814,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get alerts => 'Alerts';
 
   @override
+  String get online => 'online';
+
+  @override
   String get densityCards => 'Cards';
 
   @override

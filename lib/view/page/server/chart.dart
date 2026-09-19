@@ -20,6 +20,43 @@ import 'package:flutter/material.dart';
 /// it is showing.
 typedef ChartBand = ({int from, int to, String label});
 
+/// Keeps [child] as it was for as long as [hold].
+///
+/// For a subtree that is expensive to build and has nothing to say while
+/// something else is moving. A chart is the case this exists for: while the
+/// card in the list grows into the page, what is around the chart changes on
+/// every frame, and the chart is handed a new window each time because its
+/// axis runs to *now*. Rebuilding it for that means walking every sample, and
+/// then handing fl_chart a new `LineChartData` to diff, sixty times a second —
+/// for a line that has not changed and a window that has moved by a third of a
+/// second.
+///
+/// What it holds is the widget from the last build where [hold] was false, so
+/// letting go is continuous: the caller has to arrange for what it would have
+/// drawn meanwhile to be what it is already drawing.
+class Held extends StatefulWidget {
+  const Held({super.key, required this.hold, required this.child});
+
+  final bool hold;
+  final Widget child;
+
+  @override
+  State<Held> createState() => _HeldState();
+}
+
+class _HeldState extends State<Held> {
+  late Widget _held = widget.child;
+
+  @override
+  void didUpdateWidget(Held old) {
+    super.didUpdateWidget(old);
+    if (!widget.hold) _held = widget.child;
+  }
+
+  @override
+  Widget build(BuildContext context) => _held;
+}
+
 /// One chart: the series drawn on its shared axis, and how to label that axis.
 class MetricChartSpec {
   final List<HistorySeries> series;
@@ -356,6 +393,17 @@ Widget buildHistoryLineChart(
       : null;
 
   final chart = LineChart(
+    // Off while the card is growing into the page.
+    //
+    // fl_chart answers new data by lerping from the old to it over 150ms —
+    // every bar, and every spot of every bar. Between two samples that is what
+    // makes the line glide instead of stepping. During the movement this is
+    // handed new data on every frame, because the gutter is widening and the
+    // grid is fading in, so that lerp is restarted 60 times a second: it never
+    // reaches its end and pays for the whole series each time.
+    duration: axis > 0 && axis < 1
+        ? Duration.zero
+        : const Duration(milliseconds: 150),
     LineChartData(
       // A card is read at a glance and has nothing to hold a tooltip; the
       // page it becomes is where a value under the pointer belongs.

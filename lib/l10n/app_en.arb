@@ -1114,6 +1114,7 @@
   "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
   "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml.",
   "alerts": "Alerts",
+  "online": "online",
   "densityCards": "Cards",
   "densityRows": "Rows",
   "densityGrid": "Grid",

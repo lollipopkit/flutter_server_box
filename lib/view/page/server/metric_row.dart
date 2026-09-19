@@ -28,9 +28,13 @@ Color cardColorOf(BuildContext context) {
 /// The blocks arrive slightly ahead of the card leaving, because they are
 /// drawn *on* it: two surfaces crossing at the same rate leave the middle of
 /// the swap at three quarters of a surface, which is a wash nobody asked for.
-const _kBlockIn = 0.15;
-const _kCardOutAt = 0.1;
-const _kCardOut = 0.15;
+/// Read off [openness], not off the clock, because what has to be true is
+/// that the card has not visibly grown yet — and the movement's curve is
+/// nearly flat at its start, so a short window here is a long enough moment to
+/// cross in.
+const _kBlockIn = 0.08;
+const _kCardOutAt = 0.05;
+const _kCardOut = 0.08;
 
 /// How much of a block's own surface is there yet. See [_kBlockIn].
 double blockSurfaceAt(double openness) =>

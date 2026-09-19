@@ -108,6 +108,16 @@ const _tabular = [FontFeature.tabularFigures()];
 /// card: the two have to be the same numbers or the page arrives shifted.
 const _kFocusPad = EdgeInsets.fromLTRB(17, 13, 17, 13);
 
+/// When the chart's scale arrives, over the movement that takes the card to
+/// the page.
+///
+/// The second half of it, not all of it. A card two lines of text tall has
+/// nowhere to put five tick labels, so for the first half there is nothing to
+/// draw and the chart is held exactly as it was — which is what makes it free.
+/// It lands on 1 with the movement, so the page takes over a chart already
+/// drawn the way the page draws it.
+const _kChartAxis = Interval(0.5, 1);
+
 
 
 
@@ -206,6 +216,23 @@ class ServerCard extends ConsumerWidget {
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
+        // No ink once it is on its way to being the page.
+        //
+        // A highlight is painted into the surrounding `Material` across the
+        // whole of what it responds to, which is this entire card, and it does
+        // not go through [color] — so a card opened from under the pointer
+        // grew a full-size sheet of `hoverColor` that stayed after its own
+        // surface had gone. That reads as exactly what it looks like: the
+        // card's background expanding into the page. It only ever happened on
+        // the way in, because on the way back the pointer is on whatever was
+        // pressed to get there.
+        //
+        // And a page is not one tap target: by the end of this the rows under
+        // the pointer are the things that respond, each with ink of its own.
+        hoverColor: openness > 0 ? Colors.transparent : null,
+        splashColor: openness > 0 ? Colors.transparent : null,
+        highlightColor: openness > 0 ? Colors.transparent : null,
+        focusColor: openness > 0 ? Colors.transparent : null,
         // Every height this card has is a consequence of what the machine said
         // — a server connecting, a reading promoted, a row arriving — and each
         // of them used to move every card below it in the column between one
@@ -1005,7 +1032,15 @@ class ServerCard extends ConsumerWidget {
     required double t,
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
-    return MetricChart(
+    final axis = _kChartAxis.transform(t);
+    return Held(
+      // Nothing about the chart changes over the first half of the movement:
+      // the axis is not in yet and the line is the same line. Held there, the
+      // box goes on growing around a chart that is laid out and painted but
+      // never built — see [Held], and see [_kChartAxis] for why letting go
+      // halfway is continuous.
+      hold: t > 0 && axis <= 0,
+      child: MetricChart(
       MetricChartSpec(
         // Grey rather than the card dimmed as a whole: pressing the opacity
         // down would take the text with it, and the numbers are still worth
@@ -1022,7 +1057,8 @@ class ServerCard extends ConsumerWidget {
         binaryScale: m.binary,
         height: height,
         fill: true,
-        axis: t,
+        axis: axis,
+      ),
       ),
     );
   }

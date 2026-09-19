@@ -5062,6 +5062,12 @@ abstract class AppLocalizations {
   /// **'Alerts'**
   String get alerts;
 
+  /// No description provided for @online.
+  ///
+  /// In en, this message translates to:
+  /// **'online'**
+  String get online;
+
   /// No description provided for @densityCards.
   ///
   /// In en, this message translates to:

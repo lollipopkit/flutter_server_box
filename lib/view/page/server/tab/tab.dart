@@ -214,6 +214,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
     reverseCurve: Curves.easeInOutCubic,
   );
 
+  /// How visible a card that is not the one being opened is.
+  ///
+  /// Derived once rather than read per frame, so the cards it applies to are
+  /// the same widgets on every frame of the movement and are not rebuilt.
+  late final Animation<double> _othersOpacity = _open.drive(
+    Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: _kOthersGone)),
+  );
+
   /// Which way through the list the last change of machine went: +1 for the
   /// next one along, -1 for the one before.
   ///
@@ -1279,12 +1287,48 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // happened to, which is exactly why it has to be carried rather than
     // moved.
     //
-    // Rebuilt on every frame of the opening, which is one card's worth of work
-    // while it is open: what the card looks like at each point between is a
-    // lerp inside it, so it has to be rebuilt to change. The grid's own
-    // geometry is not — the render object is told the width directly.
+    // Rebuilt on every frame of the opening, and only the one card that is
+    // opening: what that card looks like at each point between is a lerp
+    // inside it, so it has to be rebuilt to change, and the rest of them do
+    // not change at all. Their widgets are built once out here, and Flutter
+    // skips an element whose widget is the one it already has — otherwise
+    // every card on screen, chart included, was rebuilt sixty times a second
+    // to be drawn fainter. The grid's own geometry is not rebuilt either; the
+    // render object is told the width directly.
+    // Kept between the builder's runs, and thrown away whenever this method is
+    // called again — which is whenever anything that decides what a card looks
+    // like has changed.
+    //
+    // A `LayoutBuilder` runs its builder again whenever anything inside it is
+    // dirty, not only when its constraints change, and during the movement
+    // that is every frame. So this is where the cards would be built afresh
+    // sixty times a second, each one to be drawn a little fainter.
+    final others = <double, Map<String, Widget>>{};
+
     final grid = LayoutBuilder(
-      builder: (_, cons) => AnimatedBuilder(
+      builder: (_, cons) {
+        final rest = others.putIfAbsent(
+          cons.maxWidth,
+          () => {
+            for (final id in filtered)
+              if (id != heroId)
+                id: Consumer(
+                  key: ValueKey(id),
+                  builder: (_, ref, _) => _buildEachServerCard(
+                    ref.watch(serverProvider(id)),
+                    // How far the *page* has taken over, which is what fades
+                    // the cards that are not the one being opened. An
+                    // animation rather than a number, so the widget this
+                    // returns is the one it returned last frame and Flutter
+                    // skips it outright.
+                    fade: hero ? _othersOpacity : null,
+                    density: density,
+                    pageWidth: cons.maxWidth,
+                  ),
+                ),
+          },
+        );
+        return AnimatedBuilder(
         animation: _open,
         builder: (_, _) => AnimatedMasonry(
           controller: _scrollController,
@@ -1317,9 +1361,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
           },
           expandedKey: hero ? ValueKey(heroId) : null,
           expansion: _open.value,
-          // Under the cards, and only while they are the page: with one of them
-          // open the totals would be a summary of a list that is not on screen.
-          footer: open ? null : ServerOverview(ids: filtered),
+          // Over the cards, and only while they are cards: with one of them
+          // open the totals would be a summary of a list that is not on
+          // screen. Above rather than below, because what it answers is
+          // whether to read the list at all.
+          header: open ? null : ServerOverview(ids: filtered),
           children: [
             // Every one of them, the whole way through. The rest used to be
             // taken out of the list while one was open, which made them leave
@@ -1331,25 +1377,25 @@ class _ServerPageState extends ConsumerState<ServerPage>
               // server answered rather than the grid. Watched from this page's
               // `ref` — which is what a builder would have to do — any server's
               // reading landing rebuilt every card on screen.
-              Consumer(
-                key: ValueKey(id),
-                builder: (_, ref, _) => _buildEachServerCard(
-                  ref.watch(serverProvider(id)),
-                  openness: id == heroId ? _open.value : 0,
-                  // How far the *page* has taken over, which is what fades
-                  // the cards that are not the one being opened.
-                  hidden: id == heroId ? 0 : _kOthersGone.transform(_open.value),
-                  density: density,
-                  // The box the page will have, which is this same box: the
-                  // grid and the page it becomes are the two children of one
-                  // crossing. The page asks its own width the same question,
-                  // so both arrive at the same answer about the facts column.
-                  pageWidth: cons.maxWidth,
-                ),
-              ),
+              rest[id] ??
+                  Consumer(
+                    key: ValueKey(id),
+                    builder: (_, ref, _) => _buildEachServerCard(
+                      ref.watch(serverProvider(id)),
+                      openness: _open.value,
+                      density: density,
+                      // The box the page will have, which is this same box:
+                      // the grid and the page it becomes are the two children
+                      // of one crossing. The page asks its own width the same
+                      // question, so both arrive at the same answer about the
+                      // facts column.
+                      pageWidth: cons.maxWidth,
+                    ),
+                  ),
           ],
         ),
-      ),
+        );
+      },
     );
 
     // The page is mounted for the whole movement, under the card that is
@@ -1476,11 +1522,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
         // of the way of a page being read past — so its own arrival is off.
         return AnimatedBuilder(
           animation: _open,
-          child: HideOnScroll.driven(
-            visible: _funcBarVisible,
-            enterDelay: Duration.zero,
-            enterDuration: Duration.zero,
-            child: ServerFuncBar(spi: si.spi, btns: btns),
+          child: RepaintBoundary(
+            child: HideOnScroll.driven(
+              visible: _funcBarVisible,
+              enterDelay: Duration.zero,
+              enterDuration: Duration.zero,
+              child: ServerFuncBar(spi: si.spi, btns: btns),
+            ),
           ),
           builder: (_, child) {
             final t = _open.value;
@@ -1528,34 +1576,39 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
     return AnimatedBuilder(
       animation: _open,
-      builder: (_, _) {
+      // Built once and handed through: the strip does not change while it is
+      // arriving, and rebuilding a pill per machine on every frame of the
+      // movement is the list being drawn again sixty times for a height and
+      // an opacity. The boundary is what lets those two be layer work rather
+      // than a repaint of the row.
+      child: RepaintBoundary(
+        child: SizedBox(
+          height: _kSwitcherHeight,
+          child: EdgeFadeScroll(
+            builder: (_, controller) => ListView(
+              controller: controller,
+              scrollDirection: Axis.horizontal,
+              // Lined up with the page under it rather than with the window:
+              // this strip is a row of the list that has made way, so its
+              // first pill starts where the cards start. The pills carry two
+              // of their own.
+              padding: const EdgeInsets.symmetric(horizontal: 11),
+              children: [
+                for (final (i, id) in filtered.indexed)
+                  _buildSwitcherPill(id, current: i == at),
+              ],
+            ),
+          ),
+        ),
+      ),
+      builder: (_, child) {
         final t = _open.value;
         if (t <= 0) return const SizedBox(width: double.infinity);
         return ClipRect(
           child: Align(
             alignment: Alignment.topLeft,
             heightFactor: t,
-            child: Opacity(
-              opacity: t,
-              child: SizedBox(
-                height: _kSwitcherHeight,
-                child: EdgeFadeScroll(
-                  builder: (_, controller) => ListView(
-                    controller: controller,
-                    scrollDirection: Axis.horizontal,
-                    // Lined up with the page under it rather than with the
-                    // window: this strip is a row of the list that has made
-                    // way, so its first pill starts where the cards start.
-                    // The pills carry two of their own.
-                    padding: const EdgeInsets.symmetric(horizontal: 11),
-                    children: [
-                      for (final (i, id) in filtered.indexed)
-                        _buildSwitcherPill(id, current: i == at),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            child: Opacity(opacity: t, child: child),
           ),
         );
       },
@@ -1683,7 +1736,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _buildEachServerCard(
     ServerState srv, {
     double openness = 0,
-    double hidden = 0,
+    Animation<double>? fade,
     ServerListDensity density = ServerListDensity.cards,
     double pageWidth = 0,
   }) {
@@ -1710,11 +1763,18 @@ class _ServerPageState extends ConsumerState<ServerPage>
       ).onSecondary((at) => _onLongPressCard(srv, at)),
     );
 
-    if (hidden <= 0) return card;
+    if (fade == null) return card;
     // Out of the way of the one being opened, and out of reach while it is:
     // a card that cannot be seen should not be what a tap lands on.
+    //
+    // The boundary is what makes the fade cheap. Without it the card is
+    // rasterised into the opacity layer again on every frame; with it the
+    // layer keeps the card's own picture and only its alpha changes.
     return IgnorePointer(
-      child: Opacity(opacity: (1 - hidden).clamp(0.0, 1.0), child: card),
+      child: FadeTransition(
+        opacity: fade,
+        child: RepaintBoundary(child: card),
+      ),
     );
   }
 

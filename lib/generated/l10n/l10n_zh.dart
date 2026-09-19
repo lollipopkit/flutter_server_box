@@ -2731,6 +2731,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alerts => '告警';
 
   @override
+  String get online => 'online';
+
+  @override
   String get densityCards => '卡片';
 
   @override

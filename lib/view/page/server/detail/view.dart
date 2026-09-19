@@ -606,20 +606,33 @@ ${err.message ?? 'null'}
     // func bar is there — this only explains a bar that is missing.
     final noAccess = buildFuncs ? null : _buildNoRemoteAccessCard(si);
 
+    // The readings for each of the two shapes this page takes, kept between
+    // the builder's runs and dropped whenever this method is called again.
+    //
+    // A `LayoutBuilder` runs its builder again whenever anything inside it is
+    // dirty, not only when its constraints change. While the card that became
+    // this page is still growing, the entrance below is dirty on every frame —
+    // so without this the whole page, chart and tables included, was built
+    // afresh sixty times a second to be moved a few points and faded.
+    final byWidth = <bool, Widget>{};
+
     return _hosted(
       si,
       Stack(
           children: [
             LayoutBuilder(
-              builder: (_, cons) => _buildReadings(
-                si,
-                logo: logo,
-                cards: cards,
-                bottomInset: buildFuncs ? _kFuncBarInset : 0,
-                noAccess: noAccess,
+              builder: (_, cons) => byWidth.putIfAbsent(
                 // Of the room this page has, not of the window: inside a pane
                 // it is the pane that has to hold two columns.
-                wide: cons.maxWidth >= _kColumnsWidth,
+                cons.maxWidth >= _kColumnsWidth,
+                () => _buildReadings(
+                  si,
+                  logo: logo,
+                  cards: cards,
+                  bottomInset: buildFuncs ? _kFuncBarInset : 0,
+                  noAccess: noAccess,
+                  wide: cons.maxWidth >= _kColumnsWidth,
+                ),
               ),
             ),
             // Pinned above the readings rather than scrolling with them: it is
@@ -671,7 +684,11 @@ ${err.message ?? 'null'}
     if (entrance == null) return child;
     return AnimatedBuilder(
       animation: entrance,
-      child: child,
+      // Its own layer, so what happens each frame is an offset and an alpha on
+      // a picture that is already drawn. Without it the whole column — every
+      // card of facts, every table — is rasterised again for each frame of the
+      // movement.
+      child: RepaintBoundary(child: child),
       builder: (_, child) {
         final t = Curves.easeInOutCubic.transform(
           entrance.value.clamp(0.0, 1.0),

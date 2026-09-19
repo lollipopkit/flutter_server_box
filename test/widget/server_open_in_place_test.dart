@@ -393,6 +393,72 @@ void main() {
     expect(openId(tester), 'srv-1');
   });
 
+  testWidgets('only the card that is opening is rebuilt while it opens', (
+    tester,
+  ) async {
+    // The rest of them do not change: they are drawn fainter, which is a
+    // property of a layer and not of a card. Rebuilding them per frame meant
+    // every chart on screen being built sixty times a second to fade out.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    ServerCard cardOf(String name) => tester.widget<ServerCard>(
+      find.ancestor(of: find.text(name), matching: find.byType(ServerCard)),
+    );
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    final other = cardOf('db');
+    final hero = cardOf('web');
+
+    await tester.pump(const Duration(milliseconds: 60));
+    // The one growing is a different widget each frame — what it looks like
+    // part way is a lerp inside it, so it has to be.
+    expect(identical(cardOf('web'), hero), isFalse);
+    // The one that is not, is not.
+    expect(identical(cardOf('db'), other), isTrue);
+  });
+
+  testWidgets('a card opened from under the pointer carries no ink with it', (
+    tester,
+  ) async {
+    // A highlight is painted into the card's `Material` across the whole of
+    // what responds to a tap, and not through the card's own colour. So a card
+    // opened with the pointer over it grew a full-size sheet of `hoverColor`
+    // that outlasted its surface — which looks like the card's background
+    // expanding into the page, and only ever happened on the way in.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    Finder inkOf(String name) => find.descendant(
+      of: find.ancestor(
+        of: find.text(name),
+        matching: find.byType(ServerCard),
+      ),
+      matching: find.byType(InkWell),
+    );
+
+    // A card in the grid is a thing to point at, and says so.
+    expect(tester.widget<InkWell>(inkOf('web').first).hoverColor, isNull);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      if (inkOf('web').evaluate().isEmpty) break;
+      final ink = tester.widget<InkWell>(inkOf('web').first);
+      expect(ink.hoverColor, Colors.transparent);
+      expect(ink.splashColor, Colors.transparent);
+      expect(ink.highlightColor, Colors.transparent);
+    }
+
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await settle(tester);
+    expect(tester.widget<InkWell>(inkOf('web').first).hoverColor, isNull);
+  });
+
   testWidgets('and the row of things to do stays where it is', (tester) async {
     // The row floats over the page rather than being part of it, so a step
     // through the list is not something that happens to it. Sliding it along
