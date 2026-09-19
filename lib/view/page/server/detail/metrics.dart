@@ -1518,7 +1518,14 @@ extension on _ServerDetailPageState {
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
-    final note = staleAt == null ? m.note : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
+    // A failure outranks staleness here the way it does in the colour above.
+    // Both at once is the common case — a section stops answering and the
+    // reading it left goes stale — and the timestamp says when this was last
+    // true, while the note says why it is not true now. Only one of them fits,
+    // and it is the second.
+    final note = m.error != null || staleAt == null
+        ? m.note
+        : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
 
     final Widget body;
     if (wide) {

@@ -8,7 +8,6 @@ import 'package:server_box/data/store/migrations/m025_transport_switches.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/tables.dart';
-import '../helpers/table_names.dart';
 
 /// By name, not in order: `ADD COLUMN` appends, and a fresh table declares
 /// these two in the middle. Nothing reads this table by position — the store

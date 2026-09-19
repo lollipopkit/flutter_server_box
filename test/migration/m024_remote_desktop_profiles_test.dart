@@ -33,7 +33,7 @@ void main() {
     // install and nothing in this file's other tests would notice.
     expect(const RemoteDesktopProfilesMigration().from, 24);
     expect(
-      kSchemaMigrations.where((e) => e is RemoteDesktopProfilesMigration),
+      kSchemaMigrations.whereType<RemoteDesktopProfilesMigration>(),
       hasLength(1),
     );
     expect(SchemaVersion.current, greaterThan(24));

@@ -214,8 +214,13 @@ extension Spix on Spi {
   MonitorHttpCredential? get monitorOn => monitorEnabled ? monitor : null;
 
   SpiValidationError? validate() {
-    final s = ssh;
-    if (sshOn == null && monitorOn == null) {
+    // The credential that is going to be *dialled*, not the one on file. With
+    // SSH switched off its settings are kept and never used, so a conflict
+    // among them is not a reason to refuse the record — and the fields it
+    // would name are not on screen to be corrected. Switching SSH back on is
+    // a save of its own, and this refuses it then.
+    final s = sshOn;
+    if (s == null && monitorOn == null) {
       // Both switched off is a server that cannot be connected, and the form
       // says so while it is being edited — but it is not a record worth
       // keeping, so the save is what refuses it. A server is a way in.
