@@ -2,10 +2,11 @@ import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/store/entity_store.dart';
 
 /// Shared helpers for the three named-entity providers (BMC, private keys,
-/// snippets, port forwards). Riverpod code-gen makes a true generic
-/// `EntityNotifier<T>` awkward (each state has its own freezed shape), so the
-/// shared bits live here as small extensions and functions instead of a base
-/// class. See `RETIREMENT.md`.
+/// snippets, port forwards).
+///
+/// Riverpod code-gen makes a true generic `EntityNotifier<T>` awkward — each
+/// state has its own freezed shape — so the shared bits live here as small
+/// extensions and functions instead of a base class.
 
 extension EntityListOps<T extends Object> on List<T> {
   /// Returns a copy with [fresh] replacing [old] (matched by [idOf]), or

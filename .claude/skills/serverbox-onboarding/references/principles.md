@@ -103,8 +103,9 @@ a permanent test fed by bytes an older release actually wrote.
 ## State, and one navigator trap
 
 Riverpod with code generation for providers, freezed for immutable models,
-GetIt for service location. `docs/src/content/docs/principles/state.md` is the
-long form.
+GetIt for service location. `docs/src/content/docs/principles/state.md` is what
+the app holds and where; `docs/src/content/docs/development/state.md` is how to
+declare a provider and release it.
 
 The trap that has produced the most bugs: **`showRoundDialog` puts the dialog on
 the root navigator**, while a page's `context` finds the navigator holding the
@@ -135,11 +136,13 @@ project and `libL10n` for the strings `fl_lib` already has. Prefer an existing
 
 | Question | File |
 |---|---|
-| How the layers, connection methods and core systems fit together | `docs/src/content/docs/principles/architecture.md` |
+| How the layers, connection methods and status paths fit together | `docs/src/content/docs/principles/architecture.md` |
 | Connection flow, authentication, host key verification, session lifecycle | `docs/src/content/docs/principles/ssh.md` |
 | File operations, path handling, transfers, editing | `docs/src/content/docs/principles/sftp.md` |
 | Where terminal bytes come from, tabs, virtual keyboard, selection | `docs/src/content/docs/principles/terminal.md` |
-| Provider types, update patterns, persistence, testing with Riverpod | `docs/src/content/docs/principles/state.md` |
+| What state the app holds, and where | `docs/src/content/docs/principles/state.md` |
+| Module layout, entry point, dependency injection, Rust integration | `docs/src/content/docs/development/architecture.md` |
+| Provider types, update patterns, resource lifecycle | `docs/src/content/docs/development/state.md` |
 | Where a file belongs in the tree | `docs/src/content/docs/development/structure.md` |
 | Which generator to run and why an adapter is frozen | `docs/src/content/docs/development/codegen.md` |
 | Test strategy, fixtures, integration tests | `docs/src/content/docs/development/testing.md` |

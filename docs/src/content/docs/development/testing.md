@@ -183,12 +183,8 @@ The device may request local-network permission on the first run. Allow it for t
 4. Isolate external dependencies with fakes or fixtures.
 5. Cover empty lists, missing values, invalid input, and permission failures.
 
-## Audit regression checks
+## Fixtures
 
-Signed rootfs fixtures must retain their original bytes: JSON uses LF and signatures are binary in `.gitattributes`. Never re-sign a fixture to make a test pass.
+Signed rootfs fixtures must retain their original bytes: JSON uses LF and signatures are binary in `.gitattributes`. Never re-sign or regenerate a fixture to make a test pass — a fixture is bytes a release actually wrote, and rewriting it only proves the current code agrees with itself.
 
-Model context tests load real cache files and bundled assets, then refresh through a local HTTP server. Geographic fixtures go through the production installer. SFTP tests verify read cancellation, failed operations and late handle cleanup; Monitor tests use local HTTP sockets and check shared-client disposal. Keep these behavior assertions when refactoring their implementations.
-
-The frontend's `format`, `fsPath` and `agentUrl` suites run in Node; browser suites use isolated jsdom environments. Native Android service channel checks require an Android runtime and report an explicit skip on desktop. Source text searches are not substitutes for native execution; manifest and entitlement contract checks remain useful.
-
-See the repository audit record at `docs/audits/code-health-2026-09.md` for measured performance, validation results and remaining environment-dependent coverage.
+Where a test can, it should use the production path rather than a substitute: fixtures go through the real installer, and HTTP tests use a local socket.

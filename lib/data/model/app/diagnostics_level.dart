@@ -8,12 +8,12 @@ import 'dart:io';
 /// The whole scale sits on top of one invariant: **redaction happens where the
 /// data is recorded, not where it is sent**. Known server names, addresses and
 /// usernames become placeholders in the crumb or log line itself, so no level
-/// here is the difference between identifying and not. The difference is how
+/// here is the difference between identifying and not — the difference is how
 /// much is sent, and how often.
 ///
 /// The local log is unaffected by all three. It never leaves the device on its
-/// own, it is what the Logs page shows, and it is what a user pastes into an
-/// issue by hand. This setting only decides what is *uploaded*.
+/// own: it is what the Logs page shows and what a user pastes into an issue by
+/// hand. This setting only decides what is *uploaded*.
 enum DiagnosticsLevel {
   /// Nothing is uploaded, ever.
   ///
@@ -29,25 +29,20 @@ enum DiagnosticsLevel {
 
   /// Continuously, while the app runs.
   ///
-  /// Everything [basic] sends, plus performance traces as they happen — not
-  /// held back until something breaks. This is what makes a problem visible
-  /// that never crashes: a connection that takes twelve seconds, a refresh
-  /// that quietly fails every time, a screen that is slow only on one
-  /// platform.
+  /// Everything [basic] sends, plus performance traces as they happen rather
+  /// than held back until something breaks — which is what makes a problem
+  /// visible that never crashes.
   ///
-  /// **The log stream is not part of this, at any level.** It was, and it was
-  /// the one channel that carried the app's own log lines off the device
-  /// continuously — the thing most likely to hold a string nobody audited,
-  /// since a log line is written to be read by a developer on the device
-  /// rather than to be published. Timings are structured and say how long an
-  /// operation took, not what was in it. The log stays on the device, where
-  /// the Logs page shows it and a crash report quotes it with the user
-  /// reading first.
+  /// The log stream is not part of this, at any level. It was, and it was the
+  /// one channel that carried the app's own log lines off the device
+  /// continuously — the thing most likely to hold a string nobody audited. The
+  /// log stays on the device, where the Logs page shows it and a crash report
+  /// quotes it with the user reading first.
   ///
   /// It is still the level that costs something real: every traced operation
-  /// is a request to the server, which for a self-hosted instance means
-  /// storage and CPU that scale with how much the app is used rather than
-  /// with how often it fails.
+  /// is a request to the server, so a self-hosted instance pays storage and
+  /// CPU that scale with how much the app is used rather than how often it
+  /// fails.
   full;
 
   /// Whether anything is sent at all.
@@ -58,10 +53,9 @@ enum DiagnosticsLevel {
 
   /// Whether what the app is used for is counted, as it happens.
   ///
-  /// The other half of what makes `full` continuous. Its instrumentation is
-  /// the breadcrumbs every level already records — see `AptabaseSink` — so the
-  /// difference between the levels is not what is *recorded* but whether the
-  /// count leaves the device while nothing is wrong.
+  /// Its instrumentation is the breadcrumbs every level already records — see
+  /// `AptabaseSink` — so the levels differ in whether the count leaves the
+  /// device while nothing is wrong, not in what is recorded.
   bool get sendsAnalytics => this == DiagnosticsLevel.full;
 
   /// Whether operations are traced for performance.
@@ -89,28 +83,18 @@ enum DiagnosticsLevel {
 /// Android starts at [DiagnosticsLevel.none]; everything else starts at
 /// [DiagnosticsLevel.basic].
 ///
-/// The split is about F-Droid, and it works because **F-Droid only distributes
-/// the Android build**. Their Tracking anti-feature requires opt-in *and*
-/// disabled by default — an intro page supplies the first half, and no amount
-/// of asking supplies the second — so the Android default has to be `none`.
-/// The desktop and Apple builds never go through that channel, and start at
-/// `basic`: failures are reported, nothing is sent in between.
+/// The split is about F-Droid, which distributes only the Android build. Their
+/// Tracking anti-feature requires opt-in *and* disabled by default, so the
+/// Android default has to be `none`. The desktop and Apple builds never go
+/// through that channel and start at `basic`: failures are reported, nothing
+/// is sent in between.
 ///
-/// **Decided at runtime, and that is load-bearing.** The obvious alternative
-/// is a compile-time flag — ship `full` in the builds we publish and `none` in
-/// F-Droid's — and it cannot work here. F-Droid's metadata carries a `binary:`
-/// field for this app, so they rebuild from this source and compare the result
-/// byte for byte against the published APK, distributing our signature only
-/// when the two match. A flag that differs between them makes the bytes differ
-/// and the verification fail. One binary branching on [Platform.isAndroid] is
-/// identical either way.
-///
-/// Detecting the *installer* was the other idea, and is worth ruling out in
-/// writing: it exists (`getInstallSourceInfo`, API 30+), but F-Droid has
-/// several clients, an APK downloaded from their website reports the system
-/// installer like any other sideload, and a reviewer reading the source would
-/// still find a path where collection is on by default. Keying on the platform
-/// needs none of that.
+/// **Decided at runtime, and that is load-bearing.** F-Droid's metadata
+/// carries a `binary:` field for this app, so they rebuild from this source and
+/// compare the result byte for byte against the published APK, distributing
+/// our signature only when the two match. A compile-time flag that differs
+/// between the two builds makes the bytes differ and the verification fail;
+/// one binary branching on [Platform.isAndroid] is identical either way.
 DiagnosticsLevel get defaultDiagnosticsLevel {
   // An escape hatch for a private build — a beta channel that never goes near
   // F-Droid. Must not be used to vary the published Android build, per above.

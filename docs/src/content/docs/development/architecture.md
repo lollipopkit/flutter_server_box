@@ -3,9 +3,7 @@ title: Implementation Architecture
 description: Implementation details for Server Box's Flutter, storage, connection, and native layers
 ---
 
-Server Box is organized by responsibility: UI, state coordination, local storage, and external connections are kept separate. This allows SSH, Monitor agent, and local terminal backends to share the same UI while keeping platform-specific code at the edges.
-
-For the system-level overview, see [System Architecture](/docs/principles/architecture/).
+This page covers where the code lives and how the app is wired together. For the system-level model — layers, transports and capabilities, the two status paths, migrations and security — see [System Architecture](/docs/principles/architecture/).
 
 ## Layers
 
@@ -15,19 +13,19 @@ For the system-level overview, see [System Architecture](/docs/principles/archit
 │ lib/view/                           │
 │ Pages, Widgets, and user interaction│
 └─────────────────────────────────────┘
-                  ↓
+                  │
 ┌─────────────────────────────────────┐
 │ State and business coordination     │
 │ lib/data/provider/                  │
 │ Riverpod providers and async state  │
 └─────────────────────────────────────┘
-                  ↓
+                  │
 ┌─────────────────────────────────────┐
 │ Data and services                   │
 │ lib/data/model/, lib/data/store/    │
 │ Models, storage, and connections    │
 └─────────────────────────────────────┘
-                  ↓
+                  │
 ┌─────────────────────────────────────┐
 │ External integrations               │
 │ SSH, SFTP, Monitor HTTP, platform APIs│
@@ -49,7 +47,7 @@ The project uses `riverpod_generator` to generate type-safe providers:
 - `StreamProvider` exposes continuously produced data.
 - Family providers maintain independent state for different servers or other parameters.
 
-Providers do not depend on `BuildContext`, so services and business logic can be tested independently.
+Providers do not depend on `BuildContext`, so services and business logic can be tested independently. [Riverpod patterns](/docs/development/state/) covers the declaration and lifecycle detail.
 
 ## Data persistence: encrypted SQLite
 
@@ -61,62 +59,6 @@ Data uses one of two shapes:
 - **Entity tables**: servers, private keys, snippets, port forwards, connection statistics, Agent conversations, and related records. These use real columns, foreign keys, constraints, and indexes.
 
 Drift owns the DDL in `lib/data/store/db.dart`, but does not open the connection or replace the hand-written synchronous store queries. Entity primary keys are generated IDs; user-provided names are ordinary unique columns. List and map fields are stored in child tables.
-
-## Connection methods and capabilities
-
-A server can have SSH configured, Monitor HTTP configured, or both. `preferredTransport` controls which connection is tried first; it does not disable the other one. If the first connection fails, the App can try the other.
-
-The UI uses `ServerCapabilities` to decide which features to offer:
-
-| Capability | SSH | Monitor HTTP |
-|---|---|---|
-| Shell and commands | Available | Requires `full_access` |
-| Interactive terminal | Available | Requires `full_access` and the terminal endpoint |
-| File browsing | SFTP | Requires `[remote_access.fs]` and `roots` |
-| Byte streams (SFTP and port forwarding) | Available | Not available |
-| History from before the App connected | Not available | Available |
-
-When both transports are configured, the server exposes the union of their capabilities. Making Monitor HTTP preferred therefore does not hide SFTP or port forwarding provided by SSH.
-
-SSH file transport is a separate setting. SFTP is the default; SCP can be selected for hosts without an SFTP subsystem. A server configured only through Monitor HTTP uses the agent's file API and does not provide SFTP or port forwarding.
-
-## Status collection and parsing
-
-The App has two status paths:
-
-**SSH path:**
-
-```text
-Timer
-  → Provider
-  → SSH command script
-  → sbm_parser through sbm_ffi
-  → ServerStatus
-  → UI rebuild
-```
-
-**Monitor HTTP path:**
-
-```text
-Timer
-  → GET /api/v1/metrics
-  → MonitorMetrics JSON
-  → applyMonitorMetrics
-  → ServerStatus
-  → UI rebuild
-```
-
-The App's SSH path calls the shared Rust parser in `crates/sbm_ffi`. Monitor agent uses `crates/sbm_native` on the server for core metrics such as CPU, memory, disk, and network, and uses the shared script on its slower extended cycle for values that still need CLI tools. The two paths share parts of the status model, but they are not identical sampling or parsing pipelines.
-
-The parser is made of pure functions. It returns raw counters; diff and window calculations are also pure functions, and mutable state does not cross the FFI boundary.
-
-## Storage migrations
-
-`SchemaVersion` manages the App's storage layout while Drift's `schemaVersion` remains `1`. App migrations also read old Hive boxes, generate IDs, and rewrite references, which is outside the scope of a Drift migration.
-
-`HiveImport` first imports data from an upgrading installation into `kv`. Registered schema migrations then split that data into entity tables. The adapters in `lib/hive/legacy_adapters.dart` are frozen readers for old releases and must not be regenerated from current models.
-
-Every storage migration needs a permanent regression test using bytes written by the release being migrated from. A fixture generated by the current adapter only proves that the current code agrees with itself; it does not prove that an old release can still be read.
 
 ## Dependency injection
 
