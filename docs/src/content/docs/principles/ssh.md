@@ -47,7 +47,7 @@ SSHAuthAbortError(... reason: SSHInternalError(
   Bad state: No matching host key algorithm))
 ```
 
-`SshCredential.allowLegacyAlgorithms` is configured per server, turned on in the server editor under **SSH advanced**. The four algorithm categories — host key, key exchange, cipher and MAC — are negotiated independently, and the retired algorithms are appended *after* the modern ones in each. The fallback therefore applies only within the category that has no modern option: a host with a current host key but only a SHA-1 key exchange keeps the modern host key and falls back for the kex alone. It is off for every server unless you turn it on: KEXINIT is unauthenticated, so a list containing SHA-1 can be forced on a connection by an attacker even when the server would have offered something better.
+`SshCredential.allowLegacyAlgorithms` is configured per server, turned on in the server editor under **SSH advanced**. The four algorithm categories — host key, key exchange, cipher and MAC — are negotiated independently, and the retired algorithms are appended *after* the modern ones in each. The fallback therefore applies only within the category that has no modern option: a host with a current host key but only a SHA-1 key exchange keeps the modern host key and falls back for the kex alone. These algorithms are retired because they are weak — SHA-1 signatures and key exchanges, and small Diffie-Hellman groups — so opting in allows a weaker connection than the default; it does not let a peer force one onto an otherwise-modern connection, since the KEXINIT name-lists are covered by the exchange hash the host key signs. Turn it on only for a host you trust and that cannot be reached without it.
 
 ### Creating the client
 
