@@ -15,6 +15,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/spark.dart';
+import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
 /// Every measurement a server card is built from, at both of its sizes.
@@ -192,9 +193,18 @@ class ServerCard extends ConsumerWidget {
       // The card's own surface goes as it becomes the page: by then each block
       // inside it is a card in its own right, which is how the page draws
       // them, and one more behind all of them would be a second edge.
+      //
+      // It waits until they are fully in before it starts. The two fading past
+      // each other at the same rate leaves the middle of the movement washed
+      // out — the blocks are drawn *on* this, so at half each the pair is only
+      // three quarters of a surface.
       color: openness <= 0
           ? null
-          : Color.lerp(theme.cardColor, Colors.transparent, openness),
+          : Color.lerp(
+              theme.cardColor,
+              Colors.transparent,
+              ((openness - 0.5) * 2).clamp(0.0, 1.0),
+            ),
       // A line and a tile are read as a set rather than one at a time, so they
       // are packed tighter and cornered less than a card: the design's 9pt
       // against a card's 13, and next to nothing between them.
@@ -950,17 +960,7 @@ class ServerCard extends ConsumerWidget {
         ),
         if (t > 0) _headline(m, t),
         SizedBox(height: lerpDouble(ServerCardSizes.gap, 0, t)),
-        Sparkline(
-          samples: m.samples,
-          // Grey rather than dimmed as a whole: pressing the card's opacity
-          // down would take the text with it, and the numbers are still worth
-          // reading. What is out of date is the shape.
-          color: stale ? Colors.grey : m.color,
-          height: height,
-          // A share is drawn against its full so that two cards are
-          // comparable; a rate has no full and is drawn against its own peak.
-          max: m.percent == null ? null : 100,
-        ),
+        _chart(m, stale: stale, height: height, t: t),
         // Under the chart on the card; on the page it is up in the head row,
         // where it arrives with the page.
         if (m.note.isNotEmpty && t < 1)
@@ -990,6 +990,68 @@ class ServerCard extends ConsumerWidget {
     );
 
     return _surface(theme, t, child: body, padding: _kFocusPad);
+  }
+
+  /// The window of this reading, at whichever of its two forms the movement
+  /// is between.
+  ///
+  /// A card draws bars and the page draws a line with an axis, and neither
+  /// can become the other by moving: so the box travels and grows, and what
+  /// is in it crosses over on the way. By the time the page takes the card
+  /// over, what the card is drawing *is* the page's chart — the same widget,
+  /// the same axis, the same line — so there is nothing left to cross.
+  Widget _chart(
+    ServerMetric m, {
+    required bool stale,
+    required double height,
+    required double t,
+  }) {
+    // Grey rather than dimmed as a whole: pressing the card's opacity down
+    // would take the text with it, and the numbers are still worth reading.
+    // What is out of date is the shape.
+    final color = stale ? Colors.grey : m.color;
+
+    final bars = Sparkline(
+      samples: m.samples,
+      color: color,
+      height: height,
+      // A share is drawn against its full so that two cards are comparable; a
+      // rate has no full and is drawn against its own peak.
+      max: m.percent == null ? null : 100,
+    );
+    if (t <= 0) return bars;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final line = MetricChart(
+      MetricChartSpec(
+        series: [HistorySeries(m.label, color, m.samples)],
+        format: m.format,
+        times: m.times,
+        // The same window the page draws live: from the first sample to now,
+        // so a machine that stopped answering leaves the same trailing gap on
+        // both sides of the handover.
+        window: m.times.isEmpty
+            ? null
+            : (
+                from: m.times.first,
+                to: now > m.times.last ? now : m.times.last,
+              ),
+        binaryScale: m.binary,
+        height: height,
+        fill: true,
+      ),
+    );
+
+    return SizedBox(
+      height: height,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (t < 1) Opacity(opacity: 1 - t, child: bars),
+          Opacity(opacity: t, child: line),
+        ],
+      ),
+    );
   }
 
   /// The number on its own line, growing in under the label as the card
@@ -1042,10 +1104,12 @@ class ServerCard extends ConsumerWidget {
   }) {
     if (t <= 0) return child;
     return CardX(
+      // In by the halfway point, which is where the card's own surface starts
+      // going — see [build].
       color: Color.lerp(
         Colors.transparent,
         open ?? theme.cardColor,
-        t,
+        (t * 2).clamp(0.0, 1.0),
       ),
       margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
       child: Padding(

@@ -35,7 +35,10 @@ final class ServerMetric {
     required this.note,
     required this.bigNote,
     required this.samples,
+    required this.times,
+    required this.format,
     this.percent,
+    this.binary = false,
   });
 
   final ServerMetricKind kind;
@@ -66,6 +69,25 @@ final class ServerMetric {
   /// A poll that measured nothing holds null rather than zero, so the chart
   /// draws a gap where a machine was unreachable instead of a floor.
   final List<double?> samples;
+
+  /// When each of [samples] was taken, index-aligned with it.
+  ///
+  /// What the chart plots against, so the card's line and the page's are the
+  /// same line: the page draws its window against these instants, and a card
+  /// plotting against the sample index would draw a different shape wherever
+  /// a poll ran late.
+  final List<int> times;
+
+  /// How a value of this reading is written on an axis.
+  ///
+  /// The page's own formatter, because the axis labels are part of what the
+  /// card grows into: a chart whose ticks change wording at the handover is a
+  /// chart that was replaced.
+  final String Function(double) format;
+
+  /// Whether the values are byte-based, so the axis steps in multiples of 1024
+  /// rather than of 10.
+  final bool binary;
 
   /// Whether this reading is past [kServerAlertPercent].
   bool get over => percent != null && percent! * 100 >= kServerAlertPercent;
@@ -201,9 +223,16 @@ String _pct(double? v) => v == null ? '--' : '${(v * 10).round() / 10}%';
 String _rate(double? bytesPerSec) =>
     bytesPerSec == null ? '--' : '${bytesPerSec.bytes2Str}/s';
 
+/// The same three the detail page's axis is labelled with, because the card's
+/// axis is the one it grows into.
+String _rateOf(double v) => '${v.bytes2Str}/s';
+String _formatTemp(double v) =>
+    '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}°C';
+
 List<ServerMetric> _readings(ServerState srv) {
   final ss = srv.status;
   final h = ss.history;
+  final times = h.time.toList();
   final out = <ServerMetric>[];
 
   // Always present, even before the first sample: every machine has a CPU, so
@@ -221,6 +250,8 @@ List<ServerMetric> _readings(ServerState srv) {
       bigNote: '${_pct(ss.cpu.idle)} idle',
       percent: cpu == null ? null : cpu / 100,
       samples: h.cpu.toList(),
+      times: times,
+      format: _pct,
     ),
   );
 
@@ -239,6 +270,8 @@ List<ServerMetric> _readings(ServerState srv) {
         bigNote: l10n.ofFmt((ss.mem.total * 1024).bytes2Str),
         percent: used / 100,
         samples: h.mem.toList(),
+        times: times,
+        format: _pct,
       ),
     );
   }
@@ -256,6 +289,8 @@ List<ServerMetric> _readings(ServerState srv) {
         bigNote: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
         percent: used / 100,
         samples: h.swap.toList(),
+        times: times,
+        format: _pct,
       ),
     );
   }
@@ -274,6 +309,8 @@ List<ServerMetric> _readings(ServerState srv) {
         bigNote: l10n.ofFmt(usage.size.kb2Str),
         percent: used / 100,
         samples: h.disk.toList(),
+        times: times,
+        format: _pct,
       ),
     );
   }
@@ -290,6 +327,9 @@ List<ServerMetric> _readings(ServerState srv) {
         note: '${_rate(read)} ${l10n.read}',
         bigNote: '${l10n.write} · ${_rate(read)} ${l10n.read}',
         samples: h.diskWrite.toList(),
+        times: times,
+        format: _rateOf,
+        binary: true,
       ),
     );
   }
@@ -308,6 +348,9 @@ List<ServerMetric> _readings(ServerState srv) {
         note: '↓ ${_rate(rx)} · ↑ ${_rate(tx)}',
         bigNote: '↑ · ${_rate(rx)} ↓',
         samples: h.netTx.toList(),
+        times: times,
+        format: _rateOf,
+        binary: true,
       ),
     );
   }
@@ -325,6 +368,8 @@ List<ServerMetric> _readings(ServerState srv) {
         bigNote: gpu.name,
         percent: used == null ? null : used / 100,
         samples: h.gpu.toList(),
+        times: times,
+        format: _pct,
       ),
     );
   }
@@ -340,6 +385,8 @@ List<ServerMetric> _readings(ServerState srv) {
         note: sensor,
         bigNote: sensor,
         samples: h.temp.toList(),
+        times: times,
+        format: _formatTemp,
       ),
     );
   }
@@ -359,6 +406,8 @@ List<ServerMetric> _readings(ServerState srv) {
         bigNote: battery.status.name,
         percent: percent == null ? null : percent / 100,
         samples: h.battery.toList(),
+        times: times,
+        format: _pct,
       ),
     );
   }

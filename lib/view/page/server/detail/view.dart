@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:extended_image/extended_image.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -37,6 +35,7 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';

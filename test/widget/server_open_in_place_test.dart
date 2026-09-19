@@ -25,6 +25,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
+import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
@@ -277,7 +278,12 @@ void main() {
       diskIO: DiskIO(),
     );
     status.more[StatusCmdType.uptime] = 'up 3 days';
-    status.history.add(timeMs: DateTime.now().millisecondsSinceEpoch, mem: 50);
+    // Enough of a window for there to be a line: with nothing stored the page
+    // draws a sentence where the chart goes, which is a different thing again.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (var i = 0; i < 8; i++) {
+      status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
+    }
     final notifier = container.read(serverProvider('srv-0').notifier);
     notifier.updateStatus(status);
     // The card draws readings only for a machine that has answered, which is
@@ -293,6 +299,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 340));
     final grownLabel = tester.getRect(find.text('CPU').first);
     final grownRow = tester.getRect(find.text(libL10n.memory).first);
+    // The card is drawing the page's own chart by now, not a picture of one:
+    // a bar sparkline cannot become a line chart by moving, so the box
+    // travels and what is in it crosses over on the way.
+    expect(find.byType(MetricChart), findsOneWidget);
+    final grownChart = tester.getRect(find.byType(MetricChart));
 
     // Past the handover and its crossing.
     await settle(tester);
@@ -305,6 +316,11 @@ void main() {
     expect(
       tester.getRect(find.text(libL10n.memory).first),
       rectMoreOrLessEquals(grownRow, epsilon: 2),
+    );
+    expect(find.byType(MetricChart), findsOneWidget);
+    expect(
+      tester.getRect(find.byType(MetricChart)),
+      rectMoreOrLessEquals(grownChart, epsilon: 2),
     );
   });
 

@@ -80,7 +80,7 @@ class _MetricView {
   final double? percent;
 
   final List<_Stat> stats;
-  final List<_HistorySeries> series;
+  final List<HistorySeries> series;
   final String Function(double) format;
 
   /// Whether the axis should step in multiples of 1024.
@@ -360,7 +360,7 @@ extension on _ServerDetailPageState {
             ],
             (k: 'idle', v: _pct(ss.cpu.idle)),
           ],
-          series: [_HistorySeries('CPU', _kCpuColor, w.cpu)],
+          series: [HistorySeries('CPU', _kCpuColor, w.cpu)],
           format: _pct,
         ),
       );
@@ -383,7 +383,7 @@ extension on _ServerDetailPageState {
             (k: 'free', v: _pct(ss.mem.free / ss.mem.total * 100)),
             (k: 'avail', v: _pct(ss.mem.availPercent * 100)),
           ],
-          series: [_HistorySeries(libL10n.memory, _kMemColor, w.mem)],
+          series: [HistorySeries(libL10n.memory, _kMemColor, w.mem)],
           format: _pct,
         ),
       );
@@ -415,7 +415,7 @@ extension on _ServerDetailPageState {
           stats: [
             (k: 'cached', v: _pct(ss.swap.cached / ss.swap.total * 100)),
           ],
-          series: [_HistorySeries('Swap', _kSwapColor, w.swap)],
+          series: [HistorySeries('Swap', _kSwapColor, w.swap)],
           format: _pct,
         ),
       );
@@ -444,7 +444,7 @@ extension on _ServerDetailPageState {
           note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
           bigNote: l10n.ofFmt(usage.size.kb2Str),
           percent: used / 100,
-          series: [_HistorySeries(libL10n.disk, _kDiskColor, w.disk)],
+          series: [HistorySeries(libL10n.disk, _kDiskColor, w.disk)],
           format: _pct,
         ),
       );
@@ -486,8 +486,8 @@ extension on _ServerDetailPageState {
           series:
               _deviceSeries(si, _MetricKind.diskIo) ??
               [
-                _HistorySeries(l10n.read, _kDiskReadColor, w.diskRead),
-                _HistorySeries(l10n.write, _kDiskColor, w.diskWrite),
+                HistorySeries(l10n.read, _kDiskReadColor, w.diskRead),
+                HistorySeries(l10n.write, _kDiskColor, w.diskWrite),
               ],
           format: _rateOf,
           binary: true,
@@ -520,8 +520,8 @@ extension on _ServerDetailPageState {
           series:
               _deviceSeries(si, _MetricKind.net) ??
               [
-                _HistorySeries('↓', _kNetRxColor, w.netRx),
-                _HistorySeries('↑', _kNetTxColor, w.netTx),
+                HistorySeries('↓', _kNetRxColor, w.netRx),
+                HistorySeries('↑', _kNetTxColor, w.netTx),
               ],
           format: _rateOf,
           binary: true,
@@ -566,7 +566,7 @@ extension on _ServerDetailPageState {
             if (gpu.temperature case final t?)
               (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
           ],
-          series: [_HistorySeries('GPU', _kGpuColor, w.gpu)],
+          series: [HistorySeries('GPU', _kGpuColor, w.gpu)],
           format: _pct,
         ),
       );
@@ -586,7 +586,7 @@ extension on _ServerDetailPageState {
           bigNote: sensor,
           series:
               _deviceSeries(si, _MetricKind.temp) ??
-              [_HistorySeries(libL10n.temperature, _kTempColor, w.temp)],
+              [HistorySeries(libL10n.temperature, _kTempColor, w.temp)],
           format: _formatTemp,
         ),
       );
@@ -610,7 +610,7 @@ extension on _ServerDetailPageState {
           stats: [
             if (battery.cycle case final cycle?) (k: l10n.cycle, v: '$cycle'),
           ],
-          series: [_HistorySeries(libL10n.battery, _kBatteryColor, w.battery)],
+          series: [HistorySeries(libL10n.battery, _kBatteryColor, w.battery)],
           format: _pct,
         ),
       );
@@ -789,7 +789,7 @@ extension on _ServerDetailPageState {
 
   /// One line per device, or null where the aggregate is what there is: a
   /// single device, or a window that came from a store that has only totals.
-  List<_HistorySeries>? _deviceSeries(ServerState si, _MetricKind kind) {
+  List<HistorySeries>? _deviceSeries(ServerState si, _MetricKind kind) {
     // These come from the rolling buffer, whose samples are the live window's.
     // Drawn against any other window they would be plotted at instants they
     // were not taken at.
@@ -798,7 +798,7 @@ extension on _ServerDetailPageState {
     if (devices == null) return null;
     final series = [
       for (final (i, name) in _plottedDevices(kind, devices).indexed)
-        _HistorySeries(
+        HistorySeries(
           name,
           _kDeviceColors[i % _kDeviceColors.length],
           devices.byDevice[name] ?? const <double?>[],
@@ -862,7 +862,7 @@ extension on _ServerDetailPageState {
   /// instead makes every window look full: three stored hours drawn on a
   /// 24-hour request would fill the card, and a page left in the background
   /// for four minutes would draw a line straight across the gap.
-  ({({int from, int to})? window, List<_ChartBand> bands}) _chartWindow(
+  ({({int from, int to})? window, List<ChartBand> bands}) _chartWindow(
     ServerState si,
     _Window w,
   ) {
@@ -909,7 +909,7 @@ extension on _ServerDetailPageState {
   /// at most [_kRangePoints] of them, so the outermost points sit a bucket
   /// inside the window however much it kept — and a band drawn for that is a
   /// band on every chart.
-  List<_ChartBand> _bandsIn({
+  List<ChartBand> _bandsIn({
     required int from,
     required int to,
     required int first,
@@ -1156,7 +1156,7 @@ extension on _ServerDetailPageState {
     ServerState si,
     _MetricView m,
     _Window w,
-    ({({int from, int to})? window, List<_ChartBand> bands}) axis, {
+    ({({int from, int to})? window, List<ChartBand> bands}) axis, {
     required bool wide,
   }) {
     final height = wide ? _kFocusChartHeight : _kFocusChartHeightNarrow;
@@ -1219,8 +1219,8 @@ extension on _ServerDetailPageState {
             : l10n.noStoredHistoryFor(m.label),
       );
     }
-    return _buildChart(
-      _ChartSpec(
+    return MetricChart(
+      MetricChartSpec(
         series: m.series,
         format: m.format,
         times: w.times,
