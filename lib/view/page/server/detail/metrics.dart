@@ -180,16 +180,18 @@ class _Window {
   final List<double?> battery;
 }
 
-const _kCpuColor = ChartPalette.cpu;
-const _kMemColor = ChartPalette.mem;
-const _kSwapColor = ChartPalette.swap;
-const _kDiskColor = ChartPalette.disk;
-const _kDiskReadColor = ChartPalette.diskRead;
-const _kNetRxColor = ChartPalette.netRx;
-const _kNetTxColor = ChartPalette.netTx;
-const _kGpuColor = ChartPalette.gpu;
-const _kTempColor = ChartPalette.temp;
-const _kBatteryColor = ChartPalette.battery;
+// Getters rather than constants: the six series are worked out from the
+// colour the user picked and change with the theme — see [ChartPalette].
+Color get _kCpuColor => ChartPalette.cpu;
+Color get _kMemColor => ChartPalette.mem;
+Color get _kSwapColor => ChartPalette.swap;
+Color get _kDiskColor => ChartPalette.disk;
+Color get _kDiskReadColor => ChartPalette.diskRead;
+Color get _kNetRxColor => ChartPalette.netRx;
+Color get _kNetTxColor => ChartPalette.netTx;
+Color get _kGpuColor => ChartPalette.gpu;
+Color get _kTempColor => ChartPalette.temp;
+Color get _kBatteryColor => ChartPalette.battery;
 
 /// How a reading is written, wherever it is written: the row, the headline,
 /// the stats and the picker all say the same number the same way.

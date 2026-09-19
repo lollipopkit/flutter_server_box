@@ -1,60 +1,98 @@
 import 'package:flutter/painting.dart';
+import 'package:server_box/data/res/chart_series.dart';
 
 /// The colours a reading is drawn in, wherever it is drawn.
 ///
-/// The only fixed hues left in the app: everything else is derived from the
-/// seed the user picked, and a series cannot be — CPU has to stay the same
-/// colour whatever the theme, from the card on the home page to the chart on
-/// the detail page.
+/// Derived from the colour the user picked rather than fixed. The app's accent
+/// is a setting, and a chart drawn in six hues chosen at build time was six
+/// colours beside it that had nothing to do with it — the theme colour ended
+/// up being the one colour on the page that no chart used. [SeriesPalette] is
+/// the arithmetic; this is which reading gets which of its six.
 ///
-/// Three rules hold this together, and each of the values below was picked to
-/// satisfy them rather than because it looked right on its own:
+/// **A reading's colour is not its identity, and never was.** Nothing is
+/// learned from "the purple one": every series has its name or its number
+/// beside it, on the card and on the page, which is what makes a palette that
+/// moves with the seed safe at all. What the colour does is tell two lines of
+/// *one* chart apart, and rank a row against its neighbours.
 ///
-/// 1. **A meaning keeps its colour.** [cpu] is one colour everywhere, and
-///    nothing else is that colour.
-/// 2. **A pair that is read together differs by hue *or* by lightness.** The
-///    pairs are CPU↔memory (an overlaid chart draws both), read↔write and
-///    ↓↔↑. Sixty degrees of hue is enough on its own; where two land closer
-///    than that they are a lightness step apart instead. That is why [mem] is
-///    much darker than [cpu]: they are the two that share an axis, and an
-///    overlay has to read as two bands rather than as one.
-/// 3. **Colour never carries a reading on its own.** Every series has its name
-///    or its number beside it, so this palette is legible to someone who
-///    cannot tell two of these apart, and in print.
+/// **Nine kinds share six series**, the way they already shared the fixed
+/// palette's hues: swap, the network total and the battery were one teal,
+/// disk usage and disk I/O one amber, the GPU and disk reads one purple. Two
+/// readings never drawn on the same chart can say which they are with the same
+/// colour. [SeriesPalette] holds six because six is what fits around the wheel
+/// at the 60° its rules ask for.
 ///
-/// The set this replaced broke the second rule twice: CPU `#3b82f6` and disk
-/// read `#0ea5e9` were one hue step apart, and the memory green was *brighter*
-/// than the CPU blue on a dark background, so an overlay was always green over
-/// blue whatever the numbers said.
+/// [resolve] is what keeps this current — see its own note.
 abstract final class ChartPalette {
+  /// What the app opens with, and what it falls back to if the theme has not
+  /// been read yet: `SettingStore.colorSeed`'s own default.
+  static const _fallbackSeed = Color(0xFF880E4F);
+
+  static SeriesPalette _series = SeriesPalette.fan(_fallbackSeed, dark: true);
+  static Color? _seed;
+  static bool? _dark;
+
+  /// Works the six out again, if either of the two things they depend on has
+  /// changed.
+  ///
+  /// Called from the app's own `MaterialApp.builder`, which is below the theme
+  /// — so it runs again when the seed changes, when the brightness changes,
+  /// and when the system hands over a dynamic colour, which are the three
+  /// things that move this palette. It runs before any page builds, which is
+  /// what lets the readings themselves be read as plain statics: threading a
+  /// palette through `serverCardReadings` would put a `BuildContext` into a
+  /// pure function that has no other use for one.
+  ///
+  /// [seed] is the colour picked, not `ColorScheme.primary` — Material has
+  /// already moved that one to suit its own surfaces, and the first series is
+  /// supposed to *be* the theme colour.
+  static void resolve(Color seed, {required bool dark}) {
+    if (_seed == seed && _dark == dark) return;
+    _seed = seed;
+    _dark = dark;
+    _series = SeriesPalette.fan(seed, dark: dark);
+  }
+
+  /// The six as they stand, for a caller that wants them in order.
+  static SeriesPalette get series => _series;
+
   /// Also what a promoted row and its chart are drawn in — see the home card.
-  static const cpu = Color(0xFF7CC4FF);
+  static Color get cpu => _series.cpu;
 
-  /// Deliberately a lightness step under [cpu]: these two are the pair that
-  /// shares an axis. See rule 2.
-  static const mem = Color(0xFF1F9D55);
+  /// The other half of the pair that shares an axis: an overlaid chart draws
+  /// this under [cpu], so the two are a lightness step apart as well as 60°.
+  static Color get mem => _series.mem;
 
-  static const swap = Color(0xFF2DD4BF);
+  /// Never drawn beside the network, so it can have its colour.
+  static Color get swap => _series.netRx;
 
   /// Disk *usage*, which is never drawn beside the two rates below.
-  static const disk = Color(0xFFF59E0B);
+  static Color get disk => _series.diskWrite;
 
-  static const diskRead = Color(0xFFC084FC);
-  static const diskWrite = Color(0xFFF59E0B);
+  static Color get diskRead => _series.diskRead;
+  static Color get diskWrite => _series.diskWrite;
 
-  static const netRx = Color(0xFF2DD4BF);
-  static const netTx = Color(0xFFF43F5E);
+  static Color get netRx => _series.netRx;
+  static Color get netTx => _series.netTx;
 
-  static const gpu = Color(0xFFC084FC);
-  static const temp = Color(0xFFEF4444);
-  static const battery = Color(0xFF2DD4BF);
+  static Color get gpu => _series.diskRead;
+  static Color get temp => _series.netTx;
+  static Color get battery => _series.netRx;
 
-  /// What a reading over [kServerAlertPercent] is drawn in — see
+  /// What a reading over `kServerAlertPercent` is drawn in — see
   /// [StatePalette.warn], which is the same amber for the same reason.
   static const warn = StatePalette.warn;
 
   /// One metric's devices — sensors, disks, interfaces — in a fixed order, so
   /// a device keeps its colour across rebuilds.
+  ///
+  /// Fixed where the six are not, and that is the distinction: on a chart of
+  /// eight disks the colour is the only thing saying which disk a line is, so
+  /// it is carrying identity rather than emphasis. Six derived series fanned
+  /// 60° apart are for telling *kinds* apart against the theme; these are for
+  /// telling one kind's devices apart from each other, and a palette that
+  /// moved with the seed would give the same line a different colour on two
+  /// machines.
   ///
   /// Long enough that two lines of one chart never share a colour; a chart
   /// that would need a seventh line says "+N more" instead.
@@ -72,9 +110,12 @@ abstract final class ChartPalette {
 ///
 /// Four states, and the same four wherever the question is asked: a server in
 /// a list, a systemd unit, a process, a reading against its threshold. Fixed
-/// for the reason [ChartPalette] is — "running" has to stay recognisable
-/// whatever seed the user picked — and kept beside it because the two are read
-/// together on every card.
+/// where [ChartPalette]'s six are derived, and for the reason [ChartPalette]
+/// gives about its [ChartPalette.devices]: these carry meaning rather than
+/// emphasis. "Running" has to stay recognisable whatever seed the user picked,
+/// and a red that moved with the theme would be a warning nobody could learn.
+/// Kept beside the chart colours because the two are read together on every
+/// card.
 abstract final class StatePalette {
   static const running = Color(0xFF22C55E);
 

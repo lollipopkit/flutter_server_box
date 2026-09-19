@@ -35,7 +35,7 @@ const _kColAction = 34.0;
 
 /// The CPU series colour, so a bar here and the line on the detail page read
 /// as the same quantity. See [ChartPalette].
-const _kCpuColor = ChartPalette.cpu;
+Color get _kCpuColor => ChartPalette.cpu;
 
 const _processCommandTimeout = Duration(seconds: 30);
 
