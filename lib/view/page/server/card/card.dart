@@ -917,7 +917,10 @@ class ServerCard extends ConsumerWidget {
     // so that the target is something a finger can find, which the row's own
     // 17pt of icon is not.
     return InkWell(
-      onTap: () => onPromote(m.kind),
+      // While a set is being built up a tap means "this one too", wherever on
+      // the card it lands: a row that promoted a reading instead would be the
+      // one part of the card that did something else.
+      onTap: selected == null ? () => onPromote(m.kind) : onTap,
       borderRadius: BorderRadius.circular(9),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
