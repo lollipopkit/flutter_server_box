@@ -221,6 +221,59 @@ Color serverStateDot(ServerState srv, {ServerCardReadings? readings}) =>
       ServerConn.disconnected => StatePalette.idle,
     };
 
+/// One stretch of a tile's pressure bar: how much of the bar it takes, which
+/// reading it is, and whether that reading is over its line.
+typedef ServerPressureSegment = ({
+  double share,
+  ServerMetricKind kind,
+  bool over,
+});
+
+/// How much of the bar memory and disk are allowed, against the CPU's whole.
+///
+/// Not a judgement about which matters — it is that the three do not vary
+/// alike. A working machine sits at 60% memory and 70% disk all day while its
+/// CPU moves between 2% and 90%, so at equal weight every tile on a screen
+/// would be two thirds full before anything happened, and the one thing that
+/// changes would be the hardest part of the bar to see.
+const kPressureShare = 0.5;
+
+/// Everything a machine is carrying, as stretches of one bar.
+///
+/// A tile is 44 points and has room for one bar, so the question is which
+/// reading gets it — and the answer is that none of them does. What a wall of
+/// a hundred tiles is read for is which machine is under load, and one reading
+/// cannot say that: a box at 4% CPU with a full disk is not idle.
+///
+/// The shares add up to how busy the machine is and may pass 1, which is a
+/// machine carrying everything at once; the bar clips there. That is the
+/// reading it deserves — full is full, and a view whose question is "which one
+/// is under load" does not owe a distinction between loaded and more loaded.
+///
+/// A reading the machine does not report, or reports as a rate rather than a
+/// share, takes no room: only a reading with a full to be a share *of* can be
+/// a length here.
+List<ServerPressureSegment> serverPressure(ServerCardReadings? readings) {
+  const weights = {
+    ServerMetricKind.cpu: 1.0,
+    ServerMetricKind.mem: kPressureShare,
+    ServerMetricKind.disk: kPressureShare,
+  };
+
+  final out = <ServerPressureSegment>[];
+  for (final MapEntry(key: kind, value: weight) in weights.entries) {
+    final m = readings?.all.firstWhereOrNull((m) => m.kind == kind);
+    final percent = m?.percent;
+    if (percent == null || percent <= 0) continue;
+    out.add((
+      share: percent.clamp(0.0, 1.0) * weight,
+      kind: kind,
+      over: m!.over,
+    ));
+  }
+  return out;
+}
+
 /// The one slot that is not the same on every card.
 ///
 /// Ranked the way someone scanning a list would rank it: whatever is over the

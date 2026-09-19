@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show FontFeature, lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
@@ -14,6 +15,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/shape_cross.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
@@ -105,6 +107,14 @@ abstract final class ServerCardSizes {
 
 const _tabular = [FontFeature.tabularFigures()];
 
+/// How tall a tile's pressure bar is, and its corner.
+///
+/// Thicker than the 3pt bar it replaced: this one is several colours laid end
+/// to end, and at 3 the shorter segments were a pixel of colour rather than a
+/// length to read.
+const _kPressureHeight = 6.0;
+
+
 /// What the detail page insets its focus card by, and its rows.
 ///
 /// Named here because they are the far end of a movement that starts inside a
@@ -120,6 +130,23 @@ const _kFocusPad = EdgeInsets.fromLTRB(17, 13, 17, 13);
 /// It lands on 1 with the movement, so the page takes over a chart already
 /// drawn the way the page draws it.
 const _kChartAxis = Interval(0.5, 1);
+
+/// Over how much of the same movement a line or a tile becomes the card.
+///
+/// Those two are not the card at a smaller size, so they cannot be a lerp of
+/// it: they are crossed with it, and the height between the two is part of the
+/// cross — see [ShapeCross]. They were swapped for the card on the first frame
+/// of opening and swapped back on the last frame of closing, so a line went
+/// from 40 tall to the height of a card between two frames, and the grid
+/// reserved that height for it and moved every line under it.
+///
+/// The first third, easing out. The movement's own curve starts slowly, so a
+/// cross that starts fast and ends slowly adds up to a height that changes at
+/// close to the pace of a card's: at most 47 points a frame against a card's
+/// 39, simulated at 60 Hz for a 40-point line. Easing in and out was 98, and a
+/// longer window is worse rather than better — the fast part of the cross then
+/// falls on the fast part of the movement.
+const _kShapeCross = Interval(0, 0.3, curve: Curves.easeOutCubic);
 
 
 
@@ -201,7 +228,11 @@ class ServerCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final compact = openness <= 0 && density != ServerListDensity.cards;
+    // A line or a tile at rest, which is a shape of its own rather than the
+    // card at a smaller size — see [_kShapeCross].
+    final shaped = density != ServerListDensity.cards;
+    final compact = shaped && openness <= 0;
+    final cross = shaped ? _kShapeCross.transform(openness) : 1.0;
     final card = cardColorOf(context);
     return CardX(
       // The card's own surface goes as it becomes the page: by then each block
@@ -221,19 +252,27 @@ class ServerCard extends ConsumerWidget {
       // A line and a tile are read as a set rather than one at a time, so they
       // are packed tighter and cornered less than a card: the design's 9pt
       // against a card's 13, and next to nothing between them.
-      radius: compact
-          ? const BorderRadius.all(Radius.circular(9))
+      //
+      // Both start from what this density rests at. They started from the
+      // card's, so a line went from a margin of 1 to 4 on the first frame of
+      // opening and back on the last.
+      radius: shaped
+          ? BorderRadius.lerp(
+              const BorderRadius.all(Radius.circular(9)),
+              CardX.borderRadius,
+              cross,
+            )
           : null,
-      margin: switch (density) {
-        _ when openness > 0 => EdgeInsets.lerp(
-          const EdgeInsets.all(4),
-          EdgeInsets.zero,
-          openness,
-        ),
-        _ when !compact => null,
-        ServerListDensity.rows => const EdgeInsets.symmetric(vertical: 1),
-        _ => EdgeInsets.zero,
-      },
+      margin: EdgeInsets.lerp(
+        switch (density) {
+          ServerListDensity.rows => const EdgeInsets.symmetric(vertical: 1),
+          ServerListDensity.grid => EdgeInsets.zero,
+          // `Card`'s own, which is what a null margin gets.
+          _ => const EdgeInsets.all(4),
+        },
+        EdgeInsets.zero,
+        openness,
+      ),
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -275,13 +314,32 @@ class ServerCard extends ConsumerWidget {
               : context.motion(Durations.medium3),
           curve: Curves.fastEaseInToSlowEaseOut,
           alignment: Alignment.topCenter,
-          child: compact
-              ? _compact(context, ref)
-              : _full(context, ref),
+          child: switch (shaped) {
+            _ when compact => _compact(context, ref),
+            // The same structure for the whole of the movement, so the card
+            // under it is one element throughout and not rebuilt from nothing
+            // when the cross ends.
+            true => ShapeCross(
+              t: cross,
+              fromHeight: _compactHeight,
+              from: cross < 1 ? _compact(context, ref) : null,
+              to: _full(context, ref),
+              minToWidth: UIs.columnWidth,
+            ),
+            false => _full(context, ref),
+          },
         ),
       ),
     );
   }
+
+  /// How tall a line or a tile is, which is what [_line] and [_tile] size
+  /// themselves to.
+  double get _compactHeight => switch (density) {
+    ServerListDensity.grid =>
+      isMobile ? ServerCardSizes.tileTouch : ServerCardSizes.tile,
+    _ => isMobile ? ServerCardSizes.rowTouch : ServerCardSizes.row,
+  };
 
   /// The card, and the readings block of the page it becomes.
   ///
@@ -683,22 +741,62 @@ class ServerCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 5),
-            // The slot is kept even with nothing in it, so a machine that is
-            // down does not make its tile a different height from the rest.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(ServerCardSizes.bar),
-              child: LinearProgressIndicator(
-                value: focus?.percent?.clamp(0.0, 1.0) ?? 0,
-                minHeight: ServerCardSizes.bar,
-                backgroundColor: scheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation(
-                  focus == null
-                      ? Colors.transparent
-                      : (focus.over
-                            ? StatePalette.warn
-                            : ChartPalette.reading(promoted: true)),
-                ),
+            _pressure(context, readings, scheme: scheme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Everything this machine is carrying, end to end in one bar — see
+  /// [serverPressure], which is what the lengths are.
+  ///
+  /// The slot is kept even with nothing in it, so a machine that is down does
+  /// not make its tile a different height from the rest.
+  Widget _pressure(
+    BuildContext context,
+    ServerCardReadings? readings, {
+    required ColorScheme scheme,
+  }) {
+    final segments = serverPressure(readings);
+
+    // The series colours, and this is the one place on a tile where a colour
+    // is saying *which reading*: every tile shows the same three in the same
+    // order, and nothing on a tile names them. Over its line wins — that is
+    // the tile's whole job.
+    Color colorOf(ServerPressureSegment segment) => segment.over
+        ? StatePalette.warn
+        : switch (segment.kind) {
+            ServerMetricKind.mem => ChartPalette.mem,
+            ServerMetricKind.disk => ChartPalette.diskRead,
+            _ => ChartPalette.cpu,
+          };
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(_kPressureHeight),
+      child: Container(
+        height: _kPressureHeight,
+        color: scheme.surfaceContainerHighest,
+        // A machine carrying everything at once runs past the end and is
+        // clipped there, which is the reading it deserves: full is full, and
+        // the tile that answers "which one is under load" does not owe a
+        // distinction between loaded and more loaded.
+        child: Row(
+          children: [
+            for (final segment in segments)
+              Flexible(
+                flex: (segment.share * 1000).round(),
+                child: Container(color: colorOf(segment)),
               ),
+            // Whatever is left, as the track. A `Row` holding only the
+            // segments would stretch them to the full width.
+            Flexible(
+              flex: math.max(
+                0,
+                ((1 - segments.fold(0.0, (a, s) => a + s.share)) * 1000)
+                    .round(),
+              ),
+              child: const SizedBox.shrink(),
             ),
           ],
         ),
