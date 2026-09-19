@@ -32,6 +32,7 @@ final class SshCredential {
   String? alterUrl;        // 备用 URL
   List<String>? jumpIds;   // Jump server 链
   String? proxyCommand;    // ProxyCommand，仅桌面端
+  bool allowLegacyAlgorithms; // 允许协商已被 SSH 淘汰的算法，默认关闭
 }
 ```
 

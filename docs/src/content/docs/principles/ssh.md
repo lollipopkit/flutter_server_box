@@ -32,6 +32,7 @@ final class SshCredential {
   String? alterUrl;        // Fallback URL
   List<String>? jumpIds;   // Jump-server candidates
   String? proxyCommand;    // ProxyCommand, desktop only
+  bool allowLegacyAlgorithms; // Opt in to algorithms SSH has retired, false by default
 }
 ```
 
