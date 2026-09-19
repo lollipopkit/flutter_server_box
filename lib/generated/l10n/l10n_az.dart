@@ -519,9 +519,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu keçid yalnız proqramın arxa planda işləməyə cəhd edəcəyini bildirir. Arxa planda işləyə bilməsi müvafiq icazənin aktiv olub-olmamasından asılıdır. AOSP əsaslı Android ROM sistemlərində bu tətbiq üçün \"Batareya optimallaşdırması\" funksiyasını söndür. MIUI / HyperOS üçün enerjiyə qənaət siyasətini \"Məhdudiyyətsiz\" olaraq dəyiş.';
 
   @override
-  String get trayTitle => 'Vəziyyət işarəsi';
-
-  @override
   String get trayReadings => 'Göstəricilər';
 
   @override
@@ -646,11 +643,6 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'İşləyən konteyner yoxdur.\nBunun səbəbi aşağıdakılar ola bilər:\n- Docker quraşdıran istifadəçi tətbiqdə təyin edilmiş istifadəçi adı ilə eyni deyil.\n- DOCKER_HOST mühit dəyişəni düzgün oxunmayıb. Onu terminalda `echo \$DOCKER_HOST` əmrini icra edərək əldə edə bilərsən.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count obraz';
-  }
 
   @override
   String get dockerProjectOther => 'Digər';
@@ -1259,9 +1251,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sendTo => 'Göndər…';
 
   @override
-  String get serverDetailOrder => 'Təfərrüatlar səhifəsində vidcetlərin sırası';
-
-  @override
   String get serverFuncBtns => 'Server funksiya düymələri';
 
   @override
@@ -1866,9 +1855,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Servis siyahısından istifadə etmək mümkündür, lakin idarəedici bütün status və ya başlanğıc məlumatlarını qaytarmadı.';
 
   @override
-  String get serviceEnabled => 'Başlanğıcda aktivdir';
-
-  @override
   String get systemdUserScopeMissing =>
       'İstifadəçi vahidləri siyahıda göstərilmir';
 
@@ -1949,9 +1935,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => 'Bu serverdə əmr icra etmək mümkün olmadı';
@@ -2100,11 +2083,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu serverdə disk, şəbəkə və CPU üçün Yet Another Bench Script işə salınır. Tam icra 10 ilə 20 dəqiqə arasında vaxt aparır və bu səhifədən çıxsan və ya tətbiqi bağlasan da davam edir.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'Benchmark üçün Linux tələb olunur. Bu server $system bildirir.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'Hələ benchmark yoxdur.';
 
   @override
@@ -2195,10 +2173,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get benchmarkPhaseDone => 'Tamamlanır';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'İcra nəticə bildirilmədən dayandı. Az yaddaşlı serverlərdə buna adətən yaddaş çatışmazlığı zamanı prosesləri dayandıran mexanizm səbəb olur.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'Bu nəticəni JSON kimi oxumaq mümkün olmadı. Xam mətn aşağıdadır.';
 
@@ -2216,9 +2190,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get benchmarkMultiCore => 'Çox nüvə';
 
   @override
-  String get benchmarkBlockSize => 'Blok ölçüsü';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2232,13 +2203,6 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Virtuallaşdırma';
-
-  @override
-  String get benchmarkCompare => 'Müqayisə et';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'Müqayisə üçün ən azı iki tamamlanmış benchmark lazımdır.';
 
   @override
   String get benchmarkRawLog => 'İcra jurnalı';
@@ -2642,9 +2606,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2874,8 +2835,4 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

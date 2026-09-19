@@ -478,9 +478,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '此开关只代表程序会尝试在后台运行，具体能否后台运行取决于是否开启了权限。原生 Android 请关闭本 App 的“电池优化”，MIUI / HyperOS 请将省电策略改为“无限制”。';
 
   @override
-  String get trayTitle => '状态图标';
-
-  @override
   String get trayReadings => '读数';
 
   @override
@@ -597,11 +594,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       '没有正在运行的容器。\n这可能是因为：\n- Docker 安装用户与 App 内配置的用户名不同\n- 环境变量 DOCKER_HOST 没有被正确读取。可以通过在终端内运行 `echo \$DOCKER_HOST` 来获取。';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count 个镜像';
-  }
 
   @override
   String get dockerProjectOther => '其他';
@@ -1163,9 +1155,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sendTo => '发送到…';
 
   @override
-  String get serverDetailOrder => '详情页部件顺序';
-
-  @override
   String get serverFuncBtns => '服务器功能按钮';
 
   @override
@@ -1703,9 +1692,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serviceDetailsUnavailableTip => '服务列表仍可使用，但服务管理器未返回完整的状态或开机启动信息。';
 
   @override
-  String get serviceEnabled => '已设置开机启动';
-
-  @override
   String get systemdUserScopeMissing => '未列出用户 unit';
 
   @override
@@ -1772,9 +1758,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => '当前账户无法读取 journal';
-
-  @override
-  String get serviceSelectHint => '选择一个单元查看详情';
 
   @override
   String get serverUnreachable => '无法在此服务器上执行命令';
@@ -1915,11 +1898,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '在此服务器上运行 Yet Another Bench Script：磁盘、网络与 CPU。完整跑一次需要 10–20 分钟，离开本页或关闭 App 都不会中断。';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return '性能测试需要 Linux，此服务器报告的是 $system。';
-  }
-
-  @override
   String get benchmarkNoRuns => '还没有测试记录。';
 
   @override
@@ -2005,10 +1983,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get benchmarkPhaseDone => '收尾';
 
   @override
-  String get benchmarkDiedUnreported =>
-      '测试中断且未产生结果。在小内存服务器上，这通常是 OOM killer 所致。';
-
-  @override
   String get benchmarkResultUnreadable => '此结果无法按 JSON 解析，原始文本见下方。';
 
   @override
@@ -2024,9 +1998,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get benchmarkMultiCore => '多核';
 
   @override
-  String get benchmarkBlockSize => '块大小';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2040,12 +2011,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get benchmarkVirt => '虚拟化';
-
-  @override
-  String get benchmarkCompare => '对比';
-
-  @override
-  String get benchmarkCompareEmpty => '至少需要两条已完成的记录才能对比。';
 
   @override
   String get benchmarkRawLog => '运行日志';
@@ -2434,9 +2399,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskSchedule => '执行周期';
 
   @override
-  String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
-
-  @override
   String get scheduledTaskAdd => '添加任务';
 
   @override
@@ -2662,10 +2624,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
-
-  @override
-  String get monitorNoAgent =>
-      '还没有配置了 monitor agent 的服务器。在某台服务器的设置里加上，就能在这里编辑它。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3142,9 +3100,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '此開關僅代表程式會嘗試於背景執行，能否成功取決於系統權限。在原生 Android 上，請關閉本應用的「電池最佳化」；在 MIUI / HyperOS 上，請將省電策略調整為「無限制」。';
 
   @override
-  String get trayTitle => '狀態圖示';
-
-  @override
   String get trayReadings => '讀數';
 
   @override
@@ -3261,11 +3216,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get dockerEmptyRunningItems =>
       '沒有正在執行的容器。\n這可能是因為：\n- Docker 安裝使用者與 App 內配置的使用者名稱不同\n- 環境變數 DOCKER_HOST 沒有被正確讀取。你可以通過在終端機內執行 `echo \$DOCKER_HOST` 來獲取。';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count 個映像檔';
-  }
 
   @override
   String get dockerProjectOther => '其他';
@@ -3827,9 +3777,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sendTo => '傳送到…';
 
   @override
-  String get serverDetailOrder => '詳情頁部件順序';
-
-  @override
   String get serverFuncBtns => '伺服器功能按鈕';
 
   @override
@@ -4373,9 +4320,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get serviceDetailsUnavailableTip => '服務列表仍可使用，但服務管理器未傳回完整的狀態或開機啟動資訊。';
 
   @override
-  String get serviceEnabled => '已設定開機啟動';
-
-  @override
   String get systemdUserScopeMissing => '未列出使用者 unit';
 
   @override
@@ -4454,9 +4398,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => '無法在此伺服器上執行命令';
@@ -4597,11 +4538,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '在此伺服器上執行 Yet Another Bench Script，測試磁碟、網路與 CPU。完整執行一次需要 10–20 分鐘，離開此頁面或關閉 App 都不會中斷。';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return '效能測試需要 Linux，此伺服器回報的系統為 $system。';
-  }
-
-  @override
   String get benchmarkNoRuns => '尚無效能測試記錄。';
 
   @override
@@ -4686,10 +4622,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get benchmarkPhaseDone => '正在完成';
 
   @override
-  String get benchmarkDiedUnreported =>
-      '測試中斷且未產生結果。在記憶體較小的伺服器上，通常是 OOM Killer 所致。';
-
-  @override
   String get benchmarkResultUnreadable => '無法將此結果解析為 JSON，原始文字如下。';
 
   @override
@@ -4705,9 +4637,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get benchmarkMultiCore => '多核心';
 
   @override
-  String get benchmarkBlockSize => '區塊大小';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -4721,12 +4650,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get benchmarkVirt => '虛擬化';
-
-  @override
-  String get benchmarkCompare => '比較';
-
-  @override
-  String get benchmarkCompareEmpty => '至少需要兩筆已完成的效能測試才能比較。';
 
   @override
   String get benchmarkRawLog => '執行記錄';
@@ -5116,9 +5039,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskSchedule => '執行週期';
 
   @override
-  String get scheduledTaskScheduleHint => '例如：0 2 * * * 或 @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -5345,8 +5265,4 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
-
-  @override
-  String get monitorNoAgent =>
-      '還沒有設定了 monitor agent 的伺服器。在某台伺服器的設定裡加上，就能在這裡編輯它。';
 }

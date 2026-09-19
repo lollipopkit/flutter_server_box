@@ -515,9 +515,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".';
 
   @override
-  String get trayTitle => 'Ikon status';
-
-  @override
   String get trayReadings => 'Pembacaan';
 
   @override
@@ -642,11 +639,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'Tidak ada wadah yang sedang berjalan.\nHal ini dapat terjadi karena:\n- Pengguna instalasi Docker tidak sama dengan nama pengguna yang dikonfigurasi di dalam Aplikasi.\n- Variabel lingkungan DOCKER_HOST tidak terbaca dengan benar. Anda bisa mendapatkannya dengan menjalankan `echo \$DOCKER_HOST` di terminal.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count gambar';
-  }
 
   @override
   String get dockerProjectOther => 'Lainnya';
@@ -1251,9 +1243,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sendTo => 'Kirim ke…';
 
   @override
-  String get serverDetailOrder => 'Detail pesanan widget halaman';
-
-  @override
   String get serverFuncBtns => 'Tombol fungsi server';
 
   @override
@@ -1855,9 +1844,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Daftar layanan dapat digunakan, tetapi pengelola tidak memberikan semua informasi status atau mulai otomatis.';
 
   @override
-  String get serviceEnabled => 'Diaktifkan saat mulai';
-
-  @override
   String get systemdUserScopeMissing => 'Unit pengguna tidak ditampilkan';
 
   @override
@@ -1937,9 +1923,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable =>
@@ -2088,11 +2071,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Menjalankan Yet Another Bench Script di server ini untuk menguji disk, jaringan, dan CPU. Pengujian lengkap memerlukan 10–20 menit dan tetap berjalan jika Anda meninggalkan halaman ini atau menutup aplikasi.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'Uji performa memerlukan Linux. Server ini melaporkan $system.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'Belum ada uji performa.';
 
   @override
@@ -2183,10 +2161,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get benchmarkPhaseDone => 'Menyelesaikan';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'Pengujian berhenti tanpa melaporkan hasil. Pada server kecil, penyebabnya biasanya OOM killer.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'Hasil ini tidak dapat dibaca sebagai JSON. Teks mentah ditampilkan di bawah.';
 
@@ -2204,9 +2178,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get benchmarkMultiCore => 'Multi-inti';
 
   @override
-  String get benchmarkBlockSize => 'Ukuran blok';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2220,13 +2191,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Virtualisasi';
-
-  @override
-  String get benchmarkCompare => 'Bandingkan';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'Diperlukan setidaknya dua pengujian yang telah selesai untuk dibandingkan.';
 
   @override
   String get benchmarkRawLog => 'Log pengujian';
@@ -2630,9 +2594,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2862,8 +2823,4 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

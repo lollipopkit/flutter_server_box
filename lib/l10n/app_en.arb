@@ -155,7 +155,6 @@
   "icloudBackupStatusSummary": "Last backup: {lastModified}\nStatus: {remoteState}",
   "bgRun": "Run in background",
   "bgRunTip": "This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".",
-  "trayTitle": "Status icon",
   "trayReadings": "Readings",
   "trayChart": "Chart",
   "trayChartNone": "None",
@@ -192,7 +191,6 @@
   "displayCpuIndex": "Display CPU index",
   "dl2Local": "Download {fileName} to local?",
   "dockerEmptyRunningItems": "There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo $DOCKER_HOST` in the terminal.",
-  "dockerImagesFmt": "{count} images",
   "dockerProjectOther": "Other",
   "dockerPruneTip": "Remove unused data to free up disk space",
   "dockerStatistics": "Docker Statistics",
@@ -452,7 +450,6 @@
   "homeDir": "Home",
   "selected": "{count} selected",
   "sendTo": "Send to…",
-  "serverDetailOrder": "Detail page widget order",
   "serverFuncBtns": "Server function buttons",
   "serverOrder": "Server order",
   "serverTabEmpty": "No servers yet",
@@ -691,7 +688,6 @@
   "serviceListFailed": "Could not list services",
   "serviceDetailsUnavailable": "Some service details are unavailable",
   "serviceDetailsUnavailableTip": "The service list is usable, but the manager did not return all status or startup information.",
-  "serviceEnabled": "Enabled at startup",
   "systemdUserScopeMissing": "User units are not listed",
   "systemdUserScopeMissingTip": "This account has no user session bus on the server, so only system units are shown.",
   "serviceSearchHint": "Unit name",
@@ -759,7 +755,6 @@
     }
   },
   "serviceJournalUnreadable": "This account cannot read the journal",
-  "serviceSelectHint": "Select a unit to see its details",
   "serverUnreachable": "Could not run a command on this server",
   "containerNoRuntime": "No container runtime here",
   "containerNoRuntimeTip": "Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.",
@@ -833,14 +828,6 @@
   },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.",
-  "benchmarkLinuxOnly": "Benchmarking needs Linux. This server reports {system}.",
-  "@benchmarkLinuxOnly": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "benchmarkNoRuns": "No benchmarks yet.",
   "benchmarkRunning": "Benchmark running",
   "benchmarkStartFailed": "Could not start the benchmark",
@@ -890,20 +877,16 @@
   "benchmarkPhaseNetwork": "Testing network",
   "benchmarkPhaseCpu": "Testing CPU",
   "benchmarkPhaseDone": "Finishing",
-  "benchmarkDiedUnreported": "The run stopped without reporting a result. On a small server this is usually the out-of-memory killer.",
   "benchmarkResultUnreadable": "This result could not be read as JSON. The raw text is below.",
   "benchmarkViewOnGeekbench": "View on Geekbench",
   "benchmarkGeekbenchPublic": "This result is published publicly at the link above.",
   "benchmarkSingleCore": "Single core",
   "benchmarkMultiCore": "Multi core",
-  "benchmarkBlockSize": "Block size",
   "benchmarkIops": "IOPS",
   "benchmarkSend": "Up",
   "benchmarkRecv": "Down",
   "benchmarkLatency": "Latency",
   "benchmarkVirt": "Virtualization",
-  "benchmarkCompare": "Compare",
-  "benchmarkCompareEmpty": "At least two finished benchmarks are needed to compare.",
   "benchmarkRawLog": "Run log",
   "benchmarkUpstream": "Powered by Yet Another Bench Script ({version})",
   "@benchmarkUpstream": {
@@ -1033,7 +1016,6 @@
   "scheduledTaskUnavailable": "crontab is not available on this server.",
   "scheduledTaskPreserveTip": "Comments, environment variables, and unrecognized lines in this crontab are preserved.",
   "scheduledTaskSchedule": "Schedule",
-  "scheduledTaskScheduleHint": "For example: 0 2 * * * or @reboot",
   "scheduledTaskAdd": "Add task",
   "scheduledTaskNextRun": "Next run",
   "scheduledTaskNextInFmt": "in {time}",
@@ -1100,6 +1082,5 @@
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
   "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
-  "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml.",
-  "monitorNoAgent": "No server here has a monitor agent configured. Add one in a server's settings to edit it from here."
+  "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml."
 }

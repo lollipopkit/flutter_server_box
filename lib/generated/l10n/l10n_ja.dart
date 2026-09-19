@@ -486,9 +486,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'このスイッチはプログラムがバックグラウンドで実行を試みることを意味しますが、実際にバックグラウンドで実行できるかどうかは、権限が有効になっているかに依存します。AOSPベースのAndroid ROMでは、このアプリの「バッテリー最適化」をオフにしてください。MIUIでは、省エネモードを「無制限」に変更してください。';
 
   @override
-  String get trayTitle => 'ステータスアイコン';
-
-  @override
   String get trayReadings => '測定値';
 
   @override
@@ -608,11 +605,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       '実行中のコンテナがありません。\nこれは次の理由による可能性があります：\n- Dockerのインストールユーザーとアプリ内の設定されたユーザー名が異なる\n- 環境変数DOCKER_HOSTが正しく読み込まれていない。ターミナルで`echo \$DOCKER_HOST`を実行して取得できます。';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '合計$countイメージ';
-  }
 
   @override
   String get dockerProjectOther => 'その他';
@@ -1185,9 +1177,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sendTo => '送信先…';
 
   @override
-  String get serverDetailOrder => '詳細ページのウィジェット順序';
-
-  @override
   String get serverFuncBtns => 'サーバー機能ボタン';
 
   @override
@@ -1753,9 +1742,6 @@ class AppLocalizationsJa extends AppLocalizations {
       '一覧は利用できますが、状態または自動起動の情報がすべて返されませんでした。';
 
   @override
-  String get serviceEnabled => '自動起動が有効';
-
-  @override
   String get systemdUserScopeMissing => 'ユーザー unit は表示されていません';
 
   @override
@@ -1835,9 +1821,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => 'このサーバーでコマンドを実行できませんでした';
@@ -1980,11 +1963,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'このサーバーで Yet Another Bench Script を実行し、ディスク、ネットワーク、CPU を測定します。すべてのテストには 10～20 分かかり、このページを離れたりアプリを閉じたりしても実行は継続します。';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'ベンチマークには Linux が必要です。このサーバーからは $system と報告されています。';
-  }
-
-  @override
   String get benchmarkNoRuns => 'ベンチマーク結果はまだありません。';
 
   @override
@@ -2073,10 +2051,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get benchmarkPhaseDone => '完了処理中';
 
   @override
-  String get benchmarkDiedUnreported =>
-      '結果が報告されないまま実行が停止しました。メモリの少ないサーバーでは、通常 OOM Killer が原因です。';
-
-  @override
   String get benchmarkResultUnreadable =>
       'この結果を JSON として読み取れませんでした。以下に元のテキストを表示します。';
 
@@ -2093,9 +2067,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get benchmarkMultiCore => 'マルチコア';
 
   @override
-  String get benchmarkBlockSize => 'ブロックサイズ';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2109,12 +2080,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get benchmarkVirt => '仮想化';
-
-  @override
-  String get benchmarkCompare => '比較';
-
-  @override
-  String get benchmarkCompareEmpty => '比較するには、完了したベンチマークが 2 件以上必要です。';
 
   @override
   String get benchmarkRawLog => '実行ログ';
@@ -2513,9 +2478,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2745,8 +2707,4 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }
