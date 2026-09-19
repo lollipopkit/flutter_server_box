@@ -2953,4 +2953,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Этот агент настроен только для мониторинга. Здесь нельзя открыть терминал, выполнять команды и просматривать файлы. Чтобы включить эти функции, измените раздел [remote_access] в config.toml агента.';
+
+  @override
+  String get alerts => 'Alerts';
 }

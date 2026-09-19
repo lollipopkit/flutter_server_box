@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -43,6 +44,9 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    // The list draws what has happened to these machines lately, which is
+    // the one thing in the app that records a time.
+    getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     Stores.setting.serverStatusUpdateInterval.put(0);
   });

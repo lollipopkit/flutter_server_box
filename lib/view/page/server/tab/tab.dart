@@ -24,6 +24,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
@@ -920,6 +921,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
         moveDuration: _kOpenDuration,
         expandedKey: open ? ValueKey(openId) : null,
         expansion: _open.value,
+        // Under the cards, and only while they are the page: with one of them
+        // open the totals would be a summary of a list that is not on screen.
+        footer: open ? null : ServerOverview(ids: filtered),
         children: [
           // While one is open it is the only one built: the rest are leaving,
           // which is what the grid already knows how to draw.

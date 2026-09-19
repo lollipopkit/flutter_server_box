@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -36,6 +37,9 @@ void main() {
     // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    // The list draws what has happened to these machines lately, which is
+    // the one thing in the app that records a time.
+    getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     // No auto-refresh: 0 is what `normalizeServerStatusRefreshSeconds` reads
     // as off, and its periodic timer would otherwise outlive the tree and

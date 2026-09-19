@@ -118,6 +118,26 @@ class ConnectionStatsStore {
     return result;
   }
 
+  /// The newest attempts across every server, newest first.
+  ///
+  /// What the home page's recent strip is made of: this table is the only
+  /// thing in the app that records *when* something happened to a machine, so
+  /// it is what "what has been going on" can honestly be answered with.
+  ///
+  /// Bounded by time as well as by count, because three records from a week
+  /// ago under a heading saying the last day is worse than an empty strip.
+  List<ConnectionStat> recent({
+    int limit = 3,
+    Duration within = const Duration(hours: 24),
+  }) {
+    final rows = _db.select(
+      'SELECT * FROM conn_stat WHERE timestamp >= ? '
+      'ORDER BY timestamp DESC LIMIT ?;',
+      [DateTime.now().subtract(within).millisecondsSinceEpoch, limit],
+    );
+    return [for (final row in rows) _fromRow(row)];
+  }
+
   static DateTime? _timeOf(Object? millis) =>
       millis is int ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
 

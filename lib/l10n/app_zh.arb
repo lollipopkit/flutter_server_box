@@ -851,5 +851,6 @@
   "corsOrigins": "CORS 允许来源",
   "corsOriginsTip": "允许浏览器面板从哪些来源调用此 agent。留空表示仅同源。",
   "monitorNoRemoteAccess": "此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。",
-  "remoteDesktop": "Remote desktop"
+  "remoteDesktop": "Remote desktop",
+  "alerts": "告警"
 }

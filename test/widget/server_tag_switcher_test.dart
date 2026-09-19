@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
@@ -44,6 +45,9 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    // The list draws what has happened to these machines lately, which is
+    // the one thing in the app that records a time.
+    getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     getIt.registerSingleton<SelfAddrStore>(SelfAddrStore('self_addr_test'));
     // Off, or its periodic timer outlives the tree and fails the run.

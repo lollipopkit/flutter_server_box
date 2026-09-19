@@ -2931,4 +2931,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.';
+
+  @override
+  String get alerts => 'Alerts';
 }

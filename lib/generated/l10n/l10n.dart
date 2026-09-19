@@ -5055,6 +5055,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
   String get monitorNoRemoteAccess;
+
+  /// No description provided for @alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get alerts;
 }
 
 class _AppLocalizationsDelegate

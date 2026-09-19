@@ -2726,6 +2726,9 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+
+  @override
+  String get alerts => '告警';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
