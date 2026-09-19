@@ -37,6 +37,17 @@ final class SshCredential {
 
 Jump-server candidates and `ProxyCommand` are mutually exclusive. `Spix.validate()` rejects a server that configures both.
 
+### Legacy algorithms
+
+dartssh2 proposes a modern-only set. RSA host keys are still offered, but only under the RFC 8332 names (`rsa-sha2-256`, `rsa-sha2-512`); the SHA-1 `ssh-rsa` spelling it replaced, the SHA-1 key exchanges, the CBC ciphers and the SHA-1/MD5 MACs are not in the list at all. An old daemon that predates those names — a router's dropbear, a switch — advertises only `ssh-rsa`, and the handshake ends before authentication:
+
+```text
+SSHAuthAbortError(... reason: SSHInternalError(
+  Bad state: No matching host key algorithm))
+```
+
+`SshCredential.allowLegacyAlgorithms` is the per-server answer, turned on in the server editor under **SSH advanced**. The retired algorithms are appended *after* the modern ones, so a host that offers anything current still negotiates it and only one with nothing else falls through. It is off for every server unless you turn it on: KEXINIT is unauthenticated, so a list containing SHA-1 can be forced on a connection by an attacker even when the server would have offered something better.
+
 ### Creating the client
 
 `genClient(spi)` creates and returns an SSH client:

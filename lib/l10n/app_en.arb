@@ -1027,6 +1027,8 @@
   "optionalTip": "Nothing here is needed to connect. Open one and its fields take over the form.",
   "sshAdvanced": "SSH advanced",
   "sshAdvancedTip": "Fallback destination, ProxyCommand, jump server, file transport, remote path",
+  "sshLegacyAlgorithms": "Legacy algorithms",
+  "sshLegacyAlgorithmsTip": "For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.",
   "appearanceAndPlace": "Appearance & location",
   "appearanceAndPlaceTip": "Logo, coordinates",
   "statusCollection": "Status collection",

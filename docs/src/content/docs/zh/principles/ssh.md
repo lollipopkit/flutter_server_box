@@ -37,6 +37,17 @@ final class SshCredential {
 
 Jump server 链与 `ProxyCommand` 互斥。两者同时配置时，`Spix.validate()` 会拒绝该服务器配置。
 
+### 兼容旧版算法
+
+dartssh2 默认只提议现代算法。RSA 主机密钥仍然提供，但只有 RFC 8332 的两个名字（`rsa-sha2-256`、`rsa-sha2-512`）；它取代的 SHA-1 `ssh-rsa` 写法、SHA-1 密钥交换、CBC 加密和 SHA-1/MD5 MAC 都不在列表里。早于这些名字的旧服务端——路由器的 dropbear、交换机——只会广播 `ssh-rsa`，握手会在认证之前就结束：
+
+```text
+SSHAuthAbortError(... reason: SSHInternalError(
+  Bad state: No matching host key algorithm))
+```
+
+`SshCredential.allowLegacyAlgorithms` 是按服务器给出的答案，在服务器编辑页的 **SSH 高级** 里开启。被淘汰的算法追加在现代算法**之后**，所以还能提供现代算法的设备依旧协商到它，只有一无所有的设备才会落到这一段。它对每台服务器默认关闭：KEXINIT 未受认证，一份包含 SHA-1 的列表可能被攻击者强加到一条本可以协商更好的连接上。
+
 ### 创建 client
 
 `genClient(spi)` 会创建并返回 SSH client：
