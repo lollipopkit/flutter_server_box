@@ -270,6 +270,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // page is already the detail, and only which card is in it changes.
     if (was != null) return;
     _openCtrl.forward();
+    // The card is on its way to the top of the grid, and a viewport scrolled
+    // past it would have it grow off screen — so the two travel together.
+    if (_scrollController.hasClients && _scrollController.offset > 0) {
+      _scrollController.animateTo(
+        0,
+        duration: _openCtrl.duration ?? _kOpenDuration,
+        curve: Curves.fastEaseInToSlowEaseOut,
+      );
+    }
   }
 
   /// Puts the page back to the grid, chrome first.

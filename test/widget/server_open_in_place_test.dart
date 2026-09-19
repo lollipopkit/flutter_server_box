@@ -211,4 +211,33 @@ void main() {
     // simply the next one.
     expect(openId(tester), 'srv-1');
   });
+
+  testWidgets('the card is laid out at every width on the way', (tester) async {
+    // The movement is the card taking the page's width, not a page replacing
+    // it: at the halfway point it has to be wider than the column it left and
+    // narrower than the page it is going to. A cut would be neither.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    final column = tester.getRect(find.byType(ServerCard).first).width;
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 175));
+
+    final open = find.ancestor(
+      of: find.text('web'),
+      matching: find.byType(ServerCard),
+    );
+    final midway = tester.getRect(open).width;
+    expect(midway, greaterThan(column));
+    expect(midway, lessThan(1200));
+
+    // And by the end of the growth it has the page, less what the grid keeps
+    // clear at the edges and what a card's own margin takes. Measured before
+    // the readings take over from it, which is what the growth finishing is
+    // the cue for.
+    await tester.pump(const Duration(milliseconds: 160));
+    expect(tester.getRect(open).width, greaterThan(1100));
+  });
 }
