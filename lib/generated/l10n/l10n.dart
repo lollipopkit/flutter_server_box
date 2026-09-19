@@ -5079,6 +5079,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Grid'**
   String get densityGrid;
+
+  /// No description provided for @connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connect;
+
+  /// No description provided for @disconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnect;
 }
 
 class _AppLocalizationsDelegate

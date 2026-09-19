@@ -2961,4 +2961,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get densityGrid => 'Grid';
+
+  @override
+  String get connect => 'Connect';
+
+  @override
+  String get disconnect => 'Disconnect';
 }

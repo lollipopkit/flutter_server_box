@@ -2738,6 +2738,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get densityGrid => '方块';
+
+  @override
+  String get connect => '连接';
+
+  @override
+  String get disconnect => '断开';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

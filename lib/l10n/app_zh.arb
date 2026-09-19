@@ -855,5 +855,7 @@
   "alerts": "告警",
   "densityCards": "卡片",
   "densityRows": "列表",
-  "densityGrid": "方块"
+  "densityGrid": "方块",
+  "connect": "连接",
+  "disconnect": "断开"
 }

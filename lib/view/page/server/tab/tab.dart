@@ -22,6 +22,7 @@ import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
@@ -31,7 +32,6 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_globe.dart';
-import 'package:server_box/view/widget/server_power.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
 part 'landscape.dart';
@@ -1254,7 +1254,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         onLongPress: () => _onLongPressCard(srv),
         openness: openness,
         density: density,
-      ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
+      ).onSecondary((at) => _onLongPressCard(srv, at)),
     );
 
     return card;

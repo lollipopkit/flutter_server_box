@@ -1116,5 +1116,7 @@
   "alerts": "Alerts",
   "densityCards": "Cards",
   "densityRows": "Rows",
-  "densityGrid": "Grid"
+  "densityGrid": "Grid",
+  "connect": "Connect",
+  "disconnect": "Disconnect"
 }

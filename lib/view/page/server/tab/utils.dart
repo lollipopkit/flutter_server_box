@@ -37,54 +37,15 @@ extension _Actions on _ServerPageState {
 
   /// What can be done to one server without leaving the list.
   ///
-  /// The same set whatever the card looks like — a card, a row, a tile — and
-  /// in the same order, so changing how many servers are on screen is not
-  /// something to relearn. A machine that has never connected offers only what
-  /// is true of it: the editor, because changing the configuration is the only
-  /// thing that could help.
-  void _onLongPressCard(ServerState srv) {
-    if (srv.conn != ServerConn.finished) {
+  /// [at] is where a pointer was, and null a long press. A machine that has
+  /// never connected offers only what is true of it: the editor, because
+  /// changing the configuration is the only thing that could help.
+  void _onLongPressCard(ServerState srv, [Offset? at]) {
+    if (srv.conn == ServerConn.disconnected && srv.status.err == null) {
       ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
       return;
     }
-
-    showRowsSheet<void>(
-      context,
-      rows: (ctx) => [
-        ListTile(
-          dense: true,
-          title: Text(srv.spi.name, style: UIs.text13Grey),
-          subtitle: Text(srv.spi.displayAddr, style: UIs.text11Grey),
-        ),
-        const Divider(height: 1),
-        for (final func in ServerPower.funcs)
-          ListTile(
-            leading: Icon(ServerPower.icon(func)),
-            title: Text(ServerPower.label(func)),
-            onTap: () {
-              Navigator.of(ctx).pop();
-              ServerPower.confirmAndRun(context, ref, srv.spi, func);
-            },
-          ),
-        const Divider(height: 1),
-        ListTile(
-          leading: const Icon(Icons.edit),
-          title: Text(libL10n.edit),
-          onTap: () {
-            Navigator.of(ctx).pop();
-            ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.copy),
-          title: Text(libL10n.copy),
-          onTap: () {
-            Navigator.of(ctx).pop();
-            Pfs.copy(srv.spi.displayAddr);
-          },
-        ),
-      ],
-    );
+    showServerActions(context, ref, srv, at: at);
   }
 
   /// The three ways a server gets onto this device, in one place.

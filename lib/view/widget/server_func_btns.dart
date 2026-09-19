@@ -122,7 +122,7 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
     // what looks like a target did nothing when tapped.
     return InkWell(
       onTap: available
-          ? () => _onTapMoreBtns(e, context, ref)
+          ? () => runServerFunc(e, spi, context, ref)
           : () => Toast.show(l10n.funcUnavailableFmt(e.toStr)),
       borderRadius: BorderRadius.circular(10),
       child: Opacity(
@@ -188,12 +188,18 @@ List<ServerFuncEntry> serverFuncBtnsFor(
   return [...available, ...rest];
 }
 
-extension ServerFuncBtnsActions on ServerFuncBtns {
-  void _onTapMoreBtns(
-    ServerFuncBtn value,
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+/// Does what one entry of the function row does.
+///
+/// A function rather than a method on the row, because the row is not the only
+/// place a server's functions are reached from: the list offers the same set
+/// behind a long press, and two copies of "what Terminal does" is how the two
+/// come to do different things.
+void runServerFunc(
+  ServerFuncBtn value,
+  Spi spi,
+  BuildContext context,
+  WidgetRef ref,
+) async {
     switch (value) {
       case ServerFuncBtn.files:
         // Only the SFTP backend needs a connection opened first. A server
@@ -333,7 +339,6 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         if (!context.mounted) return;
         RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi));
         break;
-    }
   }
 }
 
