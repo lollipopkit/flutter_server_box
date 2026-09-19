@@ -2962,31 +2962,31 @@ class AppLocalizationsDe extends AppLocalizations {
       'Dieser Agent ist nur für die Überwachung eingerichtet. Hier können Sie kein Terminal öffnen, keine Befehle ausführen und keine Dateien durchsuchen. Aktivieren Sie diese Funktionen unter [remote_access] in der config.toml des Agenten.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Warnungen';
 
   @override
   String get online => 'online';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Karten';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Zeilen';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Raster';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Verbinden';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Trennen';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Sucht nach Namen und Adressen – den beiden Angaben, nach denen der Editor zuerst fragt.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Fülle eines aus, scanne einen QR-Code oder importiere eine Datei, die jemand geteilt hat.';
 }

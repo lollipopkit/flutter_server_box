@@ -24,6 +24,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
@@ -391,6 +392,37 @@ void main() {
     await settle(tester);
     expect(find.byType(ServerDetailPage), findsOneWidget);
     expect(openId(tester), 'srv-1');
+  });
+
+  testWidgets('the strip over the list turns over rather than crossing', (
+    tester,
+  ) async {
+    // What the list adds up to and the rest of the list as pills are the two
+    // faces of one slot: one height, and never both on screen at once.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    final under = tester.getRect(find.byType(AnimatedMasonry)).top;
+    expect(find.byType(ServerOverview), findsOneWidget);
+    expect(find.byKey(const ValueKey('switcher')), findsNothing);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(
+        find.byType(ServerOverview).evaluate().length +
+            find.byKey(const ValueKey('switcher')).evaluate().length,
+        1,
+        reason: 'one face at a time, turned rather than faded past',
+      );
+    }
+
+    await settle(tester);
+    expect(find.byType(ServerOverview), findsNothing);
+    expect(find.byKey(const ValueKey('switcher')), findsOneWidget);
+    // The same slot at the same height, so what is under it has not moved.
+    expect(tester.getRect(find.byType(ServerDetailPage)).top, under);
   });
 
   testWidgets('only the card that is opening is rebuilt while it opens', (

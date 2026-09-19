@@ -97,7 +97,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiNoResponse => '无回复内容';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => '远程桌面';
 
   @override
   String get askAiAgentWelcome => '想在这台服务器上做什么？';
@@ -2731,7 +2731,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get alerts => '告警';
 
   @override
-  String get online => 'online';
+  String get online => '在线';
 
   @override
   String get densityCards => '卡片';
@@ -5385,7 +5385,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return '每月 $day 日的 $time';
   }
 
   @override
@@ -5496,4 +5496,31 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
+
+  @override
+  String get alerts => '警示';
+
+  @override
+  String get online => '線上';
+
+  @override
+  String get densityCards => '卡片';
+
+  @override
+  String get densityRows => '列';
+
+  @override
+  String get densityGrid => '網格';
+
+  @override
+  String get connect => '連線';
+
+  @override
+  String get disconnect => '中斷連線';
+
+  @override
+  String get searchServerTip => '搜尋名稱和位址——編輯頁最先詢問的兩項資料。';
+
+  @override
+  String get addServerTip => '填寫其中一項、掃描 QR code，或匯入他人分享的檔案。';
 }

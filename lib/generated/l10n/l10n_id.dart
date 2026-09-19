@@ -2934,31 +2934,31 @@ class AppLocalizationsId extends AppLocalizations {
       'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Peringatan';
 
   @override
   String get online => 'online';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Kartu';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Baris';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Kisi';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Hubungkan';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Putuskan';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Mencari nama dan alamat — dua hal yang pertama kali diminta editor.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang.';
 }

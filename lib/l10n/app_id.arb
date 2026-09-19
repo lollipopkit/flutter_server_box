@@ -844,5 +844,14 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "Peringatan",
+  "online": "online",
+  "densityCards": "Kartu",
+  "densityRows": "Baris",
+  "densityGrid": "Kisi",
+  "connect": "Hubungkan",
+  "disconnect": "Putuskan",
+  "searchServerTip": "Mencari nama dan alamat — dua hal yang pertama kali diminta editor.",
+  "addServerTip": "Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang."
 }

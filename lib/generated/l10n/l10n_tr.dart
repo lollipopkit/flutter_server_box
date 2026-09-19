@@ -2929,31 +2929,31 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent\'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Uyarılar';
 
   @override
-  String get online => 'online';
+  String get online => 'çevrimiçi';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Kartlar';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Satırlar';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Izgara';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Bağlan';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Bağlantıyı kes';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Adları ve adresleri arar — düzenleyicinin önce sorduğu iki bilgiyi.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Birini doldurun, QR kodu tarayın veya birinin paylaştığı dosyayı içe aktarın.';
 }

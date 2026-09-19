@@ -2950,31 +2950,31 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este agente está configurado apenas para monitorização. Não pode abrir um terminal, executar comandos ou navegar pelos ficheiros a partir daqui. Para ativar estas funções, edite [remote_access] no config.toml do agente.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Alertas';
 
   @override
   String get online => 'online';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Cartões';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Linhas';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Grelha';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Ligar';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Desligar';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Pesquisa nomes e endereços — os dois dados que o editor pede primeiro.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Preencha um, leia um código QR ou importe um ficheiro partilhado por alguém.';
 }

@@ -59,8 +59,15 @@ class ServerPage extends ConsumerStatefulWidget {
 /// short enough that opening a server is not something to wait for.
 const _kOpenDuration = Duration(milliseconds: 350);
 
-/// The row of machines that appears above an open one.
-const _kSwitcherHeight = 34.0;
+/// The strip between the bar and what is under it.
+///
+/// One height for both of the things that go in it — see [_ServerPageState
+/// ._buildStrip] — and the design's for the one that needs the room.
+const _kStripHeight = 46.0;
+
+/// One machine's pill in that strip, which is the design's height for it and
+/// not the strip's.
+const _kPillHeight = 28.0;
 
 /// How long the detail's own chrome takes to arrive or go.
 ///
@@ -1361,11 +1368,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
           },
           expandedKey: hero ? ValueKey(heroId) : null,
           expansion: _open.value,
-          // Over the cards, and only while they are cards: with one of them
-          // open the totals would be a summary of a list that is not on
-          // screen. Above rather than below, because what it answers is
-          // whether to read the list at all.
-          header: open ? null : ServerOverview(ids: filtered),
           children: [
             // Every one of them, the whole way through. The rest used to be
             // taken out of the list while one was open, which made them leave
@@ -1406,13 +1408,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // and not painted until the card hands them over, since the card is
     // already drawing exactly those widgets in exactly those boxes.
     //
-    // The strip of other machines is above both and belongs to neither: it is
-    // what the list becomes while one of its cards is open, so it stays
-    // whichever of the two is on screen.
+    // The strip above both belongs to neither: it is what the list becomes
+    // while one of its cards is open, so it stays whichever of the two is on
+    // screen.
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSwitcher(filtered, openId),
+        _buildStrip(filtered, openId),
         Expanded(
           child: Stack(
             fit: StackFit.expand,
@@ -1566,52 +1568,80 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return false;
   }
 
-  /// Which machine is on screen, and the rest of them.
+  /// The strip between the bar and what is under it.
   ///
-  /// Only while one is open, and above the card rather than in the bar: it is
-  /// a row of the list that has made way, so it belongs where the list was.
-  /// Closed it has no height at all — the list itself is the switcher then.
-  Widget _buildSwitcher(List<String> filtered, String? openId) {
-    final at = openId == null ? -1 : filtered.indexOf(openId);
+  /// Two things in one place, and one question: which machine. With nothing
+  /// open it is what the whole list adds up to; with a machine open it is the
+  /// rest of the list, as pills. So they are one slot at one height, and going
+  /// from one to the other turns the slot over — each face through a quarter
+  /// turn, so the strip is edge-on halfway and there is nothing to cross
+  /// there. Faded past each other instead, they read as two unrelated rows
+  /// swapping places.
+  ///
+  /// Pinned rather than scrolling with the list, which the overview used to
+  /// do: it shares a slot with the switcher now, and the switcher is over the
+  /// page rather than in it.
+  Widget _buildStrip(List<String> filtered, String? openId) {
+    // Both faces built once, out here: the builder below runs on every frame
+    // of the movement and returns one of these two, which Flutter skips
+    // rebuilding because it is the widget it already has.
+    final front = RepaintBoundary(
+      child: Padding(
+        // Lined up with the cards: the grid's own inset plus a card's margin.
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: ServerOverview(ids: filtered, open: openId != null),
+      ),
+    );
+    final back = RepaintBoundary(child: _buildSwitcher(filtered, openId));
 
     return AnimatedBuilder(
       animation: _open,
-      // Built once and handed through: the strip does not change while it is
-      // arriving, and rebuilding a pill per machine on every frame of the
-      // movement is the list being drawn again sixty times for a height and
-      // an opacity. The boundary is what lets those two be layer work rather
-      // than a repaint of the row.
-      child: RepaintBoundary(
-        child: SizedBox(
-          height: _kSwitcherHeight,
-          child: EdgeFadeScroll(
-            builder: (_, controller) => ListView(
-              controller: controller,
-              scrollDirection: Axis.horizontal,
-              // Lined up with the page under it rather than with the window:
-              // this strip is a row of the list that has made way, so its
-              // first pill starts where the cards start. The pills carry two
-              // of their own.
-              padding: const EdgeInsets.symmetric(horizontal: 11),
-              children: [
-                for (final (i, id) in filtered.indexed)
-                  _buildSwitcherPill(id, current: i == at),
-              ],
-            ),
+      builder: (_, _) {
+        final t = _open.value;
+        if (t <= 0) return front;
+        if (t >= 1) return back;
+        final facing = t < 0.5;
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            // Enough for the turn to read as one rather than as a squash, and
+            // not so much that the near edge swings out past the bar above.
+            ..setEntry(3, 2, 0.0015)
+            ..rotateX(facing ? -t * math.pi : (1 - t) * math.pi),
+          child: facing ? front : back,
+        );
+      },
+    );
+  }
+
+  /// Which machine is on screen, and the rest of them.
+  ///
+  /// A row of the list that has made way, so it belongs where the list was.
+  Widget _buildSwitcher(List<String> filtered, String? openId) {
+    final at = openId == null ? -1 : filtered.indexOf(openId);
+
+    return Padding(
+      // The same gap under it that the overview leaves, so what is below
+      // starts in the same place whichever face is up.
+      padding: const EdgeInsets.only(bottom: 9),
+      child: SizedBox(
+        key: const ValueKey('switcher'),
+        height: _kStripHeight,
+        child: EdgeFadeScroll(
+          builder: (_, controller) => ListView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            // Lined up with the cards under it rather than with the window:
+            // this is a row of the list, so its first pill starts where the
+            // cards start. The pills carry two of their own.
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            children: [
+              for (final (i, id) in filtered.indexed)
+                _buildSwitcherPill(id, current: i == at),
+            ],
           ),
         ),
       ),
-      builder: (_, child) {
-        final t = _open.value;
-        if (t <= 0) return const SizedBox(width: double.infinity);
-        return ClipRect(
-          child: Align(
-            alignment: Alignment.topLeft,
-            heightFactor: t,
-            child: Opacity(opacity: t, child: child),
-          ),
-        );
-      },
     );
   }
 
@@ -1621,8 +1651,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
       builder: (_, ref, _) {
         final srv = ref.watch(serverProvider(id));
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
-          child: Material(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Center(
+            // Its own height rather than the strip's: the strip is as tall as
+            // the overview it shares a slot with, and a pill stretched to that
+            // is a button the size of a card.
+            child: SizedBox(
+              height: _kPillHeight,
+              child: Material(
             color: current
                 ? scheme.secondaryContainer
                 : scheme.surfaceContainerHighest,
@@ -1659,6 +1695,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
                     ),
                   ],
                 ),
+              ),
+            ),
               ),
             ),
           ),

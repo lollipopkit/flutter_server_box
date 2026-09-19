@@ -2819,31 +2819,29 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => '알림';
 
   @override
-  String get online => 'online';
+  String get online => '온라인';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => '카드';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => '행';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => '그리드';
 
   @override
-  String get connect => 'Connect';
+  String get connect => '연결';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => '연결 해제';
 
   @override
-  String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+  String get searchServerTip => '이름과 주소를 검색합니다. 편집 화면에서 가장 먼저 묻는 두 항목입니다.';
 
   @override
-  String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+  String get addServerTip => '하나를 입력하거나 QR 코드를 스캔하거나 다른 사람이 공유한 파일을 가져오세요.';
 }

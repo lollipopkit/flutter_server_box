@@ -2951,31 +2951,31 @@ class AppLocalizationsUk extends AppLocalizations {
       'Цей агент налаштовано лише для моніторингу. Тут не можна відкрити термінал, виконувати команди чи переглядати файли. Щоб увімкнути ці функції, відредагуйте розділ [remote_access] у config.toml агента.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Сповіщення';
 
   @override
-  String get online => 'online';
+  String get online => 'онлайн';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Картки';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Рядки';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Сітка';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Підключити';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Відключити';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Шукає назви й адреси — два поля, які редактор запитує першими.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Заповніть одне поле, відскануйте QR-код або імпортуйте файл, яким хтось поділився.';
 }

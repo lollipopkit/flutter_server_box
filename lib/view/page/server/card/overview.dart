@@ -38,12 +38,20 @@ const _kBarHeight = 4.0;
 /// The rest of what happened is not gone: the count at the right end opens the
 /// strip into the list it summarises.
 class ServerOverview extends ConsumerStatefulWidget {
-  const ServerOverview({super.key, required this.ids});
+  const ServerOverview({super.key, required this.ids, this.open = false});
 
   /// The servers the list is showing, which is what these are totals *of*: a
   /// tag that narrows the list narrows the summary with it, or the two would
   /// be answering about different sets of machines.
   final List<String> ids;
+
+  /// Whether one of those machines is open, which is what this strip turns
+  /// over to make room for.
+  ///
+  /// It closes when that happens: the slot is one height on both of its faces,
+  /// and a face that is three rows taller than the other turns into a shape
+  /// that is not there.
+  final bool open;
 
   @override
   ConsumerState<ServerOverview> createState() => _ServerOverviewState();
@@ -51,6 +59,12 @@ class ServerOverview extends ConsumerStatefulWidget {
 
 class _ServerOverviewState extends ConsumerState<ServerOverview> {
   bool _expanded = false;
+
+  @override
+  void didUpdateWidget(ServerOverview old) {
+    super.didUpdateWidget(old);
+    if (widget.open && _expanded) _expanded = false;
+  }
 
   @override
   Widget build(BuildContext context) {

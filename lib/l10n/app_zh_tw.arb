@@ -851,5 +851,14 @@
   "cronDailyAtFmt": "Every day at {time}",
   "cronWeekdaysAtFmt": "On weekdays at {time}",
   "cronWeekdayAtFmt": "Every {day} at {time}",
-  "cronMonthlyAtFmt": "Day {day} of every month at {time}"
+  "cronMonthlyAtFmt": "每月 {day} 日的 {time}",
+  "alerts": "警示",
+  "online": "線上",
+  "densityCards": "卡片",
+  "densityRows": "列",
+  "densityGrid": "網格",
+  "connect": "連線",
+  "disconnect": "中斷連線",
+  "searchServerTip": "搜尋名稱和位址——編輯頁最先詢問的兩項資料。",
+  "addServerTip": "填寫其中一項、掃描 QR code，或匯入他人分享的檔案。"
 }

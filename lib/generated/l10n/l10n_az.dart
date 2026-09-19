@@ -2947,31 +2947,31 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Xəbərdarlıqlar';
 
   @override
-  String get online => 'online';
+  String get online => 'onlayn';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Kartlar';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Sətirlər';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Tor';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Qoşul';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Bağlantını kəs';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Adları və ünvanları axtarır — redaktorun əvvəlcə soruşduğu iki məlumatı.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin.';
 }

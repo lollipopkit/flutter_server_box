@@ -2811,31 +2811,29 @@ class AppLocalizationsJa extends AppLocalizations {
       'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'アラート';
 
   @override
-  String get online => 'online';
+  String get online => 'オンライン';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'カード';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => '行';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'グリッド';
 
   @override
-  String get connect => 'Connect';
+  String get connect => '接続';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => '切断';
 
   @override
-  String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+  String get searchServerTip => '名前とアドレスを検索します。編集画面で最初に尋ねられる2項目です。';
 
   @override
-  String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+  String get addServerTip => '入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。';
 }

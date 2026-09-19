@@ -844,5 +844,14 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "Alertes",
+  "online": "en ligne",
+  "densityCards": "Cartes",
+  "densityRows": "Lignes",
+  "densityGrid": "Grille",
+  "connect": "Connecter",
+  "disconnect": "Déconnecter",
+  "searchServerTip": "Recherche les noms et les adresses — les deux informations demandées en premier par l’éditeur.",
+  "addServerTip": "Remplissez-en un, scannez un QR code ou importez un fichier partagé par quelqu’un."
 }

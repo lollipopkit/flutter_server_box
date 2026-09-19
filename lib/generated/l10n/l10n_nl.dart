@@ -2954,31 +2954,31 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.';
 
   @override
-  String get alerts => 'Alerts';
+  String get alerts => 'Waarschuwingen';
 
   @override
   String get online => 'online';
 
   @override
-  String get densityCards => 'Cards';
+  String get densityCards => 'Kaarten';
 
   @override
-  String get densityRows => 'Rows';
+  String get densityRows => 'Rijen';
 
   @override
-  String get densityGrid => 'Grid';
+  String get densityGrid => 'Raster';
 
   @override
-  String get connect => 'Connect';
+  String get connect => 'Verbinden';
 
   @override
-  String get disconnect => 'Disconnect';
+  String get disconnect => 'Verbinding verbreken';
 
   @override
   String get searchServerTip =>
-      'Searches names and addresses — the two the editor asks for first.';
+      'Zoekt in namen en adressen — de twee dingen waar de editor eerst om vraagt.';
 
   @override
   String get addServerTip =>
-      'Fill one in, scan a QR code, or import a file somebody shared.';
+      'Vul er een in, scan een QR-code of importeer een bestand dat iemand heeft gedeeld.';
 }

@@ -1046,5 +1046,14 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "Xəbərdarlıqlar",
+  "online": "onlayn",
+  "densityCards": "Kartlar",
+  "densityRows": "Sətirlər",
+  "densityGrid": "Tor",
+  "connect": "Qoşul",
+  "disconnect": "Bağlantını kəs",
+  "searchServerTip": "Adları və ünvanları axtarır — redaktorun əvvəlcə soruşduğu iki məlumatı.",
+  "addServerTip": "Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin."
 }
