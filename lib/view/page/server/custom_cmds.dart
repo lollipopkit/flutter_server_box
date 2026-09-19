@@ -61,7 +61,6 @@ final class _CustomCmdsPageState extends ConsumerState<CustomCmdsPage> {
       },
       child: Scaffold(
         appBar: CustomAppBar(
-          centerTitle: true,
           title: TwoLineText(up: l10n.customCmd, down: _spi.name),
           actions: [
             if (_cmds != null)

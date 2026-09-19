@@ -2692,10 +2692,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las credenciales y las métricas cruzan la red sin cifrar. Limítalo a una LAN o a una dirección de Tailscale, o pon el agente detrás de TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Las opciones de certificado pertenecen a https:// y no se muestran aquí.';
-
-  @override
   String get behaviour => 'Comportamiento';
 
   @override
@@ -2724,6 +2720,43 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Qué comandos se ejecutan, comandos propios, qué dispositivo se lee';
+
+  @override
+  String get tagAllTags => 'Todas las etiquetas';
+
+  @override
+  String get tagMatching => 'Coincidencias';
+
+  @override
+  String get tagNewHint => 'Nueva etiqueta';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Crear #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'en este servidor';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servidores';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count en este servidor';
+  }
+
+  @override
+  String get tagMatchesTyped => 'coincide con lo que escribiste';
+
+  @override
+  String get tagEditorTip =>
+      'Lo que escribes filtra la lista; el botón crea la etiqueta y la pone en este servidor en un solo paso. El lápiz la renombra en todos los servidores que la llevan. Una etiqueta que ningún servidor lleva desaparece al guardar.';
+
+  @override
+  String get tagRenamesOnSave => 'Los cambios de nombre se aplican al guardar';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

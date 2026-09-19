@@ -288,7 +288,7 @@ extension on _MonitorSettingsViewState {
         ListTile(
           leading: const Icon(Icons.pause_circle_outline),
           title: TipText(l10n.idlePause, l10n.idlePauseTip),
-          trailing: Switch(
+          trailing: SwitchX(
             value: _idlePause,
             onChanged: (value) => setState(() {
               _idlePause = value;
@@ -401,7 +401,7 @@ extension on _MonitorSettingsViewState {
         ListTile(
           leading: const Icon(Icons.auto_delete_outlined),
           title: TipText(l10n.dataRetention, l10n.dataRetentionTip),
-          trailing: Switch(
+          trailing: SwitchX(
             value: _retentionEnabled,
             onChanged: (value) => setState(() {
               _retentionEnabled = value;

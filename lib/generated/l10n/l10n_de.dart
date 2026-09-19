@@ -2682,10 +2682,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Zugangsdaten und Messwerte gehen unverschlüsselt über das Netz. Beschränken Sie das auf ein LAN oder eine Tailscale-Adresse, oder stellen Sie den Agenten hinter TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Zertifikatsoptionen gehören zu https:// und werden hier nicht angezeigt.';
-
-  @override
   String get behaviour => 'Verhalten';
 
   @override
@@ -2714,6 +2710,43 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Welche Befehle laufen, eigene Befehle, welches Gerät gelesen wird';
+
+  @override
+  String get tagAllTags => 'Alle Tags';
+
+  @override
+  String get tagMatching => 'Treffer';
+
+  @override
+  String get tagNewHint => 'Neuer Tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag erstellen';
+  }
+
+  @override
+  String get tagOnThisServer => 'auf diesem Server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count Server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count auf diesem Server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'passt zur Eingabe';
+
+  @override
+  String get tagEditorTip =>
+      'Die Eingabe filtert die Liste; die Schaltfläche erstellt den Tag und setzt ihn in einem Schritt auf diesen Server. Das Stiftsymbol benennt ihn auf jedem Server um, der ihn trägt. Ein Tag, den kein Server trägt, verschwindet beim Speichern.';
+
+  @override
+  String get tagRenamesOnSave => 'Umbenennungen gelten beim Speichern';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

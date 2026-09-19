@@ -2671,10 +2671,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Credenciais e métricas atravessam a rede sem criptografia. Mantenha isso em uma LAN ou em um endereço Tailscale, ou coloque o agente atrás de TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'As opções de certificado pertencem a https:// e não aparecem aqui.';
-
-  @override
   String get behaviour => 'Comportamento';
 
   @override
@@ -2703,6 +2699,43 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Quais comandos rodam, comandos próprios, qual dispositivo ler';
+
+  @override
+  String get tagAllTags => 'Todas as tags';
+
+  @override
+  String get tagMatching => 'Correspondências';
+
+  @override
+  String get tagNewHint => 'Nova tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Criar #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'neste servidor';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servidores';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count neste servidor';
+  }
+
+  @override
+  String get tagMatchesTyped => 'corresponde ao que você digitou';
+
+  @override
+  String get tagEditorTip =>
+      'Digitar filtra a lista; o botão cria a tag e a coloca neste servidor em um único passo. O lápis a renomeia em todos os servidores que a carregam. Uma tag que nenhum servidor carrega desaparece ao salvar.';
+
+  @override
+  String get tagRenamesOnSave => 'As renomeações são aplicadas ao salvar';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

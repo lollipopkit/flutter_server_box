@@ -107,7 +107,6 @@ final class _ScheduledTasksPageState extends ConsumerState<ScheduledTasksPage> {
   }) {
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(up: l10n.scheduledTasks, down: widget.args.spi.name),
         actions: [
           if (catalog != null)
@@ -722,9 +721,8 @@ extension on _ScheduledTasksPageState {
   }
 
   Widget _buildSwitch(CronJob job) {
-    return Switch(
+    return SwitchX(
       value: job.enabled,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       onChanged: _busy ? null : (enabled) => _setTaskEnabled(job, enabled),
     );
   }
@@ -1218,9 +1216,8 @@ final class _TaskEditorState extends State<_TaskEditor> {
         const SizedBox(height: 13),
         Row(
           children: [
-            Switch(
+            SwitchX(
               value: _enabled,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               onChanged: (value) => setState(() => _enabled = value),
             ),
             const SizedBox(width: 13),

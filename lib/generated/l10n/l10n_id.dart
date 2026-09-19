@@ -2654,10 +2654,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Kredensial dan metrik melintasi jaringan tanpa enkripsi. Batasi pada LAN atau alamat Tailscale, atau tempatkan agen di belakang TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Opsi sertifikat milik https:// dan tidak ditampilkan di sini.';
-
-  @override
   String get behaviour => 'Perilaku';
 
   @override
@@ -2686,6 +2682,43 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Perintah mana yang berjalan, perintah kustom, perangkat mana yang dibaca';
+
+  @override
+  String get tagAllTags => 'Semua tag';
+
+  @override
+  String get tagMatching => 'Cocok';
+
+  @override
+  String get tagNewHint => 'Tag baru';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Buat #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'di server ini';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count di server ini';
+  }
+
+  @override
+  String get tagMatchesTyped => 'cocok dengan yang Anda ketik';
+
+  @override
+  String get tagEditorTip =>
+      'Mengetik akan menyaring daftar; tombolnya membuat tag dan langsung memasangnya di server ini. Pensil mengganti namanya di setiap server yang memakainya. Tag yang tidak dipakai server mana pun akan hilang saat disimpan.';
+
+  @override
+  String get tagRenamesOnSave => 'Penggantian nama diterapkan saat menyimpan';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

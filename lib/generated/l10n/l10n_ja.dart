@@ -2533,9 +2533,6 @@ class AppLocalizationsJa extends AppLocalizations {
       '認証情報と計測値が暗号化されずにネットワークを通ります。LAN か Tailscale のアドレスに限定するか、エージェントを TLS の背後に置いてください。';
 
   @override
-  String get certOptionsHttpsOnly => '証明書の設定は https:// 用のため、ここには表示されません。';
-
-  @override
   String get behaviour => '動作';
 
   @override
@@ -2561,6 +2558,43 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get statusCollectionTip => '実行するコマンド、カスタムコマンド、読み取るデバイス';
+
+  @override
+  String get tagAllTags => 'すべてのタグ';
+
+  @override
+  String get tagMatching => '一致';
+
+  @override
+  String get tagNewHint => '新しいタグ';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag を作成';
+  }
+
+  @override
+  String get tagOnThisServer => 'このサーバー';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count 台のサーバー';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return 'このサーバーに $count 個';
+  }
+
+  @override
+  String get tagMatchesTyped => '入力に一致';
+
+  @override
+  String get tagEditorTip =>
+      '入力するとリストが絞り込まれます。ボタンはタグを作成し、そのままこのサーバーに付けます。鉛筆は名前の変更で、そのタグを使うすべてのサーバーに及びます。どのサーバーも使わなくなったタグは保存時に消えます。';
+
+  @override
+  String get tagRenamesOnSave => '名前の変更は保存時に反映されます';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

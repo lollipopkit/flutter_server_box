@@ -2653,10 +2653,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Certificate options belong to https:// and are not shown here.';
-
-  @override
   String get behaviour => 'Behaviour';
 
   @override
@@ -2685,6 +2681,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Which commands run, custom commands, which device to read';
+
+  @override
+  String get tagAllTags => 'All tags';
+
+  @override
+  String get tagMatching => 'Matching';
+
+  @override
+  String get tagNewHint => 'New tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Create #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'on this server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servers';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count on this server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'matches what you typed';
+
+  @override
+  String get tagEditorTip =>
+      'Typing filters the list; the button creates the tag and puts it on this server in one step. Renaming from the pencil renames it on every server that carries it. A tag no server carries disappears on save.';
+
+  @override
+  String get tagRenamesOnSave => 'Renames apply on save';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

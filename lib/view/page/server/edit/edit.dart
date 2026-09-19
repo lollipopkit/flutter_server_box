@@ -160,6 +160,11 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   // TODO(migration): delete with [ServerCustom.cmds].
   final _unmigratedCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
+
+  /// Tag renames made in the tag editor, from the old name to the new one,
+  /// carried out across every server by `_applyTagRenames` when this page is
+  /// saved. See `_onRenameTag`.
+  final _pendingTagRenames = <String, String>{};
   final _systemType = ValueNotifier<SystemType?>(null);
   final _disabledCmdTypes = <String>{}.vn;
   final _hasStoredSudoPassword = ValueNotifier<bool?>(null);
@@ -281,8 +286,11 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     // Read here rather than inside the group below: that one is rebuilt by a
     // notifier as well as by this method, and a `ref.watch` reached on the
     // notifier's path is one made outside a build.
-    final tagTile =
-        TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx;
+    final tagTile = TagTile(
+      tags: _tags,
+      allTags: ref.watch(serversProvider).tags,
+      onEdit: _onEditTags,
+    ).cardx;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(13, 7, 13, 34),

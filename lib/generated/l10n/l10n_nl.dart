@@ -2674,10 +2674,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Inloggegevens en metingen gaan onversleuteld over het netwerk. Houd het bij een LAN of een Tailscale-adres, of zet de agent achter TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Certificaatopties horen bij https:// en worden hier niet getoond.';
-
-  @override
   String get behaviour => 'Gedrag';
 
   @override
@@ -2706,6 +2702,43 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Welke opdrachten draaien, eigen opdrachten, welk apparaat wordt gelezen';
+
+  @override
+  String get tagAllTags => 'Alle tags';
+
+  @override
+  String get tagMatching => 'Overeenkomsten';
+
+  @override
+  String get tagNewHint => 'Nieuwe tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag maken';
+  }
+
+  @override
+  String get tagOnThisServer => 'op deze server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servers';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count op deze server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'komt overeen met je invoer';
+
+  @override
+  String get tagEditorTip =>
+      'Typen filtert de lijst; de knop maakt de tag en zet hem in één stap op deze server. Het potlood hernoemt hem op elke server die hem draagt. Een tag die geen enkele server draagt, verdwijnt bij het opslaan.';
+
+  @override
+  String get tagRenamesOnSave => 'Hernoemingen worden bij opslaan toegepast';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

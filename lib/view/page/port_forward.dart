@@ -70,7 +70,6 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(
           up: l10n.portForwardBetaTitle,
           down: widget.args.spi.name,
@@ -142,7 +141,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Switch(
+          SwitchX(
             value: isActive,
             onChanged: (_) => _notifier.toggleForward(config.id),
           ),

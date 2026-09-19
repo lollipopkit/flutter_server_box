@@ -2676,10 +2676,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Учётные данные и метрики идут по сети без шифрования. Ограничьтесь локальной сетью или адресом Tailscale либо поставьте агента за TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Настройки сертификата относятся к https:// и здесь не показаны.';
-
-  @override
   String get behaviour => 'Поведение';
 
   @override
@@ -2708,6 +2704,43 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Какие команды выполняются, свои команды, какое устройство читать';
+
+  @override
+  String get tagAllTags => 'Все теги';
+
+  @override
+  String get tagMatching => 'Совпадения';
+
+  @override
+  String get tagNewHint => 'Новый тег';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Создать #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'на этом сервере';
+
+  @override
+  String tagServersFmt(Object count) {
+    return 'серверов: $count';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count на этом сервере';
+  }
+
+  @override
+  String get tagMatchesTyped => 'совпадает с введённым';
+
+  @override
+  String get tagEditorTip =>
+      'Ввод фильтрует список; кнопка создаёт тег и сразу ставит его на этот сервер. Карандаш переименовывает его на всех серверах, где он есть. Тег, которого нет ни на одном сервере, исчезает при сохранении.';
+
+  @override
+  String get tagRenamesOnSave => 'Переименования применяются при сохранении';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

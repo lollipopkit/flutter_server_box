@@ -98,7 +98,6 @@ final class _ServiceDetailViewState extends ConsumerState<ServiceDetailView> {
     if (_pane) return body;
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(
           up: unit?.fullName ?? widget.unitKey,
           down: [widget.spi.name, ?manager?.displayName].join(' · '),

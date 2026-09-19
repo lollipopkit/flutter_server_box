@@ -2457,9 +2457,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把代理放到 TLS 后面。';
 
   @override
-  String get certOptionsHttpsOnly => '证书选项属于 https://，这里不显示。';
-
-  @override
   String get behaviour => '行为';
 
   @override
@@ -2485,6 +2482,43 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get statusCollectionTip => '运行哪些命令、自定义命令、读取哪个设备';
+
+  @override
+  String get tagAllTags => '全部标签';
+
+  @override
+  String get tagMatching => '匹配';
+
+  @override
+  String get tagNewHint => '新标签';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '新建 #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => '在这台上';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count 台服务器';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '这台上有 $count 个';
+  }
+
+  @override
+  String get tagMatchesTyped => '与输入匹配';
+
+  @override
+  String get tagEditorTip =>
+      '输入会过滤列表；按钮新建标签并直接加到这台服务器上。铅笔是重命名，会改掉所有用到它的服务器。没有服务器再用的标签会在保存时消失。';
+
+  @override
+  String get tagRenamesOnSave => '重命名在保存时生效';
 
   @override
   String get scheduledTasks => '计划任务';
@@ -5207,9 +5241,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把代理放到 TLS 後面。';
 
   @override
-  String get certOptionsHttpsOnly => '憑證選項屬於 https://，這裡不顯示。';
-
-  @override
   String get behaviour => '行為';
 
   @override
@@ -5235,6 +5266,43 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get statusCollectionTip => '執行哪些命令、自訂命令、讀取哪個裝置';
+
+  @override
+  String get tagAllTags => '全部標籤';
+
+  @override
+  String get tagMatching => '符合';
+
+  @override
+  String get tagNewHint => '新標籤';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '新增 #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => '在這台上';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count 台伺服器';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '這台上有 $count 個';
+  }
+
+  @override
+  String get tagMatchesTyped => '與輸入相符';
+
+  @override
+  String get tagEditorTip =>
+      '輸入會過濾清單；按鈕會新增標籤並直接加到這台伺服器上。鉛筆是重新命名，會改掉所有用到它的伺服器。沒有伺服器再使用的標籤會在儲存時消失。';
+
+  @override
+  String get tagRenamesOnSave => '重新命名在儲存時生效';
 
   @override
   String get scheduledTasks => '排程工作';

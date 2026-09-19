@@ -2541,9 +2541,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, 에이전트를 TLS 뒤에 두세요.';
 
   @override
-  String get certOptionsHttpsOnly => '인증서 옵션은 https:// 에 해당하므로 여기에는 표시되지 않습니다.';
-
-  @override
   String get behaviour => '동작';
 
   @override
@@ -2569,6 +2566,43 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get statusCollectionTip => '실행할 명령, 사용자 명령, 읽을 장치';
+
+  @override
+  String get tagAllTags => '모든 태그';
+
+  @override
+  String get tagMatching => '일치';
+
+  @override
+  String get tagNewHint => '새 태그';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag 만들기';
+  }
+
+  @override
+  String get tagOnThisServer => '이 서버';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '서버 $count대';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '이 서버에 $count개';
+  }
+
+  @override
+  String get tagMatchesTyped => '입력과 일치';
+
+  @override
+  String get tagEditorTip =>
+      '입력하면 목록이 좁혀집니다. 버튼은 태그를 만들어 이 서버에 바로 추가합니다. 연필은 이름 변경이며, 그 태그를 쓰는 모든 서버에 적용됩니다. 어느 서버도 쓰지 않는 태그는 저장할 때 사라집니다.';
+
+  @override
+  String get tagRenamesOnSave => '이름 변경은 저장할 때 적용됩니다';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

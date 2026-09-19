@@ -2670,10 +2670,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Облікові дані й показники йдуть мережею без шифрування. Обмежтеся локальною мережею чи адресою Tailscale або поставте агента за TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Налаштування сертифіката стосуються https:// і тут не показані.';
-
-  @override
   String get behaviour => 'Поведінка';
 
   @override
@@ -2702,6 +2698,44 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Які команди виконуються, власні команди, який пристрій читати';
+
+  @override
+  String get tagAllTags => 'Усі теги';
+
+  @override
+  String get tagMatching => 'Збіги';
+
+  @override
+  String get tagNewHint => 'Новий тег';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Створити #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'на цьому сервері';
+
+  @override
+  String tagServersFmt(Object count) {
+    return 'серверів: $count';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count на цьому сервері';
+  }
+
+  @override
+  String get tagMatchesTyped => 'збігається з введеним';
+
+  @override
+  String get tagEditorTip =>
+      'Введення фільтрує список; кнопка створює тег і одразу ставить його на цей сервер. Олівець перейменовує його на всіх серверах, де він є. Тег, якого немає на жодному сервері, зникає під час збереження.';
+
+  @override
+  String get tagRenamesOnSave =>
+      'Перейменування застосовуються під час збереження';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

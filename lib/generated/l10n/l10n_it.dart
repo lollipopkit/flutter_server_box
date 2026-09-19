@@ -2683,10 +2683,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Credenziali e metriche attraversano la rete non cifrate. Tienilo su una LAN o su un indirizzo Tailscale, oppure metti l\'agente dietro TLS.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Le opzioni sul certificato appartengono a https:// e non sono mostrate qui.';
-
-  @override
   String get behaviour => 'Comportamento';
 
   @override
@@ -2715,6 +2711,43 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Quali comandi vengono eseguiti, comandi personalizzati, quale dispositivo leggere';
+
+  @override
+  String get tagAllTags => 'Tutti i tag';
+
+  @override
+  String get tagMatching => 'Corrispondenze';
+
+  @override
+  String get tagNewHint => 'Nuovo tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Crea #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'su questo server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count su questo server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'corrisponde a quanto digitato';
+
+  @override
+  String get tagEditorTip =>
+      'Digitare filtra l\'elenco; il pulsante crea il tag e lo mette su questo server in un solo passaggio. La matita lo rinomina su ogni server che lo porta. Un tag che nessun server porta sparisce al salvataggio.';
+
+  @override
+  String get tagRenamesOnSave => 'Le rinomine si applicano al salvataggio';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

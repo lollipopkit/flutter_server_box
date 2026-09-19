@@ -2666,10 +2666,6 @@ class AppLocalizationsAz extends AppLocalizations {
       'Giriş məlumatları və göstəricilər şəbəkədən şifrələnmədən keçir. Bunu LAN və ya Tailscale ünvanı ilə məhdudlaşdırın, ya da agenti TLS arxasına qoyun.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Sertifikat parametrləri https:// üçündür və burada göstərilmir.';
-
-  @override
   String get behaviour => 'Davranış';
 
   @override
@@ -2698,6 +2694,44 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Hansı əmrlər işləyir, fərdi əmrlər, hansı cihaz oxunur';
+
+  @override
+  String get tagAllTags => 'Bütün teqlər';
+
+  @override
+  String get tagMatching => 'Uyğun gələnlər';
+
+  @override
+  String get tagNewHint => 'Yeni teq';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag yarat';
+  }
+
+  @override
+  String get tagOnThisServer => 'bu serverdə';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return 'bu serverdə $count';
+  }
+
+  @override
+  String get tagMatchesTyped => 'yazdığınıza uyğun gəlir';
+
+  @override
+  String get tagEditorTip =>
+      'Yazmaq siyahını süzgəcdən keçirir; düymə teqi yaradır və bir addımda bu serverə əlavə edir. Karandaş onu daşıyan hər serverdə adını dəyişir. Heç bir serverin daşımadığı teq yadda saxlanarkən yox olur.';
+
+  @override
+  String get tagRenamesOnSave =>
+      'Adların dəyişdirilməsi yadda saxlayarkən tətbiq olunur';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

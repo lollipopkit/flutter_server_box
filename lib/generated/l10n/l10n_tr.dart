@@ -2649,10 +2649,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kimlik bilgileri ve ölçümler ağdan şifrelenmeden geçer. Bunu bir LAN veya Tailscale adresiyle sınırlayın ya da aracıyı TLS arkasına alın.';
 
   @override
-  String get certOptionsHttpsOnly =>
-      'Sertifika seçenekleri https:// içindir ve burada gösterilmez.';
-
-  @override
   String get behaviour => 'Davranış';
 
   @override
@@ -2681,6 +2677,43 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get statusCollectionTip =>
       'Hangi komutlar çalışır, özel komutlar, hangi aygıt okunur';
+
+  @override
+  String get tagAllTags => 'Tüm etiketler';
+
+  @override
+  String get tagMatching => 'Eşleşenler';
+
+  @override
+  String get tagNewHint => 'Yeni etiket';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag oluştur';
+  }
+
+  @override
+  String get tagOnThisServer => 'bu sunucuda';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count sunucu';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return 'bu sunucuda $count';
+  }
+
+  @override
+  String get tagMatchesTyped => 'yazdığınızla eşleşiyor';
+
+  @override
+  String get tagEditorTip =>
+      'Yazmak listeyi süzer; düğme etiketi oluşturup tek adımda bu sunucuya ekler. Kalem, etiketi taşıyan her sunucuda adını değiştirir. Hiçbir sunucunun taşımadığı etiket kaydederken kaybolur.';
+
+  @override
+  String get tagRenamesOnSave => 'Yeniden adlandırmalar kaydederken uygulanır';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

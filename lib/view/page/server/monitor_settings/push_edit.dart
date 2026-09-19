@@ -161,7 +161,6 @@ final class _MonitorPushEditPageState extends State<MonitorPushEditPage> {
     final entry = widget.args.entry;
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(
           up: l10n.pushChannels,
           down: entry.name.isEmpty ? libL10n.add : entry.name,
@@ -289,7 +288,7 @@ extension on _MonitorPushEditPageState {
     return ListTile(
       leading: const Icon(Icons.toggle_on_outlined),
       title: Text(field.key, style: const TextStyle(fontFamily: 'monospace')),
-      trailing: Switch(
+      trailing: SwitchX(
         value: on,
         onChanged: (value) =>
             setState(() => field.ctrl.text = value ? 'true' : 'false'),

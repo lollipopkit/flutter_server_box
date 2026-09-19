@@ -4570,12 +4570,6 @@ abstract class AppLocalizations {
   /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.'**
   String get plainHttpEditTip;
 
-  /// No description provided for @certOptionsHttpsOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Certificate options belong to https:// and are not shown here.'**
-  String get certOptionsHttpsOnly;
-
   /// No description provided for @behaviour.
   ///
   /// In en, this message translates to:
@@ -4629,6 +4623,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Which commands run, custom commands, which device to read'**
   String get statusCollectionTip;
+
+  /// No description provided for @tagAllTags.
+  ///
+  /// In en, this message translates to:
+  /// **'All tags'**
+  String get tagAllTags;
+
+  /// No description provided for @tagMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Matching'**
+  String get tagMatching;
+
+  /// No description provided for @tagNewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag'**
+  String get tagNewHint;
+
+  /// No description provided for @tagCreateFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Create #{tag}'**
+  String tagCreateFmt(Object tag);
+
+  /// No description provided for @tagOnThisServer.
+  ///
+  /// In en, this message translates to:
+  /// **'on this server'**
+  String get tagOnThisServer;
+
+  /// No description provided for @tagServersFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} servers'**
+  String tagServersFmt(Object count);
+
+  /// No description provided for @tagOnThisServerFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} on this server'**
+  String tagOnThisServerFmt(Object count);
+
+  /// No description provided for @tagMatchesTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'matches what you typed'**
+  String get tagMatchesTyped;
+
+  /// No description provided for @tagEditorTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing filters the list; the button creates the tag and puts it on this server in one step. Renaming from the pencil renames it on every server that carries it. A tag no server carries disappears on save.'**
+  String get tagEditorTip;
+
+  /// No description provided for @tagRenamesOnSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Renames apply on save'**
+  String get tagRenamesOnSave;
 
   /// No description provided for @scheduledTasks.
   ///

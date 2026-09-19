@@ -93,7 +93,6 @@ extension _ContainerPageWidgets on _ContainerPageState {
 
   CustomAppBar _buildAppBar(bool busy) {
     return CustomAppBar(
-      centerTitle: true,
       title: TwoLineText(up: libL10n.container, down: widget.args.spi.name),
       actions: [
         ListenableBuilder(

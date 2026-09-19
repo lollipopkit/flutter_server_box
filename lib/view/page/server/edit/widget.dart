@@ -42,13 +42,15 @@ extension _Widgets on _ServerEditPageState {
           const Expanded(child: Divider(height: 1)),
           if (right != null) ...[
             const SizedBox(width: 9),
-            Flexible(
-              child: Text(
-                right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: UIs.text11Grey,
-              ),
+            // Not `Flexible`: it and the rule would both be flex children and
+            // split the free space between them, so the rule stopped halfway
+            // across and a value shorter than its half floated in the middle
+            // with a gap after it. The rule is the only thing that stretches.
+            Text(
+              right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: UIs.text11Grey,
             ),
           ],
         ],
@@ -168,18 +170,21 @@ extension _Widgets on _ServerEditPageState {
     final leads = on && live.firstOrNull == method;
     final summary = _methodSummary(method);
 
-    return Padding(
+    return CardX(
       key: ValueKey(method),
-      padding: const EdgeInsets.only(bottom: 7),
-      child: CardX(
-        child: InkWell(
+      child: InkWell(
           // Tapping the row promotes it, so the order is reachable without a
           // drag: two rows are a long press and a short travel, which is a lot
           // of gesture for a choice between two things.
           onTap: () => _preferMonitorHttp.value =
               method == _Method.monitorHttp,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(7, 9, 13, 9),
+            // 5 rather than the design's 9, because Material's switch is not
+            // the design's. `shrinkWrap` already dropped its tap target, and
+            // what is left — `_kSwitchMinSize`, 40 — is still taller than the
+            // two lines of text beside it, so the row's height is the switch's
+            // and the padding is the only part of it this page decides.
+            padding: const EdgeInsets.fromLTRB(7, 5, 13, 5),
             child: Row(
               children: [
                 ReorderableDragStartListener(
@@ -227,7 +232,7 @@ extension _Widgets on _ServerEditPageState {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: on ? null : UIs.textGrey.color,
                         ),
@@ -237,13 +242,13 @@ extension _Widgets on _ServerEditPageState {
                           summary,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: UIs.text11Grey,
+                          style: UIs.text12Grey,
                         ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 9),
-                Switch(
+                SwitchX(
                   value: on,
                   onChanged: (val) => switch (method) {
                     _Method.monitorHttp => _useMonitorHttp.value = val,
@@ -254,7 +259,6 @@ extension _Widgets on _ServerEditPageState {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -298,7 +302,7 @@ extension _Widgets on _ServerEditPageState {
       title: Text(l10n.keyAuth),
       trailing: _keyIdx.listenVal(
         (idx) => _keyPath.listenVal(
-          (path) => Switch(
+          (path) => SwitchX(
             value: idx != null || path != null,
             onChanged: (on) {
               if (on) {
@@ -471,7 +475,7 @@ extension _Widgets on _ServerEditPageState {
           leading: const Icon(Icons.bolt),
           title: Text(l10n.autoConnect),
           trailing: _autoConnect.listenVal(
-            (val) => Switch(
+            (val) => SwitchX(
               value: val,
               onChanged: (val) {
                 _autoConnect.value = val;
@@ -505,7 +509,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: Icons.tune,
           title: l10n.sshAdvanced,
-          subtitle: l10n.sshAdvancedTip,
+          summary: l10n.sshAdvancedTip,
           children: [
             _buildAltUrl(),
             _buildProxyCommand(),
@@ -518,7 +522,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: Icons.image_outlined,
           title: l10n.appearanceAndPlace,
-          subtitle: l10n.appearanceAndPlaceTip,
+          summary: l10n.appearanceAndPlaceTip,
           children: [
             Input(
               controller: _logoUrlCtrl,
@@ -537,7 +541,7 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: MingCute.dashboard_line,
           title: l10n.statusCollection,
-          subtitle: l10n.statusCollectionTip,
+          summary: l10n.statusCollectionTip,
           children: [
             _buildDisabledCmdTypes(),
             _buildCustomCmds(),
@@ -548,19 +552,25 @@ extension _Widgets on _ServerEditPageState {
         _buildOptionalTile(
           icon: MingCute.server_line,
           title: 'PVE',
-          subtitle: 'Proxmox VE',
+          summary: 'Proxmox VE',
           children: [_buildPVEs()],
         ),
         _buildOptionalTile(
           icon: MingCute.chip_line,
           title: 'BMC (Redfish)',
-          subtitle: l10n.betaTip,
+          // The word, not the sentence: a right-aligned summary is a phrase
+          // read at a glance. The sentence is under the heading's `?`, first,
+          // because what matters about this one is that nothing here is
+          // guaranteed and this is where someone decides to turn it on.
+          summary: 'Beta',
+          tip: '${l10n.betaTip}\n\n${l10n.bmcTip}',
           children: [_buildBmc()],
         ),
         _buildOptionalTile(
           icon: Icons.power_settings_new,
           title: 'Wake on LAN',
-          subtitle: l10n.wolTip,
+          summary: 'Beta',
+          tip: '${l10n.betaTip}\n\n${l10n.wolTip}',
           children: [_buildWOLs()],
         ),
         _buildGroupNote(l10n.optionalTip),
@@ -568,21 +578,30 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
+  /// A folded group: what it is on the left, what it amounts to on the right,
+  /// and its fields as rows below rather than inside it.
+  ///
+  /// [ExpandableTile] rather than `ExpandTile`, because an `ExpansionTile`
+  /// holds its children inside itself: a card around it put the fields inside
+  /// the header's card, and no card left the header the one row on this page
+  /// without one. Every other row of this form is a card, and opening a group
+  /// should add rows, not grow a box.
+  ///
+  /// [tip] is what the group used to spend a row of its own explaining. A
+  /// whole tile for a paragraph nobody reads twice was the first thing inside
+  /// two of these groups, above the fields they describe; on the heading it is
+  /// one glyph, and it is there before the group is opened.
   Widget _buildOptionalTile({
     required IconData icon,
     required String title,
-    required String subtitle,
+    required String summary,
     required List<Widget> children,
+    String? tip,
   }) {
-    return ExpandTile(
-      leading: Icon(icon, size: 19),
-      title: Text(title, style: const TextStyle(fontSize: 14)),
-      subtitle: Text(
-        subtitle,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: UIs.text11Grey,
-      ),
+    return ExpandableTile(
+      leading: Icon(icon),
+      title: tip == null ? Text(title) : TipText(title, tip),
+      summary: Text(summary),
       children: children,
     );
   }
@@ -668,7 +687,7 @@ extension _Widgets on _ServerEditPageState {
           leading: const Icon(MingCute.question_line),
           title: TipText('${libL10n.temperature} (°C)', l10n.tempIsCelsiusTip),
           trailing: _tempIsCelsius.listenVal(
-            (v) => Switch(
+            (v) => SwitchX(
               value: v,
               onChanged: (val) {
                 _tempIsCelsius.value = val;
@@ -796,7 +815,6 @@ extension _Widgets on _ServerEditPageState {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CenterGreyTitle('PVE'),
           Input(
             controller: _pveAddrCtrl,
             type: TextInputType.url,
@@ -819,7 +837,7 @@ extension _Widgets on _ServerEditPageState {
             leading: const Icon(MingCute.certificate_line),
             title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
             trailing: _pveIgnoreCert.listenVal(
-              (v) => Switch(
+              (v) => SwitchX(
                 value: v,
                 onChanged: (val) {
                   _pveIgnoreCert.value = val;
@@ -948,7 +966,7 @@ extension _Widgets on _ServerEditPageState {
                   l10n.pveIgnoreCertTip,
                 ),
                 trailing: _monitorIgnoreCert.listenVal(
-                  (v) => Switch(
+                  (v) => SwitchX(
                     value: v,
                     onChanged: (val) {
                       _monitorIgnoreCert.value = val;
@@ -956,10 +974,8 @@ extension _Widgets on _ServerEditPageState {
                   ),
                 ),
               ).cardx
-            else ...[
+            else
               _buildPlainHttpCallout(),
-              _buildGroupNote(l10n.certOptionsHttpsOnly),
-            ],
           ],
         );
       },
@@ -976,12 +992,17 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildPlainHttpCallout() {
     final scheme = Theme.of(context).colorScheme;
     return CardX(
+      // Lifted off the colour every other row uses. This is the one thing on
+      // the page that is not a field but a warning about one, and on the card
+      // colour it read as another field that had failed to draw.
+      color: scheme.surfaceContainerHigh,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(17, 13, 13, 7),
+        padding: const EdgeInsets.all(13),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.warning_amber_rounded,
@@ -989,35 +1010,68 @@ extension _Widgets on _ServerEditPageState {
                   color: scheme.error,
                 ),
                 const SizedBox(width: 9),
+                // Both lines beside the icon rather than the heading alone:
+                // the icon marks the whole warning, and a body that started
+                // back at the card's edge put the two halves of one paragraph
+                // on two different margins.
                 Expanded(
-                  child: Text(
-                    l10n.plainHttpTitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.plainHttpTitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        l10n.plainHttpEditTip,
+                        style: UIs.text12Grey.copyWith(height: 1.5),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 5),
-            Text(l10n.plainHttpEditTip, style: UIs.text12Grey),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                l10n.monitorAllowInsecureHttp,
-                style: const TextStyle(fontSize: 13),
-              ),
-              subtitle: Text(
-                l10n.monitorAllowInsecureHttpTip,
-                style: UIs.text11Grey,
-              ),
-              trailing: _monitorAllowInsecure.listenVal(
-                (v) => Switch(
-                  value: v,
-                  onChanged: (val) {
-                    _monitorAllowInsecure.value = val;
-                  },
+            const SizedBox(height: 9),
+            // Inside the warning, not the next row of the form. Allowing
+            // plain http *is* what the warning is about, and a switch below
+            // the card would read as one more setting that happened to follow
+            // it.
+            Material(
+              color: scheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(13),
+              clipBehavior: Clip.hardEdge,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.monitorAllowInsecureHttp,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          Text(
+                            l10n.monitorAllowInsecureHttpTip,
+                            style: UIs.text12Grey,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    _monitorAllowInsecure.listenVal(
+                      (v) => SwitchX(
+                        value: v,
+                        onChanged: (val) {
+                          _monitorAllowInsecure.value = val;
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1068,7 +1122,7 @@ extension _Widgets on _ServerEditPageState {
                   _diskInfoCmdTypes.map((e) => e.displayName).join(', '),
                   style: UIs.textGrey,
                 ),
-                trailing: Switch(
+                trailing: SwitchX(
                   value: diskInfoEnabled,
                   onChanged: (value) {
                     _setCmdGroupDisabled(_diskInfoCmdTypes, !value);
@@ -1085,7 +1139,7 @@ extension _Widgets on _ServerEditPageState {
                   _diskHealthCmdTypes.map((e) => e.displayName).join(', '),
                   style: UIs.textGrey,
                 ),
-                trailing: Switch(
+                trailing: SwitchX(
                   value: diskHealthEnabled,
                   onChanged: (value) {
                     _setCmdGroupDisabled(_diskHealthCmdTypes, !value);
@@ -1103,43 +1157,23 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildDisabledCmdTypes() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CenterGreyTitle('${libL10n.disabled} ${libL10n.cmd}'),
-        _disabledCmdTypes.listenVal((disabled) {
-          return ListTile(
-            leading: const Icon(Icons.disabled_by_default),
-            title: Text('${libL10n.disabled} ${libL10n.cmd}'),
-            subtitle: disabled.isEmpty
-                ? null
-                : Text(disabled.join(', '), style: UIs.textGrey),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: _onTapDisabledCmdTypes,
-          );
-        }).cardx,
-      ],
-    );
+    return _disabledCmdTypes.listenVal((disabled) {
+      return ListTile(
+        leading: const Icon(Icons.disabled_by_default),
+        title: Text('${libL10n.disabled} ${libL10n.cmd}'),
+        subtitle: disabled.isEmpty
+            ? null
+            : Text(disabled.join(', '), style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapDisabledCmdTypes,
+      );
+    }).cardx;
   }
 
   Widget _buildBmc() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CenterGreyTitle('BMC (Redfish)'),
-        // A row of its own rather than a suffix on the title, the same shape
-        // the Linux page uses: what a suffix cannot say is the part that
-        // matters, which is that nothing here is guaranteed. This is where
-        // someone decides to turn it on, so it is where the warning belongs.
-        ListTile(
-          leading: const Icon(Icons.science_outlined),
-          title: const Text('Beta'),
-          subtitle: Text(l10n.betaTip, style: UIs.textGrey),
-        ).cardx,
-        ListTile(
-          leading: const Icon(BoxIcons.bxs_help_circle),
-          title: TipText(libL10n.about, l10n.bmcTip),
-        ).cardx,
         Input(
           controller: _bmcAddrCtrl,
           type: TextInputType.url,
@@ -1240,11 +1274,6 @@ extension _Widgets on _ServerEditPageState {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CenterGreyTitle('Wake On LAN (beta)'),
-        ListTile(
-          leading: const Icon(BoxIcons.bxs_help_circle),
-          title: TipText(libL10n.about, l10n.wolTip),
-        ).cardx,
         Input(
           controller: _wolMacCtrl,
           type: TextInputType.text,
