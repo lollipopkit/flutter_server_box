@@ -32,6 +32,7 @@ lib/
 │   ├── store/         # SQLite storage
 │   ├── helper/
 │   ├── res/
+│   ├── service/       # systemd/procd/OpenRC and cron/user managers
 │   └── ssh/
 ├── view/              # Pages and reusable Widgets
 ├── generated/         # Generated localization code
@@ -54,8 +55,9 @@ Models are grouped by feature:
 
 - `server/`: Server configuration, credentials, and status
 - `container/`: Docker and Podman containers
+- `file/`: Remote file models
 - `ssh/`: SSH session models
-- `sftp/`: Remote file models
+- `ai/`: AI conversation and command models
 - `app/`: App configuration and state
 
 ### `lib/data/provider/`
