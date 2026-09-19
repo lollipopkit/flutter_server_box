@@ -856,5 +856,7 @@
   "addServerTip": "入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。",
   "move": "移動",
   "moveToTop": "先頭へ移動",
-  "moveToBottom": "末尾へ移動"
+  "moveToBottom": "末尾へ移動",
+  "groupByTag": "タグでグループ化",
+  "groupByTagTip": "タグはサーバーの編集ページで設定します。"
 }

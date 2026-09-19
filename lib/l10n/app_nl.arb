@@ -856,5 +856,7 @@
   "addServerTip": "Vul er een in, scan een QR-code of importeer een bestand dat iemand heeft gedeeld.",
   "move": "Verplaatsen",
   "moveToTop": "Naar boven verplaatsen",
-  "moveToBottom": "Naar onderen verplaatsen"
+  "moveToBottom": "Naar onderen verplaatsen",
+  "groupByTag": "Groeperen op tag",
+  "groupByTagTip": "Tags stel je in in de editor van de server."
 }

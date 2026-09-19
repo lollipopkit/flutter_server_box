@@ -2986,4 +2986,10 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Mover para o fim';
+
+  @override
+  String get groupByTag => 'Agrupar por tag';
+
+  @override
+  String get groupByTagTip => 'As tags são definidas no editor do servidor.';
 }

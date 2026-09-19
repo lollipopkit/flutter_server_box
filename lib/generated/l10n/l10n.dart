@@ -5127,6 +5127,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Move to bottom'**
   String get moveToBottom;
+
+  /// No description provided for @groupByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by tag'**
+  String get groupByTag;
+
+  /// No description provided for @groupByTagTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags are set in a server’s own editor.'**
+  String get groupByTagTip;
 }
 
 class _AppLocalizationsDelegate

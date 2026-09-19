@@ -2965,4 +2965,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get moveToBottom => 'En sona taşı';
+
+  @override
+  String get groupByTag => 'Etikete göre grupla';
+
+  @override
+  String get groupByTagTip =>
+      'Etiketler sunucunun kendi düzenleme sayfasında ayarlanır.';
 }

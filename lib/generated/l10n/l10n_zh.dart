@@ -2762,6 +2762,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moveToBottom => '移到最后';
+
+  @override
+  String get groupByTag => '按 tag 分组';
+
+  @override
+  String get groupByTagTip => 'tag 是在服务器自己的编辑页里加的。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5541,4 +5547,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get moveToBottom => '移到最後';
+
+  @override
+  String get groupByTag => '依 tag 分組';
+
+  @override
+  String get groupByTagTip => 'tag 是在伺服器自己的編輯頁裡加的。';
 }

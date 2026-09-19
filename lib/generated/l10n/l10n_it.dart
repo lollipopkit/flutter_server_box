@@ -2999,4 +2999,10 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Sposta alla fine';
+
+  @override
+  String get groupByTag => 'Raggruppa per tag';
+
+  @override
+  String get groupByTagTip => 'I tag si impostano nell’editor del server.';
 }

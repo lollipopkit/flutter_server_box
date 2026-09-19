@@ -70,6 +70,39 @@ enum ServerSortField {
   bool get reorderable => this == manual;
 }
 
+/// Whether the list is cut into sections, and by what.
+///
+/// Orthogonal to [ServerSortOrder] rather than one of its cases: a grouped
+/// list is still ordered, and the order runs inside each section. Offering it
+/// as a sixth sort option would have made the two a single choice and put
+/// "grouped" and "by CPU" in competition, which they are not.
+///
+/// An enum rather than a bool because what it names is what the sections are
+/// cut *by*. A second answer — by status, by whether anything is over the line
+/// — is then a value here rather than a second setting somewhere else.
+enum ServerListGrouping {
+  none,
+  tag;
+
+  /// How the list under [tag] is cut. The empty tag is "all".
+  ///
+  /// Remembered per tag alongside the density and the sort, though it only
+  /// means anything for "all": inside `#prod` every machine is in `#prod`, so
+  /// grouping by tag there is one section with a heading over it.
+  static ServerListGrouping of(String tag) {
+    final name = Stores.setting.serverListGroup.fetch()[tag];
+    return values.firstWhereOrNull((e) => e.name == name) ?? none;
+  }
+
+  static void put(String tag, ServerListGrouping grouping) {
+    final map = Map<String, String>.from(
+      Stores.setting.serverListGroup.fetch(),
+    );
+    map[tag] = grouping.name;
+    Stores.setting.serverListGroup.put(map);
+  }
+}
+
 /// [order] with [chosen] gathered at one end of it.
 ///
 /// The one edit anything makes to the manual arrangement other than a drag,
@@ -112,21 +145,39 @@ class ServerSortOrder {
   final ServerSortField field;
   final bool ascending;
 
-  static ServerSortOrder get stored {
-    final field = ServerSortField.fromStored(Stores.setting.serverPageSortBy.fetch());
+  /// How the list under [tag] is ordered. The empty tag is "all".
+  ///
+  /// Per tag for the reason the density is — see
+  /// `SettingStore.serverListSort`. An install that chose before this was per
+  /// tag has its one answer read as the answer for "all", which is the list it
+  /// was looking at when it chose.
+  static ServerSortOrder of(String tag) {
+    final stored = Stores.setting.serverListSort.fetch()[tag];
+    final (name, direction) = switch (stored?.split(':')) {
+      [final name] => (name, null),
+      [final name, final direction] => (name, direction),
+      // TODO: the pair below is the pre-per-tag setting, kept only as the
+      // default for "all". Delete it, and this branch, a few releases on.
+      _ when tag.isEmpty => (
+        Stores.setting.serverPageSortBy.fetch(),
+        Stores.setting.serverPageSortAsc.fetch() ? 'asc' : 'desc',
+      ),
+      _ => (null, null),
+    };
+
+    final field = ServerSortField.fromStored(name);
     return ServerSortOrder(
       field,
       // Normalised, so a direction left behind by another field cannot make
       // the default look like something nothing in the sheet offers.
-      ascending: field.directional
-          ? Stores.setting.serverPageSortAsc.fetch()
-          : true,
+      ascending: field.directional ? direction != 'desc' : true,
     );
   }
 
-  void save() {
-    Stores.setting.serverPageSortBy.put(field.name);
-    Stores.setting.serverPageSortAsc.put(ascending);
+  void save(String tag) {
+    final map = Map<String, String>.from(Stores.setting.serverListSort.fetch());
+    map[tag] = '${field.name}:${ascending ? 'asc' : 'desc'}';
+    Stores.setting.serverListSort.put(map);
   }
 
   /// Every option the menu offers, in the order it offers them.
@@ -168,8 +219,8 @@ class ServerSortOrder {
     return '$subject $direction';
   }
 
-  bool get isCurrent {
-    final current = stored;
+  bool isCurrentFor(String tag) {
+    final current = of(tag);
     if (current.field != field) return false;
     return !field.directional || current.ascending == ascending;
   }

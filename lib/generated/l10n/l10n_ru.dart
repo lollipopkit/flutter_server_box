@@ -2991,4 +2991,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get moveToBottom => 'В конец';
+
+  @override
+  String get groupByTag => 'Группировать по тегу';
+
+  @override
+  String get groupByTagTip => 'Теги задаются в редакторе сервера.';
 }

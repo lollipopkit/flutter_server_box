@@ -856,5 +856,7 @@
   "addServerTip": "Preencha um, leia um código QR ou importe um ficheiro partilhado por alguém.",
   "move": "Mover",
   "moveToTop": "Mover para o início",
-  "moveToBottom": "Mover para o fim"
+  "moveToBottom": "Mover para o fim",
+  "groupByTag": "Agrupar por tag",
+  "groupByTagTip": "As tags são definidas no editor do servidor."
 }

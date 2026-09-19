@@ -856,5 +856,7 @@
   "addServerTip": "Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang.",
   "move": "Pindahkan",
   "moveToTop": "Pindah ke atas",
-  "moveToBottom": "Pindah ke bawah"
+  "moveToBottom": "Pindah ke bawah",
+  "groupByTag": "Kelompokkan menurut tag",
+  "groupByTagTip": "Tag diatur di halaman edit server."
 }

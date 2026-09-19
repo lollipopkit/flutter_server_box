@@ -2853,4 +2853,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get moveToBottom => '맨 아래로 이동';
+
+  @override
+  String get groupByTag => '태그로 그룹화';
+
+  @override
+  String get groupByTagTip => '태그는 서버 편집 페이지에서 설정합니다.';
 }

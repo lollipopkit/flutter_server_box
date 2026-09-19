@@ -856,5 +856,7 @@
   "addServerTip": "Birini doldurun, QR kodu tarayın veya birinin paylaştığı dosyayı içe aktarın.",
   "move": "Taşı",
   "moveToTop": "En başa taşı",
-  "moveToBottom": "En sona taşı"
+  "moveToBottom": "En sona taşı",
+  "groupByTag": "Etikete göre grupla",
+  "groupByTagTip": "Etiketler sunucunun kendi düzenleme sayfasında ayarlanır."
 }

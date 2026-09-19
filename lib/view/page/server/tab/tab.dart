@@ -14,6 +14,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/tag_group.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -23,6 +24,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
@@ -579,7 +581,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // which is a `build`, where `ref.watch` belongs. Every field but the two
     // that read nothing about a machine needs its state, so the whole thing is
     // read for those: `select` cannot narrow "a reading changed".
-    final needsState = ServerSortOrder.stored.field.readsStatus;
+    final needsState = ServerSortOrder.of(_tag.value).field.readsStatus;
     final states = !needsState
         ? const <String, ServerState>{}
         : {for (final id in serverOrder) id: ref.watch(serverProvider(id))};
@@ -595,7 +597,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
           // The settings arrangement, viewed however the sort button says —
           // see [ServerSortOrder], whose first option is that arrangement
           // unchanged.
-          final ordered = ServerSortOrder.stored.apply(
+          final ordered = ServerSortOrder.of(_tag.value).apply(
             serverOrder,
             servers,
             (id) => states[id] ?? ref.read(serverProvider(id)),
@@ -920,8 +922,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // comparisons this would be a move with nothing to see, which reads as
     // the action having failed rather than as the sort having hidden it.
     const manual = ServerSortOrder(ServerSortField.manual, ascending: true);
-    if (!manual.isCurrent) {
-      manual.save();
+    if (!manual.isCurrentFor(_tag.value)) {
+      manual.save(_tag.value);
       _sortVersion.notify();
     }
     _endSelecting();
@@ -1120,7 +1122,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     ),
     Btn.icon(
       text: libL10n.sort,
-      icon: Icon(ServerSortOrder.stored.icon, size: 18),
+      icon: Icon(ServerSortOrder.of(_tag.value).icon, size: 18),
       onTap: _showSortSheet,
     ),
     // Absent, not disabled, when the feature is off: a button that explains
@@ -1200,10 +1202,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  /// How to order the list. The default is the arrangement from the settings,
-  /// so this starts as a view of what the user already decided rather than as
-  /// a decision it takes from them.
+  /// How to order the list, and whether to cut it into sections.
+  ///
+  /// The default is the arrangement from the settings, so this starts as a
+  /// view of what the user already decided rather than as a decision it takes
+  /// from them.
+  ///
+  /// The two are in one sheet and are not one choice: an order is which
+  /// machine comes first, and grouping is which machines are read together.
+  /// So picking an order closes the sheet — it is the question that was asked
+  /// — and the switch under them does not, because it is a second question
+  /// that has only now become visible.
   Future<void> _showSortSheet() async {
+    final tag = _tag.value;
     await showRowsSheet<void>(
       context,
       rows: (ctx) => [
@@ -1211,13 +1222,36 @@ class _ServerPageState extends ConsumerState<ServerPage>
           SheetChoiceTile(
             icon: order.icon,
             title: order.label,
-            selected: order.isCurrent,
+            selected: order.isCurrentFor(tag),
             onTap: () {
-              order.save();
+              order.save(tag);
               Navigator.of(ctx).pop();
               _sortVersion.notify();
             },
           ),
+        const Divider(height: 1),
+        StatefulBuilder(
+          builder: (_, setSheetState) {
+            final on = ServerListGrouping.of(tag) == ServerListGrouping.tag;
+            return SwitchListTile(
+              secondary: const Icon(MingCute.hashtag_line),
+              title: Text(l10n.groupByTag),
+              // What it is for, where it is turned on: the sections are cut by
+              // the tags a machine carries, which is a thing set in the
+              // server's own editor and not here.
+              subtitle: Text(l10n.groupByTagTip, style: UIs.text11Grey),
+              value: on,
+              onChanged: (next) {
+                ServerListGrouping.put(
+                  tag,
+                  next ? ServerListGrouping.tag : ServerListGrouping.none,
+                );
+                setSheetState(() {});
+                _sortVersion.notify();
+              },
+            );
+          },
+        ),
       ],
     );
   }
@@ -1330,6 +1364,67 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
+  /// One section's heading: what these machines have in common, how many of
+  /// them there are, and how many are over the line.
+  ///
+  /// The count is what a heading is for at this size — a section of eight is
+  /// eight tiles nobody counts — and the alert count beside it is the one
+  /// thing that would otherwise need the section read to find. A section with
+  /// nothing wrong in it says nothing about alerts rather than saying zero.
+  Widget _groupHeading(TagGroup<String> group, {required bool first}) {
+    final over = group.items
+        .where((id) {
+          final srv = ref.read(serverProvider(id));
+          return srv.conn == ServerConn.finished &&
+              serverCardReadings(srv).all.any((m) => m.over);
+        })
+        .length;
+
+    return Padding(
+      // Lined up with the cards under it, which carry their own margin.
+      padding: EdgeInsets.fromLTRB(4, first ? 3 : 17, 4, 7),
+      child: Row(
+        children: [
+          Text(
+            group.label ?? l10n.ungrouped,
+            style: const TextStyle(
+              fontSize: 11,
+              height: 1,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: Colors.grey,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Divider(
+              height: Hairline.thickness,
+              thickness: Hairline.thickness,
+              color: Hairline.color(context),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Text('${group.items.length}', style: UIs.text11Grey),
+          if (over > 0) ...[
+            const SizedBox(width: 7),
+            const Icon(Icons.warning_amber, size: 13, color: StatePalette.warn),
+            const SizedBox(width: 3),
+            Text(
+              '$over',
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1,
+                color: StatePalette.warn,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   /// The list, and the one card of it that has grown into the page.
   ///
   /// One widget for both, because they are one thing: opening a server does
@@ -1351,6 +1446,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
       count: filtered.length,
       textScale: Stores.setting.textFactor.fetch(),
     );
+
+    // The sections, or null for one list. Cut before the sort is applied to
+    // nothing — `filtered` is already in the chosen order, and grouping keeps
+    // that order inside each section rather than replacing it.
+    final servers = ref.read(serversProvider).servers;
+    final groups = ServerListGrouping.of(_tag.value) == ServerListGrouping.tag
+        ? groupByTag(filtered, (id) => servers[id]?.tags)
+        : null;
 
     // Cards are as tall as what they have to say — a server that has not
     // connected is one line, one that has is several charts. Splitting them
@@ -1406,67 +1509,108 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 ),
           },
         );
+        // Every one of them, the whole way through. The rest used to be
+        // taken out of the list while one was open, which made them leave
+        // and then arrive again — a card growing in and shuffling into
+        // place for each of them, on a page nobody had asked to rearrange.
+        // They fade instead, and their slots are held for them.
+        //
+        // Its own `Consumer` per card, so a status poll rebuilds the one card
+        // whose server answered rather than the grid. Watched from this page's
+        // `ref` — which is what a builder would have to do — any server's
+        // reading landing rebuilt every card on screen.
+        Widget cardOf(String id) =>
+            rest[id] ??
+            Consumer(
+              key: ValueKey(id),
+              builder: (_, ref, _) => _buildEachServerCard(
+                ref.watch(serverProvider(id)),
+                openness: _open.value,
+                density: density,
+                // The box the page will have, which is this same box: the
+                // grid and the page it becomes are the two children of one
+                // crossing. The page asks its own width the same question, so
+                // both arrive at the same answer about the facts column.
+                pageWidth: cons.maxWidth,
+              ),
+            );
+
+        // One section, or the whole list as one. [scrollable] is off for a
+        // grouped list, where the page owns the scrolling and each section is
+        // laid out inside it.
+        AnimatedMasonry masonry(List<String> ids, {required bool scrollable}) =>
+            AnimatedMasonry(
+              controller: scrollable ? _scrollController : null,
+              scrollable: scrollable,
+              // Constant. The card growing out of the grid needs the page's
+              // inset rather than the grid's, but taking it from here would
+              // change every column's width — so every other card would slide
+              // sideways for a movement that is not about them. The card makes
+              // up the difference in its own padding instead.
+              padding: scrollable ? MasonryList.kPadding : EdgeInsets.zero,
+              // The cards make way at the same pace as the one growing, so the
+              // whole thing reads as one movement rather than as a card
+              // growing into a grid that is still settling.
+              moveDuration: context.motion(_kOpenDuration),
+              changeDuration: context.motion(Durations.medium2),
+              // The column each shape wants: a line per machine takes the
+              // width, a tile takes as little as a name needs, and a card
+              // takes the one width the rest of the app lays a column out at.
+              columnWidth: switch (density) {
+                ServerListDensity.grid => 170.0,
+                ServerListDensity.rows => double.infinity,
+                _ => UIs.columnWidth,
+              },
+              // And how much air each shape wants around it: a wall of tiles
+              // reads as a wall at the design's 5, and a list of lines as a
+              // list at nothing at all.
+              spacing: switch (density) {
+                ServerListDensity.grid => 5.0,
+                ServerListDensity.rows => 0.0,
+                _ => MasonryList.kSpacing,
+              },
+              // Only the section the card is in: the others have no card to
+              // expand, and a key they do not hold is one they ignore.
+              expandedKey: hero && ids.contains(heroId)
+                  ? ValueKey(heroId)
+                  : null,
+              expansion: _open.value,
+              children: [for (final id in ids) cardOf(id)],
+            );
+
+        if (groups == null) {
+          return AnimatedBuilder(
+            animation: _open,
+            builder: (_, _) => masonry(filtered, scrollable: true),
+          );
+        }
+
+        // A section each, under one scroll position. A masonry per section
+        // rather than one with headings in it: the headings span the row and a
+        // masonry lays its children into columns, so a heading placed in one
+        // would sit in a column beside the cards it is a heading for.
+        //
+        // The cost is that a card moving between sections — a tag edited — is
+        // a card leaving one grid and arriving in another rather than one
+        // travelling, which is a fade rather than a flight. That is the right
+        // way round: what moved it was not the list rearranging itself.
         return AnimatedBuilder(
-        animation: _open,
-        builder: (_, _) => AnimatedMasonry(
-          controller: _scrollController,
-          // Constant. The card growing out of the grid needs the page's inset
-          // rather than the grid's, but taking it from here would change
-          // every column's width — so every other card would slide sideways
-          // for a movement that is not about them. The card makes up the
-          // difference in its own padding instead.
-          padding: MasonryList.kPadding,
-          // The cards make way at the same pace as the one growing, so the whole
-          // thing reads as one movement rather than as a card growing into a
-          // grid that is still settling.
-          moveDuration: context.motion(_kOpenDuration),
-          changeDuration: context.motion(Durations.medium2),
-          // The column each shape wants: a line per machine takes the width, a
-          // tile takes as little as a name needs, and a card takes the one width
-          // the rest of the app lays a column out at.
-          columnWidth: switch (density) {
-            ServerListDensity.grid => 170.0,
-            ServerListDensity.rows => double.infinity,
-            _ => UIs.columnWidth,
-          },
-          // And how much air each shape wants around it: a wall of tiles reads
-          // as a wall at the design's 5, and a list of lines as a list at
-          // nothing at all.
-          spacing: switch (density) {
-            ServerListDensity.grid => 5.0,
-            ServerListDensity.rows => 0.0,
-            _ => MasonryList.kSpacing,
-          },
-          expandedKey: hero ? ValueKey(heroId) : null,
-          expansion: _open.value,
-          children: [
-            // Every one of them, the whole way through. The rest used to be
-            // taken out of the list while one was open, which made them leave
-            // and then arrive again — a card growing in and shuffling into
-            // place for each of them, on a page nobody had asked to rearrange.
-            // They fade instead, and their slots are held for them.
-            for (final id in filtered)
-              // Its own `Consumer`, so a status poll rebuilds the one card whose
-              // server answered rather than the grid. Watched from this page's
-              // `ref` — which is what a builder would have to do — any server's
-              // reading landing rebuilt every card on screen.
-              rest[id] ??
-                  Consumer(
-                    key: ValueKey(id),
-                    builder: (_, ref, _) => _buildEachServerCard(
-                      ref.watch(serverProvider(id)),
-                      openness: _open.value,
-                      density: density,
-                      // The box the page will have, which is this same box:
-                      // the grid and the page it becomes are the two children
-                      // of one crossing. The page asks its own width the same
-                      // question, so both arrive at the same answer about the
-                      // facts column.
-                      pageWidth: cons.maxWidth,
-                    ),
-                  ),
-          ],
-        ),
+          animation: _open,
+          builder: (_, _) => SingleChildScrollView(
+            controller: _scrollController,
+            padding: MasonryList.kPadding,
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final (at, group) in groups.indexed) ...[
+                  _groupHeading(group, first: at == 0),
+                  masonry(group.items, scrollable: false),
+                ],
+              ],
+            ),
+          ),
         );
       },
     );

@@ -2990,4 +2990,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Naar onderen verplaatsen';
+
+  @override
+  String get groupByTag => 'Groeperen op tag';
+
+  @override
+  String get groupByTagTip => 'Tags stel je in in de editor van de server.';
 }

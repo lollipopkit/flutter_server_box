@@ -963,6 +963,40 @@ class SettingStore extends SqliteStore {
     fromObj: (obj) => Map<String, String>.from(obj as Map),
   );
 
+  /// How the list is ordered, by tag — the same shape, and the same empty key
+  /// for "all", as [serverListDensity].
+  ///
+  /// Per tag for the reason the density is: `#prod` with forty in it wants to
+  /// be read busiest-first, and `#local` with two wants the arrangement it was
+  /// given. One field and one direction, written `<field>:<asc|desc>` — a bare
+  /// field name reads as ascending, which is what the pair below used to be
+  /// stored as.
+  ///
+  /// TODO: [serverPageSortBy] and [serverPageSortAsc] are only still read as
+  /// this map's empty-key default, for installs that chose before it existed.
+  /// Delete both, and the fallback in `ServerSortOrder.of`, a few releases on.
+  late final serverListSort = propertyDefault<Map<String, String>>(
+    'serverListSort',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
+  /// Whether the list is cut into sections, by tag.
+  ///
+  /// A string rather than a bool because what it names is what the sections
+  /// are cut by: `tag` today, and absent is one list. A second answer — by
+  /// status, say — is then a value rather than a second setting.
+  ///
+  /// Only ever means anything under the empty key: inside `#prod` every
+  /// machine is in `#prod`, so grouping by tag there is one section. It is
+  /// stored per tag anyway, because a setting that is remembered in one place
+  /// and forgotten in another is the harder thing to explain.
+  late final serverListGroup = propertyDefault<Map<String, String>>(
+    'serverListGroup',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
   /// Whether the globe exists at all.
   ///
   /// On by default, and off is a real off: no button in the server tab, no

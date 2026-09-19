@@ -1058,5 +1058,7 @@
   "addServerTip": "Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin.",
   "move": "Köçür",
   "moveToTop": "Ən yuxarıya köçür",
-  "moveToBottom": "Ən aşağıya köçür"
+  "moveToBottom": "Ən aşağıya köçür",
+  "groupByTag": "Teqə görə qruplaşdır",
+  "groupByTagTip": "Teqlər serverin öz redaktə səhifəsində təyin edilir."
 }

@@ -1124,5 +1124,7 @@
   "addServerTip": "Fill one in, scan a QR code, or import a file somebody shared.",
   "move": "Move",
   "moveToTop": "Move to top",
-  "moveToBottom": "Move to bottom"
+  "moveToBottom": "Move to bottom",
+  "groupByTag": "Group by tag",
+  "groupByTagTip": "Tags are set in a server’s own editor."
 }

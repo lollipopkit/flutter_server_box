@@ -859,5 +859,7 @@
   "addServerTip": "Compilane uno, scansiona un codice QR oppure importa un file condiviso da qualcuno.",
   "move": "Sposta",
   "moveToTop": "Sposta all'inizio",
-  "moveToBottom": "Sposta alla fine"
+  "moveToBottom": "Sposta alla fine",
+  "groupByTag": "Raggruppa per tag",
+  "groupByTagTip": "I tag si impostano nell’editor del server."
 }

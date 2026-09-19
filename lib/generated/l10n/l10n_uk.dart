@@ -2987,4 +2987,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get moveToBottom => 'У кінець';
+
+  @override
+  String get groupByTag => 'Групувати за тегом';
+
+  @override
+  String get groupByTagTip => 'Теги задаються в редакторі сервера.';
 }

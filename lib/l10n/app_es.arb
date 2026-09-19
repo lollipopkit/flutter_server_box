@@ -856,5 +856,7 @@
   "addServerTip": "Rellena uno, escanea un código QR o importa un archivo que alguien haya compartido.",
   "move": "Mover",
   "moveToTop": "Mover al principio",
-  "moveToBottom": "Mover al final"
+  "moveToBottom": "Mover al final",
+  "groupByTag": "Agrupar por etiqueta",
+  "groupByTagTip": "Las etiquetas se definen en el editor del servidor."
 }

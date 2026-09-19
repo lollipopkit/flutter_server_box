@@ -3007,4 +3007,11 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Mover al final';
+
+  @override
+  String get groupByTag => 'Agrupar por etiqueta';
+
+  @override
+  String get groupByTagTip =>
+      'Las etiquetas se definen en el editor del servidor.';
 }

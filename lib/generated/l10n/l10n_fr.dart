@@ -3008,4 +3008,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Déplacer en bas';
+
+  @override
+  String get groupByTag => 'Grouper par tag';
+
+  @override
+  String get groupByTagTip =>
+      'Les tags se définissent dans l’éditeur du serveur.';
 }

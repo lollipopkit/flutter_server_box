@@ -2983,4 +2983,11 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Ən aşağıya köçür';
+
+  @override
+  String get groupByTag => 'Teqə görə qruplaşdır';
+
+  @override
+  String get groupByTagTip =>
+      'Teqlər serverin öz redaktə səhifəsində təyin edilir.';
 }

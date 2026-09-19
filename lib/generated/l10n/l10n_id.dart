@@ -2970,4 +2970,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get moveToBottom => 'Pindah ke bawah';
+
+  @override
+  String get groupByTag => 'Kelompokkan menurut tag';
+
+  @override
+  String get groupByTagTip => 'Tag diatur di halaman edit server.';
 }

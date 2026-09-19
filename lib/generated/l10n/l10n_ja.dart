@@ -2845,4 +2845,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get moveToBottom => '末尾へ移動';
+
+  @override
+  String get groupByTag => 'タグでグループ化';
+
+  @override
+  String get groupByTagTip => 'タグはサーバーの編集ページで設定します。';
 }

@@ -863,5 +863,7 @@
   "online": "在线",
   "move": "移动",
   "moveToTop": "移到最前",
-  "moveToBottom": "移到最后"
+  "moveToBottom": "移到最后",
+  "groupByTag": "按 tag 分组",
+  "groupByTagTip": "tag 是在服务器自己的编辑页里加的。"
 }
