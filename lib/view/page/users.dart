@@ -77,7 +77,6 @@ final class _UsersPageState extends ConsumerState<UsersPage> {
         supported && !_unsupported && _failure == null && _catalog != null;
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(up: l10n.systemUsers, down: widget.args.spi.name),
         actions: _buildActions(canMutate),
       ),

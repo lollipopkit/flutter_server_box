@@ -2252,12 +2252,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cores => '코어';
 
   @override
-  String get historyStored => '저장된 기록';
-
-  @override
-  String get historySinceConnect => '연결 이후 · 저장되지 않음';
-
-  @override
   String get historyNoStored =>
       '기록을 저장하는 것은 monitor 에이전트뿐입니다. 이 연결은 앱이 연결한 뒤 본 것만 유지합니다.';
 
@@ -2466,6 +2460,114 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serverDetailCards => '상세 페이지 카드';
+
+  @override
+  String get connection => '연결';
+
+  @override
+  String get connectionTip => '둘 다 동시에 켤 수 있습니다. 순서가 곧 연결을 시도하는 순서입니다.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return '끌어서 순서를 바꿉니다. $first을(를) 먼저 시도하고, 응답이 없으면 $second이(가) 세션을 단독으로 맡습니다.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '$name만 켜져 있어 대체할 것이 없습니다.';
+  }
+
+  @override
+  String get transportNoneOn => '둘 다 꺼져 있습니다 — 이 서버에는 연결할 수 없습니다.';
+
+  @override
+  String get transportOffKept => '꺼짐 — 설정은 보관되며 연결하지 않음';
+
+  @override
+  String get transportDialledFirst => '먼저 시도';
+
+  @override
+  String get transportFallback => '대체';
+
+  @override
+  String get transportOnlyMethod => '유일한 방법';
+
+  @override
+  String get transportOff => '꺼짐';
+
+  @override
+  String get transportSectionOff => '꺼져 있습니다. 다시 켤 때를 위해 아래 항목은 그대로 보관됩니다.';
+
+  @override
+  String get monitorAgent => 'Monitor 에이전트';
+
+  @override
+  String get plainHttpEditTip =>
+      '자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, 에이전트를 TLS 뒤에 두세요.';
+
+  @override
+  String get behaviour => '동작';
+
+  @override
+  String get optional => '선택';
+
+  @override
+  String get optionalTip => '여기 있는 것은 연결에 필요하지 않습니다. 하나를 열면 그 항목이 양식을 대신합니다.';
+
+  @override
+  String get sshAdvanced => 'SSH 고급';
+
+  @override
+  String get sshAdvancedTip => '대체 대상, ProxyCommand, 점프 서버, 파일 전송, 원격 경로';
+
+  @override
+  String get appearanceAndPlace => '모양과 위치';
+
+  @override
+  String get appearanceAndPlaceTip => '로고, 좌표';
+
+  @override
+  String get statusCollection => '상태 수집';
+
+  @override
+  String get statusCollectionTip => '실행할 명령, 사용자 명령, 읽을 장치';
+
+  @override
+  String get tagAllTags => '모든 태그';
+
+  @override
+  String get tagMatching => '일치';
+
+  @override
+  String get tagNewHint => '새 태그';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag 만들기';
+  }
+
+  @override
+  String get tagOnThisServer => '이 서버';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '서버 $count대';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '이 서버에 $count개';
+  }
+
+  @override
+  String get tagMatchesTyped => '입력과 일치';
+
+  @override
+  String get tagEditorTip =>
+      '입력하면 목록이 좁혀집니다. 버튼은 태그를 만들어 이 서버에 바로 추가합니다. 연필은 이름 변경이며, 그 태그를 쓰는 모든 서버에 적용됩니다. 어느 서버도 쓰지 않는 태그는 저장할 때 사라집니다.';
+
+  @override
+  String get tagRenamesOnSave => '이름 변경은 저장할 때 적용됩니다';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

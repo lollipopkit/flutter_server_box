@@ -2170,12 +2170,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cores => '核心';
 
   @override
-  String get historyStored => '已存储的历史';
-
-  @override
-  String get historySinceConnect => '自连接以来 · 未存储';
-
-  @override
   String get historyNoStored => '只有 monitor agent 会存储历史。此连接只保留本应用连接后看到的部分。';
 
   @override
@@ -2382,6 +2376,114 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverDetailCards => '详情页卡片';
+
+  @override
+  String get connection => '连接方式';
+
+  @override
+  String get connectionTip => '两个可以同时开启。顺序就是拨号的顺序。';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return '拖动可调整顺序。先拨 $first；它不应答时，$second 独自承担会话。';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '只开启了 $name，没有可回落的对象。';
+  }
+
+  @override
+  String get transportNoneOn => '两个都关闭了 —— 这台服务器无法连接。';
+
+  @override
+  String get transportOffKept => '已关闭 —— 设置保留，不会拨号';
+
+  @override
+  String get transportDialledFirst => '先拨';
+
+  @override
+  String get transportFallback => '回落';
+
+  @override
+  String get transportOnlyMethod => '唯一方式';
+
+  @override
+  String get transportOff => '已关闭';
+
+  @override
+  String get transportSectionOff => '已关闭。下面的字段会保留，供你再次开启时使用。';
+
+  @override
+  String get monitorAgent => 'Monitor 代理';
+
+  @override
+  String get plainHttpEditTip =>
+      '凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把代理放到 TLS 后面。';
+
+  @override
+  String get behaviour => '行为';
+
+  @override
+  String get optional => '可选';
+
+  @override
+  String get optionalTip => '这里的东西都不是连接所必需的。展开一项，它的字段会接管表单。';
+
+  @override
+  String get sshAdvanced => 'SSH 高级';
+
+  @override
+  String get sshAdvancedTip => '备用地址、ProxyCommand、跳板机、文件传输、远端路径';
+
+  @override
+  String get appearanceAndPlace => '外观与位置';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo、坐标';
+
+  @override
+  String get statusCollection => '状态采集';
+
+  @override
+  String get statusCollectionTip => '运行哪些命令、自定义命令、读取哪个设备';
+
+  @override
+  String get tagAllTags => '全部标签';
+
+  @override
+  String get tagMatching => '匹配';
+
+  @override
+  String get tagNewHint => '新标签';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '新建 #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => '在这台上';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count 台服务器';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '这台上有 $count 个';
+  }
+
+  @override
+  String get tagMatchesTyped => '与输入匹配';
+
+  @override
+  String get tagEditorTip =>
+      '输入会过滤列表；按钮新建标签并直接加到这台服务器上。铅笔是重命名，会改掉所有用到它的服务器。没有服务器再用的标签会在保存时消失。';
+
+  @override
+  String get tagRenamesOnSave => '重命名在保存时生效';
 
   @override
   String get scheduledTasks => '计划任务';
@@ -4810,12 +4912,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cores => '核心';
 
   @override
-  String get historyStored => '已儲存的歷史';
-
-  @override
-  String get historySinceConnect => '自連線以來 · 未儲存';
-
-  @override
   String get historyNoStored => '只有 monitor agent 會儲存歷史。此連線只保留本應用連線後看到的部分。';
 
   @override
@@ -5022,6 +5118,114 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverDetailCards => '詳情頁卡片';
+
+  @override
+  String get connection => '連線方式';
+
+  @override
+  String get connectionTip => '兩個可以同時開啟。順序就是撥接的順序。';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return '拖曳可調整順序。先撥 $first；它不回應時，$second 獨自承擔工作階段。';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '只開啟了 $name，沒有可回落的對象。';
+  }
+
+  @override
+  String get transportNoneOn => '兩個都關閉了 —— 這台伺服器無法連線。';
+
+  @override
+  String get transportOffKept => '已關閉 —— 設定保留，不會撥接';
+
+  @override
+  String get transportDialledFirst => '先撥';
+
+  @override
+  String get transportFallback => '回落';
+
+  @override
+  String get transportOnlyMethod => '唯一方式';
+
+  @override
+  String get transportOff => '已關閉';
+
+  @override
+  String get transportSectionOff => '已關閉。下面的欄位會保留，供你再次開啟時使用。';
+
+  @override
+  String get monitorAgent => 'Monitor 代理';
+
+  @override
+  String get plainHttpEditTip =>
+      '憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把代理放到 TLS 後面。';
+
+  @override
+  String get behaviour => '行為';
+
+  @override
+  String get optional => '選用';
+
+  @override
+  String get optionalTip => '這裡的東西都不是連線所必需的。展開一項，它的欄位會接管表單。';
+
+  @override
+  String get sshAdvanced => 'SSH 進階';
+
+  @override
+  String get sshAdvancedTip => '備用位址、ProxyCommand、跳板機、檔案傳輸、遠端路徑';
+
+  @override
+  String get appearanceAndPlace => '外觀與位置';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo、座標';
+
+  @override
+  String get statusCollection => '狀態收集';
+
+  @override
+  String get statusCollectionTip => '執行哪些命令、自訂命令、讀取哪個裝置';
+
+  @override
+  String get tagAllTags => '全部標籤';
+
+  @override
+  String get tagMatching => '符合';
+
+  @override
+  String get tagNewHint => '新標籤';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '新增 #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => '在這台上';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count 台伺服器';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '這台上有 $count 個';
+  }
+
+  @override
+  String get tagMatchesTyped => '與輸入相符';
+
+  @override
+  String get tagEditorTip =>
+      '輸入會過濾清單；按鈕會新增標籤並直接加到這台伺服器上。鉛筆是重新命名，會改掉所有用到它的伺服器。沒有伺服器再使用的標籤會在儲存時消失。';
+
+  @override
+  String get tagRenamesOnSave => '重新命名在儲存時生效';
 
   @override
   String get scheduledTasks => '排程工作';

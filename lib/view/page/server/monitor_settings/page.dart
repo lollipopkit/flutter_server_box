@@ -60,7 +60,6 @@ final class _MonitorSettingsPageState extends State<MonitorSettingsPage> {
         },
         child: Scaffold(
           appBar: CustomAppBar(
-            centerTitle: true,
             title: TwoLineText(
               up: l10n.monitorSettings,
               down: widget.args.subtitle,

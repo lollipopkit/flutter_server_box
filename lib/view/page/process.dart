@@ -244,7 +244,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     final system = ref.watch(_provider.select((s) => s.status.system));
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(up: libL10n.process, down: widget.args.spi.name),
         actions: _buildActions(),
       ),
@@ -448,14 +447,9 @@ extension _ProcessPageWidgets on _ProcessPageState {
       overflow: TextOverflow.ellipsis,
       style: _metaStyle,
     );
-    final toggle = SizedBox(
-      height: 28,
-      child: FittedBox(
-        child: Switch(
-          value: _showKernelThreads,
-          onChanged: (value) => _rebuild(() => _showKernelThreads = value),
-        ),
-      ),
+    final toggle = SwitchX(
+      value: _showKernelThreads,
+      onChanged: (value) => _rebuild(() => _showKernelThreads = value),
     );
     return InkWell(
       borderRadius: BorderRadius.circular(7),

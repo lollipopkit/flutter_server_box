@@ -2380,12 +2380,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cores => 'Ядра';
 
   @override
-  String get historyStored => 'сохранённая история';
-
-  @override
-  String get historySinceConnect => 'с момента подключения · не сохраняется';
-
-  @override
   String get historyNoStored =>
       'Историю хранит только агент monitor. Это подключение хранит лишь то, что приложение увидело после подключения.';
 
@@ -2595,6 +2589,121 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Карточки страницы сведений';
+
+  @override
+  String get connection => 'Подключение';
+
+  @override
+  String get connectionTip =>
+      'Оба могут быть включены одновременно. Порядок — это порядок, в котором к ним обращаются.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Перетащите, чтобы изменить порядок. Сначала — $first; если он не отвечает, сессию берёт на себя $second.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Включён только $name, поэтому переключаться не на что.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Оба выключены — к этому серверу нельзя подключиться.';
+
+  @override
+  String get transportOffKept =>
+      'выключено — настройки сохранены, обращений нет';
+
+  @override
+  String get transportDialledFirst => 'обращение первым';
+
+  @override
+  String get transportFallback => 'запасной';
+
+  @override
+  String get transportOnlyMethod => 'единственный способ';
+
+  @override
+  String get transportOff => 'выключено';
+
+  @override
+  String get transportSectionOff =>
+      'Выключено. Поля ниже сохраняются на случай, если вы включите его снова.';
+
+  @override
+  String get monitorAgent => 'Агент monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Учётные данные и метрики идут по сети без шифрования. Ограничьтесь локальной сетью или адресом Tailscale либо поставьте агента за TLS.';
+
+  @override
+  String get behaviour => 'Поведение';
+
+  @override
+  String get optional => 'Необязательное';
+
+  @override
+  String get optionalTip =>
+      'Ничто здесь не нужно для подключения. Откройте один — и его поля займут место формы.';
+
+  @override
+  String get sshAdvanced => 'SSH, дополнительно';
+
+  @override
+  String get sshAdvancedTip =>
+      'Запасной адрес, ProxyCommand, промежуточный сервер, передача файлов, путь на сервере';
+
+  @override
+  String get appearanceAndPlace => 'Вид и место';
+
+  @override
+  String get appearanceAndPlaceTip => 'Логотип, координаты';
+
+  @override
+  String get statusCollection => 'Сбор статуса';
+
+  @override
+  String get statusCollectionTip =>
+      'Какие команды выполняются, свои команды, какое устройство читать';
+
+  @override
+  String get tagAllTags => 'Все теги';
+
+  @override
+  String get tagMatching => 'Совпадения';
+
+  @override
+  String get tagNewHint => 'Новый тег';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Создать #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'на этом сервере';
+
+  @override
+  String tagServersFmt(Object count) {
+    return 'серверов: $count';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count на этом сервере';
+  }
+
+  @override
+  String get tagMatchesTyped => 'совпадает с введённым';
+
+  @override
+  String get tagEditorTip =>
+      'Ввод фильтрует список; кнопка создаёт тег и сразу ставит его на этот сервер. Карандаш переименовывает его на всех серверах, где он есть. Тег, которого нет ни на одном сервере, исчезает при сохранении.';
+
+  @override
+  String get tagRenamesOnSave => 'Переименования применяются при сохранении';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

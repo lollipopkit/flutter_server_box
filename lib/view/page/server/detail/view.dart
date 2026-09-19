@@ -845,11 +845,14 @@ ${err.message ?? 'null'}
 
   /// The way into the agent's own configuration, for a server that has one.
   ///
-  /// Null for every other server, and asked of `spi.monitorHttp` rather than of
+  /// Null for every other server, and asked of `spi.monitorOn` rather than of
   /// [ServerState.capabilities]: what this opens is *the agent's* settings, and
   /// a server with both transports answers capability questions as the union of
   /// the two — so a capability check would show this for an SSH-only server
   /// that happens to share a capability with an agent.
+  ///
+  /// The switch counts. An agent that is configured and switched off is one
+  /// this app does not talk to, and editing its settings is talking to it.
   ///
   /// In the bar, not above the cards.
   ///
@@ -862,7 +865,7 @@ ${err.message ?? 'null'}
   /// Not in the function bar below the cards either: that row is things done
   /// *to* the machine, and this is the agent's own configuration.
   Widget? _buildMonitorSettingsBtn(ServerState si) {
-    final monitor = si.spi.monitorHttp;
+    final monitor = si.spi.monitorOn;
     if (monitor == null) return null;
 
     return IconButton(
@@ -1129,7 +1132,20 @@ ${err.message ?? 'null'}
   /// are two dozen numbers and stay one tap away.
   Widget? _buildDiskSmart(ServerState si) {
     final smarts = si.status.diskSmart;
-    if (smarts.isEmpty) return null;
+    if (smarts.isEmpty) {
+      // `smartctl` is missing, or is there and refused: both are why this card
+      // was empty, and neither was ever said. A host with no drives it can read
+      // still gets nothing.
+      if (si.status.sectionErrs['smart'] case final err?) {
+        return _buildFailedCard(
+          cardKey: 'smart',
+          icon: ServerDetailCards.smart.icon,
+          title: l10n.diskHealth,
+          err: err,
+        );
+      }
+      return null;
+    }
 
     // Worst first, which is the order the rows are read in and what the
     // headline is about. A drive smartctl could not read sorts between a
@@ -1378,7 +1394,17 @@ ${err.message ?? 'null'}
   /// per chip, and the readings behind it on tap.
   Widget? _buildSensors(ServerState si) {
     final ss = si.status;
-    if (ss.sensors.isEmpty) return null;
+    if (ss.sensors.isEmpty) {
+      if (ss.sectionErrs['sensors'] case final err?) {
+        return _buildFailedCard(
+          cardKey: 'sensor',
+          icon: Icons.thermostat,
+          title: libL10n.sensors,
+          err: err,
+        );
+      }
+      return null;
+    }
 
     return _buildReadoutCard(
       cardKey: 'sensor',

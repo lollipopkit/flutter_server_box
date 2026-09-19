@@ -15,6 +15,7 @@ library;
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -110,7 +111,7 @@ class _FakeServerNotifier extends ServerNotifier {
   final ServerExec? exec;
 
   @override
-  Future<ServerExec> ensureExec() async {
+  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async {
     final exec = this.exec;
     if (exec == null) throw StateError('offline: this test does not connect');
     return exec;

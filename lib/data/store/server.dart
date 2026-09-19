@@ -172,6 +172,10 @@ class ServerStore extends EntityStore<Spi> {
               jumpIds: jumps,
             ),
       preferredTransport: ServerTransport.fromName(row['preferred_transport']),
+      // Null for every row written before the columns, which is what those
+      // servers were doing: dialling whatever they had configured.
+      sshEnabled: (row['ssh_enabled'] as int? ?? 1) == 1,
+      monitorEnabled: (row['monitor_enabled'] as int? ?? 1) == 1,
       monitorHttp: monitorAddr == null
           ? null
           : MonitorHttpCredential(
@@ -303,6 +307,8 @@ class ServerStore extends EntityStore<Spi> {
       'ssh_proxy_command',
       'ssh_file_transport',
       'preferred_transport',
+      'ssh_enabled',
+      'monitor_enabled',
       'monitor_addr',
       'monitor_user',
       'monitor_pwd',
@@ -342,7 +348,16 @@ class ServerStore extends EntityStore<Spi> {
       // Written only when it means something. A server with one way in has
       // nothing to prefer, and storing a value there would leave a preference
       // behind for the *other* transport if that one is ever configured.
-      ssh != null && monitor != null ? item.transport.name : null,
+      //
+      // The stored preference, not `item.transport`, which resolves the
+      // switches as well as the configuration: saving a server with SSH
+      // switched off would otherwise write "the agent leads" over the order
+      // the user set, and switching SSH back on would not bring it back.
+      ssh != null && monitor != null
+          ? (item.preferredTransport ?? ServerTransport.ssh).name
+          : null,
+      item.sshEnabled ? 1 : 0,
+      item.monitorEnabled ? 1 : 0,
       monitor?.addr,
       monitor?.user,
       monitor?.pwd,

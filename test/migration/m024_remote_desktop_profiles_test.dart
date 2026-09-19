@@ -26,11 +26,17 @@ void main() {
     await SqliteDb.close();
   });
 
-  test('is the registered final step', () {
+  test('is registered at its own step', () {
+    // The chain's last step is asserted where that step lives; what matters
+    // here is that this one is in the list at the version it claims, since a
+    // step missing from `kSchemaMigrations` is a launch that throws on a real
+    // install and nothing in this file's other tests would notice.
     expect(const RemoteDesktopProfilesMigration().from, 24);
-    expect(SchemaVersion.current, 25);
-    expect(kSchemaMigrations.last, isA<RemoteDesktopProfilesMigration>());
-    expect(kSchemaMigrations.last.from, SchemaVersion.current - 1);
+    expect(
+      kSchemaMigrations.whereType<RemoteDesktopProfilesMigration>(),
+      hasLength(1),
+    );
+    expect(SchemaVersion.current, greaterThan(24));
   });
 
   test('creates the same columns as a fresh database', () async {

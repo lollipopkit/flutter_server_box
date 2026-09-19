@@ -2244,12 +2244,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cores => 'コア数';
 
   @override
-  String get historyStored => '保存された履歴';
-
-  @override
-  String get historySinceConnect => '接続以降 · 未保存';
-
-  @override
   String get historyNoStored =>
       '履歴を保存するのは monitor エージェントだけです。この接続では、アプリが接続後に見た分のみ保持します。';
 
@@ -2458,6 +2452,114 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get serverDetailCards => '詳細ページのカード';
+
+  @override
+  String get connection => '接続';
+
+  @override
+  String get connectionTip => '両方を同時に有効にできます。並び順が接続を試す順序です。';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'ドラッグで順序を変更できます。最初に $first を試し、応答がなければ $second がセッションを引き受けます。';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return '$name だけが有効なので、切り替え先はありません。';
+  }
+
+  @override
+  String get transportNoneOn => 'どちらも無効です — このサーバーには接続できません。';
+
+  @override
+  String get transportOffKept => '無効 — 設定は保持され、接続は行いません';
+
+  @override
+  String get transportDialledFirst => '最初に試す';
+
+  @override
+  String get transportFallback => '予備';
+
+  @override
+  String get transportOnlyMethod => '唯一の方法';
+
+  @override
+  String get transportOff => '無効';
+
+  @override
+  String get transportSectionOff => '無効です。再び有効にするときのために、以下の項目はそのまま保持されます。';
+
+  @override
+  String get monitorAgent => 'Monitor エージェント';
+
+  @override
+  String get plainHttpEditTip =>
+      '認証情報と計測値が暗号化されずにネットワークを通ります。LAN か Tailscale のアドレスに限定するか、エージェントを TLS の背後に置いてください。';
+
+  @override
+  String get behaviour => '動作';
+
+  @override
+  String get optional => '任意';
+
+  @override
+  String get optionalTip => '接続にはどれも必要ありません。開くと、その項目がフォームを置き換えます。';
+
+  @override
+  String get sshAdvanced => 'SSH 詳細';
+
+  @override
+  String get sshAdvancedTip => '代替の接続先、ProxyCommand、踏み台、ファイル転送、リモートのパス';
+
+  @override
+  String get appearanceAndPlace => '外観と場所';
+
+  @override
+  String get appearanceAndPlaceTip => 'ロゴ、座標';
+
+  @override
+  String get statusCollection => 'ステータス収集';
+
+  @override
+  String get statusCollectionTip => '実行するコマンド、カスタムコマンド、読み取るデバイス';
+
+  @override
+  String get tagAllTags => 'すべてのタグ';
+
+  @override
+  String get tagMatching => '一致';
+
+  @override
+  String get tagNewHint => '新しいタグ';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag を作成';
+  }
+
+  @override
+  String get tagOnThisServer => 'このサーバー';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count 台のサーバー';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return 'このサーバーに $count 個';
+  }
+
+  @override
+  String get tagMatchesTyped => '入力に一致';
+
+  @override
+  String get tagEditorTip =>
+      '入力するとリストが絞り込まれます。ボタンはタグを作成し、そのままこのサーバーに付けます。鉛筆は名前の変更で、そのタグを使うすべてのサーバーに及びます。どのサーバーも使わなくなったタグは保存時に消えます。';
+
+  @override
+  String get tagRenamesOnSave => '名前の変更は保存時に反映されます';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

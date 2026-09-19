@@ -2371,12 +2371,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get cores => 'Nüvələr';
 
   @override
-  String get historyStored => 'saxlanılan tarixçə';
-
-  @override
-  String get historySinceConnect => 'qoşulmadan bəri · saxlanılmır';
-
-  @override
   String get historyNoStored =>
       'Tarixçəni yalnız monitor agenti saxlayır. Bu bağlantı yalnız tətbiqin qoşulduqdan sonra gördüyünü saxlayır.';
 
@@ -2586,6 +2580,122 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Ətraflı səhifəsinin kartları';
+
+  @override
+  String get connection => 'Bağlantı';
+
+  @override
+  String get connectionTip =>
+      'Hər ikisi eyni anda açıq ola bilər. Sıra, onların yığılma sırasıdır.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Sıranı dəyişmək üçün sürüşdürün. Əvvəlcə $first yığılır; cavab verməsə, sessiyanı $second təkbaşına aparır.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Yalnız $name açıqdır, ona görə də geri dönüləcək bir şey yoxdur.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Hər ikisi bağlıdır — bu serverə qoşulmaq mümkün deyil.';
+
+  @override
+  String get transportOffKept =>
+      'bağlı — parametrlər saxlanılır, heç vaxt yığılmır';
+
+  @override
+  String get transportDialledFirst => 'əvvəlcə yığılır';
+
+  @override
+  String get transportFallback => 'ehtiyat';
+
+  @override
+  String get transportOnlyMethod => 'yeganə üsul';
+
+  @override
+  String get transportOff => 'bağlı';
+
+  @override
+  String get transportSectionOff =>
+      'Bağlıdır. Aşağıdakı sahələr yenidən açanda lazım olsun deyə saxlanılır.';
+
+  @override
+  String get monitorAgent => 'Monitor agenti';
+
+  @override
+  String get plainHttpEditTip =>
+      'Giriş məlumatları və göstəricilər şəbəkədən şifrələnmədən keçir. Bunu LAN və ya Tailscale ünvanı ilə məhdudlaşdırın, ya da agenti TLS arxasına qoyun.';
+
+  @override
+  String get behaviour => 'Davranış';
+
+  @override
+  String get optional => 'İstəyə bağlı';
+
+  @override
+  String get optionalTip =>
+      'Burada heç nə qoşulmaq üçün lazım deyil. Birini açın, onun sahələri formanı əvəz edir.';
+
+  @override
+  String get sshAdvanced => 'SSH əlavə';
+
+  @override
+  String get sshAdvancedTip =>
+      'Ehtiyat ünvan, ProxyCommand, keçid serveri, fayl nəqli, uzaq yol';
+
+  @override
+  String get appearanceAndPlace => 'Görünüş və yer';
+
+  @override
+  String get appearanceAndPlaceTip => 'Loqo, koordinatlar';
+
+  @override
+  String get statusCollection => 'Status toplanması';
+
+  @override
+  String get statusCollectionTip =>
+      'Hansı əmrlər işləyir, fərdi əmrlər, hansı cihaz oxunur';
+
+  @override
+  String get tagAllTags => 'Bütün teqlər';
+
+  @override
+  String get tagMatching => 'Uyğun gələnlər';
+
+  @override
+  String get tagNewHint => 'Yeni teq';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag yarat';
+  }
+
+  @override
+  String get tagOnThisServer => 'bu serverdə';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return 'bu serverdə $count';
+  }
+
+  @override
+  String get tagMatchesTyped => 'yazdığınıza uyğun gəlir';
+
+  @override
+  String get tagEditorTip =>
+      'Yazmaq siyahını süzgəcdən keçirir; düymə teqi yaradır və bir addımda bu serverə əlavə edir. Karandaş onu daşıyan hər serverdə adını dəyişir. Heç bir serverin daşımadığı teq yadda saxlanarkən yox olur.';
+
+  @override
+  String get tagRenamesOnSave =>
+      'Adların dəyişdirilməsi yadda saxlayarkən tətbiq olunur';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

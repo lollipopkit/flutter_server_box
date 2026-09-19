@@ -2372,12 +2372,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get cores => 'Kernen';
 
   @override
-  String get historyStored => 'opgeslagen geschiedenis';
-
-  @override
-  String get historySinceConnect => 'sinds verbinden · niet opgeslagen';
-
-  @override
   String get historyNoStored =>
       'Alleen een monitor-agent slaat geschiedenis op. Deze verbinding bewaart alleen wat de app sinds het verbinden heeft gezien.';
 
@@ -2594,6 +2588,121 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Kaarten op de detailpagina';
+
+  @override
+  String get connection => 'Verbinding';
+
+  @override
+  String get connectionTip =>
+      'Beide kunnen tegelijk aan staan. De volgorde is de volgorde waarin ze worden gebeld.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Sleep om de volgorde te wijzigen. $first wordt eerst gebeld; antwoordt die niet, dan draagt $second de sessie alleen.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Alleen $name staat aan, dus er is niets om op terug te vallen.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Beide staan uit — deze server kan niet worden verbonden.';
+
+  @override
+  String get transportOffKept =>
+      'uit — instellingen blijven bewaard, wordt nooit gebeld';
+
+  @override
+  String get transportDialledFirst => 'eerst gebeld';
+
+  @override
+  String get transportFallback => 'terugval';
+
+  @override
+  String get transportOnlyMethod => 'enige methode';
+
+  @override
+  String get transportOff => 'uit';
+
+  @override
+  String get transportSectionOff =>
+      'Uit. De velden hieronder blijven bewaard voor wanneer u het weer aanzet.';
+
+  @override
+  String get monitorAgent => 'Monitor-agent';
+
+  @override
+  String get plainHttpEditTip =>
+      'Inloggegevens en metingen gaan onversleuteld over het netwerk. Houd het bij een LAN of een Tailscale-adres, of zet de agent achter TLS.';
+
+  @override
+  String get behaviour => 'Gedrag';
+
+  @override
+  String get optional => 'Optioneel';
+
+  @override
+  String get optionalTip =>
+      'Niets hiervan is nodig om te verbinden. Open er een en de velden ervan nemen het formulier over.';
+
+  @override
+  String get sshAdvanced => 'SSH geavanceerd';
+
+  @override
+  String get sshAdvancedTip =>
+      'Uitwijkbestemming, ProxyCommand, springserver, bestandstransport, extern pad';
+
+  @override
+  String get appearanceAndPlace => 'Weergave en locatie';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, coördinaten';
+
+  @override
+  String get statusCollection => 'Statusverzameling';
+
+  @override
+  String get statusCollectionTip =>
+      'Welke opdrachten draaien, eigen opdrachten, welk apparaat wordt gelezen';
+
+  @override
+  String get tagAllTags => 'Alle tags';
+
+  @override
+  String get tagMatching => 'Overeenkomsten';
+
+  @override
+  String get tagNewHint => 'Nieuwe tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag maken';
+  }
+
+  @override
+  String get tagOnThisServer => 'op deze server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servers';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count op deze server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'komt overeen met je invoer';
+
+  @override
+  String get tagEditorTip =>
+      'Typen filtert de lijst; de knop maakt de tag en zet hem in één stap op deze server. Het potlood hernoemt hem op elke server die hem draagt. Een tag die geen enkele server draagt, verdwijnt bij het opslaan.';
+
+  @override
+  String get tagRenamesOnSave => 'Hernoemingen worden bij opslaan toegepast';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

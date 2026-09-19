@@ -2389,12 +2389,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cores => 'Núcleos';
 
   @override
-  String get historyStored => 'historial almacenado';
-
-  @override
-  String get historySinceConnect => 'desde la conexión · sin almacenar';
-
-  @override
   String get historyNoStored =>
       'Solo un agente monitor almacena el historial. Esta conexión conserva lo que la app ha visto desde que se conectó.';
 
@@ -2611,6 +2605,121 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Tarjetas de la página de detalles';
+
+  @override
+  String get connection => 'Conexión';
+
+  @override
+  String get connectionTip =>
+      'Ambos pueden estar activos a la vez. El orden es el orden en que se marcan.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Arrastra para cambiar el orden. Se marca $first primero; si no responde, $second lleva la sesión por su cuenta.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Solo $name está activo, así que no hay nada a lo que recurrir.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Ambos están desactivados: no se puede conectar con este servidor.';
+
+  @override
+  String get transportOffKept =>
+      'desactivado — los ajustes se conservan, nunca se marca';
+
+  @override
+  String get transportDialledFirst => 'se marca primero';
+
+  @override
+  String get transportFallback => 'alternativa';
+
+  @override
+  String get transportOnlyMethod => 'único método';
+
+  @override
+  String get transportOff => 'desactivado';
+
+  @override
+  String get transportSectionOff =>
+      'Desactivado. Los campos de abajo se conservan para cuando vuelvas a activarlo.';
+
+  @override
+  String get monitorAgent => 'Agente monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Las credenciales y las métricas cruzan la red sin cifrar. Limítalo a una LAN o a una dirección de Tailscale, o pon el agente detrás de TLS.';
+
+  @override
+  String get behaviour => 'Comportamiento';
+
+  @override
+  String get optional => 'Opcional';
+
+  @override
+  String get optionalTip =>
+      'Nada de esto hace falta para conectar. Abre uno y sus campos toman el formulario.';
+
+  @override
+  String get sshAdvanced => 'SSH avanzado';
+
+  @override
+  String get sshAdvancedTip =>
+      'Destino alternativo, ProxyCommand, servidor de salto, transporte de archivos, ruta remota';
+
+  @override
+  String get appearanceAndPlace => 'Apariencia y ubicación';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logotipo, coordenadas';
+
+  @override
+  String get statusCollection => 'Recogida de estado';
+
+  @override
+  String get statusCollectionTip =>
+      'Qué comandos se ejecutan, comandos propios, qué dispositivo se lee';
+
+  @override
+  String get tagAllTags => 'Todas las etiquetas';
+
+  @override
+  String get tagMatching => 'Coincidencias';
+
+  @override
+  String get tagNewHint => 'Nueva etiqueta';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Crear #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'en este servidor';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servidores';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count en este servidor';
+  }
+
+  @override
+  String get tagMatchesTyped => 'coincide con lo que escribiste';
+
+  @override
+  String get tagEditorTip =>
+      'Lo que escribes filtra la lista; el botón crea la etiqueta y la pone en este servidor en un solo paso. El lápiz la renombra en todos los servidores que la llevan. Una etiqueta que ningún servidor lleva desaparece al guardar.';
+
+  @override
+  String get tagRenamesOnSave => 'Los cambios de nombre se aplican al guardar';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

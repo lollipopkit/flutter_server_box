@@ -20,12 +20,23 @@ class RemoteDesktopTabPage extends ConsumerStatefulWidget {
 class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   String? _shownCertificate;
 
+  /// Read once and kept, because [dispose] cannot read it.
+  ///
+  /// `ref` resolves through this element's `BuildContext`, and by the time the
+  /// element is unmounted that is gone — `ref.read` there throws
+  /// `Using "ref" when a widget is about to or has been unmounted is unsafe`,
+  /// which surfaced as an exception every time this tab left the tree. The
+  /// provider is `keepAlive`, so the notifier outlives this page whichever way
+  /// it is reached.
+  late final RemoteDesktopSessions _sessions;
+
   @override
   void initState() {
     super.initState();
+    _sessions = ref.read(remoteDesktopSessionsProvider.notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(remoteDesktopSessionsProvider.notifier).setSurfaceVisible(
+      _sessions.setSurfaceVisible(
         ref.read(currentHomeTabProvider) == AppTab.remoteDesktop,
       );
     });
@@ -33,7 +44,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
 
   @override
   void dispose() {
-    ref.read(remoteDesktopSessionsProvider.notifier).setSurfaceVisible(false);
+    _sessions.setSurfaceVisible(false);
     super.dispose();
   }
 

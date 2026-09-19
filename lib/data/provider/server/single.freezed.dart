@@ -64,12 +64,12 @@ $ServerStateCopyWith<ServerState> get copyWith => _$ServerStateCopyWithImpl<Serv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&const DeepCollectionEquality().equals(other.agentCapabilities, agentCapabilities));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&(identical(other.agentCapabilities, agentCapabilities) || other.agentCapabilities == agentCapabilities));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess,agentVersion,const DeepCollectionEquality().hash(agentCapabilities));
+int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess,agentVersion,agentCapabilities);
 
 @override
 String toString() {
@@ -322,12 +322,12 @@ _$ServerStateCopyWith<_ServerState> get copyWith => __$ServerStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&const DeepCollectionEquality().equals(other.agentCapabilities, agentCapabilities));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.latencyMs, latencyMs) || other.latencyMs == latencyMs)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess)&&(identical(other.agentVersion, agentVersion) || other.agentVersion == agentVersion)&&(identical(other.agentCapabilities, agentCapabilities) || other.agentCapabilities == agentCapabilities));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess,agentVersion,const DeepCollectionEquality().hash(agentCapabilities));
+int get hashCode => Object.hash(runtimeType,spi,status,conn,latencyMs,client,remoteAccess,agentVersion,agentCapabilities);
 
 @override
 String toString() {

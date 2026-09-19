@@ -2381,12 +2381,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get cores => 'Kerne';
 
   @override
-  String get historyStored => 'gespeicherter Verlauf';
-
-  @override
-  String get historySinceConnect => 'seit der Verbindung · nicht gespeichert';
-
-  @override
   String get historyNoStored =>
       'Nur ein Monitor-Agent speichert den Verlauf. Diese Verbindung behält nur, was die App seit dem Verbinden gesehen hat.';
 
@@ -2602,6 +2596,121 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Karten der Detailseite';
+
+  @override
+  String get connection => 'Verbindung';
+
+  @override
+  String get connectionTip =>
+      'Beide können gleichzeitig an sein. Die Reihenfolge ist die Reihenfolge, in der gewählt wird.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Zum Ändern der Reihenfolge ziehen. $first wird zuerst gewählt; antwortet es nicht, trägt $second die Sitzung allein.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Nur $name ist an, es gibt also nichts, worauf ausgewichen werden könnte.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Beide sind aus — dieser Server kann nicht verbunden werden.';
+
+  @override
+  String get transportOffKept =>
+      'aus — Einstellungen bleiben, wird nie gewählt';
+
+  @override
+  String get transportDialledFirst => 'zuerst gewählt';
+
+  @override
+  String get transportFallback => 'Ausweichweg';
+
+  @override
+  String get transportOnlyMethod => 'einziger Weg';
+
+  @override
+  String get transportOff => 'aus';
+
+  @override
+  String get transportSectionOff =>
+      'Aus. Die Felder darunter bleiben erhalten, bis Sie es wieder einschalten.';
+
+  @override
+  String get monitorAgent => 'Monitor-Agent';
+
+  @override
+  String get plainHttpEditTip =>
+      'Zugangsdaten und Messwerte gehen unverschlüsselt über das Netz. Beschränken Sie das auf ein LAN oder eine Tailscale-Adresse, oder stellen Sie den Agenten hinter TLS.';
+
+  @override
+  String get behaviour => 'Verhalten';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get optionalTip =>
+      'Nichts hiervon ist zum Verbinden nötig. Öffnen Sie eines, und seine Felder übernehmen das Formular.';
+
+  @override
+  String get sshAdvanced => 'SSH erweitert';
+
+  @override
+  String get sshAdvancedTip =>
+      'Ausweichziel, ProxyCommand, Sprungserver, Dateiübertragung, entfernter Pfad';
+
+  @override
+  String get appearanceAndPlace => 'Darstellung & Ort';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, Koordinaten';
+
+  @override
+  String get statusCollection => 'Statuserfassung';
+
+  @override
+  String get statusCollectionTip =>
+      'Welche Befehle laufen, eigene Befehle, welches Gerät gelesen wird';
+
+  @override
+  String get tagAllTags => 'Alle Tags';
+
+  @override
+  String get tagMatching => 'Treffer';
+
+  @override
+  String get tagNewHint => 'Neuer Tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag erstellen';
+  }
+
+  @override
+  String get tagOnThisServer => 'auf diesem Server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count Server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count auf diesem Server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'passt zur Eingabe';
+
+  @override
+  String get tagEditorTip =>
+      'Die Eingabe filtert die Liste; die Schaltfläche erstellt den Tag und setzt ihn in einem Schritt auf diesen Server. Das Stiftsymbol benennt ihn auf jedem Server um, der ihn trägt. Ein Tag, den kein Server trägt, verschwindet beim Speichern.';
+
+  @override
+  String get tagRenamesOnSave => 'Umbenennungen gelten beim Speichern';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

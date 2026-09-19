@@ -10,6 +10,104 @@ final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 /// cheaper than a wrapper type for one entry.
 const _kNewBmcCred = '\u0000new';
 
+extension _Tags on _ServerEditPageState {
+  /// How many servers carry each tag.
+  ///
+  /// Counted here rather than kept anywhere: a tag is not a record, only a
+  /// string repeated across servers, and the count is what makes the editor's
+  /// list worth reading — it says which of `prod` and `production` is the one
+  /// everything else already uses.
+  Map<String, int> _tagUsage() {
+    final counts = <String, int>{};
+    for (final spi in ref.read(serversProvider).servers.values) {
+      for (final tag in spi.tags ?? const <String>[]) {
+        counts[tag] = (counts[tag] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  Future<void> _onEditTags(BuildContext context) {
+    final counts = _tagUsage();
+    final all = ref.read(serversProvider).tags;
+    return showTagEditor(
+      context,
+      tags: _tags,
+      allTags: all,
+      hint: l10n.tagNewHint,
+      listTitle: l10n.tagAllTags,
+      matchingTitle: l10n.tagMatching,
+      countLabel: (n) => l10n.tagOnThisServerFmt('$n'),
+      // "Create" only when there is something to create. Typing the name of a
+      // tag that already exists is how someone reaches a row far down the
+      // list, and offering to create it again would be offering a duplicate
+      // of the row right underneath.
+      createLabel: (needle) =>
+          all.contains(needle) ? libL10n.add : l10n.tagCreateFmt(needle),
+      noteOf: (tag, selected, matching) => [
+        if (selected) l10n.tagOnThisServer,
+        if (matching && !selected) l10n.tagMatchesTyped,
+        l10n.tagServersFmt('${counts[tag] ?? 0}'),
+      ].join(' · '),
+      onRename: _onRenameTag,
+      note: l10n.tagEditorTip,
+      footer: l10n.tagRenamesOnSave,
+    );
+  }
+
+  /// Records a rename, to be carried out across every server on save.
+  ///
+  /// Staged rather than written now, because this page has not written
+  /// anything yet: leaving it by the back gesture undoes the name, the tags
+  /// and the address, and a rename that had already reached four other servers
+  /// would be the one edit that survived a cancel.
+  void _onRenameTag(String from, String to) {
+    // Collapsed, so renaming `a` to `b` and then `b` to `c` is one rename of
+    // `a` to `c` rather than two, the second of which would find nothing left
+    // called `b` on any server.
+    final origin = _pendingTagRenames.entries
+        .firstWhereOrNull((e) => e.value == from)
+        ?.key;
+    _pendingTagRenames.remove(origin);
+    if ((origin ?? from) != to) _pendingTagRenames[origin ?? from] = to;
+  }
+
+  /// Rewrites the staged renames onto every other server that carries one.
+  ///
+  /// This server is not among them: its own tags are whatever `_tags` holds,
+  /// and the save that calls this has already written them.
+  Future<void> _applyTagRenames() async {
+    if (_pendingTagRenames.isEmpty) return;
+    final notifier = ref.read(serversProvider.notifier);
+    for (final old in ref.read(serversProvider).servers.values.toList()) {
+      if (old.id == _serverId) continue;
+      final tags = old.tags;
+      if (tags == null || tags.isEmpty) continue;
+
+      var changed = false;
+      final next = <String>[];
+      for (final tag in tags) {
+        final to = _pendingTagRenames[tag];
+        if (to == null) {
+          if (!next.contains(tag)) next.add(tag);
+          continue;
+        }
+        changed = true;
+        // A rename onto a name the server already carries is a merge, not a
+        // second copy of it.
+        if (!next.contains(to)) next.add(to);
+      }
+      if (!changed) continue;
+
+      await notifier.updateServer(
+        old,
+        old.copyWith(tags: next.isEmpty ? null : next),
+      );
+    }
+    _pendingTagRenames.clear();
+  }
+}
+
 extension _Discovery on _ServerEditPageState {
   /// Sweeps the network and fills this form in from what is picked.
   ///
@@ -433,30 +531,39 @@ extension _Actions on _ServerEditPageState {
       geo: geo,
     );
 
-    MonitorHttpCredential? monitorHttp;
-    if (useMonitorHttp) {
-      final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
-      if (monitorAddr == null) {
-        Toast.show('${libL10n.invalid}: Monitor URL');
-        return;
-      }
-      monitorHttp = MonitorHttpCredential(
-        addr: monitorAddr,
-        user: _monitorUserCtrl.text.selfNotEmptyOrNull,
-        pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
-        ignoreCert: _monitorIgnoreCert.value,
-        allowInsecure: _monitorAllowInsecure.value,
-      );
+    // Built from the fields whatever the switch says, and the switch travels
+    // beside it as `monitorEnabled`. Off keeps the configuration — that is the
+    // whole of what "off" means here — so turning a method back on is not a
+    // retyping exercise. Only the address is required, and only when the
+    // switch is on: there is nothing to dial without it.
+    final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
+    if (useMonitorHttp && monitorAddr == null) {
+      Toast.show('${libL10n.invalid}: Monitor URL');
+      return;
     }
+    final monitorHttp = monitorAddr == null
+        ? null
+        : MonitorHttpCredential(
+            addr: monitorAddr,
+            user: _monitorUserCtrl.text.selfNotEmptyOrNull,
+            pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
+            ignoreCert: _monitorIgnoreCert.value,
+            allowInsecure: _monitorAllowInsecure.value,
+          );
 
-    // Null when the SSH switch is off: such a server is reached through its
-    // agent, and nothing in the hidden form would have anywhere to go.
-    final ssh = !useSsh
+    // Same rule as the agent above: kept when switched off, and absent only
+    // when there is no host to keep.
+    final ssh = _ipController.text.trim().isEmpty
         ? null
         : SshCredential(
             ip: _ipController.text,
             port: int.tryParse(_portController.text) ?? 22,
-            user: _usernameController.text,
+            // Defaulted here as well as in the checks above, which only run
+            // when the switch is on: a parked configuration is still one
+            // somebody will turn back on.
+            user: _usernameController.text.isEmpty
+                ? 'root'
+                : _usernameController.text,
             pwd: _passwordController.text.selfNotEmptyOrNull,
             keyId: selectedKey?.id,
             // Carried through rather than rebuilt from the form: nothing on
@@ -535,6 +642,8 @@ extension _Actions on _ServerEditPageState {
                 ? ServerTransport.monitorHttp
                 : ServerTransport.ssh)
           : null,
+      sshEnabled: useSsh,
+      monitorEnabled: useMonitorHttp,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
       customSystemType: _systemType.value,
@@ -561,6 +670,10 @@ extension _Actions on _ServerEditPageState {
         if (!await _persistPendingSudoPassword()) return;
         await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
       }
+      // After this server is written, so that a failure above leaves the other
+      // servers alone — and so that the state this reads back already has this
+      // server's own tags in it.
+      await _applyTagRenames();
     } on DuplicateNameException catch (e) {
       if (mounted) Toast.error(l10n.nameAlreadyExistsFmt(e.name));
       return;
@@ -765,8 +878,12 @@ extension _Utils on _ServerEditPageState {
     }
 
     final monitorHttp = spi.monitorHttp;
-    _useSsh.value = spi.ssh != null;
-    _useMonitorHttp.value = monitorHttp != null;
+    // The switch, which is configuration *and* the switch: a method with
+    // nothing configured is off however the flag reads, and one that is
+    // configured and switched off shows its fields under a section that says
+    // it is off.
+    _useSsh.value = spi.sshOn != null;
+    _useMonitorHttp.value = spi.monitorOn != null;
     _preferMonitorHttp.value =
         spi.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {

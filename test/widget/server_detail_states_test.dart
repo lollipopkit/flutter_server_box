@@ -227,6 +227,44 @@ void main() {
     expect(find.textContaining('%'), findsWidgets);
   });
 
+  /// A row that vanishes says this machine has no memory. The five every
+  /// machine has stay where they are and say what happened to the reading.
+  testWidgets('a failed section keeps its row even with no reading', (
+    tester,
+  ) async {
+    final notifier = await pump(tester);
+
+    final status = InitStatus.status;
+    status.more[StatusCmdType.host] = 'test-host';
+    status.sectionErrs['mem'] = 'cat: /proc/meminfo: Permission denied';
+    notifier.updateStatus(status);
+    await settle(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(libL10n.memory), findsWidgets);
+    expect(find.text(app_locale.l10n.unavailable), findsWidgets);
+    expect(find.text('cat: /proc/meminfo: Permission denied'), findsWidgets);
+  });
+
+  /// A card that hides when it is empty answers "this machine has none of
+  /// these", which is the wrong answer when the command is simply not there.
+  testWidgets('a card whose command failed is drawn, saying why', (
+    tester,
+  ) async {
+    final notifier = await pump(tester);
+
+    final status = InitStatus.status;
+    status.more[StatusCmdType.host] = 'test-host';
+    status.sectionErrs['sensors'] = 'sh: 1: sensors: not found';
+    notifier.updateStatus(status);
+    await settle(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(libL10n.sensors), findsOneWidget);
+    expect(find.text('sh: 1: sensors: not found'), findsWidgets);
+    expect(find.text(app_locale.l10n.metricUnavailableTip), findsOneWidget);
+  });
+
   testWidgets('readings nobody should act on say when they were taken', (
     tester,
   ) async {

@@ -9,6 +9,7 @@ library;
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -102,7 +103,7 @@ class _FakeServerNotifier extends ServerNotifier {
   final ServerExec exec;
 
   @override
-  Future<ServerExec> ensureExec() async => exec;
+  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => exec;
 }
 
 /// A systemd host whose account has [uid], recording what it was asked to run.

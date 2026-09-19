@@ -127,6 +127,21 @@ class Servers extends Table with SyncMeta {
   /// written before v18 are in, when carrying both was not possible.
   TextColumn get preferredTransport => text().nullable()();
 
+  /// Whether each way in is dialled at all.
+  ///
+  /// The columns beside them are the *configuration*, which survives being
+  /// switched off — that is the whole reason these exist. So the CHECK below
+  /// still asks only that a row carry an address, and "both switched off" is
+  /// refused by `Spix.validate` rather than by SQL: a row can be edited into
+  /// that state field by field, and a constraint that fired mid-edit would
+  /// fail the write instead of the form.
+  ///
+  /// True for every row written before they existed, which is what those
+  /// servers were doing.
+  BoolColumn get sshEnabled => boolean().withDefault(const Constant(true))();
+  BoolColumn get monitorEnabled =>
+      boolean().withDefault(const Constant(true))();
+
   TextColumn get monitorAddr => text().nullable()();
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();

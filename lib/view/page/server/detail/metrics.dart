@@ -220,6 +220,31 @@ String? _sectionErr(server_model.ServerStatus ss, _MetricKind kind) {
   return null;
 }
 
+/// A row for one of the five every machine has, whose section could not be
+/// read.
+///
+/// Absence is a claim about the machine — that it has no such hardware — and
+/// for these five it is never the true one. So the row stays where it was and
+/// says what happened to the reading, rather than leaving the reader to notice
+/// that a line is gone.
+_MetricView _failedMetric(
+  _MetricKind kind,
+  String label,
+  IconData icon,
+  Color color,
+  String err,
+) => _MetricView(
+  kind: kind,
+  label: label,
+  icon: icon,
+  color: color,
+  value: '',
+  note: '',
+  bigNote: '',
+  series: const [],
+  format: _pct,
+).failing(err);
+
 /// Whether this server has said anything about itself yet.
 bool _neverSampled(ServerState si) =>
     si.status.more.isEmpty && si.status.history.isEmpty;
@@ -362,6 +387,16 @@ extension on _ServerDetailPageState {
           format: _pct,
         ),
       );
+    } else if (_sectionErr(ss, _MetricKind.mem) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.mem,
+          libL10n.memory,
+          ServerDetailCards.mem.icon,
+          _kMemColor,
+          err,
+        ),
+      );
     }
 
     if (ss.swap.total > 0) {
@@ -384,6 +419,16 @@ extension on _ServerDetailPageState {
           format: _pct,
         ),
       );
+    } else if (_sectionErr(ss, _MetricKind.swap) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.swap,
+          'Swap',
+          ServerDetailCards.swap.icon,
+          _kSwapColor,
+          err,
+        ),
+      );
     }
 
     if (ss.disk.isNotEmpty) {
@@ -401,6 +446,16 @@ extension on _ServerDetailPageState {
           percent: used / 100,
           series: [_HistorySeries(libL10n.disk, _kDiskColor, w.disk)],
           format: _pct,
+        ),
+      );
+    } else if (_sectionErr(ss, _MetricKind.disk) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.disk,
+          libL10n.disk,
+          ServerDetailCards.disk.icon,
+          _kDiskColor,
+          err,
         ),
       );
     }
@@ -470,6 +525,16 @@ extension on _ServerDetailPageState {
               ],
           format: _rateOf,
           binary: true,
+        ),
+      );
+    } else if (_sectionErr(ss, _MetricKind.net) case final err?) {
+      views.add(
+        _failedMetric(
+          _MetricKind.net,
+          libL10n.net,
+          ServerDetailCards.net.icon,
+          _kNetTxColor,
+          err,
         ),
       );
     }
@@ -936,6 +1001,7 @@ extension on _ServerDetailPageState {
         (k: l10n.samples, v: '${w.times.length}'),
     ];
     final device = _buildDeviceControl(si, m);
+    final note = _historyNote(si, wide: wide);
     // Two groups with the room between them, not five children sharing it:
     // everything in this line is as long as the language or the machine makes
     // it, and a `Flexible` narrower than its share leaves the difference as
@@ -982,10 +1048,10 @@ extension on _ServerDetailPageState {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (wide) ...[
+              if (wide && note != null) ...[
                 Flexible(
                   child: Text(
-                    _historyNote(si),
+                    note,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.right,
@@ -1055,21 +1121,22 @@ extension on _ServerDetailPageState {
                   UIs.height7,
                   _buildStats(stats),
                 ],
-                UIs.height7,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _historyNote(si, wide: false),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: UIs.text11Grey,
+                if (note != null || device != null) ...[
+                  UIs.height7,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          note ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: UIs.text11Grey,
+                        ),
                       ),
-                    ),
-                    ?device,
-                  ],
-                ),
+                      ?device,
+                    ],
+                  ),
+                ],
               ],
               chart,
               ?_buildFocusDetail(si, m.kind),
@@ -1451,7 +1518,14 @@ extension on _ServerDetailPageState {
         fontFeatures: const [FontFeature.tabularFigures()],
       ),
     );
-    final note = staleAt == null ? m.note : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
+    // A failure outranks staleness here the way it does in the colour above.
+    // Both at once is the common case — a section stops answering and the
+    // reading it left goes stale — and the timestamp says when this was last
+    // true, while the note says why it is not true now. Only one of them fits,
+    // and it is the second.
+    final note = m.error != null || staleAt == null
+        ? m.note
+        : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
 
     final Widget body;
     if (wide) {
@@ -1535,7 +1609,18 @@ extension on _ServerDetailPageState {
     } else {
       body = Row(
         children: [
-          Icon(m.icon, size: 18, color: selected ? fg : m.color),
+          // Narrow has no trailing glyph, so the icon and the value are the
+          // whole of what says this row failed — the wide one says it three
+          // times over.
+          Icon(
+            m.icon,
+            size: 18,
+            color: m.error != null
+                ? scheme.error
+                : selected
+                ? fg
+                : m.color,
+          ),
           const SizedBox(width: 9),
           Expanded(
             child: Column(
@@ -1600,18 +1685,20 @@ extension on _ServerDetailPageState {
     };
   }
 
-  /// Where the window on screen comes from. A server with no agent has only
-  /// what this app has watched since it connected, which is worth saying
-  /// before someone reads a flat line as a quiet machine.
-  String _historyNote(ServerState si, {bool wide = true}) {
-    // What the window is worth saying before where it came from: a page whose
-    // newest sample is minutes old is the one fact the reader needs first.
+  /// The one line under the header, when there is something for it to say.
+  ///
+  /// Null on an ordinary card. It used to name where the window came from —
+  /// "stored history", "since connect · not stored" — on every card of every
+  /// server, which is a line that never changes and was read once. Where the
+  /// samples come from is already answered by which ranges the header offers.
+  String? _historyNote(ServerState si, {bool wide = true}) {
+    // A page whose newest sample is minutes old is the one fact the reader
+    // needs, and the only one worth a line of its own.
     if (_staleSince(si) case final at?) return l10n.lastSampleFmt(at.toAgoStr());
     // Narrow, the header's chip holds only the window's length, so this line
     // is where its two ends fit.
     if (!wide && _custom != null) return _rangeLabel(wide: true);
-    if (!si.capabilities.storedHistory) return l10n.historySinceConnect;
-    return l10n.historyStored;
+    return null;
   }
 
   /// How long the window on screen is, however it was named.

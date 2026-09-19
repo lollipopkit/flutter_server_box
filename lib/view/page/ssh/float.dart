@@ -9,6 +9,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/app/terminal_shell.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
@@ -146,9 +147,17 @@ extension _Utils on _FloatTerminalState {
   List<VirtKey> get _keys {
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
     final spi = widget.session.spi;
+    // The same answer the strip on the page reaches, from the same field, so
+    // the two cannot come to different conclusions about the same button.
+    final shellUsesAgent =
+        spi != null &&
+        serverShellUsesAgent(
+          spi,
+          ref.read(serverProvider(spi.id)).remoteAccess,
+        );
     return VirtKeyX.loadFromStore(persistRepairs: false)
         .where((key) => !disabled.contains(key.name))
-        .where((key) => key.worksOn(spi))
+        .where((key) => key.worksOn(spi, shellUsesAgent: shellUsesAgent))
         .where(
           (key) => switch (key.func) {
             null ||

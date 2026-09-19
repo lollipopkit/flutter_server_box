@@ -23,7 +23,6 @@ final class RemoteDesktopProfilesPage extends ConsumerWidget {
     final profiles = ref.watch(remoteDesktopProfilesProvider(args.spi.id));
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(up: 'Remote desktop', down: args.spi.name),
         actions: [
           IconButton(

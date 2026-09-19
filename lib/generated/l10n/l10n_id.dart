@@ -2359,12 +2359,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get cores => 'Inti';
 
   @override
-  String get historyStored => 'riwayat tersimpan';
-
-  @override
-  String get historySinceConnect => 'sejak terhubung · tidak disimpan';
-
-  @override
   String get historyNoStored =>
       'Hanya agen monitor yang menyimpan riwayat. Koneksi ini hanya menyimpan apa yang dilihat aplikasi sejak terhubung.';
 
@@ -2574,6 +2568,121 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Kartu halaman detail';
+
+  @override
+  String get connection => 'Koneksi';
+
+  @override
+  String get connectionTip =>
+      'Keduanya bisa aktif bersamaan. Urutannya adalah urutan pemanggilan.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Seret untuk mengubah urutan. $first dipanggil lebih dulu; jika tidak menjawab, $second menanggung sesi sendirian.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Hanya $name yang aktif, jadi tidak ada cadangan.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Keduanya nonaktif — server ini tidak dapat dihubungi.';
+
+  @override
+  String get transportOffKept =>
+      'nonaktif — pengaturan disimpan, tidak pernah dipanggil';
+
+  @override
+  String get transportDialledFirst => 'dipanggil lebih dulu';
+
+  @override
+  String get transportFallback => 'cadangan';
+
+  @override
+  String get transportOnlyMethod => 'satu-satunya cara';
+
+  @override
+  String get transportOff => 'nonaktif';
+
+  @override
+  String get transportSectionOff =>
+      'Nonaktif. Kolom di bawah disimpan untuk saat Anda mengaktifkannya lagi.';
+
+  @override
+  String get monitorAgent => 'Agen monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Kredensial dan metrik melintasi jaringan tanpa enkripsi. Batasi pada LAN atau alamat Tailscale, atau tempatkan agen di belakang TLS.';
+
+  @override
+  String get behaviour => 'Perilaku';
+
+  @override
+  String get optional => 'Opsional';
+
+  @override
+  String get optionalTip =>
+      'Tidak ada di sini yang diperlukan untuk terhubung. Buka salah satu dan kolomnya mengambil alih formulir.';
+
+  @override
+  String get sshAdvanced => 'SSH lanjutan';
+
+  @override
+  String get sshAdvancedTip =>
+      'Tujuan cadangan, ProxyCommand, server lompat, transport berkas, jalur jarak jauh';
+
+  @override
+  String get appearanceAndPlace => 'Tampilan & lokasi';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, koordinat';
+
+  @override
+  String get statusCollection => 'Pengumpulan status';
+
+  @override
+  String get statusCollectionTip =>
+      'Perintah mana yang berjalan, perintah kustom, perangkat mana yang dibaca';
+
+  @override
+  String get tagAllTags => 'Semua tag';
+
+  @override
+  String get tagMatching => 'Cocok';
+
+  @override
+  String get tagNewHint => 'Tag baru';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Buat #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'di server ini';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count di server ini';
+  }
+
+  @override
+  String get tagMatchesTyped => 'cocok dengan yang Anda ketik';
+
+  @override
+  String get tagEditorTip =>
+      'Mengetik akan menyaring daftar; tombolnya membuat tag dan langsung memasangnya di server ini. Pensil mengganti namanya di setiap server yang memakainya. Tag yang tidak dipakai server mana pun akan hilang saat disimpan.';
+
+  @override
+  String get tagRenamesOnSave => 'Penggantian nama diterapkan saat menyimpan';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

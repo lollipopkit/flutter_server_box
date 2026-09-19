@@ -88,7 +88,91 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
     }
   });
 
+  _noteFailedSections(ss, status, req.parsedOutput, req.system);
+
   return ss;
+}
+
+/// How much of a command's complaint is kept as the reason.
+///
+/// Enough to read the shell's line and the one under it, and no more: this is
+/// held per section on every status object, and the section that "failed"
+/// might be one whose output the parser simply did not understand — a `sensors`
+/// table in a format this build cannot read is kilobytes of it.
+const _kSectionErrMaxLines = 5;
+const _kSectionErrMaxChars = 500;
+
+String _reasonOf(String said) {
+  final lines = said
+      .split('\n')
+      .map((l) => l.trimRight())
+      .where((l) => l.isNotEmpty)
+      .take(_kSectionErrMaxLines)
+      .join('\n');
+  return lines.length <= _kSectionErrMaxChars
+      ? lines
+      : '${lines.substring(0, _kSectionErrMaxChars)}…';
+}
+
+/// Sections whose command said something and whose parse found nothing in it.
+///
+/// A reading that is not there is two different machines: one that has no such
+/// hardware, and one whose command could not run. The status function sends
+/// stderr to stdout (see `unix_command` in the shared script builder), so each
+/// command's complaint lands inside that command's own segment — which makes
+/// the difference between the two a question about the segment rather than a
+/// guess about the text. Nothing said and nothing parsed is absence, and the
+/// page draws absence. Something said and nothing parsed is a failure, and what
+/// was said is the reason the page prints where the reading would be.
+///
+/// Grouped by command rather than by section: `mem` and `swap` are read out of
+/// one `/proc/meminfo`, so neither of them is missing for a reason of its own.
+///
+/// A command whose failure is routine keeps its own `2>/dev/null` in the
+/// manifest and never reaches here — a machine with no thermal zones is not a
+/// machine whose temperature could not be read.
+void _noteFailedSections(
+  ServerStatus ss,
+  Map<String, dynamic> status,
+  Map<String, String> raw,
+  SystemType system,
+) {
+  void check(List<String> cmds, List<String> sections, bool parsed) {
+    if (parsed) return;
+    final said = cmds
+        .map((cmd) => raw[cmd]?.trim() ?? '')
+        .firstWhere((text) => text.isNotEmpty, orElse: () => '');
+    if (said.isEmpty) return;
+    final reason = _reasonOf(said);
+    for (final section in sections) {
+      // A parse that threw said something more specific about this section and
+      // has already recorded it.
+      ss.sectionErrs.putIfAbsent(section, () => reason);
+    }
+  }
+
+  bool list(String key) => (status[key] as List?)?.isNotEmpty ?? false;
+
+  check(const ['cpu'], const ['cpu'], list('cpu'));
+  check(const ['mem'], const ['mem', 'swap'], status['mem'] != null);
+  check(const ['disk'], const ['disk'], list('disks'));
+  // Windows' interface counters are a second parse of the same segment, and
+  // the shared one is empty there by design — asking it would report every
+  // Windows host's network as unreadable.
+  if (system != SystemType.windows) {
+    check(const ['net'], const ['net'], list('net'));
+  }
+  check(const ['diskio'], const ['diskio'], list('diskio'));
+  check(
+    const ['tempType', 'tempVal', 'temp'],
+    const ['temps'],
+    (status['temps'] as Map?)?.isNotEmpty ?? false,
+  );
+  check(const ['battery'], const ['battery'], list('batteries'));
+  check(const ['sensors'], const ['sensors'], list('sensors'));
+  check(const ['gpu'], const ['gpus'], list('gpus'));
+  check(const ['nvidia'], const ['nvidia'], list('nvidia'));
+  check(const ['diskSmart'], const ['smart'], list('disk_smart'));
 }
 
 void _apply(ServerStatus ss, String section, void Function() fn) {

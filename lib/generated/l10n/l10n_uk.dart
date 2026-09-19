@@ -2374,12 +2374,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cores => 'Ядра';
 
   @override
-  String get historyStored => 'збережена історія';
-
-  @override
-  String get historySinceConnect => 'від моменту підключення · не зберігається';
-
-  @override
   String get historyNoStored =>
       'Історію зберігає лише агент monitor. Це підключення зберігає тільки те, що застосунок побачив після підключення.';
 
@@ -2590,6 +2584,122 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Картки сторінки деталей';
+
+  @override
+  String get connection => 'З\'єднання';
+
+  @override
+  String get connectionTip =>
+      'Обидва можуть бути увімкнені одночасно. Порядок — це порядок, у якому до них звертаються.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Перетягніть, щоб змінити порядок. Спершу $first; якщо він не відповідає, сеанс бере на себе $second.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Увімкнено лише $name, тож перемикатися нема на що.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Обидва вимкнені — до цього сервера неможливо під\'єднатися.';
+
+  @override
+  String get transportOffKept =>
+      'вимкнено — налаштування збережено, звернень немає';
+
+  @override
+  String get transportDialledFirst => 'звертаємось першим';
+
+  @override
+  String get transportFallback => 'запасний';
+
+  @override
+  String get transportOnlyMethod => 'єдиний спосіб';
+
+  @override
+  String get transportOff => 'вимкнено';
+
+  @override
+  String get transportSectionOff =>
+      'Вимкнено. Поля нижче збережено на той випадок, коли ви ввімкнете його знову.';
+
+  @override
+  String get monitorAgent => 'Агент monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Облікові дані й показники йдуть мережею без шифрування. Обмежтеся локальною мережею чи адресою Tailscale або поставте агента за TLS.';
+
+  @override
+  String get behaviour => 'Поведінка';
+
+  @override
+  String get optional => 'Необов\'язкове';
+
+  @override
+  String get optionalTip =>
+      'Нічого з цього не потрібно для під\'єднання. Відкрийте один — і його поля займуть місце форми.';
+
+  @override
+  String get sshAdvanced => 'SSH, додатково';
+
+  @override
+  String get sshAdvancedTip =>
+      'Запасна адреса, ProxyCommand, проміжний сервер, передавання файлів, шлях на сервері';
+
+  @override
+  String get appearanceAndPlace => 'Вигляд і місце';
+
+  @override
+  String get appearanceAndPlaceTip => 'Логотип, координати';
+
+  @override
+  String get statusCollection => 'Збір статусу';
+
+  @override
+  String get statusCollectionTip =>
+      'Які команди виконуються, власні команди, який пристрій читати';
+
+  @override
+  String get tagAllTags => 'Усі теги';
+
+  @override
+  String get tagMatching => 'Збіги';
+
+  @override
+  String get tagNewHint => 'Новий тег';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Створити #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'на цьому сервері';
+
+  @override
+  String tagServersFmt(Object count) {
+    return 'серверів: $count';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count на цьому сервері';
+  }
+
+  @override
+  String get tagMatchesTyped => 'збігається з введеним';
+
+  @override
+  String get tagEditorTip =>
+      'Введення фільтрує список; кнопка створює тег і одразу ставить його на цей сервер. Олівець перейменовує його на всіх серверах, де він є. Тег, якого немає на жодному сервері, зникає під час збереження.';
+
+  @override
+  String get tagRenamesOnSave =>
+      'Перейменування застосовуються під час збереження';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

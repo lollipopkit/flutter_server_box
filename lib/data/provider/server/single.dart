@@ -703,12 +703,19 @@ class ServerNotifier extends _$ServerNotifier {
   /// app. A server carrying both falls through to the other on failure.
   ///
   /// Throws whatever the transport throws when it cannot be reached.
-  Future<ServerExec> ensureExec() async {
+  ///
+  /// [onSshDial] runs at the moment this is about to open an SSH connection,
+  /// and is how a caller that has somewhere to show one finds out — which
+  /// transport *leads* does not answer that, because a server carrying both
+  /// falls through to sshd when the agent does not reply. Not called when a
+  /// client is already open, since nothing is dialled and nothing prompts.
+  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async {
     final spi = state.spi;
     final fallbackExists = spi.fallbackTransport != null;
     try {
       return await _execOver(
         ServerConnectCredential.fromSpi(spi),
+        onSshDial: onSshDial,
         // Only when there is somewhere to fall through to. Handing back a
         // `MonitorExec` costs no request, so a dead agent is not discovered
         // until the *caller's* command runs — outside the catch below, and too
@@ -731,18 +738,19 @@ class ServerNotifier extends _$ServerNotifier {
         e,
         s,
       );
-      return await _execOver(fallback);
+      return await _execOver(fallback, onSshDial: onSshDial);
     }
   }
 
   Future<ServerExec> _execOver(
     ServerConnectCredential credential, {
     bool probe = false,
+    VoidCallback? onSshDial,
   }) async {
     switch (credential) {
       case ServerConnectCredentialSsh():
         // Connecting *is* the probe here, and it always happens.
-        return SshExec(await ensureShellClient());
+        return SshExec(await ensureShellClient(onDial: onSshDial));
       case ServerConnectCredentialMonitorHttp():
         final source = _resolveSource(credential);
         if (source is! MonitorHttpDataSource) {
@@ -939,7 +947,7 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Throws [SSHErr] when the server has no SSH configuration, or when the
   /// retry limiter has given up on it.
-  Future<SSHClient> ensureShellClient() async {
+  Future<SSHClient> ensureShellClient({VoidCallback? onDial}) async {
     final existing = state.client;
     if (existing != null && !existing.isClosed) return existing;
 
@@ -958,6 +966,12 @@ class ServerNotifier extends _$ServerNotifier {
         message: 'Reconnect limit reached for ${spi.name}',
       );
     }
+
+    // Past the early return and the try limiter, so this fires exactly when a
+    // connection is going to be made — which is what raises the host key and
+    // keyboard-interactive prompts, and so what a caller wanting to show them
+    // somewhere is waiting for.
+    onDial?.call();
 
     // Held so the `catch` can close it. Authentication is awaited before
     // `_setClient`, so a failure there would otherwise leak a connected client

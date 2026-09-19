@@ -76,7 +76,6 @@ final class _ServicesPageState extends ConsumerState<ServicesPage> {
     final isBusy = ref.watch(_pro.select((pro) => pro.isBusy));
     return Scaffold(
       appBar: CustomAppBar(
-        centerTitle: true,
         title: TwoLineText(
           up: l10n.services,
           down: [widget.args.spi.name, ?manager?.displayName].join(' · '),

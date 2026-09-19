@@ -170,6 +170,6 @@ final class _UnixPermEditorState extends State<UnixPermEditor> {
   }
 
   Widget _buildSwitch(bool value, void Function(bool) onChanged) {
-    return Switch(value: value, onChanged: onChanged);
+    return SwitchX(value: value, onChanged: onChanged);
   }
 }

@@ -16,6 +16,8 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
       : MonitorHttpCredential.fromJson(
           json['monitorHttp'] as Map<String, dynamic>,
         ),
+  sshEnabled: json['sshEnabled'] as bool? ?? true,
+  monitorEnabled: json['monitorEnabled'] as bool? ?? true,
   preferredTransport: $enumDecodeNullable(
     _$ServerTransportEnumMap,
     json['preferredTransport'],
@@ -49,6 +51,8 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'name': instance.name,
   'ssh': ?instance.ssh,
   'monitorHttp': ?instance.monitorHttp,
+  'sshEnabled': instance.sshEnabled,
+  'monitorEnabled': instance.monitorEnabled,
   'preferredTransport': ?_$ServerTransportEnumMap[instance.preferredTransport],
   'tags': ?instance.tags,
   'autoConnect': instance.autoConnect,

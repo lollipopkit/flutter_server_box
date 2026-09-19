@@ -4096,18 +4096,6 @@ abstract class AppLocalizations {
   /// **'Cores'**
   String get cores;
 
-  /// No description provided for @historyStored.
-  ///
-  /// In en, this message translates to:
-  /// **'stored history'**
-  String get historyStored;
-
-  /// No description provided for @historySinceConnect.
-  ///
-  /// In en, this message translates to:
-  /// **'since connect · not stored'**
-  String get historySinceConnect;
-
   /// No description provided for @historyNoStored.
   ///
   /// In en, this message translates to:
@@ -4443,6 +4431,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Detail page cards'**
   String get serverDetailCards;
+
+  /// No description provided for @connection.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection'**
+  String get connection;
+
+  /// No description provided for @connectionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Both can be on at once. The order is the order they are dialled.'**
+  String get connectionTip;
+
+  /// No description provided for @transportOrderFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.'**
+  String transportOrderFmt(Object first, Object second);
+
+  /// No description provided for @transportOnlyFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {name} is on, so there is nothing to fall back to.'**
+  String transportOnlyFmt(Object name);
+
+  /// No description provided for @transportNoneOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Both are off — this server cannot be connected.'**
+  String get transportNoneOn;
+
+  /// No description provided for @transportOffKept.
+  ///
+  /// In en, this message translates to:
+  /// **'off — settings kept, never dialled'**
+  String get transportOffKept;
+
+  /// No description provided for @transportDialledFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'dialled first'**
+  String get transportDialledFirst;
+
+  /// No description provided for @transportFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'fallback'**
+  String get transportFallback;
+
+  /// No description provided for @transportOnlyMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'only method'**
+  String get transportOnlyMethod;
+
+  /// No description provided for @transportOff.
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get transportOff;
+
+  /// No description provided for @transportSectionOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off. The fields below are kept for when you turn it back on.'**
+  String get transportSectionOff;
+
+  /// No description provided for @monitorAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor agent'**
+  String get monitorAgent;
+
+  /// No description provided for @plainHttpEditTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.'**
+  String get plainHttpEditTip;
+
+  /// No description provided for @behaviour.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour'**
+  String get behaviour;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optional;
+
+  /// No description provided for @optionalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here is needed to connect. Open one and its fields take over the form.'**
+  String get optionalTip;
+
+  /// No description provided for @sshAdvanced.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH advanced'**
+  String get sshAdvanced;
+
+  /// No description provided for @sshAdvancedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Fallback destination, ProxyCommand, jump server, file transport, remote path'**
+  String get sshAdvancedTip;
+
+  /// No description provided for @appearanceAndPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance & location'**
+  String get appearanceAndPlace;
+
+  /// No description provided for @appearanceAndPlaceTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Logo, coordinates'**
+  String get appearanceAndPlaceTip;
+
+  /// No description provided for @statusCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Status collection'**
+  String get statusCollection;
+
+  /// No description provided for @statusCollectionTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Which commands run, custom commands, which device to read'**
+  String get statusCollectionTip;
+
+  /// No description provided for @tagAllTags.
+  ///
+  /// In en, this message translates to:
+  /// **'All tags'**
+  String get tagAllTags;
+
+  /// No description provided for @tagMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Matching'**
+  String get tagMatching;
+
+  /// No description provided for @tagNewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag'**
+  String get tagNewHint;
+
+  /// No description provided for @tagCreateFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Create #{tag}'**
+  String tagCreateFmt(Object tag);
+
+  /// No description provided for @tagOnThisServer.
+  ///
+  /// In en, this message translates to:
+  /// **'on this server'**
+  String get tagOnThisServer;
+
+  /// No description provided for @tagServersFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} servers'**
+  String tagServersFmt(Object count);
+
+  /// No description provided for @tagOnThisServerFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} on this server'**
+  String tagOnThisServerFmt(Object count);
+
+  /// No description provided for @tagMatchesTyped.
+  ///
+  /// In en, this message translates to:
+  /// **'matches what you typed'**
+  String get tagMatchesTyped;
+
+  /// No description provided for @tagEditorTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Typing filters the list; the button creates the tag and puts it on this server in one step. Renaming from the pencil renames it on every server that carries it. A tag no server carries disappears on save.'**
+  String get tagEditorTip;
+
+  /// No description provided for @tagRenamesOnSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Renames apply on save'**
+  String get tagRenamesOnSave;
 
   /// No description provided for @scheduledTasks.
   ///

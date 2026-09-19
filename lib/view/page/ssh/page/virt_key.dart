@@ -217,9 +217,19 @@ extension _VirtKey on SSHPageState {
     // is drawn, and a key that appeared once something connected would be a
     // strip rearranging itself under the user's thumb.
     final spi = widget.args.spi;
+    // The grant, not the transport: `_connectBackend` asks the same provider
+    // for the same field, so whether this shell will be the agent's is known
+    // here too — before the first key is drawn, which is what keeps the strip
+    // still.
+    final shellUsesAgent =
+        spi != null &&
+        serverShellUsesAgent(
+          spi,
+          ref.read(serverProvider(spi.id)).remoteAccess,
+        );
     final virtKeys = VirtKeyX.loadFromStore()
         .where((key) => !disabled.contains(key.name))
-        .where((key) => key.worksOn(spi))
+        .where((key) => key.worksOn(spi, shellUsesAgent: shellUsesAgent))
         .toList();
     for (var at = 0; at < virtKeys.length; at += kVirtKeysPerRow) {
       _virtKeysList.add(

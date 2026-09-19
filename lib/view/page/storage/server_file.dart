@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -12,18 +13,34 @@ import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/show_transfers.dart';
 
+/// Whether a server's files come from its agent rather than over SFTP.
+///
+/// [ServerFilePage] builds the browser and the function bar opens the SSH
+/// connection the other branch needs, so the question is asked here once: two
+/// call sites answering it differently means a bar that connects sshd for a
+/// page that is not going to use it, or a page that opens with no connection.
+///
+/// The transport the user put first decides, the same as it does for a command
+/// and for the terminal. When only one of the two can serve files at all there
+/// is nothing to order: the agent alone answers with its file API, and SSH
+/// alone with SFTP — which is also the tie-break for a server that names no
+/// preference, since SFTP is end to end and carries permissions and sudo.
+///
+/// [granted] rather than `ServerCapabilities.files`: the capabilities of a
+/// both-transports server are the union, and SFTP is files, so that question
+/// answers true for every such server whatever the agent allows. What is being
+/// asked here is whether the *agent* can serve them.
+bool serverFilesUseAgent(Spi spi, MonitorRemoteAccess? granted) {
+  if (spi.monitorOn == null || granted?.files != true) return false;
+  return spi.sshOn == null || spi.transport == ServerTransport.monitorHttp;
+}
+
 /// A server's files, whichever way they are reached.
 ///
 /// The one place that decides. Which transport carries the bytes is not a
 /// distinction anybody browsing files should be shown — the terminal does not
 /// show whether it reached sshd directly or through the agent's tunnel — so
 /// the file tab opens *a server*, and this answers how.
-///
-/// The order is deliberate. SFTP first wherever there is a byte stream to run
-/// it over: it is end to end, so an agent in the middle cannot read it, and it
-/// carries permissions and sudo. The agent's own file API is the answer for
-/// the case SFTP cannot serve at all — a host running the agent whose sshd
-/// this app cannot reach.
 class ServerFilePage extends ConsumerWidget {
   const ServerFilePage({super.key, required this.args});
 
@@ -36,10 +53,12 @@ class ServerFilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final caps = ref.watch(serverProvider(args.spi.id)).capabilities;
+    final state = ref.watch(serverProvider(args.spi.id));
 
-    if (caps.byteStream) return SftpPage(args: args);
-    if (caps.files) return _MonitorFilePage(args: args);
+    if (serverFilesUseAgent(args.spi, state.remoteAccess)) {
+      return _MonitorFilePage(args: args);
+    }
+    if (state.capabilities.byteStream) return SftpPage(args: args);
 
     return Scaffold(
       appBar: args.actionsSink != null
@@ -80,9 +99,10 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
   @override
   void initState() {
     super.initState();
-    // The agent itself, not whichever transport leads. This page is only
-    // reached when there is no byte stream to browse over, but saying so here
-    // costs nothing and cannot be made wrong by a change to that branch.
+    // The agent itself. `serverFilesUseAgent` is what decided this page is the
+    // right one, and it only says so for a server that has one — but reading
+    // the credential from the spi rather than from a resolved transport is
+    // what keeps that true whatever that branch grows into.
     final monitor = _spi.monitor;
     if (monitor == null) {
       throw StateError('${_spi.name} has no monitor agent to browse');

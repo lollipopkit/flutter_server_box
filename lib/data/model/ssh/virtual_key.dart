@@ -201,7 +201,7 @@ extension VirtKeyX on VirtKey {
   /// nothing happened. Answered here beside the rest of what a key is, rather
   /// than in the page that draws them, so the toolbar and the strip cannot
   /// come to different conclusions about the same button.
-  bool worksOn(Spi? spi) => switch (this) {
+  bool worksOn(Spi? spi, {bool shellUsesAgent = false}) => switch (this) {
     // Opens the files of the server this shell is on. This device has its own
     // browser, in the files tab.
     VirtKey.sftp => spi != null,
@@ -215,7 +215,18 @@ extension VirtKeyX on VirtKey {
     // Needs a channel that does not echo what is written into it, which only
     // an SSH exec channel is: a shell on this device runs in a pseudo-terminal,
     // and a monitor agent carries no exec channel at all.
-    VirtKey.tmux => spi?.ssh != null,
+    //
+    // [shellUsesAgent] is `serverShellUsesAgent` — the same answer
+    // `TerminalSession.connect` acts on — so this says whether *this* shell
+    // has an exec channel rather than guessing from which transport leads.
+    // Read off `Spi.transport` it was wrong for the one server that is both:
+    // an agent that leads without the `full_access` grant falls back to SSH,
+    // which carries tmux perfectly well, and the key was hidden anyway.
+    //
+    // The grant is read before the first key is drawn, from the same provider
+    // the connect reads it from, so this is settled once — not a strip that
+    // rearranges itself under the user's thumb once something connects.
+    VirtKey.tmux => spi?.sshOn != null && !shellUsesAgent,
     // Everything else is the terminal's own — keys, modifiers, the clipboard,
     // the IME, and snippets, which are a script typed into whatever is there.
     _ => true,

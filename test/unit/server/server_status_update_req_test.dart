@@ -327,6 +327,94 @@ __SBM_GPU_END__
       expect(result.dist, Dist.debian);
     });
   });
+
+  /// Telling a machine that has no such hardware from one whose command could
+  /// not run.
+  ///
+  /// The status function sends stderr to stdout, so a command that failed has
+  /// said so inside its own segment. Nothing said and nothing parsed is
+  /// absence; something said and nothing parsed is a failure, and what was said
+  /// is the reason the page prints where the reading would be.
+  group('a section that could not be read says why', () {
+    Future<ServerStatus> parse(Map<String, String> output) => getStatus(
+      ServerStatusUpdateReq(
+        system: SystemType.linux,
+        ss: InitStatus.status,
+        parsedOutput: {StatusCmdType.time.name: '1710000000', ...output},
+      ),
+    );
+
+    test('a command that is not installed is the section reason', () async {
+      final result = await parse({
+        StatusCmdType.sensors.name: 'sh: 1: sensors: not found',
+      });
+
+      expect(result.sectionErrs['sensors'], 'sh: 1: sensors: not found');
+    });
+
+    test('a section that said nothing is absent, not broken', () async {
+      final result = await parse({
+        StatusCmdType.sensors.name: '',
+        StatusCmdType.tempType.name: '',
+        StatusCmdType.battery.name: '',
+      });
+
+      expect(result.sectionErrs.keys, isNot(contains('sensors')));
+      expect(result.sectionErrs.keys, isNot(contains('temps')));
+      expect(result.sectionErrs.keys, isNot(contains('battery')));
+    });
+
+    test('a command absent from the output is not a failure', () async {
+      // What a disabled command leaves behind, and what an older script that
+      // never had this segment leaves behind: no key at all.
+      final result = await parse(const {});
+
+      expect(result.sectionErrs, isEmpty);
+    });
+
+    test('one command feeding two sections fails both', () async {
+      final result = await parse({
+        StatusCmdType.mem.name: 'cat: /proc/meminfo: Permission denied',
+      });
+
+      expect(result.sectionErrs['mem'], contains('Permission denied'));
+      expect(
+        result.sectionErrs['swap'],
+        contains('Permission denied'),
+        reason: 'swap is read out of the same /proc/meminfo',
+      );
+    });
+
+    test('a reading that arrived is not a failure', () async {
+      final result = await parse({
+        StatusCmdType.mem.name: 'MemTotal: 2048 kB\nMemFree: 1024 kB\n',
+      });
+
+      expect(result.mem.total, 2048);
+      expect(result.sectionErrs.keys, isNot(contains('mem')));
+      expect(
+        result.sectionErrs.keys,
+        isNot(contains('swap')),
+        reason: 'a machine with no swap is not a machine that could not read it',
+      );
+    });
+
+    test('the reason is a few lines, not the whole segment', () async {
+      // The section that "failed" may be one whose output the parser did not
+      // understand, and this is held on every status object from here on.
+      final result = await parse({
+        StatusCmdType.mem.name: List.generate(
+          400,
+          (i) => 'line $i ${'x' * 40}',
+        ).join('\n'),
+      });
+
+      final reason = result.sectionErrs['mem']!;
+      expect(reason.split('\n'), hasLength(lessThanOrEqualTo(5)));
+      expect(reason.length, lessThanOrEqualTo(501));
+      expect(reason, startsWith('line 0 '));
+    });
+  });
 }
 
 // These tests rely on `InitStatus.status` returning a fresh `ServerStatus`

@@ -108,13 +108,23 @@ pub const LINUX: &[CommandSpec] = &[
         cmd: r#"(lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID 2>/dev/null && echo "LSBLK_SUCCESS") || df -k"#,
     },
     CommandSpec { key: MEM, cmd: "cat /proc/meminfo | grep -E 'Mem|Swap'" },
-    CommandSpec { key: TEMP_TYPE, cmd: "cat /sys/class/thermal/thermal_zone*/type" },
-    CommandSpec { key: TEMP_VAL, cmd: "cat /sys/class/thermal/thermal_zone*/temp" },
+    // Quiet on purpose, unlike most of this table. The status function no
+    // longer discards stderr — a command that could not run says so in its own
+    // segment, and the page prints that where the reading would be (see
+    // `unix_command`). A machine with no thermal zones leaves this glob
+    // unexpanded, so `cat` reports a file named `thermal_zone*`; that is not a
+    // failure to read the temperature, it is a machine that has none, and the
+    // page draws absence rather than an error.
+    CommandSpec { key: TEMP_TYPE, cmd: "cat /sys/class/thermal/thermal_zone*/type 2>/dev/null" },
+    CommandSpec { key: TEMP_VAL, cmd: "cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null" },
     CommandSpec { key: HOST, cmd: "cat /etc/hostname" },
     CommandSpec { key: DISKIO, cmd: "cat /proc/diskstats" },
     CommandSpec {
         key: BATTERY,
-        cmd: r#"for f in /sys/class/power_supply/*/uevent; do cat "$f"; echo; done"#,
+        // Quiet for the same reason as the thermal zones above: a server has
+        // no `/sys/class/power_supply`, and the unexpanded glob would report
+        // that as a battery this app failed to read.
+        cmd: r#"for f in /sys/class/power_supply/*/uevent; do cat "$f" 2>/dev/null; echo; done"#,
     },
     CommandSpec {
         key: NVIDIA,

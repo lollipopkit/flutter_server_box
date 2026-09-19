@@ -12,6 +12,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/benchmark/benchmark_run.dart';
@@ -155,7 +156,7 @@ class _FakeServerNotifier extends ServerNotifier {
   final ServerExec exec;
 
   @override
-  Future<ServerExec> ensureExec() async => exec;
+  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => exec;
 }
 
 /// Answers [output], and only once [gate] has completed.

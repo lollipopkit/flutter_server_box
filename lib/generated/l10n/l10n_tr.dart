@@ -2356,12 +2356,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cores => 'Çekirdek';
 
   @override
-  String get historyStored => 'saklanan geçmiş';
-
-  @override
-  String get historySinceConnect => 'bağlantıdan beri · saklanmıyor';
-
-  @override
   String get historyNoStored =>
       'Geçmişi yalnızca monitor aracısı saklar. Bu bağlantı yalnızca uygulamanın bağlandıktan sonra gördüğünü tutar.';
 
@@ -2571,6 +2565,119 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Ayrıntı sayfası kartları';
+
+  @override
+  String get connection => 'Bağlantı';
+
+  @override
+  String get connectionTip =>
+      'İkisi aynı anda açık olabilir. Sıra, denendikleri sıradır.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Sırayı değiştirmek için sürükleyin. Önce $first denenir; yanıt vermezse oturumu tek başına $second taşır.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Yalnızca $name açık, dolayısıyla geri dönülecek bir şey yok.';
+  }
+
+  @override
+  String get transportNoneOn => 'İkisi de kapalı — bu sunucuya bağlanılamaz.';
+
+  @override
+  String get transportOffKept => 'kapalı — ayarlar saklanıyor, hiç denenmiyor';
+
+  @override
+  String get transportDialledFirst => 'önce denenir';
+
+  @override
+  String get transportFallback => 'yedek';
+
+  @override
+  String get transportOnlyMethod => 'tek yöntem';
+
+  @override
+  String get transportOff => 'kapalı';
+
+  @override
+  String get transportSectionOff =>
+      'Kapalı. Aşağıdaki alanlar, yeniden açtığınızda kullanılmak üzere saklanıyor.';
+
+  @override
+  String get monitorAgent => 'Monitor aracısı';
+
+  @override
+  String get plainHttpEditTip =>
+      'Kimlik bilgileri ve ölçümler ağdan şifrelenmeden geçer. Bunu bir LAN veya Tailscale adresiyle sınırlayın ya da aracıyı TLS arkasına alın.';
+
+  @override
+  String get behaviour => 'Davranış';
+
+  @override
+  String get optional => 'İsteğe bağlı';
+
+  @override
+  String get optionalTip =>
+      'Buradaki hiçbir şey bağlanmak için gerekli değil. Birini açın, alanları formun yerini alsın.';
+
+  @override
+  String get sshAdvanced => 'SSH gelişmiş';
+
+  @override
+  String get sshAdvancedTip =>
+      'Yedek hedef, ProxyCommand, atlama sunucusu, dosya aktarımı, uzak yol';
+
+  @override
+  String get appearanceAndPlace => 'Görünüm ve konum';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, koordinatlar';
+
+  @override
+  String get statusCollection => 'Durum toplama';
+
+  @override
+  String get statusCollectionTip =>
+      'Hangi komutlar çalışır, özel komutlar, hangi aygıt okunur';
+
+  @override
+  String get tagAllTags => 'Tüm etiketler';
+
+  @override
+  String get tagMatching => 'Eşleşenler';
+
+  @override
+  String get tagNewHint => 'Yeni etiket';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return '#$tag oluştur';
+  }
+
+  @override
+  String get tagOnThisServer => 'bu sunucuda';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count sunucu';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return 'bu sunucuda $count';
+  }
+
+  @override
+  String get tagMatchesTyped => 'yazdığınızla eşleşiyor';
+
+  @override
+  String get tagEditorTip =>
+      'Yazmak listeyi süzer; düğme etiketi oluşturup tek adımda bu sunucuya ekler. Kalem, etiketi taşıyan her sunucuda adını değiştirir. Hiçbir sunucunun taşımadığı etiket kaydederken kaybolur.';
+
+  @override
+  String get tagRenamesOnSave => 'Yeniden adlandırmalar kaydederken uygulanır';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

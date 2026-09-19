@@ -20,6 +20,28 @@ import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:xterm/core.dart';
 
+/// Whether a server's shell comes from its agent rather than over SSH.
+///
+/// [Spix.transport] is the whole of the decision, because that field is what
+/// the server editor's ordering means. It used to be "only when there is no
+/// SSH credential at all", from when a server carried one transport or the
+/// other; with both, that made the order a claim about status and commands
+/// which the terminal quietly ignored — putting the agent first did not move
+/// the terminal onto it.
+///
+/// A preference the agent will not honour is not honoured into a dead end:
+/// without the `full_access` grant this answers false and SSH carries the
+/// session, the same way [Spix.transport] ignores a preference for a transport
+/// that is not configured.
+///
+/// [granted] is what the agent said at the moment of use, not a stored answer:
+/// a grant that has been switched off since is a shell that will be refused.
+bool serverShellUsesAgent(Spi spi, MonitorRemoteAccess? granted) {
+  if (spi.monitorOn == null) return false;
+  if (spi.transport != ServerTransport.monitorHttp) return false;
+  return granted?.fullAccess == true;
+}
+
 /// A terminal and the shell feeding it, with no page attached.
 ///
 /// This used to be fields on the terminal page, and had to leave it once a
@@ -186,17 +208,12 @@ class TerminalSession {
     );
   }
 
-  /// The agent's own shell, when the agent said it allows one.
-  ///
-  /// Only when the server has no SSH credential at all: [Spix.validate]
-  /// rejects having both, and if one slipped through, SSH is the answer that
-  /// can do more.
+  /// The agent's own shell, when [serverShellUsesAgent] says it is the one.
   ShellBackend? _grantedBackend(MonitorRemoteAccess? granted) {
     final spi = this.spi;
-    if (spi == null || spi.ssh != null) return null;
-    final monitor = spi.monitorHttp;
+    if (spi == null || !serverShellUsesAgent(spi, granted)) return null;
+    final monitor = spi.monitor;
     if (monitor == null) return null;
-    if (granted?.fullAccess != true) return null;
     return MonitorShellBackend(monitor);
   }
 

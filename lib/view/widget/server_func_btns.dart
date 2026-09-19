@@ -28,6 +28,7 @@ import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/scheduled_tasks.dart';
 import 'package:server_box/view/page/services.dart';
 import 'package:server_box/view/page/ssh/snippet_run.dart';
+import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/users.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_power.dart';
@@ -198,10 +199,13 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         // Only the SFTP backend needs a connection opened first. A server
         // whose files come from its agent's API has none to open, and asking
         // for one fails on a host whose sshd this app cannot reach — which is
-        // the case that API exists for. Asked the same way round as
-        // `ServerFilePage` picks the backend, so the connection made here is
-        // the one the page then uses.
-        if (ref.read(serverProvider(spi.id)).capabilities.byteStream &&
+        // the case that API exists for. The same predicate `ServerFilePage`
+        // picks the backend with, so the connection made here is the one the
+        // page then uses.
+        if (!serverFilesUseAgent(
+              spi,
+              ref.read(serverProvider(spi.id)).remoteAccess,
+            ) &&
             !await _ensureSshClient(context, spi.id, ref)) {
           return;
         }

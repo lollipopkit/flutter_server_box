@@ -2353,12 +2353,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cores => 'Cores';
 
   @override
-  String get historyStored => 'stored history';
-
-  @override
-  String get historySinceConnect => 'since connect · not stored';
-
-  @override
   String get historyNoStored =>
       'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.';
 
@@ -2574,6 +2568,120 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Detail page cards';
+
+  @override
+  String get connection => 'Connection';
+
+  @override
+  String get connectionTip =>
+      'Both can be on at once. The order is the order they are dialled.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Drag to change the order. $first is dialled first; if it does not answer, $second carries the session on its own.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'Only $name is on, so there is nothing to fall back to.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Both are off — this server cannot be connected.';
+
+  @override
+  String get transportOffKept => 'off — settings kept, never dialled';
+
+  @override
+  String get transportDialledFirst => 'dialled first';
+
+  @override
+  String get transportFallback => 'fallback';
+
+  @override
+  String get transportOnlyMethod => 'only method';
+
+  @override
+  String get transportOff => 'off';
+
+  @override
+  String get transportSectionOff =>
+      'Off. The fields below are kept for when you turn it back on.';
+
+  @override
+  String get monitorAgent => 'Monitor agent';
+
+  @override
+  String get plainHttpEditTip =>
+      'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.';
+
+  @override
+  String get behaviour => 'Behaviour';
+
+  @override
+  String get optional => 'Optional';
+
+  @override
+  String get optionalTip =>
+      'Nothing here is needed to connect. Open one and its fields take over the form.';
+
+  @override
+  String get sshAdvanced => 'SSH advanced';
+
+  @override
+  String get sshAdvancedTip =>
+      'Fallback destination, ProxyCommand, jump server, file transport, remote path';
+
+  @override
+  String get appearanceAndPlace => 'Appearance & location';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, coordinates';
+
+  @override
+  String get statusCollection => 'Status collection';
+
+  @override
+  String get statusCollectionTip =>
+      'Which commands run, custom commands, which device to read';
+
+  @override
+  String get tagAllTags => 'All tags';
+
+  @override
+  String get tagMatching => 'Matching';
+
+  @override
+  String get tagNewHint => 'New tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Create #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'on this server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count servers';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count on this server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'matches what you typed';
+
+  @override
+  String get tagEditorTip =>
+      'Typing filters the list; the button creates the tag and puts it on this server in one step. Renaming from the pencil renames it on every server that carries it. A tag no server carries disappears on save.';
+
+  @override
+  String get tagRenamesOnSave => 'Renames apply on save';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';

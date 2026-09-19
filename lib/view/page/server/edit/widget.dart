@@ -1,6 +1,315 @@
 part of 'edit.dart';
 
+/// One of the two ways into a server, as the connection list draws it.
+enum _Method {
+  monitorHttp,
+  ssh;
+
+  IconData get icon => switch (this) {
+    _Method.monitorHttp => MingCute.web_line,
+    _Method.ssh => Icons.terminal,
+  };
+
+  String get label => switch (this) {
+    _Method.monitorHttp => 'Monitor HTTP',
+    _Method.ssh => 'SSH',
+  };
+}
+
 extension _Widgets on _ServerEditPageState {
+  /// A group's heading: what the group is, a rule, and what it currently
+  /// amounts to.
+  ///
+  /// The right-hand text is the group's own answer read back — "dialled first",
+  /// "off", the order the two methods are in — so the form can be skimmed
+  /// without opening anything. A heading that only repeated the label of the
+  /// first row under it would be a line of furniture.
+  Widget _buildGroupTitle(String title, {String? right}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(3, 17, 3, 7),
+      // Measured first, because the rule and the value want opposite things.
+      // As two flex children they split the free space, so the rule stopped
+      // halfway across and a short value floated in the middle with a gap
+      // after it; as a bare `Text` the value takes its natural width, and one
+      // that turned out to be a whole sentence took the row 52 points past the
+      // window. Held back to what is left over the rule's own minimum, the
+      // value is its own width until there is no room for it to be.
+      child: LayoutBuilder(
+        builder: (_, cons) {
+          final rightMax = cons.maxWidth.isFinite
+              ? (cons.maxWidth * 0.5).clamp(0.0, cons.maxWidth)
+              : double.infinity;
+          return Row(
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.9,
+                  color: UIs.textGrey.color,
+                ),
+              ),
+              const SizedBox(width: 9),
+              const Expanded(child: Divider(height: 1)),
+              if (right != null) ...[
+                const SizedBox(width: 9),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: rightMax),
+                  child: Text(
+                    right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: UIs.text11Grey,
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// A line of explanation under a group, in the form's own voice.
+  Widget _buildGroupNote(String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(3, 0, 3, 7),
+    child: Text(text, style: UIs.text12Grey),
+  );
+
+  // --- The two ways in ---
+
+  /// The order the two methods are dialled in, first to last.
+  List<_Method> get _methodOrder => _preferMonitorHttp.value
+      ? const [_Method.monitorHttp, _Method.ssh]
+      : const [_Method.ssh, _Method.monitorHttp];
+
+  bool _methodOn(_Method method) => switch (method) {
+    _Method.monitorHttp => _useMonitorHttp.value,
+    _Method.ssh => _useSsh.value,
+  };
+
+  /// What a method's row says about itself under its name: where it goes, or
+  /// that it goes nowhere.
+  String _methodSummary(_Method method) {
+    if (!_methodOn(method)) return l10n.transportOffKept;
+    return switch (method) {
+      _Method.monitorHttp => _monitorAddrCtrl.text.selfNotEmptyOrNull ?? '',
+      _Method.ssh => [
+        if (_ipController.text.trim().isNotEmpty)
+          '${_usernameController.text.selfNotEmptyOrNull ?? 'root'}'
+              '@${_ipController.text.trim()}'
+              ':${_portController.text.selfNotEmptyOrNull ?? '22'}',
+      ].join(),
+    };
+  }
+
+  /// What each method's own section says beside its heading.
+  String _methodRole(_Method method) {
+    if (!_methodOn(method)) return l10n.transportOff;
+    final live = _methodOrder.where(_methodOn).toList();
+    if (live.length < 2) return l10n.transportOnlyMethod;
+    return live.first == method
+        ? l10n.transportDialledFirst
+        : l10n.transportFallback;
+  }
+
+  /// Both ways in, in the order they are dialled, each with its own switch.
+  ///
+  /// One list rather than two switches and a segmented control below them. The
+  /// order *is* the list, so there is nothing to keep in step: a method that is
+  /// off has no number, and the one at the top is the one that is tried first.
+  ///
+  /// Turning the last one off is allowed, and says so rather than being
+  /// refused. What it produces is a server with no way in, which the save
+  /// refuses through `Spix.validate` — a switch that will not move leaves the
+  /// user guessing which of the two the app objected to.
+  Widget _buildConnectionGroup() {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        _useSsh,
+        _useMonitorHttp,
+        _preferMonitorHttp,
+      ]),
+      builder: (_, _) {
+        final order = _methodOrder;
+        final live = order.where(_methodOn).toList();
+        final note = switch (live.length) {
+          0 => l10n.transportNoneOn,
+          1 => l10n.transportOnlyFmt(live.first.label),
+          _ => l10n.transportOrderFmt(live.first.label, live.last.label),
+        };
+        final right = switch (live.length) {
+          // The word, not the sentence: `transportNoneOn` says what being off
+          // costs and is the note below, where there is a line to say it in.
+          // Read back beside the heading it is a state, like the other two.
+          0 => l10n.transportOff,
+          1 => '${live.first.label} ${l10n.transportOnlyMethod}',
+          _ => '${live.first.label} → ${live.last.label}',
+        };
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildGroupTitle(l10n.connection, right: right),
+            _buildGroupNote(l10n.connectionTip),
+            ReorderableListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              // The handle is drawn where the design puts it, at the start of
+              // the row: the default listener wraps the whole tile, which on a
+              // row carrying a switch means a long press anywhere picks it up.
+              buildDefaultDragHandles: false,
+              onReorderItem: (_, _) =>
+                  _preferMonitorHttp.value = !_preferMonitorHttp.value,
+              children: [
+                for (final (at, method) in order.indexed)
+                  _buildMethodRow(method, at: at, live: live),
+              ],
+            ),
+            _buildGroupNote(note),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMethodRow(
+    _Method method, {
+    required int at,
+    required List<_Method> live,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final on = _methodOn(method);
+    final ordinal = on ? '${live.indexOf(method) + 1}' : '—';
+    final leads = on && live.firstOrNull == method;
+    final summary = _methodSummary(method);
+
+    return CardX(
+      key: ValueKey(method),
+      child: InkWell(
+          // Tapping the row promotes it, so the order is reachable without a
+          // drag: two rows are a long press and a short travel, which is a lot
+          // of gesture for a choice between two things.
+          onTap: () => _preferMonitorHttp.value =
+              method == _Method.monitorHttp,
+          child: Padding(
+            // 5 rather than the design's 9, because Material's switch is not
+            // the design's. `shrinkWrap` already dropped its tap target, and
+            // what is left — `_kSwitchMinSize`, 40 — is still taller than the
+            // two lines of text beside it, so the row's height is the switch's
+            // and the padding is the only part of it this page decides.
+            padding: const EdgeInsets.fromLTRB(7, 5, 13, 5),
+            child: Row(
+              children: [
+                ReorderableDragStartListener(
+                  index: at,
+                  child: Icon(
+                    Icons.drag_indicator,
+                    size: 19,
+                    color: UIs.textGrey.color,
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Container(
+                  width: 19,
+                  height: 19,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: leads
+                        ? scheme.primary
+                        : scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    ordinal,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: leads
+                          ? scheme.onPrimary
+                          : on
+                          ? null
+                          : UIs.textGrey.color,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Icon(method.icon, size: 19, color: UIs.textGrey.color),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        method.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: on ? null : UIs.textGrey.color,
+                        ),
+                      ),
+                      if (summary.isNotEmpty)
+                        Text(
+                          summary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: UIs.text12Grey,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 9),
+                SwitchX(
+                  value: on,
+                  onChanged: (val) => switch (method) {
+                    _Method.monitorHttp => _useMonitorHttp.value = val,
+                    _Method.ssh => _useSsh.value = val,
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+    );
+  }
+
+  /// One method's own fields, under a heading that says what it is for.
+  ///
+  /// The fields stay on the page when the switch is off — that is what off
+  /// means — but a section that showed them with nothing to say about them
+  /// would read as a method that is on, so what a switched-off section carries
+  /// is one line saying they are kept.
+  Widget _buildMethodSection(_Method method, Widget fields) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        _useSsh,
+        _useMonitorHttp,
+        _preferMonitorHttp,
+      ]),
+      builder: (_, _) {
+        final title = switch (method) {
+          _Method.monitorHttp => l10n.monitorAgent,
+          _Method.ssh => 'SSH',
+        };
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildGroupTitle(title, right: _methodRole(method)),
+            if (!_methodOn(method))
+              _buildGroupNote(l10n.transportSectionOff)
+            else
+              fields,
+          ],
+        );
+      },
+    );
+  }
   Widget _buildAuth() {
     // Reads both sources: a server imported with an IdentityFile authenticates
     // with a key even though nothing is selected among the stored ones, and a
@@ -9,7 +318,7 @@ extension _Widgets on _ServerEditPageState {
       title: Text(l10n.keyAuth),
       trailing: _keyIdx.listenVal(
         (idx) => _keyPath.listenVal(
-          (path) => Switch(
+          (path) => SwitchX(
             value: idx != null || path != null,
             onChanged: (on) {
               if (on) {
@@ -167,33 +476,149 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  Widget _buildMore() {
-    return ExpandTile(
-      title: Text(libL10n.more),
+  /// What this server does once it is reachable.
+  ///
+  /// Separate from the connection above because none of it is about getting
+  /// there, and separate from `Optional` below because every server has an
+  /// answer to all three whether or not anybody set one.
+  Widget _buildBehaviourGroup() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        _buildGroupTitle(l10n.behaviour),
+        ListTile(
+          leading: const Icon(Icons.bolt),
+          title: Text(l10n.autoConnect),
+          trailing: _autoConnect.listenVal(
+            (val) => SwitchX(
+              value: val,
+              onChanged: (val) {
+                _autoConnect.value = val;
+              },
+            ),
+          ),
+        ).cardx,
         _buildSudoPassword(),
-        Input(
-          controller: _logoUrlCtrl,
-          type: TextInputType.url,
-          icon: Icons.image,
-          label: 'Logo URL',
-          hint: 'https://example.com/logo.png',
-          suggestion: false,
-        ),
-        _buildAltUrl(),
-        _buildProxyCommand(),
-        _buildFileTransport(),
-        _buildScriptDir(),
-        _buildGeo(),
         _buildEnvs(),
-        _buildPVEs(),
-        _buildCustomCmds(),
-        _buildStorageCollection(),
-        _buildDisabledCmdTypes(),
-        _buildCustomDev(),
-        _buildBmc(),
-        _buildWOLs(),
       ],
+    );
+  }
+
+  /// Everything a server can have and most do not.
+  ///
+  /// One `More` held fifteen entries in a flat list, so finding Wake on LAN
+  /// meant reading past a logo URL and a coordinate. They are grouped by the
+  /// question they answer and each group is folded, which also gives the four
+  /// that are whole subsystems — PVE, the BMC, Wake on LAN, what the status
+  /// script collects — a name on the page instead of a row in the middle of
+  /// one.
+  ///
+  /// [ExpandTile] rather than a page each: a group's fields belong to the
+  /// server being edited, and a page would be a second form with its own save.
+  Widget _buildOptionalGroup() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildGroupTitle(l10n.optional),
+        _buildOptionalTile(
+          icon: Icons.tune,
+          title: l10n.sshAdvanced,
+          summary: l10n.sshAdvancedTip,
+          children: [
+            _buildAltUrl(),
+            _buildProxyCommand(),
+            _buildJumpServer(),
+            _buildFileTransport(),
+            _buildScriptDir(),
+            _buildSystemType(),
+          ],
+        ),
+        _buildOptionalTile(
+          icon: Icons.image_outlined,
+          title: l10n.appearanceAndPlace,
+          summary: l10n.appearanceAndPlaceTip,
+          children: [
+            Input(
+              controller: _logoUrlCtrl,
+              type: TextInputType.url,
+              icon: Icons.image,
+              label: 'Logo URL',
+              hint: 'https://example.com/logo.png',
+              suggestion: false,
+            ),
+            _buildGeo(),
+          ],
+        ),
+        // Where "remove temperature from the status script" is actually done,
+        // which is what the detail page's advice on an unreadable section
+        // points at.
+        _buildOptionalTile(
+          icon: MingCute.dashboard_line,
+          title: l10n.statusCollection,
+          summary: l10n.statusCollectionTip,
+          children: [
+            _buildDisabledCmdTypes(),
+            _buildCustomCmds(),
+            _buildStorageCollection(),
+            _buildCustomDev(),
+          ],
+        ),
+        _buildOptionalTile(
+          icon: MingCute.server_line,
+          title: 'PVE',
+          summary: 'Proxmox VE',
+          children: [_buildPVEs()],
+        ),
+        _buildOptionalTile(
+          icon: MingCute.chip_line,
+          title: 'BMC (Redfish)',
+          // The word, not the sentence: a right-aligned summary is a phrase
+          // read at a glance. The sentence is under the heading's `?`, first,
+          // because what matters about this one is that nothing here is
+          // guaranteed and this is where someone decides to turn it on.
+          summary: 'Beta',
+          tip: '${l10n.betaTip}\n\n${l10n.bmcTip}',
+          children: [_buildBmc()],
+        ),
+        _buildOptionalTile(
+          icon: Icons.power_settings_new,
+          title: 'Wake on LAN',
+          summary: 'Beta',
+          tip: '${l10n.betaTip}\n\n${l10n.wolTip}',
+          children: [_buildWOLs()],
+        ),
+        _buildGroupNote(l10n.optionalTip),
+      ],
+    );
+  }
+
+  /// A folded group: what it is on the left, what it amounts to on the right,
+  /// and its fields as rows below rather than inside it.
+  ///
+  /// [ExpandableTile] rather than `ExpandTile`, because an `ExpansionTile`
+  /// holds its children inside itself: a card around it put the fields inside
+  /// the header's card, and no card left the header the one row on this page
+  /// without one. Every other row of this form is a card, and opening a group
+  /// should add rows, not grow a box.
+  ///
+  /// [tip] is what the group used to spend a row of its own explaining. A
+  /// whole tile for a paragraph nobody reads twice was the first thing inside
+  /// two of these groups, above the fields they describe; on the heading it is
+  /// one glyph, and it is there before the group is opened.
+  Widget _buildOptionalTile({
+    required IconData icon,
+    required String title,
+    required String summary,
+    required List<Widget> children,
+    String? tip,
+  }) {
+    return ExpandableTile(
+      leading: Icon(icon),
+      title: tip == null ? Text(title) : TipText(title, tip),
+      summary: Text(summary),
+      children: children,
     );
   }
 
@@ -278,7 +703,7 @@ extension _Widgets on _ServerEditPageState {
           leading: const Icon(MingCute.question_line),
           title: TipText('${libL10n.temperature} (°C)', l10n.tempIsCelsiusTip),
           trailing: _tempIsCelsius.listenVal(
-            (v) => Switch(
+            (v) => SwitchX(
               value: v,
               onChanged: (val) {
                 _tempIsCelsius.value = val;
@@ -406,7 +831,6 @@ extension _Widgets on _ServerEditPageState {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CenterGreyTitle('PVE'),
           Input(
             controller: _pveAddrCtrl,
             type: TextInputType.url,
@@ -429,7 +853,7 @@ extension _Widgets on _ServerEditPageState {
             leading: const Icon(MingCute.certificate_line),
             title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
             trailing: _pveIgnoreCert.listenVal(
-              (v) => Switch(
+              (v) => SwitchX(
                 value: v,
                 onChanged: (val) {
                   _pveIgnoreCert.value = val;
@@ -450,81 +874,6 @@ extension _Widgets on _ServerEditPageState {
   /// holding a shell open, and sshd for the things the agent has no endpoint
   /// for. What survives of the exclusivity is the order, which only has to be
   /// asked when there are two things to order.
-  Widget _buildConnMethodSwitch() {
-    return _useSsh.listenVal((useSsh) {
-      return _useMonitorHttp.listenVal((useHttp) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SwitchListTile(
-              title: const Text('SSH'),
-              secondary: const Icon(Icons.terminal),
-              value: useSsh,
-              // Turning the last one off would leave a server with no way in
-              // at all, which `Spix.validate` refuses on save — better to
-              // refuse the switch than to accept it and reject the save.
-              onChanged: (val) {
-                if (!val && !_useMonitorHttp.value) {
-                  Toast.show(l10n.noConnectionMethod);
-                  return;
-                }
-                _useSsh.value = val;
-              },
-            ),
-            SwitchListTile(
-              // The one switch here that offers a way in which does not exist
-              // until something has been installed on the server — which is
-              // not a thing a switch can convey, so the tip carries a link to
-              // the page that explains it. Markdown, so the link is a link.
-              title: TipText(
-                'Monitor HTTP',
-                l10n.monitorHttpTip(Urls.monitorAgentDoc),
-                isMarkdown: true,
-              ),
-              secondary: const Icon(MingCute.web_line),
-              value: useHttp,
-              onChanged: (val) {
-                if (!val && !_useSsh.value) {
-                  Toast.show(l10n.noConnectionMethod);
-                  return;
-                }
-                _useMonitorHttp.value = val;
-              },
-            ),
-            if (useSsh && useHttp) _buildTransportPriority(),
-          ],
-        );
-      });
-    });
-  }
-
-  /// Which way in is tried first.
-  ///
-  /// Ordering, not exclusion: the other one still carries whatever it alone
-  /// can do, and a failure on this one falls through to it. What the choice
-  /// actually decides is where the status poll goes and which connection a
-  /// command opens first.
-  Widget _buildTransportPriority() {
-    return _preferMonitorHttp.listenVal((preferHttp) {
-      return ListTile(
-        title: Text(l10n.preferredTransport),
-        subtitle: Text(l10n.preferredTransportTip, style: UIs.textGrey),
-        trailing: SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('SSH')),
-            ButtonSegment(value: true, label: Text('HTTP')),
-          ],
-          selected: {preferHttp},
-          onSelectionChanged: (selection) {
-            _preferMonitorHttp.value = selection.first;
-          },
-        ),
-      );
-    });
-  }
-
-  /// SSH host/port/user — hidden when `_useMonitorHttp` is selected, since
-  /// they're not used by the monitor HTTP connection path at all.
   Widget _buildSshConnFields() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -563,68 +912,188 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  /// Monitor's HTTP API connection fields — shown instead of `_buildAuth()`
-  /// when `_useMonitorHttp` is selected, never alongside it.
-  Widget _buildMonitorHttp() {
+  /// The agent's own fields.
+  ///
+  /// Which of the last two rows is here is decided by the URL, because they
+  /// answer questions only one scheme raises: a certificate to trust is an
+  /// `https://` question, and permission to send a password in the clear is an
+  /// `http://` one. Showing both put a switch on the page that could not
+  /// matter whichever way it was set.
+  ///
+  /// Read as "anything that is not explicitly `http://`", so typing
+  /// `https://…` never passes through the plaintext warning on its way: the
+  /// callout appears when the user has actually declared plaintext, not while
+  /// they are still typing the scheme.
+  Widget _buildMonitorHttpFields() {
     const addr = 'https://127.0.0.1:3770';
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CenterGreyTitle(libL10n.network),
-        Input(
-          controller: _monitorAddrCtrl,
-          type: TextInputType.url,
-          icon: MingCute.web_line,
-          label: 'URL',
-          hint: addr,
-          suggestion: false,
-        ),
-        // Prefixed to say which account this is: the agent's panel login, not
-        // a system account on the far host. A server reached this way has no
-        // system account configured here at all.
-        Input(
-          controller: _monitorUserCtrl,
-          type: TextInputType.text,
-          icon: MingCute.user_2_line,
-          label: 'Monitor ${libL10n.user}',
-          suggestion: false,
-        ),
-        Input(
-          controller: _monitorPwdCtrl,
-          type: TextInputType.visiblePassword,
-          icon: MingCute.lock_line,
-          label: 'Monitor ${libL10n.pwd}',
-          obscureText: true,
-          suggestion: false,
-        ),
-        ListTile(
-          leading: const Icon(MingCute.certificate_line),
-          title: TipText('Monitor ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
-          trailing: _monitorIgnoreCert.listenVal(
-            (v) => Switch(
-              value: v,
-              onChanged: (val) {
-                _monitorIgnoreCert.value = val;
-              },
+    return ListenableBuilder(
+      listenable: _monitorAddrCtrl,
+      builder: (_, _) {
+        final plain = _monitorAddrCtrl.text
+            .trim()
+            .toLowerCase()
+            .startsWith('http://');
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(
+              controller: _monitorAddrCtrl,
+              type: TextInputType.url,
+              icon: MingCute.web_line,
+              label: 'URL',
+              hint: addr,
+              suggestion: false,
             ),
-          ),
-        ).cardx,
-        ListTile(
-          leading: const Icon(Icons.warning_amber_rounded),
-          title: TipText(
-            l10n.monitorAllowInsecureHttp,
-            l10n.monitorAllowInsecureHttpTip,
-          ),
-          trailing: _monitorAllowInsecure.listenVal(
-            (v) => Switch(
-              value: v,
-              onChanged: (val) {
-                _monitorAllowInsecure.value = val;
-              },
+            // Prefixed to say which account this is: the agent's panel login,
+            // not a system account on the far host. A server reached this way
+            // has no system account configured here at all.
+            Input(
+              controller: _monitorUserCtrl,
+              type: TextInputType.text,
+              icon: MingCute.user_2_line,
+              label: 'Monitor ${libL10n.user}',
+              suggestion: false,
             ),
-          ),
-        ).cardx,
-      ],
+            Input(
+              controller: _monitorPwdCtrl,
+              type: TextInputType.visiblePassword,
+              icon: MingCute.lock_line,
+              label: 'Monitor ${libL10n.pwd}',
+              obscureText: true,
+              suggestion: false,
+            ),
+            // What a monitor agent *is*, where there is not one yet. It is the
+            // only way in on this page that does not exist until something has
+            // been installed on the server, which no switch can convey — and
+            // once an address is typed the question has been answered, so the
+            // explanation goes rather than sitting there for good.
+            if (_monitorAddrCtrl.text.trim().isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(3, 0, 3, 7),
+                child: SimpleMarkdown(
+                  data: l10n.monitorHttpTip(Urls.monitorAgentDoc),
+                ),
+              ),
+            if (!plain)
+              ListTile(
+                leading: const Icon(MingCute.certificate_line),
+                title: TipText(
+                  'Monitor ${l10n.ignoreCert}',
+                  l10n.pveIgnoreCertTip,
+                ),
+                trailing: _monitorIgnoreCert.listenVal(
+                  (v) => SwitchX(
+                    value: v,
+                    onChanged: (val) {
+                      _monitorIgnoreCert.value = val;
+                    },
+                  ),
+                ),
+              ).cardx
+            else
+              _buildPlainHttpCallout(),
+          ],
+        );
+      },
+    );
+  }
+
+  /// The warning a plaintext URL raises, with the permission it is about
+  /// inside it.
+  ///
+  /// `Allow HTTP` is not a setting that happens to sit near a warning — it *is*
+  /// the warning's answer, and the app refuses to call a plain-http URL
+  /// without it. Separated, the switch read as an option and the warning read
+  /// as something that had already been decided.
+  Widget _buildPlainHttpCallout() {
+    final scheme = Theme.of(context).colorScheme;
+    return CardX(
+      // Lifted off the colour every other row uses. This is the one thing on
+      // the page that is not a field but a warning about one, and on the card
+      // colour it read as another field that had failed to draw.
+      color: scheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 19,
+                  color: scheme.error,
+                ),
+                const SizedBox(width: 9),
+                // Both lines beside the icon rather than the heading alone:
+                // the icon marks the whole warning, and a body that started
+                // back at the card's edge put the two halves of one paragraph
+                // on two different margins.
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.plainHttpTitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        l10n.plainHttpEditTip,
+                        style: UIs.text12Grey.copyWith(height: 1.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            // Inside the warning, not the next row of the form. Allowing
+            // plain http *is* what the warning is about, and a switch below
+            // the card would read as one more setting that happened to follow
+            // it.
+            Material(
+              color: scheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(13),
+              clipBehavior: Clip.hardEdge,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.monitorAllowInsecureHttp,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          Text(
+                            l10n.monitorAllowInsecureHttpTip,
+                            style: UIs.text12Grey,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    _monitorAllowInsecure.listenVal(
+                      (v) => SwitchX(
+                        value: v,
+                        onChanged: (val) {
+                          _monitorAllowInsecure.value = val;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -669,7 +1138,7 @@ extension _Widgets on _ServerEditPageState {
                   _diskInfoCmdTypes.map((e) => e.displayName).join(', '),
                   style: UIs.textGrey,
                 ),
-                trailing: Switch(
+                trailing: SwitchX(
                   value: diskInfoEnabled,
                   onChanged: (value) {
                     _setCmdGroupDisabled(_diskInfoCmdTypes, !value);
@@ -686,7 +1155,7 @@ extension _Widgets on _ServerEditPageState {
                   _diskHealthCmdTypes.map((e) => e.displayName).join(', '),
                   style: UIs.textGrey,
                 ),
-                trailing: Switch(
+                trailing: SwitchX(
                   value: diskHealthEnabled,
                   onChanged: (value) {
                     _setCmdGroupDisabled(_diskHealthCmdTypes, !value);
@@ -704,43 +1173,23 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildDisabledCmdTypes() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CenterGreyTitle('${libL10n.disabled} ${libL10n.cmd}'),
-        _disabledCmdTypes.listenVal((disabled) {
-          return ListTile(
-            leading: const Icon(Icons.disabled_by_default),
-            title: Text('${libL10n.disabled} ${libL10n.cmd}'),
-            subtitle: disabled.isEmpty
-                ? null
-                : Text(disabled.join(', '), style: UIs.textGrey),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: _onTapDisabledCmdTypes,
-          );
-        }).cardx,
-      ],
-    );
+    return _disabledCmdTypes.listenVal((disabled) {
+      return ListTile(
+        leading: const Icon(Icons.disabled_by_default),
+        title: Text('${libL10n.disabled} ${libL10n.cmd}'),
+        subtitle: disabled.isEmpty
+            ? null
+            : Text(disabled.join(', '), style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapDisabledCmdTypes,
+      );
+    }).cardx;
   }
 
   Widget _buildBmc() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CenterGreyTitle('BMC (Redfish)'),
-        // A row of its own rather than a suffix on the title, the same shape
-        // the Linux page uses: what a suffix cannot say is the part that
-        // matters, which is that nothing here is guaranteed. This is where
-        // someone decides to turn it on, so it is where the warning belongs.
-        ListTile(
-          leading: const Icon(Icons.science_outlined),
-          title: const Text('Beta'),
-          subtitle: Text(l10n.betaTip, style: UIs.textGrey),
-        ).cardx,
-        ListTile(
-          leading: const Icon(BoxIcons.bxs_help_circle),
-          title: TipText(libL10n.about, l10n.bmcTip),
-        ).cardx,
         Input(
           controller: _bmcAddrCtrl,
           type: TextInputType.url,
@@ -841,11 +1290,6 @@ extension _Widgets on _ServerEditPageState {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CenterGreyTitle('Wake On LAN (beta)'),
-        ListTile(
-          leading: const Icon(BoxIcons.bxs_help_circle),
-          title: TipText(libL10n.about, l10n.wolTip),
-        ).cardx,
         Input(
           controller: _wolMacCtrl,
           type: TextInputType.text,
@@ -874,10 +1318,23 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: _onSave,
-      child: const Icon(Icons.save),
+  /// The one button that writes anything.
+  ///
+  /// A filled button rather than an icon, because it is the page's only
+  /// outcome and the two icons beside it are not: `Delete` and the script tip
+  /// are recognised by their glyphs, and a third glyph among them would be a
+  /// save that looks like a third utility.
+  Widget _buildSaveBtn() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: FilledButton(
+        onPressed: _onSave,
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 17),
+          visualDensity: VisualDensity.compact,
+        ),
+        child: Text(libL10n.save),
+      ),
     );
   }
 

@@ -2382,12 +2382,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get cores => 'Core';
 
   @override
-  String get historyStored => 'cronologia archiviata';
-
-  @override
-  String get historySinceConnect => 'dalla connessione · non archiviata';
-
-  @override
   String get historyNoStored =>
       'Solo un agente monitor archivia la cronologia. Questa connessione conserva ciò che l\'app ha visto da quando si è connessa.';
 
@@ -2603,6 +2597,121 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get serverDetailCards => 'Schede della pagina dettagli';
+
+  @override
+  String get connection => 'Connessione';
+
+  @override
+  String get connectionTip =>
+      'Possono essere attivi entrambi. L\'ordine è l\'ordine in cui vengono contattati.';
+
+  @override
+  String transportOrderFmt(Object first, Object second) {
+    return 'Trascina per cambiare l\'ordine. $first viene contattato per primo; se non risponde, $second porta avanti la sessione da solo.';
+  }
+
+  @override
+  String transportOnlyFmt(Object name) {
+    return 'È attivo solo $name, quindi non c\'è nulla su cui ripiegare.';
+  }
+
+  @override
+  String get transportNoneOn =>
+      'Sono entrambi disattivati: questo server non può essere connesso.';
+
+  @override
+  String get transportOffKept =>
+      'disattivato — impostazioni conservate, mai contattato';
+
+  @override
+  String get transportDialledFirst => 'contattato per primo';
+
+  @override
+  String get transportFallback => 'ripiego';
+
+  @override
+  String get transportOnlyMethod => 'unico metodo';
+
+  @override
+  String get transportOff => 'disattivato';
+
+  @override
+  String get transportSectionOff =>
+      'Disattivato. I campi qui sotto restano per quando lo riattiverai.';
+
+  @override
+  String get monitorAgent => 'Agente monitor';
+
+  @override
+  String get plainHttpEditTip =>
+      'Credenziali e metriche attraversano la rete non cifrate. Tienilo su una LAN o su un indirizzo Tailscale, oppure metti l\'agente dietro TLS.';
+
+  @override
+  String get behaviour => 'Comportamento';
+
+  @override
+  String get optional => 'Facoltativo';
+
+  @override
+  String get optionalTip =>
+      'Nulla qui serve per connettersi. Aprine uno e i suoi campi prendono il posto del modulo.';
+
+  @override
+  String get sshAdvanced => 'SSH avanzate';
+
+  @override
+  String get sshAdvancedTip =>
+      'Destinazione di riserva, ProxyCommand, server di salto, trasporto file, percorso remoto';
+
+  @override
+  String get appearanceAndPlace => 'Aspetto e luogo';
+
+  @override
+  String get appearanceAndPlaceTip => 'Logo, coordinate';
+
+  @override
+  String get statusCollection => 'Raccolta dello stato';
+
+  @override
+  String get statusCollectionTip =>
+      'Quali comandi vengono eseguiti, comandi personalizzati, quale dispositivo leggere';
+
+  @override
+  String get tagAllTags => 'Tutti i tag';
+
+  @override
+  String get tagMatching => 'Corrispondenze';
+
+  @override
+  String get tagNewHint => 'Nuovo tag';
+
+  @override
+  String tagCreateFmt(Object tag) {
+    return 'Crea #$tag';
+  }
+
+  @override
+  String get tagOnThisServer => 'su questo server';
+
+  @override
+  String tagServersFmt(Object count) {
+    return '$count server';
+  }
+
+  @override
+  String tagOnThisServerFmt(Object count) {
+    return '$count su questo server';
+  }
+
+  @override
+  String get tagMatchesTyped => 'corrisponde a quanto digitato';
+
+  @override
+  String get tagEditorTip =>
+      'Digitare filtra l\'elenco; il pulsante crea il tag e lo mette su questo server in un solo passaggio. La matita lo rinomina su ogni server che lo porta. Un tag che nessun server porta sparisce al salvataggio.';
+
+  @override
+  String get tagRenamesOnSave => 'Le rinomine si applicano al salvataggio';
 
   @override
   String get scheduledTasks => 'Scheduled tasks';
