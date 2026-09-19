@@ -1531,86 +1531,37 @@ extension on _ServerDetailPageState {
         ? m.note
         : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
 
-    final Widget body;
-    if (wide) {
-      body = Row(
-        children: [
-          Icon(
-            m.icon,
-            size: 18,
-            color: m.error != null
-                ? scheme.error
-                : selected
-                ? fg
-                : m.color,
-          ),
-          UIs.width13,
-          SizedBox(
-            width: 84,
-            child: Text(
-              m.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: fg,
-              ),
-            ),
-          ),
-          // The box is what lines the rows up; this is the gap. Without it a
-          // label as wide as its box — "Temperature" nearly is — ran straight
-          // into the note beside it, and the two read as one phrase.
-          UIs.width13,
-          Expanded(
-            child: Row(
-              children: [
-                if (m.percent case final p?) ...[
-                  Flexible(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 340),
-                      child: LinearProgressIndicator(
-                        value: p.clamp(0, 1),
-                        minHeight: 3,
-                        borderRadius: BorderRadius.circular(3),
-                        // The metric's own colour, and a track that is visible
-                        // on both surfaces a row is drawn on: the theme's
-                        // default track is the selected row's own background.
-                        color: selected ? fg : m.color,
-                        backgroundColor: (fg ?? scheme.onSurface).withValues(
-                          alpha: 0.15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  UIs.width13,
-                ],
-                Flexible(
-                  child: Text(
-                    note,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: UIs.text12Grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          UIs.width13,
-          value,
-          const SizedBox(width: 9),
-          Icon(
-            m.error != null
-                ? Icons.error_outline
-                : selected
-                ? Icons.show_chart
-                : Icons.chevron_right,
-            size: 17,
-            color: m.error != null ? scheme.error : fg ?? UIs.textGrey.color,
-          ),
-        ],
+    void promote() {
+      _rebuild(() => _focusMetric = m.kind);
+      // Kept, so the card this page grew out of shows the same reading when it
+      // shrinks back into the list.
+      ServerPromoted.put(
+        widget.args.spi.id,
+        ServerMetricKind.values.firstWhere((e) => e.name == m.kind.name),
       );
-    } else {
+      _revealFocus();
+    }
+
+    // The same widget the card in the list draws, at the far end of the
+    // movement that turns one into the other. Two rows built from the same
+    // numbers would have to be crossed over when the page takes the card
+    // over, and a crossing is what reads as the page having been rebuilt.
+    if (wide) {
+      return MetricRow(
+        icon: m.icon,
+        label: m.label,
+        color: m.color,
+        value: m.value,
+        note: note,
+        percent: m.percent,
+        error: m.error,
+        selected: selected,
+        onTap: promote,
+      );
+    }
+
+    final Widget body;
+    {
       body = Row(
         children: [
           // Narrow has no trailing glyph, so the icon and the value are the
@@ -1662,20 +1613,9 @@ extension on _ServerDetailPageState {
     return CardX(
       color: selected ? scheme.secondaryContainer : null,
       child: InkWell(
-        onTap: () {
-          _rebuild(() => _focusMetric = m.kind);
-          // Kept, so the card this page grew out of shows the same reading
-          // when it shrinks back into the list.
-          ServerPromoted.put(
-            widget.args.spi.id,
-            ServerMetricKind.values.firstWhere((e) => e.name == m.kind.name),
-          );
-          _revealFocus();
-        },
+        onTap: promote,
         child: Padding(
-          padding: wide
-              ? const EdgeInsets.fromLTRB(17, 11, 13, 11)
-              : const EdgeInsets.fromLTRB(13, 9, 13, 9),
+          padding: const EdgeInsets.fromLTRB(13, 9, 13, 9),
           child: body,
         ),
       ),

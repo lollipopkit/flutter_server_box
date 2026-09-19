@@ -53,6 +53,20 @@ class MetricChartSpec {
   /// of 1024 rather than of 10 — see [niceAxis]
   final bool binaryScale;
 
+  /// How much of the chart's own chrome is drawn: the scale down the left,
+  /// the lines across, the padding that holds them off the card's edge, and
+  /// the touch that puts a value under the pointer.
+  ///
+  /// 0 is the same line with none of it, which is what a chart the height of
+  /// two lines of text can show — five tick labels in 44 points is a smear.
+  /// Anything between is the one growing into the other: the gutter is a
+  /// width, so the plot narrows into it rather than jumping when it appears.
+  ///
+  /// The scale itself does not change with this. What the line is drawn
+  /// against is the same at both ends, or the card and the page would be two
+  /// different readings of the same numbers.
+  final double axis;
+
   const MetricChartSpec({
     required this.series,
     required this.format,
@@ -62,6 +76,7 @@ class MetricChartSpec {
     this.binaryScale = false,
     this.height = 110,
     this.fill = false,
+    this.axis = 1,
   });
 
   bool get hasData => series.any((s) => s.hasSpots);
@@ -98,7 +113,7 @@ class MetricChart extends StatelessWidget {
     }
     if (bars.isEmpty) return UIs.placeholder;
 
-    final hasLegend = spec.series.length > 1;
+    final hasLegend = spec.series.length > 1 && spec.axis >= 1;
     final body = Padding(
       // The extra bottom allowance is only for the axis' own overflow: fl_chart
       // centres the lowest label on the bottom gridline, so roughly half of it
@@ -107,7 +122,11 @@ class MetricChart extends StatelessWidget {
       //
       // The top keeps the topmost axis label off whatever heading is above it;
       // at 7 the two touched.
-      padding: EdgeInsets.fromLTRB(17, 15, 17, hasLegend ? 0 : 15),
+      padding: EdgeInsets.lerp(
+        EdgeInsets.zero,
+        EdgeInsets.fromLTRB(17, 15, 17, hasLegend ? 0 : 15),
+        spec.axis.clamp(0.0, 1.0),
+      )!,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -119,6 +138,7 @@ class MetricChart extends StatelessWidget {
               binaryScale: spec.binaryScale,
               window: spec.window,
               bands: spec.bands,
+              axis: spec.axis.clamp(0.0, 1.0),
             );
             return spec.fill
                 ? Expanded(child: plot)
@@ -301,6 +321,7 @@ Widget buildHistoryLineChart(
   bool binaryScale = false,
   ({int from, int to})? window,
   List<ChartBand> bands = const [],
+  double axis = 1,
 }) {
   // fl_chart throws a LateInitializationError on `mostLeftSpot` when handed a
   // bar with no spots at all
@@ -316,11 +337,13 @@ Widget buildHistoryLineChart(
       .expand((b) => b.spots)
       .map((e) => e.y)
       .fold<double>(double.infinity, (a, b) => a < b ? a : b);
-  final axis = niceAxis(trough: trough, peak: peak, binary: binaryScale);
-  final bottom = axis.bottom;
-  final top = axis.top;
-  final interval = axis.interval;
-  final gutter = axisWidth(bottom, top, interval, format);
+  final scale = niceAxis(trough: trough, peak: peak, binary: binaryScale);
+  final bottom = scale.bottom;
+  final top = scale.top;
+  final interval = scale.interval;
+  // Scaled rather than switched: the gutter is what the plot is inset by, so
+  // a chart that gained one between two frames would shift its whole line.
+  final gutter = axisWidth(bottom, top, interval, format) * axis;
 
   // The window that was asked for, not the extent of what came back. Equal
   // bounds would give fl_chart a zero-width axis, so a window that has
@@ -334,7 +357,10 @@ Widget buildHistoryLineChart(
 
   final chart = LineChart(
     LineChartData(
+      // A card is read at a glance and has nothing to hold a tooltip; the
+      // page it becomes is where a value under the pointer belongs.
       lineTouchData: LineTouchData(
+        enabled: axis >= 1,
         touchTooltipData: LineTouchTooltipData(
           tooltipPadding: const EdgeInsets.all(5),
           tooltipBorderRadius: BorderRadius.circular(8),
@@ -369,11 +395,11 @@ Widget buildHistoryLineChart(
         handleBuiltInTouches: true,
       ),
       gridData: FlGridData(
-        show: true,
+        show: axis > 0,
         drawVerticalLine: false,
         horizontalInterval: interval,
-        getDrawingHorizontalLine: (value) => const FlLine(
-          color: Color.fromARGB(43, 88, 91, 94),
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: const Color.fromARGB(43, 88, 91, 94).withValues(alpha: axis),
           strokeWidth: 1,
         ),
       ),
@@ -388,19 +414,21 @@ Widget buildHistoryLineChart(
         ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
-            showTitles: true,
+            showTitles: axis > 0,
             // Without an explicit interval fl_chart emits a label per pixel
             // step, which stacked them into an unreadable smear
             interval: interval,
             // Sized to the labels this axis will actually draw. A fixed
             // reserve had to assume the worst case, which left a wide empty
             // gutter on every chart whose ticks happened to be short.
-            reservedSize: axisWidth(bottom, top, interval, format),
+            reservedSize: gutter,
             getTitlesWidget: (val, meta) => SideTitleWidget(
               meta: meta,
               child: Text(
                 format(val),
-                style: UIs.text12Grey,
+                style: UIs.text12Grey.copyWith(
+                  color: UIs.text12Grey.color?.withValues(alpha: axis),
+                ),
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.visible,

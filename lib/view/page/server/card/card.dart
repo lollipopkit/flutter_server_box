@@ -14,8 +14,8 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
-import 'package:server_box/view/page/server/card/spark.dart';
 import 'package:server_box/view/page/server/chart.dart';
+import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
 /// Every measurement a server card is built from, at both of its sizes.
@@ -99,31 +99,9 @@ const _tabular = [FontFeature.tabularFigures()];
 /// Named here because they are the far end of a movement that starts inside a
 /// card: the two have to be the same numbers or the page arrives shifted.
 const _kFocusPad = EdgeInsets.fromLTRB(17, 13, 17, 13);
-const _kRowPad = EdgeInsets.symmetric(horizontal: 9, vertical: 5);
-const _kOpenRowPad = EdgeInsets.fromLTRB(17, 11, 13, 11);
 
-/// A row's two ends, as whole styles rather than as numbers.
-///
-/// Lerped with [TextStyle.lerp], which is the only way to arrive at exactly
-/// the page's own style: a line height left explicit at the far end is a line
-/// height the page does not have, and the rows would land a pixel or two off
-/// for every one of them.
-/// No explicit line height at either end: [TextStyle.lerp] keeps whichever of
-/// the two has one, so a height stated on the near end is a height the page
-/// never gets rid of — and the rows land a few points off for every one of
-/// them.
-const _kRowLabel = TextStyle(fontSize: 12);
-const _kOpenRowLabel = TextStyle(fontSize: 13, fontWeight: FontWeight.w500);
-const _kRowValue = TextStyle(
-  fontSize: 13,
-  fontWeight: FontWeight.w500,
-  fontFeatures: _tabular,
-);
-const _kOpenRowValue = TextStyle(
-  fontSize: 15,
-  fontWeight: FontWeight.w500,
-  fontFeatures: _tabular,
-);
+
+
 
 /// One server, as the home page draws it.
 ///
@@ -188,7 +166,7 @@ class ServerCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final compact = openness <= 0 && density != ServerListDensity.cards;
-    final theme = Theme.of(context);
+    final card = cardColorOf(context);
     return CardX(
       // The card's own surface goes as it becomes the page: by then each block
       // inside it is a card in its own right, which is how the page draws
@@ -201,7 +179,7 @@ class ServerCard extends ConsumerWidget {
       color: openness <= 0
           ? null
           : Color.lerp(
-              theme.cardColor,
+              card,
               Colors.transparent,
               ((openness - 0.5) * 2).clamp(0.0, 1.0),
             ),
@@ -229,7 +207,17 @@ class ServerCard extends ConsumerWidget {
         // of them used to move every card below it in the column between one
         // frame and the next.
         child: AnimatedSize(
-          duration: context.motion(Durations.medium3),
+          // Off while the card is growing into the page: its height is
+          // already being animated, by the lerps inside it, and a second
+          // animation easing towards a target that moves every frame lags
+          // behind the width — which is the card's own height arriving after
+          // everything else driven by the same movement.
+          // Not zero: `RenderAnimatedSize` completes a zero-length animation
+          // inside its own `performLayout`, which is a render object dirtying
+          // itself mid-layout.
+          duration: openness > 0
+              ? const Duration(milliseconds: 1)
+              : context.motion(Durations.medium3),
           curve: Curves.fastEaseInToSlowEaseOut,
           alignment: Alignment.topCenter,
           child: compact
@@ -989,67 +977,42 @@ class ServerCard extends ConsumerWidget {
       ],
     );
 
-    return _surface(theme, t, child: body, padding: _kFocusPad);
+    return _surface(context, t, child: body, padding: _kFocusPad);
   }
 
-  /// The window of this reading, at whichever of its two forms the movement
-  /// is between.
+  /// The window of this reading.
   ///
-  /// A card draws bars and the page draws a line with an axis, and neither
-  /// can become the other by moving: so the box travels and grows, and what
-  /// is in it crosses over on the way. By the time the page takes the card
-  /// over, what the card is drawing *is* the page's chart — the same widget,
-  /// the same axis, the same line — so there is nothing left to cross.
+  /// The page's own chart, at both ends of the movement — so there is nothing
+  /// to swap when the page takes over, only a scale and a set of lines growing
+  /// in beside a line that has not moved. A card the height of two lines of
+  /// text cannot carry five tick labels, so at rest it has none; the gutter
+  /// they sit in is a width, and the plot narrows into it rather than jumping
+  /// when it appears.
   Widget _chart(
     ServerMetric m, {
     required bool stale,
     required double height,
     required double t,
   }) {
-    // Grey rather than dimmed as a whole: pressing the card's opacity down
-    // would take the text with it, and the numbers are still worth reading.
-    // What is out of date is the shape.
-    final color = stale ? Colors.grey : m.color;
-
-    final bars = Sparkline(
-      samples: m.samples,
-      color: color,
-      height: height,
-      // A share is drawn against its full so that two cards are comparable; a
-      // rate has no full and is drawn against its own peak.
-      max: m.percent == null ? null : 100,
-    );
-    if (t <= 0) return bars;
-
     final now = DateTime.now().millisecondsSinceEpoch;
-    final line = MetricChart(
+    return MetricChart(
       MetricChartSpec(
-        series: [HistorySeries(m.label, color, m.samples)],
+        // Grey rather than the card dimmed as a whole: pressing the opacity
+        // down would take the text with it, and the numbers are still worth
+        // reading. What is out of date is the shape.
+        series: [HistorySeries(m.label, stale ? Colors.grey : m.color, m.samples)],
         format: m.format,
         times: m.times,
         // The same window the page draws live: from the first sample to now,
-        // so a machine that stopped answering leaves the same trailing gap on
-        // both sides of the handover.
+        // so a machine that stopped answering leaves the same trailing gap at
+        // both ends of the movement.
         window: m.times.isEmpty
             ? null
-            : (
-                from: m.times.first,
-                to: now > m.times.last ? now : m.times.last,
-              ),
+            : (from: m.times.first, to: now > m.times.last ? now : m.times.last),
         binaryScale: m.binary,
         height: height,
         fill: true,
-      ),
-    );
-
-    return SizedBox(
-      height: height,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (t < 1) Opacity(opacity: 1 - t, child: bars),
-          Opacity(opacity: t, child: line),
-        ],
+        axis: t,
       ),
     );
   }
@@ -1096,11 +1059,10 @@ class ServerCard extends ConsumerWidget {
   /// surface appearing under something that has not moved — rather than the
   /// contents jumping to make room for one.
   Widget _surface(
-    ThemeData theme,
+    BuildContext context,
     double t, {
     required Widget child,
     required EdgeInsets padding,
-    Color? open,
   }) {
     if (t <= 0) return child;
     return CardX(
@@ -1108,7 +1070,7 @@ class ServerCard extends ConsumerWidget {
       // going — see [build].
       color: Color.lerp(
         Colors.transparent,
-        open ?? theme.cardColor,
+        cardColorOf(context),
         (t * 2).clamp(0.0, 1.0),
       ),
       margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
@@ -1220,137 +1182,21 @@ class ServerCard extends ConsumerWidget {
     required ColorScheme scheme,
     bool promoted = false,
   }) {
-    final t = openness;
-    final percent = m.percent;
-
-    final row = Row(
-      children: [
-        Icon(m.icon, size: lerpDouble(17, 18, t), color: Colors.grey),
-        SizedBox(width: lerpDouble(9, 13, t)),
-        SizedBox(
-          width: lerpDouble(
-            ServerCardSizes.label,
-            ServerCardSizes.openLabel,
-            t,
-          ),
-          child: Text(
-            m.label,
-            style: TextStyle.lerp(_kRowLabel, _kOpenRowLabel, t),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        SizedBox(width: lerpDouble(9, 13, t)),
-        Expanded(
-          child: percent == null
-              // A rate has no full, so the space a bar would take says what
-              // the number is of instead.
-              ? Text(
-                  m.note,
-                  style: TextStyle.lerp(
-                    const TextStyle(fontSize: 12, color: Colors.grey),
-                    UIs.text12Grey,
-                    t,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : Row(
-                  children: [
-                    Flexible(
-                      child: ConstrainedBox(
-                        // What the page caps it at, so a bar in a wide column
-                        // does not run the width of the window. The other end
-                        // is a bound that cannot bind — a card is never wider
-                        // than the page it is in.
-                        constraints: BoxConstraints(
-                          maxWidth: lerpDouble(
-                            pageWidth <= 340 ? 340 : pageWidth,
-                            340,
-                            t,
-                          )!,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                            ServerCardSizes.bar,
-                          ),
-                          child: LinearProgressIndicator(
-                            value: percent.clamp(0.0, 1.0),
-                            minHeight: ServerCardSizes.bar,
-                            backgroundColor: scheme.surfaceContainerHighest,
-                            valueColor: AlwaysStoppedAnimation(
-                              m.over ? StatePalette.warn : m.color,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // The note joins the bar as the row grows into the page's,
-                    // where there is width for both.
-                    if (t > 0 && m.note.isNotEmpty)
-                      Flexible(
-                        child: Opacity(
-                          opacity: t,
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: lerpDouble(0, 13, t)!,
-                            ),
-                            child: Text(
-                              m.note,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: UIs.text12Grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-        ),
-        SizedBox(width: lerpDouble(9, 13, t)),
-        Text(m.value, style: TextStyle.lerp(_kRowValue, _kOpenRowValue, t)),
-        // The page's rows are a way in as well as a reading, and say so.
-        if (t > 0) ...[
-          SizedBox(width: 9 * t),
-          SizedBox(
-            width: 17 * t,
-            child: Opacity(
-              opacity: t,
-              child: const Icon(
-                Icons.chevron_right,
-                size: 17,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-
-    // Tapping a row promotes it, which is the one thing a card lets you do to
-    // it without leaving the list. The ink extends past the row on both sides
-    // so that the target is something a finger can find, which the row's own
-    // 17pt of icon is not.
-    final body = InkWell(
+    return MetricRow(
+      icon: m.icon,
+      label: m.label,
+      color: m.color,
+      value: m.value,
+      note: m.note,
+      percent: m.percent,
+      over: m.over,
+      selected: promoted,
+      openness: openness,
+      barMax: pageWidth,
       // While a set is being built up a tap means "this one too", wherever on
       // the card it lands: a row that promoted a reading instead would be the
       // one part of the card that did something else.
       onTap: selected == null ? () => onPromote(m.kind) : onTap,
-      borderRadius: BorderRadius.circular(9),
-      child: Padding(
-        padding: EdgeInsets.lerp(_kRowPad, _kOpenRowPad, t)!,
-        child: row,
-      ),
-    );
-
-    return _surface(
-      theme,
-      t,
-      child: body,
-      padding: EdgeInsets.zero,
-      // The one being drawn above is marked where it sits, which is what says
-      // the chart and this row are the same reading.
-      open: promoted ? scheme.secondaryContainer : null,
     );
   }
 

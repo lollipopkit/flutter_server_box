@@ -27,6 +27,7 @@ import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
+import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
 import '../helpers/spi_fixture.dart';
@@ -304,6 +305,10 @@ void main() {
     // travels and what is in it crosses over on the way.
     expect(find.byType(MetricChart), findsOneWidget);
     final grownChart = tester.getRect(find.byType(MetricChart));
+    // And the rows are the page's own rows, not a second set drawn from the
+    // same numbers.
+    final grownRows = find.byType(MetricRow).evaluate().length;
+    final firstRow = tester.getRect(find.byType(MetricRow).first);
 
     // Past the handover and its crossing.
     await settle(tester);
@@ -321,6 +326,11 @@ void main() {
     expect(
       tester.getRect(find.byType(MetricChart)),
       rectMoreOrLessEquals(grownChart, epsilon: 2),
+    );
+    expect(find.byType(MetricRow).evaluate().length, grownRows);
+    expect(
+      tester.getRect(find.byType(MetricRow).first),
+      rectMoreOrLessEquals(firstRow, epsilon: 2),
     );
   });
 
@@ -362,5 +372,44 @@ void main() {
     await settle(tester);
     expect(find.byType(ServerDetailPage), findsOneWidget);
     expect(openId(tester), 'srv-1');
+  });
+
+  testWidgets('the way back is a movement too, not a snap', (tester) async {
+    // The expansion used to hang off the selection, which is cleared the
+    // moment the way back is taken — so the card was already a card again on
+    // the first frame of what was supposed to be it shrinking.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    final column = tester.getRect(find.byType(ServerCard).first).width;
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    // Past the chrome leaving, and part way into the card's own movement.
+    await tester.pump(const Duration(milliseconds: 220));
+    await tester.pump(const Duration(milliseconds: 80));
+
+    final shrinking = tester.getRect(
+      find.ancestor(
+        of: find.text('web'),
+        matching: find.byType(ServerCard),
+      ),
+    );
+    expect(shrinking.width, greaterThan(column));
+
+    await settle(tester);
+    expect(
+      tester
+          .getRect(
+            find.ancestor(
+              of: find.text('web'),
+              matching: find.byType(ServerCard),
+            ),
+          )
+          .width,
+      moreOrLessEquals(column, epsilon: 1),
+    );
   });
 }

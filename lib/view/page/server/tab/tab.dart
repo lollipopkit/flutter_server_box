@@ -211,6 +211,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// pick from the sheet, where there is no "next", counts as forwards.
   int _swapDirection = 1;
 
+  /// The card that is grown into the page, or is on its way back out of it.
+  ///
+  /// Not the selection: that is cleared the moment the way back is taken, and
+  /// the card still has a movement to make after it — a card whose expansion
+  /// hung off the selection snapped back to its column instead of shrinking.
+  /// Cleared when the movement has finished, which is what [_openCtrl] says.
+  String? _heroId;
+
   /// Whether the detail's own chrome is up: the facts beside the readings and
   /// the row of things to do under them.
   ///
@@ -279,6 +287,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // app is open, and what it asks for is that this movement stop being one.
     _openCtrl.duration = context.motion(_kOpenDuration);
     final was = ref.read(serverSelectionProvider);
+    _heroId = id;
     ref.read(serverSelectionProvider.notifier).select(id);
     _closeTimer?.cancel();
     // Switching from one open server to another is not a second opening: the
@@ -341,6 +350,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // The chrome follows the card rather than being timed against it: what
     // says the growth has finished is the growth finishing.
     _openCtrl.addStatusListener((status) {
+      // The card is back in its column, so it is a card again.
+      if (status == AnimationStatus.dismissed && _heroId != null) {
+        setState(() => _heroId = null);
+      }
       final showing = status == AnimationStatus.completed;
       if (showing == _detailShowing) return;
       setState(() => _detailShowing = showing);
@@ -1213,7 +1226,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// readings in full, the facts, the row of things to do — arrives after the
   /// movement has finished, so that only one thing is ever moving.
   Widget _buildGrid(List<String> filtered, String? openId) {
+    // What the bar and the readings are of, and what the grid is animating.
+    // The two are the same while a machine is open and differ on the way back
+    // out: the selection goes first so that the page's chrome can leave, and
+    // the card still has to shrink.
     final open = openId != null && filtered.contains(openId);
+    final heroId = _heroId;
+    final hero = heroId != null && filtered.contains(heroId);
     // What the list draws each machine as. Not while one is open: the page has
     // one shape, and the row or tile that was tapped is on its way to it.
     final density = ServerDensityPref.of(_tag.value).resolve(
@@ -1272,7 +1291,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
             ServerListDensity.rows => 0.0,
             _ => MasonryList.kSpacing,
           },
-          expandedKey: open ? ValueKey(openId) : null,
+          expandedKey: hero ? ValueKey(heroId) : null,
           expansion: _open.value,
           // Under the cards, and only while they are the page: with one of them
           // open the totals would be a summary of a list that is not on screen.
@@ -1280,7 +1299,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
           children: [
             // While one is open it is the only one built: the rest are leaving,
             // which is what the grid already knows how to draw.
-            for (final id in open ? [openId] : filtered)
+            for (final id in open && hero ? [heroId] : filtered)
               // Its own `Consumer`, so a status poll rebuilds the one card whose
               // server answered rather than the grid. Watched from this page's
               // `ref` — which is what a builder would have to do — any server's
@@ -1289,7 +1308,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 key: ValueKey(id),
                 builder: (_, ref, _) => _buildEachServerCard(
                   ref.watch(serverProvider(id)),
-                  openness: id == openId ? _open.value : 0,
+                  openness: id == heroId ? _open.value : 0,
                   density: density,
                   // The box the page will have, which is this same box: the
                   // grid and the page it becomes are the two children of one
