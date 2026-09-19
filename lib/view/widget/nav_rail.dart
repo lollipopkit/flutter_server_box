@@ -24,26 +24,29 @@ abstract final class NavRailMetrics {
   /// Above the first item and below the footer.
   static const padding = 13.0;
 
-  /// The indicator the icon sits in, closed and open.
+  /// The indicator the icon sits in.
+  ///
+  /// Its width is the **only** thing about an item that the opening changes.
+  /// The height, the padding, the glyph and the gap under it were all a point
+  /// or three different between the two shapes, and every one of them moved
+  /// the icon a fraction of a pixel on every frame — a glyph re-rasterised at
+  /// 23.78pt and then 23.55pt does not slide, it crawls. So the icon is the
+  /// thing that stands still and the pill grows out from under it.
   static const indicatorWidth = 40.0;
   static const expandedIndicatorWidth = 164.0;
   static const indicatorHeight = 34.0;
-  static const expandedIndicatorHeight = 36.0;
 
   /// Between two indicators.
   static const itemGap = 5.0;
-  static const expandedItemGap = 2.0;
 
-  /// Inside an indicator, before the icon. Closed, this is what centres a
-  /// 22pt glyph in a 40pt pill.
+  /// Inside an indicator, before the icon. This is what centres the glyph in
+  /// the shut pill, and where it stays in the open one.
   static const indicatorPadding = (indicatorWidth - iconSize) / 2;
-  static const expandedIndicatorPadding = 11.0;
 
   /// Between the icon and the name, once there is a name.
   static const labelGap = 11.0;
 
   static const iconSize = 24.0;
-  static const expandedIconSize = 22.0;
   static const labelSize = 13.0;
 
   /// How much one item takes vertically.
@@ -244,55 +247,91 @@ class _NavRailTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // How far this item is the one being looked at, 0 to 1.
+    //
+    // Everything that says so is read off it — the fill, the glyph's colour,
+    // the name's colour and its weight — so the whole item crosses over
+    // together rather than the pill fading under a label that snapped. It is
+    // its own animation because it is its own event: the rail opening does not
+    // change which item is selected, and selecting one does not open the rail.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: selected ? 1.0 : 0.0),
+      duration: Durations.short4,
+      curve: Curves.easeOut,
+      builder: (context, on, _) => _build(context, on),
+    );
+  }
+
+  Widget _build(BuildContext context, double on) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = selected ? scheme.onSecondaryContainer : scheme.outline;
+    final fg = Color.lerp(scheme.outline, scheme.onSecondaryContainer, on);
 
     // Halfway, which is where the name has room to be read and the badge has
-    // room to sit after it. Below it the row is an icon and the badge is on
-    // the corner; above it they have swapped.
+    // room to sit after it. Below it the badge is on the indicator's corner;
+    // above it, after the name.
     final named = open > 0.5;
-    final fade = ((open - 0.5) * 2).clamp(0.0, 1.0);
+    final inline = ((open - 0.5) * 2).clamp(0.0, 1.0);
+    final corner = 1 - (open * 2).clamp(0.0, 1.0);
 
-    // Geometry here and the fill below, rather than one `AnimatedContainer`
-    // doing both. It would animate the width and the padding *towards* what
-    // this frame asked for, a frame or two behind the row inside — and a row
-    // laid out for a pill wider than the one it is in is an overflow.
-    Widget indicator = SizedBox(
+    // Every measurement written out rather than left to an
+    // `AnimatedContainer`: it would ease the width and the padding *towards*
+    // what this frame asked for, a frame or two behind the row inside — and a
+    // row laid out for a pill wider than the one it is in is an overflow.
+    final indicator = SizedBox(
       width: _lerp(
         NavRailMetrics.indicatorWidth,
         NavRailMetrics.expandedIndicatorWidth,
       ),
-      height: _lerp(
-        NavRailMetrics.indicatorHeight,
-        NavRailMetrics.expandedIndicatorHeight,
-      ),
-      child: AnimatedContainer(
-        // The fill, and only the fill: it is the one thing here that changes
-        // without the rail opening or shutting.
-        duration: Durations.short3,
-        curve: Curves.easeOut,
+      height: NavRailMetrics.indicatorHeight,
+      child: DecoratedBox(
         decoration: ShapeDecoration(
           shape: const StadiumBorder(),
-          color: selected ? scheme.secondaryContainer : Colors.transparent,
+          color: Color.lerp(Colors.transparent, scheme.secondaryContainer, on),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: _lerp(
-              NavRailMetrics.indicatorPadding,
-              NavRailMetrics.expandedIndicatorPadding,
-            ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: NavRailMetrics.indicatorPadding,
           ),
           child: Row(
             children: [
-              IconTheme.merge(
-                data: IconThemeData(
-                  size: _lerp(
-                    NavRailMetrics.iconSize,
-                    NavRailMetrics.expandedIconSize,
+              // The badge is anchored to the glyph, not to the pill.
+              //
+              // On the pill's own corner it kept station with an edge that
+              // travels 120 points as the rail opens — so it flew off to the
+              // right, across the name arriving under it, while fading out.
+              // On the glyph it stays where it was and only fades.
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconTheme.merge(
+                    data: IconThemeData(
+                      size: NavRailMetrics.iconSize,
+                      color: fg,
+                    ),
+                // Round the glyph and nothing else.
+                //
+                // A `Tooltip` builds two different trees — with an
+                // `OverlayPortal` and without — depending on whether it is
+                // allowed to show anything, so turning it off halfway through
+                // the opening re-parents everything under it. Under it here is
+                // one `Icon`, which has nothing to lose by that.
+                    child: TooltipVisibility(
+                      // Only while the name is not on the row already.
+                      visible: !named,
+                      child: Tooltip(
+                        message: item.label,
+                        waitDuration: Durations.long2,
+                        child: on > 0.5 ? item.selectedIcon : item.icon,
+                      ),
+                    ),
                   ),
-                  color: fg,
-                ),
-                child: selected ? item.selectedIcon : item.icon,
+                  // Always here, faded out over the first half of the opening
+                  // rather than taken away at the halfway mark: dropped there
+                  // it went from fully drawn to gone between two frames, on
+                  // the one item that has a badge.
+                  if (item.badge case final badge?)
+                    Positioned(top: -4, right: -6, child: badge(corner)),
+                ],
               ),
               // Absent rather than transparent while the rail is shut: a name
               // with no room left is a `Text` laid out in a box of no width.
@@ -307,47 +346,43 @@ class _NavRailTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: NavRailMetrics.labelSize,
                       height: 1.2,
-                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                      fontWeight: FontWeight.lerp(
+                        FontWeight.w400,
+                        FontWeight.w500,
+                        on,
+                      ),
                       // The colour, not an `Opacity` around it — see
                       // [NavRailBadge.opacity].
-                      color:
-                          (selected
-                                  ? scheme.onSecondaryContainer
-                                  : Colors.grey)
-                              .withValues(alpha: open),
+                      color: Color.lerp(
+                        Colors.grey,
+                        scheme.onSecondaryContainer,
+                        on,
+                      )?.withValues(alpha: open),
                     ),
                   ),
                 ),
+                // Narrowed as it fades rather than only faded: a badge at
+                // opacity zero is still as wide as a badge, and this one
+                // arrives in a pill that has not finished widening.
+                if (item.badge case final badge?)
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      widthFactor: inline,
+                      child: badge(inline),
+                    ),
+                  ),
               ],
-              // Past the halfway point only. A faded badge is still as wide as
-              // a badge, so one held here from the start would be 26 points of
-              // row in a pill that is not yet that wide.
-              if (named)
-                if (item.badge case final badge?) badge(fade),
             ],
           ),
         ),
       ),
     );
 
-    if (item.badge case final badge? when !named) {
-      indicator = Stack(
-        // The badge hangs off two of the indicator's edges by design, and a
-        // clip here would take the corner off it.
-        clipBehavior: Clip.none,
-        children: [
-          indicator,
-          Positioned(top: -4, right: -6, child: badge(1 - fade)),
-        ],
-      );
-    }
-
     final tile = Padding(
       // Outside the ink rather than inside it, so that what lights under the
       // pointer is the pill and not the pill plus the gap under it.
-      padding: EdgeInsets.only(
-        bottom: _lerp(NavRailMetrics.itemGap, NavRailMetrics.expandedItemGap),
-      ),
+      padding: const EdgeInsets.only(bottom: NavRailMetrics.itemGap),
       child: InkWell(
         onTap: onTap,
         // The pill's own shape. A rectangle under a stadium reads as a second
@@ -362,25 +397,15 @@ class _NavRailTile extends StatelessWidget {
       ),
     );
 
-    // Only while it is the only thing naming the item. Open, the name is on
-    // the row and a bubble repeating it would be over the row it names.
-    final withName = named
-        ? tile
-        : Tooltip(
-            message: item.label,
-            waitDuration: Durations.long2,
-            child: tile,
-          );
-
     return switch (item.onMenu) {
-      null => withName,
+      null => tile,
       // Translucent, so the tap that switches tabs still reaches the ink
       // response this sits inside. A long press wins the arena over that tap
       // by holding past the timeout, which is what lets one target carry both.
       final onMenu => GestureDetector(
         behavior: HitTestBehavior.translucent,
         onLongPress: () => onMenu(null),
-        child: withName,
+        child: tile,
       ).onSecondary(onMenu),
     };
   }
