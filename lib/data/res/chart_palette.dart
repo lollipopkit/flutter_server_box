@@ -61,6 +61,16 @@ abstract final class ChartPalette {
   /// The six as they stand, for a caller that wants them in order.
   static SeriesPalette get series => _series;
 
+  /// What a reading is drawn in, given whether it is the one being watched.
+  ///
+  /// One function rather than the same ternary in each place that draws a
+  /// reading, and that matters more here than it usually does: a card grows
+  /// into the detail page, so the two have to agree exactly or a reading
+  /// changes colour at the handover — which reads as the page having swapped
+  /// it for a different one.
+  static Color reading({required bool promoted}) =>
+      promoted ? ChartPalette.promoted : ChartPalette.quiet;
+
   /// The one reading a card is watching, in the theme colour itself.
   ///
   /// Which reading that is, is said by the label beside it. What the colour

@@ -48,7 +48,6 @@ class _MetricView {
     required this.kind,
     required this.label,
     required this.icon,
-    required this.color,
     required this.value,
     required this.note,
     required this.bigNote,
@@ -63,7 +62,10 @@ class _MetricView {
   final _MetricKind kind;
   final String label;
   final IconData icon;
-  final Color color;
+
+  // No colour. What a reading is drawn in depends on whether it is the one
+  // this page is focused on, which is not something a reading knows about
+  // itself — see [_seriesColor].
 
   /// The reading now, as the row and the headline both show it.
   final String value;
@@ -99,8 +101,7 @@ class _MetricView {
     kind: kind,
     label: label,
     icon: icon,
-    color: color,
-    value: l10n.unavailable,
+        value: l10n.unavailable,
     note: error,
     bigNote: '',
     series: const [],
@@ -180,19 +181,6 @@ class _Window {
   final List<double?> battery;
 }
 
-// Getters rather than constants: the six series are worked out from the
-// colour the user picked and change with the theme — see [ChartPalette].
-Color get _kCpuColor => ChartPalette.cpu;
-Color get _kMemColor => ChartPalette.mem;
-Color get _kSwapColor => ChartPalette.swap;
-Color get _kDiskColor => ChartPalette.disk;
-Color get _kDiskReadColor => ChartPalette.diskRead;
-Color get _kNetRxColor => ChartPalette.netRx;
-Color get _kNetTxColor => ChartPalette.netTx;
-Color get _kGpuColor => ChartPalette.gpu;
-Color get _kTempColor => ChartPalette.temp;
-Color get _kBatteryColor => ChartPalette.battery;
-
 /// How a reading is written, wherever it is written: the row, the headline,
 /// the stats and the picker all say the same number the same way.
 String _pct(double? v) => v == null ? '--' : '${(v * 10).round() / 10}%';
@@ -233,14 +221,12 @@ _MetricView _failedMetric(
   _MetricKind kind,
   String label,
   IconData icon,
-  Color color,
   String err,
 ) => _MetricView(
   kind: kind,
   label: label,
   icon: icon,
-  color: color,
-  value: '',
+    value: '',
   note: '',
   bigNote: '',
   series: const [],
@@ -260,12 +246,11 @@ bool _neverSampled(ServerState si) =>
 /// ones this machine does not report, which is the one shape change worth
 /// making.
 List<_MetricView> _blankMetrics() {
-  _MetricView dash(_MetricKind kind, String label, IconData icon, Color color) =>
+  _MetricView dash(_MetricKind kind, String label, IconData icon) =>
       _MetricView(
         kind: kind,
         label: label,
         icon: icon,
-        color: color,
         value: _pct(null),
         note: '',
         bigNote: '',
@@ -274,11 +259,11 @@ List<_MetricView> _blankMetrics() {
       );
 
   return [
-    dash(_MetricKind.cpu, 'CPU', ServerDetailCards.cpu.icon, _kCpuColor),
-    dash(_MetricKind.mem, libL10n.memory, ServerDetailCards.mem.icon, _kMemColor),
-    dash(_MetricKind.swap, 'Swap', ServerDetailCards.swap.icon, _kSwapColor),
-    dash(_MetricKind.disk, libL10n.disk, ServerDetailCards.disk.icon, _kDiskColor),
-    dash(_MetricKind.net, libL10n.net, ServerDetailCards.net.icon, _kNetTxColor),
+    dash(_MetricKind.cpu, 'CPU', ServerDetailCards.cpu.icon),
+    dash(_MetricKind.mem, libL10n.memory, ServerDetailCards.mem.icon),
+    dash(_MetricKind.swap, 'Swap', ServerDetailCards.swap.icon),
+    dash(_MetricKind.disk, libL10n.disk, ServerDetailCards.disk.icon),
+    dash(_MetricKind.net, libL10n.net, ServerDetailCards.net.icon),
   ];
 }
 
@@ -349,7 +334,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.cpu,
           label: 'CPU',
           icon: ServerDetailCards.cpu.icon,
-          color: _kCpuColor,
           value: _pct(cpu),
           note: ss.cpu.brand.keys.firstOrNull ?? '',
           bigNote: '${_pct(ss.cpu.idle)} idle',
@@ -362,7 +346,7 @@ extension on _ServerDetailPageState {
             ],
             (k: 'idle', v: _pct(ss.cpu.idle)),
           ],
-          series: [HistorySeries('CPU', _kCpuColor, w.cpu)],
+          series: [HistorySeries('CPU', ChartPalette.promoted, w.cpu)],
           format: _pct,
         ),
       );
@@ -376,7 +360,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.mem,
           label: libL10n.memory,
           icon: ServerDetailCards.mem.icon,
-          color: _kMemColor,
           value: _pct(used),
           note: '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / $total',
           bigNote: l10n.ofFmt(total),
@@ -385,7 +368,7 @@ extension on _ServerDetailPageState {
             (k: 'free', v: _pct(ss.mem.free / ss.mem.total * 100)),
             (k: 'avail', v: _pct(ss.mem.availPercent * 100)),
           ],
-          series: [HistorySeries(libL10n.memory, _kMemColor, w.mem)],
+          series: [HistorySeries(libL10n.memory, ChartPalette.promoted, w.mem)],
           format: _pct,
         ),
       );
@@ -395,7 +378,6 @@ extension on _ServerDetailPageState {
           _MetricKind.mem,
           libL10n.memory,
           ServerDetailCards.mem.icon,
-          _kMemColor,
           err,
         ),
       );
@@ -409,7 +391,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.swap,
           label: 'Swap',
           icon: ServerDetailCards.swap.icon,
-          color: _kSwapColor,
           value: _pct(used),
           note: l10n.ofFmt(total),
           bigNote: l10n.ofFmt(total),
@@ -417,7 +398,7 @@ extension on _ServerDetailPageState {
           stats: [
             (k: 'cached', v: _pct(ss.swap.cached / ss.swap.total * 100)),
           ],
-          series: [HistorySeries('Swap', _kSwapColor, w.swap)],
+          series: [HistorySeries('Swap', ChartPalette.promoted, w.swap)],
           format: _pct,
         ),
       );
@@ -427,7 +408,6 @@ extension on _ServerDetailPageState {
           _MetricKind.swap,
           'Swap',
           ServerDetailCards.swap.icon,
-          _kSwapColor,
           err,
         ),
       );
@@ -441,12 +421,11 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.disk,
           label: libL10n.disk,
           icon: ServerDetailCards.disk.icon,
-          color: _kDiskColor,
           value: _pct(used),
           note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
           bigNote: l10n.ofFmt(usage.size.kb2Str),
           percent: used / 100,
-          series: [HistorySeries(libL10n.disk, _kDiskColor, w.disk)],
+          series: [HistorySeries(libL10n.disk, ChartPalette.promoted, w.disk)],
           format: _pct,
         ),
       );
@@ -456,7 +435,6 @@ extension on _ServerDetailPageState {
           _MetricKind.disk,
           libL10n.disk,
           ServerDetailCards.disk.icon,
-          _kDiskColor,
           err,
         ),
       );
@@ -469,7 +447,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.diskIo,
           label: l10n.diskIo,
           icon: MingCute.transfer_3_line,
-          color: _kDiskReadColor,
           value: _rate(write),
           // The one that is going to be a problem, not the average of them:
           // a machine with six disks is busy because one of them is.
@@ -488,8 +465,8 @@ extension on _ServerDetailPageState {
           series:
               _deviceSeries(si, _MetricKind.diskIo) ??
               [
-                HistorySeries(l10n.read, _kDiskReadColor, w.diskRead),
-                HistorySeries(l10n.write, _kDiskColor, w.diskWrite),
+                HistorySeries(l10n.read, ChartPalette.devices[0], w.diskRead),
+                HistorySeries(l10n.write, ChartPalette.devices[1], w.diskWrite),
               ],
           format: _rateOf,
           binary: true,
@@ -506,7 +483,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.net,
           label: libL10n.net,
           icon: ServerDetailCards.net.icon,
-          color: _kNetTxColor,
           value: _rate(tx),
           note: _busiestNote(
             ns.realIfaces.length,
@@ -522,8 +498,8 @@ extension on _ServerDetailPageState {
           series:
               _deviceSeries(si, _MetricKind.net) ??
               [
-                HistorySeries('↓', _kNetRxColor, w.netRx),
-                HistorySeries('↑', _kNetTxColor, w.netTx),
+                HistorySeries('↓', ChartPalette.devices[0], w.netRx),
+                HistorySeries('↑', ChartPalette.devices[1], w.netTx),
               ],
           format: _rateOf,
           binary: true,
@@ -535,7 +511,6 @@ extension on _ServerDetailPageState {
           _MetricKind.net,
           libL10n.net,
           ServerDetailCards.net.icon,
-          _kNetTxColor,
           err,
         ),
       );
@@ -553,7 +528,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.gpu,
           label: 'GPU',
           icon: ServerDetailCards.gpu.icon,
-          color: _kGpuColor,
           value: _pct(used),
           note: ss.gpus.length > 1
               ? _busiestNote(ss.gpus.length, gpu.name)
@@ -568,7 +542,7 @@ extension on _ServerDetailPageState {
             if (gpu.temperature case final t?)
               (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
           ],
-          series: [HistorySeries('GPU', _kGpuColor, w.gpu)],
+          series: [HistorySeries('GPU', ChartPalette.promoted, w.gpu)],
           format: _pct,
         ),
       );
@@ -580,7 +554,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.temp,
           label: libL10n.temperature,
           icon: ServerDetailCards.temp.icon,
-          color: _kTempColor,
           value: _formatTemp(celsius),
           note: ss.temps.devices.length > 1
               ? l10n.sensorsHottestFmt(ss.temps.devices.length, sensor)
@@ -588,7 +561,7 @@ extension on _ServerDetailPageState {
           bigNote: sensor,
           series:
               _deviceSeries(si, _MetricKind.temp) ??
-              [HistorySeries(libL10n.temperature, _kTempColor, w.temp)],
+              [HistorySeries(libL10n.temperature, ChartPalette.promoted, w.temp)],
           format: _formatTemp,
         ),
       );
@@ -604,7 +577,6 @@ extension on _ServerDetailPageState {
           kind: _MetricKind.battery,
           label: libL10n.battery,
           icon: ServerDetailCards.battery.icon,
-          color: _kBatteryColor,
           value: _pct(percent),
           note: [battery.status.name, ?battery.name].join(' · '),
           bigNote: battery.status.name,
@@ -612,7 +584,7 @@ extension on _ServerDetailPageState {
           stats: [
             if (battery.cycle case final cycle?) (k: l10n.cycle, v: '$cycle'),
           ],
-          series: [HistorySeries(libL10n.battery, _kBatteryColor, w.battery)],
+          series: [HistorySeries(libL10n.battery, ChartPalette.promoted, w.battery)],
           format: _pct,
         ),
       );
@@ -1021,7 +993,7 @@ extension on _ServerDetailPageState {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(m.icon, size: 18, color: m.color),
+              Icon(m.icon, size: 18, color: ChartPalette.reading(promoted: true)),
               const SizedBox(width: 9),
               Flexible(
                 child: Text(
@@ -1552,7 +1524,7 @@ extension on _ServerDetailPageState {
       return MetricRow(
         icon: m.icon,
         label: m.label,
-        color: m.color,
+        color: ChartPalette.reading(promoted: selected),
         value: m.value,
         note: note,
         percent: m.percent,
@@ -1576,7 +1548,7 @@ extension on _ServerDetailPageState {
                 ? scheme.error
                 : selected
                 ? fg
-                : m.color,
+                : ChartPalette.reading(promoted: false),
           ),
           const SizedBox(width: 9),
           Expanded(

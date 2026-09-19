@@ -78,32 +78,30 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
       within: _kRecentWindow,
     );
 
-    return Padding(
-      // The design's gap between this and the first row of cards. The grid
-      // brings none of its own above the header.
-      padding: const EdgeInsets.only(bottom: 9),
-      child: CardX(
-        clipBehavior: Clip.antiAlias,
-        margin: EdgeInsets.zero,
-        child: AnimatedSize(
-          duration: context.motion(Durations.medium2),
-          curve: Curves.fastEaseInToSlowEaseOut,
-          alignment: Alignment.topCenter,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: _kStripHeight,
-                child: LayoutBuilder(
-                  builder: (_, cons) =>
-                      _strip(context, totals, events, cons.maxWidth),
-                ),
+    // No gap of its own above or below: the slot this sits in keeps it, for
+    // this and for the switcher that takes its place — see the server tab's
+    // `_kStripInset`.
+    return CardX(
+      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
+      child: AnimatedSize(
+        duration: context.motion(Durations.medium2),
+        curve: Curves.fastEaseInToSlowEaseOut,
+        alignment: Alignment.topCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: _kStripHeight,
+              child: LayoutBuilder(
+                builder: (_, cons) =>
+                    _strip(context, totals, events, cons.maxWidth),
               ),
-              if (_expanded)
-                for (final event in events) _RecentRow(event: event),
-            ],
-          ),
+            ),
+            if (_expanded)
+              for (final event in events) _RecentRow(event: event),
+          ],
         ),
       ),
     );
@@ -199,25 +197,16 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
   /// processors are averaged, because a fleet has no single one to be a share
   /// of.
   Widget _bars(_Totals totals, {required int count, required bool compact}) {
-    final all = <({String k, double? pct, String v, Color color})>[
-      (
-        k: 'CPU',
-        pct: totals.cpu,
-        v: _pct(totals.cpu),
-        color: ChartPalette.cpu,
-      ),
-      (
-        k: libL10n.memory,
-        pct: totals.mem,
-        v: _pct(totals.mem),
-        color: ChartPalette.mem,
-      ),
-      (
-        k: libL10n.disk,
-        pct: totals.disk,
-        v: _pct(totals.disk),
-        color: ChartPalette.disk,
-      ),
+    // One colour for all three, and it is the theme's. These are not three
+    // readings being told apart — each is named at the head of its own bar —
+    // they are three lengths being read across one strip, and three hues
+    // there is the strip competing with the cards under it for the one thing
+    // colour is spent on. The one over its line is the exception, below.
+    final color = ChartPalette.promoted;
+    final all = <({String k, double? pct, String v})>[
+      (k: 'CPU', pct: totals.cpu, v: _pct(totals.cpu)),
+      (k: libL10n.memory, pct: totals.mem, v: _pct(totals.mem)),
+      (k: libL10n.disk, pct: totals.disk, v: _pct(totals.disk)),
     ];
 
     return Padding(
@@ -253,7 +242,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                   valueColor: AlwaysStoppedAnimation(
                     (one.pct ?? 0) >= kServerAlertPercent
                         ? StatePalette.warn
-                        : one.color,
+                        : color,
                   ),
                 ),
               ),
@@ -268,7 +257,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                 fontFeatures: _tabular,
                 color: (one.pct ?? 0) >= kServerAlertPercent
                     ? StatePalette.warn
-                    : one.color,
+                    : color,
               ),
             ),
           ],

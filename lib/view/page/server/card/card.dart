@@ -105,18 +105,6 @@ abstract final class ServerCardSizes {
 
 const _tabular = [FontFeature.tabularFigures()];
 
-/// What a reading is drawn in: the theme colour for the one this card is
-/// watching, a tint barely off grey for the rest.
-///
-/// By role rather than by kind, and that is the whole of it. A list of two
-/// dozen machines each drawn in the hue of whatever it happens to be watching
-/// is two dozen hues that say nothing — what the eye is doing down that list
-/// is comparing how high the bars are, and which reading each one is, is
-/// written beside it. So the colour is spent on the one thing it can say
-/// there: this is the one drawn in full. See [ChartPalette.promoted].
-Color _seriesColor({required bool promoted}) =>
-    promoted ? ChartPalette.promoted : ChartPalette.quiet;
-
 /// What the detail page insets its focus card by, and its rows.
 ///
 /// Named here because they are the far end of a movement that starts inside a
@@ -611,7 +599,7 @@ class ServerCard extends ConsumerWidget {
                     valueColor: AlwaysStoppedAnimation(
                       m.over
                           ? StatePalette.warn
-                          : _seriesColor(promoted: promoted),
+                          : ChartPalette.reading(promoted: promoted),
                     ),
                   ),
                 ),
@@ -708,7 +696,7 @@ class ServerCard extends ConsumerWidget {
                       ? Colors.transparent
                       : (focus.over
                             ? StatePalette.warn
-                            : _seriesColor(promoted: true)),
+                            : ChartPalette.reading(promoted: true)),
                 ),
               ),
             ),
@@ -998,7 +986,7 @@ class ServerCard extends ConsumerWidget {
               : lerpDouble(ServerCardSizes.big, ServerCardSizes.openHead, t),
           child: Row(
           children: [
-            Icon(m.icon, size: 18, color: _seriesColor(promoted: true)),
+            Icon(m.icon, size: 18, color: ChartPalette.reading(promoted: true)),
             const SizedBox(width: 9),
             Text(
               m.label,
@@ -1089,7 +1077,7 @@ class ServerCard extends ConsumerWidget {
         series: [
           HistorySeries(
             m.label,
-            stale ? Colors.grey : _seriesColor(promoted: true),
+            stale ? Colors.grey : ChartPalette.reading(promoted: true),
             m.samples,
           ),
         ],
@@ -1306,7 +1294,7 @@ class ServerCard extends ConsumerWidget {
     return MetricRow(
       icon: m.icon,
       label: m.label,
-      color: _seriesColor(promoted: promoted),
+      color: ChartPalette.reading(promoted: promoted),
       value: m.value,
       note: m.note,
       percent: m.percent,
