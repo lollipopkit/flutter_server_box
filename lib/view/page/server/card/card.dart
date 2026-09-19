@@ -180,17 +180,13 @@ class ServerCard extends ConsumerWidget {
       // inside it is a card in its own right, which is how the page draws
       // them, and one more behind all of them would be a second edge.
       //
-      // It waits until they are fully in before it starts. The two fading past
-      // each other at the same rate leaves the middle of the movement washed
-      // out — the blocks are drawn *on* this, so at half each the pair is only
-      // three quarters of a surface.
+      // Over with in the movement's first fifth, once the blocks are in — see
+      // [cardSurfaceAt]. Held any longer it is a sheet the size of the whole
+      // content area by the time it fades, which is a change of background
+      // rather than a card becoming a page.
       color: openness <= 0
           ? null
-          : Color.lerp(
-              card,
-              Colors.transparent,
-              ((openness - 0.5) * 2).clamp(0.0, 1.0),
-            ),
+          : Color.lerp(Colors.transparent, card, cardSurfaceAt(openness)),
       // A line and a tile are read as a set rather than one at a time, so they
       // are packed tighter and cornered less than a card: the design's 9pt
       // against a card's 13, and next to nothing between them.
@@ -1069,9 +1065,10 @@ class ServerCard extends ConsumerWidget {
   /// A block that is part of the card at rest and a card of its own at the
   /// end.
   ///
-  /// The colour and the inset cross over together, so what happens is a
-  /// surface appearing under something that has not moved — rather than the
-  /// contents jumping to make room for one.
+  /// The surface is there from the start of the movement and the inset arrives
+  /// with everything else, so what happens is a surface growing under contents
+  /// that are already travelling — rather than one appearing around them at
+  /// the point they stop.
   Widget _surface(
     BuildContext context,
     double t, {
@@ -1080,13 +1077,9 @@ class ServerCard extends ConsumerWidget {
   }) {
     if (t <= 0) return child;
     return CardX(
-      // In by the halfway point, which is where the card's own surface starts
-      // going — see [build].
-      color: Color.lerp(
-        Colors.transparent,
-        cardColorOf(context),
-        (t * 2).clamp(0.0, 1.0),
-      ),
+      // In before the card's own surface starts going — see [build] and
+      // [blockSurfaceAt].
+      color: Color.lerp(Colors.transparent, cardColorOf(context), blockSurfaceAt(t)),
       margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
       child: Padding(
         padding: EdgeInsets.lerp(EdgeInsets.zero, padding, t)!,

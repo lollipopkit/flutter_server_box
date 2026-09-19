@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -35,6 +36,7 @@ import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
+import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -65,6 +67,14 @@ const _kSwitcherHeight = 34.0;
 /// Shorter than the card's movement and out of phase with it — see
 /// [_ServerPageState._detailShowing].
 const _kChromeDuration = Durations.short4;
+
+/// How quickly the cards that are not being opened get out of the way.
+///
+/// Over inside the movement's first third, because the page's own facts are
+/// coming in over the same ground: two half-transparent layouts on top of each
+/// other is a wash, and the cards are the half nobody is looking at. Their
+/// slots are held for them either way — what this is is only the paint.
+const _kOthersGone = Interval(0, 0.35, curve: Curves.easeOutCubic);
 
 /// How long the list takes to become the globe, and back.
 ///
@@ -200,8 +210,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// movement rather than as a jump followed by a settle.
   late final _open = CurvedAnimation(
     parent: _openCtrl,
-    curve: Curves.fastEaseInToSlowEaseOut,
-    reverseCurve: Curves.fastEaseInToSlowEaseOut,
+    curve: Curves.easeInOutCubic,
+    reverseCurve: Curves.easeInOutCubic,
   );
 
   /// Which way through the list the last change of machine went: +1 for the
@@ -230,6 +240,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   /// Holds the gap between the chrome going and the card starting back.
   Timer? _closeTimer;
+
+  /// Whether the function row floating over the open machine is wanted.
+  ///
+  /// Here rather than inside the page because the row is: it outlives the
+  /// page under it, which is replaced at every step through the list.
+  final _funcBarVisible = ValueNotifier(true);
 
   /// Where the page's own key bindings live.
   ///
@@ -287,6 +303,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // app is open, and what it asks for is that this movement stop being one.
     _openCtrl.duration = context.motion(_kOpenDuration);
     final was = ref.read(serverSelectionProvider);
+    // Whatever the last machine's page was scrolled to, this one opens at its
+    // top — so the row that floats over it is there to be used.
+    _funcBarVisible.value = true;
     _heroId = id;
     ref.read(serverSelectionProvider.notifier).select(id);
     _closeTimer?.cancel();
@@ -324,6 +343,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   @override
   void dispose() {
     _closeTimer?.cancel();
+    _funcBarVisible.dispose();
     _keys.dispose();
     _open.dispose();
     _openCtrl.dispose();
@@ -1318,7 +1338,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   openness: id == heroId ? _open.value : 0,
                   // How far the *page* has taken over, which is what fades
                   // the cards that are not the one being opened.
-                  hidden: id == heroId ? 0 : _open.value,
+                  hidden: id == heroId ? 0 : _kOthersGone.transform(_open.value),
                   density: density,
                   // The box the page will have, which is this same box: the
                   // grid and the page it becomes are the two children of one
@@ -1332,10 +1352,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
       ),
     );
 
-    // The readings in full, once the card has stopped growing. Crossed with
-    // the card rather than replacing it: by then the two are the same shape —
-    // one reading drawn large over the rest as rows — so what the crossing
-    // has to carry is the difference between them and not a whole page.
+    // The page is mounted for the whole movement, under the card that is
+    // becoming it. What it has that a card has not — the facts beside the
+    // readings, the tables under them — comes in while the chart is still
+    // growing, rather than after: a card growing into a page and then the page
+    // filling in is two arrivals for one tap. Its own readings are laid out
+    // and not painted until the card hands them over, since the card is
+    // already drawing exactly those widgets in exactly those boxes.
     //
     // The strip of other machines is above both and belongs to neither: it is
     // what the list becomes while one of its cards is open, so it stays
@@ -1345,15 +1368,26 @@ class _ServerPageState extends ConsumerState<ServerPage>
       children: [
         _buildSwitcher(filtered, openId),
         Expanded(
-          child: AnimatedSwitcher(
-            // Both halves laid out in the same box. The default stack
-            // shrink-wraps and centres, which left the grid's own scrollable
-            // as tall as its contents in the middle of the window.
-            layoutBuilder: _viewSwapLayout,
-            duration: context.motion(_kChromeDuration),
-            child: open && _detailShowing
-                ? _buildOpenDetail(openId)
-                : KeyedSubtree(key: const ValueKey('cards'), child: grid),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (hero) _buildOpenDetail(heroId),
+              // Dropped the moment the page takes the readings over rather
+              // than crossed with it: at that point both are drawing the same
+              // widgets in the same places, so a crossing would have nothing
+              // to carry and 200ms to carry it in.
+              if (!_detailShowing)
+                KeyedSubtree(key: const ValueKey('cards'), child: grid),
+              // Above both, and the tab's rather than the page's — see
+              // [_buildFuncBar].
+              if (hero)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _buildFuncBar(heroId),
+                ),
+            ],
           ),
         ),
       ],
@@ -1378,11 +1412,18 @@ class _ServerPageState extends ConsumerState<ServerPage>
     if (spi == null) return const SizedBox.shrink();
     return KeyedSubtree(
       key: const ValueKey('detail'),
-      child: DirectionalSwap(
-        id: id,
-        direction: _swapDirection,
-        duration: context.motion(_kOpenDuration),
-        child: _detailFor(id, spi),
+      // Where the bar floating over this learns that it is being read past.
+      // It is not inside the page any more, so it has no controller to ask —
+      // and there is a page per machine, so there would be a different one
+      // after every step through the list.
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onDetailScroll,
+        child: DirectionalSwap(
+          id: id,
+          direction: _swapDirection,
+          duration: context.motion(_kOpenDuration),
+          child: _detailFor(id, spi),
+        ),
       ),
     );
   }
@@ -1390,15 +1431,91 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _detailFor(String id, Spi spi) {
     return KeyedSubtree(
       key: ValueKey('detail:$id'),
-      // Opaque, because it is crossed with the grid underneath it rather than
-      // put in its place: a translucent page would show two layouts at once
-      // for the length of the fade.
+      // Opaque, because the grid is drawn on top of it while the card is
+      // growing: a translucent page would show the two layouts through each
+      // other for the length of the movement.
       child: Material(
         type: MaterialType.canvas,
         color: Theme.of(context).scaffoldBackgroundColor,
-        child: ServerDetailPage(args: SpiRequiredArgs(spi), bare: true),
+        child: ServerDetailPage(
+          args: SpiRequiredArgs(spi),
+          bare: true,
+          // Mounted from the first frame of the movement, so what it has that
+          // the card has not arrives with the chart rather than after it.
+          entrance: _open,
+          // Until then the card is the one drawing them.
+          readingsShowing: _detailShowing,
+        ),
       ),
     );
+  }
+
+  /// The row of things that can be done to the open machine.
+  ///
+  /// The tab's rather than the page's, so that stepping to another machine
+  /// leaves it where it is. The page slides — that is what says which way
+  /// through the list the step went — and a row of the same buttons sliding
+  /// with it is the one part of that movement that says nothing at all. What
+  /// does differ between two machines changes in place, a slot at a time; see
+  /// [ServerFuncBtns].
+  Widget _buildFuncBar(String id) {
+    return Consumer(
+      builder: (_, ref, _) {
+        final si = ref.watch(serverProvider(id));
+        final (entries: btns, any: any) = serverDetailFuncBtns(si);
+        // A machine with nothing to show yet keeps the row, greyed: the
+        // entries have not gone away, there is simply no connection to do any
+        // of them through, and the positions are worth keeping. A machine that
+        // is reachable and can serve none of them has no row — what belongs in
+        // its place is the page's own explanation.
+        final show = serverDetailHasContent(si) ? any : btns.isNotEmpty;
+        if (!show) return const SizedBox.shrink();
+        // Rises with the card and sinks with it, rather than arriving on its
+        // own once the movement is over and vanishing when it starts back.
+        // That leaves [HideOnScroll] doing only what it is for — getting out
+        // of the way of a page being read past — so its own arrival is off.
+        return AnimatedBuilder(
+          animation: _open,
+          child: HideOnScroll.driven(
+            visible: _funcBarVisible,
+            enterDelay: Duration.zero,
+            enterDuration: Duration.zero,
+            child: ServerFuncBar(spi: si.spi, btns: btns),
+          ),
+          builder: (_, child) {
+            final t = _open.value;
+            if (t >= 1) return child!;
+            return Opacity(
+              opacity: t.clamp(0.0, 1.0),
+              child: Transform.translate(
+                offset: Offset(0, (1 - t) * kFuncBarHeight * 0.5),
+                child: child,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Whether the page under the function row is being read past.
+  bool _onDetailScroll(ScrollNotification n) {
+    // The page's own scrollable, not a list inside one of its cards.
+    if (n.depth != 0) return false;
+    final next = switch (n) {
+      UserScrollNotification(:final direction) => switch (direction) {
+        // The direction dragged, not the direction the offset moved: a list
+        // settling after a fling is not someone asking for this.
+        ScrollDirection.reverse => false,
+        ScrollDirection.forward => true,
+        ScrollDirection.idle => _funcBarVisible.value,
+      },
+      _ => _funcBarVisible.value,
+    };
+    // Always there at the top, whatever the last drag was.
+    _funcBarVisible.value =
+        next || n.metrics.pixels <= n.metrics.minScrollExtent;
+    return false;
   }
 
   /// Which machine is on screen, and the rest of them.

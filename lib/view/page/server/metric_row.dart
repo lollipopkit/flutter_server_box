@@ -16,6 +16,30 @@ Color cardColorOf(BuildContext context) {
   return theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLow;
 }
 
+/// Where in the movement the surfaces change hands.
+///
+/// A card has one surface behind everything; the page has one per block and
+/// nothing behind them. Spread over the whole movement that swap is the one
+/// thing in it a reader can see happening — the card's colour holds while the
+/// card grows, so it ends up a sheet over the entire content area, and then it
+/// has to go somewhere. Done with inside the first fifth, before anything has
+/// travelled far, what is left to watch is only geometry.
+///
+/// The blocks arrive slightly ahead of the card leaving, because they are
+/// drawn *on* it: two surfaces crossing at the same rate leave the middle of
+/// the swap at three quarters of a surface, which is a wash nobody asked for.
+const _kBlockIn = 0.15;
+const _kCardOutAt = 0.1;
+const _kCardOut = 0.15;
+
+/// How much of a block's own surface is there yet. See [_kBlockIn].
+double blockSurfaceAt(double openness) =>
+    (openness / _kBlockIn).clamp(0.0, 1.0);
+
+/// How much of the card's own surface is left. See [_kBlockIn].
+double cardSurfaceAt(double openness) =>
+    1 - ((openness - _kCardOutAt) / _kCardOut).clamp(0.0, 1.0);
+
 /// One reading that is not the one being drawn in full.
 ///
 /// The same widget on a card in the list and on the page that card grows into,
@@ -185,13 +209,13 @@ class MetricRow extends StatelessWidget {
     if (t <= 0) return body;
     // A card of its own at the far end, because what is above it there is the
     // same surface the chart sits on and a row with none of its own
-    // disappeared into the page. It arrives by the halfway point, which is
-    // where the card's own surface starts going.
+    // disappeared into the page. It is in before the card's own starts going
+    // — see [blockSurfaceAt].
     return CardX(
       color: Color.lerp(
         Colors.transparent,
         selected ? scheme.secondaryContainer : cardColorOf(context),
-        (t * 2).clamp(0.0, 1.0),
+        blockSurfaceAt(t),
       ),
       margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
       child: body,

@@ -29,6 +29,7 @@ import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
+import 'package:server_box/view/widget/server_func_btns.dart';
 
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
@@ -298,21 +299,39 @@ void main() {
     // Grown, but the page has not taken over yet: that happens when the
     // growth finishes.
     await tester.pump(const Duration(milliseconds: 340));
-    final grownLabel = tester.getRect(find.text('CPU').first);
-    final grownRow = tester.getRect(find.text(libL10n.memory).first);
+    // Two trees are on screen here: the card, which is drawing the readings,
+    // and the page under it, which is laid out so that its own facts can be
+    // placed against them and paints none of it until the handover. So both
+    // ends of the handover can be measured on this one frame, and the frames
+    // either side of it measured against each other as well.
+    Finder inCard(Finder f) =>
+        find.descendant(of: find.byType(AnimatedMasonry), matching: f);
+    Finder inPage(Finder f) =>
+        find.descendant(of: find.byType(ServerDetailPage), matching: f);
+
+    final grownLabel = tester.getRect(inCard(find.text('CPU')).first);
+    final grownRow = tester.getRect(inCard(find.text(libL10n.memory)).first);
     // The card is drawing the page's own chart by now, not a picture of one:
     // a bar sparkline cannot become a line chart by moving, so the box
     // travels and what is in it crosses over on the way.
-    expect(find.byType(MetricChart), findsOneWidget);
-    final grownChart = tester.getRect(find.byType(MetricChart));
+    expect(inCard(find.byType(MetricChart)), findsOneWidget);
+    final grownChart = tester.getRect(inCard(find.byType(MetricChart)));
     // And the rows are the page's own rows, not a second set drawn from the
     // same numbers.
-    final grownRows = find.byType(MetricRow).evaluate().length;
-    final firstRow = tester.getRect(find.byType(MetricRow).first);
+    final grownRows = inCard(find.byType(MetricRow)).evaluate().length;
+    final firstRow = tester.getRect(inCard(find.byType(MetricRow)).first);
 
-    // Past the handover and its crossing.
+    // The page is already laid out exactly where the card has arrived.
+    expect(
+      tester.getRect(inPage(find.byType(MetricChart))),
+      rectMoreOrLessEquals(grownChart, epsilon: 2),
+    );
+
+    // Past the handover, where the grid is dropped and the page starts
+    // painting what it had been holding room for.
     await settle(tester);
     expect(find.byType(ServerDetailPage), findsOneWidget);
+    expect(find.byType(AnimatedMasonry), findsNothing);
 
     expect(
       tester.getRect(find.text('CPU').first),
@@ -372,6 +391,37 @@ void main() {
     await settle(tester);
     expect(find.byType(ServerDetailPage), findsOneWidget);
     expect(openId(tester), 'srv-1');
+  });
+
+  testWidgets('and the row of things to do stays where it is', (tester) async {
+    // The row floats over the page rather than being part of it, so a step
+    // through the list is not something that happens to it. Sliding it along
+    // with the page said the buttons had changed when they had not.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+    expect(find.byType(ServerFuncBar), findsOneWidget);
+    final at = tester.getRect(find.byType(ServerFuncBar));
+
+    final modifier = Platform.isMacOS
+        ? LogicalKeyboardKey.metaLeft
+        : LogicalKeyboardKey.controlLeft;
+    await tester.sendKeyDownEvent(modifier);
+    await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
+    await tester.sendKeyUpEvent(modifier);
+
+    // Through the whole of the step, including the middle of it where both
+    // machines are on screen.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      expect(find.byType(ServerFuncBar), findsOneWidget);
+      expect(tester.getRect(find.byType(ServerFuncBar)), at);
+    }
+
+    await settle(tester);
+    expect(tester.getRect(find.byType(ServerFuncBar)), at);
   });
 
   testWidgets('the way back is a movement too, not a snap', (tester) async {

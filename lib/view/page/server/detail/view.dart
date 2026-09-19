@@ -58,7 +58,31 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   /// name twice.
   final bool bare;
 
-  const ServerDetailPage({super.key, required this.args, this.bare = false});
+  /// How far the card that is becoming this page has got, or null when this
+  /// page was not arrived at that way.
+  ///
+  /// What it drives is everything the card has no counterpart for — the facts
+  /// beside the readings, the tables under them. Those used to be built the
+  /// moment the movement ended, so a card grew into a page and then the page
+  /// filled in, which is two arrivals for one tap. On this they come in while
+  /// the chart is still growing.
+  final Animation<double>? entrance;
+
+  /// Whether the readings are this page's to draw.
+  ///
+  /// False while the card is still the one drawing them: the two are the same
+  /// widgets in the same boxes, so both on screen at once is the same thing
+  /// drawn twice. The block is still laid out — what is beside and below it is
+  /// placed against it — but nothing of it is painted.
+  final bool readingsShowing;
+
+  const ServerDetailPage({
+    super.key,
+    required this.args,
+    this.bare = false,
+    this.entrance,
+    this.readingsShowing = true,
+  });
 
   @override
   ConsumerState<ServerDetailPage> createState() => _ServerDetailPageState();
@@ -69,17 +93,12 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   );
 }
 
-/// Left over on either side of the bar, so the page it floats above is still
-/// visible past it and it never reads as a second edge to the window.
-const _kFuncBarSideRoom = 100.0;
-
-/// One row of buttons with their labels: a 17pt icon over a line of 11pt text,
-/// plus the buttons' own inset and the row's, and a little over.
-const _kFuncBarHeight = 56.0;
-
 /// What the grid keeps clear below its last card, so the bar is never over
 /// something that cannot be scrolled out from under it.
-const _kFuncBarInset = _kFuncBarHeight + 26;
+///
+/// Kept even when this page is not the one drawing the bar: [ServerDetailPage
+/// .bare] means the tab floats it above, over the same content.
+const _kFuncBarInset = kFuncBarInset;
 
 /// From here the facts sit beside the readings rather than under them.
 ///
@@ -90,6 +109,59 @@ const _kColumnsWidth = 800.0;
 
 /// The column the facts and the tables sit in.
 const _kAsideWidth = 330.0;
+
+/// Whether there is anything to render for [state].
+///
+/// Losing the connection must not empty the page: the status already fetched
+/// is still the most recent thing known about the server, and the error card
+/// explains why it stopped updating. Collapsing to the placeholder on
+/// `ServerConn.failed` threw both away, so a monitor going offline looked
+/// identical to a server that had never been opened.
+///
+/// `more` is the "has ever been fetched" signal — every successful status
+/// apply populates it on both transports, and `keepStatusWhenErr` in
+/// `ServerNotifier` already relies on that.
+///
+/// Top level because the server tab asks it too: it draws the function row
+/// above a page it hosts, and what that row can do is a different answer on a
+/// machine with nothing to show yet.
+bool serverDetailHasContent(ServerState state) {
+  if (state.status.more.isNotEmpty) return true;
+  // Connecting is something to show: the rows every machine has, drawn with
+  // dashes, under a progress line. What this used to do instead — a spinner
+  // and "waiting for connection" — made the page arrive twice, once as a
+  // placeholder and once as itself, with everything in a different place.
+  if (state.conn == server_model.ServerConn.connecting ||
+      state.conn == server_model.ServerConn.connected ||
+      state.conn == server_model.ServerConn.loading) {
+    return true;
+  }
+  // Having a connection is not having anything to show. Read as "connected is
+  // enough", this page opened onto a grid of empty cards — dashes where the
+  // CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch took,
+  // which on a server that is merely slow is a while. `finished` is the state
+  // that means a status came back; it is only ever left for another *later*
+  // fetch, so the page does not flicker back on refresh.
+  return state.conn == server_model.ServerConn.finished;
+}
+
+/// The entries the function row draws for [si], and whether any can be used.
+///
+/// One answer for the page and for the tab that hosts it: a machine with
+/// nothing to show yet keeps the row, greyed, so the positions stay put while
+/// it connects — see `_buildNothingYet`.
+({List<ServerFuncEntry> entries, bool any}) serverDetailFuncBtns(
+  ServerState si,
+) {
+  final entries = serverFuncBtnsFor(si.spi, si.remoteAccess);
+  if (!serverDetailHasContent(si)) {
+    return (
+      entries: [for (final e in entries) (btn: e.btn, available: false)],
+      any: false,
+    );
+  }
+  return (entries: entries, any: entries.any((e) => e.available));
+}
 
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
@@ -340,15 +412,19 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
                 ],
               ],
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildFuncBar(si, [
-                for (final entry in serverFuncBtnsFor(si.spi, si.remoteAccess))
-                  (btn: entry.btn, available: false),
-              ]),
-            ),
+            // Not when the tab is the host: it floats one of its own above
+            // this, which is what keeps the row still while the machine on
+            // screen changes.
+            if (!widget.bare)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: ServerFuncBar(
+                  spi: si.spi,
+                  btns: serverDetailFuncBtns(si).entries,
+                ),
+              ),
           ],
         ),
     );
@@ -500,36 +576,7 @@ ${err.message ?? 'null'}
     ref.read(serversProvider.notifier).refresh(spi: si.spi);
   }
 
-  /// Whether there is anything to render.
-  ///
-  /// Losing the connection must not empty the page: the status already
-  /// fetched is still the most recent thing known about the server, and the
-  /// error card below explains why it stopped updating. Collapsing to the
-  /// placeholder on `ServerConn.failed` threw both away, so a monitor going
-  /// offline looked identical to a server that had never been opened.
-  ///
-  /// `more` is the "has ever been fetched" signal — every successful status
-  /// apply populates it on both transports, and `keepStatusWhenErr` in
-  /// `ServerNotifier` already relies on that.
-  bool _hasContent(ServerState state) {
-    if (state.status.more.isNotEmpty) return true;
-    // Connecting is something to show: the rows every machine has, drawn with
-    // dashes, under a progress line. What this used to do instead — a spinner
-    // and "waiting for connection" — made the page arrive twice, once as a
-    // placeholder and once as itself, with everything in a different place.
-    if (state.conn == server_model.ServerConn.connecting ||
-        state.conn == server_model.ServerConn.connected ||
-        state.conn == server_model.ServerConn.loading) {
-      return true;
-    }
-    // Having a connection is not having anything to show. Read as "connected
-    // is enough", this page opened onto a grid of empty cards — dashes where
-    // the CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch
-    // took, which on a server that is merely slow is a while. `finished` is
-    // the state that means a status came back; it is only ever left for
-    // another *later* fetch, so the page does not flicker back on refresh.
-    return state.conn == server_model.ServerConn.finished;
-  }
+  bool _hasContent(ServerState state) => serverDetailHasContent(state);
 
   Widget _buildMainPage(ServerState si) {
     // What this connection can actually serve, asked once and used twice: to
@@ -540,11 +587,10 @@ ${err.message ?? 'null'}
     // whose agent grants `[remote_access.fs]` but not `full_access` — that
     // server has a Files button and nothing else, and it went missing from its
     // own page while the Files tab went on listing it.
-    final funcBtns = serverFuncBtnsFor(si.spi, si.remoteAccess);
     // Whether any of them can be used. An entry this connection cannot serve
     // is still on the row, dimmed and last; a row of nothing but those is not
     // a row, and what belongs in its place is the explanation below.
-    final buildFuncs = funcBtns.any((e) => e.available);
+    final (entries: funcBtns, any: buildFuncs) = serverDetailFuncBtns(si);
     final logo = _buildLogo(si);
 
     // Everything that is not one of the metrics: a table or a one-off reading,
@@ -592,18 +638,50 @@ ${err.message ?? 'null'}
             // Over the page rather than at the top of it. These act on the
             // server, not on any one card, so they belong within reach the
             // whole way down instead of scrolling off after the first chart.
-            if (buildFuncs)
+            //
+            // The tab hosts its own when it hosts this page — see
+            // [ServerDetailPage.bare].
+            if (buildFuncs && !widget.bare)
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
                 child: HideOnScroll(
                   controller: _scrollCtrl,
-                  child: _buildFuncBar(si, funcBtns),
+                  child: ServerFuncBar(spi: si.spi, btns: funcBtns),
                 ),
               ),
           ],
         ),
+    );
+  }
+
+  /// Something the card this page grew out of has no counterpart for, coming
+  /// in while that card is still growing.
+  ///
+  /// Moved rather than laid out differently: what this wraps sits where it
+  /// will end up from the first frame, so the readings it is measured against
+  /// never shift because it arrived. Nothing at all when the page was not
+  /// arrived at that way — see [ServerDetailPage.entrance].
+  ///
+  /// The curve leaves at rest and gathers pace, which is what keeps it out of
+  /// the way of the cards the grid is still fading out underneath.
+  Widget _entering(Widget child, {required Offset from}) {
+    final entrance = widget.entrance;
+    if (entrance == null) return child;
+    return AnimatedBuilder(
+      animation: entrance,
+      child: child,
+      builder: (_, child) {
+        final t = Curves.easeInOutCubic.transform(
+          entrance.value.clamp(0.0, 1.0),
+        );
+        if (t >= 1) return child!;
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(offset: from * (1 - t), child: child),
+        );
+      },
     );
   }
 
@@ -626,17 +704,38 @@ ${err.message ?? 'null'}
       ?logo,
       ?_buildErrCard(si),
       ?_buildStaleCard(si),
-      _buildMetrics(si, wide: wide),
+      // Laid out whether or not it is painted: what is beside it and under it
+      // is placed against it — see [ServerDetailPage.readingsShowing].
+      Opacity(
+        opacity: widget.readingsShowing ? 1 : 0,
+        child: IgnorePointer(
+          ignoring: !widget.readingsShowing,
+          child: _buildMetrics(si, wide: wide),
+        ),
+      ),
       // Under the readings rather than in the column beside them: these are
       // tables — sensor rows, GPU processes, SMART attributes — and a 330pt
       // column is not a width any of them was written for.
-      if (wide) ...[UIs.height13, _buildCardGrid(cards)],
+      if (wide) ...[
+        UIs.height13,
+        // From below, because that is the edge it is arriving past.
+        _entering(_buildCardGrid(cards), from: const Offset(0, 24)),
+      ],
     ];
-    final aside = <Widget>[
+    final asideItems = <Widget>[
       ..._buildInfoCards(si),
       ?noAccess,
       if (!wide) _buildCardGrid(cards),
     ];
+    // In from the side it sits on when there is one, and from below when it is
+    // under the readings instead.
+    final aside = _entering(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: asideItems,
+      ),
+      from: wide ? const Offset(24, 0) : const Offset(0, 24),
+    );
 
     return SingleChildScrollView(
       controller: _scrollCtrl,
@@ -652,18 +751,12 @@ ${err.message ?? 'null'}
                   ),
                 ),
                 UIs.width13,
-                SizedBox(
-                  width: _kAsideWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: aside,
-                  ),
-                ),
+                SizedBox(width: _kAsideWidth, child: aside),
               ],
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [...metrics, UIs.height13, ...aside],
+              children: [...metrics, UIs.height13, aside],
             ),
     );
   }
@@ -733,44 +826,6 @@ ${err.message ?? 'null'}
         title: Text(l10n.monitorNoRemoteAccess, style: UIs.text12Grey),
         trailing: const Icon(Icons.open_in_new, size: 17),
         onTap: Urls.monitorPermissionsDoc.launchUrl,
-      ),
-    );
-  }
-
-  /// The row of things that can be done to this server, floating over it.
-  ///
-  /// Takes the entries rather than working them out, so that what is drawn is
-  /// the same list `_buildMainPage` decided there was room for.
-  Widget _buildFuncBar(ServerState si, List<ServerFuncEntry> btns) {
-    return LayoutBuilder(
-      builder: (_, cons) => Center(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 13),
-          child: ConstrainedBox(
-            // The row takes the width it needs up to this; beyond it, it
-            // scrolls. Stretched across a desktop window it would stop being a
-            // group of buttons and become a band across the page.
-            constraints: BoxConstraints(
-              maxWidth: (cons.maxWidth - _kFuncBarSideRoom).clamp(
-                0.0,
-                double.infinity,
-              ),
-            ),
-            child: Material(
-              // Raised off the page, because it is the one thing here that is
-              // not part of what the page is showing.
-              elevation: 3,
-              shadowColor: Colors.black26,
-              color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(19),
-              clipBehavior: Clip.antiAlias,
-              child: SizedBox(
-                height: _kFuncBarHeight,
-                child: ServerFuncBtns(spi: si.spi, btns: btns),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

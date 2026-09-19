@@ -36,6 +36,64 @@ import 'package:server_box/view/widget/server_power.dart';
 /// One entry of the function row, and whether this connection can serve it.
 typedef ServerFuncEntry = ({ServerFuncBtn btn, bool available});
 
+/// Left over on either side of the bar, so the page it floats above is still
+/// visible past it and it never reads as a second edge to the window.
+const kFuncBarSideRoom = 100.0;
+
+/// One row of buttons with their labels: a 17pt icon over a line of 11pt text,
+/// plus the buttons' own inset and the row's, and a little over.
+const kFuncBarHeight = 56.0;
+
+/// What a page keeps clear below its last card, so the bar is never over
+/// something that cannot be scrolled out from under it.
+const kFuncBarInset = kFuncBarHeight + 26;
+
+/// The row of things that can be done to a server, floating over its page.
+///
+/// Takes the entries rather than working them out, so that what is drawn is
+/// the same list the page decided there was room for.
+class ServerFuncBar extends StatelessWidget {
+  const ServerFuncBar({super.key, required this.spi, required this.btns});
+
+  final Spi spi;
+  final List<ServerFuncEntry> btns;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, cons) => Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 13),
+          child: ConstrainedBox(
+            // The row takes the width it needs up to this; beyond it, it
+            // scrolls. Stretched across a desktop window it would stop being a
+            // group of buttons and become a band across the page.
+            constraints: BoxConstraints(
+              maxWidth: (cons.maxWidth - kFuncBarSideRoom).clamp(
+                0.0,
+                double.infinity,
+              ),
+            ),
+            child: Material(
+              // Raised off the page, because it is the one thing here that is
+              // not part of what the page is showing.
+              elevation: 3,
+              shadowColor: Colors.black26,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(19),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                height: kFuncBarHeight,
+                child: ServerFuncBtns(spi: spi, btns: btns),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({super.key, required this.spi, required this.btns});
 
@@ -54,9 +112,36 @@ class ServerFuncBtns extends StatelessWidget {
   Widget build(BuildContext context) {
     if (btns.isEmpty) return UIs.placeholder;
 
+    // One slot per position, and a slot only animates when what is in it
+    // changes. Switching to a machine whose row is the same row leaves every
+    // slot holding the widget it already held, so nothing moves at all; a
+    // machine that cannot serve the terminal changes the two slots that
+    // swapped places and dims one of them, and the rest stay where they are.
     final items = [
       for (final entry in btns)
-        Consumer(builder: (_, ref, _) => _buildItem(context, entry, ref)),
+        AnimatedSwitcher(
+          duration: Durations.short4,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          // Sized to what is arriving, never to the larger of the two: the
+          // default stack takes the width of the widest child, so one slot
+          // changing would push the whole row wider for the length of the
+          // crossing and pull it back afterwards.
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.center,
+            children: [
+              for (final old in previous)
+                Positioned.fill(child: Center(child: old)),
+              ?current,
+            ],
+          ),
+          child: KeyedSubtree(
+            key: ValueKey((entry.btn, entry.available)),
+            child: Consumer(
+              builder: (_, ref, _) => _buildItem(context, entry, ref),
+            ),
+          ),
+        ),
     ];
 
     // It has to say how wide it is. A shrink-wrapping viewport
