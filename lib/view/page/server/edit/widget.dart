@@ -27,33 +27,46 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildGroupTitle(String title, {String? right}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(3, 17, 3, 7),
-      child: Row(
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.9,
-              color: UIs.textGrey.color,
-            ),
-          ),
-          const SizedBox(width: 9),
-          const Expanded(child: Divider(height: 1)),
-          if (right != null) ...[
-            const SizedBox(width: 9),
-            // Not `Flexible`: it and the rule would both be flex children and
-            // split the free space between them, so the rule stopped halfway
-            // across and a value shorter than its half floated in the middle
-            // with a gap after it. The rule is the only thing that stretches.
-            Text(
-              right,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: UIs.text11Grey,
-            ),
-          ],
-        ],
+      // Measured first, because the rule and the value want opposite things.
+      // As two flex children they split the free space, so the rule stopped
+      // halfway across and a short value floated in the middle with a gap
+      // after it; as a bare `Text` the value takes its natural width, and one
+      // that turned out to be a whole sentence took the row 52 points past the
+      // window. Held back to what is left over the rule's own minimum, the
+      // value is its own width until there is no room for it to be.
+      child: LayoutBuilder(
+        builder: (_, cons) {
+          final rightMax = cons.maxWidth.isFinite
+              ? (cons.maxWidth * 0.5).clamp(0.0, cons.maxWidth)
+              : double.infinity;
+          return Row(
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.9,
+                  color: UIs.textGrey.color,
+                ),
+              ),
+              const SizedBox(width: 9),
+              const Expanded(child: Divider(height: 1)),
+              if (right != null) ...[
+                const SizedBox(width: 9),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: rightMax),
+                  child: Text(
+                    right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: UIs.text11Grey,
+                  ),
+                ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -127,7 +140,10 @@ extension _Widgets on _ServerEditPageState {
           _ => l10n.transportOrderFmt(live.first.label, live.last.label),
         };
         final right = switch (live.length) {
-          0 => l10n.transportNoneOn,
+          // The word, not the sentence: `transportNoneOn` says what being off
+          // costs and is the note below, where there is a line to say it in.
+          // Read back beside the heading it is a state, like the other two.
+          0 => l10n.transportOff,
           1 => '${live.first.label} ${l10n.transportOnlyMethod}',
           _ => '${live.first.label} → ${live.last.label}',
         };
