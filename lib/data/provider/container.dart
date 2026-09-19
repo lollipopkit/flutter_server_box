@@ -30,14 +30,6 @@ const _containerSeparatorPrefix = 'SrvBoxContainerSep';
 // extension method bodies (imported top-level names are not visible there).
 String shellSingleQuote(String value) => sh.shellSingleQuote(value);
 
-/// Build a single command that acts on multiple containers, e.g.
-/// `start 'id1' 'id2'`. Returns null when [ids] is empty.
-String? buildContainerBulkCmd(String action, Iterable<String> ids) {
-  final args = ids.map(shellSingleQuote).join(' ');
-  if (args.isEmpty) return null;
-  return '$action $args';
-}
-
 String buildContainerRunCmd({
   required String image,
   required String name,
