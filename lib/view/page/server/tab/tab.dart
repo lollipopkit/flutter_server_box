@@ -29,6 +29,7 @@ import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
+import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/card/switcher.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
@@ -203,6 +204,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
     reverseCurve: Curves.fastEaseInToSlowEaseOut,
   );
 
+  /// Which way through the list the last change of machine went: +1 for the
+  /// next one along, -1 for the one before.
+  ///
+  /// What the detail's own switch is drawn with — see [DirectionalSwap]. A
+  /// pick from the sheet, where there is no "next", counts as forwards.
+  int _swapDirection = 1;
+
   /// Whether the detail's own chrome is up: the facts beside the readings and
   /// the row of things to do under them.
   ///
@@ -260,6 +268,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// the card looks like at each point between is the card's own business.
   void _openDetail(String id) {
     _keys.requestFocus();
+    // Which way through the list this is, so the page it becomes knows which
+    // side to come in from.
+    final from = _lastFiltered.indexOf(ref.read(serverSelectionProvider) ?? '');
+    final to = _lastFiltered.indexOf(id);
+    if (from >= 0 && to >= 0 && to != from) {
+      _swapDirection = to > from ? 1 : -1;
+    }
     // Asked each time rather than once: the switch can be turned on while the
     // app is open, and what it asks for is that this movement stop being one.
     _openCtrl.duration = context.motion(_kOpenDuration);
@@ -1324,9 +1339,26 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   /// The open server's own page, without the bar this page already has.
+  ///
+  /// One key for every machine, so that changing which one is open is not a
+  /// change the crossing above sees: what that crossing is for is the card
+  /// becoming the page, and stepping from one machine to the next is a
+  /// movement of its own — see [DirectionalSwap].
   Widget _buildOpenDetail(String id) {
     final spi = ref.read(serversProvider).servers[id];
     if (spi == null) return const SizedBox.shrink();
+    return KeyedSubtree(
+      key: const ValueKey('detail'),
+      child: DirectionalSwap(
+        id: id,
+        direction: _swapDirection,
+        duration: context.motion(_kOpenDuration),
+        child: _detailFor(id, spi),
+      ),
+    );
+  }
+
+  Widget _detailFor(String id, Spi spi) {
     return KeyedSubtree(
       key: ValueKey('detail:$id'),
       // Opaque, because it is crossed with the grid underneath it rather than

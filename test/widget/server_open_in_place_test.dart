@@ -24,6 +24,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
@@ -305,5 +306,45 @@ void main() {
       tester.getRect(find.text(libL10n.memory).first),
       rectMoreOrLessEquals(grownRow, epsilon: 2),
     );
+  });
+
+  testWidgets('stepping to the next machine comes in from the right', (
+    tester,
+  ) async {
+    // Which way through the list a step went is the one thing a cross-fade
+    // cannot say, and it is the reason a list has an order.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+    expect(find.byType(DirectionalSwap), findsOneWidget);
+
+    final modifier = Platform.isMacOS
+        ? LogicalKeyboardKey.metaLeft
+        : LogicalKeyboardKey.controlLeft;
+    await tester.sendKeyDownEvent(modifier);
+    await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
+    await tester.sendKeyUpEvent(modifier);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+
+    // Both machines on screen: the one being left, and the one arriving from
+    // the side the list runs towards.
+    final pages = tester.widgetList<ServerDetailPage>(
+      find.byType(ServerDetailPage),
+    );
+    expect(pages.length, 2);
+    final rects = find
+        .byType(ServerDetailPage)
+        .evaluate()
+        .map((e) => tester.getRect(find.byWidget(e.widget)).left)
+        .toList();
+    // The arriving one is to the right of the one it is replacing.
+    expect(rects[1], greaterThan(rects[0]));
+
+    await settle(tester);
+    expect(find.byType(ServerDetailPage), findsOneWidget);
+    expect(openId(tester), 'srv-1');
   });
 }
