@@ -28,6 +28,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/actions.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
+import 'package:server_box/view/page/server/card/menu.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
@@ -256,6 +257,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// Holds the gap between the chrome going and the card starting back.
   Timer? _closeTimer;
 
+  /// The card that is face down, showing what can be done to its machine.
+  ///
+  /// One at a time: turning a second one over turns the first back, the way a
+  /// menu closes when another opens.
+  String? _flippedId;
+
   /// Whether the function row floating over the open machine is wanted.
   ///
   /// Here rather than inside the page because the row is: it outlives the
@@ -307,6 +314,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// the card looks like at each point between is the card's own business.
   void _openDetail(String id) {
     _keys.requestFocus();
+    // A card on its way to being the page has no other side to be on.
+    _flippedId = null;
     // Which way through the list this is, so the page it becomes knows which
     // side to come in from.
     final from = _lastFiltered.indexOf(ref.read(serverSelectionProvider) ?? '');
@@ -634,8 +643,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
       bindings: {
         // What the top-left arrow does, and what a set being built up is
         // abandoned with.
+        // Whatever is open, innermost first: a card face down, then a set
+        // being built up, then the machine the page is of.
         const SingleActivator(LogicalKeyboardKey.escape): () {
-          if (_selecting) {
+          if (_flippedId != null) {
+            _unflip();
+          } else if (_selecting) {
             _endSelecting();
           } else {
             _closeDetail();
@@ -1778,27 +1791,55 @@ class _ServerPageState extends ConsumerState<ServerPage>
     ServerListDensity density = ServerListDensity.cards,
     double pageWidth = 0,
   }) {
+    final flipped = srv.spi.id == _flippedId;
     final card = Builder(
       // A context from inside the built tree, so the tap can ask whether a
-      // detail pane is on screen. The state's own context is an ancestor of
-      // the layout that installs the scope, and the lookup only goes up.
-      builder: (context) => ServerCard(
-        key: ValueKey(srv.spi.id),
-        srv: srv,
-        promoted: _promotedOf(srv.spi.id),
-        onPromote: (kind) => _promote(srv.spi.id, kind),
-        // While a set is being built up, a tap is what adds to it: there is
-        // nothing else a tap could mean with boxes beside every name, and
-        // having to hit the box itself is a 19pt target on a 40pt row.
-        onTap: () => _selecting
-            ? _toggleSelected(srv.spi.id)
-            : _onTapCard(context, srv),
-        onLongPress: () => _onLongPressCard(srv),
-        openness: openness,
-        density: density,
-        pageWidth: pageWidth,
-        selected: _selecting ? _selected.contains(srv.spi.id) : null,
-      ).onSecondary((at) => _onLongPressCard(srv, at)),
+      // detail pane is on screen, and a menu can be hung off the box this
+      // built. The state's own context is an ancestor of the layout that
+      // installs the scope, and the lookup only goes up.
+      builder: (context) {
+        final front = ServerCard(
+          key: ValueKey(srv.spi.id),
+          srv: srv,
+          promoted: _promotedOf(srv.spi.id),
+          onPromote: (kind) => _promote(srv.spi.id, kind),
+          // While a set is being built up, a tap is what adds to it: there is
+          // nothing else a tap could mean with boxes beside every name, and
+          // having to hit the box itself is a 19pt target on a 40pt row.
+          onTap: () => _selecting
+              ? _toggleSelected(srv.spi.id)
+              : _onTapCard(context, srv),
+          onLongPress: () =>
+              _onLongPressCard(context, srv, density: density),
+          openness: openness,
+          density: density,
+          pageWidth: pageWidth,
+          selected: _selecting ? _selected.contains(srv.spi.id) : null,
+        );
+        // Nothing to turn over while it is becoming the page, and nothing to
+        // turn over that is not a card.
+        if (openness > 0 || density != ServerListDensity.cards) {
+          return front.onSecondary(
+            (at) => _onLongPressCard(context, srv, at: at, density: density),
+          );
+        }
+        return CardFlip(
+          flipped: flipped,
+          front: front.onSecondary(
+            (at) => _onLongPressCard(context, srv, at: at, density: density),
+          ),
+          back: ServerCardMenu(
+            spi: srv.spi,
+            actions: serverActions(
+              context,
+              ref,
+              srv,
+              onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
+            ),
+            onClose: _unflip,
+          ),
+        );
+      },
     );
 
     if (fade == null) return card;

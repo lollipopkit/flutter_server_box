@@ -4,14 +4,25 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/server/conn.dart';
+import 'package:server_box/data/model/server/cpu.dart';
+import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/memory.dart';
+import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/temp.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/server/card/menu.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
@@ -139,5 +150,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ServerEditPage), findsOneWidget);
+  });
+
+  testWidgets('a card with a status turns over instead', (tester) async {
+    // A card is big enough to hold what can be done to the machine, so the
+    // actions go on its back rather than over the top of it.
+    Stores.server.put(
+      spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u', autoConnect: false),
+    );
+    await pump(tester);
+
+    final ctx = tester.element(find.byType(ServerPage));
+    final container = ProviderScope.containerOf(ctx);
+    container.read(serverProvider('srv-1').notifier).updateStatus(
+      ServerStatus(
+        cpu: Cpus(),
+        mem: const Memory(total: 1048576, free: 524288, avail: 524288),
+        disk: const [],
+        tcp: const Conn(maxConn: 0, fail: 0),
+        netSpeed: NetSpeed(),
+        swap: const Swap(total: 0, free: 0, cached: 0),
+        temps: Temperatures(),
+        system: SystemType.linux,
+        diskIO: DiskIO(),
+      ),
+    );
+    container
+        .read(serverProvider('srv-1').notifier)
+        .updateConnection(ServerConn.finished);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ServerCardMenu), findsNothing);
+    await tester.longPress(find.text('web').first);
+    await tester.pumpAndSettle();
+
+    // The other side of the same card, not a page and not a sheet.
+    expect(find.byType(ServerEditPage), findsNothing);
+    expect(find.byType(ServerCardMenu), findsOneWidget);
+    // The one entry that says what it is of, which is the one the design
+    // keeps room for.
+    final menu = tester.widget<ServerCardMenu>(find.byType(ServerCardMenu));
+    final noted = menu.actions.firstWhere((a) => a.note != null);
+    expect(find.text(noted.note!), findsOneWidget);
+
+    // Escape turns it back.
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(ServerCardMenu), findsNothing);
   });
 }

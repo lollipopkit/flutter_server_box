@@ -66,7 +66,7 @@ extension _Widgets on _ServerPageState {
                 promoted: _promotedOf(id),
                 onPromote: (kind) => _promote(id, kind),
                 onTap: () => _onTapCard(context, srv),
-                onLongPress: () => _onLongPressCard(srv),
+                onLongPress: () => _onLongPressCard(context, srv),
               ),
             ),
           ),

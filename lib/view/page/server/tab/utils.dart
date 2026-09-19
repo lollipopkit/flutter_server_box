@@ -43,24 +43,67 @@ extension _Actions on _ServerPageState {
 
   /// What can be done to one server without leaving the list.
   ///
-  /// [at] is where a pointer was, and null a long press. A machine that has
-  /// never connected offers only what is true of it: the editor, because
-  /// changing the configuration is the only thing that could help.
-  void _onLongPressCard(ServerState srv, [Offset? at]) {
+  /// Three shapes for one set of actions, decided by what there is room to put
+  /// them on and by what asked:
+  ///
+  /// - a card is big enough to hold them, so it turns over and they are on its
+  ///   back — where the machine is, rather than where the finger was;
+  /// - a line or a tile is not, so they hang off the one that was pressed,
+  ///   which stays where it is and does not change height;
+  /// - a narrow window on a touch device gets a sheet, because the middle of a
+  ///   phone is where the card being acted on is and the top half is out of a
+  ///   thumb's reach.
+  ///
+  /// [ctx] is the pressed card's, and [at] where a pointer was — null for a
+  /// long press, which has a finger over the spot.
+  ///
+  /// A machine that has never connected offers only what is true of it: the
+  /// editor, because changing the configuration is the only thing that could
+  /// help.
+  void _onLongPressCard(
+    BuildContext ctx,
+    ServerState srv, {
+    Offset? at,
+    ServerListDensity density = ServerListDensity.cards,
+  }) {
     if (srv.conn == ServerConn.disconnected && srv.status.err == null) {
       ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
       return;
     }
+
+    final touchSheet = isMobile && !_opensInPlace(ctx);
+    if (!touchSheet && at == null && density == ServerListDensity.cards) {
+      _keys.requestFocus();
+      setState(() => _flippedId = srv.spi.id);
+      return;
+    }
+
     showServerActions(
       context,
       ref,
       srv,
-      at: at,
+      // Hung off the pressed row rather than dropped in the middle of the
+      // window: which of forty machines a menu is about is a question the
+      // menu's own position answers.
+      at: at ?? (touchSheet ? null : _anchorUnder(ctx)),
       // A finger has no modifier to hold, so this is the way in to acting on
       // several machines; a pointer's is a held key and does not need a row
       // here as well.
       onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
     );
+  }
+
+  /// The bottom left of whatever was pressed, in the window's coordinates.
+  Offset? _anchorUnder(BuildContext ctx) {
+    final box = ctx.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset(0, box.size.height));
+  }
+
+  /// Turns whichever card is face down back over.
+  void _unflip() {
+    if (_flippedId == null) return;
+    setState(() => _flippedId = null);
   }
 
   /// The three ways a server gets onto this device, in one place.

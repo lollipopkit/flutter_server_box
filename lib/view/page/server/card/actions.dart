@@ -58,7 +58,10 @@ List<ContextMenuAction> serverActions(
         ),
     ContextMenuAction(
       icon: Icons.copy,
-      text: '${libL10n.copy} · ${spi.displayAddr}',
+      text: libL10n.copy,
+      // What would go on the clipboard, which is the one thing in this list
+      // that is worth reading before choosing it.
+      note: spi.displayAddr,
       onTap: () => Pfs.copy(spi.displayAddr),
     ),
     ContextMenuAction(
@@ -161,6 +164,14 @@ Future<void> showServerActions(
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          subtitle: action.note == null
+              ? null
+              : Text(
+                  action.note!,
+                  style: UIs.text11Grey,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
           // Answered rather than run here: the sheet has to be gone before an
           // action that opens a dialog of its own runs, or the dialog opens
           // underneath it.
