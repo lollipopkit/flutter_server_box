@@ -62,6 +62,34 @@ final class ServerMetric {
   bool get over => percent != null && percent! * 100 >= kServerAlertPercent;
 }
 
+/// Which reading a machine is being watched by, remembered per machine.
+///
+/// The card and the detail page are one structure at two sizes, so promoting a
+/// row on either is the same choice: a database watched for its disk stays
+/// watched for its disk when it is opened, and picking a different one there
+/// is what the card shows when it is closed again.
+///
+/// Stored by [ServerMetricKind.name], never by index: a case inserted into
+/// that enum would silently repoint every stored choice.
+abstract final class ServerPromoted {
+  static ServerMetricKind? of(String serverId) {
+    final name = Stores.setting.serverCardMetric.fetch()[serverId];
+    if (name == null) return null;
+    return ServerMetricKind.values.firstWhereOrNull((e) => e.name == name);
+  }
+
+  /// Answers whether anything changed, so a caller can skip a rebuild.
+  static bool put(String serverId, ServerMetricKind kind) {
+    final map = Map<String, String>.from(
+      Stores.setting.serverCardMetric.fetch(),
+    );
+    if (map[serverId] == kind.name) return false;
+    map[serverId] = kind.name;
+    Stores.setting.serverCardMetric.put(map);
+    return true;
+  }
+}
+
 /// What one card shows: the readings it has room for, and how many it has not.
 typedef ServerCardReadings = ({
   /// In the order every card draws them — see [serverCardReadings].

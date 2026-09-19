@@ -1660,6 +1660,12 @@ extension on _ServerDetailPageState {
       child: InkWell(
         onTap: () {
           _rebuild(() => _focusMetric = m.kind);
+          // Kept, so the card this page grew out of shows the same reading
+          // when it shrinks back into the list.
+          ServerPromoted.put(
+            widget.args.spi.id,
+            ServerMetricKind.values.firstWhere((e) => e.name == m.kind.name),
+          );
           _revealFocus();
         },
         child: Padding(

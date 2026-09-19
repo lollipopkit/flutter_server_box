@@ -29,6 +29,7 @@ import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
+import 'package:server_box/view/page/server/card/switcher.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
@@ -570,6 +571,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
         },
         cmd(LogicalKeyboardKey.bracketLeft): () => _stepServer(-1),
         cmd(LogicalKeyboardKey.bracketRight): () => _stepServer(1),
+        // The list, from inside one of its machines. Nothing when the list is
+        // already the page — the bar's own search is what that wants.
+        cmd(LogicalKeyboardKey.keyK): () {
+          final openId = ref.read(serverSelectionProvider);
+          if (openId != null) _showServerSheet(_lastFiltered, openId);
+        },
       },
       child: Focus(focusNode: _keys, child: child),
     );
@@ -915,43 +922,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
   }
 
-  /// Every machine, grouped the way the list groups them, for picking one
-  /// without going back to the grid.
+  /// Every machine, for picking one without going back to the grid.
+  ///
+  /// The strip of pills over an open card is this same list and answers it for
+  /// a handful; past that they stop fitting, and what a longer one wants is
+  /// something to type into and the tags to group by.
   Future<void> _showServerSheet(List<String> filtered, String openId) async {
-    await showRowsSheet<void>(
+    final picked = await showServerSwitcher(
       context,
-      rows: (ctx) => [
-        for (final id in filtered)
-          Consumer(
-            builder: (_, ref, _) {
-              final srv = ref.watch(serverProvider(id));
-              return ListTile(
-                selected: id == openId,
-                leading: Container(
-                  width: 9,
-                  height: 9,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _dotOf(srv),
-                  ),
-                ),
-                title: Text(srv.spi.name),
-                subtitle: Text(
-                  srv.listLine ?? srv.spi.displayAddr,
-                  style: UIs.text11Grey,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: id == openId ? const Icon(Icons.check) : null,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _openDetail(id);
-                },
-              );
-            },
-          ),
-      ],
+      ids: filtered,
+      current: openId,
     );
+    if (picked == null || !mounted) return;
+    _openDetail(picked);
   }
 
   /// Find a server by name or address, in the bar and in the list under it.

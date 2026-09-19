@@ -223,24 +223,10 @@ extension _Utils on _ServerPageState {
 
   /// Which reading [id]'s card draws in full, or null for whichever the
   /// machine reports first.
-  ServerMetricKind? _promotedOf(String id) {
-    final name = Stores.setting.serverCardMetric.fetch()[id];
-    if (name == null) return null;
-    return ServerMetricKind.values.firstWhereOrNull((e) => e.name == name);
-  }
+  ServerMetricKind? _promotedOf(String id) => ServerPromoted.of(id);
 
-  /// Remembers which reading [id]'s card draws in full.
-  ///
-  /// Per server, and kept: the choice is about the machine, so it has to
-  /// survive the app being closed and be the same on the detail page.
   void _promote(String id, ServerMetricKind kind) {
-    final map = Map<String, String>.from(
-      Stores.setting.serverCardMetric.fetch(),
-    );
-    if (map[id] == kind.name) return;
-    map[id] = kind.name;
-    Stores.setting.serverCardMetric.put(map);
-    setState(() {});
+    if (ServerPromoted.put(id, kind)) setState(() {});
   }
 
   void _updateOffset() {

@@ -35,6 +35,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
@@ -120,7 +121,18 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   final _cardsOff = <String>{};
 
   /// The metric drawn in full. The rest are a row each.
-  _MetricKind _focusMetric = _MetricKind.cpu;
+  ///
+  /// The same choice the card in the list draws by, read through
+  /// [ServerPromoted]: this page and that card are one structure at two sizes,
+  /// so a reading promoted on either has to be the one promoted on the other.
+  /// CPU when nothing has been chosen, which is the reading every machine has.
+  late _MetricKind _focusMetric = _storedFocus ?? _MetricKind.cpu;
+
+  _MetricKind? get _storedFocus {
+    final kind = ServerPromoted.of(widget.args.spi.id);
+    if (kind == null) return null;
+    return _MetricKind.values.firstWhereOrNull((e) => e.name == kind.name);
+  }
 
   /// Which of a metric's devices the chart draws, where the reader has said.
   /// Absent means [_Devices.defaults], which is what a page opens on.
