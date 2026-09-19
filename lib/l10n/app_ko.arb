@@ -867,5 +867,7 @@
   "moveToTop": "맨 위로 이동",
   "moveToBottom": "맨 아래로 이동",
   "groupByTag": "태그로 그룹화",
-  "groupByTagTip": "태그는 서버 편집 페이지에서 설정합니다."
+  "groupByTagTip": "태그는 서버 편집 페이지에서 설정합니다.",
+  "connecting": "연결 중…",
+  "authShort": "인증"
 }

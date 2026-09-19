@@ -1060,5 +1060,7 @@
   "moveToTop": "Ən yuxarıya köçür",
   "moveToBottom": "Ən aşağıya köçür",
   "groupByTag": "Teqə görə qruplaşdır",
-  "groupByTagTip": "Teqlər serverin öz redaktə səhifəsində təyin edilir."
+  "groupByTagTip": "Teqlər serverin öz redaktə səhifəsində təyin edilir.",
+  "connecting": "Qoşulur…",
+  "authShort": "Auth"
 }

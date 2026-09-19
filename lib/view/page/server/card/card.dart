@@ -107,6 +107,28 @@ abstract final class ServerCardSizes {
 
 const _tabular = [FontFeature.tabularFigures()];
 
+/// The slot the one thing to do about a machine sits in.
+///
+/// Named because a line keeps it empty in the one state that has nothing to
+/// offer, and an empty slot of a different width is a column that moves.
+const _kLineActionWidth = 27.0;
+
+/// How long the readings take to fill a card once the first sample lands.
+///
+/// The design's number, and it is the height as well as the contents: the card
+/// grows out of its 56pt over this, and what fills it comes in over the same
+/// stretch — so a machine answering is one movement rather than a box growing
+/// and then filling.
+const _kArrive = Duration(milliseconds: 377);
+
+/// How far apart the blocks of that come in.
+///
+/// Small enough that six of them are a sweep down the card rather than six
+/// separate arrivals — six at 20 is 100ms, inside the 377 the whole thing
+/// takes — and large enough to have a direction, which is what says the card
+/// filled rather than appeared.
+const _kArriveStep = Duration(milliseconds: 20);
+
 /// How tall a tile's pressure bar is, and its corner.
 ///
 /// Thicker than the 3pt bar it replaced: this one is several colours laid end
@@ -323,7 +345,7 @@ class ServerCard extends ConsumerWidget {
           // itself mid-layout.
           duration: openness > 0
               ? const Duration(milliseconds: 1)
-              : context.motion(Durations.medium3),
+              : context.motion(_kArrive),
           curve: Curves.fastEaseInToSlowEaseOut,
           alignment: Alignment.topCenter,
           child: switch (shaped) {
@@ -368,12 +390,7 @@ class ServerCard extends ConsumerWidget {
 
     final err = srv.status.err;
     final auth = srv.needsInteractiveAuth;
-    final busy = switch (srv.conn) {
-      ServerConn.connecting ||
-      ServerConn.connected ||
-      ServerConn.loading => true,
-      _ => false,
-    };
+    final busy = _busy;
     // Only what has been sampled is drawn. A machine that failed keeps its
     // last numbers on its own page, where there is room to say how old they
     // are; on a card the error is the more useful of the two.
@@ -403,25 +420,38 @@ class ServerCard extends ConsumerWidget {
         _titleSlot(context, ref, t),
         if (busy) _progress(context),
         if (err != null && !auth) _error(context, err),
-        if (focus != null) ...[
-          SizedBox(height: lerpDouble(ServerCardSizes.gap, 0, t)),
-          _focus(
-            context,
-            focus,
-            theme: theme,
-            stale: stale != null,
-            twoColumns: twoColumns,
+        // Everything that arrives with the first sample, coming in one block
+        // after another — see [_Arriving]. Mounted only when there is a body,
+        // which is exactly when the card grows out of its 56pt, so the
+        // stagger runs once per machine and not on every poll after.
+        if (focus != null || readings != null)
+          _Arriving(
+            duration: context.motion(_kArrive),
+            children: [
+              if (focus != null)
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: lerpDouble(ServerCardSizes.gap, 0, t)!,
+                  ),
+                  child: _focus(
+                    context,
+                    focus,
+                    theme: theme,
+                    stale: stale != null,
+                    twoColumns: twoColumns,
+                  ),
+                ),
+              if (readings != null)
+                ..._rows(
+                  context,
+                  readings,
+                  focus: focus,
+                  theme: theme,
+                  scheme: scheme,
+                ),
+              ?_foot(context, readings),
+            ],
           ),
-        ],
-        if (readings != null)
-          ..._rows(
-            context,
-            readings,
-            focus: focus,
-            theme: theme,
-            scheme: scheme,
-          ),
-        ?_foot(context, readings),
       ],
     );
 
@@ -491,9 +521,55 @@ class ServerCard extends ConsumerWidget {
         : readings.all.firstWhereOrNull((m) => m.kind == promoted) ??
               readings.all.firstOrNull;
 
+    // Connected, but the numbers have stopped. Both shapes say so — the tile
+    // by going grey, the line by what it puts in its right column.
+    final stale = readings == null ? null : serverStaleSince(srv);
+
     return density == ServerListDensity.grid
-        ? _tile(context, readings, focus)
-        : _line(context, readings, focus);
+        ? _tile(context, readings, focus, stale: stale != null)
+        : _line(context, ref, readings, focus, stale: stale);
+  }
+
+  /// Whether this machine is on its way somewhere.
+  ///
+  /// One definition, because three places draw from it and they have to agree
+  /// about which states get a progress line — a card that shows one while its
+  /// line does not is two answers to the same question.
+  bool get _busy => switch (srv.conn) {
+    ServerConn.connecting ||
+    ServerConn.connected ||
+    ServerConn.loading => true,
+    _ => false,
+  };
+
+  /// Where this machine stands, for the right of a line.
+  ///
+  /// One column in one place, so it can be read down a list of forty rather
+  /// than each row having to be looked at to find out whether it said
+  /// anything. Beside it is [_connAction] — the one thing to *do* about each
+  /// state, and the same mapping the card uses, so a machine offers the same
+  /// control whichever shape the list is in.
+  ///
+  /// Empty where [_lineMiddle] is already saying it. The two have different
+  /// jobs — the middle is why there is no bar, this is where the machine
+  /// stands — and for two of the six they are the same sentence. The middle
+  /// wins, being in the place the eye is already: the bar's.
+  (String, Color) _lineState(DateTime? stale) {
+    if (srv.needsInteractiveAuth) return ('', StatePalette.warn);
+    return switch (srv.conn) {
+      ServerConn.disconnected => ('', Colors.grey),
+      ServerConn.connecting ||
+      ServerConn.connected ||
+      ServerConn.loading => (l10n.connecting, Colors.grey),
+      ServerConn.failed => (libL10n.retry, StatePalette.failed),
+      // The numbers are still the most recent thing known about it, so what
+      // this says is how old they are rather than that they are gone.
+      ServerConn.finished when stale != null => (
+        stale.toAgoStr(),
+        StatePalette.warn,
+      ),
+      ServerConn.finished => (srv.listLine ?? '', Colors.grey),
+    };
   }
 
   /// A line: the state, the name, how long it has been up, what it is carrying
@@ -505,10 +581,13 @@ class ServerCard extends ConsumerWidget {
   /// of the line, where the bars would have been.
   Widget _line(
     BuildContext context,
+    WidgetRef ref,
     ServerCardReadings? readings,
-    ServerMetric? focus,
-  ) {
+    ServerMetric? focus, {
+    DateTime? stale,
+  }) {
     final scheme = Theme.of(context).colorScheme;
+    final (word, wordColor) = _lineState(stale);
 
     return SizedBox(
       height: isMobile ? ServerCardSizes.rowTouch : ServerCardSizes.row,
@@ -547,46 +626,21 @@ class ServerCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (wide >= 560) ...[
-                  const SizedBox(width: 13),
-                  SizedBox(
-                    width: 72,
-                    child: Text(
-                      srv.listLine ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        height: 1,
-                        color: Colors.grey,
-                        fontFeatures: _tabular,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
                 const SizedBox(width: 13),
                 if (focus == null)
-                  // Nothing to draw a bar of, so the line says why in the
-                  // space the bars would have taken.
-                  Expanded(
-                    child: Text(
-                      srv.needsInteractiveAuth
-                          ? libL10n.tapToAuth
-                          : (srv.listLine ?? libL10n.disconnected),
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1,
-                        color: srv.conn == ServerConn.failed
-                            ? StatePalette.failed
-                            : Colors.grey,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  )
+                  // Nothing to draw a bar of, so the middle says why — in the
+                  // space the bars would have taken, so the row is the same
+                  // height whichever of the six it is.
+                  Expanded(child: _lineMiddle(context))
                 else
                   Expanded(
-                    child: _load(context, readings, focus, scheme: scheme),
+                    child: _load(
+                      context,
+                      readings,
+                      focus,
+                      scheme: scheme,
+                      stale: stale != null,
+                    ),
                   ),
                 if (wide >= 700) ...[
                   const SizedBox(width: 13),
@@ -611,13 +665,87 @@ class ServerCard extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(width: 7),
-                const Icon(Icons.chevron_right, size: 17, color: Colors.grey),
+                // The column that is in the same place on every row, whatever
+                // the state — see [_lineState]. It is what a chevron used to
+                // be, which said only that a row opens, and said it forty
+                // times.
+                //
+                // Dropped on a phone, where the row is already giving up its
+                // rate column and its second reading: what it says about a
+                // machine with nothing to draw is in the middle of the line
+                // anyway, and the one thing to *do* is the icon after it,
+                // which never goes.
+                if (wide >= 560) ...[
+                  const SizedBox(width: 13),
+                  SizedBox(
+                    width: 88,
+                    child: Text(
+                      word,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1,
+                        color: wordColor,
+                        fontFeatures: _tabular,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 3),
+                // A machine on its way already has a line across the middle
+                // of this row; the card's spinner here would be the same
+                // answer twice. The slot is kept so the column does not move.
+                if (_busy)
+                  const SizedBox(width: _kLineActionWidth)
+                else
+                  _connAction(context, ref),
               ],
             );
           },
         ),
       ),
+    );
+  }
+
+  /// The middle of a line with nothing to draw a bar of.
+  ///
+  /// One of three things, and never a fourth height: a machine on its way
+  /// gets the same 3pt line the card gets, one that failed gets what the far
+  /// end actually said, and one nobody has connected gets the word for that.
+  ///
+  /// The error is the message rather than "Failure": a row is where a list of
+  /// forty is scanned, and `Connection refused` against `No route to host`
+  /// is the difference between a machine to look at now and one to look at
+  /// later. The card under it has the raw text as well; this has one line.
+  Widget _lineMiddle(BuildContext context) {
+    if (_busy) {
+      return const Align(
+        alignment: Alignment.centerLeft,
+        child: LinearProgressIndicator(
+          minHeight: ServerCardSizes.bar,
+          borderRadius: BorderRadius.all(
+            Radius.circular(ServerCardSizes.bar),
+          ),
+        ),
+      );
+    }
+
+    final err = srv.status.err;
+    final (text, color) = switch (srv) {
+      _ when srv.needsInteractiveAuth => (libL10n.tapToAuth, StatePalette.warn),
+      _ when err != null => (
+        err.solution ?? err.message ?? libL10n.fail,
+        StatePalette.failed,
+      ),
+      _ => (libL10n.disconnected, Colors.grey),
+    };
+    return Text(
+      text,
+      style: TextStyle(fontSize: 12, height: 1, color: color),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
@@ -639,6 +767,7 @@ class ServerCard extends ConsumerWidget {
     ServerCardReadings? readings,
     ServerMetric focus, {
     required ColorScheme scheme,
+    bool stale = false,
   }) {
     final inBar = [
       for (final kind in serverPressureKinds)
@@ -659,14 +788,24 @@ class ServerCard extends ConsumerWidget {
 
         return Row(
           children: [
-            Expanded(child: _pressure(context, readings, scheme: scheme)),
+            Expanded(
+              child: _pressure(
+                context,
+                readings,
+                scheme: scheme,
+                stale: stale,
+              ),
+            ),
             // In the bar's own order rather than by rank, so the numbers line
             // up down a list whichever reading each machine is watched by.
             if (!focusInBar && kept.contains(focus.kind))
               _loadValue(focus, name: Colors.grey),
             for (final m in inBar)
               if (kept.contains(m.kind))
-                _loadValue(m, name: _pressureColor(m.kind, over: m.over)),
+                _loadValue(
+                  m,
+                  name: _pressureColor(m.kind, over: m.over, stale: stale),
+                ),
           ],
         );
       },
@@ -719,8 +858,9 @@ class ServerCard extends ConsumerWidget {
   Widget _tile(
     BuildContext context,
     ServerCardReadings? readings,
-    ServerMetric? focus,
-  ) {
+    ServerMetric? focus, {
+    bool stale = false,
+  }) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: isMobile ? ServerCardSizes.tileTouch : ServerCardSizes.tile,
@@ -760,9 +900,13 @@ class ServerCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 10,
                     height: 1.2,
-                    color: focus?.over == true
-                        ? StatePalette.warn
-                        : Colors.grey,
+                    // The one word a tile has room for is also the only thing
+                    // on it that can say why: red for a machine that failed,
+                    // amber for one waiting to be let in, and for a reading
+                    // that is over its line.
+                    color: focus == null
+                        ? _tileWordColor
+                        : (focus.over ? StatePalette.warn : Colors.grey),
                     fontFeatures: _tabular,
                   ),
                   maxLines: 1,
@@ -770,7 +914,7 @@ class ServerCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 5),
-            _pressure(context, readings, scheme: scheme),
+            _pressure(context, readings, scheme: scheme, stale: stale),
           ],
         ),
       ),
@@ -782,10 +926,15 @@ class ServerCard extends ConsumerWidget {
   ///
   /// The slot is kept even with nothing in it, so a machine that is down does
   /// not make its tile a different height from the rest.
+  /// [stale] is a connection that is up and no longer sampling. The lengths
+  /// stay exactly as they were — the last reading is still the most recent
+  /// thing known about the machine — and the colours go, which is the half
+  /// that has stopped being true.
   Widget _pressure(
     BuildContext context,
     ServerCardReadings? readings, {
     required ColorScheme scheme,
+    bool stale = false,
   }) {
     final segments = serverPressure(readings);
 
@@ -804,7 +953,11 @@ class ServerCard extends ConsumerWidget {
               Flexible(
                 flex: (segment.share * 1000).round(),
                 child: Container(
-                  color: _pressureColor(segment.kind, over: segment.over),
+                  color: _pressureColor(
+                    segment.kind,
+                    over: segment.over,
+                    stale: stale,
+                  ),
                 ),
               ),
             // Whatever is left, as the track. A `Row` holding only the
@@ -830,7 +983,13 @@ class ServerCard extends ConsumerWidget {
   /// Nothing on a tile names them; a line does, in these same colours — see
   /// [_load]. Over its line wins, because that is what the bar is looked at
   /// for.
-  Color _pressureColor(ServerMetricKind kind, {required bool over}) => over
+  Color _pressureColor(
+    ServerMetricKind kind, {
+    required bool over,
+    bool stale = false,
+  }) => stale
+      ? Colors.grey
+      : over
       ? StatePalette.warn
       : switch (kind) {
           ServerMetricKind.mem => ChartPalette.mem,
@@ -839,10 +998,20 @@ class ServerCard extends ConsumerWidget {
         };
 
   /// What a tile says where a number would be.
+  ///
+  /// Short, because it shares a 44pt tile with a name: "Click to verify" is
+  /// what a card has room for and a tile has not, and a tile that elides its
+  /// own state says less than the dash it replaced.
   String get _tileWord => switch (srv.conn) {
     ServerConn.failed =>
-      srv.needsInteractiveAuth ? libL10n.tapToAuth : libL10n.fail,
+      srv.needsInteractiveAuth ? l10n.authShort : libL10n.fail,
     _ => '—',
+  };
+
+  Color get _tileWordColor => switch (srv.conn) {
+    ServerConn.failed =>
+      srv.needsInteractiveAuth ? StatePalette.warn : StatePalette.failed,
+    _ => Colors.grey,
   };
 
   // --- The title, which every state has ---
@@ -967,7 +1136,11 @@ class ServerCard extends ConsumerWidget {
       ),
     };
 
-    final wrapped = SizedBox(height: 23, width: 27, child: Center(child: child));
+    final wrapped = SizedBox(
+      height: 23,
+      width: _kLineActionWidth,
+      child: Center(child: child),
+    );
     if (onTap == null) return wrapped;
     return InkWell(
       borderRadius: BorderRadius.circular(7),
@@ -1476,6 +1649,53 @@ class ServerCard extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A column whose children come in one after another, once, on arrival.
+///
+/// [Opacity] rather than a fade transition per child: there is one clock for
+/// the whole column, and each child reads its own stretch of it. Six
+/// controllers on forty cards is forty times what this costs.
+///
+/// It runs when this widget is *mounted*, not when its children change — which
+/// is the whole of when it should run. A card with no readings does not build
+/// one at all, so the mount is the first sample landing; after that the
+/// element stays and the tween is already at its end, so a poll rebuilds the
+/// children and nothing fades.
+class _Arriving extends StatelessWidget {
+  const _Arriving({required this.duration, required this.children});
+
+  final Duration duration;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = duration.inMilliseconds;
+    final step = _kArriveStep.inMilliseconds;
+    // The last child still has the fade's own length to run in, so the steps
+    // before it share what is left rather than pushing it past the end.
+    final fade = math.max(1, total - step * math.max(0, children.length - 1));
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: duration,
+      builder: (_, value, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (at, child) in children.indexed)
+            Opacity(
+              opacity: Interval(
+                (at * step) / total,
+                ((at * step) + fade) / total,
+                curve: Curves.easeOut,
+              ).transform(value),
+              child: child,
+            ),
         ],
       ),
     );

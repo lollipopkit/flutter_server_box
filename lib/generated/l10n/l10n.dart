@@ -5139,6 +5139,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tags are set in a server’s own editor.'**
   String get groupByTagTip;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connecting;
+
+  /// No description provided for @authShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth'**
+  String get authShort;
 }
 
 class _AppLocalizationsDelegate

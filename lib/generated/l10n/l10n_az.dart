@@ -2990,4 +2990,10 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get groupByTagTip =>
       'Teqlər serverin öz redaktə səhifəsində təyin edilir.';
+
+  @override
+  String get connecting => 'Qoşulur…';
+
+  @override
+  String get authShort => 'Auth';
 }

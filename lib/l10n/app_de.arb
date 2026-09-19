@@ -858,5 +858,7 @@
   "moveToTop": "Nach ganz oben",
   "moveToBottom": "Nach ganz unten",
   "groupByTag": "Nach Tag gruppieren",
-  "groupByTagTip": "Tags werden im Editor des Servers gesetzt."
+  "groupByTagTip": "Tags werden im Editor des Servers gesetzt.",
+  "connecting": "Verbinden…",
+  "authShort": "Auth"
 }

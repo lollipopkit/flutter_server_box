@@ -1126,5 +1126,7 @@
   "moveToTop": "Move to top",
   "moveToBottom": "Move to bottom",
   "groupByTag": "Group by tag",
-  "groupByTagTip": "Tags are set in a server’s own editor."
+  "groupByTagTip": "Tags are set in a server’s own editor.",
+  "connecting": "Connecting…",
+  "authShort": "Auth"
 }

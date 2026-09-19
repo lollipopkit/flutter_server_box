@@ -858,5 +858,7 @@
   "moveToTop": "Naar boven verplaatsen",
   "moveToBottom": "Naar onderen verplaatsen",
   "groupByTag": "Groeperen op tag",
-  "groupByTagTip": "Tags stel je in in de editor van de server."
+  "groupByTagTip": "Tags stel je in in de editor van de server.",
+  "connecting": "Verbinden…",
+  "authShort": "Auth"
 }

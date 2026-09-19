@@ -858,5 +858,7 @@
   "moveToTop": "Pindah ke atas",
   "moveToBottom": "Pindah ke bawah",
   "groupByTag": "Kelompokkan menurut tag",
-  "groupByTagTip": "Tag diatur di halaman edit server."
+  "groupByTagTip": "Tag diatur di halaman edit server.",
+  "connecting": "Menghubungkan…",
+  "authShort": "Auth"
 }

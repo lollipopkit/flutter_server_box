@@ -2997,4 +2997,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'Теги задаются в редакторе сервера.';
+
+  @override
+  String get connecting => 'Подключение…';
+
+  @override
+  String get authShort => 'Авториз.';
 }

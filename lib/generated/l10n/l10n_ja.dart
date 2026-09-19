@@ -2851,4 +2851,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'タグはサーバーの編集ページで設定します。';
+
+  @override
+  String get connecting => '接続中…';
+
+  @override
+  String get authShort => '認証';
 }

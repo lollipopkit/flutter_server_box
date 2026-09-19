@@ -2996,4 +2996,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'Tags stel je in in de editor van de server.';
+
+  @override
+  String get connecting => 'Verbinden…';
+
+  @override
+  String get authShort => 'Auth';
 }

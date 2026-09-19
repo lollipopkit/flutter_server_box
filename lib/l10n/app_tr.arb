@@ -858,5 +858,7 @@
   "moveToTop": "En başa taşı",
   "moveToBottom": "En sona taşı",
   "groupByTag": "Etikete göre grupla",
-  "groupByTagTip": "Etiketler sunucunun kendi düzenleme sayfasında ayarlanır."
+  "groupByTagTip": "Etiketler sunucunun kendi düzenleme sayfasında ayarlanır.",
+  "connecting": "Bağlanıyor…",
+  "authShort": "Kimlik"
 }

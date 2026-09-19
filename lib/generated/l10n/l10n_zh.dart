@@ -2768,6 +2768,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'tag 是在服务器自己的编辑页里加的。';
+
+  @override
+  String get connecting => '连接中…';
+
+  @override
+  String get authShort => '认证';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5553,4 +5559,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get groupByTagTip => 'tag 是在伺服器自己的編輯頁裡加的。';
+
+  @override
+  String get connecting => '連線中…';
+
+  @override
+  String get authShort => '認證';
 }

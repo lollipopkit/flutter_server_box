@@ -2859,4 +2859,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get groupByTagTip => '태그는 서버 편집 페이지에서 설정합니다.';
+
+  @override
+  String get connecting => '연결 중…';
+
+  @override
+  String get authShort => '인증';
 }

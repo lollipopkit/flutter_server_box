@@ -858,5 +858,7 @@
   "moveToTop": "先頭へ移動",
   "moveToBottom": "末尾へ移動",
   "groupByTag": "タグでグループ化",
-  "groupByTagTip": "タグはサーバーの編集ページで設定します。"
+  "groupByTagTip": "タグはサーバーの編集ページで設定します。",
+  "connecting": "接続中…",
+  "authShort": "認証"
 }

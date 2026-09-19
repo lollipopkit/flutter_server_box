@@ -2976,4 +2976,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'Tag diatur di halaman edit server.';
+
+  @override
+  String get connecting => 'Menghubungkan…';
+
+  @override
+  String get authShort => 'Auth';
 }

@@ -861,5 +861,7 @@
   "moveToTop": "Sposta all'inizio",
   "moveToBottom": "Sposta alla fine",
   "groupByTag": "Raggruppa per tag",
-  "groupByTagTip": "I tag si impostano nell’editor del server."
+  "groupByTagTip": "I tag si impostano nell’editor del server.",
+  "connecting": "Connessione…",
+  "authShort": "Auth"
 }

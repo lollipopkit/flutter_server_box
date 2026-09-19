@@ -2975,4 +2975,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'Tags are set in a server’s own editor.';
+
+  @override
+  String get connecting => 'Connecting…';
+
+  @override
+  String get authShort => 'Auth';
 }

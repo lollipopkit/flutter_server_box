@@ -3004,4 +3004,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get groupByTagTip => 'Tags werden im Editor des Servers gesetzt.';
+
+  @override
+  String get connecting => 'Verbinden…';
+
+  @override
+  String get authShort => 'Auth';
 }

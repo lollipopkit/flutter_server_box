@@ -858,5 +858,7 @@
   "moveToTop": "Mover para o início",
   "moveToBottom": "Mover para o fim",
   "groupByTag": "Agrupar por tag",
-  "groupByTagTip": "As tags são definidas no editor do servidor."
+  "groupByTagTip": "As tags são definidas no editor do servidor.",
+  "connecting": "A ligar…",
+  "authShort": "Auth"
 }

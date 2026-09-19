@@ -3015,4 +3015,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get groupByTagTip =>
       'Les tags se définissent dans l’éditeur du serveur.';
+
+  @override
+  String get connecting => 'Connexion…';
+
+  @override
+  String get authShort => 'Auth';
 }

@@ -858,5 +858,7 @@
   "moveToTop": "Déplacer en haut",
   "moveToBottom": "Déplacer en bas",
   "groupByTag": "Grouper par tag",
-  "groupByTagTip": "Les tags se définissent dans l’éditeur du serveur."
+  "groupByTagTip": "Les tags se définissent dans l’éditeur du serveur.",
+  "connecting": "Connexion…",
+  "authShort": "Auth"
 }

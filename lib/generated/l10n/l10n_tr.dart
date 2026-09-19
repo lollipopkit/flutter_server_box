@@ -2972,4 +2972,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get groupByTagTip =>
       'Etiketler sunucunun kendi düzenleme sayfasında ayarlanır.';
+
+  @override
+  String get connecting => 'Bağlanıyor…';
+
+  @override
+  String get authShort => 'Kimlik';
 }
