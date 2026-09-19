@@ -11,6 +11,7 @@
 /// behind "more".
 library;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/view/page/home.dart';
@@ -136,12 +137,13 @@ void main() {
                       label: 'one',
                     ),
                   ],
-                  footer: NavRailFooterButton(
-                    icon: const Icon(Icons.settings),
-                    tooltip: 'settings',
-                    selected: selected,
-                    onTap: () {},
+                  footer: NavRailItem(
+                    icon: Icon(Icons.settings),
+                    selectedIcon: Icon(Icons.settings),
+                    label: 'settings',
                   ),
+                  footerSelected: selected,
+                  onFooterTap: () {},
                 ),
                 const Expanded(child: SizedBox()),
               ],
@@ -206,16 +208,16 @@ void main() {
     });
   });
 
-  /// The estimate against the layout it is an estimate of.
+  /// The number against the layout it describes.
   ///
   /// The count has to be made before the destinations are built, so their
-  /// height cannot be measured — it is worked out from [NavRailMetrics]
-  /// instead. This is what says the arithmetic still describes the widget.
+  /// height cannot be measured — it is read off [NavRailMetrics] instead.
+  /// This is what says the arithmetic still describes the widget.
   ///
-  /// One-sided on purpose: over-estimating costs a slot, under-estimating
-  /// overflows the rail. The upper bound is only there so a wildly generous
-  /// estimate does not pass as a safe one.
-  group('the estimate', () {
+  /// One-sided on purpose: over-stating costs a slot, under-stating overflows
+  /// the rail. The upper bound is only there so a wildly generous number does
+  /// not pass as a safe one.
+  group('how tall one destination is', () {
     Future<double> measure(WidgetTester tester, double textScale) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -229,13 +231,13 @@ void main() {
                     onSelected: (_) {},
                     items: const [
                       NavRailItem(
-                        icon: Icon(Icons.circle),
-                        selectedIcon: Icon(Icons.circle),
+                        icon: Icon(Icons.looks_one),
+                        selectedIcon: Icon(Icons.looks_one),
                         label: 'one',
                       ),
                       NavRailItem(
-                        icon: Icon(Icons.circle),
-                        selectedIcon: Icon(Icons.circle),
+                        icon: Icon(Icons.looks_two),
+                        selectedIcon: Icon(Icons.looks_two),
                         label: 'two',
                       ),
                     ],
@@ -249,24 +251,22 @@ void main() {
       );
       await tester.pump();
       // Top to top of consecutive destinations, which is the pitch the count
-      // divides by — not one destination's own painted height.
-      final first = tester.getRect(find.text('one'));
-      final second = tester.getRect(find.text('two'));
+      // divides by — not one destination's own painted height. Measured on the
+      // icons, because a shut rail draws no names: they are its tooltips.
+      final first = tester.getRect(find.byIcon(Icons.looks_one));
+      final second = tester.getRect(find.byIcon(Icons.looks_two));
       return second.top - first.top;
     }
 
     Future<void> check(WidgetTester tester, double textScale) async {
       final real = await measure(tester, textScale);
-      final estimated = railDestinationExtent(
-        tester.element(find.byType(AppNavRail)),
-      );
       expect(
-        estimated,
+        railDestinationExtent,
         greaterThanOrEqualTo(real),
         reason: 'an under-estimate is a rail that overflows its box',
       );
       expect(
-        estimated,
+        railDestinationExtent,
         lessThan(real + 24),
         reason: 'and a wild over-estimate is tabs behind "more" for nothing',
       );
@@ -276,14 +276,137 @@ void main() {
       await check(tester, 1);
     });
 
-    testWidgets('and at the ones this app lets the user set', (tester) async {
-      // `textFactor` is a setting, so the label — the only part of a
-      // destination that moves — is not a constant. The fractional scales are
-      // the ones that matter: a line is laid out to a whole pixel, so the
-      // plain product is *under* the real height at some of them.
-      for (final scale in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.5, 3.0]) {
+    testWidgets('and at every scale, because nothing here is text', (
+      tester,
+    ) async {
+      // What the shut rail bought: an item is an icon in a pill, so the pitch
+      // is a constant rather than something that has to be guessed ahead of a
+      // layout it cannot see.
+      for (final scale in [1.1, 1.3, 1.6, 2.0, 3.0]) {
         await check(tester, scale);
       }
+    });
+  });
+
+  /// The two shapes the rail has.
+  group('opening', () {
+    Future<double> widthAfterHover(
+      WidgetTester tester, {
+      required bool hover,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      if (hover) {
+        final pointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(
+          pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+        );
+        // Past the whole of the opening, which is what the width is asserted
+        // at — halfway through it is neither number.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+
+      return tester.getSize(find.byType(AppNavRail)).width;
+    }
+
+    testWidgets('is what the pointer does, and costs the tab nothing', (
+      tester,
+    ) async {
+      expect(await widthAfterHover(tester, hover: false), NavRailMetrics.width);
+      expect(
+        await widthAfterHover(tester, hover: true),
+        NavRailMetrics.expandedWidth,
+      );
+      // And the tab beside it never moved: the rail is painted over it, and
+      // what the `Row` holds open is the shut width — see `_kRailWidth`.
+      expect(railWidth, NavRailMetrics.width);
+    });
+
+    testWidgets('lays an item out inside the pill at every width', (
+      tester,
+    ) async {
+      // What went wrong the first time: an `AnimatedContainer` easing the
+      // pill's width towards this frame's number while the row inside was
+      // already laid out for it, which is a `RenderFlex` overflow — reported,
+      // with a whole widget tree, on every frame of the opening.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: [
+                    NavRailItem(
+                      icon: const Icon(Icons.circle),
+                      selectedIcon: const Icon(Icons.circle),
+                      label: 'one',
+                      badge: (opacity) => NavRailBadge(
+                        label: '3/3',
+                        opacity: opacity,
+                      ),
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      // Frame by frame through the whole of it, in both directions: the
+      // overflow was only ever at one end of the range.
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        expect(tester.takeException(), isNull, reason: 'opening, frame $i');
+      }
+      await tester.sendEventToBinding(pointer.hover(const Offset(600, 300)));
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        expect(tester.takeException(), isNull, reason: 'shutting, frame $i');
+      }
+    });
+
+    testWidgets('names an item with a tooltip while it is shut', (
+      tester,
+    ) async {
+      await widthAfterHover(tester, hover: false);
+      // The name is not on screen, so something has to be able to say it.
+      expect(find.text('one'), findsNothing);
+      expect(
+        tester.widget<Tooltip>(find.byType(Tooltip)).message,
+        'one',
+      );
     });
   });
 }

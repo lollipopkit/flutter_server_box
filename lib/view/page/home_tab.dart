@@ -96,7 +96,9 @@ extension AppTabViewX on AppTab {
       icon: icon,
       selectedIcon: selectedIcon,
       label: label,
-      badge: this == AppTab.server ? const ConnCountRailBadge() : null,
+      badge: this == AppTab.server
+          ? (opacity) => ConnCountRailBadge(opacity: opacity)
+          : null,
       onMenu: onMenu,
     );
   }

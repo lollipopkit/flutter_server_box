@@ -42,26 +42,30 @@ class HomePage extends ConsumerStatefulWidget {
 
 /// What the navigation rail takes from the width a tab gets.
 ///
-/// Only used to decide whether a rail is worth showing — the rail lays itself
-/// out, from the same constant.
+/// Its shut width, which is the only one it ever takes: the rail opens under
+/// the pointer and is painted *over* the tab beside it, so a tab is never laid
+/// out twice for the sake of a hover.
 const _kRailWidth = NavRailMetrics.width;
+
+/// What the `Row` holds open for it, which is the number above and not the one
+/// the rail reaches when it opens.
+@visibleForTesting
+const railWidth = _kRailWidth;
 
 /// What the rail spends on things that are not destinations.
 ///
-/// Its own padding and the settings button at its foot. Subtracted before the
+/// Its own padding and the settings at its foot. Subtracted before the
 /// destinations are counted.
 const _kRailChromeHeight = NavRailMetrics.chromeHeight;
 
-/// How tall one rail destination is, near enough to count them.
+/// How tall one rail destination is.
 ///
-/// An estimate rather than a measurement, because the count has to be made
-/// *before* the destinations are built. Erring high is a rail with a spare
-/// slot; erring low is a rail that overflows its box, which is why [AppNavRail]
-/// also scrolls. `test/widget/home_rail_tabs_test.dart` holds it against what
-/// the rail actually lays out.
+/// Exact rather than an estimate, now that a shut item is an icon in a pill
+/// and nothing that moves with the text scale. Still measured against the
+/// widget in `test/widget/home_rail_tabs_test.dart`, because being a point
+/// under is a rail that overflows its box.
 @visibleForTesting
-double railDestinationExtent(BuildContext context) =>
-    NavRailMetrics.itemExtent(context);
+const railDestinationExtent = NavRailMetrics.itemExtent;
 
 /// How many destinations fit in [height].
 ///
@@ -457,93 +461,118 @@ class _HomePageState extends ConsumerState<HomePage>
     Widget mainContent(bool narrow) => ListenableBuilder(
       listenable: _selectIndex,
       builder: (_, _) => Scaffold(
-        body: Row(
+        body: Stack(
           children: [
-            // Absent rather than empty, for the inset again: the rail is a
-            // `SafeArea`, so one wrapped round nothing still holds the left
-            // inset open beside a full-bleed page.
-            if (!narrow && !_wantsWindow) _buildRailBar(),
-            Expanded(
-              child: Stack(
-                children: [
-                  // Kept mounted behind the settings rather than swapped out
-                  // for them: a tab holds a terminal, a scroll position and a
-                  // navigator of its own, and all three would end here.
-                  // `Offstage` does not lay its child out, so nothing is
-                  // resized to zero and back on the way through either.
-                  Offstage(
-                    offstage: _tabsHidden,
-                    child: TickerMode(
-                      enabled: !_tabsHidden,
-                      child: _crossed(
-                        leaving: true,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          itemCount: _tabs.length,
-                          physics: const NeverScrollableScrollPhysics(),
-                          // Each tab keeps its own stack, so a page opened
-                          // inside one — a server's details, its files — covers
-                          // the tab and not the window. The bar or rail that got
-                          // you here stays put, and coming back to a tab returns
-                          // you to where you were in it.
-                          itemBuilder: (_, index) => NestedNavigator(
-                            key: ValueKey(_tabs[index]),
-                            // The top inset lands on the tab's own content and
-                            // not on the navigator around it, which is the whole
-                            // point: a page pushed here is a sibling route,
-                            // outside this `SafeArea`, so it reaches the top of
-                            // the window and animates across the status bar.
-                            // Wrapping the navigator instead would inset the
-                            // pushed page too and put the seam back.
-                            //
-                            // Here rather than in each tab because a tab is not
-                            // one shape: three of them put a `Scaffold` *inside*
-                            // a pane splitter, so the splitter's own divider is
-                            // above any app bar that could have spent the inset.
-                            rootBuilder: (_) =>
-                                SafeArea(bottom: false, child: _tabs[index].page),
-                          ),
-                          onPageChanged: (value) {
-                            FocusScope.of(context).unfocus();
-                            if (!_switchingPage) {
-                              _selectIndex.value = value;
-                              _rememberTab(value);
-                            }
-                            _syncFullscreenSystemUi();
-                          },
-                        ),
-                      ),
-                    ),
+            Row(
+              children: [
+                // The room the rail stands in, and not the rail: it opens
+                // under the pointer and is painted over what is beside it, so
+                // a tab must not be laid out to one width and then another.
+                //
+                // Its own `SafeArea` rather than none, because the rail has
+                // one too — on a landscape phone wide enough for a rail, the
+                // left inset is width neither of them may spend.
+                if (_hasRail(narrow))
+                  const SafeArea(
+                    top: false,
+                    bottom: false,
+                    right: false,
+                    child: SizedBox(width: _kRailWidth),
                   ),
-                  // Its own navigator, like a tab's: what the settings push —
-                  // the private keys, a backup, the raw editor — belongs over
-                  // the settings and not over the window.
-                  if (_settingsSeen)
-                    Offstage(
-                      offstage: !_settingsShowing,
-                      child: TickerMode(
-                        enabled: _settingsShowing,
-                        child: IgnorePointer(
-                          // On the way out it is still painted and still on
-                          // top, so without this a tap meant for the tab
-                          // underneath would land on a page that is leaving.
-                          ignoring: !_settingsOpen,
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Kept mounted behind the settings rather than swapped out
+                      // for them: a tab holds a terminal, a scroll position and a
+                      // navigator of its own, and all three would end here.
+                      // `Offstage` does not lay its child out, so nothing is
+                      // resized to zero and back on the way through either.
+                      Offstage(
+                        offstage: _tabsHidden,
+                        child: TickerMode(
+                          enabled: !_tabsHidden,
                           child: _crossed(
-                            leaving: false,
-                            child: NestedNavigator(
-                              key: const ValueKey('settings'),
-                              rootBuilder: (_) => const SafeArea(
-                                bottom: false,
-                                child: SettingsPage(),
+                            leaving: true,
+                            child: PageView.builder(
+                              controller: _pageController,
+                              itemCount: _tabs.length,
+                              physics: const NeverScrollableScrollPhysics(),
+                              // Each tab keeps its own stack, so a page opened
+                              // inside one — a server's details, its files — covers
+                              // the tab and not the window. The bar or rail that got
+                              // you here stays put, and coming back to a tab returns
+                              // you to where you were in it.
+                              itemBuilder: (_, index) => NestedNavigator(
+                                key: ValueKey(_tabs[index]),
+                                // The top inset lands on the tab's own content and
+                                // not on the navigator around it, which is the whole
+                                // point: a page pushed here is a sibling route,
+                                // outside this `SafeArea`, so it reaches the top of
+                                // the window and animates across the status bar.
+                                // Wrapping the navigator instead would inset the
+                                // pushed page too and put the seam back.
+                                //
+                                // Here rather than in each tab because a tab is not
+                                // one shape: three of them put a `Scaffold` *inside*
+                                // a pane splitter, so the splitter's own divider is
+                                // above any app bar that could have spent the inset.
+                                rootBuilder: (_) =>
+                                    SafeArea(bottom: false, child: _tabs[index].page),
                               ),
+                              onPageChanged: (value) {
+                                FocusScope.of(context).unfocus();
+                                if (!_switchingPage) {
+                                  _selectIndex.value = value;
+                                  _rememberTab(value);
+                                }
+                                _syncFullscreenSystemUi();
+                              },
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              ),
+                      // Its own navigator, like a tab's: what the settings push —
+                      // the private keys, a backup, the raw editor — belongs over
+                      // the settings and not over the window.
+                      if (_settingsSeen)
+                        Offstage(
+                          offstage: !_settingsShowing,
+                          child: TickerMode(
+                            enabled: _settingsShowing,
+                            child: IgnorePointer(
+                              // On the way out it is still painted and still on
+                              // top, so without this a tap meant for the tab
+                              // underneath would land on a page that is leaving.
+                              ignoring: !_settingsOpen,
+                              child: _crossed(
+                                leaving: false,
+                                child: NestedNavigator(
+                                  key: const ValueKey('settings'),
+                                  rootBuilder: (_) => const SafeArea(
+                                    bottom: false,
+                                    child: SettingsPage(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            // Painted last, so that opening it is a panel coming out over the
+            // tab rather than the tab drawing over it: in a `Row` the rail is
+            // the first child and so the first painted, and what it overflows
+            // into is painted after.
+            if (_hasRail(narrow))
+              PositionedDirectional(
+                top: 0,
+                bottom: 0,
+                start: 0,
+                child: _buildRailBar(),
+              ),
           ],
         ),
         bottomNavigationBar: narrow && !_wantsWindow
@@ -772,11 +801,15 @@ class _HomePageState extends ConsumerState<HomePage>
   /// remainder, exactly as the bar does.
   Widget _buildRailBar() {
     return SafeArea(
+      // Anchored to the start, so the inset on the far side is not its to
+      // keep clear: taking it would make the rail wider than the room the
+      // `Row` holds open for it, by however much the other edge is cut off.
+      right: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final capacity = railCapacity(
             height: constraints.maxHeight,
-            destinationExtent: railDestinationExtent(context),
+            destinationExtent: railDestinationExtent,
           );
           final shown = railShownCount(
             wanted: _barTabs.length,
@@ -821,17 +854,18 @@ class _HomePageState extends ConsumerState<HomePage>
             if (index < shown) return _onDestinationSelected(index);
             unawaited(_showMoreSheet(shown));
           },
-          // Laid out under the items rather than stacked over them: pinned by
-          // a `Positioned` it sat on top of the last tab whenever the rail was
-          // full, and covered it.
-          footer: NavRailFooterButton(
-            icon: const Icon(Icons.settings),
-            tooltip: libL10n.setting,
-            // Lit like a destination, because that is what it now is: what it
-            // shows arrives beside this rail rather than over it.
-            selected: _settingsOpen,
-            onTap: _openSettings,
+          // An item like the rest, laid out under them rather than stacked
+          // over them: pinned by a `Positioned` it sat on top of the last tab
+          // whenever the rail was full, and covered it. Lit like a destination
+          // because that is what it is — what it shows arrives beside this
+          // rail rather than over it.
+          footer: NavRailItem(
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: libL10n.setting,
           ),
+          footerSelected: _settingsOpen,
+          onFooterTap: _openSettings,
         );
       },
     );
@@ -1070,6 +1104,9 @@ class _HomePageState extends ConsumerState<HomePage>
       _switchingPage = false;
     });
   }
+
+  /// Whether the window gets a rail rather than a bar.
+  bool _hasRail(bool narrow) => !narrow && !_wantsWindow;
 
   /// Shows the settings where a tab is shown, rather than over everything.
   ///

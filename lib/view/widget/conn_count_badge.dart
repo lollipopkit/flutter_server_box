@@ -59,13 +59,17 @@ class ConnCountBadge extends StatelessWidget {
 /// that is the icon — inside the indicator, over the glyph. Here the badge is
 /// the whole widget and the rail puts it on the indicator's corner.
 class ConnCountRailBadge extends StatelessWidget {
-  const ConnCountRailBadge({super.key});
+  const ConnCountRailBadge({super.key, this.opacity = 1});
+
+  /// How far the rail has it faded — see [NavRailBadge.opacity].
+  final double opacity;
 
   @override
   Widget build(BuildContext context) {
     return ConnCountBuilder(
-      builder: (_, count) =>
-          count == null ? const SizedBox.shrink() : NavRailBadge(label: count),
+      builder: (_, count) => count == null
+          ? const SizedBox.shrink()
+          : NavRailBadge(label: count, opacity: opacity),
     );
   }
 }
