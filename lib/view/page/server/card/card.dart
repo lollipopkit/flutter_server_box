@@ -144,7 +144,7 @@ class ServerCard extends ConsumerWidget {
     this.openness = 0,
     this.density = ServerListDensity.cards,
     this.selected,
-    this.openWidth = 0,
+    this.pageWidth = 0,
   });
 
   final ServerState srv;
@@ -168,12 +168,14 @@ class ServerCard extends ConsumerWidget {
   /// about choosing.
   final bool? selected;
 
-  /// How wide this card will be when it has finished growing.
+  /// How wide the page this card is growing into will be.
   ///
-  /// Known by the grid rather than measured here: the card's own width is
-  /// whatever the movement is at, and what has to be decided from it — whether
-  /// the facts will sit beside the readings — must not change halfway through.
-  final double openWidth;
+  /// Known by the grid rather than measured here for two reasons: the card's
+  /// own width is whatever the movement is at, so a decision taken from it
+  /// would change halfway through; and the one decision taken from it —
+  /// whether the facts sit beside the readings — has to be the same answer the
+  /// page gives, which it asks of this same box.
+  final double pageWidth;
 
   /// How much of this machine to draw.
   ///
@@ -265,7 +267,7 @@ class ServerCard extends ConsumerWidget {
     // Two columns at the far end, or one. Decided from where the card is
     // going rather than from where it is, so the reservation grows evenly
     // instead of appearing the moment the card passes 800pt.
-    final twoColumns = openWidth >= ServerCardSizes.columnsWidth;
+    final twoColumns = pageWidth >= ServerCardSizes.columnsWidth;
 
     final column = Column(
       mainAxisSize: MainAxisSize.min,
@@ -1199,7 +1201,7 @@ class ServerCard extends ConsumerWidget {
                         // than the page it is in.
                         constraints: BoxConstraints(
                           maxWidth: lerpDouble(
-                            openWidth <= 340 ? 340 : openWidth,
+                            pageWidth <= 340 ? 340 : pageWidth,
                             340,
                             t,
                           )!,

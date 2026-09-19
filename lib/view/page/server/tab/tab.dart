@@ -1291,11 +1291,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   ref.watch(serverProvider(id)),
                   openness: id == openId ? _open.value : 0,
                   density: density,
-                  // What the card will be laid out at once it has the page,
-                  // less what the page keeps clear at its edges. Decided from
-                  // the grid's own box rather than from the card's, which is
-                  // whatever the movement is at.
-                  openWidth: cons.maxWidth - 26,
+                  // The box the page will have, which is this same box: the
+                  // grid and the page it becomes are the two children of one
+                  // crossing. The page asks its own width the same question,
+                  // so both arrive at the same answer about the facts column.
+                  pageWidth: cons.maxWidth,
                 ),
               ),
           ],
@@ -1534,7 +1534,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     ServerState srv, {
     double openness = 0,
     ServerListDensity density = ServerListDensity.cards,
-    double openWidth = 0,
+    double pageWidth = 0,
   }) {
     final card = Builder(
       // A context from inside the built tree, so the tap can ask whether a
@@ -1554,7 +1554,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         onLongPress: () => _onLongPressCard(srv),
         openness: openness,
         density: density,
-        openWidth: openWidth,
+        pageWidth: pageWidth,
         selected: _selecting ? _selected.contains(srv.spi.id) : null,
       ).onSecondary((at) => _onLongPressCard(srv, at)),
     );
