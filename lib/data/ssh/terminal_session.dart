@@ -84,9 +84,6 @@ class TerminalSession {
   /// Whether a second command can run beside the interactive shell.
   bool get canExec => _backend?.supportsExec ?? false;
 
-  /// Whether the source of shells is gone, as opposed to merely absent.
-  bool get isBackendClosed => _backend?.isClosed ?? true;
-
   Map<String, String>? get environment => source.environment;
 
   String? get tmuxLang => source.tmuxLang;

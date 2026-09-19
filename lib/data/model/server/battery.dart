@@ -32,7 +32,6 @@ class Battery {
     return 'Battery{$percent, $status, $name, $cycle}';
   }
 
-  bool get isLiPoly => tech == 'Li-poly';
 }
 
 enum BatteryStatus {
