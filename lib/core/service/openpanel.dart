@@ -9,47 +9,37 @@ import 'package:server_box/data/res/build_data.dart';
 
 /// The second analytics destination, beside Aptabase.
 ///
-/// **Why there are two, and what each is for.** Aptabase answers "what is this
-/// used for" while storing no identifier at all — its protocol has no field
-/// for a user, so a session cannot be joined to the one before it. What it
-/// cannot answer is anything spanning launches: retention, or a funnel a user
-/// takes two sessions to walk. OpenPanel can, because it accepts a
-/// `profileId`, and accepting one is exactly what makes it the heavier choice.
+/// **Why there are two.** Aptabase answers "what is this used for" while
+/// storing no identifier at all — its protocol has no field for a user, so a
+/// session cannot be joined to the one before it. What it cannot answer is
+/// anything spanning launches: retention, or a funnel a user takes two sessions
+/// to walk. OpenPanel can, because it accepts a `profileId`, and accepting one
+/// is what makes it the heavier choice.
 ///
 /// **This one's endpoint is committed and Aptabase's is not**, so a published
 /// build counts profiles and no build counts sessions until someone supplies
-/// `APTABASE_HOST` and `APTABASE_APP_KEY`. A committed endpoint is also what
-/// the privacy policy has to describe, since a rebuild from this source — an
-/// F-Droid one, a fork — reports here too unless its builder changes the
-/// value. What that rebuild inherits is the *default off*: `full` is opted
-/// into by hand or nothing is sent at all.
+/// `APTABASE_HOST` and `APTABASE_APP_KEY`. Being committed is also what the
+/// privacy policy has to describe, since a rebuild from this source reports
+/// here too unless its builder changes the value. What a rebuild inherits is
+/// the *default off*: `full` is opted into by hand or nothing is sent.
 ///
-/// Being the configured one makes this a privacy decision rather than a
-/// configuration one:
-///
-/// - It mints a persistent [profileId]. Aptabase needs none, so with only
-///   Aptabase configured nothing is stored on the device — see
-///   [AptabaseAnalytics]. Configuring this reverses that, which is why the
-///   privacy policy names the identifier rather than only the endpoint.
-/// - The identity is bounded the same way the rest is: it exists **only at
-///   `full`**, [start] creates it and [stop] deletes it, it is a random 128
-///   bits derived from no device property, and it lives in [PrefStore] rather
-///   than `Stores.setting` because `BackupV2` restores every setting and would
-///   hand a second device the same identity.
+/// The identity is bounded the way the rest is: it exists **only at `full`**,
+/// [start] creates it and [stop] deletes it, it is random 128 bits derived from
+/// no device property, and it lives in [PrefStore] rather than `Stores.setting`
+/// because `BackupV2` restores every setting and would hand a second device the
+/// same identity.
 ///
 /// **Both destinations receive the same events**, since both sinks read the
 /// same `Diag.crumb` calls. Nothing is deduplicated between them: they are two
-/// separate datasets that happen to be fed from one instrumentation, and a
-/// number taken from one is not comparable with the other's — Aptabase counts
-/// sessions, this counts profiles.
+/// separate datasets fed from one instrumentation, and a number taken from one
+/// is not comparable with the other's — Aptabase counts sessions, this counts
+/// profiles.
 abstract final class OpenPanelAnalytics {
   /// The self-hosted instance's API base, no trailing slash.
   ///
   /// `/api` is part of it: the bare `/track` answers 307 and only `/api/track`
-  /// is the ingestion route.
-  ///
-  /// Overridable with `--dart-define=OPENPANEL_URL=...`, which is how a build
-  /// points at a test instance.
+  /// is the ingestion route. Overridable with `--dart-define=OPENPANEL_URL=...`
+  /// for a test instance.
   static const url = String.fromEnvironment(
     'OPENPANEL_URL',
     defaultValue: 'https://diag.lollipopkit.com/api',
@@ -59,24 +49,12 @@ abstract final class OpenPanelAnalytics {
   /// ships inside every binary and grants appending events, nothing else.
   ///
   /// It is also the whole credential — the id alone is what the request
-  /// carries. OpenPanel authenticates ingestion three ways, in order: the
-  /// client's `ignoreCorsAndSecret`, an `Origin` the project's CORS list
-  /// allows, or a client secret. This client has the first one set, so the
-  /// other two never run and neither header is sent.
-  ///
-  /// Neither of the others is usable here. An app is not a browser and has no
-  /// `Origin` to send — OpenPanel's CORS wildcard still requires the header to
-  /// be present (`cors.includes('*') && origin`), so a project permissive
-  /// enough to allow anything still refuses a request with no `Origin` at all.
-  /// A secret would ship in every binary, and this app's source is public, so
-  /// it would be readable without even unpacking one. What is left is honest
-  /// about what the endpoint is: publicly writable, exactly like the Sentry
-  /// DSN. If it is ever abused, mint a new client and change this value.
-  ///
-  /// One consequence outlives that choice. OpenPanel checks `__revenue`
-  /// *before* `ignoreCorsAndSecret`, so an event carrying that property is
-  /// refused however the client is configured, unless the project sets
-  /// `allowUnsafeRevenueTracking`. Nothing here sends one.
+  /// carries, because this client sets `ignoreCorsAndSecret` and OpenPanel
+  /// checks that before its `Origin` and client-secret paths. Neither of the
+  /// other two is usable here: an app has no `Origin` to send, and a secret
+  /// would ship readable in a public source tree. What is left is honest about
+  /// what the endpoint is — publicly writable, exactly like the Sentry DSN. If
+  /// it is ever abused, mint a new client and change this value.
   static const clientId = String.fromEnvironment(
     'OPENPANEL_CLIENT_ID',
     defaultValue: 'c048a7b5-68b3-476d-acdb-c944fdaadede',
@@ -90,9 +68,8 @@ abstract final class OpenPanelAnalytics {
   /// **OpenPanel has no batch endpoint** — one POST per event — so queueing is
   /// not a batching win, it is a wake-up one: crumbs arrive while a screen is
   /// being built, and firing a request inside that is worse than firing ten a
-  /// couple of minutes later. Events carry `__timestamp`, which is the field
-  /// OpenPanel's own SDK adds to anything it had to hold, so the delay does
-  /// not move them.
+  /// couple of minutes later. Events carry `__timestamp` so the delay does not
+  /// move them.
   static const _maxBatch = 50;
 
   /// How often a partial queue goes out anyway.
