@@ -1223,56 +1223,68 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // while it is open: what the card looks like at each point between is a
     // lerp inside it, so it has to be rebuilt to change. The grid's own
     // geometry is not — the render object is told the width directly.
-    final grid = AnimatedBuilder(
-      animation: _open,
-      builder: (_, _) => AnimatedMasonry(
-        controller: _scrollController,
-        // No room kept for chrome at either end: the tag switcher, the sort and
-        // the add button are in the bar above this, and nothing floats over it.
-        padding: MasonryList.kPadding,
-        // The cards make way at the same pace as the one growing, so the whole
-        // thing reads as one movement rather than as a card growing into a
-        // grid that is still settling.
-        moveDuration: context.motion(_kOpenDuration),
-        changeDuration: context.motion(Durations.medium2),
-        // The column each shape wants: a line per machine takes the width, a
-        // tile takes as little as a name needs, and a card takes the one width
-        // the rest of the app lays a column out at.
-        columnWidth: switch (density) {
-          ServerListDensity.grid => 170.0,
-          ServerListDensity.rows => double.infinity,
-          _ => UIs.columnWidth,
-        },
-        // And how much air each shape wants around it: a wall of tiles reads
-        // as a wall at the design's 5, and a list of lines as a list at
-        // nothing at all.
-        spacing: switch (density) {
-          ServerListDensity.grid => 5.0,
-          ServerListDensity.rows => 0.0,
-          _ => MasonryList.kSpacing,
-        },
-        expandedKey: open ? ValueKey(openId) : null,
-        expansion: _open.value,
-        // Under the cards, and only while they are the page: with one of them
-        // open the totals would be a summary of a list that is not on screen.
-        footer: open ? null : ServerOverview(ids: filtered),
-        children: [
-          // While one is open it is the only one built: the rest are leaving,
-          // which is what the grid already knows how to draw.
-          for (final id in open ? [openId] : filtered)
-            // Its own `Consumer`, so a status poll rebuilds the one card whose
-            // server answered rather than the grid. Watched from this page's
-            // `ref` — which is what a builder would have to do — any server's
-            // reading landing rebuilt every card on screen.
-            Consumer(
-              key: ValueKey(id),
-              builder: (_, ref, _) => _buildEachServerCard(
-                ref.watch(serverProvider(id)),
-                openness: id == openId ? _open.value : 0,
-                density: density,
+    final grid = LayoutBuilder(
+      builder: (_, cons) => AnimatedBuilder(
+        animation: _open,
+        builder: (_, _) => AnimatedMasonry(
+          controller: _scrollController,
+          // The grid's own inset at rest, and the page's once one card is the
+          // page — so what the card holds lines up with what the page holds
+          // and nothing shifts when the page takes over.
+          padding: EdgeInsets.lerp(
+            MasonryList.kPadding,
+            const EdgeInsets.fromLTRB(13, 7, 13, 13),
+            _open.value,
+          )!,
+          // The cards make way at the same pace as the one growing, so the whole
+          // thing reads as one movement rather than as a card growing into a
+          // grid that is still settling.
+          moveDuration: context.motion(_kOpenDuration),
+          changeDuration: context.motion(Durations.medium2),
+          // The column each shape wants: a line per machine takes the width, a
+          // tile takes as little as a name needs, and a card takes the one width
+          // the rest of the app lays a column out at.
+          columnWidth: switch (density) {
+            ServerListDensity.grid => 170.0,
+            ServerListDensity.rows => double.infinity,
+            _ => UIs.columnWidth,
+          },
+          // And how much air each shape wants around it: a wall of tiles reads
+          // as a wall at the design's 5, and a list of lines as a list at
+          // nothing at all.
+          spacing: switch (density) {
+            ServerListDensity.grid => 5.0,
+            ServerListDensity.rows => 0.0,
+            _ => MasonryList.kSpacing,
+          },
+          expandedKey: open ? ValueKey(openId) : null,
+          expansion: _open.value,
+          // Under the cards, and only while they are the page: with one of them
+          // open the totals would be a summary of a list that is not on screen.
+          footer: open ? null : ServerOverview(ids: filtered),
+          children: [
+            // While one is open it is the only one built: the rest are leaving,
+            // which is what the grid already knows how to draw.
+            for (final id in open ? [openId] : filtered)
+              // Its own `Consumer`, so a status poll rebuilds the one card whose
+              // server answered rather than the grid. Watched from this page's
+              // `ref` — which is what a builder would have to do — any server's
+              // reading landing rebuilt every card on screen.
+              Consumer(
+                key: ValueKey(id),
+                builder: (_, ref, _) => _buildEachServerCard(
+                  ref.watch(serverProvider(id)),
+                  openness: id == openId ? _open.value : 0,
+                  density: density,
+                  // What the card will be laid out at once it has the page,
+                  // less what the page keeps clear at its edges. Decided from
+                  // the grid's own box rather than from the card's, which is
+                  // whatever the movement is at.
+                  openWidth: cons.maxWidth - 26,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -1290,6 +1302,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
         _buildSwitcher(filtered, openId),
         Expanded(
           child: AnimatedSwitcher(
+            // Both halves laid out in the same box. The default stack
+            // shrink-wraps and centres, which left the grid's own scrollable
+            // as tall as its contents in the middle of the window.
+            layoutBuilder: _viewSwapLayout,
             duration: context.motion(_kChromeDuration),
             child: open && _detailShowing
                 ? _buildOpenDetail(openId)
@@ -1486,6 +1502,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     ServerState srv, {
     double openness = 0,
     ServerListDensity density = ServerListDensity.cards,
+    double openWidth = 0,
   }) {
     final card = Builder(
       // A context from inside the built tree, so the tap can ask whether a
@@ -1505,6 +1522,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         onLongPress: () => _onLongPressCard(srv),
         openness: openness,
         density: density,
+        openWidth: openWidth,
         selected: _selecting ? _selected.contains(srv.spi.id) : null,
       ).onSecondary((at) => _onLongPressCard(srv, at)),
     );

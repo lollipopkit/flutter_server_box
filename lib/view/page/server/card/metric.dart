@@ -33,6 +33,7 @@ final class ServerMetric {
     required this.color,
     required this.value,
     required this.note,
+    required this.bigNote,
     required this.samples,
     this.percent,
   });
@@ -47,6 +48,14 @@ final class ServerMetric {
 
   /// What the value is a share of, or which device is carrying it.
   final String note;
+
+  /// What goes beside the value once it is a headline rather than a figure at
+  /// the end of a row.
+  ///
+  /// Shorter than [note] and about the number rather than about the machine:
+  /// beside "35.3%" the useful half is what it is of, and the other half —
+  /// which disk, which interface — is already the row's business.
+  final String bigNote;
 
   /// 0-1 for a reading with a full, null for a rate: only the first kind gets
   /// a bar, because only it has something to be a share of.
@@ -209,6 +218,7 @@ List<ServerMetric> _readings(ServerState srv) {
       color: ChartPalette.cpu,
       value: _pct(cpu),
       note: ss.cpu.brand.keys.firstOrNull ?? '',
+      bigNote: '${_pct(ss.cpu.idle)} idle',
       percent: cpu == null ? null : cpu / 100,
       samples: h.cpu.toList(),
     ),
@@ -226,6 +236,7 @@ List<ServerMetric> _readings(ServerState srv) {
         note:
             '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / '
             '${(ss.mem.total * 1024).bytes2Str}',
+        bigNote: l10n.ofFmt((ss.mem.total * 1024).bytes2Str),
         percent: used / 100,
         samples: h.mem.toList(),
       ),
@@ -242,6 +253,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.swap,
         value: _pct(used),
         note: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
+        bigNote: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
         percent: used / 100,
         samples: h.swap.toList(),
       ),
@@ -259,6 +271,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.disk,
         value: _pct(used),
         note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
+        bigNote: l10n.ofFmt(usage.size.kb2Str),
         percent: used / 100,
         samples: h.disk.toList(),
       ),
@@ -275,6 +288,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.diskWrite,
         value: _rate(write),
         note: '${_rate(read)} ${l10n.read}',
+        bigNote: '${l10n.write} · ${_rate(read)} ${l10n.read}',
         samples: h.diskWrite.toList(),
       ),
     );
@@ -292,6 +306,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.netTx,
         value: _rate(tx),
         note: '↓ ${_rate(rx)} · ↑ ${_rate(tx)}',
+        bigNote: '↑ · ${_rate(rx)} ↓',
         samples: h.netTx.toList(),
       ),
     );
@@ -307,6 +322,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.gpu,
         value: _pct(used),
         note: gpu.name,
+        bigNote: gpu.name,
         percent: used == null ? null : used / 100,
         samples: h.gpu.toList(),
       ),
@@ -322,6 +338,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.temp,
         value: '${celsius.toStringAsFixed(1)}°C',
         note: sensor,
+        bigNote: sensor,
         samples: h.temp.toList(),
       ),
     );
@@ -339,6 +356,7 @@ List<ServerMetric> _readings(ServerState srv) {
         color: ChartPalette.battery,
         value: _pct(percent),
         note: [battery.status.name, ?battery.name].join(' · '),
+        bigNote: battery.status.name,
         percent: percent == null ? null : percent / 100,
         samples: h.battery.toList(),
       ),

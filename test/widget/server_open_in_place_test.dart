@@ -6,7 +6,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/conn.dart';
+import 'package:server_box/data/model/server/cpu.dart';
+import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/memory.dart';
+import 'package:server_box/data/model/server/net_speed.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/selection.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -239,5 +249,61 @@ void main() {
     // the cue for.
     await tester.pump(const Duration(milliseconds: 160));
     expect(tester.getRect(open).width, greaterThan(1100));
+  });
+
+  testWidgets('and nothing moves when the page takes the card over', (
+    tester,
+  ) async {
+    // The point of the whole movement: the chart and the rows are the same
+    // widgets from the grid to the page, so at the moment the page takes over
+    // they have to be exactly where the card had them. A handover that shifts
+    // them reads as the card having been replaced by a picture of itself.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerPage, skipOffstage: false)),
+    );
+    final status = ServerStatus(
+      cpu: Cpus(),
+      mem: const Memory(total: 1048576, free: 524288, avail: 524288),
+      disk: const [],
+      tcp: const Conn(maxConn: 0, fail: 0),
+      netSpeed: NetSpeed(),
+      swap: const Swap(total: 0, free: 0, cached: 0),
+      temps: Temperatures(),
+      system: SystemType.linux,
+      diskIO: DiskIO(),
+    );
+    status.more[StatusCmdType.uptime] = 'up 3 days';
+    status.history.add(timeMs: DateTime.now().millisecondsSinceEpoch, mem: 50);
+    final notifier = container.read(serverProvider('srv-0').notifier);
+    notifier.updateStatus(status);
+    // The card draws readings only for a machine that has answered, which is
+    // what `finished` means — a status alone is what it last said.
+    notifier.updateConnection(ServerConn.finished);
+    await settle(tester);
+    expect(find.text('CPU'), findsWidgets);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    // Grown, but the page has not taken over yet: that happens when the
+    // growth finishes.
+    await tester.pump(const Duration(milliseconds: 340));
+    final grownLabel = tester.getRect(find.text('CPU').first);
+    final grownRow = tester.getRect(find.text(libL10n.memory).first);
+
+    // Past the handover and its crossing.
+    await settle(tester);
+    expect(find.byType(ServerDetailPage), findsOneWidget);
+
+    expect(
+      tester.getRect(find.text('CPU').first),
+      rectMoreOrLessEquals(grownLabel, epsilon: 2),
+    );
+    expect(
+      tester.getRect(find.text(libL10n.memory).first),
+      rectMoreOrLessEquals(grownRow, epsilon: 2),
+    );
   });
 }

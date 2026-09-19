@@ -1091,7 +1091,11 @@ extension on _ServerDetailPageState {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              head,
+              // Stated rather than natural — see [ServerCardSizes.openHead].
+              // It is also where the card this page grew out of put its own,
+              // which is what lets the page take over without the chart
+              // moving.
+              SizedBox(height: ServerCardSizes.openHead, child: head),
               UIs.height7,
               if (wide)
                 Row(

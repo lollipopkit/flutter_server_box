@@ -32,10 +32,38 @@ abstract final class ServerCardSizes {
   static const gap = 9.0;
   static const openGap = 13.0;
 
-  /// Tall enough to read a shape in on a card, tall enough to read a value off
-  /// on the page it becomes.
+  /// Tall enough to read a shape in on a card, and the detail page's own
+  /// `_kFocusChartHeight` at the other end — the movement ends where the page
+  /// begins, so the two numbers have to be the same one.
   static const chart = 44.0;
-  static const openChart = 210.0;
+  static const openChart = 216.0;
+  static const openChartNarrow = 140.0;
+
+  /// What the detail page keeps beside the readings for the facts about the
+  /// machine, and the gap before it.
+  ///
+  /// Reserved while the card is still growing, so the chart arrives at the
+  /// width it will have rather than at the card's full width and then
+  /// shrinking by a third the moment the page takes over.
+  static const aside = 330.0;
+  static const asideGap = 13.0;
+
+  /// From here the detail puts the facts beside the readings rather than under
+  /// them — the page's own `_kColumnsWidth`.
+  static const columnsWidth = 800.0;
+
+  /// The line above the chart, once the readings are the page.
+  ///
+  /// Stated rather than natural, and honoured at both ends of the movement:
+  /// the page puts a window picker and a device control up there and the card
+  /// has neither, so a row that took the height of what is in it would put the
+  /// chart six points lower on the page than the card had it — which is the
+  /// whole page landing shifted at the moment it takes over.
+  ///
+  /// Also worth having on its own: what is in that row changes with the
+  /// metric, and a chart that moves when a device control appears is a chart
+  /// that moves for no reason anyone asked for.
+  static const openHead = 30.0;
 
   static const rowGap = 7.0;
 
@@ -65,6 +93,37 @@ abstract final class ServerCardSizes {
 
 const _tabular = [FontFeature.tabularFigures()];
 
+/// What the detail page insets its focus card by, and its rows.
+///
+/// Named here because they are the far end of a movement that starts inside a
+/// card: the two have to be the same numbers or the page arrives shifted.
+const _kFocusPad = EdgeInsets.fromLTRB(17, 13, 17, 13);
+const _kRowPad = EdgeInsets.symmetric(horizontal: 9, vertical: 5);
+const _kOpenRowPad = EdgeInsets.fromLTRB(17, 11, 13, 11);
+
+/// A row's two ends, as whole styles rather than as numbers.
+///
+/// Lerped with [TextStyle.lerp], which is the only way to arrive at exactly
+/// the page's own style: a line height left explicit at the far end is a line
+/// height the page does not have, and the rows would land a pixel or two off
+/// for every one of them.
+/// No explicit line height at either end: [TextStyle.lerp] keeps whichever of
+/// the two has one, so a height stated on the near end is a height the page
+/// never gets rid of — and the rows land a few points off for every one of
+/// them.
+const _kRowLabel = TextStyle(fontSize: 12);
+const _kOpenRowLabel = TextStyle(fontSize: 13, fontWeight: FontWeight.w500);
+const _kRowValue = TextStyle(
+  fontSize: 13,
+  fontWeight: FontWeight.w500,
+  fontFeatures: _tabular,
+);
+const _kOpenRowValue = TextStyle(
+  fontSize: 15,
+  fontWeight: FontWeight.w500,
+  fontFeatures: _tabular,
+);
+
 /// One server, as the home page draws it.
 ///
 /// The card and the detail page are the same structure at two sizes — one
@@ -85,6 +144,7 @@ class ServerCard extends ConsumerWidget {
     this.openness = 0,
     this.density = ServerListDensity.cards,
     this.selected,
+    this.openWidth = 0,
   });
 
   final ServerState srv;
@@ -108,6 +168,13 @@ class ServerCard extends ConsumerWidget {
   /// about choosing.
   final bool? selected;
 
+  /// How wide this card will be when it has finished growing.
+  ///
+  /// Known by the grid rather than measured here: the card's own width is
+  /// whatever the movement is at, and what has to be decided from it — whether
+  /// the facts will sit beside the readings — must not change halfway through.
+  final double openWidth;
+
   /// How much of this machine to draw.
   ///
   /// Only while it is in the grid: a row that is being opened is on its way to
@@ -118,7 +185,14 @@ class ServerCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final compact = openness <= 0 && density != ServerListDensity.cards;
+    final theme = Theme.of(context);
     return CardX(
+      // The card's own surface goes as it becomes the page: by then each block
+      // inside it is a card in its own right, which is how the page draws
+      // them, and one more behind all of them would be a second edge.
+      color: openness <= 0
+          ? null
+          : Color.lerp(theme.cardColor, Colors.transparent, openness),
       // A line and a tile are read as a set rather than one at a time, so they
       // are packed tighter and cornered less than a card: the design's 9pt
       // against a card's 13, and next to nothing between them.
@@ -126,6 +200,11 @@ class ServerCard extends ConsumerWidget {
           ? const BorderRadius.all(Radius.circular(9))
           : null,
       margin: switch (density) {
+        _ when openness > 0 => EdgeInsets.lerp(
+          const EdgeInsets.all(4),
+          EdgeInsets.zero,
+          openness,
+        ),
         _ when !compact => null,
         ServerListDensity.rows => const EdgeInsets.symmetric(vertical: 1),
         _ => EdgeInsets.zero,
@@ -149,8 +228,17 @@ class ServerCard extends ConsumerWidget {
     );
   }
 
+  /// The card, and the readings block of the page it becomes.
+  ///
+  /// One tree for both, because the movement between them is a hero: the chart
+  /// and the rows are the same widgets the whole way, so what travels is them
+  /// and not a picture of them. Every measurement that differs between the two
+  /// ends is a lerp on [openness], and at 1 this is laid out exactly as
+  /// `ServerDetailPage` lays its readings out — which is what lets the page
+  /// take over without anything moving.
   Widget _full(BuildContext context, WidgetRef ref) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final t = openness;
 
     final err = srv.status.err;
@@ -174,33 +262,67 @@ class ServerCard extends ConsumerWidget {
         : readings.all.firstWhereOrNull((m) => m.kind == promoted) ??
               readings.all.firstOrNull;
 
-    final children = <Widget>[
-      if (stale != null) _stale(context, stale),
-      _title(context, ref),
-      if (busy) _progress(context),
-      if (err != null && !auth) _error(context, err),
-      if (focus != null) ...[
-        SizedBox(height: lerpDouble(ServerCardSizes.gap, 17, t)),
-        _focus(context, focus, stale: stale != null),
+    // Two columns at the far end, or one. Decided from where the card is
+    // going rather than from where it is, so the reservation grows evenly
+    // instead of appearing the moment the card passes 800pt.
+    final twoColumns = openWidth >= ServerCardSizes.columnsWidth;
+
+    final column = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (stale != null) _stale(context, stale),
+        // The name goes as the page's own bar takes it: by the time the
+        // readings are the page, what they are of is at the top of the window
+        // with the switcher between machines beside it.
+        _titleSlot(context, ref, t),
+        if (busy) _progress(context),
+        if (err != null && !auth) _error(context, err),
+        if (focus != null) ...[
+          SizedBox(height: lerpDouble(ServerCardSizes.gap, 0, t)),
+          _focus(
+            context,
+            focus,
+            theme: theme,
+            stale: stale != null,
+            twoColumns: twoColumns,
+          ),
+        ],
+        if (readings != null)
+          ..._rows(
+            context,
+            readings,
+            focus: focus,
+            theme: theme,
+            scheme: scheme,
+          ),
+        ?_foot(context, readings),
       ],
-      if (readings != null)
-        ..._rows(context, readings, focus: focus, scheme: scheme),
-      ?_foot(context, readings),
-    ];
+    );
+
+    final reserved = twoColumns
+        ? (ServerCardSizes.aside + ServerCardSizes.asideGap) * t
+        : 0.0;
 
     return Padding(
-      padding: EdgeInsets.all(
-        lerpDouble(ServerCardSizes.pad, ServerCardSizes.openPad, t)!,
-      ),
+      // At rest the card's own inset; at the end none, because by then each
+      // block inside carries its own.
+      padding: EdgeInsets.all(lerpDouble(ServerCardSizes.pad, 0, t)!),
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minHeight: ServerCardSizes.collapsed,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: children,
-        ),
+        child: reserved <= 0
+            ? column
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: column),
+                  // Empty: what goes here is the page's, and it arrives with
+                  // the page. What this is for is the width.
+                  SizedBox(width: reserved),
+                ],
+              ),
       ),
     );
   }
@@ -531,6 +653,25 @@ class ServerCard extends ConsumerWidget {
 
   // --- The title, which every state has ---
 
+  /// The name row, and how much of it is left.
+  ///
+  /// It goes as the card becomes the page: by then the window's own bar names
+  /// the machine and carries the switcher to the others, and a second name
+  /// under it would be the page saying what it is twice. Collapsed rather than
+  /// faded alone, or the block below would arrive 23pt lower than the page
+  /// puts it.
+  Widget _titleSlot(BuildContext context, WidgetRef ref, double t) {
+    if (t <= 0) return _title(context, ref);
+    if (t >= 1) return const SizedBox.shrink();
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.topCenter,
+        heightFactor: 1 - t,
+        child: Opacity(opacity: 1 - t, child: _title(context, ref)),
+      ),
+    );
+  }
+
   Widget _title(BuildContext context, WidgetRef ref) {
     final line = srv.needsInteractiveAuth ? libL10n.tapToAuth : srv.listLine;
 
@@ -748,13 +889,40 @@ class ServerCard extends ConsumerWidget {
 
   /// One reading drawn in full: what it is, what it says now, and the window
   /// this app kept of it.
-  Widget _focus(BuildContext context, ServerMetric m, {required bool stale}) {
+  ///
+  /// At rest it is a block inside the card. At the far end it is a card of its
+  /// own with the page's own 17/13 inset, which is the shape the detail draws
+  /// — so the surface grows under the chart rather than appearing around it.
+  ///
+  /// The number moves as it goes: on the card it sits at the right of the
+  /// label's line, and on the page it is a headline of its own underneath.
+  /// Both are drawn, crossing over, and the headline's line grows from nothing
+  /// — so what reads is one number travelling down and getting bigger.
+  Widget _focus(
+    BuildContext context,
+    ServerMetric m, {
+    required ThemeData theme,
+    required bool stale,
+    required bool twoColumns,
+  }) {
     final t = openness;
-    return Column(
+    final height = lerpDouble(
+      ServerCardSizes.chart,
+      twoColumns
+          ? ServerCardSizes.openChart
+          : ServerCardSizes.openChartNarrow,
+      t,
+    )!;
+
+    final body = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        SizedBox(
+          height: t <= 0
+              ? null
+              : lerpDouble(ServerCardSizes.big, ServerCardSizes.openHead, t),
+          child: Row(
           children: [
             Icon(m.icon, size: 18, color: m.color),
             const SizedBox(width: 9),
@@ -763,84 +931,216 @@ class ServerCard extends ConsumerWidget {
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
             const Spacer(),
-            Text(
-              m.value,
-              style: const TextStyle(
-                fontSize: ServerCardSizes.big,
-                height: 1,
-                fontFeatures: _tabular,
+            if (t < 1)
+              Opacity(
+                opacity: 1 - t,
+                child: Text(
+                  m.value,
+                  style: const TextStyle(
+                    fontSize: ServerCardSizes.big,
+                    height: 1,
+                    fontFeatures: _tabular,
+                  ),
+                ),
               ),
-            ),
           ],
+          ),
         ),
-        const SizedBox(height: ServerCardSizes.gap),
+        if (t > 0) _headline(m, t),
+        SizedBox(height: lerpDouble(ServerCardSizes.gap, 0, t)),
         Sparkline(
           samples: m.samples,
           // Grey rather than dimmed as a whole: pressing the card's opacity
           // down would take the text with it, and the numbers are still worth
           // reading. What is out of date is the shape.
           color: stale ? Colors.grey : m.color,
-          height: lerpDouble(
-            ServerCardSizes.chart,
-            ServerCardSizes.openChart,
-            t,
-          )!,
+          height: height,
           // A share is drawn against its full so that two cards are
           // comparable; a rate has no full and is drawn against its own peak.
           max: m.percent == null ? null : 100,
         ),
-        if (m.note.isNotEmpty) ...[
-          const SizedBox(height: ServerCardSizes.gap),
-          Text(
-            m.note,
-            style: const TextStyle(fontSize: 11, height: 1.4, color: Colors.grey),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        // Under the chart on the card; on the page it is up in the head row,
+        // where it arrives with the page.
+        if (m.note.isNotEmpty && t < 1)
+          ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: 1 - t,
+              child: Opacity(
+                opacity: 1 - t,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: ServerCardSizes.gap),
+                  child: Text(
+                    m.note,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.4,
+                      color: Colors.grey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
       ],
+    );
+
+    return _surface(theme, t, child: body, padding: _kFocusPad);
+  }
+
+  /// The number on its own line, growing in under the label as the card
+  /// becomes the page.
+  Widget _headline(ServerMetric m, double t) {
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.topCenter,
+        heightFactor: t,
+        child: Opacity(
+          opacity: t,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 7),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  m.value,
+                  style: const TextStyle(fontSize: 27, fontFeatures: _tabular),
+                ),
+                const SizedBox(width: 9),
+                Flexible(
+                  child: Text(
+                    m.bigNote,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A block that is part of the card at rest and a card of its own at the
+  /// end.
+  ///
+  /// The colour and the inset cross over together, so what happens is a
+  /// surface appearing under something that has not moved — rather than the
+  /// contents jumping to make room for one.
+  Widget _surface(
+    ThemeData theme,
+    double t, {
+    required Widget child,
+    required EdgeInsets padding,
+    Color? open,
+  }) {
+    if (t <= 0) return child;
+    return CardX(
+      color: Color.lerp(
+        Colors.transparent,
+        open ?? theme.cardColor,
+        t,
+      ),
+      margin: EdgeInsets.lerp(EdgeInsets.zero, const EdgeInsets.all(4), t),
+      child: Padding(
+        padding: EdgeInsets.lerp(EdgeInsets.zero, padding, t)!,
+        child: child,
+      ),
     );
   }
 
   /// The rest of the readings, one line each.
   ///
-  /// The one being drawn above is not repeated here: it is the same reading,
-  /// and a row for it would be a second copy of the number already at the top
-  /// of the card.
+  /// The one being drawn above is not repeated here on the card: it is the
+  /// same reading, and a row for it would be a second copy of the number at
+  /// the top. On the page it comes back — there is room, and the row is where
+  /// a different one is chosen from.
   List<Widget> _rows(
     BuildContext context,
     ServerCardReadings readings, {
     required ServerMetric? focus,
+    required ThemeData theme,
     required ColorScheme scheme,
   }) {
-    final rows = readings.shown
-        .where((m) => m.kind != focus?.kind)
-        .toList();
+    final t = openness;
+    // On the card, the five slots minus the one drawn above. On the page,
+    // every reading the machine has — including the promoted one, which is
+    // where a different one is chosen from. The ones the card had no room for
+    // grow in as it opens rather than appearing when the page takes over.
+    final onCard = {
+      for (final m in readings.shown)
+        if (m.kind != focus?.kind) m.kind,
+    };
+    final rows = t > 0
+        ? readings.all
+        : readings.shown.where((m) => m.kind != focus?.kind).toList();
     if (rows.isEmpty && readings.more == 0) return const [];
 
     return [
-      const SizedBox(height: ServerCardSizes.gap),
-      Divider(
-        height: Hairline.thickness,
-        thickness: Hairline.thickness,
-        color: Hairline.color(context),
-      ),
-      const SizedBox(height: ServerCardSizes.gap),
+      SizedBox(height: lerpDouble(ServerCardSizes.gap, 7, t)),
+      // One card's worth of hairline at rest, and nothing once each row is a
+      // card: a line between two separate surfaces is a line about neither.
+      if (t < 1)
+        ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: 1 - t,
+            child: Opacity(
+              opacity: 1 - t,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: ServerCardSizes.gap),
+                child: Divider(
+                  height: Hairline.thickness,
+                  thickness: Hairline.thickness,
+                  color: Hairline.color(context),
+                ),
+              ),
+            ),
+          ),
+        ),
       for (final (at, m) in rows.indexed) ...[
-        if (at > 0) const SizedBox(height: ServerCardSizes.rowGap),
-        _row(context, m, scheme: scheme),
+        if (at > 0)
+          SizedBox(height: lerpDouble(ServerCardSizes.rowGap, 0, t)),
+        if (onCard.contains(m.kind))
+          _row(context, m, theme: theme, scheme: scheme)
+        else
+          // Not one of the card's, so it grows into the list as the card
+          // becomes the page rather than arriving with it.
+          ClipRect(
+            child: Align(
+              alignment: Alignment.topCenter,
+              heightFactor: t,
+              child: Opacity(
+                opacity: t,
+                child: _row(
+                  context,
+                  m,
+                  theme: theme,
+                  scheme: scheme,
+                  promoted: m.kind == focus?.kind,
+                ),
+              ),
+            ),
+          ),
       ],
       // A machine reporting more than fits says how many rather than growing
       // taller than its neighbours: the cards are scanned down a column, and
       // one card a line longer than the rest is what breaks that.
-      if (readings.more > 0)
-        Padding(
-          padding: const EdgeInsets.only(top: ServerCardSizes.rowGap),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '+${readings.more} ${libL10n.more}',
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
+      if (readings.more > 0 && t < 1)
+        Opacity(
+          opacity: 1 - t,
+          child: Padding(
+            padding: const EdgeInsets.only(top: ServerCardSizes.rowGap),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                '+${readings.more} ${libL10n.more}',
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
             ),
           ),
         ),
@@ -850,15 +1150,17 @@ class ServerCard extends ConsumerWidget {
   Widget _row(
     BuildContext context,
     ServerMetric m, {
+    required ThemeData theme,
     required ColorScheme scheme,
+    bool promoted = false,
   }) {
     final t = openness;
     final percent = m.percent;
 
     final row = Row(
       children: [
-        Icon(m.icon, size: 17, color: Colors.grey),
-        const SizedBox(width: 9),
+        Icon(m.icon, size: lerpDouble(17, 18, t), color: Colors.grey),
+        SizedBox(width: lerpDouble(9, 13, t)),
         SizedBox(
           width: lerpDouble(
             ServerCardSizes.label,
@@ -867,48 +1169,95 @@ class ServerCard extends ConsumerWidget {
           ),
           child: Text(
             m.label,
-            style: const TextStyle(fontSize: 12, height: 1),
+            style: TextStyle.lerp(_kRowLabel, _kOpenRowLabel, t),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 9),
+        SizedBox(width: lerpDouble(9, 13, t)),
         Expanded(
           child: percent == null
               // A rate has no full, so the space a bar would take says what
               // the number is of instead.
               ? Text(
                   m.note,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    height: 1,
-                    color: Colors.grey,
+                  style: TextStyle.lerp(
+                    const TextStyle(fontSize: 12, color: Colors.grey),
+                    UIs.text12Grey,
+                    t,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 )
-              : ClipRRect(
-                  borderRadius: BorderRadius.circular(ServerCardSizes.bar),
-                  child: LinearProgressIndicator(
-                    value: percent.clamp(0.0, 1.0),
-                    minHeight: ServerCardSizes.bar,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation(
-                      m.over ? StatePalette.warn : m.color,
+              : Row(
+                  children: [
+                    Flexible(
+                      child: ConstrainedBox(
+                        // What the page caps it at, so a bar in a wide column
+                        // does not run the width of the window. The other end
+                        // is a bound that cannot bind — a card is never wider
+                        // than the page it is in.
+                        constraints: BoxConstraints(
+                          maxWidth: lerpDouble(
+                            openWidth <= 340 ? 340 : openWidth,
+                            340,
+                            t,
+                          )!,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            ServerCardSizes.bar,
+                          ),
+                          child: LinearProgressIndicator(
+                            value: percent.clamp(0.0, 1.0),
+                            minHeight: ServerCardSizes.bar,
+                            backgroundColor: scheme.surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation(
+                              m.over ? StatePalette.warn : m.color,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    // The note joins the bar as the row grows into the page's,
+                    // where there is width for both.
+                    if (t > 0 && m.note.isNotEmpty)
+                      Flexible(
+                        child: Opacity(
+                          opacity: t,
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: lerpDouble(0, 13, t)!,
+                            ),
+                            child: Text(
+                              m.note,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: UIs.text12Grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
         ),
-        const SizedBox(width: 9),
-        Text(
-          m.value,
-          style: const TextStyle(
-            fontSize: 13,
-            height: 1.2,
-            fontWeight: FontWeight.w500,
-            fontFeatures: _tabular,
+        SizedBox(width: lerpDouble(9, 13, t)),
+        Text(m.value, style: TextStyle.lerp(_kRowValue, _kOpenRowValue, t)),
+        // The page's rows are a way in as well as a reading, and say so.
+        if (t > 0) ...[
+          SizedBox(width: 9 * t),
+          SizedBox(
+            width: 17 * t,
+            child: Opacity(
+              opacity: t,
+              child: const Icon(
+                Icons.chevron_right,
+                size: 17,
+                color: Colors.grey,
+              ),
+            ),
           ),
-        ),
+        ],
       ],
     );
 
@@ -916,16 +1265,26 @@ class ServerCard extends ConsumerWidget {
     // it without leaving the list. The ink extends past the row on both sides
     // so that the target is something a finger can find, which the row's own
     // 17pt of icon is not.
-    return InkWell(
+    final body = InkWell(
       // While a set is being built up a tap means "this one too", wherever on
       // the card it lands: a row that promoted a reading instead would be the
       // one part of the card that did something else.
       onTap: selected == null ? () => onPromote(m.kind) : onTap,
       borderRadius: BorderRadius.circular(9),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: EdgeInsets.lerp(_kRowPad, _kOpenRowPad, t)!,
         child: row,
       ),
+    );
+
+    return _surface(
+      theme,
+      t,
+      child: body,
+      padding: EdgeInsets.zero,
+      // The one being drawn above is marked where it sits, which is what says
+      // the chart and this row are the same reading.
+      open: promoted ? scheme.secondaryContainer : null,
     );
   }
 

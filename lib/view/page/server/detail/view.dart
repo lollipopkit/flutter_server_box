@@ -35,6 +35,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
+import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
