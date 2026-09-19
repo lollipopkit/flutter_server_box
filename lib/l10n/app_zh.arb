@@ -765,6 +765,8 @@
   "optionalTip": "这里的东西都不是连接所必需的。展开一项，它的字段会接管表单。",
   "sshAdvanced": "SSH 高级",
   "sshAdvancedTip": "备用地址、ProxyCommand、跳板机、文件传输、远端路径",
+  "sshLegacyAlgorithms": "兼容旧版算法",
+  "sshLegacyAlgorithmsTip": "用于只提供 SHA-1 `ssh-rsa` 主机密钥或 SHA-1 密钥交换的旧 SSH 服务端（路由器、交换机）。安全性较低，仅在设备确实需要时开启。",
   "appearanceAndPlace": "外观与位置",
   "appearanceAndPlaceTip": "Logo、坐标",
   "statusCollection": "状态采集",

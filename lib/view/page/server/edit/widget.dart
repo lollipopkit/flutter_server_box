@@ -531,6 +531,7 @@ extension _Widgets on _ServerEditPageState {
             _buildProxyCommand(),
             _buildJumpServer(),
             _buildFileTransport(),
+            _buildAllowLegacyAlgorithms(),
             _buildScriptDir(),
             _buildSystemType(),
           ],
@@ -821,6 +822,36 @@ extension _Widgets on _ServerEditPageState {
           child: Text(val == SshFileTransport.scp ? 'SCP' : 'SFTP'),
         ),
       ).cardx;
+    });
+  }
+
+  /// Whether this host is allowed the algorithms SSH has retired.
+  ///
+  /// Follows the *SSH* switch, for the file transport's reason: with SSH off
+  /// the save writes `ssh: null`, so a choice made here would be accepted,
+  /// saved and discarded without a word.
+  ///
+  /// A switch rather than something the app finds out for itself. The handshake
+  /// is where the answer would be, and the only way to get there is to try a
+  /// set the server has already refused — which for a host that *is* current
+  /// means giving a stranger a list containing SHA-1 that they do not need.
+  Widget _buildAllowLegacyAlgorithms() {
+    return _useSsh.listenVal((useSsh) {
+      if (!useSsh) return UIs.placeholder;
+      return _allowLegacyAlgorithms.listenVal((val) {
+        return ListTile(
+          leading: const Icon(MingCute.lock_line),
+          title: TipText(
+            l10n.sshLegacyAlgorithms,
+            l10n.sshLegacyAlgorithmsTip,
+          ),
+          trailing: SwitchX(
+            value: val,
+            onChanged: (v) => _allowLegacyAlgorithms.value = v,
+          ),
+          onTap: () => _allowLegacyAlgorithms.value = !val,
+        ).cardx;
+      });
     });
   }
 

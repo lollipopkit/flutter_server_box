@@ -10,6 +10,7 @@ import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
+import 'package:server_box/core/utils/ssh_algorithms.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/ssh_key_unlock.dart';
@@ -662,6 +663,7 @@ Future<SSHClient> _authenticatedClient({
           ? null
           : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
+      algorithms: SshAlgorithms.of(ssh),
       handshakeTimeout: timeout,
       authTimeout: timeout,
     );
@@ -752,6 +754,7 @@ Future<SSHClient> _authenticatedClient({
         ? null
         : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
+    algorithms: SshAlgorithms.of(ssh),
     handshakeTimeout: timeout,
     authTimeout: timeout,
   );

@@ -148,6 +148,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// answer by itself.
   final _fileTransport = ValueNotifier(SshFileTransport.sftp);
 
+  /// Whether this host is allowed the algorithms SSH has retired — see
+  /// [SshCredential.allowLegacyAlgorithms]. Beside the file transport because
+  /// it is the same kind of answer: a fact about one old host that the app
+  /// cannot work out for itself.
+  final _allowLegacyAlgorithms = ValueNotifier(false);
+
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
 
@@ -230,6 +236,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _useMonitorHttp.dispose();
     _preferMonitorHttp.dispose();
     _fileTransport.dispose();
+    _allowLegacyAlgorithms.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
     _unmigratedCmds.dispose();

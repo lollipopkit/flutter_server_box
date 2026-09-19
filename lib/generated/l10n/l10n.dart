@@ -4540,6 +4540,18 @@ abstract class AppLocalizations {
   /// **'Fallback destination, ProxyCommand, jump server, file transport, remote path'**
   String get sshAdvancedTip;
 
+  /// No description provided for @sshLegacyAlgorithms.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy algorithms'**
+  String get sshLegacyAlgorithms;
+
+  /// No description provided for @sshLegacyAlgorithmsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.'**
+  String get sshLegacyAlgorithmsTip;
+
   /// No description provided for @appearanceAndPlace.
   ///
   /// In en, this message translates to:

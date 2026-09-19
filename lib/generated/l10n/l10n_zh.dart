@@ -2437,6 +2437,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshAdvancedTip => '备用地址、ProxyCommand、跳板机、文件传输、远端路径';
 
   @override
+  String get sshLegacyAlgorithms => '兼容旧版算法';
+
+  @override
+  String get sshLegacyAlgorithmsTip =>
+      '用于只提供 SHA-1 `ssh-rsa` 主机密钥或 SHA-1 密钥交换的旧 SSH 服务端（路由器、交换机）。安全性较低，仅在设备确实需要时开启。';
+
+  @override
   String get appearanceAndPlace => '外观与位置';
 
   @override
