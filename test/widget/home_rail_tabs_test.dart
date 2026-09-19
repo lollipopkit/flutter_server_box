@@ -11,14 +11,17 @@
 /// behind "more".
 library;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 void main() {
   group('how many fit', () {
-    // 6 tabs at the shipped estimate is 384pt of destinations, plus the rail's
-    // own chrome. A laptop window has room; a short one does not.
+    // A destination taller than the one this rail draws, so the numbers below
+    // stay about the arithmetic rather than about the current metrics: what
+    // matters is that a tall window has room for six and a short one does not.
     int capacityAt(double height) =>
         railCapacity(height: height, destinationExtent: 64);
 
@@ -115,16 +118,109 @@ void main() {
     });
   });
 
-  /// The estimate against the layout it is an estimate of.
+  /// The foot of the rail, which is a destination now rather than a button
+  /// that pushed a page over the rail itself.
+  group('the settings at the foot', () {
+    Future<Color?> fillAt(WidgetTester tester, {required bool selected}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                  footer: NavRailItem(
+                    icon: Icon(Icons.settings),
+                    selectedIcon: Icon(Icons.settings),
+                    label: 'settings',
+                  ),
+                  footerSelected: selected,
+                  onFooterTap: () {},
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      // Settled, because which item is lit is now crossed over rather than
+      // switched: the fill is `Color.lerp`ed from a `TweenAnimationBuilder`.
+      await tester.pump(const Duration(milliseconds: 400));
+      final box = find
+          .ancestor(
+            of: find.byIcon(Icons.settings),
+            matching: find.byType(DecoratedBox),
+          )
+          .first;
+      final decoration =
+          tester.widget<DecoratedBox>(box).decoration as ShapeDecoration;
+      return decoration.color;
+    }
+
+    testWidgets('is filled in while the settings are showing', (tester) async {
+      final scheme = ThemeData().colorScheme;
+      expect(await fillAt(tester, selected: true), scheme.secondaryContainer);
+      expect(await fillAt(tester, selected: false), Colors.transparent);
+    });
+
+    testWidgets('and nothing above it is, while they are', (tester) async {
+      // What `selectedIndex: -1` is for. The tab underneath is still the one
+      // that comes back, but it is not what is on screen — and two lit pills
+      // in one rail say two things are.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: -1,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final pill = tester.widget<DecoratedBox>(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.circle),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      expect((pill.decoration as ShapeDecoration).color, Colors.transparent);
+    });
+  });
+
+  /// The number against the layout it describes.
   ///
   /// The count has to be made before the destinations are built, so their
-  /// height cannot be measured — it is worked out from the M3 rail's own
-  /// numbers instead. This is what says those numbers are still Flutter's.
+  /// height cannot be measured — it is read off [NavRailMetrics] instead.
+  /// This is what says the arithmetic still describes the widget.
   ///
-  /// One-sided on purpose: over-estimating costs a slot, under-estimating
-  /// overflows the rail. The upper bound is only there so a wildly generous
-  /// estimate does not pass as a safe one.
-  group('the estimate', () {
+  /// One-sided on purpose: over-stating costs a slot, under-stating overflows
+  /// the rail. The upper bound is only there so a wildly generous number does
+  /// not pass as a safe one.
+  group('how tall one destination is', () {
     Future<double> measure(WidgetTester tester, double textScale) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -133,17 +229,19 @@ void main() {
             child: Scaffold(
               body: Row(
                 children: [
-                  NavigationRail(
+                  AppNavRail(
                     selectedIndex: 0,
-                    labelType: NavigationRailLabelType.all,
-                    destinations: const [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.circle),
-                        label: Text('one'),
+                    onSelected: (_) {},
+                    items: const [
+                      NavRailItem(
+                        icon: Icon(Icons.looks_one),
+                        selectedIcon: Icon(Icons.looks_one),
+                        label: 'one',
                       ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.circle),
-                        label: Text('two'),
+                      NavRailItem(
+                        icon: Icon(Icons.looks_two),
+                        selectedIcon: Icon(Icons.looks_two),
+                        label: 'two',
                       ),
                     ],
                   ),
@@ -156,24 +254,22 @@ void main() {
       );
       await tester.pump();
       // Top to top of consecutive destinations, which is the pitch the count
-      // divides by — not one destination's own painted height.
-      final first = tester.getRect(find.text('one'));
-      final second = tester.getRect(find.text('two'));
+      // divides by — not one destination's own painted height. Measured on the
+      // icons, because a shut rail draws no names: they are its tooltips.
+      final first = tester.getRect(find.byIcon(Icons.looks_one));
+      final second = tester.getRect(find.byIcon(Icons.looks_two));
       return second.top - first.top;
     }
 
     Future<void> check(WidgetTester tester, double textScale) async {
       final real = await measure(tester, textScale);
-      final estimated = railDestinationExtent(
-        tester.element(find.byType(NavigationRail)),
-      );
       expect(
-        estimated,
+        railDestinationExtent,
         greaterThanOrEqualTo(real),
         reason: 'an under-estimate is a rail that overflows its box',
       );
       expect(
-        estimated,
+        railDestinationExtent,
         lessThan(real + 24),
         reason: 'and a wild over-estimate is tabs behind "more" for nothing',
       );
@@ -183,15 +279,318 @@ void main() {
       await check(tester, 1);
     });
 
-    testWidgets('and at the ones this app lets the user set', (tester) async {
-      // `textFactor` is a setting, so the label — the only part of a
-      // destination that moves — is not a constant. The fractional scales are
-      // the ones that matter: a line is laid out to a whole pixel, so the real
-      // height is `round(16 × scale)` and the plain product is *under* it at
-      // 1.1, 1.3, 1.6 and 1.8.
-      for (final scale in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.5, 3.0]) {
+    testWidgets('and at every scale, because nothing here is text', (
+      tester,
+    ) async {
+      // What the shut rail bought: an item is an icon in a pill, so the pitch
+      // is a constant rather than something that has to be guessed ahead of a
+      // layout it cannot see.
+      for (final scale in [1.1, 1.3, 1.6, 2.0, 3.0]) {
         await check(tester, scale);
       }
+    });
+  });
+
+  /// The two shapes the rail has.
+  group('opening', () {
+    Future<double> widthAfterHover(
+      WidgetTester tester, {
+      required bool hover,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      if (hover) {
+        final pointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(
+          pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+        );
+        // Past the whole of the opening, which is what the width is asserted
+        // at — halfway through it is neither number.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+
+      return tester.getSize(find.byType(AppNavRail)).width;
+    }
+
+    testWidgets('is what the pointer does, and costs the tab nothing', (
+      tester,
+    ) async {
+      expect(await widthAfterHover(tester, hover: false), NavRailMetrics.width);
+      expect(
+        await widthAfterHover(tester, hover: true),
+        NavRailMetrics.expandedWidth,
+      );
+      // And the tab beside it never moved: the rail is painted over it, and
+      // what the `Row` holds open is the shut width — see `_kRailWidth`.
+      expect(railWidth, NavRailMetrics.width);
+    });
+
+    testWidgets('lays an item out inside the pill at every width', (
+      tester,
+    ) async {
+      // What went wrong the first time: an `AnimatedContainer` easing the
+      // pill's width towards this frame's number while the row inside was
+      // already laid out for it, which is a `RenderFlex` overflow — reported,
+      // with a whole widget tree, on every frame of the opening.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: [
+                    NavRailItem(
+                      icon: const Icon(Icons.circle),
+                      selectedIcon: const Icon(Icons.circle),
+                      label: 'one',
+                      badge: (opacity) => NavRailBadge(
+                        label: '3/3',
+                        opacity: opacity,
+                      ),
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      // Frame by frame through the whole of it, in both directions: the
+      // overflow was only ever at one end of the range.
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        expect(tester.takeException(), isNull, reason: 'opening, frame $i');
+      }
+      await tester.sendEventToBinding(pointer.hover(const Offset(600, 300)));
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        expect(tester.takeException(), isNull, reason: 'shutting, frame $i');
+      }
+    });
+
+    testWidgets('keeps one element for an item all the way through', (
+      tester,
+    ) async {
+      // Re-parenting an item mid-animation is what made it jump: the state
+      // that says how far it is selected, and the one the pill's fill used to
+      // be eased by, are both destroyed by it. Wrappers used to come and go at
+      // the halfway mark — the `Stack` holding the corner badge, and the
+      // `Tooltip` that names an item while there is no room for its name.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: [
+                    NavRailItem(
+                      icon: const Icon(Icons.circle),
+                      selectedIcon: const Icon(Icons.circle),
+                      label: 'one',
+                      badge: (opacity) => NavRailBadge(
+                        label: '3/3',
+                        opacity: opacity,
+                      ),
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final pill = find
+          .ancestor(
+            of: find.byIcon(Icons.circle),
+            matching: find.byType(DecoratedBox),
+          )
+          .first;
+      final shut = tester.element(pill);
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      // Across the halfway mark, which is where both wrappers flipped.
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        expect(
+          tester.element(pill),
+          same(shut),
+          reason: 'the pill was rebuilt from scratch at frame $i',
+        );
+      }
+    });
+
+    testWidgets('moves nothing but the pill', (tester) async {
+      // What "jitter" was. The two shapes disagreed about the pill's height,
+      // its padding, the glyph's size and the gap under it — a point or three
+      // each — so every frame re-rasterised the glyph a fraction smaller and
+      // a fraction further along, which a filled icon on a filled pill shows
+      // as crawling rather than sliding. Now the icon is the thing that
+      // stands still and the pill grows out from under it.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: [
+                    NavRailItem(
+                      icon: const Icon(Icons.looks_one),
+                      selectedIcon: const Icon(Icons.looks_one),
+                      label: 'badged',
+                      badge: (opacity) => NavRailBadge(
+                        label: '3/3',
+                        opacity: opacity,
+                      ),
+                    ),
+                    const NavRailItem(
+                      icon: Icon(Icons.looks_two),
+                      selectedIcon: Icon(Icons.looks_two),
+                      label: 'plain',
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      final first = tester.getRect(find.byIcon(Icons.looks_one));
+      // The second as well: the gap between two items used to close as the
+      // rail opened, so everything below the first one drifted upwards.
+      final second = tester.getRect(find.byIcon(Icons.looks_two));
+
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        // To a tenth of a point, not exactly: the pill's width runs through
+        // `lerpDouble` and hands its padding whatever that lands on, so the
+        // glyph's box comes back a few ulps either way.
+        expect(
+          tester.getRect(find.byIcon(Icons.looks_one)),
+          rectMoreOrLessEquals(first, epsilon: 0.1),
+          reason: 'the first glyph moved, at frame $i',
+        );
+        expect(
+          tester.getRect(find.byIcon(Icons.looks_two)),
+          rectMoreOrLessEquals(second, epsilon: 0.1),
+          reason: 'the second glyph moved, at frame $i',
+        );
+      }
+    });
+
+    testWidgets('keeps the badge on the glyph rather than the pill', (
+      tester,
+    ) async {
+      // On the pill's own corner the badge kept station with an edge that
+      // travels 124 points as the rail opens, so it flew right across the
+      // name arriving under it while fading out — which read as the icon
+      // beside it flashing.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: [
+                    NavRailItem(
+                      icon: const Icon(Icons.circle),
+                      selectedIcon: const Icon(Icons.circle),
+                      label: 'one',
+                      badge: (opacity) => NavRailBadge(
+                        label: '3/3',
+                        opacity: opacity,
+                      ),
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      Rect corner() => tester.getRect(find.byType(NavRailBadge).first);
+      final shut = corner();
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        // The glyph itself moves three points as the pill's padding grows,
+        // and the badge is allowed to go with it. Anything more is the pill's
+        // far edge dragging it along.
+        expect(
+          (corner().right - shut.right).abs(),
+          lessThan(4),
+          reason: 'the badge travelled, at frame $i',
+        );
+      }
+    });
+
+    testWidgets('names an item with a tooltip while it is shut', (
+      tester,
+    ) async {
+      await widthAfterHover(tester, hover: false);
+      // The name is not on screen, so something has to be able to say it.
+      expect(find.text('one'), findsNothing);
+      expect(
+        tester.widget<Tooltip>(find.byType(Tooltip)).message,
+        'one',
+      );
     });
   });
 }

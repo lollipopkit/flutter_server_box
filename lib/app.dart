@@ -69,6 +69,22 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
   // the rail each resolve a size from their own defaults and are unaffected.
   return base.copyWith(
     iconTheme: base.iconTheme.copyWith(size: 19),
+    // Material's bar title is `titleLarge` at 22, drawn for a page that is one
+    // thing. Every bar in this app sits over a form or a list whose own rows
+    // are 14, and at 22 the name of the page outweighed everything on it —
+    // pages had started passing a 20 of their own to get out from under it.
+    //
+    // `inherit: false` for the same reason [listTileTheme] needs it below:
+    // `AnimatedTheme` lerps this against the previous theme's, and
+    // `TextStyle.lerp` throws when the two ends disagree about it.
+    appBarTheme: base.appBarTheme.copyWith(
+      titleTextStyle: base.textTheme.titleLarge?.copyWith(
+        inherit: false,
+        fontSize: 17,
+        fontWeight: FontWeight.w500,
+        color: base.colorScheme.onSurface,
+      ),
+    ),
     // Material's tile is a destination in a menu, so its title is `bodyLarge`
     // at 16 and its subtitle `bodyMedium` at 14. These are rows of a form,
     // where the title is a field's name and the subtitle is what it is set to,

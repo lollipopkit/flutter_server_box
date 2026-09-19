@@ -9,12 +9,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
@@ -60,11 +60,13 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
+import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'about.dart';
+part 'group.dart';
 part 'menu.dart';
 part 'entries/ai.dart';
 part 'entries/app.dart';
@@ -76,8 +78,6 @@ part 'entries/linux.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
-
-const _kIconSize = 23.0;
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -100,32 +100,55 @@ class SettingsPage extends ConsumerStatefulWidget {
 /// making the pane a narrow strip in the middle of a wide window — and it is
 /// also what lets the pages here that are a grid rather than a list keep two
 /// columns.
-const _kContentMaxWidth = 900.0;
+///
+/// Written as the grid's own arithmetic rather than as a number, so that the
+/// form inside really does get its second column: a cap a few points under
+/// this one leaves [PageColumns] measuring room for one and laying the whole
+/// form out in a single column the width of two.
+final _kContentMaxWidth = PageColumns.widthFor(
+  2,
+  padding: _kGridPadding,
+  spacing: _kGridSpacing,
+);
+
+/// What the form is spaced by, which is the design's 17 minus what a `CardX`
+/// already carries: a `Card` brings a margin of 4 on every side, so 13 here is
+/// 17 on screen at the edges and 9 between two columns is 17 between them.
+const _kGridPadding = EdgeInsets.all(13);
+const _kGridSpacing = 9.0;
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  /// Which branches are open in the wide menu. Nothing to start with, so it
-  /// opens as a list of subjects rather than as everything there is.
-  final _expanded = <String>{};
-
   /// Which branch the narrow tabs are inside, innermost last.
   ///
-  /// The wide menu shows every level at once and needs no such thing; the tabs
-  /// show one level and walk between them. Both read the same tree, and both
-  /// point at the same [_selectedId].
+  /// The wide menu is one flat column of subjects and needs no such thing —
+  /// what is inside the one being read is a row of tabs over the content. The
+  /// tabs show one level and walk between them. Both read the same tree, and
+  /// both point at the same [_selectedId].
   final _path = <SettingsNode>[];
 
   String? _selectedId;
 
+  /// What the search field holds, trimmed. Empty is the ordinary state.
+  final _searchCtrl = TextEditingController();
+  final _searchFocus = FocusNode();
+  String _query = '';
+
+  bool get _searching => _query.isNotEmpty;
+
   /// A wide window has to be showing something from the start, so it opens on
-  /// the first group with its branch unfolded. A narrow one opens on the list
-  /// and [_path] stays empty until a row is picked.
+  /// the first page there is. A narrow one opens on the list and [_path] stays
+  /// empty until a row is picked.
   @override
   void initState() {
     super.initState();
-    final first = _buildNodes().firstWhereOrNull((e) => !e.isLeaf);
-    if (first == null) return;
-    _expanded.add(first.id);
-    _selectedId = first.firstLeaf?.id;
+    _selectedId = _buildNodes().firstOrNull?.firstLeaf?.id;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _searchFocus.dispose();
+    super.dispose();
   }
 
   Future<void> _clearAllSettings() async {
@@ -346,9 +369,76 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     setState(() => _selectedId = node.id);
   }
 
-  void _onToggle(SettingsNode node) {
+  /// A row of the flat menu, which names a subject rather than a page.
+  ///
+  /// Picking one shows what is first inside it; the rest of what it holds is
+  /// the row of tabs over the content.
+  void _onMenuTap(SettingsNode node) {
+    final leaf = node.firstLeaf;
+    if (leaf != null) _onSelect(leaf);
+  }
+
+  void _onSearch(String value) {
+    final query = value.trim();
+    if (query == _query) return;
     setState(() {
-      if (!_expanded.remove(node.id)) _expanded.add(node.id);
+      _query = query;
+      // A narrow window shows the results where the list is, which is the
+      // root — so a search started there cannot leave a level open under it.
+      if (query.isNotEmpty) _path.clear();
+    });
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
+    _onSearch('');
+  }
+
+  /// Every page whose own name, the subject it is under, or the id the code
+  /// knows it by carries [query].
+  ///
+  /// The id is matched deliberately. Three pages are called "General" and
+  /// `app.setting` is what tells them apart; it is also the only thing that
+  /// answers an untranslated word — `privacy`, `sftp` — in a locale that
+  /// spells the title differently.
+  List<SettingsHit> _hits(List<SettingsNode> nodes) {
+    final needle = _query.toLowerCase();
+    bool matches(SettingsNode leaf, SettingsNode? parent) =>
+        leaf.title.toLowerCase().contains(needle) ||
+        leaf.id.toLowerCase().contains(needle) ||
+        (parent?.title.toLowerCase().contains(needle) ?? false);
+
+    final hits = <SettingsHit>[];
+    for (final node in nodes) {
+      if (node.isLeaf) {
+        if (matches(node, null)) hits.add(SettingsHit(leaf: node));
+        continue;
+      }
+      for (final child in node.children) {
+        if (child.isLeaf && matches(child, node)) {
+          hits.add(SettingsHit(leaf: child, parent: node));
+        }
+      }
+    }
+    return hits;
+  }
+
+  /// Goes to what was found, and drops the search on the way.
+  ///
+  /// The search is a way *to* a page, not a place — leaving it up behind the
+  /// page it just opened would mean two things on screen claiming to be what
+  /// the content is showing.
+  void _onHit(SettingsHit hit) {
+    _dropPushedPages();
+    setState(() {
+      _searchCtrl.clear();
+      _query = '';
+      _selectedId = hit.leaf.id;
+      // Where the narrow tabs have to be for the page to be on screen: inside
+      // its subject, or on the page itself when it has no subject over it.
+      _path
+        ..clear()
+        ..add(hit.parent ?? hit.leaf);
     });
   }
 
@@ -383,11 +473,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         return;
       }
       _path.add(node);
-      // Unfolded in the wide menu too. The two navigations share [_selectedId]
-      // but not their shape, and only the menu's own toggle used to write here
-      // — so a branch entered while narrow was still folded if the window then
-      // grew, leaving the page on screen with no row anywhere pointing at it.
-      _expanded.add(node.id);
       final leaf = node.firstLeaf;
       if (leaf != null) _selectedId = leaf.id;
     });
@@ -416,12 +501,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final selected =
         leaves.firstWhereOrNull((e) => e.id == _selectedId) ?? leaves.first;
 
+    final hits = _searching ? _hits(nodes) : const <SettingsHit>[];
+
     final menu = _SettingsMenu(
       nodes: nodes,
       selectedId: selected.id,
-      expandedIds: _expanded,
-      onSelect: _onSelect,
-      onToggle: _onToggle,
+      onSelect: _onMenuTap,
+      search: _buildSearchField(),
     );
 
     return LayoutBuilder(
@@ -434,21 +520,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           menu: menu,
           nodes: nodes,
           selected: selected,
+          hits: hits,
         );
       },
     );
   }
 
-  /// The leaves beside [id] — the ones its own level holds.
-  static List<SettingsNode>? _groupOf(List<SettingsNode> level, String id) {
-    final leaves = level.where((e) => e.isLeaf).toList();
-    if (leaves.any((e) => e.id == id)) return leaves;
-    for (final node in level) {
-      if (node.children.isEmpty) continue;
-      final found = _groupOf(node.children, id);
-      if (found != null) return found;
+  /// The subject [id] is under, and null for a page that is its own subject.
+  static SettingsNode? _branchOf(List<SettingsNode> nodes, String id) {
+    for (final node in nodes) {
+      if (node.isLeaf) continue;
+      if (node.children.any((e) => e.id == id)) return node;
     }
     return null;
+  }
+
+  /// The pages shown beside the one selected: what its subject holds, or it
+  /// alone.
+  ///
+  /// A top-level page gets no tabs. It used to be given the other top-level
+  /// pages as siblings — Container, Private key, BMC accounts and About in one
+  /// row — which is the menu's job and not a level's.
+  static List<SettingsNode> _levelFor(List<SettingsNode> nodes, String id) {
+    final branch = _branchOf(nodes, id);
+    if (branch != null) return branch.children.where((e) => e.isLeaf).toList();
+    final leaf = nodes.firstWhereOrNull((e) => e.isLeaf && e.id == id);
+    return leaf == null ? const [] : [leaf];
   }
 
   /// The level [node] leads to: what is inside a branch, and a leaf alone.
@@ -465,66 +562,80 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required Widget menu,
     required List<SettingsNode> nodes,
     required SettingsNode selected,
+    required List<SettingsHit> hits,
   }) {
-    final content = _buildContent(wide: wide, nodes: nodes, selected: selected);
+    // What the search found, built here because both layouts need it and
+    // neither may build the other's: only one of the two is in the tree.
+    //
+    // Drawn by [AppSettingsPage] rather than by this page, because what it
+    // looks through is the rows that page builds — and it draws them as they
+    // are drawn on their own page, so a switch found by searching is a switch.
+    final results = _searching
+        ? AppSettingsPage(
+            // Ignored while searching, which looks at every section. It is
+            // still the one this page would otherwise have been showing.
+            section: SettingsSection.app,
+            search: SettingsSearch(
+              query: _query,
+              pages: hits,
+              onPage: _onHit,
+            ),
+          )
+        : null;
 
-    return Scaffold(
-      // The one bar the page has, naming whatever is being shown. The pages in
-      // it are given `embedded: true` and drop their own.
-      appBar: CustomAppBar(
-        // The list names itself; everything else is named by what it shows.
-        title: Text(
-          !wide && _path.isEmpty ? libL10n.setting : selected.title,
-          style: const TextStyle(fontSize: 20),
-        ),
-        // Out of the level rather than out of the settings, while there is a
-        // level to leave. A leaf shown on its own has no tabs and so no other
-        // way back to the list.
-        leading: !wide && _path.isNotEmpty
-            ? BackButton(onPressed: _onTabBack)
-            : null,
-        actions: [
-          Btn.text(
-            text: context.libL10n.logs,
-            onTap: () => DebugPage.route.go(
-              context,
-              args: DebugPageArgs(
-                title: '${context.libL10n.logs}(${BuildData.build})',
+    final content = _buildContent(
+      wide: wide,
+      nodes: nodes,
+      selected: selected,
+      results: results,
+    );
+
+    // The subject being read, and what else is in it. Its own row over the
+    // content rather than the bar's title: the bar spans the menu column too,
+    // and a row of tabs starting above the menu points at nothing there.
+    final level = _levelFor(nodes, selected.id);
+    final actions = _buildActions();
+    final header = _SettingsContentHeader(
+      title: _branchOf(nodes, selected.id)?.title ?? selected.title,
+      nodes: level,
+      selectedId: selected.id,
+      onTap: _onSelect,
+      actions: actions,
+    );
+
+    final scaffold = Scaffold(
+      // None on a wide window. The menu says which subject, the header over
+      // the content says which page and carries the two buttons that act on
+      // the settings as a whole, and the settings are shown beside the rail
+      // rather than over it — so a bar here named the page a third time and
+      // spent 46 points saying it.
+      //
+      // A narrow one keeps it: there is no menu column beside the content to
+      // name anything, and the way back out of a level is its button.
+      appBar: wide
+          ? null
+          : CustomAppBar(
+              // The list names itself; everything else is named by what it
+              // shows.
+              title: Text(
+                // The count is a heading over the results, where the design
+                // puts it — and it is one this page cannot work out anyway,
+                // since most of what matched is rows rather than pages.
+                _searching
+                    ? libL10n.search
+                    : (_path.isEmpty ? libL10n.setting : selected.title),
               ),
+              // Out of the level rather than out of the settings, while there
+              // is a level to leave. A leaf shown on its own has no tabs and
+              // so no other way back to the list. A search is left the same
+              // way, since on a narrow window it took the list's place.
+              leading: _searching || _path.isNotEmpty
+                  ? BackButton(
+                      onPressed: _searching ? _clearSearch : _onTabBack,
+                    )
+                  : null,
+              actions: actions,
             ),
-            // The crash menu, behind a long press on the button next to the
-            // thing it is for, rather than a second button in a bar that is
-            // already four wide.
-            //
-            // `kDebugMode` is a const, so a release does not register the
-            // gesture and `CrashDebugMenu` — with everything it reaches — is
-            // tree shaken out rather than shipped behind a gesture nobody is
-            // told about.
-            onLongTap: kDebugMode ? () => CrashDebugMenu.show(context) : null,
-          ),
-          Btn.icon(
-            text: libL10n.delete,
-            icon: const Icon(Icons.delete),
-            onTap: () => context.showRoundDialog(
-              title: libL10n.attention,
-              child: SimpleMarkdown(
-                data: libL10n.askContinue(
-                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-                ),
-              ),
-              actions: [
-                CountDownBtn(
-                  onTap: () {
-                    context.popDialog();
-                    _clearAllSettings();
-                  },
-                  afterColor: Colors.red,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
       // The same column every other list-beside-content page has, rather than
       // a `Row` of its own. It used to be one, at a fixed 232 and with a plain
       // divider — so this was the one such column in the app that could not be
@@ -555,7 +666,58 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             // app bar already covers, and the home indicator the `SafeArea`
             // just above here already cleared.
             surfaceBuilder: (ctx, split) => split
-                ? content
+                ? Column(
+                    children: [
+                      // Hidden rather than taken out of the tree: `Offstage`
+                      // in a column takes no height, and a `Column` whose
+                      // children come and go rebuilds what is under them —
+                      // which here is the navigator, and rebuilding that is
+                      // losing every page in it.
+                      Offstage(offstage: _searching, child: header),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            // Still laid out under the results, which is what
+                            // keeps the navigator and every page in it alive.
+                            // Taken out of the focus chain though: Tab walking
+                            // into a form nobody can see is the same bug as
+                            // the caret leaving the field.
+                            ExcludeFocus(excluding: _searching, child: content),
+                            // Over the content rather than a page *of* it.
+                            //
+                            // As a page it was a route arriving, and a route
+                            // arriving takes the focus — `ModalRoute.didPush`
+                            // hands it to the new route's own scope. The field
+                            // that put it there is in the menu column, outside
+                            // this navigator, so the first character typed
+                            // pushed a route and the field lost the caret.
+                            if (results != null)
+                              Positioned.fill(
+                                // Faded in, because it arrives over a page
+                                // that stays where it is: without it the first
+                                // character typed replaced the form in one
+                                // frame and read as the page having changed
+                                // rather than as a search having started.
+                                child: FadeIn(
+                                  duration: Durations.short3,
+                                  child: _opaque(
+                                    ListView(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        13,
+                                        13,
+                                        13,
+                                        17,
+                                      ),
+                                      children: [results],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
                 : Builder(
                     builder: (ctx) => _buildNarrow(ctx, nodes, content),
                   ),
@@ -563,7 +725,99 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ),
       ),
     );
+
+    // The chord the field advertises, actually bound. `Focus` so the binding
+    // has somewhere on this page to be reached from — `CallbackShortcuts`
+    // reads the focus chain, and a page nobody has clicked in yet has nothing
+    // on it. Traversal skipped, so Tab still walks the real controls.
+    if (!isDesktop) return scaffold;
+    return CallbackShortcuts(
+      bindings: {_kSearchShortcut: _searchFocus.requestFocus},
+      child: Focus(autofocus: true, skipTraversal: true, child: scaffold),
+    );
   }
+
+  /// What acts on the settings as a whole: the log, and clearing everything.
+  List<Widget> _buildActions() {
+    return [
+      Btn.text(
+        text: context.libL10n.logs,
+        onTap: () => DebugPage.route.go(
+          context,
+          args: DebugPageArgs(
+            title: '${context.libL10n.logs}(${BuildData.build})',
+          ),
+        ),
+        // The crash menu, behind a long press on the button next to the thing
+        // it is for, rather than a second button in a bar that is already four
+        // wide.
+        //
+        // `kDebugMode` is a const, so a release does not register the gesture
+        // and `CrashDebugMenu` — with everything it reaches — is tree shaken
+        // out rather than shipped behind a gesture nobody is told about.
+        onLongTap: kDebugMode ? () => CrashDebugMenu.show(context) : null,
+      ),
+      Btn.icon(
+        text: libL10n.delete,
+        icon: const Icon(Icons.delete),
+        onTap: () => context.showRoundDialog(
+          title: libL10n.attention,
+          child: SimpleMarkdown(
+            data: libL10n.askContinue(
+              '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+            ),
+          ),
+          actions: [
+            CountDownBtn(
+              onTap: () {
+                context.popDialog();
+                _clearAllSettings();
+              },
+              afterColor: Colors.red,
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  /// A background and the width cap, round whatever the content pane shows.
+  ///
+  /// A route sliding in has to be opaque, or what it is covering shows through
+  /// it for the length of the transition. The pages under here are
+  /// `embedded: true` and drop their own `Scaffold`, so without this nothing
+  /// gives them a background at all — the one behind belongs to the `Scaffold`
+  /// this whole page is in, and both routes were letting it, and each other,
+  /// through.
+  ///
+  /// The `Scaffold`'s colour and not `colorScheme.surface`: that is the slot
+  /// `toAmoled` overrides, and the surface one it leaves alone.
+  ///
+  /// The cap goes on what is *in* the page, never on the page. A route sliding
+  /// in is as wide as the pane; a navigator inside a narrower box slides the
+  /// whole transition inside that box, so the page appeared to come out of a
+  /// panel in the middle rather than in from the edge. The `Material` stays
+  /// full width for the same reason — it is the background the transition is
+  /// drawn against.
+  Widget _opaque(Widget child) => Material(
+    color: Theme.of(context).scaffoldBackgroundColor,
+    // Told to expand inside the cap: a `Center` hands down loose constraints,
+    // under which a page's list takes the height of its content rather than
+    // the height of the pane.
+    child: Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: _kContentMaxWidth),
+        child: SizedBox.expand(child: child),
+      ),
+    ),
+  );
+
+  Widget _buildSearchField() => _SettingsSearchField(
+    controller: _searchCtrl,
+    focusNode: _searchFocus,
+    onChanged: _onSearch,
+    onClear: _clearSearch,
+  );
 
   /// The levels, as pages of a navigator.
   ///
@@ -575,36 +829,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required bool wide,
     required List<SettingsNode> nodes,
     required SettingsNode selected,
+    required Widget? results,
   }) {
-    // A route sliding in has to be opaque, or what it is covering shows
-    // through it for the length of the transition. The pages under here are
-    // `embedded: true` and drop their own `Scaffold`, so without this nothing
-    // gives them a background at all — the one behind belongs to the
-    // `Scaffold` this whole page is in, and both routes were letting it, and
-    // each other, through.
-    //
-    // The `Scaffold`'s colour and not `colorScheme.surface`: that is the slot
-    // `toAmoled` overrides, and the surface one it leaves alone.
-    // The cap goes on what is *in* the page, never on the page. A route
-    // sliding in is as wide as the pane; a navigator inside a narrower box
-    // slides the whole transition inside that box, so the page appeared to
-    // come out of a panel in the middle rather than in from the edge.
-    //
-    // The `Material` stays full width for the same reason — it is the
-    // background the transition is drawn against.
-    Widget opaque(Widget child) => Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      // Told to expand inside the cap: a `Center` hands down loose
-      // constraints, under which a page's list takes the height of its
-      // content rather than the height of the pane.
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _kContentMaxWidth),
-          child: SizedBox.expand(child: child),
-        ),
-      ),
-    );
-
     /// Keyed by the group it shows, never by what is selected inside it.
     ///
     /// Selecting is what a drag *does*: `onPageChanged` fires mid-settle and
@@ -622,26 +848,35 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       );
     }
 
+    final level = _levelFor(nodes, selected.id);
+
     final navigator = Navigator(
       key: _contentNav,
       pages: [
         if (wide)
+          // Never keyed by the search: the results are drawn over this
+          // navigator, not as a page of it — see where they are laid out.
           MaterialPage<void>(
-            key: ValueKey(
-              _groupOf(nodes, selected.id)?.firstOrNull?.id ?? 'root',
-            ),
-            child: opaque(pagesOf(_groupOf(nodes, selected.id) ?? const [])),
+            key: ValueKey(level.firstOrNull?.id ?? 'root'),
+            child: _opaque(pagesOf(level)),
           )
         else ...[
           // What settings there are, which is where a narrow window starts.
           MaterialPage<void>(
             key: const ValueKey('root'),
-            child: opaque(_SettingsList(nodes: nodes, onTap: _onTab)),
+            child: _opaque(
+              _SettingsList(
+                nodes: nodes,
+                onTap: _onTab,
+                search: _buildSearchField(),
+                results: results,
+              ),
+            ),
           ),
           for (final entered in _path)
             MaterialPage<void>(
               key: ValueKey(entered.id),
-              child: opaque(pagesOf(_levelOf(entered))),
+              child: _opaque(pagesOf(_levelOf(entered))),
             ),
         ],
       ],
@@ -778,6 +1013,33 @@ enum SettingsSection {
     SettingsSection.editor => libL10n.editor,
     SettingsSection.fullScreen => l10n.fullScreen,
   };
+
+  /// The page this group is, inside the subject it is under.
+  ///
+  /// What the search puts over a row it found: three of these pages are called
+  /// "General", and the subject is the half that tells them apart.
+  String get breadcrumb => switch (this) {
+    SettingsSection.app => '${libL10n.app} › ${libL10n.general}',
+    SettingsSection.privacy => '${libL10n.app} › ${l10n.privacy}',
+    SettingsSection.ai => '${libL10n.app} › ${libL10n.ai}',
+    SettingsSection.fullScreen => '${libL10n.app} › ${l10n.fullScreen}',
+    SettingsSection.server => '${libL10n.server} › ${libL10n.general}',
+    SettingsSection.ssh => '${libL10n.terminal} › ${libL10n.general}',
+    SettingsSection.linux => '${libL10n.terminal} › Linux (Beta)',
+    SettingsSection.sftp => '${libL10n.file} › SFTP',
+    SettingsSection.editor => '${libL10n.file} › ${libL10n.editor}',
+    SettingsSection.container => libL10n.container,
+  };
+
+  /// Whether this build has this group at all.
+  ///
+  /// The search walks every one of them, and a group the menu never offers is
+  /// one whose rows cannot be reached from a result either.
+  bool get available => switch (this) {
+    SettingsSection.fullScreen => isMobile,
+    SettingsSection.linux => Rootfs.isAvailable,
+    _ => true,
+  };
 }
 
 /// One settings group as a page of its own.
@@ -817,10 +1079,33 @@ final class SettingsSectionPage extends StatelessWidget {
   }
 }
 
+/// What the page shows instead of its own group while a search is on.
+///
+/// The search is rendered here and not beside the menu, because what it looks
+/// through is the rows this page builds — and those are built from a state
+/// with five text controllers on it, which nothing outside can construct.
+final class SettingsSearch {
+  const SettingsSearch({
+    required this.query,
+    required this.pages,
+    required this.onPage,
+  });
+
+  final String query;
+
+  /// Pages whose own names match, found by the menu rather than here.
+  final List<SettingsHit> pages;
+
+  final void Function(SettingsHit hit) onPage;
+}
+
 final class AppSettingsPage extends ConsumerStatefulWidget {
   final SettingsSection section;
 
-  const AppSettingsPage({super.key, required this.section});
+  /// When set, every section's matching rows instead of this one's own.
+  final SettingsSearch? search;
+
+  const AppSettingsPage({super.key, required this.section, this.search});
 
   /// No route of its own — see [SettingsSectionPage], which is what a caller
   /// outside the settings tree pushes. This builds a group's rows and nothing
@@ -833,9 +1118,13 @@ final class AppSettingsPage extends ConsumerStatefulWidget {
 final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   final _setting = Stores.setting;
 
-  /// The kept crash report, read once — see `_buildLastCrashReport`. Null
-  /// again after it is dropped, which is what makes the row disappear.
-  Future<String?>? _savedCrashReport;
+  /// The kept crash report, read once in [initState]. Null again after it is
+  /// dropped, which is what makes its group disappear.
+  String? _savedCrashReport;
+
+  /// Whether this device can ask for a fingerprint or a face. Null until the
+  /// platform has answered, which is not a row and not a group.
+  bool? _bioAuthAvail;
 
   late final _sshOpacityCtrl = TextEditingController(
     text: _setting.sshBgOpacity.fetch().toString(),
@@ -870,6 +1159,22 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
         if (changed && mounted) setState(() {});
       });
     }
+
+    // Both of these decide whether a whole group exists, so they are answered
+    // once here rather than by a builder inside a row: a row that arrived a
+    // frame later left a heading and a hairline with nothing under them.
+    unawaited(
+      CrashReport.saved().then((report) {
+        if (!mounted || report == null) return;
+        setState(() => _savedCrashReport = report);
+      }),
+    );
+    unawaited(
+      PlatformPublicSettings.bioAuthAvailable.then((avail) {
+        if (!mounted || !avail) return;
+        setState(() => _bioAuthAvail = true);
+      }),
+    );
   }
 
   @override
@@ -882,26 +1187,136 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     super.dispose();
   }
 
+  /// What a group of settings is made of, named and in order.
+  ///
+  /// A function of the section rather than a field, because the search walks
+  /// every one of them — see [_buildSearch].
+  List<SettingsGroup> _groupsOf(SettingsSection section) => switch (section) {
+    SettingsSection.app => _buildApp(),
+    SettingsSection.privacy => _buildPrivacy(),
+    SettingsSection.ai => _buildAskAiConfig(),
+    SettingsSection.server => _buildServer(),
+    SettingsSection.ssh => _buildSSH(),
+    SettingsSection.linux => _buildLinux(),
+    SettingsSection.sftp => _buildSFTP(),
+    SettingsSection.container => _buildContainer(),
+    SettingsSection.editor => _buildEditor(),
+    SettingsSection.fullScreen => _buildFullScreen(),
+  };
+
+  /// Every row of every group there is, that [query] names.
+  ///
+  /// The rows themselves, drawn as they are drawn on their own page — so a
+  /// switch found by searching is a switch, and flipping it here is flipping
+  /// it. Each section's matches carry its own heading, which is where the row
+  /// lives; a breadcrumb repeated on every row would say it once per line.
+  List<SettingsGroup> _matchingGroups(String query) {
+    final needle = query.toLowerCase();
+    final groups = <SettingsGroup>[];
+    for (final section in SettingsSection.values) {
+      if (!section.available) continue;
+      final rows = [
+        for (final group in _groupsOf(section))
+          ...group.rows.where((row) => row.matches(needle)),
+      ];
+      if (rows.isNotEmpty) groups.add(SettingsGroup(section.breadcrumb, rows));
+    }
+    return groups;
+  }
+
+  Widget _buildSearch(SettingsSearch search) {
+    final groups = _matchingGroups(search.query);
+    final pages = search.pages;
+    final total = groups.fold<int>(pages.length, (n, g) => n + g.rows.length);
+
+    // The pages themselves, under the settings on them: somebody typing
+    // "sequence" means the page, and somebody typing "font" means a row.
+    final pageGroup = pages.isEmpty
+        ? null
+        : SettingsGroup(libL10n.setting, [
+            for (final hit in pages)
+              SettingsRow(
+                hit.leaf.title,
+                () => ListTile(
+                  leading: Icon(hit.leaf.icon),
+                  title: Text(hit.leaf.title),
+                  subtitle: hit.parent == null
+                      ? null
+                      : Text(hit.parent!.title, style: UIs.text11Grey),
+                  trailing: const Icon(Icons.keyboard_arrow_right),
+                  onTap: () => search.onPage(hit),
+                ),
+              ),
+          ]);
+
+    return Column(
+      key: settingsResultsKey,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GroupTitle(
+          '$total ${libL10n.result}',
+          padding: const EdgeInsets.fromLTRB(3, 0, 3, 7),
+        ),
+        // A keystroke rewrites this whole list, and which of it changed is
+        // the one thing that cannot be read off the result. So a section that
+        // stops matching shrinks away and one that starts matching grows in,
+        // and the rest of the column flows around it.
+        AnimatedColumn(
+          children: [
+            for (final group in [...groups, ?pageGroup])
+              Padding(
+                key: ValueKey('group:${group.title}'),
+                padding: const EdgeInsets.only(bottom: 13),
+                child: SettingsGroupView(group, animated: true),
+              ),
+            // An entry like any other, so that it grows in as the last group
+            // shrinks out. Returned early instead, it replaced the column —
+            // state and all — and the groups it was replacing had nothing
+            // left to leave from.
+            if (total == 0)
+              Padding(
+                key: const ValueKey('empty'),
+                padding: const EdgeInsets.symmetric(vertical: 34),
+                child: Center(child: Text(libL10n.empty, style: UIs.textGrey)),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // No heading over it: the menu says which group this is, and the bar above
-    // repeats it. A `CenterGreyTitle` here would be the third time.
-    final group = switch (widget.section) {
-      SettingsSection.app => _buildApp(),
-      SettingsSection.privacy => _buildPrivacy(),
-      SettingsSection.ai => _buildAskAiConfig(),
-      SettingsSection.server => _buildServer(),
-      SettingsSection.ssh => _buildSSH(),
-      SettingsSection.linux => _buildLinux(),
-      SettingsSection.sftp => _buildSFTP(),
-      SettingsSection.container => _buildContainer(),
-      SettingsSection.editor => _buildEditor(),
-      SettingsSection.fullScreen => _buildFullScreen(),
-    };
+    if (widget.search case final search?) return _buildSearch(search);
 
-    return ListView(
-      padding: context.padBottom(UIs.roundRectCardPadding),
-      children: [group],
+    // The grid rather than one tall column. A settings row is a label at one
+    // end and a control at the other, and on a desktop window a single column
+    // of them put the two a hand's width apart and made the page a screen and
+    // a half of scrolling. [PageColumns] is what the rest of the app's forms
+    // are laid out in, at a width chosen for exactly this kind of row.
+    //
+    // No heading over the grid itself: the menu says which group this is, and
+    // the header above the content repeats it. The headings inside are the
+    // groups' own.
+    Widget grid() => PageColumns(
+      padding: _kGridPadding,
+      spacing: _kGridSpacing,
+      bottomInset: MediaQuery.paddingOf(context).bottom,
+      children: [
+        // A group can come out empty — every row in it is behind a platform
+        // test — and an empty one is a heading with a rule and nothing under.
+        for (final group in _groupsOf(widget.section))
+          if (group.rows.isNotEmpty) SettingsGroupView(group),
+      ],
+    );
+
+    // See [_Linux._buildLinux]: its rows are about whichever profile is
+    // selected, and nothing else here notifies when that changes.
+    if (widget.section != SettingsSection.linux) return grid();
+    return ValBuilder(
+      listenable: _setting.linuxProfile.listenable(),
+      builder: (_) => grid(),
     );
   }
 

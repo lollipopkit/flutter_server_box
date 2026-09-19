@@ -11,6 +11,7 @@ import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 extension AppTabViewX on AppTab {
   Widget get page {
@@ -86,14 +87,19 @@ extension AppTabViewX on AppTab {
 
   /// The same tab in the rail.
   ///
-  /// [NavigationRail.destinations] is typed, so there is nothing to wrap the
-  /// item as a whole with. The icon and the label are the two widgets it does
-  /// take, and between them they are everything the item draws.
-  NavigationRailDestination navRailDestination({ContextMenuOpener? onMenu}) {
-    return NavigationRailDestination(
-      icon: _withMenu(_counted(icon), onMenu),
-      selectedIcon: _withMenu(_counted(selectedIcon), onMenu),
-      label: _withMenu(Text(label), onMenu),
+  /// The count is not wrapped round the icon here: [AppNavRail] hangs it off
+  /// the indicator's corner instead, clear of the glyph. The menu is not
+  /// wrapped either — the rail carries it on the whole item, so a long press
+  /// on the label reaches it too.
+  NavRailItem navRailItem({ContextMenuOpener? onMenu}) {
+    return NavRailItem(
+      icon: icon,
+      selectedIcon: selectedIcon,
+      label: label,
+      badge: this == AppTab.server
+          ? (opacity) => ConnCountRailBadge(opacity: opacity)
+          : null,
+      onMenu: onMenu,
     );
   }
 
