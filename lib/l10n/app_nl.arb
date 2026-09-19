@@ -853,5 +853,8 @@
   "connect": "Verbinden",
   "disconnect": "Verbinding verbreken",
   "searchServerTip": "Zoekt in namen en adressen — de twee dingen waar de editor eerst om vraagt.",
-  "addServerTip": "Vul er een in, scan een QR-code of importeer een bestand dat iemand heeft gedeeld."
+  "addServerTip": "Vul er een in, scan een QR-code of importeer een bestand dat iemand heeft gedeeld.",
+  "move": "Verplaatsen",
+  "moveToTop": "Naar boven verplaatsen",
+  "moveToBottom": "Naar onderen verplaatsen"
 }

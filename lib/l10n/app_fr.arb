@@ -853,5 +853,8 @@
   "connect": "Connecter",
   "disconnect": "Déconnecter",
   "searchServerTip": "Recherche les noms et les adresses — les deux informations demandées en premier par l’éditeur.",
-  "addServerTip": "Remplissez-en un, scannez un QR code ou importez un fichier partagé par quelqu’un."
+  "addServerTip": "Remplissez-en un, scannez un QR code ou importez un fichier partagé par quelqu’un.",
+  "move": "Déplacer",
+  "moveToTop": "Déplacer en haut",
+  "moveToBottom": "Déplacer en bas"
 }

@@ -853,5 +853,8 @@
   "connect": "接続",
   "disconnect": "切断",
   "searchServerTip": "名前とアドレスを検索します。編集画面で最初に尋ねられる2項目です。",
-  "addServerTip": "入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。"
+  "addServerTip": "入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。",
+  "move": "移動",
+  "moveToTop": "先頭へ移動",
+  "moveToBottom": "末尾へ移動"
 }

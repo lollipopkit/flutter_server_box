@@ -2956,4 +2956,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get addServerTip =>
       'Birini doldurun, QR kodu tarayın veya birinin paylaştığı dosyayı içe aktarın.';
+
+  @override
+  String get move => 'Taşı';
+
+  @override
+  String get moveToTop => 'En başa taşı';
+
+  @override
+  String get moveToBottom => 'En sona taşı';
 }

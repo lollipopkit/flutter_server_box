@@ -2844,4 +2844,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get addServerTip => '하나를 입력하거나 QR 코드를 스캔하거나 다른 사람이 공유한 파일을 가져오세요.';
+
+  @override
+  String get move => '이동';
+
+  @override
+  String get moveToTop => '맨 위로 이동';
+
+  @override
+  String get moveToBottom => '맨 아래로 이동';
 }

@@ -5109,6 +5109,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fill one in, scan a QR code, or import a file somebody shared.'**
   String get addServerTip;
+
+  /// No description provided for @move.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get move;
+
+  /// No description provided for @moveToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to top'**
+  String get moveToTop;
+
+  /// No description provided for @moveToBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to bottom'**
+  String get moveToBottom;
 }
 
 class _AppLocalizationsDelegate

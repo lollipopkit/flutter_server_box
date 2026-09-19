@@ -2974,4 +2974,13 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get addServerTip =>
       'Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin.';
+
+  @override
+  String get move => 'Köçür';
+
+  @override
+  String get moveToTop => 'Ən yuxarıya köçür';
+
+  @override
+  String get moveToBottom => 'Ən aşağıya köçür';
 }

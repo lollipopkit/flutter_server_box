@@ -860,5 +860,8 @@
   "connect": "連線",
   "disconnect": "中斷連線",
   "searchServerTip": "搜尋名稱和位址——編輯頁最先詢問的兩項資料。",
-  "addServerTip": "填寫其中一項、掃描 QR code，或匯入他人分享的檔案。"
+  "addServerTip": "填寫其中一項、掃描 QR code，或匯入他人分享的檔案。",
+  "move": "移動",
+  "moveToTop": "移到最前",
+  "moveToBottom": "移到最後"
 }

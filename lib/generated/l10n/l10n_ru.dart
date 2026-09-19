@@ -2982,4 +2982,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get addServerTip =>
       'Заполните одно из полей, отсканируйте QR-код или импортируйте файл, которым кто-то поделился.';
+
+  @override
+  String get move => 'Переместить';
+
+  @override
+  String get moveToTop => 'В начало';
+
+  @override
+  String get moveToBottom => 'В конец';
 }

@@ -2753,6 +2753,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addServerTip => '手动填写、扫描二维码，或导入别人分享的文件。';
+
+  @override
+  String get move => '移动';
+
+  @override
+  String get moveToTop => '移到最前';
+
+  @override
+  String get moveToBottom => '移到最后';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5523,4 +5532,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get addServerTip => '填寫其中一項、掃描 QR code，或匯入他人分享的檔案。';
+
+  @override
+  String get move => '移動';
+
+  @override
+  String get moveToTop => '移到最前';
+
+  @override
+  String get moveToBottom => '移到最後';
 }

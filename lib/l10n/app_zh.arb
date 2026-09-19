@@ -860,5 +860,8 @@
   "disconnect": "断开",
   "searchServerTip": "搜索名称和地址，也就是编辑页最先问的两项。",
   "addServerTip": "手动填写、扫描二维码，或导入别人分享的文件。",
-  "online": "在线"
+  "online": "在线",
+  "move": "移动",
+  "moveToTop": "移到最前",
+  "moveToBottom": "移到最后"
 }

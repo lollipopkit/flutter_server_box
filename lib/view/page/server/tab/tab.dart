@@ -64,6 +64,16 @@ const _kOpenDuration = Duration(milliseconds: 350);
 /// ._buildStrip] — and the design's for the one that needs the room.
 const _kStripHeight = 46.0;
 
+/// The room that strip keeps above and below itself, for both of its faces.
+///
+/// 12 of visible gap on each side. Above, the bar is 40 tall and its tallest
+/// control, the density tabs, is about 32 centred in it: 4 of the bar's own,
+/// and this adds 8. Below, the grid's 4 and a card's margin of 4 follow this
+/// 4, which is also what is between two cards. It was 0 above and 9 below,
+/// which drew as 4 and 17: the summary read as part of the bar, and the cards
+/// as a separate block under it.
+const _kStripInset = EdgeInsets.only(top: 8, bottom: 4);
+
 /// One machine's pill in that strip, which is the design's height for it and
 /// not the strip's.
 const _kPillHeight = 28.0;
@@ -804,6 +814,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
               icon: const Icon(MingCute.hashtag_line, size: 18),
               onTap: _bulkTag,
             ),
+            // The one action here that is about the list rather than about the
+            // machines. Dragging is how one server is moved, and forty is
+            // exactly where dragging stops being a way to do anything.
+            Btn.icon(
+              text: l10n.move,
+              icon: const Icon(Icons.swap_vert, size: 18),
+              onTap: _bulkMove,
+            ),
             Btn.icon(
               text: libL10n.delete,
               icon: const Icon(Icons.delete, size: 18),
@@ -858,6 +876,53 @@ class _ServerPageState extends ConsumerState<ServerPage>
         if (mounted) context.showErrDialog(e, st);
         return;
       }
+    }
+    _endSelecting();
+  }
+
+  /// Moves the chosen machines to one end of the arrangement.
+  ///
+  /// Both ends and nothing between them. A position to insert at is a number
+  /// nobody has — the list being looked at is the whole of what is known about
+  /// where things are — and "up one" applied to five machines at once is five
+  /// separate answers about what it did.
+  Future<void> _bulkMove() async {
+    final toTop = await showRowsSheet<bool>(
+      context,
+      rows: (ctx) => [
+        SheetChoiceTile(
+          icon: Icons.vertical_align_top,
+          title: l10n.moveToTop,
+          selected: false,
+          onTap: () => Navigator.of(ctx).pop(true),
+        ),
+        SheetChoiceTile(
+          icon: Icons.vertical_align_bottom,
+          title: l10n.moveToBottom,
+          selected: false,
+          onTap: () => Navigator.of(ctx).pop(false),
+        ),
+      ],
+    );
+    if (toTop == null || !mounted) return;
+
+    final order = ref.read(serversProvider).serverOrder;
+    final moved = moveInOrder(order, _selected, toTop: toTop);
+    if (moved.equals(order)) {
+      _endSelecting();
+      return;
+    }
+
+    await ref.read(serversProvider.notifier).updateServerOrder(moved);
+    if (!mounted) return;
+
+    // The arrangement is only on screen under `manual`: under any of the
+    // comparisons this would be a move with nothing to see, which reads as
+    // the action having failed rather than as the sort having hidden it.
+    const manual = ServerSortOrder(ServerSortField.manual, ascending: true);
+    if (!manual.isCurrent) {
+      manual.save();
+      _sortVersion.notify();
     }
     _endSelecting();
   }
@@ -1600,23 +1665,31 @@ class _ServerPageState extends ConsumerState<ServerPage>
     );
     final back = RepaintBoundary(child: _buildSwitcher(filtered, openId));
 
-    return AnimatedBuilder(
-      animation: _open,
-      builder: (_, _) {
-        final t = _open.value;
-        if (t <= 0) return front;
-        if (t >= 1) return back;
-        final facing = t < 0.5;
-        return Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            // Enough for the turn to read as one rather than as a squash, and
-            // not so much that the near edge swings out past the bar above.
-            ..setEntry(3, 2, 0.0015)
-            ..rotateX(facing ? -t * math.pi : (1 - t) * math.pi),
-          child: facing ? front : back,
-        );
-      },
+    // Around the turn rather than inside each face: one definition for both,
+    // so what is below starts in the same place whichever face is up, and the
+    // axis of the turn is the middle of the strip rather than of the strip
+    // plus its gap.
+    return Padding(
+      padding: _kStripInset,
+      child: AnimatedBuilder(
+        animation: _open,
+        builder: (_, _) {
+          final t = _open.value;
+          if (t <= 0) return front;
+          if (t >= 1) return back;
+          final facing = t < 0.5;
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              // Enough for the turn to read as one rather than as a squash,
+              // and not so much that the near edge swings out past the bar
+              // above.
+              ..setEntry(3, 2, 0.0015)
+              ..rotateX(facing ? -t * math.pi : (1 - t) * math.pi),
+            child: facing ? front : back,
+          );
+        },
+      ),
     );
   }
 
@@ -1626,26 +1699,22 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _buildSwitcher(List<String> filtered, String? openId) {
     final at = openId == null ? -1 : filtered.indexOf(openId);
 
-    return Padding(
-      // The same gap under it that the overview leaves, so what is below
-      // starts in the same place whichever face is up.
-      padding: const EdgeInsets.only(bottom: 9),
-      child: SizedBox(
-        key: const ValueKey('switcher'),
-        height: _kStripHeight,
-        child: EdgeFadeScroll(
-          builder: (_, controller) => ListView(
-            controller: controller,
-            scrollDirection: Axis.horizontal,
-            // Lined up with the cards under it rather than with the window:
-            // this is a row of the list, so its first pill starts where the
-            // cards start. The pills carry two of their own.
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            children: [
-              for (final (i, id) in filtered.indexed)
-                _buildSwitcherPill(id, current: i == at),
-            ],
-          ),
+    // No gap of its own: [_kStripInset] is around both faces.
+    return SizedBox(
+      key: const ValueKey('switcher'),
+      height: _kStripHeight,
+      child: EdgeFadeScroll(
+        builder: (_, controller) => ListView(
+          controller: controller,
+          scrollDirection: Axis.horizontal,
+          // Lined up with the cards under it rather than with the window:
+          // this is a row of the list, so its first pill starts where the
+          // cards start. The pills carry two of their own.
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          children: [
+            for (final (i, id) in filtered.indexed)
+              _buildSwitcherPill(id, current: i == at),
+          ],
         ),
       ),
     );

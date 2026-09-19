@@ -853,5 +853,8 @@
   "connect": "Bağlan",
   "disconnect": "Bağlantıyı kes",
   "searchServerTip": "Adları ve adresleri arar — düzenleyicinin önce sorduğu iki bilgiyi.",
-  "addServerTip": "Birini doldurun, QR kodu tarayın veya birinin paylaştığı dosyayı içe aktarın."
+  "addServerTip": "Birini doldurun, QR kodu tarayın veya birinin paylaştığı dosyayı içe aktarın.",
+  "move": "Taşı",
+  "moveToTop": "En başa taşı",
+  "moveToBottom": "En sona taşı"
 }

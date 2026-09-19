@@ -2999,4 +2999,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get addServerTip =>
       'Remplissez-en un, scannez un QR code ou importez un fichier partagé par quelqu’un.';
+
+  @override
+  String get move => 'Déplacer';
+
+  @override
+  String get moveToTop => 'Déplacer en haut';
+
+  @override
+  String get moveToBottom => 'Déplacer en bas';
 }

@@ -70,6 +70,36 @@ enum ServerSortField {
   bool get reorderable => this == manual;
 }
 
+/// [order] with [chosen] gathered at one end of it.
+///
+/// The one edit anything makes to the manual arrangement other than a drag,
+/// and the only one that can be made to several machines at once. Both ends
+/// and nothing between them: a position to insert at is a number nobody has,
+/// since the list on screen is the whole of what is known about where things
+/// are.
+///
+/// The moved block keeps the order it was already in rather than the order the
+/// machines were picked in — what moves is a run of the list, and a run that
+/// arrives shuffled is a second change nobody asked for. Ids in [chosen] that
+/// are not in [order] are ignored, which is what a machine deleted while it
+/// was selected looks like.
+List<String> moveInOrder(
+  List<String> order,
+  Set<String> chosen, {
+  required bool toTop,
+}) {
+  final moved = [
+    for (final id in order)
+      if (chosen.contains(id)) id,
+  ];
+  if (moved.isEmpty) return order;
+  final rest = [
+    for (final id in order)
+      if (!chosen.contains(id)) id,
+  ];
+  return toTop ? [...moved, ...rest] : [...rest, ...moved];
+}
+
 /// A field and a direction, with the label and icon that go with them.
 ///
 /// A model rather than part of the server tab, which is where it started: the

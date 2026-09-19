@@ -853,5 +853,8 @@
   "connect": "Hubungkan",
   "disconnect": "Putuskan",
   "searchServerTip": "Mencari nama dan alamat — dua hal yang pertama kali diminta editor.",
-  "addServerTip": "Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang."
+  "addServerTip": "Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang.",
+  "move": "Pindahkan",
+  "moveToTop": "Pindah ke atas",
+  "moveToBottom": "Pindah ke bawah"
 }

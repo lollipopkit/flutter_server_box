@@ -2978,4 +2978,13 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get addServerTip =>
       'Заповніть одне поле, відскануйте QR-код або імпортуйте файл, яким хтось поділився.';
+
+  @override
+  String get move => 'Перемістити';
+
+  @override
+  String get moveToTop => 'На початок';
+
+  @override
+  String get moveToBottom => 'У кінець';
 }

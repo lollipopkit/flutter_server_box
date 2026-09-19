@@ -1121,5 +1121,8 @@
   "connect": "Connect",
   "disconnect": "Disconnect",
   "searchServerTip": "Searches names and addresses — the two the editor asks for first.",
-  "addServerTip": "Fill one in, scan a QR code, or import a file somebody shared."
+  "addServerTip": "Fill one in, scan a QR code, or import a file somebody shared.",
+  "move": "Move",
+  "moveToTop": "Move to top",
+  "moveToBottom": "Move to bottom"
 }

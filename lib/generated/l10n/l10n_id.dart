@@ -2961,4 +2961,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get addServerTip =>
       'Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang.';
+
+  @override
+  String get move => 'Pindahkan';
+
+  @override
+  String get moveToTop => 'Pindah ke atas';
+
+  @override
+  String get moveToBottom => 'Pindah ke bawah';
 }

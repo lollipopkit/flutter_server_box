@@ -1055,5 +1055,8 @@
   "connect": "Qoşul",
   "disconnect": "Bağlantını kəs",
   "searchServerTip": "Adları və ünvanları axtarır — redaktorun əvvəlcə soruşduğu iki məlumatı.",
-  "addServerTip": "Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin."
+  "addServerTip": "Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin.",
+  "move": "Köçür",
+  "moveToTop": "Ən yuxarıya köçür",
+  "moveToBottom": "Ən aşağıya köçür"
 }

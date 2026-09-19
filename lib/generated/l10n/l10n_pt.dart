@@ -2977,4 +2977,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get addServerTip =>
       'Preencha um, leia um código QR ou importe um ficheiro partilhado por alguém.';
+
+  @override
+  String get move => 'Mover';
+
+  @override
+  String get moveToTop => 'Mover para o início';
+
+  @override
+  String get moveToBottom => 'Mover para o fim';
 }

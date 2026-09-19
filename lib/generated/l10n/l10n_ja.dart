@@ -2836,4 +2836,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get addServerTip => '入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。';
+
+  @override
+  String get move => '移動';
+
+  @override
+  String get moveToTop => '先頭へ移動';
+
+  @override
+  String get moveToBottom => '末尾へ移動';
 }

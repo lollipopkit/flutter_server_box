@@ -853,5 +853,8 @@
   "connect": "Ligar",
   "disconnect": "Desligar",
   "searchServerTip": "Pesquisa nomes e endereços — os dois dados que o editor pede primeiro.",
-  "addServerTip": "Preencha um, leia um código QR ou importe um ficheiro partilhado por alguém."
+  "addServerTip": "Preencha um, leia um código QR ou importe um ficheiro partilhado por alguém.",
+  "move": "Mover",
+  "moveToTop": "Mover para o início",
+  "moveToBottom": "Mover para o fim"
 }
