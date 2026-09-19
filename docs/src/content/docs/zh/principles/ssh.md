@@ -47,7 +47,7 @@ SSHAuthAbortError(... reason: SSHInternalError(
   Bad state: No matching host key algorithm))
 ```
 
-`SshCredential.allowLegacyAlgorithms` 是按服务器给出的答案，在服务器编辑页的 **SSH 高级** 里开启。被淘汰的算法追加在现代算法**之后**，所以还能提供现代算法的设备依旧协商到它，只有一无所有的设备才会落到这一段。它对每台服务器默认关闭：KEXINIT 未受认证，一份包含 SHA-1 的列表可能被攻击者强加到一条本可以协商更好的连接上。
+`SshCredential.allowLegacyAlgorithms` 是按服务器单独配置的开关，在服务器编辑页的 **SSH 高级** 里开启。主机密钥、密钥交换、加密和 MAC 这四类算法各自独立协商，被淘汰的算法在每一类里都追加在现代算法**之后**。因此降级只发生在没有现代算法可选的那一类：一台主机密钥很新、却只有 SHA-1 密钥交换的设备，仍会保留现代主机密钥，只在密钥交换上回退。它对每台服务器默认关闭：KEXINIT 未受认证，一份包含 SHA-1 的列表可能被攻击者强加到一条本可以协商更好的连接上。
 
 ### 创建 client
 
