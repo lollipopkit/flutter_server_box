@@ -30,7 +30,6 @@ final class ServerMetric {
     required this.kind,
     required this.label,
     required this.icon,
-    required this.color,
     required this.value,
     required this.note,
     required this.bigNote,
@@ -44,7 +43,10 @@ final class ServerMetric {
   final ServerMetricKind kind;
   final String label;
   final IconData icon;
-  final Color color;
+
+  // No colour. What a reading is drawn in depends on whether it is the one
+  // that card is watching, which is not something a reading knows about
+  // itself — see `ChartPalette.promoted` and the card's own `_seriesColor`.
 
   /// The reading now, written the way the row and the headline both write it.
   final String value;
@@ -163,30 +165,43 @@ DateTime? serverStaleSince(ServerState srv) {
   return DateTime.now().difference(at) > _staleAfter ? at : null;
 }
 
-/// The readings [srv] reports, and the five slots a card draws.
+/// The readings every card draws when the machine reports them.
+const _kAlwaysShown = {
+  ServerMetricKind.cpu,
+  ServerMetricKind.mem,
+  ServerMetricKind.disk,
+  ServerMetricKind.net,
+};
+
+/// The readings [srv] reports, and the five a card draws.
 ///
-/// The order is fixed rather than the machine's own: CPU, memory and disk are
-/// what a list of servers is scanned for, so they are in the same place on
-/// every card and the numbers line up down a column. Exactly one slot varies
-/// — see [_extra] — and a machine reporting more than fits says how many by a
-/// count rather than by growing a card taller than its neighbours.
+/// Which five: [_kAlwaysShown], plus one that varies by machine — see
+/// [_extra]. A machine reporting more says how many by a count instead of
+/// making its card taller than the others.
+///
+/// `shown` keeps the order of `all`, which is the order the detail page draws
+/// its rows in. The card grows into that page, so a row in a different place
+/// on the two moved on the first frame of the transition and back on the last.
+/// It used to be cpu, mem, disk, extra, net: a swap was drawn after the disk
+/// on the card and before it on the page, and a GPU before the network on the
+/// card and after it on the page. The cost is that the disk or the network is
+/// one row lower on a card whose varying reading comes before it.
+///
+/// The network counts as taken before [_extra] is asked. It did not, so a
+/// machine reporting nothing else got it twice and a `more` of -1 — every
+/// swapless machine on its first poll, before disk I/O has a second sample.
 ServerCardReadings serverCardReadings(ServerState srv) {
   final all = _readings(srv);
-  final by = {for (final m in all) m.kind: m};
+  final kinds = {
+    for (final m in all)
+      if (_kAlwaysShown.contains(m.kind)) m.kind,
+  };
+  if (_extra(all, kinds) case final extra?) kinds.add(extra.kind);
 
-  final shown = <ServerMetric>[];
-  void take(ServerMetricKind kind) {
-    if (by[kind] case final m?) shown.add(m);
-  }
-
-  take(ServerMetricKind.cpu);
-  take(ServerMetricKind.mem);
-  take(ServerMetricKind.disk);
-  if (_extra(all, {for (final m in shown) m.kind}) case final extra?) {
-    shown.add(extra);
-  }
-  take(ServerMetricKind.net);
-
+  final shown = [
+    for (final m in all)
+      if (kinds.contains(m.kind)) m,
+  ];
   return (shown: shown, all: all, more: all.length - shown.length);
 }
 
@@ -260,7 +275,6 @@ List<ServerMetric> _readings(ServerState srv) {
       kind: ServerMetricKind.cpu,
       label: 'CPU',
       icon: ServerDetailCards.cpu.icon,
-      color: ChartPalette.cpu,
       value: _pct(cpu),
       note: ss.cpu.brand.keys.firstOrNull ?? '',
       bigNote: '${_pct(ss.cpu.idle)} idle',
@@ -278,7 +292,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.mem,
         label: libL10n.memory,
         icon: ServerDetailCards.mem.icon,
-        color: ChartPalette.mem,
         value: _pct(used),
         note:
             '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / '
@@ -299,7 +312,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.swap,
         label: 'Swap',
         icon: ServerDetailCards.swap.icon,
-        color: ChartPalette.swap,
         value: _pct(used),
         note: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
         bigNote: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
@@ -319,7 +331,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.disk,
         label: libL10n.disk,
         icon: ServerDetailCards.disk.icon,
-        color: ChartPalette.disk,
         value: _pct(used),
         note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
         bigNote: l10n.ofFmt(usage.size.kb2Str),
@@ -338,7 +349,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.diskIo,
         label: l10n.diskIo,
         icon: MingCute.transfer_3_line,
-        color: ChartPalette.diskWrite,
         value: _rate(write),
         note: '${_rate(read)} ${l10n.read}',
         bigNote: '${l10n.write} · ${_rate(read)} ${l10n.read}',
@@ -359,7 +369,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.net,
         label: libL10n.net,
         icon: ServerDetailCards.net.icon,
-        color: ChartPalette.netTx,
         value: _rate(tx),
         note: '↓ ${_rate(rx)} · ↑ ${_rate(tx)}',
         bigNote: '↑ · ${_rate(rx)} ↓',
@@ -378,7 +387,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.gpu,
         label: 'GPU',
         icon: ServerDetailCards.gpu.icon,
-        color: ChartPalette.gpu,
         value: _pct(used),
         note: gpu.name,
         bigNote: gpu.name,
@@ -396,7 +404,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.temp,
         label: libL10n.temperature,
         icon: ServerDetailCards.temp.icon,
-        color: ChartPalette.temp,
         value: '${celsius.toStringAsFixed(1)}°C',
         note: sensor,
         bigNote: sensor,
@@ -416,7 +423,6 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.battery,
         label: libL10n.battery,
         icon: ServerDetailCards.battery.icon,
-        color: ChartPalette.battery,
         value: _pct(percent),
         note: [battery.status.name, ?battery.name].join(' · '),
         bigNote: battery.status.name,

@@ -29,6 +29,10 @@ abstract final class ChartPalette {
   static const _fallbackSeed = Color(0xFF880E4F);
 
   static SeriesPalette _series = SeriesPalette.fan(_fallbackSeed, dark: true);
+  static SeriesPalette _emphasis = SeriesPalette.seedFirst(
+    _fallbackSeed,
+    dark: true,
+  );
   static Color? _seed;
   static bool? _dark;
 
@@ -51,10 +55,35 @@ abstract final class ChartPalette {
     _seed = seed;
     _dark = dark;
     _series = SeriesPalette.fan(seed, dark: dark);
+    _emphasis = SeriesPalette.seedFirst(seed, dark: dark);
   }
 
   /// The six as they stand, for a caller that wants them in order.
   static SeriesPalette get series => _series;
+
+  /// The one reading a card is watching, in the theme colour itself.
+  ///
+  /// Which reading that is, is said by the label beside it. What the colour
+  /// says is that this is the one drawn in full above the rest — so it stays
+  /// the theme colour when a different reading is promoted, and a screen of
+  /// two dozen machines is one accent on neutrals rather than a hue per
+  /// machine chosen by whatever each of them happens to be watching.
+  static Color get promoted => _emphasis.of(ChartSeries.cpu);
+
+  /// Every other reading on that card: a tint barely off grey.
+  ///
+  /// Still a colour rather than grey, so a bar reads as a bar. Nothing is lost
+  /// by them all being the same one — each is named at the head of its own
+  /// row, and what the eye is doing across them is comparing lengths.
+  static Color get quiet => _emphasis.of(ChartSeries.mem);
+
+  /// Half of a pair read together — disk read against write, ↓ against ↑ —
+  /// where the colour is the only thing saying which is which.
+  ///
+  /// Unused on a card, where the pairs are each one row: it is the detail
+  /// page that draws both lines. Kept because [quiet] is the wrong answer
+  /// there and finding that out from a chart is finding it out late.
+  static Color get quietPaired => _emphasis.of(ChartSeries.diskRead);
 
   /// Also what a promoted row and its chart are drawn in — see the home card.
   static Color get cpu => _series.cpu;

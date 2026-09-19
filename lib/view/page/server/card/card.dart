@@ -105,6 +105,18 @@ abstract final class ServerCardSizes {
 
 const _tabular = [FontFeature.tabularFigures()];
 
+/// What a reading is drawn in: the theme colour for the one this card is
+/// watching, a tint barely off grey for the rest.
+///
+/// By role rather than by kind, and that is the whole of it. A list of two
+/// dozen machines each drawn in the hue of whatever it happens to be watching
+/// is two dozen hues that say nothing — what the eye is doing down that list
+/// is comparing how high the bars are, and which reading each one is, is
+/// written beside it. So the colour is spent on the one thing it can say
+/// there: this is the one drawn in full. See [ChartPalette.promoted].
+Color _seriesColor({required bool promoted}) =>
+    promoted ? ChartPalette.promoted : ChartPalette.quiet;
+
 /// What the detail page insets its focus card by, and its rows.
 ///
 /// Named here because they are the far end of a movement that starts inside a
@@ -517,7 +529,7 @@ class ServerCard extends ConsumerWidget {
                     ),
                   )
                 else ...[
-                  Expanded(child: _rowReading(focus, scheme)),
+                  Expanded(child: _rowReading(focus, scheme, promoted: true)),
                   if (second != null && wide >= 420) ...[
                     const SizedBox(width: 13),
                     Expanded(child: _rowReading(second, scheme)),
@@ -556,7 +568,13 @@ class ServerCard extends ConsumerWidget {
     );
   }
 
-  Widget _rowReading(ServerMetric m, ColorScheme scheme) {
+  /// [promoted] is the one this machine is being watched by — see
+  /// [_seriesColor]. The second reading on a line never is.
+  Widget _rowReading(
+    ServerMetric m,
+    ColorScheme scheme, {
+    bool promoted = false,
+  }) {
     return Row(
       children: [
         SizedBox(
@@ -591,7 +609,9 @@ class ServerCard extends ConsumerWidget {
                     minHeight: 4,
                     backgroundColor: scheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation(
-                      m.over ? StatePalette.warn : m.color,
+                      m.over
+                          ? StatePalette.warn
+                          : _seriesColor(promoted: promoted),
                     ),
                   ),
                 ),
@@ -684,9 +704,11 @@ class ServerCard extends ConsumerWidget {
                 minHeight: ServerCardSizes.bar,
                 backgroundColor: scheme.surfaceContainerHighest,
                 valueColor: AlwaysStoppedAnimation(
-                  focus?.over == true
-                      ? StatePalette.warn
-                      : (focus?.color ?? Colors.transparent),
+                  focus == null
+                      ? Colors.transparent
+                      : (focus.over
+                            ? StatePalette.warn
+                            : _seriesColor(promoted: true)),
                 ),
               ),
             ),
@@ -976,7 +998,7 @@ class ServerCard extends ConsumerWidget {
               : lerpDouble(ServerCardSizes.big, ServerCardSizes.openHead, t),
           child: Row(
           children: [
-            Icon(m.icon, size: 18, color: m.color),
+            Icon(m.icon, size: 18, color: _seriesColor(promoted: true)),
             const SizedBox(width: 9),
             Text(
               m.label,
@@ -1064,7 +1086,13 @@ class ServerCard extends ConsumerWidget {
         // Grey rather than the card dimmed as a whole: pressing the opacity
         // down would take the text with it, and the numbers are still worth
         // reading. What is out of date is the shape.
-        series: [HistorySeries(m.label, stale ? Colors.grey : m.color, m.samples)],
+        series: [
+          HistorySeries(
+            m.label,
+            stale ? Colors.grey : _seriesColor(promoted: true),
+            m.samples,
+          ),
+        ],
         format: m.format,
         times: m.times,
         // The same window the page draws live: from the first sample to now,
@@ -1278,7 +1306,7 @@ class ServerCard extends ConsumerWidget {
     return MetricRow(
       icon: m.icon,
       label: m.label,
-      color: m.color,
+      color: _seriesColor(promoted: promoted),
       value: m.value,
       note: m.note,
       percent: m.percent,

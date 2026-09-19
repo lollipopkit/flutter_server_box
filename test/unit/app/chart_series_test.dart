@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/color/oklch.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/chart_series.dart';
 
 /// The chart palette, against the values the design published.
@@ -197,6 +198,58 @@ void main() {
           }
         }
       }
+    });
+  });
+
+  group('the palette the app reads', () {
+    tearDown(() => ChartPalette.resolve(seed, dark: true));
+
+    test('the six move with the seed and with the theme', () {
+      ChartPalette.resolve(seed, dark: true);
+      final wasCpu = ChartPalette.cpu;
+      final wasPromoted = ChartPalette.promoted;
+
+      ChartPalette.resolve(const Color(0xFF3AA655), dark: true);
+      expect(ChartPalette.cpu, isNot(wasCpu));
+      expect(ChartPalette.promoted, isNot(wasPromoted));
+
+      // And back, since the same two answers must come from the same two
+      // inputs — this is a cache as much as it is a computation.
+      ChartPalette.resolve(seed, dark: true);
+      expect(ChartPalette.cpu, wasCpu);
+      expect(ChartPalette.promoted, wasPromoted);
+
+      ChartPalette.resolve(seed, dark: false);
+      expect(ChartPalette.cpu, isNot(wasCpu));
+    });
+
+    test('promoted is the accent and quiet is barely off grey', () {
+      ChartPalette.resolve(seed, dark: true);
+
+      // The one being watched carries the theme's own hue.
+      expect(
+        hueDistance(Oklch.of(ChartPalette.promoted).h, Oklch.of(seed).h),
+        lessThan(4),
+      );
+      expect(Oklch.of(ChartPalette.promoted).c, greaterThan(0.10));
+
+      // The rest are a tint, and the gap between the two is what says which
+      // row of a card is the one drawn in full above the others.
+      expect(Oklch.of(ChartPalette.quiet).c, lessThan(0.05));
+      expect(
+        Oklch.of(ChartPalette.promoted).c,
+        greaterThan(Oklch.of(ChartPalette.quiet).c * 2),
+      );
+      // Half of a pair sits between them: enough to be the only label.
+      final paired = Oklch.of(ChartPalette.quietPaired).c;
+      expect(paired, greaterThan(Oklch.of(ChartPalette.quiet).c));
+      expect(paired, lessThan(Oklch.of(ChartPalette.promoted).c));
+    });
+
+    test('a device keeps its colour whatever the seed', () {
+      final before = ChartPalette.devices;
+      ChartPalette.resolve(const Color(0xFF3AA655), dark: false);
+      expect(ChartPalette.devices, before);
     });
   });
 
