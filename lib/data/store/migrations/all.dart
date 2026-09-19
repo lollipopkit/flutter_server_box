@@ -20,6 +20,7 @@ import 'package:server_box/data/store/migrations/m022_ai_endpoint_version.dart';
 import 'package:server_box/data/store/migrations/m023_enum_names.dart';
 import 'package:server_box/data/store/migrations/m024_remote_desktop_profiles.dart';
 import 'package:server_box/data/store/migrations/m025_transport_switches.dart';
+import 'package:server_box/data/store/migrations/m026_ssh_legacy_algorithms.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -62,4 +63,5 @@ const kSchemaMigrations = <SchemaMigration>[
   EnumNamesMigration(),
   RemoteDesktopProfilesMigration(),
   TransportSwitchesMigration(),
+  SshLegacyAlgorithmsMigration(),
 ];

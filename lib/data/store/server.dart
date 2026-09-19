@@ -168,6 +168,10 @@ class ServerStore extends EntityStore<Spi> {
                     (e) => e.name == row['ssh_file_transport'],
                   ) ??
                   SshFileTransport.sftp,
+              // Null for every row written before the column, which is what
+              // those builds proposed: false.
+              allowLegacyAlgorithms:
+                  (row['ssh_allow_legacy_algorithms'] as int? ?? 0) == 1,
               jumpId: jumps?.firstOrNull,
               jumpIds: jumps,
             ),
@@ -306,6 +310,7 @@ class ServerStore extends EntityStore<Spi> {
       'ssh_alter_url',
       'ssh_proxy_command',
       'ssh_file_transport',
+      'ssh_allow_legacy_algorithms',
       'preferred_transport',
       'ssh_enabled',
       'monitor_enabled',
@@ -345,6 +350,7 @@ class ServerStore extends EntityStore<Spi> {
       ssh?.alterUrl,
       ssh?.proxyCommand,
       ssh?.fileTransport.name,
+      (ssh?.allowLegacyAlgorithms ?? false) ? 1 : 0,
       // Written only when it means something. A server with one way in has
       // nothing to prefer, and storing a value there would leave a preference
       // behind for the *other* transport if that one is ever configured.

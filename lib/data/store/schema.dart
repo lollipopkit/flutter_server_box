@@ -99,7 +99,11 @@ abstract final class SchemaVersion {
   ///      name rather than by index, which shifted meaning every time a case
   ///      was removed
   /// v25: saved RDP and VNC profiles become a syncable server child
-  static const current = 26;
+  /// v26: `server.ssh_enabled` and `monitor_enabled`, so one way into a server
+  ///      can be switched off without its configuration being dropped
+  /// v27: `server.ssh_allow_legacy_algorithms`, so a host whose SSH daemon
+  ///      only offers the retired `ssh-rsa`/SHA-1 algorithms can be reached
+  static const current = 27;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

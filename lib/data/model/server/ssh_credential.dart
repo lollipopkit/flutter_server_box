@@ -92,6 +92,18 @@ final class SshCredential {
   )
   final SshFileTransport fileTransport;
 
+  /// Whether this host may negotiate the algorithms SSH has retired.
+  ///
+  /// Defaulted false, so every record written before this existed goes on
+  /// proposing exactly what it did. An old SSH daemon — a router's dropbear, a
+  /// switch — often advertises only the SHA-1 `ssh-rsa` host key spelling,
+  /// which the modern set no longer contains, and the handshake then dies at
+  /// host-key negotiation with `No matching host key algorithm`, before any
+  /// authentication is attempted. Turning this on appends the retired
+  /// algorithms *after* the modern ones, so a host that offers anything current
+  /// still negotiates it and only one with nothing else falls through.
+  final bool allowLegacyAlgorithms;
+
   /// Carry the SSH byte stream over this server's `monitor` agent instead of
   /// connecting to [ip]:[port] directly, for hosts whose SSH port isn't
   /// reachable but whose monitor endpoint is.
@@ -114,6 +126,7 @@ final class SshCredential {
     this.jumpIds,
     this.proxyCommand,
     this.fileTransport = SshFileTransport.sftp,
+    this.allowLegacyAlgorithms = false,
   });
 
   factory SshCredential.fromJson(Map<String, dynamic> json) =>
@@ -235,6 +248,7 @@ final class SshCredential {
     Object? jumpIds = _unset,
     Object? proxyCommand = _unset,
     SshFileTransport? fileTransport,
+    bool? allowLegacyAlgorithms,
   }) {
     return SshCredential(
       ip: ip ?? this.ip,
@@ -253,6 +267,8 @@ final class SshCredential {
           ? this.proxyCommand
           : proxyCommand as String?,
       fileTransport: fileTransport ?? this.fileTransport,
+      allowLegacyAlgorithms:
+          allowLegacyAlgorithms ?? this.allowLegacyAlgorithms,
     );
   }
 
@@ -268,7 +284,10 @@ final class SshCredential {
         proxyCommand == other.proxyCommand &&
         // Changing how the socket is obtained needs a reconnect just as much
         // as changing the address does
-        listEquals(resolvedJumpIds, other.resolvedJumpIds);
+        listEquals(resolvedJumpIds, other.resolvedJumpIds) &&
+        // The algorithms are chosen once, in the handshake that is already
+        // over, so a finished session cannot be moved onto a different set.
+        allowLegacyAlgorithms == other.allowLegacyAlgorithms;
   }
 
   @override
@@ -302,6 +321,7 @@ final class SshCredential {
     Object.hashAll(resolvedJumpIds),
     proxyCommand,
     fileTransport,
+    allowLegacyAlgorithms,
   );
 }
 

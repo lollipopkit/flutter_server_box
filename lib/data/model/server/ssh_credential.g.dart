@@ -30,6 +30,7 @@ SshCredential _$SshCredentialFromJson(Map<String, dynamic> json) =>
             unknownValue: SshFileTransport.sftp,
           ) ??
           SshFileTransport.sftp,
+      allowLegacyAlgorithms: json['allowLegacyAlgorithms'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
@@ -46,6 +47,7 @@ Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
       'jumpIds': ?instance.jumpIds,
       'proxyCommand': ?instance.proxyCommand,
       'fileTransport': _$SshFileTransportEnumMap[instance.fileTransport]!,
+      'allowLegacyAlgorithms': instance.allowLegacyAlgorithms,
     };
 
 const _$SshFileTransportEnumMap = {
