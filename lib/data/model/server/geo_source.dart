@@ -8,11 +8,9 @@ import 'package:server_box/data/model/server/geo.dart';
 /// wrong looks exactly like one that is right unless the globe can say which
 /// it is looking at.
 ///
-/// **The case order is the chain's order, and nothing compares it.** It used to
-/// carry a `beats` method, which decided whether a newly arrived answer could
-/// overwrite a stored one — a question that only existed while answers were
-/// stored. `IpGeo.shared.locate` asks each link in turn and stops at the first that
-/// answers, so precedence is control flow now and cannot disagree with itself.
+/// **The case order is the chain's order.** `IpGeo.locate` asks each link in
+/// turn and stops at the first that answers, so precedence is control flow and
+/// cannot disagree with itself.
 enum GeoSource {
   /// The user typed it. Nothing overrides this.
   manual,
@@ -26,21 +24,16 @@ enum GeoSource {
 
   /// The city-level data, downloaded with consent.
   ///
-  /// The last link, and the only one that needs anything installed. There was a
-  /// `country` case under it, answered by a database bundled in the app; both
-  /// went when the download replaced them, and the case went with the database
-  /// rather than being kept as a value nothing can produce.
+  /// The last link, and the only one that needs anything installed.
   city,
 }
 
 /// Why nothing could place a server.
 ///
-/// Kept because "unknown" on its own is a dead end: the globe cannot say
-/// whether the address is one no database will ever have, or one that simply
-/// is not in the data this build has — and those read the same on screen while
-/// meaning entirely different things about what to do next. A whole tab of
-/// servers in the unplaced strip is the ordinary state of a LAN-only install,
-/// and nothing said so.
+/// Kept because "unknown" on its own is a dead end: it cannot say whether the
+/// address is one no database will ever have, or one that simply is not in the
+/// data this build has — and those read the same on screen while meaning
+/// entirely different things about what to do next.
 enum GeoMiss {
   /// A LAN, loopback, link-local or documentation address, or a name that only
   /// resolves on the network the device is already on.
@@ -62,12 +55,9 @@ enum GeoMiss {
 
 /// A coordinate and the reason to believe it.
 ///
-/// **Never persisted, so it has no JSON.** It carried a `toJson` and a
-/// `tryFromJson` for the store that held where each host was; that store is
-/// gone, and a serialiser kept for nothing is the kind that stops matching the
-/// class it serialises without anything noticing. What is written to disk is
-/// the address a server reported — see [SelfAddrStore] — and the coordinate is
-/// worked out again from it each time.
+/// Never persisted, so it has no JSON: what is written to disk is the address a
+/// server reported — see [SelfAddrStore] — and the coordinate is worked out
+/// again from it each time.
 final class ResolvedGeo {
   const ResolvedGeo({required this.coord, required this.source});
 
