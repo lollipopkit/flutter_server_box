@@ -41,18 +41,7 @@ extension _Actions on _ServerPageState {
     }
   }
 
-  /// What can be done to one server without leaving the list.
-  ///
-  /// Three shapes for one set of actions, decided by what there is room to put
-  /// them on and by what asked:
-  ///
-  /// - a card is big enough to hold them, so it turns over and they are on its
-  ///   back — where the machine is, rather than where the finger was;
-  /// - a line or a tile is not, so they hang off the one that was pressed,
-  ///   which stays where it is and does not change height;
-  /// - a narrow window on a touch device gets a sheet, because the middle of a
-  ///   phone is where the card being acted on is and the top half is out of a
-  ///   thumb's reach.
+  /// Shows actions for one server without leaving the list.
   ///
   /// [ctx] is the pressed card's, and [at] where a pointer was — null for a
   /// long press, which has a finger over the spot.
@@ -71,25 +60,34 @@ extension _Actions on _ServerPageState {
       return;
     }
 
-    final touchSheet = isMobile && !_opensInPlace(ctx);
-    if (!touchSheet && at == null && density == ServerListDensity.cards) {
-      _keys.requestFocus();
-      setState(() => _flippedId = srv.spi.id);
-      return;
-    }
+    // Pointer input provides an anchor; narrow touch layouts use a sheet.
+    final sheet = at == null && !_opensInPlace(ctx);
+    final id = srv.spi.id;
 
-    showServerActions(
-      context,
-      ref,
-      srv,
-      // Hung off the pressed row rather than dropped in the middle of the
-      // window: which of forty machines a menu is about is a question the
-      // menu's own position answers.
-      at: at ?? (touchSheet ? null : _anchorUnder(ctx)),
-      // A finger has no modifier to hold, so this is the way in to acting on
-      // several machines; a pointer's is a held key and does not need a row
-      // here as well.
-      onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
+    _keys.requestFocus();
+    setState(() => _menuId = id);
+    unawaited(
+      showServerActions(
+        context,
+        ref,
+        srv,
+        // Anchor the menu to the pressed row when possible.
+        at: at ?? (sheet ? null : _anchorUnder(ctx)),
+        sheet: sheet,
+        // Said inside the menu only where the menu is not beside the thing it
+        // is about: a sheet is at the bottom of the window, and a 44pt tile
+        // has no room for identifying information beyond the name. A card or
+        // a row has said it already, right under the menu and highlighted.
+        header: sheet || density == ServerListDensity.grid
+            ? serverMenuHead(srv)
+            : null,
+        // Touch users enter multi-selection through the menu.
+        onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
+      ).whenComplete(() {
+        // Do not clear a newer menu's highlight.
+        if (!mounted || _menuId != id) return;
+        setState(() => _menuId = null);
+      }),
     );
   }
 
@@ -98,12 +96,6 @@ extension _Actions on _ServerPageState {
     final box = ctx.findRenderObject();
     if (box is! RenderBox || !box.hasSize) return null;
     return box.localToGlobal(Offset(0, box.size.height));
-  }
-
-  /// Turns whichever card is face down back over.
-  void _unflip() {
-    if (_flippedId == null) return;
-    setState(() => _flippedId = null);
   }
 
   /// The three ways a server gets onto this device, in one place.

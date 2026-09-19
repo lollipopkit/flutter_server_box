@@ -61,12 +61,18 @@ extension _Widgets on _ServerPageState {
           key: ValueKey(id),
           child: Center(
             child: SingleChildScrollView(
-              child: ServerCard(
-                srv: srv,
-                promoted: _promotedOf(id),
-                onPromote: (kind) => _promote(id, kind),
-                onTap: () => _onTapCard(context, srv),
-                onLongPress: () => _onLongPressCard(context, srv),
+              // Use the card context so the menu is anchored to the card.
+              child: Builder(
+                builder: (context) => ServerCard(
+                  srv: srv,
+                  promoted: _promotedOf(id),
+                  onPromote: (kind) => _promote(id, kind),
+                  onTap: () => _onTapCard(context, srv),
+                  onLongPress: () => _onLongPressCard(context, srv),
+                  highlighted: id == _menuId,
+                ).onSecondary(
+                  (at) => _onLongPressCard(context, srv, at: at),
+                ),
               ),
             ),
           ),

@@ -190,6 +190,22 @@ ServerCardReadings serverCardReadings(ServerState srv) {
   return (shown: shown, all: all, more: all.length - shown.length);
 }
 
+/// Returns the status color used by server indicators.
+///
+/// [readings] can be supplied when the caller already has computed readings.
+Color serverStateDot(ServerState srv, {ServerCardReadings? readings}) =>
+    switch (srv.conn) {
+      ServerConn.finished =>
+        (readings ?? serverCardReadings(srv)).all.any((m) => m.over)
+            ? StatePalette.warn
+            : StatePalette.running,
+      ServerConn.failed => StatePalette.failed,
+      ServerConn.connecting ||
+      ServerConn.connected ||
+      ServerConn.loading => StatePalette.warn,
+      ServerConn.disconnected => StatePalette.idle,
+    };
+
 /// The one slot that is not the same on every card.
 ///
 /// Ranked the way someone scanning a list would rank it: whatever is over the

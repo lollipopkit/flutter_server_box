@@ -55,11 +55,14 @@ abstract final class ServerCardSizes {
 
   /// What the card adds to the grid's own padding once it is the page.
   ///
-  /// The page insets its readings by 13 at the sides and 7 above; the grid
+  /// The page insets its readings by 13 at the sides and 4 above; the grid
   /// insets its cards by 8 and 4. This is the difference, so the two line up
   /// without the grid having to change — see the comment on the masonry's
   /// padding.
-  static const openInset = EdgeInsets.fromLTRB(5, 3, 5, 9);
+  ///
+  /// The top inset is zero so detail readings align with the card's grid
+  /// position. The grid supplies the remaining top padding.
+  static const openInset = EdgeInsets.fromLTRB(5, 0, 5, 9);
 
   /// The line above the chart, once the readings are the page.
   ///
@@ -141,7 +144,9 @@ class ServerCard extends ConsumerWidget {
     this.openness = 0,
     this.density = ServerListDensity.cards,
     this.selected,
+    this.highlighted = false,
     this.pageWidth = 0,
+    this.opensInPlace = false,
   });
 
   final ServerState srv;
@@ -165,6 +170,9 @@ class ServerCard extends ConsumerWidget {
   /// about choosing.
   final bool? selected;
 
+  /// Whether the context menu for this server is open.
+  final bool highlighted;
+
   /// How wide the page this card is growing into will be.
   ///
   /// Known by the grid rather than measured here for two reasons: the card's
@@ -173,6 +181,16 @@ class ServerCard extends ConsumerWidget {
   /// whether the facts sit beside the readings — has to be the same answer the
   /// page gives, which it asks of this same box.
   final double pageWidth;
+
+  /// Whether a tap opens this card in place, by growing it into the detail.
+  ///
+  /// Such a card draws no tap ripple. `InkResponse` confirms the ripple and
+  /// stops tracking it before it calls `onTap`, so the transparent
+  /// `splashColor` that [build] sets once [openness] is above 0 never reaches
+  /// it: the ripple kept expanding for its 375 ms fade-out, clipped to a card
+  /// that was growing to the width of the page. The pressed highlight is still
+  /// drawn, because that one stays tracked and does turn transparent.
+  final bool opensInPlace;
 
   /// How much of this machine to draw.
   ///
@@ -194,9 +212,12 @@ class ServerCard extends ConsumerWidget {
       // [cardSurfaceAt]. Held any longer it is a sheet the size of the whole
       // content area by the time it fades, which is a change of background
       // rather than a card becoming a page.
-      color: openness <= 0
-          ? null
-          : Color.lerp(Colors.transparent, card, cardSurfaceAt(openness)),
+      color: switch (openness) {
+        > 0 => Color.lerp(Colors.transparent, card, cardSurfaceAt(openness)),
+        // Keep the highlight persistent while the context menu is open.
+        _ when highlighted => Theme.of(context).colorScheme.secondaryContainer,
+        _ => null,
+      },
       // A line and a tile are read as a set rather than one at a time, so they
       // are packed tighter and cornered less than a card: the design's 9pt
       // against a card's 13, and next to nothing between them.
@@ -230,6 +251,9 @@ class ServerCard extends ConsumerWidget {
         // And a page is not one tap target: by the end of this the rows under
         // the pointer are the things that respond, each with ink of its own.
         hoverColor: openness > 0 ? Colors.transparent : null,
+        // See [opensInPlace]: the colour below cannot reach a ripple that a
+        // tap has already confirmed, so such a card starts none.
+        splashFactory: opensInPlace ? NoSplash.splashFactory : null,
         splashColor: openness > 0 ? Colors.transparent : null,
         highlightColor: openness > 0 ? Colors.transparent : null,
         focusColor: openness > 0 ? Colors.transparent : null,
@@ -398,22 +422,9 @@ class ServerCard extends ConsumerWidget {
               readings.all.firstOrNull;
 
     return density == ServerListDensity.grid
-        ? _tile(context, focus)
+        ? _tile(context, readings, focus)
         : _line(context, readings, focus);
   }
-
-  /// What a machine's state looks like at seven pixels across.
-  Color _dot(ServerCardReadings? readings) => switch (srv.conn) {
-    ServerConn.finished =>
-      readings != null && readings.all.any((m) => m.over)
-          ? StatePalette.warn
-          : StatePalette.running,
-    ServerConn.failed => StatePalette.failed,
-    ServerConn.connecting ||
-    ServerConn.connected ||
-    ServerConn.loading => StatePalette.warn,
-    ServerConn.disconnected => StatePalette.idle,
-  };
 
   /// A line: the state, the name, how long it has been up, two readings and
   /// what the network is doing.
@@ -451,7 +462,7 @@ class ServerCard extends ConsumerWidget {
                   height: ServerCardSizes.dot,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _dot(readings),
+                    color: serverStateDot(srv, readings: readings),
                   ),
                 ),
                 const SizedBox(width: 11),
@@ -610,7 +621,11 @@ class ServerCard extends ConsumerWidget {
   /// What a wall of forty is for. A machine that cannot be reached keeps the
   /// tile's height and loses the bar, because a grid whose tiles are different
   /// heights is not a grid.
-  Widget _tile(BuildContext context, ServerMetric? focus) {
+  Widget _tile(
+    BuildContext context,
+    ServerCardReadings? readings,
+    ServerMetric? focus,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: isMobile ? ServerCardSizes.tileTouch : ServerCardSizes.tile,
@@ -628,7 +643,7 @@ class ServerCard extends ConsumerWidget {
                   height: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _dot(null),
+                    color: serverStateDot(srv, readings: readings),
                   ),
                 ),
                 const SizedBox(width: 5),
@@ -1033,7 +1048,11 @@ class ServerCard extends ConsumerWidget {
   }) {
     final now = DateTime.now().millisecondsSinceEpoch;
     final axis = _kChartAxis.transform(t);
-    return Held(
+    // The chart height must follow the parent transition so it does not freeze
+    // at an intermediate value during the reverse animation.
+    return SizedBox(
+      height: height,
+      child: Held(
       // Nothing about the chart changes over the first half of the movement:
       // the axis is not in yet and the line is the same line. Held there, the
       // box goes on growing around a chart that is laid out and painted but
@@ -1058,6 +1077,7 @@ class ServerCard extends ConsumerWidget {
         height: height,
         fill: true,
         axis: axis,
+      ),
       ),
       ),
     );
@@ -1173,31 +1193,14 @@ class ServerCard extends ConsumerWidget {
             ),
           ),
         ),
-      for (final (at, m) in rows.indexed) ...[
-        if (at > 0)
-          SizedBox(height: lerpDouble(ServerCardSizes.rowGap, 0, t)),
-        if (onCard.contains(m.kind))
-          _row(context, m, theme: theme, scheme: scheme)
-        else
-          // Not one of the card's, so it grows into the list as the card
-          // becomes the page rather than arriving with it.
-          ClipRect(
-            child: Align(
-              alignment: Alignment.topCenter,
-              heightFactor: t,
-              child: Opacity(
-                opacity: t,
-                child: _row(
-                  context,
-                  m,
-                  theme: theme,
-                  scheme: scheme,
-                  promoted: m.kind == focus?.kind,
-                ),
-              ),
-            ),
-          ),
-      ],
+      ..._spaced(
+        context,
+        rows,
+        onCard,
+        focus: focus,
+        theme: theme,
+        scheme: scheme,
+      ),
       // A machine reporting more than fits says how many rather than growing
       // taller than its neighbours: the cards are scanned down a column, and
       // one card a line longer than the rest is what breaks that.
@@ -1216,6 +1219,53 @@ class ServerCard extends ConsumerWidget {
           ),
         ),
     ];
+  }
+
+  /// Builds [rows] with transition-aware gaps around rows not shown on cards.
+  List<Widget> _spaced(
+    BuildContext context,
+    List<ServerMetric> rows,
+    Set<ServerMetricKind> onCard, {
+    required ServerMetric? focus,
+    required ThemeData theme,
+    required ColorScheme scheme,
+  }) {
+    final t = openness;
+    final gap = SizedBox(height: lerpDouble(ServerCardSizes.rowGap, 0, t));
+    final out = <Widget>[];
+    var cardRowAbove = false;
+    for (final m in rows) {
+      if (onCard.contains(m.kind)) {
+        if (cardRowAbove) out.add(gap);
+        out.add(_row(context, m, theme: theme, scheme: scheme));
+        cardRowAbove = true;
+        continue;
+      }
+      final row = _row(
+        context,
+        m,
+        theme: theme,
+        scheme: scheme,
+        promoted: m.kind == focus?.kind,
+      );
+      out.add(
+        ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: t,
+            child: Opacity(
+              opacity: t,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: cardRowAbove ? [gap, row] : [row, gap],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return out;
   }
 
   Widget _row(

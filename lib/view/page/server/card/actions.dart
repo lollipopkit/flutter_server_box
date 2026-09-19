@@ -2,13 +2,15 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_power.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -19,9 +21,8 @@ import 'package:server_box/view/widget/server_share.dart';
 /// key. Three lists would be three chances for them to drift apart, and a
 /// density is a view of the same machines rather than a different place.
 ///
-/// The row of functions on a server's own page is the same set of functions,
-/// run through the same [runServerFunc]: a Terminal that behaves differently
-/// depending on where it was opened from is two features.
+/// Feature navigation stays on the server page. This menu contains actions on
+/// the server record or connection, plus power controls when connected.
 List<ContextMenuAction> serverActions(
   BuildContext context,
   WidgetRef ref,
@@ -32,9 +33,7 @@ List<ContextMenuAction> serverActions(
   final connected = srv.conn == ServerConn.finished;
 
   return [
-    // First, and only on a device with no other way in: a long press already
-    // means "the other things", so acting on several machines has to start
-    // from inside that rather than replace it. A pointer holds a modifier.
+    // On touch devices, selection is available from the long-press menu.
     if (onSelect != null)
       ContextMenuAction(
         icon: Icons.check_box_outlined,
@@ -46,16 +45,6 @@ List<ContextMenuAction> serverActions(
       text: libL10n.edit,
       onTap: () => ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
     ),
-    // What this machine can be used for, in the order the user put them in on
-    // the function row — the same list, so the two cannot disagree about what
-    // this server offers.
-    for (final entry in serverFuncBtnsFor(spi, srv.remoteAccess))
-      if (entry.available)
-        ContextMenuAction(
-          icon: entry.btn.icon,
-          text: entry.btn.toStr,
-          onTap: () => runServerFunc(entry.btn, spi, context, ref),
-        ),
     ContextMenuAction(
       icon: Icons.copy,
       text: libL10n.copy,
@@ -82,9 +71,7 @@ List<ContextMenuAction> serverActions(
         text: l10n.connect,
         onTap: () => ref.read(serversProvider.notifier).refresh(spi: spi),
       ),
-    // Last, and only where it can be carried out: these end in the machine
-    // going away, which is not something to offer beside "copy address" on a
-    // server that is not even reachable.
+    // Power controls require an active connection.
     if (connected)
       for (final func in ServerPower.funcs)
         ContextMenuAction(
@@ -107,8 +94,6 @@ Future<void> _confirmDelete(
   WidgetRef ref,
   Spi spi,
 ) async {
-  // Named, because this is reached from a list where several machines look
-  // alike and the one under the finger is not always the one in mind.
   final confirmed = await context.showRoundDialog<bool>(
     title: libL10n.attention,
     child: Text(
@@ -124,60 +109,78 @@ Future<void> _confirmDelete(
   }
 }
 
+/// Identifies the server in a compact tile menu header.
+Widget serverMenuHead(ServerState srv) {
+  final line = srv.listLine ?? srv.spi.displayAddr;
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(11, 5, 11, 7),
+    child: Row(
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: serverStateDot(srv),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            srv.spi.name,
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 9),
+        // Keep long addresses from determining the menu width.
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 110),
+          child: Text(
+            line,
+            style: const TextStyle(fontSize: 10, height: 1, color: Colors.grey),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Raises [serverActions] the way the input that asked for them wants.
 ///
-/// [at] is where a pointer was, and null a long press — which has a finger
-/// over the spot, so nothing is drawn under it. On a phone that is a sheet at
-/// the bottom rather than a dialog in the middle: the middle of a phone is
-/// where the card being acted on is, and the top half is out of a thumb's
-/// reach.
+/// [at] is what the menu hangs off: where a pointer was, or the bottom of
+/// whatever was long-pressed. The thing pressed stays where it is and says so
+/// by its colour — see [ServerCard.highlighted] — which is what makes the
+/// menu's own position readable as "this one".
+///
+/// [sheet] is the one window with nowhere to hang it: a single column under a
+/// finger. [header] names the machine inside the menu — see [serverMenuHead].
+///
+/// How each of those is drawn is [showContextMenu]'s, not this file's: the
+/// sheet and the popup are one menu in two places, and a set of rows written
+/// out again here is how they stop being one.
 Future<void> showServerActions(
   BuildContext context,
   WidgetRef ref,
   ServerState srv, {
   Offset? at,
+  bool sheet = false,
+  Widget? header,
   VoidCallback? onSelect,
-}) async {
-  final actions = serverActions(context, ref, srv, onSelect: onSelect);
-  if (at != null || !isMobile) {
-    return showContextMenu(context, actions, title: srv.spi.name, at: at);
-  }
-
-  final chosen = await showRowsSheet<ContextMenuAction>(
+}) {
+  return showContextMenu(
     context,
-    rows: (ctx) => [
-      ListTile(
-        dense: true,
-        title: Text(srv.spi.name, style: UIs.text13Grey),
-        subtitle: Text(srv.spi.displayAddr, style: UIs.text11Grey),
-      ),
-      const Divider(height: 1),
-      for (final action in actions)
-        ListTile(
-          leading: Icon(
-            action.icon,
-            color: action.destructive ? Colors.red : null,
-          ),
-          title: Text(
-            action.text,
-            style: action.destructive ? UIs.textRed : null,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: action.note == null
-              ? null
-              : Text(
-                  action.note!,
-                  style: UIs.text11Grey,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-          // Answered rather than run here: the sheet has to be gone before an
-          // action that opens a dialog of its own runs, or the dialog opens
-          // underneath it.
-          onTap: () => Navigator.of(ctx).pop(action),
-        ),
-    ],
+    serverActions(context, ref, srv, onSelect: onSelect),
+    title: srv.spi.name,
+    header: header,
+    at: at,
+    sheet: sheet,
   );
-  chosen?.onTap();
 }
