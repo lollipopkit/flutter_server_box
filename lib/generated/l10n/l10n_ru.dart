@@ -520,9 +520,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот переключатель означает, что программа будет пытаться работать в фоновом режиме, но фактическое выполнение зависит от того, включено ли разрешение. Для нативного Android отключите «Оптимизацию батареи» для этого приложения, для MIUI измените контроль активности на «Нет ограничений».';
 
   @override
-  String get trayTitle => 'Значок состояния';
-
-  @override
   String get trayReadings => 'Показания';
 
   @override
@@ -646,11 +643,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'Нет запущенных контейнеров.\nЭто может быть из-за:\n- пользователя Docker, отличного от пользователя, настроенного в приложении\n- переменной окружения DOCKER_HOST, которая не была правильно считана. Вы можете выполнить `echo \$DOCKER_HOST` в терминале, чтобы увидеть ее значение.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return 'Всего $count образов';
-  }
 
   @override
   String get dockerProjectOther => 'Другое';
@@ -1256,10 +1248,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sendTo => 'Отправить в…';
-
-  @override
-  String get serverDetailOrder =>
-      'Порядок элементов на странице деталей сервера';
 
   @override
   String get serverFuncBtns => 'Кнопки функций сервера';
@@ -1877,9 +1865,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Список доступен, но менеджер не вернул все сведения о состоянии или автозапуске.';
 
   @override
-  String get serviceEnabled => 'Включено при запуске';
-
-  @override
   String get systemdUserScopeMissing => 'Пользовательские юниты не показаны';
 
   @override
@@ -1959,9 +1944,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable =>
@@ -2109,11 +2091,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Запускает на этом сервере Yet Another Bench Script для проверки диска, сети и процессора. Полный тест занимает 10–20 минут и продолжает выполняться, если покинуть эту страницу или закрыть приложение.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'Для теста производительности требуется Linux. Сервер сообщает, что используется $system.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'Результатов тестирования пока нет.';
 
   @override
@@ -2205,10 +2182,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get benchmarkPhaseDone => 'Завершение';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'Тест остановился, не сообщив результат. На сервере с малым объёмом памяти причиной обычно является OOM killer.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'Не удалось прочитать этот результат как JSON. Ниже приведён исходный текст.';
 
@@ -2226,9 +2199,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get benchmarkMultiCore => 'Несколько ядер';
 
   @override
-  String get benchmarkBlockSize => 'Размер блока';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2242,13 +2212,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Виртуализация';
-
-  @override
-  String get benchmarkCompare => 'Сравнить';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'Для сравнения требуется как минимум два завершённых теста.';
 
   @override
   String get benchmarkRawLog => 'Журнал выполнения';
@@ -2652,9 +2615,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2884,8 +2844,4 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Этот агент настроен только для мониторинга. Здесь нельзя открыть терминал, выполнять команды и просматривать файлы. Чтобы включить эти функции, измените раздел [remote_access] в config.toml агента.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

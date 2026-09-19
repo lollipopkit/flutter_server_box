@@ -285,8 +285,6 @@ class ServersNotifier extends _$ServersNotifier {
     state = state.copyWith(autoRefreshTimer: null);
   }
 
-  bool get isAutoRefreshOn => state.autoRefreshTimer != null;
-
   void closeServer({String? id}) {
     if (id == null) {
       for (final serverId in state.servers.keys) {

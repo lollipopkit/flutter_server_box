@@ -23,7 +23,7 @@
 //! roots contain a directory writable by someone else is already trusting that
 //! someone. This is stated rather than papered over.
 
-use std::path::{Component, Path, PathBuf};
+use std::path::{Component, PathBuf};
 
 /// Why a path was refused. Kept apart from "the operation failed" so the API
 /// can answer 403 for the first and 404/500 for the second — a client that
@@ -198,7 +198,3 @@ impl FsRoots {
     }
 }
 
-/// Whether `path` is inside `root`, for callers that hold both already.
-pub fn is_within(path: &Path, root: &Path) -> bool {
-    path.starts_with(root)
-}

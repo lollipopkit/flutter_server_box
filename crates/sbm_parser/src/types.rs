@@ -315,7 +315,9 @@ pub struct Battery {
 }
 
 impl Battery {
-    /// Dart `Battery.isLiPoly`
+    /// What the Linux collector filters on when only Li-poly packs are wanted
+    /// (`parse_batteries`). The Dart side no longer has a counterpart: it reads
+    /// this field from the parsed battery instead.
     pub fn is_li_poly(&self) -> bool {
         self.tech.as_deref() == Some("Li-poly")
     }

@@ -32,6 +32,7 @@ lib/
 │   ├── store/         # SQLite 存储
 │   ├── helper/
 │   ├── res/
+│   ├── service/       # systemd/procd/OpenRC 及 cron/用户管理
 │   └── ssh/
 ├── view/              # 页面和可复用 Widget
 ├── generated/         # 生成的本地化代码
@@ -54,8 +55,9 @@ lib/
 
 - `server/`：服务器配置、凭据和状态
 - `container/`：Docker/Podman 容器
+- `file/`：远程文件模型
 - `ssh/`：SSH 会话相关模型
-- `sftp/`：远程文件模型
+- `ai/`：AI 会话与命令模型
 - `app/`：App 本身的配置和状态
 
 ### `lib/data/provider/`
