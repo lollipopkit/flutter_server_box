@@ -69,7 +69,7 @@ final class _FakeServerNotifier extends ServerNotifier {
       ServerState(spi: spiFixture(id: id, name: 'hk'), status: InitStatus.status);
 
   @override
-  Future<ServerExec> ensureExec() async => _FakeExec();
+  Future<ServerExec> ensureExec({VoidCallback? onSshDial}) async => _FakeExec();
 }
 
 void main() {

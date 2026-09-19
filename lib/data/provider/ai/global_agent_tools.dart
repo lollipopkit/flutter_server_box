@@ -958,22 +958,20 @@ class GlobalAgentToolService {
       );
     }
 
-    // Connecting is what raises the host key and keyboard-interactive
-    // prompts, and this may be running while the Agent is nowhere on screen.
-    // Only on the path that actually connects: a server with a client already
-    // open asks nothing, and pulling the shell up on every tool call would
-    // override a user who deliberately closed it. A server whose commands go
-    // to its agent opens no shell at all, so it does not raise this either —
-    // which is a question about the transport that leads, not about whether an
-    // SSH credential exists.
-    if (state.spi.transport == ServerTransport.ssh) {
-      _ref.read(agentShellProvider.notifier).show();
-    }
-
     final notifier = _ref.read(serverProvider(spi.id).notifier);
     final ServerExec exec;
     try {
-      exec = await notifier.ensureExec();
+      // Connecting is what raises the host key and keyboard-interactive
+      // prompts, and this may be running while the Agent is nowhere on
+      // screen. Asked of the connection rather than predicted from
+      // `Spi.transport`: a server with a client already open asks nothing,
+      // a server whose commands go to its agent opens no shell at all — and
+      // one carrying both falls through to sshd when the agent does not
+      // reply, which the transport that leads does not say. Predicted, that
+      // last case raised the prompts with the shell still hidden.
+      exec = await notifier.ensureExec(
+        onSshDial: () => _ref.read(agentShellProvider.notifier).show(),
+      );
     } catch (e) {
       throw StateError('Cannot run commands on ${state.spi.name}: $e');
     }
