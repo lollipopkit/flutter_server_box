@@ -857,5 +857,7 @@
   "densityRows": "列表",
   "densityGrid": "方块",
   "connect": "连接",
-  "disconnect": "断开"
+  "disconnect": "断开",
+  "searchServerTip": "搜索名称和地址，也就是编辑页最先问的两项。",
+  "addServerTip": "手动填写、扫描二维码，或导入别人分享的文件。"
 }

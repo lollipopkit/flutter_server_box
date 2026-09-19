@@ -2966,4 +2966,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get disconnect => 'Disconnect';
+
+  @override
+  String get searchServerTip =>
+      'Searches names and addresses — the two the editor asks for first.';
+
+  @override
+  String get addServerTip =>
+      'Fill one in, scan a QR code, or import a file somebody shared.';
 }

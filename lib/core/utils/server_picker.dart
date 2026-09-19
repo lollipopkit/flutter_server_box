@@ -89,7 +89,7 @@ class _ServerPickerSheetState extends ConsumerState<_ServerPickerSheet> {
     final sorted = ServerSortOrder.stored.apply(
       order,
       byId,
-      (id) => ref.read(serverProvider(id)).conn,
+      (id) => ref.read(serverProvider(id)),
     );
 
     final all = [for (final id in sorted) ?byId[id]];

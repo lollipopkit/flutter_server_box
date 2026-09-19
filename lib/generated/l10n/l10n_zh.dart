@@ -2744,6 +2744,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get disconnect => '断开';
+
+  @override
+  String get searchServerTip => '搜索名称和地址，也就是编辑页最先问的两项。';
+
+  @override
+  String get addServerTip => '手动填写、扫描二维码，或导入别人分享的文件。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

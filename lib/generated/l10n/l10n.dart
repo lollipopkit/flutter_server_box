@@ -5091,6 +5091,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Disconnect'**
   String get disconnect;
+
+  /// No description provided for @searchServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Searches names and addresses — the two the editor asks for first.'**
+  String get searchServerTip;
+
+  /// No description provided for @addServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill one in, scan a QR code, or import a file somebody shared.'**
+  String get addServerTip;
 }
 
 class _AppLocalizationsDelegate

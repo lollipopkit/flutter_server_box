@@ -1,9 +1,10 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
 
 /// How the server list is ordered.
 ///
@@ -18,7 +19,19 @@ import 'package:server_box/data/res/store.dart';
 enum ServerSortField {
   manual,
   name,
-  status;
+  status,
+
+  /// Busiest first. The one an operator reaches for: a list ordered by how
+  /// hard each machine is working puts the question at the top of it.
+  cpu,
+
+  /// Whatever is past its threshold, first. See [kServerAlertPercent] — the
+  /// same line the card's footer and the overview's count mean by "over".
+  alert,
+
+  /// Shortest first, which is the direction that answers something: a machine
+  /// that has just come back is news, and one up for two hundred days is not.
+  uptime;
 
   /// The field a stored value names.
   ///
@@ -37,8 +50,24 @@ enum ServerSortField {
   ///
   /// [manual] *is* the arrangement, so a reversed one is a second arrangement
   /// nobody made — and the list already has a page for saying what the order
-  /// should be. The other two are comparisons and read both ways.
-  bool get directional => this != manual;
+  /// should be. [alert] is not a comparison either: it is "what is wrong,
+  /// first", and its reverse is "what is wrong, last", which nobody wants.
+  /// The rest are comparisons and read both ways.
+  bool get directional => this != manual && this != alert;
+
+  /// Whether ordering by this asks the machines anything.
+  ///
+  /// [manual] and [name] are answered by the record alone, so a page sorting
+  /// by one of them does not have to watch every server's readings — which is
+  /// a rebuild of the whole list on every poll.
+  bool get readsStatus => this != manual && this != name;
+
+  /// Whether the list may be dragged into a new order while this is on.
+  ///
+  /// Only [manual], because only [manual] is the order: dragging under a
+  /// comparison would move a card and have the comparison put it straight
+  /// back, which reads as the drag having failed.
+  bool get reorderable => this == manual;
 }
 
 /// A field and a direction, with the label and icon that go with them.
@@ -86,6 +115,9 @@ class ServerSortOrder {
     (ServerSortField.name, false) => Icons.sort,
     (ServerSortField.status, true) => Icons.arrow_upward,
     (ServerSortField.status, false) => Icons.arrow_downward,
+    (ServerSortField.cpu, _) => Icons.speed,
+    (ServerSortField.alert, _) => Icons.priority_high,
+    (ServerSortField.uptime, _) => Icons.schedule,
   };
 
   String get label {
@@ -93,6 +125,9 @@ class ServerSortOrder {
       ServerSortField.manual => libL10n.sequence,
       ServerSortField.name => libL10n.sortByName,
       ServerSortField.status => l10n.status,
+      ServerSortField.cpu => 'CPU',
+      ServerSortField.alert => l10n.alerts,
+      ServerSortField.uptime => libL10n.uptime,
     };
     if (!field.directional) return subject;
     final direction = switch (field) {
@@ -113,13 +148,13 @@ class ServerSortOrder {
   /// [ServerSortField.manual] orders by — so that case is a copy or a reverse, not
   /// a comparison.
   ///
-  /// [connOf] answers what a server's connection is doing. Read through a
+  /// [stateOf] answers what is known about a server right now. Read through a
   /// callback rather than from a provider here, because this runs inside a
   /// build and the caller is the one holding a `ref`.
   List<String> apply(
     List<String> order,
     Map<String, Spi> servers,
-    ServerConn Function(String id) connOf,
+    ServerState Function(String id) stateOf,
   ) {
     switch (field) {
       case ServerSortField.manual:
@@ -136,22 +171,48 @@ class ServerSortOrder {
         });
         return sorted;
       case ServerSortField.status:
-        // Both read once per server rather than inside the comparator, which
-        // runs O(n log n) times: `connOf` reaches a provider, and a position
-        // looked up with `indexOf` is a scan of the list being sorted.
-        final conn = {for (final id in order) id: connOf(id).index};
-        final rank = {for (var i = 0; i < order.length; i++) order[i]: i};
-        final sorted = order.toList();
-        // By how far along the connection is, and by the settings order within
-        // each state — `sort` is not stable, so the tie is broken explicitly
-        // or servers in the same state shuffle between rebuilds.
-        sorted.sort((a, b) {
-          final byState = conn[a]!.compareTo(conn[b]!);
-          if (byState != 0) return ascending ? byState : -byState;
-          return rank[a]!.compareTo(rank[b]!);
-        });
-        return sorted;
+        return _by(order, (id) => stateOf(id).conn.index.toDouble());
+      case ServerSortField.cpu:
+        // Busiest first by default, which is the direction the question is
+        // asked in — so this one reverses what "ascending" means to it.
+        return _by(
+          order,
+          (id) => -(stateOf(id).status.cpu.usedPercent(coreIdx: 0) ?? -1),
+        );
+      case ServerSortField.alert:
+        // Not a comparison but a partition: over the line, then everything
+        // else in the arrangement it was already in.
+        return _by(
+          order,
+          (id) => serverCardReadings(stateOf(id)).all.any((m) => m.over)
+              ? 0
+              : 1,
+        );
+      case ServerSortField.uptime:
+        return _by(
+          order,
+          (id) =>
+              -(stateOf(id).status.history.time.firstOrNull ?? 0).toDouble(),
+        );
     }
+  }
+
+  /// Sorts by one number per server, keeping the arrangement as the tie.
+  ///
+  /// Read once per server rather than inside the comparator, which runs
+  /// O(n log n) times: [stateOf] reaches a provider. And the tie is broken
+  /// explicitly, because `sort` is not stable — without it two servers with
+  /// the same reading swap places between rebuilds.
+  List<String> _by(List<String> order, double Function(String id) keyOf) {
+    final keys = {for (final id in order) id: keyOf(id)};
+    final rank = {for (var i = 0; i < order.length; i++) order[i]: i};
+    final sorted = order.toList();
+    sorted.sort((a, b) {
+      final byKey = keys[a]!.compareTo(keys[b]!);
+      if (byKey != 0) return ascending ? byKey : -byKey;
+      return rank[a]!.compareTo(rank[b]!);
+    });
+    return sorted;
   }
 }
 

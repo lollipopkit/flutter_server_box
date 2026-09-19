@@ -1118,5 +1118,7 @@
   "densityRows": "Rows",
   "densityGrid": "Grid",
   "connect": "Connect",
-  "disconnect": "Disconnect"
+  "disconnect": "Disconnect",
+  "searchServerTip": "Searches names and addresses — the two the editor asks for first.",
+  "addServerTip": "Fill one in, scan a QR code, or import a file somebody shared."
 }

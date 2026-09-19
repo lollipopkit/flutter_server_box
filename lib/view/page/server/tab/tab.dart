@@ -444,12 +444,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
     //
     // `select` narrows it to the transition: a status poll landing does not
     // reorder the list, a server connecting or dropping does.
-    final conns = ServerSortOrder.stored.field != ServerSortField.status
-        ? const <String, ServerConn>{}
-        : {
-            for (final id in serverOrder)
-              id: ref.watch(serverProvider(id).select((s) => s.conn)),
-          };
+    // Watched only where the order depends on them, and only in this method —
+    // which is a `build`, where `ref.watch` belongs. Every field but the two
+    // that read nothing about a machine needs its state, so the whole thing is
+    // read for those: `select` cannot narrow "a reading changed".
+    final needsState = ServerSortOrder.stored.field.readsStatus;
+    final states = !needsState
+        ? const <String, ServerState>{}
+        : {for (final id in serverOrder) id: ref.watch(serverProvider(id))};
 
     return _ServerOpenRequest(
       split: _opensInPlace(context),
@@ -465,7 +467,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
           final ordered = ServerSortOrder.stored.apply(
             serverOrder,
             servers,
-            (id) => conns[id] ?? ServerConn.disconnected,
+            (id) => states[id] ?? ref.read(serverProvider(id)),
           );
           final filtered = _filterServers(ordered);
           // The empty states win over the globe — see [_buildBodySmall] — so
@@ -1192,22 +1194,30 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _ => StatePalette.idle,
   };
 
-  /// What the page shows with no cards on it, which is two different things.
+  /// What the page shows with no cards on it, which is three different
+  /// things.
   ///
   /// A tag with nothing under it is a filter to undo — the servers are still
   /// there, and an empty page that does not say so reads as having lost them.
-  /// No servers at all is the first thing a new install sees, and the one
-  /// place on this page worth spelling out what to do.
+  /// A search with no hits is the same again, and the one that would be read
+  /// most wrongly: with no tag on it used to answer "no servers yet" and offer
+  /// to add one, on a page whose servers are all still there. No servers at
+  /// all is the first thing a new install sees, and the one place worth
+  /// spelling out what to do.
+  ///
+  /// Each gets a name for what is empty, a sentence saying why, and one way
+  /// out — in that order, because the way out is what the sentence leads to.
   Widget _buildEmpty() {
-    // A search with no hits is a third thing again, and the one that would be
-    // read most wrongly: with no tag on, it used to answer "no servers yet"
-    // and offer to add one, on a page whose servers are all still there.
     final query = _search.needle;
     if (query.isNotEmpty) {
       return EmptyPane(
         key: const ValueKey('empty-search'),
         icon: Icons.search_off,
-        label: query,
+        title: query,
+        // What was searched, since it is neither everything about a server nor
+        // an obvious subset of it: a machine is found by what it is called and
+        // where it is, which are the two the editor asks for first.
+        label: l10n.searchServerTip,
         action: Btn.text(text: libL10n.clear, onTap: _search.end),
       );
     }
@@ -1215,8 +1225,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     if (_tag.value.isNotEmpty) {
       return EmptyPane(
         key: const ValueKey('empty-tag'),
-        icon: BoxIcons.bx_server,
-        label: '#${_tag.value}',
+        icon: MingCute.hashtag_line,
+        title: '#${_tag.value}',
+        // Where tags come from, which is the question an empty one raises and
+        // which nothing on this tab answers.
+        label: l10n.tagsEmptyTip,
         action: Btn.text(
           text: libL10n.clear,
           onTap: () => _tag.value = TagSwitcher.kDefaultTag,
@@ -1227,7 +1240,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return EmptyPane(
       key: const ValueKey('empty-none'),
       icon: BoxIcons.bx_server,
-      label: l10n.serverTabEmpty,
+      title: l10n.serverTabEmpty,
+      label: l10n.addServerTip,
       action: Btn.text(text: libL10n.add, onTap: _onTapAddServer),
     );
   }
