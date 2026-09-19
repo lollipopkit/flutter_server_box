@@ -47,7 +47,16 @@ part 'misc.dart';
 
 class ServerDetailPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
-  const ServerDetailPage({super.key, required this.args});
+
+  /// Whether this is a page of its own or the inside of one.
+  ///
+  /// The server tab grows a card into this rather than pushing it, so there is
+  /// already a bar over it carrying the way back and the switcher between
+  /// machines — and a second one under it would be the page saying its own
+  /// name twice.
+  final bool bare;
+
+  const ServerDetailPage({super.key, required this.args, this.bare = false});
 
   @override
   ConsumerState<ServerDetailPage> createState() => _ServerDetailPageState();
@@ -259,10 +268,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   Widget _buildNothingYet(ServerState si) {
     final notice = _noticeOf(si);
 
-    return Scaffold(
-      appBar: _buildAppBar(si),
-      body: SafeArea(
-        child: Stack(
+    return _hosted(
+      si,
+      Stack(
           children: [
             ListView(
               padding: EdgeInsets.fromLTRB(26, 26, 26, _kFuncBarInset + 26),
@@ -330,8 +338,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
             ),
           ],
         ),
-      ),
     );
+  }
+
+  /// The page around the readings, or nothing when something else is the page.
+  ///
+  /// [ServerDetailPage.bare] is the server tab having grown a card into this:
+  /// the bar is already up there and so is the window's own inset, so a second
+  /// of each would be a page inside a page.
+  Widget _hosted(ServerState si, Widget body) {
+    if (widget.bare) return body;
+    return Scaffold(appBar: _buildAppBar(si), body: SafeArea(child: body));
   }
 
   /// Which of the three this is, and what it says.
@@ -530,10 +547,9 @@ ${err.message ?? 'null'}
     // func bar is there — this only explains a bar that is missing.
     final noAccess = buildFuncs ? null : _buildNoRemoteAccessCard(si);
 
-    return Scaffold(
-      appBar: _buildAppBar(si),
-      body: SafeArea(
-        child: Stack(
+    return _hosted(
+      si,
+      Stack(
           children: [
             LayoutBuilder(
               builder: (_, cons) => _buildReadings(
@@ -575,7 +591,6 @@ ${err.message ?? 'null'}
               ),
           ],
         ),
-      ),
     );
   }
 

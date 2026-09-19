@@ -14,22 +14,17 @@ extension _Actions on _ServerPageState {
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
       return;
     }
-    // The one place that knows about the layout. With a pane on screen,
-    // opening a server means selecting it; without one it means pushing, and
-    // the page that opens cannot tell the difference either way.
+    // The one place that knows about the layout. With room for it, opening a
+    // server means growing its card into the page; without, it means pushing
+    // one — and the detail cannot tell the difference either way.
     //
-    // Selected even when it has nothing to show yet. On one screen, jumping
+    // Opened even when it has nothing to show yet. On one screen, jumping
     // straight to the edit form is the only useful thing a tap can do for a
-    // server that has never connected. Beside a list it is not: the detail
-    // page says why it is empty, and staying on the list is what lets someone
+    // server that has never connected. In place it is not: the detail says why
+    // it is empty, and the list is still there, which is what lets someone
     // work through several servers that are all failing.
-    if (PaneScope.isSplit(context)) {
-      // Only the first selection reshapes the list, from a grid across the
-      // window to a column beside the pane. That is the move worth animating;
-      // picking another server afterwards leaves every row where it was.
-      final reshapes = ref.read(serverSelectionProvider) == null;
-      ref.read(serverSelectionProvider.notifier).select(srv.spi.id);
-      if (reshapes) _flyCardIntoPane(context, srv);
+    if (_opensInPlace(context)) {
+      _openDetail(srv.spi.id);
       return;
     }
 

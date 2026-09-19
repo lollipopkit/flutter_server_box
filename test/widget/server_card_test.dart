@@ -11,9 +11,9 @@ import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
-import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -22,6 +22,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/tab/tab.dart';
 
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
@@ -124,6 +125,48 @@ void main() {
     await tester.pump();
 
     expect(asked, [ServerMetricKind.mem]);
+  });
+
+  testWidgets('a long name elides rather than running past the card', (
+    tester,
+  ) async {
+    // The name already asked for an ellipsis; in a row a text is handed its
+    // own intrinsic width, so it never got to use it and pushed the row past
+    // the card instead. Overflow is an exception in a test rather than a
+    // stripe on the screen, so the pump is most of the assertion.
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    Stores.server.put(
+      spiFixture(
+        id: 'srv-long',
+        name: 'a server whose name is far longer than any card is wide',
+        ip: 'h',
+        user: 'u',
+        autoConnect: false,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: const [
+            LibLocalizations.delegate,
+            ...AppLocalizations.localizationsDelegates,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: ResponsivePoints.builder,
+          home: const ServerPage(),
+        ),
+      ),
+    );
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
+
+    expect(find.byType(ServerPage), findsOneWidget);
   });
 
   testWidgets('what is promoted is what the headline shows', (tester) async {
