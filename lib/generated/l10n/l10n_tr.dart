@@ -518,9 +518,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu anahtar yalnızca programın arka planda çalışmayı deneyeceği anlamına gelir. Arka planda çalışıp çalışamayacağı, iznin etkinleştirilip etkinleştirilmediğine bağlıdır. AOSP tabanlı Android ROM\'lar için lütfen bu uygulamada \"Pil Optimizasyonu\"nu devre dışı bırakın. MIUI / HyperOS için lütfen güç tasarrufu politikasını \"Sınırsız\" olarak değiştirin.';
 
   @override
-  String get trayTitle => 'Durum simgesi';
-
-  @override
   String get trayReadings => 'Değerler';
 
   @override
@@ -645,11 +642,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'Çalışan konteyner yok.\nBunun nedeni şunlar olabilir:\n- Docker kurulum kullanıcısı, uygulamada yapılandırılan kullanıcı adıyla aynı değil.\n- DOCKER_HOST ortam değişkeni doğru okunmadı. Terminalde `echo \$DOCKER_HOST` komutunu çalıştırarak kontrol edebilirsiniz.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count görüntü';
-  }
 
   @override
   String get dockerProjectOther => 'Diğer';
@@ -1254,9 +1246,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sendTo => 'Şuraya gönder…';
 
   @override
-  String get serverDetailOrder => 'Ayrıntı sayfası bileşen sırası';
-
-  @override
   String get serverFuncBtns => 'Sunucu işlev düğmeleri';
 
   @override
@@ -1855,9 +1844,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Liste kullanılabilir, ancak yönetici tüm durum veya otomatik başlatma bilgilerini döndürmedi.';
 
   @override
-  String get serviceEnabled => 'Başlangıçta etkin';
-
-  @override
   String get systemdUserScopeMissing => 'Kullanıcı unit\'leri listelenmiyor';
 
   @override
@@ -1937,9 +1923,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => 'Bu sunucuda komut çalıştırılamadı';
@@ -2085,11 +2068,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Disk, ağ ve CPU\'yu test etmek için bu sunucuda Yet Another Bench Script\'i çalıştırır. Tam bir test 10–20 dakika sürer ve bu sayfadan ayrılsanız veya uygulamayı kapatsanız da devam eder.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'Performans testi için Linux gerekir. Bu sunucu $system bildiriyor.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'Henüz performans testi yok.';
 
   @override
@@ -2180,10 +2158,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get benchmarkPhaseDone => 'Tamamlanıyor';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'Test sonuç bildirmeden durdu. Düşük bellekli bir sunucuda bunun nedeni genellikle OOM killer\'dır.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'Bu sonuç JSON olarak okunamadı. Ham metin aşağıdadır.';
 
@@ -2201,9 +2175,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get benchmarkMultiCore => 'Çok çekirdek';
 
   @override
-  String get benchmarkBlockSize => 'Blok boyutu';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2217,13 +2188,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Sanallaştırma';
-
-  @override
-  String get benchmarkCompare => 'Karşılaştır';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'Karşılaştırma için en az iki tamamlanmış test gerekir.';
 
   @override
   String get benchmarkRawLog => 'Çalıştırma günlüğü';
@@ -2734,9 +2698,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2966,8 +2927,4 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent\'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

@@ -490,9 +490,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 스위치는 프로그램이 백그라운드에서 실행을 시도한다는 의미입니다. 실제 백그라운드 실행 가능 여부는 권한 활성화 여부에 따라 다릅니다. AOSP 기반 Android ROM의 경우, 이 앱의 \"배터리 최적화\"를 비활성화해 주세요. MIUI / HyperOS의 경우, 절전 정책을 \"무제한\"으로 변경해 주세요.';
 
   @override
-  String get trayTitle => '상태 아이콘';
-
-  @override
   String get trayReadings => '측정값';
 
   @override
@@ -612,11 +609,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       '실행 중인 컨테이너가 없습니다.\n다음과 같은 원인이 있을 수 있습니다:\n- Docker 설치 사용자와 앱에 설정된 사용자 이름이 다릅니다.\n- 환경 변수 DOCKER_HOST가 올바르게 읽히지 않았습니다. 터미널에서 `echo \$DOCKER_HOST`를 실행하여 확인할 수 있습니다.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '이미지 $count개';
-  }
 
   @override
   String get dockerProjectOther => '기타';
@@ -1189,9 +1181,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sendTo => '보낼 위치…';
 
   @override
-  String get serverDetailOrder => '상세 페이지 위젯 순서';
-
-  @override
   String get serverFuncBtns => '서버 기능 버튼';
 
   @override
@@ -1761,9 +1750,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '서비스 목록은 사용할 수 있지만 상태 또는 자동 시작 정보가 모두 반환되지 않았습니다.';
 
   @override
-  String get serviceEnabled => '부팅 시 활성화';
-
-  @override
   String get systemdUserScopeMissing => '사용자 unit이 나열되지 않았습니다';
 
   @override
@@ -1843,9 +1829,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => '이 서버에서 명령을 실행할 수 없습니다';
@@ -1988,11 +1971,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 서버에서 Yet Another Bench Script를 실행하여 디스크, 네트워크, CPU를 측정합니다. 전체 실행에는 10~20분이 걸리며 이 페이지를 나가거나 앱을 닫아도 계속 진행됩니다.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return '벤치마크에는 Linux가 필요합니다. 이 서버는 $system(으)로 보고됩니다.';
-  }
-
-  @override
   String get benchmarkNoRuns => '아직 벤치마크 결과가 없습니다.';
 
   @override
@@ -2081,10 +2059,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get benchmarkPhaseDone => '마무리 중';
 
   @override
-  String get benchmarkDiedUnreported =>
-      '결과를 보고하지 않고 실행이 중단되었습니다. 메모리가 적은 서버에서는 일반적으로 OOM Killer가 원인입니다.';
-
-  @override
   String get benchmarkResultUnreadable =>
       '이 결과를 JSON으로 읽을 수 없습니다. 아래에 원본 텍스트를 표시합니다.';
 
@@ -2101,9 +2075,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get benchmarkMultiCore => '멀티 코어';
 
   @override
-  String get benchmarkBlockSize => '블록 크기';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2117,12 +2088,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get benchmarkVirt => '가상화';
-
-  @override
-  String get benchmarkCompare => '비교';
-
-  @override
-  String get benchmarkCompareEmpty => '비교하려면 완료된 벤치마크가 두 개 이상 필요합니다.';
 
   @override
   String get benchmarkRawLog => '실행 로그';
@@ -2623,9 +2588,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2855,8 +2817,4 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

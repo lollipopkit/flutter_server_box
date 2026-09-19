@@ -28,8 +28,6 @@ class Swap {
 
   double get usedPercent => total == 0 ? 0.0 : 1 - free / total;
 
-  double get freePercent => total == 0 ? 0.0 : free / total;
-
   @override
   String toString() {
     return 'Swap{total: $total, free: $free, cached: $cached}';

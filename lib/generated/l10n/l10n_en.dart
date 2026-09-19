@@ -511,9 +511,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".';
 
   @override
-  String get trayTitle => 'Status icon';
-
-  @override
   String get trayReadings => 'Readings';
 
   @override
@@ -638,11 +635,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count images';
-  }
 
   @override
   String get dockerProjectOther => 'Other';
@@ -1242,9 +1234,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendTo => 'Send to…';
-
-  @override
-  String get serverDetailOrder => 'Detail page widget order';
 
   @override
   String get serverFuncBtns => 'Server function buttons';
@@ -1851,9 +1840,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'The service list is usable, but the manager did not return all status or startup information.';
 
   @override
-  String get serviceEnabled => 'Enabled at startup';
-
-  @override
   String get systemdUserScopeMissing => 'User units are not listed';
 
   @override
@@ -1933,9 +1919,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => 'Could not run a command on this server';
@@ -2082,11 +2065,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'Benchmarking needs Linux. This server reports $system.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'No benchmarks yet.';
 
   @override
@@ -2177,10 +2155,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get benchmarkPhaseDone => 'Finishing';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'The run stopped without reporting a result. On a small server this is usually the out-of-memory killer.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'This result could not be read as JSON. The raw text is below.';
 
@@ -2198,9 +2172,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get benchmarkMultiCore => 'Multi core';
 
   @override
-  String get benchmarkBlockSize => 'Block size';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2214,13 +2185,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Virtualization';
-
-  @override
-  String get benchmarkCompare => 'Compare';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'At least two finished benchmarks are needed to compare.';
 
   @override
   String get benchmarkRawLog => 'Run log';
@@ -2738,9 +2702,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2970,8 +2931,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

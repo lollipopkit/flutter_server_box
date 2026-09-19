@@ -4,76 +4,78 @@ This document tracks every `TODO` that exists as intentional migration residue. 
 
 > **Rule:** See `lib/data/store/schema.dart` and `lib/data/store/migrations/all.dart`. A schema step is three edits: model, `SchemaVersion.current`, and `kSchemaMigrations`. Testing `apply()` directly never proves the other two. See `CLAUDE.md` for details.
 
+Locations name the file and the symbol a retirement touches. Line numbers are deliberately absent: they drift with every unrelated edit and a stale pointer is worse than none.
+
 ## Hive (keep per Q1)
 
 Data has been on SQLite since before `1.0.1538`. However upgrades from `1466`/`1480`/`1491` and earlier still rely on `HiveImport`. Fixtures under `test/fixtures/hive_v{1466,1480,1491}/` and `test/migration/hive_release_migration_test.dart` guard this path. **Do not delete `lib/hive/` or `hive_ce` dependencies until `SchemaVersion.oldestSupported` is advanced past the Hive era and fixtures confirm no install can still carry a Hive box.**
 
-| Area | File:Line | Since | Retire when | Notes |
+| Area | Location | Since | Retire when | Notes |
 |---|---|---|---|---|
-| Hive bootstrap | `lib/main.dart:109` | m003 | no install predates HiveImport | `Hive.initFlutter`, `registerHiveLegacyAdapters`, `Hive.close`, `lib/hive/*` + `hive_ce*` deps |
-| Hive adapters | `lib/hive/legacy_adapters.dart:27` | m003 | with Hive bootstrap | frozen adapters; never regenerate |
-| Hive SPI legacy | `lib/hive/spi_legacy_adapter.dart:70` | m004 | with `SpiNestSshMigration` | `Spi` nesting |
-| Hive → SQLite migration | `lib/data/store/migrations/m003_hive_to_sqlite.dart:18` | m003 | with Hive bootstrap | |
-| Schema bump guard | `lib/data/store/schema.dart:156` | m003 | with HiveImport | `TODO` there |
+| Hive bootstrap | `lib/main.dart` (`Hive.initFlutter`, `registerHiveLegacyAdapters`, `Hive.close`) | m003 | no install predates HiveImport | `lib/hive/*` + `hive_ce*` deps |
+| Hive adapters | `lib/hive/legacy_adapters.dart` (`registerHiveLegacyAdapters`, frozen `Legacy*V1` types) | m003 | with Hive bootstrap | frozen adapters; never regenerate |
+| Hive SPI legacy | `lib/hive/spi_legacy_adapter.dart` (`SpiLegacyAdapter`, `SpiNestedLegacyAdapter`) | m004 | with `SpiNestSshMigration` | `Spi` nesting |
+| Hive → SQLite migration | `lib/data/store/migrations/m003_hive_to_sqlite.dart` (`HiveImport`) | m003 | with Hive bootstrap | |
+| Schema bump guard | `lib/data/store/schema.dart` (`SchemaVersion`) | m003 | with HiveImport | `TODO` there |
 
 ## v2 compatibility shims
 
-| File:Line | Since | Retire when | Notes |
+| Location | Since | Retire when | Notes |
 |---|---|---|---|
-| `lib/core/sync.dart:143` | v2 | no v2 backup can still be imported | `BakSyncer` + `lib/data/res/misc.dart:24`, `lib/data/model/app/bak/*` |
-| `lib/data/res/misc.dart:24` | v2 | with sync.dart | |
-| `lib/main.dart:85` | v2 | no backup holds legacy name | `BakSyncer.inheritLegacyRemote` |
+| `lib/core/sync.dart` (`BakSyncer`, `inheritLegacyRemote`) | v2 | no v2 backup can still be imported | `lib/data/res/misc.dart`, `lib/data/model/app/bak/*` |
+| `lib/data/res/misc.dart` (`TODO`) | v2 | with sync.dart | |
+| `lib/main.dart` (`BakSyncer.inheritLegacyRemote` call) | v2 | no backup holds legacy name | |
 
 ## ServerCustom `cmds` / `withoutCmds`
 
 `custom.dart` keeps `cmds` (CSV) alongside the normalized child table. One full release after the table is the only store of truth can it go.
 
-| File:Line | Since | Retire when | Notes |
+| Location | Since | Retire when | Notes |
 |---|---|---|---|
-| `lib/data/model/server/custom.dart:19,50` | m004 ext | next major after 1.0.1538 | `withoutCmds`/`cmds` fields |
-| `lib/data/provider/server/single.dart:640` | m004 ext | with custom.dart | fallback read |
-| `lib/view/page/server/edit/edit.dart:152` | m004 ext | with custom.dart | editor write path |
+| `lib/data/model/server/custom.dart` (`cmds`, `withoutCmds`) | m004 ext | next major after 1.0.1538 | |
+| `lib/data/provider/server/single.dart` (`IndividualServerNotifier._migrateCustomCmds`) | m004 ext | with custom.dart | fallback read |
+| `lib/view/page/server/edit/edit.dart` (`ServerEditPage`) | m004 ext | with custom.dart | editor write path |
 
 ## Settings — retired keys swept by `removeRetiredKeys`
 
-`SettingStore.removeRetiredKeys` (`lib/data/store/setting.dart:516,775`) is the sweeper. Each entry has a paired migration.
+`SettingStore.removeRetiredKeys` (`lib/data/store/setting.dart`) is the sweeper. Each entry has a paired migration.
 
-| Key / File:Line | Migration | Retire when |
+| Key / Location | Migration | Retire when |
 |---|---|---|
-| `watchServerIds` `lib/data/store/setting.dart:230` | `m015_watch_selection_to_exclusion.dart:25` | one release after exclusion shipped |
-| `legacyStatusUrls` `lib/data/store/setting.dart:256` | `m016_legacy_status_urls.dart` | one release after 410 dialog shipped |
-| `schemaVersion` kv `lib/data/store/setting.dart:516` | — | when no install can hold stale `fgService` row |
-| `fgService` stale row `lib/data/store/setting.dart:628` | — | swept, harmless |
-| string branch `sshVirtKeys` `lib/data/store/setting.dart:587` | `m011_virt_key_rows.dart:11` + `m013_virt_key_names` | after rows migration |
-| flag reads `lib/data/store/setting.dart:802` | `m008_settings_fixups.dart:38,69,72` | with SettingsFixups |
-| virtKeyRows read `lib/data/store/setting.dart:818` | `m011_virt_key_rows.dart:11` | with VirtKeyRows |
+| `watchServerIds` `lib/data/store/setting.dart` (`SettingStore.watchServerIds`) | `m015_watch_selection_to_exclusion.dart` | one release after exclusion shipped |
+| `legacyStatusUrls` `lib/data/store/setting.dart` | `m016_legacy_status_urls.dart` | one release after 410 dialog shipped |
+| `schemaVersion` kv `lib/data/store/setting.dart` | — | when no install can hold stale `fgService` row |
+| `fgService` stale row `lib/data/store/setting.dart` | — | swept, harmless |
+| string branch `sshVirtKeys` `lib/data/store/setting.dart` | `m011_virt_key_rows.dart` + `m013_virt_key_names.dart` | after rows migration |
+| flag reads `lib/data/store/setting.dart` | `m008_settings_fixups.dart` | with SettingsFixups |
+| virtKeyRows read `lib/data/store/setting.dart` | `m011_virt_key_rows.dart` | with VirtKeyRows |
 
 ## known_host table
 
-| File:Line | Migration | Retire when |
+| Location | Migration | Retire when |
 |---|---|---|
-| `lib/data/store/server.dart:435` + `lib/data/store/migrations/m004_kv_to_tables.dart:437` + `m012_known_hosts_to_settings.dart:25` | m012 | no install can carry `known_host` table |
+| `lib/data/store/server.dart` (legacy `known_host` table) + `lib/data/store/migrations/m004_kv_to_tables.dart` + `lib/data/store/migrations/m012_known_hosts_to_settings.dart` | m012 | no install can carry `known_host` table |
 
 ## Home / history / tabs
 
-| File:Line | Since | Retire when |
+| Location | Since | Retire when |
 |---|---|---|
-| `lib/data/store/history.dart:152` `homeTabIndex` | m010 | `lib/view/page/home.dart:161` |
-| `lib/data/ssh/terminal_source.dart:104` / `lib/view/page/ssh/tab.dart:467` / `lib/view/page/storage/tab.dart:433` tab profiles | profile migration | no saved tab set predates profiles |
+| `lib/data/store/history.dart` (`homeTabIndex`) | m010 | `lib/view/page/home.dart` |
+| `lib/data/ssh/terminal_source.dart` / `lib/view/page/ssh/tab.dart` / `lib/view/page/storage/tab.dart` (tab profiles) | profile migration | no saved tab set predates profiles |
 
 ## Scripts / platform
 
-| File:Line | Since | Retire when |
+| Location | Since | Retire when |
 |---|---|---|
-| `lib/data/model/app/scripts/cmd_types.dart:28` enum sync | sbm_parser share | when Dart enum generated from `sbm_parser` |
-| `lib/data/model/app/scripts/script_consts.dart:7` | script share | when `ScriptConstants` derived from `crates/sbm_parser` |
-| `lib/data/model/app/linux_distro.dart:284` | — | after three-line `/etc/os-release` trim |
-| `lib/data/model/app/server_detail_card.dart:83` | — | after card `ks` names stabilized |
-| `lib/core/utils/ios_rootfs.dart:818` | container | no install predates container |
-| `lib/core/utils/local_files.dart:23` | — | no install still writes old paths |
-| `lib/main.dart:103` `extended_image_library` folder | upstream | when library creates folder recursively |
-| `lib/view/page/storage/file_browser.dart:724` sudo rescue | SFTP sudo | when escalatePath decided |
-| `lib/view/page/setting/entries/app.dart:470` raw settings edit | — | decide intentionality |
+| `lib/data/model/app/scripts/cmd_types.dart` enum sync | sbm_parser share | when Dart enum generated from `sbm_parser` |
+| `lib/data/model/app/scripts/script_consts.dart` (`ScriptConstants`) | script share | when `ScriptConstants` derived from `crates/sbm_parser` |
+| `lib/data/model/app/linux_distro.dart` | — | after three-line `/etc/os-release` trim |
+| `lib/data/model/app/server_detail_card.dart` | — | after card `ks` names stabilized |
+| `lib/core/utils/ios_rootfs.dart` | container | no install predates container |
+| `lib/core/utils/local_files.dart` | — | no install still writes old paths |
+| `lib/main.dart` (`extended_image_library` folder) | upstream | when library creates folder recursively |
+| `lib/view/page/storage/file_browser.dart` sudo rescue | SFTP sudo | when escalatePath decided |
+| `lib/view/page/setting/entries/app.dart` raw settings edit | — | decide intentionality |
 
 ## How to retire
 

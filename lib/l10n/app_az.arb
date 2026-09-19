@@ -139,7 +139,6 @@
   "icloudBackupStatusSummary": "Son ehtiyat nüsxə: {lastModified}\nVəziyyət: {remoteState}",
   "bgRun": "Arxa planda işlət",
   "bgRunTip": "Bu keçid yalnız proqramın arxa planda işləməyə cəhd edəcəyini bildirir. Arxa planda işləyə bilməsi müvafiq icazənin aktiv olub-olmamasından asılıdır. AOSP əsaslı Android ROM sistemlərində bu tətbiq üçün \"Batareya optimallaşdırması\" funksiyasını söndür. MIUI / HyperOS üçün enerjiyə qənaət siyasətini \"Məhdudiyyətsiz\" olaraq dəyiş.",
-  "trayTitle": "Vəziyyət işarəsi",
   "trayReadings": "Göstəricilər",
   "trayChart": "Qrafik",
   "trayChartNone": "Yoxdur",
@@ -176,7 +175,6 @@
   "displayCpuIndex": "CPU indeksini göstər",
   "dl2Local": "{fileName} bu cihaza endirilsin?",
   "dockerEmptyRunningItems": "İşləyən konteyner yoxdur.\nBunun səbəbi aşağıdakılar ola bilər:\n- Docker quraşdıran istifadəçi tətbiqdə təyin edilmiş istifadəçi adı ilə eyni deyil.\n- DOCKER_HOST mühit dəyişəni düzgün oxunmayıb. Onu terminalda `echo $DOCKER_HOST` əmrini icra edərək əldə edə bilərsən.",
-  "dockerImagesFmt": "{count} obraz",
   "dockerProjectOther": "Digər",
   "dockerPruneTip": "Diskdə yer boşaltmaq üçün istifadə olunmayan məlumatları sil",
   "dockerStatistics": "Docker statistikası",
@@ -435,7 +433,6 @@
   "homeDir": "Ev qovluğu",
   "selected": "{count} seçilib",
   "sendTo": "Göndər…",
-  "serverDetailOrder": "Təfərrüatlar səhifəsində vidcetlərin sırası",
   "serverFuncBtns": "Server funksiya düymələri",
   "serverOrder": "Serverlərin sırası",
   "serverTabEmpty": "Hələ server yoxdur",
@@ -662,7 +659,6 @@
   "serviceListFailed": "Servis siyahısını almaq mümkün olmadı",
   "serviceDetailsUnavailable": "Servislərlə bağlı bəzi təfərrüatlar əlçatan deyil",
   "serviceDetailsUnavailableTip": "Servis siyahısından istifadə etmək mümkündür, lakin idarəedici bütün status və ya başlanğıc məlumatlarını qaytarmadı.",
-  "serviceEnabled": "Başlanğıcda aktivdir",
   "systemdUserScopeMissing": "İstifadəçi vahidləri siyahıda göstərilmir",
   "systemdUserScopeMissingTip": "Bu hesabın serverdə istifadəçi sessiyası şini yoxdur, buna görə yalnız sistem vahidləri göstərilir.",
   "serverUnreachable": "Bu serverdə əmr icra etmək mümkün olmadı",
@@ -735,14 +731,6 @@
   },
   "benchmark": "Benchmark",
   "benchmarkIntro": "Bu serverdə disk, şəbəkə və CPU üçün Yet Another Bench Script işə salınır. Tam icra 10 ilə 20 dəqiqə arasında vaxt aparır və bu səhifədən çıxsan və ya tətbiqi bağlasan da davam edir.",
-  "benchmarkLinuxOnly": "Benchmark üçün Linux tələb olunur. Bu server {system} bildirir.",
-  "@benchmarkLinuxOnly": {
-    "placeholders": {
-      "system": {
-        "type": "String"
-      }
-    }
-  },
   "benchmarkNoRuns": "Hələ benchmark yoxdur.",
   "benchmarkRunning": "Benchmark icra olunur",
   "benchmarkStartFailed": "Benchmark başlatmaq mümkün olmadı",
@@ -792,20 +780,16 @@
   "benchmarkPhaseNetwork": "Şəbəkə sınaqdan keçirilir",
   "benchmarkPhaseCpu": "CPU sınaqdan keçirilir",
   "benchmarkPhaseDone": "Tamamlanır",
-  "benchmarkDiedUnreported": "İcra nəticə bildirilmədən dayandı. Az yaddaşlı serverlərdə buna adətən yaddaş çatışmazlığı zamanı prosesləri dayandıran mexanizm səbəb olur.",
   "benchmarkResultUnreadable": "Bu nəticəni JSON kimi oxumaq mümkün olmadı. Xam mətn aşağıdadır.",
   "benchmarkViewOnGeekbench": "Geekbench saytında bax",
   "benchmarkGeekbenchPublic": "Bu nəticə yuxarıdakı keçiddə hamıya açıq şəkildə dərc edilib.",
   "benchmarkSingleCore": "Tək nüvə",
   "benchmarkMultiCore": "Çox nüvə",
-  "benchmarkBlockSize": "Blok ölçüsü",
   "benchmarkIops": "IOPS",
   "benchmarkSend": "Yükləmə",
   "benchmarkRecv": "Endirmə",
   "benchmarkLatency": "Gecikmə",
   "benchmarkVirt": "Virtuallaşdırma",
-  "benchmarkCompare": "Müqayisə et",
-  "benchmarkCompareEmpty": "Müqayisə üçün ən azı iki tamamlanmış benchmark lazımdır.",
   "benchmarkRawLog": "İcra jurnalı",
   "benchmarkUpstream": "Yet Another Bench Script ({version}) əsasında işləyir",
   "@benchmarkUpstream": {
@@ -863,7 +847,6 @@
   "serviceUnitFile": "Unit file",
   "serviceJournalRecent": "{count, plural, one{Last line} other{Last {count} lines}}",
   "serviceJournalUnreadable": "This account cannot read the journal",
-  "serviceSelectHint": "Select a unit to see its details",
   "systemUsers": "Users",
   "userManagerLinuxOnly": "System user management currently supports Linux servers.",
   "userRegularAccount": "Regular",
@@ -998,7 +981,6 @@
   "scheduledTaskUnavailable": "crontab is not available on this server.",
   "scheduledTaskPreserveTip": "Comments, environment variables, and unrecognized lines in this crontab are preserved.",
   "scheduledTaskSchedule": "Schedule",
-  "scheduledTaskScheduleHint": "For example: 0 2 * * * or @reboot",
   "scheduledTaskAdd": "Add task",
   "scheduledTaskNextRun": "Next run",
   "scheduledTaskNextInFmt": "in {time}",
@@ -1064,6 +1046,5 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
-  "monitorNoAgent": "No server here has a monitor agent configured. Add one in a server's settings to edit it from here."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
 }

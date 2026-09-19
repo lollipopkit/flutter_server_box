@@ -1013,12 +1013,6 @@ abstract class AppLocalizations {
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
-  /// No description provided for @trayTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Status icon'**
-  String get trayTitle;
-
   /// No description provided for @trayReadings.
   ///
   /// In en, this message translates to:
@@ -1234,12 +1228,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.'**
   String get dockerEmptyRunningItems;
-
-  /// No description provided for @dockerImagesFmt.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} images'**
-  String dockerImagesFmt(Object count);
 
   /// No description provided for @dockerProjectOther.
   ///
@@ -2278,12 +2266,6 @@ abstract class AppLocalizations {
   /// **'Send to…'**
   String get sendTo;
 
-  /// No description provided for @serverDetailOrder.
-  ///
-  /// In en, this message translates to:
-  /// **'Detail page widget order'**
-  String get serverDetailOrder;
-
   /// No description provided for @serverFuncBtns.
   ///
   /// In en, this message translates to:
@@ -3256,12 +3238,6 @@ abstract class AppLocalizations {
   /// **'The service list is usable, but the manager did not return all status or startup information.'**
   String get serviceDetailsUnavailableTip;
 
-  /// No description provided for @serviceEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Enabled at startup'**
-  String get serviceEnabled;
-
   /// No description provided for @systemdUserScopeMissing.
   ///
   /// In en, this message translates to:
@@ -3369,12 +3345,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This account cannot read the journal'**
   String get serviceJournalUnreadable;
-
-  /// No description provided for @serviceSelectHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a unit to see its details'**
-  String get serviceSelectHint;
 
   /// No description provided for @serverUnreachable.
   ///
@@ -3622,12 +3592,6 @@ abstract class AppLocalizations {
   /// **'Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.'**
   String get benchmarkIntro;
 
-  /// No description provided for @benchmarkLinuxOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Benchmarking needs Linux. This server reports {system}.'**
-  String benchmarkLinuxOnly(String system);
-
   /// No description provided for @benchmarkNoRuns.
   ///
   /// In en, this message translates to:
@@ -3778,12 +3742,6 @@ abstract class AppLocalizations {
   /// **'Finishing'**
   String get benchmarkPhaseDone;
 
-  /// No description provided for @benchmarkDiedUnreported.
-  ///
-  /// In en, this message translates to:
-  /// **'The run stopped without reporting a result. On a small server this is usually the out-of-memory killer.'**
-  String get benchmarkDiedUnreported;
-
   /// No description provided for @benchmarkResultUnreadable.
   ///
   /// In en, this message translates to:
@@ -3814,12 +3772,6 @@ abstract class AppLocalizations {
   /// **'Multi core'**
   String get benchmarkMultiCore;
 
-  /// No description provided for @benchmarkBlockSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Block size'**
-  String get benchmarkBlockSize;
-
   /// No description provided for @benchmarkIops.
   ///
   /// In en, this message translates to:
@@ -3849,18 +3801,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Virtualization'**
   String get benchmarkVirt;
-
-  /// No description provided for @benchmarkCompare.
-  ///
-  /// In en, this message translates to:
-  /// **'Compare'**
-  String get benchmarkCompare;
-
-  /// No description provided for @benchmarkCompareEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'At least two finished benchmarks are needed to compare.'**
-  String get benchmarkCompareEmpty;
 
   /// No description provided for @benchmarkRawLog.
   ///
@@ -4714,12 +4654,6 @@ abstract class AppLocalizations {
   /// **'Schedule'**
   String get scheduledTaskSchedule;
 
-  /// No description provided for @scheduledTaskScheduleHint.
-  ///
-  /// In en, this message translates to:
-  /// **'For example: 0 2 * * * or @reboot'**
-  String get scheduledTaskScheduleHint;
-
   /// No description provided for @scheduledTaskAdd.
   ///
   /// In en, this message translates to:
@@ -5121,12 +5055,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
   String get monitorNoRemoteAccess;
-
-  /// No description provided for @monitorNoAgent.
-  ///
-  /// In en, this message translates to:
-  /// **'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.'**
-  String get monitorNoAgent;
 }
 
 class _AppLocalizationsDelegate

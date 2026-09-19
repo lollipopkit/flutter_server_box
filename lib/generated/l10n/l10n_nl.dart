@@ -517,9 +517,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Deze schakelaar betekent alleen dat het programma zal proberen op de achtergrond uit te voeren, of het in de achtergrond kan worden uitgevoerd, hangt af van of de toestemming is ingeschakeld of niet. Voor native Android, schakel \"Batterijoptimalisatie\" uit in deze app, en voor miui, wijzig de energiebesparingsbeleid naar \"Onbeperkt\".';
 
   @override
-  String get trayTitle => 'Statuspictogram';
-
-  @override
   String get trayReadings => 'Metingen';
 
   @override
@@ -644,11 +641,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'Er zijn geen actieve containers.\nDit kan komen doordat:\n- De Docker-installatiegebruiker niet overeenkomt met de gebruikersnaam die is geconfigureerd binnen de app.\n- De omgevingsvariabele DOCKER_HOST is niet correct gelezen. U kunt deze krijgen door `echo \$DOCKER_HOST` in de terminal uit te voeren.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return '$count afbeeldingen';
-  }
 
   @override
   String get dockerProjectOther => 'Overig';
@@ -1253,9 +1245,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sendTo => 'Verzenden naar…';
-
-  @override
-  String get serverDetailOrder => 'Volgorde van widget op detailpagina';
 
   @override
   String get serverFuncBtns => 'Server functieknoppen';
@@ -1869,9 +1858,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'De lijst is bruikbaar, maar de beheerder gaf niet alle status- of opstartinformatie terug.';
 
   @override
-  String get serviceEnabled => 'Ingeschakeld bij opstarten';
-
-  @override
   String get systemdUserScopeMissing => 'Gebruikers-units worden niet getoond';
 
   @override
@@ -1951,9 +1937,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable => 'Kon geen opdracht uitvoeren op deze server';
@@ -2101,11 +2084,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Voert Yet Another Bench Script uit op deze server om schijf, netwerk en CPU te testen. Een volledige test duurt 10–20 minuten en gaat door als je deze pagina verlaat of de app sluit.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'Voor benchmarks is Linux vereist. Deze server meldt $system.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'Nog geen benchmarks.';
 
   @override
@@ -2196,10 +2174,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get benchmarkPhaseDone => 'Afronden';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'De test stopte zonder een resultaat te melden. Op een kleine server is de OOM-killer meestal de oorzaak.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'Dit resultaat kon niet als JSON worden gelezen. De onbewerkte tekst staat hieronder.';
 
@@ -2217,9 +2191,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get benchmarkMultiCore => 'Meerdere kernen';
 
   @override
-  String get benchmarkBlockSize => 'Blokgrootte';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2233,13 +2204,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Virtualisatie';
-
-  @override
-  String get benchmarkCompare => 'Vergelijken';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'Er zijn minstens twee voltooide benchmarks nodig om te vergelijken.';
 
   @override
   String get benchmarkRawLog => 'Uitvoeringslogboek';
@@ -2759,9 +2723,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2991,8 +2952,4 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }

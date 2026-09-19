@@ -518,9 +518,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a \'Otimização de bateria\' para este app, no MIUI, altere a estratégia de economia de energia para \'Sem restrições\'.';
 
   @override
-  String get trayTitle => 'Ícone de estado';
-
-  @override
   String get trayReadings => 'Leituras';
 
   @override
@@ -644,11 +641,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get dockerEmptyRunningItems =>
       'Não há contêineres em execução.\nIsso pode ser porque:\n- O usuário que instalou o Docker difere do usuário configurado no app\n- A variável de ambiente DOCKER_HOST não foi lida corretamente. Você pode verificar isso executando `echo \$DOCKER_HOST` no terminal.';
-
-  @override
-  String dockerImagesFmt(Object count) {
-    return 'Total de $count imagens';
-  }
 
   @override
   String get dockerProjectOther => 'Outros';
@@ -1250,10 +1242,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sendTo => 'Enviar para…';
-
-  @override
-  String get serverDetailOrder =>
-      'Ordem dos componentes na página de detalhes do servidor';
 
   @override
   String get serverFuncBtns => 'Botões de função do servidor';
@@ -1865,9 +1853,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'A lista pode ser usada, mas o gestor não devolveu todas as informações de estado ou arranque.';
 
   @override
-  String get serviceEnabled => 'Ativado no arranque';
-
-  @override
   String get systemdUserScopeMissing => 'As units de usuário não são listadas';
 
   @override
@@ -1947,9 +1932,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get serviceJournalUnreadable => 'This account cannot read the journal';
-
-  @override
-  String get serviceSelectHint => 'Select a unit to see its details';
 
   @override
   String get serverUnreachable =>
@@ -2097,11 +2079,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Executa o Yet Another Bench Script neste servidor para testar disco, rede e CPU. Uma execução completa leva de 10 a 20 minutos e continua mesmo se você sair desta página ou fechar o aplicativo.';
 
   @override
-  String benchmarkLinuxOnly(String system) {
-    return 'O teste de desempenho requer Linux. Este servidor informa $system.';
-  }
-
-  @override
   String get benchmarkNoRuns => 'Ainda não há testes de desempenho.';
 
   @override
@@ -2193,10 +2170,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get benchmarkPhaseDone => 'Finalizando';
 
   @override
-  String get benchmarkDiedUnreported =>
-      'A execução parou sem informar um resultado. Em um servidor com pouca memória, a causa geralmente é o OOM killer.';
-
-  @override
   String get benchmarkResultUnreadable =>
       'Não foi possível ler este resultado como JSON. O texto original está abaixo.';
 
@@ -2214,9 +2187,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get benchmarkMultiCore => 'Vários núcleos';
 
   @override
-  String get benchmarkBlockSize => 'Tamanho do bloco';
-
-  @override
   String get benchmarkIops => 'IOPS';
 
   @override
@@ -2230,13 +2200,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get benchmarkVirt => 'Virtualização';
-
-  @override
-  String get benchmarkCompare => 'Comparar';
-
-  @override
-  String get benchmarkCompareEmpty =>
-      'São necessários pelo menos dois testes concluídos para comparar.';
 
   @override
   String get benchmarkRawLog => 'Log de execução';
@@ -2756,9 +2719,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get scheduledTaskSchedule => 'Schedule';
 
   @override
-  String get scheduledTaskScheduleHint => 'For example: 0 2 * * * or @reboot';
-
-  @override
   String get scheduledTaskAdd => 'Add task';
 
   @override
@@ -2988,8 +2948,4 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Este agente está configurado apenas para monitorização. Não pode abrir um terminal, executar comandos ou navegar pelos ficheiros a partir daqui. Para ativar estas funções, edite [remote_access] no config.toml do agente.';
-
-  @override
-  String get monitorNoAgent =>
-      'No server here has a monitor agent configured. Add one in a server\'s settings to edit it from here.';
 }
