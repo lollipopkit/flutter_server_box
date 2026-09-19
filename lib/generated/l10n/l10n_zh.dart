@@ -2729,6 +2729,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get alerts => '告警';
+
+  @override
+  String get densityCards => '卡片';
+
+  @override
+  String get densityRows => '列表';
+
+  @override
+  String get densityGrid => '方块';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

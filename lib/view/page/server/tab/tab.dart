@@ -23,6 +23,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
@@ -124,8 +125,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   final _scrollController = ScrollController();
 
-  /// Bumped when the sort changes, which is a view over the list rather than
-  /// anything the providers hold — so nothing else would rebuild it.
+  /// Bumped when the sort or the density changes, which are views over the
+  /// list rather than anything the providers hold — so nothing else would
+  /// rebuild it.
   final _sortVersion = RNode();
 
   /// The bar's search: what is typed, and whether the bar is a field at all.
@@ -526,31 +528,113 @@ class _ServerPageState extends ConsumerState<ServerPage>
           height: SessionTabBar.height,
           child: InlineSearchBar(
             controller: _search,
-            child: Row(
-              children: [
-                // The way back comes first and takes no room when there is
-                // nowhere to go back to.
-                if (openId != null)
-                  Btn.icon(
-                    text: libL10n.close,
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 17),
-                    onTap: _closeDetail,
+            child: LayoutBuilder(
+              builder: (_, cons) => Row(
+                children: [
+                  // The way back comes first and takes no room when there is
+                  // nowhere to go back to.
+                  if (openId != null)
+                    Btn.icon(
+                      text: libL10n.close,
+                      icon: const Icon(Icons.arrow_back_ios_new, size: 17),
+                      onTap: _closeDetail,
+                    ),
+                  Expanded(
+                    child: openId == null
+                        ? _buildTagSwitcher()
+                        : _buildServerSwitcher(openId, filtered),
                   ),
-                Expanded(
-                  child: openId == null
-                      ? _buildTagSwitcher()
-                      : _buildServerSwitcher(openId, filtered),
-                ),
-                // The four of them act on the list, and the list is still the
-                // page with one of its cards open — so they stay where they
-                // are rather than following a server into its own page.
-                ..._listActions(globeKey: _globeBtnKey),
-                const SizedBox(width: 7),
-              ],
+                  // Not while one is open: the page is one machine then, and
+                  // how many of them fit on a screen is not a question it has.
+                  if (openId == null)
+                    _buildDensityControl(filtered.length, room: cons.maxWidth),
+                  // The rest act on the list, and the list is still the page
+                  // with one of its cards open — so they stay where they are
+                  // rather than following a server into its own page.
+                  ..._listActions(globeKey: _globeBtnKey),
+                  const SizedBox(width: 7),
+                ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+
+  /// How much of each machine the list draws.
+  ///
+  /// A real control where the bar has room for one — four positions with the
+  /// current one filled, so what the other three are is visible rather than
+  /// something to go looking for. Where it has not, the same four are a sheet
+  /// behind a button, which is what the tag and the sort already do.
+  Widget _buildDensityControl(int count, {required double room}) {
+    final stored = ServerDensityPref.of(_tag.value);
+
+    // Room for four labelled positions, the switcher beside them and the four
+    // buttons after them. Below it the labels are what would have to shrink,
+    // and a segmented control with no labels is four unexplained icons.
+    if (room < 860) {
+      final resolved = stored.resolve(
+        count: count,
+        textScale: Stores.setting.textFactor.fetch(),
+      );
+      return Btn.icon(
+        text: resolved.label,
+        icon: Icon(resolved.icon, size: 18),
+        onTap: () => _showDensitySheet(count),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: SegmentedTabs<ServerListDensity>(
+        segments: [
+          for (final density in ServerListDensity.values)
+            SegmentedTab(
+              value: density,
+              label: density.label,
+              icon: density.icon,
+            ),
+        ],
+        selected: stored,
+        onSelected: _setDensity,
+      ),
+    );
+  }
+
+  void _setDensity(ServerListDensity density) {
+    ServerDensityPref.put(_tag.value, density);
+    _sortVersion.notify();
+  }
+
+  Future<void> _showDensitySheet(int count) async {
+    final stored = ServerDensityPref.of(_tag.value);
+    await showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        for (final density in ServerListDensity.values)
+          SheetChoiceTile(
+            icon: density.icon,
+            title: density.label,
+            // What `auto` means right now, said where the choice is made: the
+            // control otherwise gives no clue which of the three it picked.
+            selected: density == stored,
+            onTap: () {
+              Navigator.of(ctx).pop();
+              _setDensity(density);
+            },
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(17, 7, 17, 27),
+          child: Text(
+            '${libL10n.auto} · $count → '
+            '${ServerListDensity.autoFor(count).label}',
+            style: UIs.text11Grey,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
     );
   }
 
@@ -890,6 +974,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// movement has finished, so that only one thing is ever moving.
   Widget _buildGrid(List<String> filtered, String? openId) {
     final open = openId != null && filtered.contains(openId);
+    // What the list draws each machine as. Not while one is open: the page has
+    // one shape, and the row or tile that was tapped is on its way to it.
+    final density = ServerDensityPref.of(_tag.value).resolve(
+      count: filtered.length,
+      textScale: Stores.setting.textFactor.fetch(),
+    );
 
     // Cards are as tall as what they have to say — a server that has not
     // connected is one line, one that has is several charts. Splitting them
@@ -919,6 +1009,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
         // thing reads as one movement rather than as a card growing into a
         // grid that is still settling.
         moveDuration: _kOpenDuration,
+        // The column each shape wants: a line per machine takes the width, a
+        // tile takes as little as a name needs, and a card takes the one width
+        // the rest of the app lays a column out at.
+        columnWidth: switch (density) {
+          ServerListDensity.grid => 170.0,
+          ServerListDensity.rows => double.infinity,
+          _ => UIs.columnWidth,
+        },
         expandedKey: open ? ValueKey(openId) : null,
         expansion: _open.value,
         // Under the cards, and only while they are the page: with one of them
@@ -937,6 +1035,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
               builder: (_, ref, _) => _buildEachServerCard(
                 ref.watch(serverProvider(id)),
                 openness: id == openId ? _open.value : 0,
+                density: density,
               ),
             ),
         ],
@@ -1137,7 +1236,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     await ref.read(serversProvider.notifier).refresh();
   }
 
-  Widget _buildEachServerCard(ServerState srv, {double openness = 0}) {
+  Widget _buildEachServerCard(
+    ServerState srv, {
+    double openness = 0,
+    ServerListDensity density = ServerListDensity.cards,
+  }) {
     final card = Builder(
       // A context from inside the built tree, so the tap can ask whether a
       // detail pane is on screen. The state's own context is an ancestor of
@@ -1150,6 +1253,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         onTap: () => _onTapCard(context, srv),
         onLongPress: () => _onLongPressCard(srv),
         openness: openness,
+        density: density,
       ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
     );
 

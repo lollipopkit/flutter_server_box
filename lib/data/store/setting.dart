@@ -949,6 +949,20 @@ class SettingStore extends SqliteStore {
     fromObj: (obj) => Map<String, String>.from(obj as Map),
   );
 
+  /// How much of each server the list shows, by tag.
+  ///
+  /// Per tag because a tag is a set of machines: `#prod` with forty in it and
+  /// `#local` with two want different answers. The empty key is "all", which
+  /// is the set the app opens on.
+  ///
+  /// A [ServerListDensity]'s `name`, and absent means `auto` — so an install
+  /// that has never chosen follows the count rather than a stored guess.
+  late final serverListDensity = propertyDefault<Map<String, String>>(
+    'serverListDensity',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
   /// Whether the globe exists at all.
   ///
   /// On by default, and off is a real off: no button in the server tab, no

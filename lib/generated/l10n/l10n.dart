@@ -5061,6 +5061,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Alerts'**
   String get alerts;
+
+  /// No description provided for @densityCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get densityCards;
+
+  /// No description provided for @densityRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows'**
+  String get densityRows;
+
+  /// No description provided for @densityGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get densityGrid;
 }
 
 class _AppLocalizationsDelegate

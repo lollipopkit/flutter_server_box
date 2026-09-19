@@ -11,6 +11,7 @@ import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/spark.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
@@ -45,6 +46,16 @@ abstract final class ServerCardSizes {
   /// The least a card with nothing to report takes: a title and no more.
   static const collapsed = 30.0;
 
+  /// One line per machine, and one tile per machine.
+  ///
+  /// The taller of each pair is what a finger needs; the shorter is what a
+  /// pointer can hit, and the height saved is more machines on screen. Both
+  /// are the design's numbers.
+  static const row = 40.0;
+  static const rowTouch = 48.0;
+  static const tile = 44.0;
+  static const tileTouch = 56.0;
+
   static const bar = 3.0;
   static const name = 15.0;
   static const big = 21.0;
@@ -71,6 +82,7 @@ class ServerCard extends ConsumerWidget {
     required this.onTap,
     this.onLongPress,
     this.openness = 0,
+    this.density = ServerListDensity.cards,
   });
 
   final ServerState srv;
@@ -86,8 +98,37 @@ class ServerCard extends ConsumerWidget {
   /// 0 is a card in the grid, 1 the detail it becomes. See the class doc.
   final double openness;
 
+  /// How much of this machine to draw.
+  ///
+  /// Only while it is in the grid: a row that is being opened is on its way to
+  /// being the page, and the page has one shape. The height between the two is
+  /// animated rather than jumped — see the [AnimatedSize] in [build].
+  final ServerListDensity density;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final compact = openness <= 0 && density != ServerListDensity.cards;
+    return CardX(
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        // Every height this card has is a consequence of what the machine said
+        // — a server connecting, a reading promoted, a row arriving — and each
+        // of them used to move every card below it in the column between one
+        // frame and the next.
+        child: AnimatedSize(
+          duration: Durations.medium3,
+          curve: Curves.fastEaseInToSlowEaseOut,
+          alignment: Alignment.topCenter,
+          child: compact
+              ? _compact(context, ref)
+              : _full(context, ref),
+        ),
+      ),
+    );
+  }
+
+  Widget _full(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final t = openness;
 
@@ -126,28 +167,328 @@ class ServerCard extends ConsumerWidget {
       ?_foot(context, readings),
     ];
 
-    return CardX(
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: Padding(
-          padding: EdgeInsets.all(
-            lerpDouble(ServerCardSizes.pad, ServerCardSizes.openPad, t)!,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: ServerCardSizes.collapsed,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
-            ),
-          ),
+    return Padding(
+      padding: EdgeInsets.all(
+        lerpDouble(ServerCardSizes.pad, ServerCardSizes.openPad, t)!,
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: ServerCardSizes.collapsed,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
         ),
       ),
     );
   }
+
+  // --- The two shapes a card takes in a longer list ---
+
+  /// One line, or one tile.
+  ///
+  /// Both answer a narrower question than the card does — which machine to
+  /// look at — so both are the same three things: whether it is up, what it is
+  /// called, and the one reading that is being watched. Everything else is a
+  /// tap away, and a list of forty is not read by reading forty of anything.
+  Widget _compact(BuildContext context, WidgetRef ref) {
+    final readings = srv.conn == ServerConn.finished && !serverNeverSampled(srv)
+        ? serverCardReadings(srv)
+        : null;
+    final focus = readings == null
+        ? null
+        : readings.all.firstWhereOrNull((m) => m.kind == promoted) ??
+              readings.all.firstOrNull;
+
+    return density == ServerListDensity.grid
+        ? _tile(context, focus)
+        : _line(context, readings, focus);
+  }
+
+  /// What a machine's state looks like at seven pixels across.
+  Color _dot(ServerCardReadings? readings) => switch (srv.conn) {
+    ServerConn.finished =>
+      readings != null && readings.all.any((m) => m.over)
+          ? StatePalette.warn
+          : StatePalette.running,
+    ServerConn.failed => StatePalette.failed,
+    ServerConn.connecting ||
+    ServerConn.connected ||
+    ServerConn.loading => StatePalette.warn,
+    ServerConn.disconnected => StatePalette.idle,
+  };
+
+  /// A line: the state, the name, how long it has been up, two readings and
+  /// what the network is doing.
+  ///
+  /// Every one of them the same height, whatever the machine has to say. That
+  /// is the whole point of this shape — a machine that cannot be reached must
+  /// not push the forty under it down — so what a failure gets is the middle
+  /// of the line, where the bars would have been.
+  Widget _line(
+    BuildContext context,
+    ServerCardReadings? readings,
+    ServerMetric? focus,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final second = readings?.shown.firstWhereOrNull(
+      (m) => m.kind != focus?.kind && m.percent != null,
+    );
+
+    return SizedBox(
+      height: isMobile ? ServerCardSizes.rowTouch : ServerCardSizes.row,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13),
+        child: LayoutBuilder(
+          builder: (_, cons) {
+            // Columns are dropped from the right as the width goes, in the
+            // order they are worth least: the rate first, then the second
+            // reading, then how long it has been up. The name and the one
+            // reading being watched never go.
+            final wide = cons.maxWidth;
+            return Row(
+              children: [
+                Container(
+                  width: ServerCardSizes.dot,
+                  height: ServerCardSizes.dot,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _dot(readings),
+                  ),
+                ),
+                const SizedBox(width: 11),
+                SizedBox(
+                  width: 96,
+                  child: Text(
+                    srv.spi.name,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.2,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (wide >= 560) ...[
+                  const SizedBox(width: 13),
+                  SizedBox(
+                    width: 72,
+                    child: Text(
+                      srv.listLine ?? '',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1,
+                        color: Colors.grey,
+                        fontFeatures: _tabular,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 13),
+                if (focus == null)
+                  // Nothing to draw a bar of, so the line says why in the
+                  // space the bars would have taken.
+                  Expanded(
+                    child: Text(
+                      srv.needsInteractiveAuth
+                          ? libL10n.tapToAuth
+                          : (srv.listLine ?? libL10n.disconnected),
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1,
+                        color: srv.conn == ServerConn.failed
+                            ? StatePalette.failed
+                            : Colors.grey,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                else ...[
+                  Expanded(child: _rowReading(focus, scheme)),
+                  if (second != null && wide >= 420) ...[
+                    const SizedBox(width: 13),
+                    Expanded(child: _rowReading(second, scheme)),
+                  ],
+                ],
+                if (wide >= 700) ...[
+                  const SizedBox(width: 13),
+                  SizedBox(
+                    width: 96,
+                    child: Text(
+                      readings?.all
+                              .firstWhereOrNull(
+                                (m) => m.kind == ServerMetricKind.net,
+                              )
+                              ?.note ??
+                          '',
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1,
+                        color: Colors.grey,
+                        fontFeatures: _tabular,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 7),
+                const Icon(Icons.chevron_right, size: 17, color: Colors.grey),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _rowReading(ServerMetric m, ColorScheme scheme) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 30,
+          child: Text(
+            // Three letters of the name, because the bar beside it is what is
+            // being read and a full label would take the width the bar needs.
+            m.label.length <= 4
+                ? m.label.toUpperCase()
+                : m.label.substring(0, 3).toUpperCase(),
+            style: const TextStyle(
+              fontSize: 10,
+              height: 1,
+              color: Colors.grey,
+            ),
+            maxLines: 1,
+          ),
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: m.percent == null
+              ? Text(
+                  m.value,
+                  style: const TextStyle(fontSize: 11, height: 1),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: m.percent!.clamp(0.0, 1.0),
+                    minHeight: 4,
+                    backgroundColor: scheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation(
+                      m.over ? StatePalette.warn : m.color,
+                    ),
+                  ),
+                ),
+        ),
+        if (m.percent != null) ...[
+          const SizedBox(width: 7),
+          SizedBox(
+            width: 46,
+            child: Text(
+              m.value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1,
+                fontFeatures: _tabular,
+              ),
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// A tile: a state, a name and one number.
+  ///
+  /// What a wall of forty is for. A machine that cannot be reached keeps the
+  /// tile's height and loses the bar, because a grid whose tiles are different
+  /// heights is not a grid.
+  Widget _tile(BuildContext context, ServerMetric? focus) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: isMobile ? ServerCardSizes.tileTouch : ServerCardSizes.tile,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _dot(null),
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    srv.spi.name,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.2,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  focus?.value ?? _tileWord,
+                  style: TextStyle(
+                    fontSize: 10,
+                    height: 1.2,
+                    color: focus?.over == true
+                        ? StatePalette.warn
+                        : Colors.grey,
+                    fontFeatures: _tabular,
+                  ),
+                  maxLines: 1,
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            // The slot is kept even with nothing in it, so a machine that is
+            // down does not make its tile a different height from the rest.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(ServerCardSizes.bar),
+              child: LinearProgressIndicator(
+                value: focus?.percent?.clamp(0.0, 1.0) ?? 0,
+                minHeight: ServerCardSizes.bar,
+                backgroundColor: scheme.surfaceContainerHighest,
+                valueColor: AlwaysStoppedAnimation(
+                  focus?.over == true
+                      ? StatePalette.warn
+                      : (focus?.color ?? Colors.transparent),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// What a tile says where a number would be.
+  String get _tileWord => switch (srv.conn) {
+    ServerConn.failed =>
+      srv.needsInteractiveAuth ? libL10n.tapToAuth : libL10n.fail,
+    _ => '—',
+  };
 
   // --- The title, which every state has ---
 

@@ -22,6 +22,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
@@ -188,5 +189,44 @@ void main() {
     // what says the promotion took, since a card with no promotion draws the
     // CPU's `--`.
     expect(find.text('50.0%'), findsOneWidget);
+  });
+
+  group('the three densities', () {
+    test('what auto means is decided by the count and nothing else', () {
+      // The window's width says nothing about it: three servers on a desktop
+      // are still three servers.
+      expect(ServerListDensity.autoFor(1), ServerListDensity.cards);
+      expect(ServerListDensity.autoFor(6), ServerListDensity.cards);
+      expect(ServerListDensity.autoFor(7), ServerListDensity.rows);
+      expect(ServerListDensity.autoFor(24), ServerListDensity.rows);
+      expect(ServerListDensity.autoFor(25), ServerListDensity.grid);
+    });
+
+    test('a larger text scale rules the tightest one out', () {
+      // A name in a 44pt tile is the first thing to stop fitting.
+      expect(
+        ServerListDensity.grid.resolve(count: 40, textScale: 1),
+        ServerListDensity.grid,
+      );
+      expect(
+        ServerListDensity.grid.resolve(count: 40, textScale: 1.5),
+        ServerListDensity.rows,
+      );
+      expect(
+        ServerListDensity.auto.resolve(count: 40, textScale: 1.5),
+        ServerListDensity.rows,
+      );
+    });
+
+    test('a choice is kept per tag', () {
+      ServerDensityPref.put('', ServerListDensity.grid);
+      ServerDensityPref.put('prod', ServerListDensity.cards);
+
+      expect(ServerDensityPref.of(''), ServerListDensity.grid);
+      expect(ServerDensityPref.of('prod'), ServerListDensity.cards);
+      // Never chosen, so it follows the count rather than another tag's
+      // answer.
+      expect(ServerDensityPref.of('staging'), ServerListDensity.auto);
+    });
   });
 }

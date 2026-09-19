@@ -2973,4 +2973,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get alerts => 'Alerts';
+
+  @override
+  String get densityCards => 'Cards';
+
+  @override
+  String get densityRows => 'Rows';
+
+  @override
+  String get densityGrid => 'Grid';
 }
