@@ -3,19 +3,17 @@ title: Riverpod Patterns
 description: Provider, asynchronous state, and resource-lifecycle patterns used by Server Box
 ---
 
-Server Box uses Riverpod and `riverpod_generator` for UI state, asynchronous data, and service dependencies.
-
-For the system-level state model, see [State model](/docs/principles/state/).
+Server Box uses Riverpod and `riverpod_generator` for UI state, asynchronous data, and service dependencies. What state the app holds, and where it lives, is in [State model](/docs/principles/state/).
 
 ## Provider structure
 
 ```text
 UI Widget
-    ↓ ref.watch / ref.read
+    │ ref.watch / ref.read
 Provider
-    ↓
+    │
 Service / Store
-    ↓
+    │
 State update
 ```
 
@@ -150,20 +148,9 @@ List<Server> onlineServers(Ref ref) {
 }
 ```
 
-## Server-specific state
-
-The actual per-server provider is `serverProvider(serverId)`. Each instance contains the server configuration, connection state, SSH client, current status, and Monitor agent access information. `ServerNotifier` owns connection, collection, and error handling; pages read its state rather than managing the connection lifecycle.
-
-```dart
-final serverState = ref.watch(serverProvider(serverId));
-
-// ServerNotifier owns connection, collection, and error handling.
-await ref.read(serverProvider(serverId).notifier).refresh();
-```
-
 ## Reactive refresh
 
-A provider that needs periodic refreshes can create a timer and cancel it when disposed:
+A provider that needs periodic refreshes can create a timer and cancel it when disposed. The order matters, and both reasons are in the code:
 
 ```dart
 @riverpod
@@ -202,31 +189,7 @@ class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
 }
 ```
 
-Use `ref.watch` for provider dependencies. When an upstream provider changes, Riverpod can recompute dependent providers:
-
-```dart
-@riverpod
-Future<SystemInfo> systemInfo(Ref ref, Server server) async {
-  final client = await ref.watch(sshClientProvider(server).future);
-  return client.getSystemInfo();
-}
-```
-
-## State persistence
-
-The authoritative local store is the encrypted SQLite database `store.db`:
-
-- Settings and history use `SqliteStore`.
-- Servers, private keys, snippets, and other related records use entity stores.
-- Hive adapters only import data from old installations; Hive is not the current runtime backend.
-
-```dart
-final servers = Stores.server.readAll();
-Stores.server.put(server);
-Stores.server.deleteById(server.id);
-```
-
-Providers manage runtime state. Data that must survive a restart belongs in a store, not only in a provider cache.
+A refresh may also be asked for from outside the timer — startup, a lifecycle edge, a bulk action. Concurrency is then the scheduler's problem rather than each caller's: `ServerRefreshScheduler` (`lib/data/provider/server/refresh_scheduler.dart`) owns one global queue and shares the future of a server already queued or active, so three callers asking at once produce one refresh and no more than `maxConcurrent` run side by side.
 
 ## Best practices
 
