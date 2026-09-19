@@ -1243,6 +1243,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
           ServerListDensity.rows => double.infinity,
           _ => UIs.columnWidth,
         },
+        // And how much air each shape wants around it: a wall of tiles reads
+        // as a wall at the design's 5, and a list of lines as a list at
+        // nothing at all.
+        spacing: switch (density) {
+          ServerListDensity.grid => 5.0,
+          ServerListDensity.rows => 0.0,
+          _ => MasonryList.kSpacing,
+        },
         expandedKey: open ? ValueKey(openId) : null,
         expansion: _open.value,
         // Under the cards, and only while they are the page: with one of them

@@ -119,6 +119,17 @@ class ServerCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final compact = openness <= 0 && density != ServerListDensity.cards;
     return CardX(
+      // A line and a tile are read as a set rather than one at a time, so they
+      // are packed tighter and cornered less than a card: the design's 9pt
+      // against a card's 13, and next to nothing between them.
+      radius: compact
+          ? const BorderRadius.all(Radius.circular(9))
+          : null,
+      margin: switch (density) {
+        _ when !compact => null,
+        ServerListDensity.rows => const EdgeInsets.symmetric(vertical: 1),
+        _ => EdgeInsets.zero,
+      },
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
