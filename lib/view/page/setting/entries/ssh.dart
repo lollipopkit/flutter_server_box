@@ -8,31 +8,47 @@ extension _SSH on _AppSettingsPageState {
     RNodes.app.notify();
   }
 
-  Widget _buildSSH() {
-    return Column(
-      children: [
+  List<SettingsGroup> _buildSSH() {
+    return [
+      SettingsGroup(libL10n.general, [
         if (isDesktop) _buildSSHConfigImport(),
         if (isDesktop) _buildSshConnectionMode(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
+        _buildSSHVirtualKeyAutoOff(),
+        if (isDesktop) _buildDesktopSshAutoCopyPassword(),
+        if (isLinux) _buildDesktopTerminal(),
+      ]),
+      SettingsGroup(libL10n.theme, [
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
-        _buildSshBg(),
-        if (isLinux) _buildDesktopTerminal(),
-        if (isDesktop) _buildDesktopSshAutoCopyPassword(),
-        _buildSSHVirtualKeyAutoOff(),
-        _buildTmuxAuto(),
-      ].map((e) => CardX(child: e)).toList(),
-    );
+      ]),
+      // Three rows about one picture, which is what the tile they were folded
+      // into was for.
+      SettingsGroup(libL10n.background, [
+        _buildSshBgImage(),
+        _buildSshBgOpacity(),
+        _buildSshBlurRadius(),
+      ]),
+      SettingsGroup(l10n.tmuxAutoAttach, [
+        _buildTmuxAutoToggle(),
+        _buildTmuxShowSelector(),
+        _buildTmuxSessionName(),
+      ]),
+    ];
   }
 
-  Widget _buildSSHConfigImport() {
-    return ListTile(
-      leading: const Icon(MingCute.file_import_line),
-      title: Text(l10n.sshConfigImport),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapSSHConfigImport,
+  SettingsRow _buildSSHConfigImport() {
+    final label = l10n.sshConfigImport;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.file_import_line),
+        title: Text(label),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapSSHConfigImport,
+      ),
     );
   }
 
@@ -171,42 +187,51 @@ extension _SSH on _AppSettingsPageState {
     }
   }
 
-  Widget _buildSSHVirtualKeyAutoOff() {
-    return ListTile(
-      leading: const Icon(MingCute.hotkey_fill),
-      title: Text(l10n.sshVirtualKeyAutoOff),
-      subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
+  SettingsRow _buildSSHVirtualKeyAutoOff() {
+    final label = l10n.sshVirtualKeyAutoOff;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.hotkey_fill),
+        title: Text(label),
+        subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
+        trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
+      ),
+      keywords: 'Ctrl Alt',
     );
   }
 
-  Widget _buildFont() {
-    return ListTile(
-      leading: const Icon(MingCute.font_fill),
-      title: Text(libL10n.font),
-      trailing: _setting.fontPath.listenable().listenVal((val) {
-        final fontName = val.getFileName(withoutExtension: true);
-        return Text(fontName ?? libL10n.empty, style: UIs.text15);
-      }),
-      onTap: () {
-        context.showRoundDialog(
-          title: libL10n.font,
-          actions: [
-            TextButton(
-              onPressed: () async => await _pickFontFile(),
-              child: Text(libL10n.file),
-            ),
-            TextButton(
-              onPressed: () async {
-                await _clearCachedFont();
-                _setting.fontPath.delete();
-                _refreshApp(closeDialog: true);
-              },
-              child: Text(libL10n.clear),
-            ),
-          ],
-        );
-      },
+  SettingsRow _buildFont() {
+    final label = libL10n.font;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.font_fill),
+        title: Text(label),
+        trailing: _setting.fontPath.listenable().listenVal((val) {
+          final fontName = val.getFileName(withoutExtension: true);
+          return Text(fontName ?? libL10n.empty, style: UIs.text15);
+        }),
+        onTap: () {
+          context.showRoundDialog(
+            title: label,
+            actions: [
+              TextButton(
+                onPressed: () async => await _pickFontFile(),
+                child: Text(libL10n.file),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await _clearCachedFont();
+                  _setting.fontPath.delete();
+                  _refreshApp(closeDialog: true);
+                },
+                child: Text(libL10n.clear),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -241,15 +266,20 @@ extension _SSH on _AppSettingsPageState {
     _refreshApp(closeDialog: true);
   }
 
-  Widget _buildTermFontSize() {
-    return ListTile(
-      leading: const Icon(MingCute.font_size_line),
-      title: TipText(libL10n.fontSize, l10n.termFontSizeTip),
-      trailing: ValBuilder(
-        listenable: _setting.termFontSize.listenable(),
-        builder: (val) => Text(val.toString(), style: UIs.text15),
+  SettingsRow _buildTermFontSize() {
+    final label = libL10n.fontSize;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.font_size_line),
+        title: TipText(label, l10n.termFontSizeTip),
+        trailing: ValBuilder(
+          listenable: _setting.termFontSize.listenable(),
+          builder: (val) => Text(val.toString(), style: UIs.text15),
+        ),
+        onTap: () => _showFontSizeDialog(_setting.termFontSize),
       ),
-      onTap: () => _showFontSizeDialog(_setting.termFontSize),
+      keywords: l10n.termFontSizeTip,
     );
   }
 
@@ -271,11 +301,14 @@ extension _SSH on _AppSettingsPageState {
     _refreshApp(closeDialog: true);
   }
 
-  Widget _buildDesktopTerminal() {
-    return _setting.desktopTerminal.listenable().listenVal((val) {
-      return ListTile(
+  SettingsRow _buildDesktopTerminal() {
+    final label = libL10n.terminal;
+    return SettingsRow(
+      label,
+      () => _setting.desktopTerminal.listenable().listenVal((val) {
+        return ListTile(
         leading: const Icon(Icons.terminal),
-        title: TipText(libL10n.terminal, l10n.desktopTerminalTip),
+        title: TipText(label, l10n.desktopTerminalTip),
         trailing: Text(
           val,
           style: UIs.text15,
@@ -295,7 +328,7 @@ extension _SSH on _AppSettingsPageState {
               child: Input(
                 controller: ctrl,
                 autoFocus: true,
-                label: libL10n.terminal,
+                label: label,
                 hint: 'x-terminal-emulator / gnome-terminal',
                 icon: Icons.edit,
                 suggestion: false,
@@ -305,34 +338,46 @@ extension _SSH on _AppSettingsPageState {
             );
           });
         },
-      );
-    });
-  }
-
-  Widget _buildDesktopSshAutoCopyPassword() {
-    return ListTile(
-      leading: const Icon(Icons.password),
-      title: Text('${libL10n.copy} ${libL10n.pwd}'),
-      subtitle: Text('SSH', style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
+        );
+      }),
+      keywords: l10n.desktopTerminalTip,
     );
   }
 
-  Widget _buildSshConnectionMode() {
-    return _setting.sshConnectionMode.listenable().listenVal((useSystemSsh) {
-      final title = useSystemSsh
-          ? l10n.sshConnectionModeUseSystem
-          : l10n.sshConnectionModeUseBuiltin;
-      return ListTile(
-        leading: const Icon(Icons.swap_horiz),
-        title: Text(title),
-        subtitle: Text(l10n.sshConnectionModeTip, style: UIs.textGrey),
-        trailing: StoreSwitch(prop: _setting.sshConnectionMode),
-      );
-    });
+  SettingsRow _buildDesktopSshAutoCopyPassword() {
+    final label = '${libL10n.copy} ${libL10n.pwd}';
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.password),
+        title: Text(label),
+        subtitle: Text('SSH', style: UIs.textGrey),
+        trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
+      ),
+      keywords: 'SSH',
+    );
   }
 
-  Widget _buildTermTheme() {
+  SettingsRow _buildSshConnectionMode() {
+    return SettingsRow(
+      l10n.sshConnectionModeUseSystem,
+      () => _setting.sshConnectionMode.listenable().listenVal((useSystemSsh) {
+        final title = useSystemSsh
+            ? l10n.sshConnectionModeUseSystem
+            : l10n.sshConnectionModeUseBuiltin;
+        return ListTile(
+          leading: const Icon(Icons.swap_horiz),
+          title: Text(title),
+          subtitle: Text(l10n.sshConnectionModeTip, style: UIs.textGrey),
+          trailing: StoreSwitch(prop: _setting.sshConnectionMode),
+        );
+      }),
+      keywords:
+          '${l10n.sshConnectionModeUseBuiltin} ${l10n.sshConnectionModeTip}',
+    );
+  }
+
+  SettingsRow _buildTermTheme() {
     String index2Str(int index) {
       switch (index) {
         case 0:
@@ -346,88 +391,90 @@ extension _SSH on _AppSettingsPageState {
       }
     }
 
-    return ListTile(
-      leading: const Icon(MingCute.moon_stars_fill, size: _kIconSize),
-      title: Text(libL10n.theme),
-      trailing: ValBuilder(
-        listenable: _setting.termTheme.listenable(),
-        builder: (val) => Text(index2Str(val), style: UIs.text15),
+    return SettingsRow(
+      libL10n.theme,
+      () => ListTile(
+        leading: const Icon(MingCute.moon_stars_fill),
+        title: Text(libL10n.theme),
+        trailing: ValBuilder(
+          listenable: _setting.termTheme.listenable(),
+          builder: (val) => Text(index2Str(val), style: UIs.text15),
+        ),
+        onTap: () async {
+          final selected = await context.showPickSingleDialog(
+            title: libL10n.theme,
+            items: List.generate(3, (index) => index),
+            display: (p0) => index2Str(p0),
+            initial: _setting.termTheme.fetch(),
+          );
+          if (selected != null) {
+            _setting.termTheme.put(selected);
+          }
+        },
       ),
-      onTap: () async {
-        final selected = await context.showPickSingleDialog(
-          title: libL10n.theme,
-          items: List.generate(3, (index) => index),
-          display: (p0) => index2Str(p0),
-          initial: _setting.termTheme.fetch(),
-        );
-        if (selected != null) {
-          _setting.termTheme.put(selected);
-        }
-      },
     );
   }
 
-  Widget _buildSSHWakeLock() {
-    return ListTile(
-      leading: const Icon(MingCute.lock_fill),
-      title: Text(l10n.wakeLock),
-      trailing: StoreSwitch(prop: _setting.sshWakeLock),
-    );
-  }
-
-  Widget _buildLetterCache() {
-    return ListTile(
-      leading: const Icon(Bootstrap.alphabet),
-      title: TipText(
-        l10n.letterCache,
-        '${l10n.letterCacheTip}\n${l10n.needRestart}',
+  SettingsRow _buildSSHWakeLock() {
+    final label = l10n.wakeLock;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.lock_fill),
+        title: Text(label),
+        trailing: StoreSwitch(prop: _setting.sshWakeLock),
       ),
-      trailing: StoreSwitch(prop: _setting.letterCache),
     );
   }
 
-  Widget _buildSshBg() {
-    return ExpandTile(
-      leading: const Icon(MingCute.background_fill),
-      title: Text(libL10n.background),
-      children: [
-        _buildSshBgImage(),
-        _buildSshBgOpacity(),
-        _buildSshBlurRadius(),
-      ],
+  SettingsRow _buildLetterCache() {
+    final label = l10n.letterCache;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Bootstrap.alphabet),
+        title: TipText(label, '${l10n.letterCacheTip}\n${l10n.needRestart}'),
+        trailing: StoreSwitch(prop: _setting.letterCache),
+      ),
+      keywords: l10n.letterCacheTip,
     );
   }
 
-  Widget _buildSshBgImage() {
-    return ListTile(
-      leading: const Icon(Icons.image),
-      title: Text(libL10n.image),
-      trailing: _setting.sshBgImage.listenable().listenVal((val) {
-        final name = val.getFileName();
-        return Text(name ?? libL10n.empty, style: UIs.text15);
-      }),
-      onTap: () {
-        context.showRoundDialog(
-          title: libL10n.image,
-          actions: [
-            TextButton(
-              onPressed: () async => await _pickBgImage(),
-              child: Text(libL10n.file),
-            ),
-            TextButton(
-              onPressed: () {
-                _setting.sshBgImage.delete();
-                _refreshApp(closeDialog: true);
-              },
-              child: Text(libL10n.clear),
-            ),
-          ],
-        );
-      },
+  SettingsRow _buildSshBgImage() {
+    final label = libL10n.image;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.image),
+        title: Text(label),
+        trailing: _setting.sshBgImage.listenable().listenVal((val) {
+          final name = val.getFileName();
+          return Text(name ?? libL10n.empty, style: UIs.text15);
+        }),
+        onTap: () {
+          context.showRoundDialog(
+            title: label,
+            actions: [
+              TextButton(
+                onPressed: () async => await _pickBgImage(),
+                child: Text(libL10n.file),
+              ),
+              TextButton(
+                onPressed: () {
+                  _setting.sshBgImage.delete();
+                  _refreshApp(closeDialog: true);
+                },
+                child: Text(libL10n.clear),
+              ),
+            ],
+          );
+        },
+      ),
+      keywords: libL10n.background,
     );
   }
 
-  Widget _buildSshBgOpacity() {
+  SettingsRow _buildSshBgOpacity() {
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
@@ -438,30 +485,34 @@ extension _SSH on _AppSettingsPageState {
       context.popDialog();
     }
 
-    return ListTile(
-      leading: const Icon(Icons.opacity),
-      title: Text(libL10n.opacity),
-      trailing: ValBuilder(
-        listenable: _setting.sshBgOpacity.listenable(),
-        builder: (val) => Text(val.toString(), style: UIs.text15),
-      ),
-      onTap: () => context.showRoundDialog(
-        title: libL10n.opacity,
-        child: Input(
-          controller: _sshOpacityCtrl,
-          autoFocus: true,
-          type: TextInputType.number,
-          hint: '0.3',
-          icon: Icons.opacity,
-          suggestion: false,
-          onSubmitted: onSave,
+    return SettingsRow(
+      libL10n.opacity,
+      () => ListTile(
+        leading: const Icon(Icons.opacity),
+        title: Text(libL10n.opacity),
+        trailing: ValBuilder(
+          listenable: _setting.sshBgOpacity.listenable(),
+          builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
-        actions: Btn.ok(onTap: () => onSave(_sshOpacityCtrl.text)).toList,
+        onTap: () => context.showRoundDialog(
+          title: libL10n.opacity,
+          child: Input(
+            controller: _sshOpacityCtrl,
+            autoFocus: true,
+            type: TextInputType.number,
+            hint: '0.3',
+            icon: Icons.opacity,
+            suggestion: false,
+            onSubmitted: onSave,
+          ),
+          actions: Btn.ok(onTap: () => onSave(_sshOpacityCtrl.text)).toList,
+        ),
       ),
+      keywords: libL10n.background,
     );
   }
 
-  Widget _buildSshBlurRadius() {
+  SettingsRow _buildSshBlurRadius() {
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
@@ -475,88 +526,92 @@ extension _SSH on _AppSettingsPageState {
       context.popDialog();
     }
 
-    return ListTile(
-      leading: const Icon(Icons.blur_on),
-      title: Text(libL10n.blurRadius),
-      trailing: ValBuilder(
-        listenable: _setting.sshBlurRadius.listenable(),
-        builder: (val) => Text(val.toString(), style: UIs.text15),
-      ),
-      onTap: () => context.showRoundDialog(
-        title: libL10n.blurRadius,
-        child: Input(
-          controller: _sshBlurCtrl,
-          autoFocus: true,
-          type: TextInputType.number,
-          hint: '0',
-          icon: Icons.blur_on,
-          suggestion: false,
-          onSubmitted: onSave,
+    return SettingsRow(
+      libL10n.blurRadius,
+      () => ListTile(
+        leading: const Icon(Icons.blur_on),
+        title: Text(libL10n.blurRadius),
+        trailing: ValBuilder(
+          listenable: _setting.sshBlurRadius.listenable(),
+          builder: (val) => Text(val.toString(), style: UIs.text15),
         ),
-        actions: Btn.ok(onTap: () => onSave(_sshBlurCtrl.text)).toList,
-      ),
-    );
-  }
-
-  Widget _buildTmuxAuto() {
-    return ExpandTile(
-      leading: const Icon(Icons.terminal),
-      title: Text(l10n.tmuxAutoAttach),
-      children: [
-        _buildTmuxAutoToggle(),
-        _buildTmuxShowSelector(),
-        _buildTmuxSessionName(),
-      ],
-    );
-  }
-
-  Widget _buildTmuxAutoToggle() {
-    return ListTile(
-      title: Text(l10n.tmuxAuto),
-      subtitle: Text(
-        l10n.tmuxAutoTip,
-        style: UIs.textGrey,
-      ),
-      trailing: StoreSwitch(prop: _setting.tmuxAuto),
-    );
-  }
-
-  Widget _buildTmuxShowSelector() {
-    return _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
-      return IgnorePointer(
-        ignoring: !autoEnabled,
-        child: Opacity(
-          opacity: autoEnabled ? 1.0 : 0.5,
-          child: ListTile(
-            title: Text(l10n.tmuxSessionSelector),
-            subtitle: Text(
-              l10n.tmuxSessionSelectorTip,
-              style: UIs.textGrey,
-            ),
-            trailing: StoreSwitch(prop: _setting.tmuxShowSelector),
+        onTap: () => context.showRoundDialog(
+          title: libL10n.blurRadius,
+          child: Input(
+            controller: _sshBlurCtrl,
+            autoFocus: true,
+            type: TextInputType.number,
+            hint: '0',
+            icon: Icons.blur_on,
+            suggestion: false,
+            onSubmitted: onSave,
           ),
+          actions: Btn.ok(onTap: () => onSave(_sshBlurCtrl.text)).toList,
         ),
-      );
-    });
+      ),
+      keywords: libL10n.background,
+    );
   }
 
-  Widget _buildTmuxSessionName() {
-    return _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
-      return _setting.tmuxSessionName.listenable().listenVal((name) {
-        final displayName = name.isEmpty ? 'server_box' : name;
+  SettingsRow _buildTmuxAutoToggle() {
+    final label = l10n.tmuxAuto;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.terminal),
+        title: Text(label),
+        subtitle: Text(l10n.tmuxAutoTip, style: UIs.textGrey),
+        trailing: StoreSwitch(prop: _setting.tmuxAuto),
+      ),
+      keywords: 'tmux ${l10n.tmuxAutoTip}',
+    );
+  }
+
+  SettingsRow _buildTmuxShowSelector() {
+    final label = l10n.tmuxSessionSelector;
+    return SettingsRow(
+      label,
+      () => _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
         return IgnorePointer(
           ignoring: !autoEnabled,
           child: Opacity(
             opacity: autoEnabled ? 1.0 : 0.5,
             child: ListTile(
-              title: Text(l10n.tmuxDefaultSessionName),
-              trailing: Text(displayName, style: UIs.text15),
-              onTap: () => _showTmuxSessionNameDialog(name),
+              leading: const Icon(Icons.list_alt),
+              title: Text(label),
+              subtitle: Text(l10n.tmuxSessionSelectorTip, style: UIs.textGrey),
+              trailing: StoreSwitch(prop: _setting.tmuxShowSelector),
             ),
           ),
         );
-      });
-    });
+      }),
+      keywords: 'tmux ${l10n.tmuxSessionSelectorTip}',
+    );
+  }
+
+  SettingsRow _buildTmuxSessionName() {
+    final label = l10n.tmuxDefaultSessionName;
+    return SettingsRow(
+      label,
+      () => _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
+        return _setting.tmuxSessionName.listenable().listenVal((name) {
+          final displayName = name.isEmpty ? 'server_box' : name;
+          return IgnorePointer(
+            ignoring: !autoEnabled,
+            child: Opacity(
+              opacity: autoEnabled ? 1.0 : 0.5,
+              child: ListTile(
+                leading: const Icon(Icons.badge_outlined),
+                title: Text(label),
+                trailing: Text(displayName, style: UIs.text15),
+                onTap: () => _showTmuxSessionNameDialog(name),
+              ),
+            ),
+          );
+        });
+      }),
+      keywords: 'tmux',
+    );
   }
 
   Future<void> _showTmuxSessionNameDialog(String current) async {

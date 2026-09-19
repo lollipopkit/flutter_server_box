@@ -6,14 +6,14 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
-import 'package:server_box/view/page/setting/entry.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class MacOSMenuBarManager {
   static List<PlatformMenu> buildMenuBar(
     BuildContext context,
-    void Function(int) onTabChanged,
-  ) {
+    void Function(int) onTabChanged, {
+    required VoidCallback onSettings,
+  }) {
     final l10n = context.l10n;
     final homeTabs = Stores.setting.homeTabs.fetch();
     return [
@@ -30,7 +30,7 @@ class MacOSMenuBarManager {
               LogicalKeyboardKey.comma,
               meta: true,
             ),
-            onSelected: () => SettingsPage.route.go(context),
+            onSelected: onSettings,
           ),
           PlatformMenuItem(
             label: libL10n.menuQuit,

@@ -22,22 +22,18 @@ part of '../entry.dart';
 /// setting would only take effect on the next install, which on iOS means
 /// deleting everything the package manager ever put there.
 extension _Linux on _AppSettingsPageState {
-  Widget _buildLinux() {
-    // Which profile is selected decides what the rows below are *about* — the
-    // mirror is per distribution and each dialog's header names it — so they
-    // redraw together with the list.
-    return ValBuilder(
-      listenable: _setting.linuxProfile.listenable(),
-      builder: (_) => Column(
-        children: [
-          _buildLinuxBeta(),
-          _buildLinuxProfiles(),
-          _buildLinuxShell(),
-          _buildLinuxMirror(),
-          _buildLinuxDns(),
-        ].nonNulls.map((e) => CardX(child: e)).toList(),
-      ),
-    );
+  /// Which profile is selected decides what the rows below are *about* — the
+  /// mirror is per distribution and each dialog's header names it — so they
+  /// redraw together with the list. The listenable is `build`'s, round the
+  /// whole grid: a group is a list of cards now, and a builder inside one of
+  /// them would rebuild that card alone.
+  List<SettingsGroup> _buildLinux() {
+    return [
+      SettingsGroup(libL10n.system, [_buildLinuxBeta(), _buildLinuxProfiles()]),
+      if (_buildLinuxShell() case final shell?)
+        SettingsGroup(libL10n.terminal, [shell]),
+      SettingsGroup(libL10n.network, [_buildLinuxMirror(), _buildLinuxDns()]),
+    ];
   }
 
   /// That this is beta, at the top of the page that manages it.
@@ -49,11 +45,15 @@ extension _Linux on _AppSettingsPageState {
   /// Stays after the warning before an install has been dismissed: that one is
   /// asked once and can be turned off, and this page would then be the only
   /// place left that says it.
-  Widget _buildLinuxBeta() {
-    return ListTile(
-      leading: const Icon(Icons.science_outlined, size: _kIconSize),
-      title: const Text('Beta'),
-      subtitle: Text(l10n.betaTip, style: UIs.textGrey),
+  SettingsRow _buildLinuxBeta() {
+    return SettingsRow(
+      'Beta',
+      () => ListTile(
+        leading: const Icon(Icons.science_outlined),
+        title: const Text('Beta'),
+        subtitle: Text(l10n.betaTip, style: UIs.textGrey),
+      ),
+      keywords: l10n.betaTip,
     );
   }
 
@@ -62,7 +62,14 @@ extension _Linux on _AppSettingsPageState {
   /// The list is the container's own subdirectories — see `IosRootfs.scan` —
   /// so a profile deleted from disk cannot linger here, and this cannot promise
   /// a tree that is not there.
-  Widget _buildLinuxProfiles() {
+  SettingsRow _buildLinuxProfiles() {
+    return SettingsRow(libL10n.system, _buildLinuxProfileList, keywords: 'rootfs distro alpine debian');
+  }
+
+  /// Read when the row is drawn rather than when the group is described: the
+  /// list is a scan of the container's subdirectories, and the search builds
+  /// every section's groups on every keystroke.
+  Widget _buildLinuxProfileList() {
     final profiles = Rootfs.profiles;
     final selected = Rootfs.selected;
     return Column(
@@ -73,7 +80,6 @@ extension _Linux on _AppSettingsPageState {
               profile.id == selected?.id
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
-              size: _kIconSize,
             ),
             title: Text(profile.label),
             // What it is, under what it is called: the label is the user's and
@@ -123,7 +129,7 @@ extension _Linux on _AppSettingsPageState {
             onTap: () => _selectProfile(profile),
           ),
         ListTile(
-          leading: const Icon(Icons.add, size: _kIconSize),
+          leading: const Icon(Icons.add),
           title: Text(profiles.isEmpty ? libL10n.install : libL10n.add),
           // What a tap gets you, not a stored preference. With one
           // distribution that is the whole answer; with more it is a choice,
@@ -328,8 +334,7 @@ extension _Linux on _AppSettingsPageState {
                 release == distro.preferred
                     ? Icons.radio_button_checked
                     : Icons.radio_button_unchecked,
-                size: _kIconSize,
-              ),
+                ),
               title: Text(release.version),
               // The series, which is what the package manager will call this
               // release and what decides whether a later one is an update of
@@ -353,53 +358,67 @@ extension _Linux on _AppSettingsPageState {
   /// The selected system's shell, which is a file inside it rather than a
   /// setting — the same file `chsh` writes. Absent when nothing is installed:
   /// there is no tree to hold it.
-  Widget? _buildLinuxShell() {
+  SettingsRow? _buildLinuxShell() {
     final root = Rootfs.root;
     if (root == null) return null;
-    return ListTile(
-      leading: const Icon(Icons.terminal_outlined, size: _kIconSize),
-      title: TipText(libL10n.terminal, l10n.linuxShellTip),
-      subtitle: Text(linuxShell(root), style: UIs.textGrey),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapLinuxShell,
+    final label = libL10n.terminal;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.terminal_outlined),
+        title: TipText(label, l10n.linuxShellTip),
+        subtitle: Text(linuxShell(root), style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapLinuxShell,
+      ),
+      keywords: 'shell ${l10n.linuxShellTip}',
     );
   }
 
-  Widget _buildLinuxMirror() {
-    return ListTile(
-      leading: const Icon(Icons.cloud_download_outlined, size: _kIconSize),
-      title: TipText(l10n.mirror, l10n.linuxNetTip),
-      subtitle: ValBuilder(
-        listenable: _setting.linuxMirrors.listenable(),
-        // The mirror in force, not the row stored for it: nothing stored means
-        // the distribution's own default, and that is what would be fetched.
-        builder: (_) => Text(
-          linuxMirror(),
-          style: UIs.textGrey,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+  SettingsRow _buildLinuxMirror() {
+    final label = l10n.mirror;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.cloud_download_outlined),
+        title: TipText(label, l10n.linuxNetTip),
+        subtitle: ValBuilder(
+          listenable: _setting.linuxMirrors.listenable(),
+          // The mirror in force, not the row stored for it: nothing stored
+          // means the distribution's own default, which is what is fetched.
+          builder: (_) => Text(
+            linuxMirror(),
+            style: UIs.textGrey,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapLinuxMirror,
       ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapLinuxMirror,
+      keywords: l10n.linuxNetTip,
     );
   }
 
-  Widget _buildLinuxDns() {
-    return ListTile(
-      leading: const Icon(Icons.dns_outlined, size: _kIconSize),
-      title: TipText('DNS', l10n.linuxNetTip),
-      subtitle: ValBuilder(
-        listenable: _setting.linuxDns.listenable(),
-        builder: (val) => Text(
-          val,
-          style: UIs.textGrey,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+  SettingsRow _buildLinuxDns() {
+    return SettingsRow(
+      'DNS',
+      () => ListTile(
+        leading: const Icon(Icons.dns_outlined),
+        title: TipText('DNS', l10n.linuxNetTip),
+        subtitle: ValBuilder(
+          listenable: _setting.linuxDns.listenable(),
+          builder: (val) => Text(
+            val,
+            style: UIs.textGrey,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapLinuxDns,
       ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapLinuxDns,
+      keywords: l10n.linuxNetTip,
     );
   }
 

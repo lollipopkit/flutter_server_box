@@ -15,17 +15,28 @@ part of '../entry.dart';
 /// F-Droid's Tracking anti-feature wants opt-in and off by default, and a
 /// feature that does nothing until someone accepts a 25 MB download is both.
 extension _Globe on _AppSettingsPageState {
-  Widget _buildGlobe() {
-    return ExpandTile(
-      leading: const Icon(Icons.public, size: _kIconSize),
-      title: Text(l10n.globe),
-      initiallyExpanded: false,
-      children: [_buildGlobeEnabled(), const _GeoDataTile()],
+  SettingsGroup _buildGlobe() {
+    return SettingsGroup(l10n.globe, [
+      _buildGlobeEnabled(),
+      SettingsRow(
+        l10n.geoData,
+        () => const _GeoDataTile(),
+        keywords: l10n.geoDataTip,
+      ),
+    ]);
+  }
+
+  SettingsRow _buildGlobeEnabled() {
+    return SettingsRow(
+      l10n.globe,
+      _buildGlobeEnabledTile,
+      keywords: l10n.globeEnabledTip,
     );
   }
 
-  Widget _buildGlobeEnabled() {
+  Widget _buildGlobeEnabledTile() {
     return ListTile(
+      leading: const Icon(Icons.public),
       title: TipText(l10n.globe, l10n.globeEnabledTip),
       trailing: StoreSwitch(
         prop: _setting.globeEnabled,

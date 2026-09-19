@@ -10,6 +10,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/edge_fade_scroll.dart';
 
 import '../helpers/test_db.dart';
 
@@ -24,8 +25,17 @@ void main() {
 
   late Directory tempDir;
 
+  // `Paths.doc` is `late final`, so it is set once for the process. The globe's
+  // data row reads it while it builds, and it builds now that the group it is
+  // in is a card rather than a tile that has to be opened.
+  var pathsSet = false;
+
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-settings-');
+    if (!pathsSet) {
+      Paths.doc = tempDir.path;
+      pathsSet = true;
+    }
     await openTestDb();
     // In memory: a real write started in a `testWidgets` body never lets go of
     // the box's lock, and this page writes on nearly every switch.
@@ -50,6 +60,13 @@ void main() {
   /// A tab of the floating bar, told apart from the settings behind it.
   Finder tabRow(String title) => find.descendant(
     of: find.byKey(settingsTabsKey),
+    matching: find.text(title),
+  );
+
+  /// A tab of the row over the content, which is what a wide window has
+  /// instead of the floating bar.
+  Finder headerTab(String title) => find.descendant(
+    of: find.byKey(settingsHeaderKey),
     matching: find.text(title),
   );
 
@@ -122,19 +139,18 @@ void main() {
     expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
-  testWidgets('the wide menu is one rail at every level', (tester) async {
+  testWidgets('the wide menu is a rail, not a list of cards', (tester) async {
     await pump(tester, width: 1200);
 
-    // One kind of row at every level: cards among rails would read as two
-    // menus rather than as one with something open in it.
-    final rail = find.descendant(
-      of: find.byKey(settingsMenuKey),
-      matching: find.byType(SideBarTile),
+    // One kind of row, each with the mark for its subject: cards among rails
+    // would read as two menus rather than as one with something open in it.
+    expect(
+      find.descendant(
+        of: find.byKey(settingsMenuKey),
+        matching: find.byType(Icon),
+      ),
+      findsWidgets,
     );
-    expect(rail, findsWidgets);
-    for (final tile in tester.widgetList<SideBarTile>(rail)) {
-      expect(tile.icon, isNotNull, reason: tile.title);
-    }
     expect(
       find.descendant(
         of: find.byKey(settingsMenuKey),
@@ -144,29 +160,163 @@ void main() {
     );
   });
 
-  testWidgets('a branch opens instead of showing something', (tester) async {
+  testWidgets('a subject shows what is inside it over the content', (
+    tester,
+  ) async {
     await pump(tester, width: 1200);
-    final before = barTitle(tester);
 
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
 
-    expect(menuRow(libL10n.sequence), findsOneWidget);
-    // The bar names what it named: the branch opened, it did not select.
-    expect(barTitle(tester), before);
+    // The menu is one row per subject; what a subject holds is not in it.
+    expect(menuRow(libL10n.sequence), findsNothing);
+    expect(menuRow(libL10n.general), findsNothing);
+    // It is the row over the content, headed by the subject's own name.
+    expect(headerTab(libL10n.server), findsOneWidget);
+    expect(headerTab(libL10n.general), findsOneWidget);
+    expect(headerTab(libL10n.sequence), findsOneWidget);
+    // No bar at all on a wide window: the menu says which subject, and the
+    // header over the content says which page and carries the two buttons
+    // that act on the settings as a whole.
+    expect(find.byType(AppBar), findsNothing);
   });
 
-  testWidgets('a leaf under a branch shows in the content', (tester) async {
+  testWidgets('a page under a subject is reached by its tab', (tester) async {
     await pump(tester, width: 1200);
-
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
-    await tester.tap(menuRow(libL10n.sequence));
+
+    final scheme = Theme.of(
+      tester.element(find.byKey(settingsHeaderKey)),
+    ).colorScheme;
+    Color? fillOf(String title) {
+      final pill = find
+          .ancestor(of: headerTab(title), matching: find.byType(Container))
+          .first;
+      final decoration =
+          tester.widget<Container>(pill).decoration as ShapeDecoration?;
+      return decoration?.color;
+    }
+
+    // What is first inside the subject, rather than a row of tabs with none of
+    // them on.
+    expect(fillOf(libL10n.general), scheme.secondaryContainer);
+    expect(fillOf(libL10n.sequence), Colors.transparent);
+
+    await tester.tap(headerTab(libL10n.sequence));
+    await settle(tester, 20);
+
+    expect(fillOf(libL10n.sequence), scheme.secondaryContainer);
+    expect(fillOf(libL10n.general), Colors.transparent);
+  });
+
+  testWidgets('a subject with one page gets no tabs', (tester) async {
+    await pump(tester, width: 1200);
+
+    await tester.tap(menuRow(libL10n.about));
     await settle(tester);
 
-    expect(barTitle(tester), libL10n.sequence);
-    // Embedded, so it dropped the bar it has when pushed — one page, one bar.
-    expect(find.byType(AppBar), findsOneWidget);
+    // The header stays — it names the page and carries the two buttons that
+    // act on the settings as a whole — but a row with one tab on it would say
+    // only what the name beside it just said. The other top-level pages are
+    // not its siblings either; that is the menu's job.
+    expect(headerTab(libL10n.about), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(settingsHeaderKey),
+        matching: find.byType(EdgeFadeScroll),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('the search reaches a page without its subject', (tester) async {
+    await pump(tester, width: 1200);
+
+    await tester.enterText(find.byType(TextField).first, 'sequence');
+    await settle(tester, 20);
+
+    // Named by what it is under, since three pages here are called "General".
+    final hit = find.descendant(
+      of: find.byKey(settingsResultsKey),
+      matching: find.widgetWithText(ListTile, libL10n.sequence),
+    );
+    expect(hit, findsOneWidget);
+    // The count is a heading over the results, not a bar's title: most of
+    // what a search matches is rows, and a bar cannot count those.
+    expect(find.text('1 ${libL10n.result}'.toUpperCase()), findsOneWidget);
+
+    await tester.tap(hit);
+    await settle(tester, 20);
+
+    // Gone the moment it has been used: the search is a way to a page, not a
+    // place to stay.
+    expect(find.text('1 ${libL10n.result}'.toUpperCase()), findsNothing);
+    expect(headerTab(libL10n.sequence), findsOneWidget);
+  });
+
+  testWidgets('typing the first character keeps the caret in the field', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+
+    final field = find.byType(TextField).first;
+    FocusNode? nodeOf() => tester.widget<TextField>(field).focusNode;
+
+    await tester.showKeyboard(field);
+    await settle(tester);
+    expect(nodeOf()?.hasFocus, isTrue);
+
+    // The one that turns the search on, which used to swap the page of the
+    // content navigator — and a route arriving takes the focus with it, from
+    // a field that is not even inside that navigator.
+    await tester.enterText(field, 'u');
+    await settle(tester, 20);
+
+    expect(
+      nodeOf()?.hasFocus,
+      isTrue,
+      reason: 'the first character must not push a route',
+    );
+  });
+
+  testWidgets('a result that stops matching leaves rather than vanishing', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+
+    final field = find.byType(TextField).first;
+    // Scoped to the results: the page they are drawn over is still in the
+    // tree under them, and "Language" is a row on that page too.
+    final row = find.descendant(
+      of: find.byKey(settingsResultsKey),
+      matching: find.widgetWithText(ListTile, libL10n.language),
+    );
+
+    await tester.enterText(field, libL10n.language);
+    await settle(tester, 20);
+    expect(row, findsOneWidget);
+
+    // Narrowed to nothing. The row is gone from the build, which is exactly
+    // when it has to still be on screen: a list that closes the gap in one
+    // frame says nothing about what changed.
+    await tester.enterText(field, '${libL10n.language}zzz');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(row, findsOneWidget);
+
+    await settle(tester, 20);
+    expect(row, findsNothing);
+    expect(find.text(libL10n.empty), findsOneWidget);
+  });
+
+  testWidgets('a search that matches nothing says so', (tester) async {
+    await pump(tester, width: 1200);
+
+    await tester.enterText(find.byType(TextField).first, 'zzzz');
+    await settle(tester, 20);
+
+    expect(find.text(libL10n.empty), findsOneWidget);
   });
 
   testWidgets('a narrow window opens on the list, with no tabs over it', (

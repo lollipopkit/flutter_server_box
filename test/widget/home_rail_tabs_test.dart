@@ -14,11 +14,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/widget/nav_rail.dart';
 
 void main() {
   group('how many fit', () {
-    // 6 tabs at the shipped estimate is 384pt of destinations, plus the rail's
-    // own chrome. A laptop window has room; a short one does not.
+    // A destination taller than the one this rail draws, so the numbers below
+    // stay about the arithmetic rather than about the current metrics: what
+    // matters is that a tall window has room for six and a short one does not.
     int capacityAt(double height) =>
         railCapacity(height: height, destinationExtent: 64);
 
@@ -115,11 +117,100 @@ void main() {
     });
   });
 
+  /// The foot of the rail, which is a destination now rather than a button
+  /// that pushed a page over the rail itself.
+  group('the settings at the foot', () {
+    Future<Color?> fillAt(WidgetTester tester, {required bool selected}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                  footer: NavRailFooterButton(
+                    icon: const Icon(Icons.settings),
+                    tooltip: 'settings',
+                    selected: selected,
+                    onTap: () {},
+                  ),
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      final box = find
+          .ancestor(
+            of: find.byIcon(Icons.settings),
+            matching: find.byType(AnimatedContainer),
+          )
+          .first;
+      final decoration =
+          tester.widget<AnimatedContainer>(box).decoration as ShapeDecoration;
+      return decoration.color;
+    }
+
+    testWidgets('is filled in while the settings are showing', (tester) async {
+      final scheme = ThemeData().colorScheme;
+      expect(await fillAt(tester, selected: true), scheme.secondaryContainer);
+      expect(await fillAt(tester, selected: false), Colors.transparent);
+    });
+
+    testWidgets('and nothing above it is, while they are', (tester) async {
+      // What `selectedIndex: -1` is for. The tab underneath is still the one
+      // that comes back, but it is not what is on screen — and two lit pills
+      // in one rail say two things are.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: -1,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      final pill = tester.widget<AnimatedContainer>(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.circle),
+              matching: find.byType(AnimatedContainer),
+            )
+            .first,
+      );
+      expect((pill.decoration as ShapeDecoration).color, Colors.transparent);
+    });
+  });
+
   /// The estimate against the layout it is an estimate of.
   ///
   /// The count has to be made before the destinations are built, so their
-  /// height cannot be measured — it is worked out from the M3 rail's own
-  /// numbers instead. This is what says those numbers are still Flutter's.
+  /// height cannot be measured — it is worked out from [NavRailMetrics]
+  /// instead. This is what says the arithmetic still describes the widget.
   ///
   /// One-sided on purpose: over-estimating costs a slot, under-estimating
   /// overflows the rail. The upper bound is only there so a wildly generous
@@ -133,17 +224,19 @@ void main() {
             child: Scaffold(
               body: Row(
                 children: [
-                  NavigationRail(
+                  AppNavRail(
                     selectedIndex: 0,
-                    labelType: NavigationRailLabelType.all,
-                    destinations: const [
-                      NavigationRailDestination(
+                    onSelected: (_) {},
+                    items: const [
+                      NavRailItem(
                         icon: Icon(Icons.circle),
-                        label: Text('one'),
+                        selectedIcon: Icon(Icons.circle),
+                        label: 'one',
                       ),
-                      NavigationRailDestination(
+                      NavRailItem(
                         icon: Icon(Icons.circle),
-                        label: Text('two'),
+                        selectedIcon: Icon(Icons.circle),
+                        label: 'two',
                       ),
                     ],
                   ),
@@ -165,7 +258,7 @@ void main() {
     Future<void> check(WidgetTester tester, double textScale) async {
       final real = await measure(tester, textScale);
       final estimated = railDestinationExtent(
-        tester.element(find.byType(NavigationRail)),
+        tester.element(find.byType(AppNavRail)),
       );
       expect(
         estimated,
@@ -186,9 +279,8 @@ void main() {
     testWidgets('and at the ones this app lets the user set', (tester) async {
       // `textFactor` is a setting, so the label — the only part of a
       // destination that moves — is not a constant. The fractional scales are
-      // the ones that matter: a line is laid out to a whole pixel, so the real
-      // height is `round(16 × scale)` and the plain product is *under* it at
-      // 1.1, 1.3, 1.6 and 1.8.
+      // the ones that matter: a line is laid out to a whole pixel, so the
+      // plain product is *under* the real height at some of them.
       for (final scale in [1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.5, 3.0]) {
         await check(tester, scale);
       }
