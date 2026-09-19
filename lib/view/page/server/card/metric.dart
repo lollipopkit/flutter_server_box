@@ -238,6 +238,20 @@ typedef ServerPressureSegment = ({
 /// changes would be the hardest part of the bar to see.
 const kPressureShare = 0.5;
 
+/// Which readings the bar is made of, in the order they are laid end to end,
+/// and how much of it each is allowed.
+const _kPressureWeights = {
+  ServerMetricKind.cpu: 1.0,
+  ServerMetricKind.mem: kPressureShare,
+  ServerMetricKind.disk: kPressureShare,
+};
+
+/// The readings [serverPressure] draws, in its order.
+///
+/// For a line in the list, which has room to name them and give their numbers
+/// beside the bar: it has to name the same ones, in the same order.
+Iterable<ServerMetricKind> get serverPressureKinds => _kPressureWeights.keys;
+
 /// Everything a machine is carrying, as stretches of one bar.
 ///
 /// A tile is 44 points and has room for one bar, so the question is which
@@ -254,14 +268,8 @@ const kPressureShare = 0.5;
 /// share, takes no room: only a reading with a full to be a share *of* can be
 /// a length here.
 List<ServerPressureSegment> serverPressure(ServerCardReadings? readings) {
-  const weights = {
-    ServerMetricKind.cpu: 1.0,
-    ServerMetricKind.mem: kPressureShare,
-    ServerMetricKind.disk: kPressureShare,
-  };
-
   final out = <ServerPressureSegment>[];
-  for (final MapEntry(key: kind, value: weight) in weights.entries) {
+  for (final MapEntry(key: kind, value: weight) in _kPressureWeights.entries) {
     final m = readings?.all.firstWhereOrNull((m) => m.kind == kind);
     final percent = m?.percent;
     if (percent == null || percent <= 0) continue;

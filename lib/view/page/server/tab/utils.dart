@@ -8,7 +8,13 @@ extension _Actions on _ServerPageState {
   /// `PaneScope` is installed by the layout this page builds, so it is a
   /// descendant of the state's own context — and an inherited lookup only
   /// travels upwards. Asking from the state would always answer "no pane".
-  void _onTapCard(BuildContext context, ServerState srv) {
+  ///
+  /// [inPlace] is for a layout that knows the answer [_opensInPlace] cannot
+  /// give. That one asks the window's width, which is right for the list and
+  /// wrong for the full-screen pager: it draws no grid and no detail, so a tap
+  /// in a wide window selected the server and started the card's growth with
+  /// nothing on screen to show either.
+  void _onTapCard(BuildContext context, ServerState srv, {bool? inPlace}) {
     // Held on a pointer, a tap is the start of choosing several rather than
     // the opening of one — the convention every file manager has.
     if (_modifierHeld) {
@@ -29,7 +35,7 @@ extension _Actions on _ServerPageState {
     // server that has never connected. In place it is not: the detail says why
     // it is empty, and the list is still there, which is what lets someone
     // work through several servers that are all failing.
-    if (_opensInPlace(context)) {
+    if (inPlace ?? _opensInPlace(context)) {
       _openDetail(srv.spi.id);
       return;
     }

@@ -67,7 +67,9 @@ extension _Widgets on _ServerPageState {
                   srv: srv,
                   promoted: _promotedOf(id),
                   onPromote: (kind) => _promote(id, kind),
-                  onTap: () => _onTapCard(context, srv),
+                  // Never in place, for the reason the request above is never
+                  // split: there is no grid here for a card to grow out of.
+                  onTap: () => _onTapCard(context, srv, inPlace: false),
                   onLongPress: () => _onLongPressCard(context, srv),
                   highlighted: id == _menuId,
                 ).onSecondary(

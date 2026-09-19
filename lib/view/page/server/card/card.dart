@@ -114,6 +114,18 @@ const _tabular = [FontFeature.tabularFigures()];
 /// length to read.
 const _kPressureHeight = 6.0;
 
+/// A line's share of the same bar: the least it is drawn at, the width of one
+/// reading's name and number after it, and the gap before each.
+///
+/// The bar keeps a third of what the line has for both and never less than
+/// 48, which is about what three stretches of colour can still be told apart
+/// in. The numbers get the rest, so they are all there from about 750 points
+/// of window, and the last of them — the watched one — goes at about 310.
+/// 72 for a number is "DISK 100.0%" at these sizes.
+const _kLoadBarMin = 48.0;
+const _kLoadValueWidth = 72.0;
+const _kLoadGap = 13.0;
+
 
 /// What the detail page insets its focus card by, and its rows.
 ///
@@ -484,8 +496,8 @@ class ServerCard extends ConsumerWidget {
         : _line(context, readings, focus);
   }
 
-  /// A line: the state, the name, how long it has been up, two readings and
-  /// what the network is doing.
+  /// A line: the state, the name, how long it has been up, what it is carrying
+  /// as one bar with the numbers beside it, and what the network is doing.
   ///
   /// Every one of them the same height, whatever the machine has to say. That
   /// is the whole point of this shape — a machine that cannot be reached must
@@ -497,9 +509,6 @@ class ServerCard extends ConsumerWidget {
     ServerMetric? focus,
   ) {
     final scheme = Theme.of(context).colorScheme;
-    final second = readings?.shown.firstWhereOrNull(
-      (m) => m.kind != focus?.kind && m.percent != null,
-    );
 
     return SizedBox(
       height: isMobile ? ServerCardSizes.rowTouch : ServerCardSizes.row,
@@ -508,9 +517,10 @@ class ServerCard extends ConsumerWidget {
         child: LayoutBuilder(
           builder: (_, cons) {
             // Columns are dropped from the right as the width goes, in the
-            // order they are worth least: the rate first, then the second
-            // reading, then how long it has been up. The name and the one
-            // reading being watched never go.
+            // order they are worth least: the rate first, then the numbers
+            // beside the bar — which [_load] decides, having the width to
+            // decide by — then how long it has been up. The name, the bar and
+            // the one reading being watched never go.
             final wide = cons.maxWidth;
             return Row(
               children: [
@@ -574,13 +584,10 @@ class ServerCard extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   )
-                else ...[
-                  Expanded(child: _rowReading(focus, scheme, promoted: true)),
-                  if (second != null && wide >= 420) ...[
-                    const SizedBox(width: 13),
-                    Expanded(child: _rowReading(second, scheme)),
-                  ],
-                ],
+                else
+                  Expanded(
+                    child: _load(context, readings, focus, scheme: scheme),
+                  ),
                 if (wide >= 700) ...[
                   const SizedBox(width: 13),
                   SizedBox(
@@ -614,71 +621,93 @@ class ServerCard extends ConsumerWidget {
     );
   }
 
-  /// [promoted] is the one this machine is being watched by — see
-  /// [_seriesColor]. The second reading on a line never is.
-  Widget _rowReading(
-    ServerMetric m,
-    ColorScheme scheme, {
-    bool promoted = false,
+  /// What a line says about load: the bar a tile draws, and beside it the
+  /// numbers the bar is made of.
+  ///
+  /// One bar, where there were two side by side. Two bars are two readings to
+  /// compare across, and a list is not scanned for that: it is scanned for
+  /// which machine is carrying the most, which is one length — see
+  /// [serverPressure]. A line has the width a tile has not, so the readings
+  /// are named and given as numbers after the bar, each name in the colour of
+  /// its stretch of it.
+  ///
+  /// The numbers go from the right as the width does, and the bar stays. The
+  /// last number to go is the reading this machine is watched by — which need
+  /// not be one the bar holds, and is then the first of them.
+  Widget _load(
+    BuildContext context,
+    ServerCardReadings? readings,
+    ServerMetric focus, {
+    required ColorScheme scheme,
   }) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 30,
-          child: Text(
-            // Three letters of the name, because the bar beside it is what is
-            // being read and a full label would take the width the bar needs.
-            m.label.length <= 4
-                ? m.label.toUpperCase()
-                : m.label.substring(0, 3).toUpperCase(),
-            style: const TextStyle(
-              fontSize: 10,
-              height: 1,
-              color: Colors.grey,
-            ),
-            maxLines: 1,
-          ),
-        ),
-        const SizedBox(width: 7),
-        Expanded(
-          child: m.percent == null
-              ? Text(
-                  m.value,
-                  style: const TextStyle(fontSize: 11, height: 1),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: m.percent!.clamp(0.0, 1.0),
-                    minHeight: 4,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation(
-                      m.over
-                          ? StatePalette.warn
-                          : ChartPalette.reading(promoted: promoted),
-                    ),
-                  ),
-                ),
-        ),
-        if (m.percent != null) ...[
-          const SizedBox(width: 7),
-          SizedBox(
-            width: 46,
-            child: Text(
-              m.value,
-              textAlign: TextAlign.end,
-              style: const TextStyle(
-                fontSize: 11,
-                height: 1,
-                fontFeatures: _tabular,
-              ),
+    final inBar = [
+      for (final kind in serverPressureKinds)
+        ?readings?.all.firstWhereOrNull((m) => m.kind == kind),
+    ];
+    final focusInBar = inBar.any((m) => m.kind == focus.kind);
+
+    return LayoutBuilder(
+      builder: (_, cons) {
+        // The watched one first, because it is the last to go.
+        final ranked = [focus, ...inBar.where((m) => m.kind != focus.kind)];
+        // See [_kLoadBarMin] for how the width is shared.
+        final bar = math.max(_kLoadBarMin, cons.maxWidth / 3);
+        final room = ((cons.maxWidth - bar) / (_kLoadValueWidth + _kLoadGap))
+            .floor()
+            .clamp(0, ranked.length);
+        final kept = {for (final m in ranked.take(room)) m.kind};
+
+        return Row(
+          children: [
+            Expanded(child: _pressure(context, readings, scheme: scheme)),
+            // In the bar's own order rather than by rank, so the numbers line
+            // up down a list whichever reading each machine is watched by.
+            if (!focusInBar && kept.contains(focus.kind))
+              _loadValue(focus, name: Colors.grey),
+            for (final m in inBar)
+              if (kept.contains(m.kind))
+                _loadValue(m, name: _pressureColor(m.kind, over: m.over)),
+          ],
+        );
+      },
+    );
+  }
+
+  /// One reading's name and number, after the bar on a line.
+  Widget _loadValue(ServerMetric m, {required Color name}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: _kLoadGap),
+      child: SizedBox(
+        width: _kLoadValueWidth,
+        child: Row(
+          children: [
+            Text(
+              // Three letters of it: the number beside it is what is being
+              // read, and the width is the bar's.
+              m.label.length <= 4
+                  ? m.label.toUpperCase()
+                  : m.label.substring(0, 3).toUpperCase(),
+              style: TextStyle(fontSize: 10, height: 1, color: name),
               maxLines: 1,
             ),
-          ),
-        ],
-      ],
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                m.value,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1,
+                  color: m.over ? StatePalette.warn : null,
+                  fontFeatures: _tabular,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -760,18 +789,6 @@ class ServerCard extends ConsumerWidget {
   }) {
     final segments = serverPressure(readings);
 
-    // The series colours, and this is the one place on a tile where a colour
-    // is saying *which reading*: every tile shows the same three in the same
-    // order, and nothing on a tile names them. Over its line wins — that is
-    // the tile's whole job.
-    Color colorOf(ServerPressureSegment segment) => segment.over
-        ? StatePalette.warn
-        : switch (segment.kind) {
-            ServerMetricKind.mem => ChartPalette.mem,
-            ServerMetricKind.disk => ChartPalette.diskRead,
-            _ => ChartPalette.cpu,
-          };
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(_kPressureHeight),
       child: Container(
@@ -786,7 +803,9 @@ class ServerCard extends ConsumerWidget {
             for (final segment in segments)
               Flexible(
                 flex: (segment.share * 1000).round(),
-                child: Container(color: colorOf(segment)),
+                child: Container(
+                  color: _pressureColor(segment.kind, over: segment.over),
+                ),
               ),
             // Whatever is left, as the track. A `Row` holding only the
             // segments would stretch them to the full width.
@@ -803,6 +822,21 @@ class ServerCard extends ConsumerWidget {
       ),
     );
   }
+
+  /// The colour of [kind]'s stretch of the pressure bar.
+  ///
+  /// The series colours, and the bar is the one place in a list where a colour
+  /// says *which reading*: every bar holds the same three in the same order.
+  /// Nothing on a tile names them; a line does, in these same colours — see
+  /// [_load]. Over its line wins, because that is what the bar is looked at
+  /// for.
+  Color _pressureColor(ServerMetricKind kind, {required bool over}) => over
+      ? StatePalette.warn
+      : switch (kind) {
+          ServerMetricKind.mem => ChartPalette.mem,
+          ServerMetricKind.disk => ChartPalette.diskRead,
+          _ => ChartPalette.cpu,
+        };
 
   /// What a tile says where a number would be.
   String get _tileWord => switch (srv.conn) {

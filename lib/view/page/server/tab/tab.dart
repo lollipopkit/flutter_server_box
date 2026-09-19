@@ -255,6 +255,16 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// Cleared when the movement has finished, which is what [_openCtrl] says.
   String? _heroId;
 
+  /// How tall each card was in the grid, for the grid that is mounted again on
+  /// the way back.
+  ///
+  /// The grid is dropped while the page has the readings and mounted again
+  /// with the open card already at full size, so what it would measure for
+  /// that card's slot is the page. In a list of lines that put every line
+  /// under it a page-height too low until the card had landed, and then they
+  /// travelled up — a second movement after the first. See [MasonryMemory].
+  final _gridMemory = MasonryMemory();
+
   /// Whether the detail's own chrome is up: the facts beside the readings and
   /// the row of things to do under them.
   ///
@@ -1575,6 +1585,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   ? ValueKey(heroId)
                   : null,
               expansion: _open.value,
+              // One for every section: a card is known by its server, and is
+              // the same height whichever section it is in.
+              memory: _gridMemory,
               children: [for (final id in ids) cardOf(id)],
             );
 

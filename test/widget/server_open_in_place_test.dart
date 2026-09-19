@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
@@ -24,10 +25,12 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
+import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
@@ -113,6 +116,60 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
+  /// Has the first machine answer, so its card has readings to draw.
+  ///
+  /// [everything] adds a swap and a disk to the memory, so the swap sits
+  /// between two of the card's own rows. With [sensor] the one slot that varies
+  /// goes to the sensor and the swap has no row on the card; without it the
+  /// swap takes that slot and is a row of the card's.
+  Future<void> answer(
+    WidgetTester tester, {
+    bool everything = false,
+    bool sensor = true,
+  }) async {
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerPage, skipOffstage: false)),
+    );
+    final status = ServerStatus(
+      cpu: Cpus(),
+      mem: const Memory(total: 1048576, free: 524288, avail: 524288),
+      disk: [
+        if (everything)
+          Disk(
+            path: '/dev/sda1',
+            mount: '/',
+            usedPercent: 40,
+            used: BigInt.from(4000000),
+            size: BigInt.from(10000000),
+            avail: BigInt.from(6000000),
+          ),
+      ],
+      tcp: const Conn(maxConn: 0, fail: 0),
+      netSpeed: NetSpeed(),
+      swap: everything
+          ? const Swap(total: 1048576, free: 786432, cached: 0)
+          : const Swap(total: 0, free: 0, cached: 0),
+      temps: Temperatures()
+        ..setAll({if (everything && sensor) 'coretemp': 41.0}),
+      system: SystemType.linux,
+      diskIO: DiskIO(),
+    );
+    status.more[StatusCmdType.uptime] = 'up 3 days';
+    // Enough of a window for there to be a line: with nothing stored the page
+    // draws a sentence where the chart goes, which is a different thing again.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (var i = 0; i < 8; i++) {
+      status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
+    }
+    final notifier = container.read(serverProvider('srv-0').notifier);
+    notifier.updateStatus(status);
+    // The card draws readings only for a machine that has answered, which is
+    // what `finished` means — a status alone is what it last said.
+    notifier.updateConnection(ServerConn.finished);
+    await settle(tester);
+    expect(find.text('CPU'), findsWidgets);
+  }
+
   String? openId(WidgetTester tester) {
     // Not skipping offstage: a narrow window pushes a page over this one,
     // and a route under the top one is offstage rather than gone.
@@ -190,6 +247,38 @@ void main() {
     expect(find.byType(ServerPage, skipOffstage: false), findsOneWidget);
   });
 
+  testWidgets('and so does the full-screen pager, however wide it is', (
+    tester,
+  ) async {
+    // The pager draws one card at a time and no grid, so there is nothing for
+    // a card to grow out of and nowhere for the detail to be drawn. The tap
+    // asked the window's width instead of the layout, so in a wide window it
+    // selected the server and started the movement with nothing on screen to
+    // show either: the tap did nothing visible, and the selection it left
+    // behind opened that server the next time the list was the layout.
+    addServers();
+    Stores.setting.fullScreen.put(true);
+    await pump(tester, size: const Size(1200, 700));
+    expect(find.byType(PageView), findsOneWidget);
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+
+    // Never connected, so what the tap offers is the editor, as a page.
+    expect(openId(tester), isNull);
+    expect(find.byType(ServerEditPage), findsOneWidget);
+
+    // And one that has answered gets its own page, pushed the same way.
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await settle(tester);
+    await answer(tester);
+    await tester.tap(find.text('web'));
+    await settle(tester);
+
+    expect(openId(tester), isNull);
+    expect(find.byType(ServerDetailPage), findsOneWidget);
+  });
+
   testWidgets('escape is the same way back as the arrow', (tester) async {
     addServers();
     await pump(tester, size: const Size(1200, 900));
@@ -265,35 +354,7 @@ void main() {
     // them reads as the card having been replaced by a picture of itself.
     addServers();
     await pump(tester, size: const Size(1200, 900));
-
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(ServerPage, skipOffstage: false)),
-    );
-    final status = ServerStatus(
-      cpu: Cpus(),
-      mem: const Memory(total: 1048576, free: 524288, avail: 524288),
-      disk: const [],
-      tcp: const Conn(maxConn: 0, fail: 0),
-      netSpeed: NetSpeed(),
-      swap: const Swap(total: 0, free: 0, cached: 0),
-      temps: Temperatures(),
-      system: SystemType.linux,
-      diskIO: DiskIO(),
-    );
-    status.more[StatusCmdType.uptime] = 'up 3 days';
-    // Enough of a window for there to be a line: with nothing stored the page
-    // draws a sentence where the chart goes, which is a different thing again.
-    final now = DateTime.now().millisecondsSinceEpoch;
-    for (var i = 0; i < 8; i++) {
-      status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
-    }
-    final notifier = container.read(serverProvider('srv-0').notifier);
-    notifier.updateStatus(status);
-    // The card draws readings only for a machine that has answered, which is
-    // what `finished` means — a status alone is what it last said.
-    notifier.updateConnection(ServerConn.finished);
-    await settle(tester);
-    expect(find.text('CPU'), findsWidgets);
+    await answer(tester);
 
     await tester.tap(find.text('web'));
     await tester.pump();
@@ -353,6 +414,132 @@ void main() {
       rectMoreOrLessEquals(firstRow, epsilon: 2),
     );
   });
+
+  // The near end of the same movement. Everything about the card is a lerp on
+  // how far it has got, so the frame after it starts and the frame before it
+  // stops are the card at rest, to within nothing anyone could see. What
+  // breaks that is never a lerp — it is something that is one thing at any
+  // openness above 0 and another at 0, which is a cut on exactly those two
+  // frames. Four of them made the way back end in one: the chart held at the
+  // height it had halfway, a full gap for each row that had shrunk to nothing,
+  // a bar at half its length beside a note nobody could see, and a row the
+  // card draws in a different place from the page.
+  Future<void> restsAsItMoves(
+    WidgetTester tester, {
+    required bool sensor,
+  }) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester, everything: true, sensor: sensor);
+
+    final card = find.ancestor(
+      of: find.text('web'),
+      matching: find.byType(ServerCard),
+    );
+    Finder inCard(Finder f) => find.descendant(of: card, matching: f);
+    double openness() => tester.widget<ServerCard>(card).openness;
+
+    // The rows the card draws at rest, which are the ones that can be compared
+    // at both ends. With a sensor the swap between them has no slot on the
+    // card; without one it has, and used to be drawn after the disk there and
+    // before it on the page.
+    final rows = [libL10n.memory, if (!sensor) 'Swap', libL10n.disk];
+    Map<String, Rect> geometry() => {
+      'card': tester.getRect(card),
+      'chart': tester.getRect(inCard(find.byType(MetricChart))),
+      for (final label in rows) ...{
+        label: tester.getRect(inCard(find.widgetWithText(MetricRow, label))),
+        '$label bar': tester.getRect(
+          find.descendant(
+            of: inCard(find.widgetWithText(MetricRow, label)),
+            matching: find.byType(LinearProgressIndicator),
+          ),
+        ),
+      },
+    };
+    void expectSame(Map<String, Rect> moving, Map<String, Rect> rest) {
+      for (final MapEntry(key: what, value: rect) in rest.entries) {
+        expect(
+          moving[what],
+          rectMoreOrLessEquals(rect, epsilon: 1),
+          reason: '$what, against $rect at rest',
+        );
+      }
+    }
+
+    // The chart's box is a lerp like the rest, on every frame and not only at
+    // the ends: the chart inside it is held unbuilt for half of the movement,
+    // and a height that was part of what is held stops following for that
+    // half and jumps when it is let go.
+    void expectChartFollows() {
+      final hero = tester.widget<ServerCard>(card);
+      final open = hero.pageWidth >= ServerCardSizes.columnsWidth
+          ? ServerCardSizes.openChart
+          : ServerCardSizes.openChartNarrow;
+      expect(
+        tester.getRect(inCard(find.byType(MetricChart))).height,
+        moreOrLessEquals(
+          lerpDouble(ServerCardSizes.chart, open, hero.openness)!,
+          epsilon: 0.5,
+        ),
+        reason: 'the chart at ${hero.openness}',
+      );
+    }
+
+    final atRest = geometry();
+
+    // A millisecond at a time, which no display does: a frame's worth of the
+    // movement is a couple of points of width already, and what is being
+    // asked here is what the card is *next to* rest, not a frame away from it.
+    const tick = Duration(milliseconds: 1);
+    const frame = Duration(milliseconds: 16);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(tick);
+    expect(openness(), inExclusiveRange(0, 0.001));
+    expectSame(geometry(), atRest);
+    // The rest of the way in, until the page takes the readings over and the
+    // grid is dropped.
+    for (var i = 0; i < 30 && card.evaluate().isNotEmpty; i++) {
+      expectChartFollows();
+      await tester.pump(frame);
+    }
+
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    // The chrome leaves first, and the card starts back once it has.
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump();
+    // Through the middle a frame at a time, because where the hold starts is
+    // what decides what is held.
+    for (var i = 0; i < 21; i++) {
+      await tester.pump(frame);
+      expectChartFollows();
+    }
+    Map<String, Rect>? last;
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(tick);
+      if (openness() <= 0) break;
+      last = geometry();
+    }
+    expect(openness(), 0);
+    expect(last, isNotNull);
+
+    await settle(tester);
+    expectSame(geometry(), atRest);
+    expectSame(last!, atRest);
+  }
+
+  testWidgets(
+    'nor when the card leaves the grid, or comes to rest in it',
+    (tester) => restsAsItMoves(tester, sensor: true),
+  );
+
+  testWidgets(
+    'and a row the card draws is where the page draws it',
+    (tester) => restsAsItMoves(tester, sensor: false),
+  );
 
   testWidgets('stepping to the next machine comes in from the right', (
     tester,
@@ -425,6 +612,36 @@ void main() {
     expect(tester.getRect(find.byType(ServerDetailPage)).top, under);
   });
 
+  testWidgets('and it is as far from the bar as the cards are from it', (
+    tester,
+  ) async {
+    // Measured between what is drawn, not between boxes: the strip had no gap
+    // above it and 9 below, which with the bar's own 4 and the grid's 8 drew
+    // as 4 above and 17 below — the summary read as part of the bar, and the
+    // cards as a separate block under it.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    Rect cardOf(String name) => tester.getRect(
+      find.ancestor(of: find.text(name), matching: find.byType(ServerCard)),
+    );
+    // A card's box includes its margin, which is not drawn.
+    const margin = 4.0;
+    final strip = tester.getRect(find.byType(ServerOverview));
+    final control = tester.getRect(
+      find.byType(SegmentedTabs<ServerListDensity>),
+    );
+
+    final above = strip.top - control.bottom;
+    final below = cardOf('web').top + margin - strip.bottom;
+    final between = cardOf('db').left + margin - (cardOf('web').right - margin);
+
+    // Under it, the same as between two cards: it is one more block of the
+    // same grid.
+    expect(below, moreOrLessEquals(between, epsilon: 0.5));
+    expect(above, moreOrLessEquals(below, epsilon: 1.5));
+  });
+
   testWidgets('only the card that is opening is rebuilt while it opens', (
     tester,
   ) async {
@@ -489,6 +706,62 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
     await settle(tester);
     expect(tester.widget<InkWell>(inkOf('web').first).hoverColor, isNull);
+  });
+
+  testWidgets('nor the ripple of the tap that opened it', (tester) async {
+    // `InkResponse` confirms a ripple and stops tracking it before it calls
+    // `onTap`, so the transparent `splashColor` the card sets once it is
+    // moving never reaches it. The ripple went on expanding for its fade-out,
+    // clipped to a card that was growing to the width of the page. A card that
+    // opens in place starts none; one that pushes a page still does.
+    addServers();
+
+    // Every splash the card's `Material` is painting, whichever factory the
+    // platform's theme picked. Highlights are tracked and do go transparent.
+    Iterable<InkFeature> ripples() {
+      final ink = find.descendant(
+        of: find.ancestor(
+          of: find.text('web'),
+          matching: find.byType(ServerCard),
+        ),
+        matching: find.byType(InkWell),
+      );
+      final all =
+          (Material.of(tester.element(ink.first)) as dynamic).debugInkFeatures
+              as List<InkFeature>?;
+      return (all ?? const <InkFeature>[]).where(
+        (f) => f is! InkHighlight && f is! NoSplash,
+      );
+    }
+
+    // Held for longer than the press timeout, which is when a splash starts.
+    Future<TestGesture> press() async {
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('web')),
+      );
+      await tester.pump(const Duration(milliseconds: 150));
+      return gesture;
+    }
+
+    // Narrow first, where a tap pushes a page: this is what says the probe
+    // above can see a ripple at all.
+    await pump(tester, size: const Size(420, 900));
+    var gesture = await press();
+    expect(ripples(), isNotEmpty);
+    await gesture.cancel();
+    await settle(tester);
+
+    tester.view.physicalSize = const Size(1200, 900);
+    await settle(tester);
+    gesture = await press();
+    expect(ripples(), isEmpty);
+    await gesture.up();
+    expect(openId(tester), 'srv-0');
+    for (var i = 0; i < 8; i++) {
+      await tester.pump(const Duration(milliseconds: 40));
+      if (find.byType(AnimatedMasonry).evaluate().isEmpty) break;
+      expect(ripples(), isEmpty);
+    }
   });
 
   testWidgets('and the row of things to do stays where it is', (tester) async {
@@ -600,4 +873,77 @@ void main() {
     await settle(tester);
     expect(other(), rectMoreOrLessEquals(atRest, epsilon: 0.5));
   });
+
+  // A line and a tile are a different shape from the card, not the card at a
+  // smaller size, so they cannot be a lerp of it. They were swapped for the
+  // card on the first frame of the movement and swapped back on the last: the
+  // line was 40 tall on one frame and the height of a card on the next, and
+  // the grid reserved the card's height for it and moved every line under it.
+  // The two shapes are crossed over the start of the movement instead, and
+  // the height between them is part of it.
+  for (final density in [ServerListDensity.rows, ServerListDensity.grid]) {
+    testWidgets('a ${density.name} entry opens from the size it has', (
+      tester,
+    ) async {
+      addServers();
+      ServerDensityPref.put(TagSwitcher.kDefaultTag, density);
+      await pump(tester, size: const Size(1200, 900));
+      await answer(tester, everything: true);
+
+      // The first of them: while the two shapes cross, the name is in both.
+      Finder cardOf(String name) => find
+          .ancestor(of: find.text(name), matching: find.byType(ServerCard))
+          .first;
+      double openness() => tester.widget<ServerCard>(cardOf('web')).openness;
+      Rect hero() => tester.getRect(cardOf('web'));
+      Rect other() => tester.getRect(cardOf('db'));
+
+      final heroAtRest = hero();
+      final otherAtRest = other();
+      const tick = Duration(milliseconds: 1);
+      const frame = Duration(milliseconds: 16);
+
+      await tester.tap(find.text('web'));
+      await tester.pump();
+      await tester.pump(tick);
+      expect(openness(), inExclusiveRange(0, 0.001));
+      expect(hero(), rectMoreOrLessEquals(heroAtRest, epsilon: 1));
+      expect(other(), rectMoreOrLessEquals(otherAtRest, epsilon: 0.5));
+
+      // No frame of the way in is a jump: the height is part of the movement,
+      // which covers about 500 points in 350 ms and peaks near 50 a frame. The
+      // swap was over 200 in one, and a cross that eased in and out was 100.
+      // Nor is any of them an overflow: a tile is narrower than anything the
+      // card's layout was written for.
+      var last = hero().height;
+      // Until the page takes the readings over and the grid is dropped.
+      for (var i = 0; i < 30; i++) {
+        if (find.byType(AnimatedMasonry).evaluate().isEmpty) break;
+        final now = hero().height;
+        expect((now - last).abs(), lessThan(80), reason: 'at ${openness()}');
+        expect(tester.takeException(), isNull, reason: 'at ${openness()}');
+        last = now;
+        await tester.pump(frame);
+      }
+
+      await settle(tester);
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump();
+      for (var i = 0; i < 21; i++) {
+        await tester.pump(frame);
+      }
+      Rect? lastMoving;
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(tick);
+        if (openness() <= 0) break;
+        lastMoving = hero();
+      }
+      expect(openness(), 0);
+      // Already the size it rests at, with nothing left to close afterwards.
+      expect(lastMoving, rectMoreOrLessEquals(heroAtRest, epsilon: 1));
+      expect(hero(), rectMoreOrLessEquals(heroAtRest, epsilon: 1));
+      expect(other(), rectMoreOrLessEquals(otherAtRest, epsilon: 0.5));
+    });
+  }
 }

@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -58,15 +59,29 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  ServerStatus sampled() {
+  /// [everything] adds a disk and a swap to the memory: the disk is the third
+  /// reading a line's bar holds, and the swap is one it does not.
+  ServerStatus sampled({bool everything = false}) {
     final ss = ServerStatus(
       cpu: Cpus(),
       // 1 GiB, half of it gone.
       mem: const Memory(total: 1048576, free: 524288, avail: 524288),
-      disk: const [],
+      disk: [
+        if (everything)
+          Disk(
+            path: '/dev/sda1',
+            mount: '/',
+            usedPercent: 40,
+            used: BigInt.from(4000000),
+            size: BigInt.from(10000000),
+            avail: BigInt.from(6000000),
+          ),
+      ],
       tcp: const Conn(maxConn: 0, fail: 0),
       netSpeed: NetSpeed(),
-      swap: const Swap(total: 0, free: 0, cached: 0),
+      swap: everything
+          ? const Swap(total: 1048576, free: 786432, cached: 0)
+          : const Swap(total: 0, free: 0, cached: 0),
       temps: Temperatures(),
       system: SystemType.linux,
       diskIO: DiskIO(),
@@ -81,8 +96,11 @@ void main() {
     WidgetTester tester, {
     required ServerMetricKind? promoted,
     required void Function(ServerMetricKind) onPromote,
+    ServerListDensity density = ServerListDensity.cards,
+    double width = 600,
+    bool everything = false,
   }) async {
-    tester.view.physicalSize = const Size(600, 900);
+    tester.view.physicalSize = Size(width, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
@@ -98,12 +116,13 @@ void main() {
             body: ServerCard(
               srv: ServerState(
                 spi: spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
-                status: sampled(),
+                status: sampled(everything: everything),
                 conn: ServerConn.finished,
               ),
               promoted: promoted,
               onPromote: onPromote,
               onTap: () {},
+              density: density,
             ),
           ),
         ),
@@ -227,6 +246,94 @@ void main() {
       // Never chosen, so it follows the count rather than another tag's
       // answer.
       expect(ServerDensityPref.of('staging'), ServerListDensity.auto);
+    });
+  });
+
+  // A line draws what a machine is carrying as one bar, the same one a tile
+  // draws, where it used to draw a bar per reading. It has the width a tile
+  // has not, so it also names the readings and gives their numbers.
+  group('a line in the list', () {
+    // The bar is the only rounded clip inside a line.
+    final bar = find.descendant(
+      of: find.byType(ServerCard),
+      matching: find.byType(ClipRRect),
+    );
+
+    testWidgets('draws one bar, and names what it is made of', (tester) async {
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        density: ServerListDensity.rows,
+        width: 900,
+        everything: true,
+      );
+
+      expect(bar, findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+
+      // Each name in the colour of its stretch of the bar, which is what ties
+      // a number to a length.
+      Color? nameColor(String name) =>
+          tester.widget<Text>(find.text(name)).style?.color;
+      expect(nameColor('CPU'), ChartPalette.cpu);
+      expect(nameColor('MEM'), ChartPalette.mem);
+      expect(nameColor('DISK'), ChartPalette.diskRead);
+      // In the bar's own order.
+      expect(
+        tester.getCenter(find.text('CPU')).dx,
+        lessThan(tester.getCenter(find.text('MEM')).dx),
+      );
+      expect(
+        tester.getCenter(find.text('MEM')).dx,
+        lessThan(tester.getCenter(find.text('DISK')).dx),
+      );
+      // A swap is not part of the bar, and nobody is watching it.
+      expect(find.text('SWAP'), findsNothing);
+    });
+
+    testWidgets('keeps the bar and the watched number when narrow', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        promoted: ServerMetricKind.mem,
+        onPromote: (_) {},
+        density: ServerListDensity.rows,
+        width: 330,
+        everything: true,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(bar, findsOneWidget);
+      expect(tester.getSize(bar).width, greaterThanOrEqualTo(48));
+      expect(find.text('MEM'), findsOneWidget);
+      expect(find.text('CPU'), findsNothing);
+      expect(find.text('DISK'), findsNothing);
+    });
+
+    testWidgets('a watched reading the bar does not hold comes first', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        promoted: ServerMetricKind.swap,
+        onPromote: (_) {},
+        density: ServerListDensity.rows,
+        width: 900,
+        everything: true,
+      );
+
+      expect(find.text('SWAP'), findsOneWidget);
+      expect(
+        tester.getCenter(find.text('SWAP')).dx,
+        lessThan(tester.getCenter(find.text('CPU')).dx),
+      );
+      // Not a stretch of the bar, so not in a colour of it.
+      expect(
+        tester.widget<Text>(find.text('SWAP')).style?.color,
+        Colors.grey,
+      );
     });
   });
 }

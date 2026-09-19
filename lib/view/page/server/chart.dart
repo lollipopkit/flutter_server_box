@@ -31,9 +31,10 @@ typedef ChartBand = ({int from, int to, String label});
 /// for a line that has not changed and a window that has moved by a third of a
 /// second.
 ///
-/// What it holds is the widget from the last build where [hold] was false, so
-/// letting go is continuous: the caller has to arrange for what it would have
-/// drawn meanwhile to be what it is already drawing.
+/// Keeps the last stable child while the parent transition is in progress.
+///
+/// The child must be captured at the transition boundary. Capturing one build
+/// early leaves stale chart content visible during the reverse animation.
 class Held extends StatefulWidget {
   const Held({super.key, required this.hold, required this.child});
 
@@ -50,7 +51,7 @@ class _HeldState extends State<Held> {
   @override
   void didUpdateWidget(Held old) {
     super.didUpdateWidget(old);
-    if (!widget.hold) _held = widget.child;
+    if (!widget.hold || !old.hold) _held = widget.child;
   }
 
   @override

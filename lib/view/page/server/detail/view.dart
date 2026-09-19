@@ -756,7 +756,9 @@ ${err.message ?? 'null'}
 
     return SingleChildScrollView(
       controller: _scrollCtrl,
-      padding: EdgeInsets.fromLTRB(13, 7, 13, bottomInset + 13),
+      // Match the grid's top inset so the card-to-detail transition does not
+      // introduce a vertical jump.
+      padding: EdgeInsets.fromLTRB(13, 4, 13, bottomInset + 13),
       child: wide
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,

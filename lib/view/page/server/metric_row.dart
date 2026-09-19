@@ -251,9 +251,15 @@ class MetricRow extends StatelessWidget {
       );
     }
 
+    // Grow the note's share with the transition. Reserving it while invisible
+    // would make the progress bar jump at the start and end of the animation.
+    const barFlex = 1000;
+    final noteFlex = note.isEmpty ? 0 : (barFlex * t).round();
+
     return Row(
       children: [
         Flexible(
+          flex: barFlex,
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: lerpDouble(barMax <= 340 ? 340 : barMax, 340, t)!,
@@ -273,10 +279,10 @@ class MetricRow extends StatelessWidget {
             ),
           ),
         ),
-        // Joins the bar as the row grows into the page's, where there is width
-        // for both.
-        if (t > 0 && note.isNotEmpty)
+        // Omit the flexible child at zero; flex 0 still lays out its content.
+        if (noteFlex > 0)
           Flexible(
+            flex: noteFlex,
             child: Opacity(
               opacity: t,
               child: Padding(
