@@ -180,16 +180,16 @@ class _Window {
   final List<double?> battery;
 }
 
-const _kCpuColor = Color(0xFF3B82F6);
-const _kMemColor = Color(0xFF22C55E);
-const _kSwapColor = Color(0xFF14B8A6);
-const _kDiskColor = Color(0xFFF97316);
-const _kDiskReadColor = Color(0xFF0EA5E9);
-const _kNetRxColor = Color(0xFF8B5CF6);
-const _kNetTxColor = Color(0xFFEC4899);
-const _kGpuColor = Color(0xFF8B5CF6);
-const _kTempColor = Color(0xFFEF4444);
-const _kBatteryColor = Color(0xFF14B8A6);
+const _kCpuColor = ChartPalette.cpu;
+const _kMemColor = ChartPalette.mem;
+const _kSwapColor = ChartPalette.swap;
+const _kDiskColor = ChartPalette.disk;
+const _kDiskReadColor = ChartPalette.diskRead;
+const _kNetRxColor = ChartPalette.netRx;
+const _kNetTxColor = ChartPalette.netTx;
+const _kGpuColor = ChartPalette.gpu;
+const _kTempColor = ChartPalette.temp;
+const _kBatteryColor = ChartPalette.battery;
 
 /// How a reading is written, wherever it is written: the row, the headline,
 /// the stats and the picker all say the same number the same way.

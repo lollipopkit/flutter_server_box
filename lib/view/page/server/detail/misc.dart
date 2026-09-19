@@ -277,16 +277,8 @@ extension on _ServerDetailPageState {
 }
 
 /// Palette for the lines of one metric's devices — sensors, disks,
-/// interfaces. Fixed order so a device keeps its colour across rebuilds, and
-/// as long as [_kMaxDeviceLines] so two lines never share one.
-const _kDeviceColors = [
-  Color(0xFFEF4444),
-  Color(0xFFF59E0B),
-  Color(0xFF8B5CF6),
-  Color(0xFF14B8A6),
-  Color(0xFF3B82F6),
-  Color(0xFFEC4899),
-];
+/// interfaces. As long as [_kMaxDeviceLines], so two lines never share one.
+const _kDeviceColors = ChartPalette.devices;
 
 /// A stretch of the window with nothing in it, and why.
 ///

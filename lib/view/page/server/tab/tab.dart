@@ -9,11 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
-import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/app/net_view.dart';
-import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -24,18 +22,17 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
-import 'package:server_box/view/widget/percent_circle.dart';
 import 'package:server_box/view/widget/server_globe.dart';
 import 'package:server_box/view/widget/server_power.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
-part 'card_stat.dart';
-part 'content.dart';
 part 'flight.dart';
 part 'landscape.dart';
 part 'pane_list.dart';
@@ -49,9 +46,6 @@ class ServerPage extends ConsumerStatefulWidget {
 
   static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
-
-const _cardPad = 74.0;
-const _cardPadSingle = 13.0;
 
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
@@ -107,13 +101,10 @@ Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
 
 class _ServerPageState extends ConsumerState<ServerPage>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
-  double _textFactorDouble = 1.0;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
-  TextScaler _textFactor = TextScaler.linear(1.0);
   PageController? _landscapeController;
   String? _landscapeSeenId;
 
-  final _cardsStatus = <String, _CardNotifier>{};
   late final ValueNotifier<Set<String>> _tags;
 
   Timer? _timer;
@@ -229,10 +220,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _tags.dispose();
     _offsetNotifier.dispose();
     _landscapeController?.dispose();
-    for (final n in _cardsStatus.values) {
-      n.dispose();
-    }
-    _cardsStatus.clear();
     super.dispose();
   }
 
@@ -334,23 +321,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _startAvoidJitterTimer();
   }
 
-  void _pruneCardNotifiers(Set<String> aliveIds) {
-    final toRemove = _cardsStatus.keys
-        .where((id) => !aliveIds.contains(id))
-        .toList();
-    for (final id in toRemove) {
-      _cardsStatus.remove(id)?.dispose();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     // Listen to provider changes and update the ValueNotifier
-    ref.listen(serversProvider, (previous, next) {
-      _tags.value = next.tags;
-      _pruneCardNotifiers(next.servers.keys.toSet());
-    });
+    ref.listen(serversProvider, (previous, next) => _tags.value = next.tags);
     return OrientationBuilder(
       builder: (_, orientation) {
         if (orientation == Orientation.landscape) {
@@ -377,13 +352,26 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // what was left up here was a title naming the app on the app's own
       // first screen.
       appBar: bare ? null : _buildTagBar(),
+      // The whole list, not a handful of labels inside it. The setting says
+      // how big this page's text is, and it used to reach only the two lines
+      // under a card's rings — so turning it up left every other word on the
+      // page the size it was. Nothing on a card is a fixed height, so a larger
+      // scale makes the cards taller rather than clipping them.
       body: Stores.setting.textFactor.listenable().listenVal((val) {
-        _updateTextScaler(val);
-        // The bar above spends the top inset, as an app bar does; this is what
-        // is left, and what it still has to clear is the home indicator — which
-        // it has to clear *especially* with [bare] on, since the navigation
-        // that used to sit between the two is gone.
-        return SafeArea(top: false, child: child);
+        return MediaQuery.withNoTextScaling(
+          child: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(val)),
+              // The bar above spends the top inset, as an app bar does; this
+              // is what is left, and what it still has to clear is the home
+              // indicator — especially with [bare] on, since the navigation
+              // that used to sit between the two is gone.
+              child: SafeArea(top: false, child: child),
+            ),
+          ),
+        );
       }),
     );
   }
@@ -934,26 +922,18 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildEachServerCard(ServerState srv) {
-    final card = CardX(
-      key: ValueKey(srv.spi.id),
+    final card = Builder(
       // A context from inside the built tree, so the tap can ask whether a
       // detail pane is on screen. The state's own context is an ancestor of
       // the layout that installs the scope, and the lookup only goes up.
-      child: Builder(
-        builder: (context) => InkWell(
-          onTap: () => _onTapCard(context, srv),
-          onLongPress: () => _onLongPressCard(srv),
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: _cardPadSingle,
-              right: 3,
-              top: _cardPadSingle,
-              bottom: _cardPadSingle,
-            ),
-            child: _buildRealServerCard(srv),
-          ),
-        ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
-      ),
+      builder: (context) => ServerCard(
+        key: ValueKey(srv.spi.id),
+        srv: srv,
+        promoted: _promotedOf(srv.spi.id),
+        onPromote: (kind) => _promote(srv.spi.id, kind),
+        onTap: () => _onTapCard(context, srv),
+        onLongPress: () => _onLongPressCard(srv),
+      ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
     );
 
     return _flyingId.listenVal((flyingId) {
@@ -971,142 +951,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
     });
   }
 
-  /// The child's width mat not equal to 1/4 of the screen width,
-  /// so we need to wrap it with a SizedBox.
-  Widget _wrapWithSizedbox(
-    Widget child,
-    double maxWidth, [
-    bool circle = false,
-  ]) {
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final width = (maxWidth - _cardPad) / 4;
-        return SizedBox(width: width, child: child);
-      },
-    );
-  }
-
-  Widget _buildRealServerCard(ServerState srv) {
-    final id = srv.spi.id;
-    final cardStatus = _getCardNoti(id);
-    final title = _buildServerCardTitle(srv);
-
-    return cardStatus.listenVal((_) {
-      final List<Widget> children = [title];
-      if (srv.conn == ServerConn.finished) {
-        if (cardStatus.value.flip) {
-          children.add(_buildFlippedCard(srv));
-        } else {
-          children.add(_buildNormalCard(srv.status, srv.spi));
-        }
-      }
-
-      final height = _calcCardHeight(srv.conn, cardStatus.value.flip);
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 377),
-        curve: Curves.fastEaseInToSlowEaseOut,
-        height: height,
-        // Use [OverflowBox] to dismiss the warning of [Column] overflow.
-        child: OverflowBox(
-          // Zero rather than the parent's minimum, which the AnimatedContainer
-          // makes tight at whatever height the 377ms tween is currently at.
-          // Flipping a card walks that from 110 to 99 while `maxHeight` below
-          // is already the target 99, so every frame of the shrink handed
-          // `110.0<=h<=99.0` to the Column and tripped the box-constraint
-          // assertion.
-          minHeight: 0,
-          // The target height, including when that target is the minimum.
-          // Passing null there left the Column on the parent's constraint,
-          // which during a 110 → 23 shrink is whatever the tween is at: at 15
-          // the title's 23pt spinner overflowed it by 8 and struck the card
-          // with the stripe for the length of the animation. The title is
-          // never taller than `_kCardHeightMin`, so this always fits.
-          maxHeight: height,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: children,
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildFlippedCard(ServerState srv) {
-    const color = Colors.grey;
-    const textStyle = TextStyle(fontSize: 13, color: color);
-    final children = [
-      for (final func in ServerPower.funcs)
-        Btn.column(
-          onTap: () => ServerPower.confirmAndRun(context, ref, srv.spi, func),
-          icon: Icon(ServerPower.icon(func), color: color),
-          text: ServerPower.label(func),
-          textStyle: textStyle,
-        ),
-      Btn.column(
-        onTap: () =>
-            ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi)),
-        icon: const Icon(Icons.edit, color: color),
-        text: libL10n.edit,
-        textStyle: textStyle,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 9),
-      child: LayoutBuilder(
-        builder: (_, cons) {
-          final width = (cons.maxWidth - _cardPad) / children.length;
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: children.map((e) {
-              if (width == 0) return e;
-              return SizedBox(width: width, child: e);
-            }).toList(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildNormalCard(ServerStatus ss, Spi spi) {
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final maxWidth = cons.maxWidth;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            UIs.height13,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _wrapWithSizedbox(
-                  // 0 until the second sample lands: the tab list needs a
-                  // fixed-size circle, and an empty ring reads the same as idle
-                  PercentCircle(percent: ss.cpu.usedPercent() ?? 0),
-                  maxWidth,
-                  true,
-                ),
-                _wrapWithSizedbox(
-                  PercentCircle(percent: ss.mem.usedPercent * 100),
-                  maxWidth,
-                  true,
-                ),
-                _wrapWithSizedbox(_buildNet(ss, spi.id), maxWidth),
-                _wrapWithSizedbox(_buildDisk(ss, spi.id), maxWidth),
-              ],
-            ),
-            UIs.height13,
-          ],
-        );
-      },
-    );
-  }
-
   @override
   bool get wantKeepAlive => true;
-
-  static const _kCardHeightMin = 23.0;
-  static const _kCardHeightFlip = 99.0;
-  static const _kCardHeightNormal = 110.0;
 }

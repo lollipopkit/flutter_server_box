@@ -31,6 +31,7 @@ import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';

@@ -40,16 +40,56 @@ extension _Actions on _ServerPageState {
     }
   }
 
+  /// What can be done to one server without leaving the list.
+  ///
+  /// The same set whatever the card looks like — a card, a row, a tile — and
+  /// in the same order, so changing how many servers are on screen is not
+  /// something to relearn. A machine that has never connected offers only what
+  /// is true of it: the editor, because changing the configuration is the only
+  /// thing that could help.
   void _onLongPressCard(ServerState srv) {
-    if (srv.conn == ServerConn.finished) {
-      final id = srv.spi.id;
-      final cardStatus = _getCardNoti(id);
-      cardStatus.value = cardStatus.value.copyWith(
-        flip: !cardStatus.value.flip,
-      );
-    } else {
+    if (srv.conn != ServerConn.finished) {
       ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+      return;
     }
+
+    showRowsSheet<void>(
+      context,
+      rows: (ctx) => [
+        ListTile(
+          dense: true,
+          title: Text(srv.spi.name, style: UIs.text13Grey),
+          subtitle: Text(srv.spi.displayAddr, style: UIs.text11Grey),
+        ),
+        const Divider(height: 1),
+        for (final func in ServerPower.funcs)
+          ListTile(
+            leading: Icon(ServerPower.icon(func)),
+            title: Text(ServerPower.label(func)),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              ServerPower.confirmAndRun(context, ref, srv.spi, func);
+            },
+          ),
+        const Divider(height: 1),
+        ListTile(
+          leading: const Icon(Icons.edit),
+          title: Text(libL10n.edit),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.copy),
+          title: Text(libL10n.copy),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            Pfs.copy(srv.spi.displayAddr);
+          },
+        ),
+      ],
+    );
   }
 
   /// The three ways a server gets onto this device, in one place.
@@ -195,20 +235,27 @@ extension _Utils on _ServerPageState {
     }).toList();
   }
 
-  double? _calcCardHeight(ServerConn cs, bool flip) {
-    if (_textFactorDouble != 1.0) return null;
-    if (cs != ServerConn.finished) {
-      return _ServerPageState._kCardHeightMin;
-    }
-    if (flip) {
-      return _ServerPageState._kCardHeightFlip;
-    }
-    return _ServerPageState._kCardHeightNormal;
+  /// Which reading [id]'s card draws in full, or null for whichever the
+  /// machine reports first.
+  ServerMetricKind? _promotedOf(String id) {
+    final name = Stores.setting.serverCardMetric.fetch()[id];
+    if (name == null) return null;
+    return ServerMetricKind.values.firstWhereOrNull((e) => e.name == name);
   }
 
-
-  _CardNotifier _getCardNoti(String id) =>
-      _cardsStatus.putIfAbsent(id, () => _CardNotifier(const _CardStatus()));
+  /// Remembers which reading [id]'s card draws in full.
+  ///
+  /// Per server, and kept: the choice is about the machine, so it has to
+  /// survive the app being closed and be the same on the detail page.
+  void _promote(String id, ServerMetricKind kind) {
+    final map = Map<String, String>.from(
+      Stores.setting.serverCardMetric.fetch(),
+    );
+    if (map[id] == kind.name) return;
+    map[id] = kind.name;
+    Stores.setting.serverCardMetric.put(map);
+    setState(() {});
+  }
 
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
@@ -216,11 +263,6 @@ extension _Utils on _ServerPageState {
     final r = math.Random().nextDouble();
     final n = math.Random().nextBool() ? 1 : -1;
     _offsetNotifier.value = x * r * n;
-  }
-
-  void _updateTextScaler(double val) {
-    _textFactorDouble = val;
-    _textFactor = TextScaler.linear(_textFactorDouble);
   }
 
   void _startAvoidJitterTimer() {
@@ -233,74 +275,6 @@ extension _Utils on _ServerPageState {
         _timer?.cancel();
       }
     });
-  }
-}
-
-extension _ServerX on ServerState {
-  bool get needsInteractiveAuth {
-    final error = status.err;
-    return error is SSHErr && error.type == SSHErrType.interactiveAuth;
-  }
-
-  String? _getTopRightStr(Spi spi) {
-    if (status.err != null) {
-      return libL10n.viewErr;
-    }
-    switch (conn) {
-      case ServerConn.disconnected:
-        return null;
-      case ServerConn.finished:
-        // Highest priority of temperature display
-        final cmdTemp = () {
-          final val = status.customCmds['server_card_top_right'];
-          if (val == null) return null;
-          // This returned value is used on server card top right, so it should
-          // be a single line string.
-          return val.split('\n').lastOrNull;
-        }();
-        final temperatureVal = () {
-          // Second priority
-          final preferTempDev = spi.custom?.preferTempDev;
-          if (preferTempDev != null) {
-            final preferTemp = status.sensors
-                .firstWhereOrNull((e) => e.device == preferTempDev)
-                ?.summary
-                ?.split(' ')
-                .firstOrNull;
-            if (preferTemp != null) {
-              return double.tryParse(preferTemp.replaceFirst('°C', ''));
-            }
-          }
-          // Last priority
-          final temp = status.temps.first;
-          if (temp != null) {
-            return temp;
-          }
-          return null;
-        }();
-        final upTime = status.more[StatusCmdType.uptime];
-        // Temperature and uptime, and nothing else. The latency belongs to the
-        // detail page's About card: this line is read while scanning a list of
-        // machines, and a number that changes on every poll is noise there.
-        final items = [
-          cmdTemp ??
-              (temperatureVal != null
-                  ? '${temperatureVal.toStringAsFixed(1)}°C'
-                  : null),
-          upTime,
-        ];
-        final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
-        if (str.isEmpty) return libL10n.empty;
-        return str;
-      case ServerConn.loading:
-        return null;
-      case ServerConn.connected:
-        return null;
-      case ServerConn.connecting:
-        return null;
-      case ServerConn.failed:
-        return libL10n.fail;
-    }
   }
 }
 

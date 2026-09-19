@@ -57,22 +57,19 @@ extension _Widgets on _ServerPageState {
         final id = order[idx];
         final srv = ref.watch(serverProvider(id));
 
-        final title = _buildServerCardTitle(srv);
-        final List<Widget> children = [
-          title,
-          _buildNormalCard(srv.status, srv.spi),
-        ];
-
         return KeyedSubtree(
           key: ValueKey(id),
-          child: _getCardNoti(id).listenVal((_) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: children,
-            );
-          }),
+          child: Center(
+            child: SingleChildScrollView(
+              child: ServerCard(
+                srv: srv,
+                promoted: _promotedOf(id),
+                onPromote: (kind) => _promote(id, kind),
+                onTap: () => _onTapCard(context, srv),
+                onLongPress: () => _onLongPressCard(srv),
+              ),
+            ),
+          ),
         );
       },
     );

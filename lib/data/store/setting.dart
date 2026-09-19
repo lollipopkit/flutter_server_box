@@ -934,6 +934,21 @@ class SettingStore extends SqliteStore {
   /// Default tmux session name. Empty string means use 'server_box'.
   late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
 
+  /// Which reading each server's card draws in full, by server id.
+  ///
+  /// Per server because the answer is: a database is watched for its disk and
+  /// a build box for its CPU. Carried into the detail page as well, so picking
+  /// a row on the card and picking one on the page are the same choice — which
+  /// is the whole reason the card and the page are one structure.
+  ///
+  /// A kind's `name`, never its index: a case inserted into
+  /// `ServerMetricKind` would silently repoint every stored choice.
+  late final serverCardMetric = propertyDefault<Map<String, String>>(
+    'serverCardMetric',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
   /// Whether the globe exists at all.
   ///
   /// On by default, and off is a real off: no button in the server tab, no

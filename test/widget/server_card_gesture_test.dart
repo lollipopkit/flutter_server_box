@@ -19,11 +19,11 @@ import '../helpers/test_db.dart';
 
 /// What a long press — and so a right-click — does to a server card.
 ///
-/// The two are one callback (`tab.dart:272` passes `_onLongPressCard` to both),
+/// The two are one callback (`tab.dart` passes `_onLongPressCard` to both),
 /// and `fl_lib/test/secondary_tap_test.dart` covers the gesture. What is left
 /// is the branch that callback takes, which depends on whether the server is
-/// connected: a card with a status to show flips over to show it, and a card
-/// with nothing behind it opens the page where that is fixed instead.
+/// connected: a card with a status to show raises what can be done to it, and
+/// a card with nothing behind it opens the page where that is fixed instead.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -83,9 +83,10 @@ void main() {
   testWidgets(
     'a long press on a card with nothing behind it opens the edit page',
     (tester) async {
-      // `_onLongPressCard` flips a card that has a status to show, and opens the
-      // page where a broken server is fixed when it has not connected. A flip
-      // would show the back of a card with nothing on it.
+      // `_onLongPressCard` raises the action sheet for a card that has a
+      // status, and opens the page where a broken server is fixed when it has
+      // not connected — where a menu of things to do to it would be a menu of
+      // things that cannot be done.
       //
       // `autoConnect: false`, so the server stays `ServerConn.disconnected` and
       // nothing here reaches for a socket.
@@ -113,7 +114,7 @@ void main() {
   testWidgets('and a right-click does the same, being the same callback', (
     tester,
   ) async {
-    // `tab.dart:272` passes `asSecondary(() => _onLongPressCard(srv))` beside
+    // `tab.dart` passes `asSecondary(() => _onLongPressCard(srv))` beside
     // the `onLongPress` that gets the same call. The gesture itself is
     // `fl_lib/test/secondary_tap_test.dart`; this is that they agree.
     Stores.server.put(

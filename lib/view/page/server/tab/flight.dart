@@ -111,17 +111,16 @@ extension _Flight on _ServerPageState {
   }
 
   /// The grid form, charts and all.
+  ///
+  /// The card itself, without its controls: what is in the air is a picture of
+  /// where it was, and a row that could be tapped mid-flight would be tapped
+  /// on the way to somewhere else.
   Widget _flightCard(ServerState srv) {
-    return CardX(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          left: _cardPadSingle,
-          right: 3,
-          top: _cardPadSingle,
-          bottom: _cardPadSingle,
-        ),
-        child: _buildRealServerCard(srv),
-      ),
+    return ServerCard(
+      srv: srv,
+      promoted: _promotedOf(srv.spi.id),
+      onPromote: (_) {},
+      onTap: () {},
     );
   }
 }

@@ -1,0 +1,346 @@
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/gpu.dart';
+import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/data/res/store.dart';
+
+/// Which reading a row, or the chart above the rows, is showing.
+enum ServerMetricKind { cpu, mem, swap, disk, diskIo, net, gpu, temp, battery }
+
+/// The share at which a reading stops being a number and becomes a reason to
+/// look at this machine.
+///
+/// One line for the whole app: the card's footer, the overview's alert count
+/// and the extra slot's ranking all mean the same thing by "over".
+const kServerAlertPercent = 85.0;
+
+/// One reading, as a card draws it.
+///
+/// The same object is the row and the chart: promoting a row is choosing which
+/// of these the card draws in full, so the two can never disagree about the
+/// number they are showing.
+final class ServerMetric {
+  const ServerMetric({
+    required this.kind,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.note,
+    required this.samples,
+    this.percent,
+  });
+
+  final ServerMetricKind kind;
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  /// The reading now, written the way the row and the headline both write it.
+  final String value;
+
+  /// What the value is a share of, or which device is carrying it.
+  final String note;
+
+  /// 0-1 for a reading with a full, null for a rate: only the first kind gets
+  /// a bar, because only it has something to be a share of.
+  final double? percent;
+
+  /// The window this app kept, oldest last — `StatusHistory` order.
+  ///
+  /// A poll that measured nothing holds null rather than zero, so the chart
+  /// draws a gap where a machine was unreachable instead of a floor.
+  final List<double?> samples;
+
+  /// Whether this reading is past [kServerAlertPercent].
+  bool get over => percent != null && percent! * 100 >= kServerAlertPercent;
+}
+
+/// What one card shows: the readings it has room for, and how many it has not.
+typedef ServerCardReadings = ({
+  /// In the order every card draws them — see [serverCardReadings].
+  List<ServerMetric> shown,
+
+  /// Every reading this machine reports, for the detail and the row picker.
+  List<ServerMetric> all,
+
+  /// How many of [all] did not fit in [shown].
+  int more,
+});
+
+/// Whether this server has said anything about itself yet.
+bool serverNeverSampled(ServerState srv) =>
+    srv.status.more.isEmpty && srv.status.history.isEmpty;
+
+/// How long without a sample counts as the readings having stopped.
+///
+/// Three polls, and never under half a minute: one poll running long is a slow
+/// script rather than a stopped app, and a card that says "stale" every time a
+/// refresh takes its time teaches the reader to ignore it.
+Duration get _staleAfter {
+  final seconds = Stores.setting.serverStatusUpdateInterval.fetch();
+  final polls = Duration(seconds: (seconds > 0 ? seconds : 10) * 3);
+  return polls < const Duration(seconds: 30)
+      ? const Duration(seconds: 30)
+      : polls;
+}
+
+/// When the last sample landed, if that was long enough ago to say so.
+///
+/// A connection that is up but no longer sampling keeps its numbers — the last
+/// reading is still the most recent thing known about the machine — and says
+/// how old they are. Falling back to the connecting state instead would throw
+/// away numbers that are still worth something.
+DateTime? serverStaleSince(ServerState srv) {
+  final times = srv.status.history.time;
+  if (times.isEmpty) return null;
+  final at = DateTime.fromMillisecondsSinceEpoch(times.last);
+  return DateTime.now().difference(at) > _staleAfter ? at : null;
+}
+
+/// The readings [srv] reports, and the five slots a card draws.
+///
+/// The order is fixed rather than the machine's own: CPU, memory and disk are
+/// what a list of servers is scanned for, so they are in the same place on
+/// every card and the numbers line up down a column. Exactly one slot varies
+/// — see [_extra] — and a machine reporting more than fits says how many by a
+/// count rather than by growing a card taller than its neighbours.
+ServerCardReadings serverCardReadings(ServerState srv) {
+  final all = _readings(srv);
+  final by = {for (final m in all) m.kind: m};
+
+  final shown = <ServerMetric>[];
+  void take(ServerMetricKind kind) {
+    if (by[kind] case final m?) shown.add(m);
+  }
+
+  take(ServerMetricKind.cpu);
+  take(ServerMetricKind.mem);
+  take(ServerMetricKind.disk);
+  if (_extra(all, {for (final m in shown) m.kind}) case final extra?) {
+    shown.add(extra);
+  }
+  take(ServerMetricKind.net);
+
+  return (shown: shown, all: all, more: all.length - shown.length);
+}
+
+/// The one slot that is not the same on every card.
+///
+/// Ranked the way someone scanning a list would rank it: whatever is over the
+/// line first, because that is the reason this machine is worth a look; then
+/// what this machine has and most do not, because a row saying the same thing
+/// as its neighbours' is a row that could have been anything; and otherwise
+/// what every machine has left over.
+ServerMetric? _extra(List<ServerMetric> all, Set<ServerMetricKind> taken) {
+  final free = all.where((m) => !taken.contains(m.kind)).toList();
+  if (free.isEmpty) return null;
+
+  if (free.firstWhereOrNull((m) => m.over) case final over?) return over;
+
+  const rare = [
+    ServerMetricKind.gpu,
+    ServerMetricKind.battery,
+    ServerMetricKind.temp,
+  ];
+  for (final kind in rare) {
+    if (free.firstWhereOrNull((m) => m.kind == kind) case final m?) return m;
+  }
+
+  const common = [ServerMetricKind.diskIo, ServerMetricKind.swap];
+  for (final kind in common) {
+    if (free.firstWhereOrNull((m) => m.kind == kind) case final m?) return m;
+  }
+  return free.first;
+}
+
+String _pct(double? v) => v == null ? '--' : '${(v * 10).round() / 10}%';
+String _rate(double? bytesPerSec) =>
+    bytesPerSec == null ? '--' : '${bytesPerSec.bytes2Str}/s';
+
+List<ServerMetric> _readings(ServerState srv) {
+  final ss = srv.status;
+  final h = ss.history;
+  final out = <ServerMetric>[];
+
+  // Always present, even before the first sample: every machine has a CPU, so
+  // an absent row would say this one does not rather than that nothing has
+  // been measured yet — which is what the dash says.
+  final cpu = ss.cpu.usedPercent(coreIdx: 0);
+  out.add(
+    ServerMetric(
+      kind: ServerMetricKind.cpu,
+      label: 'CPU',
+      icon: ServerDetailCards.cpu.icon,
+      color: ChartPalette.cpu,
+      value: _pct(cpu),
+      note: ss.cpu.brand.keys.firstOrNull ?? '',
+      percent: cpu == null ? null : cpu / 100,
+      samples: h.cpu.toList(),
+    ),
+  );
+
+  if (ss.mem.total > 0) {
+    final used = ss.mem.usedPercent * 100;
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.mem,
+        label: libL10n.memory,
+        icon: ServerDetailCards.mem.icon,
+        color: ChartPalette.mem,
+        value: _pct(used),
+        note:
+            '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / '
+            '${(ss.mem.total * 1024).bytes2Str}',
+        percent: used / 100,
+        samples: h.mem.toList(),
+      ),
+    );
+  }
+
+  if (ss.swap.total > 0) {
+    final used = ss.swap.usedPercent * 100;
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.swap,
+        label: 'Swap',
+        icon: ServerDetailCards.swap.icon,
+        color: ChartPalette.swap,
+        value: _pct(used),
+        note: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
+        percent: used / 100,
+        samples: h.swap.toList(),
+      ),
+    );
+  }
+
+  if (ss.disk.isNotEmpty) {
+    final usage = ss.diskUsage ?? DiskUsage.parse(ss.disk);
+    final used = usage.usedPercent;
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.disk,
+        label: libL10n.disk,
+        icon: ServerDetailCards.disk.icon,
+        color: ChartPalette.disk,
+        value: _pct(used),
+        note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
+        percent: used / 100,
+        samples: h.disk.toList(),
+      ),
+    );
+  }
+
+  final (read, write) = ss.diskIO.allSpeedBytes;
+  if (read != null || write != null) {
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.diskIo,
+        label: l10n.diskIo,
+        icon: MingCute.transfer_3_line,
+        color: ChartPalette.diskWrite,
+        value: _rate(write),
+        note: '${_rate(read)} ${l10n.read}',
+        samples: h.diskWrite.toList(),
+      ),
+    );
+  }
+
+  final ns = ss.netSpeed;
+  if (ns.devices.isNotEmpty) {
+    final rx = ns.speedInBytesOf();
+    final tx = ns.speedOutBytesOf();
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.net,
+        label: libL10n.net,
+        icon: ServerDetailCards.net.icon,
+        color: ChartPalette.netTx,
+        value: _rate(tx),
+        note: '↓ ${_rate(rx)} · ↑ ${_rate(tx)}',
+        samples: h.netTx.toList(),
+      ),
+    );
+  }
+
+  if (_busiestGpu(ss) case final gpu?) {
+    final used = gpu.utilization;
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.gpu,
+        label: 'GPU',
+        icon: ServerDetailCards.gpu.icon,
+        color: ChartPalette.gpu,
+        value: _pct(used),
+        note: gpu.name,
+        percent: used == null ? null : used / 100,
+        samples: h.gpu.toList(),
+      ),
+    );
+  }
+
+  if (_hottest(ss) case (final sensor, final celsius)) {
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.temp,
+        label: libL10n.temperature,
+        icon: ServerDetailCards.temp.icon,
+        color: ChartPalette.temp,
+        value: '${celsius.toStringAsFixed(1)}°C',
+        note: sensor,
+        samples: h.temp.toList(),
+      ),
+    );
+  }
+
+  // The first battery, not every one: a laptop has one, and a host reporting
+  // several is reporting its mouse and its keyboard.
+  if (ss.batteries.firstOrNull case final battery?) {
+    final percent = battery.percent?.toDouble();
+    out.add(
+      ServerMetric(
+        kind: ServerMetricKind.battery,
+        label: libL10n.battery,
+        icon: ServerDetailCards.battery.icon,
+        color: ChartPalette.battery,
+        value: _pct(percent),
+        note: [battery.status.name, ?battery.name].join(' · '),
+        percent: percent == null ? null : percent / 100,
+        samples: h.battery.toList(),
+      ),
+    );
+  }
+
+  return out;
+}
+
+GpuItem? _busiestGpu(ServerStatus ss) {
+  GpuItem? top;
+  for (final gpu in ss.gpus) {
+    if (top == null || (gpu.utilization ?? -1) > (top.utilization ?? -1)) {
+      top = gpu;
+    }
+  }
+  return top;
+}
+
+/// The hottest sensor, which is the one that will be a problem.
+(String, double)? _hottest(ServerStatus ss) {
+  String? name;
+  double? top;
+  for (final device in ss.temps.devices) {
+    final value = ss.temps.get(device);
+    if (value == null) continue;
+    if (top == null || value > top) {
+      name = device;
+      top = value;
+    }
+  }
+  return name == null || top == null ? null : (name, top);
+}
