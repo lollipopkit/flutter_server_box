@@ -672,6 +672,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 children: [
                   // The way back comes first and takes no room when there is
                   // nowhere to go back to.
+                  //
+                  // Inset to where the switcher's own glyph sits when there is
+                  // nothing open — `SessionSwitcherLabel` holds it 14 off the
+                  // edge, and a button's own 7 is half of that — so the first
+                  // thing in the bar is in the same place either way.
+                  if (openId != null) const SizedBox(width: 7),
                   if (openId != null)
                     Btn.icon(
                       text: libL10n.close,
