@@ -5,10 +5,12 @@ import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
@@ -212,6 +214,43 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// Holds the gap between the chrome going and the card starting back.
   Timer? _closeTimer;
 
+  /// Where the page's own key bindings live.
+  ///
+  /// Focused deliberately — when a machine is opened or a set is started —
+  /// rather than on arrival: this tab is kept alive behind the others, and a
+  /// node that grabs focus when it is built would take it from whatever tab
+  /// the user is actually looking at.
+  final _keys = FocusNode(debugLabel: 'server list', skipTraversal: true);
+
+  /// The list as it was last drawn, for the bindings that step through it.
+  ///
+  /// A key is pressed between builds, so what "the next machine" is has to be
+  /// something the last build left behind.
+  List<String> _lastFiltered = const [];
+
+  /// The machines being acted on together, or empty when none are.
+  ///
+  /// Empty is the ordinary list — no boxes beside the names, taps open — and
+  /// anything else turns the bar into what is being done to them. Kept here
+  /// rather than in a provider because it is a state of *this page*: leaving
+  /// it and coming back is finishing, not resuming.
+  final _selected = <String>{};
+
+  bool get _selecting => _selected.isNotEmpty;
+
+  /// Puts [id] in or out of the set, and ends selecting when it empties.
+  void _toggleSelected(String id) {
+    _keys.requestFocus();
+    setState(() {
+      if (!_selected.remove(id)) _selected.add(id);
+    });
+  }
+
+  void _endSelecting() {
+    if (_selected.isEmpty) return;
+    setState(_selected.clear);
+  }
+
   /// Opens [id] in place: the card grows to the width of the page and the rest
   /// of the grid makes way.
   ///
@@ -219,6 +258,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// and deleting one clears it — so this is the one thing that changes. What
   /// the card looks like at each point between is the card's own business.
   void _openDetail(String id) {
+    _keys.requestFocus();
+    // Asked each time rather than once: the switch can be turned on while the
+    // app is open, and what it asks for is that this movement stop being one.
+    _openCtrl.duration = context.motion(_kOpenDuration);
     final was = ref.read(serverSelectionProvider);
     ref.read(serverSelectionProvider.notifier).select(id);
     _closeTimer?.cancel();
@@ -235,8 +278,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
   void _closeDetail() {
     if (ref.read(serverSelectionProvider) == null) return;
     if (_detailShowing) setState(() => _detailShowing = false);
+    _openCtrl.duration = context.motion(_kOpenDuration);
     _closeTimer?.cancel();
-    _closeTimer = Timer(_kChromeDuration, () {
+    _closeTimer = Timer(context.motion(_kChromeDuration), () {
       if (!mounted) return;
       ref.read(serverSelectionProvider.notifier).select(null);
       _openCtrl.reverse();
@@ -246,6 +290,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   @override
   void dispose() {
     _closeTimer?.cancel();
+    _keys.dispose();
     _open.dispose();
     _openCtrl.dispose();
     _timer?.cancel();
@@ -470,6 +515,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
             (id) => states[id] ?? ref.read(serverProvider(id)),
           );
           final filtered = _filterServers(ordered);
+          _lastFiltered = filtered;
           // The empty states win over the globe — see [_buildBodySmall] — so
           // an empty one is not the globe having the window, and the bar with
           // the control that undoes the filter has to stay.
@@ -481,19 +527,65 @@ class _ServerPageState extends ConsumerState<ServerPage>
           final globe =
               _globe.value && filtered.isNotEmpty && openId == null;
           _publishImmersive(globe);
-          return _buildScaffold(
-            _buildBodySmall(
-              filtered: filtered,
-              globe: globe,
+          return _bound(
+            _buildScaffold(
+              _buildBodySmall(
+                filtered: filtered,
+                globe: globe,
+                openId: openId,
+              ),
+              bare: globe,
               openId: openId,
+              filtered: filtered,
             ),
-            bare: globe,
-            openId: openId,
-            filtered: filtered,
           );
         },
       ),
     );
+  }
+
+  /// The keys this page answers to.
+  ///
+  /// Only the ones that act on the page as a whole. What can be done to *one*
+  /// machine is on the menu a long press or a right-click opens, and reaching
+  /// those from the keyboard needs a card to be focusable first — which is a
+  /// separate thing and not this.
+  Widget _bound(Widget child) {
+    // The platform's own modifier: a Mac holds command where everything else
+    // holds control, and a binding that names the wrong one is a binding
+    // nobody can press.
+    SingleActivator cmd(LogicalKeyboardKey key) =>
+        SingleActivator(key, meta: isMacOS, control: !isMacOS);
+
+    return CallbackShortcuts(
+      bindings: {
+        // What the top-left arrow does, and what a set being built up is
+        // abandoned with.
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (_selecting) {
+            _endSelecting();
+          } else {
+            _closeDetail();
+          }
+        },
+        cmd(LogicalKeyboardKey.bracketLeft): () => _stepServer(-1),
+        cmd(LogicalKeyboardKey.bracketRight): () => _stepServer(1),
+      },
+      child: Focus(focusNode: _keys, child: child),
+    );
+  }
+
+  /// The machine before or after the open one, wrapping at the ends.
+  ///
+  /// Wrapping because the list is short and the alternative is a key that
+  /// silently does nothing at one end of it.
+  void _stepServer(int delta) {
+    final openId = ref.read(serverSelectionProvider);
+    if (openId == null || _lastFiltered.length < 2) return;
+    final at = _lastFiltered.indexOf(openId);
+    if (at < 0) return;
+    final next = (at + delta) % _lastFiltered.length;
+    _openDetail(_lastFiltered[next]);
   }
 
   /// Whether a server opens where its card is, or as a page of its own.
@@ -518,6 +610,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// strips are read as one line down the app, and a taller one here would
   /// shift the page contents by that much on every switch between tabs.
   PreferredSizeWidget _buildTagBar(String? openId, List<String> filtered) {
+    if (_selecting) return _buildSelectionBar(filtered);
     return PreferredSizeListenBuilder(
       // Which tag is on, what tags there are to choose between, and how the
       // list is ordered — the sort button draws its own current icon.
@@ -562,6 +655,144 @@ class _ServerPageState extends ConsumerState<ServerPage>
         );
       },
     );
+  }
+
+  /// What is being done to several machines at once, in the bar's place.
+  ///
+  /// The bar's own controls are about the list — a tag, a search, an order —
+  /// and none of them means anything while a set is being built up. So the
+  /// whole strip becomes the set: how many, out of how many, and the things
+  /// that can be done to all of them.
+  ///
+  /// The actions are the single-machine set minus everything that cannot be
+  /// done to several: there is no one terminal for three machines, and no one
+  /// address to copy.
+  PreferredSizeWidget _buildSelectionBar(List<String> filtered) {
+    final scheme = Theme.of(context).colorScheme;
+    final count = _selected.length;
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(SessionTabBar.height),
+      child: SizedBox(
+        height: SessionTabBar.height,
+        child: Row(
+          children: [
+            Btn.icon(
+              text: libL10n.close,
+              icon: const Icon(Icons.close, size: 18),
+              onTap: _endSelecting,
+            ),
+            Icon(Icons.check_box, size: 19, color: scheme.primary),
+            const SizedBox(width: 9),
+            Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Text('/ ${filtered.length}', style: UIs.text11Grey),
+            const Spacer(),
+            Btn.icon(
+              text: l10n.connect,
+              icon: const Icon(Icons.link, size: 18),
+              onTap: () => _bulk((spi) {
+                ref.read(serversProvider.notifier).refresh(spi: spi);
+              }),
+            ),
+            Btn.icon(
+              text: l10n.disconnect,
+              icon: const Icon(Icons.link_off, size: 18),
+              onTap: () => _bulk((spi) {
+                ref.read(serversProvider.notifier).closeServer(id: spi.id);
+              }),
+            ),
+            Btn.icon(
+              text: libL10n.tag,
+              icon: const Icon(MingCute.hashtag_line, size: 18),
+              onTap: _bulkTag,
+            ),
+            Btn.icon(
+              text: libL10n.delete,
+              icon: const Icon(Icons.delete, size: 18),
+              onTap: _bulkDelete,
+            ),
+            const SizedBox(width: 7),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Runs [each] over the chosen machines and then stops choosing.
+  ///
+  /// Stopping is the point: an action that left the set selected would leave
+  /// the page in a state whose only purpose was to reach the action.
+  void _bulk(void Function(Spi spi) each) {
+    final servers = ref.read(serversProvider).servers;
+    for (final id in _selected.toList()) {
+      final spi = servers[id];
+      if (spi != null) each(spi);
+    }
+    _endSelecting();
+  }
+
+  /// Adds one tag to every chosen machine.
+  ///
+  /// Adds rather than replaces: a tag is one of the things a server is, and a
+  /// bulk edit that cleared the others would be a way to lose them quietly.
+  Future<void> _bulkTag() async {
+    final tag = await context.showRoundDialog<String>(
+      title: libL10n.tag,
+      child: Input(
+        autoFocus: true,
+        type: TextInputType.text,
+        hint: libL10n.tag,
+        onSubmitted: (value) => context.popDialog(value.trim()),
+      ),
+      actions: Btn.cancel().toList,
+    );
+    if (tag == null || tag.isEmpty || !mounted) return;
+
+    final notifier = ref.read(serversProvider.notifier);
+    final servers = ref.read(serversProvider).servers;
+    for (final id in _selected.toList()) {
+      final spi = servers[id];
+      if (spi == null) continue;
+      final tags = {...?spi.tags, tag}.toList();
+      try {
+        await notifier.updateServer(spi, spi.copyWith(tags: tags));
+      } catch (e, st) {
+        if (mounted) context.showErrDialog(e, st);
+        return;
+      }
+    }
+    _endSelecting();
+  }
+
+  /// The one that cannot be undone, so it says how many.
+  Future<void> _bulkDelete() async {
+    final count = _selected.length;
+    final confirmed = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: Text(
+        libL10n.askContinue('${libL10n.delete} ${libL10n.server}($count)'),
+      ),
+      actions: Btn.ok(red: true).toList,
+    );
+    if (confirmed != true || !mounted) return;
+
+    final notifier = ref.read(serversProvider.notifier);
+    for (final id in _selected.toList()) {
+      try {
+        await notifier.delServer(id);
+      } catch (e, st) {
+        if (mounted) context.showErrDialog(e, st);
+        return;
+      }
+    }
+    _endSelecting();
   }
 
   /// How much of each machine the list draws.
@@ -941,8 +1172,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // here would fight that — and each empty state has its own, so going from
     // a filtered-out tag to no servers at all is also a crossing.
     return AnimatedSwitcher(
-      duration: _kViewSwapDuration,
-      reverseDuration: _kViewSwapDuration,
+      duration: context.motion(_kViewSwapDuration),
+      reverseDuration: context.motion(_kViewSwapDuration),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       // Scale and fade rather than fade alone — see [_viewSwapTransition] for
@@ -1010,7 +1241,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
         // The cards make way at the same pace as the one growing, so the whole
         // thing reads as one movement rather than as a card growing into a
         // grid that is still settling.
-        moveDuration: _kOpenDuration,
+        moveDuration: context.motion(_kOpenDuration),
+        changeDuration: context.motion(Durations.medium2),
         // The column each shape wants: a line per machine takes the width, a
         // tile takes as little as a name needs, and a card takes the one width
         // the rest of the app lays a column out at.
@@ -1058,7 +1290,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         _buildSwitcher(filtered, openId),
         Expanded(
           child: AnimatedSwitcher(
-            duration: _kChromeDuration,
+            duration: context.motion(_kChromeDuration),
             child: open && _detailShowing
                 ? _buildOpenDetail(openId)
                 : KeyedSubtree(key: const ValueKey('cards'), child: grid),
@@ -1264,10 +1496,16 @@ class _ServerPageState extends ConsumerState<ServerPage>
         srv: srv,
         promoted: _promotedOf(srv.spi.id),
         onPromote: (kind) => _promote(srv.spi.id, kind),
-        onTap: () => _onTapCard(context, srv),
+        // While a set is being built up, a tap is what adds to it: there is
+        // nothing else a tap could mean with boxes beside every name, and
+        // having to hit the box itself is a 19pt target on a 40pt row.
+        onTap: () => _selecting
+            ? _toggleSelected(srv.spi.id)
+            : _onTapCard(context, srv),
         onLongPress: () => _onLongPressCard(srv),
         openness: openness,
         density: density,
+        selected: _selecting ? _selected.contains(srv.spi.id) : null,
       ).onSecondary((at) => _onLongPressCard(srv, at)),
     );
 

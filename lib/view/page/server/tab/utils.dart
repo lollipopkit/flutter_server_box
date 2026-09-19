@@ -9,6 +9,12 @@ extension _Actions on _ServerPageState {
   /// descendant of the state's own context — and an inherited lookup only
   /// travels upwards. Asking from the state would always answer "no pane".
   void _onTapCard(BuildContext context, ServerState srv) {
+    // Held on a pointer, a tap is the start of choosing several rather than
+    // the opening of one — the convention every file manager has.
+    if (_modifierHeld) {
+      _toggleSelected(srv.spi.id);
+      return;
+    }
     if (srv.needsInteractiveAuth) {
       TryLimiter.reset(srv.spi.id);
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
@@ -45,7 +51,16 @@ extension _Actions on _ServerPageState {
       ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
       return;
     }
-    showServerActions(context, ref, srv, at: at);
+    showServerActions(
+      context,
+      ref,
+      srv,
+      at: at,
+      // A finger has no modifier to hold, so this is the way in to acting on
+      // several machines; a pointer's is a held key and does not need a row
+      // here as well.
+      onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
+    );
   }
 
   /// The three ways a server gets onto this device, in one place.
@@ -155,6 +170,21 @@ class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
     ref.listen(serverDetailRequestProvider, (_, _) => _drain());
     return widget.child;
   }
+}
+
+/// Whether a key that turns a tap into "add this one too" is down.
+///
+/// Read from the hardware rather than from a gesture's details, which carry no
+/// modifiers: this is the only place it is asked, and a tap is synchronous
+/// with the key being held.
+bool get _modifierHeld {
+  final keys = HardwareKeyboard.instance.logicalKeysPressed;
+  return keys.contains(LogicalKeyboardKey.metaLeft) ||
+      keys.contains(LogicalKeyboardKey.metaRight) ||
+      keys.contains(LogicalKeyboardKey.controlLeft) ||
+      keys.contains(LogicalKeyboardKey.controlRight) ||
+      keys.contains(LogicalKeyboardKey.shiftLeft) ||
+      keys.contains(LogicalKeyboardKey.shiftRight);
 }
 
 extension _Utils on _ServerPageState {

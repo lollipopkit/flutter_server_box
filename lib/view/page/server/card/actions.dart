@@ -25,12 +25,22 @@ import 'package:server_box/view/widget/server_share.dart';
 List<ContextMenuAction> serverActions(
   BuildContext context,
   WidgetRef ref,
-  ServerState srv,
-) {
+  ServerState srv, {
+  VoidCallback? onSelect,
+}) {
   final spi = srv.spi;
   final connected = srv.conn == ServerConn.finished;
 
   return [
+    // First, and only on a device with no other way in: a long press already
+    // means "the other things", so acting on several machines has to start
+    // from inside that rather than replace it. A pointer holds a modifier.
+    if (onSelect != null)
+      ContextMenuAction(
+        icon: Icons.check_box_outlined,
+        text: libL10n.select,
+        onTap: onSelect,
+      ),
     ContextMenuAction(
       icon: Icons.edit,
       text: libL10n.edit,
@@ -123,8 +133,9 @@ Future<void> showServerActions(
   WidgetRef ref,
   ServerState srv, {
   Offset? at,
+  VoidCallback? onSelect,
 }) async {
-  final actions = serverActions(context, ref, srv);
+  final actions = serverActions(context, ref, srv, onSelect: onSelect);
   if (at != null || !isMobile) {
     return showContextMenu(context, actions, title: srv.spi.name, at: at);
   }

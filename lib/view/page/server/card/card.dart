@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
@@ -83,6 +84,7 @@ class ServerCard extends ConsumerWidget {
     this.onLongPress,
     this.openness = 0,
     this.density = ServerListDensity.cards,
+    this.selected,
   });
 
   final ServerState srv;
@@ -97,6 +99,14 @@ class ServerCard extends ConsumerWidget {
 
   /// 0 is a card in the grid, 1 the detail it becomes. See the class doc.
   final double openness;
+
+  /// Whether this machine is one of the ones being acted on, or null when
+  /// nothing is being acted on at all.
+  ///
+  /// Three states rather than a bool: a box beside every name when nobody is
+  /// selecting anything is a column of empty boxes down a page that is not
+  /// about choosing.
+  final bool? selected;
 
   /// How much of this machine to draw.
   ///
@@ -117,7 +127,7 @@ class ServerCard extends ConsumerWidget {
         // of them used to move every card below it in the column between one
         // frame and the next.
         child: AnimatedSize(
-          duration: Durations.medium3,
+          duration: context.motion(Durations.medium3),
           curve: Curves.fastEaseInToSlowEaseOut,
           alignment: Alignment.topCenter,
           child: compact
@@ -180,6 +190,22 @@ class ServerCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: children,
         ),
+      ),
+    );
+  }
+
+  /// The box that says whether this machine is one of the ones being acted
+  /// on. Nothing at all when nothing is.
+  Widget? _check(BuildContext context) {
+    final selected = this.selected;
+    if (selected == null) return null;
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(right: 9),
+      child: Icon(
+        selected ? Icons.check_box : Icons.check_box_outline_blank,
+        size: 19,
+        color: selected ? scheme.primary : Colors.grey,
       ),
     );
   }
@@ -249,6 +275,7 @@ class ServerCard extends ConsumerWidget {
             final wide = cons.maxWidth;
             return Row(
               children: [
+                ?_check(context),
                 Container(
                   width: ServerCardSizes.dot,
                   height: ServerCardSizes.dot,
@@ -425,6 +452,7 @@ class ServerCard extends ConsumerWidget {
           children: [
             Row(
               children: [
+                ?_check(context),
                 Container(
                   width: 6,
                   height: 6,
@@ -506,6 +534,7 @@ class ServerCard extends ConsumerWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                ?_check(context),
                 // Before the name, at the size of it: which distribution a
                 // machine runs is what a list of servers is scanned for, and
                 // it reads faster as a shape than as a word. The gap goes with

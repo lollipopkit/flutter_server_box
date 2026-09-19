@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/provider/server/selection.dart';
@@ -172,5 +173,42 @@ void main() {
     // branch below the width check, which is what says the check took.
     expect(openId(tester), isNull);
     expect(find.byType(ServerPage, skipOffstage: false), findsOneWidget);
+  });
+
+  testWidgets('escape is the same way back as the arrow', (tester) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+    expect(openId(tester), isNotNull);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await settle(tester);
+
+    expect(openId(tester), isNull);
+  });
+
+  testWidgets('and the bracket keys step to the next machine', (tester) async {
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+    expect(openId(tester), 'srv-0');
+
+    // The page's own answer to which modifier this platform uses, so the test
+    // presses the key the binding is actually registered under.
+    final modifier = Platform.isMacOS
+        ? LogicalKeyboardKey.metaLeft
+        : LogicalKeyboardKey.controlLeft;
+    await tester.sendKeyDownEvent(modifier);
+    await tester.sendKeyEvent(LogicalKeyboardKey.bracketRight);
+    await tester.sendKeyUpEvent(modifier);
+    await settle(tester);
+
+    // Wrapping is the point at the ends of a two-server list, but here it is
+    // simply the next one.
+    expect(openId(tester), 'srv-1');
   });
 }
