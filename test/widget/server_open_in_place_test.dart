@@ -412,4 +412,44 @@ void main() {
       moreOrLessEquals(column, epsilon: 1),
     );
   });
+
+  testWidgets('the cards that are not being opened never move', (tester) async {
+    // They used to be taken out of the list while one was open, so they left
+    // and then arrived again: every one of them growing in and shuffling into
+    // place, on a page nobody had asked to rearrange. Opening one machine is
+    // not something that happens to the others.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    Rect other() => tester.getRect(
+      find.ancestor(
+        of: find.text('db'),
+        matching: find.byType(ServerCard),
+      ),
+    );
+
+    final atRest = other();
+
+    // Sideways is the whole of it: the strip of machines takes a line above
+    // the grid while one is open, so everything under it is that much lower,
+    // and that is the strip arriving rather than the grid rearranging.
+    void expectStill() {
+      expect(other().left, moreOrLessEquals(atRest.left, epsilon: 0.5));
+      expect(other().width, moreOrLessEquals(atRest.width, epsilon: 0.5));
+    }
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+    expectStill();
+
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 260));
+    expectStill();
+
+    await settle(tester);
+    expect(other(), rectMoreOrLessEquals(atRest, epsilon: 0.5));
+  });
 }

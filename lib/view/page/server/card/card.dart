@@ -53,6 +53,14 @@ abstract final class ServerCardSizes {
   /// them — the page's own `_kColumnsWidth`.
   static const columnsWidth = 800.0;
 
+  /// What the card adds to the grid's own padding once it is the page.
+  ///
+  /// The page insets its readings by 13 at the sides and 7 above; the grid
+  /// insets its cards by 8 and 4. This is the difference, so the two line up
+  /// without the grid having to change — see the comment on the masonry's
+  /// padding.
+  static const openInset = EdgeInsets.fromLTRB(5, 3, 5, 9);
+
   /// The line above the chart, once the readings are the page.
   ///
   /// Stated rather than natural, and honoured at both ends of the movement:
@@ -305,9 +313,15 @@ class ServerCard extends ConsumerWidget {
         : 0.0;
 
     return Padding(
-      // At rest the card's own inset; at the end none, because by then each
-      // block inside carries its own.
-      padding: EdgeInsets.all(lerpDouble(ServerCardSizes.pad, 0, t)!),
+      // At rest the card's own inset. At the end, what is left of the page's
+      // once the grid's own padding and this card's margin are taken off it:
+      // the blocks inside carry the rest, and the grid cannot supply it
+      // without changing the width of every column.
+      padding: EdgeInsets.lerp(
+        const EdgeInsets.all(ServerCardSizes.pad),
+        ServerCardSizes.openInset,
+        t,
+      )!,
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minHeight: ServerCardSizes.collapsed,

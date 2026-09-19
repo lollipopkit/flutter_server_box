@@ -1262,14 +1262,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
         animation: _open,
         builder: (_, _) => AnimatedMasonry(
           controller: _scrollController,
-          // The grid's own inset at rest, and the page's once one card is the
-          // page — so what the card holds lines up with what the page holds
-          // and nothing shifts when the page takes over.
-          padding: EdgeInsets.lerp(
-            MasonryList.kPadding,
-            const EdgeInsets.fromLTRB(13, 7, 13, 13),
-            _open.value,
-          )!,
+          // Constant. The card growing out of the grid needs the page's inset
+          // rather than the grid's, but taking it from here would change
+          // every column's width — so every other card would slide sideways
+          // for a movement that is not about them. The card makes up the
+          // difference in its own padding instead.
+          padding: MasonryList.kPadding,
           // The cards make way at the same pace as the one growing, so the whole
           // thing reads as one movement rather than as a card growing into a
           // grid that is still settling.
@@ -1297,9 +1295,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
           // open the totals would be a summary of a list that is not on screen.
           footer: open ? null : ServerOverview(ids: filtered),
           children: [
-            // While one is open it is the only one built: the rest are leaving,
-            // which is what the grid already knows how to draw.
-            for (final id in open && hero ? [heroId] : filtered)
+            // Every one of them, the whole way through. The rest used to be
+            // taken out of the list while one was open, which made them leave
+            // and then arrive again — a card growing in and shuffling into
+            // place for each of them, on a page nobody had asked to rearrange.
+            // They fade instead, and their slots are held for them.
+            for (final id in filtered)
               // Its own `Consumer`, so a status poll rebuilds the one card whose
               // server answered rather than the grid. Watched from this page's
               // `ref` — which is what a builder would have to do — any server's
@@ -1309,6 +1310,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 builder: (_, ref, _) => _buildEachServerCard(
                   ref.watch(serverProvider(id)),
                   openness: id == heroId ? _open.value : 0,
+                  // How far the *page* has taken over, which is what fades
+                  // the cards that are not the one being opened.
+                  hidden: id == heroId ? 0 : _open.value,
                   density: density,
                   // The box the page will have, which is this same box: the
                   // grid and the page it becomes are the two children of one
@@ -1416,7 +1420,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   builder: (_, controller) => ListView(
                     controller: controller,
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    // Lined up with the page under it rather than with the
+                    // window: this strip is a row of the list that has made
+                    // way, so its first pill starts where the cards start.
+                    // The pills carry two of their own.
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
                     children: [
                       for (final (i, id) in filtered.indexed)
                         _buildSwitcherPill(id, current: i == at),
@@ -1552,6 +1560,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _buildEachServerCard(
     ServerState srv, {
     double openness = 0,
+    double hidden = 0,
     ServerListDensity density = ServerListDensity.cards,
     double pageWidth = 0,
   }) {
@@ -1578,7 +1587,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
       ).onSecondary((at) => _onLongPressCard(srv, at)),
     );
 
-    return card;
+    if (hidden <= 0) return card;
+    // Out of the way of the one being opened, and out of reach while it is:
+    // a card that cannot be seen should not be what a tap lands on.
+    return IgnorePointer(
+      child: Opacity(opacity: (1 - hidden).clamp(0.0, 1.0), child: card),
+    );
   }
 
   @override
