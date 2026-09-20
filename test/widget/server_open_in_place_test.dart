@@ -116,7 +116,8 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
-  /// Has the first machine answer, so its card has readings to draw.
+  /// Has a machine answer — the first, unless [id] names another — so its
+  /// card has readings to draw.
   ///
   /// [everything] adds a swap and a disk to the memory, so the swap sits
   /// between two of the card's own rows. With [sensor] the one slot that varies
@@ -124,6 +125,7 @@ void main() {
   /// swap takes that slot and is a row of the card's.
   Future<void> answer(
     WidgetTester tester, {
+    String id = 'srv-0',
     bool everything = false,
     bool sensor = true,
   }) async {
@@ -161,7 +163,7 @@ void main() {
     for (var i = 0; i < 8; i++) {
       status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
     }
-    final notifier = container.read(serverProvider('srv-0').notifier);
+    final notifier = container.read(serverProvider(id).notifier);
     notifier.updateStatus(status);
     // The card draws readings only for a machine that has answered, which is
     // what `finished` means — a status alone is what it last said.
@@ -612,6 +614,44 @@ void main() {
     expect(tester.getRect(find.byType(ServerDetailPage)).top, under);
   });
 
+  testWidgets('and a face at rest is the one that was turning', (tester) async {
+    // Each face was handed back bare once the turn was over and wrapped in
+    // the turn while it lasted: a different parent at rest, so the face was
+    // unmounted and built again on the frame the turn started or stopped. The
+    // pills keep a scroll position and work out their faded edges a frame
+    // after they are mounted, so the way back began with the row of machines
+    // jumping to its start and its edges going hard for a frame.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    Element overview() => tester.element(find.byType(ServerOverview));
+    Element switcher() =>
+        tester.element(find.byKey(const ValueKey('switcher')));
+
+    final resting = overview();
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(identical(overview(), resting), isTrue);
+
+    // Past the halfway point, where the other face is the one turning.
+    await tester.pump(const Duration(milliseconds: 240));
+    final turning = switcher();
+    await settle(tester);
+    expect(identical(switcher(), turning), isTrue);
+
+    // And into the way back: past the chrome leaving, a little into the turn.
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 260));
+    expect(identical(switcher(), turning), isTrue);
+
+    await tester.pump(const Duration(milliseconds: 240));
+    final landing = overview();
+    await settle(tester);
+    expect(identical(overview(), landing), isTrue);
+  });
+
   testWidgets('and it is as far from the bar as the cards are from it', (
     tester,
   ) async {
@@ -795,6 +835,82 @@ void main() {
     expect(tester.getRect(find.byType(ServerFuncBar)), at);
   });
 
+  testWidgets('and is the same row from the way in to the way back', (
+    tester,
+  ) async {
+    // It rises and sinks with the card, and once the card had stopped it was
+    // handed back without the layers that do that — a different parent at
+    // openness 1 from the one at anything less. So the row was unmounted and
+    // built again on the last frame of the way in and the first of the way
+    // back, and a row that has just been mounted spends its first frames off
+    // the bottom of the window: it went out just as the card started to
+    // shrink, and came back to fade.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    Element bar() => tester.element(find.byType(ServerFuncBar));
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    final rising = bar();
+
+    await settle(tester);
+    expect(identical(bar(), rising), isTrue);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      // Gone with the card landing, which is the end of it.
+      if (find.byType(ServerFuncBar).evaluate().isEmpty) break;
+      expect(identical(bar(), rising), isTrue, reason: 'frame $i');
+      // And where it belongs rather than past the edge it sits on.
+      final slide = tester.widget<AnimatedSlide>(
+        find.ancestor(
+          of: find.byType(ServerFuncBar),
+          matching: find.byType(AnimatedSlide),
+        ),
+      );
+      expect(slide.offset, Offset.zero, reason: 'frame $i');
+    }
+    expect(find.byType(ServerFuncBar), findsNothing);
+  });
+
+  testWidgets('and what the page adds is built once, not at each handover', (
+    tester,
+  ) async {
+    // The facts beside the readings and the tables under them come in with
+    // the card, and were handed back without the layers that do that once it
+    // had stopped — so all of them were unmounted, built and laid out again
+    // on the last frame of the way in and the first of the way back, which is
+    // the most there is to build on this page and the least time to do it in.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+
+    Element fact() => tester.element(
+      find
+          .descendant(
+            of: find.byType(ServerDetailPage),
+            matching: find.text(libL10n.conn),
+          )
+          .first,
+    );
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    final entering = fact();
+
+    await settle(tester);
+    expect(identical(fact(), entering), isTrue);
+
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 260));
+    expect(identical(fact(), entering), isTrue);
+  });
+
   testWidgets('the way back is a movement too, not a snap', (tester) async {
     // The expansion used to hang off the selection, which is cleared the
     // moment the way back is taken — so the card was already a card again on
@@ -832,6 +948,101 @@ void main() {
           .width,
       moreOrLessEquals(column, epsilon: 1),
     );
+  });
+
+  testWidgets('the readings come in once, not at each end of the movement', (
+    tester,
+  ) async {
+    // A card fills block by block when its machine first answers. That ran
+    // whenever the blocks were *mounted*, and the movement mounts them again
+    // three times over: the grid is dropped while the page has the readings
+    // and mounted for the way back, the open card's body changed parents on
+    // the first and last frames, and every other card was wrapped to be faded
+    // and unwrapped after. So the readings went out and came back in before
+    // the card started shrinking, and again once it had landed.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+    await answer(tester, id: 'srv-1');
+
+    // How opaque the card itself draws each machine's memory row. A row both
+    // cards have at rest, so nothing about the movement is fading it — and
+    // only as far up as the card, which leaves out the layer the other cards
+    // are faded through.
+    Iterable<double> rows() sync* {
+      final labels = find.descendant(
+        of: find.byType(AnimatedMasonry),
+        matching: find.text(libL10n.memory),
+      );
+      for (final label in labels.evaluate()) {
+        var opacity = 1.0;
+        label.visitAncestorElements((e) {
+          if (e.widget is ServerCard) return false;
+          if (e.widget case Opacity(opacity: final o)) opacity *= o;
+          return true;
+        });
+        yield opacity;
+      }
+    }
+
+    expect(rows(), [1.0, 1.0]);
+
+    await tester.tap(find.text('web'));
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      // The page has taken the readings over, and the grid is gone.
+      if (find.byType(AnimatedMasonry).evaluate().isEmpty) break;
+      expect(rows(), everyElement(1.0), reason: 'frame $i of the way in');
+    }
+
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    // From the chrome leaving to well past the card landing.
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(rows(), [1.0, 1.0], reason: 'frame $i of the way back');
+    }
+    expect(openId(tester), isNull);
+  });
+
+  testWidgets('and no card is built again from nothing at either end', (
+    tester,
+  ) async {
+    // What the above was a symptom of, for the cards that are not the one
+    // being opened. The layer they are faded through was put around each when
+    // a machine opened and taken off when it closed — a different widget at
+    // the same place, so every one of them was unmounted and built from
+    // nothing on the first frame of the movement and again on the last, which
+    // are the two frames with the least time to spare.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+
+    Element cardOf(String id) => tester.element(
+      find.byWidgetPredicate((w) => w is ServerCard && w.srv.spi.id == id),
+    );
+
+    final hero = cardOf('srv-0');
+    final other = cardOf('srv-1');
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(identical(cardOf('srv-0'), hero), isTrue);
+    expect(identical(cardOf('srv-1'), other), isTrue);
+
+    // The grid is mounted again for the way back, so these are new elements
+    // by design — and the same ones from there until the card has landed.
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 260));
+    final heroBack = cardOf('srv-0');
+    final otherBack = cardOf('srv-1');
+
+    await settle(tester);
+    expect(identical(cardOf('srv-0'), heroBack), isTrue);
+    expect(identical(cardOf('srv-1'), otherBack), isTrue);
   });
 
   testWidgets('the cards that are not being opened never move', (tester) async {

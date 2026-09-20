@@ -99,6 +99,7 @@ void main() {
     ServerListDensity density = ServerListDensity.cards,
     double width = 600,
     bool everything = false,
+    ServerConn conn = ServerConn.finished,
   }) async {
     tester.view.physicalSize = Size(width, 900);
     tester.view.devicePixelRatio = 1;
@@ -117,7 +118,7 @@ void main() {
               srv: ServerState(
                 spi: spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
                 status: sampled(everything: everything),
-                conn: ServerConn.finished,
+                conn: conn,
               ),
               promoted: promoted,
               onPromote: onPromote,
@@ -139,6 +140,53 @@ void main() {
     // CPU leads, so it is the headline — and the row list under it is the rest.
     expect(find.text('CPU'), findsOneWidget);
     expect(find.text(libL10n.memory), findsOneWidget);
+  });
+
+  group('the readings coming in', () {
+    // How opaque the card draws its memory row: every [Opacity] between the
+    // two, multiplied.
+    double row(WidgetTester tester) {
+      var opacity = 1.0;
+      tester.element(find.text(libL10n.memory)).visitAncestorElements((e) {
+        if (e.widget is ServerCard) return false;
+        if (e.widget case Opacity(opacity: final o)) opacity *= o;
+        return true;
+      });
+      return opacity;
+    }
+
+    testWidgets('is the machine answering, and nothing else', (tester) async {
+      // Block after block, once. What starts it is a card that was on screen
+      // without readings getting them — not the blocks being mounted, which
+      // happens whenever the grid is: on the way back from an open machine,
+      // when a tag is picked, when the globe is left. Each of those played it
+      // again, on a card that had had its readings all along.
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        conn: ServerConn.connecting,
+      );
+      expect(find.text(libL10n.memory), findsNothing);
+
+      await pump(tester, promoted: null, onPromote: (_) {});
+      // Past the three blocks above it, each 20ms after the last.
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(row(tester), inExclusiveRange(0, 1));
+
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(row(tester), 1.0);
+
+      // A poll: the same card, built again with what the machine said next.
+      await pump(tester, promoted: null, onPromote: (_) {});
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(row(tester), 1.0);
+
+      // And a card that is mounted with readings already has them.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await pump(tester, promoted: null, onPromote: (_) {});
+      expect(row(tester), 1.0);
+    });
   });
 
   testWidgets('tapping a row asks for it to be drawn in full', (tester) async {

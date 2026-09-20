@@ -1673,8 +1673,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // for the whole list at once — the bar's refresh button is gone. Nothing
     // is lost that a pointer cannot reach: the status poll runs on its own,
     // and each card carries its own refresh for the one server behind it.
-    if (!isMobile || open) return body;
-    return RefreshIndicator(onRefresh: _refreshAll, child: body);
+    if (!isMobile) return body;
+    // Around the body whether or not a machine is open, and told not to
+    // listen while one is. Left off instead, it was a parent the body had at
+    // one moment and not the next: the page, the grid, the strip and the row
+    // of things to do were all unmounted and built again when a card was
+    // tapped, and again when the selection was cleared — which is the first
+    // frame of the way back.
+    return RefreshIndicator(
+      onRefresh: _refreshAll,
+      notificationPredicate: open
+          ? (_) => false
+          : defaultScrollNotificationPredicate,
+      child: body,
+    );
   }
 
   /// The open server's own page, without the bar this page already has.
@@ -1762,7 +1774,15 @@ class _ServerPageState extends ConsumerState<ServerPage>
           ),
           builder: (_, child) {
             final t = _open.value;
-            if (t >= 1) return child!;
+            // The same two layers at rest as on the way, rather than the row
+            // handed back bare once the card has stopped. That was a
+            // different parent at 1 from the one at anything less, so the row
+            // was unmounted and built again on the last frame of the way in
+            // and the first of the way back — and [HideOnScroll] spends the
+            // first frames after it is mounted off the edge it sits on, so
+            // the row went out just as the card started to shrink. At 1 both
+            // cost nothing: full opacity paints the child directly, and a
+            // translation by zero is an offset.
             return Opacity(
               opacity: t.clamp(0.0, 1.0),
               child: Transform.translate(
@@ -1832,17 +1852,25 @@ class _ServerPageState extends ConsumerState<ServerPage>
         animation: _open,
         builder: (_, _) {
           final t = _open.value;
-          if (t <= 0) return front;
-          if (t >= 1) return back;
           final facing = t < 0.5;
+          // Inside the turn at rest as well, with nothing to turn by. Handed
+          // back bare at 0 and at 1, a face had a different parent on the
+          // frame the turn started or stopped and was built again from
+          // nothing — and the pills keep a scroll position and work out their
+          // faded edges a frame after they are mounted. The identity is
+          // painted as an offset of zero, so it costs no layer and the text
+          // in it is drawn as it would be without.
+          final turning = t > 0 && t < 1;
           return Transform(
             alignment: Alignment.center,
-            transform: Matrix4.identity()
-              // Enough for the turn to read as one rather than as a squash,
-              // and not so much that the near edge swings out past the bar
-              // above.
-              ..setEntry(3, 2, 0.0015)
-              ..rotateX(facing ? -t * math.pi : (1 - t) * math.pi),
+            transform: turning
+                ? (Matrix4.identity()
+                    // Enough for the turn to read as one rather than as a
+                    // squash, and not so much that the near edge swings out
+                    // past the bar above.
+                    ..setEntry(3, 2, 0.0015)
+                    ..rotateX(facing ? -t * math.pi : (1 - t) * math.pi))
+                : Matrix4.identity(),
             child: facing ? front : back,
           );
         },
@@ -2033,16 +2061,23 @@ class _ServerPageState extends ConsumerState<ServerPage>
       },
     );
 
-    if (fade == null) return card;
     // Out of the way of the one being opened, and out of reach while it is:
     // a card that cannot be seen should not be what a tap lands on.
     //
     // The boundary is what makes the fade cheap. Without it the card is
     // rasterised into the opacity layer again on every frame; with it the
     // layer keeps the card's own picture and only its alpha changes.
+    //
+    // Around every card the whole time, the open one and a grid at rest
+    // included, with nothing to fade by. Put on when a machine opened and
+    // taken off when it closed, these were a different widget at the same
+    // place: every card but the open one was unmounted and built from nothing
+    // on the first frame of the movement and again on the last. Fully opaque,
+    // the transition paints its child directly and costs no layer.
     return IgnorePointer(
+      ignoring: fade != null,
       child: FadeTransition(
-        opacity: fade,
+        opacity: fade ?? kAlwaysCompleteAnimation,
         child: RepaintBoundary(child: card),
       ),
     );

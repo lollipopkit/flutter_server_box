@@ -693,7 +693,13 @@ ${err.message ?? 'null'}
         final t = Curves.easeInOutCubic.transform(
           entrance.value.clamp(0.0, 1.0),
         );
-        if (t >= 1) return child!;
+        // The same two layers once it has arrived, rather than the child
+        // handed back bare: that is a different parent at 1 from the one at
+        // anything less, so every card of facts and every table was
+        // unmounted, built and laid out again on the last frame of the way in
+        // and the first of the way back. At 1 neither costs anything — full
+        // opacity paints the child directly, and a translation by zero is an
+        // offset.
         return Opacity(
           opacity: t,
           child: Transform.translate(offset: from * (1 - t), child: child),

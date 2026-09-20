@@ -348,20 +348,26 @@ class ServerCard extends ConsumerWidget {
               : context.motion(_kArrive),
           curve: Curves.fastEaseInToSlowEaseOut,
           alignment: Alignment.topCenter,
-          child: switch (shaped) {
-            _ when compact => _compact(context, ref),
-            // The same structure for the whole of the movement, so the card
-            // under it is one element throughout and not rebuilt from nothing
-            // when the cross ends.
-            true => ShapeCross(
-              t: cross,
-              fromHeight: _compactHeight,
-              from: cross < 1 ? _compact(context, ref) : null,
-              to: _full(context, ref),
-              minToWidth: UIs.columnWidth,
-            ),
-            false => _full(context, ref),
-          },
+          // Above everything that changes shape, so the clock the readings
+          // come in on is the card's and not whichever shape drew them last.
+          child: _Arrival(
+            hasBody: _hasBody,
+            duration: context.motion(_kArrive),
+            builder: (context, arrival) => switch (shaped) {
+              _ when compact => _compact(context, ref),
+              // The same structure for the whole of the movement, so the card
+              // under it is one element throughout and not rebuilt from
+              // nothing when the cross ends.
+              true => ShapeCross(
+                t: cross,
+                fromHeight: _compactHeight,
+                from: cross < 1 ? _compact(context, ref) : null,
+                to: _full(context, ref, arrival),
+                minToWidth: UIs.columnWidth,
+              ),
+              false => _full(context, ref, arrival),
+            },
+          ),
         ),
       ),
     );
@@ -375,6 +381,15 @@ class ServerCard extends ConsumerWidget {
     _ => isMobile ? ServerCardSizes.rowTouch : ServerCardSizes.row,
   };
 
+  /// Whether there are readings to draw: the machine has answered, and with
+  /// a sample.
+  ///
+  /// One definition, because going from false to true is what [_Arrival]
+  /// reads as the first sample landing — so it has to be the same question
+  /// both shapes ask before drawing any.
+  bool get _hasBody =>
+      srv.conn == ServerConn.finished && !serverNeverSampled(srv);
+
   /// The card, and the readings block of the page it becomes.
   ///
   /// One tree for both, because the movement between them is a hero: the chart
@@ -383,7 +398,11 @@ class ServerCard extends ConsumerWidget {
   /// ends is a lerp on [openness], and at 1 this is laid out exactly as
   /// `ServerDetailPage` lays its readings out — which is what lets the page
   /// take over without anything moving.
-  Widget _full(BuildContext context, WidgetRef ref) {
+  Widget _full(
+    BuildContext context,
+    WidgetRef ref,
+    Animation<double> arrival,
+  ) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final t = openness;
@@ -394,8 +413,7 @@ class ServerCard extends ConsumerWidget {
     // Only what has been sampled is drawn. A machine that failed keeps its
     // last numbers on its own page, where there is room to say how old they
     // are; on a card the error is the more useful of the two.
-    final hasBody =
-        srv.conn == ServerConn.finished && !serverNeverSampled(srv);
+    final hasBody = _hasBody;
     final stale = hasBody && err == null ? serverStaleSince(srv) : null;
 
     final readings = hasBody ? serverCardReadings(srv) : null;
@@ -421,11 +439,11 @@ class ServerCard extends ConsumerWidget {
         if (busy) _progress(context),
         if (err != null && !auth) _error(context, err),
         // Everything that arrives with the first sample, coming in one block
-        // after another — see [_Arriving]. Mounted only when there is a body,
-        // which is exactly when the card grows out of its 56pt, so the
-        // stagger runs once per machine and not on every poll after.
+        // after another — see [_Arriving]. When that is, is [_Arrival]'s to
+        // say: this is mounted far more often than a machine answers.
         if (focus != null || readings != null)
           _Arriving(
+            clock: arrival,
             duration: context.motion(_kArrive),
             children: [
               if (focus != null)
@@ -464,26 +482,24 @@ class ServerCard extends ConsumerWidget {
       // once the grid's own padding and this card's margin are taken off it:
       // the blocks inside carry the rest, and the grid cannot supply it
       // without changing the width of every column.
-      padding: EdgeInsets.lerp(
-        const EdgeInsets.all(ServerCardSizes.pad),
-        ServerCardSizes.openInset,
-        t,
-      )!,
+      //
+      // Plus what is kept clear for the facts, as inset rather than as an
+      // empty box beside the column in a `Row`: a `Row` that is only there
+      // above openness 0 is a different parent on the first frame of the
+      // movement and on the last, and everything under it is unmounted and
+      // built again on both.
+      padding:
+          EdgeInsets.lerp(
+            const EdgeInsets.all(ServerCardSizes.pad),
+            ServerCardSizes.openInset,
+            t,
+          )! +
+          EdgeInsets.only(right: reserved),
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minHeight: ServerCardSizes.collapsed,
         ),
-        child: reserved <= 0
-            ? column
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: column),
-                  // Empty: what goes here is the page's, and it arrives with
-                  // the page. What this is for is the width.
-                  SizedBox(width: reserved),
-                ],
-              ),
+        child: column,
       ),
     );
   }
@@ -513,9 +529,7 @@ class ServerCard extends ConsumerWidget {
   /// called, and the one reading that is being watched. Everything else is a
   /// tap away, and a list of forty is not read by reading forty of anything.
   Widget _compact(BuildContext context, WidgetRef ref) {
-    final readings = srv.conn == ServerConn.finished && !serverNeverSampled(srv)
-        ? serverCardReadings(srv)
-        : null;
+    final readings = _hasBody ? serverCardReadings(srv) : null;
     final focus = readings == null
         ? null
         : readings.all.firstWhereOrNull((m) => m.kind == promoted) ??
@@ -1655,20 +1669,81 @@ class ServerCard extends ConsumerWidget {
   }
 }
 
-/// A column whose children come in one after another, once, on arrival.
+/// When a card's readings come in: once, as its machine first answers.
+///
+/// **Not when what draws them is mounted**, which is what this used to be —
+/// [_Arriving] ran its own tween from 0 wherever it was built. A card is
+/// mounted far more often than a machine answers: the grid is dropped while a
+/// machine is open and mounted again for the way back, a line's card is built
+/// on the first frame of opening it, a tag is picked, the globe is left. Each
+/// of those played the fill again, and around the opening movement that was
+/// the readings going out and coming back before the card started shrinking,
+/// and again once it had landed.
+///
+/// So the clock is here, above every shape the card takes, and what starts it
+/// is [hasBody] going from false to true *between two builds of the same
+/// card*. A card mounted with readings already had them, and its clock starts
+/// at the end — the rule `AnimatedMasonry` follows for its own children, and
+/// for the same reason: something is only new against what was already on
+/// screen without it.
+class _Arrival extends StatefulWidget {
+  const _Arrival({
+    required this.hasBody,
+    required this.duration,
+    required this.builder,
+  });
+
+  final bool hasBody;
+  final Duration duration;
+  final Widget Function(BuildContext context, Animation<double> arrival)
+  builder;
+
+  @override
+  State<_Arrival> createState() => _ArrivalState();
+}
+
+class _ArrivalState extends State<_Arrival>
+    with SingleTickerProviderStateMixin {
+  late final _clock = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+    value: widget.hasBody ? 1 : 0,
+  );
+
+  @override
+  void didUpdateWidget(_Arrival old) {
+    super.didUpdateWidget(old);
+    _clock.duration = widget.duration;
+    if (widget.hasBody && !old.hasBody) _clock.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _clock.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, _clock);
+}
+
+/// A column whose children come in one after another along [clock].
 ///
 /// [Opacity] rather than a fade transition per child: there is one clock for
 /// the whole column, and each child reads its own stretch of it. Six
 /// controllers on forty cards is forty times what this costs.
 ///
-/// It runs when this widget is *mounted*, not when its children change — which
-/// is the whole of when it should run. A card with no readings does not build
-/// one at all, so the mount is the first sample landing; after that the
-/// element stays and the tween is already at its end, so a poll rebuilds the
-/// children and nothing fades.
+/// The clock is [_Arrival]'s rather than this widget's own, so being mounted
+/// again is not arriving again. Once it has run, a poll rebuilds the children
+/// and nothing fades.
 class _Arriving extends StatelessWidget {
-  const _Arriving({required this.duration, required this.children});
+  const _Arriving({
+    required this.clock,
+    required this.duration,
+    required this.children,
+  });
 
+  final Animation<double> clock;
   final Duration duration;
   final List<Widget> children;
 
@@ -1680,10 +1755,9 @@ class _Arriving extends StatelessWidget {
     // before it share what is left rather than pushing it past the end.
     final fade = math.max(1, total - step * math.max(0, children.length - 1));
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: duration,
-      builder: (_, value, _) => Column(
+    return AnimatedBuilder(
+      animation: clock,
+      builder: (_, _) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1693,7 +1767,7 @@ class _Arriving extends StatelessWidget {
                 (at * step) / total,
                 ((at * step) + fade) / total,
                 curve: Curves.easeOut,
-              ).transform(value),
+              ).transform(clock.value),
               child: child,
             ),
         ],
