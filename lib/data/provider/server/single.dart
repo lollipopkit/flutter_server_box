@@ -161,6 +161,15 @@ class ServerNotifier extends _$ServerNotifier {
   /// when the SPI's connection config changes.
   ServerDataSource? _source;
 
+  /// The SSH client this notifier owns, kept beside [state].
+  ///
+  /// The dispose listener cannot close it through [state]: it runs while the
+  /// element is being invalidated, and reading the state then rebuilds the
+  /// provider — a rebuild whose result no longer carries this client, so the
+  /// connection was left open. Every path that installs or drops a client keeps
+  /// this in step with [ServerState.client].
+  SSHClient? _client;
+
   int _cachedTimeout = 5;
 
   @override
@@ -169,7 +178,7 @@ class ServerNotifier extends _$ServerNotifier {
       unawaited(_disposePersistentShell());
       _source?.close();
       try {
-        state.client?.close();
+        _client?.close();
       } catch (_) {}
     });
 
@@ -186,7 +195,26 @@ class ServerNotifier extends _$ServerNotifier {
     final serverNotifier = ref.read(serversProvider);
     final spi = serverNotifier.servers[serverId];
     if (spi == null) {
-      throw StateError('Server $serverId not found');
+      // The server is gone — deleted, or removed by a sync pull — while this
+      // notifier was still alive and something was still watching it. Riverpod
+      // refreshes an *active* element after an invalidation, so the delete path
+      // cannot avoid this rebuild; throwing here turned deleting a server into
+      // an unhandled error and left this provider stuck in an error state for
+      // every watcher still on screen.
+      //
+      // Keep what it last had instead: the record's readings, marked
+      // disconnected. Nothing polls it again — `refresh` walks the servers that
+      // still exist — and a restore that reuses the id is picked up by the
+      // lookup above on the next rebuild.
+      final last = stateOrNull;
+      if (last == null) {
+        throw StateError('Server $serverId not found');
+      }
+      return last.copyWith(
+        conn: ServerConn.disconnected,
+        client: null,
+        latencyMs: null,
+      );
     }
 
     return ServerState(spi: spi, status: InitStatus.status);
@@ -301,6 +329,7 @@ class ServerNotifier extends _$ServerNotifier {
       _extendedFetchedAt = null;
       _extendedAcceptedAt = null;
     }
+    _client = client;
     state = state.copyWith(client: client);
   }
 
@@ -360,6 +389,7 @@ class ServerNotifier extends _$ServerNotifier {
     _operationGeneration++;
     unawaited(_disposePersistentShell());
     state.client?.close();
+    _client = null;
     _usePersistentShellForStatus = true;
     state = state.copyWith(
       spi: spi,
@@ -382,6 +412,7 @@ class ServerNotifier extends _$ServerNotifier {
     _scriptWritten = false;
     if (closeClient) {
       client?.close();
+      _client = null;
     }
     state = state.copyWith(
       status: status,
@@ -396,6 +427,7 @@ class ServerNotifier extends _$ServerNotifier {
     _operationGeneration++;
     unawaited(_disposePersistentShell());
     state.client?.close();
+    _client = null;
     _scriptWritten = false;
     state = state.copyWith(
       client: null,

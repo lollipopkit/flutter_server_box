@@ -1,25 +1,23 @@
 ---
 title: Riverpod 实践
-description: Server Box 中 Provider、异步状态和资源生命周期的实现方式
+description: Server Box 使用的 provider、异步状态和资源生命周期写法
 ---
 
-Server Box 使用 Riverpod 和 `riverpod_generator` 管理 UI 状态、异步数据和服务依赖。
-
-系统层面的状态模型请参阅 [状态模型](/docs/zh/principles/state/)。
+Server Box 使用 Riverpod 和 `riverpod_generator` 管理 UI 状态、异步数据和服务依赖。应用持有哪些状态、存在哪里，见[状态模型](/docs/zh/principles/state/)。
 
 ## Provider 结构
 
 ```text
 UI Widget
-    ↓ ref.watch / ref.read
+    │ ref.watch / ref.read
 Provider
-    ↓
+    │
 Service / Store
-    ↓
+    │
 状态更新
 ```
 
-Widget 通过 `ref.watch` 订阅状态，需要执行操作时通过 `ref.read(...notifier)` 调用 provider 方法。Provider 负责协调 service 和 store，Widget 只处理展示和交互。
+Widget 使用 `ref.watch` 订阅状态，使用 `ref.read(...notifier)` 调用操作。Provider 协调 service 和 store，Widget 只负责展示和交互。
 
 ## Provider 类型
 
@@ -39,11 +37,11 @@ class Settings extends _$Settings {
 }
 ```
 
-它不是 `StateProvider`。需要把更新逻辑、校验或持久化集中在 provider 中时，使用 notifier 更容易维护。
+它不是 `StateProvider`。校验、持久化等属于状态的更新逻辑应放进 notifier。
 
 ### `AsyncNotifierProvider`
 
-用于需要加载、成功和错误状态的异步数据：
+用于具有 loading、success 和 error 状态的异步数据：
 
 ```dart
 @riverpod
@@ -60,7 +58,7 @@ class ServerStatus extends _$ServerStatus {
 }
 ```
 
-Widget 使用 `AsyncValue.when` 处理所有状态：
+Widget 应处理 `AsyncValue` 的全部状态：
 
 ```dart
 final status = ref.watch(serverStatusProvider(server));
@@ -83,17 +81,11 @@ Stream<CpuUsage> cpuUsage(Ref ref, Server server) {
 }
 ```
 
-如果 stream 需要额外资源，在 `ref.onDispose` 中释放：
-
-```dart
-ref.onDispose(() {
-  client.stopMonitoring();
-});
-```
+stream 使用的资源在 `ref.onDispose` 中释放。
 
 ### Family Provider
 
-带参数的 provider 会为每组参数维护独立状态，例如不同服务器的容器列表：
+带参数的 provider 会为每组参数维护独立状态，例如每台服务器的容器列表：
 
 ```dart
 @riverpod
@@ -107,7 +99,7 @@ Future<List<Container>> containers(Ref ref, Server server) async {
 
 ### 自动释放
 
-默认情况下，provider 在没有监听者时可以自动释放。需要保留状态时显式设置 `keepAlive`：
+默认情况下，provider 在没有监听者时可以被释放。只有状态必须跨过这个生命周期时才使用 `keepAlive`：
 
 ```dart
 @Riverpod(keepAlive: true)
@@ -116,7 +108,7 @@ class TemporaryState extends _$TemporaryState {
 }
 ```
 
-选择 `keepAlive` 前先确认状态是否需要跨页面保留；不必要地保留 provider 会增加资源占用。
+不必要的 keepAlive 会持续占用资源。
 
 ## 读取和更新状态
 
@@ -138,11 +130,11 @@ class ServerWidget extends ConsumerWidget {
 ref.read(settingsProvider.notifier).update(newSettings);
 ```
 
-只监听状态的一部分时使用 `select`，避免无关字段变化导致 Widget 重建。
+Widget 只需要状态的一部分时使用 `select`，避免无关变化触发重建。
 
 ## 派生状态
 
-不要重复保存可以从其他 provider 计算出来的数据。使用另一个 provider 派生结果：
+可以从已有 provider 计算的数据，不要再保存一份可变副本：
 
 ```dart
 @riverpod
@@ -156,35 +148,52 @@ List<Server> onlineServers(Ref ref) {
 }
 ```
 
-## 服务器级状态
+## 响应式刷新
 
-带服务器 ID 参数的 `serverProvider` 为每台服务器维护独立状态。状态包含服务器配置、连接状态、SSH client、当前状态数据和 Monitor agent 的能力信息。连接、刷新和错误处理都由 `ServerNotifier` 负责，页面不直接管理连接生命周期。
-
-```dart
-final serverState = ref.watch(serverProvider(serverId));
-
-// ServerNotifier 负责连接、状态采集和错误处理。
-await ref.read(serverProvider(serverId).notifier).refresh();
-```
-
-## 状态持久化
-
-权威本地存储是加密 SQLite 数据库 `store.db`。设置和历史记录使用 `SqliteStore`；服务器、snippet、private key 等具有关联关系的记录使用对应的 entity store。
+需要周期刷新的 provider 可以创建 timer，并在销毁时取消。顺序很重要，两个原因都写在代码里：
 
 ```dart
-final servers = Stores.server.readAll();
-Stores.server.put(server);
-Stores.server.deleteById(server.id);
+@riverpod
+class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
+  Timer? _timer;
+
+  @override
+  Future<StatusModel> build(Server server) async {
+    ref.onDispose(() => _timer?.cancel());
+    final status = await fetchStatus(server);
+    // 请求飞行途中被销毁：onDispose 已经跑过，此时启动的 timer 没有任何东西会取消它。
+    if (!ref.mounted) return status;
+    // 等第一次请求落地后才启动。若在它还在运行时触发，这次 tick 写入的状态
+    // 会被这次 build 自己的结果覆盖。
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
+    return status;
+  }
+
+  bool _refreshing = false;
+
+  Future<void> refresh() async {
+    // 上一次请求还在飞行时到达的 tick 会被丢弃。两次并发可能乱序完成，
+    // 较旧的答案会覆盖较新的。
+    if (_refreshing) return;
+    _refreshing = true;
+    try {
+      state = const AsyncValue.loading();
+      state = await AsyncValue.guard(() => fetchStatus(server));
+    } finally {
+      _refreshing = false;
+    }
+  }
+}
 ```
 
-Hive adapter 只用于从旧安装导入数据，不是当前运行时的存储后端。
+timer 之外也可能要求刷新——启动、生命周期边沿、批量操作。此时并发是调度器的责任而不是每个调用方的：`ServerRefreshScheduler`（`lib/data/provider/server/refresh_scheduler.dart`）持有唯一的全局队列，对已排队或正在运行的服务器共享同一个 future，因此三个调用方同时请求只会产生一次刷新，并且并发数不超过 `maxConcurrent`。
 
 ## 实践建议
 
 1. 将 provider 放在使用它的功能附近。
-2. 优先使用代码生成的 provider。
+2. 优先使用 `@riverpod` 和代码生成。
 3. 让每个 provider 负责单一职责。
 4. 对 `AsyncValue` 的 data、loading 和 error 状态分别处理。
-5. 在 `ref.onDispose` 中释放 stream、timer 和连接等资源。
-6. 不要为派生数据额外创建可变副本。
-7. 避免不必要的 `keepAlive`，让无用状态及时释放。
+5. 在 `ref.onDispose` 中释放 stream、timer 和连接。
+6. 将 UI 逻辑与业务逻辑分开。
+7. 避免不必要的 `keepAlive` 和过深的 provider 依赖图。

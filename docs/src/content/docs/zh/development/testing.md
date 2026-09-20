@@ -181,12 +181,8 @@ flutter drive --publish-port \
 4. 使用 fake 或 fixture 隔离外部依赖。
 5. 覆盖空列表、缺失值、无效输入和权限错误等边界情况。
 
-## 审查回归检查
+## 固定数据
 
-rootfs 签名 fixture 必须保留原始字节：`.gitattributes` 为 JSON 固定 LF，将签名标为二进制。不能为通过测试而重新签名。
+rootfs 签名 fixture 必须保留原始字节：`.gitattributes` 为 JSON 固定 LF，将签名标为二进制。永远不要为了让测试通过而重新签名或重新生成 fixture——fixture 是某个发布版本真实写下的字节，改写它只能证明当前代码与自身一致。
 
-模型表测试读取真实缓存和打包资源，并通过本地 HTTP 服务刷新；地理数据 fixture 走生产安装流程。SFTP 测试验证读取取消、操作失败和迟到句柄清理，Monitor 测试使用本地 HTTP 连接验证共享客户端释放。
-
-前端 `format`、`fsPath`、`agentUrl` 测试使用 Node，其余浏览器测试保留隔离的 jsdom 环境。Android 服务通道测试需要 Android 运行环境，在桌面明确跳过；源码字符串断言不能替代原生运行验证。manifest 和 entitlement 打包契约检查仍然保留。
-
-性能记录、验证结果及依赖设备环境的覆盖缺口见仓库中的 `docs/audits/code-health-2026-09.md`。
+测试应尽量走生产路径而非替身：fixture 经由真实安装器，HTTP 测试使用本地 socket。

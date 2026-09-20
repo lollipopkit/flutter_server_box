@@ -2655,6 +2655,13 @@ class AppLocalizationsNl extends AppLocalizations {
       'Uitwijkbestemming, ProxyCommand, springserver, bestandstransport, extern pad';
 
   @override
+  String get sshLegacyAlgorithms => 'Legacy algorithms';
+
+  @override
+  String get sshLegacyAlgorithmsTip =>
+      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+
+  @override
   String get appearanceAndPlace => 'Weergave en locatie';
 
   @override

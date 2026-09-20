@@ -2521,6 +2521,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshAdvancedTip => '대체 대상, ProxyCommand, 점프 서버, 파일 전송, 원격 경로';
 
   @override
+  String get sshLegacyAlgorithms => 'Legacy algorithms';
+
+  @override
+  String get sshLegacyAlgorithmsTip =>
+      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+
+  @override
   String get appearanceAndPlace => '모양과 위치';
 
   @override

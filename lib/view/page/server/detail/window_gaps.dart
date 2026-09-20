@@ -7,17 +7,15 @@ typedef WindowGap = ({int from, int to, bool leading});
 /// The stretches of `from`..`to` that the samples do not cover.
 ///
 /// The window a chart draws is the one that was *asked for*, so the samples do
-/// not have to reach its ends — and where they stop is the thing worth seeing.
-/// Taking the axis from the samples instead makes every window look full:
-/// three stored hours drawn on a 24-hour request fill the card, and a page
-/// left in the background for four minutes draws a line straight across the
-/// gap.
+/// not have to reach its ends, and where they stop is the thing worth seeing.
+/// Taking the axis from the samples instead makes every window look full: three
+/// stored hours drawn on a 24-hour request fill the card.
 ///
-/// Both tolerances exist because neither end is exact. A stored window comes
-/// back bucketed, so its first and last points sit up to a bucket inside the
-/// window whatever the agent kept; the live window ends whenever the last poll
-/// landed, which is always a little before now. A band drawn for those is a
-/// band on every chart, and a band on every chart is furniture.
+/// [leadTolerance] and [trailTolerance] exist because neither end is exact: a
+/// stored window comes back bucketed, so its first and last points sit up to a
+/// bucket inside the window, and the live window ends whenever the last poll
+/// landed, always a little before now. Without them every chart would carry a
+/// band, which is furniture.
 ///
 /// [first] and [last] are the instants of the oldest and newest sample. A
 /// window with no samples at all has no gaps *in* it — there is nothing to

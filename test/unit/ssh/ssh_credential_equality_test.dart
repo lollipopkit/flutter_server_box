@@ -57,6 +57,21 @@ void main() {
     expect(scp.isSameAs(current), isTrue);
   });
 
+  test('and so is the legacy-algorithms switch', () {
+    // A reconnect is required, not merely a different value: the set is chosen
+    // once, in a handshake that is already over. So it belongs in `isSameAs`,
+    // unlike the file transport above.
+    const permissive = SshCredential(
+      ip: '10.0.0.1',
+      user: 'me',
+      jumpIds: ['j-1'],
+      allowLegacyAlgorithms: true,
+    );
+    expect(permissive, isNot(current));
+    expect(permissive.hashCode, isNot(current.hashCode));
+    expect(permissive.isSameAs(current), isFalse);
+  });
+
   test('no jump server at all hashes as no jump server', () {
     const a = SshCredential(ip: '10.0.0.1', user: 'me');
     const b = SshCredential(ip: '10.0.0.1', user: 'me', jumpIds: []);

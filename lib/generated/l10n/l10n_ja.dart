@@ -2513,6 +2513,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshAdvancedTip => '代替の接続先、ProxyCommand、踏み台、ファイル転送、リモートのパス';
 
   @override
+  String get sshLegacyAlgorithms => 'Legacy algorithms';
+
+  @override
+  String get sshLegacyAlgorithmsTip =>
+      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+
+  @override
   String get appearanceAndPlace => '外観と場所';
 
   @override

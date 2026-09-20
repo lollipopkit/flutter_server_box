@@ -121,6 +121,13 @@ class Servers extends Table with SyncMeta {
   /// written before the column existed meant — see `m014`.
   TextColumn get sshFileTransport => text().nullable()();
 
+  /// Whether this host may negotiate the algorithms SSH has retired — the
+  /// SHA-1 `ssh-rsa` host key spelling and its neighbours. False for every row
+  /// written before the column, which is what those builds proposed; see
+  /// [SshCredential.allowLegacyAlgorithms].
+  BoolColumn get sshAllowLegacyAlgorithms =>
+      boolean().withDefault(const Constant(false))();
+
   /// Which way of reaching this server is tried first, by
   /// `ServerTransport.name`. Null means "whichever is configured", which is
   /// the only answer for a server that has just one — and the only shape rows

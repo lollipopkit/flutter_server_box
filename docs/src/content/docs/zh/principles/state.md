@@ -3,9 +3,7 @@ title: 状态模型
 description: Server Box 如何组织运行时状态、服务器状态和持久化数据
 ---
 
-Server Box 使用 Riverpod 管理页面状态、异步数据和服务依赖。以下是项目中常用的状态管理模式。
-
-本页介绍系统层面的状态模型。Provider 的实现方式和资源生命周期请参阅 [Riverpod 实践](/docs/zh/development/state/)。
+Server Box 使用 Riverpod 管理页面状态、异步数据和服务依赖。本页介绍应用持有哪些状态、它们存在哪里；provider 的声明写法和生命周期见 [Riverpod 实践](/docs/zh/development/state/)。
 
 ## 为什么使用 Riverpod？
 
@@ -14,7 +12,7 @@ Server Box 使用 Riverpod 管理页面状态、异步数据和服务依赖。�
 - **Provider 隔离**：每个 provider 可以独立测试。
 - **代码生成**：减少样板代码，同时保留静态类型检查。
 
-## Provider 架构
+## 状态分层
 
 ```text
 ┌─────────────────────────────────────────────┐
@@ -34,174 +32,27 @@ Server Box 使用 Riverpod 管理页面状态、异步数据和服务依赖。�
 └─────────────────────────────────────────────┘
 ```
 
-Widget 使用 `ref.watch` 订阅状态，状态变化后自动重建；需要执行操作时，使用 `ref.read` 调用 provider 或 notifier 方法。
-
-## Provider 类型
-
-### `NotifierProvider`
-
-带 class 的 `@riverpod` 声明会生成 `NotifierProvider`，适合包含更新方法的同步状态：
-
-```dart
-@riverpod
-class ThemeNotifier extends _$ThemeNotifier {
-  @override
-  ThemeMode build() {
-    return SettingStore.themeMode;
-  }
-
-  void setTheme(ThemeMode mode) {
-    state = mode;
-    SettingStore.themeMode = mode;
-  }
-}
-```
-
-Widget 读取状态：
-
-```dart
-class MyWidget extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ref.watch(themeNotifierProvider);
-    return Text('当前主题：$theme');
-  }
-}
-```
-
-### `AsyncNotifierProvider`
-
-用于具有 loading、data 和 error 状态的异步数据：
-
-```dart
-@riverpod
-class ServerStatus extends _$ServerStatus {
-  @override
-  Future<StatusModel> build(Server server) async {
-    return fetchStatus(server);
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => fetchStatus(server));
-  }
-}
-```
-
-Widget 应处理 `AsyncValue` 的全部状态：
-
-```dart
-final status = ref.watch(serverStatusProvider(server));
-
-return status.when(
-  data: (value) => StatusWidget(value),
-  loading: () => const LoadingWidget(),
-  error: (error, stack) => ErrorWidget(error),
-);
-```
-
-### `StreamProvider`
-
-用于持续产生数据的 stream：
-
-```dart
-@riverpod
-Stream<CpuUsage> cpuUsage(Ref ref, Server server) {
-  final client = ref.watch(sshClientProvider(server));
-  final stream = client.monitorCpu();
-
-  ref.onDispose(client.stopMonitoring);
-  return stream;
-}
-```
-
-当 provider 没有监听者时，Riverpod 会释放自动管理的资源；需要手动清理的 client、timer 或 subscription 应注册到 `ref.onDispose`。
-
-### Family Provider
-
-带参数的 provider 会为每组参数维护独立状态：
-
-```dart
-@riverpod
-Future<List<Container>> containers(Ref ref, Server server) async {
-  final client = await ref.watch(sshClientProvider(server).future);
-  return client.listContainers();
-}
-```
-
-`containersProvider(server)` 和 `containersProvider(server2)` 对应不同的缓存状态。
-
-## 状态更新
-
-### 直接更新
-
-通过 notifier 方法集中处理更新逻辑：
-
-```dart
-ref.read(settingsProvider.notifier).updateTheme(darkMode);
-```
-
-### 计算状态和派生状态
-
-可以从已有 provider 计算结果，而不额外保存一份可变数据：
-
-```dart
-@riverpod
-int totalServers(Ref ref) {
-  return ref.watch(serversProvider).length;
-}
-
-@riverpod
-List<Server> onlineServers(Ref ref) {
-  return ref.watch(serversProvider).where((server) => server.isOnline).toList();
-}
-```
+Widget 使用 `ref.watch` 订阅状态，使用 `ref.read(...notifier)` 调用操作。Provider 协调 service 和 store，Widget 只负责展示和交互。
 
 ## 服务器级状态
 
-带服务器 ID 参数的 `serverProvider` 为每台服务器维护独立状态。该状态包含服务器配置、连接状态、SSH client、当前状态数据和 Monitor agent 的能力信息。
+带服务器 ID 参数的 `serverProvider(serverId)` 为每台服务器维护独立状态，包含服务器配置、连接状态、SSH client、当前状态数据和 Monitor agent 的能力信息。`ServerNotifier` 负责连接、采集和错误处理，页面读取它的状态而不是自己管理连接生命周期。
 
 ```dart
 final serverState = ref.watch(serverProvider(serverId));
 
-// 执行刷新；ServerNotifier 负责连接、采集和错误处理。
 await ref.read(serverProvider(serverId).notifier).refresh();
 ```
 
-页面通过 provider 读取状态，连接和刷新逻辑留在 `ServerNotifier` 中。
+## 与时间有关的调度
 
-## 响应式刷新
+有三件事由时钟驱动，而它们各自走哪条 transport 并不是同一个答案：
 
-需要定时更新的数据可以在 provider 中创建 timer，并在销毁时取消：
-
-```dart
-@riverpod
-class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
-  Timer? _timer;
-
-  @override
-  Future<StatusModel> build(Server server) async {
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
-    ref.onDispose(() => _timer?.cancel());
-    return fetchStatus(server);
-  }
-
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => fetchStatus(server));
-  }
-}
-```
-
-provider 依赖其他 provider 时，使用 `ref.watch` 建立依赖；上游状态变化后，下游 provider 会重新计算：
-
-```dart
-@riverpod
-Future<SystemInfo> systemInfo(Ref ref, Server server) async {
-  final client = await ref.watch(sshClientProvider(server).future);
-  return client.getSystemInfo();
-}
-```
+- **状态轮询**由 notifier 持有的 timer 驱动，在 `ref.onDispose` 中取消；它使用领先的 transport，即 `Spix.transport`。
+- **已存历史**向报告 `ServerCapabilities.storedHistory` 的那条 transport 请求，也就是 agent，而不一定是领先的那条。SSH 没有历史，因此只有 SSH 的服务器只有应用自己的滚动 buffer。
+- **超出当前帧的工作**会被移出帧外：benchmark 在服务器上脱离启动并轮询，文件传输运行在独立 isolate 上——两者都可能比应用停留在前台的时间更长。
+  - 命令——benchmark、服务操作、进程列表——经由 `ensureExec()`，它使用领先的 transport，失败时回退到另一条。
+  - 文件传输自选后端——SSH 上的 SFTP 或 agent 的文件 API——取决于服务器能用什么提供文件，而不是由承载状态的 transport 决定。
 
 ## 状态持久化
 
@@ -217,22 +68,4 @@ Stores.server.put(server);
 Stores.server.deleteById(server.id);
 ```
 
-Provider 管理运行时状态；需要跨启动保留的数据应通过 store 持久化，不要依赖 provider cache。
-
-## 生命周期和性能
-
-- 默认情况下，provider 在没有监听者时可以自动释放。
-- 需要跨页面保留的 provider 才设置 `@Riverpod(keepAlive: true)`。
-- 使用 `select` 只订阅需要的字段，减少无关 Widget 重建。
-- Family Provider 为每组参数维护独立状态；参数应具有稳定的相等性。
-- 在 `ref.onDispose` 中释放 timer、stream、SSH client 等资源。
-
-## 实践建议
-
-1. 将 provider 放在使用它的功能附近。
-2. 优先使用 `@riverpod` 和代码生成。
-3. 让每个 provider 负责单一职责。
-4. 对 `AsyncValue` 的 data、loading 和 error 状态分别处理。
-5. 将 UI 逻辑与业务逻辑分开。
-6. 避免为派生数据创建重复的可变副本。
-7. 避免不必要的 `keepAlive` 和过深的 provider 依赖图。
+Provider 管理运行时状态；需要跨启动保留的数据应通过 store 持久化，不要只依赖 provider cache。

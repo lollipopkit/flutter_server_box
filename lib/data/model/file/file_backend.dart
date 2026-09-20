@@ -71,12 +71,11 @@ const kStagingSuffix = '.sb-part-';
 
 /// Where to park a write to [destination] until it can be renamed into place.
 ///
-/// The counter alone was unique only within the isolate holding it, and every
-/// transfer runs in a fresh one that starts it at zero — so two transfers to
-/// the same destination both picked `<name>.sb-part-0`, wrote into each
-/// other's bytes, and cleaned up each other's file. [_stagingToken] is drawn
-/// once per isolate from a source that does not repeat across them, which is
-/// what makes the two disagree; the counter then separates writes within one.
+/// Every transfer runs in a fresh isolate whose counter starts at zero, so the
+/// counter alone would make two transfers to the same destination pick the same
+/// name, write into each other's bytes, and clean up each other's file.
+/// [_stagingToken] disagrees between isolates; the counter separates writes
+/// within one.
 String stagingNameFor(String destination) =>
     '$destination$kStagingSuffix$_stagingToken-${_staging++}';
 
@@ -94,20 +93,19 @@ final _stagingToken = Random.secure()
 /// [FileBackend.write] renames the one onto the other.
 ///
 /// A staged copy is created with whatever the far side's umask says, and the
-/// rename carries *that* mode onto the destination. So saving an edit to a 0755
-/// script left it 0644 and unrunnable, and replacing a 0600 file made it
-/// world-readable — neither of which anyone asked for by saving a file.
-/// Whatever was there keeps its permissions instead.
+/// rename carries *that* mode onto the destination — so saving an edit to a
+/// 0755 script would leave it 0644 and unrunnable, and replacing a 0600 file
+/// would make it world-readable. Whatever was there keeps its permissions
+/// instead.
 ///
-/// Best effort, and logged rather than fatal. The bytes are already across by
+/// Best effort, and logged rather than fatal: the bytes are already across by
 /// the time this runs, and a server that will not report or set a mode is one
-/// where failing here would mean the file could never be saved at all, with the
-/// new contents thrown away every time. The `monitor` agent's own write settled
-/// on the same answer (`monitor/src/api/fs.rs`).
+/// where failing here would throw the new contents away every time. The
+/// `monitor` agent's own write settled on the same answer
+/// (`monitor/src/api/fs.rs`).
 ///
-/// A no-op where the backend has no notion of permissions: there is nothing to
-/// read and nothing to set, which is what [FileBackendTraits.permissions]
-/// answering false means.
+/// A no-op where the backend has no notion of permissions, which is what
+/// [FileBackendTraits.permissions] answering false means.
 Future<void> carryModeToStaging(
   FileBackend backend,
   String staging,
@@ -214,11 +212,10 @@ abstract interface class FileBackend {
 
   /// The bytes, from [offset].
   ///
-  /// Every backend honours the offset. It was a trait for a while — declared,
-  /// answered `true` by both implementations, and read by nothing — which is a
-  /// promise with no way to tell whether it was kept. A backend that cannot
-  /// seek has no business implementing this interface: a transfer engine that
-  /// has to check first is one that cannot resume anything.
+  /// Every backend honours the offset, and there is no trait for it: a backend
+  /// that cannot seek has no business implementing this interface, and a
+  /// transfer engine that has to check first is one that cannot resume
+  /// anything.
   Stream<List<int>> read(String path, {int offset = 0});
 
   /// Writes [data] to [path], replacing whatever was there.

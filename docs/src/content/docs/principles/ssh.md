@@ -32,10 +32,22 @@ final class SshCredential {
   String? alterUrl;        // Fallback URL
   List<String>? jumpIds;   // Jump-server candidates
   String? proxyCommand;    // ProxyCommand, desktop only
+  bool allowLegacyAlgorithms; // Opt in to algorithms SSH has retired, false by default
 }
 ```
 
 Jump-server candidates and `ProxyCommand` are mutually exclusive. `Spix.validate()` rejects a server that configures both.
+
+### Legacy algorithms
+
+dartssh2 proposes a modern-only set. RSA host keys are still offered, but only under the RFC 8332 names (`rsa-sha2-256`, `rsa-sha2-512`); the SHA-1 `ssh-rsa` spelling it replaced, the SHA-1 key exchanges, the CBC ciphers and the SHA-1/MD5 MACs are not in the list at all. An old daemon that predates those names — a router's dropbear, a switch — advertises only `ssh-rsa`, and the handshake ends before authentication:
+
+```text
+SSHAuthAbortError(... reason: SSHInternalError(
+  Bad state: No matching host key algorithm))
+```
+
+`SshCredential.allowLegacyAlgorithms` is configured per server, turned on in the server editor under **SSH advanced**. The four algorithm categories — host key, key exchange, cipher and MAC — are negotiated independently, and the retired algorithms are appended *after* the modern ones in each. The fallback therefore applies only within the category that has no modern option: a host with a current host key but only a SHA-1 key exchange keeps the modern host key and falls back for the kex alone. These algorithms are retired because they are weak — SHA-1 signatures and key exchanges, and small Diffie-Hellman groups — so opting in allows a weaker connection than the default; it does not let a peer force one onto an otherwise-modern connection, since the KEXINIT name-lists are covered by the exchange hash the host key signs. Turn it on only for a host you trust and that cannot be reached without it.
 
 ### Creating the client
 
