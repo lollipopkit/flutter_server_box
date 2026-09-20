@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
@@ -66,7 +67,14 @@ void main() {
   ///
   /// [sensor] adds a temperature, which takes the one slot that varies — so
   /// with [everything] the swap has no slot on the card at all.
-  ServerStatus sampled({bool everything = false, bool sensor = false}) {
+  ///
+  /// [samples] is how many polls it has answered. Two is the least a window
+  /// can be drawn from, and what most of these are about is a card with one.
+  ServerStatus sampled({
+    bool everything = false,
+    bool sensor = false,
+    int samples = 2,
+  }) {
     final ss = ServerStatus(
       cpu: Cpus(),
       // 1 GiB, half of it gone.
@@ -93,7 +101,14 @@ void main() {
     );
     // What says a status came back at all — see `serverNeverSampled`.
     ss.more[StatusCmdType.uptime] = 'up 3 days';
-    ss.history.add(timeMs: DateTime.now().millisecondsSinceEpoch, mem: 50);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    for (var i = 0; i < samples; i++) {
+      ss.history.add(
+        timeMs: now - (samples - i) * 3000,
+        cpu: 10.0 + i,
+        mem: 50,
+      );
+    }
     return ss;
   }
 
@@ -105,6 +120,7 @@ void main() {
     double width = 600,
     bool everything = false,
     bool sensor = false,
+    int samples = 2,
     ServerConn conn = ServerConn.finished,
     // Unfolded unless a test is about the fold: what most of these are about
     // is the rows, and a card rests without any.
@@ -127,7 +143,11 @@ void main() {
             body: ServerCard(
               srv: ServerState(
                 spi: spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
-                status: sampled(everything: everything, sensor: sensor),
+                status: sampled(
+                  everything: everything,
+                  sensor: sensor,
+                  samples: samples,
+                ),
                 conn: conn,
               ),
               promoted: promoted,
@@ -342,6 +362,63 @@ void main() {
         ).first,
       );
       expect(button.height, lessThanOrEqualTo(ServerCardSizes.big));
+    });
+  });
+
+  group('the window of a reading', () {
+    testWidgets('is drawn from the first sample, as a point', (tester) async {
+      // Connected and nothing polled into the history yet: a number, and
+      // nothing to draw. The card kept the chart's 44 points and the gap over
+      // them for a box with nothing in it, which read as a chart that had
+      // failed to load rather than as one that had not started.
+      await pump(tester, promoted: null, onPromote: (_) {}, samples: 0);
+      expect(find.text('CPU'), findsOneWidget);
+      expect(find.byType(MetricChart), findsNothing);
+      final without = tester.getSize(find.byType(ServerCard)).height;
+
+      LineChartBarData bar() => tester
+          .widget<LineChart>(find.byType(LineChart))
+          .data
+          .lineBarsData
+          .single;
+
+      // One poll is enough, and the card grows for it. A line cannot be drawn
+      // through one sample, so it is a point — holding out for the line was a
+      // whole poll's wait on every connection.
+      await pump(tester, promoted: null, onPromote: (_) {}, samples: 1);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.byType(MetricChart), findsOneWidget);
+      expect(bar().spots, hasLength(1));
+      expect(bar().dotData.show, isTrue);
+      expect(
+        tester.getSize(find.byType(ServerCard)).height - without,
+        moreOrLessEquals(
+          ServerCardSizes.chart + ServerCardSizes.gap,
+          epsilon: 0.5,
+        ),
+      );
+
+      // From two on it is the line, with no dots on it.
+      await pump(tester, promoted: null, onPromote: (_) {}, samples: 2);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(bar().spots, hasLength(2));
+      expect(bar().dotData.show, isFalse);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('nor for a reading that has no samples of its own', (
+      tester,
+    ) async {
+      // The machine has answered twice and this reading has not been in
+      // either: a disk with no history is a share and nothing to plot.
+      await pump(
+        tester,
+        promoted: ServerMetricKind.disk,
+        onPromote: (_) {},
+        everything: true,
+      );
+      expect(find.text(libL10n.disk), findsWidgets);
+      expect(find.byType(MetricChart), findsNothing);
     });
   });
 

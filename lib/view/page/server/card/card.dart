@@ -1224,8 +1224,19 @@ class ServerCard extends ConsumerWidget {
     // Folded, and with something folded away. A machine that reports the one
     // reading has nothing under it either way, and is drawn as unfolded.
     final folded = !expanded && others.isNotEmpty;
+    // Anything at all to plot. A reading the history does not keep has a
+    // number and nothing to draw it against; the card held the chart's room
+    // for it anyway, and a box with nothing in it reads as a chart that
+    // failed to load. One sample is enough: [MetricChart] draws it as a
+    // point, and holding out for the line would be a poll's wait on every
+    // connection for a card that already has something to show.
+    //
+    // Only at rest. The page has a chart's room whatever is in it, so the box
+    // grows from nothing on the way there rather than from a card's worth —
+    // the same rule the rows that are not on the card grow in by.
+    final drawn = m.samples.any((v) => v != null);
     final height = lerpDouble(
-      ServerCardSizes.chart,
+      drawn ? ServerCardSizes.chart : 0,
       twoColumns
           ? ServerCardSizes.openChart
           : ServerCardSizes.openChartNarrow,
@@ -1269,8 +1280,8 @@ class ServerCard extends ConsumerWidget {
           ),
         ),
         if (t > 0) _headline(m, t),
-        SizedBox(height: lerpDouble(ServerCardSizes.gap, 0, t)),
-        _chart(m, stale: stale, height: height, t: t),
+        if (drawn) SizedBox(height: lerpDouble(ServerCardSizes.gap, 0, t)),
+        if (drawn || t > 0) _chart(m, stale: stale, height: height, t: t),
         // Under the chart on the card; on the page it is up in the head row,
         // where it arrives with the page.
         if ((m.note.isNotEmpty || folded) && t < 1)

@@ -144,7 +144,16 @@ class MetricChart extends StatelessWidget {
           barWidth: 1.5,
           isStrokeCapRound: true,
           color: s.color,
-          dotData: const FlDotData(show: false),
+          // A lone sample is a point, and there is nothing to draw a line
+          // between: with the dots off, the first poll's worth of a machine
+          // was a plot with nothing in it, for as long as the second took to
+          // arrive. From two on it is the line, and a dot per sample on it
+          // would be what is read instead.
+          dotData: FlDotData(
+            show: spots.length == 1,
+            getDotPainter: (_, _, _, _) =>
+                FlDotCirclePainter(radius: 2, color: s.color, strokeWidth: 0),
+          ),
           belowBarData: BarAreaData(show: false),
         ),
       );
