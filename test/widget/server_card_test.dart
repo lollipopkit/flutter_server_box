@@ -462,30 +462,104 @@ void main() {
   });
 
   group('the three densities', () {
-    test('what auto means is decided by the count and nothing else', () {
-      // The window's width says nothing about it: three servers on a desktop
-      // are still three servers.
-      expect(ServerListDensity.autoFor(1), ServerListDensity.cards);
-      expect(ServerListDensity.autoFor(6), ServerListDensity.cards);
-      expect(ServerListDensity.autoFor(7), ServerListDensity.rows);
-      expect(ServerListDensity.autoFor(24), ServerListDensity.rows);
-      expect(ServerListDensity.autoFor(25), ServerListDensity.grid);
+    ServerListDensity auto(int count, Size viewport, {bool folded = true}) =>
+        ServerListDensity.autoFor(count, viewport: viewport, folded: folded);
+
+    test('what auto means is what the window shows at once', () {
+      // The richest shape that holds all of them without scrolling. It was
+      // six and twenty-four whatever the window, which is what one desktop
+      // window holds — so a wide one went to lines with room for a dozen more
+      // cards, and a phone kept cards it could show two of.
+      const desk = Size(1200, 800);
+      // Three columns of four.
+      expect(auto(1, desk), ServerListDensity.cards);
+      expect(auto(12, desk), ServerListDensity.cards);
+      expect(auto(13, desk), ServerListDensity.rows);
+      // Eighteen lines.
+      expect(auto(18, desk), ServerListDensity.rows);
+      expect(auto(19, desk), ServerListDensity.grid);
+
+      // The same list in a bigger window is still cards: five columns of six.
+      expect(auto(30, const Size(2000, 1100)), ServerListDensity.cards);
+      // And in a narrower one it is not: two columns of four.
+      expect(auto(9, const Size(700, 800)), ServerListDensity.rows);
+      // Nor in a shorter one, at the same width: three columns of two.
+      expect(auto(6, const Size(1200, 500)), ServerListDensity.cards);
+      expect(auto(10, const Size(1200, 500)), ServerListDensity.rows);
+      // Which has eleven lines, so a list that was cards a moment ago can be
+      // tiles after the window is made half as tall.
+      expect(auto(12, const Size(1200, 500)), ServerListDensity.grid);
+    });
+
+    test('and how tall a card is, which is whether it rests folded', () {
+      // Unfolded, that desktop window holds the six it always did.
+      const desk = Size(1200, 800);
+      expect(auto(6, desk, folded: false), ServerListDensity.cards);
+      expect(auto(7, desk, folded: false), ServerListDensity.rows);
+    });
+
+    test('one column is given a second screen of cards', () {
+      // A phone, where that is a flick. Held to one screen it has room for
+      // four, or one unfolded, and would hardly ever be given cards at all.
+      const phone = Size(390, 700);
+      expect(auto(8, phone), ServerListDensity.cards);
+      expect(auto(9, phone), ServerListDensity.rows);
+      expect(auto(3, phone, folded: false), ServerListDensity.cards);
+      expect(auto(4, phone, folded: false), ServerListDensity.rows);
+    });
+
+    test('and one machine is a card whatever the window', () {
+      expect(auto(1, const Size(300, 100)), ServerListDensity.cards);
+      expect(auto(1, Size.zero), ServerListDensity.cards);
+    });
+
+    testWidgets('a card is as tall as auto takes it to be', (tester) async {
+      // Those two numbers are about this widget and live in another file, so
+      // this is what says when the card has changed under them.
+      Future<double> measure({required bool expanded}) async {
+        await pump(
+          tester,
+          // Memory, for a note under the chart: a machine in a test has no
+          // CPU model, and most real ones have.
+          promoted: ServerMetricKind.mem,
+          onPromote: (_) {},
+          everything: true,
+          sensor: true,
+          expanded: expanded,
+          width: 338,
+        );
+        await tester.pump(const Duration(milliseconds: 600));
+        return tester.getSize(find.byType(ServerCard)).height;
+      }
+
+      expect(
+        await measure(expanded: false),
+        moreOrLessEquals(ServerListDensity.cardFolded, epsilon: 8),
+      );
+      // Three rows here, and most machines have four: a machine in a test
+      // has no network to report. So one more of them, measured.
+      final unfolded = await measure(expanded: true);
+      expect(find.byType(MetricRow), findsNWidgets(3));
+      final row = tester.getSize(find.byType(MetricRow).first).height;
+      expect(
+        unfolded + row + ServerCardSizes.rowGap,
+        moreOrLessEquals(ServerListDensity.cardUnfolded, epsilon: 15),
+      );
     });
 
     test('a larger text scale rules the tightest one out', () {
       // A name in a 44pt tile is the first thing to stop fitting.
-      expect(
-        ServerListDensity.grid.resolve(count: 40, textScale: 1),
-        ServerListDensity.grid,
-      );
-      expect(
-        ServerListDensity.grid.resolve(count: 40, textScale: 1.5),
-        ServerListDensity.rows,
-      );
-      expect(
-        ServerListDensity.auto.resolve(count: 40, textScale: 1.5),
-        ServerListDensity.rows,
-      );
+      const desk = Size(1200, 800);
+      ServerListDensity resolved(ServerListDensity it, double textScale) =>
+          it.resolve(
+            count: 40,
+            textScale: textScale,
+            viewport: desk,
+            folded: true,
+          );
+      expect(resolved(ServerListDensity.grid, 1), ServerListDensity.grid);
+      expect(resolved(ServerListDensity.grid, 1.5), ServerListDensity.rows);
+      expect(resolved(ServerListDensity.auto, 1.5), ServerListDensity.rows);
     });
 
     test('a choice is kept per tag', () {

@@ -610,6 +610,48 @@ void main() {
     expect(tester.getSize(card).height, moreOrLessEquals(folded, epsilon: 1));
   });
 
+  testWidgets('auto is what the window shows at once, and follows it', (
+    tester,
+  ) async {
+    // It was the count alone — cards up to six, lines up to twenty-four —
+    // which is what one desktop window holds. So a wider one went to lines
+    // with room for the cards, and nothing happened when a window was made
+    // too narrow for the ones it had.
+    for (var i = 0; i < 10; i++) {
+      Stores.server.put(
+        spiFixture(
+          id: 'many-$i',
+          name: 'm$i',
+          ip: 'h$i',
+          user: 'u',
+          autoConnect: false,
+        ),
+      );
+    }
+    await pump(tester, size: const Size(1200, 900));
+
+    Set<ServerListDensity> drawn() => {
+      for (final card in tester.widgetList<ServerCard>(find.byType(ServerCard)))
+        card.density,
+    };
+
+    // Three columns of four: ten of them fit, where ten used to be lines.
+    expect(drawn(), {ServerListDensity.cards});
+
+    // One column, and two screens of it is nine.
+    tester.view.physicalSize = const Size(500, 900);
+    await settle(tester);
+    expect(drawn(), {ServerListDensity.rows});
+    // The bar is a button this narrow, and wears what auto came to — which
+    // only the grid knows, and tells it a frame later.
+    expect(find.byIcon(ServerListDensity.rows.icon), findsOneWidget);
+
+    tester.view.physicalSize = const Size(1200, 900);
+    await settle(tester);
+    expect(drawn(), {ServerListDensity.cards});
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('what a card nobody has touched rests at is "UI Fold"', (
     tester,
   ) async {

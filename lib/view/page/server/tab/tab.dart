@@ -157,6 +157,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   final _scrollController = ScrollController();
 
+  /// What [ServerListDensity.auto] last came to in the grid, for the bar over
+  /// it to say.
+  ///
+  /// Null until a grid has been laid out. See [_publishAuto].
+  final _autoDensity = ValueNotifier<ServerListDensity?>(null);
+
   /// Bumped when the sort or the density changes, which are views over the
   /// list rather than anything the providers hold — so nothing else would
   /// rebuild it.
@@ -399,6 +405,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _globeGuideTimer?.cancel();
     _scrollController.dispose();
     _sortVersion.dispose();
+    _autoDensity.dispose();
     _search.dispose();
     Stores.setting.globeEnabled.listenable().removeListener(
       _globeEnabledListener,
@@ -733,7 +740,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return PreferredSizeListenBuilder(
       // Which tag is on, what tags there are to choose between, and how the
       // list is ordered — the sort button draws its own current icon.
-      listenable: Listenable.merge([_tags, _tag, _sortVersion]),
+      listenable: Listenable.merge([_tags, _tag, _sortVersion, _autoDensity]),
       // The wrapper is what the `Scaffold` measures, so it has to be told; its
       // own default is a full toolbar.
       preferSize: const Size.fromHeight(SessionTabBar.height),
@@ -988,10 +995,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // buttons after them. Below it the labels are what would have to shrink,
     // and a segmented control with no labels is four unexplained icons.
     if (room < 860) {
-      final resolved = stored.resolve(
-        count: count,
-        textScale: Stores.setting.textFactor.fetch(),
-      );
+      final resolved = _resolvedDensity(stored, count);
       return Btn.icon(
         text: resolved.label,
         icon: Icon(resolved.icon, size: 18),
@@ -1014,6 +1018,38 @@ class _ServerPageState extends ConsumerState<ServerPage>
         onSelected: _setDensity,
       ),
     );
+  }
+
+  /// What [stored] comes to, for the bar — which is not where the list is
+  /// measured.
+  ///
+  /// For [ServerListDensity.auto] that is the grid's own answer when it has
+  /// given one, since it is decided by how big the list is and only the grid
+  /// knows. Before that — the globe is up, so there has been no grid — the
+  /// window stands in for the list: the same question of a box a bar or two
+  /// taller.
+  ServerListDensity _resolvedDensity(ServerListDensity stored, int count) {
+    if (stored == ServerListDensity.auto) {
+      if (_autoDensity.value case final known?) return known;
+    }
+    return stored.resolve(
+      count: count,
+      textScale: Stores.setting.textFactor.fetch(),
+      viewport: MediaQuery.sizeOf(context),
+      folded: Stores.setting.collapseUIDefault.fetch(),
+    );
+  }
+
+  /// Tells the bar what `auto` came to, once the frame that found out is over.
+  ///
+  /// Found during layout, which is too late to build the bar with and no time
+  /// to mark it dirty in. Only when it changes: this runs on every layout of
+  /// the grid, and a window being dragged wider is hundreds of them.
+  void _publishAuto(ServerListDensity auto) {
+    if (_autoDensity.value == auto) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _autoDensity.value = auto;
+    });
   }
 
   void _setDensity(ServerListDensity density) {
@@ -1042,7 +1078,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
           padding: const EdgeInsets.fromLTRB(17, 7, 17, 27),
           child: Text(
             '${libL10n.auto} · $count → '
-            '${ServerListDensity.autoFor(count).label}',
+            '${_resolvedDensity(ServerListDensity.auto, count).label}',
             style: UIs.text11Grey,
             textAlign: TextAlign.center,
           ),
@@ -1462,12 +1498,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     final open = openId != null && filtered.contains(openId);
     final heroId = _heroId;
     final hero = heroId != null && filtered.contains(heroId);
-    // What the list draws each machine as. Not while one is open: the page has
-    // one shape, and the row or tile that was tapped is on its way to it.
-    final density = ServerDensityPref.of(_tag.value).resolve(
-      count: filtered.length,
-      textScale: Stores.setting.textFactor.fetch(),
-    );
+    // What the list draws each machine as is asked inside the grid, where how
+    // big the list is is known — see [ServerListDensity.autoFor].
+    final stored = ServerDensityPref.of(_tag.value);
+    final textScale = Stores.setting.textFactor.fetch();
+    final folded = Stores.setting.collapseUIDefault.fetch();
 
     // The sections, or null for one list. Cut before the sort is applied to
     // nothing — `filtered` is already in the chosen order, and grouping keeps
@@ -1510,12 +1545,32 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // dirty, not only when its constraints change, and during the movement
     // that is every frame. So this is where the cards would be built afresh
     // sixty times a second, each one to be drawn a little fainter.
-    final others = <double, Map<String, Widget>>{};
+    //
+    // By the shape as well as the width: a window made shorter can be what
+    // takes the list from cards to lines, with its width unchanged.
+    final others = <(double, ServerListDensity), Map<String, Widget>>{};
 
     final grid = LayoutBuilder(
       builder: (_, cons) {
+        // What `auto` comes to here, whether or not it is what is chosen: the
+        // bar says so beside the choice — see [_publishAuto].
+        final auto = ServerListDensity.auto.resolve(
+          count: filtered.length,
+          textScale: textScale,
+          viewport: cons.biggest,
+          folded: folded,
+        );
+        _publishAuto(auto);
+        final density = stored == ServerListDensity.auto
+            ? auto
+            : stored.resolve(
+                count: filtered.length,
+                textScale: textScale,
+                viewport: cons.biggest,
+                folded: folded,
+              );
         final rest = others.putIfAbsent(
-          cons.maxWidth,
+          (cons.maxWidth, density),
           () => {
             for (final id in filtered)
               if (id != heroId)
