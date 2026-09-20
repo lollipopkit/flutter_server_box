@@ -145,6 +145,64 @@ void main() {
     await tester.pump();
   }
 
+  group('a card', () {
+    testWidgets('on its way says so once', (tester) async {
+      // A spinner where the thing to do about it goes, and that is all. It had
+      // a line under its title as well — the same answer twice, which is what
+      // a line in the list already declines to do by giving up its spinner.
+      for (final name in ['connecting', 'loading']) {
+        final srv = ladder[name];
+        if (srv == null) continue;
+        await pump(tester, srv, density: ServerListDensity.cards);
+        expect(find.byType(SizedLoading), findsOneWidget, reason: name);
+        // Which is itself drawn with one of these, so: that one, and no other.
+        expect(
+          find.byType(LinearProgressIndicator),
+          findsOneWidget,
+          reason: name,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(SizedLoading),
+            matching: find.byType(LinearProgressIndicator),
+          ),
+          findsOneWidget,
+          reason: name,
+        );
+      }
+    });
+  });
+
+  group('a card with nothing to report', () {
+    testWidgets('has as much under its title as over it', (tester) async {
+      // It was held to a height rather than being as tall as its title: 30,
+      // from when a line under the title made up the difference. The title is
+      // 23, so without that line the other 7 sat under it as a gap nothing
+      // was in — the card's own inset over the name, and half as much again
+      // below.
+      for (final name in ['connecting', 'disconnected']) {
+        await pump(tester, ladder[name]!, density: ServerListDensity.cards);
+        final card = tester.getRect(
+          find.descendant(
+            of: find.byType(ServerCard),
+            matching: find.byType(InkWell),
+          ).first,
+        );
+        // The tallest thing in the title row, which is what it is as tall as.
+        final action = tester.getRect(
+          find.byWidgetPredicate(
+            (w) => w is SizedBox && w.height == 23 && w.width == 27,
+          ),
+        );
+        expect(
+          card.bottom - action.bottom,
+          moreOrLessEquals(action.top - card.top, epsilon: 0.5),
+          reason: name,
+        );
+      }
+    });
+  });
+
   group('a line', () {
     testWidgets('is the same height in every state', (tester) async {
       final heights = <String, double>{};

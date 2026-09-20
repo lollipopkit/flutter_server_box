@@ -97,9 +97,6 @@ abstract final class ServerCardSizes {
   static const label = 58.0;
   static const openLabel = 84.0;
 
-  /// The least a card with nothing to report takes: a title and no more.
-  static const collapsed = 30.0;
-
   /// One line per machine, and one tile per machine.
   ///
   /// The taller of each pair is what a finger needs; the shorter is what a
@@ -127,7 +124,7 @@ const _kLineActionWidth = 27.0;
 /// How long the readings take to fill a card once the first sample lands.
 ///
 /// The design's number, and it is the height as well as the contents: the card
-/// grows out of its 56pt over this, and what fills it comes in over the same
+/// grows out of its title over this, and what fills it comes in over the same
 /// stretch — so a machine answering is one movement rather than a box growing
 /// and then filling.
 const _kArrive = Duration(milliseconds: 377);
@@ -431,7 +428,6 @@ class ServerCard extends ConsumerWidget {
 
     final err = srv.status.err;
     final auth = srv.needsInteractiveAuth;
-    final busy = _busy;
     // Only what has been sampled is drawn. A machine that failed keeps its
     // last numbers on its own page, where there is room to say how old they
     // are; on a card the error is the more useful of the two.
@@ -458,7 +454,6 @@ class ServerCard extends ConsumerWidget {
         // readings are the page, what they are of is at the top of the window
         // with the switcher between machines beside it.
         _titleSlot(context, ref, t),
-        if (busy) _progress(context),
         if (err != null && !auth) _error(context, err),
         // Everything that arrives with the first sample, coming in one block
         // after another — see [_Arriving]. When that is, is [_Arrival]'s to
@@ -521,12 +516,11 @@ class ServerCard extends ConsumerWidget {
             t,
           )! +
           EdgeInsets.only(right: reserved),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: ServerCardSizes.collapsed,
-        ),
-        child: column,
-      ),
+      // As tall as what is in it, which with nothing to report is the title.
+      // It was held to 30, from when a progress line under the title made up
+      // the difference; the title is 23, so without that line the other 7 sat
+      // under it as a gap with nothing in it.
+      child: column,
     );
   }
 
@@ -572,9 +566,10 @@ class ServerCard extends ConsumerWidget {
 
   /// Whether this machine is on its way somewhere.
   ///
-  /// One definition, because three places draw from it and they have to agree
-  /// about which states get a progress line — a card that shows one while its
-  /// line does not is two answers to the same question.
+  /// One definition, because a line draws from it twice and the two have to
+  /// agree: the progress across its middle, and the spinner's slot at its
+  /// right being left empty for it. A card says it with the spinner alone —
+  /// see [_connAction], which asks the same three states.
   bool get _busy => switch (srv.conn) {
     ServerConn.connecting ||
     ServerConn.connected ||
@@ -1109,21 +1104,15 @@ class ServerCard extends ConsumerWidget {
 
   // --- The states that are not a body ---
 
-  /// Connecting: the height does not move and a line under the title says
-  /// something is happening.
-  ///
-  /// Not a skeleton. A skeleton grows to the height of a success first and has
-  /// to shrink back when the answer is that there is nothing — which is the
-  /// one movement a list of cards cannot afford.
-  Widget _progress(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(top: ServerCardSizes.gap),
-      child: LinearProgressIndicator(
-        minHeight: ServerCardSizes.bar,
-        borderRadius: BorderRadius.all(Radius.circular(ServerCardSizes.bar)),
-      ),
-    );
-  }
+  // Connecting is not one of them. The height does not move and the spinner
+  // in [_connAction]'s slot says something is happening; a line under the
+  // title as well was the same answer twice, which is what a line in the
+  // list already declines to do by giving up its spinner for the one across
+  // its middle.
+  //
+  // Not a skeleton either. A skeleton grows to the height of a success first
+  // and has to shrink back when the answer is that there is nothing — which
+  // is the one movement a list of cards cannot afford.
 
   /// What went wrong, and what was actually said.
   ///
