@@ -10,6 +10,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/pressure.dart';
 
 const _tabular = [FontFeature.tabularFigures()];
 
@@ -27,6 +28,20 @@ const _kStripHeight = 46.0;
 /// fit beside everything else on one line.
 const _kBarWidth = 52.0;
 const _kBarHeight = 4.0;
+
+/// From here there is room for a bar each. Below it the three share one.
+const _kSeparateBars = 760.0;
+
+/// The one bar's share of its section: the least it is drawn at, the width of
+/// one reading's name and number after it, and the gap before each.
+///
+/// The same rule a line in the list shares its bar by: a third of what there
+/// is and never under 48, which is about what three stretches of colour can
+/// still be told apart in. The numbers get the rest and go from the right as
+/// the width does. 66 is "DIS 100.0%" at these sizes.
+const _kPressureMin = 48.0;
+const _kValueWidth = 66.0;
+const _kValueGap = 11.0;
 
 /// What the cards do not answer, above the cards.
 ///
@@ -88,20 +103,31 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
         duration: context.motion(Durations.medium2),
         curve: Curves.fastEaseInToSlowEaseOut,
         alignment: Alignment.topCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: _kStripHeight,
-              child: LayoutBuilder(
-                builder: (_, cons) =>
-                    _strip(context, totals, events, cons.maxWidth),
-              ),
-            ),
-            if (_expanded)
-              for (final event in events) _RecentRow(event: event),
-          ],
+        // Around the list as well as the line: what the list opens with
+        // depends on whether the line had room to say it — see [_strip].
+        child: LayoutBuilder(
+          builder: (_, cons) {
+            final showLast = cons.maxWidth >= _kShowLast;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: _kStripHeight,
+                  child: _strip(context, totals, events, cons.maxWidth),
+                ),
+                if (_expanded) ...[
+                  // What the dot was the colour of, when the line was too
+                  // narrow to say: a dot that opens onto three connections
+                  // that went fine has not said why it is amber.
+                  if (!showLast)
+                    if (totals.over case final over?)
+                      _RecentRow(said: _saidOver(over)),
+                  for (final event in events) _RecentRow(said: _saidOf(event)),
+                ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -109,10 +135,13 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
 
   /// The line itself: three sections with a hairline between them.
   ///
-  /// Sections are dropped from the right as the width goes, in the order they
-  /// are worth least — what has happened before what the estate is using,
-  /// because the second is the one being scanned. The way into the list is
-  /// never dropped.
+  /// What gives as the width goes is detail, never a section. The last thing
+  /// that happened loses its words first and keeps its colour — see [_more] —
+  /// and then the three bars become one, which is the three of them laid end
+  /// to end the way a tile in the list draws a machine. They used to be
+  /// dropped instead, memory and then the disk, so a phone was told about the
+  /// processors and nothing else: the one of the three that says least about
+  /// whether anything needs looking at.
   Widget _strip(
     BuildContext context,
     _Totals totals,
@@ -120,30 +149,40 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
     double width,
   ) {
     final scheme = Theme.of(context).colorScheme;
-    final bars = switch (width) {
-      >= 760 => 3,
-      >= 600 => 2,
-      _ => 1,
-    };
-    final showLast = width >= 820;
-    // A phone keeps the count, one bar and the way into the list, and gives up
-    // the word and half the room between sections to do it.
+    final separate = width >= _kSeparateBars;
+    final showLast = width >= _kShowLast;
+    // A phone gives up the word and half the room between sections.
     final compact = width < 480;
+    final said = _said(totals, events);
 
     return Row(
       children: [
         _online(totals, compact: compact),
         _divider(context),
-        _bars(totals, count: bars, compact: compact),
-        if (showLast || events.isNotEmpty) _divider(context),
+        if (separate)
+          _bars(totals, compact: compact)
+        else
+          Expanded(child: _pressure(totals, compact: compact)),
+        if (said != null) _divider(context),
         if (showLast)
-          Expanded(child: _last(context, totals, events, scheme: scheme))
+          Expanded(
+            child: said == null
+                ? const SizedBox.shrink()
+                : _last(context, said, events, scheme: scheme),
+          )
         else ...[
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(right: 9),
-            child: _more(events, scheme: scheme),
-          ),
+          if (separate) const Spacer(),
+          if (said != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9),
+              child: _more(
+                scheme: scheme,
+                // The line had no room to say it, so the colour is all of it
+                // — and there is something behind it whenever there is one.
+                dot: said.color,
+                opens: true,
+              ),
+            ),
         ],
       ],
     );
@@ -196,32 +235,23 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
   /// Memory and disk are summed — bytes are bytes, wherever they are — and the
   /// processors are averaged, because a fleet has no single one to be a share
   /// of.
-  Widget _bars(_Totals totals, {required int count, required bool compact}) {
+  Widget _bars(_Totals totals, {required bool compact}) {
     // One colour for all three, and it is the theme's. These are not three
     // readings being told apart — each is named at the head of its own bar —
     // they are three lengths being read across one strip, and three hues
     // there is the strip competing with the cards under it for the one thing
     // colour is spent on. The one over its line is the exception, below.
     final color = ChartPalette.promoted;
-    final all = <({String k, double? pct, String v})>[
-      (k: 'CPU', pct: totals.cpu, v: _pct(totals.cpu)),
-      (k: libL10n.memory, pct: totals.mem, v: _pct(totals.mem)),
-      (k: libL10n.disk, pct: totals.disk, v: _pct(totals.disk)),
-    ];
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 13),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final (at, one) in all.take(count).indexed) ...[
+          for (final (at, one) in totals.shares.indexed) ...[
             if (at > 0) const SizedBox(width: 17),
             Text(
-              // Three letters, because what is being read is the bar beside it
-              // and a full word would take the width the bar needs.
-              one.k.length <= 4
-                  ? one.k.toUpperCase()
-                  : one.k.substring(0, 3).toUpperCase(),
+              one.short,
               style: const TextStyle(
                 fontSize: 10,
                 height: 1,
@@ -240,24 +270,20 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                     context,
                   ).colorScheme.surfaceContainerHighest,
                   valueColor: AlwaysStoppedAnimation(
-                    (one.pct ?? 0) >= kServerAlertPercent
-                        ? StatePalette.warn
-                        : color,
+                    one.over ? StatePalette.warn : color,
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 7),
             Text(
-              one.v,
+              _pct(one.pct),
               style: TextStyle(
                 fontSize: 12,
                 height: 1,
                 fontWeight: FontWeight.w500,
                 fontFeatures: _tabular,
-                color: (one.pct ?? 0) >= kServerAlertPercent
-                    ? StatePalette.warn
-                    : color,
+                color: one.over ? StatePalette.warn : color,
               ),
             ),
           ],
@@ -266,68 +292,127 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
     );
   }
 
-  /// The one thing worth saying, and the way to the rest.
+  /// The same three as one bar, for a line with no room for a bar each.
+  ///
+  /// [PressureBar] is what a tile in the list draws one machine as, at the
+  /// same weights — so this is that reading for the whole list, and can be
+  /// read against the tiles under it. The names are in the colours of their
+  /// stretches, which is what makes three colours in one bar three readings
+  /// rather than a gradient. The numbers go from the right as the width does
+  /// and the bar stays, which is the order a line in the list gives them up
+  /// in.
+  Widget _pressure(_Totals totals, {required bool compact}) {
+    final shares = totals.shares;
+    final segments = pressureOf(
+      (kind) => switch (shares.firstWhereOrNull((s) => s.kind == kind)?.pct) {
+        final pct? => pct / 100,
+        null => null,
+      },
+    );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 13),
+      child: LayoutBuilder(
+        builder: (_, cons) {
+          final bar = cons.maxWidth / 3 < _kPressureMin
+              ? _kPressureMin
+              : cons.maxWidth / 3;
+          final room = ((cons.maxWidth - bar) / (_kValueWidth + _kValueGap))
+              .floor()
+              .clamp(0, shares.length);
+
+          return Row(
+            children: [
+              Expanded(child: PressureBar(segments: segments)),
+              for (final one in shares.take(room))
+                Padding(
+                  padding: const EdgeInsets.only(left: _kValueGap),
+                  child: SizedBox(
+                    width: _kValueWidth,
+                    child: Row(
+                      children: [
+                        Text(
+                          one.short,
+                          style: TextStyle(
+                            fontSize: 10,
+                            height: 1,
+                            color: pressureColor(one.kind, over: one.over),
+                          ),
+                          maxLines: 1,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            _pct(one.pct),
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              fontSize: 12,
+                              height: 1,
+                              fontWeight: FontWeight.w500,
+                              fontFeatures: _tabular,
+                              color: one.over ? StatePalette.warn : null,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// The one thing worth saying, or null when there is nothing.
   ///
   /// A reading over the line outranks anything that has merely happened, and
   /// carries no time because nothing records when a reading crossed — what it
   /// says is the state now. Otherwise this is the last connection attempt,
   /// which is the one thing this app does record the time of.
+  _Said? _said(_Totals totals, List<ConnectionStat> events) =>
+      switch ((totals.over, events.firstOrNull)) {
+        (final over?, _) => _saidOver(over),
+        (_, final event?) => _saidOf(event),
+        _ => null,
+      };
+
+  /// [said] in words, and the way to the rest.
   Widget _last(
     BuildContext context,
-    _Totals totals,
+    _Said said,
     List<ConnectionStat> events, {
     required ColorScheme scheme,
   }) {
-    final over = totals.over;
-    final event = events.firstOrNull;
-    final (color, name, text, at) = switch ((over, event)) {
-      ((final name, final m)?, _) => (
-        StatePalette.warn,
-        name,
-        '${m.label} ${m.value} · ${m.note}',
-        null,
-      ),
-      (_, final e?) => (
-        e.result == ConnectionResult.success
-            ? StatePalette.running
-            : StatePalette.failed,
-        e.serverName,
-        e.result == ConnectionResult.success
-            ? '${libL10n.conn} · ${e.durationMs} ms'
-            : (e.errorMessage.isEmpty ? e.result.name : e.errorMessage),
-        e.timestamp.toAgoStr(),
-      ),
-      _ => (Colors.grey, '', '', null),
-    };
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(13, 0, 9, 0),
       child: Row(
         children: [
-          if (name.isNotEmpty) ...[
-            _Dot(color),
-            const SizedBox(width: 9),
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: 12,
-                height: 1,
-                fontWeight: FontWeight.w500,
-                color: color,
-              ),
-              maxLines: 1,
+          _Dot(said.color),
+          const SizedBox(width: 9),
+          Text(
+            said.name,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1,
+              fontWeight: FontWeight.w500,
+              color: said.color,
             ),
-            const SizedBox(width: 9),
-          ],
+            maxLines: 1,
+          ),
+          const SizedBox(width: 9),
           Expanded(
             child: Text(
-              text,
+              said.text,
               style: const TextStyle(fontSize: 12, height: 1),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (at != null) ...[
+          if (said.at case final at?) ...[
             const SizedBox(width: 9),
             Text(
               at,
@@ -340,21 +425,38 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
             ),
           ],
           const SizedBox(width: 9),
-          _more(events, scheme: scheme),
+          // No dot of its own: the one at the head of these words is it.
+          _more(scheme: scheme, opens: events.isNotEmpty),
         ],
       ),
     );
   }
 
-  /// How much more there is, and the way to it.
-  Widget _more(List<ConnectionStat> events, {required ColorScheme scheme}) {
-    if (events.isEmpty) return const SizedBox.shrink();
+  /// The way to the rest of what has happened, and what colour the last of it
+  /// was.
+  ///
+  /// A dot rather than a count. The count was of what the list holds, which is
+  /// capped at [_kRecentCount] — so it said "+3" on every install with a day's
+  /// use behind it, and what a line with no room for words most needs to say
+  /// is whether the last thing that happened went well. [dot] is null where
+  /// the words are on the line and carry their own.
+  ///
+  /// [opens] is whether there is anything to open onto; without it this is
+  /// the dot alone.
+  Widget _more({
+    required ColorScheme scheme,
+    required bool opens,
+    Color? dot,
+  }) {
+    if (!opens) {
+      return dot == null ? const SizedBox.shrink() : _Dot(dot);
+    }
     return InkWell(
       onTap: () => setState(() => _expanded = !_expanded),
       borderRadius: BorderRadius.circular(13),
       child: Container(
         height: 26,
-        padding: const EdgeInsets.fromLTRB(7, 0, 5, 0),
+        padding: EdgeInsets.fromLTRB(dot == null ? 5 : 9, 0, 5, 0),
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(13),
@@ -362,15 +464,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '+${events.length}',
-              style: const TextStyle(
-                fontSize: 11,
-                height: 1,
-                color: Colors.grey,
-                fontFeatures: _tabular,
-              ),
-            ),
+            if (dot != null) ...[_Dot(dot), const SizedBox(width: 3)],
             AnimatedRotation(
               turns: _expanded ? 0.5 : 0,
               duration: context.motion(Durations.short4),
@@ -443,6 +537,38 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
 String _pct(double? v) =>
     v == null ? '--' : '${(v * 10).round() / 10}%';
 
+/// From here the last thing that happened is said in words on the line.
+const _kShowLast = 820.0;
+
+/// One thing worth saying: whose it is, what, how it went and when.
+typedef _Said = ({Color color, String name, String text, String? at});
+
+/// A reading past its line, which is a state and so has no time.
+_Said _saidOver((String, ServerMetric) over) => (
+  color: StatePalette.warn,
+  name: over.$1,
+  text: '${over.$2.label} ${over.$2.value} · ${over.$2.note}',
+  at: null,
+);
+
+/// A connection attempt, in the machine's own words when it failed: the result
+/// name alone says which of five kinds it was, and the message is the part
+/// anyone can act on.
+_Said _saidOf(ConnectionStat e) {
+  final ok = e.result == ConnectionResult.success;
+  return (
+    color: ok ? StatePalette.running : StatePalette.failed,
+    name: e.serverName,
+    text: ok
+        ? '${libL10n.conn} · ${e.durationMs} ms'
+        : (e.errorMessage.isEmpty ? e.result.name : e.errorMessage),
+    at: e.timestamp.toAgoStr(),
+  );
+}
+
+/// One of the three things a list is using, as a share of what it has.
+typedef _Share = ({ServerMetricKind kind, String short, double? pct, bool over});
+
 /// What the line says, worked out once.
 class _Totals {
   const _Totals({
@@ -462,6 +588,27 @@ class _Totals {
 
   /// The first reading past the line, and whose it is.
   final (String, ServerMetric)? over;
+
+  /// The three as the line draws them, in the order [PressureBar] lays them
+  /// end to end — which is the order they were dropped in when they were.
+  ///
+  /// Three letters each, because what is being read is the bar beside the
+  /// name and a full word would take the width the bar needs.
+  List<_Share> get shares => [
+    for (final (kind, name, pct) in [
+      (ServerMetricKind.cpu, 'CPU', cpu),
+      (ServerMetricKind.mem, libL10n.memory, mem),
+      (ServerMetricKind.disk, libL10n.disk, disk),
+    ])
+      (
+        kind: kind,
+        short: name.length <= 4
+            ? name.toUpperCase()
+            : name.substring(0, 3).toUpperCase(),
+        pct: pct,
+        over: (pct ?? 0) >= kServerAlertPercent,
+      ),
+  ];
 }
 
 /// What a machine's state looks like at seven pixels across, which is the
@@ -479,15 +626,14 @@ class _Dot extends StatelessWidget {
   );
 }
 
-/// One of the things that have happened, once the strip is opened out.
+/// One of the things worth saying, once the strip is opened out.
 class _RecentRow extends StatelessWidget {
-  const _RecentRow({required this.event});
+  const _RecentRow({required this.said});
 
-  final ConnectionStat event;
+  final _Said said;
 
   @override
   Widget build(BuildContext context) {
-    final ok = event.result == ConnectionResult.success;
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 13),
@@ -496,12 +642,12 @@ class _RecentRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Dot(ok ? StatePalette.running : StatePalette.failed),
+          _Dot(said.color),
           const SizedBox(width: 11),
           SizedBox(
             width: 96,
             child: Text(
-              event.serverName,
+              said.name,
               style: const TextStyle(
                 fontSize: 12,
                 height: 1.3,
@@ -514,29 +660,24 @@ class _RecentRow extends StatelessWidget {
           const SizedBox(width: 11),
           Expanded(
             child: Text(
-              // What happened, in the machine's own words when it failed: the
-              // result name alone says which of five kinds it was, and the
-              // message is the part anyone can act on.
-              ok
-                  ? '${libL10n.conn} · ${event.durationMs} ms'
-                  : (event.errorMessage.isEmpty
-                        ? event.result.name
-                        : event.errorMessage),
+              said.text,
               style: const TextStyle(fontSize: 12, height: 1.3),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 11),
-          Text(
-            event.timestamp.toAgoStr(),
-            style: const TextStyle(
-              fontSize: 11,
-              height: 1.3,
-              color: Colors.grey,
-              fontFeatures: _tabular,
+          if (said.at case final at?) ...[
+            const SizedBox(width: 11),
+            Text(
+              at,
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.3,
+                color: Colors.grey,
+                fontFeatures: _tabular,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

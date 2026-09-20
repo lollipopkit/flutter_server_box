@@ -15,6 +15,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/pressure.dart';
 import 'package:server_box/view/page/server/card/shape_cross.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
@@ -138,13 +139,6 @@ const _kArrive = Duration(milliseconds: 377);
 /// takes — and large enough to have a direction, which is what says the card
 /// filled rather than appeared.
 const _kArriveStep = Duration(milliseconds: 20);
-
-/// How tall a tile's pressure bar is, and its corner.
-///
-/// Thicker than the 3pt bar it replaced: this one is several colours laid end
-/// to end, and at 3 the shorter segments were a pixel of colour rather than a
-/// length to read.
-const _kPressureHeight = 6.0;
 
 /// A line's share of the same bar: the least it is drawn at, the width of one
 /// reading's name and number after it, and the gap before each.
@@ -632,7 +626,6 @@ class ServerCard extends ConsumerWidget {
     ServerMetric? focus, {
     DateTime? stale,
   }) {
-    final scheme = Theme.of(context).colorScheme;
     final (word, wordColor) = _lineState(stale);
 
     return SizedBox(
@@ -684,7 +677,6 @@ class ServerCard extends ConsumerWidget {
                       context,
                       readings,
                       focus,
-                      scheme: scheme,
                       stale: stale != null,
                     ),
                   ),
@@ -812,7 +804,6 @@ class ServerCard extends ConsumerWidget {
     BuildContext context,
     ServerCardReadings? readings,
     ServerMetric focus, {
-    required ColorScheme scheme,
     bool stale = false,
   }) {
     final inBar = [
@@ -835,10 +826,8 @@ class ServerCard extends ConsumerWidget {
         return Row(
           children: [
             Expanded(
-              child: _pressure(
-                context,
-                readings,
-                scheme: scheme,
+              child: PressureBar(
+                segments: serverPressure(readings),
                 stale: stale,
               ),
             ),
@@ -850,7 +839,7 @@ class ServerCard extends ConsumerWidget {
               if (kept.contains(m.kind))
                 _loadValue(
                   m,
-                  name: _pressureColor(m.kind, over: m.over, stale: stale),
+                  name: pressureColor(m.kind, over: m.over, stale: stale),
                 ),
           ],
         );
@@ -907,7 +896,6 @@ class ServerCard extends ConsumerWidget {
     ServerMetric? focus, {
     bool stale = false,
   }) {
-    final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: isMobile ? ServerCardSizes.tileTouch : ServerCardSizes.tile,
       child: Padding(
@@ -960,88 +948,12 @@ class ServerCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 5),
-            _pressure(context, readings, scheme: scheme, stale: stale),
+            PressureBar(segments: serverPressure(readings), stale: stale),
           ],
         ),
       ),
     );
   }
-
-  /// Everything this machine is carrying, end to end in one bar — see
-  /// [serverPressure], which is what the lengths are.
-  ///
-  /// The slot is kept even with nothing in it, so a machine that is down does
-  /// not make its tile a different height from the rest.
-  /// [stale] is a connection that is up and no longer sampling. The lengths
-  /// stay exactly as they were — the last reading is still the most recent
-  /// thing known about the machine — and the colours go, which is the half
-  /// that has stopped being true.
-  Widget _pressure(
-    BuildContext context,
-    ServerCardReadings? readings, {
-    required ColorScheme scheme,
-    bool stale = false,
-  }) {
-    final segments = serverPressure(readings);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(_kPressureHeight),
-      child: Container(
-        height: _kPressureHeight,
-        color: scheme.surfaceContainerHighest,
-        // A machine carrying everything at once runs past the end and is
-        // clipped there, which is the reading it deserves: full is full, and
-        // the tile that answers "which one is under load" does not owe a
-        // distinction between loaded and more loaded.
-        child: Row(
-          children: [
-            for (final segment in segments)
-              Flexible(
-                flex: (segment.share * 1000).round(),
-                child: Container(
-                  color: _pressureColor(
-                    segment.kind,
-                    over: segment.over,
-                    stale: stale,
-                  ),
-                ),
-              ),
-            // Whatever is left, as the track. A `Row` holding only the
-            // segments would stretch them to the full width.
-            Flexible(
-              flex: math.max(
-                0,
-                ((1 - segments.fold(0.0, (a, s) => a + s.share)) * 1000)
-                    .round(),
-              ),
-              child: const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// The colour of [kind]'s stretch of the pressure bar.
-  ///
-  /// The series colours, and the bar is the one place in a list where a colour
-  /// says *which reading*: every bar holds the same three in the same order.
-  /// Nothing on a tile names them; a line does, in these same colours — see
-  /// [_load]. Over its line wins, because that is what the bar is looked at
-  /// for.
-  Color _pressureColor(
-    ServerMetricKind kind, {
-    required bool over,
-    bool stale = false,
-  }) => stale
-      ? Colors.grey
-      : over
-      ? StatePalette.warn
-      : switch (kind) {
-          ServerMetricKind.mem => ChartPalette.mem,
-          ServerMetricKind.disk => ChartPalette.diskRead,
-          _ => ChartPalette.cpu,
-        };
 
   /// What a tile says where a number would be.
   ///

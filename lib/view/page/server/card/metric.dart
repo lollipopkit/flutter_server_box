@@ -312,16 +312,30 @@ Iterable<ServerMetricKind> get serverPressureKinds => _kPressureWeights.keys;
 /// A reading the machine does not report, or reports as a rate rather than a
 /// share, takes no room: only a reading with a full to be a share *of* can be
 /// a length here.
-List<ServerPressureSegment> serverPressure(ServerCardReadings? readings) {
+List<ServerPressureSegment> serverPressure(ServerCardReadings? readings) =>
+    pressureOf(
+      (kind) => readings?.all.firstWhereOrNull((m) => m.kind == kind)?.percent,
+    );
+
+/// The same bar from shares that are not one machine's readings: what a whole
+/// list adds up to, for the strip over it.
+///
+/// [share] answers 0 to 1 for each of [serverPressureKinds], or null for one
+/// there is nothing to say about. One definition of the weights, the order
+/// and the line a reading is over, so a bar over the list and the bars in it
+/// are the same reading at two scales.
+List<ServerPressureSegment> pressureOf(
+  double? Function(ServerMetricKind kind) share,
+) {
   final out = <ServerPressureSegment>[];
   for (final MapEntry(key: kind, value: weight) in _kPressureWeights.entries) {
-    final m = readings?.all.firstWhereOrNull((m) => m.kind == kind);
-    final percent = m?.percent;
+    final percent = share(kind);
     if (percent == null || percent <= 0) continue;
     out.add((
       share: percent.clamp(0.0, 1.0) * weight,
       kind: kind,
-      over: m!.over,
+      // [ServerMetric.over], which is this same comparison.
+      over: percent * 100 >= kServerAlertPercent,
     ));
   }
   return out;
