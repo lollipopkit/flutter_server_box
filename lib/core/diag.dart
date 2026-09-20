@@ -4,14 +4,15 @@ import 'package:fl_lib/fl_lib.dart';
 /// for every app on fl_lib (`lifecycle`, `nav`, `store`, `network`).
 ///
 /// These are the things this app does that a crash report has to be read
-/// against. Both open reports naming a crash point at a terminal, and neither
-/// says which kind of terminal — [terminal] carries the engine so the next one
-/// does.
+/// against. At `full` the same crumbs are also what says which features are
+/// used, so a category with no call sites is a feature nothing can be said
+/// about — see `OpenPanelSink`. That is the second reason to add one, and the
+/// reason the list is not only about crashes.
 ///
-/// At `full` the same crumbs are also what says which features are used, so a
-/// category with no call sites is a feature nothing can be said about — see
-/// `OpenPanelSink`. That is the second reason to add one, and the reason the
-/// list is not only about crashes.
+/// Never recorded, at any level: what a prompt asked, where a tool was pointed,
+/// where a server is, what a snippet contains. A category names the kind of
+/// action; `data` carries things like a verb and which transport, never a value
+/// the user typed.
 abstract final class SbDiag {
   /// Reaching a server: which transport was chosen, whether it connected.
   static const server = DiagCategory('server');
@@ -28,17 +29,14 @@ abstract final class SbDiag {
 
   /// The local Linux userland: installing one, replacing it, removing it.
   ///
-  /// Separate from [terminal], which is where one is *used*. The two answer
-  /// different questions — how many installs ever get one at all, against how
-  /// often the one they have is opened — and an install that fails never
-  /// reaches a terminal to be counted by.
+  /// Separate from [terminal], which is where one is *used*: an install that
+  /// fails never reaches a terminal to be counted by.
   static const linux = DiagCategory('linux');
 
   /// A snippet being run.
   ///
-  /// Not [terminal], which is where it lands: a snippet is a thing the user
-  /// wrote and reuses, and how many people ever run one is the question. What
-  /// it *contains* is never recorded — see the note on [Breadcrumb].
+  /// Not [terminal], which is where it lands: how many people ever run one is
+  /// the question, and what it *contains* is never recorded.
   static const snippet = DiagCategory('snippet');
 
   /// A port forward starting.
@@ -52,11 +50,6 @@ abstract final class SbDiag {
   static const backup = DiagCategory('backup');
 
   /// The AI agent: a prompt going out, a tool it proposed being run.
-  ///
-  /// Never what was asked or what the tool was pointed at. A prompt is the
-  /// most private thing this app handles — it can quote terminal output and
-  /// file contents — so what is recorded is that one happened, and which of a
-  /// fixed set of tools the model reached for.
   static const agent = DiagCategory('agent');
 
   /// Reaching a BMC, which is a machine's management controller rather than
@@ -72,14 +65,9 @@ abstract final class SbDiag {
 
   /// The globe: whether it is looked at, and what puts a server on it.
   ///
-  /// Never where a server is. No coordinate, no host, not even a country —
-  /// what is recorded is which link of `IpGeo`'s chain answered and how many
-  /// servers each one accounted for, which is the question the chain exists to
-  /// be judged by: the country database costs every install the megabytes it
-  /// ships in, and the city shards cost a request the user had to consent to.
-  ///
-  /// Apart from [server], where a coordinate typed by hand is one more field of
-  /// a saved server rather than anything the globe did.
+  /// Never where a server is. What is recorded is which link of `IpGeo`'s
+  /// chain answered and how many servers each one accounted for, which is the
+  /// question the chain exists to be judged by.
   static const globe = DiagCategory('globe');
 
   /// Moving settings between devices: remote sync, and the push that keeps a

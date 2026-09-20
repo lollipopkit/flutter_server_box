@@ -18,62 +18,58 @@ abstract final class Urls {
   static const docs = 'https://serverbox.lollipopkit.com/docs';
 
   /// What `{DIST}` and `{BRIGHT}` mean, and what a usable image URL looks
-  /// like. The wiki this used to point at says nothing about either.
+  /// like.
   static const customLogoDoc = '$docs/advanced/custom-logo/';
 
   /// What a `monitor` agent is, and how to get one onto a server.
   ///
-  /// Linked from the server editor rather than only from the docs site: the
-  /// switch offers a way of reaching a server that does not exist until
-  /// something has been installed on it, which is not a thing a switch can
-  /// convey on its own.
+  /// Linked from the server editor, because the switch offers a way of
+  /// reaching a server that does not exist until something is installed on it
+  /// — not a thing a switch can convey on its own.
   static const monitorAgentDoc = '$docs/advanced/monitor-agent/';
 
   /// What `[remote_access]` grants, and that every switch under it is off
   /// until the agent's operator edits `config.toml`.
   ///
-  /// Linked from the server page of an agent that grants nothing, which is the
-  /// one place where the absence of the whole function bar needs explaining —
-  /// and from where the reader cannot act on it, since they may not be the
-  /// person with the file.
+  /// Linked from the server page of an agent that grants nothing — the one
+  /// place the absence of the whole function bar needs explaining, and where
+  /// the reader may not be the person who has the file.
   static const monitorPermissionsDoc = '$monitorAgentDoc#permission-switches';
 
   /// How an alert rule is written: what a metric, a matcher and a threshold
   /// are, which combinations the agent actually evaluates, and when a rule
   /// stays quiet.
   ///
-  /// Linked from the rule list rather than restated there. A rule that the
-  /// agent cannot parse is a `warn!` in its own log and an alert that never
-  /// arrives, so the parts worth knowing are the ones a form cannot show — a
-  /// threshold with no comparator means `<`, and a unit that does not fit its
-  /// metric never fires.
+  /// Linked rather than restated in the form, because the parts worth knowing
+  /// are exactly the ones a form cannot show: a threshold with no comparator
+  /// means `<`, and a unit that does not fit its metric never fires.
   static const monitorRulesDoc = '$monitorAgentDoc#alert-rules';
 
   /// What is collected at each diagnostics level, and what is not.
   ///
   /// Linked from the intro page that asks the question and from the setting
   /// that revisits it. Three sentences on a radio tile can say what a level
-  /// sends; they cannot say where it goes, how long it is kept, or what a
-  /// report has been checked not to contain — and consent given without
-  /// somewhere to read that is consent to a summary.
+  /// sends; they cannot say where it goes or how long it is kept, and consent
+  /// given without somewhere to read that is consent to a summary.
   static const privacyPolicy = '$docs/privacy/';
 
   /// Where the city-level geo data is downloaded from.
   ///
-  /// Two static files and a manifest, fetched once. Every lookup after that is
-  /// local, so this host learns that someone took the data and nothing else —
-  /// not which addresses were looked up, not how many, not when. That is a
-  /// property of downloading the whole thing rather than a promise about the
-  /// operator, which is why there is no setting to point it elsewhere: there
-  /// would be nothing for it to improve.
+  /// A manifest and two archives, fetched once; every individual lookup after
+  /// that is local. The download is itself an ordinary HTTPS request, so it
+  /// exposes whatever any request does — the caller's address, TLS metadata,
+  /// timing — but it never says which address is being looked up, because the
+  /// lookups happen on the device against the downloaded data. That is why
+  /// there is no setting to point it elsewhere: there would be nothing for it
+  /// to improve.
   static const geoData = 'https://ipgeo.lollipopkit.com';
 
   /// The second endpoint, for a network where the first will not answer.
   ///
   /// `releases/latest/download/<file>` resolves without a tag being known, so
   /// the fallback needs no lookup of its own. It carries the same logical data,
-  /// but independently produced gzip archives may have different bytes. The
-  /// installer therefore uses each endpoint's manifest and assets as one set.
+  /// but independently produced gzip archives may have different bytes, so the
+  /// installer uses each endpoint's manifest and assets as one set.
   static const geoDataFallback =
       '$myGithub/ipgeo-shards/releases/latest/download';
 

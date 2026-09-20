@@ -5,7 +5,7 @@ description: Server Box 如何组织界面、状态、存储和平台层
 
 Server Box 采用分层结构，将界面、状态协调、本地数据和外部连接分别处理。这样既方便跨平台实现，也让 SSH、Monitor agent 和本机终端能够共用上层 UI。
 
-本页介绍系统层面的模型。实现细节和代码布局请参阅[实现架构](/docs/zh/development/architecture/)。
+本页介绍系统层面的模型：分层结构，以及影响大多数行为的两个决定——一台服务器可以同时暴露两种 transport，状态也可以从任一边到达。模块布局、入口、依赖注入与 Rust 集成请参阅[实现架构](/docs/zh/development/architecture/)。
 
 ## 架构分层
 
@@ -24,8 +24,8 @@ Server Box 采用分层结构，将界面、状态协调、本地数据和外部
                       ↓
 ┌─────────────────────────────────────────────────┐
 │ 数据与服务层                                    │
-│ lib/data/store/、lib/data/model/                │
-│ 本地存储、model、连接服务                       │
+│ lib/data/model/、lib/data/store/                │
+│ model、本地存储、连接服务                       │
 └─────────────────────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────┐
@@ -33,36 +33,6 @@ Server Box 采用分层结构，将界面、状态协调、本地数据和外部
 │ SSH、SFTP、Monitor HTTP、平台 API               │
 └─────────────────────────────────────────────────┘
 ```
-
-## 应用入口和导航
-
-`lib/main.dart` 负责初始化依赖、打开本地数据库、初始化 Rust bindings，并调用 `runApp`。根组件负责主题、路由和 Riverpod `ProviderScope`。
-
-首页通过标签页提供服务器、终端、文件和代码片段等功能。页面只负责展示和接收交互，具体状态和操作交给 provider、service 或 store。
-
-## 状态管理：Riverpod
-
-项目使用 `riverpod_generator` 生成类型安全的 Provider：
-
-- `NotifierProvider`：管理带更新方法的同步状态
-- `AsyncNotifierProvider`：管理异步加载、成功和错误状态
-- `StreamProvider`：暴露持续产生的数据流
-- Family Provider：为不同服务器或其他参数维护独立状态
-
-Provider 不要求依赖 `BuildContext`，因此 service 和业务逻辑可以独立测试。Widget 通过 `ref.watch` 订阅状态，通过 `ref.read(...notifier)` 发起更新。
-
-## 本地存储：加密 SQLite
-
-App 的权威本地存储是加密 SQLite 文件 `store.db`。数据库加密密钥保存在平台安全存储中，数据库由 `SqliteDb` 打开并应用 `foreign_keys` pragma。
-
-数据根据是否需要关系查询分为两类：
-
-- **Key-value 表 `kv(store, key, value, updated_at)`**：用于设置和历史等互不相关的值。`value` 以 JSON 存储，写入值必须提供 `toJson`。
-- **Entity 表**：用于服务器、private key、snippet、port forward、connection statistics 和 Agent conversation 等具有关联关系的数据。它们使用独立列、外键、约束和索引。
-
-Drift 只负责 DDL（`lib/data/store/db.dart`），不会打开数据库连接，也不负责现有的同步查询。`SqliteDb` 创建连接后，将 handle 交给手写的 store 查询代码。
-
-Entity 的 primary key 使用生成的 ID；用户输入的 name 是可唯一约束的普通列。列表和 map 字段使用 child table，以便查询和级联删除。
 
 ## 连接方式和能力模型
 
@@ -120,26 +90,11 @@ parser 以纯函数形式工作，只返回原始计数；差分和滑动窗口�
 
 每个存储迁移都必须保留永久 regression test，并使用旧 release 实际写出的 bytes。当前 adapter 重新生成 fixture 只能证明当前版本与自身一致，不能证明它还能读取旧版本数据。
 
-## 依赖注入
-
-服务和 store 使用以下方式组合：
-
-1. **Provider**：向 UI 暴露依赖和状态。
-2. **GetIt**：在适合使用 service locator 的场景提供全局服务实例。
-3. **Constructor injection**：在 class 之间显式传递依赖。
-
-## 平台和 Rust 集成
-
-Flutter 提供跨平台 UI，平台插件负责通知、后台服务、文件系统等系统能力。Rust 代码通过 `crates/sbm_ffi` 和 flutter_rust_bridge 暴露给 Dart，生成的 bindings 位于 `lib/src/rust/`。
-
-`crates/sbm_parser` 是共享的纯解析库；`crates/sbm_native` 仅供 Monitor agent 在服务器本机采样。App 不会在远程服务器上调用 `sbm_native`。
-
 ## 安全架构
 
 ### 数据保护
 
-- **密码 / SSH 密钥**：存储在加密的 SQLite 数据库中；加密密钥本身保存在平台安全存储（Keychain/Keystore）
-- **主机指纹**：安全存储
+- **密码 / SSH 密钥与已信任的主机指纹**：存放在加密的 SQLite 数据库（设置存储中的 `sshKnownHostFingerprints`）中；加密密钥本身保存在平台安全存储（Keychain/Keystore）
 - **会话数据**：不进行持久化
 
 ### 连接安全

@@ -26,11 +26,9 @@ class SchemaTooNewException implements Exception {
 /// One forward-only step between two adjacent schema versions.
 ///
 /// Migrations exist so the model classes only ever describe the *current*
-/// shape. Without them, every format change leaves a permanent branch behind
-/// in `fromJson` — `Spi.jumpId` has carried a "kept for compatibility" comment
-/// alongside `jumpIds` for exactly that reason, with no way to tell when it
-/// became safe to delete. A migration, by contrast, has a version it belongs
-/// to and a version after which it can be removed.
+/// shape, instead of every format change leaving a permanent branch behind in
+/// `fromJson` with no way to tell when it became safe to delete. A migration
+/// has a version it belongs to and a version after which it can be removed.
 abstract interface class SchemaMigration {
   /// Applies to data stored at this version, producing [from] + 1
   int get from;
@@ -51,58 +49,48 @@ abstract final class SchemaVersion {
   /// Oldest schema a partially completed Hive import may have left in SQLite.
   static const oldestSupported = 2;
 
-  /// v2: everything up to and including `monitorHttp` on Spi — the last
-  ///     layout written before versioning existed, hence the starting point
-  ///     rather than v1
+  /// The schema sequence, one line per step. Each migration file documents its
+  /// own reasoning; this is the index.
+  ///
+  /// v2: everything up to `monitorHttp` on Spi — the last layout written
+  ///     before versioning existed, hence the starting point rather than v1
   /// v3: Spi's flat SSH fields nested under `ssh`
   /// v4: Hive boxes replaced by one encrypted SQLite database
   ///
   /// There is no migration registered for v2 -> v3 or v3 -> v4. Both are done
   /// by `HiveImport`, which is the only code that reads a Hive box and so the
-  /// only place a pre-v3 record can be decoded at all; it records [current]
-  /// when it finishes. Every install therefore reaches SQLite already at v4,
-  /// and [migrate] has nothing to do until a v5 exists.
-  /// v5: entities out of `kv` and into tables with columns, foreign keys
-  ///     and per-row sync metadata
+  /// only place a pre-v3 record can be decoded at all; it records
+  /// [hiveImportProduces] when it finishes. Every install therefore reaches
+  /// SQLite already at v4.
+  ///
+  /// v5: entities out of `kv` and into tables with columns, foreign keys and
+  ///     per-row sync metadata
   /// v6: per-monitor explicit permission for plaintext HTTP on trusted networks
   /// v7: the BMC side channel's columns on `server`
-  /// v8: `private_key.comment`, so a key's label can be edited without
-  ///     opening the key to rewrite the copy inside it
+  /// v8: `private_key.comment`
   /// v9: the two settings fixups that gated themselves on their own
-  ///     `xxxMigrated` flag key, now ordered steps like everything else
+  ///     `xxxMigrated` flag key
   /// v10: the Agent shell's eight settings keys and the AI provider's six
   ///      folded into one object row each
-  /// v11: `server_dist`, caching what each server was last seen running so a
-  ///      row can draw its mark without a live status
-  /// v12: `horizonVirtKey`, a switch meaning one row of virtual keys, becomes
-  ///      `virtKeyRows`, a count of how many rows to show at once
+  /// v11: `server_dist`, caching what each server was last seen running
+  /// v12: `horizonVirtKey`, a switch, becomes `virtKeyRows`, a count
   /// v13: the trusted host keys v5 moved into `known_host` put back into the
   ///      setting the app actually reads
-  /// v14: the virtual keys' order and hidden set by name rather than by enum
-  ///      index
-  /// v15: `server.ssh_file_transport`, so a host with no SFTP subsystem can be
-  ///      told to move its files over `scp` instead
-  /// v16: the watch's server selection inverted into an exclusion list, so
-  ///      every monitor server syncs unless it is held back
+  /// v14: the virtual keys' order and hidden set by name rather than by index
+  /// v15: `server.ssh_file_transport`, for a host with no SFTP subsystem
+  /// v16: the watch's server selection inverted into an exclusion list
   /// v17: the hand-typed Go-compat `/status` URLs retired, and the user told
-  /// v18: `server.preferred_transport`, and the SSH/monitor exclusivity check
-  ///      relaxed so one server can carry both
-  /// v19: `server.geo_lat` and `geo_lon`, the coordinate a user gives a server
-  ///      so the globe can draw it somewhere the app has no way to look up
-  /// v20: the `geo` key-value rows dropped — a cache of where each host was,
-  ///      retired with the per-lookup requests it existed for
-  /// v21: the old five-button home arrangement becomes four buttons plus
-  ///      the "more" destination
-  /// v22: the home tab selection is stored as enum names instead of indexes
+  /// v18: `server.preferred_transport`, and the SSH/monitor exclusivity relaxed
+  ///      so one server can carry both
+  /// v19: `server.geo_lat` and `geo_lon`
+  /// v20: the `geo` key-value rows dropped
+  /// v21: the old five-button home arrangement becomes four plus "more"
+  /// v22: the home tab selection stored as enum names instead of indexes
   /// v23: AI endpoints store the API version previously appended at request time
-  /// v24: the server function row and the server sort field stored by enum
-  ///      name rather than by index, which shifted meaning every time a case
-  ///      was removed
+  /// v24: the server function row and the server sort field stored by enum name
   /// v25: saved RDP and VNC profiles become a syncable server child
-  /// v26: `server.ssh_enabled` and `monitor_enabled`, so one way into a server
-  ///      can be switched off without its configuration being dropped
-  /// v27: `server.ssh_allow_legacy_algorithms`, so a host whose SSH daemon
-  ///      only offers the retired `ssh-rsa`/SHA-1 algorithms can be reached
+  /// v26: `server.ssh_enabled` and `monitor_enabled`
+  /// v27: `server.ssh_allow_legacy_algorithms`
   static const current = 27;
 
   /// Persisted locally, never included in a backup: it describes *this
@@ -118,13 +106,10 @@ abstract final class SchemaVersion {
   /// build. Callers must treat that as fatal for anything that writes — see
   /// the class doc.
   static Future<void> migrate(List<SchemaMigration> migrations) async {
-    // Before anything about *this* install is consulted, because what it
-    // catches is a disagreement in the list itself and every install has the
-    // same list. Built by hand rather than with a collection-for, which kept
-    // the last of two steps claiming one version and dropped the other with
-    // nothing said — and the gap check below only notices when the loss leaves
-    // a version this install has to cross, so whether anyone found out
-    // depended on where the install happened to be.
+    // Built by hand rather than with a collection-for, which keeps the last of
+    // two steps claiming one version and drops the other with nothing said.
+    // The gap check below would only notice when the loss leaves a version
+    // this install has to cross.
     final byFrom = <int, SchemaMigration>{};
     for (final m in migrations) {
       final clash = byFrom[m.from];
