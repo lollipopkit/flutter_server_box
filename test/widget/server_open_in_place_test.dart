@@ -75,8 +75,16 @@ void main() {
   /// [expanded] unfolds both cards' rows, which is not what a card rests at
   /// but is what most of this file measures: the rows a card shows are the
   /// ones that can be compared between the card and the page.
+  ///
+  /// Said about the two cards rather than by switching "UI Fold" off, which
+  /// would also change what the page they open into unfolds.
   void addServers({bool expanded = true}) {
-    if (expanded) Stores.setting.serverCardExpanded.put(['srv-0', 'srv-1']);
+    if (expanded) {
+      Stores.setting.serverCardExpandedOverride.put({
+        'srv-0': true,
+        'srv-1': true,
+      });
+    }
     for (final (i, name) in ['web', 'db'].indexed) {
       Stores.server.put(
         spiFixture(
@@ -580,7 +588,7 @@ void main() {
     await tester.tap(inCard(find.byIcon(Icons.expand_more)));
     await settle(tester);
     expect(inCard(find.byType(MetricRow)), findsWidgets);
-    expect(Stores.setting.serverCardExpanded.fetch(), ['srv-0']);
+    expect(Stores.setting.serverCardExpandedOverride.fetch(), {'srv-0': true});
     final unfolded = tester.getSize(card).height;
     expect(unfolded, greaterThan(folded));
 
@@ -594,11 +602,74 @@ void main() {
     expect(inCard(find.byType(MetricRow)), findsWidgets);
     expect(tester.getSize(card).height, moreOrLessEquals(unfolded, epsilon: 1));
 
-    await tester.tap(inCard(find.byIcon(Icons.expand_more)));
+    await tester.tap(inCard(find.byIcon(Icons.expand_less)));
     await settle(tester);
     expect(inCard(find.byType(MetricRow)), findsNothing);
-    expect(Stores.setting.serverCardExpanded.fetch(), isEmpty);
+    // Back to what the setting says, which is no opinion about this card.
+    expect(Stores.setting.serverCardExpandedOverride.fetch(), isEmpty);
     expect(tester.getSize(card).height, moreOrLessEquals(folded, epsilon: 1));
+  });
+
+  testWidgets('what a card nobody has touched rests at is "UI Fold"', (
+    tester,
+  ) async {
+    // A default rather than a starting value: nothing is written for a card
+    // until somebody says something about it, so switching the setting moves
+    // every card that nobody has — and this tab is kept alive behind the
+    // settings page, so it has to be told.
+    addServers(expanded: false);
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+    await answer(tester, id: 'srv-1');
+
+    Finder rowsOf(String id) => find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is ServerCard && w.srv.spi.id == id,
+      ),
+      matching: find.byType(MetricRow),
+    );
+    Finder controlOf(String id, IconData icon) => find.descendant(
+      of: find.byWidgetPredicate(
+        (w) => w is ServerCard && w.srv.spi.id == id,
+      ),
+      matching: find.byIcon(icon),
+    );
+
+    // On, which is what an install starts with: folded.
+    expect(Stores.setting.collapseUIDefault.fetch(), isTrue);
+    expect(rowsOf('srv-0'), findsNothing);
+    expect(rowsOf('srv-1'), findsNothing);
+
+    // One of them is unfolded by hand, and the setting is switched after.
+    await tester.tap(controlOf('srv-0', Icons.expand_more));
+    await settle(tester);
+    Stores.setting.collapseUIDefault.put(false);
+    await settle(tester);
+    expect(rowsOf('srv-0'), findsWidgets);
+    expect(rowsOf('srv-1'), findsWidgets);
+    // What was said about the first now agrees with the setting, and stays
+    // said; nothing was written for the second.
+    expect(Stores.setting.serverCardExpandedOverride.fetch(), {'srv-0': true});
+
+    // Folding one by hand is the opinion now, and the other still follows.
+    await tester.tap(controlOf('srv-1', Icons.expand_less));
+    await settle(tester);
+    expect(rowsOf('srv-1'), findsNothing);
+    expect(Stores.setting.serverCardExpandedOverride.fetch(), {
+      'srv-0': true,
+      'srv-1': false,
+    });
+
+    // Unfolded again, it is back to what the setting says: no entry, so it
+    // is not held unfolded when the setting is switched back.
+    await tester.tap(controlOf('srv-1', Icons.expand_more));
+    await settle(tester);
+    expect(Stores.setting.serverCardExpandedOverride.fetch(), {'srv-0': true});
+
+    Stores.setting.collapseUIDefault.put(true);
+    await settle(tester);
+    expect(rowsOf('srv-0'), findsWidgets);
+    expect(rowsOf('srv-1'), findsNothing);
   });
 
   testWidgets('stepping to the next machine comes in from the right', (

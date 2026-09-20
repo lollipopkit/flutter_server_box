@@ -79,6 +79,16 @@ abstract final class ServerCardSizes {
   /// that moves for no reason anyone asked for.
   static const openHead = 30.0;
 
+  /// The line under the chart: what the reading is of and, folded, the way to
+  /// the rest of the readings beside it.
+  ///
+  /// Stated rather than natural, and the same folded or not. The control is
+  /// taller than the text and only there folded, so a line as tall as what is
+  /// in it would be one height folded and another unfolded — and the text
+  /// would move down the moment the control arrived, on a press that is about
+  /// what is under it.
+  static const underLine = 23.0;
+
   static const rowGap = 7.0;
 
   /// The column the row labels line up in, which is what lets the numbers on
@@ -1310,6 +1320,9 @@ class ServerCard extends ConsumerWidget {
     required bool twoColumns,
   }) {
     final t = openness;
+    // Folded, and with something folded away. A machine that reports the one
+    // reading has nothing under it either way, and is drawn as unfolded.
+    final folded = !expanded && others.isNotEmpty;
     final height = lerpDouble(
       ServerCardSizes.chart,
       twoColumns
@@ -1359,7 +1372,7 @@ class ServerCard extends ConsumerWidget {
         _chart(m, stale: stale, height: height, t: t),
         // Under the chart on the card; on the page it is up in the head row,
         // where it arrives with the page.
-        if (m.note.isNotEmpty && t < 1)
+        if ((m.note.isNotEmpty || folded) && t < 1)
           ClipRect(
             child: Align(
               alignment: Alignment.topCenter,
@@ -1367,16 +1380,15 @@ class ServerCard extends ConsumerWidget {
               child: Opacity(
                 opacity: 1 - t,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: ServerCardSizes.gap),
-                  child: Text(
+                  // Less than a gap by what the line has over its text, which
+                  // is centred in it — so the text is a gap under the chart.
+                  padding: const EdgeInsets.only(top: ServerCardSizes.gap - 4),
+                  child: _under(
+                    context,
                     m.note,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      height: 1.4,
-                      color: Colors.grey,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    unseen: others.length,
+                    folded: folded,
+                    moving: t > 0,
                   ),
                 ),
               ),
@@ -1386,6 +1398,79 @@ class ServerCard extends ConsumerWidget {
     );
 
     return _surface(context, t, child: body, padding: _kFocusPad);
+  }
+
+  /// The line under the chart: what the reading is of, and folded, the way
+  /// to the rest of the readings at the end of it.
+  ///
+  /// Folded, this is the last line of the card, so the control is on it rather
+  /// than on a line of its own under a rule — which was a third of the card's
+  /// height spent on saying there is more. The note starts at the left then,
+  /// because it is sharing the line and a caption centred in what is left of
+  /// one is centred on nothing.
+  ///
+  /// Unfolded, the line is the note's alone and it is a caption again, under
+  /// the middle of the chart. It travels there rather than being there: the
+  /// control closes to nothing beside it and the card grows under it, all
+  /// three over the same stretch on the same curve, so unfolding is one
+  /// movement. The control it leaves is under the rows by then — see [_rows].
+  Widget _under(
+    BuildContext context,
+    String note, {
+    required int unseen,
+    required bool folded,
+    required bool moving,
+  }) {
+    final duration = context.motion(_kArrive);
+    // The card's own, from the [AnimatedSize] in [build].
+    const curve = Curves.fastEaseInToSlowEaseOut;
+    return SizedBox(
+      height: ServerCardSizes.underLine,
+      child: Row(
+        children: [
+          Expanded(
+            child: AnimatedAlign(
+              alignment: folded ? Alignment.centerLeft : Alignment.center,
+              duration: duration,
+              curve: curve,
+              child: Text(
+                note,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.4,
+                  color: Colors.grey,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          AnimatedSwitcher(
+            duration: duration,
+            switchInCurve: curve,
+            // Flipped, because the one leaving is run backwards: this is what
+            // makes it leave the way the other arrives.
+            switchOutCurve: curve.flipped,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                axis: Axis.horizontal,
+                // Closing towards the edge of the card it sits against.
+                alignment: Alignment.centerRight,
+                sizeFactor: animation,
+                child: child,
+              ),
+            ),
+            child: folded
+                ? IgnorePointer(
+                    ignoring: moving,
+                    child: _fold(unseen, wide: false),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Beside the name of the reading drawn in full: which one that is.
@@ -1601,19 +1686,27 @@ class ServerCard extends ConsumerWidget {
         : const <ServerMetric>[];
     final onCard = {for (final m in resting) m.kind};
     final rows = t > 0 ? readings.all : resting;
+    // Folded and at rest there is nothing under the reading at all: the way
+    // to the rest of them is on its last line — see [_under].
+    if (rows.isEmpty) return const [];
     // What the machine reports and the card is not drawing. Counted from what
     // is drawn rather than taken from `readings.more`, which is what did not
     // fit in the five slots: a reading promoted from outside them is drawn
     // and was still being counted.
     final unseen =
         readings.all.length - (focus == null ? 0 : 1) - resting.length;
-    if (rows.isEmpty && unseen == 0) return const [];
 
     return [
-      SizedBox(height: lerpDouble(ServerCardSizes.gap, 7, t)),
+      // From nothing when folded, where there was nothing: a gap that is
+      // there at any openness above 0 and not at 0 is every card under this
+      // one moving by it on the first frame of opening.
+      SizedBox(
+        height: lerpDouble(expanded ? ServerCardSizes.gap : 0, 7, t),
+      ),
       // One card's worth of hairline at rest, and nothing once each row is a
       // card: a line between two separate surfaces is a line about neither.
-      if (t < 1)
+      // None folded, for the same reason as the gap.
+      if (expanded && t < 1)
         ClipRect(
           child: Align(
             alignment: Alignment.topCenter,
@@ -1639,74 +1732,76 @@ class ServerCard extends ConsumerWidget {
         theme: theme,
         scheme: scheme,
       ),
-      if (t < 1) _fold(context, unseen, below: resting.isNotEmpty, t: t),
+      // The way back, under what it folds away. Goes as the card becomes the
+      // page, by height as well as by fading, so what is under it is not a
+      // line lower until the last frame.
+      if (expanded && t < 1)
+        ClipRect(
+          child: Align(
+            alignment: Alignment.topCenter,
+            heightFactor: 1 - t,
+            child: Opacity(
+              opacity: 1 - t,
+              child: Padding(
+                padding: const EdgeInsets.only(top: ServerCardSizes.rowGap),
+                child: IgnorePointer(
+                  ignoring: t > 0,
+                  child: _fold(unseen, wide: true),
+                ),
+              ),
+            ),
+          ),
+        ),
     ];
   }
 
-  /// The line under the readings: how many the card is not showing, and the
-  /// way to the rest of them and back.
+  /// How many readings the card is not showing, and the way to them and back.
   ///
-  /// The count was a caption when the rows were always there. It is the
-  /// control now, across the width of the card — the arrow alone is a target
-  /// the size of a letter, on a card where a miss opens the machine.
+  /// The count and the arrow are one control: the arrow alone is a target the
+  /// size of a letter, on a card where a miss opens the machine. [wide] is
+  /// the one under the rows, which has a line to itself and takes all of it;
+  /// the other shares the line under the chart — see [_under].
   ///
   /// A machine reporting more than fits still says how many rather than
   /// growing taller than its neighbours: the cards are scanned down a column,
   /// and one card a line longer than the rest is what breaks that. Those are
   /// on the page, and reachable from [_switch].
   ///
-  /// Goes as the card becomes the page, by height as well as by fading, so
-  /// what is under it is not a line lower until the last frame.
-  Widget _fold(
-    BuildContext context,
-    int unseen, {
-    required bool below,
-    required double t,
-  }) {
-    return ClipRect(
-      child: Align(
-        alignment: Alignment.topCenter,
-        heightFactor: 1 - t,
-        child: Opacity(
-          opacity: 1 - t,
-          child: Padding(
-            // Under rows it keeps their distance. Folded, the hairline above
-            // has already put one there.
-            padding: EdgeInsets.only(top: below ? ServerCardSizes.rowGap : 0),
-            child: Semantics(
-              button: true,
-              label: expanded ? libL10n.fold : libL10n.more,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(7),
-                onTap: selected == null ? onToggleExpanded : onTap,
-                child: SizedBox(
-                  height: 23,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (unseen > 0)
-                        Text(
-                          '+$unseen ${libL10n.more}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                            fontFeatures: _tabular,
-                          ),
-                        ),
-                      AnimatedRotation(
-                        turns: expanded ? 0.5 : 0,
-                        duration: context.motion(Durations.short4),
-                        child: const Icon(
-                          Icons.expand_more,
-                          size: 17,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
+  /// Two arrows rather than one that turns. Each of the two places this is
+  /// drawn only ever has it in one state, so there is never a turn to see.
+  Widget _fold(int unseen, {required bool wide}) {
+    return Semantics(
+      button: true,
+      label: expanded ? libL10n.fold : libL10n.more,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(7),
+        // While a set is being built up a press means "this one too",
+        // wherever on the card it lands — see [_row].
+        onTap: selected == null ? onToggleExpanded : onTap,
+        child: SizedBox(
+          height: ServerCardSizes.underLine,
+          child: Row(
+            mainAxisSize: wide ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Off whatever is beside it, inside the ink so the two are one
+              // target.
+              if (!wide) const SizedBox(width: 9),
+              if (unseen > 0)
+                Text(
+                  '+$unseen ${libL10n.more}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey,
+                    fontFeatures: _tabular,
                   ),
                 ),
+              Icon(
+                expanded ? Icons.expand_less : Icons.expand_more,
+                size: 17,
+                color: Colors.grey,
               ),
-            ),
+            ],
           ),
         ),
       ),

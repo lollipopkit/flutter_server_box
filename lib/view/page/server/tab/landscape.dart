@@ -67,7 +67,7 @@ extension _Widgets on _ServerPageState {
                   srv: srv,
                   promoted: _promotedOf(id),
                   onPromote: (kind) => _promote(id, kind),
-                  expanded: ServerCardExpanded.all.contains(id),
+                  expanded: ServerCardExpanded.reader(id),
                   onToggleExpanded: () => _toggleExpanded(id),
                   // Never in place, for the reason the request above is never
                   // split: there is no grid here for a card to grow out of.

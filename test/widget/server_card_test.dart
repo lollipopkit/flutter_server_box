@@ -25,6 +25,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
@@ -154,8 +155,10 @@ void main() {
   });
 
   group('a card at rest', () {
-    // The line under the readings: the count and the arrow are one control.
-    final fold = find.byIcon(Icons.expand_more);
+    // The way to the rest of the readings, and the way back: the count and
+    // the arrow are one control, and the arrow says which of the two it is.
+    final unfold = find.byIcon(Icons.expand_more);
+    final fold = find.byIcon(Icons.expand_less);
 
     // What the machine in [pump] reports, to count against.
     ServerCardReadings readingsOf({bool everything = false}) =>
@@ -187,8 +190,62 @@ void main() {
       final unseen = readingsOf().all.length - 1;
       expect(find.text('+$unseen ${libL10n.more}'), findsOneWidget);
 
-      await tester.tap(fold);
+      expect(fold, findsNothing);
+      await tester.tap(unfold);
       expect(pressed, 1);
+    });
+
+    testWidgets('has that control on its last line, after what the reading '
+        'is of', (tester) async {
+      // A line of its own under a rule was a third of a folded card's height
+      // spent on saying there is more. The note starts at the left because it
+      // is sharing the line; unfolded the line is its own and it is a caption
+      // under the middle of the chart again — and it travels there, with the
+      // control closing beside it, rather than being there on the next frame.
+      Future<void> show({required bool expanded}) => pump(
+        tester,
+        // Memory, because its note is never empty: a machine in a test has
+        // no CPU model to put under the CPU's chart.
+        promoted: ServerMetricKind.mem,
+        onPromote: (_) {},
+        expanded: expanded,
+      );
+      final note = find.textContaining(' / ');
+      Rect chart() => tester.getRect(find.byType(MetricChart));
+
+      await show(expanded: false);
+      expect(note, findsOneWidget);
+      expect(find.byType(Divider), findsNothing);
+      final folded = tester.getRect(note);
+      final control = tester.getRect(
+        find.ancestor(of: unfold, matching: find.byType(InkWell)).first,
+      );
+      expect(folded.left, moreOrLessEquals(chart().left, epsilon: 0.5));
+      expect(control.right, moreOrLessEquals(chart().right, epsilon: 0.5));
+      expect(control.left, greaterThanOrEqualTo(folded.right));
+      expect(
+        control.center.dy,
+        moreOrLessEquals(folded.center.dy, epsilon: 0.5),
+      );
+
+      await show(expanded: true);
+      await tester.pump(const Duration(milliseconds: 60));
+      final moving = tester.getRect(note);
+      expect(moving.left, greaterThan(folded.left));
+      // The same line it was on: the height is stated, so the control
+      // arriving or leaving does not move the text up or down.
+      expect(moving.top, moreOrLessEquals(folded.top, epsilon: 0.5));
+
+      await tester.pump(const Duration(milliseconds: 500));
+      final unfolded = tester.getRect(note);
+      expect(
+        unfolded.center.dx,
+        moreOrLessEquals(chart().center.dx, epsilon: 0.5),
+      );
+      expect(unfolded.left, greaterThan(moving.left));
+      expect(unfolded.top, moreOrLessEquals(folded.top, epsilon: 0.5));
+      expect(unfold, findsNothing);
+      expect(fold, findsOneWidget);
     });
 
     testWidgets('unfolded, counts only what still has no row', (tester) async {

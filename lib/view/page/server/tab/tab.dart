@@ -196,6 +196,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _sortVersion.notify();
   }
 
+  /// Builds the grid again when "UI Fold" is switched.
+  ///
+  /// What a card nobody has touched rests at is that setting's answer — see
+  /// [ServerCardExpanded] — and this tab is kept alive behind the settings
+  /// page, so nothing else would tell it: the cards stayed as they were until
+  /// something unrelated happened to build the grid.
+  void _uiFoldListener() => _sortVersion.notify();
+
   /// What the globe guide points at.
   ///
   /// [_listActions] is built from three places — the bar over a single column,
@@ -395,6 +403,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
     Stores.setting.globeEnabled.listenable().removeListener(
       _globeEnabledListener,
     );
+    Stores.setting.collapseUIDefault.listenable().removeListener(
+      _uiFoldListener,
+    );
     _globe.dispose();
     _tag.dispose();
     _tags.dispose();
@@ -419,6 +430,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
       setState(() => _detailShowing = showing);
     });
     Stores.setting.globeEnabled.listenable().addListener(_globeEnabledListener);
+    Stores.setting.collapseUIDefault.listenable().addListener(_uiFoldListener);
     _startAvoidJitterTimer();
     _scheduleGlobeGuide();
   }
@@ -1488,7 +1500,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // render object is told the width directly.
     // Whose rows are unfolded, asked once for the whole grid: the answer is a
     // query, and the card being opened is built again on every frame.
-    final unfolded = ServerCardExpanded.all;
+    final unfolded = ServerCardExpanded.reader;
 
     // Kept between the builder's runs, and thrown away whenever this method is
     // called again — which is whenever anything that decides what a card looks
@@ -1519,7 +1531,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                     fade: hero ? _othersOpacity : null,
                     density: density,
                     pageWidth: cons.maxWidth,
-                    expanded: unfolded.contains(id),
+                    expanded: unfolded(id),
                   ),
                 ),
           },
@@ -1547,7 +1559,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 // crossing. The page asks its own width the same question, so
                 // both arrive at the same answer about the facts column.
                 pageWidth: cons.maxWidth,
-                expanded: unfolded.contains(id),
+                expanded: unfolded(id),
               ),
             );
 

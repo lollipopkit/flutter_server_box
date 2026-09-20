@@ -123,24 +123,48 @@ abstract final class ServerPromoted {
   }
 }
 
-/// Which machines' cards have their rows unfolded, remembered per machine.
+/// Whether a machine's card has its rows unfolded.
+///
+/// What the "UI Fold" setting says, unless somebody has said otherwise about
+/// this machine — see [SettingStore.serverCardExpandedOverride].
 ///
 /// Not the card's own state: the grid is dropped while a machine is open and
 /// mounted again on the way back, so anything a card remembered for itself
 /// would be forgotten by opening it.
 abstract final class ServerCardExpanded {
-  /// Every one of them, in one read.
+  /// What a card nobody has touched rests at.
+  static bool get _byDefault => !Stores.setting.collapseUIDefault.fetch();
+
+  /// The answer for any machine, from two reads.
   ///
   /// For a grid, which asks once for all of its cards rather than once per
   /// card: a read is a query, and the card being opened is built again on
   /// every frame of the movement.
-  static Set<String> get all =>
-      Stores.setting.serverCardExpanded.fetch().toSet();
+  static bool Function(String serverId) get reader {
+    final byDefault = _byDefault;
+    final chosen = Stores.setting.serverCardExpandedOverride.fetch();
+    return (serverId) => chosen[serverId] ?? byDefault;
+  }
 
+  /// Folds [serverId]'s rows, or unfolds them.
+  ///
+  /// A press that puts a card back to what the setting says removes its entry
+  /// rather than recording the same answer: folding a card again after a look
+  /// is not an opinion about it, and an entry would hold it folded against
+  /// the setting being changed later — the one card out of step on a page
+  /// that had just been asked to unfold.
   static void toggle(String serverId) {
-    final ids = List<String>.from(Stores.setting.serverCardExpanded.fetch());
-    if (!ids.remove(serverId)) ids.add(serverId);
-    Stores.setting.serverCardExpanded.put(ids);
+    final byDefault = _byDefault;
+    final chosen = Map<String, bool>.from(
+      Stores.setting.serverCardExpandedOverride.fetch(),
+    );
+    final next = !(chosen[serverId] ?? byDefault);
+    if (next == byDefault) {
+      chosen.remove(serverId);
+    } else {
+      chosen[serverId] = next;
+    }
+    Stores.setting.serverCardExpandedOverride.put(chosen);
   }
 }
 

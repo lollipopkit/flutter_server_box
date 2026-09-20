@@ -949,15 +949,21 @@ class SettingStore extends SqliteStore {
     fromObj: (obj) => Map<String, String>.from(obj as Map),
   );
 
-  /// The servers whose card has its rows unfolded, by [Spi.id].
+  /// Whether a server's card has its rows unfolded, for the servers somebody
+  /// has said so about, by [Spi.id].
   ///
-  /// A card rests at one reading drawn in full; the rest are a press away. The
-  /// ones unfolded are what is listed, so that folded is what a server added
-  /// tomorrow gets without anything being written for it.
+  /// A card with no entry rests at what [collapseUIDefault] says, which is
+  /// what makes that setting a default rather than a starting value: a server
+  /// added tomorrow follows it without anything being written, and so does
+  /// every card nobody has touched when the setting is changed.
   ///
   /// Per server for the reason [serverCardMetric] is: the two machines worth
   /// keeping open on a page of forty are not the same two for everybody.
-  late final serverCardExpanded = listProperty<String>('serverCardExpanded');
+  late final serverCardExpandedOverride = propertyDefault<Map<String, bool>>(
+    'serverCardExpandedOverride',
+    const {},
+    fromObj: (obj) => Map<String, bool>.from(obj as Map),
+  );
 
   /// How much of each server the list shows, by tag.
   ///
