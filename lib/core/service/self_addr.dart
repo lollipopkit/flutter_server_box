@@ -52,10 +52,10 @@ abstract final class SelfAddr {
 
   /// The one address to place a server by, or null when it has none.
   ///
-  /// IPv4 first when there is a choice, so a dual-stack machine is placed the
-  /// same way every time. Otherwise the first one, which makes the answer
-  /// stable across samples rather than dependent on the order the kernel
-  /// listed interfaces.
+  /// IPv4 first when there is a choice, so a dual-stack machine resolves to its
+  /// v4 address consistently. Otherwise the first address the machine reported,
+  /// in the order it reported them — nothing here sorts, so the answer follows
+  /// that order rather than being independent of it.
   static InternetAddress? pick(List<String> reported) {
     final found = publicIn(reported);
     // Through `unwrapV4Mapped`, because `::ffff:a.b.c.d` has `type` IPv6 and

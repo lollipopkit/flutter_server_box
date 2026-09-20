@@ -55,11 +55,13 @@ abstract final class Urls {
 
   /// Where the city-level geo data is downloaded from.
   ///
-  /// Two static files and a manifest, fetched once; every lookup after that is
-  /// local, so this host learns that someone took the data and nothing else.
-  /// That is a property of downloading the whole dataset rather than a promise
-  /// about the operator, which is why there is no setting to point it
-  /// elsewhere: there would be nothing for it to improve.
+  /// A manifest and two archives, fetched once; every individual lookup after
+  /// that is local. The download is itself an ordinary HTTPS request, so it
+  /// exposes whatever any request does — the caller's address, TLS metadata,
+  /// timing — but it never says which address is being looked up, because the
+  /// lookups happen on the device against the downloaded data. That is why
+  /// there is no setting to point it elsewhere: there would be nothing for it
+  /// to improve.
   static const geoData = 'https://ipgeo.lollipopkit.com';
 
   /// The second endpoint, for a network where the first will not answer.
