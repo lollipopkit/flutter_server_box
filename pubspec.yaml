@@ -42,7 +42,7 @@ dependencies:
   fl_chart: ^1.2.0
   freezed_annotation: ^3.0.0
   get_it: ^9.0.5
-  hive_ce: ^2.19.3
+  hive_ce: ^2.20.0
   hive_ce_flutter: ^2.3.1
   intl: ^0.20.2
   json_annotation: ^4.9.0
@@ -54,7 +54,7 @@ dependencies:
   # Direct, though `SqliteStore` lives in fl_lib: `hooks.user_defines` below is
   # only honoured for this package's own dependencies, and the Hive migration
   # opens the database from here too.
-  sqlite3: ^3.5.1
+  sqlite3: ^3.6.0
   # Storage layer over the same encrypted connection: `NativeDatabase.opened`
   # takes the `sqlite3` Database this app already opens and keys itself, so
   # sqlite3mc and the build-hook bundling below are untouched.
@@ -96,11 +96,11 @@ dependencies:
   # hook compiles the crate directly, so there is nothing to depend on.
   flutter_rust_bridge_hooks: 2.13.0
   desktop_drop: ^0.8.4
-  sentry: ^9.29.0
+  sentry: ^9.30.0
   # Runtime for the generated reader in `lib/src/proto`, which is how Android's
   # crash tombstone is decoded. Pure Dart, and its own dependencies —
   # collection, fixnum, meta — are already in this tree.
-  protobuf: ^6.0.0
+  protobuf: ^6.1.0
   fixnum: ^1.1.1
   device_info_plus: ^13.2.0
   aptabase_flutter: ^0.5.0
