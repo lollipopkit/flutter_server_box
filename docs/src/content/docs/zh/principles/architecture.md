@@ -5,7 +5,7 @@ description: Server Box 如何组织界面、状态、存储和平台层
 
 Server Box 采用分层结构，将界面、状态协调、本地数据和外部连接分别处理。这样既方便跨平台实现，也让 SSH、Monitor agent 和本机终端能够共用上层 UI。
 
-本页介绍系统层面的模型：分层结构，以及形当大多数行为的两个决定——一台服务器可以同时暴露两种 transport，状态也可以从任一边到达。模块布局、入口、依赖注入与 Rust 集成请参阅[实现架构](/docs/zh/development/architecture/)。
+本页介绍系统层面的模型：分层结构，以及影响大多数行为的两个决定——一台服务器可以同时暴露两种 transport，状态也可以从任一边到达。模块布局、入口、依赖注入与 Rust 集成请参阅[实现架构](/docs/zh/development/architecture/)。
 
 ## 架构分层
 
@@ -94,8 +94,7 @@ parser 以纯函数形式工作，只返回原始计数；差分和滑动窗口�
 
 ### 数据保护
 
-- **密码 / SSH 密钥**：存储在加密的 SQLite 数据库中；加密密钥本身保存在平台安全存储（Keychain/Keystore）
-- **主机指纹**：安全存储
+- **密码 / SSH 密钥与已信任的主机指纹**：存放在加密的 SQLite 数据库（设置存储中的 `sshKnownHostFingerprints`）中；加密密钥本身保存在平台安全存储（Keychain/Keystore）
 - **会话数据**：不进行持久化
 
 ### 连接安全

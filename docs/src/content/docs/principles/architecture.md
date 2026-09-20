@@ -92,7 +92,6 @@ Every storage migration needs a permanent regression test using bytes written by
 
 ## Security
 
-- **Credentials**: SSH passwords and keys live in the encrypted SQLite database; the database key itself is in platform secure storage (Keychain / Keystore).
-- **Host fingerprints** are kept in secure storage.
+- **Credentials and trusted host fingerprints** live in the encrypted SQLite database (`sshKnownHostFingerprints` on the setting store); the database key itself is in platform secure storage (Keychain / Keystore).
 - **Sessions are not persisted.**
 - **Host key verification** is performed by the App in every case, including through a jump server or a `ProxyCommand`.

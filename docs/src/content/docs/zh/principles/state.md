@@ -46,11 +46,13 @@ await ref.read(serverProvider(serverId).notifier).refresh();
 
 ## 与时间有关的调度
 
-应用里有三种按时间驱动的调度，每种都由 `Spix.transport` 逐服务器解析：
+有三件事由时钟驱动，而它们各自走哪条 transport 并不是同一个答案：
 
-- **状态轮询**由 notifier 持有的 timer 驱动，在 `ref.onDispose` 中取消。
-- **Monitor HTTP 的历史数据**在选择图表时间范围时按需请求；SSH 没有已存历史，应用自己的滚动 buffer 就是全部。
+- **状态轮询**由 notifier 持有的 timer 驱动，在 `ref.onDispose` 中取消；它使用领先的 transport，即 `Spix.transport`。
+- **已存历史**向报告 `ServerCapabilities.storedHistory` 的那条 transport 请求，也就是 agent，而不一定是领先的那条。SSH 没有历史，因此只有 SSH 的服务器只有应用自己的滚动 buffer。
 - **超出当前帧的工作**会被移出帧外：benchmark 在服务器上脱离启动并轮询，文件传输运行在独立 isolate 上——两者都可能比应用停留在前台的时间更长。
+  - 命令——benchmark、服务操作、进程列表——经由 `ensureExec()`，它使用领先的 transport，失败时回退到另一条。
+  - 文件传输自选后端——SSH 上的 SFTP 或 agent 的文件 API——取决于服务器能用什么提供文件，而不是由承载状态的 transport 决定。
 
 ## 状态持久化
 

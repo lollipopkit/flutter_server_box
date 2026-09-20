@@ -46,11 +46,13 @@ await ref.read(serverProvider(serverId).notifier).refresh();
 
 ## Reacting to time
 
-Three schedules drive the app, all of them resolved per server through `Spix.transport`:
+Three things are driven by the clock, and which transport carries each is not one answer:
 
-- **Status polling** is a timer owned by the notifier, cancelled from `ref.onDispose`.
-- **Monitor HTTP history** is asked for on demand when a chart range is chosen; SSH has no stored history, so the app's own rolling buffer is all there is.
+- **Status polling** is a timer owned by the notifier, cancelled from `ref.onDispose`, and it uses the leading transport — `Spix.transport`.
+- **Stored history** is asked of whichever transport reports `ServerCapabilities.storedHistory`, which is the agent and not necessarily the one that leads. SSH has none, so an SSH-only server has only the app's own rolling buffer.
 - **Work that outlives the frame** is moved off it: a benchmark run is started detached on the server and polled, and a file transfer runs on its own isolate, because either can last longer than the app stays in the foreground.
+  - Commands — a benchmark run, a service action, a process list — go through `ensureExec()`, which uses the leading transport and falls back to the other when it fails.
+  - A transfer picks its own backend — SFTP over SSH or the agent's file API — from what the server can serve files with, not from which transport carries status.
 
 ## State persistence
 
