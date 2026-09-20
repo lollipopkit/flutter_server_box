@@ -1006,6 +1006,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 7),
       child: SegmentedTabs<ServerListDensity>(
+        // Closed to the one it is set to until a pointer is over it. This is
+        // changed once in a while and sits in a bar beside things used all
+        // the time: four labelled positions were the widest and the brightest
+        // thing in it, to say what one of them says. The room is still kept
+        // for all four — see above — because it opens where it stands.
+        collapse: true,
         segments: [
           for (final density in ServerListDensity.values)
             SegmentedTab(

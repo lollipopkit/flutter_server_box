@@ -3,6 +3,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -608,6 +609,57 @@ void main() {
     // Back to what the setting says, which is no opinion about this card.
     expect(Stores.setting.serverCardExpandedOverride.fetch(), isEmpty);
     expect(tester.getSize(card).height, moreOrLessEquals(folded, epsilon: 1));
+  });
+
+  testWidgets('how much of each machine is drawn is one word in the bar, and '
+      'four under a pointer', (tester) async {
+    // Four labelled positions were the widest thing in a bar they are the
+    // least used part of. It rests as the one it is set to, drawn as the same
+    // control, and opens where it stands.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+
+    final control = find.byType(SegmentedTabs<ServerListDensity>);
+    final closed = tester.getRect(control);
+    bool shown(ServerListDensity density) {
+      final label = tester.getRect(
+        find.descendant(of: control, matching: find.text(density.label)),
+      );
+      final box = tester.getRect(control);
+      return label.left >= box.left && label.right <= box.right;
+    }
+
+    expect(shown(ServerListDensity.auto), isTrue);
+    expect(shown(ServerListDensity.rows), isFalse);
+    expect(find.text(ServerListDensity.rows.label).hitTestable(), findsNothing);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(closed.center);
+    await settle(tester);
+
+    final open = tester.getRect(control);
+    expect(open.width, greaterThan(closed.width * 2));
+    // What comes after it in the bar has not moved: it opens into the room
+    // the switcher on its other side was given.
+    expect(open.right, closed.right);
+    for (final density in ServerListDensity.values) {
+      expect(shown(density), isTrue, reason: density.name);
+    }
+
+    await tester.tap(find.text(ServerListDensity.rows.label));
+    await settle(tester);
+    expect(
+      tester.widget<ServerCard>(find.byType(ServerCard).first).density,
+      ServerListDensity.rows,
+    );
+
+    await mouse.moveTo(Offset.zero);
+    await settle(tester);
+    expect(tester.getRect(control).width, lessThan(open.width / 2));
+    expect(shown(ServerListDensity.rows), isTrue);
+    expect(shown(ServerListDensity.auto), isFalse);
   });
 
   testWidgets('auto is what the window shows at once, and follows it', (
