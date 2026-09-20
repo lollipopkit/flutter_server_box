@@ -123,6 +123,27 @@ abstract final class ServerPromoted {
   }
 }
 
+/// Which machines' cards have their rows unfolded, remembered per machine.
+///
+/// Not the card's own state: the grid is dropped while a machine is open and
+/// mounted again on the way back, so anything a card remembered for itself
+/// would be forgotten by opening it.
+abstract final class ServerCardExpanded {
+  /// Every one of them, in one read.
+  ///
+  /// For a grid, which asks once for all of its cards rather than once per
+  /// card: a read is a query, and the card being opened is built again on
+  /// every frame of the movement.
+  static Set<String> get all =>
+      Stores.setting.serverCardExpanded.fetch().toSet();
+
+  static void toggle(String serverId) {
+    final ids = List<String>.from(Stores.setting.serverCardExpanded.fetch());
+    if (!ids.remove(serverId)) ids.add(serverId);
+    Stores.setting.serverCardExpanded.put(ids);
+  }
+}
+
 /// What one card shows: the readings it has room for, and how many it has not.
 typedef ServerCardReadings = ({
   /// In the order every card draws them — see [serverCardReadings].

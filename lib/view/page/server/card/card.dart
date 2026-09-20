@@ -200,8 +200,10 @@ class ServerCard extends ConsumerWidget {
     required this.srv,
     required this.promoted,
     required this.onPromote,
+    required this.onToggleExpanded,
     required this.onTap,
     this.onLongPress,
+    this.expanded = false,
     this.openness = 0,
     this.density = ServerListDensity.cards,
     this.selected,
@@ -217,6 +219,22 @@ class ServerCard extends ConsumerWidget {
   final ServerMetricKind? promoted;
 
   final ValueChanged<ServerMetricKind> onPromote;
+
+  /// Whether the rows under the reading drawn in full are showing.
+  ///
+  /// Folded is what a card rests at: one reading and its window, which is the
+  /// thing a machine is being watched by, and a page of cards that short is
+  /// twice as many machines on screen. The rest are a press away on the line
+  /// under it — see [_fold] — and which reading leads is chosen beside its
+  /// name instead of by pressing a row that may not be there. See [_switch].
+  ///
+  /// Only at rest. On the way to the page every reading has a row, and the
+  /// ones the card was not showing grow in.
+  final bool expanded;
+
+  /// The line under the readings was pressed.
+  final VoidCallback onToggleExpanded;
+
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
@@ -454,6 +472,10 @@ class ServerCard extends ConsumerWidget {
                   child: _focus(
                     context,
                     focus,
+                    others: [
+                      for (final m in readings!.all)
+                        if (m.kind != focus.kind) m,
+                    ],
                     theme: theme,
                     stale: stale != null,
                     twoColumns: twoColumns,
@@ -1282,6 +1304,7 @@ class ServerCard extends ConsumerWidget {
   Widget _focus(
     BuildContext context,
     ServerMetric m, {
+    required List<ServerMetric> others,
     required ThemeData theme,
     required bool stale,
     required bool twoColumns,
@@ -1311,6 +1334,10 @@ class ServerCard extends ConsumerWidget {
               m.label,
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
+            // The card's only. On the page every reading has a row, and
+            // pressing one is how a different one is chosen there.
+            if (others.isNotEmpty && t < 1)
+              Opacity(opacity: 1 - t, child: _switch(others, moving: t > 0)),
             const Spacer(),
             if (t < 1)
               Opacity(
@@ -1359,6 +1386,74 @@ class ServerCard extends ConsumerWidget {
     );
 
     return _surface(context, t, child: body, padding: _kFocusPad);
+  }
+
+  /// Beside the name of the reading drawn in full: which one that is.
+  ///
+  /// Pressing a row is the other way, and on a card at rest there are no rows
+  /// — see [expanded]. Here it does not depend on what is unfolded, and it
+  /// reaches the readings the card has no slot for as well.
+  ///
+  /// No taller than the line it is on. That line takes the height of what is
+  /// in it at rest and a stated one from the first frame of the movement, so
+  /// anything taller than the number beside it is a chart that jumps by the
+  /// difference on that frame.
+  Widget _switch(List<ServerMetric> others, {required bool moving}) {
+    return IgnorePointer(
+      // On its way out, so not something to press.
+      ignoring: moving,
+      child: Builder(
+        // The button's own box, which is what the menu hangs off.
+        builder: (context) => Semantics(
+          button: true,
+          label: libL10n.switch_,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(7),
+            // While a set is being built up a press means "this one too",
+            // wherever on the card it lands — see [_row].
+            onTap: selected == null
+                ? () => _pickReading(context, others)
+                : onTap,
+            child: const SizedBox(
+              width: _kLineActionWidth,
+              height: ServerCardSizes.big,
+              child: Icon(Icons.unfold_more, size: 15, color: Colors.grey),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Raises the readings this machine has, to choose the one drawn in full.
+  ///
+  /// Every one but the one already there: choosing that would do nothing, and
+  /// it is named an inch above the menu. What each reads now is beside its
+  /// name, because that is usually the reason for picking it.
+  void _pickReading(BuildContext context, List<ServerMetric> others) {
+    final box = context.findRenderObject();
+    // Under the button in every window, a phone's included: what it hangs off
+    // is a control the size of a finger, not a card the height of the screen,
+    // so there is always somewhere to put it. A sheet only when there is
+    // nothing to measure.
+    final at = box is RenderBox && box.hasSize
+        ? box.localToGlobal(Offset(0, box.size.height))
+        : null;
+    showContextMenu(
+      context,
+      [
+        for (final m in others)
+          ContextMenuAction(
+            icon: m.icon,
+            text: m.label,
+            note: m.value,
+            onTap: () => onPromote(m.kind),
+          ),
+      ],
+      title: srv.spi.name,
+      at: at,
+      sheet: at == null,
+    );
   }
 
   /// The window of this reading.
@@ -1493,18 +1588,26 @@ class ServerCard extends ConsumerWidget {
     required ColorScheme scheme,
   }) {
     final t = openness;
-    // On the card, the five slots minus the one drawn above. On the page,
-    // every reading the machine has — including the promoted one, which is
-    // where a different one is chosen from. The ones the card had no room for
-    // grow in as it opens rather than appearing when the page takes over.
-    final onCard = {
-      for (final m in readings.shown)
-        if (m.kind != focus?.kind) m.kind,
-    };
-    final rows = t > 0
-        ? readings.all
-        : readings.shown.where((m) => m.kind != focus?.kind).toList();
-    if (rows.isEmpty && readings.more == 0) return const [];
+    // On the card, the five slots minus the one drawn above — or none of
+    // them, folded. On the page, every reading the machine has, including the
+    // promoted one, which is where a different one is chosen from. The ones
+    // the card was not showing grow in as it opens rather than appearing when
+    // the page takes over, and folded that is all of them.
+    final resting = expanded
+        ? [
+            for (final m in readings.shown)
+              if (m.kind != focus?.kind) m,
+          ]
+        : const <ServerMetric>[];
+    final onCard = {for (final m in resting) m.kind};
+    final rows = t > 0 ? readings.all : resting;
+    // What the machine reports and the card is not drawing. Counted from what
+    // is drawn rather than taken from `readings.more`, which is what did not
+    // fit in the five slots: a reading promoted from outside them is drawn
+    // and was still being counted.
+    final unseen =
+        readings.all.length - (focus == null ? 0 : 1) - resting.length;
+    if (rows.isEmpty && unseen == 0) return const [];
 
     return [
       SizedBox(height: lerpDouble(ServerCardSizes.gap, 7, t)),
@@ -1536,24 +1639,78 @@ class ServerCard extends ConsumerWidget {
         theme: theme,
         scheme: scheme,
       ),
-      // A machine reporting more than fits says how many rather than growing
-      // taller than its neighbours: the cards are scanned down a column, and
-      // one card a line longer than the rest is what breaks that.
-      if (readings.more > 0 && t < 1)
-        Opacity(
+      if (t < 1) _fold(context, unseen, below: resting.isNotEmpty, t: t),
+    ];
+  }
+
+  /// The line under the readings: how many the card is not showing, and the
+  /// way to the rest of them and back.
+  ///
+  /// The count was a caption when the rows were always there. It is the
+  /// control now, across the width of the card — the arrow alone is a target
+  /// the size of a letter, on a card where a miss opens the machine.
+  ///
+  /// A machine reporting more than fits still says how many rather than
+  /// growing taller than its neighbours: the cards are scanned down a column,
+  /// and one card a line longer than the rest is what breaks that. Those are
+  /// on the page, and reachable from [_switch].
+  ///
+  /// Goes as the card becomes the page, by height as well as by fading, so
+  /// what is under it is not a line lower until the last frame.
+  Widget _fold(
+    BuildContext context,
+    int unseen, {
+    required bool below,
+    required double t,
+  }) {
+    return ClipRect(
+      child: Align(
+        alignment: Alignment.topCenter,
+        heightFactor: 1 - t,
+        child: Opacity(
           opacity: 1 - t,
           child: Padding(
-            padding: const EdgeInsets.only(top: ServerCardSizes.rowGap),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                '+${readings.more} ${libL10n.more}',
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
+            // Under rows it keeps their distance. Folded, the hairline above
+            // has already put one there.
+            padding: EdgeInsets.only(top: below ? ServerCardSizes.rowGap : 0),
+            child: Semantics(
+              button: true,
+              label: expanded ? libL10n.fold : libL10n.more,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(7),
+                onTap: selected == null ? onToggleExpanded : onTap,
+                child: SizedBox(
+                  height: 23,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (unseen > 0)
+                        Text(
+                          '+$unseen ${libL10n.more}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontFeatures: _tabular,
+                          ),
+                        ),
+                      AnimatedRotation(
+                        turns: expanded ? 0.5 : 0,
+                        duration: context.motion(Durations.short4),
+                        child: const Icon(
+                          Icons.expand_more,
+                          size: 17,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         ),
-    ];
+      ),
+    );
   }
 
   /// Builds [rows] with transition-aware gaps around rows not shown on cards.

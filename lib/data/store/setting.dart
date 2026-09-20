@@ -949,6 +949,16 @@ class SettingStore extends SqliteStore {
     fromObj: (obj) => Map<String, String>.from(obj as Map),
   );
 
+  /// The servers whose card has its rows unfolded, by [Spi.id].
+  ///
+  /// A card rests at one reading drawn in full; the rest are a press away. The
+  /// ones unfolded are what is listed, so that folded is what a server added
+  /// tomorrow gets without anything being written for it.
+  ///
+  /// Per server for the reason [serverCardMetric] is: the two machines worth
+  /// keeping open on a page of forty are not the same two for everybody.
+  late final serverCardExpanded = listProperty<String>('serverCardExpanded');
+
   /// How much of each server the list shows, by tag.
   ///
   /// Per tag because a tag is a set of machines: `#prod` with forty in it and

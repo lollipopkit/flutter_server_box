@@ -133,6 +133,7 @@ void main() {
                 srv: srv,
                 promoted: null,
                 onPromote: (_) {},
+                onToggleExpanded: () {},
                 onTap: () {},
                 density: density,
               ),

@@ -270,6 +270,12 @@ extension _Utils on _ServerPageState {
     if (ServerPromoted.put(id, kind)) setState(() {});
   }
 
+  /// Folds the rows of [id]'s card, or unfolds them.
+  void _toggleExpanded(String id) {
+    ServerCardExpanded.toggle(id);
+    setState(() {});
+  }
+
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
     final x = MediaQuery.sizeOf(context).height * 0.03;

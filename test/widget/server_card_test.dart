@@ -25,6 +25,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 
 import '../helpers/spi_fixture.dart';
@@ -61,7 +62,10 @@ void main() {
 
   /// [everything] adds a disk and a swap to the memory: the disk is the third
   /// reading a line's bar holds, and the swap is one it does not.
-  ServerStatus sampled({bool everything = false}) {
+  ///
+  /// [sensor] adds a temperature, which takes the one slot that varies — so
+  /// with [everything] the swap has no slot on the card at all.
+  ServerStatus sampled({bool everything = false, bool sensor = false}) {
     final ss = ServerStatus(
       cpu: Cpus(),
       // 1 GiB, half of it gone.
@@ -82,7 +86,7 @@ void main() {
       swap: everything
           ? const Swap(total: 1048576, free: 786432, cached: 0)
           : const Swap(total: 0, free: 0, cached: 0),
-      temps: Temperatures(),
+      temps: Temperatures()..setAll({if (sensor) 'coretemp': 41.0}),
       system: SystemType.linux,
       diskIO: DiskIO(),
     );
@@ -99,7 +103,12 @@ void main() {
     ServerListDensity density = ServerListDensity.cards,
     double width = 600,
     bool everything = false,
+    bool sensor = false,
     ServerConn conn = ServerConn.finished,
+    // Unfolded unless a test is about the fold: what most of these are about
+    // is the rows, and a card rests without any.
+    bool expanded = true,
+    VoidCallback? onToggleExpanded,
   }) async {
     tester.view.physicalSize = Size(width, 900);
     tester.view.devicePixelRatio = 1;
@@ -117,11 +126,13 @@ void main() {
             body: ServerCard(
               srv: ServerState(
                 spi: spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
-                status: sampled(everything: everything),
+                status: sampled(everything: everything, sensor: sensor),
                 conn: conn,
               ),
               promoted: promoted,
               onPromote: onPromote,
+              expanded: expanded,
+              onToggleExpanded: onToggleExpanded ?? () {},
               onTap: () {},
               density: density,
             ),
@@ -140,6 +151,141 @@ void main() {
     // CPU leads, so it is the headline — and the row list under it is the rest.
     expect(find.text('CPU'), findsOneWidget);
     expect(find.text(libL10n.memory), findsOneWidget);
+  });
+
+  group('a card at rest', () {
+    // The line under the readings: the count and the arrow are one control.
+    final fold = find.byIcon(Icons.expand_more);
+
+    // What the machine in [pump] reports, to count against.
+    ServerCardReadings readingsOf({bool everything = false}) =>
+        serverCardReadings(
+          ServerState(
+            spi: spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'),
+            // A sensor whenever there is a swap, so that one of the two is
+            // left without a slot.
+            status: sampled(everything: everything, sensor: everything),
+            conn: ServerConn.finished,
+          ),
+        );
+
+    testWidgets('is one reading, and says how many it is not showing', (
+      tester,
+    ) async {
+      var pressed = 0;
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        expanded: false,
+        onToggleExpanded: () => pressed++,
+      );
+
+      expect(find.text('CPU'), findsOneWidget);
+      expect(find.byType(MetricRow), findsNothing);
+      // Every reading but the one drawn in full.
+      final unseen = readingsOf().all.length - 1;
+      expect(find.text('+$unseen ${libL10n.more}'), findsOneWidget);
+
+      await tester.tap(fold);
+      expect(pressed, 1);
+    });
+
+    testWidgets('unfolded, counts only what still has no row', (tester) async {
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        everything: true,
+        sensor: true,
+      );
+
+      final readings = readingsOf(everything: true);
+      expect(readings.more, 1, reason: 'the swap, which the sensor displaced');
+      expect(
+        find.byType(MetricRow),
+        findsNWidgets(readings.shown.length - 1),
+      );
+      expect(fold, findsOneWidget);
+      expect(find.text('+1 ${libL10n.more}'), findsOneWidget);
+    });
+
+    testWidgets('a reading promoted from outside the slots is not counted', (
+      tester,
+    ) async {
+      // `more` is what did not fit in the five slots, and was what the card
+      // said was unseen. A reading from outside them that is drawn in full is
+      // not in a slot and is on screen, so the count was one too many — which
+      // the control beside the name makes an ordinary thing to do.
+      final readings = readingsOf(everything: true);
+      final outside = readings.all.firstWhereOrNull(
+        (m) => !readings.shown.contains(m),
+      );
+      expect(outside, isNotNull, reason: 'a machine with a sixth reading');
+
+      await pump(
+        tester,
+        promoted: outside!.kind,
+        onPromote: (_) {},
+        everything: true,
+        sensor: true,
+      );
+      // All five are on screen: the one drawn in full, and a row for each of
+      // the four slots. So there is nothing to count, where `more` says one.
+      expect(find.byType(MetricRow), findsNWidgets(readings.shown.length));
+      expect(readings.more, 1);
+      expect(find.textContaining(libL10n.more), findsNothing);
+      expect(fold, findsOneWidget);
+    });
+
+    testWidgets('chooses what is drawn in full beside its name', (
+      tester,
+    ) async {
+      final asked = <ServerMetricKind>[];
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: asked.add,
+        expanded: false,
+      );
+      // Folded, so the one place a name other than the CPU's can be is the
+      // menu.
+      expect(find.text(libL10n.memory), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.unfold_more));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Every reading but the one already there, each with what it reads now.
+      final others = readingsOf().all.where(
+        (m) => m.kind != ServerMetricKind.cpu,
+      );
+      for (final m in others) {
+        expect(find.text(m.label), findsOneWidget);
+      }
+      expect(find.text('CPU'), findsOneWidget);
+
+      await tester.tap(find.text(libL10n.memory));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(asked, [ServerMetricKind.mem]);
+    });
+
+    testWidgets('and the control is no taller than the line it is on', (
+      tester,
+    ) async {
+      // That line takes the height of what is in it at rest and a stated one
+      // from the first frame of opening, so anything taller than the number
+      // beside it is a chart that jumps on that frame.
+      await pump(tester, promoted: null, onPromote: (_) {});
+      final button = tester.getSize(
+        find.ancestor(
+          of: find.byIcon(Icons.unfold_more),
+          matching: find.byType(InkWell),
+        ).first,
+      );
+      expect(button.height, lessThanOrEqualTo(ServerCardSizes.big));
+    });
   });
 
   group('the readings coming in', () {

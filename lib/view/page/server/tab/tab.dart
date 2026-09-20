@@ -1486,6 +1486,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // every card on screen, chart included, was rebuilt sixty times a second
     // to be drawn fainter. The grid's own geometry is not rebuilt either; the
     // render object is told the width directly.
+    // Whose rows are unfolded, asked once for the whole grid: the answer is a
+    // query, and the card being opened is built again on every frame.
+    final unfolded = ServerCardExpanded.all;
+
     // Kept between the builder's runs, and thrown away whenever this method is
     // called again — which is whenever anything that decides what a card looks
     // like has changed.
@@ -1515,6 +1519,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                     fade: hero ? _othersOpacity : null,
                     density: density,
                     pageWidth: cons.maxWidth,
+                    expanded: unfolded.contains(id),
                   ),
                 ),
           },
@@ -1542,6 +1547,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
                 // crossing. The page asks its own width the same question, so
                 // both arrive at the same answer about the facts column.
                 pageWidth: cons.maxWidth,
+                expanded: unfolded.contains(id),
               ),
             );
 
@@ -2027,6 +2033,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     Animation<double>? fade,
     ServerListDensity density = ServerListDensity.cards,
     double pageWidth = 0,
+    bool expanded = false,
   }) {
     final card = Builder(
       // A context from inside the built tree, so the tap can ask whether a
@@ -2039,6 +2046,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
           srv: srv,
           promoted: _promotedOf(srv.spi.id),
           onPromote: (kind) => _promote(srv.spi.id, kind),
+          expanded: expanded,
+          onToggleExpanded: () => _toggleExpanded(srv.spi.id),
           // While a set is being built up, a tap is what adds to it: there is
           // nothing else a tap could mean with boxes beside every name, and
           // having to hit the box itself is a 19pt target on a 40pt row.

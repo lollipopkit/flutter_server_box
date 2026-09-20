@@ -72,7 +72,11 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  void addServers() {
+  /// [expanded] unfolds both cards' rows, which is not what a card rests at
+  /// but is what most of this file measures: the rows a card shows are the
+  /// ones that can be compared between the card and the page.
+  void addServers({bool expanded = true}) {
+    if (expanded) Stores.setting.serverCardExpanded.put(['srv-0', 'srv-1']);
     for (final (i, name) in ['web', 'db'].indexed) {
       Stores.server.put(
         spiFixture(
@@ -429,8 +433,9 @@ void main() {
   Future<void> restsAsItMoves(
     WidgetTester tester, {
     required bool sensor,
+    bool expanded = true,
   }) async {
-    addServers();
+    addServers(expanded: expanded);
     await pump(tester, size: const Size(1200, 900));
     await answer(tester, everything: true, sensor: sensor);
 
@@ -445,7 +450,13 @@ void main() {
     // at both ends. With a sensor the swap between them has no slot on the
     // card; without one it has, and used to be drawn after the disk there and
     // before it on the page.
-    final rows = [libL10n.memory, if (!sensor) 'Swap', libL10n.disk];
+    //
+    // Folded there are none, and what is compared is the card and its chart:
+    // every row grows in from nothing, and the line under them goes the same
+    // way, so neither may be a height the card has at 0 and not just past it.
+    final rows = expanded
+        ? [libL10n.memory, if (!sensor) 'Swap', libL10n.disk]
+        : const <String>[];
     Map<String, Rect> geometry() => {
       'card': tester.getRect(card),
       'chart': tester.getRect(inCard(find.byType(MetricChart))),
@@ -542,6 +553,53 @@ void main() {
     'and a row the card draws is where the page draws it',
     (tester) => restsAsItMoves(tester, sensor: false),
   );
+
+  testWidgets(
+    'nor with its rows folded, which is what a card rests at',
+    (tester) => restsAsItMoves(tester, sensor: true, expanded: false),
+  );
+
+  testWidgets('a card keeps its rows folded or not through being opened', (
+    tester,
+  ) async {
+    // Not the card's own state: the grid is dropped while a machine is open
+    // and mounted again for the way back, so a card that remembered this for
+    // itself would come back folded from every visit.
+    addServers(expanded: false);
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+
+    final card = find.byWidgetPredicate(
+      (w) => w is ServerCard && w.srv.spi.id == 'srv-0',
+    );
+    Finder inCard(Finder f) => find.descendant(of: card, matching: f);
+
+    expect(inCard(find.byType(MetricRow)), findsNothing);
+    final folded = tester.getSize(card).height;
+
+    await tester.tap(inCard(find.byIcon(Icons.expand_more)));
+    await settle(tester);
+    expect(inCard(find.byType(MetricRow)), findsWidgets);
+    expect(Stores.setting.serverCardExpanded.fetch(), ['srv-0']);
+    final unfolded = tester.getSize(card).height;
+    expect(unfolded, greaterThan(folded));
+
+    // The press was the line's, not the card's.
+    expect(openId(tester), isNull);
+
+    await tester.tap(find.text('web'));
+    await settle(tester);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+    await settle(tester);
+    expect(inCard(find.byType(MetricRow)), findsWidgets);
+    expect(tester.getSize(card).height, moreOrLessEquals(unfolded, epsilon: 1));
+
+    await tester.tap(inCard(find.byIcon(Icons.expand_more)));
+    await settle(tester);
+    expect(inCard(find.byType(MetricRow)), findsNothing);
+    expect(Stores.setting.serverCardExpanded.fetch(), isEmpty);
+    expect(tester.getSize(card).height, moreOrLessEquals(folded, epsilon: 1));
+  });
 
   testWidgets('stepping to the next machine comes in from the right', (
     tester,
