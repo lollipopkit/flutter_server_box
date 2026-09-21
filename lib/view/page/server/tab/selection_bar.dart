@@ -68,8 +68,19 @@ class ServerSelectionBar extends StatelessWidget
             ),
           ),
           const SizedBox(width: 7),
-          Text('/ $total', style: UIs.text11Grey),
-          const Spacer(),
+          // The one part that gives way on a narrow bar. The buttons after it
+          // are fixed-size icons and all of them are needed; the total is the
+          // least of what the bar says, and at 320pt with large text it was
+          // what pushed them past the edge.
+          Expanded(
+            child: Text(
+              '/ $total',
+              style: UIs.text11Grey,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           Btn.icon(
             text: l10n.connect,
             icon: const Icon(Icons.link, size: 18),
