@@ -214,11 +214,15 @@ void main() {
     // export is the one the user put somewhere.
     expect(rescueTemps().difference(tempsBefore), isEmpty);
     // Nor beside `store.db`, for the same reason: this is the whole database,
-    // in the clear on this path.
+    // in the clear on this path. Compared as URIs, because `picker.dir` is
+    // built by joining onto `tmp.path` with a `/` — on Windows that leaves a
+    // forward slash where `listSync` answers with a backslash, and two strings
+    // naming one directory are not equal.
+    final chosen = picker.dir.absolute.uri;
     final strays = tmp
         .listSync(recursive: true)
         .whereType<File>()
-        .where((f) => f.parent.path != picker.dir.path)
+        .where((f) => f.parent.absolute.uri != chosen)
         .where(
           (f) => f.path
               .split(Platform.pathSeparator)
