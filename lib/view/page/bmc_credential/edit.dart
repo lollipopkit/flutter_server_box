@@ -72,6 +72,7 @@ class _BmcCredentialEditPageState extends ConsumerState<BmcCredentialEditPage> {
         actions: [
           if (existing != null)
             IconButton(
+              tooltip: libL10n.delete,
               onPressed: () => _onDelete(existing, shared),
               icon: const Icon(Icons.delete),
             ),

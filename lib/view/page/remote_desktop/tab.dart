@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
@@ -179,9 +180,20 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     };
     return ListTile(
       selected: active,
-      leading: Icon(Icons.circle, size: 10, color: color),
+      leading: Semantics(
+        label: _connectionStateLabel(session.connectionState),
+        excludeSemantics: true,
+        child: Tooltip(
+          message: _connectionStateLabel(session.connectionState),
+          excludeFromSemantics: true,
+          child: Icon(Icons.circle, size: 10, color: color),
+        ),
+      ),
       title: Text(session.profile.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(session.profile.protocol.name.toUpperCase()),
+      subtitle: Text(
+        '${session.profile.protocol.name.toUpperCase()} · '
+        '${_connectionStateLabel(session.connectionState)}',
+      ),
       trailing: IconButton(
         tooltip: libL10n.close,
         icon: const Icon(Icons.close, size: 18),
@@ -195,6 +207,13 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     );
   }
 
+  String _connectionStateLabel(ffi.RemoteDesktopConnectionState state) => switch (state) {
+    ffi.RemoteDesktopConnectionState.connected => libL10n.ready,
+    ffi.RemoteDesktopConnectionState.connecting => context.l10n.pveLoadingConnect,
+    ffi.RemoteDesktopConnectionState.reconnecting => libL10n.reconnecting,
+    ffi.RemoteDesktopConnectionState.disconnected => libL10n.disconnected,
+  };
+
   Future<void> _showSessions(RemoteDesktopSessionsState state) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -206,9 +225,19 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
             for (final session in state.ordered)
               ListTile(
                 selected: session.id == state.activeId,
-                leading: const Icon(Icons.desktop_windows_outlined),
+                leading: Semantics(
+                  label: _connectionStateLabel(session.connectionState),
+                  excludeSemantics: true,
+                  child: Tooltip(
+                    message: _connectionStateLabel(session.connectionState),
+                    child: const Icon(Icons.desktop_windows_outlined),
+                  ),
+                ),
                 title: Text(session.profile.name),
-                subtitle: Text(session.profile.protocol.name.toUpperCase()),
+                subtitle: Text(
+                  '${session.profile.protocol.name.toUpperCase()} · '
+                  '${_connectionStateLabel(session.connectionState)}',
+                ),
                 trailing: IconButton(
                   tooltip: libL10n.close,
                   icon: const Icon(Icons.close),

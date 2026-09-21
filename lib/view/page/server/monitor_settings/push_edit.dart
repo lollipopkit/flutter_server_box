@@ -327,6 +327,7 @@ extension on _MonitorPushEditPageState {
                   ),
                 ),
                 IconButton(
+                  tooltip: libL10n.delete,
                   icon: const Icon(Icons.delete, size: 19),
                   onPressed: () => setState(() => headers.removeAt(idx)),
                 ),
