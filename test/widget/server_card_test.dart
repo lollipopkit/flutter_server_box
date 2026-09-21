@@ -187,9 +187,17 @@ void main() {
 
   group('a card at rest', () {
     // The way to the rest of the readings, and the way back: the count and
-    // the arrow are one control, and the arrow says which of the two it is.
-    final unfold = find.byIcon(Icons.expand_more);
-    final fold = find.byIcon(Icons.expand_less);
+    // the arrow are one control, and which of the two it is, is what it says
+    // it does. Found by that rather than by its arrow or its count, because
+    // the line it shares folded keeps room for it with a copy of its face
+    // that is not drawn — see `ServerCard._under`.
+    Finder control(String label) => find.byWidgetPredicate(
+      (w) => w is Semantics && w.properties.label == label,
+    );
+    final unfold = control(libL10n.more);
+    final fold = control(libL10n.fold);
+    Finder said(Finder control, String text) =>
+        find.descendant(of: control, matching: find.text(text));
 
     // What the machine in [pump] reports, to count against.
     ServerCardReadings readingsOf({bool everything = false}) =>
@@ -219,7 +227,7 @@ void main() {
       expect(find.byType(MetricRow), findsNothing);
       // Every reading but the one drawn in full.
       final unseen = readingsOf().all.length - 1;
-      expect(find.text('+$unseen ${libL10n.more}'), findsOneWidget);
+      expect(said(unfold, '+$unseen ${libL10n.more}'), findsOneWidget);
 
       expect(fold, findsNothing);
       await tester.tap(unfold);
@@ -248,14 +256,14 @@ void main() {
       expect(note, findsOneWidget);
       expect(find.byType(Divider), findsNothing);
       final folded = tester.getRect(note);
-      final control = tester.getRect(
-        find.ancestor(of: unfold, matching: find.byType(InkWell)).first,
+      final pressed = tester.getRect(
+        find.descendant(of: unfold, matching: find.byType(InkWell)),
       );
       expect(folded.left, moreOrLessEquals(chart().left, epsilon: 0.5));
-      expect(control.right, moreOrLessEquals(chart().right, epsilon: 0.5));
-      expect(control.left, greaterThanOrEqualTo(folded.right));
+      expect(pressed.right, moreOrLessEquals(chart().right, epsilon: 0.5));
+      expect(pressed.left, greaterThanOrEqualTo(folded.right));
       expect(
-        control.center.dy,
+        pressed.center.dy,
         moreOrLessEquals(folded.center.dy, epsilon: 0.5),
       );
 
@@ -279,6 +287,95 @@ void main() {
       expect(fold, findsOneWidget);
     });
 
+    testWidgets('and that control travels to the line under the rows, as '
+        'one control', (tester) async {
+      // It closed where it was while another opened under the rows — which
+      // the card, growing by uncovering what was already laid out at its full
+      // height, did not show until it had finished. So the thing that had
+      // just been pressed went away under the finger, with the ink of the
+      // press cut off in it.
+      Future<void> show({required bool expanded}) => pump(
+        tester,
+        promoted: ServerMetricKind.mem,
+        onPromote: (_) {},
+        everything: true,
+        expanded: expanded,
+      );
+      final pressed = find.descendant(
+        of: find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              (w.properties.label == libL10n.more ||
+                  w.properties.label == libL10n.fold),
+        ),
+        matching: find.byType(InkWell),
+      );
+      Rect control() => tester.getRect(pressed);
+      double under() =>
+          tester.getRect(find.byType(ServerCard)).bottom - control().bottom;
+
+      await show(expanded: false);
+      final ink = tester.element(pressed);
+      final folded = control();
+      final kept = under();
+
+      // [pressedIn] is the control as it was when it was pressed, and
+      // [frames] how many of these it is still on its way for.
+      Future<List<double>> travel(Rect pressedIn, {required int frames}) async {
+        final tops = <double>[];
+        // The box the press landed in. Ink is placed from its top left and
+        // heads for its middle, so one that is made wider or narrower by the
+        // press — as wide as the line, or by what it counts changing — takes
+        // the ripple out from under the finger and across the card. It was:
+        // from the right of the line to the left of it, then to the middle on
+        // the way down.
+        for (var i = 0; i < 30; i++) {
+          await tester.pump(const Duration(milliseconds: 16));
+          tops.add(control().top);
+          if (i < frames) {
+            expect(control().size, pressedIn.size, reason: '$i');
+            expect(control().right, pressedIn.right, reason: '$i');
+          }
+          // Held to the bottom of the card the whole way. That is what
+          // travelling with it is, and what not being behind its clip is.
+          // To within a point: the card is a frame behind the first change
+          // in what it holds, which is that frame's share of the movement.
+          expect(under(), moreOrLessEquals(kept, epsilon: 1), reason: '$i');
+        }
+        return tops;
+      }
+
+      await show(expanded: true);
+      final down = await travel(folded, frames: 22);
+      expect(tester.element(pressed), same(ink));
+      expect(down.last, greaterThan(folded.top + 50));
+      expect(
+        down.where((top) => top > folded.top + 5 && top < down.last - 5),
+        isNotEmpty,
+        reason: 'it was in neither place on the way',
+      );
+      for (var i = 1; i < down.length; i++) {
+        expect(down[i], greaterThanOrEqualTo(down[i - 1] - 0.01));
+      }
+      expect(
+        control().right,
+        moreOrLessEquals(folded.right, epsilon: 0.5),
+      );
+
+      // And back, with the rows it is over still there to be folded away
+      // rather than gone on the frame it set off.
+      final unfolded = control();
+      await show(expanded: false);
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(MetricRow), findsWidgets);
+      final up = await travel(unfolded, frames: 15);
+      expect(tester.element(pressed), same(ink));
+      expect(find.byType(MetricRow), findsNothing);
+      expect(up.last, moreOrLessEquals(folded.top, epsilon: 0.5));
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('unfolded, counts only what still has no row', (tester) async {
       await pump(
         tester,
@@ -295,7 +392,7 @@ void main() {
         findsNWidgets(readings.shown.length - 1),
       );
       expect(fold, findsOneWidget);
-      expect(find.text('+1 ${libL10n.more}'), findsOneWidget);
+      expect(said(fold, '+1 ${libL10n.more}'), findsOneWidget);
     });
 
     testWidgets('a reading promoted from outside the slots is not counted', (
@@ -659,7 +756,12 @@ void main() {
           expanded: expanded,
           width: 338,
         );
-        await tester.pump(const Duration(milliseconds: 600));
+        // Frame by frame, as the rows unfold: the card follows a height that
+        // changes on every frame, and one that went from folded to unfolded
+        // between two frames is a change it would animate on its own after.
+        for (var i = 0; i < 30; i++) {
+          await tester.pump(const Duration(milliseconds: 20));
+        }
         return tester.getSize(find.byType(ServerCard)).height;
       }
 

@@ -568,6 +568,18 @@ void main() {
     (tester) => restsAsItMoves(tester, sensor: true, expanded: false),
   );
 
+  /// The control that unfolds a card's rows, or folds them: [label] is which.
+  ///
+  /// By what it says it does rather than by its arrow. It is one arrow that
+  /// turns, and folded there are two of it in the tree: the line the control
+  /// shares keeps room for it with a copy of its face that is not drawn.
+  Finder foldControl(String id, String label) => find.descendant(
+    of: find.byWidgetPredicate((w) => w is ServerCard && w.srv.spi.id == id),
+    matching: find.byWidgetPredicate(
+      (w) => w is Semantics && w.properties.label == label,
+    ),
+  );
+
   testWidgets('a card keeps its rows folded or not through being opened', (
     tester,
   ) async {
@@ -586,7 +598,7 @@ void main() {
     expect(inCard(find.byType(MetricRow)), findsNothing);
     final folded = tester.getSize(card).height;
 
-    await tester.tap(inCard(find.byIcon(Icons.expand_more)));
+    await tester.tap(foldControl('srv-0', libL10n.more));
     await settle(tester);
     expect(inCard(find.byType(MetricRow)), findsWidgets);
     expect(Stores.setting.serverCardExpandedOverride.fetch(), {'srv-0': true});
@@ -603,7 +615,7 @@ void main() {
     expect(inCard(find.byType(MetricRow)), findsWidgets);
     expect(tester.getSize(card).height, moreOrLessEquals(unfolded, epsilon: 1));
 
-    await tester.tap(inCard(find.byIcon(Icons.expand_less)));
+    await tester.tap(foldControl('srv-0', libL10n.fold));
     await settle(tester);
     expect(inCard(find.byType(MetricRow)), findsNothing);
     // Back to what the setting says, which is no opinion about this card.
@@ -751,20 +763,13 @@ void main() {
       ),
       matching: find.byType(MetricRow),
     );
-    Finder controlOf(String id, IconData icon) => find.descendant(
-      of: find.byWidgetPredicate(
-        (w) => w is ServerCard && w.srv.spi.id == id,
-      ),
-      matching: find.byIcon(icon),
-    );
-
     // On, which is what an install starts with: folded.
     expect(Stores.setting.collapseUIDefault.fetch(), isTrue);
     expect(rowsOf('srv-0'), findsNothing);
     expect(rowsOf('srv-1'), findsNothing);
 
     // One of them is unfolded by hand, and the setting is switched after.
-    await tester.tap(controlOf('srv-0', Icons.expand_more));
+    await tester.tap(foldControl('srv-0', libL10n.more));
     await settle(tester);
     Stores.setting.collapseUIDefault.put(false);
     await settle(tester);
@@ -775,7 +780,7 @@ void main() {
     expect(Stores.setting.serverCardExpandedOverride.fetch(), {'srv-0': true});
 
     // Folding one by hand is the opinion now, and the other still follows.
-    await tester.tap(controlOf('srv-1', Icons.expand_less));
+    await tester.tap(foldControl('srv-1', libL10n.fold));
     await settle(tester);
     expect(rowsOf('srv-1'), findsNothing);
     expect(Stores.setting.serverCardExpandedOverride.fetch(), {
@@ -785,7 +790,7 @@ void main() {
 
     // Unfolded again, it is back to what the setting says: no entry, so it
     // is not held unfolded when the setting is switched back.
-    await tester.tap(controlOf('srv-1', Icons.expand_more));
+    await tester.tap(foldControl('srv-1', libL10n.more));
     await settle(tester);
     expect(Stores.setting.serverCardExpandedOverride.fetch(), {'srv-0': true});
 

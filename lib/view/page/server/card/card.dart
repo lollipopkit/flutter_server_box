@@ -137,6 +137,17 @@ const _kArrive = Duration(milliseconds: 377);
 /// filled rather than appeared.
 const _kArriveStep = Duration(milliseconds: 20);
 
+/// How a card's rows unfold, over [_kArrive].
+///
+/// Slow to start, which is not only how it looks. The [AnimatedSize] around
+/// the card is a frame behind the first change in its child's height whatever
+/// its duration is, and draws the old height for that frame — so the bottom
+/// of the card is cut off by however much the rows grew in it. On the curve
+/// the card's own height eases along, which starts fast, that is over ten
+/// points at 60 Hz: all of the inset under the control and some of the
+/// control. On this one it is under a point.
+const _kFoldCurve = Curves.easeInOutCubic;
+
 /// A line's share of the same bar: the least it is drawn at, the width of one
 /// reading's name and number after it, and the gap before each.
 ///
@@ -353,26 +364,29 @@ class ServerCard extends ConsumerWidget {
         // — a server connecting, a reading promoted, a row arriving — and each
         // of them used to move every card below it in the column between one
         // frame and the next.
-        child: AnimatedSize(
-          // Off while the card is growing into the page: its height is
-          // already being animated, by the lerps inside it, and a second
-          // animation easing towards a target that moves every frame lags
-          // behind the width — which is the card's own height arriving after
-          // everything else driven by the same movement.
-          // Not zero: `RenderAnimatedSize` completes a zero-length animation
-          // inside its own `performLayout`, which is a render object dirtying
-          // itself mid-layout.
-          duration: openness > 0
-              ? const Duration(milliseconds: 1)
-              : context.motion(_kArrive),
-          curve: Curves.fastEaseInToSlowEaseOut,
-          alignment: Alignment.topCenter,
-          // Above everything that changes shape, so the clock the readings
-          // come in on is the card's and not whichever shape drew them last.
-          child: _Arrival(
-            hasBody: _hasBody,
-            duration: context.motion(_kArrive),
-            builder: (context, arrival) => switch (shaped) {
+        // Above everything that changes shape, so the clocks the readings
+        // come in on and unfold by are the card's, and not whichever shape
+        // drew them last.
+        child: _Clocks(
+          hasBody: _hasBody,
+          expanded: expanded,
+          duration: context.motion(_kArrive),
+          builder: (context, arrival, fold) => AnimatedSize(
+            // Off while the card is growing into the page, and while its rows
+            // are unfolding: its height is already being animated then, by the
+            // lerps inside it, and a second animation easing towards a target
+            // that moves every frame lags behind it — which is the card's own
+            // height arriving after everything else driven by the same
+            // movement.
+            // Not zero: `RenderAnimatedSize` completes a zero-length animation
+            // inside its own `performLayout`, which is a render object
+            // dirtying itself mid-layout.
+            duration: openness > 0 || fold.isAnimating
+                ? const Duration(milliseconds: 1)
+                : context.motion(_kArrive),
+            curve: Curves.fastEaseInToSlowEaseOut,
+            alignment: Alignment.topCenter,
+            child: switch (shaped) {
               _ when compact => _compact(context, ref),
               // The same structure for the whole of the movement, so the card
               // under it is one element throughout and not rebuilt from
@@ -381,10 +395,10 @@ class ServerCard extends ConsumerWidget {
                 t: cross,
                 fromHeight: _compactHeight,
                 from: cross < 1 ? _compact(context, ref) : null,
-                to: _full(context, ref, arrival),
+                to: _full(context, ref, arrival, fold),
                 minToWidth: UIs.columnWidth,
               ),
-              false => _full(context, ref, arrival),
+              false => _full(context, ref, arrival, fold),
             },
           ),
         ),
@@ -403,7 +417,7 @@ class ServerCard extends ConsumerWidget {
   /// Whether there are readings to draw: the machine has answered, and with
   /// a sample.
   ///
-  /// One definition, because going from false to true is what [_Arrival]
+  /// One definition, because going from false to true is what [_Clocks]
   /// reads as the first sample landing — so it has to be the same question
   /// both shapes ask before drawing any.
   bool get _hasBody =>
@@ -421,6 +435,7 @@ class ServerCard extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     Animation<double> arrival,
+    Animation<double> fold,
   ) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -455,41 +470,17 @@ class ServerCard extends ConsumerWidget {
         // with the switcher between machines beside it.
         _titleSlot(context, ref, t),
         if (err != null && !auth) _error(context, err),
-        // Everything that arrives with the first sample, coming in one block
-        // after another — see [_Arriving]. When that is, is [_Arrival]'s to
-        // say: this is mounted far more often than a machine answers.
-        if (focus != null || readings != null)
-          _Arriving(
-            clock: arrival,
-            duration: context.motion(_kArrive),
-            children: [
-              if (focus != null)
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: lerpDouble(ServerCardSizes.gap, 0, t)!,
-                  ),
-                  child: _focus(
-                    context,
-                    focus,
-                    others: [
-                      for (final m in readings!.all)
-                        if (m.kind != focus.kind) m,
-                    ],
-                    theme: theme,
-                    stale: stale != null,
-                    twoColumns: twoColumns,
-                  ),
-                ),
-              if (readings != null)
-                ..._rows(
-                  context,
-                  readings,
-                  focus: focus,
-                  theme: theme,
-                  scheme: scheme,
-                ),
-              ?_foot(context, readings),
-            ],
+        if (readings != null)
+          _body(
+            context,
+            readings,
+            focus: focus,
+            theme: theme,
+            scheme: scheme,
+            stale: stale != null,
+            twoColumns: twoColumns,
+            arrival: arrival,
+            fold: fold,
           ),
       ],
     );
@@ -521,6 +512,179 @@ class ServerCard extends ConsumerWidget {
       // the difference; the title is 23, so without that line the other 7 sat
       // under it as a gap with nothing in it.
       child: column,
+    );
+  }
+
+  /// Everything that arrives with the first sample, coming in one block after
+  /// another — see [_Arriving]. When that is, is [_Clocks]'s to say: this is
+  /// mounted far more often than a machine answers.
+  ///
+  /// Three parts of one sweep rather than one column of it, because of the
+  /// control that unfolds the rows. It is on the last line of the reading
+  /// folded and under the rows unfolded, and it has to get from one to the
+  /// other by travelling: it is what was just pressed, and closing where it
+  /// was while another opened a card's height below read as the press having
+  /// removed it. So it is one control, held to the bottom of the reading and
+  /// its rows together — which is the first of those places while the rows are
+  /// nothing tall, the second once they are all there, and everything between
+  /// on the way. See [_rows] for what keeps a line clear under them.
+  ///
+  /// The foot is under all of that, and is why it is the bottom of those two
+  /// and not of the card.
+  Widget _body(
+    BuildContext context,
+    ServerCardReadings readings, {
+    required ServerMetric? focus,
+    required ThemeData theme,
+    required ColorScheme scheme,
+    required bool stale,
+    required bool twoColumns,
+    required Animation<double> arrival,
+    required Animation<double> fold,
+  }) {
+    final t = openness;
+    final duration = context.motion(_kArrive);
+    final others = [
+      for (final m in readings.all)
+        if (m.kind != focus?.kind) m,
+    ];
+    // Laid out as unfolded for as long as any of that is showing, which is
+    // longer than [expanded] says on the way back: the rows are what the
+    // height being given up is the height of.
+    final unfolded = expanded || fold.value > 0;
+    final rows = _rows(
+      context,
+      readings,
+      focus: focus,
+      unfolded: unfolded,
+      theme: theme,
+      scheme: scheme,
+    );
+    final foot = _foot(context, readings);
+    // One reading has nothing under it to fold, and the page has a row for
+    // every one of them.
+    final foldable = focus != null && others.isNotEmpty;
+    // Which end the control is at, or was last at: it keeps the face of the
+    // one it is leaving until it has arrived — see [_fold] for why.
+    final atUnfolded = expanded ? fold.value >= 1 : fold.value > 0;
+    // What the machine reports and the card is not drawing, at each end.
+    // Counted from what is drawn rather than taken from `readings.more`, which
+    // is what did not fit in the five slots: a reading promoted from outside
+    // them is drawn and was still being counted.
+    final unseenFolded = others.length;
+    final unseenUnfolded =
+        others.length -
+        readings.shown.where((m) => m.kind != focus?.kind).length;
+    final sweep = (focus == null ? 0 : 1) + rows.length + (foot == null ? 0 : 1);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Stack(
+          fit: StackFit.passthrough,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (focus != null)
+                  _Arriving(
+                    clock: arrival,
+                    duration: duration,
+                    of: sweep,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: lerpDouble(ServerCardSizes.gap, 0, t)!,
+                        ),
+                        child: _focus(
+                          context,
+                          focus,
+                          others: others,
+                          theme: theme,
+                          stale: stale,
+                          twoColumns: twoColumns,
+                          fold: fold,
+                        ),
+                      ),
+                    ],
+                  ),
+                // As tall as they have unfolded to. On the way to the page
+                // that is all of it — what comes in there comes in row by
+                // row — and folded it is every row the page has, at the same
+                // pace, so there is nothing for this to hold back.
+                SizeTransition(
+                  alignment: Alignment.topCenter,
+                  sizeFactor: unfolded
+                      ? fold.drive(Tween(begin: t, end: 1))
+                      : kAlwaysCompleteAnimation,
+                  child: _Arriving(
+                    clock: arrival,
+                    duration: duration,
+                    from: focus == null ? 0 : 1,
+                    of: sweep,
+                    children: rows,
+                  ),
+                ),
+              ],
+            ),
+            // The rest of the line under the rows, which the control has to
+            // itself: the arrow alone is a target the size of a letter, on a
+            // card where a miss opens the machine. Beside the control rather
+            // than the control made wider — see [_fold] — and only once it
+            // has arrived, since folded this line is what the reading is of.
+            //
+            // There whenever the control is and deaf the rest of the time,
+            // rather than there only when it listens: it is before the
+            // control in this list, so its arriving would make the control
+            // the third child where it had been the second, and that is the
+            // control taken away and built again, with its ink.
+            if (foldable && t < 1)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: ServerCardSizes.underLine,
+                child: IgnorePointer(
+                  ignoring: !(t <= 0 && expanded && atUnfolded),
+                  child: ExcludeSemantics(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: selected == null ? onToggleExpanded : onTap,
+                    ),
+                  ),
+                ),
+              ),
+            if (foldable && t < 1)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: _Arrives(
+                  clock: arrival,
+                  duration: duration,
+                  // With what it is drawn on: the reading, or the last row.
+                  at: expanded ? sweep - (foot == null ? 1 : 2) : 0,
+                  of: sweep,
+                  child: _fold(
+                    unseenFolded: unseenFolded,
+                    unseenUnfolded: unseenUnfolded,
+                    atUnfolded: atUnfolded,
+                    fold: fold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (foot != null)
+          _Arriving(
+            clock: arrival,
+            duration: duration,
+            from: sweep - 1,
+            of: sweep,
+            children: [foot],
+          ),
+      ],
     );
   }
 
@@ -1231,11 +1395,12 @@ class ServerCard extends ConsumerWidget {
     required ThemeData theme,
     required bool stale,
     required bool twoColumns,
+    required Animation<double> fold,
   }) {
     final t = openness;
-    // Folded, and with something folded away. A machine that reports the one
+    // With something under it to fold away. A machine that reports the one
     // reading has nothing under it either way, and is drawn as unfolded.
-    final folded = !expanded && others.isNotEmpty;
+    final foldable = others.isNotEmpty;
     // Anything at all to plot. A reading the history does not keep has a
     // number and nothing to draw it against; the card held the chart's room
     // for it anyway, and a box with nothing in it reads as a chart that
@@ -1296,24 +1461,26 @@ class ServerCard extends ConsumerWidget {
         if (drawn || t > 0) _chart(m, stale: stale, height: height, t: t),
         // Under the chart on the card; on the page it is up in the head row,
         // where it arrives with the page.
-        if ((m.note.isNotEmpty || folded) && t < 1)
-          ClipRect(
-            child: Align(
-              alignment: Alignment.topCenter,
-              heightFactor: 1 - t,
-              child: Opacity(
-                opacity: 1 - t,
-                child: Padding(
-                  // Less than a gap by what the line has over its text, which
-                  // is centred in it — so the text is a gap under the chart.
-                  padding: const EdgeInsets.only(top: ServerCardSizes.gap - 4),
-                  child: _under(
-                    context,
-                    m.note,
-                    unseen: others.length,
-                    folded: folded,
-                    moving: t > 0,
-                  ),
+        //
+        // A reading that says nothing about itself still has the line while
+        // it is folded, for the control that is on it — and gives it up as
+        // that leaves, rather than on the frame it sets off.
+        if ((m.note.isNotEmpty || foldable) && t < 1)
+          SizeTransition(
+            alignment: Alignment.topCenter,
+            sizeFactor: m.note.isNotEmpty
+                ? AlwaysStoppedAnimation(1 - t)
+                : fold.drive(Tween(begin: 1 - t, end: 0)),
+            child: Opacity(
+              opacity: 1 - t,
+              child: Padding(
+                // Less than a gap by what the line has over its text, which
+                // is centred in it — so the text is a gap under the chart.
+                padding: const EdgeInsets.only(top: ServerCardSizes.gap - 4),
+                child: _under(
+                  m.note,
+                  unseen: others.length,
+                  fold: foldable ? fold : kAlwaysCompleteAnimation,
                 ),
               ),
             ),
@@ -1334,29 +1501,31 @@ class ServerCard extends ConsumerWidget {
   /// one is centred on nothing.
   ///
   /// Unfolded, the line is the note's alone and it is a caption again, under
-  /// the middle of the chart. It travels there rather than being there: the
-  /// control closes to nothing beside it and the card grows under it, all
-  /// three over the same stretch on the same curve, so unfolding is one
-  /// movement. The control it leaves is under the rows by then — see [_rows].
+  /// the middle of the chart. It travels there along [fold], as the control
+  /// leaves for the line under the rows.
+  ///
+  /// The control itself is not in this row. It is one control in both places
+  /// and is drawn over the card — see [_body] — so what is here is the room
+  /// it takes while it is on this line: its own face, not drawn, closing as
+  /// it goes. A width would have to be guessed, and what it says is as long
+  /// as the language makes it.
   Widget _under(
-    BuildContext context,
     String note, {
     required int unseen,
-    required bool folded,
-    required bool moving,
+    required Animation<double> fold,
   }) {
-    final duration = context.motion(_kArrive);
-    // The card's own, from the [AnimatedSize] in [build].
-    const curve = Curves.fastEaseInToSlowEaseOut;
     return SizedBox(
       height: ServerCardSizes.underLine,
       child: Row(
         children: [
           Expanded(
-            child: AnimatedAlign(
-              alignment: folded ? Alignment.centerLeft : Alignment.center,
-              duration: duration,
-              curve: curve,
+            child: AlignTransition(
+              alignment: fold.drive(
+                AlignmentTween(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.center,
+                ),
+              ),
               child: Text(
                 note,
                 style: const TextStyle(
@@ -1369,28 +1538,24 @@ class ServerCard extends ConsumerWidget {
               ),
             ),
           ),
-          AnimatedSwitcher(
-            duration: duration,
-            switchInCurve: curve,
-            // Flipped, because the one leaving is run backwards: this is what
-            // makes it leave the way the other arrives.
-            switchOutCurve: curve.flipped,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SizeTransition(
-                axis: Axis.horizontal,
-                // Closing towards the edge of the card it sits against.
-                alignment: Alignment.centerRight,
-                sizeFactor: animation,
-                child: child,
-              ),
-            ),
-            child: folded
-                ? IgnorePointer(
-                    ignoring: moving,
-                    child: _fold(unseen, wide: false),
+          SizeTransition(
+            axis: Axis.horizontal,
+            // Closing towards the edge of the card it sits against.
+            alignment: Alignment.centerRight,
+            sizeFactor: ReverseAnimation(fold),
+            // Nothing once it has gone: the room is closed by then. Asked of
+            // where it is going as well as where it is, because on the way
+            // back this is built before the clock has moved.
+            child: !expanded || fold.value < 1
+                ? Visibility.maintain(
+                    visible: false,
+                    child: _foldFace(
+                      unseen,
+                      shown: kAlwaysCompleteAnimation,
+                      fold: fold,
+                    ),
                   )
-                : const SizedBox.shrink(),
+                : null,
           ),
         ],
       ),
@@ -1591,10 +1756,14 @@ class ServerCard extends ConsumerWidget {
   /// same reading, and a row for it would be a second copy of the number at
   /// the top. On the page it comes back — there is room, and the row is where
   /// a different one is chosen from.
+  ///
+  /// [unfolded] is whether they are laid out as showing, which [_body] says:
+  /// how much of that is showing yet is its to draw.
   List<Widget> _rows(
     BuildContext context,
     ServerCardReadings readings, {
     required ServerMetric? focus,
+    required bool unfolded,
     required ThemeData theme,
     required ColorScheme scheme,
   }) {
@@ -1604,7 +1773,7 @@ class ServerCard extends ConsumerWidget {
     // promoted one, which is where a different one is chosen from. The ones
     // the card was not showing grow in as it opens rather than appearing when
     // the page takes over, and folded that is all of them.
-    final resting = expanded
+    final resting = unfolded
         ? [
             for (final m in readings.shown)
               if (m.kind != focus?.kind) m,
@@ -1615,24 +1784,18 @@ class ServerCard extends ConsumerWidget {
     // Folded and at rest there is nothing under the reading at all: the way
     // to the rest of them is on its last line — see [_under].
     if (rows.isEmpty) return const [];
-    // What the machine reports and the card is not drawing. Counted from what
-    // is drawn rather than taken from `readings.more`, which is what did not
-    // fit in the five slots: a reading promoted from outside them is drawn
-    // and was still being counted.
-    final unseen =
-        readings.all.length - (focus == null ? 0 : 1) - resting.length;
 
     return [
       // From nothing when folded, where there was nothing: a gap that is
       // there at any openness above 0 and not at 0 is every card under this
       // one moving by it on the first frame of opening.
       SizedBox(
-        height: lerpDouble(expanded ? ServerCardSizes.gap : 0, 7, t),
+        height: lerpDouble(unfolded ? ServerCardSizes.gap : 0, 7, t),
       ),
       // One card's worth of hairline at rest, and nothing once each row is a
       // card: a line between two separate surfaces is a line about neither.
       // None folded, for the same reason as the gap.
-      if (expanded && t < 1)
+      if (unfolded && t < 1)
         ClipRect(
           child: Align(
             alignment: Alignment.topCenter,
@@ -1658,78 +1821,137 @@ class ServerCard extends ConsumerWidget {
         theme: theme,
         scheme: scheme,
       ),
-      // The way back, under what it folds away. Goes as the card becomes the
-      // page, by height as well as by fading, so what is under it is not a
-      // line lower until the last frame.
-      if (expanded && t < 1)
-        ClipRect(
-          child: Align(
-            alignment: Alignment.topCenter,
-            heightFactor: 1 - t,
-            child: Opacity(
-              opacity: 1 - t,
-              child: Padding(
-                padding: const EdgeInsets.only(top: ServerCardSizes.rowGap),
-                child: IgnorePointer(
-                  ignoring: t > 0,
-                  child: _fold(unseen, wide: true),
-                ),
-              ),
-            ),
-          ),
+      // A line kept clear for the way back, which is drawn over it rather
+      // than in it — see [_body]. Goes as the card becomes the page, so what
+      // is under it is not a line lower until the last frame.
+      if (unfolded && t < 1)
+        SizedBox(
+          height:
+              (ServerCardSizes.rowGap + ServerCardSizes.underLine) * (1 - t),
         ),
     ];
   }
 
   /// How many readings the card is not showing, and the way to them and back.
   ///
-  /// The count and the arrow are one control: the arrow alone is a target the
-  /// size of a letter, on a card where a miss opens the machine. [wide] is
-  /// the one under the rows, which has a line to itself and takes all of it;
-  /// the other shares the line under the chart — see [_under].
+  /// The count and the arrow are one control. A machine reporting more than
+  /// fits still says how many rather than growing taller than its neighbours:
+  /// the cards are scanned down a column, and one card a line longer than the
+  /// rest is what breaks that. Those are on the page, and reachable from
+  /// [_switch].
   ///
-  /// A machine reporting more than fits still says how many rather than
-  /// growing taller than its neighbours: the cards are scanned down a column,
-  /// and one card a line longer than the rest is what breaks that. Those are
-  /// on the page, and reachable from [_switch].
+  /// One control in both places, which is what lets it travel between them —
+  /// and lets the ink of the press that sent it go with it, rather than be
+  /// cut off with a control that was taken away.
   ///
-  /// Two arrows rather than one that turns. Each of the two places this is
-  /// drawn only ever has it in one state, so there is never a turn to see.
-  Widget _fold(int unseen, {required bool wide}) {
-    return Semantics(
-      button: true,
-      label: expanded ? libL10n.fold : libL10n.more,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(7),
-        // While a set is being built up a press means "this one too",
-        // wherever on the card it lands — see [_row].
-        onTap: selected == null ? onToggleExpanded : onTap,
-        child: SizedBox(
-          height: ServerCardSizes.underLine,
-          child: Row(
-            mainAxisSize: wide ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // Off whatever is beside it, inside the ink so the two are one
-              // target.
-              if (!wide) const SizedBox(width: 9),
-              if (unseen > 0)
-                Text(
-                  '+$unseen ${libL10n.more}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey,
-                    fontFeatures: _tabular,
-                  ),
-                ),
-              Icon(
-                expanded ? Icons.expand_less : Icons.expand_more,
-                size: 17,
-                color: Colors.grey,
-              ),
-            ],
+  /// **Its box is the same from the press until it has arrived.** Ink is
+  /// placed from the top left of the box it was started in, and heads for the
+  /// middle of it. This was made as wide as the line on the press that
+  /// unfolded it, so the ripple under the finger was suddenly that far from
+  /// the *left* of the card, and spent the way down crossing to the middle of
+  /// the line. What it counts changes on the press as well, which is a
+  /// narrower or a wider box, and the same thing by less.
+  ///
+  /// So it has the face of the end it is leaving ([atUnfolded]) the whole way,
+  /// and what the other end counts comes in over it without taking any room
+  /// — see [_foldFace].
+  ///
+  /// The card's, so it goes with the card's own surface on the way to the
+  /// page, which is early: by then it is held to the bottom of rows that are
+  /// growing in under it.
+  Widget _fold({
+    required int unseenFolded,
+    required int unseenUnfolded,
+    required bool atUnfolded,
+    required Animation<double> fold,
+  }) {
+    final t = openness;
+    final folding = ReverseAnimation(fold);
+    return IgnorePointer(
+      ignoring: t > 0,
+      child: Opacity(
+        opacity: cardSurfaceAt(t),
+        child: Semantics(
+          button: true,
+          label: expanded ? libL10n.fold : libL10n.more,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(7),
+            // While a set is being built up a press means "this one too",
+            // wherever on the card it lands — see [_row].
+            onTap: selected == null ? onToggleExpanded : onTap,
+            child: _foldFace(
+              atUnfolded ? unseenUnfolded : unseenFolded,
+              shown: atUnfolded ? fold : folding,
+              // Only on the way: at rest the other end's count is nowhere.
+              incoming: atUnfolded == expanded
+                  ? 0
+                  : (atUnfolded ? unseenFolded : unseenUnfolded),
+              arriving: atUnfolded ? folding : fold,
+              fold: fold,
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// What [_fold] looks like, which is also what [_under] keeps room for.
+  ///
+  /// [unseen] is the count it is as wide as, there by as much as [shown].
+  /// [incoming] is the one it is on its way to saying, there by as much as
+  /// [arriving] and drawn over the first from a box of no width — so the two
+  /// cross, ending where the first ends, and the control is no wider or
+  /// narrower for it until it is rebuilt at the far end with that count as
+  /// its own.
+  ///
+  /// One arrow that turns. It was two, because each of the two places this
+  /// was drawn only ever had it in one state and there was never a turn to
+  /// see; now it is one control going from one to the other, and there is.
+  Widget _foldFace(
+    int unseen, {
+    required Animation<double> shown,
+    required Animation<double> fold,
+    int incoming = 0,
+    Animation<double> arriving = kAlwaysDismissedAnimation,
+  }) {
+    Widget count(int unseen, Animation<double> opacity) => FadeTransition(
+      opacity: opacity,
+      child: Text(
+        '+$unseen ${libL10n.more}',
+        style: const TextStyle(
+          fontSize: 10,
+          color: Colors.grey,
+          fontFeatures: _tabular,
+        ),
+        maxLines: 1,
+        softWrap: false,
+      ),
+    );
+
+    return SizedBox(
+      height: ServerCardSizes.underLine,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Off whatever is beside it, inside the ink so the two are one
+          // target.
+          const SizedBox(width: 9),
+          if (unseen > 0) count(unseen, shown),
+          if (incoming > 0)
+            SizedBox(
+              width: 0,
+              child: OverflowBox(
+                alignment: Alignment.centerRight,
+                minWidth: 0,
+                maxWidth: double.infinity,
+                child: count(incoming, arriving),
+              ),
+            ),
+          RotationTransition(
+            turns: fold.drive(Tween(begin: 0, end: 0.5)),
+            child: const Icon(Icons.expand_more, size: 17, color: Colors.grey),
+          ),
+        ],
       ),
     );
   }
@@ -1847,16 +2069,17 @@ class ServerCard extends ConsumerWidget {
   }
 }
 
-/// When a card's readings come in: once, as its machine first answers.
+/// The two movements a card has of its own, and when each of them starts.
 ///
-/// **Not when what draws them is mounted**, which is what this used to be —
-/// [_Arriving] ran its own tween from 0 wherever it was built. A card is
-/// mounted far more often than a machine answers: the grid is dropped while a
-/// machine is open and mounted again for the way back, a line's card is built
-/// on the first frame of opening it, a tag is picked, the globe is left. Each
-/// of those played the fill again, and around the opening movement that was
-/// the readings going out and coming back before the card started shrinking,
-/// and again once it had landed.
+/// **When its readings come in: once, as its machine first answers. Not when
+/// what draws them is mounted**, which is what this used to be — [_Arriving]
+/// ran its own tween from 0 wherever it was built. A card is mounted far more
+/// often than a machine answers: the grid is dropped while a machine is open
+/// and mounted again for the way back, a line's card is built on the first
+/// frame of opening it, a tag is picked, the globe is left. Each of those
+/// played the fill again, and around the opening movement that was the
+/// readings going out and coming back before the card started shrinking, and
+/// again once it had landed.
 ///
 /// So the clock is here, above every shape the card takes, and what starts it
 /// is [hasBody] going from false to true *between two builds of the same
@@ -1864,66 +2087,143 @@ class ServerCard extends ConsumerWidget {
 /// at the end — the rule `AnimatedMasonry` follows for its own children, and
 /// for the same reason: something is only new against what was already on
 /// screen without it.
-class _Arrival extends StatefulWidget {
-  const _Arrival({
+///
+/// **And how far its rows are unfolded**, by the same rule: what moves it is
+/// [expanded] changing between two builds, and a card mounted unfolded is
+/// unfolded. It is a clock rather than the card's [AnimatedSize] because of
+/// what that does with a taller child: lays it out at its full height at once
+/// and uncovers it. Nothing under the rows travels — it is where it will end
+/// up from the first frame, behind the clip — and the one thing under them is
+/// the control that was just pressed. Along this the rows are as tall as they
+/// have got to, and what is under them is moved by that.
+class _Clocks extends StatefulWidget {
+  const _Clocks({
     required this.hasBody,
+    required this.expanded,
     required this.duration,
     required this.builder,
   });
 
   final bool hasBody;
+  final bool expanded;
   final Duration duration;
-  final Widget Function(BuildContext context, Animation<double> arrival)
+  final Widget Function(
+    BuildContext context,
+    Animation<double> arrival,
+    Animation<double> fold,
+  )
   builder;
 
   @override
-  State<_Arrival> createState() => _ArrivalState();
+  State<_Clocks> createState() => _ClocksState();
 }
 
-class _ArrivalState extends State<_Arrival>
-    with SingleTickerProviderStateMixin {
-  late final _clock = AnimationController(
+class _ClocksState extends State<_Clocks> with TickerProviderStateMixin {
+  late final _arrival = AnimationController(
     vsync: this,
     duration: widget.duration,
     value: widget.hasBody ? 1 : 0,
   );
 
+  late final _fold = AnimationController(
+    vsync: this,
+    duration: widget.duration,
+    value: widget.expanded ? 1 : 0,
+  )..addStatusListener(_onFoldStatus);
+
+  /// Built again as the fold comes to rest, because [ServerCard.build] asks
+  /// whether it is moving. Its setting off needs nothing: that is
+  /// [didUpdateWidget], and a build follows it.
+  void _onFoldStatus(AnimationStatus status) {
+    if (!status.isAnimating) setState(() {});
+  }
+
   @override
-  void didUpdateWidget(_Arrival old) {
+  void didUpdateWidget(_Clocks old) {
     super.didUpdateWidget(old);
-    _clock.duration = widget.duration;
-    if (widget.hasBody && !old.hasBody) _clock.forward(from: 0);
+    _arrival.duration = widget.duration;
+    _fold.duration = widget.duration;
+    if (widget.hasBody && !old.hasBody) _arrival.forward(from: 0);
+    if (widget.expanded != old.expanded) {
+      _fold.animateTo(widget.expanded ? 1 : 0, curve: _kFoldCurve);
+    }
   }
 
   @override
   void dispose() {
-    _clock.dispose();
+    _arrival.dispose();
+    _fold.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, _clock);
+  Widget build(BuildContext context) =>
+      widget.builder(context, _arrival, _fold);
 }
 
 /// A column whose children come in one after another along [clock].
 ///
-/// [Opacity] rather than a fade transition per child: there is one clock for
-/// the whole column, and each child reads its own stretch of it. Six
-/// controllers on forty cards is forty times what this costs.
-///
-/// The clock is [_Arrival]'s rather than this widget's own, so being mounted
-/// again is not arriving again. Once it has run, a poll rebuilds the children
-/// and nothing fades.
+/// A stretch of a sweep rather than always the whole of one: [from] is where
+/// in it the first of [children] is and [of] how many there are in all. What
+/// comes in is not all in one column — see [ServerCard._body] — and it is
+/// still one movement down the card.
 class _Arriving extends StatelessWidget {
   const _Arriving({
     required this.clock,
     required this.duration,
+    required this.of,
     required this.children,
+    this.from = 0,
   });
 
   final Animation<double> clock;
   final Duration duration;
+  final int from;
+  final int of;
   final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, child) in children.indexed)
+          _Arrives(
+            clock: clock,
+            duration: duration,
+            at: from + i,
+            of: of,
+            child: child,
+          ),
+      ],
+    );
+  }
+}
+
+/// One child's stretch of that sweep: the [at]th [of] them.
+///
+/// [Opacity] rather than a fade transition with a controller of its own:
+/// there is one clock for the whole card, and each child reads its own stretch
+/// of it. Six controllers on forty cards is forty times what this costs.
+///
+/// The clock is [_Clocks]'s rather than this widget's own, so being mounted
+/// again is not arriving again. Once it has run, a poll rebuilds the children
+/// and nothing fades.
+class _Arrives extends StatelessWidget {
+  const _Arrives({
+    required this.clock,
+    required this.duration,
+    required this.at,
+    required this.of,
+    required this.child,
+  });
+
+  final Animation<double> clock;
+  final Duration duration;
+  final int at;
+  final int of;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -1931,25 +2231,18 @@ class _Arriving extends StatelessWidget {
     final step = _kArriveStep.inMilliseconds;
     // The last child still has the fade's own length to run in, so the steps
     // before it share what is left rather than pushing it past the end.
-    final fade = math.max(1, total - step * math.max(0, children.length - 1));
+    final fade = math.max(1, total - step * math.max(0, of - 1));
+    final stretch = Interval(
+      (at * step) / total,
+      ((at * step) + fade) / total,
+      curve: Curves.easeOut,
+    );
 
     return AnimatedBuilder(
       animation: clock,
-      builder: (_, _) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final (at, child) in children.indexed)
-            Opacity(
-              opacity: Interval(
-                (at * step) / total,
-                ((at * step) + fade) / total,
-                curve: Curves.easeOut,
-              ).transform(clock.value),
-              child: child,
-            ),
-        ],
-      ),
+      child: child,
+      builder: (_, child) =>
+          Opacity(opacity: stretch.transform(clock.value), child: child),
     );
   }
 }
