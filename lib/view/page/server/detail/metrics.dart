@@ -1091,71 +1091,104 @@ extension on _ServerDetailPageState {
               // moving.
               SizedBox(height: ServerCardSizes.openHead, child: head),
               UIs.height7,
-              if (wide)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+              // What is over the chart and what is under it are as tall as
+              // the reading has things to say — a line of what it is of, a
+              // second run of facts, a bar for every core — and choosing
+              // another reading changed both between two frames: the chart
+              // jumped by one and the rows under the card by the sum. Each
+              // eases to its new height on its own, beside the other and not
+              // inside it, so the chart slides by the one over it and the
+              // card's height is the two together. One [AnimatedSize] round
+              // the card would ease its edge and leave the chart to jump
+              // inside it, and one inside another is cut short by the outer.
+              _eased(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Flexible(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    if (wide)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Flexible(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                value,
+                                const SizedBox(width: 9),
+                                Flexible(child: _buildFacts(m.bigNote, const [])),
+                              ],
+                            ),
+                          ),
+                          if (stats.isNotEmpty)
+                            Flexible(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                reverse: true,
+                                child: _buildStats(stats),
+                              ),
+                            ),
+                        ],
+                      )
+                    else ...[
+                      // On the number's own line, and in the words that were
+                      // already there. They had a line of their own under it, in a
+                      // second style — a number over its name — so a phone gave
+                      // two lines and two ways of writing to what is one sentence:
+                      // how busy it is, and where the rest of it went.
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           value,
                           const SizedBox(width: 9),
-                          Flexible(child: _buildFacts(m.bigNote, const [])),
+                          Expanded(child: _buildFacts(m.bigNote, stats)),
                         ],
                       ),
-                    ),
-                    if (stats.isNotEmpty)
-                      Flexible(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          reverse: true,
-                          child: _buildStats(stats),
+                      if (note != null || device != null) ...[
+                        UIs.height7,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                note ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: UIs.text11Grey,
+                              ),
+                            ),
+                            ?device,
+                          ],
                         ),
-                      ),
-                  ],
-                )
-              else ...[
-                // On the number's own line, and in the words that were
-                // already there. They had a line of their own under it, in a
-                // second style — a number over its name — so a phone gave
-                // two lines and two ways of writing to what is one sentence:
-                // how busy it is, and where the rest of it went.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    value,
-                    const SizedBox(width: 9),
-                    Expanded(child: _buildFacts(m.bigNote, stats)),
+                      ],
+                    ],
                   ],
                 ),
-                if (note != null || device != null) ...[
-                  UIs.height7,
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          note ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: UIs.text11Grey,
-                        ),
-                      ),
-                      ?device,
-                    ],
-                  ),
-                ],
-              ],
-              chart,
-              ?_buildFocusDetail(si, m.kind),
+              ),
+              // As tall as a chart for every reading but one that failed,
+              // which is as tall as what it has to say.
+              _eased(chart),
+              _eased(
+                _buildFocusDetail(si, m.kind) ??
+                    const SizedBox(width: double.infinity),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  /// A part of the focus card that eases to the height of what is in it.
+  ///
+  /// The page's own cards open and close at this pace — see
+  /// `_buildReadoutCard`.
+  Widget _eased(Widget child) => AnimatedSize(
+    duration: Durations.short4,
+    curve: Curves.easeOutCubic,
+    alignment: Alignment.topCenter,
+    child: child,
+  );
 
   /// The chart, or the one line that says why there isn't one.
   Widget _buildFocusChart(

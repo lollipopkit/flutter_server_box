@@ -410,6 +410,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('phone: the chart card eases to the height of another reading', (
+    tester,
+  ) async {
+    // The CPU has one line over its chart and the sensors have two: which of
+    // them the chart is of, and the way to the rest. Choosing between them
+    // moved the chart by that line and every row under the card with it,
+    // between two frames.
+    await pump(
+      tester,
+      size: const Size(402, 874),
+      status: () {
+        final status = richStatus();
+        final now = DateTime.now().millisecondsSinceEpoch;
+        for (var i = 0; i < 4; i++) {
+          status.history.add(
+            timeMs: now - (4 - i) * 3000,
+            cpu: 10.0 + i,
+            temp: 60.0 + i,
+          );
+        }
+        return status;
+      },
+    );
+
+    Rect chart() => tester.getRect(find.byType(MetricChart));
+    Rect card() => tester.getRect(
+      find.ancestor(of: find.byType(MetricChart), matching: find.byType(CardX)),
+    );
+    final chartWas = chart();
+    final cardWas = card();
+
+    await tester.tap(find.text(libL10n.temperature).first);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    final chartOnTheWay = chart();
+    final cardOnTheWay = card();
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(chart().top, greaterThan(chartWas.top + 10));
+    expect(card().height, greaterThan(cardWas.height + 10));
+
+    // Neither where it was nor where it ends up, a fifth of the way through.
+    expect(chartOnTheWay.top, greaterThan(chartWas.top + 1));
+    expect(chartOnTheWay.top, lessThan(chart().top - 1));
+    expect(cardOnTheWay.height, greaterThan(cardWas.height + 1));
+    expect(cardOnTheWay.height, lessThan(card().height - 1));
+    // And the chart is the height it was the whole way: what moves is what
+    // is round it.
+    expect(chartOnTheWay.height, chartWas.height);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a row is drawn in the theme colour, whichever reading it is', (
     tester,
   ) async {
