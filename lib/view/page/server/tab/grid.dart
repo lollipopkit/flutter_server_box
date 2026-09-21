@@ -211,8 +211,7 @@ extension _Grid on _ServerPageState {
                 for (final (at, group) in groups.indexed) ...[
                   ServerGroupHeading(
                     label: group.label,
-                    count: group.items.length,
-                    over: _overCount(group),
+                    ids: group.items,
                     first: at == 0,
                   ),
                   masonry(group.items, scrollable: false),
@@ -294,17 +293,6 @@ extension _Grid on _ServerPageState {
     );
   }
 
-  /// How many of [group]'s machines are over the line, for its heading — see
-  /// [ServerGroupHeading].
-  int _overCount(TagGroup<String> group) {
-    return group.items
-        .where((id) {
-          final srv = ref.read(serverProvider(id));
-          return srv.conn == ServerConn.finished &&
-              serverCardReadings(srv).all.any((m) => m.over);
-        })
-        .length;
-  }
 
   Future<void> _refreshAll() async {
     await ref.read(serversProvider.notifier).refresh();
