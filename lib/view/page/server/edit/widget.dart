@@ -327,6 +327,7 @@ extension _Widgets on _ServerEditPageState {
         title: Text(path, style: UIs.text13),
         subtitle: Text(l10n.sshConfigImport, style: UIs.textGrey),
         trailing: IconButton(
+          tooltip: libL10n.close,
           icon: const Icon(Icons.close, size: 20),
           onPressed: () => _keyPath.value = null,
         ),
@@ -1225,6 +1226,7 @@ extension _Widgets on _ServerEditPageState {
         trailing: cred == null
             ? const Icon(Icons.keyboard_arrow_right)
             : IconButton(
+                tooltip: libL10n.edit,
                 icon: const Icon(Icons.edit),
                 // Awaited, and the result read back. That page can delete the
                 // account, and leaving without doing so left `_bmcCredId`
