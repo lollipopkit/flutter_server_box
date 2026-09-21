@@ -227,6 +227,87 @@ void main() {
     expect(find.textContaining('%'), findsWidgets);
   });
 
+  testWidgets('and drawn in full, says it where the chart would be', (
+    tester,
+  ) async {
+    // It was the machine's words in grey monospace, centred in a box the
+    // height of the chart they replaced — 216 points with one line in the
+    // middle, which reads as a chart that has not loaded rather than as
+    // something having gone wrong. That it failed, what was said, what to do
+    // and the way to all of it, from the left and as tall as they are.
+    final notifier = await pump(tester);
+
+    Rect focus() => tester.getRect(
+      find
+          .ancestor(
+            of: find.text(libL10n.memory).first,
+            matching: find.byType(CardX),
+          )
+          .first,
+    );
+
+    final working = InitStatus.status;
+    working.more[StatusCmdType.host] = 'test-host';
+    working.mem = const Memory(total: 134217728, free: 8388608, avail: 16777216);
+    notifier.updateStatus(working);
+    await settle(tester);
+    await tester.tap(find.text(libL10n.memory).first);
+    await settle(tester);
+    final whole = focus().height;
+
+    Future<void> fail(String said) async {
+      final failed = InitStatus.status;
+      failed.more[StatusCmdType.host] = 'test-host';
+      failed.sectionErrs['mem'] = said;
+      notifier.updateStatus(failed);
+      await settle(tester);
+      await settle(tester);
+    }
+
+    // What a missing command says is one line, and the card is shorter for it
+    // than it is round a chart.
+    await fail('cat: /proc/meminfo: Permission denied');
+    expect(focus().height, lessThan(whole));
+
+    const said = 'Traceback (most recent call last):\n'
+        '  File "status.py", line 12, in mem\n'
+        '  File "status.py", line 40, in read\n'
+        '  File "status.py", line 44, in open\n'
+        'PermissionError: /proc/meminfo';
+    await fail(said);
+
+    expect(tester.takeException(), isNull);
+    final title = find.text(libL10n.fail);
+    expect(title, findsOneWidget);
+    expect(
+      tester.widget<Text>(title).style?.color,
+      Theme.of(tester.element(title)).colorScheme.error,
+    );
+    // From the left, under the number — not centred in a chart's worth.
+    expect(
+      tester.getRect(title).left,
+      lessThan(tester.getRect(find.byType(ServerDetailPage)).width / 3),
+    );
+    expect(find.text(app_locale.l10n.metricUnavailableTip), findsOneWidget);
+    // Cut to a few lines on the card, whatever it ran to.
+    expect(tester.widget<Text>(find.text(said).first).maxLines, 4);
+
+    // All of what was said is a press away, where it can be copied: the card
+    // cuts it to a few lines, and the last of a traceback is the useful one.
+    await tester.tap(find.text(app_locale.l10n.viewError));
+    await settle(tester);
+    expect(find.byType(SelectableText), findsOneWidget);
+    expect(
+      tester.widget<SelectableText>(find.byType(SelectableText)).data,
+      said,
+    );
+    await tester.tap(find.text(libL10n.close));
+    await settle(tester);
+    expect(find.byType(SelectableText), findsNothing);
+    // The page under the dialog is still the page.
+    expect(find.byType(ServerDetailPage), findsOneWidget);
+  });
+
   /// A row that vanishes says this machine has no memory. The five every
   /// machine has stay where they are and say what happened to the reading.
   testWidgets('a failed section keeps its row even with no reading', (
@@ -288,8 +369,23 @@ void main() {
 
     expect(tester.takeException(), isNull);
     // Said at the top of the page, once, with the way to ask again.
-    expect(find.textContaining(RegExp(r'Everything below is from')), findsOneWidget);
+    final said = find.textContaining(RegExp(r'Everything below is from'));
+    expect(said, findsOneWidget);
     expect(find.text(libL10n.refresh), findsOneWidget);
+    // In a card about as tall as the way to ask again, which is the tallest
+    // thing in it. That was a `TextButton`, held to 48 on a phone, with 9
+    // more over and under it: 66 points of card round one line of text.
+    final card = tester.getRect(
+      find.ancestor(of: said, matching: find.byType(CardX)).first,
+    );
+    final line = tester.getRect(said);
+    // Its own margin included, which is 4 on each side.
+    expect(card.height, lessThan(56));
+    // And the sentence is in the middle of it, not over a gap.
+    expect(
+      line.center.dy,
+      moreOrLessEquals(card.center.dy, epsilon: 1),
+    );
     // And in the rows, where the note is the timestamp rather than what the
     // figure is of.
     expect(find.textContaining(RegExp(r'^at \d')), findsWidgets);

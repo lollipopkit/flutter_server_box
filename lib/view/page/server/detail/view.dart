@@ -834,13 +834,18 @@ ${err.message ?? 'null'}
 
     return CardX(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(17, 9, 9, 9),
+        // Next to nothing above and below, because the way to ask again
+        // brings its own: it is 32 tall round a line of text, and that is
+        // already the air this sentence has. It was a `TextButton`, which a
+        // phone holds to 48, inside 9 more on each side — 66 points of card
+        // for one line of 12pt text, most of it the space over and under it.
+        padding: const EdgeInsets.fromLTRB(17, 5, 9, 5),
         child: Row(
           children: [
             const Icon(
               Icons.pause_circle_outline,
               size: 18,
-              color: Color(0xFFF59E0B),
+              color: StatePalette.warn,
             ),
             UIs.width13,
             Expanded(
@@ -849,11 +854,16 @@ ${err.message ?? 'null'}
                   at.toAgoStr(),
                   _clockOf(at.millisecondsSinceEpoch),
                 ),
-                style: UIs.text12Grey,
+                style: UIs.text13,
               ),
             ),
             UIs.width7,
-            Btn.text(text: libL10n.refresh, onTap: () => _reconnect(si)),
+            Btn.row(
+              icon: const Icon(Icons.refresh, size: 17),
+              text: libL10n.refresh,
+              mainAxisSize: MainAxisSize.min,
+              onTap: () => _reconnect(si),
+            ),
           ],
         ),
       ),

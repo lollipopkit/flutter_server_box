@@ -1199,35 +1199,10 @@ extension on _ServerDetailPageState {
     required bool wide,
   }) {
     final height = wide ? _kFocusChartHeight : _kFocusChartHeightNarrow;
-    // A section that failed has no line to draw and a reason worth reading in
-    // full, so it takes the chart's place rather than being squeezed into the
-    // row's one line.
-    if (m.error case final err?) {
-      return SizedBox(
-        height: height,
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SelectableText(
-                  err,
-                  textAlign: TextAlign.center,
-                  style: UIs.text12Grey.copyWith(fontFamily: 'monospace'),
-                ),
-                UIs.height13,
-                Text(
-                  l10n.metricUnavailableTip,
-                  textAlign: TextAlign.center,
-                  style: UIs.text11Grey,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+    // A section that failed has no line to draw and a reason worth reading,
+    // so that takes the chart's place — and only as much of it as it needs:
+    // see [_buildReadingFailed].
+    if (m.error case final err?) return _buildReadingFailed(m, err, wide: wide);
     // Only the chart waits. The range is a question about the chart, and the
     // headline and the rows below go on being what the machine is doing now.
     if (_customBusy || (_custom == null && _rangeBusy.contains(_range))) {
@@ -1275,6 +1250,95 @@ extension on _ServerDetailPageState {
           height: height,
           fill: true,
         ),
+      ),
+    );
+  }
+
+  /// What the chart's place holds when the reading's section of the status
+  /// failed: that it did, what the machine said, what to do about it, and the
+  /// way to all of what it said.
+  ///
+  /// Not a banner over the page — the other readings are fine, and a failure
+  /// that takes the page with it hides everything that worked. And not the
+  /// height of the chart it replaces: it was a line of grey monospace centred
+  /// in 216 points of nothing, which read as a chart that had not loaded yet
+  /// rather than as something having gone wrong.
+  ///
+  /// What the machine said is cut to a few lines here. A missing command is
+  /// one line and a Python traceback is forty, and the card is for knowing
+  /// which; the whole of it is a press away, where it can be selected.
+  Widget _buildReadingFailed(_MetricView m, String err, {required bool wide}) {
+    final scheme = Theme.of(context).colorScheme;
+    const mono = TextStyle(fontSize: 12, height: 1.5, fontFamily: 'monospace');
+
+    return Padding(
+      padding: EdgeInsets.only(top: wide ? 17 : 13, bottom: wide ? 9 : 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error, size: 18, color: scheme.error),
+              UIs.width7,
+              Text(
+                libL10n.fail,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1,
+                  fontWeight: FontWeight.w500,
+                  color: scheme.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Container(
+            // As wide as what it says where there is room, and the card's
+            // width on a phone, where what it says is wider than that anyway.
+            width: wide ? null : double.infinity,
+            padding: wide
+                ? const EdgeInsets.symmetric(horizontal: 13, vertical: 9)
+                : const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: UIs.halfAlpha,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Text(
+              err.trim(),
+              style: mono,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 9),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Text(l10n.metricUnavailableTip, style: UIs.text13Grey),
+          ),
+          const SizedBox(height: 9),
+          Btn.row(
+            icon: const Icon(Icons.bug_report_outlined, size: 17),
+            text: l10n.viewError,
+            mainAxisSize: MainAxisSize.min,
+            onTap: () => context.showRoundDialog(
+              title: m.label,
+              child: SingleChildScrollView(
+                child: SelectableText(err.trim(), style: mono),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Pfs.copy(err.trim()),
+                  child: Text(libL10n.copy),
+                ),
+                TextButton(
+                  onPressed: () => context.popDialog(),
+                  child: Text(libL10n.close),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
