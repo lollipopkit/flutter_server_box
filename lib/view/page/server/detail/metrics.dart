@@ -338,13 +338,14 @@ extension on _ServerDetailPageState {
           note: ss.cpu.brand.keys.firstOrNull ?? '',
           bigNote: '${_pct(ss.cpu.idle)} idle',
           percent: cpu == null ? null : cpu / 100,
+          // Not idle as well: the line beside the number already says it,
+          // and these are read straight after that line.
           stats: [
             (k: 'user', v: _pct(ss.cpu.user)),
             if (ss.system == SystemType.linux) ...[
               (k: 'sys', v: _pct(ss.cpu.sys)),
               (k: 'io', v: _pct(ss.cpu.iowait)),
             ],
-            (k: 'idle', v: _pct(ss.cpu.idle)),
           ],
           series: [HistorySeries('CPU', ChartPalette.promoted, w.cpu)],
           format: _pct,
@@ -532,9 +533,9 @@ extension on _ServerDetailPageState {
           note: ss.gpus.length > 1
               ? _busiestNote(ss.gpus.length, gpu.name)
               : gpu.name,
-          bigNote: mem == null
-              ? gpu.name
-              : '${gpu.name} · ${mem.used} ${l10n.ofFmt('${mem.total} ${mem.unit}')}',
+          // The card's own, which this line takes over from. It carried the
+          // memory too, which is the first of the stats after it.
+          bigNote: gpu.name,
           percent: used == null ? null : used / 100,
           stats: [
             if (mem != null)
@@ -1043,18 +1044,7 @@ extension on _ServerDetailPageState {
       ],
     );
 
-    final headline = [
-      Text(m.value, style: UIs.text27),
-      const SizedBox(width: 9),
-      Flexible(
-        child: Text(
-          m.bigNote,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: UIs.text13Grey,
-        ),
-      ),
-    ];
+    final value = Text(m.value, style: UIs.text27);
 
     // The key goes on a wrapper, not on the card: `CardX` hands its own key to
     // the `Card` it builds, and a `GlobalKey` on two widgets at once is an
@@ -1082,7 +1072,11 @@ extension on _ServerDetailPageState {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: headline,
+                        children: [
+                          value,
+                          const SizedBox(width: 9),
+                          Flexible(child: _buildFacts(m.bigNote, const [])),
+                        ],
                       ),
                     ),
                     if (stats.isNotEmpty)
@@ -1096,11 +1090,19 @@ extension on _ServerDetailPageState {
                   ],
                 )
               else ...[
-                Row(crossAxisAlignment: CrossAxisAlignment.end, children: headline),
-                if (stats.isNotEmpty) ...[
-                  UIs.height7,
-                  _buildStats(stats),
-                ],
+                // On the number's own line, and in the words that were
+                // already there. They had a line of their own under it, in a
+                // second style — a number over its name — so a phone gave
+                // two lines and two ways of writing to what is one sentence:
+                // how busy it is, and where the rest of it went.
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    value,
+                    const SizedBox(width: 9),
+                    Expanded(child: _buildFacts(m.bigNote, stats)),
+                  ],
+                ),
                 if (note != null || device != null) ...[
                   UIs.height7,
                   Row(
@@ -1414,6 +1416,35 @@ extension on _ServerDetailPageState {
     });
   }
 
+  /// What goes with the headline where there is one column: what the number
+  /// is out of, then each of [stats], all written the way the first is.
+  ///
+  /// Wrapped rather than cut short. A rate's line is a rate, its direction,
+  /// the other direction, a peak and a window, which is more than a phone is
+  /// wide — and the last of those is the one that says what the chart under
+  /// it covers. The number is about two of these lines tall, so a second run
+  /// still ends level with it.
+  Widget _buildFacts(String note, List<_Stat> stats) {
+    return Wrap(
+      spacing: 13,
+      runSpacing: 1,
+      crossAxisAlignment: WrapCrossAlignment.end,
+      children: [
+        for (final fact in [
+          if (note.isNotEmpty) note,
+          for (final s in stats) '${s.v} ${s.k}',
+        ])
+          Text(
+            fact,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: UIs.text13Grey,
+          ),
+      ],
+    );
+  }
+
+  /// The same, where there is room to set each number over its name.
   Widget _buildStats(List<_Stat> stats) {
     if (stats.isEmpty) return UIs.placeholder;
     return Row(

@@ -197,6 +197,25 @@ void main() {
     expect(scaled(), moreOrLessEquals(123, epsilon: 0.01));
   });
 
+  testWidgets('phone: what goes with the number is on its line, written '
+      'one way', (tester) async {
+    // They had a line of their own under it, each a number over its name — a
+    // second line and a second way of writing for what reads straight on
+    // from "idle". And idle was one of them, so it was on the card twice.
+    await pump(tester, size: const Size(390, 844));
+
+    final idle = find.textContaining(' idle');
+    final user = find.textContaining(' user');
+    expect(idle, findsOneWidget);
+    expect(user, findsOneWidget);
+    expect(
+      tester.getRect(user).left,
+      greaterThan(tester.getRect(idle).right),
+    );
+    expect(tester.getRect(user).top, tester.getRect(idle).top);
+    expect(tester.widget<Text>(user).style, tester.widget<Text>(idle).style);
+  });
+
   testWidgets('phone: the chart is as wide as its card lets it be', (
     tester,
   ) async {
@@ -244,7 +263,7 @@ void main() {
     await pump(tester, size: const Size(1200, 900));
 
     // CPU leads, so its stats are the ones in the card.
-    expect(find.text('idle'), findsOneWidget);
+    expect(find.text('user'), findsOneWidget);
 
     // The first is the row; the Hardware card's total comes later in the tree.
     await tester.tap(find.text(libL10n.memory).first);
@@ -255,7 +274,7 @@ void main() {
     expect(tester.takeException(), isNull);
     // Memory's stats replaced CPU's, which is what says the chart changed
     // subject rather than a second card having opened.
-    expect(find.text('idle'), findsNothing);
+    expect(find.text('user'), findsNothing);
     expect(find.text('avail'), findsOneWidget);
   });
 
