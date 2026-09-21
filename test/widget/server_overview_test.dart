@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
@@ -206,6 +207,57 @@ void main() {
       tester.getSize(find.byType(PressureBar)).width,
       greaterThanOrEqualTo(48),
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a name is against its number, and the slack before the two', (
+    tester,
+  ) async {
+    // The name was at one end of its slot and the number at the other, so
+    // what the slot had over was between a name and what it names: on a phone
+    // "CPU" was further from "2.6%" than "2.6%" was from "MEM".
+    //
+    // The CPU, which has nothing to say here and says it in two characters:
+    // the one reading in a test short enough to leave its slot any slack.
+    await pump(tester, width: 390);
+
+    final bar = tester.getRect(find.byType(PressureBar));
+    final name = tester.getRect(find.text('CPU'));
+    final number = find.text('--');
+    expect(
+      tester.getRect(number).left - name.right,
+      moreOrLessEquals(5, epsilon: 0.5),
+    );
+    // No wider than what it says. It was as wide as what the name left of
+    // the slot, with the text at the far end of that.
+    final drawn = tester
+        .renderObject<RenderParagraph>(
+          find.descendant(of: number, matching: find.byType(RichText)),
+        )
+        .getMaxIntrinsicWidth(double.infinity);
+    expect(tester.getSize(number).width, moreOrLessEquals(drawn, epsilon: 0.5));
+    // And what is over is before the name, on top of the gap every slot has.
+    expect(name.left - bar.right, greaterThan(11 + 1));
+  });
+
+  testWidgets('and the slot is as wide as its text is drawn', (tester) async {
+    // 66 whatever the text scale was: slack at 0.82, which is what a phone
+    // with its text turned down draws this at, and "100.0%" cut short at 1.3.
+    Future<double> slot(double scale) async {
+      tester.platformDispatcher.textScaleFactorTestValue = scale;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      // Wide enough to have room for two of them at either size.
+      await pump(tester, width: 700);
+      // From the end of one number to the end of the next: a slot and the
+      // gap before it.
+      return tester.getRect(find.text('50.0%')).right -
+          tester.getRect(find.text('--')).right;
+    }
+
+    final small = await slot(0.82);
+    final large = await slot(1.3);
+    expect(large / small, moreOrLessEquals((66 * 1.3 + 11) / (66 * 0.82 + 11),
+        epsilon: 0.02));
     expect(tester.takeException(), isNull);
   });
 

@@ -38,7 +38,8 @@ const _kSeparateBars = 760.0;
 /// The same rule a line in the list shares its bar by: a third of what there
 /// is and never under 48, which is about what three stretches of colour can
 /// still be told apart in. The numbers get the rest and go from the right as
-/// the width does. 66 is "DIS 100.0%" at these sizes.
+/// the width does. 66 is "DIS 100.0%" at these sizes — at the size the text
+/// is drawn at, so it is scaled with it: see [ServerOverview._pressure].
 const _kPressureMin = 48.0;
 const _kValueWidth = 66.0;
 const _kValueGap = 11.0;
@@ -313,11 +314,16 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 13),
       child: LayoutBuilder(
-        builder: (_, cons) {
+        builder: (context, cons) {
           final bar = cons.maxWidth / 3 < _kPressureMin
               ? _kPressureMin
               : cons.maxWidth / 3;
-          final room = ((cons.maxWidth - bar) / (_kValueWidth + _kValueGap))
+          // As wide as the longest of them at the size the text is drawn at.
+          // It was 66 whatever that was: a phone with its text turned down
+          // had a fifth of each as slack, and one with it turned up had its
+          // numbers cut short.
+          final slot = MediaQuery.textScalerOf(context).scale(_kValueWidth);
+          final room = ((cons.maxWidth - bar) / (slot + _kValueGap))
               .floor()
               .clamp(0, shares.length);
 
@@ -328,8 +334,19 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                 Padding(
                   padding: const EdgeInsets.only(left: _kValueGap),
                   child: SizedBox(
-                    width: _kValueWidth,
+                    width: slot,
+                    // The name against its number, and what the slot has left
+                    // over before the two of them. The name was at one end
+                    // and the number at the other, so the slack was between a
+                    // name and what it is the name of — "CPU      2.6%" — and
+                    // wider than the gap to the next reading, which is the
+                    // one that should say where one ends.
+                    //
+                    // The slot stays as wide as the longest, so the bar does
+                    // not change width as a number gains a digit, and ends
+                    // where it did: the number is still against the right.
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
                           one.short,
@@ -341,10 +358,9 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                           maxLines: 1,
                         ),
                         const SizedBox(width: 5),
-                        Expanded(
+                        Flexible(
                           child: Text(
                             _pct(one.pct),
-                            textAlign: TextAlign.end,
                             style: TextStyle(
                               fontSize: 12,
                               height: 1,

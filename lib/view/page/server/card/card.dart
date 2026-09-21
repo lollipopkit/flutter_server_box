@@ -813,7 +813,10 @@ class ServerCard extends ConsumerWidget {
         final ranked = [focus, ...inBar.where((m) => m.kind != focus.kind)];
         // See [_kLoadBarMin] for how the width is shared.
         final bar = math.max(_kLoadBarMin, cons.maxWidth / 3);
-        final room = ((cons.maxWidth - bar) / (_kLoadValueWidth + _kLoadGap))
+        // At the size the text is drawn at, which is what the width is the
+        // width of: left at 72, a larger text had its numbers cut short.
+        final slot = MediaQuery.textScalerOf(context).scale(_kLoadValueWidth);
+        final room = ((cons.maxWidth - bar) / (slot + _kLoadGap))
             .floor()
             .clamp(0, ranked.length);
         final kept = {for (final m in ranked.take(room)) m.kind};
@@ -829,12 +832,13 @@ class ServerCard extends ConsumerWidget {
             // In the bar's own order rather than by rank, so the numbers line
             // up down a list whichever reading each machine is watched by.
             if (!focusInBar && kept.contains(focus.kind))
-              _loadValue(focus, name: Colors.grey),
+              _loadValue(focus, name: Colors.grey, width: slot),
             for (final m in inBar)
               if (kept.contains(m.kind))
                 _loadValue(
                   m,
                   name: pressureColor(m.kind, over: m.over, stale: stale),
+                  width: slot,
                 ),
           ],
         );
@@ -843,11 +847,19 @@ class ServerCard extends ConsumerWidget {
   }
 
   /// One reading's name and number, after the bar on a line.
-  Widget _loadValue(ServerMetric m, {required Color name}) {
+  ///
+  /// At either end of [width], unlike the same two over the list: down forty
+  /// lines they are a column of names and a column of numbers, and that is
+  /// what they are read as.
+  Widget _loadValue(
+    ServerMetric m, {
+    required Color name,
+    required double width,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(left: _kLoadGap),
       child: SizedBox(
-        width: _kLoadValueWidth,
+        width: width,
         child: Row(
           children: [
             Text(
