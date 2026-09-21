@@ -133,6 +133,30 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.dispose();
   }
 
+  /// Closes the terminals that were running in a system that has been deleted.
+  ///
+  /// Their shells went with the files they were running from, so leaving the
+  /// tabs up leaves dead terminals nobody asked to keep. Driven by
+  /// `Rootfs.removed` rather than by the delete here, because the settings page
+  /// deletes too and only this page has the tabs.
+  ///
+  /// A member of the class, not of an extension: an extension method's
+  /// tear-off is a new closure each time, so `removeListener` in [dispose]
+  /// matched nothing and every disposed tab stayed on this static notifier.
+  void _onRootfsRemoved() {
+    final id = Rootfs.removed.value;
+    if (id == null || !mounted) return;
+    for (final tab in [..._sessions.tabs]) {
+      final source = tab.data.page.args.source;
+      if (source is! LocalSource || !source.rootfs) continue;
+      // A tab that names no profile was opened in whichever was selected then.
+      // With that one gone the selection has moved, so it cannot be recovered
+      // here — such a tab is left alone rather than closed on a guess, and its
+      // shell reports what it finds.
+      if (source.profileId == id) _closeTab(tab.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -380,26 +404,6 @@ extension _Sessions on _SSHTabPageState {
   /// separate.
   Future<void> _removeRootfs(LinuxProfile target) async {
     await removeRootfs(context, profile: target);
-  }
-
-  /// Closes the terminals that were running in a system that has been deleted.
-  ///
-  /// Their shells went with the files they were running from, so leaving the
-  /// tabs up leaves dead terminals nobody asked to keep. Driven by
-  /// `Rootfs.removed` rather than by the delete here, because the settings page
-  /// deletes too and only this page has the tabs.
-  void _onRootfsRemoved() {
-    final id = Rootfs.removed.value;
-    if (id == null || !mounted) return;
-    for (final tab in [..._sessions.tabs]) {
-      final source = tab.data.page.args.source;
-      if (source is! LocalSource || !source.rootfs) continue;
-      // A tab that names no profile was opened in whichever was selected then.
-      // With that one gone the selection has moved, so it cannot be recovered
-      // here — such a tab is left alone rather than closed on a guess, and its
-      // shell reports what it finds.
-      if (source.profileId == id) _closeTab(tab.id);
-    }
   }
 
   Future<void> _confirmClose(int index) async {

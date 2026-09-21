@@ -389,15 +389,6 @@ extension on _ContainerPageState {
     });
   }
 
-  void _onContainerTabChanged() {
-    final index = _tabCtrl.index;
-    if (index == _lastTabIndex) return;
-    _lastTabIndex = index;
-    final tab = _ContainerTabs.values[index];
-    if (tab != _ContainerTabs.settings) _lastResourceTab = tab;
-    unawaited(_refreshContainerTab(tab));
-  }
-
   Future<void> _refreshCurrentContainerTab({bool isAuto = false}) {
     return _refreshContainerTab(
       _ContainerTabs.values[_tabCtrl.index],
