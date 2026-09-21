@@ -44,9 +44,8 @@ final class ServerMetric {
   final String label;
   final IconData icon;
 
-  // No colour. What a reading is drawn in depends on whether it is the one
-  // that card is watching, which is not something a reading knows about
-  // itself — see `ChartPalette.promoted` and the card's own `_seriesColor`.
+  // No colour. Every reading is drawn in the same one, which is the theme's
+  // and not the reading's — see `ChartPalette.accent`.
 
   /// The reading now, written the way the row and the headline both write it.
   final String value;

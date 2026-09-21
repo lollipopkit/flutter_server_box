@@ -157,7 +157,7 @@ extension on _ServerDetailPageState {
   List<HistorySeries> _tempSeries(ServerState si) {
     final h = si.status.history;
     if (h.tempsByDevice.isEmpty) {
-      return [HistorySeries(libL10n.temperature, _kDeviceColors.first, h.temp)];
+      return [HistorySeries(libL10n.temperature, ChartPalette.accent, h.temp)];
     }
 
     // Hottest first, so "the hottest match in this group" falls out of a
@@ -186,15 +186,11 @@ extension on _ServerDetailPageState {
 
     return [
       for (final (i, e) in picked.indexed)
-        HistorySeries(e.key, _kDeviceColors[i % _kDeviceColors.length], e.value),
+        HistorySeries(e.key, ChartPalette.lines[i % _kMaxDeviceLines], e.value),
     ];
   }
 
 }
-
-/// Palette for the lines of one metric's devices — sensors, disks,
-/// interfaces. As long as [_kMaxDeviceLines], so two lines never share one.
-const _kDeviceColors = ChartPalette.devices;
 
 /// Trailing `.0` dropped: with round ticks the axis reads 0/25/50/75/100, and
 /// the decimal was only ever noise there

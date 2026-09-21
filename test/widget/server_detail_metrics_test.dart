@@ -21,6 +21,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -29,6 +30,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
+import 'package:server_box/view/page/server/metric_row.dart';
 
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
@@ -278,6 +280,33 @@ void main() {
     expect(find.text('avail'), findsOneWidget);
   });
 
+  testWidgets('a row is drawn in the theme colour, whichever reading it is', (
+    tester,
+  ) async {
+    // Only the reading drawn in full was. The rest had a tint of their own,
+    // barely off grey and 100° off the theme's hue: olive icons and olive
+    // bars under a pink theme, beside cards whose icons were pink.
+    await pump(tester, size: const Size(1200, 900));
+
+    // CPU leads, so memory is one of the rest.
+    final row = find.ancestor(
+      of: find.text(libL10n.memory).first,
+      matching: find.byType(MetricRow),
+    );
+    expect(tester.widget<MetricRow>(row).selected, isFalse);
+    final icon = tester.widget<Icon>(
+      find.descendant(of: row, matching: find.byType(Icon)).first,
+    );
+    expect(icon.color, ChartPalette.accent);
+    final bar = tester.widget<LinearProgressIndicator>(
+      find.descendant(
+        of: row,
+        matching: find.byType(LinearProgressIndicator),
+      ),
+    );
+    expect(bar.valueColor?.value, ChartPalette.accent);
+  });
+
   /// What a machine reports beyond the five: a percentage with a line behind
   /// it is a row, and the table it comes with stays a card.
   testWidgets('GPU load, the hottest sensor and the battery are rows', (
@@ -396,6 +425,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     expect(tester.takeException(), isNull);
+
+    // The first line is the theme colour and the second is not: they were
+    // a red and an amber fixed at build time, so the one chart on the page
+    // with two lines was the one with none of the theme in it.
+    final lines = tester
+        .widget<LineChart>(find.byType(LineChart))
+        .data
+        .lineBarsData;
+    expect(lines, hasLength(2));
+    expect(lines.first.color, ChartPalette.accent);
+    expect(lines.last.color, isNot(ChartPalette.accent));
+    expect(lines.last.color, ChartPalette.lines[1]);
 
     // The legend is the device list, so the names are what says the chart is
     // per device rather than read against write.

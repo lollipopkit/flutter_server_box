@@ -64,8 +64,7 @@ final class SeriesPalette {
   /// Every series is a colour of its own, fanned around the wheel.
   ///
   /// What a single chart wants: the lines in it are told apart by colour, so
-  /// each needs one. A *page* of these is what [SeriesPalette.seedFirst]
-  /// exists for.
+  /// each needs one.
   factory SeriesPalette.fan(Color seed, {required bool dark}) {
     final s = Oklch.of(seed);
     final asked = _clampChroma(s.c * 1.15);
@@ -82,42 +81,6 @@ final class SeriesPalette {
       anchor.color,
       for (var i = 1; i < ChartSeries.values.length; i++)
         Oklch(steps[i % 2], anchor.c * 0.72, hues[i]).fitted.color,
-    ], hues);
-  }
-
-  /// Only the promoted series is in colour; the rest are barely off grey.
-  ///
-  /// The same fan, used where what is being compared is *how high*, not which
-  /// reading: two dozen tiles each drawn in the colour of whatever that
-  /// machine happens to promote is two dozen hues on one screen, none of which
-  /// means anything — the reading is named beside the number anyway, and the
-  /// theme colour has been reduced to one sixth of the page.
-  ///
-  /// So "promoted" is what the theme colour says, and the rest drop to a tint.
-  /// The roles that are always read as a pair — read↔write, ↓↔↑ — keep enough
-  /// chroma to stay apart, because there the colour is the only label.
-  factory SeriesPalette.seedFirst(Color seed, {required bool dark}) {
-    final s = Oklch.of(seed);
-    final lead = _clampChroma(s.c * 1.1);
-    final quiet = dark ? const [0.74, 0.58] : const [0.58, 0.44];
-
-    // Offset so that no quiet series sits on the accent's own hue, where a
-    // tint of it reads as a faded version of the theme colour.
-    final hues = [
-      s.h,
-      for (var i = 1; i < ChartSeries.values.length; i++)
-        (s.h + 40 + i * 60) % 360,
-    ];
-    return SeriesPalette._([
-      Oklch(dark ? 0.82 : 0.58, lead, s.h).fitted.color,
-      for (var i = 1; i < ChartSeries.values.length; i++)
-        Oklch(
-          quiet[i % 2],
-          // `mem` is the only one of the five with nothing to be told apart
-          // from, so it is the only one fully quiet.
-          i >= 2 ? 0.085 : 0.035,
-          hues[i],
-        ).fitted.color,
     ], hues);
   }
 

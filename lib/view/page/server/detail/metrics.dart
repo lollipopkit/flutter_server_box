@@ -63,9 +63,9 @@ class _MetricView {
   final String label;
   final IconData icon;
 
-  // No colour. What a reading is drawn in depends on whether it is the one
-  // this page is focused on, which is not something a reading knows about
-  // itself — see [_seriesColor].
+  // No colour. Every reading is drawn in the same one, which is the theme's
+  // and not the reading's — see [ChartPalette.accent]. The lines of [series]
+  // are the exception, and carry their own.
 
   /// The reading now, as the row and the headline both show it.
   final String value;
@@ -347,7 +347,7 @@ extension on _ServerDetailPageState {
               (k: 'io', v: _pct(ss.cpu.iowait)),
             ],
           ],
-          series: [HistorySeries('CPU', ChartPalette.promoted, w.cpu)],
+          series: [HistorySeries('CPU', ChartPalette.accent, w.cpu)],
           format: _pct,
         ),
       );
@@ -369,7 +369,7 @@ extension on _ServerDetailPageState {
             (k: 'free', v: _pct(ss.mem.free / ss.mem.total * 100)),
             (k: 'avail', v: _pct(ss.mem.availPercent * 100)),
           ],
-          series: [HistorySeries(libL10n.memory, ChartPalette.promoted, w.mem)],
+          series: [HistorySeries(libL10n.memory, ChartPalette.accent, w.mem)],
           format: _pct,
         ),
       );
@@ -399,7 +399,7 @@ extension on _ServerDetailPageState {
           stats: [
             (k: 'cached', v: _pct(ss.swap.cached / ss.swap.total * 100)),
           ],
-          series: [HistorySeries('Swap', ChartPalette.promoted, w.swap)],
+          series: [HistorySeries('Swap', ChartPalette.accent, w.swap)],
           format: _pct,
         ),
       );
@@ -426,7 +426,7 @@ extension on _ServerDetailPageState {
           note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
           bigNote: l10n.ofFmt(usage.size.kb2Str),
           percent: used / 100,
-          series: [HistorySeries(libL10n.disk, ChartPalette.promoted, w.disk)],
+          series: [HistorySeries(libL10n.disk, ChartPalette.accent, w.disk)],
           format: _pct,
         ),
       );
@@ -465,9 +465,11 @@ extension on _ServerDetailPageState {
           // nothing to tell apart and the two directions are worth more.
           series:
               _deviceSeries(si, _MetricKind.diskIo) ??
+              // The one the number above is of first, which is the line in
+              // the theme colour — see [ChartPalette.lines].
               [
-                HistorySeries(l10n.read, ChartPalette.devices[0], w.diskRead),
-                HistorySeries(l10n.write, ChartPalette.devices[1], w.diskWrite),
+                HistorySeries(l10n.write, ChartPalette.lines[0], w.diskWrite),
+                HistorySeries(l10n.read, ChartPalette.lines[1], w.diskRead),
               ],
           format: _rateOf,
           binary: true,
@@ -499,8 +501,8 @@ extension on _ServerDetailPageState {
           series:
               _deviceSeries(si, _MetricKind.net) ??
               [
-                HistorySeries('↓', ChartPalette.devices[0], w.netRx),
-                HistorySeries('↑', ChartPalette.devices[1], w.netTx),
+                HistorySeries('↑', ChartPalette.lines[0], w.netTx),
+                HistorySeries('↓', ChartPalette.lines[1], w.netRx),
               ],
           format: _rateOf,
           binary: true,
@@ -543,7 +545,7 @@ extension on _ServerDetailPageState {
             if (gpu.temperature case final t?)
               (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
           ],
-          series: [HistorySeries('GPU', ChartPalette.promoted, w.gpu)],
+          series: [HistorySeries('GPU', ChartPalette.accent, w.gpu)],
           format: _pct,
         ),
       );
@@ -562,7 +564,7 @@ extension on _ServerDetailPageState {
           bigNote: sensor,
           series:
               _deviceSeries(si, _MetricKind.temp) ??
-              [HistorySeries(libL10n.temperature, ChartPalette.promoted, w.temp)],
+              [HistorySeries(libL10n.temperature, ChartPalette.accent, w.temp)],
           format: _formatTemp,
         ),
       );
@@ -585,7 +587,7 @@ extension on _ServerDetailPageState {
           stats: [
             if (battery.cycle case final cycle?) (k: l10n.cycle, v: '$cycle'),
           ],
-          series: [HistorySeries(libL10n.battery, ChartPalette.promoted, w.battery)],
+          series: [HistorySeries(libL10n.battery, ChartPalette.accent, w.battery)],
           format: _pct,
         ),
       );
@@ -775,7 +777,7 @@ extension on _ServerDetailPageState {
       for (final (i, name) in _plottedDevices(kind, devices).indexed)
         HistorySeries(
           name,
-          _kDeviceColors[i % _kDeviceColors.length],
+          ChartPalette.lines[i % _kMaxDeviceLines],
           devices.byDevice[name] ?? const <double?>[],
         ),
     ];
@@ -996,7 +998,7 @@ extension on _ServerDetailPageState {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(m.icon, size: 18, color: ChartPalette.reading(promoted: true)),
+              Icon(m.icon, size: 18, color: ChartPalette.accent),
               const SizedBox(width: 9),
               Flexible(
                 child: Text(
@@ -1557,7 +1559,7 @@ extension on _ServerDetailPageState {
       return MetricRow(
         icon: m.icon,
         label: m.label,
-        color: ChartPalette.reading(promoted: selected),
+        color: ChartPalette.accent,
         value: m.value,
         note: note,
         percent: m.percent,
@@ -1581,7 +1583,7 @@ extension on _ServerDetailPageState {
                 ? scheme.error
                 : selected
                 ? fg
-                : ChartPalette.reading(promoted: false),
+                : ChartPalette.accent,
           ),
           const SizedBox(width: 9),
           Expanded(

@@ -1430,7 +1430,7 @@ class ServerCard extends ConsumerWidget {
               : lerpDouble(ServerCardSizes.big, ServerCardSizes.openHead, t),
           child: Row(
           children: [
-            Icon(m.icon, size: 18, color: ChartPalette.reading(promoted: true)),
+            Icon(m.icon, size: 18, color: ChartPalette.accent),
             const SizedBox(width: 9),
             Text(
               m.label,
@@ -1651,7 +1651,7 @@ class ServerCard extends ConsumerWidget {
     final series = [
       HistorySeries(
         m.label,
-        stale ? Colors.grey : ChartPalette.reading(promoted: true),
+        stale ? Colors.grey : ChartPalette.accent,
         m.samples,
       ),
     ];
@@ -2013,7 +2013,7 @@ class ServerCard extends ConsumerWidget {
     return MetricRow(
       icon: m.icon,
       label: m.label,
-      color: ChartPalette.reading(promoted: promoted),
+      color: ChartPalette.accent,
       value: m.value,
       note: m.note,
       percent: m.percent,

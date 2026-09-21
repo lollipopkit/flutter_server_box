@@ -161,95 +161,78 @@ void main() {
     }
   });
 
-  group('seed first', () {
-    test('only the promoted series is in colour', () {
-      final p = SeriesPalette.seedFirst(seed, dark: true);
-      final lead = Oklch.of(p.cpu);
-
-      expect(lead.h, closeTo(Oklch.of(seed).h, 1));
-      expect(lead.c, greaterThan(0.10));
-
-      // Memory has nothing to be told apart from, so it is the quietest.
-      expect(Oklch.of(p.mem).c, lessThan(0.05));
-      // The four that are read in pairs keep enough to stay apart.
-      for (final series in [
-        ChartSeries.diskRead,
-        ChartSeries.diskWrite,
-        ChartSeries.netRx,
-        ChartSeries.netTx,
-      ]) {
-        final c = Oklch.of(p.of(series)).c;
-        expect(c, greaterThan(0.05));
-        expect(c, lessThan(lead.c));
-      }
-    });
-
-    test('a pair still differs by hue or by light', () {
-      for (final seed in seeds) {
-        for (final dark in [true, false]) {
-          final p = SeriesPalette.seedFirst(seed, dark: dark);
-          for (final (a, b) in [
-            (ChartSeries.diskRead, ChartSeries.diskWrite),
-            (ChartSeries.netRx, ChartSeries.netTx),
-          ]) {
-            final hue = hueDistance(p.hueOf(a), p.hueOf(b));
-            final light = contrastRatio(p.of(a), p.of(b));
-            expect(hue >= 60 || light >= 1.5, isTrue, reason: '$a vs $b');
-          }
-        }
-      }
-    });
-  });
-
   group('the palette the app reads', () {
     tearDown(() => ChartPalette.resolve(seed, dark: true));
 
     test('the six move with the seed and with the theme', () {
       ChartPalette.resolve(seed, dark: true);
       final wasCpu = ChartPalette.cpu;
-      final wasPromoted = ChartPalette.promoted;
+      final wasAccent = ChartPalette.accent;
 
       ChartPalette.resolve(const Color(0xFF3AA655), dark: true);
       expect(ChartPalette.cpu, isNot(wasCpu));
-      expect(ChartPalette.promoted, isNot(wasPromoted));
+      expect(ChartPalette.accent, isNot(wasAccent));
 
       // And back, since the same two answers must come from the same two
       // inputs — this is a cache as much as it is a computation.
       ChartPalette.resolve(seed, dark: true);
       expect(ChartPalette.cpu, wasCpu);
-      expect(ChartPalette.promoted, wasPromoted);
+      expect(ChartPalette.accent, wasAccent);
 
       ChartPalette.resolve(seed, dark: false);
       expect(ChartPalette.cpu, isNot(wasCpu));
     });
 
-    test('promoted is the accent and quiet is barely off grey', () {
-      ChartPalette.resolve(seed, dark: true);
-
-      // The one being watched carries the theme's own hue.
-      expect(
-        hueDistance(Oklch.of(ChartPalette.promoted).h, Oklch.of(seed).h),
-        lessThan(4),
-      );
-      expect(Oklch.of(ChartPalette.promoted).c, greaterThan(0.10));
-
-      // The rest are a tint, and the gap between the two is what says which
-      // row of a card is the one drawn in full above the others.
-      expect(Oklch.of(ChartPalette.quiet).c, lessThan(0.05));
-      expect(
-        Oklch.of(ChartPalette.promoted).c,
-        greaterThan(Oklch.of(ChartPalette.quiet).c * 2),
-      );
-      // Half of a pair sits between them: enough to be the only label.
-      final paired = Oklch.of(ChartPalette.quietPaired).c;
-      expect(paired, greaterThan(Oklch.of(ChartPalette.quiet).c));
-      expect(paired, lessThan(Oklch.of(ChartPalette.promoted).c));
+    test('a reading is drawn in the theme colour', () {
+      // Every reading, not only the one a card is watching. The rest were a
+      // tint barely off grey on a hue 100° from the theme's: olive under a
+      // pink theme, beside cards whose own icons were pink.
+      for (final seed in seeds) {
+        for (final dark in [true, false]) {
+          ChartPalette.resolve(seed, dark: dark);
+          final accent = Oklch.of(ChartPalette.accent);
+          expect(hueDistance(accent.h, Oklch.of(seed).h), lessThan(4));
+          // In colour, by as much as this lightness has room for at this
+          // hue: some have 0.086 where the default seed has 0.11.
+          expect(accent.c, greaterThan(0.07));
+          // One colour, not two near ones: a line in this and a stretch of
+          // the bar over the list in the CPU's are the same thing.
+          expect(ChartPalette.accent, ChartPalette.cpu);
+        }
+      }
     });
 
-    test('a device keeps its colour whatever the seed', () {
-      final before = ChartPalette.devices;
-      ChartPalette.resolve(const Color(0xFF3AA655), dark: false);
-      expect(ChartPalette.devices, before);
+    test('the lines of a chart start at the theme colour and stay apart', () {
+      // They were six colours fixed at build time, two of them the red and
+      // the amber a failure and a warning are drawn in. Whatever the seed:
+      // the first is the accent, the second is across the wheel from it, and
+      // no two that are not apart by hue are as light as each other.
+      for (final seed in seeds) {
+        for (final dark in [true, false]) {
+          ChartPalette.resolve(seed, dark: dark);
+          final lines = ChartPalette.lines;
+          expect(lines, hasLength(6));
+          expect(lines.toSet(), hasLength(6));
+          expect(lines.first, ChartPalette.accent);
+
+          final hues = [
+            for (final line in lines)
+              ChartPalette.series.hueOf(
+                ChartSeries.values[ChartPalette.series.all.indexOf(line)],
+              ),
+          ];
+          expect(hueDistance(hues[0], hues[1]), closeTo(180, 0.5));
+          for (var a = 0; a < lines.length; a++) {
+            for (var b = a + 1; b < lines.length; b++) {
+              expect(
+                hueDistance(hues[a], hues[b]),
+                greaterThanOrEqualTo(59.5),
+                reason: '$seed $dark: $a vs $b',
+              );
+            }
+          }
+        }
+      }
     });
   });
 

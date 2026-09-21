@@ -242,7 +242,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
     // they are three lengths being read across one strip, and three hues
     // there is the strip competing with the cards under it for the one thing
     // colour is spent on. The one over its line is the exception, below.
-    final color = ChartPalette.promoted;
+    final color = ChartPalette.accent;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 13),
