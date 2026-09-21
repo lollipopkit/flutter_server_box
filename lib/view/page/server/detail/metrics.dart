@@ -929,27 +929,47 @@ extension on _ServerDetailPageState {
   }
 
   /// One metric drawn in full, the rest a line each.
+  ///
+  /// Built again when a different one is chosen, and nothing else on the page
+  /// is — see [_ServerDetailPageState._focus].
   Widget _buildMetrics(ServerState si, {required bool wide}) {
     final window = _window(si);
     final views = _metrics(si, window);
     if (views.isEmpty) return UIs.placeholder;
-    final focus =
-        views.firstWhereOrNull((e) => e.kind == _focusMetric) ?? views.first;
+    final staleAt = _staleSince(si);
+    // Each row as it is drawn chosen and as it is drawn not, kept between the
+    // builder's runs and dropped whenever this method is called again.
+    //
+    // Choosing a reading changes two rows: the one that was chosen and the
+    // one that is. Built afresh each time, all nine were new widgets and all
+    // nine were built again; handed the widget it already has, Flutter skips
+    // a row altogether.
+    final rows = <(_MetricKind, bool), Widget>{};
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildFocusCard(si, focus, window, wide: wide),
-        UIs.height7,
-        // The cards bring their own margin, which is what spaces them.
-        for (final view in views)
-          _buildMetricRow(
-            view,
-            selected: view.kind == focus.kind,
-            wide: wide,
-            staleAt: _staleSince(si),
-          ),
-      ],
+    return ValueListenableBuilder(
+      valueListenable: _focus,
+      builder: (_, chosen, _) {
+        final focus =
+            views.firstWhereOrNull((e) => e.kind == chosen) ?? views.first;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildFocusCard(si, focus, window, wide: wide),
+            UIs.height7,
+            // The cards bring their own margin, which is what spaces them.
+            for (final view in views)
+              rows.putIfAbsent(
+                (view.kind, view.kind == focus.kind),
+                () => _buildMetricRow(
+                  view,
+                  selected: view.kind == focus.kind,
+                  wide: wide,
+                  staleAt: staleAt,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -1205,16 +1225,23 @@ extension on _ServerDetailPageState {
             : l10n.noStoredHistoryFor(m.label),
       );
     }
-    return MetricChart(
-      MetricChartSpec(
-        series: m.series,
-        format: m.format,
-        times: w.times,
-        window: axis.window,
-        bands: axis.bands,
-        binaryScale: m.binary,
-        height: height,
-        fill: true,
+    // A layer of its own. fl_chart eases from one line to the next over 150ms,
+    // which is nine frames of a chart that has changed and a page around it
+    // that has not — and without this each of them painted the page: every
+    // row under the chart, and where the facts are under those rather than
+    // beside them, every card and table of those as well.
+    return RepaintBoundary(
+      child: MetricChart(
+        MetricChartSpec(
+          series: m.series,
+          format: m.format,
+          times: w.times,
+          window: axis.window,
+          bands: axis.bands,
+          binaryScale: m.binary,
+          height: height,
+          fill: true,
+        ),
       ),
     );
   }
@@ -1512,7 +1539,44 @@ extension on _ServerDetailPageState {
   }
 
   /// A metric that is not being read: what it is at, and how to read it.
+  ///
+  /// Built again when what it says has changed and not on every poll: most of
+  /// them say on this poll what they said on the last — a disk's share, a
+  /// swap nobody is using, a battery — and a row is forty elements to be told
+  /// so. See [BuiltFrom] for what has to be listed; the press is safe to keep,
+  /// since what it reads of the row is which reading it is.
   Widget _buildMetricRow(
+    _MetricView m, {
+    required bool selected,
+    required bool wide,
+    DateTime? staleAt,
+  }) {
+    // And a layer of its own, as every card on this page has: what is kept
+    // is not built again, but it is painted again with everything else in its
+    // layer whenever any of that changes — which on every poll something
+    // does. With one each, a poll paints the cards that changed.
+    return RepaintBoundary(
+      child: BuiltFrom(
+        [
+          m.kind,
+          m.icon,
+          m.label,
+          m.value,
+          m.note,
+          m.percent,
+          m.error,
+          selected,
+          wide,
+          // To the minute, which is what the row says of it.
+          staleAt == null ? null : _clockOf(staleAt.millisecondsSinceEpoch),
+        ],
+        builder: (_) =>
+            _metricRow(m, selected: selected, wide: wide, staleAt: staleAt),
+      ),
+    );
+  }
+
+  Widget _metricRow(
     _MetricView m, {
     required bool selected,
     required bool wide,
@@ -1547,7 +1611,7 @@ extension on _ServerDetailPageState {
         : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
 
     void promote() {
-      _rebuild(() => _focusMetric = m.kind);
+      _focus.value = m.kind;
       // Kept, so the card this page grew out of shows the same reading when it
       // shrinks back into the list.
       ServerPromoted.put(
@@ -2136,7 +2200,23 @@ extension on _ServerDetailPageState {
     ].join(', ');
   }
 
+  /// Built again when one of its rows says something else. What a machine is
+  /// built of never does, and what it is called and running changes with its
+  /// uptime: once a minute, on a page rebuilt every few seconds.
   Widget _buildInfoCard(
+    IconData icon,
+    String title,
+    List<({String k, String v, bool secret})> rows,
+  ) {
+    return RepaintBoundary(
+      child: BuiltFrom(
+        [icon, title, ...rows],
+        builder: (_) => _infoCard(icon, title, rows),
+      ),
+    );
+  }
+
+  Widget _infoCard(
     IconData icon,
     String title,
     List<({String k, String v, bool secret})> rows,

@@ -13,12 +13,14 @@ import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
 import 'package:server_box/view/page/server/card/shape_cross.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
+import 'package:server_box/view/widget/built_from.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
 
 /// Every measurement a server card is built from, at both of its sizes.
@@ -1164,9 +1166,27 @@ class ServerCard extends ConsumerWidget {
     );
   }
 
+  /// Kept between polls while it says the same thing — see [BuiltFrom]. A
+  /// machine's name, what it runs and how it is reached are a fifth of its
+  /// card, and none of it is what a poll is about; the line on the right is
+  /// its uptime, which changes once a minute. What the control on the right
+  /// does is of the record, which is listed.
   Widget _title(BuildContext context, WidgetRef ref) {
     final line = srv.needsInteractiveAuth ? libL10n.tapToAuth : srv.listLine;
+    return BuiltFrom(
+      [
+        srv.spi,
+        line,
+        srv.conn,
+        srv.needsInteractiveAuth,
+        selected,
+        Stores.setting.showDistMark.fetch(),
+      ],
+      builder: (context) => _titleRow(context, ref, line),
+    );
+  }
 
+  Widget _titleRow(BuildContext context, WidgetRef ref, String? line) {
     return LayoutBuilder(
       builder: (_, cons) => Row(
         children: [
@@ -1659,6 +1679,10 @@ class ServerCard extends ConsumerWidget {
     // at an intermediate value during the reverse animation.
     return SizedBox(
       height: height,
+      // A layer of its own: the line eases to each new sample over 150ms, and
+      // without this every one of those frames painted the card round it —
+      // its name, its number, its note — for every card a poll had reached.
+      child: RepaintBoundary(
       child: Held(
       // Nothing about the chart changes over the first half of the movement:
       // the axis is not in yet and the line is the same line. Held there, the
@@ -1683,6 +1707,7 @@ class ServerCard extends ConsumerWidget {
         height: height,
         fill: true,
         axis: axis,
+      ),
       ),
       ),
       ),

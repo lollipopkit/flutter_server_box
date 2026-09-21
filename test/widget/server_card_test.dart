@@ -6,6 +6,7 @@ import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -81,6 +82,7 @@ void main() {
     int samples = 2,
     bool differenced = false,
     Duration lastAgo = const Duration(seconds: 3),
+    String uptime = 'up 3 days',
   }) {
     final ss = ServerStatus(
       cpu: Cpus(),
@@ -107,7 +109,7 @@ void main() {
       diskIO: DiskIO(),
     );
     // What says a status came back at all — see `serverNeverSampled`.
-    ss.more[StatusCmdType.uptime] = 'up 3 days';
+    ss.more[StatusCmdType.uptime] = uptime;
     final now = DateTime.now().millisecondsSinceEpoch;
     for (var i = 0; i < samples; i++) {
       ss.history.add(
@@ -130,6 +132,7 @@ void main() {
     int samples = 2,
     bool differenced = false,
     Duration lastAgo = const Duration(seconds: 3),
+    String uptime = 'up 3 days',
     ServerConn conn = ServerConn.finished,
     // Unfolded unless a test is about the fold: what most of these are about
     // is the rows, and a card rests without any.
@@ -158,6 +161,7 @@ void main() {
                   samples: samples,
                   differenced: differenced,
                   lastAgo: lastAgo,
+                  uptime: uptime,
                 ),
                 conn: conn,
               ),
@@ -618,6 +622,35 @@ void main() {
       await pump(tester, promoted: null, onPromote: (_) {});
       expect(row(tester), 1.0);
     });
+  });
+
+  testWidgets('a poll leaves the name row as it was, until it says something '
+      'else', (tester) async {
+    // A machine's name, what it runs and how it is reached are a fifth of its
+    // card and none of it is what a poll is about. Every poll is a new status
+    // and so a new widget for each of them, and an element visited to be told
+    // what it had.
+    await pump(tester, promoted: null, onPromote: (_) {});
+    final nameWas = tester.widget(find.text('web'));
+
+    await pump(tester, promoted: null, onPromote: (_) {}, samples: 3);
+    expect(tester.widget(find.text('web')), same(nameWas));
+
+    // Kept is not stuck: the line on the right is the uptime, and says the
+    // new one.
+    await pump(tester, promoted: null, onPromote: (_) {}, uptime: 'up 4 days');
+    expect(find.textContaining('4 days'), findsOneWidget);
+    expect(find.textContaining('3 days'), findsNothing);
+
+    // Nor is the control on the right: it is the one thing a card that is
+    // not answering has, and it changes with how the machine stands.
+    await pump(
+      tester,
+      promoted: null,
+      onPromote: (_) {},
+      conn: ServerConn.disconnected,
+    );
+    expect(find.byIcon(MingCute.link_3_line), findsOneWidget);
   });
 
   testWidgets('tapping a row asks for it to be drawn in full', (tester) async {

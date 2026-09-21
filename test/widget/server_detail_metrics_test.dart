@@ -32,6 +32,8 @@ import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 
+import 'package:server_box/view/widget/server_func_btns.dart';
+
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
 
@@ -278,6 +280,134 @@ void main() {
     // subject rather than a second card having opened.
     expect(find.text('user'), findsNothing);
     expect(find.text('avail'), findsOneWidget);
+  });
+
+  testWidgets('a poll builds again what says something else, and nothing '
+      'that does not', (tester) async {
+    // Every widget on the page is a new one on every poll, since the status
+    // it is built from is, so every element was visited to be told what it
+    // already had: sixteen hundred of them here, most about what the machine
+    // is rather than what it is doing. Twelve to eighteen milliseconds a poll
+    // in this harness and several times that on a phone in debug, every few
+    // seconds, for a page that mostly says what it said.
+    final notifier = await pump(tester, size: const Size(1200, 900));
+
+    Finder rowOf(String label) => find.ancestor(
+      of: find.text(label).first,
+      matching: find.byType(MetricRow),
+    );
+    final hardware = find
+        .ancestor(
+          of: find.text(app_locale.l10n.hardware),
+          matching: find.byType(CardX),
+        )
+        .first;
+    final bar = find.byType(ServerFuncBar);
+    final diskWas = tester.widget(rowOf(libL10n.disk));
+    final hardwareWas = tester.widget(hardware);
+    final barWas = tester.widget(bar);
+    expect(find.text('87.5%'), findsWidgets);
+
+    // The same machine with half its memory back.
+    final next = statusOf()
+      ..mem = const Memory(total: 134217728, free: 8388608, avail: 67108864);
+    notifier.updateStatus(next, latencyMs: 41);
+    await settle(tester);
+
+    expect(tester.widget(rowOf(libL10n.disk)), same(diskWas));
+    expect(tester.widget(hardware), same(hardwareWas));
+    expect(tester.widget(bar), same(barWas));
+    // And what did change is said: kept is not the same as stuck.
+    expect(find.text('87.5%'), findsNothing);
+    expect(find.text('50.0%'), findsWidgets);
+  });
+
+  testWidgets('choosing a reading builds the readings again, and nothing '
+      'beside them', (tester) async {
+    // It was the page's own state, so a press built the whole page: every
+    // card of facts and every table, none of which is about which reading is
+    // drawn in full. Twelve to twenty milliseconds a press in this harness,
+    // which is a run of missed frames when one row is pressed after another.
+    //
+    // A widget that was not built again is the widget it was: none of these
+    // are `const`, so building any of them makes a new one.
+    await pump(tester, size: const Size(1200, 900));
+
+    final facts = find
+        .ancestor(of: find.text(libL10n.about), matching: find.byType(CardX))
+        .first;
+    // A row that is neither the one being left nor the one being chosen.
+    final other = find.ancestor(
+      of: find.text(libL10n.disk).first,
+      matching: find.byType(MetricRow),
+    );
+    final factsWere = tester.widget(facts);
+    final otherWas = tester.widget(other);
+
+    await tester.tap(find.text(libL10n.memory).first);
+    for (var i = 0; i < 3; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    // It did change.
+    expect(find.text('avail'), findsOneWidget);
+    expect(tester.widget(facts), same(factsWere));
+    expect(tester.widget(other), same(otherWas));
+  });
+
+  testWidgets('which reading leads is the machine\'s, so it goes with the '
+      'machine', (tester) async {
+    // The page is a widget, not a route: a pane hands this same state another
+    // server. The windows fetched and the devices picked were given up then
+    // and the reading drawn in full was not, so the second machine opened on
+    // whatever had been chosen for the first.
+    final other = spiFixture(
+      id: 'srv-other',
+      name: 'db',
+      ip: 'h2',
+      user: 'u',
+      autoConnect: false,
+    );
+    Stores.server.put(other);
+    await pump(tester, size: const Size(1200, 900));
+    await tester.tap(find.text(libL10n.memory).first);
+    for (var i = 0; i < 3; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text('avail'), findsOneWidget);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: const [
+            LibLocalizations.delegate,
+            ...AppLocalizations.localizationsDelegates,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: ResponsivePoints.builder,
+          home: Builder(
+            builder: (context) {
+              app_locale.l10n = AppLocalizations.of(context)!;
+              context.setLibL10n();
+              return ServerDetailPage(args: SpiRequiredArgs(other));
+            },
+          ),
+        ),
+      ),
+    );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerDetailPage)),
+    );
+    container.read(serverProvider('srv-other').notifier).updateStatus(
+      statusOf(),
+      latencyMs: 41,
+    );
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    // Nothing was chosen for this one, so it is the CPU.
+    expect(find.text('avail'), findsNothing);
+    expect(find.text('user'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('a row is drawn in the theme colour, whichever reading it is', (

@@ -250,7 +250,28 @@ extension on _ServerDetailPageState {
   ///
   /// The dot is a second carrier for the verdict the value already states in
   /// words ("PASSED", "running"), not the only one.
+  ///
+  /// Kept between polls while it says the same thing, unless it leads
+  /// somewhere: where it leads is a closure over the status it was built
+  /// from, and a kept row would open the one from however many polls ago. See
+  /// [BuiltFrom].
   Widget _buildReadoutRow({
+    required String k,
+    required String v,
+    String? sub,
+    Color? dot,
+    VoidCallback? onTap,
+  }) {
+    if (onTap != null) {
+      return _readoutRow(k: k, v: v, sub: sub, dot: dot, onTap: onTap);
+    }
+    return BuiltFrom(
+      [k, v, sub, dot],
+      builder: (_) => _readoutRow(k: k, v: v, sub: sub, dot: dot),
+    );
+  }
+
+  Widget _readoutRow({
     required String k,
     required String v,
     String? sub,

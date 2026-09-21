@@ -41,6 +41,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
 import 'package:server_box/view/page/server/text_scale.dart';
+import 'package:server_box/view/widget/built_from.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -200,7 +201,13 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// [ServerPromoted]: this page and that card are one structure at two sizes,
   /// so a reading promoted on either has to be the one promoted on the other.
   /// CPU when nothing has been chosen, which is the reading every machine has.
-  late _MetricKind _focusMetric = _storedFocus ?? _MetricKind.cpu;
+  ///
+  /// Listened to by the readings alone — see `_buildMetrics`. It was a field
+  /// changed through `setState`, so pressing a row built the whole page again:
+  /// every card of facts and every table beside the readings, none of which
+  /// is about which reading is drawn in full. That was most of a frame, and
+  /// pressing one row after another was a run of frames that did not fit.
+  late final _focus = ValueNotifier(_storedFocus ?? _MetricKind.cpu);
 
   _MetricKind? get _storedFocus {
     final kind = ServerPromoted.of(widget.args.spi.id);
@@ -282,6 +289,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   void dispose() {
     super.dispose();
     _scrollCtrl.dispose();
+    _focus.dispose();
   }
 
   @override
@@ -309,6 +317,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       _range = _HistoryRange.live;
       _devicePick.clear();
     });
+    // Which reading leads is said per machine, like the rest of these.
+    _focus.value = _storedFocus ?? _MetricKind.cpu;
     // What `initState` does for the server the page opened on: this one's
     // buffer is empty until its own poll fills it, and the agent has the part
     // that happened before the page arrived.
@@ -438,7 +448,15 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   Widget _hosted(ServerState si, Widget body) {
     if (widget.bare) return body;
     return Scaffold(
-      appBar: _buildAppBar(si),
+      // Says the machine's name and nothing about its state, so it is built
+      // when that is edited rather than on every poll.
+      appBar: PreferredSize(
+        preferredSize: CustomAppBar.calcPreferredSize(),
+        child: BuiltFrom(
+          [si.spi, PaneScope.closeDetailOf(context) != null, context.isDark],
+          builder: (_) => _buildAppBar(si),
+        ),
+      ),
       // The tab's body carries this already, and a page pushed on its own is
       // outside that. It was a scaler handed to five of this page's texts
       // instead, which replaces the system's for those five: on a phone with
@@ -603,9 +621,12 @@ ${err.message ?? 'null'}
 
     // Everything that is not one of the metrics: a table or a one-off reading,
     // which is what makes it a card rather than a row.
+    // A layer each, so a poll paints the ones that changed rather than all of
+    // them — see `_buildMetricRow`.
     final cards = <Widget>[
       for (final entry in _cardBuildMap.entries)
-        if (!_cardsOff.contains(entry.key.name)) ?entry.value(si),
+        if (!_cardsOff.contains(entry.key.name))
+          if (entry.value(si) case final card?) RepaintBoundary(child: card),
     ];
     // Beside the readings rather than under them, in the column that says how
     // this machine is reached: the readings are fine and this is about the row
@@ -669,7 +690,13 @@ ${err.message ?? 'null'}
                 bottom: 0,
                 child: HideOnScroll(
                   controller: _scrollCtrl,
-                  child: ServerFuncBar(spi: si.spi, btns: funcBtns),
+                  // A third of this page's elements, and about the machine
+                  // rather than about what it is doing: the same buttons on
+                  // every poll.
+                  child: BuiltFrom(
+                    [si.spi, ...funcBtns],
+                    builder: (_) => ServerFuncBar(spi: si.spi, btns: funcBtns),
+                  ),
                 ),
               ),
           ],
