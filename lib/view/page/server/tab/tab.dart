@@ -35,6 +35,7 @@ import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/card/switcher.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
@@ -570,24 +571,14 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // The whole list, not a handful of labels inside it. The setting says
       // how big this page's text is, and it used to reach only the two lines
       // under a card's rings — so turning it up left every other word on the
-      // page the size it was. Nothing on a card is a fixed height, so a larger
-      // scale makes the cards taller rather than clipping them.
-      body: Stores.setting.textFactor.listenable().listenVal((val) {
-        return MediaQuery.withNoTextScaling(
-          child: Builder(
-            builder: (context) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(val)),
-              // The bar above spends the top inset, as an app bar does; this
-              // is what is left, and what it still has to clear is the home
-              // indicator — especially with [bare] on, since the navigation
-              // that used to sit between the two is gone.
-              child: SafeArea(top: false, child: child),
-            ),
-          ),
-        );
-      }),
+      // page the size it was.
+      body: ServerTextScale(
+        // The bar above spends the top inset, as an app bar does; this is
+        // what is left, and what it still has to clear is the home indicator
+        // — especially with [bare] on, since the navigation that used to sit
+        // between the two is gone.
+        child: SafeArea(top: false, child: child),
+      ),
     );
   }
 
@@ -1034,13 +1025,22 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// knows. Before that — the globe is up, so there has been no grid — the
   /// window stands in for the list: the same question of a box a bar or two
   /// taller.
+  /// How much larger than drawn the list's text is, which is what rules a
+  /// tile out: the page's own scale, asked of the size a tile's name is.
+  ///
+  /// The system's share counts. It was the setting alone, so a phone set to
+  /// large text was still given tiles its names did not fit in.
+  double get _textScale =>
+      ServerTextScale.of(context).scale(ServerCardSizes.name) /
+      ServerCardSizes.name;
+
   ServerListDensity _resolvedDensity(ServerListDensity stored, int count) {
     if (stored == ServerListDensity.auto) {
       if (_autoDensity.value case final known?) return known;
     }
     return stored.resolve(
       count: count,
-      textScale: Stores.setting.textFactor.fetch(),
+      textScale: _textScale,
       viewport: MediaQuery.sizeOf(context),
       folded: Stores.setting.collapseUIDefault.fetch(),
     );
@@ -1507,7 +1507,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // What the list draws each machine as is asked inside the grid, where how
     // big the list is is known — see [ServerListDensity.autoFor].
     final stored = ServerDensityPref.of(_tag.value);
-    final textScale = Stores.setting.textFactor.fetch();
+    final textScale = _textScale;
     final folded = Stores.setting.collapseUIDefault.fetch();
 
     // The sections, or null for one list. Cut before the sort is applied to

@@ -40,6 +40,7 @@ import 'package:server_box/view/page/server/detail/window_gaps.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/monitor_settings/page.dart';
+import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
@@ -252,7 +253,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// back on screen — see `_revealFocus`.
   final _focusCardKey = GlobalKey();
   late final _collapse = _settings.collapseUIDefault.fetch();
-  late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
   late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
@@ -437,7 +437,15 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// of each would be a page inside a page.
   Widget _hosted(ServerState si, Widget body) {
     if (widget.bare) return body;
-    return Scaffold(appBar: _buildAppBar(si), body: SafeArea(child: body));
+    return Scaffold(
+      appBar: _buildAppBar(si),
+      // The tab's body carries this already, and a page pushed on its own is
+      // outside that. It was a scaler handed to five of this page's texts
+      // instead, which replaces the system's for those five: on a phone with
+      // its text turned down they were a fifth larger than the rest of the
+      // card they were in.
+      body: SafeArea(child: ServerTextScale(child: body)),
+    );
   }
 
   /// Which of the three this is, and what it says.
@@ -1205,9 +1213,8 @@ ${err.message ?? 'null'}
                       ? disk.path
                       : '${disk.path} (${disk.mount})',
                   style: UIs.text12,
-                  textScaler: _textFactor,
                 ),
-                Text(text, style: UIs.text12Grey, textScaler: _textFactor),
+                Text(text, style: UIs.text12Grey),
               ],
             ),
           ),

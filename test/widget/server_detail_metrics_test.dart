@@ -173,6 +173,28 @@ void main() {
     expect(find.text('test-host'), findsOneWidget);
   });
 
+  testWidgets('phone: a page pushed on its own is at the scale the list is', (
+    tester,
+  ) async {
+    // Five of its texts were handed the setting as their scaler, which
+    // replaces the system's for those five. With the phone's text turned down
+    // they were a fifth larger than the rest of the card they were in, and
+    // the rest of the page did not follow the setting at all.
+    tester.platformDispatcher.textScaleFactorTestValue = 0.82;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await pump(tester, size: const Size(390, 844));
+
+    final host = find.text('test-host');
+    expect(tester.widget<Text>(host).textScaler, isNull);
+    double scaled() =>
+        MediaQuery.textScalerOf(tester.element(host)).scale(100);
+    expect(scaled(), moreOrLessEquals(82, epsilon: 0.01));
+
+    Stores.setting.textFactor.put(1.5);
+    await tester.pump();
+    expect(scaled(), moreOrLessEquals(123, epsilon: 0.01));
+  });
+
   /// Nine rows and the cards under them, at the width where every line of the
   /// focus card is competing for the same 390 points.
   testWidgets('phone: every row a rich machine reports still fits', (

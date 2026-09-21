@@ -704,6 +704,35 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('the list is drawn at the size the system asks for, times '
+      'its own setting', (tester) async {
+    // The setting replaced the system's scale rather than multiplying it. On
+    // a phone with its text turned down to 0.82 that was every other page at
+    // 0.82 and this one at 1: a list a fifth larger than the bars it sits
+    // between, for a reader who had asked for smaller. A desktop has no such
+    // setting, which is how long it took to be seen.
+    tester.platformDispatcher.textScaleFactorTestValue = 0.82;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    addServers();
+    await pump(tester, size: const Size(402, 874));
+
+    double scaled(double size) => MediaQuery.textScalerOf(
+      tester.element(find.byType(ServerCard).first),
+    ).scale(size);
+
+    expect(scaled(100), moreOrLessEquals(82, epsilon: 0.01));
+    // The same 0.82 the bar over the list is drawn at, which is outside it.
+    expect(
+      MediaQuery.textScalerOf(tester.element(find.byType(ServerPage))).scale(100),
+      moreOrLessEquals(82, epsilon: 0.01),
+    );
+
+    // And the setting still does what it says, on top of that.
+    Stores.setting.textFactor.put(1.5);
+    await tester.pump();
+    expect(scaled(100), moreOrLessEquals(123, epsilon: 0.01));
+  });
+
   testWidgets('what a card nobody has touched rests at is "UI Fold"', (
     tester,
   ) async {

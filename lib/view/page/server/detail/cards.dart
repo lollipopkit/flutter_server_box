@@ -283,7 +283,6 @@ extension on _ServerDetailPageState {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: UIs.text13,
-                  textScaler: _textFactor,
                 ),
                 if (sub != null)
                   // One line, cut where it runs out. A row that wraps is two
@@ -294,7 +293,6 @@ extension on _ServerDetailPageState {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: UIs.text11Grey,
-                    textScaler: _textFactor,
                   ),
               ],
             ),
@@ -307,7 +305,6 @@ extension on _ServerDetailPageState {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: UIs.text13Grey,
-              textScaler: _textFactor,
             ),
           ),
           if (onTap != null)
