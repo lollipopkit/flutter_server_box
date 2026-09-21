@@ -96,7 +96,11 @@ void main() {
     expect(script, contains("-ne '4242'"));
   });
 
-  group('under /bin/sh', () {
+  /// Only where there is a `/bin/sh` to feed. The rest of this file is text
+  /// this app assembles — including the Windows command, which is worth
+  /// asserting on every host — so the POSIX requirement is the group's rather
+  /// than the file's.
+  group('under /bin/sh', skip: Platform.isWindows ? 'requires /bin/sh' : null, () {
     test('parses, and refuses a target it cannot prove', () async {
       final script = ProcKill.command(proc(), SystemType.linux, ProcSignal.kill)!;
       final result = await sh(script);
