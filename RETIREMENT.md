@@ -104,14 +104,12 @@ These are not waiting on installs. Each has its own condition in the code.
 | `lib/data/model/app/scripts/cmd_types.dart` — enum/`sbm_parser` sync | Dart enum generated from `sbm_parser` |
 | `lib/data/model/app/scripts/script_consts.dart` — `ScriptConstants` | derived from `crates/sbm_parser` |
 | `lib/data/model/app/linux_distro.dart` — short marker forms | three-line `/etc/os-release` trim crosses every supported install |
-| `lib/data/model/app/server_detail_card.dart` — `introducedAfterBuild` | card names stable |
 | `lib/data/model/app/bak/backup2.dart` — `compressBackups` | no supported build predates compression |
 | `lib/core/utils/ios_rootfs.dart` — the old `alpine/` tree | no install predates the container |
 | `lib/core/utils/local_files.dart` — legacy `Paths` locations | no install still writes them |
 | `lib/core/utils/server_share.dart` — `findExisting` | `Spi.isSameAs` grows an identity covering both transports |
 | `lib/main.dart` — the `extended_image_library` temp folder | the library creates it recursively |
 | `lib/view/page/storage/file_browser.dart` — escalating an empty-file create | a way to escalate a write is worked out |
-| `lib/data/store/setting.dart` — `detailCardOrder` | a release has shipped without the key |
 | `lib/view/page/setting/entries/app.dart` — raw settings edit | whether the timestamp behaviour was intentional |
 | `lib/view/page/user_detail.dart` — `authorized_keys` | the file editor is reachable outside the browser |
 
