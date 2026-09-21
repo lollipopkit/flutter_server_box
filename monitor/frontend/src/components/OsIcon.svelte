@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Apple, Grid2x2, Terminal, type IconProps } from '@lucide/svelte'
+  import { Apple, Grid2x2, Terminal, type LucideProps } from '@lucide/svelte'
   import type { Platform } from '../types'
 
-  interface Props extends IconProps {
+  type Props = LucideProps & {
     platform: Platform | undefined
   }
 
