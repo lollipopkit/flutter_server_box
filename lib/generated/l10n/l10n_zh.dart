@@ -2771,10 +2771,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moveToBottom => '移到最后';
 
   @override
-  String get groupByTag => '按 tag 分组';
+  String get groupByTag => '按标签分组';
 
   @override
-  String get groupByTagTip => 'tag 是在服务器自己的编辑页里加的。';
+  String get groupByTagTip => '标签是在服务器自己的编辑页里加的。';
 
   @override
   String get connecting => '连接中…';
@@ -5562,10 +5562,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get moveToBottom => '移到最後';
 
   @override
-  String get groupByTag => '依 tag 分組';
+  String get groupByTag => '依標籤分組';
 
   @override
-  String get groupByTagTip => 'tag 是在伺服器自己的編輯頁裡加的。';
+  String get groupByTagTip => '標籤是在伺服器自己的編輯頁裡加的。';
 
   @override
   String get connecting => '連線中…';

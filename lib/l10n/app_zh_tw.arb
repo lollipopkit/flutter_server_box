@@ -864,8 +864,8 @@
   "move": "移動",
   "moveToTop": "移到最前",
   "moveToBottom": "移到最後",
-  "groupByTag": "依 tag 分組",
-  "groupByTagTip": "tag 是在伺服器自己的編輯頁裡加的。",
+  "groupByTag": "依標籤分組",
+  "groupByTagTip": "標籤是在伺服器自己的編輯頁裡加的。",
   "connecting": "連線中…",
   "authShort": "認證"
 }

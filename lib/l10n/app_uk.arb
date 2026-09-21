@@ -859,6 +859,6 @@
   "moveToBottom": "У кінець",
   "groupByTag": "Групувати за тегом",
   "groupByTagTip": "Теги задаються в редакторі сервера.",
-  "connecting": "З’єднання…",
+  "connecting": "Підключення…",
   "authShort": "Автор."
 }

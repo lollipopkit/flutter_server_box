@@ -866,8 +866,8 @@
   "move": "移动",
   "moveToTop": "移到最前",
   "moveToBottom": "移到最后",
-  "groupByTag": "按 tag 分组",
-  "groupByTagTip": "tag 是在服务器自己的编辑页里加的。",
+  "groupByTag": "按标签分组",
+  "groupByTagTip": "标签是在服务器自己的编辑页里加的。",
   "connecting": "连接中…",
   "authShort": "认证"
 }
