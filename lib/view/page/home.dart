@@ -30,6 +30,11 @@ import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/server_share.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+part 'home/lifecycle.dart';
+part 'home/nav.dart';
+part 'home/settings.dart';
+part 'home/tabs.dart';
+
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -39,74 +44,6 @@ class HomePage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: HomePage.new, path: '/');
 }
 
-
-/// What the navigation rail takes from the width a tab gets.
-///
-/// Its shut width, which is the only one it ever takes: the rail opens under
-/// the pointer and is painted *over* the tab beside it, so a tab is never laid
-/// out twice for the sake of a hover.
-const _kRailWidth = NavRailMetrics.width;
-
-/// What the `Row` holds open for it, which is the number above and not the one
-/// the rail reaches when it opens.
-@visibleForTesting
-const railWidth = _kRailWidth;
-
-/// What the rail spends on things that are not destinations.
-///
-/// Its own padding and the settings at its foot. Subtracted before the
-/// destinations are counted.
-const _kRailChromeHeight = NavRailMetrics.chromeHeight;
-
-/// How tall one rail destination is.
-///
-/// Exact rather than an estimate, now that a shut item is an icon in a pill
-/// and nothing that moves with the text scale. Still measured against the
-/// widget in `test/widget/home_rail_tabs_test.dart`, because being a point
-/// under is a rail that overflows its box.
-@visibleForTesting
-const railDestinationExtent = NavRailMetrics.itemExtent;
-
-/// How many destinations fit in [height].
-///
-/// **Never fewer than two**, and that floor is what makes the arithmetic in
-/// [railShownCount] exact. Below two there is no arrangement that both says
-/// which tab is open and reaches the others: one slot is either a tab with the
-/// rest unreachable, or a "more" with nothing saying where you are. So a rail
-/// too short for two plans for two anyway and scrolls — which is a window under
-/// 200pt tall, where the tab's own contents have about 130 and nothing on
-/// screen is usable either way.
-@visibleForTesting
-int railCapacity({required double height, required double destinationExtent}) {
-  if (destinationExtent <= 0) return 2;
-  final room = height - _kRailChromeHeight;
-  return math.max(2, room ~/ destinationExtent);
-}
-
-/// How many tabs the rail draws, of the [wanted] the user put in it.
-///
-/// The rest are behind "more", **which is a destination itself** — so a rail
-/// that cannot hold everything holds one fewer than it has room for.
-///
-/// [total] is every tab there is. The tabs the user left out of the bar are
-/// already behind "more" whatever the height, and this is where a rail too
-/// short for the ones they kept sends those as well.
-///
-/// The result **plus that slot** is what the rail draws, and it never exceeds
-/// [capacity] — which holds because [railCapacity] is at least 2. The `max(1,
-/// ...)` is only a floor against a smaller one arriving from somewhere else:
-/// with `capacity` 1 it answers one tab and a "more" beside it, two
-/// destinations in room for one, and the rail scrolls.
-@visibleForTesting
-int railShownCount({
-  required int wanted,
-  required int total,
-  required int capacity,
-}) {
-  if (wanted >= total && wanted <= capacity) return wanted;
-  return math.max(1, math.min(wanted, capacity - 1));
-}
-
 class _HomePageState extends ConsumerState<HomePage>
     with
         AutomaticKeepAliveClientMixin,
@@ -114,7 +51,8 @@ class _HomePageState extends ConsumerState<HomePage>
         WidgetsBindingObserver,
         SingleTickerProviderStateMixin,
         GlobalRef {
-  /// Which tab to come back to, by [AppTab.name] — see [_rememberTab].
+  /// Which tab to come back to, by [AppTab.name] — see
+  /// [_HomePageTabs._rememberTab].
   ///
   /// A store, not a `Restorable*`. Flutter's restoration is dead in this app —
   /// `restoreState` runs, registration succeeds, the value reads back within
@@ -134,6 +72,19 @@ class _HomePageState extends ConsumerState<HomePage>
   DateTime? _pausedTime;
   int _serverRefreshCycle = 0;
 
+  /// Guards against two of [_HomePageLifecycle._consumePendingShare] being up
+  /// at once.
+  ///
+  /// The launch path and a resume can both fire while the first is still
+  /// waiting on the passphrase dialog, and `takeOpenedShare` clearing the
+  /// native side is not enough on its own — the second call would find nothing
+  /// and return, but only after the first had already been asked twice on
+  /// platforms where opening a file also resumes the app.
+  var _consumingShare = false;
+
+  /// The lock screen currently up, if any. See where it is assigned.
+  Future<void>? _authed;
+
   late final _notifier = ref.read(serversProvider.notifier);
   /// What the user arranged: the bar, and the rail.
   late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
@@ -150,8 +101,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// Whether the window is too narrow for a rail, read from the last build.
   ///
-  /// A field because the callbacks that need it — see [_openSettings] — run
-  /// outside the `LayoutBuilder` that works it out.
+  /// A field because the callbacks that need it — see
+  /// [_HomePageSettings._openSettings] — run outside the `LayoutBuilder` that
+  /// works it out.
   bool _narrow = false;
 
   /// Whether the settings are what the content area is showing.
@@ -181,17 +133,6 @@ class _HomePageState extends ConsumerState<HomePage>
     curve: Curves.easeOutCubic,
     reverseCurve: Curves.easeInCubic,
   );
-
-  /// Whether the tabs are laid out at all.
-  ///
-  /// Only once the settings have finished arriving. Offstage is not laid out,
-  /// so hiding them the moment the animation *starts* would leave nothing to
-  /// fade out of.
-  bool get _tabsHidden => _settingsOpen && _settingsCtrl.isCompleted;
-
-  /// Whether the settings are laid out, which they are for the whole of their
-  /// own leaving as well.
-  bool get _settingsShowing => _settingsOpen || !_settingsCtrl.isDismissed;
 
   /// Whether they have been opened at all since launch.
   ///
@@ -284,7 +225,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
     // Only at the ends. What moves in between is drawn by `FadeTransition`
     // and `SlideTransition`, which listen for themselves; what a rebuild is
-    // for is [_tabsHidden] and [_settingsMounted], and both only change there.
+    // for is [_tabsHidden] and [_settingsShowing], and both only change there.
     _settingsCtrl.addStatusListener((status) {
       switch (status) {
         case AnimationStatus.completed || AnimationStatus.dismissed:
@@ -308,33 +249,10 @@ class _HomePageState extends ConsumerState<HomePage>
     _publishCurrentTab();
   }
 
-  /// Files the tab at [index] as where the app was left.
-  ///
-  /// By name. A position stops meaning the same thing the moment the tabs are
-  /// reordered or one is hidden, and the reorder is a setting the user makes
-  /// between launches.
-  void _rememberTab(int index) {
-    if (index < 0 || index >= _tabs.length) return;
-    _lastTab.put(_tabs[index].name);
-  }
-
-  /// Where to reopen, or null to leave it on the first tab.
-  ///
-  /// A name this build cannot place, or a tab since hidden, is nothing to go
-  /// back to rather than a position to clamp.
-  int? _savedTabIndex() {
-    final name = _lastTab.fetch();
-    if (name.isNotEmpty) {
-      final at = _tabs.indexWhere((tab) => tab.name == name);
-      return at < 0 ? null : at;
-    }
-    // TODO: delete with `HistoryStore.homeTabIndex`. An install upgrading from
-    // a build that stored the position has one and no name; reading it once
-    // is what keeps that launch on the tab it was left on.
-    final saved = Stores.history.homeTabIndex.fetch();
-    if (saved < 0 || saved >= _tabs.length) return null;
-    return saved;
-  }
+  // The listeners [initState] hands over by name are methods of this class
+  // rather than of an extension. An extension method torn off is a new closure
+  // each time, equal to no other, so the `removeListener` in [dispose] would be
+  // handed something that was never added and remove nothing.
 
   /// Tells [currentHomeTabProvider] where the app ended up.
   ///
@@ -344,6 +262,55 @@ class _HomePageState extends ConsumerState<HomePage>
     final index = _selectIndex.value;
     if (index < 0 || index >= _tabs.length) return;
     ref.read(currentHomeTabProvider.notifier).update(_tabs[index]);
+  }
+
+  void _handleHomeTabsChanged() {
+    final newBar = Stores.setting.homeTabs.fetch();
+    final newTabs = [...newBar, ...AppTab.overflowOf(newBar)];
+    // The page list is every tab either way, so it only changes when the *bar*
+    // does — which is what the setting says.
+    if (!mounted || newBar.equals(_barTabs)) return;
+
+    final previousIndex = _selectIndex.value;
+    // Which tab was open, not where it was. Dragging Files above Terminal in
+    // the settings page moved neither of them under the user — position 2 was
+    // kept and whatever now sits there was shown instead, which reads as the
+    // reorder having opened a page at random.
+    final previousTab = previousIndex >= 0 && previousIndex < _tabs.length
+        ? _tabs[previousIndex]
+        : null;
+    final moved = previousTab == null ? -1 : newTabs.indexOf(previousTab);
+    // It is gone from the set, so there is nothing to follow: stay where the
+    // index points, which is the nearest thing to not moving.
+    final nextIndex = moved >= 0
+        ? moved
+        : (newTabs.isEmpty ? 0 : previousIndex.clamp(0, newTabs.length - 1));
+
+    setState(() {
+      _barTabs = newBar;
+      _tabs = newTabs;
+      _selectIndex.value = nextIndex;
+      _rememberTab(nextIndex);
+    });
+
+    // The index alone does not say which tab it is any more — the list under
+    // it just changed — and it may well not have moved.
+    _publishCurrentTab();
+
+    if (nextIndex != previousIndex && _pageController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_pageController.hasClients) return;
+        _pageController.jumpToPage(nextIndex);
+      });
+    }
+  }
+
+  void _handleRefreshIntervalChanged() {
+    if (_canRefreshServers) {
+      unawaited(_restartServerRefreshCycle());
+    } else {
+      _stopServerRefreshCycle();
+    }
   }
 
   @override
@@ -359,65 +326,7 @@ class _HomePageState extends ConsumerState<HomePage>
     }
 
     if (isDesktop) return;
-
-    switch (state) {
-      case AppLifecycleState.resumed:
-        // Before anything else, so the foreground service can be let go while
-        // the app is allowed to ask for it again.
-        TermSessionManager.setBackgrounded(false);
-        _lastFullscreenMode = null;
-        if (_shouldAuth) {
-          final delay = Stores.setting.delayBioAuthLock.fetch();
-          if (delay > 0 && _pausedTime != null) {
-            final now = DateTime.now();
-            if (now.difference(_pausedTime ?? now).inSeconds > delay) {
-              unawaited(_authed = _goAuth());
-            } else {
-              _shouldAuth = false;
-              _releasePrivacyCover();
-            }
-            _pausedTime = null;
-          } else {
-            unawaited(_authed = _goAuth());
-          }
-        } else {
-          _releasePrivacyCover();
-        }
-        unawaited(_restartServerRefreshCycle());
-        unawaited(MethodChans.updateHomeWidget());
-        _syncFullscreenSystemUi();
-        break;
-      case AppLifecycleState.paused:
-        _lastFullscreenMode = null;
-        _pausedTime = DateTime.now();
-        _shouldAuth = true;
-        // Decided here rather than on the way back: the native cover comes off
-        // the moment the app is frontmost, which is several frames before
-        // Flutter hears about it and can push the lock screen.
-        if (Stores.setting.useBioAuth.fetch()) {
-          unawaited(MethodChans.setPrivacyBlurLocked(true));
-        }
-        if (!(isAndroid && Stores.setting.bgRun.fetch())) {
-          _stopServerRefreshCycle();
-        }
-        break;
-      case AppLifecycleState.inactive:
-        // Not in `paused`, which is too late. Android refuses to *start* a
-        // foreground service for an app that is already in the background, and
-        // `paused` is delivered from `onStop` — by then the activity is gone.
-        // `inactive` comes from `onPause`, while it is still visible, which is
-        // the last moment the request is allowed.
-        //
-        // The cost is that pulling down the notification shade also reads as
-        // leaving, so a device with nothing connected can show the keep-alive
-        // notification for as long as the shade is open. That is the same
-        // notification `bgRun` asks for anyway, and the alternative is a
-        // request the system turns down.
-        TermSessionManager.setBackgrounded(true);
-        break;
-      default:
-        break;
-    }
+    _handleMobileLifecycle(state);
   }
 
   @override
@@ -486,82 +395,8 @@ class _HomePageState extends ConsumerState<HomePage>
                 Expanded(
                   child: Stack(
                     children: [
-                      // Kept mounted behind the settings rather than swapped out
-                      // for them: a tab holds a terminal, a scroll position and a
-                      // navigator of its own, and all three would end here.
-                      // `Offstage` does not lay its child out, so nothing is
-                      // resized to zero and back on the way through either.
-                      Offstage(
-                        offstage: _tabsHidden,
-                        child: TickerMode(
-                          enabled: !_tabsHidden,
-                          child: _crossed(
-                            leaving: true,
-                            child: PageView.builder(
-                              controller: _pageController,
-                              itemCount: _tabs.length,
-                              physics: const NeverScrollableScrollPhysics(),
-                              // Each tab keeps its own stack, so a page opened
-                              // inside one — a server's details, its files — covers
-                              // the tab and not the window. The bar or rail that got
-                              // you here stays put, and coming back to a tab returns
-                              // you to where you were in it.
-                              itemBuilder: (_, index) => NestedNavigator(
-                                key: ValueKey(_tabs[index]),
-                                // The top inset lands on the tab's own content and
-                                // not on the navigator around it, which is the whole
-                                // point: a page pushed here is a sibling route,
-                                // outside this `SafeArea`, so it reaches the top of
-                                // the window and animates across the status bar.
-                                // Wrapping the navigator instead would inset the
-                                // pushed page too and put the seam back.
-                                //
-                                // Here rather than in each tab because a tab is not
-                                // one shape: three of them put a `Scaffold` *inside*
-                                // a pane splitter, so the splitter's own divider is
-                                // above any app bar that could have spent the inset.
-                                rootBuilder: (_) =>
-                                    SafeArea(bottom: false, child: _tabs[index].page),
-                              ),
-                              onPageChanged: (value) {
-                                FocusScope.of(context).unfocus();
-                                if (!_switchingPage) {
-                                  _selectIndex.value = value;
-                                  _rememberTab(value);
-                                }
-                                _syncFullscreenSystemUi();
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Its own navigator, like a tab's: what the settings push —
-                      // the private keys, a backup, the raw editor — belongs over
-                      // the settings and not over the window.
-                      if (_settingsSeen)
-                        Offstage(
-                          offstage: !_settingsShowing,
-                          child: TickerMode(
-                            enabled: _settingsShowing,
-                            child: IgnorePointer(
-                              // On the way out it is still painted and still on
-                              // top, so without this a tap meant for the tab
-                              // underneath would land on a page that is leaving.
-                              ignoring: !_settingsOpen,
-                              child: _crossed(
-                                leaving: false,
-                                child: NestedNavigator(
-                                  key: const ValueKey('settings'),
-                                  navigatorKey: _settingsNavKey,
-                                  rootBuilder: (_) => const SafeArea(
-                                    bottom: false,
-                                    child: SettingsPage(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                      _buildTabPages(),
+                      if (_settingsSeen) _buildSettingsPane(),
                     ],
                   ),
                 ),
@@ -679,223 +514,6 @@ class _HomePageState extends ConsumerState<HomePage>
     return withKeys;
   }
 
-  /// One side of the crossing between the tabs and the settings.
-  ///
-  /// [leaving] is the side that is on its way out as the settings arrive —
-  /// the tabs — so the two fade in opposite directions and are displaced in
-  /// opposite directions, which is what reads as one replacing the other
-  /// rather than as two things fading independently.
-  Widget _crossed({required bool leaving, required Widget child}) {
-    const shift = 0.03;
-    return FadeTransition(
-      opacity: leaving
-          ? Tween(begin: 1.0, end: 0.0).animate(_settingsAnim)
-          : _settingsAnim,
-      child: SlideTransition(
-        position: Tween(
-          begin: leaving ? Offset.zero : const Offset(shift, 0),
-          end: leaving ? const Offset(-shift, 0) : Offset.zero,
-        ).animate(_settingsAnim),
-        child: child,
-      ),
-    );
-  }
-
-  Widget _buildBottomBar() {
-    return ListenableBuilder(
-      listenable: _selectIndex,
-      builder: (context, child) {
-        if (_isServerFullscreenMode) return UIs.placeholder;
-        final shown = _barTabs;
-        final overflow = _tabs.length - shown.length;
-        final selected = _selectIndex.value;
-        return NavigationBar(
-          key: _navKey,
-          // Past the bar's own tabs, what is open is inside "more" — which is
-          // then what the last destination stands for, and is lit to say so.
-          // The settings light that slot too, when they are what it holds.
-          selectedIndex: _settingsOpen && overflow == 0
-              ? shown.length
-              : (selected < shown.length ? selected : shown.length),
-          height: kBottomNavigationBarHeight * 1.1,
-          animationDuration: const Duration(milliseconds: 250),
-          onDestinationSelected: (index) {
-            if (index < shown.length) return _onDestinationSelected(index);
-            // The last slot is one or the other, never both.
-            if (overflow > 0) {
-              unawaited(_showMoreSheet(shown.length));
-              return;
-            }
-            _openSettings();
-          },
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          destinations: [
-            for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
-            // One slot, holding whichever of the two is needed. While
-            // anything is behind "more" that is where the settings live, as
-            // they always have; with every tab turned on there is nothing left
-            // for "more" to hold, and the slot becomes the settings themselves
-            // rather than a sheet with one row in it.
-            //
-            // Settings is not an `AppTab` either way: it is never arranged,
-            // never stored, and never one of the pages the index above
-            // addresses — tapping it pushes rather than switches.
-            if (overflow > 0)
-              NavigationDestination(
-                icon: const Icon(Icons.more_horiz),
-                selectedIcon: const Icon(Icons.more_horiz),
-                label: libL10n.more,
-              )
-            else
-              NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings),
-                label: libL10n.setting,
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// The tabs that did not fit, and the way to change which ones those are.
-  ///
-  /// [shownCount] rather than the constant: the bar shows fewer than that when
-  /// fewer are enabled, and the split has to be the one the bar actually made.
-  Future<void> _showMoreSheet(int shownCount) async {
-    final overflow = _tabs.skip(shownCount).toList();
-    final selected = _selectIndex.value;
-
-    await showRowsSheet<void>(
-      context,
-      rows: (ctx) => [
-        for (final tab in overflow)
-          ListTile(
-            leading: tab.icon,
-            title: Text(tab.label),
-            selected: _tabs.indexOf(tab) == selected,
-            onTap: () {
-              // The sheet closes itself; the page it came from is what
-              // switches tabs, on the navigator that owns the tabs.
-              Navigator.of(ctx).pop();
-              _onDestinationSelected(_tabs.indexOf(tab));
-            },
-          ),
-        const Divider(height: 1),
-        // Where the tabs are arranged, reachable from the bar they arrange
-        // rather than only from four levels into the settings tree. The
-        // same page either way — this pushes it, settings embeds it.
-        ListTile(
-          leading: const Icon(Icons.tab_outlined),
-          title: Text(l10n.homeTabs),
-          onTap: () {
-            Navigator.of(ctx).pop();
-            HomeTabsConfigPage.route.go(context);
-          },
-        ),
-        // The bar has no settings slot of its own while this sheet exists —
-        // the slot is the one this sheet came out of. It takes that slot back
-        // when every tab is on and there is no sheet to raise.
-        ListTile(
-          leading: const Icon(Icons.settings),
-          title: Text(libL10n.setting),
-          onTap: () {
-            Navigator.of(ctx).pop();
-            _openSettings();
-          },
-        ),
-      ],
-    );
-  }
-
-  /// The rail, with the same "more" the bottom bar has.
-  ///
-  /// It had none, which was two things wrong at once. The tabs the user left
-  /// out of the bar were unreachable on a wide window — nothing there listed
-  /// them — and `_selectIndex` addresses every tab while the destinations were
-  /// only the ones in the bar, so arriving on one of the others tripped
-  /// `NavigationRail`'s own `selectedIndex < destinations.length` assert. That
-  /// is reachable without any wide-window navigation at all: the tab the app
-  /// reopens on is restored by name, and a window can be widened while one of
-  /// them is showing.
-  ///
-  /// The rail also runs out of *height*, which the bar never does — so what is
-  /// behind "more" here is the tabs the user hid plus however many of the rest
-  /// do not fit. Both are the same thing to everything downstream, because the
-  /// rail draws the first `shown` of [_tabs] and `_showMoreSheet` takes the
-  /// remainder, exactly as the bar does.
-  Widget _buildRailBar() {
-    return SafeArea(
-      // Anchored to the start, so the inset on the far side is not its to
-      // keep clear: taking it would make the rail wider than the room the
-      // `Row` holds open for it, by however much the other edge is cut off.
-      right: false,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final capacity = railCapacity(
-            height: constraints.maxHeight,
-            destinationExtent: railDestinationExtent,
-          );
-          final shown = railShownCount(
-            wanted: _barTabs.length,
-            total: _tabs.length,
-            capacity: capacity,
-          );
-          return _buildRail(shown: shown);
-        },
-      ),
-    );
-  }
-
-  Widget _buildRail({required int shown}) {
-    final more = shown < _tabs.length;
-    return ListenableBuilder(
-      listenable: _selectIndex,
-      builder: (context, _) {
-        if (_isServerFullscreenMode) return UIs.placeholder;
-        return AppNavRail(
-          key: _navKey,
-          // Past the rail's own tabs, what is open is inside "more" — which is
-          // then what the last item stands for, and is lit to say so. The bar
-          // does the same.
-          //
-          // Out of range while the settings are showing, so that nothing in
-          // the rail is lit but the foot of it: the tab underneath is still
-          // the one that will come back, but it is not what is on screen.
-          selectedIndex: _settingsOpen
-              ? -1
-              : (_selectIndex.value < shown ? _selectIndex.value : shown),
-          items: [
-            for (final tab in _tabs.take(shown))
-              tab.navRailItem(onMenu: _navMenuFor(tab)),
-            if (more)
-              NavRailItem(
-                icon: const Icon(Icons.more_horiz),
-                selectedIcon: const Icon(Icons.more_horiz),
-                label: libL10n.more,
-              ),
-          ],
-          onSelected: (index) {
-            if (index < shown) return _onDestinationSelected(index);
-            unawaited(_showMoreSheet(shown));
-          },
-          // An item like the rest, laid out under them rather than stacked
-          // over them: pinned by a `Positioned` it sat on top of the last tab
-          // whenever the rail was full, and covered it. Lit like a destination
-          // because that is what it is — what it shows arrives beside this
-          // rail rather than over it.
-          footer: NavRailItem(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings),
-            label: libL10n.setting,
-          ),
-          footerSelected: _settingsOpen,
-          onFooterTap: _openSettings,
-        );
-      },
-    );
-  }
-
   @override
   bool get wantKeepAlive => true;
 
@@ -944,426 +562,10 @@ class _HomePageState extends ConsumerState<HomePage>
     // connection, and one machine slow to answer would hold all of this back
     // for as long as it takes to time out. The strip the guide points at is
     // already laid out — this runs after the first frame.
-    unawaited(() async {
-      // Behind the lock screen, not beside it. Every one of these is a
-      // root-navigator dialog, and the lock page is on that navigator too —
-      // see [_goAuth]. Completes immediately when no lock is configured.
-      await authed;
-      if (!mounted) return;
-      // Says so when this launch took over the sandboxed build's data, or
-      // when it could not — see [SandboxImport].
-      await SandboxImportNotice.showIfNeeded(context);
-      if (!mounted) return;
-      // Says so when this upgrade took a feature away — see
-      // [LegacyStatusUrlsMigration].
-      await LegacyStatusNotice.showIfNeeded(context);
-      if (!mounted) return;
-      // Nothing about the previous run is raised here any more. A crash used
-      // to put a toast in front of somebody who had just opened the app to do
-      // something else, once, on the one launch that read the marker; the
-      // report is now kept and waits under **Settings → Privacy** — see
-      // [CrashReportDialog]. The two notices above stay: both are about data
-      // this launch changed, which is not something to find out about later.
-      // A share opened from AirDrop or the Files app while this app was not
-      // running: the platform launched it with the URL, and the native side
-      // has been holding the bytes since before the first frame.
-      //
-      // **Before the guide, not after.** The guide is an overlay above every
-      // route and skips itself when something else is up — which only works if
-      // the something else is already there. With this second, a launch that
-      // had both drew the hint on top of the passphrase prompt the user had
-      // just asked for, and the guide's own button sat over the dialog's.
-      // Answering the file the user opened comes first either way.
-      await _consumePendingShare();
-      if (!mounted) return;
-      await _maybeShowNavGuide();
-    }());
+    unawaited(_showLaunchNotices(authed));
 
     unawaited(_restartServerRefreshCycle());
 
     bakSync.sync(milliDelay: 1000);
-  }
-
-  /// Guards against two of these being up at once.
-  ///
-  /// The launch path and a resume can both fire while the first is still
-  /// waiting on the passphrase dialog, and `takeOpenedShare` clearing the
-  /// native side is not enough on its own — the second call would find nothing
-  /// and return, but only after the first had already been asked twice on
-  /// platforms where opening a file also resumes the app.
-  var _consumingShare = false;
-
-  /// The lock screen currently up, if any. See where it is assigned.
-  Future<void>? _authed;
-
-  /// Takes in a `.sbxsrv` the platform handed this app, if one is waiting.
-  Future<void> _consumePendingShare() async {
-    if (_consumingShare) return;
-    // Before the launch path has decided whether there is a lock, [_authed] is
-    // null and awaiting it waits for nothing — so a `resumed` edge arriving
-    // first (a cold launch on macOS, where opening the file is what activates
-    // the app) would put the passphrase prompt on the same root navigator as
-    // the lock page, over it. Returning costs nothing: the launch path calls
-    // this itself once it has assigned it, and taking the guard below would
-    // have made that call a no-op instead.
-    if (_authed == null) return;
-    _consumingShare = true;
-    try {
-      final text = await MethodChans.takeOpenedShare();
-      if (text == null || text.isEmpty || !mounted) return;
-      // Behind the lock screen for the same reason the launch notices are: it
-      // is a root-navigator dialog, and the lock page is on that navigator.
-      //
-      // Read here rather than captured on entry, and that ordering matters:
-      // this method is called from the top of `didChangeAppLifecycleState`,
-      // before the branch that starts the lock. The platform call above is a
-      // channel round trip, so the rest of that method — including assigning
-      // the new [_authed] — has run by the time this line does.
-      await _authed;
-      if (!mounted) return;
-      await ServerShareUi.consume(context, ref, text, digitsOnly: false);
-    } catch (e, s) {
-      Loggers.app.warning('Consume the opened share', e, s);
-    } finally {
-      _consumingShare = false;
-    }
-  }
-
-  /// Completes once the lock screen, if there is one, has been dismissed.
-  ///
-  /// Awaited by the launch notices. `showRoundDialog` puts a dialog on the
-  /// *root* navigator, which is the one holding the lock page, so anything
-  /// raised while it is up draws over it — and the crash report renders the
-  /// previous run's log, which is precisely what a lock screen exists to keep
-  /// unread. The other two notices are no better placed there.
-  /// [showGuide] is false on the launch path, where the caller shows the guide
-  /// itself once the launch notices have been through.
-  ///
-  /// The call below runs *before* this method's own future completes, so a
-  /// launch with a lock configured had the guide up before the crash and
-  /// migration notices it is supposed to follow — the ordering the caller
-  /// spells out, defeated by the one branch that does not go through it.
-  /// Resuming has no such sequence and is where this still has to happen.
-  Future<void> _goAuth({bool showGuide = true}) async {
-    // First, and on every path out of here. On iOS the cover is a view over the
-    // Flutter window, so it is *above* every route drawn inside it — left up it
-    // would hide the lock screen instead of protecting it. Releasing it before
-    // the push costs at most the frames until the route appears, and in
-    // practice the channel round trip outlasts the push.
-    //
-    // The path that matters is the early return below. Backgrounding *from* the
-    // lock screen and coming back re-locks the cover and lands here, where
-    // `alreadyIn` is true — and skipping this left the cover over that screen
-    // with nothing that would ever take it off, since the next trip out and
-    // back returns at exactly the same place.
-    _releasePrivacyCover();
-
-    if (!Stores.setting.useBioAuth.fetch()) return;
-    if (LocalAuthPage.route.alreadyIn) return;
-
-    // The route's own future, not `onAuthSuccess`. That callback runs from
-    // inside `context.pop()`, while the lock screen is still the route the
-    // navigator answers with — so the guide's "is the home page current"
-    // check would say no and skip it every launch, on exactly the devices
-    // this branch exists for. The future completes once the pop has.
-    await LocalAuthPage.route.go(
-      context,
-      args: LocalAuthPageArgs(
-        onAuthSuccess: () => _shouldAuth = false,
-        onUnavailable: _onAuthUnavailable,
-      ),
-    );
-    if (showGuide) await _maybeShowNavGuide();
-  }
-
-  /// This device cannot answer the lock, so stop asking it.
-  ///
-  /// The setting is only ever true here because it arrived from somewhere else:
-  /// a backup taken on a phone, restored onto a machine with no sensor. The
-  /// lock screen has no way to open on such a machine, and the settings page
-  /// hides the switch when `LocalAuth.isAvail` is false — so the one control
-  /// that would turn it off is missing on exactly the devices that need it,
-  /// and the app was unusable (#1406).
-  ///
-  /// Written without a sync timestamp. This is a fact about *this* machine, and
-  /// stamping it would let the next sync carry it to the phone the backup came
-  /// from and silently unlock that too.
-  void _onAuthUnavailable() {
-    _shouldAuth = false;
-    final prop = Stores.setting.useBioAuth;
-    final saved = prop.store.set(prop.key, false, updateLastUpdateTsOnSet: false);
-    // `set` answers false rather than throwing. Worth a line and nothing more:
-    // the app is already past the lock either way, and the cost of a failed
-    // write is being asked once more on the next launch.
-    if (saved != true) {
-      Loggers.app.warning('Could not turn ${prop.key} off on a device '
-          'that cannot authenticate');
-    }
-  }
-
-  /// Let the native privacy cover come off, now that either the lock screen is
-  /// about to take over or it was established that none is coming.
-  void _releasePrivacyCover() {
-    unawaited(MethodChans.setPrivacyBlurLocked(false));
-  }
-
-  void _onDestinationSelected(int index) {
-    if (index < 0 || index >= _tabs.length) return;
-    // A tab is a tab even when the settings are the thing on screen: picking
-    // one has to put them away, which is the same move as picking the tab you
-    // were already on.
-    _closeSettings();
-    if (_selectIndex.value == index) return;
-    _selectIndex.value = index;
-    _rememberTab(index);
-    _switchingPage = true;
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 677),
-      curve: Curves.fastLinearToSlowEaseIn,
-    );
-    Future.delayed(const Duration(milliseconds: 677), () {
-      _switchingPage = false;
-    });
-  }
-
-  /// Whether the window gets a rail rather than a bar.
-  bool _hasRail(bool narrow) => !narrow && !_wantsWindow;
-
-  /// Puts the settings away, where they are shown in place of a tab.
-  void _closeSettings() {
-    if (!_settingsOpen) return;
-    setState(() => _settingsOpen = false);
-    _settingsCtrl.reverse();
-  }
-
-  /// Shows the settings where a tab is shown, rather than over everything.
-  ///
-  /// Only where there is a rail to keep on screen. A phone has none to cover,
-  /// and no room for a second strip under the settings' own floating one — so
-  /// there they stay a page, with the bar's back button as the way out.
-  void _openSettings() {
-    if (_narrow) {
-      SettingsPage.route.go(context);
-      return;
-    }
-    if (_settingsOpen) return;
-    setState(() {
-      _settingsOpen = true;
-      _settingsSeen = true;
-    });
-    _settingsCtrl.forward();
-  }
-
-  bool get _isServerFullscreenMode {
-    if (!Stores.setting.fullScreen.fetch()) return false;
-    if (_tabs.isEmpty) return false;
-    final selectedIndex = _selectIndex.value;
-    if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
-    return isLandscape && _tabs[selectedIndex] == AppTab.server;
-  }
-
-  void _syncFullscreenSystemUi({bool? forceHide}) {
-    if (!isMobile) return;
-    final hide = forceHide ?? _isServerFullscreenMode;
-    if (_lastFullscreenMode == hide) return;
-    _lastFullscreenMode = hide;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      SystemUIs.switchStatusBar(hide: hide);
-    });
-  }
-}
-
-
-extension _HomePageStateUtils on _HomePageState {
-  bool get _canRefreshServers {
-    if (isDesktop) return true;
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (lifecycle == null || lifecycle == AppLifecycleState.resumed) {
-      return true;
-    }
-    return isAndroid && Stores.setting.bgRun.fetch();
-  }
-}
-
-
-extension _HomePageStateActions on _HomePageState {
-  void _handleHomeTabsChanged() {
-    final newBar = Stores.setting.homeTabs.fetch();
-    final newTabs = [...newBar, ...AppTab.overflowOf(newBar)];
-    // The page list is every tab either way, so it only changes when the *bar*
-    // does — which is what the setting says.
-    if (!mounted || newBar.equals(_barTabs)) return;
-
-    final previousIndex = _selectIndex.value;
-    // Which tab was open, not where it was. Dragging Files above Terminal in
-    // the settings page moved neither of them under the user — position 2 was
-    // kept and whatever now sits there was shown instead, which reads as the
-    // reorder having opened a page at random.
-    final previousTab = previousIndex >= 0 && previousIndex < _tabs.length
-        ? _tabs[previousIndex]
-        : null;
-    final moved = previousTab == null ? -1 : newTabs.indexOf(previousTab);
-    // It is gone from the set, so there is nothing to follow: stay where the
-    // index points, which is the nearest thing to not moving.
-    final nextIndex = moved >= 0
-        ? moved
-        : (newTabs.isEmpty ? 0 : previousIndex.clamp(0, newTabs.length - 1));
-
-    // ignore: invalid_use_of_protected_member
-    setState(() {
-      _barTabs = newBar;
-      _tabs = newTabs;
-      _selectIndex.value = nextIndex;
-      _rememberTab(nextIndex);
-    });
-
-    // The index alone does not say which tab it is any more — the list under
-    // it just changed — and it may well not have moved.
-    _publishCurrentTab();
-
-    if (nextIndex != previousIndex && _pageController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_pageController.hasClients) return;
-        _pageController.jumpToPage(nextIndex);
-      });
-    }
-  }
-
-  void _handleRefreshIntervalChanged() {
-    if (_canRefreshServers) {
-      unawaited(_restartServerRefreshCycle());
-    } else {
-      _stopServerRefreshCycle();
-    }
-  }
-
-  /// Starts a new polling cycle without letting its timer race the first run.
-  ///
-  /// The generation prevents a refresh that finishes after pause, dispose or a
-  /// newer restart from turning the timer back on. Repeated restart requests
-  /// share the notifier's global refresh queue; only the latest one schedules
-  /// the next poll.
-  Future<void> _restartServerRefreshCycle() async {
-    final cycle = ++_serverRefreshCycle;
-    _notifier.stopAutoRefresh();
-    try {
-      await _notifier.refresh();
-    } catch (error, stackTrace) {
-      Loggers.app.warning('Initial server refresh failed', error, stackTrace);
-    }
-    if (!mounted || cycle != _serverRefreshCycle || !_canRefreshServers) return;
-    await _notifier.startAutoRefresh();
-  }
-
-  void _stopServerRefreshCycle() {
-    _serverRefreshCycle++;
-    _notifier.stopAutoRefresh();
-  }
-}
-
-/// What a tab can be told to do to everything it holds.
-///
-/// Two tabs hold a set of live things — the servers, and the terminals — and
-/// acting on all of them one row at a time is the tedious part of having more
-/// than a few. The rest of the tabs hold records: a snippet is not connected
-/// to anything, and a menu with nothing in it is worse than no menu.
-///
-/// On the tab and not on the page it opens, because that is the one control
-/// reachable from anywhere in the app. Turning everything off is most wanted
-/// from somewhere that is not the server list.
-extension _HomePageNav on _HomePageState {
-  ContextMenuOpener? _navMenuFor(AppTab tab) {
-    final l10n = context.l10n;
-    final menu = switch (tab) {
-      AppTab.server => (
-        title: libL10n.server,
-        actions: [
-          ContextMenuAction(
-            text: l10n.connectAll,
-            icon: MingCute.link_3_line,
-            onTap: () => unawaited(_notifier.connectAll()),
-          ),
-          ContextMenuAction(
-            text: l10n.disconnectAll,
-            icon: MingCute.unlink_2_line,
-            destructive: true,
-            onTap: _notifier.closeServer,
-          ),
-        ],
-      ),
-      AppTab.ssh => (
-        title: libL10n.terminal,
-        actions: [
-          ContextMenuAction(
-            text: l10n.disconnectAll,
-            icon: MingCute.unlink_2_line,
-            destructive: true,
-            onTap: () => unawaited(_confirmCloseAllTerminals()),
-          ),
-        ],
-      ),
-      _ => null,
-    };
-    if (menu == null) return null;
-    return (at) => showContextMenu(context, menu.actions, title: menu.title, at: at);
-  }
-
-  /// Asked first, unlike disconnecting servers.
-  ///
-  /// A server that was disconnected reconnects with the entry above it and is
-  /// back where it was. A terminal that was closed takes its scrollback with
-  /// it, and whatever was still running in it.
-  Future<void> _confirmCloseAllTerminals() async {
-    final ok = await context.showRoundDialog<bool>(
-      title: libL10n.attention,
-      child: Text(
-        libL10n.askContinue('${libL10n.close} ${libL10n.all} ${libL10n.terminal}'),
-      ),
-      actions: Btnx.okReds,
-    );
-    if (ok != true) return;
-    // The tab that owns the sessions does the closing; see
-    // [TerminalCloseAllRequest] for why it cannot be called directly.
-    ref.read(terminalCloseAllRequestProvider.notifier).go();
-  }
-
-  /// Points at the tab strip, once per install.
-  ///
-  /// The menu above opens on a long press or a right-click and leaves no mark
-  /// on screen — nothing about the strip says it is there. Everything else in
-  /// this app that hides behind a long press has a visible way in as well;
-  /// this one does not, because the tab's own tap already means "go there".
-  Future<void> _maybeShowNavGuide() async {
-    if (_navGuideHandled) return;
-    final flag = Stores.setting.navTabMenuGuided;
-    if (flag.fetch()) return;
-    if (!mounted) return;
-    // Nothing to act on in bulk yet. Someone who has just installed this has
-    // enough in front of them without being told about a shortcut for a list
-    // they have not made.
-    if (ref.read(serversProvider).serverOrder.isEmpty) return;
-    // The overlay goes above every route, so it would cover the lock screen,
-    // an update notice or the sandbox-import dialog rather than wait for it.
-    // Skipping leaves the guide for the next launch.
-    if (ModalRoute.of(context)?.isCurrent != true) return;
-
-    final overlay = Overlay.maybeOf(context, rootOverlay: true);
-    if (overlay == null) return;
-    // Null when the strip is not built — fullscreen mode takes it away.
-    final spot = rectInOverlay(_navKey.currentContext, overlay);
-    if (spot == null) return;
-
-    _navGuideHandled = true;
-    // One step, so no title: a heading over a single sentence says it twice.
-    // The same card the terminal's key walkthrough uses — see [GuideView].
-    await GuideOverlay.show(context, [
-      GuideStep(body: context.l10n.navTabMenuTip, spot: spot),
-    ]);
-    // Written when it has been seen through, not when it was scheduled.
-    flag.put(true);
   }
 }

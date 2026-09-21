@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/reading_text.dart';
 
 /// Which reading a row, or the chart above the rows, is showing.
 enum ServerMetricKind { cpu, mem, swap, disk, diskIo, net, gpu, temp, battery }
@@ -188,7 +189,7 @@ bool serverNeverSampled(ServerState srv) =>
 /// Three polls, and never under half a minute: one poll running long is a slow
 /// script rather than a stopped app, and a card that says "stale" every time a
 /// refresh takes its time teaches the reader to ignore it.
-Duration get _staleAfter {
+Duration get serverStaleAfter {
   final seconds = Stores.setting.serverStatusUpdateInterval.fetch();
   final polls = Duration(seconds: (seconds > 0 ? seconds : 10) * 3);
   return polls < const Duration(seconds: 30)
@@ -206,7 +207,7 @@ DateTime? serverStaleSince(ServerState srv) {
   final times = srv.status.history.time;
   if (times.isEmpty) return null;
   final at = DateTime.fromMillisecondsSinceEpoch(times.last);
-  return DateTime.now().difference(at) > _staleAfter ? at : null;
+  return DateTime.now().difference(at) > serverStaleAfter ? at : null;
 }
 
 /// The readings every card draws when the machine reports them.
@@ -369,16 +370,6 @@ ServerMetric? _extra(List<ServerMetric> all, Set<ServerMetricKind> taken) {
   return free.first;
 }
 
-String _pct(double? v) => v == null ? '--' : '${(v * 10).round() / 10}%';
-String _rate(double? bytesPerSec) =>
-    bytesPerSec == null ? '--' : '${bytesPerSec.bytes2Str}/s';
-
-/// The same three the detail page's axis is labelled with, because the card's
-/// axis is the one it grows into.
-String _rateOf(double v) => '${v.bytes2Str}/s';
-String _formatTemp(double v) =>
-    '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}°C';
-
 List<ServerMetric> _readings(ServerState srv) {
   final ss = srv.status;
   final h = ss.history;
@@ -394,13 +385,13 @@ List<ServerMetric> _readings(ServerState srv) {
       kind: ServerMetricKind.cpu,
       label: 'CPU',
       icon: ServerDetailCards.cpu.icon,
-      value: _pct(cpu),
+      value: ReadingFmt.pct(cpu),
       note: ss.cpu.brand.keys.firstOrNull ?? '',
-      bigNote: '${_pct(ss.cpu.idle)} idle',
+      bigNote: '${ReadingFmt.pct(ss.cpu.idle)} idle',
       percent: cpu == null ? null : cpu / 100,
       samples: h.cpu.toList(),
       times: times,
-      format: _pct,
+      format: ReadingFmt.pct,
     ),
   );
 
@@ -411,7 +402,7 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.mem,
         label: libL10n.memory,
         icon: ServerDetailCards.mem.icon,
-        value: _pct(used),
+        value: ReadingFmt.pct(used),
         note:
             '${((ss.mem.total - ss.mem.free) * 1024).bytes2Str} / '
             '${(ss.mem.total * 1024).bytes2Str}',
@@ -419,7 +410,7 @@ List<ServerMetric> _readings(ServerState srv) {
         percent: used / 100,
         samples: h.mem.toList(),
         times: times,
-        format: _pct,
+        format: ReadingFmt.pct,
       ),
     );
   }
@@ -431,13 +422,13 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.swap,
         label: 'Swap',
         icon: ServerDetailCards.swap.icon,
-        value: _pct(used),
+        value: ReadingFmt.pct(used),
         note: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
         bigNote: l10n.ofFmt((ss.swap.total * 1024).bytes2Str),
         percent: used / 100,
         samples: h.swap.toList(),
         times: times,
-        format: _pct,
+        format: ReadingFmt.pct,
       ),
     );
   }
@@ -450,13 +441,13 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.disk,
         label: libL10n.disk,
         icon: ServerDetailCards.disk.icon,
-        value: _pct(used),
+        value: ReadingFmt.pct(used),
         note: '${usage.used.kb2Str} / ${usage.size.kb2Str}',
         bigNote: l10n.ofFmt(usage.size.kb2Str),
         percent: used / 100,
         samples: h.disk.toList(),
         times: times,
-        format: _pct,
+        format: ReadingFmt.pct,
       ),
     );
   }
@@ -468,12 +459,12 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.diskIo,
         label: l10n.diskIo,
         icon: MingCute.transfer_3_line,
-        value: _rate(write),
-        note: '${_rate(read)} ${l10n.read}',
-        bigNote: '${l10n.write} · ${_rate(read)} ${l10n.read}',
+        value: ReadingFmt.rate(write),
+        note: '${ReadingFmt.rate(read)} ${l10n.read}',
+        bigNote: '${l10n.write} · ${ReadingFmt.rate(read)} ${l10n.read}',
         samples: h.diskWrite.toList(),
         times: times,
-        format: _rateOf,
+        format: ReadingFmt.rateAxis,
         binary: true,
       ),
     );
@@ -488,47 +479,47 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.net,
         label: libL10n.net,
         icon: ServerDetailCards.net.icon,
-        value: _rate(tx),
-        note: '↓ ${_rate(rx)} · ↑ ${_rate(tx)}',
-        bigNote: '↑ · ${_rate(rx)} ↓',
+        value: ReadingFmt.rate(tx),
+        note: '↓ ${ReadingFmt.rate(rx)} · ↑ ${ReadingFmt.rate(tx)}',
+        bigNote: '↑ · ${ReadingFmt.rate(rx)} ↓',
         samples: h.netTx.toList(),
         times: times,
-        format: _rateOf,
+        format: ReadingFmt.rateAxis,
         binary: true,
       ),
     );
   }
 
-  if (_busiestGpu(ss) case final gpu?) {
+  if (busiestGpu(ss) case final gpu?) {
     final used = gpu.utilization;
     out.add(
       ServerMetric(
         kind: ServerMetricKind.gpu,
         label: 'GPU',
         icon: ServerDetailCards.gpu.icon,
-        value: _pct(used),
+        value: ReadingFmt.pct(used),
         note: gpu.name,
         bigNote: gpu.name,
         percent: used == null ? null : used / 100,
         samples: h.gpu.toList(),
         times: times,
-        format: _pct,
+        format: ReadingFmt.pct,
       ),
     );
   }
 
-  if (_hottest(ss) case (final sensor, final celsius)) {
+  if (hottestSensor(ss) case (final sensor, final celsius)) {
     out.add(
       ServerMetric(
         kind: ServerMetricKind.temp,
         label: libL10n.temperature,
         icon: ServerDetailCards.temp.icon,
-        value: '${celsius.toStringAsFixed(1)}°C',
+        value: ReadingFmt.temp(celsius),
         note: sensor,
         bigNote: sensor,
         samples: h.temp.toList(),
         times: times,
-        format: _formatTemp,
+        format: ReadingFmt.temp,
       ),
     );
   }
@@ -542,13 +533,13 @@ List<ServerMetric> _readings(ServerState srv) {
         kind: ServerMetricKind.battery,
         label: libL10n.battery,
         icon: ServerDetailCards.battery.icon,
-        value: _pct(percent),
+        value: ReadingFmt.pct(percent),
         note: [battery.status.name, ?battery.name].join(' · '),
         bigNote: battery.status.name,
         percent: percent == null ? null : percent / 100,
         samples: h.battery.toList(),
         times: times,
-        format: _pct,
+        format: ReadingFmt.pct,
       ),
     );
   }
@@ -556,7 +547,10 @@ List<ServerMetric> _readings(ServerState srv) {
   return out;
 }
 
-GpuItem? _busiestGpu(ServerStatus ss) {
+/// The GPU carrying the most work — the one the row reads, and the one the
+/// detail's GPU card leads with. Null on a host with no GPU at all; the first
+/// card on one whose driver reports no utilisation.
+GpuItem? busiestGpu(ServerStatus ss) {
   GpuItem? top;
   for (final gpu in ss.gpus) {
     if (top == null || (gpu.utilization ?? -1) > (top.utilization ?? -1)) {
@@ -566,8 +560,9 @@ GpuItem? _busiestGpu(ServerStatus ss) {
   return top;
 }
 
-/// The hottest sensor, which is the one that will be a problem.
-(String, double)? _hottest(ServerStatus ss) {
+/// The sensor the temperature row reads: the hottest, which is the one that
+/// will be a problem. Null on a host whose sensors have no reading yet.
+(String, double)? hottestSensor(ServerStatus ss) {
   String? name;
   double? top;
   for (final device in ss.temps.devices) {

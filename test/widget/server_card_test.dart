@@ -27,6 +27,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/metric_row.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
@@ -194,7 +195,7 @@ void main() {
     // the arrow are one control, and which of the two it is, is what it says
     // it does. Found by that rather than by its arrow or its count, because
     // the line it shares folded keeps room for it with a copy of its face
-    // that is not drawn — see `ServerCard._under`.
+    // that is not drawn — see `ServerCardFocus._under`.
     Finder control(String label) => find.byWidgetPredicate(
       (w) => w is Semantics && w.properties.label == label,
     );

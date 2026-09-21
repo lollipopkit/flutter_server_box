@@ -28,6 +28,7 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
+import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';

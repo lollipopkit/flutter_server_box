@@ -11,8 +11,7 @@ import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/card/pressure.dart';
-
-const _tabular = [FontFeature.tabularFigures()];
+import 'package:server_box/view/page/server/reading_text.dart';
 
 /// How long back the recent list looks.
 const _kRecentWindow = Duration(hours: 24);
@@ -22,7 +21,11 @@ const _kRecentWindow = Duration(hours: 24);
 const _kRecentCount = 3;
 
 /// The strip's own height, and the design's.
-const _kStripHeight = 46.0;
+///
+/// Also the height of the machine switcher that turns over into this strip's
+/// slot while a server is open — see `ServerStrip` — so the slot is one
+/// height whichever face is up.
+const kServerStripHeight = 46.0;
 
 /// One fleet reading's bar: short enough that three of them and their numbers
 /// fit beside everything else on one line.
@@ -114,7 +117,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
-                  height: _kStripHeight,
+                  height: kServerStripHeight,
                   child: _strip(context, totals, events, cons.maxWidth),
                 ),
                 if (_expanded) ...[
@@ -212,7 +215,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
               fontSize: 15,
               height: 1,
               fontWeight: FontWeight.w500,
-              fontFeatures: _tabular,
+              fontFeatures: kTabularFigures,
             ),
           ),
           if (!compact) ...[
@@ -278,12 +281,12 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
             ),
             const SizedBox(width: 7),
             Text(
-              _pct(one.pct),
+              ReadingFmt.pct(one.pct),
               style: TextStyle(
                 fontSize: 12,
                 height: 1,
                 fontWeight: FontWeight.w500,
-                fontFeatures: _tabular,
+                fontFeatures: kTabularFigures,
                 color: one.over ? StatePalette.warn : color,
               ),
             ),
@@ -360,12 +363,12 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                         const SizedBox(width: 5),
                         Flexible(
                           child: Text(
-                            _pct(one.pct),
+                            ReadingFmt.pct(one.pct),
                             style: TextStyle(
                               fontSize: 12,
                               height: 1,
                               fontWeight: FontWeight.w500,
-                              fontFeatures: _tabular,
+                              fontFeatures: kTabularFigures,
                               color: one.over ? StatePalette.warn : null,
                             ),
                             maxLines: 1,
@@ -436,7 +439,7 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
                 fontSize: 11,
                 height: 1,
                 color: Colors.grey,
-                fontFeatures: _tabular,
+                fontFeatures: kTabularFigures,
               ),
             ),
           ],
@@ -549,9 +552,6 @@ class _ServerOverviewState extends ConsumerState<ServerOverview> {
     );
   }
 }
-
-String _pct(double? v) =>
-    v == null ? '--' : '${(v * 10).round() / 10}%';
 
 /// From here the last thing that happened is said in words on the line.
 const _kShowLast = 820.0;
@@ -690,7 +690,7 @@ class _RecentRow extends StatelessWidget {
                 fontSize: 11,
                 height: 1.3,
                 color: Colors.grey,
-                fontFeatures: _tabular,
+                fontFeatures: kTabularFigures,
               ),
             ),
           ],
