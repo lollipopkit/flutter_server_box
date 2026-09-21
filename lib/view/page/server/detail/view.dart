@@ -272,9 +272,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   @override
   void dispose() {
-    super.dispose();
     _scrollCtrl.dispose();
     _focus.dispose();
+    super.dispose();
   }
 
   @override
