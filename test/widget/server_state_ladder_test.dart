@@ -150,9 +150,13 @@ void main() {
       // A spinner where the thing to do about it goes, and that is all. It had
       // a line under its title as well — the same answer twice, which is what
       // a line in the list already declines to do by giving up its spinner.
-      for (final name in ['connecting', 'loading']) {
-        final srv = ladder[name];
-        if (srv == null) continue;
+      // Both of the states that are "on its way", built here rather than
+      // looked up: the ladder has no `loading` rung, and a name it does not
+      // have was passed over without a word, so half of this never ran.
+      for (final (name, srv) in [
+        ('connecting', state(ServerConn.connecting)),
+        ('loading', state(ServerConn.loading)),
+      ]) {
         await pump(tester, srv, density: ServerListDensity.cards);
         expect(find.byType(SizedLoading), findsOneWidget, reason: name);
         // Which is itself drawn with one of these, so: that one, and no other.
