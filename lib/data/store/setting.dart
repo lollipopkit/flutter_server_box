@@ -100,12 +100,6 @@ class SettingStore extends SqliteStore {
 
   late final snippetOrder = listProperty<String>('snippetOrder');
 
-  // Server details page cards order
-  late final detailCardOrder = listProperty(
-    'detailCardOrder',
-    defaultValue: ServerDetailCards.values.map((e) => e.name).toList(),
-  );
-
   // Disabled detail cards (for persistence when toggling visibility)
   late final detailCardDisabled = listProperty<String>('detailCardDisabled');
 
@@ -984,6 +978,9 @@ class SettingStore extends SqliteStore {
       'fgService',
       'noNotiPerm',
       'showDistIcon',
+      // The detail page no longer has a user-defined card order. Its remaining
+      // optional cards follow the declaration order, so this row has no reader.
+      'detailCardOrder',
       // The plain-key schema version. It moved to an internal key so that a
       // backup stops carrying it; this drops the copy a Hive import brought
       // across, which nothing reads and a backup would still export.

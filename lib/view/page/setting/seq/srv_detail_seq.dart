@@ -12,9 +12,6 @@ import 'package:server_box/data/res/store.dart';
 /// a reading with no line over time. Their order is the order they are
 /// declared in, and dragging them around was arranging a list whose length is
 /// decided by what the machine reports.
-///
-/// TODO: `SettingStore.detailCardOrder` is no longer read. Delete the key once
-/// a release has shipped without it.
 class ServerDetailOrderPage extends StatefulWidget {
   /// Whether it is being shown inside the settings pane rather than pushed.
   ///

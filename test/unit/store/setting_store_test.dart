@@ -260,6 +260,7 @@ void main() {
         'fgService': true,
         'noNotiPerm': true,
         'showDistIcon': true,
+        'detailCardOrder': ['about', 'cpu'],
         'recordHistory': false,
       });
 
@@ -270,6 +271,7 @@ void main() {
       expect(store.get<bool>('fgService'), isNull);
       expect(store.get<bool>('noNotiPerm'), isNull);
       expect(store.get<bool>('showDistIcon'), isNull);
+      expect(store.get<List<dynamic>>('detailCardOrder'), isNull);
       expect(store.get<bool>('recordHistory'), isFalse);
     },
   );
