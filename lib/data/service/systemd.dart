@@ -300,9 +300,15 @@ final class SystemdServiceManager implements ServiceManagerBackend {
   /// `2026-09-16T21:09:58+0800 host nginx[8840]: message`, without the date
   /// and the host: the date is almost always today's, and every line of one
   /// machine's log has the same host.
+  ///
+  /// Newlines are normalized first, the way `CronManager.parse` and
+  /// `UserManager.parse` do: a carriage return left at the end of a line is
+  /// not something `(.*)$` can match — `.` excludes it — so every line of a
+  /// CRLF transcript came back as an unparsed one with no time on it.
   static ServiceLog parseJournal(String stdout, {String stderr = ''}) {
     final lines = <ServiceLogLine>[];
-    for (final line in stdout.split('\n')) {
+    final normalized = stdout.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+    for (final line in normalized.split('\n')) {
       if (line.trim().isEmpty || line.startsWith('-- ')) continue;
       final match = _journalLine.firstMatch(line);
       lines.add(
