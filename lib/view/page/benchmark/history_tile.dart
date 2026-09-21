@@ -64,6 +64,7 @@ class BenchmarkHistoryTile extends StatelessWidget {
           style: UIs.text12Grey,
         ),
         trailing: IconButton(
+          tooltip: libL10n.delete,
           icon: const Icon(Icons.delete_outline),
           onPressed: onDelete,
         ),

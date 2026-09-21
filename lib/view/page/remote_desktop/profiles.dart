@@ -84,7 +84,16 @@ final class RemoteDesktopProfilesPage extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (open) const Icon(Icons.circle, size: 9, color: Colors.green),
+          if (open)
+            Semantics(
+              label: libL10n.ready,
+              excludeSemantics: true,
+              child: Tooltip(
+                message: libL10n.ready,
+                excludeFromSemantics: true,
+                child: const Icon(Icons.circle, size: 9, color: Colors.green),
+              ),
+            ),
           PopupMenuButton<_ProfileAction>(
             onSelected: (action) => switch (action) {
               _ProfileAction.edit => _edit(context, ref, profile),

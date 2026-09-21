@@ -133,6 +133,7 @@ extension on _CustomCmdsPageState {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              tooltip: libL10n.delete,
               icon: const Icon(Icons.delete, size: 19),
               onPressed: () => _onDelete(idx),
             ),

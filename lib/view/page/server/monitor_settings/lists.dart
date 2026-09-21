@@ -110,6 +110,7 @@ final class _MonitorRulesPageState extends State<MonitorRulesPage> {
               title: Text(rule.name.isEmpty ? libL10n.empty : rule.name),
               subtitle: Text(_summary(rule), style: UIs.textGrey),
               trailing: IconButton(
+                tooltip: libL10n.delete,
                 icon: const Icon(Icons.delete, size: 19),
                 onPressed: () => _edited(() => _rules.removeAt(idx)),
               ),
@@ -292,6 +293,7 @@ final class _MonitorPushListPageState extends State<MonitorPushListPage> {
               title: Text(entry.name.isEmpty ? libL10n.empty : entry.name),
               subtitle: Text(entry.pushType, style: UIs.textGrey),
               trailing: IconButton(
+                tooltip: libL10n.delete,
                 icon: const Icon(Icons.delete, size: 19),
                 onPressed: () => _removePush(idx),
               ),
@@ -405,6 +407,7 @@ final class _MonitorCorsPageState extends State<MonitorCorsPage> {
               leading: MonitorUi.index(idx),
               title: Text(origin),
               trailing: IconButton(
+                tooltip: libL10n.delete,
                 icon: const Icon(Icons.delete, size: 19),
                 onPressed: () => _edited(() => _origins.removeAt(idx)),
               ),
