@@ -92,8 +92,8 @@ class MetricChartSpec {
   final bool binaryScale;
 
   /// How much of the chart's own chrome is drawn: the scale down the left,
-  /// the lines across, the padding that holds them off the card's edge, and
-  /// the touch that puts a value under the pointer.
+  /// the lines across, the room above and below that its outermost labels
+  /// hang into, and the touch that puts a value under the pointer.
   ///
   /// 0 is the same line with none of it, which is what a chart the height of
   /// two lines of text can show — five tick labels in 44 points is a smear.
@@ -169,9 +169,14 @@ class MetricChart extends StatelessWidget {
       //
       // The top keeps the topmost axis label off whatever heading is above it;
       // at 7 the two touched.
+      //
+      // Nothing at the sides. What this is drawn in has an inset of its own,
+      // and 17 more on each was a chart 34 in from the edge of its card with
+      // a gutter on top of that — a fifth of a phone's width spent on holding
+      // the line away from a heading it lines up with better.
       padding: EdgeInsets.lerp(
         EdgeInsets.zero,
-        EdgeInsets.fromLTRB(17, 15, 17, hasLegend ? 0 : 15),
+        EdgeInsets.fromLTRB(0, 15, 0, hasLegend ? 0 : 15),
         spec.axis.clamp(0.0, 1.0),
       )!,
       child: Column(

@@ -5,6 +5,7 @@
 /// fit, and a machine without swap has no swap row rather than an empty one.
 library;
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,7 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 
 import '../helpers/spi_fixture.dart';
@@ -193,6 +195,37 @@ void main() {
     Stores.setting.textFactor.put(1.5);
     await tester.pump();
     expect(scaled(), moreOrLessEquals(123, epsilon: 0.01));
+  });
+
+  testWidgets('phone: the chart is as wide as its card lets it be', (
+    tester,
+  ) async {
+    // It was 17 in from that on each side, inside a card that is already 17
+    // in from its own edge: with the page's 13 and the scale's gutter, a
+    // fifth of a phone's width with no chart in it.
+    await pump(
+      tester,
+      size: const Size(390, 844),
+      status: () {
+        final status = statusOf();
+        final now = DateTime.now().millisecondsSinceEpoch;
+        for (var i = 0; i < 4; i++) {
+          status.history.add(
+            timeMs: now - (4 - i) * 3000,
+            cpu: 10.0 + i,
+            mem: 50,
+          );
+        }
+        return status;
+      },
+    );
+
+    final given = tester.getRect(find.byType(MetricChart));
+    final plot = tester.getRect(find.byType(LineChart));
+    expect(plot.left, given.left);
+    expect(plot.right, given.right);
+    // And what it is given is the card's own inset and the page's, no more.
+    expect(given.left, lessThanOrEqualTo(13 + 17 + 4));
   });
 
   /// Nine rows and the cards under them, at the width where every line of the
