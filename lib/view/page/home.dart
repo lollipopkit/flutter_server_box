@@ -162,6 +162,10 @@ class _HomePageState extends ConsumerState<HomePage>
   /// took away the only navigation on screen to get back out with.
   bool _settingsOpen = false;
 
+  /// The settings' own stack, so that back can be asked whether it has
+  /// somewhere to go before it is taken to mean "put the settings away".
+  final _settingsNavKey = GlobalKey<NavigatorState>();
+
   /// The settings arriving and leaving.
   ///
   /// A tab is swapped for a tab by the `PageView` sliding, which is a move
@@ -548,6 +552,7 @@ class _HomePageState extends ConsumerState<HomePage>
                                 leaving: false,
                                 child: NestedNavigator(
                                   key: const ValueKey('settings'),
+                                  navigatorKey: _settingsNavKey,
                                   rootBuilder: (_) => const SafeArea(
                                     bottom: false,
                                     child: SettingsPage(),
@@ -619,12 +624,32 @@ class _HomePageState extends ConsumerState<HomePage>
       },
     );
 
+    // Back, while the settings are shown in place of a tab, puts them away.
+    //
+    // On a phone they are a page and back pops it. Here they are not a route
+    // at all, so back went to the only route there is — this one — and on a
+    // wide Android window that is the app closing from inside its settings.
+    //
+    // What the settings have pushed goes first: their navigator asks for the
+    // gesture itself while it has somewhere to go, and every scope on a route
+    // is told of a back that was refused, so without asking it this would put
+    // the settings away from under the page that was being left.
+    final withBack = PopScope(
+      canPop: !_settingsOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_settingsNavKey.currentState?.canPop() ?? false) return;
+        _closeSettings();
+      },
+      child: withShell,
+    );
+
     // The shortcuts, on every desktop. macOS additionally gets a menu bar,
     // which is where a shortcut is *discovered* — but the menu bar is a macOS
     // API, and until now it was also the only thing that bound the keys, so
     // Linux and Windows had no way to switch tabs from the keyboard at all.
     final withKeys = !isDesktop
-        ? withShell
+        ? withBack
         : CallbackShortcuts(
             bindings: desktopShortcuts(
               tabCount: _tabs.length,
@@ -637,7 +662,7 @@ class _HomePageState extends ConsumerState<HomePage>
             child: Focus(
               autofocus: true,
               skipTraversal: true,
-              child: withShell,
+              child: withBack,
             ),
           );
 
@@ -1087,10 +1112,7 @@ class _HomePageState extends ConsumerState<HomePage>
     // A tab is a tab even when the settings are the thing on screen: picking
     // one has to put them away, which is the same move as picking the tab you
     // were already on.
-    if (_settingsOpen) {
-      setState(() => _settingsOpen = false);
-      _settingsCtrl.reverse();
-    }
+    _closeSettings();
     if (_selectIndex.value == index) return;
     _selectIndex.value = index;
     _rememberTab(index);
@@ -1107,6 +1129,13 @@ class _HomePageState extends ConsumerState<HomePage>
 
   /// Whether the window gets a rail rather than a bar.
   bool _hasRail(bool narrow) => !narrow && !_wantsWindow;
+
+  /// Puts the settings away, where they are shown in place of a tab.
+  void _closeSettings() {
+    if (!_settingsOpen) return;
+    setState(() => _settingsOpen = false);
+    _settingsCtrl.reverse();
+  }
 
   /// Shows the settings where a tab is shown, rather than over everything.
   ///
