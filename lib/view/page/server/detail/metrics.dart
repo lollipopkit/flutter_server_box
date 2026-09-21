@@ -624,19 +624,19 @@ extension on _ServerDetailPageState {
   }
 
   /// What a rate has in place of a full: how high it got in the window on
-  /// screen, and how wide that window is.
+  /// screen.
+  ///
+  /// And nothing about the window itself. It said how long that was, which for
+  /// a preset is its name — "Live", under a header whose selected chip says
+  /// "Live". See [_buildFocusCard] for the one window whose length is not
+  /// already on screen.
   List<_Stat> _rateStats(List<double?> values) {
     double? peak;
     for (final v in values) {
       if (v == null) continue;
       if (peak == null || v > peak) peak = v;
     }
-    return [
-      if (peak != null) (k: l10n.peak, v: _rate(peak)),
-      // The length of the window, not its name: a named one has no short name
-      // and its two timestamps are the header's business.
-      (k: l10n.window, v: _windowLength()),
-    ];
+    return [if (peak != null) (k: l10n.peak, v: _rate(peak))];
   }
 }
 
@@ -966,6 +966,12 @@ extension on _ServerDetailPageState {
     // ways of saying the axis.
     final stats = [
       ...m.stats,
+      // How long a window the reader named is, where the header has room for
+      // its two ends and so says those instead. Narrow, the header's chip is
+      // this number, and a preset's chip is its name: either way it would be
+      // on the card twice.
+      if (_custom case final window? when wide)
+        (k: l10n.window, v: window.to.difference(window.from).toAgoStr),
       if (axis.bands.firstOrNull case final gap?
           when (_custom != null || _range != _HistoryRange.live) &&
               w.times.isNotEmpty)
@@ -1658,13 +1664,6 @@ extension on _ServerDetailPageState {
     // is where its two ends fit.
     if (!wide && _custom != null) return _rangeLabel(wide: true);
     return null;
-  }
-
-  /// How long the window on screen is, however it was named.
-  String _windowLength() {
-    final window = _custom;
-    if (window == null) return _range.label;
-    return window.to.difference(window.from).toAgoStr;
   }
 
   /// What the chart's window is called.

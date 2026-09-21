@@ -426,6 +426,12 @@ void main() {
     }
     expect(tester.takeException(), isNull);
 
+    // A rate says how high it got, and not what window that was in: the
+    // header's chip already does. It said "Live" over the word "window", two
+    // lines under a chip that says "Live".
+    expect(find.text(app_locale.l10n.window), findsNothing);
+    expect(find.text(app_locale.l10n.rangeLive), findsOneWidget);
+
     // The first line is the theme colour and the second is not: they were
     // a red and an amber fixed at build time, so the one chart on the page
     // with two lines was the one with none of the theme in it.
