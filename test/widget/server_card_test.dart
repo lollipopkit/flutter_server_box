@@ -70,10 +70,17 @@ void main() {
   ///
   /// [samples] is how many polls it has answered. Two is the least a window
   /// can be drawn from, and what most of these are about is a card with one.
+  ///
+  /// [differenced] leaves the CPU out of the first of them, which is how a
+  /// machine actually reports it: the share of the counters between two
+  /// reads has no value at the first read. [lastAgo] is how long ago the last
+  /// of them was taken.
   ServerStatus sampled({
     bool everything = false,
     bool sensor = false,
     int samples = 2,
+    bool differenced = false,
+    Duration lastAgo = const Duration(seconds: 3),
   }) {
     final ss = ServerStatus(
       cpu: Cpus(),
@@ -104,8 +111,8 @@ void main() {
     final now = DateTime.now().millisecondsSinceEpoch;
     for (var i = 0; i < samples; i++) {
       ss.history.add(
-        timeMs: now - (samples - i) * 3000,
-        cpu: 10.0 + i,
+        timeMs: now - lastAgo.inMilliseconds - (samples - 1 - i) * 3000,
+        cpu: differenced && i == 0 ? null : 10.0 + i,
         mem: 50,
       );
     }
@@ -121,6 +128,8 @@ void main() {
     bool everything = false,
     bool sensor = false,
     int samples = 2,
+    bool differenced = false,
+    Duration lastAgo = const Duration(seconds: 3),
     ServerConn conn = ServerConn.finished,
     // Unfolded unless a test is about the fold: what most of these are about
     // is the rows, and a card rests without any.
@@ -147,6 +156,8 @@ void main() {
                   everything: everything,
                   sensor: sensor,
                   samples: samples,
+                  differenced: differenced,
+                  lastAgo: lastAgo,
                 ),
                 conn: conn,
               ),
@@ -390,6 +401,11 @@ void main() {
       expect(find.byType(MetricChart), findsOneWidget);
       expect(bar().spots, hasLength(1));
       expect(bar().dotData.show, isTrue);
+      // In the middle. An axis that is one instant wide puts everything on it
+      // at its left edge, which is half of the point outside the plot.
+      final lone = tester.widget<LineChart>(find.byType(LineChart)).data;
+      expect(lone.maxX, greaterThan(lone.minX));
+      expect((lone.minX + lone.maxX) / 2, bar().spots.single.x);
       expect(
         tester.getSize(find.byType(ServerCard)).height - without,
         moreOrLessEquals(
@@ -404,6 +420,44 @@ void main() {
       expect(bar().spots, hasLength(2));
       expect(bar().dotData.show, isFalse);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('reaches both ends of what it is drawn in', (tester) async {
+      // It reached neither. The axis ran from the first sample, which has no
+      // CPU in it, to the clock, which is later than the last sample by
+      // however long ago that was — two stretches with no line in them, and
+      // a fifth of the chart each on a machine that has only just answered.
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        samples: 5,
+        differenced: true,
+      );
+      final data = tester.widget<LineChart>(find.byType(LineChart)).data;
+      final spots = data.lineBarsData.single.spots;
+      expect(spots, hasLength(4));
+      expect(data.minX, spots.first.x);
+      expect(data.maxX, spots.last.x);
+    });
+
+    testWidgets('and runs on to now once the readings have stopped', (
+      tester,
+    ) async {
+      // The one time the distance to the clock says something, and it is the
+      // same gap the page draws its band in.
+      final before = DateTime.now().millisecondsSinceEpoch;
+      await pump(
+        tester,
+        promoted: null,
+        onPromote: (_) {},
+        samples: 5,
+        lastAgo: const Duration(minutes: 5),
+      );
+      final data = tester.widget<LineChart>(find.byType(LineChart)).data;
+      final spots = data.lineBarsData.single.spots;
+      expect(data.minX, spots.first.x);
+      expect(data.maxX, greaterThanOrEqualTo(before));
     });
 
     testWidgets('nor for a reading that has no samples of its own', (

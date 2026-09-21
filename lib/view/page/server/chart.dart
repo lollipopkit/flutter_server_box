@@ -270,6 +270,45 @@ class HistorySeries {
   }
 }
 
+/// The axis of a chart of what this app watched itself: from the first reading
+/// it draws to the last sample taken.
+///
+/// It ran from the first *sample* to the clock, and a line reached neither
+/// end. The left was a poll short because a reading that is a difference has
+/// none at the first sample — CPU is the share of the counters between two
+/// reads — and the right was short by however long ago the last sample was
+/// taken: up to a poll, and for an agent its collection cycle plus whatever
+/// the two clocks disagree by. Neither says anything about the machine, and
+/// both are a share of the window that is largest exactly when the window is
+/// shortest: a fifth of the chart for a machine connected ten seconds ago.
+///
+/// [until] is the clock, given once the readings have stopped. That distance
+/// is the one worth seeing, and it is the only time the axis runs past the
+/// last sample.
+///
+/// To the last *sample* rather than the last reading drawn, so a reading that
+/// is no longer being taken ends where it ended instead of being stretched up
+/// to the present.
+({int from, int to})? watchedWindow(
+  List<int> times,
+  List<HistorySeries> series, {
+  int? until,
+}) {
+  if (times.isEmpty) return null;
+  int? from;
+  for (final s in series) {
+    final length = math.min(s.values.length, times.length);
+    for (var i = 0; i < length; i++) {
+      if (s.values[i] == null) continue;
+      if (from == null || times[i] < from) from = times[i];
+      break;
+    }
+  }
+  if (from == null) return null;
+  final last = times.last;
+  return (from: from, to: until != null && until > last ? until : last);
+}
+
 /// Picks an axis whose ticks land on round numbers.
 ///
 /// Deriving the interval from the data instead (`peak * 1.1 / 4`) produced
@@ -395,12 +434,24 @@ Widget buildHistoryLineChart(
   // The window that was asked for, not the extent of what came back. Equal
   // bounds would give fl_chart a zero-width axis, so a window that has
   // collapsed to an instant falls back to the data.
-  final minX = window != null && window.to > window.from
+  var minX = window != null && window.to > window.from
       ? window.from.toDouble()
       : null;
-  final maxX = window != null && window.to > window.from
+  var maxX = window != null && window.to > window.from
       ? window.to.toDouble()
       : null;
+  // And the data can be an instant as well: the first reading of a machine,
+  // which is drawn as a point. fl_chart puts everything on a zero-width axis
+  // at its left edge, half outside the plot; the middle is where one point
+  // with nothing on either side of it belongs.
+  if (minX == null || maxX == null) {
+    final xs = bars.expand((b) => b.spots).map((e) => e.x);
+    final at = xs.first;
+    if (xs.every((x) => x == at)) {
+      minX = at - 1;
+      maxX = at + 1;
+    }
+  }
 
   final chart = LineChart(
     // Off while the card is growing into the page.

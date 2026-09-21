@@ -1467,8 +1467,17 @@ class ServerCard extends ConsumerWidget {
     required double height,
     required double t,
   }) {
-    final now = DateTime.now().millisecondsSinceEpoch;
     final axis = _kChartAxis.transform(t);
+    // Grey rather than the card dimmed as a whole: pressing the opacity down
+    // would take the text with it, and the numbers are still worth reading.
+    // What is out of date is the shape.
+    final series = [
+      HistorySeries(
+        m.label,
+        stale ? Colors.grey : ChartPalette.reading(promoted: true),
+        m.samples,
+      ),
+    ];
     // The chart height must follow the parent transition so it does not freeze
     // at an intermediate value during the reverse animation.
     return SizedBox(
@@ -1482,24 +1491,17 @@ class ServerCard extends ConsumerWidget {
       hold: t > 0 && axis <= 0,
       child: MetricChart(
       MetricChartSpec(
-        // Grey rather than the card dimmed as a whole: pressing the opacity
-        // down would take the text with it, and the numbers are still worth
-        // reading. What is out of date is the shape.
-        series: [
-          HistorySeries(
-            m.label,
-            stale ? Colors.grey : ChartPalette.reading(promoted: true),
-            m.samples,
-          ),
-        ],
+        series: series,
         format: m.format,
         times: m.times,
-        // The same window the page draws live: from the first sample to now,
-        // so a machine that stopped answering leaves the same trailing gap at
-        // both ends of the movement.
-        window: m.times.isEmpty
-            ? null
-            : (from: m.times.first, to: now > m.times.last ? now : m.times.last),
+        // The same window the page draws live, so the line is where it was at
+        // both ends of the movement — and a machine that stopped answering
+        // leaves the same trailing gap at both.
+        window: watchedWindow(
+          m.times,
+          series,
+          until: stale ? DateTime.now().millisecondsSinceEpoch : null,
+        ),
         binaryScale: m.binary,
         height: height,
         fill: true,

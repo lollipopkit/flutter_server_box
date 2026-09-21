@@ -838,6 +838,7 @@ extension on _ServerDetailPageState {
   /// for four minutes would draw a line straight across the gap.
   ({({int from, int to})? window, List<ChartBand> bands}) _chartWindow(
     ServerState si,
+    _MetricView m,
     _Window w,
   ) {
     final times = w.times;
@@ -856,13 +857,14 @@ extension on _ServerDetailPageState {
 
     final minutes = _range.minutes;
     if (minutes == null) {
-      // What this app has watched, up to now. Not up to the last sample: the
-      // distance between the two is the thing worth seeing.
+      // What this app has watched. Up to now only once the readings have
+      // stopped, which is when the distance to the last of them is worth
+      // seeing — see [watchedWindow] for what it was before that.
       final now = DateTime.now().millisecondsSinceEpoch;
-      final gap = now - last;
+      final stopped = now - last > _staleAfter.inMilliseconds;
       return (
-        window: (from: first, to: now > last ? now : last),
-        bands: gap > _staleAfter.inMilliseconds
+        window: watchedWindow(times, m.series, until: stopped ? now : null),
+        bands: stopped
             ? [(from: last, to: now, label: l10n.noData)]
             : const [],
       );
@@ -954,7 +956,7 @@ extension on _ServerDetailPageState {
     _Window w, {
     required bool wide,
   }) {
-    final axis = _chartWindow(si, w);
+    final axis = _chartWindow(si, m, w);
     final chart = _buildFocusChart(si, m, w, axis, wide: wide);
     // What a window that could not be filled actually holds. Only when it is
     // short: on a window the agent covered, "stored 24 h · window 24 h" is two
