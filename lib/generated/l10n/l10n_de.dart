@@ -1489,6 +1489,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
+  String get sshA11yLineCopied => 'Line copied to clipboard';
+
+  @override
   String get supportFmtArgs =>
       'Die folgenden Formatierungsparameter werden unterstützt:';
 

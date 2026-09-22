@@ -542,7 +542,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         _a11yInputCtrl.selection =
             TextSelection.collapsed(offset: currentLine.length);
         _a11yLastInputText = currentLine;
-        _a11yLastCursor = currentLine.length;
+        _a11yLastCursor = currentLine.characters.length;
       }
       // With the field empty, whatever the current line holds is the prompt
       // baseline unconfirmed input is cut out of — see `_refreshA11yOutput`.
@@ -771,15 +771,35 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// history; new output is appended at the bottom without scrolling the view,
   /// so a screen reader user keeps their place.
   Widget _buildA11yOutput() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      itemCount: _a11yOutput.length,
-      itemBuilder: (context, index) => Text(
-        _a11yOutput[index],
-        style: TextStyle(
-          fontSize: _terminalStyle.fontSize,
-          height: _terminalStyle.height,
-          fontFamily: _terminalStyle.fontFamily,
+    // The whole list gets the list role, and every non-empty line a listItem
+    // role: TalkBack needs those roles to walk the output as a list. Empty
+    // rows render nothing, so the reader does not stop at silent gaps.
+    //
+    // A [SelectionArea] wraps the list so text can be dragged across rows and
+    // copied, like the original terminal canvas — the rows stay plain [Text]
+    // so their screen-reader labels are clean.
+    return Semantics(
+      role: SemanticsRole.list,
+      explicitChildNodes: true,
+      child: SelectionArea(
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          itemCount: _a11yOutput.length,
+          itemBuilder: (context, index) {
+            final line = _a11yOutput[index];
+            if (line.trim().isEmpty) return const SizedBox.shrink();
+            return Semantics(
+              role: SemanticsRole.listItem,
+              child: Text(
+                line,
+                style: TextStyle(
+                  fontSize: _terminalStyle.fontSize,
+                  height: _terminalStyle.height,
+                  fontFamily: _terminalStyle.fontFamily,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -825,28 +845,37 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// backspace over what the field sent before, then type the new text. The
   /// shell echoes it back, so the terminal line tracks the field keystroke by
   /// keystroke — an editor or TUI field on the far side sees each one.
-  /// Syncs the field's text and cursor into the terminal as a small diff,
-  /// not a full rewrite: move the terminal cursor to where the field's
-  /// cursor is, delete whatever the field removed, type whatever it added —
-  /// all measured in graphemes so an emoji is one edit, not two.
-  void _syncA11yToTerminal(String newText, int newCursor) {
+  ///
+  /// The diff is measured in graphemes end to end: the prefix, the suffix,
+  /// the deleted run and the caret are all whole characters, so an emoji —
+  /// several UTF-16 code units — is one edit, never a torn half-character.
+  /// The field's own caret offset is in code units, and is converted first.
+  void _syncA11yToTerminal(String newText, int newCursorCodeUnits) {
     final oldText = _a11yLastInputText;
+    final newCursor = _codeUnitsToGraphemes(newText, newCursorCodeUnits);
     if (newText == oldText && newCursor == _a11yLastCursor) return;
+
+    final oldChars = oldText.characters.toList();
+    final newChars = newText.characters.toList();
 
     // Common prefix, then common suffix — the middle is the only thing that
     // actually changed.
     var p = 0;
-    final minLen = oldText.length < newText.length ? oldText.length : newText.length;
-    while (p < minLen && oldText[p] == newText[p]) p++;
+    while (
+        p < oldChars.length &&
+        p < newChars.length &&
+        oldChars[p] == newChars[p]) {
+      p++;
+    }
     var s = 0;
     while (
-        s < oldText.length - p &&
-        s < newText.length - p &&
-        oldText[oldText.length - 1 - s] == newText[newText.length - 1 - s]) {
+        s < oldChars.length - p &&
+        s < newChars.length - p &&
+        oldChars[oldChars.length - 1 - s] == newChars[newChars.length - 1 - s]) {
       s++;
     }
-    final oldMid = oldText.substring(p, oldText.length - s);
-    final newMid = newText.substring(p, newText.length - s);
+    final oldMidLen = oldChars.length - p - s;
+    final newMid = newChars.sublist(p, newChars.length - s).join();
 
     // 1. Move the terminal cursor from where it was to the edit position.
     final cursorDelta = p - _a11yLastCursor;
@@ -856,7 +885,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       );
     }
     // 2. Drop the part the field removed (Delete key, under the cursor).
-    for (var i = 0; i < oldMid.characters.length; i++) {
+    for (var i = 0; i < oldMidLen; i++) {
       _terminal.keyInput(TerminalKey.delete);
     }
     // 3. Type the part the field added.
@@ -866,6 +895,20 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     _a11yLastInputText = newText;
     _a11yLastCursor = newCursor;
+  }
+
+  /// A field caret offset is in UTF-16 code units; this whole class counts
+  /// graphemes. Walk the string once to find which grapheme the offset lands
+  /// inside or just past.
+  int _codeUnitsToGraphemes(String text, int codeUnits) {
+    var g = 0;
+    var cu = 0;
+    for (final ch in text.characters) {
+      if (cu >= codeUnits) break;
+      g++;
+      cu += ch.length;
+    }
+    return g;
   }
 
   void _onA11yInputChanged(String text) {

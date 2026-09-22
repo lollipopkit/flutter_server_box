@@ -429,6 +429,7 @@
   "sshA11yModeTip": "以纯文本呈现终端输出，并提供输入框和带标签的按键，方便屏幕阅读器用户使用。",
   "sshA11yInputHint": "输入命令后按回车",
   "sshA11yCursorPrefix": "选中",
+  "sshA11yLineCopied": "已复制该行到剪贴板",
   "supportFmtArgs": "支持以下格式化参数：",
   "suspendTip": "suspend 功能需要 root 权限及 systemd 支持。",
   "switchTo": "切换到 {val}",

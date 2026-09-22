@@ -1493,6 +1493,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
+  String get sshA11yLineCopied => 'Line copied to clipboard';
+
+  @override
   String get supportFmtArgs =>
       'Les paramètres de mise en forme suivants sont pris en charge :';
 

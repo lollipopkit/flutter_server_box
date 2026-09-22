@@ -1480,6 +1480,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
+  String get sshA11yLineCopied => 'Line copied to clipboard';
+
+  @override
   String get supportFmtArgs =>
       'Aşağıdaki biçimlendirme parametreleri desteklenir:';
 

@@ -1398,6 +1398,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
+  String get sshA11yLineCopied => 'Line copied to clipboard';
+
+  @override
   String get supportFmtArgs => '以下のフォーマット引数がサポートされています：';
 
   @override
