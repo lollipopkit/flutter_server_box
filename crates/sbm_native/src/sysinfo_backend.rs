@@ -59,9 +59,6 @@ fn logical_cpu_count() -> Option<usize> {
     std::thread::available_parallelism().ok().map(usize::from)
 }
 
-/// Groups per-logical-core brand strings into (name, count), matching
-/// `windows::parse_cpu_brand`'s shape (and `monitor`'s `format_cpu_brand`,
-/// which expects this grouping to render "Brand (xN)")
 /// Whether a reading is a measurement rather than a sentinel.
 ///
 /// macOS reports inactive PMU sensors through the same API as live ones, with

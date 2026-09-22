@@ -2745,7 +2745,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+  String scheduledTaskSummaryFmt(num enabled, num total) {
     return 'Усього: $total · увімкнено: $enabled';
   }
 

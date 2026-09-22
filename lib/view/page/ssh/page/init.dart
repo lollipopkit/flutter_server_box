@@ -1021,10 +1021,10 @@ final class _TmuxClientCandidate {
 
 extension on SSHPageState {
   void _disconnectFromNotification() {
-    // Mark as disconnected in session manager for immediate UI/notification feedback
+    // Update observers before closing the channel so the UI and notification
+    // respond immediately.
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
 
-    // Try to close the running SSH session, if any
     try {
       _session?.close();
     } catch (e, stackTrace) {

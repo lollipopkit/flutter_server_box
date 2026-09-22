@@ -2757,8 +2757,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total attività · $enabled attive';
+  String scheduledTaskSummaryFmt(num enabled, num total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      enabled,
+      locale: localeName,
+      other: '$enabled attive',
+      one: '1 attiva',
+    );
+    return '$total attività · $_temp0';
   }
 
   @override

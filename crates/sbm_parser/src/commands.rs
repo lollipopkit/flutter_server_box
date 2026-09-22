@@ -85,9 +85,8 @@ pub const LINUX: &[CommandSpec] = &[
         key: SYS,
         // Three keys, not one. `PRETTY_NAME` is prose written for a person and
         // is what the status page shows; `ID` is os-release's machine-readable
-        // identifier and is what picks the distribution's mark, which used to
-        // be guessed by looking for substrings in the prose. `ID_LIKE` names
-        // the base a derivative nothing recognises is built on.
+        // identifier used to select the distribution's mark. `ID_LIKE`
+        // identifies the closest recognized base distribution for derivatives.
         //
         // Both files are read, in the order os-release specifies — a system
         // that has only `/usr/lib/os-release` is answered, and one where

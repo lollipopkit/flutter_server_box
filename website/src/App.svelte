@@ -14,12 +14,8 @@
     syncLocaleToUrl,
   } from './lib/i18n'
 
-  // The badges under "All the tools. One app." Product and protocol names, so
-  // they are not translated — the locale files carried a `capabilities.items`
-  // copy of this list that nothing ever read, and it is removed rather than
-  // left for someone to edit expecting an effect.
-  //
-  // Second row is what the app has grown since this list was last touched.
+  // Keep product and protocol names untranslated. This list is the single
+  // source of truth; locale-specific copies would appear editable but be unused.
   const capabilities = [
     'Status chart', 'SSH Terminal', 'SFTP', 'SCP', 'Docker', 'Process',
     'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS',
@@ -35,17 +31,12 @@
     { key: 'platforms', icon: '⬡', wide: false },
   ]
 
-  // The origin holds two copies of every shot: `<name>.png` is what was taken
-  // and what the stores are fed, `<name>.jpg` is the same frame at 1440px on
-  // its long edge for the web. Both are addressed the same way, so a refreshed
-  // screenshot replaces an object and needs no change here.
+  // The CDN stores original PNGs and 1440px JPEGs for the web under matching
+  // names, so refreshing an image does not require a source-code change.
   const shotBase = 'https://cdn.lollipopkit.com/serverbox/screenshot'
 
-  // The hero's four. Order is what the stack's `x`/`rotate` were tuned for, and
-  // each one answers to an `alt` string in the locale files — `one` is the
-  // overview, `two` the charts, `three` the terminal, `four` the files. Swap a
-  // `src` here and the string it is described by has to move with it, in all
-  // seven locales.
+  // The order matches the stack transforms below. Each key also selects its
+  // localized alt text, so update all locales when changing a key's image.
   const screenshots = [
     { src: `${shotBase}/iphone/home.jpg`, key: 'one', x: -18, y: 8, hoverSlot: -1.5, rotate: -7, hoverRotate: -1.8, motion: 18 },
     { src: `${shotBase}/iphone/server-details.jpg`, key: 'two', x: -6, y: -4, hoverSlot: -0.5, rotate: -2, hoverRotate: -0.6, motion: 12 },
@@ -53,9 +44,8 @@
     { src: `${shotBase}/iphone/files.jpg`, key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
   ]
 
-  // Not in the locale files, deliberately: these are the app's own screen
-  // names, the same ones its tabs carry in English, and translating them into
-  // seven languages would be inventing names the app does not use.
+  // These labels match the app's English screen names and are intentionally
+  // not localized independently from the app.
   const shotLabels = {
     home: 'Server list',
     'server-details': 'Server details',
@@ -71,11 +61,8 @@
     settings: 'Settings',
   }
 
-  // Every shot there is, folded by device class. Folded rather than laid out:
-  // it is 31 images, and none of them is why someone opened the page. `<details>`
-  // and `loading="lazy"` together mean a closed group costs one request for
-  // nothing — a collapsed subtree is never in the viewport, so the browser
-  // does not fetch it until it is opened.
+  // Group all screenshots by device in collapsed `<details>` elements.
+  // `loading="lazy"` defers each group's images until the group is opened.
   const gallery = [
     { platform: 'iPhone', dir: 'iphone', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'snippets', 'agent', 'bench', 'settings'] },
     { platform: 'iPad', dir: 'ipad', shots: ['home', 'server-details', 'terminal', 'files', 'container', 'process', 'services', 'globe', 'agent', 'settings'] },

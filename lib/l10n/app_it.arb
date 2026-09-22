@@ -789,7 +789,7 @@
   "scheduledTaskNextInFmt": "in {time}",
   "scheduledTaskEnabled": "Enabled",
   "scheduledTaskCommentedOut": "Commented out",
-  "scheduledTaskSummaryFmt": "{total} attività · {enabled} attive",
+  "scheduledTaskSummaryFmt": "{total} attività · {enabled, plural, one{1 attiva} other{{enabled} attive}}",
   "scheduledTaskFilterHint": "Filter tasks",
   "scheduledTaskPreserved": "Preserved lines",
   "scheduledTaskRaw": "Raw crontab",

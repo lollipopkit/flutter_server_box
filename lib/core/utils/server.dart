@@ -373,25 +373,23 @@ Future<SSHClient> genClient(
   Spi spi, {
   void Function(GenSSHClientStatus)? onStatus,
 
-  /// Only pass this param if using multi-threading and key login
+  /// Private key material supplied when this runs in an isolate.
   String? privateKey,
 
-  /// Only pass this param if using multi-threading and key login
+  /// Jump-host private key material supplied when this runs in an isolate.
   String? jumpPrivateKey,
 
-  /// Prefer this map in isolate mode, fallback to [Stores.key] otherwise.
+  /// Preferred in isolate mode; otherwise credentials come from [Stores.key].
   Map<String, String>? privateKeysByKeyId,
 
-  /// Prefer this map in isolate mode, fallback to [Stores.server] otherwise.
+  /// Preferred in isolate mode; otherwise servers come from [Stores.server].
   Map<String, Spi>? jumpSpisById,
   Duration timeout = const Duration(seconds: 5),
 
-  /// [Spi] of the jump server
-  ///
-  /// Must pass this param if using multi-threading and key login
+  /// Jump server supplied when this runs in an isolate with key authentication.
   Spi? jumpSpi,
 
-  /// Handle keyboard-interactive authentication
+  /// Handles keyboard-interactive authentication prompts.
   SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   Map<String, String>? knownHostFingerprints,
   HostKeyPersistCallback? onHostKeyAccepted,

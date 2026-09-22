@@ -33,11 +33,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="${ISH_BUILD_DIR:-$REPO_ROOT/build/ish}"
 
-# The engine is a submodule, so which revision builds is the gitlink and not a
-# hash written out here. A fork of OpenMinis/ish-arm64 carrying the fixes this
-# app needs and upstream has not made: its `main` is upstream's commit with
-# those on top, so what was changed is the fork's log between the two. Its `dev`
-# is unrelated older work and is not what this builds.
+# The gitlink selects the engine revision; this script does not duplicate that
+# hash. The OpenMinis/ish-arm64 fork carries fixes not yet available upstream.
+# Its `main` branch is the upstream commit plus those fixes, so the fork's log
+# records the difference. Its unrelated, older `dev` branch is not built.
 #
 # To move it: `git submodule update --remote third_party/ish-arm64`, then
 # `git add third_party/ish-arm64` — the gitlink is the record.

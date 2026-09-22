@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_gbk2utf8/flutter_gbk2utf8.dart';
 
-/// Utility class for decoding SSH command output with encoding fallback
+/// Decodes SSH output with a Windows-specific GBK fallback.
 class SSHDecoder {
-  /// Decodes bytes to string with multiple encoding fallback strategies
+  /// Decodes [bytes] as UTF-8, then tries GBK for malformed Windows output.
   ///
   /// Tries in order:
-  /// 1. UTF-8 (with allowMalformed for lenient parsing)
+  /// 1. UTF-8 with malformed sequences replaced.
   ///    - Windows PowerShell scripts now set UTF-8 output encoding by default
   /// 2. GBK (for Windows Chinese systems)
   ///    - In some cases, Windows will still revert to GBK.
@@ -20,15 +20,13 @@ class SSHDecoder {
   }) {
     if (bytes.isEmpty) return '';
 
-    // Try UTF-8 first with allowMalformed
     try {
       final result = utf8.decode(bytes, allowMalformed: true);
-      // Check if there are replacement characters indicating decode failure
-      // For non-Windows systems, always use UTF-8 result
+      // Non-Windows output remains UTF-8 even when it contains replacement
+      // characters; GBK is only a plausible fallback on Windows.
       if (!result.contains('�') || !isWindows) {
         return result;
       }
-      // For Windows with replacement chars, log and try GBK fallback
       if (isWindows && result.contains('�')) {
         final contextInfo = context != null ? ' [$context]' : '';
         Loggers.app.info(
@@ -40,13 +38,11 @@ class SSHDecoder {
       Loggers.app.warning('UTF-8 decode failed$contextInfo: $e');
     }
 
-    // For Windows or when UTF-8 has replacement chars, try GBK
     try {
       return gbk.decode(bytes);
     } catch (e) {
       final contextInfo = context != null ? ' [$context]' : '';
       Loggers.app.warning('GBK decode failed$contextInfo: $e');
-      // Return empty string if all decoding attempts fail
       return '';
     }
   }

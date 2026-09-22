@@ -4,9 +4,9 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 
-/// Helper class for detecting remote system types
+/// Detects the operating system exposed by a remote SSH server.
 class SystemDetector {
-  /// Detects the system type of a remote server
+  /// Returns the configured system type or detects it from remote commands.
   ///
   /// First checks if a custom system type is configured in [spi].
   /// If not, attempts to detect the system by running commands:
@@ -15,7 +15,6 @@ class SystemDetector {
   ///
   /// Returns [SystemType.linux] as default if detection fails.
   static Future<SystemType> detect(SSHClient client, Spi spi) async {
-    // First, check if custom system type is defined
     SystemType? detectedSystemType = spi.customSystemType;
     if (detectedSystemType != null) {
       dprint(
@@ -25,7 +24,7 @@ class SystemDetector {
     }
 
     try {
-      // Try to detect Unix/Linux/BSD systems first (more reliable and doesn't create files)
+      // `uname` is the least invasive probe and identifies Unix-like systems.
       final unixResult = await client.runSafe(
         'uname -a 2>/dev/null',
         context: 'uname detection for ${spi.oldId}',
@@ -40,7 +39,7 @@ class SystemDetector {
         return detectedSystemType;
       }
 
-      // If uname fails, try to detect Windows systems
+      // Fall back to the Windows `ver` command when `uname` is inconclusive.
       final powershellResult = await client.runSafe(
         'ver 2>nul',
         systemType: SystemType.windows,
@@ -59,7 +58,7 @@ class SystemDetector {
       );
     }
 
-    // Default fallback
+    // Preserve the historical Linux default when neither probe succeeds.
     detectedSystemType = SystemType.linux;
     dprint('Defaulting to Linux system type for ${spi.oldId}');
     return detectedSystemType;

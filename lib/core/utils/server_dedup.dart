@@ -6,8 +6,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/store/server.dart';
 
 class ServerDeduplication {
-  /// Remove duplicate servers from the import list based on existing servers
-  /// Returns the deduplicated list
+  /// Removes imported servers that match an existing server.
   static List<Spi> deduplicateServers(
     List<Spi> importedServers, {
     List<Spi>? existingServers,
@@ -24,7 +23,7 @@ class ServerDeduplication {
     return deduplicated;
   }
 
-  /// Check if an imported server is a duplicate of an existing server
+  /// Whether [imported] matches any server in [existing].
   static bool _isDuplicate(Spi imported, List<Spi> existing) {
     for (final existingSpi in existing) {
       if (imported.isSameAs(existingSpi)) {
@@ -35,7 +34,7 @@ class ServerDeduplication {
     return false;
   }
 
-  /// Resolve name conflicts by appending suffixes
+  /// Resolves name conflicts by appending numeric suffixes.
   static List<Spi> resolveNameConflicts(
     List<Spi> importedServers, {
     List<Spi>? existingServers,
@@ -46,7 +45,7 @@ class ServerDeduplication {
     final result = <Spi>[];
 
     for (final server in importedServers) {
-      // Check against both existing servers and already processed servers
+      // Avoid conflicts with stored servers and earlier entries in this batch.
       final newName = uniqueName(
         server.name,
         taken: (name) =>
@@ -79,7 +78,7 @@ class ServerDeduplication {
     }
   }
 
-  /// Get summary of import operation
+  /// Summarizes how many imported servers remain after deduplication.
   static ImportSummary getImportSummary(
     List<Spi> originalList,
     List<Spi> deduplicatedList,
@@ -92,12 +91,11 @@ class ServerDeduplication {
     );
   }
 
-  /// Import servers with deduplication and show appropriate notifications
-  /// Returns the number of servers actually imported
-  /// Note: Caller must check mounted before calling this method
-  /// If resolvedServers is provided, it should be pre-filtered (non-empty)
-  /// [originalCount] should be provided when passing resolvedServers to show
-  /// the true pre-dedup count in messages
+  /// Imports deduplicated servers and reports the result to the user.
+  ///
+  /// Callers must ensure [context] is mounted. When [resolvedServers] is
+  /// provided, it must already be non-empty; pass [originalCount] to retain the
+  /// pre-deduplication count in user-facing messages.
   static Future<int> importServersWithNotification({
     List<Spi>? servers,
     required WidgetRef ref,

@@ -20,7 +20,7 @@ abstract class Snippet with _$Snippet {
     List<String>? tags,
     String? note,
 
-    /// List of server id that this snippet should be auto run on
+    /// Server ids on which this snippet runs automatically.
     List<String>? autoRunOn,
   }) = _Snippet;
 
@@ -63,7 +63,7 @@ extension SnippetX on Snippet {
       final key = match.group(0);
       final func = fmtArgs[key];
       if (func != null) return func(spi);
-      // If not found, return the original content for further processing
+      // Preserve unknown placeholders for later processing.
       return key ?? '';
     });
   }
@@ -87,21 +87,21 @@ extension SnippetX on Snippet {
       data: {'interactive': matches.isEmpty ? 'no' : 'yes'},
     );
 
-    /// There is no [TerminalKey] in the script
+    // A fixed script can be sent as one input operation.
     if (matches.isEmpty) {
       terminal.textInput(argsFmted);
       if (autoEnter) terminal.keyInput(TerminalKey.enter);
       return;
     }
 
-    // Records all start and end indexes of the matches
+    // Keep both bounds because input between placeholders is sent separately.
     final (starts, ends) = matches.fold((<int>[], <int>[]), (pre, e) {
       pre.$1.add(e.start);
       pre.$2.add(e.end);
       return pre;
     });
 
-    // Check all indexes, `(idx + 1).start` must >= `idx.end`
+    // Reject overlapping placeholders before slicing the script.
     for (var i = 0; i < starts.length - 1; i++) {
       final lastEnd = ends[i];
       final nextStart = starts[i + 1];
@@ -110,24 +110,21 @@ extension SnippetX on Snippet {
       }
     }
 
-    // Start term input
     if (starts.first > 0) {
       terminal.textInput(argsFmted.substring(0, starts.first));
     }
 
-    // Process matched
     for (var idx = 0; idx < starts.length; idx++) {
       final start = starts[idx];
       final end = ends[idx];
       final key = argsFmted.substring(start, end).toLowerCase();
 
-      // Special funcs
       final special = _find(SnippetFuncs.specialCtrl, key);
       if (special != null) {
         final raw = key.substring(special.key.length + 1, key.length - 1);
         await special.value((term: terminal, raw: raw));
       } else {
-        // Term keys
+        // Remaining placeholders represent terminal keys.
         final termKey = _find(fmtTermKeys, key);
         if (termKey != null) {
           await _doTermKeys(terminal, termKey, key);

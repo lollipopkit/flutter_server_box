@@ -1,14 +1,12 @@
-/* Layer order, declared before anything creates one, because a layer's
-   priority is fixed by where its name first appears. Unlayered rules beat
-   every layer, so this file's own component styles — which are unlayered —
-   still win over a utility class, and only the reset below is moved out of
-   their way. */
+/* Declare layer priority before any layer is created. Component styles remain
+   unlayered and therefore override utilities; only the reset belongs in a
+   lower-priority layer. */
 @layer theme, base, utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
-/* Shared UI library: tailwind utilities only (no preflight — this site ships
-   its own reset) + the shared design tokens the components are built on */
+/* Import Tailwind utilities without preflight because this site defines its
+   own reset, then load the shared component tokens. */
 @import 'tailwindcss/theme' layer(theme);
 @import 'tailwindcss/utilities' layer(utilities);
 @import '@serverbox/webui/theme.css';
@@ -55,10 +53,7 @@
   }
 }
 
-/* In a layer, so that a utility class can override it. Unlayered, `padding: 0`
-   on `*` beat `.px-6` in `@layer utilities` no matter the specificity — which
-   is how every shared component lost its padding while keeping its background
-   and its radius, since the reset sets neither of those. */
+/* Keep the reset below utilities so utility spacing can override it. */
 @layer base {
   *,
   *::before,
@@ -212,9 +207,7 @@ body {
   padding: clamp(5rem, 12vw, 9rem) 0;
 }
 
-/* The same content width as the nav and every section below it. Without it the
-   hero was the one full-bleed block on the page, and on a phone its heading and
-   subtitle ran to both edges while everything around them kept a gutter. */
+/* Match the nav and section width so the hero keeps the same mobile gutters. */
 .hero {
   width: min(1080px, 92vw);
   margin: 0 auto;
@@ -376,10 +369,8 @@ body {
   grid-column: span 2;
 }
 
-/* Screenshot gallery.
-   A plain <details> per device class, so the folding needs no state and works
-   with JS off. A closed group is never in the viewport, which is what makes
-   `loading="lazy"` on its images cost nothing until someone opens it. */
+/* Use one native <details> per device class so collapsing works without JS and
+   lazy-loaded images remain outside the viewport until their group opens. */
 .gallery {
   display: flex;
   flex-direction: column;
@@ -713,10 +704,8 @@ body {
     display: none;
   }
 
-  /* The links are hidden at this width, so the switcher shares the bar with the
-     brand alone. A select is as wide as its widest option, and this is only the
-     floor that keeps the pill from changing size with the language chosen —
-     capping it instead is what cut `English` down to `Engli`. */
+  /* Keep the language pill wide enough for its longest option without
+     truncating labels or changing width when the selection changes. */
   .language-switcher select {
     min-width: 7.2rem;
   }
@@ -770,10 +759,8 @@ body {
     padding: clamp(4rem, 10vw, 6rem) 0 clamp(3rem, 6vw, 5rem);
   }
 
-  /* The heading is written as two lines and carries its own `<br>`. The base
-     size is a floor rather than a ratio, so on a phone it is wider than the
-     column and the second half wraps again — three lines, one of them a single
-     word. Scaled to the viewport here so each half stays one line. */
+  /* Scale the explicit two-line heading to the viewport so neither half wraps
+     onto an additional line. */
   .hero h1 {
     font-size: clamp(1.9rem, 8.6vw, 2.5rem);
   }

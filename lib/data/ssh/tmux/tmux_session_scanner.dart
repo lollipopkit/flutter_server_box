@@ -6,8 +6,7 @@ import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 
-/// Scans for available tmux sessions on the remote server and manages
-/// tmux -CC connections.
+/// Discovers and manages tmux sessions on the remote server.
 final class TmuxSessionScanner {
   final PersistentShell _shell;
   final String? _lang;
@@ -33,7 +32,7 @@ final class TmuxSessionScanner {
     return isTmuxAvailable();
   }
 
-  /// Find tmux binary and check availability. Stores the path for later use.
+  /// Locates tmux and caches its executable path when available.
   Future<bool> isTmuxAvailable() async {
     try {
       final tmuxBin = await _findTmuxBin();
@@ -109,7 +108,7 @@ final class TmuxSessionScanner {
     );
   }
 
-  /// Create a window using the discovered tmux binary and configured locale.
+  /// Creates a window using the discovered tmux executable and locale.
   Future<bool> newWindow(String sessionName) async {
     if (!await _ensureTmuxResolved()) return false;
     return runCommand(

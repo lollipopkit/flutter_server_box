@@ -328,16 +328,15 @@ pub struct GoPush {
 
 impl Config {
     pub async fn load() -> Result<Self> {
-        // .env support: environment variables are the primary config channel for Docker/systemd
+        // Environment variables are the primary configuration channel for
+        // container and systemd deployments.
         dotenvy::dotenv().ok();
 
-        // Try to load from config file first (TOML preferred, JSON fallback)
         if Path::new("config.toml").exists() {
             let content =
                 fs::read_to_string("config.toml").context("Failed to read config.toml")?;
             let mut config: Self = toml::from_str(&content).context("Failed to parse config.toml")?;
             
-            // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides()?;
             config.validate()?;
@@ -347,7 +346,6 @@ impl Config {
                 .with_context(|| format!("Failed to read {}", json_path.display()))?;
             let mut config: Self = serde_json::from_str(&content).context("Failed to parse config.json")?;
 
-            // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides()?;
             config.validate()?;
@@ -378,12 +376,10 @@ impl Config {
             return Ok(config);
         }
 
-        // Create default config
         let mut config = Self::default();
         config.apply_env_overrides()?;
         config.validate()?;
 
-        // Save default config as TOML
         let content =
             toml::to_string_pretty(&config).context("Failed to serialize default config")?;
         config_file::write_atomic(Path::new("config.toml"), content.as_bytes())
@@ -410,9 +406,7 @@ impl Config {
     /// clears them so nothing downstream — including the `config.toml` written
     /// straight after — carries the old shape.
     pub fn normalize(&mut self) -> Result<()> {
-        // If we have Go-style config, convert it
         if self.server.is_none() && self.monitoring.is_none() {
-            // Convert Go format to Rust format
             let server = ServerConfig {
                 host: env::var("SBM_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
                 port: env::var("SBM_PORT")
@@ -432,7 +426,7 @@ impl Config {
             };
 
             let interval_seconds = if let Some(interval_str) = &self.legacy.interval {
-                // Parse Go-style interval like "7s"
+                // Legacy intervals use a compact duration such as `7s`.
                 if interval_str.ends_with('s') {
                     interval_str[..interval_str.len()-1].parse().unwrap_or(7)
                 } else {

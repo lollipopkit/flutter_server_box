@@ -58,8 +58,8 @@ List<SettingsNode> _buildNodes() {
             page: () => const DesktopSettingsPage(embedded: true),
           ),
 
-        /// Fullscreen Mode is designed for old mobile phone which can be
-        /// used as a status screen.
+        // Fullscreen mode lets a mobile device serve as a dedicated status
+        // display.
         if (isMobile)
           SettingsNode.leaf(
             id: 'app.fullScreen',

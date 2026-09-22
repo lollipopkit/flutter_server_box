@@ -200,7 +200,8 @@ class ForegroundService : Service() {
             stopSelf()
         } catch (e: Exception) {
             logError("Failed to start/update foreground", e)
-            // Don't stop the service for other exceptions, just log them
+            // Only a SecurityException makes continued foreground operation
+            // impossible; log other failures and allow a later update to retry.
         }
     }
 

@@ -2,7 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 
-/// Enum representing different command types for various systems
+/// Platforms supported by status commands.
 enum CmdTypeSys {
   linux('Linux'),
   bsd('BSD'),
@@ -28,7 +28,7 @@ enum CmdTypeSys {
 // TODO(migration): enum names must stay in sync with the sbm_parser
 // commands.rs keys (locked by test/unit/app/frb_parser_test.dart).
 sealed class ShellCmdType implements Enum {
-  /// Get corresponding system type
+  /// Platform that provides this command.
   CmdTypeSys get sysType;
 
   static Set<ShellCmdType> get all {
@@ -41,7 +41,7 @@ sealed class ShellCmdType implements Enum {
 }
 
 extension ShellCmdTypeX on ShellCmdType {
-  /// Display name of the command type; also the stored disable-key format
+  /// Display name and persisted key used to disable this command.
   String get displayName => '${sysType.sign}.$name';
 }
 
@@ -118,7 +118,7 @@ enum WindowsStatusCmdType implements ShellCmdType {
   CmdTypeSys get sysType => CmdTypeSys.windows;
 }
 
-/// Extensions for StatusCmdType
+/// Presentation helpers for Unix status commands.
 extension StatusCmdTypeX on StatusCmdType {
   String get i18n => switch (this) {
     StatusCmdType.sys => libL10n.system,

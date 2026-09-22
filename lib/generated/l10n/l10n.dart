@@ -4700,7 +4700,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{total} tasks · {enabled} enabled'**
-  String scheduledTaskSummaryFmt(Object enabled, Object total);
+  String scheduledTaskSummaryFmt(num enabled, num total);
 
   /// No description provided for @scheduledTaskFilterHint.
   ///

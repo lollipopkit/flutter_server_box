@@ -46,11 +46,10 @@ class ScriptPaths {
   static final Map<(String, bool), String> _scriptDirMap =
       <(String, bool), String>{};
 
-  /// Get the script directory for the given [id].
+  /// Returns the current script directory for [id].
   ///
-  /// Default is [ScriptConstants.scriptDirTmp]/[ScriptConstants.scriptFile],
-  /// if this path is not accessible, it will be changed to
-  /// [ScriptConstants.scriptDirHome]/[ScriptConstants.scriptFile].
+  /// Starts with the platform's temporary directory. [switchScriptDir] changes
+  /// it to the home-directory location when the temporary path is unavailable.
   static String getScriptDir(String id, {bool isWindows = false}) {
     final key = (id, isWindows);
     final defaultTmpDir = isWindows
@@ -60,7 +59,7 @@ class ScriptPaths {
     return _scriptDirMap[key]!;
   }
 
-  /// Switch between tmp and home directories for script storage
+  /// Switches between the temporary and home script directories.
   static String switchScriptDir(String id, {bool isWindows = false}) {
     final key = (id, isWindows);
     return switch (_scriptDirMap[key]) {
@@ -79,7 +78,7 @@ class ScriptPaths {
     };
   }
 
-  /// Get the full script path for the given [id]
+  /// Returns the full script path for [id].
   static String getScriptPath(String id, {bool isWindows = false}) {
     final dir = getScriptDir(id, isWindows: isWindows);
     final fileName = isWindows

@@ -5,7 +5,7 @@ import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_scanner.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 
-/// Represents the user's choice when connecting to tmux.
+/// A user's tmux selection for a new terminal connection.
 sealed class TmuxAttachChoice {
   const TmuxAttachChoice();
 }
@@ -17,13 +17,13 @@ final class TmuxAttachExisting extends TmuxAttachChoice {
   const TmuxAttachExisting({required this.sessionName, this.windowIndex});
 }
 
-/// Create a new tmux session with the given name.
+/// Creates a tmux session named [sessionName].
 final class TmuxAttachNew extends TmuxAttachChoice {
   final String sessionName;
   const TmuxAttachNew({required this.sessionName});
 }
 
-/// Skip tmux entirely (use raw shell).
+/// Opens the raw shell without tmux.
 final class TmuxAttachSkip extends TmuxAttachChoice {
   const TmuxAttachSkip();
 }
@@ -42,7 +42,7 @@ final class TmuxSession {
 
   TmuxSessionScanner get scanner => _scanner;
 
-  /// Check if tmux is available on the remote server.
+  /// Whether tmux is available on the remote server.
   Future<bool> get isAvailable => _scanner.isTmuxAvailable();
 
   /// Discover available sessions.

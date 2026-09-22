@@ -35,10 +35,10 @@
 
   const metrics = new Poller(api.getMetrics, 5000)
 
-  // Platform-only, doesn't change per-sample — fetched once per server
-  // (shared with the sidebar's OS icons via capabilitiesStore), not on the
+  // Capabilities are platform-specific and do not change per sample. Fetch
+  // once per server (shared with sidebar OS icons), rather than on the
   // metrics poll cadence. Undefined before it loads is treated as "unknown"
-  // (permissive) below so cards don't flash hidden-then-shown while in flight.
+  // below so cards do not flash from hidden to visible while loading.
   $effect(() => {
     if (servers.authenticated) void capabilitiesStore.ensure(servers.currentId)
   })
@@ -325,8 +325,8 @@
           value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
           detail={m
             ? [
-                // cpu_brand already reads e.g. "Apple M5 Pro (x18)"; older
-                // agents without it fall back to a bare core count
+                // `cpu_brand` already includes the logical core count, e.g.
+                // "Apple M5 Pro (x18)". Older agents use a bare core count.
                 m.cpu_brand || (m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : ''),
                 m.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : '',
               ]
@@ -413,12 +413,9 @@
       {/if}
     {/snippet}
 
-    <!-- Up to 8 cards now that battery/sensors/smart are gated on real
-         capabilities (see showBattery et al.) rather than always reserved
-         slots — a 2-col jump straight to 4-col leaves tablet-width viewports
-         (~640-1023px) as cramped as phones; md:grid-cols-3 smooths the ramp.
-         Order is drag-to-reorder (desktop pointer only — HTML5 DnD has no
-         built-in touch support) and synced server-side via cardOrder. -->
+    <!-- Three columns prevent the optional cards from crowding tablet-width
+         viewports before the layout expands to four columns. Card order is
+         synced through cardOrder; HTML5 drag-and-drop is pointer-only. -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
       {#each visibleCardOrder as id (id)}
         <div
@@ -494,10 +491,8 @@
           {#if m.conn}
             <div class="flex justify-between">
               <span class="text-sm text-muted-fg">{$LL.connections()}</span>
-              <!-- Linux's /proc/net/snmp reports the SNMP MIB-II tcpMaxConn
-                   counter, which is -1 by convention when the kernel has no
-                   static connection cap (i.e. always, on Linux) — not an
-                   error, so show it as "unlimited" rather than a raw -1 -->
+              <!-- Linux reports tcpMaxConn as -1 when no static connection
+                   limit exists. Display that sentinel as "unlimited". -->
               <span class="text-sm font-medium">
                 {m.conn.max_conn === -1 ? $LL.unlimited() : m.conn.max_conn}
               </span>

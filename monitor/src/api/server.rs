@@ -344,16 +344,14 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             .middleware(Logger::default())
             .middleware(cors)
             .configure(configure_api(exec_max_request))
-            // TODO: Go-compat endpoint (used by the flutter_server_box app); remove once the app migrates to /api/v1
+            // TODO: Remove this root-level 410 response after one release.
             .route("/status", web::get().to(get_status_compat))
-            // Static file serving configuration:
-            // 1. /static/* routes serve files from {static_dir}/static/ directory (React build structure)
-            // 2. Root level files (favicon.ico, manifest.json, etc.) served from {static_dir}/
-            // 3. SPA fallback serves index.html for client-side routing
+            // Serve legacy `/static` paths and root assets from the bundled
+            // Svelte frontend.
             .service(
                 Files::new("/static", "frontend/dist")
-                    .use_etag(true) // Enable ETag headers for caching
-                    .use_last_modified(true), // Enable Last-Modified headers
+                    .use_etag(true)
+                    .use_last_modified(true),
             )
             .service(
                 Files::new("/", "frontend/dist")
@@ -361,7 +359,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .use_last_modified(true)
                     .index_file("index.html"),
             )
-            // SPA fallback - serves index.html for unmatched routes (client-side routing)
+            // Serve index.html for unmatched client-side routes.
             .service(serve_index)
             .default_service(web::to(spa_fallback))
     });
@@ -381,7 +379,8 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     Ok(())
 }
 
-/// Build the rustls server config from PEM cert/key (ring provider, consistent with our dependency choices)
+/// Builds the rustls server config from a PEM certificate and key using the
+/// ring provider.
 fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
     use std::{fs::File, io::BufReader};
 
@@ -438,7 +437,6 @@ async fn login(
         }
     };
 
-    // Verify user credentials
     let user = match sqlx::query!(
         "SELECT id, username, password_hash FROM users WHERE username = ?",
         req.username
@@ -474,7 +472,6 @@ async fn login(
     {
         app_state.login_throttle.record_success(attempt);
 
-        // Update last login
         sqlx::query!(
             "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?",
             user.id
@@ -482,7 +479,6 @@ async fn login(
         .execute(&app_state.db)
         .await?;
 
-        // Generate JWT token
         let token = auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
 
         return Ok(HttpResponse::Ok().json(&LoginResponse { token }));

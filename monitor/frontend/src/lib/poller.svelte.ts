@@ -1,5 +1,5 @@
-/// Periodic fetcher with reactive data/error/loading state; components call
-/// start() in onMount and stop() in onDestroy
+/// Periodic fetcher with reactive data, error, and loading state. Components
+/// call `start()` on mount and `stop()` on destroy.
 
 export class Poller<T> {
   data = $state<T | null>(null)

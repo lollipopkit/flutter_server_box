@@ -16,10 +16,10 @@
 #   * `flutter clean`, which removes build/ and takes the libraries with it,
 #     leaving a checkout that looks untouched.
 #
-# ## Which release
+# ## Release selection
 #
-# The one whose tag is on the submodule's checked-out HEAD, asked of the
-# submodule itself: the fork tags every published commit `vX.Y.Z`, so
+# Select the release whose tag points to the submodule's checked-out HEAD. The
+# fork tags every published commit `vX.Y.Z`, so
 # `git tag --points-at HEAD` answers offline and exactly. That gitlink is this
 # repository's only statement about which revision of the engine it builds
 # against — see CLAUDE.md — so resolving through it means the libraries and the
@@ -35,10 +35,10 @@
 # usual reason to be here is a build directory that is empty or stale, not a
 # checkout that is behind.
 #
-# ## Which not to
+# ## Stale-library detection
 #
-# What is checked once they are in place is the sha they were put there for,
-# recorded beside them in `.ish-libs-sha`. Existence alone was not enough: the
+# Record the source SHA beside installed libraries in `.ish-libs-sha` and
+# verify it on later runs. Existence alone is insufficient: the
 # ordinary way the gitlink moves is `git submodule update --remote`, which
 # leaves the previous revision's libraries sitting in build/ where they are
 # still found, and linking those against the new revision's headers is the

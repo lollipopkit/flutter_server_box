@@ -1791,7 +1791,7 @@ class AppLocalizationsRu extends AppLocalizations {
       count,
       locale: localeName,
       other: 'Показать потоки ядра: $count',
-      one: 'Показать 1 поток ядра',
+      one: 'Показать $count поток ядра',
     );
     return '$_temp0';
   }
@@ -1883,7 +1883,7 @@ class AppLocalizationsRu extends AppLocalizations {
       count,
       locale: localeName,
       other: 'Другие units: $count',
-      one: 'Ещё 1 unit',
+      one: 'Ещё $count unit',
     );
     return '$_temp0';
   }
@@ -2748,7 +2748,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+  String scheduledTaskSummaryFmt(num enabled, num total) {
     return 'Всего: $total · включено: $enabled';
   }
 

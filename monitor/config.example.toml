@@ -1,5 +1,4 @@
-# ServerBox Monitor Configuration
-# TOML format configuration file example
+# ServerBox Monitor configuration example
 
 # Database configuration
 database_url = "sqlite:serverbox_monitor.db"
@@ -33,17 +32,16 @@ interval_seconds = 7
 # How often a rule may fire, formatted "N/duration". Default: once per minute.
 # push_rate = "1/1m"
 
-# The slower cycle that collects battery/sensors/SMART/AMD-GPU data — the only
+# The slower cycle collects battery, sensor, SMART, and AMD GPU data — the only
 # fields that still need CLI tools (smartctl/sensors/amd-smi) after monitor's
 # native collection cutover. Core fields (cpu/mem/disk/net/uptime/...) no
-# longer depend on it at all, and are collected every interval_seconds
-# regardless of anything in this section. Values are cached and carried
+# longer depend on it and are collected every interval_seconds regardless of
+# this section. Values are cached and carried
 # forward between extended collections.
 [monitoring.extended]
 # Unset defaults to 10x interval_seconds, floored at 120s. Lower it only if
 # you need SMART/sensor data fresher than that; smartctl-class latency on
-# every core cycle is real, avoidable cost for data that doesn't change that
-# fast.
+# every core cycle adds avoidable latency for data that changes slowly.
 # interval_secs = 300
 
 # Skip the extended cycle while nobody is looking, i.e. while no authenticated
@@ -59,7 +57,7 @@ enabled = true
 # How long to keep system metrics (in days)
 metrics_days = 30
 
-# How long to keep alert records (in days)  
+# How long to keep alert records (in days)
 alerts_days = 90
 
 # How often to run cleanup (in hours)
@@ -104,8 +102,8 @@ ssh_addr = "127.0.0.1:22"
 # This makes your panel password equivalent to a shell as whatever account the
 # agent runs as — which is why install.sh installs a *user* service by default.
 # If you run the agent as root, turn this off. The SSH login stays available
-# alongside it either way, for anyone who wants sshd's authentication, logging
-# and second factor instead.
+# alongside it for anyone who wants sshd's authentication, logging, and second
+# factor instead.
 #
 # Also settable with SBM_FULL_ACCESS=0/1 (env wins over this file), and the
 # panel can turn it off — but never on — from its first-run prompt.

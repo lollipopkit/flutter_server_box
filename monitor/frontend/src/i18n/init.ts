@@ -1,14 +1,13 @@
-// Locale bootstrap: load all locales synchronously (small dictionaries) and
-// pick the persisted choice, falling back to browser language detection.
-// Custom detection instead of typesafe-i18n's detectors so storage access
-// goes through window.localStorage (see tests/setup.ts for why).
+// Load the small locale dictionaries synchronously. Prefer the persisted
+// locale, then fall back to the browser language. Custom detection keeps
+// storage access on `window.localStorage` for the test shim in `tests/setup.ts`.
 import type { Locales } from './i18n-types.js'
 import { isLocale, locales } from './i18n-util.js'
 import { loadAllLocales } from './i18n-util.sync.js'
 import { setLocale } from './i18n-svelte.js'
 
-// Primary-subtag fallbacks for locales that need more than a straight
-// 'xx' -> 'xx' match (Chinese variants map to different simplified/traditional locales)
+// Map Chinese script and region variants to the supported Simplified or
+// Traditional Chinese locale.
 const primarySubtagFallbacks: Record<string, Locales> = {
 	zh: 'zh-CN',
 	'zh-hans': 'zh-CN',

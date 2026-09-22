@@ -2756,8 +2756,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total Aufgaben · $enabled aktiviert';
+  String scheduledTaskSummaryFmt(num enabled, num total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total Aufgaben',
+      one: '1 Aufgabe',
+    );
+    return '$_temp0 · $enabled aktiviert';
   }
 
   @override
@@ -2957,7 +2963,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get retentionAlerts => 'Keep alerts';
 
   @override
-  String get retentionCleanup => 'Bereinigung ausführen alle';
+  String get retentionCleanup => 'Bereinigungsintervall';
 
   @override
   String get retentionMaxDbSize => 'Maximale Datenbankgröße';

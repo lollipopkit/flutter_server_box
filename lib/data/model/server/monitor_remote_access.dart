@@ -15,9 +15,8 @@ class MonitorRemoteAccess {
   /// The agent will let this app reach the machine with no SSH credentials —
   /// a shell, a command, a forwarded port — as the account it runs as.
   ///
-  /// Always re-checked by the agent when the request arrives; this is what the
-  /// app asks in order to know what to offer, rather than asking the user to
-  /// assert something the agent already knows.
+  /// The agent re-checks this when each request arrives. The app uses it only
+  /// to decide which actions to offer.
   final bool fullAccess;
 
   /// The agent will serve `/api/v1/fs/*`.

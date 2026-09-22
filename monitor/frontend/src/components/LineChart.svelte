@@ -11,21 +11,20 @@
 
   interface Props {
     /// Omit when the surrounding page already says what this chart is (e.g.
-    /// a detail page's own header) — repeating it as a card title too is
-    /// just noise
+    /// a detail page with its own header).
     title?: string
-    /// Timestamps aligned index-by-index with every series' values
+    /// Timestamps aligned index-by-index with every series' values.
     labels: string[]
     series: ChartSeries[]
-    /// Fixed y max (e.g. 100 for percentages); auto-scaled when absent
+    /// Fixed y-axis maximum (e.g. 100 for percentages); auto-scaled when absent.
     yMax?: number
     format: (v: number) => string
   }
 
   const { title, labels, series, yMax, format }: Props = $props()
 
-  // Rendered 1:1 at the measured container width (no preserveAspectRatio
-  // scaling, which stretched axis text on wide viewports)
+  // Render at the measured width rather than scaling the SVG, which distorts
+  // axis labels on wide viewports.
   let chartWidth = $state(0)
   const W = $derived(Math.max(chartWidth, 320))
   const H = 220

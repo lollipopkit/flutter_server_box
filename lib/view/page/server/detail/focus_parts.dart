@@ -516,13 +516,11 @@ class ServerDetailDiskItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Create a list to hold this disk and its children
     final items = <Widget>[];
 
-    // Add the current disk
     items.add(_row());
 
-    // Recursively add child disks with increased indentation
+    // Flatten the subtree while preserving its depth for indentation.
     if (disk.children.isNotEmpty) {
       for (final childDisk in disk.children) {
         items.add(

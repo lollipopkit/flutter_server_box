@@ -1452,8 +1452,8 @@ class ServerNotifier extends _$ServerNotifier {
       // custom commands, so put it first and leave custom output last.
       final combined = extended.isEmpty ? raw : '$extended\n$raw';
 
-      // Same conversion contract as the monitor path: raw transport output in,
-      // ServerStatus (plus a trend sample) out
+      // Use the same conversion contract as the monitor path: raw transport
+      // output becomes a ServerStatus plus one trend sample.
       final source = SshDataSource(spi: spi, runScript: () async => combined);
       final status = await source.fetchStatus(_copyStatus(state.status));
       // Shell output carries no sampling instant, so the nearest thing is when
@@ -1476,9 +1476,9 @@ class ServerNotifier extends _$ServerNotifier {
     }
 
     if (!_isRefreshCurrent(operation, spi)) return;
-    // Set Server.isBusy to false each time this method is called
+    // A successful refresh leaves the connection ready for the next poll.
     updateConnection(ServerConn.finished);
-    // Reset retry count only after successful preparation
+    // Reset retries only after status preparation succeeds.
     TryLimiter.reset(sid);
   }
 

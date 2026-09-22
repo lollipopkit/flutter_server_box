@@ -2526,7 +2526,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskCommentedOut => '已注释';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+  String scheduledTaskSummaryFmt(num enabled, num total) {
     return '$total 个任务 · $enabled 个已启用';
   }
 
@@ -5304,7 +5304,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskCommentedOut => '已註解';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+  String scheduledTaskSummaryFmt(num enabled, num total) {
     return '$total 個工作 · 已啟用 $enabled 個';
   }
 

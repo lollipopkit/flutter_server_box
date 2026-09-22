@@ -248,7 +248,8 @@ extension _SSH on _AppSettingsPageState {
     final path = await Pfs.pickFilePath();
     if (path == null) return;
 
-    // iOS can't copy file to app dir, so we need to use the original path
+    // The iOS file picker grants access to the selected file in place, so keep
+    // its original path instead of copying it into the app directory.
     if (isIOS) {
       _setting.fontPath.put(path);
       await FontUtils.loadFrom(path);

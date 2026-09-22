@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 
-/// Represents the various states a container can be in.
-/// Supports both Docker and Podman container status parsing.
+/// A normalized Docker or Podman container state.
 enum ContainerStatus {
   running,
   exited,
@@ -12,10 +11,10 @@ enum ContainerStatus {
   dead,
   unknown;
 
-  /// Check if the container is actively running
+  /// Whether the container is actively running.
   bool get isRunning => this == ContainerStatus.running;
 
-  /// Parse Docker container status string to ContainerStatus
+  /// Parses a Docker-style status string.
   static ContainerStatus fromDockerState(String? state) {
     if (state == null || state.isEmpty) return ContainerStatus.unknown;
 
@@ -37,7 +36,7 @@ enum ContainerStatus {
     return ContainerStatus.unknown;
   }
 
-  /// Parse Podman container status from exited boolean
+  /// Maps Podman's legacy `exited` flag to a container state.
   static ContainerStatus fromPodmanExited(bool? exited) {
     if (exited == true) return ContainerStatus.exited;
     if (exited == false) return ContainerStatus.running;
@@ -58,7 +57,7 @@ enum ContainerStatus {
     _ => false,
   };
 
-  /// Get display string for the status
+  /// Localized status label where one is available.
   String get displayName {
     return switch (this) {
       ContainerStatus.running => libL10n.running,

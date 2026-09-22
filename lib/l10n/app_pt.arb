@@ -786,7 +786,7 @@
   "scheduledTaskNextInFmt": "in {time}",
   "scheduledTaskEnabled": "Enabled",
   "scheduledTaskCommentedOut": "Commented out",
-  "scheduledTaskSummaryFmt": "{total} tarefas · {enabled} ativadas",
+  "scheduledTaskSummaryFmt": "{total, plural, =0{{total} tarefas} =1{1 tarefa} other{{total} tarefas}} · {enabled} ativadas",
   "scheduledTaskFilterHint": "Filter tasks",
   "scheduledTaskPreserved": "Preserved lines",
   "scheduledTaskRaw": "Raw crontab",

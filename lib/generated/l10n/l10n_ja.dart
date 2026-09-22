@@ -2576,7 +2576,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'コメントアウト済み';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+  String scheduledTaskSummaryFmt(num enabled, num total) {
     return '$total 件のタスク · $enabled 件が有効';
   }
 

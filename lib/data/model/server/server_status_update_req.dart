@@ -61,7 +61,8 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
       int.tryParse(StatusCmdType.time.findInMap(req.parsedOutput).trim()) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-  // Per-segment tolerance: one failing segment does not affect the others (matching the old per-segment try-catch semantics)
+  // Parse each segment independently so one failure does not discard results
+  // from the other segments.
   _apply(ss, 'cpu', () => _applyCpu(ss, status, req.system));
   _apply(ss, 'mem', () => _applyMemory(ss, status));
   _apply(ss, 'swap', () => _applySwap(ss, status));
@@ -248,7 +249,8 @@ void _applyCpu(ServerStatus ss, Map<String, dynamic> status, SystemType system) 
   if (cores.isEmpty) return;
 
   if (system == SystemType.windows) {
-    // Windows only has instantaneous percentages: accumulate onto the previous pseudo-counters to simulate cumulative ticks
+    // Windows provides instantaneous percentages only. Add them to the previous
+    // pseudo-counters to simulate cumulative ticks.
     cores = _accumulateWindowsCpu(cores, ss.cpu.now);
   }
   ss.cpu.update(cores);
@@ -266,7 +268,8 @@ List<SingleCpuCore> _accumulateWindowsCpu(
   List<SingleCpuCore> fresh,
   List<SingleCpuCore> prev,
 ) {
-  // The first entry of fresh/prev is the "cpu" summary; per-core entries start at 1
+  // The first entry in `fresh` and `prev` is the CPU summary; per-core entries
+  // start at index 1.
   final cores = <SingleCpuCore>[];
   var totalUser = 0;
   var totalIdle = 0;
@@ -339,7 +342,8 @@ void _applyNet(
 ) {
   final List<NetSpeedPart> parts;
   if (req.system == SystemType.windows) {
-    // Windows net speed is a WMI double-sample delta; the FFI emits rates directly
+    // Windows network speed comes from a two-sample WMI delta; the FFI returns
+    // the rates directly.
     final speedsJson = ffi.parseWindowsNetSpeedJson(
       raw: WindowsStatusCmdType.net.findInMap(req.parsedOutput),
     );

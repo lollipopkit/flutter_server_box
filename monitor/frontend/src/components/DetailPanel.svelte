@@ -18,18 +18,15 @@
 
   const labels = $derived(history.map((p) => p.timestamp))
 
-  // usage_percent is resolved server-side by adapt_cpu, which is the only place
-  // that knows whether used/total are cumulative ticks (Linux, needs a delta)
-  // or one-shot percentage pseudo-counters (Bsd/Windows, ratio is the value).
-  // null until a baseline exists on the first Linux cycle.
+  // `adapt_cpu` resolves cumulative Linux ticks and one-shot BSD/Windows
+  // counters into percentages. The first Linux sample has no baseline.
   const corePercents = $derived((m?.cpu_cores ?? []).map((c) => c.usage_percent))
 
-  // Detail pages backed by the slower extended collection cycle — see the
-  // freshness note rendered for these below
+  // These pages use the slower extended collection cycle and display its
+  // freshness note below.
   const extendedKinds = new Set<DetailKind>(['battery', 'sensors', 'smart'])
 
-  // Click-to-sort table state — one per list, since a page (disk) can show
-  // more than one sortable table at once
+  // Keep sort state per list because the disk page contains multiple tables.
   type SortDir = 1 | -1
   type Sort<K extends string> = { key: K; dir: SortDir }
 

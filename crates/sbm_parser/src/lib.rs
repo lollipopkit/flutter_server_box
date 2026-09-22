@@ -34,9 +34,11 @@ pub enum SystemType {
     Windows,
 }
 
-/// Parse result of one collection round. `None`/empty fields mean the command was
-/// missing or failed to parse, matching the app's per-segment try-catch tolerance:
-/// one failing segment does not affect the others.
+/// Parsed data from one collection round.
+///
+/// `None` and empty fields mean that the corresponding command was unavailable
+/// or its output could not be parsed. A failure in one segment does not discard
+/// the other segments.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ServerStatus {
     pub cpu: Vec<CpuCore>,
@@ -102,11 +104,11 @@ pub struct ServerStatus {
     pub disk_smart: Vec<DiskSmart>,
 }
 
-/// Parse options
+/// Options that affect status parsing.
 #[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
-    /// Temperature divisor: Linux thermal_zone reports millidegree Celsius (1000.0);
-    /// 1.0 when sensors output Celsius directly (the app's tempIsCelsius setting)
+    /// Divisor applied to temperature readings. Linux thermal zones report
+    /// millidegrees Celsius (`1000.0`); direct Celsius readings use `1.0`.
     pub temp_divisor: f64,
 }
 
@@ -116,7 +118,7 @@ impl Default for ParseOptions {
     }
 }
 
-/// Parse entry point: `raw` maps command key (see [`commands`]) → raw output
+/// Parses raw command output keyed by the identifiers in [`commands`].
 pub fn parse_status(system: SystemType, raw: &HashMap<String, String>) -> ServerStatus {
     parse_status_opts(system, raw, ParseOptions::default())
 }

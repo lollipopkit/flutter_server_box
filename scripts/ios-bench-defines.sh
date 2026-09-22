@@ -4,8 +4,8 @@
 # The benchmark script and the prebuilt aarch64 binary belong to the ish-arm64
 # fork, under third_party/ish-arm64/benchmark/assets/ — they come with the
 # submodule. They are passed in rather than copied:
-# they are the thing being measured, and a second copy here would be a second
-# thing to keep in step. It also keeps them out of the shipped app, since a
+# they are the inputs being measured, and another copy would need to be kept in
+# sync. This also keeps them out of the shipped app, since a
 # define reaches only the build that asks for it.
 #
 #     scripts/ios-bench-defines.sh > /tmp/bench.json
@@ -21,7 +21,7 @@ if [ ! -f "$assets/shellbench.sh" ]; then
 fi
 
 # The C half is optional: without it the suite still reports every shell
-# section, and reporting nothing because one binary is missing would be worse.
+# section; one missing binary should not suppress every other result.
 python3 - "$assets" <<'PY'
 import base64, json, pathlib, sys
 

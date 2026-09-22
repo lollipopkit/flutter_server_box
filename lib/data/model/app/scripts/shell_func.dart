@@ -30,32 +30,32 @@ extension ShellFuncX on ShellFunc {
   }
 }
 
-/// Manager class for shell function operations
+/// Resolves script paths and builds commands for shell functions.
 class ShellFuncManager {
   const ShellFuncManager._();
 
-  /// System string used by the FFI ("linux" | "bsd" | "windows");
-  /// null defaults to linux (linux and bsd produce the same Unix script)
+  /// Returns the platform name expected by the FFI.
+  ///
+  /// A null value defaults to Linux; Linux and BSD use the same Unix script.
   static String ffiSystem(SystemType? systemType) => switch (systemType) {
     SystemType.windows => 'windows',
     SystemType.bsd => 'bsd',
     _ => 'linux',
   };
 
-  /// Normalize a directory path to ensure it doesn't end with trailing separators
+  /// Removes trailing path separators from [dir].
   static String _normalizeDir(String dir, bool isWindows) {
     final separator = isWindows
         ? ScriptConstants.windowsPathSeparator
         : ScriptConstants.unixPathSeparator;
 
-    // Remove all trailing separators
     final pattern = RegExp('${RegExp.escape(separator)}+\$');
     return dir.replaceAll(pattern, '');
   }
 
-  /// Get the script directory for the given [id].
+  /// Returns the script directory for [id].
   ///
-  /// Checks for custom script directory first, then falls back to default.
+  /// Uses [customDir] when provided; otherwise uses the stored default.
   static String getScriptDir(
     String id, {
     SystemType? systemType,
@@ -67,13 +67,13 @@ class ShellFuncManager {
     return ScriptPaths.getScriptDir(id, isWindows: isWindows);
   }
 
-  /// Switch between tmp and home directories for script storage
+  /// Switches between the temporary and home script directories.
   static void switchScriptDir(String id, {SystemType? systemType}) {
     final isWindows = systemType == SystemType.windows;
     ScriptPaths.switchScriptDir(id, isWindows: isWindows);
   }
 
-  /// Get the full script path for the given [id]
+  /// Returns the full script path for [id].
   static String getScriptPath(
     String id, {
     SystemType? systemType,
@@ -94,7 +94,7 @@ class ShellFuncManager {
     return ScriptPaths.getScriptPath(id, isWindows: isWindows);
   }
 
-  /// Get the installation shell command for the script
+  /// Builds the command that installs the script.
   static String getInstallShellCmd(
     String id, {
     SystemType? systemType,
