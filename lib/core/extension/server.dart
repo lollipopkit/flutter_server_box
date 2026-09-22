@@ -1,6 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/utils/logo_url.dart';
+import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/dist_icon.dart';
@@ -35,5 +38,71 @@ extension LogoExt on ServerState {
     }
     logoUrl = logoUrl.replaceAll('{BRIGHT}', context.isDark ? 'dark' : 'light');
     return isFetchableLogoUrl(logoUrl) ? logoUrl : null;
+  }
+}
+
+extension ServerStateUi on ServerState {
+  /// Whether what stopped the connection was the far end asking a question.
+  ///
+  /// Not a failure to report but a prompt to answer, which is why the card
+  /// offers a lock rather than a retry: the same attempt again would ask the
+  /// same question.
+  bool get needsInteractiveAuth {
+    final error = status.err;
+    return error is SSHErr && error.type == SSHErrType.interactiveAuth;
+  }
+
+  /// The one line a list of servers carries beside a name.
+  ///
+  /// Temperature and uptime, and nothing else. The latency belongs to the
+  /// detail page's About card: this is read while scanning a list of machines,
+  /// and a number that changes on every poll is noise there.
+  ///
+  /// Null when there is nothing to say, which is every state but the two that
+  /// have an answer — one that failed, and one that has been sampled.
+  String? get listLine {
+    if (status.err != null) return libL10n.viewErr;
+    switch (conn) {
+      case ServerConn.disconnected:
+      case ServerConn.loading:
+      case ServerConn.connected:
+      case ServerConn.connecting:
+        return null;
+      case ServerConn.failed:
+        return libL10n.fail;
+      case ServerConn.finished:
+        // Highest priority: whatever the user's own command printed.
+        final cmdTemp = () {
+          final val = status.customCmds['server_card_top_right'];
+          if (val == null) return null;
+          // Used on one line, so only the last one is of any use.
+          return val.split('\n').lastOrNull;
+        }();
+        final temperatureVal = () {
+          final preferTempDev = spi.custom?.preferTempDev;
+          if (preferTempDev != null) {
+            final preferTemp = status.sensors
+                .firstWhereOrNull((e) => e.device == preferTempDev)
+                ?.summary
+                ?.split(' ')
+                .firstOrNull;
+            if (preferTemp != null) {
+              return double.tryParse(preferTemp.replaceFirst('°C', ''));
+            }
+          }
+          return status.temps.first;
+        }();
+        final upTime = status.more[StatusCmdType.uptime];
+        final items = [
+          cmdTemp ??
+              (temperatureVal != null
+                  ? '${temperatureVal.toStringAsFixed(1)}°C'
+                  : null),
+          upTime,
+        ];
+        final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
+        if (str.isEmpty) return libL10n.empty;
+        return str;
+    }
   }
 }

@@ -70,7 +70,7 @@ void main() {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: ListView(children: [PlatformPublicSettings.buildBioAuth]),
+          body: ListView(children: [PlatformPublicSettings.buildBioAuthRows()]),
         ),
       ),
     );
@@ -78,17 +78,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  testWidgets('a device without authentication hides the setting', (
-    tester,
-  ) async {
-    await pumpSetting(tester);
-    expect(find.text(libL10n.bioAuth), findsNothing);
-    expect(find.text(libL10n.notExistFmt(libL10n.bioAuth)), findsNothing);
-    expect(find.byType(Switch), findsNothing);
-    // Nothing at all: this one carries its own card in the one case it has
-    // something to put in it, so a caller that cards it as well leaves an
-    // empty card on a device that hid the setting.
-    expect(find.byType(CardX), findsNothing);
+  test('a device without authentication has no setting to show', () async {
+    // Asked before anything is built, and by the page rather than by the row:
+    // these two rows live in a named group now, and a group whose rows arrive
+    // a frame later is a heading and a hairline with nothing under them.
+    expect(await PlatformPublicSettings.bioAuthAvailable, isFalse);
   });
 
   testWidgets(
@@ -104,10 +98,8 @@ void main() {
           AuthResult.fail;
       Stores.setting.useBioAuth.put(true);
 
+      expect(await PlatformPublicSettings.bioAuthAvailable, isTrue);
       await pumpSetting(tester);
-      await tester.tap(find.text(libL10n.bioAuth));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
       await tester.tap(find.byType(Switch));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));

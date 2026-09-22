@@ -2952,4 +2952,55 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Bu agent yalnız monitorinq üçündür. Buradan terminal aça, əmrlər işlədə və fayllara baxa bilməzsiniz. Bu funksiyaları aktivləşdirmək üçün agentin config.toml faylında [remote_access] bölməsini redaktə edin.';
+
+  @override
+  String get alerts => 'Xəbərdarlıqlar';
+
+  @override
+  String get online => 'onlayn';
+
+  @override
+  String get densityCards => 'Kartlar';
+
+  @override
+  String get densityRows => 'Sətirlər';
+
+  @override
+  String get densityGrid => 'Tor';
+
+  @override
+  String get connect => 'Qoşul';
+
+  @override
+  String get disconnect => 'Bağlantını kəs';
+
+  @override
+  String get searchServerTip =>
+      'Adları və ünvanları axtarır — redaktorun əvvəlcə soruşduğu iki məlumatı.';
+
+  @override
+  String get addServerTip =>
+      'Birini doldurun, QR kodu skan edin və ya kiminsə paylaşdığı faylı idxal edin.';
+
+  @override
+  String get move => 'Köçür';
+
+  @override
+  String get moveToTop => 'Ən yuxarıya köçür';
+
+  @override
+  String get moveToBottom => 'Ən aşağıya köçür';
+
+  @override
+  String get groupByTag => 'Teqə görə qruplaşdır';
+
+  @override
+  String get groupByTagTip =>
+      'Teqlər serverin öz redaktə səhifəsində təyin edilir.';
+
+  @override
+  String get connecting => 'Qoşulur…';
+
+  @override
+  String get authShort => 'Auth';
 }

@@ -5,50 +5,55 @@ extension _App on _AppSettingsPageState {
     context.showRoundDialog(title: libL10n.fail, child: Text(libL10n.invalid));
   }
 
-  Widget _buildApp() {
-    final androidSettings = isAndroid ? _buildAndroidSettings() : null;
-    final specific = _buildPlatformSetting();
-    // Carded one by one rather than by mapping the list. `buildBioAuth` owns
-    // its own card and answers with an empty widget where there is no
-    // biometric hardware, where it is still loading, and where the check
-    // failed — so a card applied from out here is a card around nothing three
-    // times over, and a card around a card in the one case it has something.
-    final children = <Widget>[
-      _buildLocale().cardx,
-      _buildThemeMode().cardx,
-      _buildAppColor().cardx,
-      _buildCheckUpdate().cardx,
-      PlatformPublicSettings.buildBioAuth,
-      // `buildPrivacyBlur` was here. Covering the app in the switcher is about
-      // who can read what is on screen, which is what the privacy page is —
-      // and a setting is easier to find under the subject it belongs to than
-      // in the list of everything.
-      if (androidSettings != null) androidSettings.cardx,
-      if (specific != null) specific.cardx,
-      _buildAppMore().cardx,
+  List<SettingsGroup> _buildApp() {
+    return [
+      SettingsGroup(libL10n.general, [
+        _buildLocale(),
+        _buildThemeMode(),
+        _buildAppColor(),
+        _buildCollapseUI(),
+      ]),
+      SettingsGroup(libL10n.update, [_buildCheckUpdate(), _buildBeta()]),
+      // Everything about the machine the app happens to be on, which is why
+      // every row in it is behind a platform test. It is also where the rows
+      // that used to be behind a tile called "More" ended up: a group with a
+      // name is what that tile was standing in for.
+      SettingsGroup(libL10n.system, [
+        if (_bioAuthAvail == true) _buildBioAuth(),
+        if (isMobile) _buildWakeLock(),
+        if (isAndroid) _buildBgRun(),
+        if (isDesktop) _buildHideTitleBar(),
+        if (DmgNotice.applies) _buildDmgNotice(),
+        // Debug only, which is where it was moved to while these rows were
+        // flat. Naming the group does not put it back in a release build.
+        if (kDebugMode) _buildEditRawSettings(),
+      ]),
     ];
-
-    return Column(children: children);
   }
 
-  Widget _buildAndroidSettings() {
-    return ExpandTile(
-      leading: const Icon(Icons.phone_android),
-      title: Text('Android ${libL10n.setting}'),
-      children: [_buildBgRun()],
+  SettingsRow _buildBioAuth() {
+    return SettingsRow(
+      libL10n.bioAuth,
+      PlatformPublicSettings.buildBioAuthRows,
     );
   }
 
-  Widget _buildBgRun() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ListTile(
-          title: TipText(l10n.bgRun, l10n.bgRunTip),
-          trailing: StoreSwitch(prop: Stores.setting.bgRun),
-        ),
-        _buildBgRunPermission(),
-      ],
+  SettingsRow _buildBgRun() {
+    final label = l10n.bgRun;
+    return SettingsRow(
+      label,
+      () => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.phone_android),
+            title: TipText(label, l10n.bgRunTip),
+            trailing: StoreSwitch(prop: Stores.setting.bgRun),
+          ),
+          _buildBgRunPermission(),
+        ],
+      ),
+      keywords: l10n.bgRunTip,
     );
   }
 
@@ -82,140 +87,154 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  Widget? _buildPlatformSetting() {
-    // The App Store build's one standing entry about the DMG build. The line
-    // in the update dialog is asked to go away and does; this one stays, so
-    // there is somewhere to read the whole thing afterwards.
-    if (DmgNotice.applies) {
-      return ListTile(
+  /// The App Store build's one standing entry about the DMG build. The line in
+  /// the update dialog is asked to go away and does; this one stays, so there
+  /// is somewhere to read the whole thing afterwards.
+  SettingsRow _buildDmgNotice() {
+    final label = l10n.macDmgTitle;
+    return SettingsRow(
+      label,
+      () => ListTile(
         leading: const Icon(MingCute.apple_fill),
-        title: Text(l10n.macDmgTitle),
+        title: Text(label),
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () => DmgNotice.show(context),
-      );
-    }
-
-    return null;
+      ),
+    );
   }
 
-  Widget _buildCheckUpdate() {
-    return ListTile(
-      leading: const Icon(Icons.update),
-      title: Text(libL10n.checkUpdate),
-      subtitle: ValBuilder(
-        listenable: AppUpdateIface.newestBuild,
-        builder: (val) {
-          String display;
-          if (val != null) {
-            if (val > BuildData.build) {
-              display = libL10n.versionHasUpdate(val);
+  SettingsRow _buildCheckUpdate() {
+    final label = libL10n.checkUpdate;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.update),
+        title: Text(label),
+        subtitle: ValBuilder(
+          listenable: AppUpdateIface.newestBuild,
+          builder: (val) {
+            String display;
+            if (val != null) {
+              if (val > BuildData.build) {
+                display = libL10n.versionHasUpdate(val);
+              } else {
+                display = libL10n.versionUpdated(BuildData.build);
+              }
             } else {
-              display = libL10n.versionUpdated(BuildData.build);
+              display = libL10n.versionUnknownUpdate(BuildData.build);
             }
-          } else {
-            display = libL10n.versionUnknownUpdate(BuildData.build);
-          }
-          return Text(display, style: UIs.textGrey);
-        },
+            return Text(display, style: UIs.textGrey);
+          },
+        ),
+        onTap: () => Fns.throttle(
+          () => AppUpdateIface.doUpdate(
+            context: context,
+            build: BuildData.build,
+            githubReleasesUrl: Urls.githubReleasesApi,
+            storeUrl: Urls.appStore,
+            force: BuildMode.isDebug,
+            noticeBuilder: (ctx) => DmgNotice.forUpdate(
+              ctx,
+              build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+            ),
+          ),
+        ),
+        trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
       ),
-      onTap: () => Fns.throttle(
-        () => AppUpdateIface.doUpdate(
-          context: context,
-          build: BuildData.build,
-          githubReleasesUrl: Urls.githubReleasesApi,
-          storeUrl: Urls.appStore,
-          force: BuildMode.isDebug,
-          noticeBuilder: (ctx) =>
-              DmgNotice.forUpdate(ctx, build: AppUpdateIface.newestBuild.value ?? BuildData.build),
+      // The version is on this row, so it is what somebody typing one is
+      // looking for.
+      keywords: 'v${BuildData.build}',
+    );
+  }
+
+  SettingsRow _buildUpdateInterval() {
+    final label = l10n.updateServerStatusInterval;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.timer_outlined),
+        title: Text(label),
+        onTap: () async {
+          final val = await context.showPickSingleDialog(
+            title: libL10n.setting,
+            items: List.generate(10, (idx) => idx == 1 ? null : idx),
+            initial: _setting.serverStatusUpdateInterval.fetch(),
+            display: (p0) => p0 == 0 ? libL10n.manual : '$p0 ${l10n.second}',
+          );
+          if (val != null) {
+            _setting.serverStatusUpdateInterval.put(val);
+          }
+        },
+        trailing: ValBuilder(
+          listenable: _setting.serverStatusUpdateInterval.listenable(),
+          builder: (val) => Text('$val ${l10n.second}', style: UIs.text15),
         ),
       ),
-      trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
     );
   }
 
-  Widget _buildUpdateInterval() {
-    return ListTile(
-      title: Text(l10n.updateServerStatusInterval),
-      onTap: () async {
-        final val = await context.showPickSingleDialog(
-          title: libL10n.setting,
-          items: List.generate(10, (idx) => idx == 1 ? null : idx),
-          initial: _setting.serverStatusUpdateInterval.fetch(),
-          display: (p0) => p0 == 0 ? libL10n.manual : '$p0 ${l10n.second}',
-        );
-        if (val != null) {
-          _setting.serverStatusUpdateInterval.put(val);
-        }
-      },
-      trailing: ValBuilder(
-        listenable: _setting.serverStatusUpdateInterval.listenable(),
-        builder: (val) => Text('$val ${l10n.second}', style: UIs.text15),
+  SettingsRow _buildAppColor() {
+    final label = libL10n.primaryColorSeed;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.colorize),
+        title: Text(label),
+        trailing: _setting.colorSeed.listenable().listenVal((_) {
+          return ClipOval(
+            child: Container(color: UIs.primaryColor, height: 23, width: 23),
+          );
+        }),
+        onTap: _onTapAppColor,
       ),
     );
   }
 
-  Widget _buildAppColor() {
-    return ListTile(
-      leading: const Icon(Icons.colorize),
-      title: Text(libL10n.primaryColorSeed),
-      trailing: _setting.colorSeed.listenable().listenVal((_) {
-        return ClipOval(
-          child: Container(color: UIs.primaryColor, height: 27, width: 27),
-        );
-      }),
-      onTap: () {
-        withTextFieldController((ctrl) async {
-          ctrl.text = Color(_setting.colorSeed.fetch()).toHex;
-          await context.showRoundDialog(
-            title: libL10n.primaryColorSeed,
-            child: StatefulBuilder(
-              builder: (context, setState) {
-                final children = <Widget>[
-                  if (!isIOS)
-                    DynamicColorBuilder(
-                      builder: (light, dark) {
-                        final supported = light != null || dark != null;
-                        if (!supported) {
-                          if (!_setting.useSystemPrimaryColor.fetch()) {
-                            _setting.useSystemPrimaryColor.put(false);
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              setState(() {});
-                            });
-                          }
-                          return const SizedBox.shrink();
-                        }
-                        return ListTile(
-                          title: Text(libL10n.followSystem),
-                          trailing: StoreSwitch(
-                            prop: _setting.useSystemPrimaryColor,
-                            callback: (_) => setState(() {}),
-                          ),
-                        );
-                      },
-                    ),
-                ];
-                if (!_setting.useSystemPrimaryColor.fetch()) {
-                  children.add(
-                    ColorPicker(
-                      color: Color(_setting.colorSeed.fetch()),
-                      onColorChanged: (c) => ctrl.text = c.toHex,
-                    ),
-                  );
-                }
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: children,
-                );
-              },
-            ),
-            actions: [
-              Btn.cancel(),
-              Btn.ok(onTap: () => _onSaveColor(ctrl.text)),
-            ],
-          );
-        });
-      },
-    );
+  void _onTapAppColor() {
+    withTextFieldController((ctrl) async {
+      ctrl.text = Color(_setting.colorSeed.fetch()).toHex;
+      await context.showRoundDialog(
+        title: libL10n.primaryColorSeed,
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            final children = <Widget>[
+              if (!isIOS)
+                DynamicColorBuilder(
+                  builder: (light, dark) {
+                    final supported = light != null || dark != null;
+                    if (!supported) {
+                      if (!_setting.useSystemPrimaryColor.fetch()) {
+                        _setting.useSystemPrimaryColor.put(false);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          setState(() {});
+                        });
+                      }
+                      return const SizedBox.shrink();
+                    }
+                    return ListTile(
+                      title: Text(libL10n.followSystem),
+                      trailing: StoreSwitch(
+                        prop: _setting.useSystemPrimaryColor,
+                        callback: (_) => setState(() {}),
+                      ),
+                    );
+                  },
+                ),
+            ];
+            if (!_setting.useSystemPrimaryColor.fetch()) {
+              children.add(
+                ColorPicker(
+                  color: Color(_setting.colorSeed.fetch()),
+                  onColorChanged: (c) => ctrl.text = c.toHex,
+                ),
+              );
+            }
+            return Column(mainAxisSize: MainAxisSize.min, children: children);
+          },
+        ),
+        actions: [Btn.cancel(), Btn.ok(onTap: () => _onSaveColor(ctrl.text))],
+      );
+    });
   }
 
   void _onSaveColor(String s) {
@@ -241,49 +260,59 @@ extension _App on _AppSettingsPageState {
     context.popDialog();
   }
 
-  Widget _buildMaxRetry() {
-    return ValBuilder(
-      listenable: _setting.maxRetryCount.listenable(),
-      builder: (val) => ListTile(
-        title: Text(l10n.maxRetryCount),
-        onTap: () async {
-          final selected = await context.showPickSingleDialog(
-            title: l10n.maxRetryCount,
-            items: List.generate(10, (index) => index),
-            display: (p0) => '$p0 ${l10n.times}',
-            initial: val,
-          );
-          if (selected != null) {
-            _setting.maxRetryCount.put(selected);
-          }
-        },
-        trailing: Text('$val ${l10n.times}', style: UIs.text15),
+  SettingsRow _buildMaxRetry() {
+    final label = l10n.maxRetryCount;
+    return SettingsRow(
+      label,
+      () => ValBuilder(
+        listenable: _setting.maxRetryCount.listenable(),
+        builder: (val) => ListTile(
+          leading: const Icon(Icons.replay),
+          title: Text(label),
+          onTap: () async {
+            final selected = await context.showPickSingleDialog(
+              title: label,
+              items: List.generate(10, (index) => index),
+              display: (p0) => '$p0 ${l10n.times}',
+              initial: val,
+            );
+            if (selected != null) {
+              _setting.maxRetryCount.put(selected);
+            }
+          },
+          trailing: Text('$val ${l10n.times}', style: UIs.text15),
+        ),
       ),
     );
   }
 
-  Widget _buildThemeMode() {
+  SettingsRow _buildThemeMode() {
+    final label = libL10n.themeMode;
     // Issue #57
     final len = ThemeMode.values.length;
-    return ListTile(
-      leading: const Icon(MingCute.moon_stars_fill),
-      title: Text(libL10n.themeMode),
-      onTap: () async {
-        final selected = await context.showPickSingleDialog(
-          title: libL10n.themeMode,
-          items: List.generate(len + 2, (index) => index),
-          display: (p0) => _buildThemeModeStr(p0),
-          initial: _setting.themeMode.fetch(),
-        );
-        if (selected != null) {
-          _setting.themeMode.put(selected);
-          RNodes.app.notify();
-        }
-      },
-      trailing: ValBuilder(
-        listenable: _setting.themeMode.listenable(),
-        builder: (val) => Text(_buildThemeModeStr(val), style: UIs.text15),
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.moon_stars_fill),
+        title: Text(label),
+        onTap: () async {
+          final selected = await context.showPickSingleDialog(
+            title: label,
+            items: List.generate(len + 2, (index) => index),
+            display: (p0) => _buildThemeModeStr(p0),
+            initial: _setting.themeMode.fetch(),
+          );
+          if (selected != null) {
+            _setting.themeMode.put(selected);
+            RNodes.app.notify();
+          }
+        },
+        trailing: ValBuilder(
+          listenable: _setting.themeMode.listenable(),
+          builder: (val) => Text(_buildThemeModeStr(val), style: UIs.text15),
+        ),
       ),
+      keywords: 'AMOLED ${libL10n.dark} ${libL10n.bright}',
     );
   }
 
@@ -302,86 +331,73 @@ extension _App on _AppSettingsPageState {
     }
   }
 
-  Widget _buildLocale() {
-    return ListTile(
-      leading: const Icon(IonIcons.language),
-      title: Text(libL10n.language),
-      onTap: () async {
-        final selected = await context.showPickSingleDialog(
-          title: libL10n.language,
-          items: AppLocalizations.supportedLocales,
-          display: (p0) => p0.nativeName,
-          initial: _setting.locale.fetch().toLocale,
-        );
-        if (selected != null) {
-          _setting.locale.put(selected.code);
-          // No `pop`: the picker has already closed — that is what `await`
-          // returning a selection means — so popping here closed the settings
-          // page behind it. `notify` is what makes the new language take
-          // effect; nothing has to be dismissed for that.
-          RNodes.app.notify();
-        }
-      },
-      trailing: ListenBuilder(
-        listenable: _setting.locale.listenable(),
-        builder: () => Text(context.localeNativeName, style: UIs.text15),
+  SettingsRow _buildLocale() {
+    final label = libL10n.language;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(IonIcons.language),
+        title: Text(label),
+        onTap: () async {
+          final selected = await context.showPickSingleDialog(
+            title: label,
+            items: AppLocalizations.supportedLocales,
+            display: (p0) => p0.nativeName,
+            initial: _setting.locale.fetch().toLocale,
+          );
+          if (selected != null) {
+            _setting.locale.put(selected.code);
+            // No `pop`: the picker has already closed — that is what `await`
+            // returning a selection means — so popping here closed the settings
+            // page behind it. `notify` is what makes the new language take
+            // effect; nothing has to be dismissed for that.
+            RNodes.app.notify();
+          }
+        },
+        trailing: ListenBuilder(
+          listenable: _setting.locale.listenable(),
+          builder: () => Text(context.localeNativeName, style: UIs.text15),
+        ),
       ),
     );
   }
 
-  Widget _buildAppMore() {
-    return ExpandTile(
-      leading: const Icon(MingCute.more_3_fill),
-      title: Text(libL10n.more),
-      initiallyExpanded: false,
-      children: [
-        _buildBeta(),
-        if (isMobile) _buildWakeLock(),
-        _buildCollapseUI(),
-        if (isDesktop) _buildHideTitleBar(),
-        // Debug only, which is where it was moved to while these rows were
-        // flat. Folding them back does not put it back in a release build.
-        if (kDebugMode) _buildEditRawSettings(),
-      ],
-    );
-  }
-
-  /// Its own page rather than two rows under **More**, because what it decides
-  /// is not the same kind of thing as the rows it sat among.
+  /// Its own page rather than two rows under the app's own settings, because
+  /// what it decides is not the same kind of thing as the rows it sat among.
   ///
   /// A page can also be reached — from the intro that first asks the question,
   /// from a release note, from an answer to someone asking what is collected —
-  /// and a row buried in a collapsed tile cannot. It stays a page even with
-  /// two rows on it: the settings search matches on the node id, so `privacy`
-  /// is now a thing to search for.
-  Widget _buildPrivacy() {
-    return Column(
-      children: [
-        // Only where a report could actually be sent. A control that cannot do
-        // anything is worse than one that is not offered, and a build with no
-        // DSN in it can do nothing here. See [DiagnosticsUpload].
-        //
-        // Not wrapped in a card: the picker is a list of them already.
-        if (DiagnosticsUpload.availableInBuild) _buildDiagnosticsUpload(),
-        // Above the policy and below the level, which is where it is about:
-        // the level decides what is sent automatically, and this is the one
-        // thing no level sends. Not behind `availableInBuild` — a build with
-        // no upload endpoint is exactly the one where handing the log over by
-        // hand is the only way a crash gets reported at all.
-        _buildLastCrashReport(),
-        // Not under that condition, unlike when these two were rows together.
+  /// and a row buried in a collapsed tile cannot.
+  List<SettingsGroup> _buildPrivacy() {
+    return [
+      // Only where a report could actually be sent. A control that cannot do
+      // anything is worse than one that is not offered, and a build with no
+      // DSN in it can do nothing here. See [DiagnosticsUpload].
+      //
+      // Uncarded: the picker is a list of cards already.
+      if (DiagnosticsUpload.availableInBuild)
+        SettingsGroup(
+          l10n.crashCollect,
+          [_buildDiagnosticsUpload()],
+          carded: false,
+        ),
+      // Not behind `availableInBuild` — a build with no upload endpoint is
+      // exactly the one where handing the log over by hand is the only way a
+      // crash gets reported at all. Absent when nothing crashed: a row reading
+      // "no crash report" would be on the page for the whole life of every
+      // healthy install, while a row that appears is itself the news.
+      if (_savedCrashReport != null)
+        SettingsGroup(libL10n.log, [_buildLastCrashReport()]),
+      SettingsGroup(l10n.privacy, [
         // The policy describes what is kept on the device as well as what is
-        // sent, so it has something to say in a build that uploads nothing —
-        // and a page whose only content is conditional can otherwise open
-        // empty.
-        _buildPrivacyPolicy().cardx,
+        // sent, so it has something to say in a build that uploads nothing.
+        _buildPrivacyPolicy(),
         // Last, after everything about what leaves the device. It is the one
         // control here that acts on this moment instead — who can read the
-        // screen — so it reads as a coda rather than as the heading the page
-        // opens on.
-        ?PlatformPublicSettings.buildPrivacyBlur?.cardx,
-      ],
-    );
+        // screen.
+        ?PlatformPublicSettings.privacyBlur?.row,
+      ]),
+    ];
   }
 
   /// Where the choice made on the intro page can be revisited.
@@ -391,55 +407,42 @@ extension _App on _AppSettingsPageState {
   /// current level and whose tap opened a picker of three bare labels: the
   /// sentence saying what a level actually sends existed only on the intro,
   /// which is the one screen a user sees once and cannot go back to.
-  ///
-  /// A page has the room for it. This one holds two rows.
-  Widget _buildDiagnosticsUpload() {
-    return DiagnosticsLevelPicker(
-      // Applied now rather than at the next launch: turning it down has to
-      // take the sink out immediately, not eventually.
-      onPicked: () => unawaited(DiagnosticsUpload.sync()),
+  SettingsRow _buildDiagnosticsUpload() {
+    return SettingsRow(
+      l10n.crashCollect,
+      () => DiagnosticsLevelPicker(
+        // Applied now rather than at the next launch: turning it down has to
+        // take the sink out immediately, not eventually.
+        onPicked: () => unawaited(DiagnosticsUpload.sync()),
+      ),
     );
   }
 
-  /// The previous run's log, when there is one, and nothing when there is not.
+  /// The previous run's log, when there is one.
   ///
-  /// **Present only when something crashed**, which is what makes this the
-  /// replacement for the toast rather than a second place to look. A row
-  /// reading "no crash report" would be on the page for the whole life of
-  /// every healthy install; a row that appears is itself the news.
-  ///
-  /// Read through a [FutureBuilder] because whether a report exists is a file
-  /// on disk, and this page builds synchronously. The miss is the common case
-  /// and costs one `exists` call.
-  Widget _buildLastCrashReport() {
-    return FutureBuilder<String?>(
-      // Held rather than started here. A `FutureBuilder` given a fresh future
-      // on every build re-reads the file on every unrelated rebuild of this
-      // page, and shows its `null` snapshot again each time — so the row
-      // flickered out and back whenever anything else on the page changed.
-      future: _savedCrashReport ??= CrashReport.saved(),
-      builder: (_, snapshot) {
-        final report = snapshot.data;
-        if (report == null) return UIs.placeholder;
-        return ListTile(
-          leading: const Icon(Icons.bug_report_outlined),
-          title: Text(l10n.crashReportTitle),
-          subtitle: Text(
-            l10n.crashLastRunFailed,
-            style: UIs.textGrey,
-          ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () async {
-            final kept = await CrashReportDialog.show(context, report);
-            // The row goes when the report does, and nothing else notices:
-            // the future is held, not a listenable, so it is replaced rather
-            // than left to answer from a file that is no longer there.
-            if (kept) return;
-            _savedCrashReport = null;
-            refresh();
-          },
-        ).cardx;
-      },
+  /// Whether one exists is a file on disk, read once when the page opens —
+  /// see [_AppSettingsPageState.initState]. Read here through a builder it
+  /// flickered out and back on every unrelated rebuild, and the group it is in
+  /// could not know whether to exist at all.
+  SettingsRow _buildLastCrashReport() {
+    final label = l10n.crashReportTitle;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.bug_report_outlined),
+        title: Text(label),
+        subtitle: Text(l10n.crashLastRunFailed, style: UIs.textGrey),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () async {
+          final report = _savedCrashReport;
+          if (report == null) return;
+          final kept = await CrashReportDialog.show(context, report);
+          // The row goes when the report does.
+          if (kept) return;
+          _savedCrashReport = null;
+          refresh();
+        },
+      ),
     );
   }
 
@@ -448,55 +451,83 @@ extension _App on _AppSettingsPageState {
   /// The dialog that picks a level is a list of three options and has nowhere
   /// to put a link; and the policy is worth reaching without first opening the
   /// control that changes a setting.
-  Widget _buildPrivacyPolicy() {
-    return ListTile(
-      // Every row on this page carries one, so the column of them reads as a
-      // list rather than as one row that happens to be indented differently.
-      leading: const Icon(Icons.policy_outlined),
-      title: Text(l10n.privacyPolicy),
-      trailing: const Icon(Icons.open_in_new, size: 17),
-      onTap: Urls.privacyPolicy.launchUrl,
-    );
-  }
-
-  Widget _buildBeta() {
-    return ListTile(
-      title: Text(l10n.preReleaseUpdates),
-      trailing: StoreSwitch(prop: _setting.betaTest),
-    );
-  }
-
-  Widget _buildWakeLock() {
-    return ListTile(
-      title: Text(l10n.wakeLock),
-      trailing: StoreSwitch(prop: _setting.generalWakeLock),
-    );
-  }
-
-  Widget _buildCollapseUI() {
-    return ListTile(
-      title: TipText('UI ${libL10n.fold}', l10n.collapseUITip),
-      trailing: StoreSwitch(prop: _setting.collapseUIDefault),
-    );
-  }
-
-  Widget _buildHideTitleBar() {
-    return ListTile(
-      title: Text(libL10n.hideTitleBar),
-      trailing: StoreSwitch(
-        prop: _setting.hideTitleBar,
-        callback: (value) async {
-          await SystemUIs.updateTitleBarStyle(hideTitleBar: value);
-        },
+  SettingsRow _buildPrivacyPolicy() {
+    final label = l10n.privacyPolicy;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.policy_outlined),
+        title: Text(label),
+        trailing: const Icon(Icons.open_in_new, size: 17),
+        onTap: Urls.privacyPolicy.launchUrl,
       ),
     );
   }
 
-  Widget _buildEditRawSettings() {
-    return ListTile(
-      title: const Text('(Dev) Edit raw json'),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _editRawSettings,
+  SettingsRow _buildBeta() {
+    final label = l10n.preReleaseUpdates;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.science_outlined),
+        title: Text(label),
+        trailing: StoreSwitch(prop: _setting.betaTest),
+      ),
+    );
+  }
+
+  SettingsRow _buildWakeLock() {
+    final label = l10n.wakeLock;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.lock_fill),
+        title: Text(label),
+        trailing: StoreSwitch(prop: _setting.generalWakeLock),
+      ),
+    );
+  }
+
+  SettingsRow _buildCollapseUI() {
+    final label = 'UI ${libL10n.fold}';
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.unfold_less),
+        title: TipText(label, l10n.collapseUITip),
+        trailing: StoreSwitch(prop: _setting.collapseUIDefault),
+      ),
+      keywords: l10n.collapseUITip,
+    );
+  }
+
+  SettingsRow _buildHideTitleBar() {
+    final label = libL10n.hideTitleBar;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.web_asset),
+        title: Text(label),
+        trailing: StoreSwitch(
+          prop: _setting.hideTitleBar,
+          callback: (value) async {
+            await SystemUIs.updateTitleBarStyle(hideTitleBar: value);
+          },
+        ),
+      ),
+    );
+  }
+
+  SettingsRow _buildEditRawSettings() {
+    const label = '(Dev) Edit raw json';
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.data_object),
+        title: const Text(label),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _editRawSettings,
+      ),
     );
   }
 

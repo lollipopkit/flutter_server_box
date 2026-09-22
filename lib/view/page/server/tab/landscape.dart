@@ -57,22 +57,29 @@ extension _Widgets on _ServerPageState {
         final id = order[idx];
         final srv = ref.watch(serverProvider(id));
 
-        final title = _buildServerCardTitle(srv);
-        final List<Widget> children = [
-          title,
-          _buildNormalCard(srv.status, srv.spi),
-        ];
-
         return KeyedSubtree(
           key: ValueKey(id),
-          child: _getCardNoti(id).listenVal((_) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: children,
-            );
-          }),
+          child: Center(
+            child: SingleChildScrollView(
+              // Use the card context so the menu is anchored to the card.
+              child: Builder(
+                builder: (context) => ServerCard(
+                  srv: srv,
+                  promoted: _promotedOf(id),
+                  onPromote: (kind) => _promote(id, kind),
+                  expanded: ServerCardExpanded.reader(id),
+                  onToggleExpanded: () => _toggleExpanded(id),
+                  // Never in place, for the reason the request above is never
+                  // split: there is no grid here for a card to grow out of.
+                  onTap: () => _onTapCard(context, srv, inPlace: false),
+                  onLongPress: () => _onLongPressCard(context, srv),
+                  highlighted: id == _menuId,
+                ).onSecondary(
+                  (at) => _onLongPressCard(context, srv, at: at),
+                ),
+              ),
+            ),
+          ),
         );
       },
     );

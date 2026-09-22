@@ -1,198 +1,138 @@
-part of 'view.dart';
+import 'dart:math' as math;
 
-extension on _ServerDetailPageState {
-  void _showClosableDetailDialog({
-    required String title,
-    required Widget child,
-  }) {
-    context.showRoundDialog(
-      title: title,
-      child: child,
-      actions: [
-        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
-      ],
-    );
+import 'package:fl_chart/fl_chart.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+
+/// What a reading's history is drawn as, wherever it is drawn.
+///
+/// Pulled out of the detail page so that the card in the list can draw the
+/// same chart: the card grows into that page, and a bar sparkline cannot
+/// become a line chart without the change being the thing you notice. One
+/// widget, one axis, one set of lines — what differs between the two is how
+/// much of it is faded in.
+/// A stretch of the window with nothing in it, and why.
+///
+/// The axis is the window that was asked for, so a window the samples do not
+/// fill has to say so rather than let the line span it: a chart that joins
+/// 09:37 to now through a four-minute hole draws a machine that was idle, and
+/// one that compresses three stored hours into a 24-hour axis lies about what
+/// it is showing.
+typedef ChartBand = ({int from, int to, String label});
+
+/// Keeps [child] as it was for as long as [hold].
+///
+/// For a subtree that is expensive to build and has nothing to say while
+/// something else is moving. A chart is the case this exists for: while the
+/// card in the list grows into the page, what is around the chart changes on
+/// every frame, and the chart is handed a new window each time because its
+/// axis runs to *now*. Rebuilding it for that means walking every sample, and
+/// then handing fl_chart a new `LineChartData` to diff, sixty times a second —
+/// for a line that has not changed and a window that has moved by a third of a
+/// second.
+///
+/// Keeps the last stable child while the parent transition is in progress.
+///
+/// The child must be captured at the transition boundary. Capturing one build
+/// early leaves stale chart content visible during the reverse animation.
+class Held extends StatefulWidget {
+  const Held({super.key, required this.hold, required this.child});
+
+  final bool hold;
+  final Widget child;
+
+  @override
+  State<Held> createState() => _HeldState();
+}
+
+class _HeldState extends State<Held> {
+  late Widget _held = widget.child;
+
+  @override
+  void didUpdateWidget(Held old) {
+    super.didUpdateWidget(old);
+    if (!widget.hold || !old.hold) _held = widget.child;
   }
 
-  /// One card in full: every reading it reports, and what is holding its
-  /// memory.
+  @override
+  Widget build(BuildContext context) => _held;
+}
+
+/// One chart: the series drawn on its shared axis, and how to label that axis.
+class MetricChartSpec {
+  final List<HistorySeries> series;
+  final String Function(double) format;
+
+  /// The instant of each sample, shared by every series because they are
+  /// index-aligned by construction. Empty plots against the sample index,
+  /// which is what a chart with no window to honour wants.
+  final List<int> times;
+
+  /// The window the axis covers, whether or not the samples reach its edges.
+  /// Null takes the extent of the data, as a chart with no [times] must.
+  final ({int from, int to})? window;
+
+  /// The stretches of [window] no sample falls in.
+  final List<ChartBand> bands;
+
+  /// How tall the plot is, which the focus card decides by how much room the
+  /// window has: a shape is only readable in so little height.
+  final double height;
+
+  /// Whether [height] is the whole block rather than the plot.
   ///
-  /// The row above carries the two figures that fit on a line — load and
-  /// temperature — and this is the rest, in the order it is read in: what the
-  /// card is, what it is doing, then who is doing it. A process list on its
-  /// own was what this used to be, which left a card reporting no processes
-  /// with nothing to open at all.
-  void _onTapGpuItem(GpuItem item) {
-    final mem = item.memory;
-    final scheme = Theme.of(context).colorScheme;
-    final rows = <({String k, String v})>[
-      if (item.utilization case final util?) (k: l10n.used, v: _pct(util)),
-      if (item.temperature case final t?)
-        (k: libL10n.temperature, v: _formatTemp(t.toDouble())),
-      if (item.power case final power?) (k: l10n.power, v: power),
-      if (item.fanSpeed case final fan?)
-        (k: l10n.fan, v: '$fan${item.vendor == 'nvidia' ? '%' : ' RPM'}'),
-      if (item.clockSpeed case final clock?)
-        (k: l10n.clockSpeed, v: '$clock MHz'),
-      if (mem != null)
-        (k: libL10n.memory, v: '${mem.used} / ${mem.total} ${mem.unit}'),
-      (k: l10n.vendor, v: item.vendor),
-    ];
-    final processes = mem?.processes ?? const <GpuSmiMemProcess>[];
+  /// The focus card draws one metric at a time and the metrics do not agree on
+  /// how many lines they have — a legend under two series, none under one — so
+  /// without this the card changed height as the reader moved between them.
+  /// Filling takes the difference out of the plot instead.
+  final bool fill;
 
-    showRowsSheet<void>(
-      context,
-      rows: (_) => [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(17, 5, 17, 9),
-          child: Text(
-            '${item.name} · ${item.id}',
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-          ),
-        ),
-        for (final (i, row) in rows.indexed) ...[
-          if (i > 0) const Divider(height: 1, indent: 17, endIndent: 17),
-          _buildReadoutRow(k: row.k, v: row.v),
-        ],
-        if (processes.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(17, 17, 17, 5),
-            child: Text(
-              l10n.processesFmt(processes.length),
-              style: UIs.text11Grey.copyWith(color: scheme.primary),
-            ),
-          ),
-          for (final process in processes)
-            _buildReadoutRow(
-              k: process.name,
-              sub: 'PID ${process.pid}',
-              v: '${process.memory} MiB',
-            ),
-        ],
-      ],
-    );
-  }
+  /// Whether the values are byte-based, so the axis should step in multiples
+  /// of 1024 rather than of 10 — see [niceAxis]
+  final bool binaryScale;
 
-  void _onTapCustomItem(MapEntry<String, String> cmd) {
-    _showClosableDetailDialog(
-      title: cmd.key,
-      child: SingleChildScrollView(
-        child: Text(cmd.value, style: UIs.text13Grey),
-      ),
-    );
-  }
-
-  void _onTapSensorItem(SensorItem si) {
-    context.showRoundDialog(
-      title: si.device,
-      child: SingleChildScrollView(
-        child: SimpleMarkdown(
-          data: si.toMarkdown,
-          styleSheet: MarkdownStyleSheet(
-            tableBorder: TableBorder.all(color: Colors.grey),
-            tableHead: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
-    );
-  }
-
-  bool _getInitExpand(int len, [int? max]) {
-    if (!_collapse) return true;
-    if (_size.width > UIs.columnWidth) return true;
-    return len > 0 && len <= (max ?? 3);
-  }
-
-  /// Which sensors the temperature metric draws by default, in order: the
-  /// hottest sensor matching each group.
+  /// How much of the chart's own chrome is drawn: the scale down the left,
+  /// the lines across, the room above and below that its outermost labels
+  /// hang into, and the touch that puts a value under the pointer.
   ///
-  /// A Mac reports two dozen sensors through one API — fourteen of them PMU
-  /// dies within a degree of each other — and a Linux box with several thermal
-  /// zones is no better. Plotting all of them produced a legend taller than
-  /// the plot and a band of indistinguishable lines; plotting simply the
-  /// hottest N filled the chart with near-duplicate dies and dropped the SSD
-  /// and the battery entirely. One line per component is what a temperature
-  /// chart is read for; everything else is a tap away in the device picker.
+  /// 0 is the same line with none of it, which is what a chart the height of
+  /// two lines of text can show — five tick labels in 44 points is a smear.
+  /// Anything between is the one growing into the other: the gutter is a
+  /// width, so the plot narrows into it rather than jumping when it appears.
   ///
-  /// Names come from three unrelated sources, so each group has to cover all
-  /// three:
-  /// - Linux: the `type` of each `/sys/class/thermal/thermal_zone*`, plus
-  ///   hwmon driver names where those are read
-  /// - macOS: `sysinfo` Component labels, which are SMC keys spelled out
-  /// - Windows: `MSAcpi_ThermalZoneTemperature`'s `InstanceName`, e.g.
-  ///   `ACPI\ThermalZone\TZ00_0`
-  ///
-  /// Matched as lowercase substrings; the first group to match claims the
-  /// sensor, so a device is never plotted twice. Order is by how much the
-  /// reading usually matters.
-  static const _kTempCategories = <List<String>>[
-    // CPU / SoC package
-    [
-      'x86_pkg_temp', 'coretemp', 'k10temp', 'zenpower', 'peci', // Linux x86
-      'cpu_thermal', 'cpu-thermal', 'soc_thermal', 'soc-thermal', // Linux ARM
-      'bcm2835_thermal', 'tcpu',
-      'tdie', 'tcal', 'pmgr soc', 'soc mtr', // macOS
-      'cpu', 'package', 'soc',
-    ],
-    // GPU
-    ['amdgpu', 'nouveau', 'radeon', 'gpu', 'tgpu'],
-    // Storage
-    ['nvme', 'nand', 'ssd', 'drive', 'disk'],
-    // Battery / power delivery
-    ['gas gauge', 'battery', 'bat0', 'charger'],
-    // Wireless
-    ['iwlwifi', 'airport', 'wifi', 'wlan'],
-    // Board, chipset, ambient. Windows' single ACPI zone lands here, which is
-    // fine: a host with one sensor plots it whichever group claims it.
-    ['acpitz', 'thermalzone', 'pch', 'tskin', 'tskn', 'ambient', 'thermal'],
-  ];
+  /// The scale itself does not change with this. What the line is drawn
+  /// against is the same at both ends, or the card and the page would be two
+  /// different readings of the same numbers.
+  final double axis;
 
-  static double? _latest(List<double?> values) {
-    for (var i = values.length - 1; i >= 0; i--) {
-      if (values[i] != null) return values[i];
-    }
-    return null;
-  }
+  const MetricChartSpec({
+    required this.series,
+    required this.format,
+    this.times = const [],
+    this.window,
+    this.bands = const [],
+    this.binaryScale = false,
+    this.height = 110,
+    this.fill = false,
+    this.axis = 1,
+  });
 
-  List<_HistorySeries> _tempSeries(ServerState si) {
-    final h = si.status.history;
-    if (h.tempsByDevice.isEmpty) {
-      return [_HistorySeries(libL10n.temperature, _kDeviceColors.first, h.temp)];
-    }
+  bool get hasData => series.any((s) => s.hasSpots);
+}
 
-    // Hottest first, so "the hottest match in this group" falls out of a
-    // single pass and any leftovers are already ranked
-    final ranked = h.tempsByDevice.entries.toList()
-      ..sort(
-        (a, b) => (_latest(b.value) ?? -1).compareTo(_latest(a.value) ?? -1),
-      );
+/// One chart plus the legend line carrying each series' latest value —
+/// mirrors `monitor/frontend/src/components/LineChart.svelte`.
+///
+/// The same widget on a card in the list and on the page that card grows into:
+/// what changes between them is the height and how much of the chrome is
+/// faded in, not what is drawing the line.
+class MetricChart extends StatelessWidget {
+  const MetricChart(this.spec, {super.key});
 
-    final picked = <MapEntry<String, List<double?>>>[];
-    final taken = <String>{};
-    for (final group in _kTempCategories) {
-      for (final e in ranked) {
-        if (taken.contains(e.key)) continue;
-        final name = e.key.toLowerCase();
-        if (!group.any(name.contains)) continue;
-        picked.add(e);
-        taken.add(e.key);
-        break;
-      }
-    }
+  final MetricChartSpec spec;
 
-    // A platform naming its sensors in some way this doesn't anticipate still
-    // gets a chart, just an unsorted one
-    if (picked.isEmpty) picked.add(ranked.first);
-
-    return [
-      for (final (i, e) in picked.indexed)
-        _HistorySeries(e.key, _kDeviceColors[i % _kDeviceColors.length], e.value),
-    ];
-  }
-
-  /// One chart plus the legend line carrying each series' latest value —
-  /// mirrors `monitor/frontend/src/components/LineChart.svelte`.
-  Widget _buildChart(_ChartSpec spec) {
+  @override
+  Widget build(BuildContext context) {
     final bars = <LineChartBarData>[];
     for (final s in spec.series) {
       final spots = s.spotsAgainst(spec.times);
@@ -204,14 +144,23 @@ extension on _ServerDetailPageState {
           barWidth: 1.5,
           isStrokeCapRound: true,
           color: s.color,
-          dotData: const FlDotData(show: false),
+          // A lone sample is a point, and there is nothing to draw a line
+          // between: with the dots off, the first poll's worth of a machine
+          // was a plot with nothing in it, for as long as the second took to
+          // arrive. From two on it is the line, and a dot per sample on it
+          // would be what is read instead.
+          dotData: FlDotData(
+            show: spots.length == 1,
+            getDotPainter: (_, _, _, _) =>
+                FlDotCirclePainter(radius: 2, color: s.color, strokeWidth: 0),
+          ),
           belowBarData: BarAreaData(show: false),
         ),
       );
     }
     if (bars.isEmpty) return UIs.placeholder;
 
-    final hasLegend = spec.series.length > 1;
+    final hasLegend = spec.series.length > 1 && spec.axis >= 1;
     final body = Padding(
       // The extra bottom allowance is only for the axis' own overflow: fl_chart
       // centres the lowest label on the bottom gridline, so roughly half of it
@@ -220,18 +169,28 @@ extension on _ServerDetailPageState {
       //
       // The top keeps the topmost axis label off whatever heading is above it;
       // at 7 the two touched.
-      padding: EdgeInsets.fromLTRB(17, 15, 17, hasLegend ? 0 : 15),
+      //
+      // Nothing at the sides. What this is drawn in has an inset of its own,
+      // and 17 more on each was a chart 34 in from the edge of its card with
+      // a gutter on top of that — a fifth of a phone's width spent on holding
+      // the line away from a heading it lines up with better.
+      padding: EdgeInsets.lerp(
+        EdgeInsets.zero,
+        EdgeInsets.fromLTRB(0, 15, 0, hasLegend ? 0 : 15),
+        spec.axis.clamp(0.0, 1.0),
+      )!,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           () {
-            final plot = _buildHistoryLineChart(
+            final plot = buildHistoryLineChart(
               bars,
               series: spec.series,
               format: spec.format,
               binaryScale: spec.binaryScale,
               window: spec.window,
               bands: spec.bands,
+              axis: spec.axis.clamp(0.0, 1.0),
             );
             return spec.fill
                 ? Expanded(child: plot)
@@ -276,84 +235,17 @@ extension on _ServerDetailPageState {
   }
 }
 
-/// Palette for the lines of one metric's devices — sensors, disks,
-/// interfaces. Fixed order so a device keeps its colour across rebuilds, and
-/// as long as [_kMaxDeviceLines] so two lines never share one.
-const _kDeviceColors = [
-  Color(0xFFEF4444),
-  Color(0xFFF59E0B),
-  Color(0xFF8B5CF6),
-  Color(0xFF14B8A6),
-  Color(0xFF3B82F6),
-  Color(0xFFEC4899),
-];
-
-/// A stretch of the window with nothing in it, and why.
-///
-/// The axis is the window that was asked for, so a window the samples do not
-/// fill has to say so rather than let the line span it: a chart that joins
-/// 09:37 to now through a four-minute hole draws a machine that was idle, and
-/// one that compresses three stored hours into a 24-hour axis lies about what
-/// it is showing.
-typedef _ChartBand = ({int from, int to, String label});
-
-/// One chart: the series drawn on its shared axis, and how to label that axis.
-class _ChartSpec {
-  final List<_HistorySeries> series;
-  final String Function(double) format;
-
-  /// The instant of each sample, shared by every series because they are
-  /// index-aligned by construction. Empty plots against the sample index,
-  /// which is what a chart with no window to honour wants.
-  final List<int> times;
-
-  /// The window the axis covers, whether or not the samples reach its edges.
-  /// Null takes the extent of the data, as a chart with no [times] must.
-  final ({int from, int to})? window;
-
-  /// The stretches of [window] no sample falls in.
-  final List<_ChartBand> bands;
-
-  /// How tall the plot is, which the focus card decides by how much room the
-  /// window has: a shape is only readable in so little height.
-  final double height;
-
-  /// Whether [height] is the whole block rather than the plot.
-  ///
-  /// The focus card draws one metric at a time and the metrics do not agree on
-  /// how many lines they have — a legend under two series, none under one — so
-  /// without this the card changed height as the reader moved between them.
-  /// Filling takes the difference out of the plot instead.
-  final bool fill;
-
-  /// Whether the values are byte-based, so the axis should step in multiples
-  /// of 1024 rather than of 10 — see [_niceAxis]
-  final bool binaryScale;
-
-  const _ChartSpec({
-    required this.series,
-    required this.format,
-    this.times = const [],
-    this.window,
-    this.bands = const [],
-    this.binaryScale = false,
-    this.height = 110,
-    this.fill = false,
-  });
-
-  bool get hasData => series.any((s) => s.hasSpots);
-}
 
 /// One line. Reads straight off a [StatusHistory] ring buffer, whose gaps are
 /// `null` for "not measured at that sample" — those points are skipped rather
 /// than plotted as 0, so an interface that only just appeared doesn't drag the
 /// line down to the axis.
-class _HistorySeries {
+class HistorySeries {
   final String label;
   final Color color;
   final List<double?> values;
 
-  const _HistorySeries(this.label, this.color, this.values);
+  const HistorySeries(this.label, this.color, this.values);
 
   /// Whether there is anything to draw, which is what every caller asking for
   /// [spots] was really asking.
@@ -383,6 +275,45 @@ class _HistorySeries {
   }
 }
 
+/// The axis of a chart of what this app watched itself: from the first reading
+/// it draws to the last sample taken.
+///
+/// It ran from the first *sample* to the clock, and a line reached neither
+/// end. The left was a poll short because a reading that is a difference has
+/// none at the first sample — CPU is the share of the counters between two
+/// reads — and the right was short by however long ago the last sample was
+/// taken: up to a poll, and for an agent its collection cycle plus whatever
+/// the two clocks disagree by. Neither says anything about the machine, and
+/// both are a share of the window that is largest exactly when the window is
+/// shortest: a fifth of the chart for a machine connected ten seconds ago.
+///
+/// [until] is the clock, given once the readings have stopped. That distance
+/// is the one worth seeing, and it is the only time the axis runs past the
+/// last sample.
+///
+/// To the last *sample* rather than the last reading drawn, so a reading that
+/// is no longer being taken ends where it ended instead of being stretched up
+/// to the present.
+({int from, int to})? watchedWindow(
+  List<int> times,
+  List<HistorySeries> series, {
+  int? until,
+}) {
+  if (times.isEmpty) return null;
+  int? from;
+  for (final s in series) {
+    final length = math.min(s.values.length, times.length);
+    for (var i = 0; i < length; i++) {
+      if (s.values[i] == null) continue;
+      if (from == null || times[i] < from) from = times[i];
+      break;
+    }
+  }
+  if (from == null) return null;
+  final last = times.last;
+  return (from: from, to: until != null && until > last ? until : last);
+}
+
 /// Picks an axis whose ticks land on round numbers.
 ///
 /// Deriving the interval from the data instead (`peak * 1.1 / 4`) produced
@@ -392,7 +323,7 @@ class _HistorySeries {
 /// [binary] selects the progression. Byte rates are formatted in powers of
 /// 1024, so a decimal-round step of 500 000 renders as "488.3 KB/s"; stepping
 /// in multiples of 1024 gives "512 KB/s".
-({double bottom, double top, double interval}) _niceAxis({
+({double bottom, double top, double interval}) niceAxis({
   required double trough,
   required double peak,
   required bool binary,
@@ -452,7 +383,7 @@ class _HistorySeries {
 }
 
 /// Width to reserve for the left axis, from the labels it will actually draw.
-double _axisWidth(
+double axisWidth(
   double bottom,
   double top,
   double interval,
@@ -467,19 +398,6 @@ double _axisWidth(
   return (longest * 7.0 + 10).clamp(32.0, 72.0);
 }
 
-/// Trailing `.0` dropped: with round ticks the axis reads 0/25/50/75/100, and
-/// the decimal was only ever noise there
-String _formatTemp(double v) =>
-    '${v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1)}°C';
-
-extension _ViewUtils on String {
-  bool get isSvgUrl {
-    final uri = Uri.tryParse(this);
-    final path = uri?.path.toLowerCase() ?? toLowerCase();
-    return path.endsWith('.svg');
-  }
-}
-
 /// Multi-series chart. Every series shares one axis, whose bounds come from
 /// the data rather than from a fixed range.
 ///
@@ -487,13 +405,14 @@ extension _ViewUtils on String {
 /// a CPU idling at 8% and a machine sitting at 40 °C both drew a flat line
 /// hugging the bottom edge. Both bounds now snap outwards to whole intervals,
 /// which is also where the margin around the data comes from.
-Widget _buildHistoryLineChart(
+Widget buildHistoryLineChart(
   List<LineChartBarData> bars, {
-  required List<_HistorySeries> series,
+  required List<HistorySeries> series,
   required String Function(double) format,
   bool binaryScale = false,
   ({int from, int to})? window,
-  List<_ChartBand> bands = const [],
+  List<ChartBand> bands = const [],
+  double axis = 1,
 }) {
   // fl_chart throws a LateInitializationError on `mostLeftSpot` when handed a
   // bar with no spots at all
@@ -509,25 +428,53 @@ Widget _buildHistoryLineChart(
       .expand((b) => b.spots)
       .map((e) => e.y)
       .fold<double>(double.infinity, (a, b) => a < b ? a : b);
-  final axis = _niceAxis(trough: trough, peak: peak, binary: binaryScale);
-  final bottom = axis.bottom;
-  final top = axis.top;
-  final interval = axis.interval;
-  final axisWidth = _axisWidth(bottom, top, interval, format);
+  final scale = niceAxis(trough: trough, peak: peak, binary: binaryScale);
+  final bottom = scale.bottom;
+  final top = scale.top;
+  final interval = scale.interval;
+  // Scaled rather than switched: the gutter is what the plot is inset by, so
+  // a chart that gained one between two frames would shift its whole line.
+  final gutter = axisWidth(bottom, top, interval, format) * axis;
 
   // The window that was asked for, not the extent of what came back. Equal
   // bounds would give fl_chart a zero-width axis, so a window that has
   // collapsed to an instant falls back to the data.
-  final minX = window != null && window.to > window.from
+  var minX = window != null && window.to > window.from
       ? window.from.toDouble()
       : null;
-  final maxX = window != null && window.to > window.from
+  var maxX = window != null && window.to > window.from
       ? window.to.toDouble()
       : null;
+  // And the data can be an instant as well: the first reading of a machine,
+  // which is drawn as a point. fl_chart puts everything on a zero-width axis
+  // at its left edge, half outside the plot; the middle is where one point
+  // with nothing on either side of it belongs.
+  if (minX == null || maxX == null) {
+    final xs = bars.expand((b) => b.spots).map((e) => e.x);
+    final at = xs.first;
+    if (xs.every((x) => x == at)) {
+      minX = at - 1;
+      maxX = at + 1;
+    }
+  }
 
   final chart = LineChart(
+    // Off while the card is growing into the page.
+    //
+    // fl_chart answers new data by lerping from the old to it over 150ms —
+    // every bar, and every spot of every bar. Between two samples that is what
+    // makes the line glide instead of stepping. During the movement this is
+    // handed new data on every frame, because the gutter is widening and the
+    // grid is fading in, so that lerp is restarted 60 times a second: it never
+    // reaches its end and pays for the whole series each time.
+    duration: axis > 0 && axis < 1
+        ? Duration.zero
+        : const Duration(milliseconds: 150),
     LineChartData(
+      // A card is read at a glance and has nothing to hold a tooltip; the
+      // page it becomes is where a value under the pointer belongs.
       lineTouchData: LineTouchData(
+        enabled: axis >= 1,
         touchTooltipData: LineTouchTooltipData(
           tooltipPadding: const EdgeInsets.all(5),
           tooltipBorderRadius: BorderRadius.circular(8),
@@ -562,11 +509,11 @@ Widget _buildHistoryLineChart(
         handleBuiltInTouches: true,
       ),
       gridData: FlGridData(
-        show: true,
+        show: axis > 0,
         drawVerticalLine: false,
         horizontalInterval: interval,
-        getDrawingHorizontalLine: (value) => const FlLine(
-          color: Color.fromARGB(43, 88, 91, 94),
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: const Color.fromARGB(43, 88, 91, 94).withValues(alpha: axis),
           strokeWidth: 1,
         ),
       ),
@@ -581,19 +528,21 @@ Widget _buildHistoryLineChart(
         ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
-            showTitles: true,
+            showTitles: axis > 0,
             // Without an explicit interval fl_chart emits a label per pixel
             // step, which stacked them into an unreadable smear
             interval: interval,
             // Sized to the labels this axis will actually draw. A fixed
             // reserve had to assume the worst case, which left a wide empty
             // gutter on every chart whose ticks happened to be short.
-            reservedSize: _axisWidth(bottom, top, interval, format),
+            reservedSize: gutter,
             getTitlesWidget: (val, meta) => SideTitleWidget(
               meta: meta,
               child: Text(
                 format(val),
-                style: UIs.text12Grey,
+                style: UIs.text12Grey.copyWith(
+                  color: UIs.text12Grey.color?.withValues(alpha: axis),
+                ),
                 maxLines: 1,
                 softWrap: false,
                 overflow: TextOverflow.visible,
@@ -612,12 +561,12 @@ Widget _buildHistoryLineChart(
   );
 
   if (bands.isEmpty || minX == null || maxX == null) return chart;
-  return _buildBandedChart(
+  return buildBandedChart(
     chart,
     bands: bands,
     minX: minX,
     maxX: maxX,
-    axisWidth: axisWidth,
+    axisWidth: gutter,
   );
 }
 
@@ -626,9 +575,9 @@ Widget _buildHistoryLineChart(
 /// Drawn over the plot rather than as fl_chart range annotations so the label
 /// can sit in the band: what makes a gap readable is the sentence in it, and
 /// an unlabelled grey rectangle is just a second background.
-Widget _buildBandedChart(
+Widget buildBandedChart(
   Widget chart, {
-  required List<_ChartBand> bands,
+  required List<ChartBand> bands,
   required double minX,
   required double maxX,
   required double axisWidth,

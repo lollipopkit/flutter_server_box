@@ -2934,4 +2934,55 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Bu agent yalnızca izleme için yapılandırılmıştır. Buradan terminal açamaz, komut çalıştıramaz veya dosyalara göz atamazsınız. Bu özellikleri etkinleştirmek için agent\'ın config.toml dosyasındaki [remote_access] bölümünü düzenleyin.';
+
+  @override
+  String get alerts => 'Uyarılar';
+
+  @override
+  String get online => 'çevrimiçi';
+
+  @override
+  String get densityCards => 'Kartlar';
+
+  @override
+  String get densityRows => 'Satırlar';
+
+  @override
+  String get densityGrid => 'Izgara';
+
+  @override
+  String get connect => 'Bağlan';
+
+  @override
+  String get disconnect => 'Bağlantıyı kes';
+
+  @override
+  String get searchServerTip =>
+      'Adları ve adresleri arar — düzenleyicinin önce sorduğu iki bilgiyi.';
+
+  @override
+  String get addServerTip =>
+      'Birini doldurun, QR kodu tarayın veya birinin paylaştığı dosyayı içe aktarın.';
+
+  @override
+  String get move => 'Taşı';
+
+  @override
+  String get moveToTop => 'En başa taşı';
+
+  @override
+  String get moveToBottom => 'En sona taşı';
+
+  @override
+  String get groupByTag => 'Etikete göre grupla';
+
+  @override
+  String get groupByTagTip =>
+      'Etiketler sunucunun kendi düzenleme sayfasında ayarlanır.';
+
+  @override
+  String get connecting => 'Bağlanıyor…';
+
+  @override
+  String get authShort => 'Kimlik';
 }

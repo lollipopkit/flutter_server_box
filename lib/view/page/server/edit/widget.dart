@@ -25,50 +25,7 @@ extension _Widgets on _ServerEditPageState {
   /// without opening anything. A heading that only repeated the label of the
   /// first row under it would be a line of furniture.
   Widget _buildGroupTitle(String title, {String? right}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(3, 17, 3, 7),
-      // Measured first, because the rule and the value want opposite things.
-      // As two flex children they split the free space, so the rule stopped
-      // halfway across and a short value floated in the middle with a gap
-      // after it; as a bare `Text` the value takes its natural width, and one
-      // that turned out to be a whole sentence took the row 52 points past the
-      // window. Held back to what is left over the rule's own minimum, the
-      // value is its own width until there is no room for it to be.
-      child: LayoutBuilder(
-        builder: (_, cons) {
-          final rightMax = cons.maxWidth.isFinite
-              ? (cons.maxWidth * 0.5).clamp(0.0, cons.maxWidth)
-              : double.infinity;
-          return Row(
-            children: [
-              Text(
-                title.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.9,
-                  color: UIs.textGrey.color,
-                ),
-              ),
-              const SizedBox(width: 9),
-              const Expanded(child: Divider(height: 1)),
-              if (right != null) ...[
-                const SizedBox(width: 9),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: rightMax),
-                  child: Text(
-                    right,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: UIs.text11Grey,
-                  ),
-                ),
-              ],
-            ],
-          );
-        },
-      ),
-    );
+    return GroupTitle(title, right: right);
   }
 
   /// A line of explanation under a group, in the form's own voice.

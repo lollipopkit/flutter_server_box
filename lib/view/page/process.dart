@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 
 /// Below this the table gives way to one stacked row per process: the fixed
 /// columns would leave the command nothing to be read in.
@@ -32,11 +33,9 @@ const _kColRss = 96.0;
 const _kColIo = 88.0;
 const _kColAction = 34.0;
 
-/// The CPU series colour of the server detail page's chart (`misc.dart`), so a
-/// bar here and the line there read as the same quantity. Fixed rather than
-/// seeded for the reason that one is: it has to stay recognisable whatever
-/// colour the user picked.
-const _kCpuColor = Color(0xFF3B82F6);
+/// The CPU series colour, so a bar here and the line on the detail page read
+/// as the same quantity. See [ChartPalette].
+Color get _kCpuColor => ChartPalette.cpu;
 
 const _processCommandTimeout = Duration(seconds: 30);
 

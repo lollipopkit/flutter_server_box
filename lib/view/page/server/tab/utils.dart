@@ -8,28 +8,35 @@ extension _Actions on _ServerPageState {
   /// `PaneScope` is installed by the layout this page builds, so it is a
   /// descendant of the state's own context — and an inherited lookup only
   /// travels upwards. Asking from the state would always answer "no pane".
-  void _onTapCard(BuildContext context, ServerState srv) {
+  ///
+  /// [inPlace] is for a layout that knows the answer [_opensInPlace] cannot
+  /// give. That one asks the window's width, which is right for the list and
+  /// wrong for the full-screen pager: it draws no grid and no detail, so a tap
+  /// in a wide window selected the server and started the card's growth with
+  /// nothing on screen to show either.
+  void _onTapCard(BuildContext context, ServerState srv, {bool? inPlace}) {
+    // Held on a pointer, a tap is the start of choosing several rather than
+    // the opening of one — the convention every file manager has.
+    if (_modifierHeld) {
+      _toggleSelected(srv.spi.id);
+      return;
+    }
     if (srv.needsInteractiveAuth) {
       TryLimiter.reset(srv.spi.id);
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
       return;
     }
-    // The one place that knows about the layout. With a pane on screen,
-    // opening a server means selecting it; without one it means pushing, and
-    // the page that opens cannot tell the difference either way.
+    // The one place that knows about the layout. With room for it, opening a
+    // server means growing its card into the page; without, it means pushing
+    // one — and the detail cannot tell the difference either way.
     //
-    // Selected even when it has nothing to show yet. On one screen, jumping
+    // Opened even when it has nothing to show yet. On one screen, jumping
     // straight to the edit form is the only useful thing a tap can do for a
-    // server that has never connected. Beside a list it is not: the detail
-    // page says why it is empty, and staying on the list is what lets someone
+    // server that has never connected. In place it is not: the detail says why
+    // it is empty, and the list is still there, which is what lets someone
     // work through several servers that are all failing.
-    if (PaneScope.isSplit(context)) {
-      // Only the first selection reshapes the list, from a grid across the
-      // window to a column beside the pane. That is the move worth animating;
-      // picking another server afterwards leaves every row where it was.
-      final reshapes = ref.read(serverSelectionProvider) == null;
-      ref.read(serverSelectionProvider.notifier).select(srv.spi.id);
-      if (reshapes) _flyCardIntoPane(context, srv);
+    if (inPlace ?? _opensInPlace(context)) {
+      _openDetail(srv.spi.id);
       return;
     }
 
@@ -40,16 +47,61 @@ extension _Actions on _ServerPageState {
     }
   }
 
-  void _onLongPressCard(ServerState srv) {
-    if (srv.conn == ServerConn.finished) {
-      final id = srv.spi.id;
-      final cardStatus = _getCardNoti(id);
-      cardStatus.value = cardStatus.value.copyWith(
-        flip: !cardStatus.value.flip,
-      );
-    } else {
+  /// Shows actions for one server without leaving the list.
+  ///
+  /// [ctx] is the pressed card's, and [at] where a pointer was — null for a
+  /// long press, which has a finger over the spot.
+  ///
+  /// A machine that has never connected offers only what is true of it: the
+  /// editor, because changing the configuration is the only thing that could
+  /// help.
+  void _onLongPressCard(
+    BuildContext ctx,
+    ServerState srv, {
+    Offset? at,
+    ServerListDensity density = ServerListDensity.cards,
+  }) {
+    if (srv.conn == ServerConn.disconnected && srv.status.err == null) {
       ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+      return;
     }
+
+    // Pointer input provides an anchor; narrow touch layouts use a sheet.
+    final sheet = at == null && !_opensInPlace(ctx);
+    final id = srv.spi.id;
+
+    _keys.requestFocus();
+    setState(() => _menuId = id);
+    unawaited(
+      showServerActions(
+        context,
+        ref,
+        srv,
+        // Anchor the menu to the pressed row when possible.
+        at: at ?? (sheet ? null : _anchorUnder(ctx)),
+        sheet: sheet,
+        // Said inside the menu only where the menu is not beside the thing it
+        // is about: a sheet is at the bottom of the window, and a 44pt tile
+        // has no room for identifying information beyond the name. A card or
+        // a row has said it already, right under the menu and highlighted.
+        header: sheet || density == ServerListDensity.grid
+            ? serverMenuHead(srv)
+            : null,
+        // Touch users enter multi-selection through the menu.
+        onSelect: isMobile ? () => _toggleSelected(srv.spi.id) : null,
+      ).whenComplete(() {
+        // Do not clear a newer menu's highlight.
+        if (!mounted || _menuId != id) return;
+        setState(() => _menuId = null);
+      }),
+    );
+  }
+
+  /// The bottom left of whatever was pressed, in the window's coordinates.
+  Offset? _anchorUnder(BuildContext ctx) {
+    final box = ctx.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset(0, box.size.height));
   }
 
   /// The three ways a server gets onto this device, in one place.
@@ -161,6 +213,21 @@ class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
   }
 }
 
+/// Whether a key that turns a tap into "add this one too" is down.
+///
+/// Read from the hardware rather than from a gesture's details, which carry no
+/// modifiers: this is the only place it is asked, and a tap is synchronous
+/// with the key being held.
+bool get _modifierHeld {
+  final keys = HardwareKeyboard.instance.logicalKeysPressed;
+  return keys.contains(LogicalKeyboardKey.metaLeft) ||
+      keys.contains(LogicalKeyboardKey.metaRight) ||
+      keys.contains(LogicalKeyboardKey.controlLeft) ||
+      keys.contains(LogicalKeyboardKey.controlRight) ||
+      keys.contains(LogicalKeyboardKey.shiftLeft) ||
+      keys.contains(LogicalKeyboardKey.shiftRight);
+}
+
 extension _Utils on _ServerPageState {
   /// The list narrowed by both of the things that narrow it: the tag picked in
   /// the bar, and whatever is typed into it.
@@ -195,20 +262,19 @@ extension _Utils on _ServerPageState {
     }).toList();
   }
 
-  double? _calcCardHeight(ServerConn cs, bool flip) {
-    if (_textFactorDouble != 1.0) return null;
-    if (cs != ServerConn.finished) {
-      return _ServerPageState._kCardHeightMin;
-    }
-    if (flip) {
-      return _ServerPageState._kCardHeightFlip;
-    }
-    return _ServerPageState._kCardHeightNormal;
+  /// Which reading [id]'s card draws in full, or null for whichever the
+  /// machine reports first.
+  ServerMetricKind? _promotedOf(String id) => ServerPromoted.of(id);
+
+  void _promote(String id, ServerMetricKind kind) {
+    if (ServerPromoted.put(id, kind)) setState(() {});
   }
 
-
-  _CardNotifier _getCardNoti(String id) =>
-      _cardsStatus.putIfAbsent(id, () => _CardNotifier(const _CardStatus()));
+  /// Folds the rows of [id]'s card, or unfolds them.
+  void _toggleExpanded(String id) {
+    ServerCardExpanded.toggle(id);
+    setState(() {});
+  }
 
   void _updateOffset() {
     if (!Stores.setting.fullScreenJitter.fetch()) return;
@@ -216,11 +282,6 @@ extension _Utils on _ServerPageState {
     final r = math.Random().nextDouble();
     final n = math.Random().nextBool() ? 1 : -1;
     _offsetNotifier.value = x * r * n;
-  }
-
-  void _updateTextScaler(double val) {
-    _textFactorDouble = val;
-    _textFactor = TextScaler.linear(_textFactorDouble);
   }
 
   void _startAvoidJitterTimer() {
@@ -233,74 +294,6 @@ extension _Utils on _ServerPageState {
         _timer?.cancel();
       }
     });
-  }
-}
-
-extension _ServerX on ServerState {
-  bool get needsInteractiveAuth {
-    final error = status.err;
-    return error is SSHErr && error.type == SSHErrType.interactiveAuth;
-  }
-
-  String? _getTopRightStr(Spi spi) {
-    if (status.err != null) {
-      return libL10n.viewErr;
-    }
-    switch (conn) {
-      case ServerConn.disconnected:
-        return null;
-      case ServerConn.finished:
-        // Highest priority of temperature display
-        final cmdTemp = () {
-          final val = status.customCmds['server_card_top_right'];
-          if (val == null) return null;
-          // This returned value is used on server card top right, so it should
-          // be a single line string.
-          return val.split('\n').lastOrNull;
-        }();
-        final temperatureVal = () {
-          // Second priority
-          final preferTempDev = spi.custom?.preferTempDev;
-          if (preferTempDev != null) {
-            final preferTemp = status.sensors
-                .firstWhereOrNull((e) => e.device == preferTempDev)
-                ?.summary
-                ?.split(' ')
-                .firstOrNull;
-            if (preferTemp != null) {
-              return double.tryParse(preferTemp.replaceFirst('°C', ''));
-            }
-          }
-          // Last priority
-          final temp = status.temps.first;
-          if (temp != null) {
-            return temp;
-          }
-          return null;
-        }();
-        final upTime = status.more[StatusCmdType.uptime];
-        // Temperature and uptime, and nothing else. The latency belongs to the
-        // detail page's About card: this line is read while scanning a list of
-        // machines, and a number that changes on every poll is noise there.
-        final items = [
-          cmdTemp ??
-              (temperatureVal != null
-                  ? '${temperatureVal.toStringAsFixed(1)}°C'
-                  : null),
-          upTime,
-        ];
-        final str = items.where((e) => e != null && e.isNotEmpty).join(' | ');
-        if (str.isEmpty) return libL10n.empty;
-        return str;
-      case ServerConn.loading:
-        return null;
-      case ServerConn.connected:
-        return null;
-      case ServerConn.connecting:
-        return null;
-      case ServerConn.failed:
-        return libL10n.fail;
-    }
   }
 }
 

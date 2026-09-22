@@ -5067,6 +5067,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
   String get monitorNoRemoteAccess;
+
+  /// No description provided for @alerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get alerts;
+
+  /// No description provided for @online.
+  ///
+  /// In en, this message translates to:
+  /// **'online'**
+  String get online;
+
+  /// No description provided for @densityCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get densityCards;
+
+  /// No description provided for @densityRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows'**
+  String get densityRows;
+
+  /// No description provided for @densityGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid'**
+  String get densityGrid;
+
+  /// No description provided for @connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connect;
+
+  /// No description provided for @disconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnect;
+
+  /// No description provided for @searchServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Searches names and addresses — the two the editor asks for first.'**
+  String get searchServerTip;
+
+  /// No description provided for @addServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill one in, scan a QR code, or import a file somebody shared.'**
+  String get addServerTip;
+
+  /// No description provided for @move.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get move;
+
+  /// No description provided for @moveToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to top'**
+  String get moveToTop;
+
+  /// No description provided for @moveToBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to bottom'**
+  String get moveToBottom;
+
+  /// No description provided for @groupByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by tag'**
+  String get groupByTag;
+
+  /// No description provided for @groupByTagTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags are set in a server’s own editor.'**
+  String get groupByTagTip;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connecting;
+
+  /// No description provided for @authShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth'**
+  String get authShort;
 }
 
 class _AppLocalizationsDelegate

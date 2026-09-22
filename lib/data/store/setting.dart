@@ -927,6 +927,85 @@ class SettingStore extends SqliteStore {
   /// Default tmux session name. Empty string means use 'server_box'.
   late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
 
+  /// Which reading each server's card draws in full, by server id.
+  ///
+  /// Per server because the answer is: a database is watched for its disk and
+  /// a build box for its CPU. Carried into the detail page as well, so picking
+  /// a row on the card and picking one on the page are the same choice — which
+  /// is the whole reason the card and the page are one structure.
+  ///
+  /// A kind's `name`, never its index: a case inserted into
+  /// `ServerMetricKind` would silently repoint every stored choice.
+  late final serverCardMetric = propertyDefault<Map<String, String>>(
+    'serverCardMetric',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
+  /// Whether a server's card has its rows unfolded, for the servers somebody
+  /// has said so about, by [Spi.id].
+  ///
+  /// A card with no entry rests at what [collapseUIDefault] says, which is
+  /// what makes that setting a default rather than a starting value: a server
+  /// added tomorrow follows it without anything being written, and so does
+  /// every card nobody has touched when the setting is changed.
+  ///
+  /// Per server for the reason [serverCardMetric] is: the two machines worth
+  /// keeping open on a page of forty are not the same two for everybody.
+  late final serverCardExpandedOverride = propertyDefault<Map<String, bool>>(
+    'serverCardExpandedOverride',
+    const {},
+    fromObj: (obj) => Map<String, bool>.from(obj as Map),
+  );
+
+  /// How much of each server the list shows, by tag.
+  ///
+  /// Per tag because a tag is a set of machines: `#prod` with forty in it and
+  /// `#local` with two want different answers. The empty key is "all", which
+  /// is the set the app opens on.
+  ///
+  /// A [ServerListDensity]'s `name`, and absent means `auto` — so an install
+  /// that has never chosen follows the count rather than a stored guess.
+  late final serverListDensity = propertyDefault<Map<String, String>>(
+    'serverListDensity',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
+  /// How the list is ordered, by tag — the same shape, and the same empty key
+  /// for "all", as [serverListDensity].
+  ///
+  /// Per tag for the reason the density is: `#prod` with forty in it wants to
+  /// be read busiest-first, and `#local` with two wants the arrangement it was
+  /// given. One field and one direction, written `<field>:<asc|desc>` — a bare
+  /// field name reads as ascending, which is what the pair below used to be
+  /// stored as.
+  ///
+  /// TODO: [serverPageSortBy] and [serverPageSortAsc] are only still read as
+  /// this map's empty-key default, for installs that chose before it existed.
+  /// Delete both, and the fallback in `ServerSortOrder.of`, a few releases on.
+  late final serverListSort = propertyDefault<Map<String, String>>(
+    'serverListSort',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
+  /// Whether the list is cut into sections, by tag.
+  ///
+  /// A string rather than a bool because what it names is what the sections
+  /// are cut by: `tag` today, and absent is one list. A second answer — by
+  /// status, say — is then a value rather than a second setting.
+  ///
+  /// Only ever means anything under the empty key: inside `#prod` every
+  /// machine is in `#prod`, so grouping by tag there is one section. It is
+  /// stored per tag anyway, because a setting that is remembered in one place
+  /// and forgotten in another is the harder thing to explain.
+  late final serverListGroup = propertyDefault<Map<String, String>>(
+    'serverListGroup',
+    const {},
+    fromObj: (obj) => Map<String, String>.from(obj as Map),
+  );
+
   /// Whether the globe exists at all.
   ///
   /// On by default, and off is a real off: no button in the server tab, no

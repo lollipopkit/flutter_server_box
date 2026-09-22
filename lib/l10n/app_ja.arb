@@ -844,5 +844,21 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "アラート",
+  "online": "オンライン",
+  "densityCards": "カード",
+  "densityRows": "行",
+  "densityGrid": "グリッド",
+  "connect": "接続",
+  "disconnect": "切断",
+  "searchServerTip": "名前とアドレスを検索します。編集画面で最初に尋ねられる2項目です。",
+  "addServerTip": "入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。",
+  "move": "移動",
+  "moveToTop": "先頭へ移動",
+  "moveToBottom": "末尾へ移動",
+  "groupByTag": "タグでグループ化",
+  "groupByTagTip": "タグはサーバーの編集ページで設定します。",
+  "connecting": "接続中…",
+  "authShort": "認証"
 }

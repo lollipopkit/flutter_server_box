@@ -2824,4 +2824,52 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '이 agent는 모니터링 전용으로 설정되어 있습니다. 여기서 터미널을 열거나 명령을 실행하거나 파일을 탐색할 수 없습니다. 이 기능을 사용하려면 agent의 config.toml에서 [remote_access]를 수정하세요.';
+
+  @override
+  String get alerts => '알림';
+
+  @override
+  String get online => '온라인';
+
+  @override
+  String get densityCards => '카드';
+
+  @override
+  String get densityRows => '행';
+
+  @override
+  String get densityGrid => '그리드';
+
+  @override
+  String get connect => '연결';
+
+  @override
+  String get disconnect => '연결 해제';
+
+  @override
+  String get searchServerTip => '이름과 주소를 검색합니다. 편집 화면에서 가장 먼저 묻는 두 항목입니다.';
+
+  @override
+  String get addServerTip => '하나를 입력하거나 QR 코드를 스캔하거나 다른 사람이 공유한 파일을 가져오세요.';
+
+  @override
+  String get move => '이동';
+
+  @override
+  String get moveToTop => '맨 위로 이동';
+
+  @override
+  String get moveToBottom => '맨 아래로 이동';
+
+  @override
+  String get groupByTag => '태그로 그룹화';
+
+  @override
+  String get groupByTagTip => '태그는 서버 편집 페이지에서 설정합니다.';
+
+  @override
+  String get connecting => '연결 중…';
+
+  @override
+  String get authShort => '인증';
 }

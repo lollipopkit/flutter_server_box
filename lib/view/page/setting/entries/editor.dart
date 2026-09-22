@@ -13,92 +13,125 @@ extension _Editor on _AppSettingsPageState {
     }
   }
 
-  Widget _buildEditor() {
-    return Column(
-      children: [
+  List<SettingsGroup> _buildEditor() {
+    return [
+      SettingsGroup(libL10n.general, [
         _buildEditorWrap(),
-        _buildEditorFontFamily(),
-        _buildEditorFontSize(),
-        _buildEditorTheme(),
-        _buildEditorDarkTheme(),
         _buildEditorHighlight(),
         _buildEditorCloseAfterEdit(),
-      ].map((e) => CardX(child: e)).toList(),
-    );
+      ]),
+      SettingsGroup(libL10n.font, [
+        _buildEditorFontFamily(),
+        _buildEditorFontSize(),
+      ]),
+      SettingsGroup(libL10n.theme, [
+        _buildEditorTheme(),
+        _buildEditorDarkTheme(),
+      ]),
+    ];
   }
 
-  Widget _buildEditorCloseAfterEdit() {
-    return ListTile(
-      leading: const Icon(MingCute.edit_fill),
-      title: Text(l10n.closeAfterSave),
-      trailing: StoreSwitch(prop: _setting.closeAfterSave),
-    );
-  }
-
-  Widget _buildEditorHighlight() {
-    return ListTile(
-      leading: const Icon(MingCute.code_line, size: _kIconSize),
-      title: TipText(libL10n.highlight, l10n.editorHighlightTip),
-      trailing: StoreSwitch(prop: _setting.editorHighlight),
-    );
-  }
-
-  Widget _buildEditorTheme() {
-    return ListTile(
-      leading: const Icon(MingCute.sun_fill),
-      title: Text('${libL10n.bright} ${libL10n.theme.toLowerCase()}'),
-      trailing: ValBuilder(
-        listenable: _setting.editorTheme.listenable(),
-        builder: (val) => Text(val, style: UIs.text15),
+  SettingsRow _buildEditorCloseAfterEdit() {
+    final label = l10n.closeAfterSave;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.edit_fill),
+        title: Text(label),
+        trailing: StoreSwitch(prop: _setting.closeAfterSave),
       ),
-      onTap: () => _pickEditorTheme(_setting.editorTheme),
     );
   }
 
-  Widget _buildEditorDarkTheme() {
-    return ListTile(
-      leading: const Icon(MingCute.moon_stars_fill),
-      title: Text('${libL10n.dark} ${libL10n.theme.toLowerCase()}'),
-      trailing: ValBuilder(
-        listenable: _setting.editorDarkTheme.listenable(),
-        builder: (val) => Text(val, style: UIs.text15),
+  SettingsRow _buildEditorHighlight() {
+    final label = libL10n.highlight;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.code_line),
+        title: TipText(label, l10n.editorHighlightTip),
+        trailing: StoreSwitch(prop: _setting.editorHighlight),
       ),
-      onTap: () => _pickEditorTheme(_setting.editorDarkTheme),
+      keywords: l10n.editorHighlightTip,
     );
   }
 
-  Widget _buildEditorWrap() {
-    return ListTile(
-      leading: const Icon(MingCute.align_center_line),
-      title: Text(libL10n.softWrap),
-      trailing: StoreSwitch(prop: _setting.editorSoftWrap),
-    );
-  }
-
-  Widget _buildEditorFontSize() {
-    return ListTile(
-      leading: const Icon(MingCute.font_size_line),
-      title: Text(libL10n.fontSize),
-      trailing: ValBuilder(
-        listenable: _setting.editorFontSize.listenable(),
-        builder: (val) => Text(val.toString(), style: UIs.text15),
-      ),
-      onTap: () => _showFontSizeDialog(_setting.editorFontSize),
-    );
-  }
-
-  Widget _buildEditorFontFamily() {
-    return ListTile(
-      leading: const Icon(MingCute.font_fill),
-      title: Text(libL10n.font),
-      trailing: ValBuilder(
-        listenable: _setting.editorFontFamily.listenable(),
-        builder: (val) => Text(
-          val.isEmpty ? libL10n.auto.toLowerCase() : val,
-          style: UIs.text15,
+  SettingsRow _buildEditorTheme() {
+    final label = '${libL10n.bright} ${libL10n.theme.toLowerCase()}';
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.sun_fill),
+        title: Text(label),
+        trailing: ValBuilder(
+          listenable: _setting.editorTheme.listenable(),
+          builder: (val) => Text(val, style: UIs.text15),
         ),
+        onTap: () => _pickEditorTheme(_setting.editorTheme),
       ),
-      onTap: () => _showFontFamilyDialog(_setting.editorFontFamily),
+    );
+  }
+
+  SettingsRow _buildEditorDarkTheme() {
+    final label = '${libL10n.dark} ${libL10n.theme.toLowerCase()}';
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.moon_stars_fill),
+        title: Text(label),
+        trailing: ValBuilder(
+          listenable: _setting.editorDarkTheme.listenable(),
+          builder: (val) => Text(val, style: UIs.text15),
+        ),
+        onTap: () => _pickEditorTheme(_setting.editorDarkTheme),
+      ),
+    );
+  }
+
+  SettingsRow _buildEditorWrap() {
+    final label = libL10n.softWrap;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.align_center_line),
+        title: Text(label),
+        trailing: StoreSwitch(prop: _setting.editorSoftWrap),
+      ),
+    );
+  }
+
+  SettingsRow _buildEditorFontSize() {
+    final label = libL10n.fontSize;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.font_size_line),
+        title: Text(label),
+        trailing: ValBuilder(
+          listenable: _setting.editorFontSize.listenable(),
+          builder: (val) => Text(val.toString(), style: UIs.text15),
+        ),
+        onTap: () => _showFontSizeDialog(_setting.editorFontSize),
+      ),
+    );
+  }
+
+  SettingsRow _buildEditorFontFamily() {
+    final label = libL10n.font;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(MingCute.font_fill),
+        title: Text(label),
+        trailing: ValBuilder(
+          listenable: _setting.editorFontFamily.listenable(),
+          builder: (val) => Text(
+            val.isEmpty ? libL10n.auto.toLowerCase() : val,
+            style: UIs.text15,
+          ),
+        ),
+        onTap: () => _showFontFamilyDialog(_setting.editorFontFamily),
+      ),
     );
   }
 

@@ -133,6 +133,17 @@ enum ServerConn {
   /// Status parsing finished
   finished;
 
+  /// On its way to a first answer: connecting, connected and being set up,
+  /// or reading the status.
+  ///
+  /// One definition for everything that draws "busy" — the card's spinner, a
+  /// line's progress bar, the detail page's placeholder — because each of them
+  /// used to list the three states itself, and they have to agree.
+  bool get busy => switch (this) {
+    connecting || connected || loading => true,
+    failed || disconnected || finished => false,
+  };
+
   /// Orders by declaration index: failed < disconnected < connecting <
   /// connected < loading < finished. Do NOT reorder the enum values
   /// above without auditing all call sites that rely on this ordering.

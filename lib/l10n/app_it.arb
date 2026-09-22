@@ -847,5 +847,21 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "Avvisi",
+  "online": "online",
+  "densityCards": "Schede",
+  "densityRows": "Righe",
+  "densityGrid": "Griglia",
+  "connect": "Connetti",
+  "disconnect": "Disconnetti",
+  "searchServerTip": "Cerca nomi e indirizzi — le due informazioni richieste per prime dall’editor.",
+  "addServerTip": "Compilane uno, scansiona un codice QR oppure importa un file condiviso da qualcuno.",
+  "move": "Sposta",
+  "moveToTop": "Sposta all'inizio",
+  "moveToBottom": "Sposta alla fine",
+  "groupByTag": "Raggruppa per tag",
+  "groupByTagTip": "I tag si impostano nell’editor del server.",
+  "connecting": "Connessione…",
+  "authShort": "Auth"
 }

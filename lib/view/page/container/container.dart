@@ -53,6 +53,18 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     super.dispose();
   }
 
+  /// A member of the class, not of the actions extension: an extension
+  /// method's tear-off is a new closure each time, so [dispose] could not
+  /// remove the one [initState] added.
+  void _onContainerTabChanged() {
+    final index = _tabCtrl.index;
+    if (index == _lastTabIndex) return;
+    _lastTabIndex = index;
+    final tab = _ContainerTabs.values[index];
+    if (tab != _ContainerTabs.settings) _lastResourceTab = tab;
+    unawaited(_refreshContainerTab(tab));
+  }
+
   @override
   void initState() {
     super.initState();

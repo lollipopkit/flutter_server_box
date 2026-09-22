@@ -200,9 +200,13 @@ void main() {
   });
 
   testWidgets('the order is the one the user arranged', (tester) async {
-    // Sorted by name, descending — the setting the server tab writes. The
-    // picker reads the same one, so the two lists can never disagree.
-    const ServerSortOrder(ServerSortField.name, ascending: false).save();
+    // Sorted by name, descending — the setting the server tab writes for the
+    // list with no tag on it. The picker is not inside a tag either, so it
+    // reads that same one and the two lists can never disagree.
+    const ServerSortOrder(
+      ServerSortField.name,
+      ascending: false,
+    ).save(TagSwitcher.kDefaultTag);
 
     await open(tester);
 

@@ -27,7 +27,7 @@ extension _AskAi on SSHPageState {
   String get _recentTerminalContext {
     final selection = _selectedTerminalText;
     if (selection.isNotEmpty) return selection;
-    return _sess.outputTail.trim();
+    return _sess.screenText;
   }
 
   /// Makes this terminal reachable by the Agent session scoped to its server.
@@ -490,7 +490,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Hairline.color(context)),
       ),
-      child: ExpansionTile(
+      child: ExpandTile(
         initiallyExpanded: widget.autoStart,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
         childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -997,8 +997,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       }
     });
 
+    // The `Scaffold`'s colour, which `toAmoled` overrides and
+    // `colorScheme.surface` is not — the same as the Agent tab and its history
+    // sheet, so this panel is not the one Material grey surface under AMOLED.
     final content = Material(
-      color: theme.colorScheme.surface,
+      color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
           _buildHeader(context, theme, session),

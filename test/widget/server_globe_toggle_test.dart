@@ -9,6 +9,7 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/self_addr.dart';
 import 'package:server_box/data/store/server.dart';
@@ -43,6 +44,9 @@ void main() {
     await openTestDb();
     getIt.registerSingleton<SettingStore>(SettingStore('setting_test'));
     getIt.registerSingleton<ServerStore>(ServerStore());
+    // The list draws what has happened to these machines lately, which is
+    // the one thing in the app that records a time.
+    getIt.registerSingleton<ConnectionStatsStore>(ConnectionStatsStore.instance);
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore());
     getIt.registerSingleton<SelfAddrStore>(SelfAddrStore('self_addr_test'));
     // Off, or its periodic timer outlives the tree and fails the run.
@@ -354,27 +358,13 @@ void main() {
       expect(globe.bottom, 900 - inset);
     });
 
-    testWidgets('not beside a detail pane, where the pane has the way out', (
+    testWidgets('and the claim is dropped when a server is opened', (
       tester,
     ) async {
-      // Split, the globe is a column rather than the page and the actions row
-      // above it is still there — so the window's chrome is not in the way of
-      // anything.
-      Stores.setting.serverPageGlobe.put(true);
-      addServer();
-      await pump(tester, size: const Size(1400, 900));
-      await openDetail(tester, 'srv-1');
-
-      expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
-      expect(immersiveTab(tester), isNull);
-    });
-
-    testWidgets('and the claim is dropped when the split arrives', (
-      tester,
-    ) async {
-      // A wide window with nothing open goes down the single-column branch, so
-      // the globe does fill it — until a server is selected and it becomes one
-      // column of two.
+      // A globe with nothing open fills the window. Opening a server is what
+      // the sphere is tapped for, so the page becomes that server — and the
+      // window's chrome has to come back with it, since the globe is no longer
+      // the thing that needs the room.
       Stores.setting.serverPageGlobe.put(true);
       addServer();
       await pump(tester, size: const Size(1400, 900));
@@ -382,6 +372,7 @@ void main() {
 
       await openDetail(tester, 'srv-1');
       expect(immersiveTab(tester), isNull);
+      expect(find.byType(ServerGlobe), findsNothing);
     });
   });
 
@@ -402,24 +393,6 @@ void main() {
     }
     expect(find.byType(ServerGlobe), findsNothing);
     expect(globeButton(), findsNothing);
-  });
-
-  testWidgets('on a wide window the globe replaces the rail', (tester) async {
-    // The rail is what a wide window shows, so without this the globe would be
-    // unreachable on a desktop entirely.
-    //
-    // The detail has to be open or there is no split and this exercises the
-    // single-column branch on a large canvas — which is what it did, so it
-    // passed whatever `_buildGlobePane` was doing. `globe-pane` is the key
-    // that says which branch actually ran.
-    Stores.setting.serverPageGlobe.put(true);
-    addServer();
-    await pump(tester, size: const Size(1400, 900));
-    await openDetail(tester, 'srv-1');
-    expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
-    expect(find.byType(ServerGlobe), findsOneWidget);
-    // And the actions row is still there, which is the way back out.
-    expect(find.byIcon(Icons.grid_view_rounded), findsOneWidget);
   });
 
   /// The list becoming the globe, rather than being replaced by it.
@@ -456,45 +429,42 @@ void main() {
       expect(find.byType(ServerGlobe), findsOneWidget);
     });
 
-    testWidgets('and on a wide window, which used to cut', (tester) async {
-      // The split branch returned one pane or the other directly, so the globe
-      // replaced the rail between one frame and the next.
+    testWidgets('and on a wide window, where it once cut', (tester) async {
       addServer();
       await pump(tester, size: const Size(1400, 900));
-      await openDetail(tester, 'srv-1');
-      expect(find.byKey(const ValueKey('list-pane')), findsOneWidget);
+      expect(find.byKey(const ValueKey('grid')), findsOneWidget);
 
       await tester.tap(globeButton());
       await midway(tester);
-      // **The regression this test exists for.** Both panes are mounted here,
-      // so the actions row is built twice — and the globe button carried a
-      // `GlobalKey` for the guide to measure. Two widgets holding one of those
-      // at the same time throws during build, which lands here.
+      // **The regression this test exists for.** Both halves are mounted
+      // here, so the actions row is built twice — and the globe button
+      // carried a `GlobalKey` for the guide to measure. Two widgets holding
+      // one of those at the same time throws during build, which lands here.
       expect(tester.takeException(), isNull);
-      expect(find.byKey(const ValueKey('list-pane')), findsOneWidget);
-      expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
+      expect(find.byKey(const ValueKey('grid')), findsOneWidget);
+      expect(find.byType(ServerGlobe), findsOneWidget);
 
       await settle(tester);
-      expect(find.byKey(const ValueKey('list-pane')), findsNothing);
-      expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
+      expect(find.byKey(const ValueKey('grid')), findsNothing);
       expect(find.byType(ServerGlobe), findsOneWidget);
     });
 
     testWidgets('the way back is the same movement', (tester) async {
+      // Leaving is through the globe's own exit, since a globe that has the
+      // window has taken the bar with it — see the immersive group above.
       Stores.setting.serverPageGlobe.put(true);
       addServer();
       await pump(tester, size: const Size(1400, 900));
-      await openDetail(tester, 'srv-1');
-      expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
+      expect(find.byType(ServerGlobe), findsOneWidget);
 
-      await tester.tap(find.byIcon(Icons.grid_view_rounded));
+      await tester.tap(find.byIcon(Icons.close));
       await midway(tester);
       expect(tester.takeException(), isNull);
-      expect(find.byKey(const ValueKey('globe-pane')), findsOneWidget);
-      expect(find.byKey(const ValueKey('list-pane')), findsOneWidget);
+      expect(find.byType(ServerGlobe), findsOneWidget);
+      expect(find.byKey(const ValueKey('grid')), findsOneWidget);
 
       await settle(tester);
-      expect(find.byKey(const ValueKey('globe-pane')), findsNothing);
+      expect(find.byType(ServerGlobe), findsNothing);
     });
   });
 

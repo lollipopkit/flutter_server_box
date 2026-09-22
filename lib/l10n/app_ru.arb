@@ -844,5 +844,21 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "Оповещения",
+  "online": "в сети",
+  "densityCards": "Карточки",
+  "densityRows": "Строки",
+  "densityGrid": "Сетка",
+  "connect": "Подключиться",
+  "disconnect": "Отключиться",
+  "searchServerTip": "Ищет по именам и адресам — двум данным, которые редактор запрашивает первыми.",
+  "addServerTip": "Заполните одно из полей, отсканируйте QR-код или импортируйте файл, которым кто-то поделился.",
+  "move": "Переместить",
+  "moveToTop": "В начало",
+  "moveToBottom": "В конец",
+  "groupByTag": "Группировать по тегу",
+  "groupByTagTip": "Теги задаются в редакторе сервера.",
+  "connecting": "Подключение…",
+  "authShort": "Авториз."
 }

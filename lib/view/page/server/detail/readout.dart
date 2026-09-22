@@ -1,11 +1,14 @@
-part of 'view.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/view/widget/built_from.dart';
 
 /// What a card's chip says about the thing the card names.
 ///
 /// A verdict, not a state: the chip exists so that a card of six S.M.A.R.T.
 /// devices can be read without reading the six rows. Colour is never the only
 /// carrier — the chip always has words in it, and the rows have their own.
-enum _Verdict {
+enum ReadoutVerdict {
   ok,
   warn,
   bad,
@@ -34,41 +37,87 @@ const _kCardColumnWidth = 340.0;
 /// A card is a summary. A host with twenty sensors or fifteen guests has a
 /// page for them; what belongs here is enough to recognise the answer, and a
 /// last line saying how much was left out.
-const _kCardRows = 6;
+const kReadoutCardRows = 6;
 
-// --- The cards under the rows ---
+/// One card: a conclusion, a few lines of detail, and a last line saying
+/// what is not on screen.
+///
+/// Every card below the metric rows is this shape, because what they have in
+/// common is that none of them is a value with a line behind it — a table, a
+/// set of guests, a one-off reading — and what is wanted first from all of
+/// them is the verdict rather than the table.
+///
+/// The glyph at the end of the title row says what tapping does, and there
+/// are only three answers: `expand_more` opens the detail in place,
+/// `chevron_right` leaves for a page of its own, and nothing at all means
+/// there is nothing to open. [onTap] chooses the second; [rows] with no
+/// [onTap] the first.
+///
+/// Whether it is open is not the card's to keep — see [expanded].
+class ServerDetailReadoutCard extends StatelessWidget {
+  const ServerDetailReadoutCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.verdict,
+    this.headline,
+    this.rows = const [],
+    this.extra = const [],
+    this.footer = '',
+    this.onTap,
+    this.expanded = false,
+    this.onToggle,
+  });
 
-extension on _ServerDetailPageState {
-  /// One card: a conclusion, a few lines of detail, and a last line saying
-  /// what is not on screen.
+  final IconData icon;
+  final String title;
+
+  /// The chip beside the title.
+  final ({String text, ReadoutVerdict tone})? verdict;
+
+  /// The conclusion under the title, and what it is out of.
+  final ({String value, String note})? headline;
+
+  /// The detail, of which the first [kReadoutCardRows] are shown.
+  final List<Widget> rows;
+
+  /// Below [rows] and never cut off with them.
+  final List<Widget> extra;
+
+  /// The last line, saying what is not on screen.
+  final String footer;
+
+  /// Where the card leads, for one that leaves for a page of its own.
+  final VoidCallback? onTap;
+
+  /// Whether the detail is showing, for a card that opens in place.
   ///
-  /// Every card below the metric rows is this shape, because what they have in
-  /// common is that none of them is a value with a line behind it — a table, a
-  /// set of guests, a one-off reading — and what is wanted first from all of
-  /// them is the verdict rather than the table.
-  ///
-  /// The glyph at the end of the title row says what tapping does, and there
-  /// are only three answers: `expand_more` opens the detail in place,
-  /// `chevron_right` leaves for a page of its own, and nothing at all means
-  /// there is nothing to open. [onTap] chooses the second; [rows] with no
-  /// [onTap] the first.
-  Widget _buildReadoutCard({
-    required String cardKey,
-    required IconData icon,
-    required String title,
-    ({String text, _Verdict tone})? verdict,
-    ({String value, String note})? headline,
+  /// Held by whoever builds the card rather than by the card, because a card
+  /// does not outlive a refresh — see `_cardsOpen` on the server page.
+  final bool expanded;
+
+  /// What pressing the title does to a card that opens in place.
+  final VoidCallback? onToggle;
+
+  /// Whether a card with these opens in place: it has something to open, and
+  /// is not a way to somewhere else.
+  static bool expandable({
+    VoidCallback? onTap,
     List<Widget> rows = const [],
     List<Widget> extra = const [],
-    String footer = '',
-    VoidCallback? onTap,
-    bool? initiallyExpanded,
-  }) {
+  }) => onTap == null && (rows.isNotEmpty || extra.isNotEmpty);
+
+  @override
+  Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final expandable = onTap == null && (rows.isNotEmpty || extra.isNotEmpty);
-    final open =
-        expandable &&
-        _cardExpanded(cardKey, initiallyExpanded ?? _getInitExpand(rows.length));
+    final verdict = this.verdict;
+    final headline = this.headline;
+    final expandable = ServerDetailReadoutCard.expandable(
+      onTap: onTap,
+      rows: rows,
+      extra: extra,
+    );
+    final open = expandable && expanded;
 
     final head = Padding(
       padding: EdgeInsets.fromLTRB(17, 13, 13, headline == null ? 13 : 9),
@@ -99,7 +148,7 @@ extension on _ServerDetailPageState {
                     ),
                     if (verdict != null) ...[
                       const SizedBox(width: 9),
-                      Flexible(child: _buildVerdictChip(verdict, scheme)),
+                      Flexible(child: _verdictChip(verdict, scheme)),
                     ],
                   ],
                 ),
@@ -159,7 +208,7 @@ extension on _ServerDetailPageState {
         children: [
           if (onTap != null || expandable)
             InkWell(
-              onTap: onTap ?? () => _rebuild(() => _toggleCard(cardKey)),
+              onTap: onTap ?? onToggle,
               child: head,
             )
           else
@@ -173,7 +222,7 @@ extension on _ServerDetailPageState {
             child: open
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [...rows.take(_kCardRows), ...extra],
+                    children: [...rows.take(kReadoutCardRows), ...extra],
                   )
                 : const SizedBox(width: double.infinity),
           ),
@@ -186,77 +235,66 @@ extension on _ServerDetailPageState {
       ),
     );
   }
+}
 
-  /// The card a section gets when its command could not be read.
-  ///
-  /// A card that hides when it is empty answers "this machine has none of
-  /// these", which is the wrong answer for a machine whose `smartctl` is not
-  /// installed or whose `sensors` is not permitted — and it is the answer this
-  /// page gave for as long as the failure was invisible. So the card is drawn,
-  /// with what the command said in place of the table.
-  ///
-  /// Not an alarm. A metric row that failed goes red because a reading
-  /// disappeared from where one had been; here nothing disappeared, and what
-  /// the card owes the reader is the reason, not a warning. The raw text is
-  /// behind the same expander the rows would have been, because it is a shell's
-  /// wording rather than this app's and it is what a bug report needs.
-  Widget _buildFailedCard({
-    required String cardKey,
-    required IconData icon,
-    required String title,
-    required String err,
-  }) {
-    return _buildReadoutCard(
-      cardKey: cardKey,
-      icon: icon,
-      title: title,
-      headline: (value: l10n.unavailable, note: err.split('\n').first),
-      extra: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(17, 0, 17, 7),
-          child: SelectableText(
-            err,
-            style: UIs.text12Grey.copyWith(fontFamily: 'monospace'),
-          ),
-        ),
-      ],
-      footer: l10n.metricUnavailableTip,
-      initiallyExpanded: false,
+Widget _verdictChip(
+  ({String text, ReadoutVerdict tone}) verdict,
+  ColorScheme scheme,
+) {
+  final color = verdict.tone.color(scheme);
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.15),
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: Text(
+      verdict.text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(fontSize: 11, color: color),
+    ),
+  );
+}
+
+/// One line of a card's detail: what it is, what it is at, and — where the
+/// line leads somewhere — that it does.
+///
+/// The dot is a second carrier for the verdict the value already states in
+/// words ("PASSED", "running"), not the only one.
+///
+/// Kept between polls while it says the same thing, unless it leads
+/// somewhere: where it leads is a closure over the status it was built
+/// from, and a kept row would open the one from however many polls ago. See
+/// [BuiltFrom].
+class ServerDetailReadoutRow extends StatelessWidget {
+  const ServerDetailReadoutRow({
+    super.key,
+    required this.k,
+    required this.v,
+    this.sub,
+    this.dot,
+    this.onTap,
+  });
+
+  final String k;
+  final String v;
+  final String? sub;
+  final Color? dot;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final onTap = this.onTap;
+    if (onTap != null) return _body(onTap);
+    return BuiltFrom(
+      [k, v, sub, dot],
+      builder: (_) => _body(null),
     );
   }
 
-  Widget _buildVerdictChip(
-    ({String text, _Verdict tone}) verdict,
-    ColorScheme scheme,
-  ) {
-    final color = verdict.tone.color(scheme);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Text(
-        verdict.text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 11, color: color),
-      ),
-    );
-  }
-
-  /// One line of a card's detail: what it is, what it is at, and — where the
-  /// line leads somewhere — that it does.
-  ///
-  /// The dot is a second carrier for the verdict the value already states in
-  /// words ("PASSED", "running"), not the only one.
-  Widget _buildReadoutRow({
-    required String k,
-    required String v,
-    String? sub,
-    Color? dot,
-    VoidCallback? onTap,
-  }) {
+  Widget _body(VoidCallback? onTap) {
+    final sub = this.sub;
     final body = Padding(
       padding: EdgeInsets.fromLTRB(17, 7, onTap == null ? 17 : 9, 7),
       child: Row(
@@ -283,7 +321,6 @@ extension on _ServerDetailPageState {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: UIs.text13,
-                  textScaler: _textFactor,
                 ),
                 if (sub != null)
                   // One line, cut where it runs out. A row that wraps is two
@@ -294,7 +331,6 @@ extension on _ServerDetailPageState {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: UIs.text11Grey,
-                    textScaler: _textFactor,
                   ),
               ],
             ),
@@ -307,7 +343,6 @@ extension on _ServerDetailPageState {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.right,
               style: UIs.text13Grey,
-              textScaler: _textFactor,
             ),
           ),
           if (onTap != null)
@@ -318,14 +353,21 @@ extension on _ServerDetailPageState {
     if (onTap == null) return body;
     return InkWell(onTap: onTap, child: body);
   }
+}
 
-  /// The cards laid out in as many columns as there is room for.
-  ///
-  /// Round-robin rather than shortest-column-first: a card's height is not
-  /// known before it is laid out, and the balanced version moves a card to the
-  /// other column when the machine it describes grows a row — which on a page
-  /// that refreshes every few seconds is a card that will not stay still.
-  Widget _buildCardGrid(List<Widget> cards) {
+/// The cards laid out in as many columns as there is room for.
+///
+/// Round-robin rather than shortest-column-first: a card's height is not
+/// known before it is laid out, and the balanced version moves a card to the
+/// other column when the machine it describes grows a row — which on a page
+/// that refreshes every few seconds is a card that will not stay still.
+class ServerDetailCardGrid extends StatelessWidget {
+  const ServerDetailCardGrid({super.key, required this.cards});
+
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) {
     if (cards.isEmpty) return UIs.placeholder;
     return LayoutBuilder(
       builder: (_, cons) {
@@ -358,19 +400,19 @@ extension on _ServerDetailPageState {
       },
     );
   }
-
-  /// How much of a list is on screen, said whether or not any of it is
-  /// missing.
-  ///
-  /// A card that lists three of six devices and says nothing about the other
-  /// three is read as a host with three devices — and one that goes quiet
-  /// when it is showing everything leaves the reader counting rows to find
-  /// out. [what] is the noun the card is a list of.
-  String _countNote(int total, String what) => total <= _kCardRows
-      ? l10n.countOfFmt(total, what)
-      : l10n.shownOfFmt(_kCardRows, total, what);
-
-  /// The footer line: the parts a card has, in the order it has them.
-  String _cardFooter(List<String> parts) =>
-      parts.where((e) => e.isNotEmpty).join(' · ');
 }
+
+/// How much of a list is on screen, said whether or not any of it is
+/// missing.
+///
+/// A card that lists three of six devices and says nothing about the other
+/// three is read as a host with three devices — and one that goes quiet
+/// when it is showing everything leaves the reader counting rows to find
+/// out. [what] is the noun the card is a list of.
+String readoutCountNote(int total, String what) => total <= kReadoutCardRows
+    ? l10n.countOfFmt(total, what)
+    : l10n.shownOfFmt(kReadoutCardRows, total, what);
+
+/// The footer line: the parts a card has, in the order it has them.
+String readoutFooter(List<String> parts) =>
+    parts.where((e) => e.isNotEmpty).join(' · ');

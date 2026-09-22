@@ -2939,4 +2939,54 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Agen ini hanya dikonfigurasi untuk pemantauan. Anda tidak dapat membuka terminal, menjalankan perintah, atau menjelajahi berkas dari sini. Untuk mengaktifkan fitur tersebut, edit [remote_access] dalam config.toml agen.';
+
+  @override
+  String get alerts => 'Peringatan';
+
+  @override
+  String get online => 'online';
+
+  @override
+  String get densityCards => 'Kartu';
+
+  @override
+  String get densityRows => 'Baris';
+
+  @override
+  String get densityGrid => 'Kisi';
+
+  @override
+  String get connect => 'Hubungkan';
+
+  @override
+  String get disconnect => 'Putuskan';
+
+  @override
+  String get searchServerTip =>
+      'Mencari nama dan alamat — dua hal yang pertama kali diminta editor.';
+
+  @override
+  String get addServerTip =>
+      'Isi salah satunya, pindai kode QR, atau impor file yang dibagikan seseorang.';
+
+  @override
+  String get move => 'Pindahkan';
+
+  @override
+  String get moveToTop => 'Pindah ke atas';
+
+  @override
+  String get moveToBottom => 'Pindah ke bawah';
+
+  @override
+  String get groupByTag => 'Kelompokkan menurut tag';
+
+  @override
+  String get groupByTagTip => 'Tag diatur di halaman edit server.';
+
+  @override
+  String get connecting => 'Menghubungkan…';
+
+  @override
+  String get authShort => 'Auth';
 }

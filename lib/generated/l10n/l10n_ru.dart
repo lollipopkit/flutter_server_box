@@ -2960,4 +2960,54 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Этот агент настроен только для мониторинга. Здесь нельзя открыть терминал, выполнять команды и просматривать файлы. Чтобы включить эти функции, измените раздел [remote_access] в config.toml агента.';
+
+  @override
+  String get alerts => 'Оповещения';
+
+  @override
+  String get online => 'в сети';
+
+  @override
+  String get densityCards => 'Карточки';
+
+  @override
+  String get densityRows => 'Строки';
+
+  @override
+  String get densityGrid => 'Сетка';
+
+  @override
+  String get connect => 'Подключиться';
+
+  @override
+  String get disconnect => 'Отключиться';
+
+  @override
+  String get searchServerTip =>
+      'Ищет по именам и адресам — двум данным, которые редактор запрашивает первыми.';
+
+  @override
+  String get addServerTip =>
+      'Заполните одно из полей, отсканируйте QR-код или импортируйте файл, которым кто-то поделился.';
+
+  @override
+  String get move => 'Переместить';
+
+  @override
+  String get moveToTop => 'В начало';
+
+  @override
+  String get moveToBottom => 'В конец';
+
+  @override
+  String get groupByTag => 'Группировать по тегу';
+
+  @override
+  String get groupByTagTip => 'Теги задаются в редакторе сервера.';
+
+  @override
+  String get connecting => 'Подключение…';
+
+  @override
+  String get authShort => 'Авториз.';
 }

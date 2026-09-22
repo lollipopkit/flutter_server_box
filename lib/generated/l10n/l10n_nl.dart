@@ -2959,4 +2959,54 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Deze agent is alleen ingesteld voor monitoring. U kunt hier geen terminal openen, opdrachten uitvoeren of bestanden bekijken. Bewerk [remote_access] in de config.toml van de agent om deze functies in te schakelen.';
+
+  @override
+  String get alerts => 'Waarschuwingen';
+
+  @override
+  String get online => 'online';
+
+  @override
+  String get densityCards => 'Kaarten';
+
+  @override
+  String get densityRows => 'Rijen';
+
+  @override
+  String get densityGrid => 'Raster';
+
+  @override
+  String get connect => 'Verbinden';
+
+  @override
+  String get disconnect => 'Verbinding verbreken';
+
+  @override
+  String get searchServerTip =>
+      'Zoekt in namen en adressen — de twee dingen waar de editor eerst om vraagt.';
+
+  @override
+  String get addServerTip =>
+      'Vul er een in, scan een QR-code of importeer een bestand dat iemand heeft gedeeld.';
+
+  @override
+  String get move => 'Verplaatsen';
+
+  @override
+  String get moveToTop => 'Naar boven verplaatsen';
+
+  @override
+  String get moveToBottom => 'Naar onderen verplaatsen';
+
+  @override
+  String get groupByTag => 'Groeperen op tag';
+
+  @override
+  String get groupByTagTip => 'Tags stel je in in de editor van de server.';
+
+  @override
+  String get connecting => 'Verbinden…';
+
+  @override
+  String get authShort => 'Auth';
 }

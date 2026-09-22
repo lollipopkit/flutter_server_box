@@ -2816,4 +2816,52 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'この agent は監視専用に設定されています。ここからターミナルを開いたり、コマンドを実行したり、ファイルを閲覧したりすることはできません。これらの機能を有効にするには、agent の config.toml にある [remote_access] を編集してください。';
+
+  @override
+  String get alerts => 'アラート';
+
+  @override
+  String get online => 'オンライン';
+
+  @override
+  String get densityCards => 'カード';
+
+  @override
+  String get densityRows => '行';
+
+  @override
+  String get densityGrid => 'グリッド';
+
+  @override
+  String get connect => '接続';
+
+  @override
+  String get disconnect => '切断';
+
+  @override
+  String get searchServerTip => '名前とアドレスを検索します。編集画面で最初に尋ねられる2項目です。';
+
+  @override
+  String get addServerTip => '入力するか、QRコードをスキャンするか、共有されたファイルをインポートしてください。';
+
+  @override
+  String get move => '移動';
+
+  @override
+  String get moveToTop => '先頭へ移動';
+
+  @override
+  String get moveToBottom => '末尾へ移動';
+
+  @override
+  String get groupByTag => 'タグでグループ化';
+
+  @override
+  String get groupByTagTip => 'タグはサーバーの編集ページで設定します。';
+
+  @override
+  String get connecting => '接続中…';
+
+  @override
+  String get authShort => '認証';
 }

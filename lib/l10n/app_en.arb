@@ -1114,5 +1114,21 @@
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
   "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
-  "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml."
+  "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml.",
+  "alerts": "Alerts",
+  "online": "online",
+  "densityCards": "Cards",
+  "densityRows": "Rows",
+  "densityGrid": "Grid",
+  "connect": "Connect",
+  "disconnect": "Disconnect",
+  "searchServerTip": "Searches names and addresses — the two the editor asks for first.",
+  "addServerTip": "Fill one in, scan a QR code, or import a file somebody shared.",
+  "move": "Move",
+  "moveToTop": "Move to top",
+  "moveToBottom": "Move to bottom",
+  "groupByTag": "Group by tag",
+  "groupByTagTip": "Tags are set in a server’s own editor.",
+  "connecting": "Connecting…",
+  "authShort": "Auth"
 }

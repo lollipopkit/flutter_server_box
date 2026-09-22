@@ -97,7 +97,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiNoResponse => '无回复内容';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => '远程桌面';
 
   @override
   String get askAiAgentWelcome => '想在这台服务器上做什么？';
@@ -2733,6 +2733,54 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看监控数据，不能打开终端、执行命令或浏览文件。要开启这些功能，请修改 agent 的 config.toml，在 [remote_access] 下打开对应选项。';
+
+  @override
+  String get alerts => '告警';
+
+  @override
+  String get online => '在线';
+
+  @override
+  String get densityCards => '卡片';
+
+  @override
+  String get densityRows => '列表';
+
+  @override
+  String get densityGrid => '方块';
+
+  @override
+  String get connect => '连接';
+
+  @override
+  String get disconnect => '断开';
+
+  @override
+  String get searchServerTip => '搜索名称和地址，也就是编辑页最先问的两项。';
+
+  @override
+  String get addServerTip => '手动填写、扫描二维码，或导入别人分享的文件。';
+
+  @override
+  String get move => '移动';
+
+  @override
+  String get moveToTop => '移到最前';
+
+  @override
+  String get moveToBottom => '移到最后';
+
+  @override
+  String get groupByTag => '按标签分组';
+
+  @override
+  String get groupByTagTip => '标签是在服务器自己的编辑页里加的。';
+
+  @override
+  String get connecting => '连接中…';
+
+  @override
+  String get authShort => '认证';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5365,7 +5413,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return '每月 $day 日的 $time';
   }
 
   @override
@@ -5476,4 +5524,52 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get monitorNoRemoteAccess =>
       '此 agent 目前只能查看監控資料，不能開啟終端、執行命令或瀏覽檔案。若要開啟這些功能，請修改 agent 的 config.toml，在 [remote_access] 下開啟對應選項。';
+
+  @override
+  String get alerts => '警示';
+
+  @override
+  String get online => '線上';
+
+  @override
+  String get densityCards => '卡片';
+
+  @override
+  String get densityRows => '列';
+
+  @override
+  String get densityGrid => '網格';
+
+  @override
+  String get connect => '連線';
+
+  @override
+  String get disconnect => '中斷連線';
+
+  @override
+  String get searchServerTip => '搜尋名稱和位址——編輯頁最先詢問的兩項資料。';
+
+  @override
+  String get addServerTip => '填寫其中一項、掃描 QR code，或匯入他人分享的檔案。';
+
+  @override
+  String get move => '移動';
+
+  @override
+  String get moveToTop => '移到最前';
+
+  @override
+  String get moveToBottom => '移到最後';
+
+  @override
+  String get groupByTag => '依標籤分組';
+
+  @override
+  String get groupByTagTip => '標籤是在伺服器自己的編輯頁裡加的。';
+
+  @override
+  String get connecting => '連線中…';
+
+  @override
+  String get authShort => '認證';
 }

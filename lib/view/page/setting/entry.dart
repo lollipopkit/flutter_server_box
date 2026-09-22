@@ -9,12 +9,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
@@ -60,12 +60,18 @@ import 'package:server_box/view/widget/dist_icon.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/edge_fade_scroll.dart';
 import 'package:server_box/view/widget/geo_data_install.dart';
+import 'package:server_box/view/widget/group_title.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'about.dart';
+part 'app_page.dart';
+part 'group.dart';
+part 'layout.dart';
+part 'level.dart';
 part 'menu.dart';
+part 'nodes.dart';
 part 'entries/ai.dart';
 part 'entries/app.dart';
 part 'entries/container.dart';
@@ -76,8 +82,6 @@ part 'entries/linux.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
-
-const _kIconSize = 23.0;
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -100,32 +104,55 @@ class SettingsPage extends ConsumerStatefulWidget {
 /// making the pane a narrow strip in the middle of a wide window — and it is
 /// also what lets the pages here that are a grid rather than a list keep two
 /// columns.
-const _kContentMaxWidth = 900.0;
+///
+/// Written as the grid's own arithmetic rather than as a number, so that the
+/// form inside really does get its second column: a cap a few points under
+/// this one leaves [PageColumns] measuring room for one and laying the whole
+/// form out in a single column the width of two.
+final _kContentMaxWidth = PageColumns.widthFor(
+  2,
+  padding: _kGridPadding,
+  spacing: _kGridSpacing,
+);
+
+/// What the form is spaced by, which is the design's 17 minus what a `CardX`
+/// already carries: a `Card` brings a margin of 4 on every side, so 13 here is
+/// 17 on screen at the edges and 9 between two columns is 17 between them.
+const _kGridPadding = EdgeInsets.all(13);
+const _kGridSpacing = 9.0;
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  /// Which branches are open in the wide menu. Nothing to start with, so it
-  /// opens as a list of subjects rather than as everything there is.
-  final _expanded = <String>{};
-
   /// Which branch the narrow tabs are inside, innermost last.
   ///
-  /// The wide menu shows every level at once and needs no such thing; the tabs
-  /// show one level and walk between them. Both read the same tree, and both
-  /// point at the same [_selectedId].
+  /// The wide menu is one flat column of subjects and needs no such thing —
+  /// what is inside the one being read is a row of tabs over the content. The
+  /// tabs show one level and walk between them. Both read the same tree, and
+  /// both point at the same [_selectedId].
   final _path = <SettingsNode>[];
 
   String? _selectedId;
 
+  /// What the search field holds, trimmed. Empty is the ordinary state.
+  final _searchCtrl = TextEditingController();
+  final _searchFocus = FocusNode();
+  String _query = '';
+
+  bool get _searching => _query.isNotEmpty;
+
   /// A wide window has to be showing something from the start, so it opens on
-  /// the first group with its branch unfolded. A narrow one opens on the list
-  /// and [_path] stays empty until a row is picked.
+  /// the first page there is. A narrow one opens on the list and [_path] stays
+  /// empty until a row is picked.
   @override
   void initState() {
     super.initState();
-    final first = _buildNodes().firstWhereOrNull((e) => !e.isLeaf);
-    if (first == null) return;
-    _expanded.add(first.id);
-    _selectedId = first.firstLeaf?.id;
+    _selectedId = _buildNodes().firstOrNull?.firstLeaf?.id;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _searchFocus.dispose();
+    super.dispose();
   }
 
   Future<void> _clearAllSettings() async {
@@ -142,213 +169,81 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     }
   }
 
-  /// The menu, built here because every title comes from the l10n of the
-  /// moment. A group with settings of its own carries them in a leaf under
-  /// itself, so that opening a branch and showing a page stay separate.
-  List<SettingsNode> _buildNodes() {
-    return [
-      // Grouped by what a setting belongs to, using the same names the app's
-      // own tabs do — so "is SFTP under connections or under files" is not a
-      // question anyone has to answer. Two levels throughout: a third made
-      // reaching a page two taps of guessing.
-      SettingsNode.branch(
-        id: 'app',
-        title: libL10n.app,
-        icon: Icons.tune,
-        children: [
-          SettingsNode.leaf(
-            id: 'app.setting',
-            title: libL10n.general,
-            icon: Icons.settings_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.app),
-          ),
-          SettingsNode.leaf(
-            id: 'app.privacy',
-            title: l10n.privacy,
-            icon: Icons.privacy_tip_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.privacy),
-          ),
-          SettingsNode.leaf(
-            id: 'app.ai',
-            title: libL10n.ai,
-            icon: Icons.auto_awesome_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.ai),
-          ),
-          // A tab of its own rather than a row leading out of the general
-          // page: pushed from there it drew a second title bar under the one
-          // this page already has, naming the same thing twice.
-          SettingsNode.leaf(
-            id: 'app.homeTabs',
-            title: l10n.homeTabs,
-            icon: Icons.tab_outlined,
-            page: () => const HomeTabsConfigPage(embedded: true),
-          ),
-          if (isIOS)
-            SettingsNode.leaf(
-              id: 'app.ios',
-              title: 'iOS',
-              icon: MingCute.apple_fill,
-              page: () => const IosSettingsPage(embedded: true),
-            ),
-          // Named after the desktop it is running on, like the iOS page above:
-          // what is in there is about the platform rather than about the app.
-          if (isDesktop)
-            SettingsNode.leaf(
-              id: 'app.desktop',
-              title: DesktopSettingsPage.platformName,
-              icon: DesktopSettingsPage.platformIcon,
-              page: () => const DesktopSettingsPage(embedded: true),
-            ),
-
-          /// Fullscreen Mode is designed for old mobile phone which can be
-          /// used as a status screen.
-          if (isMobile)
-            SettingsNode.leaf(
-              id: 'app.fullScreen',
-              title: l10n.fullScreen,
-              icon: Icons.fullscreen,
-              page: () =>
-                  const AppSettingsPage(section: SettingsSection.fullScreen),
-            ),
-        ],
-      ),
-      SettingsNode.branch(
-        id: 'server',
-        title: libL10n.server,
-        icon: Icons.dns_outlined,
-        children: [
-          SettingsNode.leaf(
-            id: 'server.setting',
-            title: libL10n.general,
-            icon: Icons.settings_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.server),
-          ),
-          // One row for all three orderings. Apart they read alike — the row
-          // could not say which list it opened — and side by side as tabs each
-          // is named by what the other two are not.
-          SettingsNode.leaf(
-            id: 'server.order',
-            title: libL10n.sequence,
-            icon: Icons.sort,
-            page: () => const ServerOrdersPage(embedded: true),
-          ),
-        ],
-      ),
-      SettingsNode.branch(
-        id: 'terminal',
-        title: libL10n.terminal,
-        icon: Icons.terminal,
-        children: [
-          SettingsNode.leaf(
-            id: 'terminal.setting',
-            title: libL10n.general,
-            icon: Icons.settings_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.ssh),
-          ),
-          // Under the terminal because that is where a Linux system is
-          // reached from, and absent when this build carries none — the same
-          // question the terminal's own tab asks before it offers to install
-          // one. Named for Linux rather than for the distribution: which one
-          // is installed is allowed to change, and none of what is on that
-          // page is about which.
-          if (Rootfs.isAvailable)
-            SettingsNode.leaf(
-              id: 'terminal.linux',
-              // Not localized, and not searched for either: the id above is
-              // what the settings search matches on, and "Linux" is the same
-              // word in every locale this ships in.
-              title: 'Linux (Beta)',
-              icon: Icons.layers_outlined,
-              page: () => const AppSettingsPage(section: SettingsSection.linux),
-            ),
-          SettingsNode.leaf(
-            id: 'terminal.knownHosts',
-            title: l10n.sshKnownHostKeys,
-            icon: Icons.verified_user_outlined,
-            page: () => const KnownHostsPage(embedded: true),
-          ),
-          SettingsNode.leaf(
-            id: 'terminal.virtKey',
-            title: l10n.editVirtKeys,
-            icon: Icons.keyboard_outlined,
-            page: () => const SSHVirtKeySettingPage(embedded: true),
-          ),
-        ],
-      ),
-      SettingsNode.branch(
-        id: 'file',
-        title: libL10n.file,
-        icon: Icons.folder_outlined,
-        children: [
-          SettingsNode.leaf(
-            id: 'file.sftp',
-            title: 'SFTP',
-            icon: Icons.cloud_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.sftp),
-          ),
-          // Under files rather than under the app: it is what opens one.
-          SettingsNode.leaf(
-            id: 'file.editor',
-            title: libL10n.editor,
-            icon: Icons.edit_note,
-            page: () => const AppSettingsPage(section: SettingsSection.editor),
-          ),
-        ],
-      ),
-      SettingsNode.leaf(
-        id: 'container',
-        title: libL10n.container,
-        icon: Icons.inbox_outlined,
-        page: () => const AppSettingsPage(section: SettingsSection.container),
-      ),
-      SettingsNode.branch(
-        id: 'backup',
-        title: libL10n.backup,
-        icon: Icons.backup_outlined,
-        children: [
-          SettingsNode.leaf(
-            id: 'backup.sync',
-            title: libL10n.sync,
-            icon: Icons.cloud_sync_outlined,
-            page: () => const BackupPage(section: BackupSection.sync),
-          ),
-          SettingsNode.leaf(
-            id: 'backup.import',
-            title: libL10n.import,
-            icon: Icons.file_download_outlined,
-            page: () => const BackupPage(section: BackupSection.import),
-          ),
-        ],
-      ),
-      SettingsNode.leaf(
-        id: 'privateKey',
-        title: l10n.privateKey,
-        icon: Icons.key_outlined,
-        page: () => const PrivateKeysListPage(),
-      ),
-      SettingsNode.leaf(
-        id: 'bmcCredential',
-        title: l10n.bmcAccounts,
-        icon: Icons.developer_board,
-        page: () => const BmcCredentialsListPage(),
-      ),
-      SettingsNode.leaf(
-        id: 'about',
-        title: libL10n.about,
-        icon: Icons.info_outline,
-        page: () => const _AppAboutPage(),
-      ),
-    ];
-  }
-
   void _onSelect(SettingsNode node) {
     _dropPushedPages();
     setState(() => _selectedId = node.id);
   }
 
-  void _onToggle(SettingsNode node) {
+  /// A row of the flat menu, which names a subject rather than a page.
+  ///
+  /// Picking one shows what is first inside it; the rest of what it holds is
+  /// the row of tabs over the content.
+  void _onMenuTap(SettingsNode node) {
+    final leaf = node.firstLeaf;
+    if (leaf != null) _onSelect(leaf);
+  }
+
+  void _onSearch(String value) {
+    final query = value.trim();
+    if (query == _query) return;
     setState(() {
-      if (!_expanded.remove(node.id)) _expanded.add(node.id);
+      _query = query;
+      // A narrow window shows the results where the list is, which is the
+      // root — so a search started there cannot leave a level open under it.
+      if (query.isNotEmpty) _path.clear();
+    });
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
+    _onSearch('');
+  }
+
+  /// Every page whose own name, the subject it is under, or the id the code
+  /// knows it by carries [query].
+  ///
+  /// The id is matched deliberately. Three pages are called "General" and
+  /// `app.setting` is what tells them apart; it is also the only thing that
+  /// answers an untranslated word — `privacy`, `sftp` — in a locale that
+  /// spells the title differently.
+  List<SettingsHit> _hits(List<SettingsNode> nodes) {
+    final needle = _query.toLowerCase();
+    bool matches(SettingsNode leaf, SettingsNode? parent) =>
+        leaf.title.toLowerCase().contains(needle) ||
+        leaf.id.toLowerCase().contains(needle) ||
+        (parent?.title.toLowerCase().contains(needle) ?? false);
+
+    final hits = <SettingsHit>[];
+    for (final node in nodes) {
+      if (node.isLeaf) {
+        if (matches(node, null)) hits.add(SettingsHit(leaf: node));
+        continue;
+      }
+      for (final child in node.children) {
+        if (child.isLeaf && matches(child, node)) {
+          hits.add(SettingsHit(leaf: child, parent: node));
+        }
+      }
+    }
+    return hits;
+  }
+
+  /// Goes to what was found, and drops the search on the way.
+  ///
+  /// The search is a way *to* a page, not a place — leaving it up behind the
+  /// page it just opened would mean two things on screen claiming to be what
+  /// the content is showing.
+  void _onHit(SettingsHit hit) {
+    _dropPushedPages();
+    setState(() {
+      _searchCtrl.clear();
+      _query = '';
+      _selectedId = hit.leaf.id;
+      // Where the narrow tabs have to be for the page to be on screen: inside
+      // its subject, or on the page itself when it has no subject over it.
+      _path
+        ..clear()
+        ..add(hit.parent ?? hit.leaf);
     });
   }
 
@@ -383,11 +278,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         return;
       }
       _path.add(node);
-      // Unfolded in the wide menu too. The two navigations share [_selectedId]
-      // but not their shape, and only the menu's own toggle used to write here
-      // — so a branch entered while narrow was still folded if the window then
-      // grew, leaving the page on screen with no row anywhere pointing at it.
-      _expanded.add(node.id);
       final leaf = node.firstLeaf;
       if (leaf != null) _selectedId = leaf.id;
     });
@@ -416,12 +306,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final selected =
         leaves.firstWhereOrNull((e) => e.id == _selectedId) ?? leaves.first;
 
+    final hits = _searching ? _hits(nodes) : const <SettingsHit>[];
+
     final menu = _SettingsMenu(
       nodes: nodes,
       selectedId: selected.id,
-      expandedIds: _expanded,
-      onSelect: _onSelect,
-      onToggle: _onToggle,
+      onSelect: _onMenuTap,
+      search: _buildSearchField(),
     );
 
     return LayoutBuilder(
@@ -434,519 +325,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           menu: menu,
           nodes: nodes,
           selected: selected,
+          hits: hits,
         );
       },
     );
   }
-
-  /// The leaves beside [id] — the ones its own level holds.
-  static List<SettingsNode>? _groupOf(List<SettingsNode> level, String id) {
-    final leaves = level.where((e) => e.isLeaf).toList();
-    if (leaves.any((e) => e.id == id)) return leaves;
-    for (final node in level) {
-      if (node.children.isEmpty) continue;
-      final found = _groupOf(node.children, id);
-      if (found != null) return found;
-    }
-    return null;
-  }
-
-  /// The level [node] leads to: what is inside a branch, and a leaf alone.
-  ///
-  /// A leaf on its own gets no tabs. There is one page and nothing to move
-  /// between, and a bar with a single tab on it says only what the title bar
-  /// above it already said.
-  static List<SettingsNode> _levelOf(SettingsNode node) {
-    return node.isLeaf ? [node] : node.children;
-  }
-
-  Widget _buildScaffold({
-    required bool wide,
-    required Widget menu,
-    required List<SettingsNode> nodes,
-    required SettingsNode selected,
-  }) {
-    final content = _buildContent(wide: wide, nodes: nodes, selected: selected);
-
-    return Scaffold(
-      // The one bar the page has, naming whatever is being shown. The pages in
-      // it are given `embedded: true` and drop their own.
-      appBar: CustomAppBar(
-        // The list names itself; everything else is named by what it shows.
-        title: Text(
-          !wide && _path.isEmpty ? libL10n.setting : selected.title,
-          style: const TextStyle(fontSize: 20),
-        ),
-        // Out of the level rather than out of the settings, while there is a
-        // level to leave. A leaf shown on its own has no tabs and so no other
-        // way back to the list.
-        leading: !wide && _path.isNotEmpty
-            ? BackButton(onPressed: _onTabBack)
-            : null,
-        actions: [
-          Btn.text(
-            text: context.libL10n.logs,
-            onTap: () => DebugPage.route.go(
-              context,
-              args: DebugPageArgs(
-                title: '${context.libL10n.logs}(${BuildData.build})',
-              ),
-            ),
-            // The crash menu, behind a long press on the button next to the
-            // thing it is for, rather than a second button in a bar that is
-            // already four wide.
-            //
-            // `kDebugMode` is a const, so a release does not register the
-            // gesture and `CrashDebugMenu` — with everything it reaches — is
-            // tree shaken out rather than shipped behind a gesture nobody is
-            // told about.
-            onLongTap: kDebugMode ? () => CrashDebugMenu.show(context) : null,
-          ),
-          Btn.icon(
-            text: libL10n.delete,
-            icon: const Icon(Icons.delete),
-            onTap: () => context.showRoundDialog(
-              title: libL10n.attention,
-              child: SimpleMarkdown(
-                data: libL10n.askContinue(
-                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
-                ),
-              ),
-              actions: [
-                CountDownBtn(
-                  onTap: () {
-                    context.popDialog();
-                    _clearAllSettings();
-                  },
-                  afterColor: Colors.red,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      // The same column every other list-beside-content page has, rather than
-      // a `Row` of its own. It used to be one, at a fixed 232 and with a plain
-      // divider — so this was the one such column in the app that could not be
-      // resized and, once folding arrived, the one that could not be folded.
-      // Nothing about a menu of settings makes it a different kind of column.
-      //
-      // `minWidthForSide: 0` hands the decision to [wide], which is read from
-      // the `LayoutBuilder` above and is what the app bar and the content are
-      // already built from. Left to decide for itself it would be measuring
-      // inside the `SafeArea` — a few points narrower — and a window sitting
-      // on the breakpoint would get a title naming a page the layout was not
-      // showing.
-      body: SafeArea(
-        child: PaneSettings.listenAll(
-          (paneWidth, paneCollapsed) => AdaptivePanes.surface(
-            enabled: wide,
-            minWidthForSplit: 0,
-            listWidth: paneWidth,
-            onListWidthChanged: PaneSettings.saveWidth,
-            collapsed: paneCollapsed,
-            onCollapsedChanged: PaneSettings.saveCollapsed,
-            collapseTooltip: libL10n.fold,
-            expandTooltip: libL10n.open,
-            listBuilder: (_, _) => menu,
-            // A `Builder` so the insets read below are the ones this body
-            // actually has: the state's own context is above the `Scaffold`,
-            // where `padding` is still the whole window's — the status bar the
-            // app bar already covers, and the home indicator the `SafeArea`
-            // just above here already cleared.
-            surfaceBuilder: (ctx, split) => split
-                ? content
-                : Builder(
-                    builder: (ctx) => _buildNarrow(ctx, nodes, content),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// The levels, as pages of a navigator.
-  ///
-  /// Declarative rather than pushed by hand: [_path] already says which levels
-  /// are open, and letting the navigator read it means the two cannot disagree.
-  /// A level arriving or leaving the list is a `MaterialPage` doing so, which is
-  /// where the transition comes from.
-  Widget _buildContent({
-    required bool wide,
-    required List<SettingsNode> nodes,
-    required SettingsNode selected,
-  }) {
-    // A route sliding in has to be opaque, or what it is covering shows
-    // through it for the length of the transition. The pages under here are
-    // `embedded: true` and drop their own `Scaffold`, so without this nothing
-    // gives them a background at all — the one behind belongs to the
-    // `Scaffold` this whole page is in, and both routes were letting it, and
-    // each other, through.
-    //
-    // The `Scaffold`'s colour and not `colorScheme.surface`: that is the slot
-    // `toAmoled` overrides, and the surface one it leaves alone.
-    // The cap goes on what is *in* the page, never on the page. A route
-    // sliding in is as wide as the pane; a navigator inside a narrower box
-    // slides the whole transition inside that box, so the page appeared to
-    // come out of a panel in the middle rather than in from the edge.
-    //
-    // The `Material` stays full width for the same reason — it is the
-    // background the transition is drawn against.
-    Widget opaque(Widget child) => Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      // Told to expand inside the cap: a `Center` hands down loose
-      // constraints, under which a page's list takes the height of its
-      // content rather than the height of the pane.
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _kContentMaxWidth),
-          child: SizedBox.expand(child: child),
-        ),
-      ),
-    );
-
-    /// Keyed by the group it shows, never by what is selected inside it.
-    ///
-    /// Selecting is what a drag *does*: `onPageChanged` fires mid-settle and
-    /// changes the selection, so a key naming the selection made every swipe
-    /// throw away the state — and with it the `PageController` — that the
-    /// settle was running on. It reappeared at the new page with the movement
-    /// cut off, which is the swipe not feeling like a swipe.
-    Widget pagesOf(List<SettingsNode> level) {
-      final leaves = level.where((e) => e.isLeaf).toList();
-      return _SettingsPages(
-        key: ValueKey('pages_${leaves.firstOrNull?.id ?? 'none'}'),
-        leaves: leaves,
-        selectedId: selected.id,
-        onChanged: _onSelect,
-      );
-    }
-
-    final navigator = Navigator(
-      key: _contentNav,
-      pages: [
-        if (wide)
-          MaterialPage<void>(
-            key: ValueKey(
-              _groupOf(nodes, selected.id)?.firstOrNull?.id ?? 'root',
-            ),
-            child: opaque(pagesOf(_groupOf(nodes, selected.id) ?? const [])),
-          )
-        else ...[
-          // What settings there are, which is where a narrow window starts.
-          MaterialPage<void>(
-            key: const ValueKey('root'),
-            child: opaque(_SettingsList(nodes: nodes, onTap: _onTab)),
-          ),
-          for (final entered in _path)
-            MaterialPage<void>(
-              key: ValueKey(entered.id),
-              child: opaque(pagesOf(_levelOf(entered))),
-            ),
-        ],
-      ],
-      onDidRemovePage: (page) {
-        // A page can also go because the system back gesture took it. What the
-        // tabs show comes from [_path], so it has to hear about that.
-        if (_path.isEmpty) return;
-        if ((page.key as ValueKey?)?.value == _path.last.id) {
-          setState(_path.removeLast);
-        }
-      },
-    );
-
-    // Platform back belongs to this stack while it has somewhere to go. Without
-    // a pop handler the enclosing navigator removes the whole settings route,
-    // skipping whichever level or manually pushed page is currently on top.
-    return NavigatorPopHandler(
-      onPopWithResult: (_) => _contentNav.currentState?.pop(),
-      child: navigator,
-    );
-  }
-
-  /// The content with the tabs floating over its foot.
-  ///
-  /// The content fills the body and the bar sits over it, so what is on the page
-  /// carries on under the bar instead of stopping at a bare strip above it. The
-  /// room a list needs to bring its last row into the clear arrives as
-  /// [MediaQuery] padding, which `context.padBottom` puts on the scrollable —
-  /// padding a list can scroll through, rather than a strip taken out of the
-  /// page's box.
-  ///
-  /// [context] has to be one from inside the body — see where this is called.
-  Widget _buildNarrow(
-    BuildContext context,
-    List<SettingsNode> nodes,
-    Widget content,
-  ) {
-    final mediaQuery = MediaQuery.of(context);
-    // Nothing over the list — a bar of tabs there would be the same names
-    // twice — and nothing over a leaf, which has no level under it to show.
-    final entered = _path.lastOrNull;
-    final level = entered == null || entered.isLeaf ? null : entered;
-    final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
-
-    return Stack(
-      // Nothing here should reach past the floor of this box — the page is
-      // pushed into the home tab's navigator, and the `Scaffold` paints its
-      // bottom bar after the body, so anything that does is covered rather than
-      // shown. `none` only keeps the clip from being what cuts it: the bar
-      // carries its own margin, so it stops short of the floor on its own.
-      clipBehavior: Clip.none,
-      children: [
-        MediaQuery(
-          data: mediaQuery.copyWith(
-            padding: mediaQuery.padding.copyWith(
-              bottom: mediaQuery.padding.bottom + space,
-            ),
-          ),
-          child: content,
-        ),
-        // Edge to edge, and the bar centres itself within that: it is as wide
-        // as the level it is showing, and only scrolls when that is too wide.
-        //
-        // Flush with the floor, because the gap the bar stands in is padding
-        // inside it now. Lifting it from here as well would move it up by that
-        // much again, and put the shadow back outside the clip it just left.
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: AnimatedSwitcher(
-            duration: Durations.medium2,
-            // Springs up past its place and settles, as displacement does
-            // elsewhere. No fade with it: the curve overshoots, and an opacity
-            // past 1 asserts.
-            switchInCurve: _kTabsCurve,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, animation) => SlideTransition(
-              position: Tween(
-                // Far enough to take the shadow with it.
-                begin: const Offset(0, 1.4),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
-            ),
-            child: level == null
-                ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
-                : _SettingsTabs(
-                    key: ValueKey(level.id),
-                    nodes: _levelOf(level),
-                    selectedId: _selectedId,
-                    onTap: _onTab,
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
 }
-
-/// Which group of settings [AppSettingsPage] is showing.
-///
-/// One page rather than one per group, so that the state — and the four text
-/// controllers on it — survives moving between them.
-enum SettingsSection {
-  app,
-  privacy,
-  ai,
-  server,
-  ssh,
-  linux,
-  sftp,
-  container,
-  editor,
-  fullScreen;
-
-  /// What this group is called when it is a page of its own.
-  ///
-  /// The *subject's* name rather than the leaf's. Inside the settings the menu
-  /// beside a group already says which subject you are in, so three of those
-  /// leaves are called "General" — which on a page with nothing beside it names
-  /// nothing at all.
-  String get title => switch (this) {
-    SettingsSection.app => libL10n.app,
-    SettingsSection.privacy => l10n.privacy,
-    SettingsSection.ai => libL10n.ai,
-    SettingsSection.server => libL10n.server,
-    SettingsSection.ssh => libL10n.terminal,
-    // Not localized: the id is what the settings search matches on, and Linux
-    // is the same word in every locale this ships in.
-    SettingsSection.linux => 'Linux (Beta)',
-    SettingsSection.sftp => 'SFTP',
-    SettingsSection.container => libL10n.container,
-    SettingsSection.editor => libL10n.editor,
-    SettingsSection.fullScreen => l10n.fullScreen,
-  };
-}
-
-/// One settings group as a page of its own.
-///
-/// For the places outside the settings tree that lead into it — the terminal
-/// tab's "add a Linux system" is the one there is.
-///
-/// A wrapper rather than an `embedded` flag on [AppSettingsPage], which is what
-/// the three sibling pages in the menu use: that page is a group's rows and
-/// nothing else, on nine call sites, because the settings' own layout supplies
-/// the bar, the title and the surface. Pushed as a route it was a `ListView` on
-/// an empty one — a black screen with settings on it.
-final class SettingsSectionPage extends StatelessWidget {
-  const SettingsSectionPage({super.key, required this.args});
-
-  final SettingsSection args;
-
-  /// A route rather than a `Navigator.push` written at the call site, and the
-  /// difference is not bookkeeping: `AppRoute` decides *which* navigator the
-  /// page lands on and puts the desktop window frame round it when that is the
-  /// root one. On the nearest navigator — what a bare push finds — a page
-  /// opened from a tab lands inside that tab, so the settings replaced the
-  /// terminal's contents with the navigation still under them, and from the
-  /// side bar beside the terminals they opened in that narrow column. A caller
-  /// that means the whole window says [NavTarget.root].
-  static const route = AppRouteArg<void, SettingsSection>(
-    page: SettingsSectionPage.new,
-    path: '/settings/section',
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: Text(args.title)),
-      body: AppSettingsPage(section: args),
-    );
-  }
-}
-
-final class AppSettingsPage extends ConsumerStatefulWidget {
-  final SettingsSection section;
-
-  const AppSettingsPage({super.key, required this.section});
-
-  /// No route of its own — see [SettingsSectionPage], which is what a caller
-  /// outside the settings tree pushes. This builds a group's rows and nothing
-  /// else: no bar, no background, no scaffold.
-
-  @override
-  ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
-}
-
-final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
-  final _setting = Stores.setting;
-
-  /// The kept crash report, read once — see `_buildLastCrashReport`. Null
-  /// again after it is dropped, which is what makes the row disappear.
-  Future<String?>? _savedCrashReport;
-
-  late final _sshOpacityCtrl = TextEditingController(
-    text: _setting.sshBgOpacity.fetch().toString(),
-  );
-  late final _sshBlurCtrl = TextEditingController(
-    text: _setting.sshBlurRadius.fetch().toString(),
-  );
-  late final _textScalerCtrl = TextEditingController(
-    // `.fetch()`, as the three above: without it the field opened showing
-    // `Instance of 'SqlitePropDefault<double>'` and handed that to be parsed.
-    text: _setting.textFactor.fetch().toString(),
-  );
-  late final _serverLogoCtrl = TextEditingController(
-    text: _setting.serverLogoUrl.fetch(),
-  );
-  late final _serverMarkCtrl = TextEditingController(
-    text: _setting.serverMarkUrl.fetch(),
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    // Which releases are installable is fetched rather than compiled in, and
-    // this page is where someone is about to act on the answer: the version
-    // beside "add", the update button on a profile. Launch already tries once;
-    // this catches the case where it failed or the release moved since.
-    //
-    // Not awaited and not shown. What is in force already works, and a refresh
-    // that changes nothing — the ordinary case — should look like nothing.
-    if (widget.section == SettingsSection.linux && Rootfs.isAvailable) {
-      RootfsManifestSource.refresh().then((changed) {
-        if (changed && mounted) setState(() {});
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _sshOpacityCtrl.dispose();
-    _sshBlurCtrl.dispose();
-    _textScalerCtrl.dispose();
-    _serverLogoCtrl.dispose();
-    _serverMarkCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // No heading over it: the menu says which group this is, and the bar above
-    // repeats it. A `CenterGreyTitle` here would be the third time.
-    final group = switch (widget.section) {
-      SettingsSection.app => _buildApp(),
-      SettingsSection.privacy => _buildPrivacy(),
-      SettingsSection.ai => _buildAskAiConfig(),
-      SettingsSection.server => _buildServer(),
-      SettingsSection.ssh => _buildSSH(),
-      SettingsSection.linux => _buildLinux(),
-      SettingsSection.sftp => _buildSFTP(),
-      SettingsSection.container => _buildContainer(),
-      SettingsSection.editor => _buildEditor(),
-      SettingsSection.fullScreen => _buildFullScreen(),
-    };
-
-    return ListView(
-      padding: context.padBottom(UIs.roundRectCardPadding),
-      children: [group],
-    );
-  }
-
-  /// Redraws after something a listenable does not cover.
-  ///
-  /// The Linux page reads `Rootfs.profiles`, which is built by scanning a
-  /// directory rather than from a store key, so nothing notifies when an
-  /// install or a removal changes it.
-  void refresh() {
-    if (mounted) setState(() {});
-  }
-
-  Future<void> showTextSettingDialog({
-    required String title,
-    required String initialValue,
-    required String label,
-    required String hint,
-    required IconData icon,
-    required ValueChanged<String> onSave,
-    bool suggestion = false,
-  }) {
-    return Future<void>.sync(
-      () => withTextFieldController((ctrl) async {
-        ctrl.text = initialValue;
-
-        void save() {
-          onSave(ctrl.text.trim());
-          context.popDialog();
-        }
-
-        await context.showRoundDialog<bool>(
-          title: title,
-          child: Input(
-            controller: ctrl,
-            autoFocus: true,
-            label: label,
-            hint: hint,
-            icon: icon,
-            suggestion: suggestion,
-            onSubmitted: (_) => save(),
-          ),
-          actions: Btn.ok(onTap: save).toList,
-        );
-      }),
-    );
-  }
-}
-

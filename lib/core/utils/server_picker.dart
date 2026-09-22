@@ -86,10 +86,12 @@ class _ServerPickerSheetState extends ConsumerState<_ServerPickerSheet> {
 
     // The arrangement the user made, viewed however their sort setting says —
     // the same call the server tab makes, so the two lists never disagree.
-    final sorted = ServerSortOrder.stored.apply(
+    // The "all" list's order — this picker is not inside a tag, and the one
+    // it has to agree with is the one the server tab shows when none is on.
+    final sorted = ServerSortOrder.of(TagSwitcher.kDefaultTag).apply(
       order,
       byId,
-      (id) => ref.read(serverProvider(id)).conn,
+      (id) => ref.read(serverProvider(id)),
     );
 
     final all = [for (final id in sorted) ?byId[id]];

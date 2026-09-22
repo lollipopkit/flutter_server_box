@@ -1,19 +1,18 @@
-// ignore_for_file: invalid_use_of_protected_member
-
 import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/extension/context/motion.dart';
+import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
-import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/app/net_view.dart';
-import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -24,21 +23,31 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/card/actions.dart';
+import 'package:server_box/view/page/server/card/card.dart';
+import 'package:server_box/view/page/server/card/density.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/sizes.dart';
+import 'package:server_box/view/page/server/card/swap.dart';
+import 'package:server_box/view/page/server/card/switcher.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/server/tab/empty.dart';
+import 'package:server_box/view/page/server/tab/func_bar.dart';
+import 'package:server_box/view/page/server/tab/group_heading.dart';
+import 'package:server_box/view/page/server/tab/selection_bar.dart';
+import 'package:server_box/view/page/server/tab/strip.dart';
+import 'package:server_box/view/page/server/text_scale.dart';
 import 'package:server_box/view/page/setting/entry.dart';
-import 'package:server_box/view/widget/dist_icon.dart';
-import 'package:server_box/view/widget/pane_settings.dart';
-import 'package:server_box/view/widget/percent_circle.dart';
 import 'package:server_box/view/widget/server_globe.dart';
-import 'package:server_box/view/widget/server_power.dart';
 import 'package:server_box/view/widget/server_share.dart';
 
-part 'card_stat.dart';
-part 'content.dart';
-part 'flight.dart';
+part 'bar.dart';
+part 'bulk.dart';
+part 'detail_host.dart';
+part 'grid.dart';
 part 'landscape.dart';
-part 'pane_list.dart';
+part 'sheets.dart';
 part 'utils.dart';
 
 class ServerPage extends ConsumerStatefulWidget {
@@ -50,11 +59,26 @@ class ServerPage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: ServerPage.new, path: '/servers');
 }
 
-const _cardPad = 74.0;
-const _cardPadSingle = 13.0;
+/// How long a card takes to grow into the page, and to shrink back.
+///
+/// The design's number for this movement. Long enough that a card changing
+/// width reads as one thing moving rather than as the page being replaced,
+/// short enough that opening a server is not something to wait for.
+const _kOpenDuration = Duration(milliseconds: 350);
 
-/// Long enough to read as one movement, short enough not to be waited on.
-const _kFlightDuration = Durations.medium3;
+/// How long the detail's own chrome takes to arrive or go.
+///
+/// Shorter than the card's movement and out of phase with it — see
+/// [_ServerPageState._detailShowing].
+const _kChromeDuration = Durations.short4;
+
+/// How quickly the cards that are not being opened get out of the way.
+///
+/// Over inside the movement's first third, because the page's own facts are
+/// coming in over the same ground: two half-transparent layouts on top of each
+/// other is a wash, and the cards are the half nobody is looking at. Their
+/// slots are held for them either way — what this is is only the paint.
+const _kOthersGone = Interval(0, 0.35, curve: Curves.easeOutCubic);
 
 /// How long the list takes to become the globe, and back.
 ///
@@ -107,13 +131,10 @@ Widget _viewSwapLayout(Widget? current, List<Widget> previous) =>
 
 class _ServerPageState extends ConsumerState<ServerPage>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
-  double _textFactorDouble = 1.0;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
-  TextScaler _textFactor = TextScaler.linear(1.0);
   PageController? _landscapeController;
   String? _landscapeSeenId;
 
-  final _cardsStatus = <String, _CardNotifier>{};
   late final ValueNotifier<Set<String>> _tags;
 
   Timer? _timer;
@@ -122,11 +143,29 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   final _scrollController = ScrollController();
 
-  /// Bumped when the sort changes, which is a view over the list rather than
-  /// anything the providers hold — so nothing else would rebuild it.
+  /// What [ServerListDensity.auto] last came to in the grid, for the bar over
+  /// it to say.
+  ///
+  /// Null until a grid has been laid out. See [_publishAuto].
+  final _autoDensity = ValueNotifier<ServerListDensity?>(null);
+
+  /// Bumped when the sort or the density changes, which are views over the
+  /// list rather than anything the providers hold — so nothing else would
+  /// rebuild it.
   final _sortVersion = RNode();
 
   /// The bar's search: what is typed, and whether the bar is a field at all.
+  ///
+  /// Find a server by name or address, in the bar and in the list under it.
+  ///
+  /// The field takes the switcher's place rather than opening a page of
+  /// results: what is being searched is on screen, so the list itself is the
+  /// result — it narrows as the query is typed and the cards stay the cards,
+  /// with everything a card can do still on them.
+  ///
+  /// It narrows *within* the tag, because both are in this bar and one of them
+  /// is visibly on. A search that quietly ignored the tag would answer with
+  /// servers the page says it is not showing.
   final _search = InlineSearchController();
 
   /// Whether the list is a globe.
@@ -160,13 +199,17 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _sortVersion.notify();
   }
 
-  /// What the globe guide points at.
+  /// Builds the grid again when "UI Fold" is switched.
   ///
-  /// [_listActions] is built from three places — the bar over a single column,
-  /// the rail beside a pane, and the row over the globe pane — and the first
-  /// two never coexist, being the narrow and wide layouts. The third does
-  /// coexist with the second for the length of the pane cross-fade, which is
-  /// why it is not given this key. See [_listActions].
+  /// What a card nobody has touched rests at is that setting's answer — see
+  /// [ServerCardExpanded] — and this tab is kept alive behind the settings
+  /// page, so nothing else would tell it: the cards stayed as they were until
+  /// something unrelated happened to build the grid.
+  void _uiFoldListener() => _sortVersion.notify();
+
+  /// What the globe guide points at: the globe button in the tag bar's
+  /// [_Bar._listActions]. Null context when that button is not built — the
+  /// bar is gone in full screen landscape.
   final _globeBtnKey = GlobalKey();
 
   /// Waits out the launch notices before the globe guide is considered.
@@ -177,62 +220,188 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// is no longer there.
   Timer? _globeGuideTimer;
 
-  /// The server whose card is in the air, or null. Its row in the list is
-  /// built hidden and carries [_flightAnchorKey], so the flight has somewhere
-  /// to measure and somewhere to land without a second copy showing early.
-  final _flyingId = ValueNotifier<String?>(null);
+  /// What [ImmersiveTab] has last been told, so an unchanged answer is not
+  /// repeated.
+  bool _immersive = false;
 
-  /// The row or card at the far end of a flight.
+  /// How far the open card has grown into the page: 0 is the grid, 1 the
+  /// detail.
   ///
-  /// One key for both ends, because the two can never be on screen together:
-  /// the compact row only exists while the pane is open, the grid card only
-  /// while it is closed, and a flight is what happens in between. Going out it
-  /// marks the row being flown to; coming back, the card.
-  final _flightAnchorKey = GlobalKey();
-  OverlayFlight? _flight;
+  /// One controller rather than one per card, because only one card is ever
+  /// open — which card that is, is [serverSelectionProvider]'s answer.
+  late final _openCtrl = AnimationController(
+    vsync: this,
+    duration: _kOpenDuration,
+  );
 
-  /// Deselecting is the whole of "close the pane": the detail is built from
-  /// the selection, so dropping it collapses the layout back to the
-  /// full-width grid the app starts on.
+  /// The design's curve for this movement, at both ends of it: the card leaves
+  /// fast and arrives slowly, which is what makes a resize read as one
+  /// movement rather than as a jump followed by a settle.
+  late final _open = CurvedAnimation(
+    parent: _openCtrl,
+    curve: Curves.easeInOutCubic,
+    reverseCurve: Curves.easeInOutCubic,
+  );
+
+  /// How visible a card that is not the one being opened is.
   ///
-  /// A method rather than a closure written at the call site: tearing off the
-  /// same instance method twice yields equal values, while a fresh closure per
-  /// build would make `PaneScope` notify its dependents on every rebuild.
+  /// Derived once rather than read per frame, so the cards it applies to are
+  /// the same widgets on every frame of the movement and are not rebuilt.
+  late final Animation<double> _othersOpacity = _open.drive(
+    Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: _kOthersGone)),
+  );
+
+  /// Which way through the list the last change of machine went: +1 for the
+  /// next one along, -1 for the one before.
+  ///
+  /// What the detail's own switch is drawn with — see [DirectionalSwap]. A
+  /// pick from the sheet, where there is no "next", counts as forwards.
+  int _swapDirection = 1;
+
+  /// The card that is grown into the page, or is on its way back out of it.
+  ///
+  /// Not the selection: that is cleared the moment the way back is taken, and
+  /// the card still has a movement to make after it — a card whose expansion
+  /// hung off the selection snapped back to its column instead of shrinking.
+  /// Cleared when the movement has finished, which is what [_openCtrl] says.
+  String? _heroId;
+
+  /// How tall each card was in the grid, for the grid that is mounted again on
+  /// the way back.
+  ///
+  /// The grid is dropped while the page has the readings and mounted again
+  /// with the open card already at full size, so what it would measure for
+  /// that card's slot is the page. In a list of lines that put every line
+  /// under it a page-height too low until the card had landed, and then they
+  /// travelled up — a second movement after the first. See [MasonryMemory].
+  final _gridMemory = MasonryMemory();
+
+  /// Whether the detail's own chrome is up: the facts beside the readings and
+  /// the row of things to do under them.
+  ///
+  /// Not simply "is a server open". It arrives once the card has stopped
+  /// growing and leaves before it starts shrinking, so that what moves is the
+  /// card and nothing else — a bar rising through a card that is still
+  /// resizing reads as two things happening rather than one.
+  bool _detailShowing = false;
+
+  /// Holds the gap between the chrome going and the card starting back.
+  Timer? _closeTimer;
+
+  /// ID of the server whose context menu is open.
+  ///
+  String? _menuId;
+
+  /// Whether the function row floating over the open machine is wanted.
+  ///
+  /// Here rather than inside the page because the row is: it outlives the
+  /// page under it, which is replaced at every step through the list.
+  final _funcBarVisible = ValueNotifier(true);
+
+  /// Where the page's own key bindings live.
+  ///
+  /// Focused deliberately — when a machine is opened or a set is started —
+  /// rather than on arrival: this tab is kept alive behind the others, and a
+  /// node that grabs focus when it is built would take it from whatever tab
+  /// the user is actually looking at.
+  final _keys = FocusNode(debugLabel: 'server list', skipTraversal: true);
+
+  /// The list as it was last drawn, for the bindings that step through it.
+  ///
+  /// A key is pressed between builds, so what "the next machine" is has to be
+  /// something the last build left behind.
+  List<String> _lastFiltered = const [];
+
+  /// The machines being acted on together, or empty when none are.
+  ///
+  /// Empty is the ordinary list — no boxes beside the names, taps open — and
+  /// anything else turns the bar into what is being done to them. Kept here
+  /// rather than in a provider because it is a state of *this page*: leaving
+  /// it and coming back is finishing, not resuming.
+  final _selected = <String>{};
+
+  bool get _selecting => _selected.isNotEmpty;
+
+  /// Opens [id] in place: the card grows to the width of the page and the rest
+  /// of the grid makes way.
+  ///
+  /// The selection is the app's, not this page's — the tray opens a server,
+  /// and deleting one clears it — so this is the one thing that changes. What
+  /// the card looks like at each point between is the card's own business.
+  void _openDetail(String id) {
+    _keys.requestFocus();
+    // Which way through the list this is, so the page it becomes knows which
+    // side to come in from.
+    final from = _lastFiltered.indexOf(ref.read(serverSelectionProvider) ?? '');
+    final to = _lastFiltered.indexOf(id);
+    if (from >= 0 && to >= 0 && to != from) {
+      _swapDirection = to > from ? 1 : -1;
+    }
+    // Asked each time rather than once: the switch can be turned on while the
+    // app is open, and what it asks for is that this movement stop being one.
+    _openCtrl.duration = context.motion(_kOpenDuration);
+    final was = ref.read(serverSelectionProvider);
+    // Whatever the last machine's page was scrolled to, this one opens at its
+    // top — so the row that floats over it is there to be used.
+    _funcBarVisible.value = true;
+    _heroId = id;
+    ref.read(serverSelectionProvider.notifier).select(id);
+    _closeTimer?.cancel();
+    // Switching from one open server to another is not a second opening: the
+    // page is already the detail, and only which card is in it changes.
+    if (was != null) return;
+    _openCtrl.forward();
+    // The card is on its way to the top of the grid, and a viewport scrolled
+    // past it would have it grow off screen — so the two travel together.
+    if (_scrollController.hasClients && _scrollController.offset > 0) {
+      _scrollController.animateTo(
+        0,
+        duration: _openCtrl.duration ?? _kOpenDuration,
+        curve: Curves.fastEaseInToSlowEaseOut,
+      );
+    }
+  }
+
+  /// Puts the page back to the grid, chrome first.
+  ///
+  /// The reverse of opening in order as well as in direction: what came last
+  /// goes first, so the card is the only thing moving while it shrinks.
   void _closeDetail() {
-    // A card still on its way to a list that is about to become a grid again
-    // would land on nothing.
-    _endFlight();
-    _flyingId.value = null;
-
-    final id = ref.read(serverSelectionProvider);
-    final srv = id == null ? null : ref.read(serverProvider(id));
-    ref.read(serverSelectionProvider.notifier).select(null);
-    if (srv != null) _flyRowIntoGrid(srv);
+    if (ref.read(serverSelectionProvider) == null) return;
+    if (_detailShowing) setState(() => _detailShowing = false);
+    _openCtrl.duration = context.motion(_kOpenDuration);
+    _closeTimer?.cancel();
+    _closeTimer = Timer(context.motion(_kChromeDuration), () {
+      if (!mounted) return;
+      ref.read(serverSelectionProvider.notifier).select(null);
+      _openCtrl.reverse();
+    });
   }
 
   @override
   void dispose() {
-    // Before the tickers this state vends go with it: an entry left in the
-    // overlay outlives the page that put it there.
-    _endFlight();
-    _flyingId.dispose();
+    _closeTimer?.cancel();
+    _funcBarVisible.dispose();
+    _keys.dispose();
+    _open.dispose();
+    _openCtrl.dispose();
     _timer?.cancel();
     _globeGuideTimer?.cancel();
     _scrollController.dispose();
     _sortVersion.dispose();
+    _autoDensity.dispose();
     _search.dispose();
     Stores.setting.globeEnabled.listenable().removeListener(
       _globeEnabledListener,
+    );
+    Stores.setting.collapseUIDefault.listenable().removeListener(
+      _uiFoldListener,
     );
     _globe.dispose();
     _tag.dispose();
     _tags.dispose();
     _offsetNotifier.dispose();
     _landscapeController?.dispose();
-    for (final n in _cardsStatus.values) {
-      n.dispose();
-    }
-    _cardsStatus.clear();
     super.dispose();
   }
 
@@ -240,79 +409,21 @@ class _ServerPageState extends ConsumerState<ServerPage>
   void initState() {
     super.initState();
     _tags = ValueNotifier(ref.read(serversProvider).tags);
+    // The chrome follows the card rather than being timed against it: what
+    // says the growth has finished is the growth finishing.
+    _openCtrl.addStatusListener((status) {
+      // The card is back in its column, so it is a card again.
+      if (status == AnimationStatus.dismissed && _heroId != null) {
+        setState(() => _heroId = null);
+      }
+      final showing = status == AnimationStatus.completed;
+      if (showing == _detailShowing) return;
+      setState(() => _detailShowing = showing);
+    });
     Stores.setting.globeEnabled.listenable().addListener(_globeEnabledListener);
+    Stores.setting.collapseUIDefault.listenable().addListener(_uiFoldListener);
     _startAvoidJitterTimer();
     _scheduleGlobeGuide();
-  }
-
-  /// Starts the wait before [_maybeShowGlobeGuide], if there is anything to
-  /// wait for.
-  ///
-  /// The two conditions checked here are the ones that do not change by
-  /// waiting — the guide has been seen, or the feature is off — so a launch
-  /// that fails either never arms a timer at all.
-  void _scheduleGlobeGuide() {
-    if (Stores.setting.globeGuided.fetch()) return;
-    if (!Stores.setting.globeEnabled.fetch()) return;
-    // Long enough for the launch notices to be up if there are any, so the
-    // `isCurrent` check below has something to see. They are dialogs on the
-    // root navigator and the guide draws above every route, so it would cover
-    // one rather than wait for it.
-    _globeGuideTimer = Timer(
-      const Duration(seconds: 2),
-      () => unawaited(_maybeShowGlobeGuide()),
-    );
-  }
-
-  /// Points at the globe button, once per install.
-  ///
-  /// The server tab looks finished without it: a grid of cards with a row of
-  /// icons over them, one of which happens to replace the whole list with a
-  /// sphere. Nothing about the icon says that, and a view mode nobody presses
-  /// is a view mode that does not exist.
-  ///
-  /// Every early return here leaves the guide for the *next launch* rather
-  /// than retrying — the same rule the tab strip's guide follows, and the
-  /// reason this runs once from [initState] rather than from a build.
-  Future<void> _maybeShowGlobeGuide() async {
-    final flag = Stores.setting.globeGuided;
-    if (!mounted) return;
-    // Already using it. Being shown where the button that is already pressed
-    // is reads as the app not knowing what is on screen.
-    if (_globe.value) return;
-    // One walkthrough per launch, and the tab strip's comes first: it is about
-    // how to reach anything at all. On a fresh install that puts this on the
-    // second launch, which is also when there is something to look at.
-    if (!Stores.setting.navTabMenuGuided.fetch()) return;
-    // Nothing to place on a globe, and nothing worth interrupting a first run
-    // with.
-    if (ref.read(serversProvider).serverOrder.isEmpty) return;
-    if (ModalRoute.of(context)?.isCurrent != true) return;
-    // The tab is kept alive behind the others, so the wait above can finish
-    // after the user has moved on — and the overlay draws above every route,
-    // so it would point at a button on a page nobody is looking at. Null is
-    // "nobody said", which is this widget mounted outside the home page.
-    final tab = ref.read(currentHomeTabProvider);
-    if (tab != null && tab != AppTab.server) return;
-
-    final overlay = Overlay.maybeOf(context, rootOverlay: true);
-    if (overlay == null) return;
-    // Null when the button is not built — the actions row is gone in full
-    // screen landscape.
-    final spot = rectInOverlay(_globeBtnKey.currentContext, overlay);
-    if (spot == null) return;
-
-    await GuideOverlay.show(context, [
-      GuideStep(body: context.l10n.globeGuide, spot: spot),
-    ]);
-    // At most one per install, and the open half of a funnel `globe.open`
-    // closes. The guide exists because an icon that replaces the list with a
-    // sphere explains nothing about itself; whether it works is whether the
-    // installs that saw it are the ones that later pressed the button, and
-    // every early return above leaves an install that never saw it.
-    Diag.crumb(SbDiag.globe, 'guide');
-    // Written when it has been seen through, not when it was scheduled.
-    flag.put(true);
   }
 
   @override
@@ -334,23 +445,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _startAvoidJitterTimer();
   }
 
-  void _pruneCardNotifiers(Set<String> aliveIds) {
-    final toRemove = _cardsStatus.keys
-        .where((id) => !aliveIds.contains(id))
-        .toList();
-    for (final id in toRemove) {
-      _cardsStatus.remove(id)?.dispose();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
     // Listen to provider changes and update the ValueNotifier
-    ref.listen(serversProvider, (previous, next) {
-      _tags.value = next.tags;
-      _pruneCardNotifiers(next.servers.keys.toSet());
-    });
+    ref.listen(serversProvider, (previous, next) => _tags.value = next.tags);
     return OrientationBuilder(
       builder: (_, orientation) {
         if (orientation == Orientation.landscape) {
@@ -368,7 +467,12 @@ class _ServerPageState extends ConsumerState<ServerPage>
   ///
   /// [bare] is the globe having the window: no bar over it, and — through
   /// [ImmersiveTab] — no navigation under it either. See [_publishImmersive].
-  Widget _buildScaffold(Widget child, {bool bare = false}) {
+  Widget _buildScaffold(
+    Widget child, {
+    bool bare = false,
+    String? openId,
+    List<String> filtered = const [],
+  }) {
     return Scaffold(
       // No bar at any width. A phone used to get the app's name and a cog here
       // because this was the one layout with no other way into the settings
@@ -376,442 +480,154 @@ class _ServerPageState extends ConsumerState<ServerPage>
       // bottom bar's "more" is that way now, on every phone and every tab, so
       // what was left up here was a title naming the app on the app's own
       // first screen.
-      appBar: bare ? null : _buildTagBar(),
-      body: Stores.setting.textFactor.listenable().listenVal((val) {
-        _updateTextScaler(val);
-        // The bar above spends the top inset, as an app bar does; this is what
-        // is left, and what it still has to clear is the home indicator — which
-        // it has to clear *especially* with [bare] on, since the navigation
-        // that used to sit between the two is gone.
-        return SafeArea(top: false, child: child);
-      }),
+      appBar: bare ? null : _buildTagBar(openId, filtered),
+      // The whole list, not a handful of labels inside it. The setting says
+      // how big this page's text is, and it used to reach only the two lines
+      // under a card's rings — so turning it up left every other word on the
+      // page the size it was.
+      body: ServerTextScale(
+        // The bar above spends the top inset, as an app bar does; this is
+        // what is left, and what it still has to clear is the home indicator
+        // — especially with [bare] on, since the navigation that used to sit
+        // between the two is gone.
+        child: SafeArea(top: false, child: child),
+      ),
     );
   }
 
   Widget _buildPortrait() {
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
     final servers = ref.watch(serversProvider.select((s) => s.servers));
-    final selected = ref.watch(serverSelectionProvider);
-    final selectedSpi = selected == null ? null : servers[selected];
+    // Which server has grown into the page, or null for the grid. Read here
+    // rather than inside the builder below, which is a listener's callback and
+    // not a build of this element.
+    final openId = ref.watch(serverSelectionProvider);
 
     // Watched only for the order that depends on them, and only in this
     // method — which is a `build`, where `ref.watch` belongs. The sort runs
     // inside a `ListenableBuilder` below, and watching from that callback
     // would be a dependency registered outside the build that owns it.
     //
-    // `select` narrows it to the transition: a status poll landing does not
-    // reorder the list, a server connecting or dropping does.
-    final conns = ServerSortOrder.stored.field != ServerSortField.status
-        ? const <String, ServerConn>{}
-        : {
-            for (final id in serverOrder)
-              id: ref.watch(serverProvider(id).select((s) => s.conn)),
-          };
+    // Every field but the two that read nothing about a machine needs its
+    // state, so the whole thing is read for those: `select` cannot narrow "a
+    // reading changed".
+    final needsState = ServerSortOrder.of(_tag.value).field.readsStatus;
+    final states = !needsState
+        ? const <String, ServerState>{}
+        : {for (final id in serverOrder) id: ref.watch(serverProvider(id))};
 
-    // Both settings listened to, not read. They are changed elsewhere — the
-    // switch on the settings page, the width by dragging the divider on the
-    // terminal or files tab — and this page is kept alive behind those, so a
-    // value read when it was last on screen is not the value now. Read that
-    // way the switch took effect whenever something unrelated happened to
-    // rebuild, and this column stayed at whatever width it opened with while
-    // the others moved.
-    return PaneSettings.listenAll((paneWidth, paneCollapsed) {
-      return AdaptivePanes.detail(
-        listWidth: paneWidth,
-        onListWidthChanged: PaneSettings.saveWidth,
-        collapsed: paneCollapsed,
-        onCollapsedChanged: PaneSettings.saveCollapsed,
-        collapseTooltip: libL10n.fold,
-        expandTooltip: libL10n.open,
-        detailId: selectedSpi?.id,
-        onCloseDetail: _closeDetail,
-        // Null until something is opened, so a fresh launch gets the whole
-        // width for browsing rather than a column reserved for nothing.
-        detailBuilder: selectedSpi == null
-            ? null
-            : (_) => ServerDetailPage(args: SpiRequiredArgs(selectedSpi)),
-        // Wrapped here rather than around the whole page because this is
-        // where `split` is known — it is the layout's own answer, and the
-        // `PaneScope` that carries it is installed below this state's
-        // context, where an inherited lookup from here cannot reach.
+    return _ServerOpenRequest(
+      split: _opensInPlace(context),
+      onOpen: _openRequestedServer,
+      child: ListenableBuilder(
+        // The four ways of viewing the list, and nothing else: a tag, a
+        // search, an order, and whether it is a globe.
+        listenable: Listenable.merge([_tag, _sortVersion, _search, _globe]),
+        builder: (_, _) {
+          // The settings arrangement, viewed however the sort button says —
+          // see [ServerSortOrder], whose first option is that arrangement
+          // unchanged.
+          final ordered = ServerSortOrder.of(_tag.value).apply(
+            serverOrder,
+            servers,
+            (id) => states[id] ?? ref.read(serverProvider(id)),
+          );
+          final filtered = _filterServers(ordered);
+          _lastFiltered = filtered;
+          // The empty states win over the globe — see [_buildBodySmall] — so
+          // an empty one is not the globe having the window, and the bar with
+          // the control that undoes the filter has to stay.
+          //
+          // And an open server wins over both: tapping a dot on the sphere is
+          // how a server is opened from there, so the globe has to give way to
+          // what it was asked to open — and it is still what the page goes
+          // back to when that is closed.
+          final globe =
+              _globe.value && filtered.isNotEmpty && openId == null;
+          _publishImmersive(globe);
+          return _bound(
+            _buildScaffold(
+              _buildBodySmall(
+                filtered: filtered,
+                globe: globe,
+                openId: openId,
+              ),
+              bare: globe,
+              openId: openId,
+              filtered: filtered,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// The keys this page answers to.
+  ///
+  /// Only the ones that act on the page as a whole. What can be done to *one*
+  /// machine is on the menu a long press or a right-click opens, and reaching
+  /// those from the keyboard needs a card to be focusable first — which is a
+  /// separate thing and not this.
+  Widget _bound(Widget child) {
+    // The platform's own modifier: a Mac holds command where everything else
+    // holds control, and a binding that names the wrong one is a binding
+    // nobody can press.
+    SingleActivator cmd(LogicalKeyboardKey key) =>
+        SingleActivator(key, meta: isMacOS, control: !isMacOS);
+
+    return CallbackShortcuts(
+      bindings: {
+        // What the top-left arrow does, and what a set being built up is
+        // abandoned with.
         //
-        // The tag and the sort are listened to *inside* this rather than
-        // around the whole layout: they are two ways of viewing the list, and
-        // neither says anything about the pane beside it. Read from outside,
-        // picking a tag rebuilt the detail page as well.
-        listBuilder: (_, split) => _ServerOpenRequest(
-          split: split,
-          onOpen: _openRequestedServer,
-          child: ListenableBuilder(
-            // The four ways of viewing the list, and nothing else: a tag, a
-            // search, an order, and whether it is a globe.
-            listenable: Listenable.merge([_tag, _sortVersion, _search, _globe]),
-            builder: (_, _) {
-              // The settings arrangement, viewed however the sort button
-              // says — see [ServerSortOrder], whose first option is that
-              // arrangement unchanged.
-              final ordered = ServerSortOrder.stored.apply(
-                serverOrder,
-                servers,
-                (id) => conns[id] ?? ServerConn.disconnected,
-              );
-              // The rail gets everything, not the filtered list. It groups
-              // by tag instead of filtering to one, and has no switcher of
-              // its own — so a tag picked in the grid before a server was
-              // opened would hide servers there with nothing on screen to
-              // say so or undo it.
-              // The globe replaces the list in both layouts rather than only
-              // in one. Beside a detail pane it is a narrow globe, which is
-              // small but is at least still the view that was chosen — and
-              // the actions row above it is how it is left, so it has to
-              // stay reachable there too.
-              if (split) {
-                // Beside a detail pane the globe is a column rather than the
-                // page, and the pane above it carries the way out — so the
-                // window's chrome stays where it is.
-                _publishImmersive(false);
-                // The same swap as the narrow layout, which this branch used
-                // to do as a hard cut — the globe simply replaced the rail
-                // between one frame and the next.
-                //
-                // Keyed, because both sides are a `Scaffold` and
-                // `AnimatedSwitcher` tells its children apart by runtime type
-                // and key. Without them the swap is invisible to it and
-                // nothing animates.
-                return AnimatedSwitcher(
-                  duration: _kViewSwapDuration,
-                  reverseDuration: _kViewSwapDuration,
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: _viewSwapTransition,
-                  layoutBuilder: _viewSwapLayout,
-                  child: _globe.value
-                      ? KeyedSubtree(
-                          key: const ValueKey('globe-pane'),
-                          child: _buildGlobePane(ordered),
-                        )
-                      : KeyedSubtree(
-                          key: const ValueKey('list-pane'),
-                          child: _buildPaneList(ordered),
-                        ),
-                );
-              }
-              final filtered = _filterServers(ordered);
-              // The empty states win over the globe — see [_buildBodySmall] —
-              // so an empty one is not the globe having the window, and the
-              // bar with the control that undoes the filter has to stay.
-              final globe = _globe.value && filtered.isNotEmpty;
-              _publishImmersive(globe);
-              return _buildScaffold(
-                _buildBodySmall(filtered: filtered, globe: globe),
-                bare: globe,
-              );
-            },
-          ),
-        ),
-      );
-    });
-  }
-
-  /// The tag filter and the way to add a server, in the strip every other tab
-  /// has: a switcher on the left that opens the rest in a sheet, buttons on
-  /// the right.
-  ///
-  /// It was a pill floating over the grid, which withdrew on a timer and came
-  /// back on a tap. That is one more thing to know about this tab than about
-  /// any of the others, and the add button had to float with it — so the two
-  /// controls this page has were both somewhere that had to be discovered.
-  ///
-  /// [SessionTabBar.height] rather than a bar of its own measurements: the
-  /// strips are read as one line down the app, and a taller one here would
-  /// shift the page contents by that much on every switch between tabs.
-  PreferredSizeWidget _buildTagBar() {
-    return PreferredSizeListenBuilder(
-      // Which tag is on, what tags there are to choose between, and how the
-      // list is ordered — the sort button draws its own current icon.
-      listenable: Listenable.merge([_tags, _tag, _sortVersion]),
-      // The wrapper is what the `Scaffold` measures, so it has to be told; its
-      // own default is a full toolbar.
-      preferSize: const Size.fromHeight(SessionTabBar.height),
-      builder: () {
-        final tags = _tags.value.toList();
-        final current = _tag.value;
-        final at = tags.indexOf(current);
-
-        return SizedBox(
-          height: SessionTabBar.height,
-          child: InlineSearchBar(
-            controller: _search,
-            child: Row(
-              children: [
-                Expanded(
-                  child: SessionSwitcherLabel(
-                    name: current.isEmpty ? libL10n.all : '#$current',
-                    // Counting from 1, and null on "all" — which is not one of
-                    // the tags but the absence of a choice among them, so it
-                    // shows the icon instead.
-                    position: at < 0 ? null : at + 1,
-                    total: tags.length,
-                    icon: MingCute.hashtag_line,
-                    // Opens even with no tags anywhere. It used to be a plain
-                    // label then — the rule the session strips follow with
-                    // nothing open — but the two cases are not alike: a terminal
-                    // strip with no sessions is a feature nobody has started
-                    // using, while this is a filter whose whole vocabulary is
-                    // defined elsewhere. Someone looking for tags taps the thing
-                    // marked with a `#`, and a control that does nothing answers
-                    // neither "there are none" nor "here is where they come
-                    // from". The sheet says both.
-                    onTap: () => _showTagSheet(tags),
-                  ),
-                ),
-                ..._listActions(globeKey: _globeBtnKey),
-                const SizedBox(width: 7),
-              ],
-            ),
-          ),
-        );
+        // Handle the innermost route first. The context menu is a separate
+        // route and receives key events before this page.
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (_selecting) {
+            _endSelecting();
+          } else {
+            _closeDetail();
+          }
+        },
+        cmd(LogicalKeyboardKey.bracketLeft): () => _stepServer(-1),
+        cmd(LogicalKeyboardKey.bracketRight): () => _stepServer(1),
+        // The list, from inside one of its machines. Nothing when the list is
+        // already the page — the bar's own search is what that wants.
+        cmd(LogicalKeyboardKey.keyK): () {
+          final openId = ref.read(serverSelectionProvider);
+          if (openId != null) _showServerSheet(_lastFiltered, openId);
+        },
       },
+      child: Focus(focusNode: _keys, child: child),
     );
   }
 
-  /// Find a server by name or address, in the bar and in the list under it.
+  /// The machine before or after the open one, wrapping at the ends.
   ///
-  /// The field takes the switcher's place rather than opening a page of
-  /// results: what is being searched is on screen, so the list itself is the
-  /// result — it narrows as the query is typed and the cards stay the cards,
-  /// with everything a card can do still on them.
-  ///
-  /// It narrows *within* the tag, because both are in this bar and one of them
-  /// is visibly on. A search that quietly ignored the tag would answer with
-  /// servers the page says it is not showing.
-  /// What acts on the list rather than on one server in it.
-  ///
-  /// One list for the bar on a single column and the rail's head beside a
-  /// pane: they act on the same list and had drifted to two orders and two
-  /// icon sizes.
-  /// [globeKey] marks the globe button for the guide to point at, and is
-  /// passed by the two callers that draw the *list* — the bar over a single
-  /// column and the rail beside a pane.
-  ///
-  /// Not by the row over the globe pane, and that is load-bearing rather than
-  /// tidiness: the split layout now cross-fades the two panes, so both rows
-  /// are mounted at once for the length of the swap, and two widgets carrying
-  /// one `GlobalKey` at the same time is an exception rather than a bad
-  /// layout. Nothing is lost by leaving it off — the guide returns early when
-  /// the globe is already up, so the pane that has no key is never the one it
-  /// would have measured.
-  List<Widget> _listActions({Key? globeKey}) => [
-    Btn.icon(
-      text: libL10n.search,
-      icon: const Icon(Icons.search, size: 18),
-      onTap: _search.start,
-    ),
-    Btn.icon(
-      text: libL10n.sort,
-      icon: Icon(ServerSortOrder.stored.icon, size: 18),
-      onTap: _showSortSheet,
-    ),
-    // Absent, not disabled, when the feature is off: a button that explains
-    // itself by doing nothing is worse than one that is not offered.
-    if (Stores.setting.globeEnabled.fetch())
-      _globe.listenVal(
-        (on) => Btn.icon(
-          key: globeKey,
-          text: l10n.globe,
-          icon: Icon(
-            on ? Icons.grid_view_rounded : Icons.public,
-            size: 18,
-            color: on ? Theme.of(context).colorScheme.primary : null,
-          ),
-          onTap: _toggleGlobe,
-        ),
-      ),
-    Btn.icon(
-      text: libL10n.add,
-      icon: const Icon(Icons.add, size: 18),
-      onTap: _onTapAddServer,
-    ),
-  ];
-
-  void _toggleGlobe() {
-    if (!_globe.value &&
-        _filterServers(ref.read(serversProvider).serverOrder).isEmpty) {
-      Toast.show(l10n.serverTabEmpty);
-      return;
-    }
-    final on = !_globe.value;
-    _globe.value = on;
-    Stores.setting.serverPageGlobe.put(on);
-    // The button is the feature's only front door, so this is what says whether
-    // it is used at all. The pair matters rather than the opening alone: the
-    // choice is remembered across launches, so a globe that is turned back off
-    // is the one signal that someone tried it and did not keep it.
-    Diag.crumb(SbDiag.globe, on ? 'open' : 'close');
+  /// Wrapping because the list is short and the alternative is a key that
+  /// silently does nothing at one end of it.
+  void _stepServer(int delta) {
+    final openId = ref.read(serverSelectionProvider);
+    if (openId == null || _lastFiltered.length < 2) return;
+    final at = _lastFiltered.indexOf(openId);
+    if (at < 0) return;
+    final next = (at + delta) % _lastFiltered.length;
+    _openDetail(_lastFiltered[next]);
   }
 
-  /// The globe where the rail would be, with the rail's own actions above it.
+  /// Whether a server opens where its card is, or as a page of its own.
   ///
-  /// The actions row is not decoration here: it carries the button that turns
-  /// the globe off, and without it a wide window would have no way back to the
-  /// list.
-  Widget _buildGlobePane(List<String> order) {
-    final filtered = _filterServers(order);
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            ListenableBuilder(
-              listenable: _sortVersion,
-              builder: (_, _) =>
-                  SideBarActions(actions: _listActions(), search: _search),
-            ),
-            // The same precedence the single-column layout applies: an empty
-            // state wins over the globe. A search or a tag that matches
-            // nothing drew a blank sphere here, with the pane's actions
-            // carrying no tag control — so the only thing on screen saying a
-            // filter was on was the search field.
-            Expanded(
-              child: filtered.isEmpty ? _buildEmpty() : _buildGlobe(filtered),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// [immersive] is the globe having the window rather than sharing it with a
-  /// pane, which is what decides whether it has to carry its own way out: the
-  /// bar holding the toggle is not on screen then, and neither is the
-  /// navigation.
-  Widget _buildGlobe(List<String> filtered, {bool immersive = false}) {
-    return ServerGlobe(
-      key: const ValueKey('globe'),
-      ids: filtered,
-      onTapServer: (spi) =>
-          _onTapCard(context, ref.read(serverProvider(spi.id))),
-      onEditServer: (spi) =>
-          ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
-      action: immersive ? _buildGlobeExit() : null,
-    );
-  }
-
-  /// The way back to the list, over the globe itself.
-  ///
-  /// The same icon the bar's toggle wears while the globe is up, because it is
-  /// the same control — what is offered is the grid, and the icon says so.
-  ///
-  /// On a surface of its own rather than a bare icon: it sits over a sphere,
-  /// a coastline or a card, and none of those is a background an icon reads
-  /// against on its own.
-  Widget _buildGlobeExit() {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surfaceContainerHigh.withValues(alpha: 0.92),
-      elevation: 3,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: IconButton(
-        icon: const Icon(Icons.close, size: 18),
-        tooltip: libL10n.close,
-        onPressed: _toggleGlobe,
-      ),
-    );
-  }
-
-  /// How to order the list. The default is the arrangement from the settings,
-  /// so this starts as a view of what the user already decided rather than as
-  /// a decision it takes from them.
-  Future<void> _showSortSheet() async {
-    await showRowsSheet<void>(
-      context,
-      rows: (ctx) => [
-        for (final order in ServerSortOrder.all)
-          SheetChoiceTile(
-            icon: order.icon,
-            title: order.label,
-            selected: order.isCurrent,
-            onTap: () {
-              order.save();
-              Navigator.of(ctx).pop();
-              _sortVersion.notify();
-            },
-          ),
-      ],
-    );
-  }
-
-  /// The tags, as rows. The same sheet the session switchers open, for the
-  /// same reason: a strip of them would be as wide as the names happened to be.
-  Future<void> _showTagSheet(List<String> tags) async {
-    await showRowsSheet<void>(
-      context,
-      rows: (ctx) {
-        void pick(String tag) {
-          Navigator.of(ctx).pop();
-          _tag.value = tag;
-        }
-
-        return [
-          SheetChoiceTile(
-            icon: MingCute.hashtag_line,
-            title: libL10n.all,
-            selected: _tag.value.isEmpty,
-            onTap: () => pick(TagSwitcher.kDefaultTag),
-          ),
-          const Divider(height: 1),
-          // Where tags come from, for the sheet that would otherwise be one
-          // row saying "All" — which reads as a broken filter rather than as
-          // an empty one. A server's editor is the only place they are made,
-          // and nothing on this tab says so.
-          if (tags.isEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(17, 17, 17, 27),
-              child: Text(
-                l10n.tagsEmptyTip,
-                style: UIs.textGrey,
-                textAlign: TextAlign.center,
-              ),
-            )
-          else
-            for (final tag in tags)
-              // The same shape as the row above it: the mark, then the name.
-              // The mark is the `#`, so the name does not carry one as well.
-              SheetChoiceTile(
-                icon: MingCute.hashtag_line,
-                title: tag,
-                selected: tag == _tag.value,
-                onTap: () => pick(tag),
-              ),
-        ];
-      },
-    );
-  }
-
-  /// What [ImmersiveTab] has last been told, so an unchanged answer is not
-  /// repeated.
-  bool _immersive = false;
-
-  /// Says whether the globe is filling this tab.
-  ///
-  /// Called from a build and applied after the frame, which is the same shape
-  /// `_syncFullscreenSystemUi` on the home page has and for the same reason:
-  /// the answer is only knowable while laying the page out — it depends on the
-  /// split, the filter and the toggle — and a provider must not be written to
-  /// during a build.
-  void _publishImmersive(bool on) {
-    if (_immersive == on) return;
-    _immersive = on;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(immersiveTabProvider.notifier).update(AppTab.server, wants: on);
-    });
-  }
+  /// One column has no room to grow a card into: the card already has the
+  /// width, so growing it would only make it taller, and what a phone can
+  /// afford is one thing at a time. Above that the card grows in place and the
+  /// list makes way for it, which is what keeps the list one page.
+  bool _opensInPlace(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= AdaptivePanes.kSplitWidth;
 
   Widget _buildBodySmall({
     required List<String> filtered,
     required bool globe,
+    required String? openId,
   }) {
     // Crossed rather than swapped. The list emptying under a search and
     // filling again as it is deleted are the two halves of one movement, and
@@ -823,8 +639,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // here would fight that — and each empty state has its own, so going from
     // a filtered-out tag to no servers at all is also a crossing.
     return AnimatedSwitcher(
-      duration: _kViewSwapDuration,
-      reverseDuration: _kViewSwapDuration,
+      duration: context.motion(_kViewSwapDuration),
+      reverseDuration: context.motion(_kViewSwapDuration),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       // Scale and fade rather than fade alone — see [_viewSwapTransition] for
@@ -840,273 +656,21 @@ class _ServerPageState extends ConsumerState<ServerPage>
         // a filter to undo — with the control to undo it right there. None of
         // that can be said by a globe with nothing on it.
         _ when globe => _buildGlobe(filtered, immersive: true),
-        _ when filtered.isEmpty => _buildEmpty(),
+        _ when filtered.isEmpty => ServerListEmpty(
+          query: _search.needle,
+          tag: _tag.value,
+          onClearSearch: _search.end,
+          onClearTag: () => _tag.value = TagSwitcher.kDefaultTag,
+          onAdd: _onTapAddServer,
+        ),
         _ => KeyedSubtree(
           key: const ValueKey('grid'),
-          child: _buildGrid(filtered),
+          child: _buildGrid(filtered, openId),
         ),
-      },
-    );
-  }
-
-  Widget _buildGrid(List<String> filtered) {
-    // Cards are as tall as what they have to say — a server that has not
-    // connected is one line, one that has is several charts. Splitting them
-    // round-robin into a `ListView` per column left a short column beside a
-    // long one and gave each its own scroll position; they flow into whichever
-    // column is shortest now, in one scrollable.
-    //
-    // The animated form, because everything that rearranges this grid does so
-    // for a reason worth seeing: a server connects and its card grows, a tag
-    // is picked and half of them leave, one is added or deleted. See
-    // [AnimatedMasonry] — the card that moves is usually not the card anything
-    // happened to, which is exactly why it has to be carried rather than
-    // moved.
-    final grid = AnimatedMasonry(
-      controller: _scrollController,
-      // No room kept for chrome at either end: the tag switcher, the sort and
-      // the add button are in the bar above this, and nothing floats over it.
-      padding: MasonryList.kPadding,
-      children: [
-        for (final id in filtered)
-          // Its own `Consumer`, so a status poll rebuilds the one card whose
-          // server answered rather than the grid. Watched from this page's
-          // `ref` — which is what a builder would have to do — any server's
-          // reading landing rebuilt every card on screen.
-          Consumer(
-            key: ValueKey(id),
-            builder: (_, ref, _) =>
-                _buildEachServerCard(ref.watch(serverProvider(id))),
-          ),
-      ],
-    );
-
-    // Pulling is how a phone asks for this, and the only place anything asks
-    // for the whole list at once — the bar's refresh button is gone. Nothing
-    // is lost that a pointer cannot reach: the status poll runs on its own,
-    // and each card carries its own refresh for the one server behind it.
-    if (!isMobile) return grid;
-    return RefreshIndicator(onRefresh: _refreshAll, child: grid);
-  }
-
-  /// What the page shows with no cards on it, which is two different things.
-  ///
-  /// A tag with nothing under it is a filter to undo — the servers are still
-  /// there, and an empty page that does not say so reads as having lost them.
-  /// No servers at all is the first thing a new install sees, and the one
-  /// place on this page worth spelling out what to do.
-  Widget _buildEmpty() {
-    // A search with no hits is a third thing again, and the one that would be
-    // read most wrongly: with no tag on, it used to answer "no servers yet"
-    // and offer to add one, on a page whose servers are all still there.
-    final query = _search.needle;
-    if (query.isNotEmpty) {
-      return EmptyPane(
-        key: const ValueKey('empty-search'),
-        icon: Icons.search_off,
-        label: query,
-        action: Btn.text(text: libL10n.clear, onTap: _search.end),
-      );
-    }
-
-    if (_tag.value.isNotEmpty) {
-      return EmptyPane(
-        key: const ValueKey('empty-tag'),
-        icon: BoxIcons.bx_server,
-        label: '#${_tag.value}',
-        action: Btn.text(
-          text: libL10n.clear,
-          onTap: () => _tag.value = TagSwitcher.kDefaultTag,
-        ),
-      );
-    }
-
-    return EmptyPane(
-      key: const ValueKey('empty-none'),
-      icon: BoxIcons.bx_server,
-      label: l10n.serverTabEmpty,
-      action: Btn.text(text: libL10n.add, onTap: _onTapAddServer),
-    );
-  }
-
-  Future<void> _refreshAll() async {
-    await ref.read(serversProvider.notifier).refresh();
-  }
-
-  Widget _buildEachServerCard(ServerState srv) {
-    final card = CardX(
-      key: ValueKey(srv.spi.id),
-      // A context from inside the built tree, so the tap can ask whether a
-      // detail pane is on screen. The state's own context is an ancestor of
-      // the layout that installs the scope, and the lookup only goes up.
-      child: Builder(
-        builder: (context) => InkWell(
-          onTap: () => _onTapCard(context, srv),
-          onLongPress: () => _onLongPressCard(srv),
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: _cardPadSingle,
-              right: 3,
-              top: _cardPadSingle,
-              bottom: _cardPadSingle,
-            ),
-            child: _buildRealServerCard(srv),
-          ),
-        ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
-      ),
-    );
-
-    return _flyingId.listenVal((flyingId) {
-      if (flyingId != srv.spi.id) return card;
-      // Where a card flying back is going. Laid out so it can be measured,
-      // unpainted so the copy in the air is the only one visible.
-      return Visibility(
-        key: _flightAnchorKey,
-        visible: false,
-        maintainSize: true,
-        maintainAnimation: true,
-        maintainState: true,
-        child: card,
-      );
-    });
-  }
-
-  /// The child's width mat not equal to 1/4 of the screen width,
-  /// so we need to wrap it with a SizedBox.
-  Widget _wrapWithSizedbox(
-    Widget child,
-    double maxWidth, [
-    bool circle = false,
-  ]) {
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final width = (maxWidth - _cardPad) / 4;
-        return SizedBox(width: width, child: child);
-      },
-    );
-  }
-
-  Widget _buildRealServerCard(ServerState srv) {
-    final id = srv.spi.id;
-    final cardStatus = _getCardNoti(id);
-    final title = _buildServerCardTitle(srv);
-
-    return cardStatus.listenVal((_) {
-      final List<Widget> children = [title];
-      if (srv.conn == ServerConn.finished) {
-        if (cardStatus.value.flip) {
-          children.add(_buildFlippedCard(srv));
-        } else {
-          children.add(_buildNormalCard(srv.status, srv.spi));
-        }
-      }
-
-      final height = _calcCardHeight(srv.conn, cardStatus.value.flip);
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 377),
-        curve: Curves.fastEaseInToSlowEaseOut,
-        height: height,
-        // Use [OverflowBox] to dismiss the warning of [Column] overflow.
-        child: OverflowBox(
-          // Zero rather than the parent's minimum, which the AnimatedContainer
-          // makes tight at whatever height the 377ms tween is currently at.
-          // Flipping a card walks that from 110 to 99 while `maxHeight` below
-          // is already the target 99, so every frame of the shrink handed
-          // `110.0<=h<=99.0` to the Column and tripped the box-constraint
-          // assertion.
-          minHeight: 0,
-          // The target height, including when that target is the minimum.
-          // Passing null there left the Column on the parent's constraint,
-          // which during a 110 → 23 shrink is whatever the tween is at: at 15
-          // the title's 23pt spinner overflowed it by 8 and struck the card
-          // with the stripe for the length of the animation. The title is
-          // never taller than `_kCardHeightMin`, so this always fits.
-          maxHeight: height,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: children,
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildFlippedCard(ServerState srv) {
-    const color = Colors.grey;
-    const textStyle = TextStyle(fontSize: 13, color: color);
-    final children = [
-      for (final func in ServerPower.funcs)
-        Btn.column(
-          onTap: () => ServerPower.confirmAndRun(context, ref, srv.spi, func),
-          icon: Icon(ServerPower.icon(func), color: color),
-          text: ServerPower.label(func),
-          textStyle: textStyle,
-        ),
-      Btn.column(
-        onTap: () =>
-            ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi)),
-        icon: const Icon(Icons.edit, color: color),
-        text: libL10n.edit,
-        textStyle: textStyle,
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 9),
-      child: LayoutBuilder(
-        builder: (_, cons) {
-          final width = (cons.maxWidth - _cardPad) / children.length;
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: children.map((e) {
-              if (width == 0) return e;
-              return SizedBox(width: width, child: e);
-            }).toList(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildNormalCard(ServerStatus ss, Spi spi) {
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final maxWidth = cons.maxWidth;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            UIs.height13,
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _wrapWithSizedbox(
-                  // 0 until the second sample lands: the tab list needs a
-                  // fixed-size circle, and an empty ring reads the same as idle
-                  PercentCircle(percent: ss.cpu.usedPercent() ?? 0),
-                  maxWidth,
-                  true,
-                ),
-                _wrapWithSizedbox(
-                  PercentCircle(percent: ss.mem.usedPercent * 100),
-                  maxWidth,
-                  true,
-                ),
-                _wrapWithSizedbox(_buildNet(ss, spi.id), maxWidth),
-                _wrapWithSizedbox(_buildDisk(ss, spi.id), maxWidth),
-              ],
-            ),
-            UIs.height13,
-          ],
-        );
       },
     );
   }
 
   @override
   bool get wantKeepAlive => true;
-
-  static const _kCardHeightMin = 23.0;
-  static const _kCardHeightFlip = 99.0;
-  static const _kCardHeightNormal = 110.0;
 }

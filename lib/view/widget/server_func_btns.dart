@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +37,75 @@ import 'package:server_box/view/widget/server_power.dart';
 /// One entry of the function row, and whether this connection can serve it.
 typedef ServerFuncEntry = ({ServerFuncBtn btn, bool available});
 
-class ServerFuncBtns extends StatelessWidget {
+/// Left over on either side of the bar, so the page it floats above is still
+/// visible past it and it never reads as a second edge to the window.
+const kFuncBarSideRoom = 100.0;
+
+/// One row of buttons with their labels: a 17pt icon over a line of 11pt text,
+/// plus the buttons' own inset and the row's, and a little over.
+const kFuncBarHeight = 56.0;
+
+/// What a page keeps clear below its last card, so the bar is never over
+/// something that cannot be scrolled out from under it.
+const kFuncBarInset = kFuncBarHeight + 26;
+
+/// The row of things that can be done to a server, floating over its page.
+///
+/// Takes the entries rather than working them out, so that what is drawn is
+/// the same list the page decided there was room for.
+class ServerFuncBar extends StatelessWidget {
+  const ServerFuncBar({super.key, required this.spi, required this.btns});
+
+  final Spi spi;
+  final List<ServerFuncEntry> btns;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, cons) => Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 13),
+          child: ConstrainedBox(
+            // The row takes the width it needs up to this; beyond it, it
+            // scrolls. Stretched across a desktop window it would stop being a
+            // group of buttons and become a band across the page.
+            constraints: BoxConstraints(
+              maxWidth: (cons.maxWidth - kFuncBarSideRoom).clamp(
+                0.0,
+                double.infinity,
+              ),
+            ),
+            child: Material(
+              // Raised off the page, because it is the one thing here that is
+              // not part of what the page is showing.
+              elevation: 3,
+              shadowColor: Colors.black26,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(19),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                height: kFuncBarHeight,
+                child: ServerFuncBtns(spi: spi, btns: btns),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The row of buttons, as a list that is added to and taken from rather than
+/// redrawn.
+///
+/// The row outlives the machine it acts on — the server tab floats one over
+/// every machine it opens — so what changes when the machine does is the list,
+/// not the widget. An entry the new machine cannot serve leaves its place and
+/// takes one at the end; the entries between it and there close the gap by
+/// sliding, because that is what happens to a list when something is removed
+/// from the middle of it. Redrawn instead, the whole row said every button had
+/// changed when one had.
+class ServerFuncBtns extends StatefulWidget {
   const ServerFuncBtns({super.key, required this.spi, required this.btns});
 
   final Spi spi;
@@ -51,13 +120,137 @@ class ServerFuncBtns extends StatelessWidget {
   final List<ServerFuncEntry> btns;
 
   @override
-  Widget build(BuildContext context) {
-    if (btns.isEmpty) return UIs.placeholder;
+  State<ServerFuncBtns> createState() => _ServerFuncBtnsState();
+}
 
-    final items = [
-      for (final entry in btns)
-        Consumer(builder: (_, ref, _) => _buildItem(context, entry, ref)),
-    ];
+/// How long one entry takes to open its place in the row, or to close it.
+const _kSlotDuration = Durations.medium1;
+
+/// One entry's place in the row, and how much of it there is.
+///
+/// Identified by the button, never by where it sits: the same entry at a
+/// different index is one that moved, and the whole point of this is to tell
+/// that apart from one that was replaced.
+class _Slot {
+  _Slot(this.btn, this.entry, this.ctrl, this.onGone) {
+    curve = CurvedAnimation(
+      parent: ctrl,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    ctrl.addStatusListener(_onStatus);
+  }
+
+  final ServerFuncBtn btn;
+  ServerFuncEntry entry;
+  final AnimationController ctrl;
+  late final CurvedAnimation curve;
+
+  /// Called once the place has finished closing, which is the only point at
+  /// which this can be taken out of the row without anything jumping.
+  final void Function(_Slot) onGone;
+
+  /// Whether this is on its way out. An entry asked for again while it is
+  /// closing turns around rather than being built afresh.
+  bool leaving = false;
+
+  void _onStatus(AnimationStatus status) {
+    if (status == AnimationStatus.dismissed && leaving) onGone(this);
+  }
+
+  void dispose() {
+    ctrl.removeStatusListener(_onStatus);
+    curve.dispose();
+    ctrl.dispose();
+  }
+}
+
+class _ServerFuncBtnsState extends State<ServerFuncBtns>
+    with TickerProviderStateMixin {
+  /// The row as drawn: what is wanted, in the order it is wanted, with what is
+  /// on its way out left at the index it had.
+  final _slots = <_Slot>[];
+
+  @override
+  void initState() {
+    super.initState();
+    // The first row is not an arrival. A bar that dealt its own buttons out
+    // every time it appeared would do it once per machine opened.
+    for (final e in widget.btns) {
+      _slots.add(_Slot(e.btn, e, _controller(1), _remove));
+    }
+  }
+
+  @override
+  void didUpdateWidget(ServerFuncBtns old) {
+    super.didUpdateWidget(old);
+    if (listEquals(old.btns, widget.btns)) return;
+    setState(_sync);
+  }
+
+  @override
+  void dispose() {
+    for (final slot in _slots) {
+      slot.dispose();
+    }
+    super.dispose();
+  }
+
+  AnimationController _controller(double value) =>
+      AnimationController(vsync: this, duration: _kSlotDuration, value: value);
+
+  void _remove(_Slot slot) {
+    if (!mounted) return;
+    setState(() {
+      _slots.remove(slot);
+      slot.dispose();
+    });
+  }
+
+  void _sync() {
+    final wanted = widget.btns;
+    final wantedBtns = {for (final e in wanted) e.btn};
+
+    // Anything no longer asked for closes its place where it stands, rather
+    // than jumping to the end of the row first.
+    final closing = <int, _Slot>{};
+    for (final (at, slot) in _slots.indexed) {
+      if (wantedBtns.contains(slot.btn)) continue;
+      closing[at] = slot;
+      if (slot.leaving) continue;
+      slot.leaving = true;
+      slot.ctrl.reverse();
+    }
+
+    final next = <_Slot>[];
+    for (final e in wanted) {
+      final live = _slots.firstWhereOrNull((s) => s.btn == e.btn);
+      if (live == null) {
+        next.add(_Slot(e.btn, e, _controller(0), _remove)..ctrl.forward());
+        continue;
+      }
+      // Including one that was closing: asked for again, it opens back up from
+      // wherever it had got to.
+      live.entry = e;
+      live.leaving = false;
+      live.ctrl.forward();
+      next.add(live);
+    }
+
+    // The ones still closing go back in at the index they held, so the gap
+    // they leave is the gap that closes.
+    for (final at in closing.keys.toList()..sort()) {
+      next.insert(at.clamp(0, next.length), closing[at]!);
+    }
+
+    _slots
+      ..clear()
+      ..addAll(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_slots.isEmpty) return UIs.placeholder;
 
     // It has to say how wide it is. A shrink-wrapping viewport
     // takes the width of what is in it and no more — and, once whatever holds
@@ -68,19 +261,40 @@ class ServerFuncBtns extends StatelessWidget {
     // are: a button cut in half by the bar's edge reads as the last one, and
     // this row is the only way to reach half of what a server can do.
     return EdgeFadeScroll(
-      builder: (context, controller) => ListView.separated(
+      builder: (context, controller) => ListView(
         controller: controller,
         scrollDirection: Axis.horizontal,
         shrinkWrap: true,
+        // Each slot carries the gap after it, so the gap closes with the slot
+        // rather than being left behind as a hole. That is one gap too many at
+        // the end, taken back off the right inset.
         padding: const EdgeInsets.fromLTRB(
           _kPad,
           _kVPadTop,
-          _kPad,
+          _kPad - _kGap,
           _kVPadBottom,
         ),
-        itemCount: items.length,
-        itemBuilder: (_, i) => items[i],
-        separatorBuilder: (_, _) => const SizedBox(width: _kGap),
+        children: [
+          for (final slot in _slots)
+            SizeTransition(
+              key: ValueKey(slot.btn),
+              axis: Axis.horizontal,
+              // From its leading edge: a place opening from its middle pushes
+              // the row both ways at once.
+              alignment: Alignment.centerLeft,
+              sizeFactor: slot.curve,
+              child: FadeTransition(
+                opacity: slot.curve,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: _kGap),
+                  child: Consumer(
+                    builder: (_, ref, _) =>
+                        widget._buildItem(context, slot.entry, ref),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -122,11 +336,16 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
     // what looks like a target did nothing when tapped.
     return InkWell(
       onTap: available
-          ? () => _onTapMoreBtns(e, context, ref)
+          ? () => runServerFunc(e, spi, context, ref)
           : () => Toast.show(l10n.funcUnavailableFmt(e.toStr)),
       borderRadius: BorderRadius.circular(10),
-      child: Opacity(
+      // Animated, because an entry that keeps its place and only changes what
+      // it can do is the one case where nothing about the row moves: without
+      // this the single thing that did change is the one thing that jumped.
+      child: AnimatedOpacity(
         opacity: available ? 1 : 0.4,
+        duration: _kSlotDuration,
+        curve: Curves.easeOutCubic,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           child: Column(
@@ -134,7 +353,17 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
             children: [
               Icon(e.icon, size: 17),
               const SizedBox(height: 4),
-              Text(e.toStr, style: UIs.text11Grey),
+              // One line whatever it is given. A place in this row closes by
+              // being clipped to nothing, and a label that answered a narrow
+              // box by wrapping instead would make the bar taller on the way
+              // — which is the one measurement of it that has to hold.
+              Text(
+                e.toStr,
+                style: UIs.text11Grey,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.fade,
+              ),
             ],
           ),
         ),
@@ -188,12 +417,18 @@ List<ServerFuncEntry> serverFuncBtnsFor(
   return [...available, ...rest];
 }
 
-extension ServerFuncBtnsActions on ServerFuncBtns {
-  void _onTapMoreBtns(
-    ServerFuncBtn value,
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+/// Does what one entry of the function row does.
+///
+/// A function rather than a method on the row, because the row is not the only
+/// place a server's functions are reached from: the list offers the same set
+/// behind a long press, and two copies of "what Terminal does" is how the two
+/// come to do different things.
+void runServerFunc(
+  ServerFuncBtn value,
+  Spi spi,
+  BuildContext context,
+  WidgetRef ref,
+) async {
     switch (value) {
       case ServerFuncBtn.files:
         // Only the SFTP backend needs a connection opened first. A server
@@ -333,7 +568,6 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         if (!context.mounted) return;
         RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi));
         break;
-    }
   }
 }
 

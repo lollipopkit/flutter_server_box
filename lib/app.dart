@@ -11,6 +11,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
@@ -69,6 +70,22 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
   // the rail each resolve a size from their own defaults and are unaffected.
   return base.copyWith(
     iconTheme: base.iconTheme.copyWith(size: 19),
+    // Material's bar title is `titleLarge` at 22, drawn for a page that is one
+    // thing. Every bar in this app sits over a form or a list whose own rows
+    // are 14, and at 22 the name of the page outweighed everything on it —
+    // pages had started passing a 20 of their own to get out from under it.
+    //
+    // `inherit: false` for the same reason [listTileTheme] needs it below:
+    // `AnimatedTheme` lerps this against the previous theme's, and
+    // `TextStyle.lerp` throws when the two ends disagree about it.
+    appBarTheme: base.appBarTheme.copyWith(
+      titleTextStyle: base.textTheme.titleLarge?.copyWith(
+        inherit: false,
+        fontSize: 17,
+        fontWeight: FontWeight.w500,
+        color: base.colorScheme.onSurface,
+      ),
+    ),
     // Material's tile is a destination in a menu, so its title is `bodyLarge`
     // at 16 and its subtitle `bodyMedium` at 14. These are rows of a form,
     // where the title is a field's name and the subtitle is what it is set to,
@@ -246,6 +263,12 @@ class _MyAppState extends State<MyApp> {
         // rebuilds when the seed color, the brightness or the system's dynamic
         // color changes — each of which the native badge has to follow.
         _syncIslandBrandColors(ctx);
+        // The same three changes the chart colours are worked out from, and
+        // this runs before any page builds — see [ChartPalette.resolve].
+        // `UIs.colorSeed` rather than the scheme's primary: it is the colour
+        // that was picked, which the two builders above keep current whether
+        // it came from the setting or from the system.
+        ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
         return ToastHost(child: ResponsivePoints.builder(ctx, child));
       },
       locale: locale,

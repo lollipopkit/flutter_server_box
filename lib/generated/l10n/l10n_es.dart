@@ -2976,4 +2976,55 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Este agente está configurado solo para supervisar. Aquí no puedes abrir un terminal, ejecutar comandos ni explorar archivos. Para activar estas funciones, edita [remote_access] en el config.toml del agente.';
+
+  @override
+  String get alerts => 'Alertas';
+
+  @override
+  String get online => 'en línea';
+
+  @override
+  String get densityCards => 'Tarjetas';
+
+  @override
+  String get densityRows => 'Filas';
+
+  @override
+  String get densityGrid => 'Cuadrícula';
+
+  @override
+  String get connect => 'Conectar';
+
+  @override
+  String get disconnect => 'Desconectar';
+
+  @override
+  String get searchServerTip =>
+      'Busca nombres y direcciones: los dos datos que el editor solicita primero.';
+
+  @override
+  String get addServerTip =>
+      'Rellena uno, escanea un código QR o importa un archivo que alguien haya compartido.';
+
+  @override
+  String get move => 'Mover';
+
+  @override
+  String get moveToTop => 'Mover al principio';
+
+  @override
+  String get moveToBottom => 'Mover al final';
+
+  @override
+  String get groupByTag => 'Agrupar por etiqueta';
+
+  @override
+  String get groupByTagTip =>
+      'Las etiquetas se definen en el editor del servidor.';
+
+  @override
+  String get connecting => 'Conectando…';
+
+  @override
+  String get authShort => 'Auth';
 }

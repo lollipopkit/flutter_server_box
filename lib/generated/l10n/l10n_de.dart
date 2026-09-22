@@ -2967,4 +2967,54 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get monitorNoRemoteAccess =>
       'Dieser Agent ist nur für die Überwachung eingerichtet. Hier können Sie kein Terminal öffnen, keine Befehle ausführen und keine Dateien durchsuchen. Aktivieren Sie diese Funktionen unter [remote_access] in der config.toml des Agenten.';
+
+  @override
+  String get alerts => 'Warnungen';
+
+  @override
+  String get online => 'online';
+
+  @override
+  String get densityCards => 'Karten';
+
+  @override
+  String get densityRows => 'Zeilen';
+
+  @override
+  String get densityGrid => 'Raster';
+
+  @override
+  String get connect => 'Verbinden';
+
+  @override
+  String get disconnect => 'Trennen';
+
+  @override
+  String get searchServerTip =>
+      'Sucht nach Namen und Adressen – den beiden Angaben, nach denen der Editor zuerst fragt.';
+
+  @override
+  String get addServerTip =>
+      'Fülle eines aus, scanne einen QR-Code oder importiere eine Datei, die jemand geteilt hat.';
+
+  @override
+  String get move => 'Verschieben';
+
+  @override
+  String get moveToTop => 'Nach ganz oben';
+
+  @override
+  String get moveToBottom => 'Nach ganz unten';
+
+  @override
+  String get groupByTag => 'Nach Tag gruppieren';
+
+  @override
+  String get groupByTagTip => 'Tags werden im Editor des Servers gesetzt.';
+
+  @override
+  String get connecting => 'Verbinden…';
+
+  @override
+  String get authShort => 'Auth';
 }

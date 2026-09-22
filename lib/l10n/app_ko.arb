@@ -853,5 +853,21 @@
   "retentionCleanup": "Run cleanup every",
   "retentionMaxDbSize": "Database size cap",
   "corsOrigins": "CORS allowed origins",
-  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only."
+  "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "alerts": "알림",
+  "online": "온라인",
+  "densityCards": "카드",
+  "densityRows": "행",
+  "densityGrid": "그리드",
+  "connect": "연결",
+  "disconnect": "연결 해제",
+  "searchServerTip": "이름과 주소를 검색합니다. 편집 화면에서 가장 먼저 묻는 두 항목입니다.",
+  "addServerTip": "하나를 입력하거나 QR 코드를 스캔하거나 다른 사람이 공유한 파일을 가져오세요.",
+  "move": "이동",
+  "moveToTop": "맨 위로 이동",
+  "moveToBottom": "맨 아래로 이동",
+  "groupByTag": "태그로 그룹화",
+  "groupByTagTip": "태그는 서버 편집 페이지에서 설정합니다.",
+  "connecting": "연결 중…",
+  "authShort": "인증"
 }
