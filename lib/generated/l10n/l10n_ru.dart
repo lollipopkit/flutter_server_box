@@ -1473,6 +1473,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'Автоматическое переключение виртуальных клавиш';
 
   @override
+  String get sshA11yMode => 'Accessibility mode';
+
+  @override
+  String get sshA11yModeTip =>
+      'Render terminal output as plain text with an input field and labeled keys, for screen reader users.';
+
+  @override
+  String get sshA11yInputHint => 'Type a command, then press Enter';
+
+  @override
+  String get sshA11yCursorPrefix => 'Selected';
+
+  @override
   String get supportFmtArgs => 'Поддерживаются следующие форматы аргументов:';
 
   @override
@@ -1526,6 +1539,24 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get viewDetails => 'Просмотр деталей';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
+
+  @override
+  String get virtKeyA11ySudo => 'Sudo password';
+
+  @override
+  String get virtKeyA11ySnippet => 'Snippet';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11yIME => 'Keyboard';
+
+  @override
+  String get virtKeyA11yClipboard => 'Clipboard';
 
   @override
   String get virtKeyHelpClipboard =>

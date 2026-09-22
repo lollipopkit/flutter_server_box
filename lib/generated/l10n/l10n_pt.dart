@@ -1466,6 +1466,19 @@ class AppLocalizationsPt extends AppLocalizations {
       'Desativação automática das teclas virtuais';
 
   @override
+  String get sshA11yMode => 'Accessibility mode';
+
+  @override
+  String get sshA11yModeTip =>
+      'Render terminal output as plain text with an input field and labeled keys, for screen reader users.';
+
+  @override
+  String get sshA11yInputHint => 'Type a command, then press Enter';
+
+  @override
+  String get sshA11yCursorPrefix => 'Selected';
+
+  @override
   String get supportFmtArgs => 'Suporta os seguintes argumentos formatados:';
 
   @override
@@ -1520,6 +1533,24 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get viewDetails => 'Ver detalhes';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
+
+  @override
+  String get virtKeyA11ySudo => 'Sudo password';
+
+  @override
+  String get virtKeyA11ySnippet => 'Snippet';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11yIME => 'Keyboard';
+
+  @override
+  String get virtKeyA11yClipboard => 'Clipboard';
 
   @override
   String get virtKeyHelpClipboard =>

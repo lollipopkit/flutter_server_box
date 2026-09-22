@@ -1435,18 +1435,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Would you like to select the SSH config file manually?';
 
   @override
-  String get sshA11yInputHint => 'Type a command, then press Enter';
-  @override
-  String get sshA11yCursorPrefix => 'Selected';
-
-  @override
-  String get sshA11yMode => 'Accessibility mode';
-
-  @override
-  String get sshA11yModeTip =>
-      'Render terminal output as plain text with an input field and labeled keys, for screen reader users.';
-
-  @override
   String get sshConfigNoServers => 'No servers found in SSH config';
 
   @override
@@ -1464,6 +1452,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sshVirtualKeyAutoOff => 'Auto switching of virtual keys';
+
+  @override
+  String get sshA11yMode => 'Accessibility mode';
+
+  @override
+  String get sshA11yModeTip =>
+      'Render terminal output as plain text with an input field and labeled keys, for screen reader users.';
+
+  @override
+  String get sshA11yInputHint => 'Type a command, then press Enter';
+
+  @override
+  String get sshA11yCursorPrefix => 'Selected';
 
   @override
   String get supportFmtArgs =>
@@ -1521,23 +1522,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewDetails => 'View Details';
 
   @override
-  @override
-  String get virtKeyA11yClipboard => 'Clipboard';
-
-  @override
-  String get virtKeyA11yIME => 'Keyboard';
-
-  @override
-  String get virtKeyA11ySFTP => 'SFTP';
-
-  @override
-  String get virtKeyA11ySnippet => 'Snippet';
+  String get virtKeyA11yTmux => 'tmux';
 
   @override
   String get virtKeyA11ySudo => 'Sudo password';
 
   @override
-  String get virtKeyA11yTmux => 'tmux';
+  String get virtKeyA11ySnippet => 'Snippet';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11yIME => 'Keyboard';
+
+  @override
+  String get virtKeyA11yClipboard => 'Clipboard';
+
+  @override
   String get virtKeyHelpClipboard =>
       'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.';
 

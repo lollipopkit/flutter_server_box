@@ -8,6 +8,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -763,7 +764,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       itemCount: _a11yOutput.length,
       itemBuilder: (context, index) => SelectableText(
         _a11yOutput[index],
-        style: _terminalStyle,
+        style: TextStyle(
+          fontSize: _terminalStyle.fontSize,
+          height: _terminalStyle.height,
+          fontFamily: _terminalStyle.fontFamily,
+        ),
       ),
     );
   }
@@ -789,7 +794,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       child: TextField(
         controller: _a11yInputCtrl,
         focusNode: _a11yInputFocus,
-        style: _terminalStyle,
+        style: TextStyle(
+          fontSize: _terminalStyle.fontSize,
+          height: _terminalStyle.height,
+          fontFamily: _terminalStyle.fontFamily,
+        ),
         decoration: InputDecoration(
           hintText: l10n.sshA11yInputHint,
           isDense: true,
@@ -954,7 +963,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void _announceA11y(String message) {
     _a11yAnnounceDebounce?.cancel();
     _a11yAnnounceDebounce = Timer(const Duration(milliseconds: 200), () {
-      if (mounted) SemanticsService.announce(message);
+      if (mounted) SemanticsService.announce(message, Directionality.of(context));
     });
   }
 
