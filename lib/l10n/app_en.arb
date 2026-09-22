@@ -533,6 +533,8 @@
   "sshA11yModeTip": "Render terminal output as plain text with an input field and labeled keys, for screen reader users.",
   "sshA11yInputHint": "Type a command, then press Enter",
   "sshA11yCursorPrefix": "Selected",
+  "sshA11yCopyAll": "Copy all",
+  "sshA11ySelectText": "Select text",
   "supportFmtArgs": "The following formatting parameters are supported:",
   "suspendTip": "The suspend function requires root permission and systemd support.",
   "switchTo": "Switch to {val}",

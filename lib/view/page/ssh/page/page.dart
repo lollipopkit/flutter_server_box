@@ -211,6 +211,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// without moving the reader's reading position.
   final _a11yScrollCtrl = ScrollController();
 
+  /// Row-selection mode for the accessible output. Long-press selection is
+  /// hard to reach with a screen reader, so an explicit "Select text" button
+  /// flips the list into checkboxes; the chosen rows are then copied through
+  /// the terminal's own clipboard path. Off by default — the list only shows.
+  bool _a11ySelectMode = false;
+  final Set<int> _a11ySelectedRows = {};
+
   /// Collapses the burst of `notifyListeners` a single `write` fires when the
   /// output is a fast stream (a progress bar redrawing itself, say).
   Timer? _a11yDebounce;
@@ -229,6 +236,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// changed text is announced as itself, unchanged text gets the "selected"
   /// prefix — see [_announceCursorLineNow].
   String? _a11yLastAnnounced;
+
+  /// The cursor row (absolute Y) behind [_a11yLastAnnounced], so a redraw that
+  /// moves the highlight onto a row with the same text can still be spoken
+  /// with the "selected" prefix.
+  int _a11yLastAnnouncedY = -1;
 
   /// Arrow keys redraw the menu several times per press, and each redraw would
   /// announce on its own. One announcement per burst, after the terminal has
@@ -385,6 +397,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _discontinuityTimer?.cancel();
     _a11yDebounce?.cancel();
     _a11yAnnounceDebounce?.cancel();
+    _a11yInputCtrl.removeListener(_onA11yFieldListener);
     _a11yInputCtrl.dispose();
     _a11yInputFocus.dispose();
     _a11yScrollCtrl.dispose();
@@ -443,6 +456,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
     _bindVisibilityListener();
     _setupDiscontinuityTimer();
+    _a11yInputCtrl.addListener(_onA11yFieldListener);
 
     // Adopt whatever the provider already has, so a server that is connected
     // for status does not connect a second time just to show a terminal. This
@@ -531,6 +545,8 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (a11y && !_a11ySubscribed) {
       _terminal.addListener(_onA11yTerminalChanged);
       _a11ySubscribed = true;
+      _a11ySelectMode = false;
+      _a11ySelectedRows.clear();
       // Fill the list with what is already on screen — a session that has
       // been running is not blank. Direct assignment, not `setState`: this
       // runs inside `build`, and the frame is about to render the list.
@@ -760,6 +776,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   Widget _buildA11yBody(bool hasBg) {
     return Column(
       children: [
+        // Explicit, labelled stand-ins for the long-press selection menu the
+        // screen reader cannot reach; each one calls the terminal's own
+        // clipboard action.
+        _buildA11yActionBar(),
         Expanded(
           child: Stack(
             children: [
@@ -791,39 +811,138 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// view follows it only while parked at the bottom (see
   /// [_a11yIsAtBottom]); scrolling up to read history is never interrupted.
   Widget _buildA11yOutput() {
-    // A `SelectionArea` keeps the terminal's drag-to-select across rows. On
-    // its own it merges every row's semantics into one selection node; each
-    // row's `Semantics(label, excludeSemantics: true)` replaces that with a
-    // plain, individually readable text node while the gestures stay.
-    return SelectionArea(
-      child: ListView.builder(
-        controller: _a11yScrollCtrl,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        itemCount: _a11yOutput.length,
-        itemBuilder: (context, index) {
-          final line = _a11yOutput[index];
-          // Blank rows are real terminal rows and must keep their vertical
-          // gap, but carry no label for the reader to stop on.
-          if (line.isEmpty) {
-            return SizedBox(
-              height: _terminalStyle.fontSize * _terminalStyle.height,
-            );
-          }
-          return Semantics(
-            label: line,
-            excludeSemantics: true,
-            child: Text(
-              line,
-              style: TextStyle(
-                fontSize: _terminalStyle.fontSize,
-                height: _terminalStyle.height,
-                fontFamily: _terminalStyle.fontFamily,
-              ),
-            ),
-          );
-        },
-      ),
+    // Read-only display of the terminal's own lines. Selection is not a
+    // long-press gesture (hard to reach with a screen reader) but an explicit
+    // mode toggled by [_buildA11yActionBar], where each row carries a labelled
+    // checkbox; copying still goes through the terminal's clipboard path.
+    return ListView.builder(
+      controller: _a11yScrollCtrl,
+      // Same horizontal inset as the canvas ([_horizonPadding]).
+      padding: const EdgeInsets.symmetric(horizontal: _horizonPadding),
+      itemCount: _a11yOutput.length,
+      itemBuilder: (context, index) {
+        final line = _a11yOutput[index];
+        final textStyle = TextStyle(
+          fontSize: _terminalStyle.fontSize,
+          height: _terminalStyle.height,
+          fontFamily: _terminalStyle.fontFamily,
+        );
+        // Blank rows are real terminal rows and keep the canvas's own row
+        // height. In selection mode they collapse (nothing to copy).
+        if (line.isEmpty) {
+          if (_a11ySelectMode) return const SizedBox.shrink();
+          return SizedBox(height: _a11yLineHeight);
+        }
+        if (!_a11ySelectMode) {
+          return Text(line, style: textStyle);
+        }
+        return CheckboxListTile(
+          value: _a11ySelectedRows.contains(index),
+          onChanged: (checked) {
+            setState(() {
+              if (checked == true) {
+                _a11ySelectedRows.add(index);
+              } else {
+                _a11ySelectedRows.remove(index);
+              }
+            });
+          },
+          title: Text(line, style: textStyle),
+          contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+        );
+      },
     );
+  }
+
+  /// The canvas's own measured row height (it includes the line spacing),
+  /// falling back to the text-style product before the renderer has laid out.
+  double get _a11yLineHeight =>
+      _termKey.currentState?.renderTerminal.lineHeight ??
+      _terminalStyle.fontSize * _terminalStyle.height;
+
+  /// Explicit, labelled buttons for the actions a sighted user reaches by
+  /// long-pressing the canvas. Every action is the terminal's own: paste uses
+  /// its bracketed `paste`, "copy all" uses its select-all + selected text,
+  /// and the row checkboxes copy through the same clipboard with the same
+  /// confirmation. Nothing here keeps a clipboard implementation of its own.
+  Widget _buildA11yActionBar() {
+    final m = MaterialLocalizations.of(context);
+    final l10n = context.l10n;
+    Widget bar(List<Widget> children) => SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(children: children),
+    );
+    if (_a11ySelectMode) {
+      return bar([
+        TextButton(
+          onPressed: () => setState(() {
+            _a11ySelectedRows
+              ..clear()
+              ..addAll(
+                List.generate(
+                  _a11yOutput.length,
+                  (i) => i,
+                ).where((i) => _a11yOutput[i].isNotEmpty),
+              );
+          }),
+          child: Text(m.selectAllButtonLabel),
+        ),
+        TextButton(
+          onPressed: _a11ySelectedRows.isEmpty ? null : _a11yCopySelectedRows,
+          child: Text(m.copyButtonLabel),
+        ),
+        TextButton(
+          onPressed: () => setState(() {
+            _a11ySelectMode = false;
+            _a11ySelectedRows.clear();
+          }),
+          child: Text(m.cancelButtonLabel),
+        ),
+      ]);
+    }
+    return bar([
+      TextButton.icon(
+        onPressed: _onTerminalPaste,
+        icon: const Icon(Icons.paste, size: 18),
+        label: Text(m.pasteButtonLabel),
+      ),
+      TextButton.icon(
+        onPressed: _a11yCopyAll,
+        icon: const Icon(Icons.copy_all, size: 18),
+        label: Text(l10n.sshA11yCopyAll),
+      ),
+      TextButton.icon(
+        onPressed: () => setState(() => _a11ySelectMode = true),
+        icon: const Icon(Icons.check_box_outlined, size: 18),
+        label: Text(l10n.sshA11ySelectText),
+      ),
+    ]);
+  }
+
+  /// Copies the selected rows via the same clipboard and confirmation the
+  /// terminal uses after its own copy action.
+  Future<void> _a11yCopySelectedRows() async {
+    final rows = _a11ySelectedRows.toList()..sort();
+    final text = rows.map((i) => _a11yOutput[i]).join('\n');
+    if (text.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    _showClipboardSuccess();
+    setState(() {
+      _a11ySelectMode = false;
+      _a11ySelectedRows.clear();
+    });
+  }
+
+  /// Selects everything in the terminal itself, then runs the terminal's own
+  /// clipboard action, which sees the selection and copies it (with the same
+  /// confirmation and selection clear as a long-press copy). The button only
+  /// replaces the unreachable long-press gesture — no copy logic of our own.
+  Future<void> _a11yCopyAll() async {
+    _onTerminalSelectAll();
+    await _onClipboardAction();
   }
 
   /// The standard [TextField] accessibility mode types into. Enter submits the
@@ -856,7 +975,8 @@ class SSHPageState extends ConsumerState<SSHPage>
           isDense: true,
           border: OutlineInputBorder(),
         ),
-        onChanged: _onA11yInputChanged,
+        // Text and caret changes are bridged from one controller listener,
+        // [_onA11yFieldListener].
         onSubmitted: _onA11yInputSubmitted,
       ),
     );
@@ -867,10 +987,29 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// shell echoes it back, so the terminal line tracks the field keystroke by
   /// keystroke — an editor or TUI field on the far side sees each one.
   ///
+  /// The bridge for caret movement: tells the terminal the caret's target
+  /// position (a grapheme offset into the input, excluding the prompt) and
+  /// lets the terminal move it there itself with its own arrow keys. The
+  /// accessibility layer never edits the line to relocate the caret.
+  void _a11ySendCursorPosition(int target) {
+    final delta = target - _a11yLastCursor;
+    for (var i = 0; i < delta.abs(); i++) {
+      _terminal.keyInput(
+        delta > 0 ? TerminalKey.arrowRight : TerminalKey.arrowLeft,
+      );
+    }
+    _a11yLastCursor = target;
+  }
+
   /// The diff is measured in graphemes end to end: the prefix, the suffix,
   /// the deleted run and the caret are all whole characters, so an emoji —
   /// several UTF-16 code units — is one edit, never a torn half-character.
   /// The field's own caret offset is in code units, and is converted first.
+  ///
+  /// This only bridges to the terminal's own input primitives: it positions
+  /// the caret through [_a11ySendCursorPosition], deletes with the terminal's
+  /// backspace key, types with `textInput`, and pastes multi-line text with
+  /// the terminal's own bracketed `paste`.
   void _syncA11yToTerminal(String newText, int newCursorCodeUnits) {
     final oldText = _a11yLastInputText;
     final newCursor = _codeUnitsToGraphemes(newText, newCursorCodeUnits);
@@ -897,16 +1036,11 @@ class SSHPageState extends ConsumerState<SSHPage>
     final oldMidLen = oldChars.length - p - s;
     final newMid = newChars.sublist(p, newChars.length - s).join();
 
-    // 1. Move the terminal cursor from where it was to the edit position.
-    final cursorDelta = p - _a11yLastCursor;
-    for (var i = 0; i < cursorDelta.abs(); i++) {
-      _terminal.keyInput(
-        cursorDelta > 0 ? TerminalKey.arrowRight : TerminalKey.arrowLeft,
-      );
-    }
-    // 2. Drop the part the field removed (Delete key, under the cursor).
+    // 1. Hand the terminal the caret position at the end of the removed run.
+    _a11ySendCursorPosition(oldChars.length - s);
+    // 2. Backspace over the removed run — the terminal's own backspace key.
     for (var i = 0; i < oldMidLen; i++) {
-      _terminal.keyInput(TerminalKey.delete);
+      _terminal.keyInput(TerminalKey.backspace);
     }
     // 3. Add the part the field gained. A multi-line addition is a paste
     // (pasting a script into the field), so it goes through the terminal's
@@ -919,6 +1053,8 @@ class SSHPageState extends ConsumerState<SSHPage>
         _terminal.textInput(newMid);
       }
     }
+    // 4. Hand the terminal the caret's final resting position.
+    _a11ySendCursorPosition(newCursor);
 
     _a11yLastInputText = newText;
     _a11yLastCursor = newCursor;
@@ -938,53 +1074,74 @@ class SSHPageState extends ConsumerState<SSHPage>
     return g;
   }
 
-  void _onA11yInputChanged(String text) {
+  /// Single listener for everything the field does. Text edits are bridged as
+  /// terminal input primitives ([_syncA11yToTerminal]); a caret move with no
+  /// text change forwards only the new caret position
+  /// ([_a11ySendCursorPosition]) and lets the terminal move there.
+  void _onA11yFieldListener() {
     if (!mounted || _a11ySyncing || !Stores.setting.sshA11yMode.fetch()) {
       return;
     }
-    final sel = _a11yInputCtrl.selection;
-    _syncA11yToTerminal(text, sel.isValid ? sel.baseOffset : text.length);
+    final ctrl = _a11yInputCtrl;
+    final sel = ctrl.selection;
+    final caretCode = sel.isValid ? sel.baseOffset : ctrl.text.length;
+    if (ctrl.text != _a11yLastInputText) {
+      _syncA11yToTerminal(ctrl.text, caretCode);
+    } else {
+      _a11ySendCursorPosition(_codeUnitsToGraphemes(ctrl.text, caretCode));
+    }
   }
 
   void _onA11yInputSubmitted(String text) {
     // The content is already in the terminal — `onChanged` sent it live — so
-    // Enter only confirms. The field is cleared first, silently: a diff
-    // firing here would delete what the shell is now running.
-    _a11ySyncing = true;
+    // Enter only confirms. Do not clear the field here: the terminal is the
+    // source of truth, and once the shell draws the fresh prompt the mirror
+    // in [_mirrorA11yField] empties it itself.
     _a11yLastInputText = '';
     _a11yLastCursor = 0;
-    _a11yInputCtrl.clear();
-    _a11ySyncing = false;
     _terminal.keyInput(TerminalKey.enter);
     _a11yInputFocus.requestFocus();
   }
 
-  /// A character typed with the virtual keyboard goes into the field at its
-  /// cursor, and the field drives the diff into the terminal.
+  /// A character typed with the virtual keyboard is applied to the field at
+  /// its caret (replacing any selection, like a normal field), and the field
+  /// then bridges the edit to the terminal.
   void _appendA11yInput(String text) {
     final ctrl = _a11yInputCtrl;
-    final at = ctrl.selection.isValid
-        ? ctrl.selection.baseOffset
-        : ctrl.text.length;
-    final newText = ctrl.text.replaceRange(at, at, text);
+    final sel = ctrl.selection.isValid
+        ? ctrl.selection
+        : TextSelection.collapsed(offset: ctrl.text.length);
+    final next = TextEditingValue(
+      text: ctrl.text,
+      selection: sel,
+    ).replaced(sel, text);
     _a11ySyncing = true;
-    ctrl.text = newText;
-    ctrl.selection = TextSelection.collapsed(offset: at + text.length);
+    ctrl.value = next;
     _a11ySyncing = false;
-    _syncA11yToTerminal(newText, at + text.length);
+    _syncA11yToTerminal(next.text, next.selection.baseOffset);
   }
 
-  /// The virtual keyboard's backspace drops one grapheme from the field's
-  /// cursor, and the field drives the diff into the terminal.
+  /// The virtual keyboard's backspace removes the grapheme just before the
+  /// field's caret (respecting a selection, like a normal field), and the
+  /// field then bridges the edit to the terminal as a backspace keystroke.
   void _deleteA11yInput() {
     final ctrl = _a11yInputCtrl;
-    if (ctrl.text.isEmpty) return;
-    final newText = ctrl.text.characters.skipLast(1).toString();
+    final sel = ctrl.selection.isValid
+        ? ctrl.selection
+        : TextSelection.collapsed(offset: ctrl.text.length);
+    if (ctrl.text.isEmpty || sel.baseOffset <= 0) return;
+    final start = sel.isCollapsed ? sel.baseOffset - 1 : sel.start;
+    final end = sel.end;
+    final next = TextEditingValue(
+      text: ctrl.text,
+      selection: sel,
+    ).replaced(TextSelection(baseOffset: start, extentOffset: end), '');
     _a11ySyncing = true;
-    ctrl.text = newText;
-    ctrl.selection = TextSelection.collapsed(offset: newText.length);
+    ctrl.value = next.copyWith(
+      selection: TextSelection.collapsed(offset: start),
+    );
     _a11ySyncing = false;
-    _syncA11yToTerminal(newText, newText.length);
+    _syncA11yToTerminal(ctrl.text, start);
   }
 
   /// `Terminal.write` fires `notifyListeners` for every chunk, and a progress
@@ -1009,13 +1166,72 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yScrollCtrl.jumpTo(_a11yScrollCtrl.position.maxScrollExtent);
   }
 
-  /// Reads the buffer exactly the way the terminal canvas paints it: one
-  /// entry per screen row in `buffer.lines` (scrollback plus viewport), empty
-  /// rows included. Only the rendering changes in accessibility mode — the
-  /// source is the terminal's own line list, not a re-split text dump.
+  /// Reads the buffer the way the terminal means it: one entry per *logical*
+  /// line. A screen row flagged `isWrapped` is the continuation of the row
+  /// above it (a line longer than the viewport), so it is appended to the
+  /// previous entry instead of becoming a second, split focus target — this
+  /// matches `Buffer.getText()`, which joins wrapped rows. Blank rows are
+  /// kept. Only the rendering changes in accessibility mode; the source is
+  /// the terminal's own line list.
   List<String> _readA11yLines() {
     final buffer = _terminal.buffer;
-    return [for (var i = 0; i < buffer.height; i++) buffer.lines[i].getText()];
+    final rows = <String>[];
+    for (var i = 0; i < buffer.height; i++) {
+      final line = buffer.lines[i];
+      final text = line.getText();
+      if (i > 0 && line.isWrapped && rows.isNotEmpty) {
+        rows[rows.length - 1] = rows.last + text;
+      } else {
+        rows.add(text);
+      }
+    }
+    return rows;
+  }
+
+  /// Makes the field a one-way mirror of what is actually on the terminal's
+  /// input line: the part of the current line after the prompt baseline. The
+  /// terminal is the single source of truth — Enter consuming the line, a
+  /// program reading it, or the shell drawing a fresh prompt all flow back
+  /// into the field on their own, including clearing it. The field is only
+  /// left untouched while the terminal is still echoing the keystrokes we
+  /// just sent (the field holds our last edit and the line has not caught
+  /// up), so typing and backspacing are never pulled backwards mid-echo.
+  void _mirrorA11yField() {
+    final buffer = _terminal.buffer;
+    final line = buffer.currentLine.toString();
+
+    String input;
+    if (_a11yPromptText.isNotEmpty && line.startsWith(_a11yPromptText)) {
+      input = line.substring(_a11yPromptText.length);
+    } else {
+      // A fresh prompt or a different line (a TUI field, a password query):
+      // the whole line is the new baseline, with no input in it yet.
+      _a11yPromptText = line;
+      input = '';
+    }
+
+    final field = _a11yInputCtrl.text;
+    final echoing =
+        field.isNotEmpty && field == _a11yLastInputText && input != field;
+    if (echoing) return;
+
+    _a11ySyncing = true;
+    if (input == field) {
+      // Same text — only the caret can have moved (terminal arrow keys).
+      final caret = buffer.cursorX - _a11yPromptText.length;
+      if (caret >= 0 && caret <= field.length && caret != _a11yLastCursor) {
+        _a11yInputCtrl.selection = TextSelection.collapsed(offset: caret);
+        _a11yLastCursor = caret;
+      }
+    } else {
+      _a11yInputCtrl.value = TextEditingValue(
+        text: input,
+        selection: TextSelection.collapsed(offset: input.length),
+      );
+      _a11yLastInputText = input;
+      _a11yLastCursor = input.characters.length;
+    }
+    _a11ySyncing = false;
   }
 
   void _refreshA11yOutput() {
@@ -1035,92 +1251,31 @@ class SSHPageState extends ConsumerState<SSHPage>
       }
     }
 
-    // The terminal cursor moving left/right on the input line moves the
-    // field's caret too — the two stay in step either way. Only when the
-    // line still starts with the remembered prompt: in a TUI menu the cursor
-    // walks items, not the field's text.
-    if (_a11yInputCtrl.text.isNotEmpty) {
-      final line = buffer.currentLine.toString();
-      if (_a11yPromptText.isNotEmpty && line.startsWith(_a11yPromptText)) {
-        final caret = buffer.cursorX - _a11yPromptText.length;
-        if (caret >= 0 &&
-            caret <= _a11yInputCtrl.text.length &&
-            caret != _a11yLastCursor) {
-          _a11ySyncing = true;
-          _a11yInputCtrl.selection = TextSelection.collapsed(offset: caret);
-          _a11ySyncing = false;
-          _a11yLastCursor = caret;
+    // The field mirrors the terminal, always.
+    _mirrorA11yField();
+
+    // Event-driven speech, with no regard to which key fired. A TUI redraws
+    // the same screen rows in place when the highlight moves, an item is
+    // toggled or a choice confirmed — that is an in-place redraw (same number
+    // of logical lines), so speak the cursor row. Streaming command output
+    // instead grows the line count and is read from the list, not spoken.
+    final cursorY = buffer.absoluteCursorY;
+    if (lines.length == oldLines.length &&
+        cursorY >= 0 &&
+        cursorY < buffer.height) {
+      final text = buffer.lines[cursorY].getText().trim();
+      if (text.isNotEmpty) {
+        if (text != _a11yLastAnnounced) {
+          _a11yLastAnnounced = text;
+          _a11yLastAnnouncedY = cursorY;
+          _announceA11y(text);
+        } else if (cursorY != _a11yLastAnnouncedY) {
+          // Same wording, another row now highlighted — say it is selected.
+          _a11yLastAnnouncedY = cursorY;
+          _announceA11y('${l10n.sshA11yCursorPrefix} $text');
         }
       }
     }
-
-    // Unconfirmed input that is not in the field comes back into it: text
-    // typed with the virtual keys, or a program that stopped halfway asking
-    // for input. The line is `prompt + input`; the prompt was remembered when
-    // the field was last empty, so only the part after it is copied.
-    if (_a11yInputCtrl.text.isEmpty) {
-      final line = buffer.currentLine.toString();
-      if (_a11yPromptText.isNotEmpty &&
-          line.startsWith(_a11yPromptText) &&
-          line.length > _a11yPromptText.length) {
-        final input = line.substring(_a11yPromptText.length);
-        _a11ySyncing = true;
-        _a11yInputCtrl.text = input;
-        _a11yInputCtrl.selection = TextSelection.collapsed(
-          offset: input.length,
-        );
-        _a11ySyncing = false;
-        _a11yLastInputText = input;
-        _a11yLastCursor = input.length;
-      } else if (line.isNotEmpty && line != _a11yPromptText) {
-        // Field empty means nothing of the line is user input — it is the
-        // prompt baseline (shell prompt, "Password:", a TUI field label).
-        // Remembered so the next unconfirmed input can be cut out of it.
-        _a11yPromptText = line;
-      }
-    }
-
-    // A Space toggle in a TUI menu rewrites the item's own line (the checkbox
-    // cell flips) without the cursor moving — announce the changed item. The
-    // output list itself gets nothing added: the line is replaced in place.
-    final cursor = buffer.absoluteCursorY;
-    if (cursor < 0 || cursor >= lines.length) return;
-    final text = lines[cursor].trim();
-    if (text.isEmpty) return;
-    final prevText = cursor < oldLines.length ? oldLines[cursor].trim() : null;
-    if (prevText == null || prevText == text) return;
-    _a11yLastAnnounced = text;
-    _announceA11y(text);
-  }
-
-  /// Announces the line under the cursor after a navigation key, the way a
-  /// TUI menu user expects: an arrow key moves the highlight, and the screen
-  /// reader says where it landed.
-  ///
-  /// Whether the item's text changed decides the wording. Text that changed
-  /// (the menu scrolled, a checkbox flipped) is announced as itself; text the
-  /// cursor simply moved onto is announced with the "selected" prefix, so the
-  /// reader can tell the two apart.
-  void _announceCursorLine() {
-    if (!Stores.setting.sshA11yMode.fetch()) return;
-    _a11yAnnounceDebounce?.cancel();
-    _a11yAnnounceDebounce = Timer(
-      const Duration(milliseconds: 150),
-      _announceCursorLineNow,
-    );
-  }
-
-  void _announceCursorLineNow() {
-    if (!mounted) return;
-    final buffer = _terminal.buffer;
-    final lines = _readA11yLines();
-    final cursor = buffer.absoluteCursorY;
-    if (cursor < 0 || cursor >= lines.length) return;
-    final text = lines[cursor].trim();
-    if (text.isEmpty) return;
-    final changed = text != _a11yLastAnnounced;
-    _a11yLastAnnounced = text;
-    _announceA11y(changed ? text : '${l10n.sshA11yCursorPrefix} $text');
   }
 
   /// One entry point for every announcement, so a burst of them can be

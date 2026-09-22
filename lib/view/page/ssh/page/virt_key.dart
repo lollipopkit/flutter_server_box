@@ -91,8 +91,8 @@ extension _VirtKey on SSHPageState {
     if (inputRaw != null) {
       HapticFeedback.mediumImpact();
       if (Stores.setting.sshA11yMode.fetch()) {
-        // The field is the input's single source of truth: the character
-        // goes into it, and the whole line is rewritten to the terminal.
+        // The field only captures the tap; it forwards the character to the
+        // terminal through the same text-input primitive used below.
         _appendA11yInput(inputRaw);
       } else {
         _terminal.textInput(inputRaw);
@@ -113,15 +113,6 @@ extension _VirtKey on SSHPageState {
         break;
       default:
         _terminal.keyInput(key);
-        // Navigation keys move the highlight in a TUI menu. In accessibility
-        // mode the screen reader says where the cursor landed — see
-        // `_announceCursorLine`.
-        if (key == TerminalKey.arrowUp ||
-            key == TerminalKey.arrowDown ||
-            key == TerminalKey.arrowLeft ||
-            key == TerminalKey.arrowRight) {
-          _announceCursorLine();
-        }
         break;
     }
   }
@@ -133,7 +124,8 @@ extension _VirtKey on SSHPageState {
         break;
       case VirtualKeyFunc.backspace:
         if (Stores.setting.sshA11yMode.fetch()) {
-          // The field drives the deletion; it rewrites the whole line.
+          // The field reflects the deletion and forwards a backspace key to
+          // the terminal — the same primitive as the non-a11y branch.
           _deleteA11yInput();
         } else {
           _terminal.keyInput(TerminalKey.backspace);

@@ -1371,6 +1371,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshA11yCursorPrefix => '选中';
 
   @override
+  String get sshA11yCopyAll => '复制全部';
+
+  @override
+  String get sshA11ySelectText => '选择文本';
+
+  @override
   String get supportFmtArgs => '支持以下格式化参数：';
 
   @override
@@ -4130,6 +4136,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshA11yCursorPrefix => '選中';
+
+  @override
+  String get sshA11yCopyAll => '複製全部';
+
+  @override
+  String get sshA11ySelectText => '選擇文字';
 
   @override
   String get supportFmtArgs => '支援以下格式化參數：';

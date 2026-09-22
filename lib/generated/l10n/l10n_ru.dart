@@ -1486,6 +1486,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
+  String get sshA11yCopyAll => 'Copy all';
+
+  @override
+  String get sshA11ySelectText => 'Select text';
+
+  @override
   String get supportFmtArgs => 'Поддерживаются следующие форматы аргументов:';
 
   @override

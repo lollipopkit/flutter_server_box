@@ -1493,6 +1493,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
+  String get sshA11yCopyAll => 'Copy all';
+
+  @override
+  String get sshA11ySelectText => 'Select text';
+
+  @override
   String get supportFmtArgs =>
       'Les paramètres de mise en forme suivants sont pris en charge :';
 

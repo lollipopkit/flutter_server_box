@@ -2644,6 +2644,18 @@ abstract class AppLocalizations {
   /// **'Selected'**
   String get sshA11yCursorPrefix;
 
+  /// No description provided for @sshA11yCopyAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all'**
+  String get sshA11yCopyAll;
+
+  /// No description provided for @sshA11ySelectText.
+  ///
+  /// In en, this message translates to:
+  /// **'Select text'**
+  String get sshA11ySelectText;
+
   /// No description provided for @supportFmtArgs.
   ///
   /// In en, this message translates to:
