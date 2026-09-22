@@ -550,8 +550,12 @@ class SSHPageState extends ConsumerState<SSHPage>
       // With the field empty, whatever the current line holds is the prompt
       // baseline unconfirmed input is cut out of — see `_refreshA11yOutput`.
       _a11yPromptText = currentLine;
-      // Start at the bottom, where the newest output and the prompt are.
-      WidgetsBinding.instance.addPostFrameCallback((_) => _a11yJumpToBottom());
+      // The terminal only resizes to its real viewport once this frame lays
+      // it out; re-read after that, then park at the newest output.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshA11yOutput();
+        _a11yJumpToBottom();
+      });
     }
 
     final bgImage = Stores.setting.sshBgImage.fetch();
@@ -759,8 +763,22 @@ class SSHPageState extends ConsumerState<SSHPage>
         Expanded(
           child: Stack(
             children: [
-              Offstage(offstage: true, child: _buildTerminalView(hasBg)),
-              Positioned.fill(child: _buildA11yOutput()),
+              // Kept laid out and painted, only invisible. xterm resizes its
+              // buffer inside performLayout and Buffer.getText() reads the
+              // viewport size — an `Offstage` terminal never lays out, keeps a
+              // zero viewport and yields no text at all. Opacity 0 keeps its
+              // real size, the resize and the data stream intact.
+              Positioned.fill(
+                child: ExcludeSemantics(
+                  child: Opacity(opacity: 0, child: _buildTerminalView(hasBg)),
+                ),
+              ),
+              Positioned.fill(
+                child: ColoredBox(
+                  color: hasBg ? Colors.transparent : _terminalTheme.background,
+                  child: _buildA11yOutput(),
+                ),
+              ),
             ],
           ),
         ),
