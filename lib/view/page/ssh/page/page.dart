@@ -762,7 +762,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       itemCount: _a11yOutput.length,
-      itemBuilder: (context, index) => SelectableText(
+      itemBuilder: (context, index) => Text(
         _a11yOutput[index],
         style: TextStyle(
           fontSize: _terminalStyle.fontSize,
@@ -799,12 +799,10 @@ class SSHPageState extends ConsumerState<SSHPage>
           height: _terminalStyle.height,
           fontFamily: _terminalStyle.fontFamily,
         ),
-        decoration: InputDecoration(
-          hintText: l10n.sshA11yInputHint,
+        decoration: const InputDecoration(
           isDense: true,
-          border: const OutlineInputBorder(),
+          border: OutlineInputBorder(),
         ),
-        textInputAction: TextInputAction.send,
         onChanged: _onA11yInputChanged,
         onSubmitted: _onA11yInputSubmitted,
       ),
@@ -1190,11 +1188,18 @@ class SSHPageState extends ConsumerState<SSHPage>
     final group = _introGroup;
     final lit = group == null || item.group == group;
 
+    // Only name the key when its drawn glyph does not already say it: a plain
+    // key like "TAB" reads its own text, so an extra spoken label there would
+    // be read twice. Icon-only function keys need the word; text keys don't.
+    final spokenLabel = item.icon == null && item.semanticLabel == item.text
+        ? null
+        : item.semanticLabel;
+
     return Semantics(
       button: true,
       // The modifiers are toggles; every other key is an ordinary button.
       toggled: item.toggleable ? selected : null,
-      label: item.semanticLabel,
+      label: spokenLabel,
       child: InkWell(
         onTap: () => _doVirtualKey(item, virtKeyNotifier),
         // Held rather than tapped, and only where there is something to say —

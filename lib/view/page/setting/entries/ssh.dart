@@ -183,10 +183,24 @@ extension _SSH on _AppSettingsPageState {
 
   Widget _buildSSHA11yMode() {
     return ListTile(
-      leading: const Icon(Icons.accessibility_new),
+      leading: const Icon(MingCute.ear_line),
       title: Text(l10n.sshA11yMode),
-      subtitle: Text(l10n.sshA11yModeTip, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.sshA11yMode),
+      // The full description lives behind the info button, not on the row —
+      // other rows say only their name here.
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, size: 20),
+            tooltip: l10n.sshA11yMode,
+            onPressed: () => context.showRoundDialog(
+              title: l10n.sshA11yMode,
+              child: Text(l10n.sshA11yModeTip),
+            ),
+          ),
+          StoreSwitch(prop: _setting.sshA11yMode),
+        ],
+      ),
     );
   }
 
