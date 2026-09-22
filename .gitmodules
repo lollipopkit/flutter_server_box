@@ -38,3 +38,7 @@
 	path = packages/redfish
 	url = https://github.com/lollipopkit/redfish
 	branch = main
+[submodule "third_party/ironrdp"]
+	path = third_party/ironrdp
+	url = https://github.com/lollipopkit/IronRDP.git
+	branch = serverbox

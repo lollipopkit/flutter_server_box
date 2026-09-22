@@ -71,7 +71,7 @@ RDP 在视口稳定 300 ms 后调整远程分辨率；VNC 使用服务器提供�
 - [IronRDP 0.17](https://github.com/Devolutions/IronRDP)，MIT OR Apache-2.0
 - [vnc-rs 0.5.3](https://github.com/HsuJv/vnc-rs)，MIT OR Apache-2.0
 
-IronRDP 只启用了所需功能。仓库在 `third_party/` 中保留了 `ironrdp-client`、`ironrdp-connector` 和 `ironrdp-tls`。IronRDP 0.17 发布版本的依赖树固定了预发布版 RustCrypto 包，与 SSH 实现采用的稳定版密码学依赖冲突。这些 vendored crate 保持 IronRDP API 和版本不变，只更新相关依赖路径；上游的 MIT 与 Apache-2.0 许可证也保留在源码旁。
+IronRDP 只启用了所需功能。`third_party/ironrdp` submodule 指向 [lollipopkit/IronRDP fork](https://github.com/lollipopkit/IronRDP) 的 `serverbox` branch。该 branch 保持 IronRDP 0.17 的 API 和 crate 版本不变，并包含 ServerBox 所需的 transport、certificate trust 和 dependency compatibility 修改。更新时应先修改 fork，再在本仓库中更新 pinned commit。
 
 修改 FFI API 后，需要运行 Flutter Rust Bridge 生成和常规 Flutter 代码生成。`cargo test --workspace` 会测试协议代码。默认忽略的 `frame_backpressure_stays_bounded_at_1080p` 是 60 秒压力测试，发布前应显式执行。
 
