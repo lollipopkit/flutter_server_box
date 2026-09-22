@@ -263,6 +263,16 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// unconfirmed input, the only part worth copying back into the field.
   String _a11yPromptText = '';
 
+  /// Set right after Enter. Between sending Enter and the shell drawing the
+  /// next prompt, the just-submitted command is briefly still the terminal's
+  /// current line (its echo); mirroring that frame would mistake the submitted
+  /// command for live input and block the clear the new prompt should cause.
+  /// While this is set, the submitted line is left alone until the terminal
+  /// actually moves on — an empty input line or the cursor leaving the row.
+  bool _a11yAwaitPrompt = false;
+  int _a11ySubmittedCursorY = -1;
+  Timer? _a11yPromptGuardTimer;
+
   /// Guards the round trip: setting the field's text from the terminal must
   /// not fire `onChanged` and rewrite the same text back into the terminal.
   bool _a11ySyncing = false;
@@ -397,6 +407,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _discontinuityTimer?.cancel();
     _a11yDebounce?.cancel();
     _a11yAnnounceDebounce?.cancel();
+    _a11yPromptGuardTimer?.cancel();
     _a11yInputCtrl.removeListener(_onA11yFieldListener);
     _a11yInputCtrl.dispose();
     _a11yInputFocus.dispose();
@@ -547,6 +558,8 @@ class SSHPageState extends ConsumerState<SSHPage>
       _a11ySubscribed = true;
       _a11ySelectMode = false;
       _a11ySelectedRows.clear();
+      _a11yAwaitPrompt = false;
+      _a11yPromptGuardTimer?.cancel();
       // Fill the list with what is already on screen — a session that has
       // been running is not blank. Direct assignment, not `setState`: this
       // runs inside `build`, and the frame is about to render the list.
@@ -1093,13 +1106,22 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   void _onA11yInputSubmitted(String text) {
-    // The content is already in the terminal — `onChanged` sent it live — so
-    // Enter only confirms. Do not clear the field here: the terminal is the
-    // source of truth, and once the shell draws the fresh prompt the mirror
-    // in [_mirrorA11yField] empties it itself.
+    // The content is already in the terminal — edits were sent live — so
+    // Enter only confirms. The field clears itself once the shell draws the
+    // next prompt; the guard in [_mirrorA11yField] stops the submitted line's
+    // own echo from being mirrored back in the meantime.
+    _a11yAwaitPrompt = true;
+    _a11ySubmittedCursorY = _terminal.buffer.absoluteCursorY;
     _a11yLastInputText = '';
     _a11yLastCursor = 0;
     _terminal.keyInput(TerminalKey.enter);
+    // Safety net: a TUI that consumes Enter without a new prompt or a moved
+    // cursor must not leave the guard stuck on forever.
+    _a11yPromptGuardTimer?.cancel();
+    _a11yPromptGuardTimer = Timer(
+      const Duration(seconds: 2),
+      () => _a11yAwaitPrompt = false,
+    );
     _a11yInputFocus.requestFocus();
   }
 
@@ -1166,26 +1188,15 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yScrollCtrl.jumpTo(_a11yScrollCtrl.position.maxScrollExtent);
   }
 
-  /// Reads the buffer the way the terminal means it: one entry per *logical*
-  /// line. A screen row flagged `isWrapped` is the continuation of the row
-  /// above it (a line longer than the viewport), so it is appended to the
-  /// previous entry instead of becoming a second, split focus target — this
-  /// matches `Buffer.getText()`, which joins wrapped rows. Blank rows are
-  /// kept. Only the rendering changes in accessibility mode; the source is
-  /// the terminal's own line list.
+  /// Reads the buffer the way the terminal exports it: `Buffer.getText()`
+  /// already joins every `isWrapped` continuation row into its logical line
+  /// (inserting `\n` only at real line boundaries) and trims the right edge
+  /// correctly, so splitting on its `\n` yields exactly one entry per logical
+  /// line with blank rows kept. Reusing it — rather than walking `isWrapped`
+  /// ourselves — keeps the readable list identical to a terminal text export.
   List<String> _readA11yLines() {
-    final buffer = _terminal.buffer;
-    final rows = <String>[];
-    for (var i = 0; i < buffer.height; i++) {
-      final line = buffer.lines[i];
-      final text = line.getText();
-      if (i > 0 && line.isWrapped && rows.isNotEmpty) {
-        rows[rows.length - 1] = rows.last + text;
-      } else {
-        rows.add(text);
-      }
-    }
-    return rows;
+    final text = _terminal.buffer.getText();
+    return text.split('\n');
   }
 
   /// Makes the field a one-way mirror of what is actually on the terminal's
@@ -1208,6 +1219,20 @@ class SSHPageState extends ConsumerState<SSHPage>
       // the whole line is the new baseline, with no input in it yet.
       _a11yPromptText = line;
       input = '';
+    }
+
+    // Right after Enter, ignore the frames where the current line is still
+    // the submitted command's echo. Clear the guard once the terminal moved
+    // on — an empty input (the next prompt is drawn) or the cursor leaving
+    // the submitted row (the program produced output / a new line).
+    if (_a11yAwaitPrompt) {
+      final movedOn =
+          input.isEmpty || buffer.absoluteCursorY != _a11ySubmittedCursorY;
+      if (!movedOn) {
+        return;
+      }
+      _a11yAwaitPrompt = false;
+      _a11yPromptGuardTimer?.cancel();
     }
 
     final field = _a11yInputCtrl.text;
