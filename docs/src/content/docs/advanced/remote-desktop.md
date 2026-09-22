@@ -71,7 +71,7 @@ The protocol engine is part of the existing `sbm_ffi` Rust library:
 - [IronRDP 0.17](https://github.com/Devolutions/IronRDP), MIT OR Apache-2.0
 - [vnc-rs 0.5.3](https://github.com/HsuJv/vnc-rs), MIT OR Apache-2.0
 
-Only the required IronRDP features are enabled. The repository carries `ironrdp-client`, `ironrdp-connector`, and `ironrdp-tls` under `third_party/`. IronRDP 0.17's published dependency graph pins pre-release RustCrypto packages that conflict with the stable crypto stack used by the SSH implementation. The vendored crates keep the IronRDP APIs and versions while updating only that dependency path. Their upstream MIT and Apache-2.0 license files are preserved beside the sources.
+Only the required IronRDP features are enabled. The `third_party/ironrdp` submodule points to the `serverbox` branch of the [lollipopkit/IronRDP fork](https://github.com/lollipopkit/IronRDP). That branch keeps the IronRDP 0.17 APIs and crate versions while carrying ServerBox's transport, certificate-trust, and dependency compatibility changes. Update the fork first, then pin the resulting commit in this repository.
 
 Run Flutter Rust Bridge generation and the normal Flutter code generation after changing the FFI API. `cargo test --workspace` exercises protocol code. The ignored `frame_backpressure_stays_bounded_at_1080p` test is a 60-second stress test and should be run explicitly before release.
 

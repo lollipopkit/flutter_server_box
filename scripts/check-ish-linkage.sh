@@ -81,19 +81,37 @@ else
 fi
 
 if [ "$EXPECT" = on ]; then
-  [ "$internals" -gt 0 ] && pass "the engine's own symbols are in" \
-    || fail "no engine symbol found — the stubs were linked, not the engine"
-  [ "$engine_strings" -gt 0 ] && pass "the engine's strings are in" \
-    || fail "no engine string found"
-  [ "$sqlite" -gt 0 ] && pass "libsqlite3 is linked, as the engine needs" \
-    || fail "libsqlite3 is absent — the engine's fakefs cannot work without it"
+  if [ "$internals" -gt 0 ]; then
+    pass "the engine's own symbols are in"
+  else
+    fail "no engine symbol found — the stubs were linked, not the engine"
+  fi
+  if [ "$engine_strings" -gt 0 ]; then
+    pass "the engine's strings are in"
+  else
+    fail "no engine string found"
+  fi
+  if [ "$sqlite" -gt 0 ]; then
+    pass "libsqlite3 is linked, as the engine needs"
+  else
+    fail "libsqlite3 is absent — the engine's fakefs cannot work without it"
+  fi
 else
-  [ "$internals" -eq 0 ] && pass "no engine symbol" \
-    || fail "$internals engine symbols survived the strip"
-  [ "$engine_strings" -eq 0 ] && pass "no engine string" \
-    || fail "$engine_strings engine strings survived the strip"
-  [ "$sqlite" -eq 0 ] && pass "no libsqlite3" \
-    || fail "libsqlite3 is still linked"
+  if [ "$internals" -eq 0 ]; then
+    pass "no engine symbol"
+  else
+    fail "$internals engine symbols survived the strip"
+  fi
+  if [ "$engine_strings" -eq 0 ]; then
+    pass "no engine string"
+  else
+    fail "$engine_strings engine strings survived the strip"
+  fi
+  if [ "$sqlite" -eq 0 ]; then
+    pass "no libsqlite3"
+  else
+    fail "libsqlite3 is still linked"
+  fi
 fi
 
 [ "$failed" -eq 0 ] || die "this binary is not what '$EXPECT' means"

@@ -47,7 +47,7 @@ fi
 # The checked-in Info.plist contains the unresolved `$(FLUTTER_BUILD_NAME)`
 # setting rather than a version. Ignore that placeholder and infer the version
 # from a DMG filename instead.
-if [[ -z "$APP_VERSION" || "$APP_VERSION" == '$('* ]]; then
+if [[ -z "$APP_VERSION" || "$APP_VERSION" =~ ^\$\( ]]; then
   APP_VERSION=""
   for candidate in "$DMG_ARM64_PATH" "$DMG_AMD64_PATH"; do
     [[ -n "$candidate" ]] || continue
@@ -207,7 +207,7 @@ CASK
 
 echo "Generated tap cask: $TAP_CASK_PATH"
 echo "Version: $APP_VERSION"
-if [[ -n "$APP_BUILD" && "$APP_BUILD" != '$('* ]]; then
+if [[ -n "$APP_BUILD" && ! "$APP_BUILD" =~ ^\$\( ]]; then
   echo "Build number: $APP_BUILD"
 fi
 echo "Release tag: $RELEASE_TAG"
