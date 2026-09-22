@@ -40,14 +40,16 @@ Jump server 链与 `ProxyCommand` 互斥。两者同时配置时，`Spix.validat
 
 ### 兼容旧版算法
 
-dartssh2 默认只提议现代算法。RSA 主机密钥仍然提供，但只有 RFC 8332 的两个名字（`rsa-sha2-256`、`rsa-sha2-512`）；它取代的 SHA-1 `ssh-rsa` 写法、SHA-1 密钥交换、CBC 加密和 SHA-1/MD5 MAC 都不在列表里。早于这些名字的旧服务端——路由器的 dropbear、交换机——只会广播 `ssh-rsa`，握手会在认证之前就结束：
+dartssh2 默认只提供现代算法。RSA 主机密钥仍可使用，但只采用 RFC 8332 定义的 `rsa-sha2-256` 和 `rsa-sha2-512`。旧的 SHA-1 `ssh-rsa` 名称、SHA-1 密钥交换、CBC cipher 和 SHA-1/MD5 MAC 均不在默认列表中。路由器或交换机上的旧版 Dropbear 可能只提供 `ssh-rsa`，导致握手在认证前结束：
 
 ```text
 SSHAuthAbortError(... reason: SSHInternalError(
   Bad state: No matching host key algorithm))
 ```
 
-`SshCredential.allowLegacyAlgorithms` 是按服务器单独配置的开关，在服务器编辑页的 **SSH 高级** 里开启。主机密钥、密钥交换、加密和 MAC 这四类算法各自独立协商，被淘汰的算法在每一类里都追加在现代算法**之后**。因此降级只发生在没有现代算法可选的那一类：一台主机密钥很新、却只有 SHA-1 密钥交换的设备，仍会保留现代主机密钥，只在密钥交换上回退。这些算法被淘汰是因为它们本身很弱——SHA-1 签名与密钥交换、以及小位数的 Diffie-Hellman 群——所以开启这个开关意味着允许一条比默认更弱的连接；但它不会让对端在本可走现代算法的连接上强制降级，因为 KEXINIT 的算法列表由主机密钥签名的交换哈希覆盖。请只对确实无法用其他方式连上、并且你信任的设备开启。
+`SshCredential.allowLegacyAlgorithms` 是服务器编辑页 **SSH 高级** 中的单独开关。主机密钥、密钥交换、cipher 和 MAC 会分别协商；每一类的旧算法都排在现代算法**之后**。因此，只有某一类没有现代选项时才会回退。例如，设备拥有现代主机密钥但只支持 SHA-1 密钥交换时，连接仍会保留现代主机密钥，仅回退密钥交换。
+
+这些算法因安全性不足而被淘汰，包括 SHA-1 签名和密钥交换，以及较小的 Diffie-Hellman group。启用该开关意味着允许比默认配置更弱的连接。它不会让对端将本可使用现代算法的连接强制降级，因为主机密钥签名覆盖了 KEXINIT algorithm list。请仅对无法使用现代算法连接、且你信任的设备启用。
 
 ### 创建 client
 

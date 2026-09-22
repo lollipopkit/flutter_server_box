@@ -646,7 +646,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    /// Detect Podman not installed when using Podman mode
+    // Report a missing Podman executable as an installation error.
     if (type == ContainerType.podman &&
         (errOut.contains('podman: not found') ||
             raw.contains('podman: not found'))) {
@@ -661,7 +661,8 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    // Check result segments count
+    // Every command must contribute one segment; otherwise results cannot be
+    // matched safely to command types.
     final segments = raw.split(separator);
     if (segments.length != commands.length) {
       _setRefreshError(

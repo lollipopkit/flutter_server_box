@@ -397,7 +397,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 }
 
-/// Show the session/window selector with a "skip" option.
+/// Shows the session/window selector with an option to bypass tmux.
 Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
   BuildContext context, {
   required List<TmuxSessionInfo> sessions,

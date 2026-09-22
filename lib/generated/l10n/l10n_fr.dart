@@ -146,39 +146,39 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get askAiResendTip =>
-      'Everything after this message is discarded — the replies, the commands and their results.';
+      'Tout ce qui suit ce message sera supprimé : les réponses, les commandes et leurs résultats.';
 
   @override
   String get askAiDeleteTip =>
-      'This message and everything after it are removed — the replies, the commands and their results.';
+      'Ce message et tout ce qui le suit seront supprimés : les réponses, les commandes et leurs résultats.';
 
   @override
   String get askAiModelTable => 'Model table';
 
   @override
   String get askAiModelTableTip =>
-      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+      'Tailles de contexte par nom de modèle, fournies par models.dev. Une copie est incluse dans l’app ; touchez pour en récupérer une plus récente.';
 
   @override
-  String get askAiContextFallback => 'not in the table';
+  String get askAiContextFallback => 'absent du tableau';
 
   @override
   String get askAiCompactAt => 'Summarise at';
 
   @override
   String get askAiCompactAtTip =>
-      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+      'Indique le niveau de remplissage du contexte avant de résumer les échanges précédents. Un résumé précoce perd plus vite les détails ; un résumé tardif risque d’entraîner le refus de la requête.';
 
   @override
   String get askAiContextTokens => 'Context size';
 
   @override
   String get askAiContextTokensTip =>
-      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+      'Nombre de tokens que ce modèle peut contenir. Le mode automatique le recherche par nom ; indiquez une valeur si votre fournisseur propose un contexte plus court que celui du modèle.';
 
   @override
   String get askAiConversationCompacted =>
-      'Earlier messages were summarised to keep the conversation going.';
+      'Les messages précédents ont été résumés pour poursuivre la conversation.';
 
   @override
   String get askAiRiskReadOnly => 'Lecture seule';
@@ -1789,17 +1789,17 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le processus a changé ou s’est terminé. Actualisez la liste et réessayez.';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => 'Nom, utilisateur ou PID';
 
   @override
   String processShowKernelThreads(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
+      other: '$count threads du noyau',
+      one: '1 thread du noyau',
     );
-    return '$_temp0';
+    return 'Afficher $_temp0';
   }
 
   @override
@@ -1890,8 +1890,8 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
+      other: '$count autres unités',
+      one: '1 autre unité',
     );
     return '$_temp0';
   }
@@ -1925,12 +1925,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return 'Arrêté il y a $duration';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return 'code de sortie $code';
   }
 
   @override
@@ -1944,14 +1944,15 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
+      other: '$count dernières lignes',
+      one: 'Dernière ligne',
     );
     return '$_temp0';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable =>
+      'Ce compte ne peut pas lire le journal';
 
   @override
   String get serverUnreachable =>
@@ -2284,7 +2285,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get userManagerLinuxOnly =>
-      'System user management currently supports Linux servers.';
+      'La gestion des utilisateurs système ne prend actuellement en charge que les serveurs Linux.';
 
   @override
   String get userRegularAccount => 'Regular';
@@ -2336,7 +2337,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+      'Les modifications de root s’appliquent immédiatement à toutes les sessions.';
 
   @override
   String get userComment => 'Comment';
@@ -2345,28 +2346,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get userPrimaryGroup => 'Primary group';
 
   @override
-  String get userSupplementaryGroups => 'Supplementary groups';
+  String get userSupplementaryGroups => 'Groupes supplémentaires';
 
   @override
   String get userLoginShell => 'Login shell';
 
   @override
-  String get userCreateHome => 'Create home directory';
+  String get userCreateHome => 'Créer le dossier personnel';
 
   @override
   String get userMoveHome =>
-      'Move the existing home directory when the path changes';
+      'Déplacer le dossier personnel existant lorsque le chemin change';
 
   @override
-  String get userRemoveHome => 'Remove the home directory';
+  String get userRemoveHome => 'Supprimer le dossier personnel';
 
   @override
   String get userPasswordCreateTip =>
-      'Leave the password empty to create a password-locked account.';
+      'Laissez le mot de passe vide pour créer un compte dont la connexion par mot de passe est verrouillée.';
 
   @override
   String get userPasswordEditTip =>
-      'Leave the password empty to keep the existing password.';
+      'Laissez le mot de passe vide pour conserver le mot de passe actuel.';
 
   @override
   String funcUnavailableFmt(Object func) {
@@ -2672,11 +2673,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Destination de repli, ProxyCommand, serveur de rebond, transfert de fichiers, chemin distant';
 
   @override
-  String get sshLegacyAlgorithms => 'Legacy algorithms';
+  String get sshLegacyAlgorithms => 'Algorithmes obsolètes';
 
   @override
   String get sshLegacyAlgorithmsTip =>
-      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+      'Pour les anciens serveurs SSH, comme les routeurs ou les commutateurs, qui proposent uniquement une clé d’hôte SHA-1 `ssh-rsa` ou un échange de clés SHA-1. Moins sécurisé ; activez cette option uniquement pour les hôtes qui en ont besoin.';
 
   @override
   String get appearanceAndPlace => 'Apparence et lieu';
@@ -2734,15 +2735,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get scheduledTaskLinuxOnly =>
-      'Scheduled task management currently supports Linux servers.';
+      'La gestion des tâches planifiées ne prend actuellement en charge que les serveurs Linux.';
 
   @override
   String get scheduledTaskUnavailable =>
-      'crontab is not available on this server.';
+      'crontab n’est pas disponible sur ce serveur.';
 
   @override
   String get scheduledTaskPreserveTip =>
-      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+      'Les commentaires, les variables d’environnement et les lignes non reconnues de ce crontab sont conservés.';
 
   @override
   String get scheduledTaskSchedule => 'Schedule';
@@ -2765,8 +2766,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+  String scheduledTaskSummaryFmt(num enabled, num total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total tâches',
+      one: '1 tâche',
+      zero: '$total tâches',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      enabled,
+      locale: localeName,
+      other: '$enabled activées',
+      one: '1 activée',
+      zero: '$enabled activées',
+    );
+    return '$_temp0 · $_temp1';
   }
 
   @override
@@ -2782,11 +2797,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get scheduledTaskEnableNow => 'Enable now';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip =>
+      'Si cette option est désactivée, la ligne est enregistrée sous forme de commentaire.';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return 'Aucune tâche planifiée pour $user. Les ajouts effectués ici sont écrits dans le crontab de ce compte.';
   }
 
   @override
@@ -2805,20 +2821,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get scheduledTaskFieldDayOfWeek => 'Day of week';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => 'Une planification est requise.';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => 'Une commande est requise.';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak =>
+      'Une ligne crontab ne peut pas contenir de saut de ligne.';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro =>
+      'Une macro est composée d’un seul mot, comme @reboot.';
 
   @override
   String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+      'Une planification cron comporte cinq champs, ou une macro comme @reboot.';
 
   @override
   String get cronAtBoot => 'At boot';
@@ -2828,42 +2846,42 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return 'Toutes les $minutes minutes';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return 'Toutes les heures à :$minute';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return 'Toutes les $hours heures';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return 'Toutes les $hours heures à :$minute';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return 'Tous les jours à $time';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return 'En semaine à $time';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return 'Chaque $day à $time';
   }
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return 'Le $day de chaque mois à $time';
   }
 
   @override
@@ -2873,20 +2891,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get monitorAgentDefault => 'Agent default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart =>
+      'Prend effet après le redémarrage de l’agent';
 
   @override
   String get monitorCollection => 'Collection';
 
   @override
-  String get extendedInterval => 'Extended cycle interval';
+  String get extendedInterval => 'Intervalle de collecte étendue';
 
   @override
-  String get idlePause => 'Pause when nothing is watching';
+  String get idlePause => 'Suspendre lorsqu’aucun client ne consulte';
 
   @override
   String get idlePauseTip =>
-      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+      'La collecte étendue exécute smartctl, sensors et amd-smi. La suspendre lorsqu’aucun client n’interroge l’agent évite de réveiller un disque pour des données que personne ne consulte.';
 
   @override
   String get idlePauseThreshold => 'Idle after';
@@ -2908,10 +2927,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ruleTip =>
-      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+      'Métrique : cpu / memory / swap / disk / network / temperature. Cible : cpu0 pour un cœur, used / free / avail pour la mémoire, rx / tx pour le réseau ; disk et temperature ignorent ce champ. Seuil : un comparateur et une valeur, comme >=80%, >=70c ou >10m/s.';
 
   @override
-  String get pushChannels => 'Notification channels';
+  String get pushChannels => 'Canaux de notification';
 
   @override
   String get pushType => 'Type';
@@ -2923,37 +2942,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'Configuré sur l’agent, non affiché';
 
   @override
-  String get pushSecretKeep => 'Leave blank to keep';
+  String get pushSecretKeep => 'Laisser vide pour conserver';
 
   @override
   String get pushTestTip =>
-      'Sends one notification through this channel as it stands here, saved or not.';
+      'Envoie une notification par ce canal avec les réglages affichés, qu’ils soient enregistrés ou non.';
 
   @override
-  String get pushTestSent => 'The channel accepted it';
+  String get pushTestSent => 'Le canal a accepté la notification';
 
   @override
-  String get pushTestFailed => 'The channel refused it';
+  String get pushTestFailed => 'Le canal a refusé la notification';
 
   @override
-  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+  String get pushTestMessage => 'Notification de test de ServerBox Monitor';
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'Cet agent ne peut pas envoyer de notification par ce type de canal ; ses réglages ne sont donc pas affichés. Vous pouvez le supprimer ici ou le modifier dans le fichier config.toml de l’agent.';
 
   @override
-  String get pushJsonInvalid => 'is not valid JSON';
+  String get pushJsonInvalid => 'n’est pas un JSON valide';
 
   @override
   String get dataRetention => 'Data retention';
 
   @override
   String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+      'Si cette option est désactivée, l’agent ne supprime rien et sa base de données augmente sans limite.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2962,17 +2981,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get retentionAlerts => 'Keep alerts';
 
   @override
-  String get retentionCleanup => 'Run cleanup every';
+  String get retentionCleanup => 'Exécuter le nettoyage toutes les';
 
   @override
-  String get retentionMaxDbSize => 'Database size cap';
+  String get retentionMaxDbSize => 'Taille maximale de la base de données';
 
   @override
-  String get corsOrigins => 'CORS allowed origins';
+  String get corsOrigins => 'Origines autorisées par CORS';
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'Origines depuis lesquelles un panneau web peut appeler cet agent. Une valeur vide limite les appels à la même origine.';
 
   @override
   String get monitorNoRemoteAccess =>

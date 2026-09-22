@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Builds proot and its loader for Android arm64, into the one directory an app
-# is allowed to execute from.
+# Build proot and its loader for Android arm64 in the app's executable native
+# library directory.
 #
 # Why this exists
 # ---------------
@@ -9,9 +9,9 @@
 # directory, and a Linux rootfs is nothing but files in that directory. proot
 # gets around it not by asking for permission but by never using execve on a
 # guest binary: it carries a loader that maps the guest ELF and hands control
-# to the guest's own interpreter. Measured in
-# `integration_test/android_rootfs_test.dart` — an Alpine aarch64 busybox that
-# is refused directly and by Android's own linker runs under proot.
+# to the guest's own interpreter. `integration_test/android_rootfs_test.dart`
+# verifies that an Alpine aarch64 BusyBox rejected by direct execution and
+# Android's linker runs under proot.
 #
 # Two things are easy to get wrong, and both fail in ways that read like the
 # restriction rather than a mistake:
@@ -30,7 +30,7 @@
 #
 # Sources are canonical upstreams, not a fork of a fork, and both are pinned:
 # talloc by version and digest, proot by tag *and* the commit that tag pointed
-# at. proot needs one one-line patch to build with a current NDK — see
+# at. proot needs a one-line patch to build with a current NDK — see
 # `patch_proot`.
 #
 # Usage: scripts/build-proot-android.sh [--clean]

@@ -7,9 +7,9 @@ import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
 
-/// Service class for handling backup operations
+/// Coordinates backup and restore operations with their UI feedback.
 class BackupService {
-  /// Perform backup operation with the given source
+  /// Creates a backup and writes it to [source].
   static Future<void> backup(BuildContext context, BackupSource source) async {
     // The destination's kind, never its address or its credentials. Whether a
     // backup is encrypted is the other half: an unencrypted one going to a
@@ -49,11 +49,10 @@ class BackupService {
     }
   }
 
-  /// Perform restore operation with the given source
+  /// Reads and restores a backup from [source].
   static Future<void> restore(BuildContext context, BackupSource source) async {
     final text = await source.getContent();
     if (text == null) {
-      // Show empty message for clipboard source
       if (source is ClipboardBackupSource) {
         Toast.show(libL10n.empty);
       }
@@ -65,9 +64,8 @@ class BackupService {
     }
   }
 
-  /// Handle restore from text with decryption support
+  /// Decodes [text], prompting for a password when it is encrypted.
   static Future<void> restoreFromText(BuildContext context, String text) async {
-    // Check if backup is encrypted
     final isEncrypted = Cryptor.isEncrypted(text);
     String? password;
 
@@ -102,7 +100,7 @@ class BackupService {
       return;
     }
 
-    // Try with saved password first
+    // Avoid prompting when the saved password can decrypt this backup.
     final savedPassword = await SecureStoreProps.bakPwd.read();
     if (!context.mounted) return;
     if (savedPassword != null && savedPassword.isNotEmpty) {
@@ -253,7 +251,7 @@ class BackupService {
     );
   }
 
-  /// Show password input dialog
+  /// Prompts for the backup password.
   static Future<String?> _showPasswordDialog(
     BuildContext context, {
     String? initial,

@@ -5,11 +5,11 @@ description: Ask a model to diagnose and operate your servers, one reviewed acti
 
 Agent connects a language model to the servers you configure. The model proposes one action at a time, and the App asks you to review it before execution.
 
-Agent ships with a default API endpoint and model, so it is ready to use without being configured first; change either in settings to use a different provider. Only providers that require authentication need an API key; when configured, the App sends it as a bearer token. A request is what reaches the provider — nothing is sent until you send a message.
+Agent ships with a default API endpoint and model, so it works without initial configuration. Change either setting to use a different provider. Only providers that require authentication need an API key; when configured, the App sends it as a bearer token. Nothing is sent to the provider until you send a message.
 
 ## Two entry points
 
-**The Agent tab** works across the servers configured in the App. It can open temporary SSH connections to hosts that are not in the server list, and it can read Server Box's own server state—for example, to answer which servers are offline.
+**The Agent tab** works across the servers configured in the App. It can open temporary SSH connections to hosts outside the server list. It can also read Server Box's own state—for example, to identify offline servers.
 
 **SSH Agent** appears in the terminal page and works with the current server. It can read the terminal context. If you select terminal output and ask a question, the selected text is sent with the question.
 
@@ -26,7 +26,7 @@ Open **Settings → App → AI**:
 | **API key** | Empty |
 | **Protocol** | Auto |
 
-The endpoint can be a service base URL or a complete Chat Completions or Responses endpoint. The App completes the path for the selected protocol. **Auto** uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers, so most third-party gateways work without additional changes.
+Enter either a service base URL or a complete Chat Completions or Responses endpoint. The App completes the path for the selected protocol. **Auto** uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers, so most third-party gateways need no additional configuration.
 
 Any provider that supports one of these protocols can be used. The API key is stored on the device in the same encrypted store as server passwords.
 

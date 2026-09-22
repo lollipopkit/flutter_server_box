@@ -287,7 +287,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
                     overflow: TextOverflow.ellipsis,
                   ),
             onTap: () async {
-              // Create a filtered copy for the dialog, don't modify the original
+              // Exclude deleted servers without mutating the stored selection.
               final validServerIds = vals
                   .where(
                     (e) => ref.read(serversProvider).serverOrder.contains(e),

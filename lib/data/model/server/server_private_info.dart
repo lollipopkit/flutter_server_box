@@ -185,7 +185,7 @@ abstract class Spi with _$Spi {
   @override
   String toString() => 'Spi<${Redact.id(id)}>';
 
-  /// Parse the [id], if it's null or empty, generate a new one.
+  /// Returns [id] when valid, or generates one when it is null or empty.
   static String parseId(Object? id) {
     if (id == null || id is! String || id.isEmpty) return ShortId.generate();
     return id;

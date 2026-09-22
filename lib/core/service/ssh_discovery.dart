@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 
-// Pre-compiled RegExp patterns for SSH discovery
+// Reused across discovery passes to avoid recompiling each pattern per host.
 final _whitespaceRegExp = RegExp(r'\s+');
 final _ipv4InParenthesesRegExp = RegExp(r'\((\d+\.\d+\.\d+\.\d+)\)');
 final _interfaceRegExp = RegExp(r'^([a-z0-9]+):');
@@ -25,11 +25,11 @@ class SshDiscoveryService {
     final t0 = DateTime.now();
     final candidates = <InternetAddress>{};
 
-    // 1) Get neighbors from ARP/NDP tables
+    // Seed candidates from the local ARP and NDP tables.
     candidates.addAll(await _neighborsIPv4());
     candidates.addAll(await _neighborsIPv6());
 
-    // 2) Enumerate small subnets from local interfaces (IPv4 only)
+    // Enumerate only small local IPv4 subnets to keep the scan bounded.
     final cidrs = await _localIPv4Cidrs();
     for (final c in cidrs) {
       if (c.prefix >= 24 && c.prefix <= 30) {
@@ -37,12 +37,12 @@ class SshDiscoveryService {
       }
     }
 
-    // 3) Optional: mDNS/Bonjour SSH services
+    // Add SSH services advertised through mDNS/Bonjour when requested.
     if (config.enableMdns) {
       candidates.addAll(await _mdnsSshCandidates());
     }
 
-    // Filter out unwanted addresses: loopback, link-local, 0.0.0.0, broadcast, multicast
+    // Keep only addresses that may identify another reachable host.
     candidates.removeWhere(
       (a) =>
           a.isLoopback ||
@@ -51,7 +51,6 @@ class SshDiscoveryService {
           _isBroadcastOrMulticast(a),
     );
 
-    // 4) Concurrent SSH port scanning
     final scanner = _Scanner(
       timeout: Duration(milliseconds: config.timeoutMs),
       maxConcurrency: config.maxConcurrency,
@@ -97,7 +96,7 @@ class SshDiscoveryService {
           );
       final code = await p.exitCode;
       if (code == 0) return out;
-      // Some tools return non-zero but still have useful output
+      // Discovery tools may return partial output with a non-zero exit code.
       if (out.trim().isNotEmpty) return out;
       return null;
     } catch (e, s) {

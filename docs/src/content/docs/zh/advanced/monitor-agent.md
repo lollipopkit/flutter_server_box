@@ -63,13 +63,13 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
   它们；面板只能关闭 `full_access`。只有修改配置文件才能开启这些功能。
 - `full_access` 以 `[remote_access.terminal] enabled` 为前提。只设
   full_access 不起任何作用。
-- 终端和文件 API 会拒绝从网络上到达的明文请求,但对 loopback 调用方——包括
-  同机反向代理——无需 TLS 即可服务。所以如果 agent 绑定在 127.0.0.1,或者由
-  同机代理终结 TLS,就不需要 `allow_insecure`。只有当 agent 能被另一台机器
-  直接以明文访问时才考虑它,并且动手前先说。
+- 终端和文件 API 会拒绝从网络上到达的明文请求，但对 loopback 调用方——包括
+  同机反向代理——无需 TLS 即可服务。因此，如果 agent 绑定在 127.0.0.1，或由
+  同机代理终结 TLS，就不需要 `allow_insecure`。只有当另一台机器可以
+  通过明文连接直接访问 agent 时，才应考虑开启它；操作前请先说明风险。
 - `[remote_access.fs]` 没有 `roots` 就什么都不做。只写真正需要浏览的目录。
-  `roots = ["/"]` 会让面板密码等价于一个 shell,因为能写
-  ~/.ssh/authorized_keys 的人就有 shell,agent 启动时也会对此告警。
+  `roots = ["/"]` 会让面板密码等价于一个 shell，因为能写入
+  `~/.ssh/authorized_keys` 的人就能获得 shell。agent 启动时也会对此发出警告。
 
 修改后重启 agent，并把日志里的 `Remote access:` 那一行发给我。这一行会说明实际
 开启了哪些功能；如果全部关闭，就不会出现这一行。
@@ -176,17 +176,21 @@ curl -fsSL https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main
 
 配置文件位于二进制文件旁边的 `config.toml`。所有配置项都在 [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml) 中说明。agent 默认监听 `0.0.0.0:3770`；如果存在 `frontend/dist`，还会在该地址提供网页面板。
 
-其中一部分不必打开文件也能修改。采集间隔、告警规则、通知渠道、数据保留和允许的面板来源，可以在网页面板的 **Server Settings** 页编辑；App 里打开配置了 agent 的服务器，点右上角的设置按钮即可。两者连的是同一个 agent，写的是同一个文件。不开放编辑的部分是有意为之：JWT secret、`database_url` 和 `[remote_access]` 开关只能改文件，这样面板密码永远无法扩大 agent 的暴露面。
+采集间隔、告警规则、通知渠道、数据保留和允许的面板来源无需直接打开文件。你可以在网页面板的 **Server Settings** 中修改，也可以在 App 中打开配置了 agent 的服务器，再点击顶部的设置按钮。两个入口连接同一个 agent，并写入同一个文件。
 
-文件中已有的密钥和 token —— ServerChan key、Bark key、iOS push token、`Authorization` header —— 不会回传给编辑器。它们显示为「已设置」且输入框为空；留空即保持原值，输入新值则替换。保存后的通知渠道要等 agent 下次启动才进入规则引擎，告警规则、采集间隔、数据保留和允许来源同理。只有扩展采集周期和两个闲置暂停设置是立即生效的。App 会标出需要重启的字段。
+JWT secret、`database_url` 和 `[remote_access]` 开关只能在文件中修改。这样，即使面板密码泄露，也无法借此扩大 agent 的暴露面。
+
+文件中已有的 key 和 token——ServerChan key、Bark key、iOS push token、`Authorization` header——不会回传给编辑器。界面只显示“已设置”和一个空输入框。留空会保留原值，输入新内容则会替换。
+
+通知渠道、告警规则、采集间隔、数据保留和允许来源会在 agent 重启后生效。只有扩展采集周期和两个闲置暂停设置会立即生效。App 会标出需要重启的字段。
 
 如果 agent 需要从其他设备访问，请使用 HTTPS：可以配置内置 TLS（`[server.tls]`），也可以放在反向代理后面。App 支持自签名证书，但必须由你明确开启相关选项。
 
 ## App 能回溯多久
 
-服务器详情页的图表画的是你选的窗口，而有哪些窗口可选由 agent 决定，不是 App 写死的。`GET /api/v1/capabilities` 会报告 `retention_days`（即 `[monitoring.data_retention] metrics_days`，不会被删除的范围）和 `oldest_sample`（实际存下来的最早一条读数）。App 只提供落在两者较晚者之内的预设档，超出的置灰，并把这两个数写在区间选择器底部。
+服务器详情页的图表会显示所选时间窗口。可选范围由 agent 决定，而不是 App。`GET /api/v1/capabilities` 会报告 `retention_days`（即 `[monitoring.data_retention] metrics_days`）和 `oldest_sample`（实际保留的最早一条数据）。App 只启用落在二者较晚边界内的 preset，其余选项会置灰；范围选择器底部会显示这两个值。
 
-除了预设档，还可以直接指定一个窗口，它到达 agent 的形式是 `GET /api/v1/metrics/history?from=<epoch 秒>&to=<epoch 秒>`。请求的窗口比 agent 保留的更长时，agent 返回它有的那些行，而不是报错或悄悄缩小窗口：这个差额由客户端画成图上的留白，而一个悄悄挪动起点的 agent 会让人以为窗口是满的。`?minutes=` 仍然有效，也是老版本 agent 收到的形式。
+除了 preset，App 还可以直接指定起止时间，并请求 `GET /api/v1/metrics/history?from=<epoch 秒>&to=<epoch 秒>`。如果请求范围早于 agent 实际保留的数据，agent 会返回现有记录，不会报错或改写起始时间；缺少的部分会在图表上显示为空白。`?minutes=` 仍然可用，也用于不支持 `from` 和 `to` 的旧 agent。
 
 不报告 retention 的旧 agent 仍然只提供固定档，和以前一样。
 
@@ -228,7 +232,7 @@ SBM_PW="$SBM_PW" ./server_box_monitor user set-password admin --password-env SBM
 
 新密码在下次登录时生效，不需要重启 agent：每次登录都会读用户表。已登录的会话最多再持续一小时，也就是一个 token 的有效期。要立刻终止它们，修改 `config.toml` 中的 `jwt_secret` 并重启 agent（`systemctl --user restart server_box_monitor`，OpenRC 下是 `rc-service server-box-monitor restart`），此前签发的所有 token 都会失效。
 
-然后在 App 里更新密码——编辑该服务器，替换 **Monitor Password**——以及其他保存了这个密码的地方。没有任何机制会告知客户端 agent 的密码变了，它只是登不上去。
+然后在 App 中编辑该服务器并替换 **Monitor Password**，同时更新其他保存了该密码的客户端。密码变更不会通知客户端；更新前，客户端将无法登录。
 
 ### 忘记密码
 

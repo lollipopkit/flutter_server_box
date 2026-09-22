@@ -25,14 +25,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get crashCollectBasic => '基本信息';
 
   @override
-  String get crashCollectBasicTip => '仅包含崩溃信息，不包含日志/性能数据; **帮助我们完善App, 修复bug**';
+  String get crashCollectBasicTip =>
+      '只包含崩溃信息，不包含日志或性能数据。**这些信息可帮助我们改进 App 并修复问题。**';
 
   @override
   String get crashCollectFull => '完整信息';
 
   @override
   String get crashCollectFullTip =>
-      '除崩溃日志，加上性能数据和功能使用情况: **用于定位变慢的问题，以及了解哪些功能真的有人用。**';
+      '包含崩溃日志、性能数据和功能使用情况。**这些信息可帮助我们定位性能问题，并了解哪些功能真正有人使用。**';
 
   @override
   String get crashCollectFooter =>
@@ -305,7 +306,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentAuthMethod => '认证方式';
 
   @override
-  String get agentSshConnectTip => 'Agent 想建立 SSH 连接, 请在此输入密码';
+  String get agentSshConnectTip => 'Agent 想要建立 SSH 连接。请在此输入密码。';
 
   @override
   String get agentAdHocSessions => '临时连接';
@@ -369,23 +370,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get distIconIntroLegal =>
-      '标识仅表示本设备从远程系统读取到的信息,该信息可能有误或已过期,也不代表其衍生版本、重构版本或任何特定版本。识别不出时显示一个通用图标。\n\n每个标识均为其各自所有者的商标,此处仅用于指代它所标识的系统。';
+      '标识只根据本设备从远程系统读取的信息显示。这些信息可能不准确或已过期，也不代表某个衍生版本、重构版本或特定版本。无法识别时会显示通用图标。\n\n各标识均为其所有者的商标，此处仅用于说明对应的系统。';
 
   @override
-  String get distIconTip => '在每台服务器旁显示一个小标识,表示它可能运行的系统';
+  String get distIconTip => '在每台服务器旁显示一个小标识，表示它可能运行的系统';
 
   @override
   String get distNameMap => '名称映射';
 
   @override
   String get distNameMapTip =>
-      '仅用于「托管处的文件名和本应用使用的名称对不上」的发行版。键是本应用使用的名称,值是实际要取的名称。没有缺图就不用填。';
+      '仅用于「托管处的文件名和本应用使用的名称对不上」的发行版。键是本应用使用的名称，值是实际要取的名称。没有缺图就不用填。';
 
   @override
   String get logoUrl => 'Logo 地址';
 
   @override
-  String get logoUrlTip => '服务器详情页顶部的大图,按原色显示。';
+  String get logoUrlTip => '服务器详情页顶部的大图，按原色显示。';
 
   @override
   String get globe => '地球仪';
@@ -501,7 +502,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '关闭窗口后，App 会留在菜单栏或通知区域中，并继续监控服务器。关闭此选项后，关闭按钮会退出 App。';
 
   @override
-  String get bgRunNeedsNotification => '后台运行需要一条常驻通知,而本应用当前无通知权限。点击去开启通知权限。';
+  String get bgRunNeedsNotification => '后台运行需要显示常驻通知，但 App 尚未获得通知权限。点击授权。';
 
   @override
   String get clearAllStatsContent => '确定要清空所有服务器的连接统计数据吗？此操作无法撤销。';
@@ -683,7 +684,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get macDmgBody =>
-      'App Store 要求本应用沙盒运行,而沙盒内无法开启终端。DMG 版可以开启。\n\nApp Store 版以后可能停止更新。';
+      'App Store 要求本应用沙盒运行，而沙盒内无法开启终端。DMG 版可以开启。\n\nApp Store 版以后可能停止更新。';
 
   @override
   String get macDmgImportDenied => 'macOS 不允许读取此前安装版本的数据';
@@ -930,14 +931,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return '要对 $server 执行吗?将向该服务发送 \"$resetType\"';
+    return '要对 $server 执行「$resetType」吗？';
   }
 
   @override
   String get bmcPowerDone => '电源状态已改变';
 
   @override
-  String get bmcPowerAccepted => '已接受,但电源状态还没有改变。graceful 操作取决于操作系统';
+  String get bmcPowerAccepted => '操作已接受，但电源状态尚未改变。正常关机或重启是否成功取决于操作系统。';
 
   @override
   String get bmcPowerUnsupported => '该服务不允许这个操作的任何类型';
@@ -971,7 +972,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get bmcTip =>
-      'BMC 是主板上一台独立的计算机,主机操作系统不可达时它仍然可达。在这里配置后,服务器关机或卡死时也能读到电源状态和硬件传感器。需要 Redfish,大约 2016 年以后的企业级硬件基本都有。';
+      'BMC 是主板上的独立管理设备。即使主机已关机或操作系统无响应，它通常仍可访问。配置后，App 可以读取电源状态和硬件传感器。此功能需要 Redfish，大多数 2016 年以后的企业级硬件均支持。';
 
   @override
   String get bmcCert => '证书';
@@ -983,7 +984,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bmcCertUnreviewed => '尚未确认——点击查看证书';
 
   @override
-  String get bmcCertReview => '接收到自签证书, 请对比确认。接受之后,只有这一张证书会被信任。';
+  String get bmcCertReview => '收到自签名证书。接受前请核对指纹；接受后将只信任这张证书。';
 
   @override
   String get bmcCertChanged => '证书不一致。请核对。';
@@ -993,15 +994,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String bmcCertWas(String fingerprint) {
-    return '之前接受的:$fingerprint';
+    return '之前接受的：$fingerprint';
   }
 
   @override
-  String get bmcAddrInvalid => 'BMC 地址必须是一个 URL,例如 https://10.0.0.9';
+  String get bmcAddrInvalid => 'BMC 地址必须是 URL，例如 https://10.0.0.9';
 
   @override
   String get proxyCommandSandboxed =>
-      '此版本运行在沙盒中:命令拿到的是空的家目录,读 ~/.ssh 的命令会失败。DMG 版没有沙盒。';
+      '此版本运行在沙盒中：命令使用的是空白家目录，因此依赖 ~/.ssh 的命令会失败。DMG 版不受此限制。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -1010,7 +1011,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String privateKeyFileSandboxed(String path) {
-    return '此版本无法读取容器外的文件,因此读不到 $path 的密钥。请在设置中导入该密钥,或改用 DMG 版。';
+    return '此版本无法读取沙盒外的文件，因此无法访问 $path 中的密钥。请在设置中导入密钥，或改用 DMG 版。';
   }
 
   @override
@@ -1111,12 +1112,12 @@ class AppLocalizationsZh extends AppLocalizations {
     Object latest,
     Object pm,
   ) {
-    return '已安装 $distro $installed,现有 $latest。更新会重新下载并替换整个容器: $pm 数据会丢失';
+    return '已安装 $distro $installed，新版本为 $latest。更新会重新下载并替换整个容器，$pm 中的数据将丢失。';
   }
 
   @override
   String linuxSystemInUse(Object name) {
-    return '请先关闭 $name 上的终端, 再删除';
+    return '请先关闭 $name 上的终端，再删除';
   }
 
   @override
@@ -1135,7 +1136,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverFilesUnavailableTip =>
-      '需要能连上这台服务器的 SSH,或者安装 server_box_monitor 并开启文件 API。';
+      '需要能通过 SSH 连接这台服务器，或者安装 Monitor agent 并开启文件 API。';
 
   @override
   String get back => '返回';
@@ -1235,7 +1236,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sftpEditorTip =>
-      '如果为空, 使用App内置的文件编辑器.  例如 `vim` (建议根据 `EDITOR` 自动获取).';
+      '如果为空，使用App内置的文件编辑器.  例如 `vim` (建议根据 `EDITOR` 自动获取).';
 
   @override
   String get sftpRmrDirSummary => '在 SFTP 中使用 `rm -r` 来删除文件夹';
@@ -1248,11 +1249,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sftpUnavailableUseScp =>
-      '如果这台设备没有 SFTP 子系统(不少嵌入式设备如此),在服务器设置里把文件传输改为 SCP。';
+      '如果这台设备没有 SFTP 子系统（常见于嵌入式设备），请在服务器设置中将文件传输改为 SCP。';
 
   @override
   String get sshFileTransportTip =>
-      '常规设备用 SFTP。老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统,选 SCP:它只需要 scp 命令,以及带有 find、stat、mv、chmod 等常用文件命令的 shell 环境。';
+      '普通设备建议使用 SFTP。如果老旧或嵌入式设备的 SSH 服务没有 SFTP 子系统，请选择 SCP。SCP 需要 `scp` 命令，以及提供 `find`、`stat`、`mv`、`chmod` 等常用文件命令的 shell 环境。';
 
   @override
   String get specifyDev => '指定设备';
@@ -1798,11 +1799,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Linux 容器内';
+      '让 Agent 在本机运行，但只能操作 ServerBox 安装的 Linux 容器。';
 
   @override
   String macDmgImportedPartly(String path) {
-    return '已导入此前安装版本的数据。下载的文件仍在原处:$path。';
+    return '已导入此前安装版本的数据。下载的文件仍保留在 $path。';
   }
 
   @override
@@ -2525,7 +2526,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskCommentedOut => '已注释';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
+  String scheduledTaskSummaryFmt(num enabled, num total) {
     return '$total 个任务 · $enabled 个已启用';
   }
 
@@ -2876,7 +2877,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiNoResponse => '無回覆內容';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => '遠端桌面';
 
   @override
   String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
@@ -3084,7 +3085,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentAuthMethod => '認證方式';
 
   @override
-  String get agentSshConnectTip => 'Agent 想建立 SSH 連線，請在此輸入密碼';
+  String get agentSshConnectTip => 'Agent 想要建立 SSH 連線。請在此輸入密碼。';
 
   @override
   String get agentAdHocSessions => '暫時連線';
@@ -3148,23 +3149,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get distIconIntroLegal =>
-      '標識僅表示本裝置從遠端系統讀取到的資訊,該資訊可能有誤或已過期,也不代表其衍生版本、重構版本或任何特定版本。識別不出時顯示一個通用圖示。\n\n每個標識均為其各自所有者的商標,此處僅用於指代它所標識的系統。';
+      '標識只根據本裝置從遠端系統讀取的資訊顯示。這些資訊可能不準確或已過期，也不代表某個衍生版本、重建版本或特定版本。無法識別時會顯示通用圖示。\n\n各標識均為其所有者的商標，此處僅用於說明對應的系統。';
 
   @override
-  String get distIconTip => '在每台伺服器旁顯示一個小標識,表示它可能執行的系統';
+  String get distIconTip => '在每台伺服器旁顯示一個小標識，表示它可能執行的系統';
 
   @override
   String get distNameMap => '名稱對應';
 
   @override
   String get distNameMapTip =>
-      '僅用於「託管處的檔名和本應用使用的名稱對不上」的發行版。鍵是本應用使用的名稱,值是實際要取的名稱。沒有缺圖就不用填。';
+      '僅用於「託管處的檔名和本應用使用的名稱對不上」的發行版。鍵是本應用使用的名稱，值是實際要取的名稱。沒有缺圖就不用填。';
 
   @override
   String get logoUrl => 'Logo 位址';
 
   @override
-  String get logoUrlTip => '伺服器詳情頁頂部的大圖,按原色顯示。';
+  String get logoUrlTip => '伺服器詳情頁頂部的大圖，按原色顯示。';
 
   @override
   String get globe => '地球儀';
@@ -3280,7 +3281,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '關閉視窗後，App 會留在選單列或通知區域中，並繼續監控伺服器。關閉此選項後，關閉按鈕會結束 App。';
 
   @override
-  String get bgRunNeedsNotification => '背景執行需要一條常駐通知，而本應用目前沒有通知權限。點擊前往開啟通知權限。';
+  String get bgRunNeedsNotification => '背景執行需要顯示常駐通知，但 App 尚未取得通知權限。點一下即可授權。';
 
   @override
   String get clearAllStatsContent => '確定要清空所有伺服器的連線統計資料嗎？此操作無法撤銷。';
@@ -3523,7 +3524,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get ungrouped => '未分組';
 
   @override
-  String get containerReclaimable => 'Reclaimable';
+  String get containerReclaimable => '可回收';
 
   @override
   String get unused => '未使用';
@@ -3709,14 +3710,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String bmcPowerConfirm(String server, String resetType) {
-    return '要對 $server 執行嗎？將向該服務傳送 \"$resetType\"';
+    return '要對 $server 執行「$resetType」嗎？';
   }
 
   @override
   String get bmcPowerDone => '電源狀態已改變';
 
   @override
-  String get bmcPowerAccepted => '已接受，但電源狀態還沒有改變。graceful 操作取決於作業系統';
+  String get bmcPowerAccepted => '操作已接受，但電源狀態尚未改變。正常關機或重新啟動是否成功取決於作業系統。';
 
   @override
   String get bmcPowerUnsupported => '該服務不允許這個操作的任何類型';
@@ -3750,7 +3751,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get bmcTip =>
-      'BMC 是主機板上一台獨立的電腦,主機作業系統不可達時它仍然可達。在這裡設定後,伺服器關機或當機時也能讀到電源狀態和硬體感測器。需要 Redfish,大約 2016 年以後的企業級硬體基本都有。';
+      'BMC 是主機板上的獨立管理裝置。即使主機已關機或作業系統無回應，它通常仍可存取。設定後，App 可讀取電源狀態與硬體感測器。此功能需要 Redfish，大多數 2016 年以後的企業級硬體都支援。';
 
   @override
   String get bmcCert => '憑證';
@@ -3762,7 +3763,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get bmcCertUnreviewed => '尚未確認——點擊查看憑證';
 
   @override
-  String get bmcCertReview => '接收到自簽憑證，請對比確認。接受之後，只有這一張憑證會被信任。';
+  String get bmcCertReview => '收到自簽憑證。接受前請核對指紋；接受後將只信任這張憑證。';
 
   @override
   String get bmcCertChanged => '憑證不一致。請核對。';
@@ -3772,15 +3773,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String bmcCertWas(String fingerprint) {
-    return '之前接受的:$fingerprint';
+    return '之前接受的：$fingerprint';
   }
 
   @override
-  String get bmcAddrInvalid => 'BMC 位址必須是一個 URL,例如 https://10.0.0.9';
+  String get bmcAddrInvalid => 'BMC 位址必須是 URL，例如 https://10.0.0.9';
 
   @override
   String get proxyCommandSandboxed =>
-      '此版本執行在沙盒中:命令拿到的是空的家目錄，讀 ~/.ssh 的命令會失敗。DMG 版沒有沙盒。';
+      '此版本執行在沙盒中：命令使用的是空白家目錄，因此依賴 ~/.ssh 的命令會失敗。DMG 版不受此限制。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {
@@ -3789,7 +3790,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String privateKeyFileSandboxed(String path) {
-    return '此版本無法讀取容器外的檔案,因此讀不到 $path 的金鑰。請在設定中匯入該金鑰,或改用 DMG 版。';
+    return '此版本無法讀取沙盒外的檔案，因此無法存取 $path 中的金鑰。請在設定中匯入金鑰，或改用 DMG 版。';
   }
 
   @override
@@ -4300,7 +4301,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get serverHistory => '伺服器紀錄';
 
   @override
-  String get portForwardBetaTitle => 'Port Forward (Beta)';
+  String get portForwardBetaTitle => '連接埠轉送（Beta）';
 
   @override
   String get tmuxAutoAttach => 'tmux 自動附加';
@@ -4399,27 +4400,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get processKillTargetChanged => '該處理程序已變更或結束，請重新整理後再試。';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => '名稱、使用者或 PID';
 
   @override
   String processShowKernelThreads(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
-    );
-    return '$_temp0';
+    return '顯示 $count 個核心執行緒';
   }
 
   @override
-  String get processForceKill => 'Force kill';
+  String get processForceKill => '強制終止';
 
   @override
-  String get processStarted => 'Started';
+  String get processStarted => '啟動時間';
 
   @override
-  String get processThreads => 'Threads';
+  String get processThreads => '執行緒';
 
   @override
   String get watchServers => '手錶上的伺服器';
@@ -4483,78 +4478,66 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get systemdUserScopeMissingTip => '該帳號在伺服器上沒有使用者工作階段匯流排，因此只顯示系統 unit。';
 
   @override
-  String get serviceSearchHint => 'Unit name';
+  String get serviceSearchHint => 'Unit 名稱';
 
   @override
-  String get serviceNeedsAttention => 'Needs attention';
+  String get serviceNeedsAttention => '需要注意';
 
   @override
   String serviceOtherUnits(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
-    );
-    return '$_temp0';
+    return '其他 $count 個 unit';
   }
 
   @override
   String get serviceUnit => 'Unit';
 
   @override
-  String get serviceUnitType => 'Type';
+  String get serviceUnitType => '類型';
 
   @override
-  String get serviceScope => 'Scope';
+  String get serviceScope => '範圍';
 
   @override
-  String get serviceStartup => 'Startup';
+  String get serviceStartup => '啟動方式';
 
   @override
   String serviceUpFor(String duration) {
-    return 'up $duration';
+    return '已執行 $duration';
   }
 
   @override
   String serviceDownFor(String duration) {
-    return 'down $duration';
+    return '已停止 $duration';
   }
 
   @override
   String serviceNextIn(String duration) {
-    return 'next $duration';
+    return '$duration 後執行';
   }
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return '已於 $duration 前停止';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return '結束狀態 $code';
   }
 
   @override
-  String get serviceFullJournal => 'Full journal';
+  String get serviceFullJournal => '完整 journal';
 
   @override
-  String get serviceUnitFile => 'Unit file';
+  String get serviceUnitFile => 'Unit 檔案';
 
   @override
   String serviceJournalRecent(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
-    );
-    return '$_temp0';
+    return '最近 $count 行';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable => '此帳號無法讀取 journal';
 
   @override
   String get serverUnreachable => '無法在此伺服器上執行命令';
@@ -4595,11 +4578,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentLocalExecRootfsTip =>
-      '讓 Agent 在本機操作，範圍限於 ServerBox 安裝的 Linux 容器內';
+      '讓 Agent 在本機執行，但只能操作 ServerBox 安裝的 Linux 容器。';
 
   @override
   String macDmgImportedPartly(String path) {
-    return '已匯入先前安裝版本的資料。下載的檔案仍在原處:$path。';
+    return '已匯入先前安裝版本的資料。下載的檔案仍保留在 $path。';
   }
 
   @override
@@ -4880,44 +4863,43 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => '登入狀態';
 
   @override
-  String get userLoginEnabled => 'Login enabled';
+  String get userLoginEnabled => '已允許登入';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => '帳號';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => '安全性';
 
   @override
-  String get userSshKeys => 'SSH keys';
+  String get userSshKeys => 'SSH 金鑰';
 
   @override
-  String get userExpires => 'Expires';
+  String get userExpires => '到期日';
 
   @override
-  String get userNever => 'Never';
+  String get userNever => '永不';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => '已設定';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => '已鎖定';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => '無';
 
   @override
-  String get userSuperuser => 'Superuser';
+  String get userSuperuser => '超級使用者';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => '開啟 shell';
 
   @override
-  String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+  String get userRootChangesWarning => '對 root 的修改會立即套用到所有工作階段。';
 
   @override
   String get userComment => '備註';
@@ -5234,6 +5216,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshAdvancedTip => '備用位址、ProxyCommand、跳板機、檔案傳輸、遠端路徑';
 
   @override
+  String get sshLegacyAlgorithms => '舊版演算法相容模式';
+
+  @override
+  String get sshLegacyAlgorithmsTip =>
+      '適用於只提供 SHA-1 `ssh-rsa` 主機金鑰或 SHA-1 金鑰交換的舊式 SSH 伺服器，例如路由器或交換器。此模式安全性較低，只在裝置確實需要時開啟。';
+
+  @override
   String get appearanceAndPlace => '外觀與位置';
 
   @override
@@ -5298,117 +5287,116 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskSchedule => '執行週期';
 
   @override
-  String get scheduledTaskAdd => 'Add task';
+  String get scheduledTaskAdd => '新增工作';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => '下次執行';
 
   @override
   String scheduledTaskNextInFmt(Object time) {
-    return 'in $time';
+    return '$time 後';
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => '已啟用';
 
   @override
-  String get scheduledTaskCommentedOut => 'Commented out';
+  String get scheduledTaskCommentedOut => '已註解';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+  String scheduledTaskSummaryFmt(num enabled, num total) {
+    return '$total 個工作 · 已啟用 $enabled 個';
   }
 
   @override
-  String get scheduledTaskFilterHint => 'Filter tasks';
+  String get scheduledTaskFilterHint => '篩選工作';
 
   @override
-  String get scheduledTaskPreserved => 'Preserved lines';
+  String get scheduledTaskPreserved => '保留的行';
 
   @override
-  String get scheduledTaskRaw => 'Raw crontab';
+  String get scheduledTaskRaw => '原始 crontab';
 
   @override
-  String get scheduledTaskEnableNow => 'Enable now';
+  String get scheduledTaskEnableNow => '立即啟用';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip => '關閉後，這一行會以註解寫入。';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return '$user 沒有排程工作。在此新增的內容會寫入該帳號的 crontab。';
   }
 
   @override
-  String get scheduledTaskFieldMinute => 'Minute';
+  String get scheduledTaskFieldMinute => '分鐘';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => '小時';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => '每月的日期';
 
   @override
-  String get scheduledTaskFieldMonth => 'Month';
+  String get scheduledTaskFieldMonth => '月份';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => '星期';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => '請設定執行週期。';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => '請輸入指令。';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak => 'crontab 的一行不能包含換行字元。';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro => 'macro 必須是單一字詞，例如 @reboot。';
 
   @override
-  String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+  String get cronErrFieldCount => 'cron 排程必須包含五個欄位，或使用 @reboot 之類的 macro。';
 
   @override
-  String get cronAtBoot => 'At boot';
+  String get cronAtBoot => '開機時';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => '每分鐘';
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return '每 $minutes 分鐘';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return '每小時的 :$minute';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return '每 $hours 小時';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return '每 $hours 小時的 :$minute';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return '每天 $time';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return '週一至週五 $time';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return '每週$day $time';
   }
 
   @override

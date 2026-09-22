@@ -59,18 +59,17 @@ extension _Keyboard on SSHPageState {
         }
       }
       if (event.logicalKey == LogicalKeyboardKey.escape) {
-        // Prevent default behavior and send to terminal
+        // Consume Escape locally after forwarding it to the terminal.
         _handleEscKeyOrBackButton();
-        return true; // Mark as handled so it doesn't propagate
+        return true;
       }
       if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
           event.logicalKey == LogicalKeyboardKey.shiftRight) {
-        // Handle shift key press
         _terminal.keyInput(TerminalKey.shift);
         HapticFeedback.lightImpact();
         return true;
       }
     }
-    return false; // Let other handlers process this event
+    return false;
   }
 }

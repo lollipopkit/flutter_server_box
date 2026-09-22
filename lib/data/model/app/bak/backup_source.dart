@@ -3,22 +3,22 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 
-/// Abstract interface for backup content sources
+/// Reads and writes backup content through a user-selected destination.
 abstract class BackupSource {
-  /// Get content from this source for restore
+  /// Reads backup content for a restore.
   Future<String?> getContent();
 
-  /// Save content to this source for backup
+  /// Writes the backup at [filePath] to this destination.
   Future<void> saveContent(String filePath);
 
-  /// Display name for this source
+  /// Localized name shown for this destination.
   String get displayName;
 
-  /// Icon for this source
+  /// Icon shown for this destination.
   IconData get icon;
 }
 
-/// File-based backup source
+/// Shares backup files and reads files selected by the user.
 class FileBackupSource implements BackupSource {
   @override
   Future<String?> getContent() async {
@@ -37,7 +37,7 @@ class FileBackupSource implements BackupSource {
   IconData get icon => Icons.file_open;
 }
 
-/// Clipboard-based backup source
+/// Copies backups to and restores backups from the clipboard.
 class ClipboardBackupSource implements BackupSource {
   @override
   Future<String?> getContent() async {

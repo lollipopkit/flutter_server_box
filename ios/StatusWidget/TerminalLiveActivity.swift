@@ -9,7 +9,7 @@ import SwiftUI
 import WidgetKit
 import ActivityKit
 
-// Helper to map status strings to a color dot (case-insensitive).
+// Map status strings to indicator colors without case sensitivity.
 @inline(__always)
 private func getStatusDotColor(_ status: String) -> Color {
     switch status.lowercased() {
@@ -24,7 +24,7 @@ private func getStatusDotColor(_ status: String) -> Color {
     }
 }
 
-// Normalize status for display: capitalize first letter only.
+// Normalize a status for display by capitalizing only its first letter.
 @inline(__always)
 private func formatStatus(_ status: String) -> String {
     let trimmed = status.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -34,13 +34,13 @@ private func formatStatus(_ status: String) -> String {
     return head + tail
 }
 
-// Localize known statuses; fall back to formatted original.
+/// Return the label used when the activity's last status is stale.
 @inline(__always)
-/// What is said instead of a status the activity can no longer vouch for.
 private func localizedUnknown() -> String {
     NSLocalizedString("Status unknown", comment: "Live Activity has not been refreshed recently")
 }
 
+// Localize known statuses and format unrecognized values for display.
 private func localizedStatus(_ status: String) -> String {
     switch status.lowercased() {
     case "connected":
@@ -81,12 +81,10 @@ struct TerminalLiveActivity: Widget {
                         .lineLimit(1)
                         .foregroundStyle(.secondary)
                     HStack(spacing: 8) {
-                        // Stale means nothing has refreshed this for five
-                        // minutes, which is the app being killed as often as
-                        // it is the app being suspended — see
-                        // `LiveActivityManager.staleAfter`. Either way the
-                        // status shown is the one from before that, so it is
-                        // not reported as current.
+                        // A stale activity has not been refreshed within
+                        // `LiveActivityManager.staleAfter`, usually because
+                        // the app was suspended or terminated. Do not present
+                        // its last reported status as current.
                         Circle()
                             .fill(context.isStale ? .secondary : getStatusDotColor(state.status))
                             .frame(width: 6, height: 6)
@@ -127,9 +125,8 @@ struct TerminalLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 6) {
                         HStack(spacing: 6) {
-                            // As on the lock screen: a status nothing has
-                            // refreshed for five minutes is not reported as
-                            // current.
+                            // Match the lock screen by treating a stale status
+                            // as unknown.
                             Circle()
                                 .fill(context.isStale ? .secondary : getStatusDotColor(context.state.status))
                                 .frame(width: 6, height: 6)
@@ -176,22 +173,22 @@ struct TerminalLiveActivity_Previews: PreviewProvider {
 
     static var previews: some View {
         Group {
-            // 锁屏 / 通知样式预览
+            // Lock screen and notification preview.
             attributes
                 .previewContext(contentState, viewKind: .content)
                 .previewDisplayName("Lock Screen")
 
-            // 岛屿展开态预览
+            // Expanded Dynamic Island preview.
             attributes
                 .previewContext(contentState, viewKind: .dynamicIsland(.expanded))
                 .previewDisplayName("Dynamic Island • Expanded")
 
-            // 岛屿紧凑态预览
+            // Compact Dynamic Island preview.
             attributes
                 .previewContext(contentState, viewKind: .dynamicIsland(.compact))
                 .previewDisplayName("Dynamic Island • Compact")
 
-            // 岛屿最小态预览
+            // Minimal Dynamic Island preview.
             attributes
                 .previewContext(contentState, viewKind: .dynamicIsland(.minimal))
                 .previewDisplayName("Dynamic Island • Minimal")

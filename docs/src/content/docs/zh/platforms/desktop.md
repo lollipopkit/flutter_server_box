@@ -3,7 +3,7 @@ title: 桌面端功能
 description: macOS、Linux 和 Windows 的平台特定功能
 ---
 
-Server Box 在桌面端提供更大的工作区域、完整键盘支持以及平台相关的窗口功能。
+桌面版 Server Box 提供更大的工作区域、完整键盘支持，以及各平台特有的窗口功能。
 
 ## macOS
 

@@ -29,7 +29,6 @@ where
     pub fn add_point(&mut self, value: T, timestamp: DateTime<Utc>) {
         let point = TimeSeriesData { timestamp, value };
         
-        // Remove oldest point if we're at capacity
         if self.data.len() >= self.max_points {
             self.data.pop_front();
         }

@@ -19,11 +19,12 @@ enum TermSessionStatus {
   }
 }
 
-/// Represents a running SSH terminal session for Android notifications and iOS Live Activities.
+/// A running SSH terminal session shown in Android notifications and iOS Live
+/// Activities.
 class TermSessionInfo {
   final String id;
-  final String title; // e.g. server name
-  final String subtitle; // e.g. user@ip:port
+  final String title; // Usually the server name.
+  final String subtitle; // Usually `user@host:port`.
   final int startTimeMs;
   final TermSessionStatus status;
 

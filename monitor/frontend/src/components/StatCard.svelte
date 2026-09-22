@@ -7,13 +7,13 @@
     icon: Component
     iconClass: string
     label: string
-    /// Primary figure, always one line (truncated if needed)
+    /// Primary figure, truncated to one line if needed.
     value: string
-    /// Secondary line; rendered as a fixed-height row so all cards align
+    /// Secondary line in a fixed-height row so cards remain aligned.
     detail?: string
     valueClass?: string
     class?: string
-    /// Makes the card clickable (drill-down affordance)
+    /// Makes the card clickable and displays its drill-down affordance.
     onclick?: (e: MouseEvent) => void
   }
 

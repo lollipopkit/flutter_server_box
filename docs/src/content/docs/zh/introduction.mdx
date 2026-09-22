@@ -9,9 +9,9 @@ Server Box 是一款使用 Flutter 构建的跨平台服务器管理应用。你
 
 Server Box 为常见的服务器管理任务提供统一界面，适合系统管理员、开发者以及运行家庭服务器的用户。
 
-连接服务器有两种方式：使用 **SSH**，或使用服务器上运行的 **[Monitor agent](/docs/zh/advanced/monitor-agent/)**。SSH 不需要在服务器上安装额外软件，并支持完整功能。Monitor agent 适合不方便开放 SSH 端口的服务器；它会持续保存监控历史，因此即使 App 之前没有连接过，打开图表时也能看到历史数据。
+连接服务器有两种方式：使用 **SSH**，或使用服务器上运行的 **[Monitor agent](/docs/zh/advanced/monitor-agent/)**。SSH 不需要在服务器上安装额外软件，并提供终端、SFTP 和端口转发等功能。Monitor agent 适合不方便开放 SSH 端口的服务器。它还会持续保存监控历史，因此图表可以显示 App 连接前采集的数据。
 
-同一台服务器可以同时配置 SSH 和 Monitor agent。App 会按照设置的优先顺序尝试连接，并在需要时使用另一种方式；两种方式各自提供的功能也会保留。
+同一台服务器可以同时配置 SSH 和 Monitor agent。App 会按照设置的优先顺序尝试连接，并在需要时回退到另一种方式。两种连接提供的功能都会保留。
 
 ## 核心功能
 

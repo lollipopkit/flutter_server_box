@@ -1028,7 +1028,8 @@ fn sensors_parse_windows() {
     assert_eq!(sensors[1].summary(), Some("27.0\u{b0}C"));
 }
 
-/// Get-StorageReliabilityCounter(no Dart reference; new Windows-only parser)
+/// Parses `Get-StorageReliabilityCounter` output. This Windows-only parser has
+/// no Dart equivalent.
 #[test]
 fn disk_smart_parse_windows() {
     let raw = r#"[{"DeviceId": "0", "Temperature": 38, "TemperatureMax": 55, "Wear": 2, "PowerOnHours": 1200}]"#;

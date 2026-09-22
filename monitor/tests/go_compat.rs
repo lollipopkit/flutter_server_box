@@ -1,7 +1,8 @@
-//! Behavior-parity test suite against the Go implementation
+//! Behavior-parity tests for the legacy Go implementation.
 //!
-//! Reference: the Go implementation in git history (model/, web/, res/res.go).
-//! Each test names the Go semantics it covers; see the threshold.rs module comment for the two deliberate divergences (Go-side bugs).
+//! The reference implementation remains available in Git history under
+//! `model/`, `web/`, and `res/res.go`. See `threshold.rs` for the two deliberate
+//! parser differences.
 
 use server_box_monitor::core::config::Config;
 use server_box_monitor::monitoring::parse_disk_metrics;
@@ -226,7 +227,8 @@ fn test_go_rate_invalid_falls_back_to_default() {
 
 // ---------- Rate limiting: gommon rate.Limiter semantics ----------
 
-/// Go runner: Check before pushing (no consumption), Acquire after success (consumes); rejected once the window count is reached
+/// Matches the Go runner: checking does not consume quota, a successful push
+/// does, and the configured count limits the window.
 #[test]
 fn test_rate_limiter_check_acquire() {
     let limiter = PushRateLimiter::new();

@@ -114,9 +114,10 @@ abstract final class TmuxCommandBuilder {
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} new-window -t ${escapeArg(sessionName)}';
 
-  /// Find tmux binary path.
-  /// Uses `bash -i -c` to start an interactive shell that sources ~/.bashrc,
-  /// ensuring PATH includes homebrew/linuxbrew etc.
+  /// Locates tmux, including installations added to `PATH` by `.bashrc`.
+  ///
+  /// The direct probes remain as fallbacks when an interactive Bash shell is
+  /// unavailable.
   static String get findTmux =>
       "bash -i -c 'command -v tmux' 2>/dev/null || "
       'command -v tmux 2>/dev/null || which tmux 2>/dev/null';

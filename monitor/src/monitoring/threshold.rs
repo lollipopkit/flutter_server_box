@@ -1,9 +1,10 @@
-//! Threshold parsing and comparison matching the Go `model/threshold.go` behavior
+//! Parses and evaluates Monitor alert thresholds.
 //!
-//! Formats: `>=80.5%` (percentage), `<100m` (size), `>10m/s` (speed), `>=32c` (temperature).
-//! Two deliberate divergences from Go (Go-side bugs, not replicated):
-//! - Go fails to skip `=` in startIdx when parsing `=`-prefixed thresholds, so they always fail; a single `=` is supported correctly here
-//! - Go temperature rules demanded Size-typed thresholds and always errored; temperature thresholds compare correctly here
+//! Supported formats include `>=80.5%` (percentage), `<100m` (size), `>10m/s`
+//! (speed), and `>=32c` (temperature).
+//!
+//! Unlike the legacy Go implementation, this parser correctly handles a
+//! leading `=` and compares temperature thresholds as temperatures.
 
 use crate::monitoring::size::Size;
 use crate::utils::error::{MonitorError, Result};
@@ -41,7 +42,6 @@ impl Threshold {
             return Err(MonitorError::Monitoring("empty threshold".to_string()));
         }
 
-        // Determine the threshold type (same check order as Go)
         let (threshold_type, end_idx) = if s.contains('%') {
             (ThresholdType::Percent, len - 1)
         } else if s.ends_with("/s") {
@@ -60,7 +60,8 @@ impl Threshold {
             ('>', Some('=')) => (CompareType::GreaterOrEqual, 2),
             ('>', _) => (CompareType::Greater, 1),
             ('=', _) => (CompareType::Equal, 1),
-            // Go zero-value behavior: no operator → Less
+            // Preserve the legacy default: a threshold without an operator
+            // means "less than".
             _ => (CompareType::Less, 0),
         };
 
@@ -83,7 +84,7 @@ impl Threshold {
         })
     }
 
-    /// Go `Threshold.True()`
+    /// Returns whether `now` satisfies this threshold.
     pub fn is_true(&self, now: f64) -> bool {
         match self.compare_type {
             CompareType::Less => now < self.value,

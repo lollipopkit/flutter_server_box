@@ -1274,15 +1274,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
   }
 
-  /// The path, and the field it is typed into.
-  ///
-  /// The path *is* the field: tapping it puts a cursor where the tap was. It
-  /// used to be a label that opened a dialog with an empty box in it, which
-  /// asked the user to retype a path they were looking at in order to change
-  /// one component of it.
-  ///
-  /// A card is what says it can be typed in. Drawn as bare text it read as a
-  /// caption, which is why the go-to it replaces needed a button of its own.
+  /// An editable path field styled as a card to make the interaction clear.
   Widget _buildPathBar() {
     return CardX(
       child: RawAutocomplete<String>(

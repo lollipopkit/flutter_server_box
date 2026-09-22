@@ -669,7 +669,7 @@ class SSHPageState extends ConsumerState<SSHPage>
                 final virtKeyState = ref.watch(virtKeyboardProvider);
                 final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
 
-                // Set the terminal input handler
+                // Keep physical and virtual keyboard state in one notifier.
                 _terminal.inputHandler = virtKeyNotifier;
 
                 return _buildVirtualKey(virtKeyState, virtKeyNotifier);

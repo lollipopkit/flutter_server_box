@@ -30,24 +30,24 @@ class SettingStore extends SqliteStore {
 
   static final instance = SettingStore();
 
-  /// Time out for server connect and more...
+  /// Timeout for server connections and related operations.
   late final timeout = propertyDefault('timeOut', 5);
 
-  /// Record history of SFTP path and etc.
+  /// Whether to remember previously opened SFTP paths.
   late final recordHistory = propertyDefault('recordHistory', true);
 
-  /// Disk view: amount / IO
+  /// Whether the disk view prefers usage amounts over I/O metrics.
   late final serverTabPreferDiskAmount = propertyDefault(
     'serverTabPreferDiskAmount',
     false,
   );
 
-  /// Bigger for bigger font size
-  /// 1.0 means 100%
-  /// Warning: This may cause some UI issues
+  /// UI scale factor. `1.0` means 100%.
+  ///
+  /// Large values may cause layout issues.
   late final textFactor = propertyDefault('textFactor', 1.0);
 
-  /// The seed of color scheme
+  /// Seed color used to generate the color scheme.
   late final colorSeed = propertyDefault('primaryColor', 4287106639);
 
   late final serverStatusUpdateInterval = propertyDefault(
@@ -55,16 +55,16 @@ class SettingStore extends SqliteStore {
     Defaults.updateInterval,
   );
 
-  // Max retry count when connect to server
+  // Maximum number of server connection retries.
   late final maxRetryCount = propertyDefault('maxRetryCount', 2);
 
   // Night mode: 0 -> auto, 1 -> light, 2 -> dark, 3 -> AMOLED, 4 -> AUTO-AMOLED
   late final themeMode = propertyDefault('themeMode', 0);
 
-  // Font file path
+  // Path to the terminal font file.
   late final fontPath = propertyDefault('fontPath', '');
 
-  // Backgroud running (Android)
+  // Whether the app may continue running in the background on Android.
   late final bgRun = propertyDefault('bgRun', isAndroid);
 
   /// Whether closing the desktop window leaves the app running in the tray.
@@ -408,7 +408,7 @@ class SettingStore extends SqliteStore {
   /// Open SFTP with last viewed path
   late final sftpOpenLastPath = propertyDefault('sftpOpenLastPath', true);
 
-  /// Show folders first in SFTP file browser
+  /// Whether the SFTP browser lists directories before files.
   late final sftpShowFoldersFirst = propertyDefault(
     'sftpShowFoldersFirst',
     true,
@@ -421,7 +421,7 @@ class SettingStore extends SqliteStore {
   /// `.config` on this device too.
   late final showHiddenFiles = propertyDefault('showHiddenFiles', false);
 
-  /// Show tip of suspend
+  /// Whether to show the warning before suspending a process.
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
 
   /// Whether collapse UI items by default
@@ -604,25 +604,25 @@ class SettingStore extends SqliteStore {
     toObj: ServerFuncBtn.toStored,
   );
 
-  /// Docker is more popular than podman, set to `false` to use docker
+  /// Whether container commands use Podman instead of Docker.
   late final usePodman = propertyDefault('usePodman', false);
 
-  /// Try to use `sudo` to run docker command
+  /// Whether to try `sudo` when running container commands.
   late final containerTrySudo = propertyDefault('containerTrySudo', true);
 
-  /// Keep previous server status when err occurs
+  /// Whether to retain the previous server status after a refresh error.
   late final keepStatusWhenErr = propertyDefault('keepStatusWhenErr', false);
 
-  /// Parse container stat
+  /// Whether to collect container resource statistics.
   late final containerParseStat = propertyDefault('containerParseStat', true);
 
-  /// Auto refresh container status
+  /// Whether to refresh container status automatically.
   late final containerAutoRefresh = propertyDefault(
     'containerAutoRefresh',
     true,
   );
 
-  /// Use double column servers page on Desktop
+  /// Whether to use a two-column server page on desktop.
   late final doubleColumnServersPage = propertyDefault(
     'doubleColumnServersPage',
     true,
@@ -668,7 +668,7 @@ class SettingStore extends SqliteStore {
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
 
-  /// Display CPU view as progress, also called as old CPU view
+  /// Whether to display CPU usage with the legacy progress-bar view.
   late final cpuViewAsProgress = propertyDefault('cpuViewAsProgress', false);
 
   late final displayCpuIndex = propertyDefault('displayCpuIndex', true);
@@ -742,17 +742,17 @@ class SettingStore extends SqliteStore {
 
   late final letterCache = propertyDefault('letterCache', false);
 
-  /// Set it to `$EDITOR`, `vim` and etc. to use remote system editor in SSH terminal.
-  /// Set it empty to use local editor GUI.
+  /// Remote editor command used in the SSH terminal, such as `$EDITOR` or
+  /// `vim`. Leave empty to use the local GUI editor.
   late final sftpEditor = propertyDefault('sftpEditor', '');
 
-  /// Preferred terminal emulator command on desktop
+  /// Preferred terminal emulator command on desktop.
   late final desktopTerminal = propertyDefault(
     'desktopTerminal',
     'x-terminal-emulator',
   );
 
-  /// Copy the login password to clipboard before launching desktop SSH terminal
+  /// Whether to copy the login password before launching a desktop SSH client.
   late final desktopSshAutoCopyPassword = propertyDefault(
     'desktopSshAutoCopyPassword',
     false,

@@ -1,7 +1,6 @@
-/* ServerBox shared design tokens.
-   Source of truth for both website/ and monitor/frontend; the visual language
-   follows the website: neutral palette, pill buttons, 12px containers,
-   Plus Jakarta Sans with system fallbacks (apps load the webfont themselves).
+/* Shared ServerBox design tokens for website/ and monitor/frontend: a neutral
+   palette, pill buttons, 12px containers, and Plus Jakarta Sans with system
+   fallbacks. Consumers load the webfont themselves.
 
    Dark mode: follows the system by default; an explicit `.dark` / `.light`
    class on <html> overrides the preference (panel theme toggle). */
@@ -56,8 +55,8 @@
   }
 }
 
-/* Semantic utility names (bg-surface, text-fg, border-line, ...): components
-   never reference raw grays, so dark mode needs no `dark:` variants */
+/* Components use semantic colors instead of raw grays, so dark mode does not
+   require component-level `dark:` variants. */
 @theme inline {
   --color-bg: var(--sb-snow);
   --color-surface: var(--sb-white);

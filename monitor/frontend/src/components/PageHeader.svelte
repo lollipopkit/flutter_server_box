@@ -8,11 +8,11 @@
   interface Props {
     title: string
     subtitle?: string
-    /// Rendered immediately before the title text (e.g. an OS icon)
+    /// Rendered immediately before the title text (e.g. an OS icon).
     titleIcon?: Snippet
-    /// Present => shows a back chevron instead of the mobile menu button
+    /// When present, shows a back chevron instead of the mobile menu button.
     onback?: () => void
-    /// Right-aligned slot (buttons, badges, ...)
+    /// Right-aligned actions such as buttons or badges.
     actions?: Snippet
     containerClass?: string
   }

@@ -114,9 +114,9 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
 async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     tracing::debug!("Matches: {:?}", matches);
 
-    // Load configuration and apply CLI overrides
     let mut config = Config::load().await?;
-    // --addr has a default_value: only explicit args/env vars override the config file
+    // `--addr` has a default value, so only an explicit argument or environment
+    // value may override the config file.
     let addr = (matches.value_source("addr") != Some(clap::parser::ValueSource::DefaultValue))
         .then(|| matches.get_one::<String>("addr"))
         .flatten();
@@ -130,16 +130,14 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     config.resolve_jwt_secret()?;
     let config = Arc::new(config);
 
-    // Initialize database
     let db = db::database::init(&config.get_database_url()).await?;
 
-    // First start: create an admin with a random password when users is empty (printed once)
+    // On first start, create an admin with a generated password and print the
+    // password once.
     db::bootstrap::ensure_admin_user(&db, &config.get_database_url()).await?;
 
-    // Create shared state
     let app_state = crate::api::server::AppState::new(config.clone(), db);
 
-    // Start monitoring task
     let monitoring_handle = tokio::spawn({
         let state = app_state.clone();
         async move {
@@ -149,14 +147,12 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         }
     });
 
-    // Start data cleanup scheduler if configured
     if let Some(retention_config) = config.get_monitoring().data_retention
         && let Err(e) = cleanup::start_cleanup_scheduler(app_state.db.clone(), retention_config).await
     {
         tracing::error!("Failed to start cleanup scheduler: {}", e);
     }
 
-    // Run server and wait for shutdown signal concurrently
     tokio::select! {
         result = crate::api::server::start_server(app_state) => {
             if let Err(e) = result {
@@ -168,7 +164,6 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         }
     }
 
-    // Cancel monitoring task
     monitoring_handle.abort();
 
     Ok(())
@@ -243,10 +238,8 @@ async fn handle_config(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 }
 
 async fn handle_cleanup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
-    // Load configuration
     let config = Config::load().await?;
     
-    // Initialize database
     let db = db::database::init(&config.get_database_url()).await?;
     
     let retention_config = config.get_monitoring().data_retention

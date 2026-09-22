@@ -40,14 +40,16 @@ Jump-server candidates and `ProxyCommand` are mutually exclusive. `Spix.validate
 
 ### Legacy algorithms
 
-dartssh2 proposes a modern-only set. RSA host keys are still offered, but only under the RFC 8332 names (`rsa-sha2-256`, `rsa-sha2-512`); the SHA-1 `ssh-rsa` spelling it replaced, the SHA-1 key exchanges, the CBC ciphers and the SHA-1/MD5 MACs are not in the list at all. An old daemon that predates those names — a router's dropbear, a switch — advertises only `ssh-rsa`, and the handshake ends before authentication:
+dartssh2 proposes modern algorithms by default. RSA host keys remain available under the RFC 8332 names (`rsa-sha2-256` and `rsa-sha2-512`). The superseded SHA-1 `ssh-rsa` name, SHA-1 key exchanges, CBC ciphers, and SHA-1/MD5 MACs are excluded. An older daemon—such as Dropbear on a router or switch—may advertise only `ssh-rsa`, causing the handshake to end before authentication:
 
 ```text
 SSHAuthAbortError(... reason: SSHInternalError(
   Bad state: No matching host key algorithm))
 ```
 
-`SshCredential.allowLegacyAlgorithms` is configured per server, turned on in the server editor under **SSH advanced**. The four algorithm categories — host key, key exchange, cipher and MAC — are negotiated independently, and the retired algorithms are appended *after* the modern ones in each. The fallback therefore applies only within the category that has no modern option: a host with a current host key but only a SHA-1 key exchange keeps the modern host key and falls back for the kex alone. These algorithms are retired because they are weak — SHA-1 signatures and key exchanges, and small Diffie-Hellman groups — so opting in allows a weaker connection than the default; it does not let a peer force one onto an otherwise-modern connection, since the KEXINIT name-lists are covered by the exchange hash the host key signs. Turn it on only for a host you trust and that cannot be reached without it.
+`SshCredential.allowLegacyAlgorithms` is a per-server setting under **SSH advanced**. Host key, key exchange, cipher, and MAC algorithms are negotiated independently. Retired algorithms are appended *after* modern algorithms in each category, so fallback occurs only where no modern option is available. For example, a host with a modern host key but only a SHA-1 key exchange retains the modern host key and falls back only for key exchange.
+
+These algorithms were retired because they are weak, including SHA-1 signatures and key exchanges and small Diffie-Hellman groups. Enabling the setting therefore permits a weaker connection. It does not allow a peer to downgrade an otherwise modern connection, because the host-key signature covers the KEXINIT algorithm lists. Enable it only for a trusted host that cannot be reached otherwise.
 
 ### Creating the client
 

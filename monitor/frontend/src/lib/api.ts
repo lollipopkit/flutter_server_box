@@ -89,10 +89,10 @@ async function request<T>(
 
 /// A request that carries bytes rather than JSON.
 ///
-/// Separate from [request] for two reasons: the body is a stream in one
-/// direction or the other and never `res.json()`, and [TIMEOUT_MS] is wrong
+/// Separate from `request` for two reasons: the body is a stream in one
+/// direction or the other and never `res.json()`, and `TIMEOUT_MS` is wrong
 /// for it — ten seconds is generous for a status poll and nothing at all for a
-/// file. Bounded by the caller's own [signal] instead, which is also what a
+/// file. Bounded by the caller's own `signal` instead, which is also what a
 /// cancel button pulls.
 async function fsBytes(
   path: string,
@@ -130,7 +130,7 @@ async function fsBytes(
 
 /// Fetches capabilities for an explicit server entry (rather than
 /// `servers.current`) — used by the sidebar to show every authenticated
-/// entry's OS icon, not just the currently-selected one
+/// entry's OS icon, not just the currently selected one.
 export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSignal): Promise<Capabilities> {
   if (!entry.token) throw new ApiError('Not authenticated')
   requireSecureUrl(entry.url)
@@ -142,9 +142,9 @@ export async function getCapabilitiesFor(entry: ServerEntry, signal?: AbortSigna
   return res.json() as Promise<Capabilities>
 }
 
-/// Fetches status (incl. the agent-reported `name`) for an explicit server
+/// Fetches status, including the agent-reported `name`, for an explicit server
 /// entry — used by the sidebar/settings header so the displayed name always
-/// reflects config.toml's current hostname, never a locally cached copy
+/// reflects `config.toml`, never a locally cached copy.
 export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Promise<StatusResponse> {
   if (!entry.token) throw new ApiError('Not authenticated')
   requireSecureUrl(entry.url)
@@ -157,7 +157,7 @@ export async function getStatusFor(entry: ServerEntry, signal?: AbortSignal): Pr
 }
 
 /// Unauthenticated reachability probe for a candidate URL (add/edit server
-/// form), independent of `servers.current` since the entry may not be saved yet
+/// form), independent of `servers.current` because the entry may not be saved.
 export async function testConnection(url: string): Promise<boolean> {
   try {
     requireSecureUrl(url)
@@ -168,7 +168,7 @@ export async function testConnection(url: string): Promise<boolean> {
   }
 }
 
-/// Logs into an explicit URL (add/edit server form) instead of `servers.current`
+/// Logs into an explicit URL from the add/edit form.
 export async function loginTo(url: string, credentials: LoginRequest): Promise<LoginResponse> {
   requireSecureUrl(url)
   let res: Response
@@ -213,8 +213,7 @@ export const api = {
       'Failed to fetch history',
       signal,
     ),
-  // Platform-only, doesn't change per-sample — fetch once per server
-  // connection, not on the metrics poll cadence
+  // Capabilities are platform-specific, so callers fetch them once per server.
   getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),
   getSettings: () => request<SettingsView>('/settings', {}, 'Failed to fetch settings'),
   updateSettings: (payload: SettingsPayload) =>

@@ -8,16 +8,10 @@
 
   const { text, class: className = '' }: Props = $props()
 
-  /// snarkdown escapes inside code spans but passes raw HTML through
-  /// everywhere else, so `<img onerror=...>` in the input would reach the DOM.
-  /// Escaping first means only snarkdown's own generated tags survive, which
-  /// costs nothing: markdown syntax uses none of these three characters.
-  ///
-  /// Today every caller passes a compiled-in i18n string, so this is defence
-  /// in depth rather than a fix — but "only ever called with trusted input"
-  /// is a property a comment cannot enforce, and the panel can talk to
-  /// several agents at once, where one compromised agent should not be able
-  /// to reach another's session.
+  /// Snarkdown passes raw HTML outside code spans. Escape the input first so
+  /// only markup generated from Markdown syntax reaches the DOM. Current
+  /// callers use compiled-in i18n strings, but this keeps the component safe
+  /// if it later receives agent-provided content.
   const escapeHtml = (raw: string) =>
     raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 

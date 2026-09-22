@@ -11,23 +11,21 @@
   import { serverNames } from '../lib/serverNames.svelte'
   import { displayName, servers, type ServerEntry } from '../lib/servers.svelte'
 
-  // Fetch (once each, not polled) so every authenticated entry can show its
-  // OS icon, not just the currently-selected server
+  // Fetch each authenticated server's capabilities once for its OS icon.
   $effect(() => {
     for (const s of servers.list) void capabilitiesStore.ensure(s.id)
   })
 
-  // Re-fetch names immediately whenever an entry's auth state changes —
-  // otherwise a freshly-logged-in entry would wait up to 30s (the interval
-  // in serverNames) before its real name replaces the placeholder
+  // Refresh immediately after authentication changes instead of waiting for
+  // the next 30-second name poll.
   $effect(() => {
     servers.list.map((s) => s.token).join(',')
     void serverNames.refresh()
   })
 
-  /// Live name from the agent (config.toml), never a locally cached one —
-  /// falls back to a "not connected yet" placeholder for 'local', or the
-  /// URL/id for everything else, until the first successful fetch lands
+  /// Live name from the agent (`config.toml`), never a locally cached one.
+  /// Falls back to a "not connected yet" placeholder for `local`, or the
+  /// URL or ID for everything else, until the first successful fetch.
   function label(s: ServerEntry): string {
     const live = serverNames.byServer[s.id]
     if (live) return live
@@ -57,8 +55,7 @@
     layout.addServerOpen = true
   }
 
-  // Collapse only applies to the desktop rail; the mobile drawer is always
-  // full width with labels, so visibility is CSS-driven (lg:hidden), not #if
+  // Only the desktop rail collapses. CSS keeps the mobile drawer full width.
   onMount(() => {
     // Before the pollers: the list may still hold the assumed same-origin
     // entry, and on a static host there is nothing there to poll.

@@ -54,10 +54,8 @@ abstract final class PrivateKeyUnlock {
 
   /// Whether [pem] cannot be used without a passphrase.
   ///
-  /// False for anything unreadable rather than throwing: whether a key is
-  /// encrypted is asked in order to decide whether to ask for a passphrase,
-  /// and a key that cannot be parsed at all fails later, where the error says
-  /// what it is.
+  /// Returns false instead of throwing for unreadable input. Parsing then fails
+  /// later with the specific key error.
   static bool isLocked(String pem) {
     try {
       return SSHKeyPair.isEncryptedPem(pem);

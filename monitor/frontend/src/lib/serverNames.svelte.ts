@@ -1,8 +1,6 @@
-/// Per-server display name — always the agent's own live-reported name
-/// (config.toml's `name`, or its hostname fallback), never a value the panel
-/// stores or lets the user override locally. Polled periodically (not a
-/// one-shot cache like capabilities) since, unlike platform, the name can
-/// genuinely change if someone edits config.toml while the panel is open.
+/// Per-server display names reported by each agent from `config.toml` or its
+/// hostname fallback. Names are polled because they can change while the panel
+/// is open; platform capabilities use a one-shot cache instead.
 
 import { getStatusFor } from './api'
 import { servers } from './servers.svelte'
@@ -12,7 +10,7 @@ const INTERVAL_MS = 30_000
 const MAX_CONCURRENT = 4
 
 class ServerNamesStore {
-  /// undefined = not fetched yet (or not authenticated)
+  /// `undefined` means not fetched or not authenticated.
   byServer = $state<Record<string, string | undefined>>({})
 
   #timer: ReturnType<typeof setTimeout> | undefined
@@ -32,8 +30,7 @@ class ServerNamesStore {
     this.#cancelPending()
   }
 
-  /// Ticks immediately, independent of the interval timer — called right
-  /// after a login so the name doesn't wait up to 30s to appear
+  /// Fetches immediately after login instead of waiting for the interval.
   async refresh() {
     this.#cancelPending()
     const generation = ++this.#generation

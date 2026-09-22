@@ -212,7 +212,7 @@ class FileTransferWorker {
   }
 
   /// Initiate the worker (new thread) and start listen from messages between
-  /// the threads
+  /// Starts the worker and submits this transfer job.
   Future<void> init() async {
     if (_disposed) return;
     await worker.init(
@@ -227,7 +227,7 @@ class FileTransferWorker {
     worker.sendMessage(job);
   }
 
-  /// Handle the messages coming from the isolate
+  /// Handles prompts and notifications sent by the worker isolate.
   Future<void> mainMessageHandler(
     dynamic data,
     SendPort isolateSendPort,
@@ -280,7 +280,7 @@ class FileTransferWorker {
   }
 }
 
-/// Handle the messages coming from the main
+/// Runs transfer jobs received from the main isolate.
 Future<void> isolateMessageHandler(
   dynamic data,
   SendPort mainSendPort,

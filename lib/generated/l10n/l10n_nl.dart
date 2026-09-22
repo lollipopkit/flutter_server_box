@@ -145,39 +145,39 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiResendTip =>
-      'Everything after this message is discarded — the replies, the commands and their results.';
+      'Alles na dit bericht wordt verwijderd: de antwoorden, de opdrachten en de resultaten daarvan.';
 
   @override
   String get askAiDeleteTip =>
-      'This message and everything after it are removed — the replies, the commands and their results.';
+      'Dit bericht en alles erna worden verwijderd: de antwoorden, de opdrachten en de resultaten daarvan.';
 
   @override
   String get askAiModelTable => 'Model table';
 
   @override
   String get askAiModelTableTip =>
-      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+      'Contextgroottes per modelnaam, afkomstig van models.dev. Eén versie wordt met de app meegeleverd; tik om een nieuwere op te halen.';
 
   @override
-  String get askAiContextFallback => 'not in the table';
+  String get askAiContextFallback => 'niet in de tabel';
 
   @override
   String get askAiCompactAt => 'Summarise at';
 
   @override
   String get askAiCompactAtTip =>
-      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+      'Bepaalt hoe vol de context van het model mag worden voordat eerdere beurten worden samengevat. Eerder samenvatten verliest sneller details; later samenvatten vergroot de kans dat het model een verzoek weigert.';
 
   @override
   String get askAiContextTokens => 'Context size';
 
   @override
   String get askAiContextTokensTip =>
-      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+      'Het aantal tokens dat dit model kan bevatten. Automatisch zoekt dit op naam op; stel zelf een aantal in als je provider een kleiner contextvenster aanbiedt dan het model ondersteunt.';
 
   @override
   String get askAiConversationCompacted =>
-      'Earlier messages were summarised to keep the conversation going.';
+      'Eerdere berichten zijn samengevat om het gesprek voort te zetten.';
 
   @override
   String get askAiRiskReadOnly => 'Alleen lezen';
@@ -1651,7 +1651,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get serverHistory => 'Servergeschiedenis';
 
   @override
-  String get portForwardBetaTitle => 'Port Forward (Beta)';
+  String get portForwardBetaTitle => 'Poortdoorsturing (bèta)';
 
   @override
   String get tmuxAutoAttach => 'tmux automatisch koppelen';
@@ -1776,15 +1776,15 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het proces is gewijzigd of beëindigd. Vernieuw de lijst en probeer het opnieuw.';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => 'Naam, gebruiker of PID';
 
   @override
   String processShowKernelThreads(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
+      other: '$count kernelthreads tonen',
+      one: '1 kernelthread tonen',
     );
     return '$_temp0';
   }
@@ -1875,8 +1875,8 @@ class AppLocalizationsNl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
+      other: '$count andere units',
+      one: '1 andere unit',
     );
     return '$_temp0';
   }
@@ -1910,12 +1910,12 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return '$duration geleden gestopt';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return 'afsluitstatus $code';
   }
 
   @override
@@ -1929,14 +1929,15 @@ class AppLocalizationsNl extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
+      other: 'Laatste $count regels',
+      one: 'Laatste regel',
     );
     return '$_temp0';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable =>
+      'Dit account kan het journal niet lezen';
 
   @override
   String get serverUnreachable => 'Kon geen opdracht uitvoeren op deze server';
@@ -2267,7 +2268,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get userManagerLinuxOnly =>
-      'System user management currently supports Linux servers.';
+      'Beheer van systeemgebruikers wordt momenteel alleen ondersteund op Linux-servers.';
 
   @override
   String get userRegularAccount => 'Regular';
@@ -2319,7 +2320,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+      'Wijzigingen aan root worden meteen in alle sessies van kracht.';
 
   @override
   String get userComment => 'Comment';
@@ -2328,28 +2329,28 @@ class AppLocalizationsNl extends AppLocalizations {
   String get userPrimaryGroup => 'Primary group';
 
   @override
-  String get userSupplementaryGroups => 'Supplementary groups';
+  String get userSupplementaryGroups => 'Aanvullende groepen';
 
   @override
   String get userLoginShell => 'Login shell';
 
   @override
-  String get userCreateHome => 'Create home directory';
+  String get userCreateHome => 'Persoonlijke map maken';
 
   @override
   String get userMoveHome =>
-      'Move the existing home directory when the path changes';
+      'Bestaande persoonlijke map verplaatsen wanneer het pad verandert';
 
   @override
-  String get userRemoveHome => 'Remove the home directory';
+  String get userRemoveHome => 'Persoonlijke map verwijderen';
 
   @override
   String get userPasswordCreateTip =>
-      'Leave the password empty to create a password-locked account.';
+      'Laat het wachtwoord leeg om een account te maken waarop aanmelden met een wachtwoord is geblokkeerd.';
 
   @override
   String get userPasswordEditTip =>
-      'Leave the password empty to keep the existing password.';
+      'Laat het wachtwoord leeg om het bestaande wachtwoord te behouden.';
 
   @override
   String funcUnavailableFmt(Object func) {
@@ -2655,11 +2656,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Uitwijkbestemming, ProxyCommand, springserver, bestandstransport, extern pad';
 
   @override
-  String get sshLegacyAlgorithms => 'Legacy algorithms';
+  String get sshLegacyAlgorithms => 'Verouderde algoritmen';
 
   @override
   String get sshLegacyAlgorithmsTip =>
-      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+      'Voor oude SSH-servers, zoals routers of switches, die alleen een SHA-1-`ssh-rsa`-hostsleutel of SHA-1-sleuteluitwisseling aanbieden. Minder veilig; schakel dit alleen in voor hosts die het nodig hebben.';
 
   @override
   String get appearanceAndPlace => 'Weergave en locatie';
@@ -2716,15 +2717,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get scheduledTaskLinuxOnly =>
-      'Scheduled task management currently supports Linux servers.';
+      'Beheer van geplande taken wordt momenteel alleen ondersteund op Linux-servers.';
 
   @override
   String get scheduledTaskUnavailable =>
-      'crontab is not available on this server.';
+      'crontab is niet beschikbaar op deze server.';
 
   @override
   String get scheduledTaskPreserveTip =>
-      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+      'Opmerkingen, omgevingsvariabelen en niet-herkende regels in deze crontab blijven behouden.';
 
   @override
   String get scheduledTaskSchedule => 'Schedule';
@@ -2747,8 +2748,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+  String scheduledTaskSummaryFmt(num enabled, num total) {
+    String _temp0 = intl.Intl.pluralLogic(
+      total,
+      locale: localeName,
+      other: '$total taken',
+      one: '1 taak',
+    );
+    return '$_temp0 · $enabled ingeschakeld';
   }
 
   @override
@@ -2764,11 +2771,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get scheduledTaskEnableNow => 'Enable now';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip =>
+      'Als dit uitstaat, wordt de regel als commentaar opgeslagen.';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return 'Geen geplande taken voor $user. Wat je hier toevoegt, wordt in de crontab van dit account geschreven.';
   }
 
   @override
@@ -2778,29 +2786,30 @@ class AppLocalizationsNl extends AppLocalizations {
   String get scheduledTaskFieldHour => 'Hour';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => 'Dag van de maand';
 
   @override
   String get scheduledTaskFieldMonth => 'Month';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => 'Dag van de week';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => 'Een planning is vereist.';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => 'Een opdracht is vereist.';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak =>
+      'Een crontab-regel mag geen regeleinden bevatten.';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro => 'Een macro bestaat uit één woord, zoals @reboot.';
 
   @override
   String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+      'Een cron-planning heeft vijf velden, of een macro zoals @reboot.';
 
   @override
   String get cronAtBoot => 'At boot';
@@ -2810,42 +2819,42 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return 'Elke $minutes minuten';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return 'Elk uur om :$minute';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return 'Elke $hours uur';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return 'Elke $hours uur om :$minute';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return 'Elke dag om $time';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return 'Op werkdagen om $time';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return 'Elke $day om $time';
   }
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return 'Elke maand op dag $day om $time';
   }
 
   @override
@@ -2855,20 +2864,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get monitorAgentDefault => 'Agent default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart =>
+      'Wordt van kracht nadat de agent opnieuw is gestart';
 
   @override
   String get monitorCollection => 'Collection';
 
   @override
-  String get extendedInterval => 'Extended cycle interval';
+  String get extendedInterval => 'Interval van uitgebreide cyclus';
 
   @override
-  String get idlePause => 'Pause when nothing is watching';
+  String get idlePause => 'Pauzeren wanneer niemand meekijkt';
 
   @override
   String get idlePauseTip =>
-      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+      'De uitgebreide cyclus voert smartctl, sensors en amd-smi uit. Door deze te pauzeren wanneer geen client gegevens opvraagt, wordt een schijf niet gewekt voor gegevens die niemand leest.';
 
   @override
   String get idlePauseThreshold => 'Idle after';
@@ -2890,10 +2900,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get ruleTip =>
-      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+      'Metriek: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 voor één kern, used / free / avail voor geheugen en rx / tx voor netwerk; bij schijf en temperatuur wordt deze genegeerd. Drempel: een vergelijkingsoperator en een waarde, zoals >=80%, >=70c of >10m/s.';
 
   @override
-  String get pushChannels => 'Notification channels';
+  String get pushChannels => 'Meldingskanalen';
 
   @override
   String get pushType => 'Type';
@@ -2905,37 +2915,37 @@ class AppLocalizationsNl extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'Ingesteld op de agent, niet weergegeven';
 
   @override
-  String get pushSecretKeep => 'Leave blank to keep';
+  String get pushSecretKeep => 'Leeg laten om te behouden';
 
   @override
   String get pushTestTip =>
-      'Sends one notification through this channel as it stands here, saved or not.';
+      'Stuurt één melding via dit kanaal met de huidige instellingen, ongeacht of ze zijn opgeslagen.';
 
   @override
-  String get pushTestSent => 'The channel accepted it';
+  String get pushTestSent => 'Het kanaal heeft de melding geaccepteerd';
 
   @override
-  String get pushTestFailed => 'The channel refused it';
+  String get pushTestFailed => 'Het kanaal heeft de melding geweigerd';
 
   @override
-  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+  String get pushTestMessage => 'Testmelding van ServerBox Monitor';
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'Deze agent heeft geen afzender voor dit kanaaltype, daarom worden de instellingen niet weergegeven. Je kunt het kanaal hier verwijderen of bewerken in config.toml van de agent.';
 
   @override
-  String get pushJsonInvalid => 'is not valid JSON';
+  String get pushJsonInvalid => 'is geen geldige JSON';
 
   @override
   String get dataRetention => 'Data retention';
 
   @override
   String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+      'Als dit uitstaat, verwijdert de agent nooit gegevens en groeit de database onbeperkt.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2944,17 +2954,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get retentionAlerts => 'Keep alerts';
 
   @override
-  String get retentionCleanup => 'Run cleanup every';
+  String get retentionCleanup => 'Opschoning uitvoeren om de';
 
   @override
-  String get retentionMaxDbSize => 'Database size cap';
+  String get retentionMaxDbSize => 'Limiet voor databasegrootte';
 
   @override
-  String get corsOrigins => 'CORS allowed origins';
+  String get corsOrigins => 'Toegestane CORS-origins';
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'Origins van waaruit een browserpaneel deze agent mag aanroepen. Leeg betekent alleen dezelfde origin.';
 
   @override
   String get monitorNoRemoteAccess =>

@@ -146,39 +146,39 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiResendTip =>
-      'Everything after this message is discarded — the replies, the commands and their results.';
+      'Bu mesajdan sonraki her şey silinir: yanıtlar, komutlar ve sonuçları.';
 
   @override
   String get askAiDeleteTip =>
-      'This message and everything after it are removed — the replies, the commands and their results.';
+      'Bu mesaj ve sonrasındaki her şey silinir: yanıtlar, komutlar ve sonuçları.';
 
   @override
   String get askAiModelTable => 'Model table';
 
   @override
   String get askAiModelTableTip =>
-      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+      'Model adına göre bağlam boyutları models.dev üzerinden alınır. Bir tablo uygulamayla birlikte gelir; daha yenisini indirmek için dokunun.';
 
   @override
-  String get askAiContextFallback => 'not in the table';
+  String get askAiContextFallback => 'tabloda yok';
 
   @override
   String get askAiCompactAt => 'Summarise at';
 
   @override
   String get askAiCompactAtTip =>
-      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+      'Önceki konuşmalar özetlenmeden önce model bağlamının ne kadar dolacağı. Erken özetleme ayrıntıları daha çabuk kaybettirir; geç özetlemede ise model isteği reddedebilir.';
 
   @override
   String get askAiContextTokens => 'Context size';
 
   @override
   String get askAiContextTokensTip =>
-      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+      'Bu modelin bağlamında kaç token tutulabileceği. Otomatik seçeneği model adına göre arar; sağlayıcınız modelin desteklediğinden daha kısa bir pencere sunuyorsa bir sayı girin.';
 
   @override
   String get askAiConversationCompacted =>
-      'Earlier messages were summarised to keep the conversation going.';
+      'Konuşmanın sürebilmesi için önceki mesajlar özetlendi.';
 
   @override
   String get askAiRiskReadOnly => 'Salt okunur';
@@ -1647,7 +1647,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverHistory => 'Sunucu geçmişi';
 
   @override
-  String get portForwardBetaTitle => 'Port Forward (Beta)';
+  String get portForwardBetaTitle => 'Port Yönlendirme (Beta)';
 
   @override
   String get tmuxAutoAttach => 'tmux\'a otomatik bağlan';
@@ -1762,15 +1762,15 @@ class AppLocalizationsTr extends AppLocalizations {
       'İşlem değişti veya sonlandı. Listeyi yenileyip tekrar deneyin.';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => 'Ad, kullanıcı veya PID';
 
   @override
   String processShowKernelThreads(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
+      other: '$count kernel iş parçacığını göster',
+      one: '1 kernel iş parçacığını göster',
     );
     return '$_temp0';
   }
@@ -1861,8 +1861,8 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
+      other: '$count diğer unit',
+      one: '1 diğer unit',
     );
     return '$_temp0';
   }
@@ -1896,12 +1896,12 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return '$duration önce durduruldu';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return 'çıkış durumu $code';
   }
 
   @override
@@ -1915,14 +1915,15 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
+      other: 'Son $count satır',
+      one: 'Son satır',
     );
     return '$_temp0';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable =>
+      'Bu hesap journal kayıtlarını okuyamıyor';
 
   @override
   String get serverUnreachable => 'Bu sunucuda komut çalıştırılamadı';
@@ -2251,7 +2252,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get userManagerLinuxOnly =>
-      'System user management currently supports Linux servers.';
+      'Sistem kullanıcı yönetimi şu anda yalnızca Linux sunucularını destekliyor.';
 
   @override
   String get userRegularAccount => 'Regular';
@@ -2303,7 +2304,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+      'root kullanıcısında yapılan değişiklikler tüm oturumlarda hemen geçerli olur.';
 
   @override
   String get userComment => 'Comment';
@@ -2312,28 +2313,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get userPrimaryGroup => 'Primary group';
 
   @override
-  String get userSupplementaryGroups => 'Supplementary groups';
+  String get userSupplementaryGroups => 'Ek gruplar';
 
   @override
   String get userLoginShell => 'Login shell';
 
   @override
-  String get userCreateHome => 'Create home directory';
+  String get userCreateHome => 'Home dizini oluştur';
 
   @override
-  String get userMoveHome =>
-      'Move the existing home directory when the path changes';
+  String get userMoveHome => 'Yol değiştiğinde mevcut home dizinini taşı';
 
   @override
-  String get userRemoveHome => 'Remove the home directory';
+  String get userRemoveHome => 'Home dizinini kaldır';
 
   @override
   String get userPasswordCreateTip =>
-      'Leave the password empty to create a password-locked account.';
+      'Parolayla girişi kilitlenmiş bir hesap oluşturmak için parola alanını boş bırakın.';
 
   @override
   String get userPasswordEditTip =>
-      'Leave the password empty to keep the existing password.';
+      'Mevcut parolayı korumak için alanı boş bırakın.';
 
   @override
   String funcUnavailableFmt(Object func) {
@@ -2630,11 +2630,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Yedek hedef, ProxyCommand, atlama sunucusu, dosya aktarımı, uzak yol';
 
   @override
-  String get sshLegacyAlgorithms => 'Legacy algorithms';
+  String get sshLegacyAlgorithms => 'Eski algoritmalar';
 
   @override
   String get sshLegacyAlgorithmsTip =>
-      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+      'Yalnızca SHA-1 `ssh-rsa` host anahtarı veya SHA-1 anahtar değişimi sunan eski SSH sunucuları (yönlendirici ya da anahtar gibi) içindir. Daha az güvenlidir; yalnızca ihtiyacı olan hostlar için etkinleştirin.';
 
   @override
   String get appearanceAndPlace => 'Görünüm ve konum';
@@ -2691,15 +2691,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get scheduledTaskLinuxOnly =>
-      'Scheduled task management currently supports Linux servers.';
+      'Zamanlanmış görev yönetimi şu anda yalnızca Linux sunucularını destekliyor.';
 
   @override
-  String get scheduledTaskUnavailable =>
-      'crontab is not available on this server.';
+  String get scheduledTaskUnavailable => 'Bu sunucuda crontab kullanılamıyor.';
 
   @override
   String get scheduledTaskPreserveTip =>
-      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+      'Bu crontab içindeki yorumlar, ortam değişkenleri ve tanınmayan satırlar korunur.';
 
   @override
   String get scheduledTaskSchedule => 'Schedule';
@@ -2722,8 +2721,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+  String scheduledTaskSummaryFmt(num enabled, num total) {
+    return '$total görev · $enabled etkin';
   }
 
   @override
@@ -2739,11 +2738,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskEnableNow => 'Enable now';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip =>
+      'Kapalı olduğunda satır yorum satırı olarak yazılır.';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return '$user için zamanlanmış görev yok. Buraya eklenenler bu hesabın crontab dosyasına yazılır.';
   }
 
   @override
@@ -2753,29 +2753,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskFieldHour => 'Hour';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => 'Ayın günü';
 
   @override
   String get scheduledTaskFieldMonth => 'Month';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => 'Haftanın günü';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => 'Bir zamanlama gerekli.';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => 'Bir komut gerekli.';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak => 'Bir crontab satırı satır sonu içeremez.';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro =>
+      'Makro, @reboot gibi tek bir sözcükten oluşmalıdır.';
 
   @override
   String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+      'Cron zamanlaması beş alandan veya @reboot gibi bir makrodan oluşmalıdır.';
 
   @override
   String get cronAtBoot => 'At boot';
@@ -2785,42 +2786,42 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return 'Her $minutes dakikada bir';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return 'Her saat :$minute geçe';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return 'Her $hours saatte bir';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return 'Her $hours saatte bir, :$minute geçe';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return 'Her gün $time saatinde';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return 'Hafta içi $time saatinde';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return 'Her $day, $time saatinde';
   }
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return 'Her ayın $day. günü $time saatinde';
   }
 
   @override
@@ -2830,20 +2831,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get monitorAgentDefault => 'Agent default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart =>
+      'Agent yeniden başlatıldıktan sonra geçerli olur';
 
   @override
   String get monitorCollection => 'Collection';
 
   @override
-  String get extendedInterval => 'Extended cycle interval';
+  String get extendedInterval => 'Genişletilmiş döngü aralığı';
 
   @override
-  String get idlePause => 'Pause when nothing is watching';
+  String get idlePause => 'İzleyen yokken duraklat';
 
   @override
   String get idlePauseTip =>
-      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+      'Genişletilmiş döngü smartctl, sensors ve amd-smi komutlarını çalıştırır. Hiçbir istemci veri istemezken döngüyü duraklatmak, diskin okunmayacak veriler için uyandırılmasını önler.';
 
   @override
   String get idlePauseThreshold => 'Idle after';
@@ -2865,10 +2867,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get ruleTip =>
-      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+      'Metrik: cpu / memory / swap / disk / network / temperature. Eşleştirici: tek bir çekirdek için cpu0, bellek için used / free / avail, ağ için rx / tx; disk ve sıcaklık bunu yok sayar. Eşik: >=80%, >=70c veya >10m/s gibi bir karşılaştırma işleci ve değer.';
 
   @override
-  String get pushChannels => 'Notification channels';
+  String get pushChannels => 'Bildirim kanalları';
 
   @override
   String get pushType => 'Type';
@@ -2880,37 +2882,37 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'Agent üzerinde ayarlı, gösterilmiyor';
 
   @override
-  String get pushSecretKeep => 'Leave blank to keep';
+  String get pushSecretKeep => 'Korumak için boş bırakın';
 
   @override
   String get pushTestTip =>
-      'Sends one notification through this channel as it stands here, saved or not.';
+      'Kaydedilmiş olsun ya da olmasın, kanalın buradaki mevcut ayarlarıyla bir bildirim gönderir.';
 
   @override
-  String get pushTestSent => 'The channel accepted it';
+  String get pushTestSent => 'Kanal bildirimi kabul etti';
 
   @override
-  String get pushTestFailed => 'The channel refused it';
+  String get pushTestFailed => 'Kanal bildirimi reddetti';
 
   @override
-  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+  String get pushTestMessage => 'ServerBox Monitor test bildirimi';
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'Bu Agent, söz konusu kanal türü için bir göndericiye sahip olmadığından ayarları gösterilmiyor. Kanalı buradan kaldırabilir veya Agent\'ın config.toml dosyasında düzenleyebilirsiniz.';
 
   @override
-  String get pushJsonInvalid => 'is not valid JSON';
+  String get pushJsonInvalid => 'geçerli bir JSON değil';
 
   @override
   String get dataRetention => 'Data retention';
 
   @override
   String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+      'Kapalı olduğunda Agent hiçbir şeyi silmez ve veritabanı sınırsız büyür.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2919,17 +2921,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get retentionAlerts => 'Keep alerts';
 
   @override
-  String get retentionCleanup => 'Run cleanup every';
+  String get retentionCleanup => 'Temizleme sıklığı';
 
   @override
-  String get retentionMaxDbSize => 'Database size cap';
+  String get retentionMaxDbSize => 'Veritabanı boyutu sınırı';
 
   @override
-  String get corsOrigins => 'CORS allowed origins';
+  String get corsOrigins => 'CORS için izin verilen origin\'ler';
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'Tarayıcı panelinin bu Agent\'a erişebileceği origin\'ler. Boş bırakılırsa yalnızca aynı origin\'e izin verilir.';
 
   @override
   String get monitorNoRemoteAccess =>

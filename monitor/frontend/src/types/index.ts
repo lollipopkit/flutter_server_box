@@ -1,13 +1,13 @@
 export interface SystemMetrics {
   timestamp: string;
-  // When battery/sensors/disk_smart (the CLI-tool-bound "extended" fields)
-  // were last actually refreshed — distinct from `timestamp`, which updates
-  // every poll even on cycles that just carried the previous reading forward
+  // Last refresh of CLI-backed extended fields such as battery, sensors, and
+  // disk SMART data. `timestamp` updates every poll, including cycles that
+  // carry these readings forward.
   extended_updated_at?: string;
   server_name: string;
   cpu_usage: number;
-  // Wire-compatible with monitor's CpuCoreTime { used, total } (busy/total
-  // ticks); array index is the core number (no id/label on the wire)
+  // Wire-compatible with Monitor's `CpuCoreTime { used, total }`. The array
+  // index identifies the core because the wire format has no ID or label.
   cpu_cores?: { used: number; total: number; usage_percent: number | null }[];
   memory: MemoryMetrics;
   swap: SwapMetrics;
@@ -16,16 +16,16 @@ export interface SystemMetrics {
   temperature?: number;
   temps?: TempReading[];
   sys?: string;
-  // /etc/os-release's ID= and ID_LIKE=. Linux only, and absent on agents
-  // predating them, where `sys` (its PRETTY_NAME line) is all there is.
+  // Linux `/etc/os-release` identifiers. Older agents provide only `sys`
+  // (the `PRETTY_NAME` value).
   os_id?: string;
   os_id_like?: string[];
   cpu_brand?: string;
-  // Detail lists are absent on older agents; treat as optional
+  // Detail lists are optional for compatibility with older agents.
   gpus?: GpuMetrics[];
   disk_details?: DiskDetail[];
   ifaces?: IfaceMetrics[];
-  // Already formatted by the collection script, e.g. "up 3 days, 2:14"
+  // Already formatted by the collector, e.g. "up 3 days, 2:14".
   uptime?: string;
   conn?: ConnMetrics;
   // Cumulative sector counters since boot (not a rate) — see diskio_rate

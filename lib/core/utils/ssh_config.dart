@@ -66,18 +66,16 @@ abstract final class SSHConfig {
     return path;
   }
 
-  /// Get possible SSH config file paths, with macOS-specific handling
+  /// Candidate SSH config paths, including the macOS user-home fallback.
   static List<String> get _possibleConfigPaths {
     final paths = <String>[];
     final homePath = _homePath;
 
     if (homePath != null) {
-      // Standard path
       paths.add('$homePath/.ssh/config');
 
-      // On macOS, also try the actual user home directory
+      // Sandboxed apps may report a container home instead of the user's home.
       if (isMacOS) {
-        // Try to get the real user home directory
         final username = Platform.environment['USER'];
         if (username != null) {
           paths.add('/Users/$username/.ssh/config');
@@ -88,7 +86,7 @@ abstract final class SSHConfig {
     return paths;
   }
 
-  /// Parse SSH config file and return a list of Spi objects
+  /// Parses an SSH config file into server definitions.
   static Future<List<Spi>> parseConfig([String? configPath]) async {
     final (file, exists) = await configExistsAsync(configPath);
     if (!exists || file == null) {
@@ -483,10 +481,9 @@ abstract final class SSHConfig {
     return line.trim();
   }
 
-  /// Check if SSH config file exists, trying multiple possible paths
+  /// Returns the first existing SSH config file from the candidate paths.
   static (File?, bool) configExists([String? configPath]) {
     if (configPath != null) {
-      // If specific path is provided, use it directly
       final homePath = _homePath;
       if (homePath == null) {
         Loggers.app.warning(
@@ -500,7 +497,6 @@ abstract final class SSHConfig {
       return (file, file.existsSync());
     }
 
-    // Try multiple possible paths
     for (final path in _possibleConfigPaths) {
       dprint('Checking SSH config at path: $path');
       final file = File(path);

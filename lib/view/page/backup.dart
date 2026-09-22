@@ -396,7 +396,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 }
                 if (p0) {
                   final token = await SecureStoreProps.githubToken.read();
-                  // Allow empty gistId (will create one on first upload)
+                  // The first upload creates a Gist when no id is stored.
                   final hasToken = token != null && token.isNotEmpty;
                   if (!hasToken) {
                     Toast.show(context.l10n.githubGistTokenEmpty);
@@ -908,9 +908,8 @@ extension on _BackupPageState {
           fn: () async {
             final usedIds = <String>{};
             for (var spi in spis) {
-              // Ensure each server has a unique ID
-
-              // Only generate a new ID if the imported one is empty or already used in importing stage
+              // Preserve valid ids while resolving missing or duplicate ids
+              // within this import.
               final isIdUsed = spi.id.isEmpty || usedIds.contains(spi.id);
               final spiWithId = isIdUsed
                   ? spi.copyWith(id: ShortId.generate())

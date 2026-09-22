@@ -137,21 +137,20 @@ extension _VirtKey on SSHPageState {
         // session, polling for three seconds and giving up in silence.
         final fileSpi = widget.args.spi;
         if (fileSpi == null) return;
-        // get $PWD from SSH session with unique markers
+        // Delimit `$PWD` so unrelated terminal output cannot be mistaken for
+        // the response.
         const marker = 'ServerBoxOutput';
         const markerEnd = 'ServerBoxEnd';
         const pwdCommand = 'echo "$marker:\$PWD:$markerEnd"';
         _terminal.textInput(pwdCommand);
         _terminal.keyInput(TerminalKey.enter);
 
-        // Wait for output with timeout
         String? initPath;
         await Future.delayed(const Duration(milliseconds: 700));
         final startTime = DateTime.now();
         final timeout = const Duration(seconds: 3);
 
         while (initPath == null) {
-          // Check if we've exceeded timeout
           if (DateTime.now().difference(startTime) > timeout) {
             contextSafe?.showRoundDialog(
               title: libL10n.error,
@@ -160,12 +159,11 @@ extension _VirtKey on SSHPageState {
             return;
           }
 
-          // Search for marked output in terminal buffer
+          // Search newest output first because the marker may exist in history.
           final cmds = _terminal.buffer.lines.toList();
           for (final line in cmds.reversed) {
             final lineStr = line.toString();
             if (lineStr.contains(marker) && lineStr.contains(markerEnd)) {
-              // Extract path between markers
               final start =
                   lineStr.indexOf(marker) + marker.length + 1; // +1 for ':'
               final end = lineStr.indexOf(markerEnd) - 1; // -1 for ':'
