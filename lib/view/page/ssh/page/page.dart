@@ -761,35 +761,44 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
-  /// The output as plain lines. A `ListView` so it scrolls with the terminal's
-  /// history; new output is appended at the bottom without scrolling the view,
-  /// so a screen reader user keeps their place.
+  /// The output as plain lines. A single scrolling column of real, laid-out
+  /// rows — not a lazy sliver list, whose off-camera items have no semantics
+  /// and made TalkBack slide past the output in silence. New output appends at
+  /// the bottom without scrolling the view, so a screen reader user keeps
+  /// their place. Only the most recent [_a11yMaxRows] rows are built.
+  static const _a11yMaxRows = 1000;
+
   Widget _buildA11yOutput() {
-    // A `SelectionArea` keeps the terminal's drag-to-select across rows. On its
-    // own it merges every row's semantics into one selection node and TalkBack
-    // slides past it in silence; each row therefore carries its own
-    // `Semantics(label, excludeSemantics: true)`, which replaces the selection
-    // node for that row with a plain, individually readable text node.
+    // A `SelectionArea` keeps the terminal's drag-to-select across rows. On
+    // its own it merges every row's semantics into one selection node; each
+    // row's `Semantics(label, excludeSemantics: true)` replaces that with a
+    // plain, individually readable text node while the gestures stay.
+    final all = _a11yOutput;
+    final rows = all.length > _a11yMaxRows
+        ? all.sublist(all.length - _a11yMaxRows)
+        : all;
     return SelectionArea(
-      child: ListView.builder(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        itemCount: _a11yOutput.length,
-        itemBuilder: (context, index) {
-          final line = _a11yOutput[index];
-          if (line.trim().isEmpty) return const SizedBox.shrink();
-          return Semantics(
-            label: line,
-            excludeSemantics: true,
-            child: Text(
-              line,
-              style: TextStyle(
-                fontSize: _terminalStyle.fontSize,
-                height: _terminalStyle.height,
-                fontFamily: _terminalStyle.fontFamily,
-              ),
-            ),
-          );
-        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final line in rows)
+              if (line.trim().isNotEmpty)
+                Semantics(
+                  label: line,
+                  excludeSemantics: true,
+                  child: Text(
+                    line,
+                    style: TextStyle(
+                      fontSize: _terminalStyle.fontSize,
+                      height: _terminalStyle.height,
+                      fontFamily: _terminalStyle.fontFamily,
+                    ),
+                  ),
+                ),
+          ],
+        ),
       ),
     );
   }
