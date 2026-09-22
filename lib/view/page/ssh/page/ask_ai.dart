@@ -27,7 +27,7 @@ extension _AskAi on SSHPageState {
   String get _recentTerminalContext {
     final selection = _selectedTerminalText;
     if (selection.isNotEmpty) return selection;
-    return _sess.outputTail.trim();
+    return _sess.screenText;
   }
 
   /// Makes this terminal reachable by the Agent session scoped to its server.

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -325,6 +326,7 @@ class TerminalSession {
   static const _flushInterval = Duration(milliseconds: 16);
   static const _flushCharLimit = 32768;
   static const _tailCharLimit = 8192;
+  static const _screenTextLineLimit = 256;
 
   final _buffer = TerminalOutputBuffer();
   Timer? _flushTimer;
@@ -338,6 +340,34 @@ class TerminalSession {
   String get outputTail => _tail;
 
   void clearOutputTail() => _tail = '';
+
+  /// The end of what the terminal shows, as the emulator laid it out.
+  ///
+  /// For a reader that wants what the user is looking at, such as the Agent.
+  /// [outputTail] is the bytes as the shell sent them: colours, window titles
+  /// and cursor moves arrive as escape sequences, a prompt that redraws itself
+  /// is there once per redraw, and an autosuggestion printed and then erased
+  /// reads as typed. Behind [outputTail] by at most one flush.
+  String get screenText {
+    final buffer = terminal.buffer;
+    if (buffer.height == 0) return '';
+    final last = buffer.height - 1;
+    final text = buffer
+        .getText(
+          BufferRangeLine(
+            CellOffset(0, math.max(0, last - _screenTextLineLimit)),
+            // One past the last column: the end of a line range is exclusive.
+            CellOffset(buffer.viewWidth, last),
+          ),
+        )
+        .trim();
+    if (text.length <= _tailCharLimit) return text;
+    // Cut on a line boundary, so what is kept does not start mid-line.
+    final cut = text.indexOf('\n', text.length - _tailCharLimit);
+    return cut < 0
+        ? text.substring(text.length - _tailCharLimit)
+        : text.substring(cut + 1);
+  }
 
   void writeLn(String line) => terminal.write('$line\r\n');
 

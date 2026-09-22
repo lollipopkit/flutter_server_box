@@ -167,9 +167,9 @@ void main() {
       shell.emit('tail');
       await flushed();
 
-      // Read by the sudo prompt detector and the AI helper, both of which want
-      // the last thing printed — a cap that dropped the newest would answer
-      // with whatever scrolled past instead.
+      // Read by the sudo prompt detector, which wants the last thing printed —
+      // a cap that dropped the newest would answer with whatever scrolled past
+      // instead.
       expect(session.outputTail.length, lessThanOrEqualTo(8192));
       expect(session.outputTail.endsWith('tail'), isTrue);
       session.dispose();
@@ -185,6 +185,79 @@ void main() {
       session.clearOutputTail();
 
       expect(session.outputTail, isEmpty);
+      session.dispose();
+    });
+  });
+
+  group('what the screen shows', () {
+    test('escape sequences are applied, not quoted', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+
+      // fish's greeting and prompt, as it sends them: colours, a charset
+      // selection, the working directory and title as OSC 7 and 0, and a
+      // shell-integration mark as OSC 133.
+      shell.emit(
+        'Welcome to fish, the friendly interactive shell\r\n'
+        'Type \x1b[32mhelp\x1b(B\x1b[m for instructions on how to use fish\r\n'
+        '\x1b]7;file://hk/home/lk\x07\x1b]0;~\x07\x1b[30m\x1b(B\x1b[m'
+        '\x1b]133;A;special_key=1\x07\x1b[92mlk\x1b(B\x1b[m@\x1b(B\x1b[mhk'
+        '\x1b(B\x1b[m \x1b[32m~\x1b(B\x1b[m\x1b(B\x1b[m> \x1b[K\x1b[?2004h',
+      );
+      await flushed();
+
+      expect(
+        session.screenText,
+        'Welcome to fish, the friendly interactive shell\n'
+        'Type help for instructions on how to use fish\n'
+        'lk@hk ~>',
+      );
+      session.dispose();
+    });
+
+    test('an autosuggestion erased is not read as typed', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+
+      // `l` typed, `s -la` suggested in grey with the cursor put back after
+      // the `l`, then the suggestion cleared when the next key did not match.
+      shell.emit('\$ l\x1b[90ms -la\x1b[0m\x1b[5D');
+      shell.emit('\x1b[K');
+      await flushed();
+
+      expect(session.screenText, '\$ l');
+      expect(session.outputTail, contains('s -la'));
+      session.dispose();
+    });
+
+    test('a line redrawn in place is read once, as it ends', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+
+      shell.emit('progress 10%\rprogress 100%\r\ndone');
+      await flushed();
+
+      expect(session.screenText, 'progress 100%\ndone');
+      session.dispose();
+    });
+
+    test('it is bounded, keeping the end in whole lines', () async {
+      final session = TerminalSession(source: ServerSource(ssh));
+      final shell = _FakeShell();
+      session.bindForeground(shell);
+
+      for (var i = 0; i < 200; i++) {
+        shell.emit('${'$i'.padLeft(3, '0')} ${'x' * 60}\r\n');
+      }
+      await flushed();
+
+      final text = session.screenText;
+      expect(text.length, lessThanOrEqualTo(8192));
+      expect(text, endsWith('199 ${'x' * 60}'));
+      expect(text.split('\n').first, matches(RegExp(r'^\d{3} x{60}$')));
       session.dispose();
     });
   });
