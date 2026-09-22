@@ -997,8 +997,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       }
     });
 
+    // The `Scaffold`'s colour, which `toAmoled` overrides and
+    // `colorScheme.surface` is not — the same as the Agent tab and its history
+    // sheet, so this panel is not the one Material grey surface under AMOLED.
     final content = Material(
-      color: theme.colorScheme.surface,
+      color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
           _buildHeader(context, theme, session),
