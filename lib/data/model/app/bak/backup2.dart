@@ -566,12 +566,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     Map<String, String> serverIds,
   ) {
     final restored = Map<String, Object?>.from(history);
-    final serverHistory = restored['sshServerHistory'];
-    if (serverHistory is List) {
-      restored['sshServerHistory'] = [
-        for (final id in serverHistory) id is String ? serverIds[id] ?? id : id,
-      ];
-    }
+    // This key belonged to the retired recent-server dialog. Older backups
+    // may still contain it, but restoring one must not put unused history back
+    // into the database after the local migration removed it.
+    // TODO: Remove once supported backups can no longer contain this key.
+    restored.remove('sshServerHistory');
     final lastPaths = restored['sftpLastPath'];
     if (lastPaths is Map) {
       restored['sftpLastPath'] = {
@@ -766,7 +765,9 @@ Set<String> _mergeSqliteStore(
       // timestamp for was never written and never deleted, so the backup's
       // copy is the only copy — `0 <= 0` used to drop it, which is every entry
       // of every envelope that carries no timestamps.
-      if (!force && currentTimestamp > 0 && backupTimestamp <= currentTimestamp) {
+      if (!force &&
+          currentTimestamp > 0 &&
+          backupTimestamp <= currentTimestamp) {
         continue;
       }
       final value = backupData[key];

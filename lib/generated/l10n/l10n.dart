@@ -2926,12 +2926,6 @@ abstract class AppLocalizations {
   /// **'By join time'**
   String get sortByJoinTime;
 
-  /// No description provided for @serverHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Server history'**
-  String get serverHistory;
-
   /// No description provided for @portForwardBetaTitle.
   ///
   /// In en, this message translates to:

@@ -1649,9 +1649,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sortByJoinTime => 'По времени добавления';
 
   @override
-  String get serverHistory => 'История сервера';
-
-  @override
   String get portForwardBetaTitle => 'Перенаправление портов (бета)';
 
   @override

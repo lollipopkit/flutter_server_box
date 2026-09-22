@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -14,6 +15,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/server_dist.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 
@@ -93,10 +95,7 @@ void main() {
     }
   }
 
-  test('a server rename rewrites history and saved tab ids', () {
-    Stores.history.sshServerHistory
-      ..add('other')
-      ..add('server-old');
+  test('a server rename rewrites saved tab ids', () {
     Stores.history.sshTabs.put(
       jsonEncode([
         {'sourceId': 'server-old', 'tmuxSession': 'work'},
@@ -106,7 +105,6 @@ void main() {
 
     Stores.history.renameSshServer('server-old', 'server-new');
 
-    expect(Stores.history.sshServerHistory.all, ['server-new', 'other']);
     expect(restored().map((entry) => entry['sourceId'] ?? entry['serverId']), [
       'server-new',
       'server-new',
@@ -207,6 +205,37 @@ void main() {
     await pump(tester);
 
     expect(find.byType(SSHTabPage), findsOneWidget);
+  });
+
+  testWidgets('terminal settings are editable from the terminal page', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    expect(
+      find.byKey(const ValueKey('terminal-settings')),
+      findsOneWidget,
+      reason: 'a split terminal page should not show the action twice',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('terminal-settings')).hitTestable().first,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(SettingsSectionPage), findsOneWidget);
+    expect(find.text(l10n.wakeLock), findsOneWidget);
+
+    final wakeLock = find.ancestor(
+      of: find.text(l10n.wakeLock),
+      matching: find.byType(ListTile),
+    );
+    await tester.tap(
+      find.descendant(of: wakeLock, matching: find.byType(Switch)),
+    );
+    await tester.pump();
+
+    expect(Stores.setting.sshWakeLock.fetch(), isFalse);
   });
 
   testWidgets('the local shell comes back where the platform has one', (

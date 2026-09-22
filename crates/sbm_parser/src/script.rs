@@ -1145,7 +1145,8 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
          \x20       $p = Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q) -RedirectStandardOutput $o -RedirectStandardError $e -PassThru\n\
          \x20       $deadline = [DateTime]::UtcNow.AddSeconds(5)\n\
          \x20       while (-not $p.HasExited -and [DateTime]::UtcNow -lt $deadline -and (-not (Test-Path $o) -or (Get-Item $o).Length -le {CUSTOM_CMD_MAX_OUTPUT_BYTES})) {{ Start-Sleep -Milliseconds 50 }}\n\
-         \x20       if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null; $p.WaitForExit() }}\n\
+         \x20       if (-not $p.HasExited) {{ taskkill /PID $p.Id /T /F | Out-Null }}\n\
+         \x20       $p.WaitForExit()\n\
          \x20       [Console]::Out.Write('{CUSTOM_CMD_OUTPUT_PREFIX}')\n\
          \x20       if (Test-Path $o) {{\n\
          \x20         $s = [IO.File]::OpenRead($o)\n\

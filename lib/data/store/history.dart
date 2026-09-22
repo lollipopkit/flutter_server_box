@@ -29,14 +29,6 @@ class _ListHistory {
   }
 
   void clear() => _store.set(_name, const <String>[]);
-
-  void replace(String oldValue, String newValue) {
-    final history = all;
-    final index = history.indexOf(oldValue);
-    if (index < 0) return;
-    history[index] = newValue;
-    _store.set(_name, history.toSet().toList());
-  }
 }
 
 class _MapHistory {
@@ -63,8 +55,6 @@ class HistoryStore extends SqliteStore {
   static final instance = HistoryStore();
 
   void renameSshServer(String oldId, String newId) {
-    sshServerHistory.replace(oldId, newId);
-
     final saved = sshTabs.fetch();
     if (saved.isEmpty) return;
     try {
@@ -88,11 +78,6 @@ class HistoryStore extends SqliteStore {
   late final sftpGoPath = _ListHistory(store: this, name: 'sftpPath');
 
   late final sftpLastPath = _MapHistory(store: this, name: 'sftpLastPath');
-
-  late final sshServerHistory = _ListHistory(
-    store: this,
-    name: 'sshServerHistory',
-  );
 
   /// The terminal tabs that were open, as JSON.
   ///

@@ -565,7 +565,6 @@
   "portForward_deleteConfirmFmt": "{name} silinsin?",
   "sponsor": "Sponsor ol",
   "sortByJoinTime": "Əlavə edilmə vaxtına görə",
-  "serverHistory": "Server tarixçəsi",
   "portForwardBetaTitle": "Port yönləndirmə (beta)",
   "tmuxAutoAttach": "tmux sessiyasına avtomatik qoşulma",
   "tmuxAuto": "Avtomatik tmux",

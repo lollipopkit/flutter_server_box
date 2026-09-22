@@ -224,6 +224,23 @@ final typedField = find.byWidgetPredicate(
       expect(find.text('Try using sudo'), findsOneWidget);
     });
 
+    testWidgets('detaches focused fields before a lifecycle change', (
+      tester,
+    ) async {
+      await pump(tester, _MapBackend(const {}));
+      await tester.tap(find.byKey(FileBrowserPage.pathFieldKey));
+      await tester.pump();
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(
+        AppLifecycleState.inactive,
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('offers the roots the far side will serve', (tester) async {
       // The case this exists for: a tab restored onto a path the agent's roots
       // no longer cover. Retrying can only be refused again; the roots are the

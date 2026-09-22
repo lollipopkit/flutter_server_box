@@ -33,6 +33,15 @@ void main() {
   test('a refusal is told from an absence, whichever words it uses', () {
     expect(classifyFileError('Permission denied'), FileIssue.denied);
     expect(classifyFileError('Access denied'), FileIssue.denied);
+    expect(
+      classifyFileError(
+        PathAccessException(
+          '/Users/test/Documents/ServerBox',
+          const OSError('Operation not permitted', 1),
+        ),
+      ),
+      FileIssue.denied,
+    );
     // What a server sends when it has decided not to be specific.
     expect(classifyFileError('failure'), FileIssue.denied);
     expect(classifyFileError('No such file'), FileIssue.notFound);

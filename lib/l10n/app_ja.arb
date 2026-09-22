@@ -475,7 +475,6 @@
   "portForward_remotePort": "リモートポート",
   "portForward_deleteConfirmFmt": "{name} を削除しますか？",
   "sortByJoinTime": "追加した順",
-  "serverHistory": "サーバー履歴",
   "tmuxAutoAttach": "tmux に自動アタッチ",
   "tmuxAuto": "自動 tmux",
   "tmuxAutoTip": "SSH 接続時に tmux を自動で開始またはアタッチします",

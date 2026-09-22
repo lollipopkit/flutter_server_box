@@ -1648,9 +1648,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sortByJoinTime => 'Op moment van toevoegen';
 
   @override
-  String get serverHistory => 'Servergeschiedenis';
-
-  @override
   String get portForwardBetaTitle => 'Poortdoorsturing (bèta)';
 
   @override
