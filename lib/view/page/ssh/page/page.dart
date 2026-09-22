@@ -534,7 +534,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       // Fill the list with what is already on screen — a session that has
       // been running is not blank. Direct assignment, not `setState`: this
       // runs inside `build`, and the frame is about to render the list.
-      _a11yOutput = _terminal.buffer.getText().split('\n');
+      _a11yOutput = _readA11yLines();
       // Whatever is already on the input line — prompt, or a command typed
       // earlier with the virtual keys — starts in the field, so it is not
       // silently buried under later edits. The user trims the prompt part.
@@ -754,9 +754,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// Accessibility mode: the output as a scrollable, selectable text list,
   /// a standard input field beneath it, and the virtual keys below that.
   ///
-  /// The terminal canvas is kept off-stage — never painted, and excluded from
-  /// the semantics tree — so the session keeps its size and history while the
-  /// screen reader reads the text view instead.
+  /// The terminal canvas is kept in the tree, laid out at its real size but
+  /// invisible and excluded from semantics, so the session keeps its resize,
+  /// history and data flow while the screen reader reads the text view.
   Widget _buildA11yBody(bool hasBg) {
     return Column(
       children: [
@@ -773,12 +773,10 @@ class SSHPageState extends ConsumerState<SSHPage>
                   child: Opacity(opacity: 0, child: _buildTerminalView(hasBg)),
                 ),
               ),
-              Positioned.fill(
-                child: ColoredBox(
-                  color: hasBg ? Colors.transparent : _terminalTheme.background,
-                  child: _buildA11yOutput(),
-                ),
-              ),
+              // The output paints no background of its own — same as the
+              // canvas, which runs at backgroundOpacity 0 and shows the
+              // Scaffold colour or the background picture behind it.
+              Positioned.fill(child: _buildA11yOutput()),
             ],
           ),
         ),
@@ -787,45 +785,43 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
-  /// The output as plain lines. A single scrolling column of real, laid-out
-  /// rows — not a lazy sliver list, whose off-camera items have no semantics
-  /// and made TalkBack slide past the output in silence. New output appends at
-  /// the bottom without scrolling the view, so a screen reader user keeps
-  /// their place. Only the most recent [_a11yMaxRows] rows are built.
-  static const _a11yMaxRows = 1000;
-
+  /// The output as plain lines in a lazy list: only the on-camera rows exist,
+  /// so the screen reader walks a short, ordered set of focusable rows instead
+  /// of thousands of nodes at once. New output appends at the bottom and the
+  /// view follows it only while parked at the bottom (see
+  /// [_a11yIsAtBottom]); scrolling up to read history is never interrupted.
   Widget _buildA11yOutput() {
     // A `SelectionArea` keeps the terminal's drag-to-select across rows. On
     // its own it merges every row's semantics into one selection node; each
     // row's `Semantics(label, excludeSemantics: true)` replaces that with a
     // plain, individually readable text node while the gestures stay.
-    final all = _a11yOutput;
-    final rows = all.length > _a11yMaxRows
-        ? all.sublist(all.length - _a11yMaxRows)
-        : all;
     return SelectionArea(
-      child: SingleChildScrollView(
+      child: ListView.builder(
         controller: _a11yScrollCtrl,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final line in rows)
-              if (line.trim().isNotEmpty)
-                Semantics(
-                  label: line,
-                  excludeSemantics: true,
-                  child: Text(
-                    line,
-                    style: TextStyle(
-                      fontSize: _terminalStyle.fontSize,
-                      height: _terminalStyle.height,
-                      fontFamily: _terminalStyle.fontFamily,
-                    ),
-                  ),
-                ),
-          ],
-        ),
+        itemCount: _a11yOutput.length,
+        itemBuilder: (context, index) {
+          final line = _a11yOutput[index];
+          // Blank rows are real terminal rows and must keep their vertical
+          // gap, but carry no label for the reader to stop on.
+          if (line.isEmpty) {
+            return SizedBox(
+              height: _terminalStyle.fontSize * _terminalStyle.height,
+            );
+          }
+          return Semantics(
+            label: line,
+            excludeSemantics: true,
+            child: Text(
+              line,
+              style: TextStyle(
+                fontSize: _terminalStyle.fontSize,
+                height: _terminalStyle.height,
+                fontFamily: _terminalStyle.fontFamily,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -912,9 +908,16 @@ class SSHPageState extends ConsumerState<SSHPage>
     for (var i = 0; i < oldMidLen; i++) {
       _terminal.keyInput(TerminalKey.delete);
     }
-    // 3. Type the part the field added.
+    // 3. Add the part the field gained. A multi-line addition is a paste
+    // (pasting a script into the field), so it goes through the terminal's
+    // own `paste` and gets bracketed — otherwise the shell runs each line as
+    // a command. A single-line addition is plain typing.
     if (newMid.isNotEmpty) {
-      _terminal.textInput(newMid);
+      if (newMid.contains('\n')) {
+        _terminal.paste(newMid);
+      } else {
+        _terminal.textInput(newMid);
+      }
     }
 
     _a11yLastInputText = newText;
@@ -1006,10 +1009,19 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yScrollCtrl.jumpTo(_a11yScrollCtrl.position.maxScrollExtent);
   }
 
+  /// Reads the buffer exactly the way the terminal canvas paints it: one
+  /// entry per screen row in `buffer.lines` (scrollback plus viewport), empty
+  /// rows included. Only the rendering changes in accessibility mode — the
+  /// source is the terminal's own line list, not a re-split text dump.
+  List<String> _readA11yLines() {
+    final buffer = _terminal.buffer;
+    return [for (var i = 0; i < buffer.height; i++) buffer.lines[i].getText()];
+  }
+
   void _refreshA11yOutput() {
     if (!mounted || !Stores.setting.sshA11yMode.fetch()) return;
     final buffer = _terminal.buffer;
-    final lines = buffer.getText().split('\n');
+    final lines = _readA11yLines();
     final oldLines = _a11yOutput;
     if (!_sameLines(lines, oldLines)) {
       // Follow fresh output only while the reader is parked at the bottom;
@@ -1101,7 +1113,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   void _announceCursorLineNow() {
     if (!mounted) return;
     final buffer = _terminal.buffer;
-    final lines = buffer.getText().split('\n');
+    final lines = _readA11yLines();
     final cursor = buffer.absoluteCursorY;
     if (cursor < 0 || cursor >= lines.length) return;
     final text = lines[cursor].trim();

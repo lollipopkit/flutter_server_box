@@ -424,7 +424,6 @@
   "sshA11yModeTip": "以純文字呈現終端機輸出，並提供輸入框和帶標籤的按鍵，方便螢幕閱讀器使用者使用。",
   "sshA11yInputHint": "輸入命令後按 Enter",
   "sshA11yCursorPrefix": "選中",
-  "sshA11yLineCopied": "已複製該行到剪貼簿",
   "supportFmtArgs": "支援以下格式化參數：",
   "suspendTip": "suspend 功能需要 root 權限及 systemd 支援。",
   "switchTo": "切換到 {val}",

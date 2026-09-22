@@ -2644,12 +2644,6 @@ abstract class AppLocalizations {
   /// **'Selected'**
   String get sshA11yCursorPrefix;
 
-  /// No description provided for @sshA11yLineCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Line copied to clipboard'**
-  String get sshA11yLineCopied;
-
   /// No description provided for @supportFmtArgs.
   ///
   /// In en, this message translates to:

@@ -1403,9 +1403,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshA11yCursorPrefix => 'Selected';
 
   @override
-  String get sshA11yLineCopied => 'Line copied to clipboard';
-
-  @override
   String get supportFmtArgs => '다음 형식 매개변수가 지원됩니다:';
 
   @override
