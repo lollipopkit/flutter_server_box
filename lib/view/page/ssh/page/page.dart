@@ -10,7 +10,6 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
-import 'package:characters/characters.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
@@ -349,8 +348,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
 
-  Future<void> openAgentFromToolbar() =>
-      _showAskAiPanel(autoStart: false);
+  Future<void> openAgentFromToolbar() => _showAskAiPanel(autoStart: false);
 
   @override
   void dispose() {
@@ -519,9 +517,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     // far side a `SIGWINCH` for every one — so this one stands down rather
     // than drawing a second copy nobody is looking at.
     final floating = ref.watch(
-      terminalShellProvider.select(
-        (shell) => identical(shell?.session, _sess),
-      ),
+      terminalShellProvider.select((shell) => identical(shell?.session, _sess)),
     );
     if (floating) return _buildFloatedAway();
 
@@ -539,8 +535,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       final currentLine = _terminal.buffer.currentLine.toString();
       if (currentLine.isNotEmpty) {
         _a11yInputCtrl.text = currentLine;
-        _a11yInputCtrl.selection =
-            TextSelection.collapsed(offset: currentLine.length);
+        _a11yInputCtrl.selection = TextSelection.collapsed(
+          offset: currentLine.length,
+        );
         _a11yLastInputText = currentLine;
         _a11yLastCursor = currentLine.characters.length;
       }
@@ -754,10 +751,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         Expanded(
           child: Stack(
             children: [
-              Offstage(
-                offstage: true,
-                child: _buildTerminalView(hasBg),
-              ),
+              Offstage(offstage: true, child: _buildTerminalView(hasBg)),
               Positioned.fill(child: _buildA11yOutput()),
             ],
           ),
@@ -861,17 +855,16 @@ class SSHPageState extends ConsumerState<SSHPage>
     // Common prefix, then common suffix — the middle is the only thing that
     // actually changed.
     var p = 0;
-    while (
-        p < oldChars.length &&
+    while (p < oldChars.length &&
         p < newChars.length &&
         oldChars[p] == newChars[p]) {
       p++;
     }
     var s = 0;
-    while (
-        s < oldChars.length - p &&
+    while (s < oldChars.length - p &&
         s < newChars.length - p &&
-        oldChars[oldChars.length - 1 - s] == newChars[newChars.length - 1 - s]) {
+        oldChars[oldChars.length - 1 - s] ==
+            newChars[newChars.length - 1 - s]) {
       s++;
     }
     final oldMidLen = oldChars.length - p - s;
@@ -1008,7 +1001,9 @@ class SSHPageState extends ConsumerState<SSHPage>
         final input = line.substring(_a11yPromptText.length);
         _a11ySyncing = true;
         _a11yInputCtrl.text = input;
-        _a11yInputCtrl.selection = TextSelection.collapsed(offset: input.length);
+        _a11yInputCtrl.selection = TextSelection.collapsed(
+          offset: input.length,
+        );
         _a11ySyncing = false;
         _a11yLastInputText = input;
         _a11yLastCursor = input.length;
@@ -1027,8 +1022,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (cursor < 0 || cursor >= lines.length) return;
     final text = lines[cursor].trim();
     if (text.isEmpty) return;
-    final prevText =
-        cursor < oldLines.length ? oldLines[cursor].trim() : null;
+    final prevText = cursor < oldLines.length ? oldLines[cursor].trim() : null;
     if (prevText == null || prevText == text) return;
     _a11yLastAnnounced = text;
     _announceA11y(text);
@@ -1045,8 +1039,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   void _announceCursorLine() {
     if (!Stores.setting.sshA11yMode.fetch()) return;
     _a11yAnnounceDebounce?.cancel();
-    _a11yAnnounceDebounce =
-        Timer(const Duration(milliseconds: 150), _announceCursorLineNow);
+    _a11yAnnounceDebounce = Timer(
+      const Duration(milliseconds: 150),
+      _announceCursorLineNow,
+    );
   }
 
   void _announceCursorLineNow() {
@@ -1067,7 +1063,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   void _announceA11y(String message) {
     _a11yAnnounceDebounce?.cancel();
     _a11yAnnounceDebounce = Timer(const Duration(milliseconds: 200), () {
-      if (mounted) SemanticsService.announce(message, Directionality.of(context));
+      if (mounted) {
+        SemanticsService.sendAnnouncement(
+          PlatformDispatcher.instance.views.first,
+          message,
+          Directionality.of(context),
+        );
+      }
     });
   }
 
@@ -1178,9 +1180,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         tags: tags.vn,
         itemsBuilder: (tag) {
           if (tag == TagSwitcher.kDefaultTag) return snippets;
-          return snippets
-              .where((e) => e.tags?.contains(tag) ?? false)
-              .toList();
+          return snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
         },
         display: (snippet) => snippet.name,
       );
@@ -1360,9 +1360,7 @@ class SSHPageState extends ConsumerState<SSHPage>
                 width: i == current ? 13 : 5,
                 height: 3,
                 decoration: BoxDecoration(
-                  color: i == current
-                      ? scheme.primary
-                      : scheme.outlineVariant,
+                  color: i == current ? scheme.primary : scheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1587,10 +1585,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     return [
       for (var at = 0; at < _virtKeysList.length; at += perPage)
-        _virtKeysList.sublist(
-          at,
-          math.min(at + perPage, _virtKeysList.length),
-        ),
+        _virtKeysList.sublist(at, math.min(at + perPage, _virtKeysList.length)),
     ];
   }
 

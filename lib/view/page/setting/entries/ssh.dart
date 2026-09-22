@@ -92,9 +92,7 @@ extension _SSH on _AppSettingsPageState {
               ),
             Text(l10n.sshConfigServersToImport('${summary.toImport}')),
             const SizedBox(height: 16),
-            ...resolved.map(
-              (s) => Text('• ${s.name} (${s.displayAddr})'),
-            ),
+            ...resolved.map((s) => Text('• ${s.name} (${s.displayAddr})')),
           ],
         ),
       ),
@@ -185,10 +183,7 @@ extension _SSH on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(MingCute.ear_line),
       title: Text(l10n.sshA11yMode),
-      subtitle: Text(
-        l10n.sshA11yModeTip,
-        style: UIs.textGrey,
-      ),
+      subtitle: Text(l10n.sshA11yModeTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sshA11yMode),
     );
   }
@@ -526,10 +521,7 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildTmuxAutoToggle() {
     return ListTile(
       title: Text(l10n.tmuxAuto),
-      subtitle: Text(
-        l10n.tmuxAutoTip,
-        style: UIs.textGrey,
-      ),
+      subtitle: Text(l10n.tmuxAutoTip, style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.tmuxAuto),
     );
   }
@@ -542,10 +534,7 @@ extension _SSH on _AppSettingsPageState {
           opacity: autoEnabled ? 1.0 : 0.5,
           child: ListTile(
             title: Text(l10n.tmuxSessionSelector),
-            subtitle: Text(
-              l10n.tmuxSessionSelectorTip,
-              style: UIs.textGrey,
-            ),
+            subtitle: Text(l10n.tmuxSessionSelectorTip, style: UIs.textGrey),
             trailing: StoreSwitch(prop: _setting.tmuxShowSelector),
           ),
         ),
