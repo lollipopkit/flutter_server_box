@@ -206,6 +206,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   final _a11yInputCtrl = TextEditingController();
   final _a11yInputFocus = FocusNode();
 
+  /// Drives the output column. It is jumped to the bottom once when the mode
+  /// comes on screen, so the latest output is visible; later output appends
+  /// without moving the reader's reading position.
+  final _a11yScrollCtrl = ScrollController();
+
   /// Collapses the burst of `notifyListeners` a single `write` fires when the
   /// output is a fast stream (a progress bar redrawing itself, say).
   Timer? _a11yDebounce;
@@ -382,6 +387,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yAnnounceDebounce?.cancel();
     _a11yInputCtrl.dispose();
     _a11yInputFocus.dispose();
+    _a11yScrollCtrl.dispose();
     if (_a11ySubscribed) {
       _terminal.removeListener(_onA11yTerminalChanged);
       _a11ySubscribed = false;
@@ -544,6 +550,8 @@ class SSHPageState extends ConsumerState<SSHPage>
       // With the field empty, whatever the current line holds is the prompt
       // baseline unconfirmed input is cut out of — see `_refreshA11yOutput`.
       _a11yPromptText = currentLine;
+      // Start at the bottom, where the newest output and the prompt are.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _a11yJumpToBottom());
     }
 
     final bgImage = Stores.setting.sshBgImage.fetch();
@@ -779,6 +787,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         : all;
     return SelectionArea(
       child: SingleChildScrollView(
+        controller: _a11yScrollCtrl,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -965,13 +974,35 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yDebounce = Timer(const Duration(milliseconds: 60), _refreshA11yOutput);
   }
 
+  /// Whether the output column is parked at its bottom edge. Before the first
+  /// layout there is no position yet, which counts as "at the bottom" so the
+  /// initial view lands on the newest output.
+  bool _a11yIsAtBottom() {
+    if (!_a11yScrollCtrl.hasClients) return true;
+    final pos = _a11yScrollCtrl.position;
+    return pos.pixels >= pos.maxScrollExtent - 40;
+  }
+
+  void _a11yJumpToBottom() {
+    if (!_a11yScrollCtrl.hasClients) return;
+    _a11yScrollCtrl.jumpTo(_a11yScrollCtrl.position.maxScrollExtent);
+  }
+
   void _refreshA11yOutput() {
     if (!mounted || !Stores.setting.sshA11yMode.fetch()) return;
     final buffer = _terminal.buffer;
     final lines = buffer.getText().split('\n');
     final oldLines = _a11yOutput;
     if (!_sameLines(lines, oldLines)) {
+      // Follow fresh output only while the reader is parked at the bottom;
+      // if they scrolled up to read history, leave their place alone.
+      final atBottom = _a11yIsAtBottom();
       setState(() => _a11yOutput = lines);
+      if (atBottom) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _a11yJumpToBottom(),
+        );
+      }
     }
 
     // The terminal cursor moving left/right on the input line moves the
