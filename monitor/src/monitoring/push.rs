@@ -29,10 +29,13 @@ fn http_client() -> &'static Client {
         // test process does.
         let _ = rustls::crypto::ring::default_provider().install_default();
 
-        Client::builder()
+        let builder = Client::builder()
             .connect_timeout(CONNECT_TIMEOUT)
             .timeout(REQUEST_TIMEOUT)
-            .pool_idle_timeout(Duration::from_secs(60))
+            .pool_idle_timeout(Duration::from_secs(60));
+        #[cfg(test)]
+        let builder = builder.no_proxy();
+        builder
             .build()
             .expect("valid push HTTP client configuration")
     })

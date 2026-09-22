@@ -7,6 +7,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$REPO_ROOT"
 
+# shellcheck source-path=SCRIPTDIR
 # shellcheck source=android-build-env.sh
 source "$REPO_ROOT/scripts/release/android-build-env.sh"
 

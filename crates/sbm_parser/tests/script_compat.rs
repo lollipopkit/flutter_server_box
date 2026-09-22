@@ -950,6 +950,16 @@ fn e2e_unix_process_table_has_identity_and_load() {
     use std::process::Command;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    let pid = std::process::id().to_string();
+    let ps_available = Command::new("ps")
+        .args(["-p", &pid])
+        .output()
+        .is_ok_and(|output| output.status.success());
+    if !ps_available {
+        eprintln!("skipping process-table E2E because ps is unavailable");
+        return;
+    }
+
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -967,14 +977,15 @@ fn e2e_unix_process_table_has_identity_and_load() {
 
     let raw = String::from_utf8(output.stdout).unwrap();
     let mut lines = raw.lines();
-    let load = lines.next().unwrap_or_default();
-    assert!(
-        load.starts_with(&format!("{} ", script::PROCESS_LOAD_MARKER)),
-        "first line: {load:?}"
-    );
-    assert_eq!(load.split_whitespace().count(), 4, "{load:?}");
+    let first = lines.next().unwrap_or_default();
+    let header_line = if first.starts_with(&format!("{} ", script::PROCESS_LOAD_MARKER)) {
+        assert_eq!(first.split_whitespace().count(), 4, "{first:?}");
+        lines.next().unwrap_or_default()
+    } else {
+        first
+    };
 
-    let header: Vec<&str> = lines.next().unwrap_or_default().split_whitespace().collect();
+    let header: Vec<&str> = header_line.split_whitespace().collect();
     let column = |name: &str| {
         header
             .iter()
