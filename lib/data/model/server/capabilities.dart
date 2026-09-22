@@ -199,16 +199,13 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   /// an agent too old to have the endpoint.
   final MonitorRemoteAccess granted;
 
-  /// One grant, not one per feature. Anyone who can open a shell through the
-  /// agent can run anything in it, so a second switch for commands would
-  /// withhold nothing — it would only make the app pretend. The agent folds
-  /// its own transport check into this, so it is already false on a link the
-  /// agent would refuse.
+  /// Full access permits commands. Opening a PTY also needs the terminal
+  /// endpoint, which the agent can disable independently.
   @override
   bool get shell => granted.fullAccess;
 
   @override
-  bool get terminal => granted.fullAccess;
+  bool get terminal => granted.fullAccess && granted.terminal;
 
   /// The agent has no endpoint that relays a connection to an address the app
   /// names. A future endpoint would enable this for every agent at once.

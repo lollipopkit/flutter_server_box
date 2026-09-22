@@ -23,8 +23,8 @@ extension _Init on SSHPageState {
   /// warning in the log that said tmux was unavailable without saying why.
   bool get _canTmux => _canExec && _client != null;
 
-  /// Connects a new source of shells, asking the provider what the agent
-  /// allows at the moment of use rather than trusting a stored answer.
+  /// Connects a new source of shells. The provider's grant is a fallback hint;
+  /// [TerminalSession.connect] asks the agent directly before opening a PTY.
   Future<ShellBackend> _connectBackend() => _sess.connect(
     granted: switch (widget.args.spi) {
       final spi? => ref.read(serverProvider(spi.id)).remoteAccess,
@@ -108,7 +108,7 @@ extension _Init on SSHPageState {
       } catch (e, st) {
         Loggers.app.warning('Failed to open foreground tmux session', e, st);
         _clearTmuxState();
-        return null;
+        rethrow;
       }
       if (session != null) {
         _saveTmuxState(
@@ -155,6 +155,7 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _initTerminal() async {
+    if (_openingTerminal) return;
     // A session handed to this page is already connected and already running
     // something — the dialog that started it did all of this. Opening a second
     // shell here would replace what the user asked to carry on watching.
@@ -172,18 +173,79 @@ extension _Init on SSHPageState {
       return;
     }
 
-    _writeLn(l10n.waitConnection);
-    if (_backend == null) await _connectBackend();
+    _openingTerminal = true;
+    _retryInitialConnectionOnResume = false;
+    _setConnectionStep(TerminalConnectionStep.connecting);
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
+    try {
+      // Startup may precede the network. Permission and auth failures are not
+      // retried; only transport failures use these short backoffs.
+      const retryDelays = [
+        Duration.zero,
+        Duration(milliseconds: 500),
+        Duration(seconds: 2),
+      ];
+      for (final delay in retryDelays) {
+        if (delay != Duration.zero) {
+          await Future.delayed(delay);
+          if (!mounted) return;
+          _setConnectionStep(TerminalConnectionStep.connecting);
+        }
 
-    _writeLn('${libL10n.execute}: Shell');
-    final session = await _openForegroundSession();
+        try {
+          if (_backend?.isClosed == true) _sess.resetAfterFailedOpen();
+          if (_backend == null) await _connectBackend();
+          if (!mounted) {
+            _sess.close();
+            return;
+          }
 
-    if (session == null) {
-      _writeLn(libL10n.fail);
-      return;
+          _setConnectionStep(TerminalConnectionStep.openingShell);
+          final session = await _openForegroundSession();
+          if (!mounted) {
+            session?.close();
+            _sess.close();
+            return;
+          }
+          if (session == null) {
+            _sess.resetAfterFailedOpen();
+            _setConnectionStep(TerminalConnectionStep.shellFailed);
+            TermSessionManager.updateStatus(
+              _sessionId,
+              TermSessionStatus.disconnected,
+            );
+            return;
+          }
+
+          _bindForegroundSession(session);
+          _setConnectionStep(TerminalConnectionStep.ready);
+          break;
+        } catch (error, stackTrace) {
+          Loggers.app.warning('Failed to open terminal', error, stackTrace);
+          _sess.resetAfterFailedOpen();
+          final retryable = isRetryableTerminalConnectionError(error);
+          if (delay != retryDelays.last && retryable) {
+            continue;
+          }
+          _retryInitialConnectionOnResume = retryable;
+          _setConnectionStep(
+            _connectionStep == TerminalConnectionStep.openingShell
+                ? TerminalConnectionStep.shellFailed
+                : TerminalConnectionStep.connectionFailed,
+            detail: error is TerminalRemoteAccessUnavailable
+                ? l10n.monitorNoRemoteAccess
+                : null,
+          );
+          TermSessionManager.updateStatus(
+            _sessionId,
+            TermSessionStatus.disconnected,
+          );
+          return;
+        }
+      }
+    } finally {
+      _openingTerminal = false;
     }
-
-    _bindForegroundSession(session);
 
     // Snippets name the server they run on, and their scripts are written
     // against one. A terminal on this device has neither.

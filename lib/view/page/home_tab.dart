@@ -93,13 +93,26 @@ extension AppTabViewX on AppTab {
   /// on the label reaches it too.
   NavRailItem navRailItem({ContextMenuOpener? onMenu}) {
     return NavRailItem(
-      icon: icon,
-      selectedIcon: selectedIcon,
+      icon: _railIcon(icon),
+      selectedIcon: _railIcon(selectedIcon),
       label: label,
       badge: this == AppTab.server
           ? (opacity) => ConnCountRailBadge(opacity: opacity)
           : null,
       onMenu: onMenu,
+    );
+  }
+
+  Widget _railIcon(Widget icon) {
+    if (this != AppTab.agent) return icon;
+    return SizedBox.square(
+      dimension: NavRailMetrics.iconSize,
+      child: Center(
+        child: IconTheme.merge(
+          data: const IconThemeData(size: 22),
+          child: icon,
+        ),
+      ),
     );
   }
 

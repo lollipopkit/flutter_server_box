@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/monitor_terminal.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -295,9 +298,69 @@ void main() {
   });
 
   group('where the shells come from', () {
-    test('an agent that granted full access is a source of shells', () {
+    test('a monitor-only terminal checks its grant when status has none yet', () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      server.listen((request) {
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(
+          request.uri.path == '/api/v1/login'
+              ? '{"token":"test"}'
+              : '{"remote_access":{"terminal":true,"full_access":true}}',
+        );
+        request.response.close();
+      });
+
+      final spi = Spi(
+        name: 'agent',
+        id: 'agent-test',
+        monitorHttp: MonitorHttpCredential(
+          addr: 'http://127.0.0.1:${server.port}',
+        ),
+      );
+      final session = TerminalSession(source: ServerSource(spi));
+      addTearDown(session.close);
+
+      expect(await session.connect(), isA<MonitorShellBackend>());
+    });
+
+    test('a denied grant does not fall back to disabled SSH', () async {
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => server.close(force: true));
+      server.listen((request) {
+        request.response.headers.contentType = ContentType.json;
+        request.response.write(
+          request.uri.path == '/api/v1/login'
+              ? '{"token":"test"}'
+              : '{"remote_access":{"terminal":false,"full_access":false}}',
+        );
+        request.response.close();
+      });
+
+      final spi = Spi(
+        name: 'agent',
+        id: 'agent-denied',
+        ssh: const SshCredential(ip: '127.0.0.1', port: 22, user: 'test'),
+        sshEnabled: false,
+        monitorHttp: MonitorHttpCredential(
+          addr: 'http://127.0.0.1:${server.port}',
+        ),
+      );
+      final session = TerminalSession(source: ServerSource(spi));
+      addTearDown(session.close);
+
+      await expectLater(
+        session.connect(),
+        throwsA(isA<TerminalRemoteAccessUnavailable>()),
+      );
+    });
+
+    test('an agent granting terminal and full access is a shell source', () {
       final session = TerminalSession(source: ServerSource(monitor));
-      session.adopt(null, granted: const MonitorRemoteAccess(fullAccess: true));
+      session.adopt(
+        null,
+        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+      );
 
       expect(session.backend, isNotNull);
       // One PTY, so nothing that needs a second channel — tmux, the AI helper's
@@ -314,7 +377,10 @@ void main() {
 
     test('an SSH server with no connection to adopt has none yet', () {
       final session = TerminalSession(source: ServerSource(ssh));
-      session.adopt(null, granted: const MonitorRemoteAccess(fullAccess: true));
+      session.adopt(
+        null,
+        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+      );
 
       // The grant is the agent's, and this server has no agent. Answering
       // otherwise would open the wrong machine's shell.
@@ -323,7 +389,10 @@ void main() {
 
     test('closing hangs up a connection this session opened', () {
       final session = TerminalSession(source: ServerSource(monitor));
-      session.adopt(null, granted: const MonitorRemoteAccess(fullAccess: true));
+      session.adopt(
+        null,
+        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
+      );
 
       session.close();
 
@@ -340,5 +409,27 @@ void main() {
       expect(shell.closed, isTrue);
       expect(session.foreground, isNull);
     });
+  });
+
+  test('initial reconnect retries transport errors only', () {
+    expect(isRetryableTerminalConnectionError(TimeoutException('slow')), isTrue);
+    expect(
+      isRetryableTerminalConnectionError(
+        const MonitorHttpErr(type: MonitorHttpErrType.net),
+      ),
+      isTrue,
+    );
+    expect(
+      isRetryableTerminalConnectionError(
+        const MonitorHttpErr(type: MonitorHttpErrType.auth),
+      ),
+      isFalse,
+    );
+    expect(
+      isRetryableTerminalConnectionError(
+        const TerminalRemoteAccessUnavailable(),
+      ),
+      isFalse,
+    );
   });
 }

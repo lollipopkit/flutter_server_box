@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -13,9 +14,11 @@ import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
 import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
@@ -31,16 +34,33 @@ import 'package:xterm/core.dart';
 /// the terminal onto it.
 ///
 /// A preference the agent will not honour is not honoured into a dead end:
-/// without the `full_access` grant this answers false and SSH carries the
-/// session, the same way [Spix.transport] ignores a preference for a transport
-/// that is not configured.
+/// without both the terminal and `full_access` grants this answers false and
+/// SSH carries the session, the same way [Spix.transport] ignores a preference
+/// for a transport that is not configured.
 ///
-/// [granted] is what the agent said at the moment of use, not a stored answer:
-/// a grant that has been switched off since is a shell that will be refused.
+/// [granted] is a hint from the status poller. The terminal fetches current
+/// capabilities itself when it opens a new connection.
 bool serverShellUsesAgent(Spi spi, MonitorRemoteAccess? granted) {
   if (spi.monitorOn == null) return false;
   if (spi.transport != ServerTransport.monitorHttp) return false;
-  return granted?.fullAccess == true;
+  return granted?.fullAccess == true && granted?.terminal == true;
+}
+
+/// The monitor answered, but it cannot open a shell for this server.
+class TerminalRemoteAccessUnavailable implements Exception {
+  const TerminalRemoteAccessUnavailable();
+}
+
+/// Retry transport failures after launch, but leave permission and auth
+/// failures for the user to resolve.
+bool isRetryableTerminalConnectionError(Object error) {
+  if (error is TerminalRemoteAccessUnavailable || error is SSHAuthError) {
+    return false;
+  }
+  if (error is MonitorHttpErr) return error.type == MonitorHttpErrType.net;
+  return error is TimeoutException ||
+      error is SocketException ||
+      isJumpFailoverError(error);
 }
 
 /// A terminal and the shell feeding it, with no page attached.
@@ -138,9 +158,9 @@ class TerminalSession {
 
   /// Connects a new source of shells, replacing whatever [backend] held.
   ///
-  /// [granted] is what the agent said it allows, read by the caller at the
-  /// moment of use: a stored "yes" the agent would refuse is a dead button,
-  /// and a stored "no" hides a shell that is there.
+  /// [granted] is a hint if a fresh capabilities request fails. The terminal
+  /// reads its own grant before opening a monitor PTY, so it does not wait for
+  /// the server status poll to finish at app startup.
   ///
   /// [context] is only for interactive authentication; the navigator's own is
   /// used when there is no page in front of this session.
@@ -168,13 +188,34 @@ class TerminalSession {
       return _backend = _localBackend(local);
     }
 
-    final agent = _grantedBackend(granted);
+    var currentGrant = granted;
+    final server = spi!;
+    final monitor = server.monitor;
+    if (server.transport == ServerTransport.monitorHttp && monitor != null) {
+      final client = MonitorHttpClient(monitor);
+      try {
+        currentGrant = (await client.fetchCapabilities()).remoteAccess;
+      } on MonitorHttpErr {
+        // A known grant can still be attempted: the terminal endpoint checks
+        // permission again. SSH remains the fallback when it is enabled.
+        if ((granted?.fullAccess != true || granted?.terminal != true) &&
+            server.sshOn == null) {
+          rethrow;
+        }
+      } finally {
+        client.dispose();
+      }
+    }
+
+    final agent = _grantedBackend(currentGrant);
     if (agent != null) {
       Diag.crumb(SbDiag.terminal, 'open agent shell', data: {
         'session': session,
       });
       return _backend = agent;
     }
+
+    if (server.sshOn == null) throw const TerminalRemoteAccessUnavailable();
 
     // Before `genClient` rather than after: a connection that never returns is
     // exactly the one worth having a record of, and it is the case where the
@@ -284,6 +325,16 @@ class TerminalSession {
       closing?.close();
     } catch (e, st) {
       Loggers.app.warning('Failed to close shell backend', e, st);
+    }
+  }
+
+  /// Drops a backend after a failed initial shell open without closing a
+  /// healthy connection borrowed from the status poller.
+  void resetAfterFailedOpen() {
+    if (_ownsBackend) {
+      closeBackend();
+    } else if (_backend?.isClosed == true) {
+      _backend = null;
     }
   }
 

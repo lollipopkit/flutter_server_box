@@ -20,7 +20,11 @@ import 'package:server_box/view/page/storage/server_file.dart';
 void main() {
   const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
   const ssh = SshCredential(ip: 'host', port: 22, user: 'root', pwd: 'p');
-  const full = MonitorRemoteAccess(fullAccess: true, files: true);
+  const full = MonitorRemoteAccess(
+    terminal: true,
+    fullAccess: true,
+    files: true,
+  );
 
   Spi server({
     bool withSsh = true,
@@ -58,6 +62,14 @@ void main() {
       final spi = server(prefer: ServerTransport.monitorHttp);
       expect(serverShellUsesAgent(spi, const MonitorRemoteAccess()), isFalse);
       expect(serverShellUsesAgent(spi, null), isFalse);
+    });
+
+    test('full access without a terminal does not select the agent PTY', () {
+      final spi = server(prefer: ServerTransport.monitorHttp);
+      expect(
+        serverShellUsesAgent(spi, const MonitorRemoteAccess(fullAccess: true)),
+        isFalse,
+      );
     });
 
     test('is the agent for a server that has no SSH at all', () {
