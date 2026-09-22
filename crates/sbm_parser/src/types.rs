@@ -23,7 +23,8 @@ pub const MAX_CPU_CORES: u64 = 4096;
 /// From /proc/stat on Linux; on BSD/Windows synthesized from one-shot percentages.
 ///
 /// KNOWN CROSS-PLATFORM SEMANTIC MISMATCH (not fixed, only documented — see
-/// `monitor/CLAUDE.md`'s "已知的跨平台语义差异" section): these fields mean
+/// the "Known cross-platform semantic differences" section in
+/// `monitor/CLAUDE.md`): these fields mean
 /// three different things depending on `SystemType`, despite sharing one
 /// struct shape.
 /// - Linux: real cumulative ticks straight from `/proc/stat` — a delta

@@ -63,13 +63,13 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/monitor/in
   它们；面板只能关闭 `full_access`。只有修改配置文件才能开启这些功能。
 - `full_access` 以 `[remote_access.terminal] enabled` 为前提。只设
   full_access 不起任何作用。
-- 终端和文件 API 会拒绝从网络上到达的明文请求,但对 loopback 调用方——包括
-  同机反向代理——无需 TLS 即可服务。所以如果 agent 绑定在 127.0.0.1,或者由
-  同机代理终结 TLS,就不需要 `allow_insecure`。只有当 agent 能被另一台机器
-  直接以明文访问时才考虑它,并且动手前先说。
+- 终端和文件 API 会拒绝从网络上到达的明文请求，但对 loopback 调用方——包括
+  同机反向代理——无需 TLS 即可服务。因此，如果 agent 绑定在 127.0.0.1，或由
+  同机代理终结 TLS，就不需要 `allow_insecure`。只有当另一台机器可以
+  通过明文连接直接访问 agent 时，才应考虑开启它；操作前请先说明风险。
 - `[remote_access.fs]` 没有 `roots` 就什么都不做。只写真正需要浏览的目录。
-  `roots = ["/"]` 会让面板密码等价于一个 shell,因为能写
-  ~/.ssh/authorized_keys 的人就有 shell,agent 启动时也会对此告警。
+  `roots = ["/"]` 会让面板密码等价于一个 shell，因为能写入
+  `~/.ssh/authorized_keys` 的人就能获得 shell。agent 启动时也会对此发出警告。
 
 修改后重启 agent，并把日志里的 `Remote access:` 那一行发给我。这一行会说明实际
 开启了哪些功能；如果全部关闭，就不会出现这一行。

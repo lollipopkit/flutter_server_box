@@ -137,40 +137,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiResend => 'Resend';
 
   @override
-  String get askAiResendTip =>
-      'Everything after this message is discarded — the replies, the commands and their results.';
+  String get askAiResendTip => 'このメッセージ以降の返答、コマンド、実行結果はすべて破棄されます。';
 
   @override
-  String get askAiDeleteTip =>
-      'This message and everything after it are removed — the replies, the commands and their results.';
+  String get askAiDeleteTip => 'このメッセージと、それ以降の返答、コマンド、実行結果はすべて削除されます。';
 
   @override
   String get askAiModelTable => 'Model table';
 
   @override
   String get askAiModelTableTip =>
-      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+      'models.dev から取得したモデル名別のコンテキストサイズです。App にも同梱されていますが、タップすると最新版を取得できます。';
 
   @override
-  String get askAiContextFallback => 'not in the table';
+  String get askAiContextFallback => '一覧にありません';
 
   @override
   String get askAiCompactAt => 'Summarise at';
 
   @override
   String get askAiCompactAtTip =>
-      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+      '以前のやり取りを要約するまでに、モデルのコンテキストをどこまで使うかを指定します。早めに要約すると詳細が失われやすく、遅くするとモデルがリクエストを拒否する可能性が高まります。';
 
   @override
   String get askAiContextTokens => 'Context size';
 
   @override
   String get askAiContextTokensTip =>
-      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+      'このモデルが扱える token 数です。「自動」ではモデル名から検索します。provider がモデル本来の上限より短い範囲しか提供しない場合は、数値を指定してください。';
 
   @override
-  String get askAiConversationCompacted =>
-      'Earlier messages were summarised to keep the conversation going.';
+  String get askAiConversationCompacted => '会話を続けるため、以前のメッセージを要約しました。';
 
   @override
   String get askAiRiskReadOnly => '読み取り専用';
@@ -1553,7 +1550,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serverHistory => 'サーバー履歴';
 
   @override
-  String get portForwardBetaTitle => 'Port Forward (Beta)';
+  String get portForwardBetaTitle => 'ポートフォワード（ベータ）';
 
   @override
   String get tmuxAutoAttach => 'tmux に自動アタッチ';
@@ -1662,17 +1659,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get processKillTargetChanged => 'プロセスが変更されたか終了しました。一覧を更新して再試行してください。';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => '名前、ユーザー、PID';
 
   @override
   String processShowKernelThreads(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
-    );
-    return '$_temp0';
+    return 'カーネルスレッドを $count 件表示';
   }
 
   @override
@@ -1756,13 +1747,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String serviceOtherUnits(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
-    );
-    return '$_temp0';
+    return '他 $count 件の unit';
   }
 
   @override
@@ -1794,12 +1779,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return '$duration 前に停止';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return '終了ステータス $code';
   }
 
   @override
@@ -1810,17 +1795,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String serviceJournalRecent(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
-    );
-    return '$_temp0';
+    return '最近の $count 行';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable => 'このアカウントでは journal を読めません';
 
   @override
   String get serverUnreachable => 'このサーバーでコマンドを実行できませんでした';
@@ -2135,93 +2114,88 @@ class AppLocalizationsJa extends AppLocalizations {
       '一部のデータを削除できなかったため、このバージョンでは残りのデータも開けません。新しいバージョンを再インストールしてアクセスしてください。';
 
   @override
-  String get systemUsers => 'Users';
+  String get systemUsers => 'ユーザー';
 
   @override
-  String get userManagerLinuxOnly =>
-      'System user management currently supports Linux servers.';
+  String get userManagerLinuxOnly => 'システムユーザー管理は現在 Linux サーバーにのみ対応しています。';
 
   @override
-  String get userRegularAccount => 'Regular';
+  String get userRegularAccount => '一般アカウント';
 
   @override
-  String get userCurrentAccount => 'Current account';
+  String get userCurrentAccount => '現在のアカウント';
 
   @override
-  String get userSystemAccount => 'System account';
+  String get userSystemAccount => 'システムアカウント';
 
   @override
   String get userUid => 'UID';
 
   @override
-  String get userLoginStatus => 'Status';
+  String get userLoginStatus => 'ログイン状態';
 
   @override
-  String get userLoginEnabled => 'Login enabled';
+  String get userLoginEnabled => 'ログイン可能';
 
   @override
-  String get userDetailAccount => 'Account';
+  String get userDetailAccount => 'アカウント';
 
   @override
-  String get userDetailSecurity => 'Security';
+  String get userDetailSecurity => 'セキュリティ';
 
   @override
-  String get userSshKeys => 'SSH keys';
+  String get userSshKeys => 'SSH 鍵';
 
   @override
-  String get userExpires => 'Expires';
+  String get userExpires => '有効期限';
 
   @override
-  String get userNever => 'Never';
+  String get userNever => '無期限';
 
   @override
-  String get userPasswordSet => 'Set';
+  String get userPasswordSet => '設定済み';
 
   @override
-  String get userPasswordLocked => 'Locked';
+  String get userPasswordLocked => 'ロック中';
 
   @override
-  String get userPasswordNone => 'None';
+  String get userPasswordNone => 'なし';
 
   @override
-  String get userSuperuser => 'Superuser';
+  String get userSuperuser => 'スーパーユーザー';
 
   @override
-  String get userOpenShell => 'Open shell';
+  String get userOpenShell => 'shell を開く';
 
   @override
-  String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+  String get userRootChangesWarning => 'root への変更はすべてのセッションにすぐに反映されます。';
 
   @override
-  String get userComment => 'Comment';
+  String get userComment => 'コメント';
 
   @override
-  String get userPrimaryGroup => 'Primary group';
+  String get userPrimaryGroup => 'プライマリグループ';
 
   @override
-  String get userSupplementaryGroups => 'Supplementary groups';
+  String get userSupplementaryGroups => '補助グループ';
 
   @override
-  String get userLoginShell => 'Login shell';
+  String get userLoginShell => 'ログイン shell';
 
   @override
-  String get userCreateHome => 'Create home directory';
+  String get userCreateHome => 'ホームディレクトリを作成';
 
   @override
-  String get userMoveHome =>
-      'Move the existing home directory when the path changes';
+  String get userMoveHome => 'パスの変更時に現在のホームディレクトリも移動';
 
   @override
-  String get userRemoveHome => 'Remove the home directory';
+  String get userRemoveHome => 'ホームディレクトリを削除';
 
   @override
-  String get userPasswordCreateTip =>
-      'Leave the password empty to create a password-locked account.';
+  String get userPasswordCreateTip => 'パスワードを空にすると、パスワードログインが無効なアカウントを作成します。';
 
   @override
-  String get userPasswordEditTip =>
-      'Leave the password empty to keep the existing password.';
+  String get userPasswordEditTip => '現在のパスワードを保持する場合は空のままにします。';
 
   @override
   String funcUnavailableFmt(Object func) {
@@ -2513,11 +2487,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshAdvancedTip => '代替の接続先、ProxyCommand、踏み台、ファイル転送、リモートのパス';
 
   @override
-  String get sshLegacyAlgorithms => 'Legacy algorithms';
+  String get sshLegacyAlgorithms => '古いアルゴリズム';
 
   @override
   String get sshLegacyAlgorithmsTip =>
-      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+      'SHA-1 の `ssh-rsa` ホスト鍵または SHA-1 鍵交換しか提供しない古い SSH サーバー（ルーターやスイッチなど）向けです。安全性が低いため、必要なホストでのみ有効にしてください。';
 
   @override
   String get appearanceAndPlace => '外観と場所';
@@ -2569,249 +2543,245 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tagRenamesOnSave => '名前の変更は保存時に反映されます';
 
   @override
-  String get scheduledTasks => 'Scheduled tasks';
+  String get scheduledTasks => 'スケジュールタスク';
 
   @override
-  String get scheduledTaskLinuxOnly =>
-      'Scheduled task management currently supports Linux servers.';
+  String get scheduledTaskLinuxOnly => 'スケジュールタスク管理は現在 Linux サーバーにのみ対応しています。';
 
   @override
-  String get scheduledTaskUnavailable =>
-      'crontab is not available on this server.';
+  String get scheduledTaskUnavailable => 'このサーバーでは crontab を利用できません。';
 
   @override
   String get scheduledTaskPreserveTip =>
-      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+      'この crontab にあるコメント、環境変数、認識できない行は保持されます。';
 
   @override
-  String get scheduledTaskSchedule => 'Schedule';
+  String get scheduledTaskSchedule => '実行スケジュール';
 
   @override
-  String get scheduledTaskAdd => 'Add task';
+  String get scheduledTaskAdd => 'タスクを追加';
 
   @override
-  String get scheduledTaskNextRun => 'Next run';
+  String get scheduledTaskNextRun => '次回の実行';
 
   @override
   String scheduledTaskNextInFmt(Object time) {
-    return 'in $time';
+    return '$time 後';
   }
 
   @override
-  String get scheduledTaskEnabled => 'Enabled';
+  String get scheduledTaskEnabled => '有効';
 
   @override
-  String get scheduledTaskCommentedOut => 'Commented out';
+  String get scheduledTaskCommentedOut => 'コメントアウト済み';
 
   @override
   String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+    return '$total 件のタスク · $enabled 件が有効';
   }
 
   @override
-  String get scheduledTaskFilterHint => 'Filter tasks';
+  String get scheduledTaskFilterHint => 'タスクを絞り込む';
 
   @override
-  String get scheduledTaskPreserved => 'Preserved lines';
+  String get scheduledTaskPreserved => '保持される行';
 
   @override
-  String get scheduledTaskRaw => 'Raw crontab';
+  String get scheduledTaskRaw => '元の crontab';
 
   @override
-  String get scheduledTaskEnableNow => 'Enable now';
+  String get scheduledTaskEnableNow => '今すぐ有効化';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip => 'オフにすると、この行はコメントアウトして書き込まれます。';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return '$user にスケジュールタスクはありません。ここで追加した内容は、そのアカウントの crontab に書き込まれます。';
   }
 
   @override
-  String get scheduledTaskFieldMinute => 'Minute';
+  String get scheduledTaskFieldMinute => '分';
 
   @override
-  String get scheduledTaskFieldHour => 'Hour';
+  String get scheduledTaskFieldHour => '時';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => '日';
 
   @override
-  String get scheduledTaskFieldMonth => 'Month';
+  String get scheduledTaskFieldMonth => '月';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => '曜日';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => '実行スケジュールが必要です。';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => 'コマンドが必要です。';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak => 'crontab の 1 行に改行は含められません。';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro => 'macro は @reboot のような 1 語で指定します。';
 
   @override
   String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+      'cron スケジュールは 5 つのフィールド、または @reboot のような macro で指定します。';
 
   @override
-  String get cronAtBoot => 'At boot';
+  String get cronAtBoot => '起動時';
 
   @override
-  String get cronEveryMin => 'Every minute';
+  String get cronEveryMin => '毎分';
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return '$minutes 分ごと';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return '毎時 :$minute';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return '$hours 時間ごと';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return '$hours 時間ごとの :$minute';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return '毎日 $time';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return '平日 $time';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return '毎週$day曜日 $time';
   }
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return '毎月 $day 日 $time';
   }
 
   @override
-  String get monitorSettings => 'Monitor settings';
+  String get monitorSettings => 'Monitor 設定';
 
   @override
-  String get monitorAgentDefault => 'Agent default';
+  String get monitorAgentDefault => 'agent の初期値';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart => 'agent の再起動後に反映';
 
   @override
-  String get monitorCollection => 'Collection';
+  String get monitorCollection => '収集';
 
   @override
-  String get extendedInterval => 'Extended cycle interval';
+  String get extendedInterval => '拡張収集の間隔';
 
   @override
-  String get idlePause => 'Pause when nothing is watching';
+  String get idlePause => '閲覧中のクライアントがないときは停止';
 
   @override
   String get idlePauseTip =>
-      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+      '拡張収集では smartctl、sensors、amd-smi を実行します。クライアントが取得していない間は停止し、読まれていないデータのためにディスクが起こされるのを防ぎます。';
 
   @override
-  String get idlePauseThreshold => 'Idle after';
+  String get idlePauseThreshold => 'アイドルと判定するまで';
 
   @override
-  String get monitorAlerts => 'Alerts';
+  String get monitorAlerts => 'アラート';
 
   @override
-  String get monitoringRules => 'Alert rules';
+  String get monitoringRules => 'アラートルール';
 
   @override
-  String get ruleMonitorType => 'Metric';
+  String get ruleMonitorType => '指標';
 
   @override
-  String get ruleThreshold => 'Threshold';
+  String get ruleThreshold => 'しきい値';
 
   @override
-  String get ruleMatcher => 'Matcher';
+  String get ruleMatcher => '対象';
 
   @override
   String get ruleTip =>
-      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+      '指標: cpu / memory / swap / disk / network / temperature。対象: CPU コアは cpu0、memory は used / free / avail、network は rx / tx。disk と temperature では無視されます。しきい値: >=80%、>=70c、>10m/s のように比較演算子と値を指定します。';
 
   @override
-  String get pushChannels => 'Notification channels';
+  String get pushChannels => '通知チャネル';
 
   @override
-  String get pushType => 'Type';
+  String get pushType => '種類';
 
   @override
-  String get pushRate => 'Rate limit';
+  String get pushRate => '送信頻度の上限';
 
   @override
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'agent に設定済みのため非表示';
 
   @override
-  String get pushSecretKeep => 'Leave blank to keep';
+  String get pushSecretKeep => '空のままで現在の値を保持';
 
   @override
-  String get pushTestTip =>
-      'Sends one notification through this channel as it stands here, saved or not.';
+  String get pushTestTip => '保存前でも、現在表示されている設定でこのチャネルに通知を 1 件送信します。';
 
   @override
-  String get pushTestSent => 'The channel accepted it';
+  String get pushTestSent => 'チャネルに受け付けられました';
 
   @override
-  String get pushTestFailed => 'The channel refused it';
+  String get pushTestFailed => 'チャネルに拒否されました';
 
   @override
-  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+  String get pushTestMessage => 'ServerBox Monitor からのテスト通知';
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'この agent はこの種類のチャネルに送信できないため、設定は表示されません。ここで削除するか、agent の config.toml で編集できます。';
 
   @override
-  String get pushJsonInvalid => 'is not valid JSON';
+  String get pushJsonInvalid => '有効な JSON ではありません';
 
   @override
-  String get dataRetention => 'Data retention';
+  String get dataRetention => 'データ保持';
 
   @override
-  String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+  String get dataRetentionTip => 'オフにすると agent はデータを削除せず、データベースは上限なく増え続けます。';
 
   @override
-  String get retentionMetrics => 'Keep metrics';
+  String get retentionMetrics => '指標を保持';
 
   @override
-  String get retentionAlerts => 'Keep alerts';
+  String get retentionAlerts => 'アラートを保持';
 
   @override
-  String get retentionCleanup => 'Run cleanup every';
+  String get retentionCleanup => 'クリーンアップの間隔';
 
   @override
-  String get retentionMaxDbSize => 'Database size cap';
+  String get retentionMaxDbSize => 'データベース容量の上限';
 
   @override
-  String get corsOrigins => 'CORS allowed origins';
+  String get corsOrigins => 'CORS 許可オリジン';
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'ブラウザパネルからこの agent を呼び出せるオリジンです。空の場合は同一オリジンのみ許可します。';
 
   @override
   String get monitorNoRemoteAccess =>

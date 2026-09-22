@@ -146,39 +146,39 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get askAiResendTip =>
-      'Everything after this message is discarded — the replies, the commands and their results.';
+      'Bu mesajdan sonrakı hər şey — cavablar, əmrlər və onların nəticələri silinəcək.';
 
   @override
   String get askAiDeleteTip =>
-      'This message and everything after it are removed — the replies, the commands and their results.';
+      'Bu mesaj və ondan sonrakı hər şey — cavablar, əmrlər və onların nəticələri silinəcək.';
 
   @override
   String get askAiModelTable => 'Model table';
 
   @override
   String get askAiModelTableTip =>
-      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+      'models.dev saytından model adına görə kontekst ölçüləri. Biri tətbiqlə birlikdə verilir; yenisini əldə etmək üçün toxunun.';
 
   @override
-  String get askAiContextFallback => 'not in the table';
+  String get askAiContextFallback => 'cədvəldə yoxdur';
 
   @override
   String get askAiCompactAt => 'Summarise at';
 
   @override
   String get askAiCompactAtTip =>
-      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+      'Əvvəlki dialoq hissələri xülasə edilməzdən öncə model kontekstinin nə qədər dolacağını müəyyən edir. Daha erkən xülasə detalları tez itirir, daha gec xülasə isə modelin sorğunu rədd etməsi riskini artırır.';
 
   @override
   String get askAiContextTokens => 'Context size';
 
   @override
   String get askAiContextTokensTip =>
-      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+      'Bu modelin neçə token saxladığını göstərir. Avtomatik rejim bunu ada görə tapır; provider daha qısa kontekst pəncərəsi təqdim edirsə, rəqəmi özünüz təyin edin.';
 
   @override
   String get askAiConversationCompacted =>
-      'Earlier messages were summarised to keep the conversation going.';
+      'Söhbətin davam etməsi üçün əvvəlki mesajlar xülasə edildi.';
 
   @override
   String get askAiRiskReadOnly => 'Yalnız oxuma';
@@ -1773,15 +1773,15 @@ class AppLocalizationsAz extends AppLocalizations {
       'Proses dəyişib və ya başa çatıb. Yenilə və yenidən cəhd et.';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => 'Ad, istifadəçi və ya PID';
 
   @override
   String processShowKernelThreads(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
+      other: '$count kernel thread göstər',
+      one: '1 kernel thread göstər',
     );
     return '$_temp0';
   }
@@ -1873,8 +1873,8 @@ class AppLocalizationsAz extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
+      other: '$count digər unit',
+      one: '1 digər unit',
     );
     return '$_temp0';
   }
@@ -1908,12 +1908,12 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return '$duration əvvəl dayandırılıb';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return 'çıxış statusu $code';
   }
 
   @override
@@ -1927,14 +1927,14 @@ class AppLocalizationsAz extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
+      other: 'Son $count sətir',
+      one: 'Son sətir',
     );
     return '$_temp0';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable => 'Bu hesab journal-ı oxuya bilmir';
 
   @override
   String get serverUnreachable => 'Bu serverdə əmr icra etmək mümkün olmadı';
@@ -2266,7 +2266,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get userManagerLinuxOnly =>
-      'System user management currently supports Linux servers.';
+      'Sistem istifadəçilərinin idarəsi hazırda yalnız Linux serverlərini dəstəkləyir.';
 
   @override
   String get userRegularAccount => 'Regular';
@@ -2318,7 +2318,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+      'root hesabına dəyişikliklər bütün sessiyalarda dərhal qüvvəyə minir.';
 
   @override
   String get userComment => 'Comment';
@@ -2327,28 +2327,27 @@ class AppLocalizationsAz extends AppLocalizations {
   String get userPrimaryGroup => 'Primary group';
 
   @override
-  String get userSupplementaryGroups => 'Supplementary groups';
+  String get userSupplementaryGroups => 'Əlavə qruplar';
 
   @override
   String get userLoginShell => 'Login shell';
 
   @override
-  String get userCreateHome => 'Create home directory';
+  String get userCreateHome => 'Home qovluğu yarat';
 
   @override
-  String get userMoveHome =>
-      'Move the existing home directory when the path changes';
+  String get userMoveHome => 'Yol dəyişdikdə mövcud home qovluğunu köçür';
 
   @override
-  String get userRemoveHome => 'Remove the home directory';
+  String get userRemoveHome => 'Home qovluğunu sil';
 
   @override
   String get userPasswordCreateTip =>
-      'Leave the password empty to create a password-locked account.';
+      'Parolla girişi bağlı hesab yaratmaq üçün parolu boş saxlayın.';
 
   @override
   String get userPasswordEditTip =>
-      'Leave the password empty to keep the existing password.';
+      'Mövcud parolu saxlamaq üçün parolu boş saxlayın.';
 
   @override
   String funcUnavailableFmt(Object func) {
@@ -2647,11 +2646,11 @@ class AppLocalizationsAz extends AppLocalizations {
       'Ehtiyat ünvan, ProxyCommand, keçid serveri, fayl nəqli, uzaq yol';
 
   @override
-  String get sshLegacyAlgorithms => 'Legacy algorithms';
+  String get sshLegacyAlgorithms => 'Köhnə alqoritmlər';
 
   @override
   String get sshLegacyAlgorithmsTip =>
-      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+      'Yalnız SHA-1 `ssh-rsa` host açarı və ya SHA-1 açar mübadiləsi təklif edən köhnə SSH serverləri (örnəyin, router və ya switch) üçündür. Təhlükəsizliyi daha aşağıdır; yalnız cihaz bunu tələb etdikdə aktivləşdirin.';
 
   @override
   String get appearanceAndPlace => 'Görünüş və yer';
@@ -2709,15 +2708,14 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get scheduledTaskLinuxOnly =>
-      'Scheduled task management currently supports Linux servers.';
+      'Planlaşdırılmış tapşırıqların idarəsi hazırda yalnız Linux serverlərini dəstəkləyir.';
 
   @override
-  String get scheduledTaskUnavailable =>
-      'crontab is not available on this server.';
+  String get scheduledTaskUnavailable => 'Bu serverdə crontab mövcud deyil.';
 
   @override
   String get scheduledTaskPreserveTip =>
-      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+      'Bu crontab-dakı şərhlər, environment variable-lar və tanınmayan sətirlər qorunur.';
 
   @override
   String get scheduledTaskSchedule => 'Schedule';
@@ -2741,7 +2739,7 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+    return '$total tapşırıq · $enabled aktiv';
   }
 
   @override
@@ -2757,11 +2755,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get scheduledTaskEnableNow => 'Enable now';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip =>
+      'Söndürüləndə sətir şərh kimi yazılır.';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return '$user üçün planlaşdırılmış tapşırıq yoxdur. Buraya əlavə edilənlər həmin hesabın crontab-ına yazılır.';
   }
 
   @override
@@ -2771,29 +2770,29 @@ class AppLocalizationsAz extends AppLocalizations {
   String get scheduledTaskFieldHour => 'Hour';
 
   @override
-  String get scheduledTaskFieldDayOfMonth => 'Day of month';
+  String get scheduledTaskFieldDayOfMonth => 'Ayın günü';
 
   @override
   String get scheduledTaskFieldMonth => 'Month';
 
   @override
-  String get scheduledTaskFieldDayOfWeek => 'Day of week';
+  String get scheduledTaskFieldDayOfWeek => 'Həftənin günü';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => 'Cədvəl tələb olunur.';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => 'Əmr tələb olunur.';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak => 'crontab sətrində sətir keçidi ola bilməz.';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro => 'Makro @reboot kimi bir sözdən ibarət olur.';
 
   @override
   String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+      'cron cədvəli beş sahədən və ya @reboot kimi makrodan ibarət olur.';
 
   @override
   String get cronAtBoot => 'At boot';
@@ -2803,42 +2802,42 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return 'Hər $minutes dəqiqədən bir';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return 'Hər saatın :$minute-ci dəqiqəsində';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return 'Hər $hours saatdan bir';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return 'Hər $hours saatdan bir, :$minute-ci dəqiqədə';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return 'Hər gün saat $time';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return 'İş günləri saat $time';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return 'Hər $day saat $time';
   }
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return 'Hər ayın $day-ci günü saat $time';
   }
 
   @override
@@ -2848,20 +2847,21 @@ class AppLocalizationsAz extends AppLocalizations {
   String get monitorAgentDefault => 'Agent default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart =>
+      'Agent yenidən başladıldıqdan sonra qüvvəyə minir';
 
   @override
   String get monitorCollection => 'Collection';
 
   @override
-  String get extendedInterval => 'Extended cycle interval';
+  String get extendedInterval => 'Genişləndirilmiş dövr intervalı';
 
   @override
-  String get idlePause => 'Pause when nothing is watching';
+  String get idlePause => 'İzləyən olmadıqda dayandır';
 
   @override
   String get idlePauseTip =>
-      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+      'Genişləndirilmiş dövr smartctl, sensors və amd-smi işlədir. Heç bir client sorğu göndərməyəndə onu dayandırmaq, heç kimin oxumadığı məlumat üçün diskin oyadılmasının qarşısını alır.';
 
   @override
   String get idlePauseThreshold => 'Idle after';
@@ -2883,10 +2883,10 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get ruleTip =>
-      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+      'Metrika: cpu / memory / swap / disk / network / temperature. Uyğunlaşdırıcı: bir nüvə üçün cpu0, yaddaş üçün used / free / avail, şəbəkə üçün rx / tx; disk və temperatur bunu nəzərə almır. Hədd: >=80%, >=70c və ya >10m/s kimi müqayisə operatoru və dəyər.';
 
   @override
-  String get pushChannels => 'Notification channels';
+  String get pushChannels => 'Bildiriş kanalları';
 
   @override
   String get pushType => 'Type';
@@ -2898,37 +2898,37 @@ class AppLocalizationsAz extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'Agent-də təyin edilib, göstərilmir';
 
   @override
-  String get pushSecretKeep => 'Leave blank to keep';
+  String get pushSecretKeep => 'Saxlamaq üçün boş buraxın';
 
   @override
   String get pushTestTip =>
-      'Sends one notification through this channel as it stands here, saved or not.';
+      'Saxlanıb-saxlanmamasından asılı olmayaraq, bu channel vasitəsilə cari parametrlərlə bir bildiriş göndərir.';
 
   @override
-  String get pushTestSent => 'The channel accepted it';
+  String get pushTestSent => 'Channel bildirişi qəbul etdi';
 
   @override
-  String get pushTestFailed => 'The channel refused it';
+  String get pushTestFailed => 'Channel bildirişi rədd etdi';
 
   @override
-  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+  String get pushTestMessage => 'ServerBox Monitor-dan sınaq bildirişi';
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      'Bu agent-də bu channel növü üçün göndərici yoxdur, buna görə parametrlər göstərilmir. Buradan silə və ya agent-in config.toml faylında redaktə edə bilərsiniz.';
 
   @override
-  String get pushJsonInvalid => 'is not valid JSON';
+  String get pushJsonInvalid => 'düzgün JSON deyil';
 
   @override
   String get dataRetention => 'Data retention';
 
   @override
   String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+      'Söndürüldükdə agent heç nəyi silmir və database məhdudiyyətsiz böyüyür.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2937,17 +2937,17 @@ class AppLocalizationsAz extends AppLocalizations {
   String get retentionAlerts => 'Keep alerts';
 
   @override
-  String get retentionCleanup => 'Run cleanup every';
+  String get retentionCleanup => 'Təmizləməni bu aralıqla işə sal';
 
   @override
-  String get retentionMaxDbSize => 'Database size cap';
+  String get retentionMaxDbSize => 'Database ölçüsü limiti';
 
   @override
-  String get corsOrigins => 'CORS allowed origins';
+  String get corsOrigins => 'İcazə verilən CORS origin-ləri';
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      'Browser panel-in bu agent-ə müraciət edə biləcəyi origin-lər. Boş olduqda yalnız same-origin icazəlidir.';
 
   @override
   String get monitorNoRemoteAccess =>

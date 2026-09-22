@@ -380,7 +380,7 @@ type RootTranslation = {
 	 */
 	extendedIntervalSecs: string
 	/**
-	 * D​e​f​a​u​l​t​s​ ​t​o​ ​i​n​t​e​r​v​a​l​ ​x​1​0​ ​(​m​i​n​ ​1​2​0​s​)
+	 * D​e​f​a​u​l​t​s​ ​t​o​ ​1​0​×​ ​t​h​e​ ​c​o​l​l​e​c​t​i​o​n​ ​i​n​t​e​r​v​a​l​ ​(​a​t​ ​l​e​a​s​t​ ​1​2​0​ ​s​e​c​o​n​d​s​)
 	 */
 	defaultsToInterval: string
 	/**
@@ -464,7 +464,7 @@ type RootTranslation = {
 	 */
 	removeCustomCmd: string
 	/**
-	 * E​d​i​t​i​n​g​ ​n​e​e​d​s​ ​a​c​c​e​s​s​ ​w​i​t​h​o​u​t​ ​S​S​H​,​ ​w​h​i​c​h​ ​i​s​ ​o​f​f​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 * E​d​i​t​i​n​g​ ​r​e​q​u​i​r​e​s​ ​n​o​n​-​S​S​H​ ​a​c​c​e​s​s​,​ ​w​h​i​c​h​ ​i​s​ ​d​i​s​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
 	 */
 	customCmdsReadOnly: string
 	/**
@@ -484,7 +484,7 @@ type RootTranslation = {
 	 */
 	ruleHelpMatcher: string
 	/**
-	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​a​t​o​r​ ​`​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​`​ ​+​ ​v​a​l​u​e​ ​+​ ​u​n​i​t​ ​—​ ​p​e​r​c​e​n​t​ ​u​s​e​s​ ​%​ ​(​e​.​g​.​ ​`​>​=​8​0​%​`​)​;​ ​t​e​m​p​e​r​a​t​u​r​e​ ​u​s​e​s​ ​c​ ​(​e​.​g​.​ ​`​>​=​7​0​c​`​)​;​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​u​s​e​s​ ​a​ ​u​n​i​t​ ​+​ ​/​s​ ​(​e​.​g​.​ ​`​>​1​0​m​/​s​`​)​;​ ​s​i​z​e​ ​u​s​e​s​ ​j​u​s​t​ ​a​ ​u​n​i​t​ ​(​e​.​g​.​ ​`​<​1​0​0​m​`​)
+	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​i​s​o​n​ ​o​p​e​r​a​t​o​r​ ​`​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​`​ ​+​ ​v​a​l​u​e​ ​+​ ​u​n​i​t​ ​—​ ​u​s​e​ ​%​ ​f​o​r​ ​p​e​r​c​e​n​t​a​g​e​s​ ​(​f​o​r​ ​e​x​a​m​p​l​e​,​ ​`​>​=​8​0​%​`​)​,​ ​c​ ​f​o​r​ ​t​e​m​p​e​r​a​t​u​r​e​ ​(​`​>​=​7​0​c​`​)​,​ ​a​ ​u​n​i​t​ ​f​o​l​l​o​w​e​d​ ​b​y​ ​/​s​ ​f​o​r​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​(​`​>​1​0​m​/​s​`​)​,​ ​a​n​d​ ​a​ ​u​n​i​t​ ​b​y​ ​i​t​s​e​l​f​ ​f​o​r​ ​s​i​z​e​ ​(​`​<​1​0​0​m​`​)
 	 */
 	ruleHelpThreshold: string
 	/**
@@ -724,11 +724,11 @@ type RootTranslation = {
 	 */
 	pushTest: string
 	/**
-	 * T​h​e​ ​c​h​a​n​n​e​l​ ​a​c​c​e​p​t​e​d​ ​i​t​.
+	 * T​e​s​t​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​a​c​c​e​p​t​e​d​.
 	 */
 	pushTestOk: string
 	/**
-	 * T​h​e​ ​c​h​a​n​n​e​l​ ​r​e​f​u​s​e​d​ ​i​t​.
+	 * T​e​s​t​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​r​e​j​e​c​t​e​d​.
 	 */
 	pushTestFailed: string
 	/**
@@ -1139,7 +1139,7 @@ export type TranslationFunctions = {
 	 */
 	extendedIntervalSecs: () => LocalizedString
 	/**
-	 * Defaults to interval x10 (min 120s)
+	 * Defaults to 10× the collection interval (at least 120 seconds)
 	 */
 	defaultsToInterval: () => LocalizedString
 	/**
@@ -1223,7 +1223,7 @@ export type TranslationFunctions = {
 	 */
 	removeCustomCmd: () => LocalizedString
 	/**
-	 * Editing needs access without SSH, which is off on this agent.
+	 * Editing requires non-SSH access, which is disabled on this agent.
 	 */
 	customCmdsReadOnly: () => LocalizedString
 	/**
@@ -1243,7 +1243,7 @@ export type TranslationFunctions = {
 	 */
 	ruleHelpMatcher: () => LocalizedString
 	/**
-	 * threshold: comparator `(<, <=, =, >=, >)` + value + unit — percent uses % (e.g. `>=80%`); temperature uses c (e.g. `>=70c`); network speed uses a unit + /s (e.g. `>10m/s`); size uses just a unit (e.g. `<100m`)
+	 * threshold: comparison operator `(<, <=, =, >=, >)` + value + unit — use % for percentages (for example, `>=80%`), c for temperature (`>=70c`), a unit followed by /s for network speed (`>10m/s`), and a unit by itself for size (`<100m`)
 	 */
 	ruleHelpThreshold: () => LocalizedString
 	/**
@@ -1483,11 +1483,11 @@ export type TranslationFunctions = {
 	 */
 	pushTest: () => LocalizedString
 	/**
-	 * The channel accepted it.
+	 * Test notification accepted.
 	 */
 	pushTestOk: () => LocalizedString
 	/**
-	 * The channel refused it.
+	 * Test notification rejected.
 	 */
 	pushTestFailed: () => LocalizedString
 	/**

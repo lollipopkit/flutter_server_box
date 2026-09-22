@@ -138,40 +138,37 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiResend => 'Resend';
 
   @override
-  String get askAiResendTip =>
-      'Everything after this message is discarded — the replies, the commands and their results.';
+  String get askAiResendTip => '이 메시지 이후의 답변, 명령, 실행 결과는 모두 폐기됩니다.';
 
   @override
-  String get askAiDeleteTip =>
-      'This message and everything after it are removed — the replies, the commands and their results.';
+  String get askAiDeleteTip => '이 메시지와 이후의 답변, 명령, 실행 결과가 모두 삭제됩니다.';
 
   @override
   String get askAiModelTable => 'Model table';
 
   @override
   String get askAiModelTableTip =>
-      'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.';
+      'models.dev에서 가져온 모델별 컨텍스트 크기입니다. App에 기본 목록이 포함되며, 탭하면 최신 목록을 받을 수 있습니다.';
 
   @override
-  String get askAiContextFallback => 'not in the table';
+  String get askAiContextFallback => '목록에 없음';
 
   @override
   String get askAiCompactAt => 'Summarise at';
 
   @override
   String get askAiCompactAtTip =>
-      'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.';
+      '이전 대화를 요약하기 전까지 모델 컨텍스트를 얼마나 채울지 정합니다. 너무 일찍 요약하면 세부 내용이 빨리 사라지고, 너무 늦게 요약하면 모델이 요청을 거부할 수 있습니다.';
 
   @override
   String get askAiContextTokens => 'Context size';
 
   @override
   String get askAiContextTokensTip =>
-      'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.';
+      '이 모델이 담을 수 있는 token 수입니다. 자동은 모델 이름으로 찾습니다. provider가 모델 기본값보다 짧은 컨텍스트를 제공하면 숫자를 직접 입력하세요.';
 
   @override
-  String get askAiConversationCompacted =>
-      'Earlier messages were summarised to keep the conversation going.';
+  String get askAiConversationCompacted => '대화를 계속하기 위해 이전 메시지를 요약했습니다.';
 
   @override
   String get askAiRiskReadOnly => '읽기 전용';
@@ -1670,17 +1667,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.';
 
   @override
-  String get processSearchHint => 'Name, user or PID';
+  String get processSearchHint => '이름, 사용자 또는 PID';
 
   @override
   String processShowKernelThreads(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Show $count kernel threads',
-      one: 'Show 1 kernel thread',
-    );
-    return '$_temp0';
+    return '커널 스레드 $count개 표시';
   }
 
   @override
@@ -1764,13 +1755,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String serviceOtherUnits(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count other units',
-      one: '1 other unit',
-    );
-    return '$_temp0';
+    return '다른 unit $count개';
   }
 
   @override
@@ -1802,12 +1787,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String serviceStoppedAgo(String duration) {
-    return 'Stopped $duration ago';
+    return '$duration 전에 중지됨';
   }
 
   @override
   String serviceExitStatus(String code) {
-    return 'exit status $code';
+    return '종료 상태 $code';
   }
 
   @override
@@ -1818,17 +1803,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String serviceJournalRecent(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Last $count lines',
-      one: 'Last line',
-    );
-    return '$_temp0';
+    return '최근 $count행';
   }
 
   @override
-  String get serviceJournalUnreadable => 'This account cannot read the journal';
+  String get serviceJournalUnreadable => '이 계정은 journal을 읽을 수 없습니다';
 
   @override
   String get serverUnreachable => '이 서버에서 명령을 실행할 수 없습니다';
@@ -2146,8 +2125,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get systemUsers => 'Users';
 
   @override
-  String get userManagerLinuxOnly =>
-      'System user management currently supports Linux servers.';
+  String get userManagerLinuxOnly => '시스템 사용자 관리는 현재 Linux 서버만 지원합니다.';
 
   @override
   String get userRegularAccount => 'Regular';
@@ -2198,8 +2176,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get userOpenShell => 'Open shell';
 
   @override
-  String get userRootChangesWarning =>
-      'Changes to root take effect in every session at once.';
+  String get userRootChangesWarning => 'root 변경 사항은 모든 세션에 즉시 적용됩니다.';
 
   @override
   String get userComment => 'Comment';
@@ -2208,28 +2185,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get userPrimaryGroup => 'Primary group';
 
   @override
-  String get userSupplementaryGroups => 'Supplementary groups';
+  String get userSupplementaryGroups => '보조 그룹';
 
   @override
   String get userLoginShell => 'Login shell';
 
   @override
-  String get userCreateHome => 'Create home directory';
+  String get userCreateHome => '홈 디렉터리 생성';
 
   @override
-  String get userMoveHome =>
-      'Move the existing home directory when the path changes';
+  String get userMoveHome => '경로를 바꿀 때 기존 홈 디렉터리도 이동';
 
   @override
-  String get userRemoveHome => 'Remove the home directory';
+  String get userRemoveHome => '홈 디렉터리 삭제';
 
   @override
-  String get userPasswordCreateTip =>
-      'Leave the password empty to create a password-locked account.';
+  String get userPasswordCreateTip => '비밀번호를 비우면 비밀번호 로그인이 잠긴 계정을 만듭니다.';
 
   @override
-  String get userPasswordEditTip =>
-      'Leave the password empty to keep the existing password.';
+  String get userPasswordEditTip => '기존 비밀번호를 유지하려면 비워 두세요.';
 
   @override
   String funcUnavailableFmt(Object func) {
@@ -2521,11 +2495,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshAdvancedTip => '대체 대상, ProxyCommand, 점프 서버, 파일 전송, 원격 경로';
 
   @override
-  String get sshLegacyAlgorithms => 'Legacy algorithms';
+  String get sshLegacyAlgorithms => '레거시 알고리즘';
 
   @override
   String get sshLegacyAlgorithmsTip =>
-      'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.';
+      'SHA-1 `ssh-rsa` 호스트 키 또는 SHA-1 키 교환만 제공하는 구형 SSH 서버(라우터, 스위치 등)용입니다. 보안이 약하므로 필요한 호스트에서만 켜세요.';
 
   @override
   String get appearanceAndPlace => '모양과 위치';
@@ -2580,16 +2554,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTasks => 'Scheduled tasks';
 
   @override
-  String get scheduledTaskLinuxOnly =>
-      'Scheduled task management currently supports Linux servers.';
+  String get scheduledTaskLinuxOnly => '예약 작업 관리는 현재 Linux 서버만 지원합니다.';
 
   @override
-  String get scheduledTaskUnavailable =>
-      'crontab is not available on this server.';
+  String get scheduledTaskUnavailable => '이 서버에서 crontab을 사용할 수 없습니다.';
 
   @override
   String get scheduledTaskPreserveTip =>
-      'Comments, environment variables, and unrecognized lines in this crontab are preserved.';
+      '이 crontab의 주석, 환경 변수, 인식할 수 없는 행은 그대로 보존됩니다.';
 
   @override
   String get scheduledTaskSchedule => 'Schedule';
@@ -2613,7 +2585,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String scheduledTaskSummaryFmt(Object enabled, Object total) {
-    return '$total tasks · $enabled enabled';
+    return '작업 $total개 · $enabled개 활성화';
   }
 
   @override
@@ -2629,11 +2601,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskEnableNow => 'Enable now';
 
   @override
-  String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
+  String get scheduledTaskEnableNowTip => '끄면 해당 행을 주석 처리해 저장합니다.';
 
   @override
   String scheduledTaskEmptyFmt(Object user) {
-    return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
+    return '$user의 예약 작업이 없습니다. 여기서 추가한 내용은 해당 계정의 crontab에 쓰입니다.';
   }
 
   @override
@@ -2652,20 +2624,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskFieldDayOfWeek => 'Day of week';
 
   @override
-  String get cronErrScheduleEmpty => 'A schedule is required.';
+  String get cronErrScheduleEmpty => '실행 주기가 필요합니다.';
 
   @override
-  String get cronErrCommandEmpty => 'A command is required.';
+  String get cronErrCommandEmpty => '명령이 필요합니다.';
 
   @override
-  String get cronErrLineBreak => 'A crontab line cannot contain line breaks.';
+  String get cronErrLineBreak => 'crontab 한 행에는 줄바꿈을 넣을 수 없습니다.';
 
   @override
-  String get cronErrMacro => 'A macro is one word, such as @reboot.';
+  String get cronErrMacro => 'macro는 @reboot처럼 한 단어여야 합니다.';
 
   @override
-  String get cronErrFieldCount =>
-      'A cron schedule has five fields, or a macro such as @reboot.';
+  String get cronErrFieldCount => 'cron 주기는 다섯 필드 또는 @reboot처럼 macro로 지정합니다.';
 
   @override
   String get cronAtBoot => 'At boot';
@@ -2675,42 +2646,42 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String cronEveryMinsFmt(Object minutes) {
-    return 'Every $minutes minutes';
+    return '$minutes분마다';
   }
 
   @override
   String cronHourlyAtFmt(Object minute) {
-    return 'Every hour at :$minute';
+    return '매시 :$minute분';
   }
 
   @override
   String cronEveryHoursFmt(Object hours) {
-    return 'Every $hours hours';
+    return '$hours시간마다';
   }
 
   @override
   String cronEveryHoursAtFmt(Object hours, Object minute) {
-    return 'Every $hours hours at :$minute';
+    return '$hours시간마다 :$minute분';
   }
 
   @override
   String cronDailyAtFmt(Object time) {
-    return 'Every day at $time';
+    return '매일 $time';
   }
 
   @override
   String cronWeekdaysAtFmt(Object time) {
-    return 'On weekdays at $time';
+    return '평일 $time';
   }
 
   @override
   String cronWeekdayAtFmt(Object day, Object time) {
-    return 'Every $day at $time';
+    return '매주 $day $time';
   }
 
   @override
   String cronMonthlyAtFmt(Object day, Object time) {
-    return 'Day $day of every month at $time';
+    return '매월 $day일 $time';
   }
 
   @override
@@ -2720,20 +2691,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get monitorAgentDefault => 'Agent default';
 
   @override
-  String get monitorNeedsRestart => 'Takes effect after the agent restarts';
+  String get monitorNeedsRestart => 'agent를 다시 시작한 후 적용';
 
   @override
   String get monitorCollection => 'Collection';
 
   @override
-  String get extendedInterval => 'Extended cycle interval';
+  String get extendedInterval => '확장 수집 주기';
 
   @override
-  String get idlePause => 'Pause when nothing is watching';
+  String get idlePause => '보는 클라이언트가 없을 때 일시 중지';
 
   @override
   String get idlePauseTip =>
-      'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.';
+      '확장 수집은 smartctl, sensors, amd-smi를 실행합니다. 클라이언트가 조회하지 않을 때 멈추면 아무도 읽지 않는 데이터 때문에 디스크가 깨어나는 것을 막을 수 있습니다.';
 
   @override
   String get idlePauseThreshold => 'Idle after';
@@ -2755,10 +2726,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get ruleTip =>
-      'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.';
+      '지표: cpu / memory / swap / disk / network / temperature. 대상: 단일 코어는 cpu0, memory는 used / free / avail, network는 rx / tx를 사용하며 disk와 temperature는 이 필드를 무시합니다. 임계값은 >=80%, >=70c, >10m/s처럼 비교 연산자와 값을 입력합니다.';
 
   @override
-  String get pushChannels => 'Notification channels';
+  String get pushChannels => '알림 채널';
 
   @override
   String get pushType => 'Type';
@@ -2770,37 +2741,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pushHeaders => 'Headers';
 
   @override
-  String get pushSecretSet => 'Set on the agent, not shown';
+  String get pushSecretSet => 'agent에 설정됨, 표시하지 않음';
 
   @override
-  String get pushSecretKeep => 'Leave blank to keep';
+  String get pushSecretKeep => '기존 값을 유지하려면 비워 두세요';
 
   @override
-  String get pushTestTip =>
-      'Sends one notification through this channel as it stands here, saved or not.';
+  String get pushTestTip => '저장 여부와 관계없이 현재 화면의 설정으로 이 채널에 알림 하나를 보냅니다.';
 
   @override
-  String get pushTestSent => 'The channel accepted it';
+  String get pushTestSent => '채널이 알림을 수락했습니다';
 
   @override
-  String get pushTestFailed => 'The channel refused it';
+  String get pushTestFailed => '채널이 알림을 거부했습니다';
 
   @override
-  String get pushTestMessage => 'Test notification from ServerBox Monitor';
+  String get pushTestMessage => 'ServerBox Monitor 테스트 알림';
 
   @override
   String get pushUnknownType =>
-      'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.';
+      '이 agent에는 해당 채널 유형의 발신 기능이 없어 설정을 표시할 수 없습니다. 여기서 삭제하거나 agent의 config.toml에서 편집할 수 있습니다.';
 
   @override
-  String get pushJsonInvalid => 'is not valid JSON';
+  String get pushJsonInvalid => '유효한 JSON이 아닙니다';
 
   @override
   String get dataRetention => 'Data retention';
 
   @override
-  String get dataRetentionTip =>
-      'Off means the agent never deletes anything and its database grows without limit.';
+  String get dataRetentionTip => '끄면 agent가 데이터를 삭제하지 않아 데이터베이스가 제한 없이 커집니다.';
 
   @override
   String get retentionMetrics => 'Keep metrics';
@@ -2809,17 +2778,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get retentionAlerts => 'Keep alerts';
 
   @override
-  String get retentionCleanup => 'Run cleanup every';
+  String get retentionCleanup => '정리 실행 주기';
 
   @override
-  String get retentionMaxDbSize => 'Database size cap';
+  String get retentionMaxDbSize => '데이터베이스 크기 상한';
 
   @override
-  String get corsOrigins => 'CORS allowed origins';
+  String get corsOrigins => 'CORS 허용 origin';
 
   @override
   String get corsOriginsTip =>
-      'Origins a browser panel may call this agent from. Empty means same-origin only.';
+      '브라우저 패널이 이 agent를 호출할 수 있는 origin입니다. 비워 두면 same-origin만 허용합니다.';
 
   @override
   String get monitorNoRemoteAccess =>
