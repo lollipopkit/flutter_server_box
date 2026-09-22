@@ -11,104 +11,81 @@ extension on _ServerDetailPageState {
   /// The row of things to do stays where it is, greyed: it is not that the
   /// entries went away, it is that nothing can be done through a connection
   /// that is not there, and the positions are worth keeping.
+  ///
+  /// The words are [ServerCardNotice] at the far end of its movement: a card
+  /// that failed draws the same block, and grows it into this — see
+  /// [ServerNoticeForm.page]. The actions are this page's own, and come in
+  /// under it the way the facts come in beside the readings.
   Widget _buildNothingYet(ServerState si) {
-    final notice = _noticeOf(si);
+    final notice = ServerNotice.of(si);
 
     return _hosted(
       si,
       Stack(
-          children: [
-            ListView(
-              padding: EdgeInsets.fromLTRB(26, 26, 26, _kFuncBarInset + 26),
-              children: [
-                Icon(
-                  notice.glyph,
-                  size: 56,
-                  color: Theme.of(context).colorScheme.outlineVariant,
+        children: [
+          ListView(
+            // The readings page's inset, so the block a card grows into is
+            // in the same box whichever page it finds; the notice's own 26
+            // is on the block — see [ServerCardSizes.noticeInset].
+            padding: EdgeInsets.fromLTRB(13, 4, 13, _kFuncBarInset + 26),
+            children: [
+              _handed(
+                ServerCardNotice(
+                  notice: notice,
+                  form: ServerNoticeForm.page,
+                  openness: 1,
                 ),
-                UIs.height13,
-                Text(
-                  notice.title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w500),
-                ),
-                if (notice.text.isNotEmpty) ...[
-                  UIs.height13,
-                  Text(
-                    notice.text,
-                    textAlign: TextAlign.center,
-                    style: UIs.textGrey,
-                  ),
-                ],
-                // What the machine said, as it said it. Selectable and in full:
-                // an address or an errno is the part someone needs to paste
-                // somewhere, and truncating it is what sends them to the logs.
-                if (notice.mono.isNotEmpty) ...[
-                  UIs.height13,
-                  CardX(
-                    child: Padding(
-                      padding: const EdgeInsets.all(13),
-                      child: SelectableText(
-                        notice.mono,
-                        textAlign: TextAlign.center,
-                        style: UIs.text12Grey.copyWith(fontFamily: 'monospace'),
-                      ),
-                    ),
-                  ),
-                ],
-                UIs.height13,
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 9,
-                  runSpacing: 9,
-                  children: notice.actions,
-                ),
-                if (notice.hint.isNotEmpty) ...[
-                  UIs.height13,
-                  Text(
-                    notice.hint,
-                    textAlign: TextAlign.center,
-                    style: UIs.text11Grey,
-                  ),
-                ],
-              ],
-            ),
-            // Not when the tab is the host: it floats one of its own above
-            // this, which is what keeps the row still while the machine on
-            // screen changes.
-            if (!widget.bare)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: ServerFuncBar(
-                  spi: si.spi,
-                  btns: serverDetailFuncBtns(si).entries,
-                ),
+                byCard: ServerNotice.onCard(si) != null,
+                from: const Offset(0, 24),
               ),
-          ],
-        ),
+              _entering(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 13),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      UIs.height13,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 9,
+                        runSpacing: 9,
+                        children: _actionsOf(si, notice),
+                      ),
+                      if (notice.hint.isNotEmpty) ...[
+                        UIs.height13,
+                        Text(
+                          notice.hint,
+                          textAlign: TextAlign.center,
+                          style: UIs.text11Grey,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                from: const Offset(0, 24),
+              ),
+            ],
+          ),
+          // Not when the tab is the host: it floats one of its own above
+          // this, which is what keeps the row still while the machine on
+          // screen changes.
+          if (!widget.bare)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: ServerFuncBar(
+                spi: si.spi,
+                btns: serverDetailFuncBtns(si).entries,
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  /// Which of the three this is, and what it says.
-  ({
-    IconData glyph,
-    String title,
-    String text,
-    String mono,
-    List<Widget> actions,
-    String hint,
-  })
-  _noticeOf(ServerState si) {
-    final err = si.status.err;
-    // `connected` counts: the SSH path sits there through system detection and
-    // the script install, two round trips during which there is still nothing
-    // to show. Reading it as "not busy" put "Empty" and a Retry button in
-    // front of a server that was in the middle of connecting — and disagreed
-    // with the server card, which has always treated the three as one state.
-    final busy = si.conn.busy;
-
+  /// What changes the answer, for the state [notice] found the machine in.
+  List<Widget> _actionsOf(ServerState si, ServerNotice notice) {
     final retry = Btn.elevated(
       text: libL10n.retry,
       icon: const Icon(Icons.refresh, size: 18),
@@ -126,67 +103,36 @@ extension on _ServerDetailPageState {
       ),
     );
 
-    // Asked before the error is read: a connection this app has not been
-    // allowed to make has not been tried, so whatever else is on `err` is
-    // about an earlier address or an earlier setting.
-    final monitor = si.spi.monitorHttp;
-    if (monitor != null && monitor.needsInsecureOptIn) {
-      return (
-        glyph: Icons.no_encryption_gmailerrorred_outlined,
-        // What is true, not what the setting is called: nothing has been sent
-        // to this address yet, and what the button turns on is the sending.
-        title: l10n.plainHttpTitle,
-        text: l10n.plainHttpTip,
-        mono: monitor.addr,
-        actions: [
-          Btn.elevated(
-            // Says what it does to what: the switch it flips is this server's
-            // and not a default, which is the question anyone reading this
-            // screen is asking.
-            text: l10n.allowForThisServer,
-            icon: const Icon(Icons.lock_open, size: 18),
-            mainAxisSize: MainAxisSize.min,
-            gap: 8,
-            onTap: () => _allowInsecure(si),
-          ),
-          edit,
-        ],
-        hint: l10n.monitorAllowInsecureHttpTip,
-      );
-    }
-
-    if (err != null) {
-      return (
-        glyph: Icons.link_off,
-        title: err.solution ?? libL10n.fail,
-        text: '',
-        mono: err.message ?? '',
-        actions: [
-          retry,
-          // The message above is the error's own line; this is everything
-          // around it — what the app was doing, and the copy button a bug
-          // report needs.
+    return switch (notice.kind) {
+      ServerNoticeKind.plainHttp => [
+        Btn.elevated(
+          // Says what it does to what: the switch it flips is this server's
+          // and not a default, which is the question anyone reading this
+          // screen is asking.
+          text: l10n.allowForThisServer,
+          icon: const Icon(Icons.lock_open, size: 18),
+          mainAxisSize: MainAxisSize.min,
+          gap: 8,
+          onTap: () => _allowInsecure(si),
+        ),
+        edit,
+      ],
+      ServerNoticeKind.failed => [
+        retry,
+        // The title above is the error's own line; this is everything
+        // around it — what the app was doing, and the copy button a bug
+        // report needs.
+        if (si.status.err case final err?)
           Btn.text(
             text: l10n.viewError,
             onTap: () => _showErrDetail(si, err),
           ),
-          edit,
-        ],
-        hint: '',
-      );
-    }
-
-    return (
-      glyph: busy ? Icons.hourglass_empty : Icons.inbox_outlined,
-      // "Empty" is what a server that answered and had nothing to say would
-      // be. One that has not answered yet is connecting, and saying so is the
-      // difference between waiting and wondering.
-      title: busy ? l10n.waitConnection : libL10n.empty,
-      text: '',
-      mono: '',
-      actions: busy ? const [] : [retry, edit],
-      hint: '',
-    );
+        edit,
+      ],
+      // Nothing to do about a machine that is still on its way.
+      ServerNoticeKind.connecting => const [],
+      ServerNoticeKind.empty => [retry, edit],
+    };
   }
 
   /// The error as markdown: what to do about it, then what was actually said.
@@ -230,47 +176,14 @@ ${err.message ?? 'null'}
   /// Above the readings, because it is about all of them. Not shown when the
   /// error card is: that card already says why the numbers stopped, and two
   /// cards saying it in different words is one of them too many.
+  ///
+  /// The line the card in the list draws, at the far end of its movement —
+  /// see [ServerCardStale].
   Widget? _buildStaleCard(ServerState si) {
     if (si.status.err != null) return null;
     final at = serverStaleSince(si);
     if (at == null) return null;
-
-    return CardX(
-      child: Padding(
-        // Next to nothing above and below, because the way to ask again
-        // brings its own: it is 32 tall round a line of text, and that is
-        // already the air this sentence has. It was a `TextButton`, which a
-        // phone holds to 48, inside 9 more on each side — 66 points of card
-        // for one line of 12pt text, most of it the space over and under it.
-        padding: const EdgeInsets.fromLTRB(17, 5, 9, 5),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.pause_circle_outline,
-              size: 18,
-              color: StatePalette.warn,
-            ),
-            UIs.width13,
-            Expanded(
-              child: Text(
-                l10n.staleSinceFmt(
-                  at.toAgoStr(),
-                  _clockOf(at.millisecondsSinceEpoch),
-                ),
-                style: UIs.text13,
-              ),
-            ),
-            UIs.width7,
-            Btn.row(
-              icon: const Icon(Icons.refresh, size: 17),
-              text: libL10n.refresh,
-              mainAxisSize: MainAxisSize.min,
-              onTap: () => _reconnect(si),
-            ),
-          ],
-        ),
-      ),
-    );
+    return ServerCardStale(at: at, spi: si.spi, openness: 1);
   }
 
   /// Why there is no row of things to do, for a server whose agent grants
@@ -303,27 +216,20 @@ ${err.message ?? 'null'}
     );
   }
 
-  /// Why the status stopped updating. Sits above the cards, which keep
-  /// showing the last successful reading — stale data with a visible reason
+  /// Why the status stopped updating. Sits above the readings, which keep
+  /// showing the last successful one — stale data with a visible reason
   /// beats a blank page.
+  ///
+  /// The block the card in the list draws, at the far end of its movement —
+  /// see [ServerNoticeForm.card]. Pressing it is the way to the whole error.
   Widget? _buildErrCard(ServerState si) {
     final err = si.status.err;
     if (err == null) return null;
-
-    final solution = err.solution;
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.error_outline, color: Colors.red, size: 20),
-        title: Text(libL10n.error, style: UIs.text15),
-        subtitle: Text(
-          solution ?? err.message ?? libL10n.unknown,
-          style: UIs.text12Grey,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right, size: 17),
-        onTap: () => _showErrDetail(si, err),
-      ),
+    return ServerCardNotice(
+      notice: ServerNotice.of(si),
+      form: ServerNoticeForm.card,
+      openness: 1,
+      onTap: () => _showErrDetail(si, err),
     );
   }
 

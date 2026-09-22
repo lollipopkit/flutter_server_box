@@ -184,6 +184,51 @@ typedef ServerCardReadings = ({
 bool serverNeverSampled(ServerState srv) =>
     srv.status.more.isEmpty && srv.status.history.isEmpty;
 
+/// Whether the card in the list has readings to draw: the machine has
+/// answered, and with a sample.
+///
+/// The card's own definition, and the page it grows into asks it too: what
+/// the card draws, the page holds room for and paints only at the handover;
+/// what the card does not, the page brings in itself — see
+/// `ServerDetailPage.readingsShowing`. A machine that failed after answering
+/// keeps its numbers on its page and not on its card, where the error is the
+/// more useful of the two.
+bool serverCardHasBody(ServerState srv) =>
+    srv.conn == ServerConn.finished && !serverNeverSampled(srv);
+
+/// Whether there is anything to render on [state]'s page.
+///
+/// Losing the connection must not empty the page: the status already fetched
+/// is still the most recent thing known about the server, and the error card
+/// explains why it stopped updating. Collapsing to the placeholder on
+/// `ServerConn.failed` threw both away, so a monitor going offline looked
+/// identical to a server that had never been opened.
+///
+/// `more` is the "has ever been fetched" signal — every successful status
+/// apply populates it on both transports, and `keepStatusWhenErr` in
+/// `ServerNotifier` already relies on that.
+///
+/// Here rather than on the page because the server tab and the card ask it
+/// too: the tab draws the function row above a page it hosts, and what that
+/// row can do is a different answer on a machine with nothing to show yet;
+/// the card decides which of the page's two shapes it is growing into — see
+/// `ServerNoticeForm`.
+bool serverDetailHasContent(ServerState state) {
+  if (state.status.more.isNotEmpty) return true;
+  // Connecting is something to show: the rows every machine has, drawn with
+  // dashes, under a progress line. What this used to do instead — a spinner
+  // and "waiting for connection" — made the page arrive twice, once as a
+  // placeholder and once as itself, with everything in a different place.
+  if (state.conn.busy) return true;
+  // Having a connection is not having anything to show. Read as "connected is
+  // enough", this page opened onto a grid of empty cards — dashes where the
+  // CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch took,
+  // which on a server that is merely slow is a while. `finished` is the state
+  // that means a status came back; it is only ever left for another *later*
+  // fetch, so the page does not flicker back on refresh.
+  return state.conn == ServerConn.finished;
+}
+
 /// How long without a sample counts as the readings having stopped.
 ///
 /// Three polls, and never under half a minute: one poll running long is a slow
@@ -209,6 +254,18 @@ DateTime? serverStaleSince(ServerState srv) {
   final at = DateTime.fromMillisecondsSinceEpoch(times.last);
   return DateTime.now().difference(at) > serverStaleAfter ? at : null;
 }
+
+/// When the card in the list says the numbers stopped, or null when it says
+/// nothing of the kind.
+///
+/// Only with readings to say it of, and only while nothing has gone wrong: a
+/// machine that failed carries the failure instead, which already says why
+/// the numbers stopped. The page asks this too, of the block it holds room
+/// for — see `ServerDetailPage.readingsShowing`.
+DateTime? serverCardStaleSince(ServerState srv) =>
+    serverCardHasBody(srv) && srv.status.err == null
+        ? serverStaleSince(srv)
+        : null;
 
 /// The readings every card draws when the machine reports them.
 const _kAlwaysShown = {

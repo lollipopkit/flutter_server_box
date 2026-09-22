@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:ui' show lerpDouble;
 
+import 'package:extended_image/extended_image.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/gestures.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/conn.dart';
 import 'package:server_box/data/model/server/cpu.dart';
@@ -27,6 +29,7 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/server/card/card.dart';
 import 'package:server_box/view/page/server/card/density.dart';
+import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/overview.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/card/swap.dart';
@@ -137,11 +140,15 @@ void main() {
   /// between two of the card's own rows. With [sensor] the one slot that varies
   /// goes to the sensor and the swap has no row on the card; without it the
   /// swap takes that slot and is a row of the card's.
+  ///
+  /// [ago] puts the samples that far in the past, which past three polls is a
+  /// machine whose numbers have stopped.
   Future<void> answer(
     WidgetTester tester, {
     String id = 'srv-0',
     bool everything = false,
     bool sensor = true,
+    Duration ago = Duration.zero,
   }) async {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(ServerPage, skipOffstage: false)),
@@ -173,7 +180,7 @@ void main() {
     status.more[StatusCmdType.uptime] = 'up 3 days';
     // Enough of a window for there to be a line: with nothing stored the page
     // draws a sentence where the chart goes, which is a different thing again.
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = DateTime.now().subtract(ago).millisecondsSinceEpoch;
     for (var i = 0; i < 8; i++) {
       status.history.add(timeMs: now - (8 - i) * 3000, cpu: 10.0 + i, mem: 50);
     }
@@ -429,6 +436,270 @@ void main() {
       tester.getRect(find.byType(MetricRow).first),
       rectMoreOrLessEquals(firstRow, epsilon: 2),
     );
+  });
+
+  /// Has a machine fail — the first, unless [id] names another — with what it
+  /// said, so its card has a notice to draw. With [sampled] it answers first,
+  /// which is what puts the page's readings under the notice rather than
+  /// nothing.
+  Future<void> fail(
+    WidgetTester tester, {
+    String id = 'srv-0',
+    bool sampled = false,
+    required String message,
+  }) async {
+    if (sampled) await answer(tester, id: id);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerPage, skipOffstage: false)),
+    );
+    final notifier = container.read(serverProvider(id).notifier);
+    final status = container.read(serverProvider(id)).status;
+    status.err = SSHErr(type: SSHErrType.connect, message: message);
+    notifier.updateStatus(status);
+    notifier.updateConnection(ServerConn.failed);
+    await settle(tester);
+    expect(find.text(message), findsOneWidget);
+  }
+
+  testWidgets('a card that failed lands on the page that says so', (
+    tester,
+  ) async {
+    // The same movement for a machine with nothing to show. The words the
+    // card carries — what went wrong, and what the machine said — are the
+    // page's own title and its block of the machine's words, so at the
+    // handover they have to be exactly where the card grew them to. They
+    // used to be a block at the top left of a page whose notice sat centred
+    // under a glyph, and vanished the moment the page took over.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    const message = 'DioException [connection timeout]: took too long';
+    await fail(tester, message: message);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 340));
+    Finder inCard(Finder f) =>
+        find.descendant(of: find.byType(AnimatedMasonry), matching: f);
+    Finder inPage(Finder f) =>
+        find.descendant(of: find.byType(ServerDetailPage), matching: f);
+
+    final grownTitle = tester.getRect(inCard(find.text(libL10n.fail)));
+    final grownMono = tester.getRect(inCard(find.text(message)));
+    // The glyph the page puts over the title has grown in on the card.
+    final grownGlyph = tester.getRect(inCard(find.byIcon(Icons.link_off)));
+    // The page is already laid out exactly where the card has arrived.
+    expect(
+      tester.getRect(inPage(find.text(libL10n.fail))),
+      rectMoreOrLessEquals(grownTitle, epsilon: 2),
+    );
+    expect(
+      tester.getRect(inPage(find.text(message))),
+      rectMoreOrLessEquals(grownMono, epsilon: 2),
+    );
+    expect(
+      tester.getRect(inPage(find.byIcon(Icons.link_off))),
+      rectMoreOrLessEquals(grownGlyph, epsilon: 2),
+    );
+
+    await settle(tester);
+    expect(find.byType(AnimatedMasonry), findsNothing);
+    expect(
+      tester.getRect(find.text(libL10n.fail)),
+      rectMoreOrLessEquals(grownTitle, epsilon: 2),
+    );
+    expect(
+      tester.getRect(find.text(message)),
+      rectMoreOrLessEquals(grownMono, epsilon: 2),
+    );
+    expect(
+      tester.getRect(find.byIcon(Icons.link_off)),
+      rectMoreOrLessEquals(grownGlyph, epsilon: 2),
+    );
+    // And what the page adds under them has arrived: the ways to change the
+    // answer.
+    expect(find.text(libL10n.retry), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'and one that failed after answering lands on the line above its readings',
+    (tester) async {
+      // The other shape the page has for a failure: the last figures are
+      // still the most recent thing known, so the page keeps them under a
+      // line saying why they stopped — and that line is the card's block at
+      // the page's size. The readings are the page's alone here, since the
+      // card gives them up for the error, so they come in with the page
+      // rather than being held for a card that is not drawing them.
+      addServers();
+      await pump(tester, size: const Size(1200, 900));
+      const message = 'connection reset by peer';
+      await fail(tester, sampled: true, message: message);
+      // The card says why, and nothing else: what the overview in the strip
+      // adds up is not the card's.
+      expect(
+        find.descendant(of: find.byType(ServerCard), matching: find.text('CPU')),
+        findsNothing,
+      );
+
+      await tester.tap(find.text('web'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 340));
+      Finder inCard(Finder f) =>
+          find.descendant(of: find.byType(AnimatedMasonry), matching: f);
+      Finder inPage(Finder f) =>
+          find.descendant(of: find.byType(ServerDetailPage), matching: f);
+
+      final grownTitle = tester.getRect(inCard(find.text(libL10n.fail)));
+      final grownMono = tester.getRect(inCard(find.text(message)));
+      expect(
+        tester.getRect(inPage(find.text(libL10n.fail))),
+        rectMoreOrLessEquals(grownTitle, epsilon: 2),
+      );
+      expect(
+        tester.getRect(inPage(find.text(message))),
+        rectMoreOrLessEquals(grownMono, epsilon: 2),
+      );
+      // The readings are on their way in, not held back for the handover.
+      expect(inPage(find.text('CPU')), findsWidgets);
+      expect(
+        find.ancestor(
+          of: inPage(find.text('CPU')).first,
+          matching: find.byWidgetPredicate(
+            (w) => w is Opacity && w.opacity == 0,
+          ),
+        ),
+        findsNothing,
+        reason: 'the readings were held for a card that is not drawing them',
+      );
+
+      await settle(tester);
+      expect(find.byType(AnimatedMasonry), findsNothing);
+      expect(
+        tester.getRect(find.text(libL10n.fail)),
+        rectMoreOrLessEquals(grownTitle, epsilon: 2),
+      );
+      expect(
+        tester.getRect(find.text(message)),
+        rectMoreOrLessEquals(grownMono, epsilon: 2),
+      );
+      expect(find.text('CPU'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('a card whose numbers stopped lands on the line that says so', (
+    tester,
+  ) async {
+    // The line over the readings saying how old they are is the card's own
+    // line at the page's size, with the way to ask again grown in at its
+    // right. A card says how long ago and the page says the clock as well,
+    // so both sentences are drawn, crossing over on the way — and the page's
+    // is where the card has put it by the time the page takes over.
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester, ago: const Duration(minutes: 9));
+    // The card's line, not the strip's pill, which says the same thing.
+    final lastSample = find.descendant(
+      of: find.byType(ServerCardStale),
+      matching: find.textContaining(RegExp(r'^last sample')),
+    );
+    expect(lastSample, findsOneWidget);
+    expect(find.text(libL10n.refresh), findsNothing);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 340));
+    Finder inCard(Finder f) =>
+        find.descendant(of: find.byType(AnimatedMasonry), matching: f);
+    Finder inPage(Finder f) =>
+        find.descendant(of: find.byType(ServerDetailPage), matching: f);
+    final said = find.textContaining(RegExp(r'^Everything below is from'));
+
+    final grownIcon = tester.getRect(inCard(find.byIcon(Icons.schedule)));
+    final grownSaid = tester.getRect(inCard(said));
+    final grownRefresh = tester.getRect(inCard(find.text(libL10n.refresh)));
+    final grownChart = tester.getRect(inCard(find.byType(MetricChart)));
+    expect(
+      tester.getRect(inPage(find.byIcon(Icons.schedule))),
+      rectMoreOrLessEquals(grownIcon, epsilon: 2),
+    );
+    expect(
+      tester.getRect(inPage(said)),
+      rectMoreOrLessEquals(grownSaid, epsilon: 2),
+    );
+    expect(
+      tester.getRect(inPage(find.text(libL10n.refresh))),
+      rectMoreOrLessEquals(grownRefresh, epsilon: 2),
+    );
+
+    await settle(tester);
+    expect(find.byType(AnimatedMasonry), findsNothing);
+    // The line's own clock, not the one beside the uptime in the facts.
+    expect(
+      tester.getRect(
+        find.descendant(
+          of: find.byType(ServerCardStale),
+          matching: find.byIcon(Icons.schedule),
+        ),
+      ),
+      rectMoreOrLessEquals(grownIcon, epsilon: 2),
+    );
+    expect(tester.getRect(said), rectMoreOrLessEquals(grownSaid, epsilon: 2));
+    expect(
+      tester.getRect(find.text(libL10n.refresh)),
+      rectMoreOrLessEquals(grownRefresh, epsilon: 2),
+    );
+    expect(
+      tester.getRect(find.byType(MetricChart)),
+      rectMoreOrLessEquals(grownChart, epsilon: 2),
+    );
+    // The card's own sentence went with the card.
+    expect(lastSample, findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('and the page keeps its image out of the way of the card', (
+    tester,
+  ) async {
+    // The large image at the top of the page has no counterpart on the card,
+    // so the card keeps its room: the chart lands under where the image will
+    // be, rather than at the top of the page and then an image's height lower
+    // the moment the page takes over.
+    Stores.setting.serverLogoUrl.put('https://example.com/logo.png');
+    addServers();
+    await pump(tester, size: const Size(1200, 900));
+    await answer(tester);
+
+    await tester.tap(find.text('web'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 340));
+    Finder inCard(Finder f) =>
+        find.descendant(of: find.byType(AnimatedMasonry), matching: f);
+    Finder inPage(Finder f) =>
+        find.descendant(of: find.byType(ServerDetailPage), matching: f);
+
+    final grownChart = tester.getRect(inCard(find.byType(MetricChart)));
+    final grownLabel = tester.getRect(inCard(find.text('CPU')).first);
+    expect(
+      tester.getRect(inPage(find.byType(MetricChart))),
+      rectMoreOrLessEquals(grownChart, epsilon: 2),
+    );
+
+    await settle(tester);
+    expect(find.byType(AnimatedMasonry), findsNothing);
+    expect(
+      tester.getRect(find.byType(MetricChart)),
+      rectMoreOrLessEquals(grownChart, epsilon: 2),
+    );
+    expect(
+      tester.getRect(find.text('CPU').first),
+      rectMoreOrLessEquals(grownLabel, epsilon: 2),
+    );
+    // Under the image, which is a share of the column's width.
+    final image = tester.getRect(find.byType(ExtendedImage));
+    expect(image.height, moreOrLessEquals(image.width * 0.3, epsilon: 1));
+    expect(grownLabel.top, greaterThan(image.bottom));
+    expect(tester.takeException(), isNull);
   });
 
   // The near end of the same movement. Everything about the card is a lerp on

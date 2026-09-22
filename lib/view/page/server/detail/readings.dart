@@ -592,7 +592,9 @@ extension on _ServerDetailPageState {
           selected,
           wide,
           // To the minute, which is what the row says of it.
-          staleAt == null ? null : _clockOf(staleAt.millisecondsSinceEpoch),
+          staleAt == null
+              ? null
+              : ReadingFmt.clock(staleAt.millisecondsSinceEpoch),
         ],
         builder: (_) =>
             _metricRow(m, selected: selected, wide: wide, staleAt: staleAt),
@@ -613,7 +615,7 @@ extension on _ServerDetailPageState {
     // not true now. Only one of them fits, and it is the second.
     final note = m.error != null || staleAt == null
         ? m.note
-        : l10n.atTimeFmt(_clockOf(staleAt.millisecondsSinceEpoch));
+        : l10n.atTimeFmt(ReadingFmt.clock(staleAt.millisecondsSinceEpoch));
 
     void promote() {
       _focus.value = m.kind;

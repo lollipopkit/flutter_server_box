@@ -55,6 +55,33 @@ abstract final class ServerCardSizes {
   /// position. The grid supplies the remaining top padding.
   static const openInset = EdgeInsets.fromLTRB(5, 0, 5, 9);
 
+  /// What the page with nothing to show insets its notice by, over the page's
+  /// own inset.
+  ///
+  /// The design's 26 all round, less the 13 at the sides and 4 above that the
+  /// page puts round everything — the same box the readings are laid out in,
+  /// which is what a card grows into whichever page it finds. The block
+  /// carries the difference, as with [openInset], so it lands at the page's
+  /// 26 without the page around it changing.
+  static const noticeInset = EdgeInsets.fromLTRB(13, 22, 13, 0);
+
+  /// What the page insets its readings by at the sides: the 13 that
+  /// [openInset] and the grid's own 8 add up to.
+  ///
+  /// What a card's content is as wide as at the far end is the page's width
+  /// less twice this, and less the facts column where there is one — which
+  /// is how the card knows the height of an image it does not draw. See
+  /// `ServerCard._full`.
+  static const pageSide = 13.0;
+
+  /// The large image at the top of a server's page: how tall it is for the
+  /// width it is given, and the air over and under it.
+  ///
+  /// Here because the card growing into that page has no image and keeps its
+  /// room instead, so what is under the image lands where the page puts it.
+  static const logoHeightRatio = 0.3;
+  static const logoPad = 13.0;
+
   /// The line above the chart, once the readings are the page.
   ///
   /// Stated rather than natural, and honoured at both ends of the movement:

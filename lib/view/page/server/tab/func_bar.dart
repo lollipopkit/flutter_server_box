@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/view/page/server/card/metric.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 

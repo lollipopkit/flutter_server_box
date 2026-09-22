@@ -7,7 +7,6 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:intl/intl.dart';
 import 'package:redfish/redfish.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
@@ -17,7 +16,6 @@ import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/gpu.dart';
 import 'package:server_box/data/model/server/sensors.dart';
-import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/bmc/bmc.dart';
@@ -28,6 +26,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/card/metric.dart';
+import 'package:server_box/view/page/server/card/notices.dart';
 import 'package:server_box/view/page/server/card/sizes.dart';
 import 'package:server_box/view/page/server/chart.dart';
 import 'package:server_box/view/page/server/detail/focus_parts.dart';
@@ -72,12 +71,16 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   /// the chart is still growing.
   final Animation<double>? entrance;
 
-  /// Whether the readings are this page's to draw.
+  /// Whether what the card draws is this page's to draw.
   ///
-  /// False while the card is still the one drawing them: the two are the same
+  /// False while the card is still the one drawing it: the two are the same
   /// widgets in the same boxes, so both on screen at once is the same thing
   /// drawn twice. The block is still laid out — what is beside and below it is
   /// placed against it — but nothing of it is painted.
+  ///
+  /// Which blocks that is depends on the machine — the readings, or the notice
+  /// a card that failed carries instead — and is asked per block, of the card's
+  /// own definitions; see `_handed`.
   final bool readingsShowing;
 
   const ServerDetailPage({
@@ -103,37 +106,6 @@ class ServerDetailPage extends ConsumerStatefulWidget {
 /// Kept even when this page is not the one drawing the bar: [ServerDetailPage
 /// .bare] means the tab floats it above, over the same content.
 const _kFuncBarInset = kFuncBarInset;
-
-/// Whether there is anything to render for [state].
-///
-/// Losing the connection must not empty the page: the status already fetched
-/// is still the most recent thing known about the server, and the error card
-/// explains why it stopped updating. Collapsing to the placeholder on
-/// `ServerConn.failed` threw both away, so a monitor going offline looked
-/// identical to a server that had never been opened.
-///
-/// `more` is the "has ever been fetched" signal — every successful status
-/// apply populates it on both transports, and `keepStatusWhenErr` in
-/// `ServerNotifier` already relies on that.
-///
-/// Top level because the server tab asks it too: it draws the function row
-/// above a page it hosts, and what that row can do is a different answer on a
-/// machine with nothing to show yet.
-bool serverDetailHasContent(ServerState state) {
-  if (state.status.more.isNotEmpty) return true;
-  // Connecting is something to show: the rows every machine has, drawn with
-  // dashes, under a progress line. What this used to do instead — a spinner
-  // and "waiting for connection" — made the page arrive twice, once as a
-  // placeholder and once as itself, with everything in a different place.
-  if (state.conn.busy) return true;
-  // Having a connection is not having anything to show. Read as "connected is
-  // enough", this page opened onto a grid of empty cards — dashes where the
-  // CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch took,
-  // which on a server that is merely slow is a while. `finished` is the state
-  // that means a status came back; it is only ever left for another *later*
-  // fetch, so the page does not flicker back on refresh.
-  return state.conn == server_model.ServerConn.finished;
-}
 
 /// The entries the function row draws for [si], and whether any can be used.
 ///
@@ -504,6 +476,27 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     );
   }
 
+  /// [child] as the card that became this page has it, or has not.
+  ///
+  /// [byCard] is the card drawing the same widgets in the same boxes, so this
+  /// is laid out — what is beside and below it is placed against it — and
+  /// painted only once the card hands it over, which is
+  /// [ServerDetailPage.readingsShowing]. Otherwise it is something the card
+  /// has no counterpart for, and comes in while the card is still growing —
+  /// see [_entering].
+  ///
+  /// Asked per block rather than once for the page. Held for a card that was
+  /// not drawing it, a block appeared at the handover from nothing: a machine
+  /// that failed after answering keeps its readings on this page and off its
+  /// card, and they arrived in one cut the moment the card stopped moving.
+  Widget _handed(Widget child, {required bool byCard, required Offset from}) {
+    if (!byCard) return _entering(child, from: from);
+    return Opacity(
+      opacity: widget.readingsShowing ? 1 : 0,
+      child: IgnorePointer(ignoring: !widget.readingsShowing, child: child),
+    );
+  }
+
   /// The readings: one metric drawn in full with the rest as rows, and beside
   /// them what the machine is and everything that is a table rather than a
   /// trend.
@@ -519,18 +512,27 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     required bool wide,
     Widget? noAccess,
   }) {
+    // Whether the card this page grew out of is drawing each of these — see
+    // [_handed]. Asked of the card's own definitions, so the two never
+    // disagree about who has a block.
+    final cardNotice = ServerNotice.onCard(si) != null;
+    final cardBody = serverCardHasBody(si);
     final metrics = <Widget>[
-      ?logo,
-      ?_buildErrCard(si),
-      ?_buildStaleCard(si),
-      // Laid out whether or not it is painted: what is beside it and under it
-      // is placed against it — see [ServerDetailPage.readingsShowing].
-      Opacity(
-        opacity: widget.readingsShowing ? 1 : 0,
-        child: IgnorePointer(
-          ignoring: !widget.readingsShowing,
-          child: _buildMetrics(si, wide: wide),
+      // From above, the edge it sits against: the card keeps its room and
+      // draws nothing in it — see `ServerCard._full`.
+      if (logo != null) _entering(logo, from: const Offset(0, -24)),
+      if (_buildErrCard(si) case final errCard?)
+        _handed(errCard, byCard: cardNotice, from: const Offset(0, 24)),
+      if (_buildStaleCard(si) case final stale?)
+        _handed(
+          stale,
+          byCard: serverCardStaleSince(si) != null,
+          from: const Offset(0, 24),
         ),
+      _handed(
+        _buildMetrics(si, wide: wide),
+        byCard: cardBody,
+        from: const Offset(0, 24),
       ),
       // Under the readings rather than in the column beside them: these are
       // tables — sensor rows, GPU processes, SMART attributes — and a 330pt
@@ -709,6 +711,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// may be drawn here is a wider set than what may be drawn there. Recolouring
   /// is a modification, and at least one project — Rocky Linux — forbids
   /// altering its mark "in any way", which is why no mark ships for it.
+  ///
+  /// Its height is stated in [ServerCardSizes], because the card that grows
+  /// into this page keeps the image's room without drawing it.
   Widget? _buildLogo(ServerState si) {
     final logoUrl = si.getLogoUrl(context);
     // Null, not an empty placeholder: the wrapping Padding was laid out either
@@ -717,10 +722,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     if (logoUrl == null) return null;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 13),
+      padding: const EdgeInsets.symmetric(vertical: ServerCardSizes.logoPad),
       child: LayoutBuilder(
         builder: (_, cons) {
-          final height = cons.maxWidth * 0.3;
+          final height = cons.maxWidth * ServerCardSizes.logoHeightRatio;
           if (logoUrl.isSvgUrl) {
             return SvgPicture.network(
               logoUrl,

@@ -97,21 +97,10 @@ extension on _ServerDetailPageState {
           // window says when the readings begin, and one at the end has
           // nothing to name — it runs to now.
           label: gap.leading
-              ? l10n.noDataBeforeFmt(_clockOf(first))
+              ? l10n.noDataBeforeFmt(ReadingFmt.clock(first))
               : l10n.noData,
         ),
     ];
-  }
-
-  /// A sample's instant as a clock reading — the day where the window spans
-  /// one, because "no data before 11:20" is a different fact on Tuesday.
-  String _clockOf(int timeMs) {
-    final at = DateTime.fromMillisecondsSinceEpoch(timeMs);
-    final sameDay = DateTime.now().difference(at) < const Duration(hours: 12);
-    return DateFormat(
-      sameDay ? 'HH:mm' : 'MMM d HH:mm',
-      l10n.localeName,
-    ).format(at);
   }
 
   /// The one line under the header, when there is something for it to say.
@@ -141,8 +130,8 @@ extension on _ServerDetailPageState {
     if (window == null) return _range.label;
     final span = window.to.difference(window.from).toAgoStr;
     if (!wide) return span;
-    return '${_clockOf(window.from.millisecondsSinceEpoch)} – '
-        '${_clockOf(window.to.millisecondsSinceEpoch)}';
+    return '${ReadingFmt.clock(window.from.millisecondsSinceEpoch)} – '
+        '${ReadingFmt.clock(window.to.millisecondsSinceEpoch)}';
   }
 
   /// The ranges, and the way to the ones that are not here.
@@ -328,7 +317,7 @@ extension on _ServerDetailPageState {
                     leading: const Icon(Icons.event, size: 20),
                     title: Text(bound ? l10n.from : l10n.to),
                     trailing: Text(
-                      _clockOf(
+                      ReadingFmt.clock(
                         (bound ? from : to).millisecondsSinceEpoch,
                       ),
                       style: UIs.text13,
@@ -371,7 +360,7 @@ extension on _ServerDetailPageState {
                           l10n.agentRetentionFmt(kept.toAgoStr),
                         if (caps.oldestSample case final oldest?)
                           l10n.oldestSampleFmt(
-                            _clockOf(oldest.millisecondsSinceEpoch),
+                            ReadingFmt.clock(oldest.millisecondsSinceEpoch),
                           ),
                       ].join(' · '),
                       style: UIs.text11Grey,

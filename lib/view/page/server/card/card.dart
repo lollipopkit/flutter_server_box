@@ -4,7 +4,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/motion.dart';
 import 'package:server_box/core/extension/server.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/view/page/server/card/arrival.dart';
@@ -254,14 +253,12 @@ class ServerCard extends StatelessWidget {
     _ => isMobile ? ServerCardSizes.rowTouch : ServerCardSizes.row,
   };
 
-  /// Whether there are readings to draw: the machine has answered, and with
-  /// a sample.
+  /// Whether there are readings to draw — see [serverCardHasBody].
   ///
   /// One definition, because going from false to true is what
   /// [ServerCardClocks] reads as the first sample landing — so it has to be
   /// the same question both shapes ask before drawing any.
-  bool get _hasBody =>
-      srv.conn == ServerConn.finished && !serverNeverSampled(srv);
+  bool get _hasBody => serverCardHasBody(srv);
 
   /// The card, and the readings block of the page it becomes.
   ///
@@ -278,13 +275,16 @@ class ServerCard extends StatelessWidget {
   ) {
     final t = openness;
 
-    final err = srv.status.err;
-    final auth = srv.needsInteractiveAuth;
+    // What the card says about a machine with nothing to show, and which of
+    // the page's two shapes it is on its way to — see [ServerNoticeForm].
+    // Decided from where the card is going, like [twoColumns] below.
+    final notice = ServerNotice.onCard(srv);
+    final hasContent = serverDetailHasContent(srv);
     // Only what has been sampled is drawn. A machine that failed keeps its
     // last numbers on its own page, where there is room to say how old they
     // are; on a card the error is the more useful of the two.
     final hasBody = _hasBody;
-    final stale = hasBody && err == null ? serverStaleSince(srv) : null;
+    final stale = serverCardStaleSince(srv);
 
     final readings = hasBody ? serverCardReadings(srv) : null;
     final focus = readings == null
@@ -296,17 +296,44 @@ class ServerCard extends StatelessWidget {
     // going rather than from where it is, so the reservation grows evenly
     // instead of appearing the moment the card passes 800pt.
     final twoColumns = pageWidth >= ServerCardSizes.columnsWidth;
+    // Only a page with readings has the facts beside them: a machine with
+    // nothing to show is one notice across the whole width.
+    final asideAtEnd = twoColumns && hasContent
+        ? ServerCardSizes.aside + ServerCardSizes.asideGap
+        : 0.0;
+
+    // The page's image, which the card has not: its room is kept from the
+    // first frame, growing with the card, so what is under it lands where
+    // the page puts it rather than a picture's height too high. The image
+    // itself comes in with the page — see `ServerDetailPage._buildLogo`. Its
+    // height is a share of the width the page lays it out at, which is this
+    // card's at the far end. A box of no height at rest rather than none, so
+    // the blocks under it are the same children of the same column on every
+    // frame.
+    final logoRoom = t > 0 && hasContent && srv.getLogoUrl(context) != null
+        ? ((pageWidth - 2 * ServerCardSizes.pageSide - asideAtEnd) *
+                  ServerCardSizes.logoHeightRatio +
+              2 * ServerCardSizes.logoPad) *
+            t
+        : 0.0;
 
     final column = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (stale != null) ServerCardStale(at: stale),
+        SizedBox(height: logoRoom),
+        if (stale != null)
+          ServerCardStale(at: stale, spi: srv.spi, openness: t),
         // The name goes as the page's own bar takes it: by the time the
         // readings are the page, what they are of is at the top of the window
         // with the switcher between machines beside it.
         ServerCardTitle(srv: srv, openness: t, selected: selected),
-        if (err != null && !auth) ServerCardError(err: err),
+        if (notice != null)
+          ServerCardNotice(
+            notice: notice,
+            openness: t,
+            form: hasContent ? ServerNoticeForm.card : ServerNoticeForm.page,
+          ),
         if (readings != null)
           _body(
             context,
@@ -320,9 +347,7 @@ class ServerCard extends StatelessWidget {
       ],
     );
 
-    final reserved = twoColumns
-        ? (ServerCardSizes.aside + ServerCardSizes.asideGap) * t
-        : 0.0;
+    final reserved = asideAtEnd * t;
 
     return Padding(
       // At rest the card's own inset. At the end, what is left of the page's

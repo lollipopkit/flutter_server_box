@@ -1,6 +1,8 @@
 import 'dart:ui' show FontFeature;
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:intl/intl.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 
 /// Figures that line up down a column: every digit the same width, so the
 /// numbers on six cards, or on forty lines, can be compared down a page.
@@ -27,4 +29,15 @@ abstract final class ReadingFmt {
   /// and the decimal was only ever noise there.
   static String temp(double celsius) =>
       '${celsius.toStringAsFixed(celsius == celsius.roundToDouble() ? 0 : 1)}°C';
+
+  /// A sample's instant as a clock reading — the day where the window spans
+  /// one, because "no data before 11:20" is a different fact on Tuesday.
+  static String clock(int timeMs) {
+    final at = DateTime.fromMillisecondsSinceEpoch(timeMs);
+    final sameDay = DateTime.now().difference(at) < const Duration(hours: 12);
+    return DateFormat(
+      sameDay ? 'HH:mm' : 'MMM d HH:mm',
+      l10n.localeName,
+    ).format(at);
+  }
 }
