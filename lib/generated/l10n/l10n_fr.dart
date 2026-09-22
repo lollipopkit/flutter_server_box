@@ -2772,12 +2772,14 @@ class AppLocalizationsFr extends AppLocalizations {
       locale: localeName,
       other: '$total tâches',
       one: '1 tâche',
+      zero: '$total tâches',
     );
     String _temp1 = intl.Intl.pluralLogic(
       enabled,
       locale: localeName,
       other: '$enabled activées',
       one: '1 activée',
+      zero: '$enabled activées',
     );
     return '$_temp0 · $_temp1';
   }

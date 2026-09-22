@@ -2751,7 +2751,14 @@ class AppLocalizationsPt extends AppLocalizations {
       one: '1 tarefa',
       zero: '$total tarefas',
     );
-    return '$_temp0 · $enabled ativadas';
+    String _temp1 = intl.Intl.pluralLogic(
+      enabled,
+      locale: localeName,
+      other: '$enabled ativadas',
+      one: '1 ativada',
+      zero: '$enabled ativadas',
+    );
+    return '$_temp0 · $_temp1';
   }
 
   @override
