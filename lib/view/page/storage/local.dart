@@ -100,9 +100,16 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   }
 
   List<Widget> _actions(FileBrowserHandle handle) => [
-    IconButton(tooltip: libL10n.mission, 
-      icon: const Icon(Icons.downloading),
-      onPressed: () => showTransfers(context),
+    if (isDesktop)
+      Btn.icon(
+        text: libL10n.open,
+        icon: const Icon(Icons.folder_open_outlined, size: 18),
+        onTap: () => Pfs.revealPath(Paths.file),
+      ),
+    Btn.icon(
+      text: libL10n.mission,
+      icon: const Icon(Icons.downloading, size: 18),
+      onTap: () => showTransfers(context),
     ),
   ];
 

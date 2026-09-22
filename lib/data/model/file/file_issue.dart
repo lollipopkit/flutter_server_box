@@ -46,6 +46,8 @@ FileIssue classifyFileError(Object? error) {
   // than on the bare number, which a path is free to contain.
   if (message.contains('permission denied') ||
       message.contains('access denied') ||
+      // macOS TCC uses EPERM for protected folders such as Documents.
+      message.contains('operation not permitted') ||
       message.contains('status code of 403') ||
       message.contains('403 forbidden') ||
       message.contains('code 3') ||

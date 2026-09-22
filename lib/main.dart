@@ -165,6 +165,7 @@ Future<void> _initApp() async {
     BuildData.name,
     bakName: Miscs.bakFileName,
     dirs: const {PathDir.img, PathDir.font},
+    fileInUserDocuments: false,
   );
   await CrashLog.attach(Paths.doc.joinPath('logs'));
   // Which release a report came from is the first thing asked about one and

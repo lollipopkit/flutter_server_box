@@ -257,8 +257,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   void dispose() {
     _sort.dispose();
     _search.dispose();
-    _pathCtrl.dispose();
+    _pathFocus.removeListener(_onPathFocusChange);
     _pathFocus.dispose();
+    _pathCtrl.dispose();
     _busy.dispose();
     _dropping.dispose();
     _listFocus.dispose();
@@ -1107,13 +1108,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       if (!widget.args.isPickFile && !widget.args.isPickDir)
         Btn.icon(
           text: libL10n.add,
-          icon: const Icon(Icons.add),
+          icon: const Icon(Icons.add, size: 18),
           onTap: () => showContextMenu(context, _createActions),
         ),
       _buildViewBtn(),
-      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _search.start),
+      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search, size: 18), onTap: _search.start),
       if (isDesktop)
-        Btn.icon(text: libL10n.refresh, icon: const Icon(Icons.refresh), onTap: refresh),
+        Btn.icon(text: libL10n.refresh, icon: const Icon(Icons.refresh, size: 18), onTap: refresh),
     ];
 
     final body = Column(
@@ -1178,7 +1179,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                     duration: Durations.short3,
                     child: Text(title, key: ValueKey(title)),
                   ),
-                  actions: actions,
+                  actions: [...actions, const SizedBox(width: 7)],
                 ),
               ),
             ),
@@ -1807,7 +1808,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     return _sort.listenVal((value) {
       final hidden = Stores.setting.showHiddenFiles.fetch();
       return PopupMenuButton<Object>(
-        icon: const Icon(Icons.sort),
+        tooltip: libL10n.sort,
+        padding: EdgeInsets.zero,
+        child: const Padding(
+          padding: EdgeInsets.all(7),
+          child: Icon(Icons.sort, size: 18),
+        ),
         itemBuilder: (_) => [
           for (final by in _SortBy.values)
             PopupMenuItem(
