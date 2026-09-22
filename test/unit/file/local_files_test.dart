@@ -25,10 +25,14 @@ void main() {
     await File('${source.path}/server/download.txt').writeAsString('nested');
     await File('${Paths.file}/current.txt').writeAsString('current');
     await File('${source.path}/current.txt').writeAsString('old');
+    await File('${source.path}/collision.txt').writeAsString('imported');
+    final unrelatedStaging = await File(
+      '${Paths.file}/collision.txt.importing',
+    ).writeAsString('user data');
 
     final imported = await LocalFiles.importFrom(source.path);
 
-    expect(imported, 2);
+    expect(imported, 3);
     expect(await File('${Paths.file}/note.txt').readAsString(), 'legacy');
     expect(
       await File('${Paths.file}/server/download.txt').readAsString(),
@@ -36,6 +40,18 @@ void main() {
     );
     expect(await File('${Paths.file}/current.txt').readAsString(), 'current');
     expect(await File('${source.path}/note.txt').readAsString(), 'legacy');
+    expect(
+      await File('${Paths.file}/collision.txt').readAsString(),
+      'imported',
+    );
+    expect(await unrelatedStaging.readAsString(), 'user data');
+    expect(
+      await Directory(Paths.file)
+          .list()
+          .where((entry) => entry.path.contains('.serverbox-import-'))
+          .isEmpty,
+      isTrue,
+    );
   });
 
   test('does not import symlinks outside the selected directory', () async {
@@ -50,5 +66,23 @@ void main() {
       await FileSystemEntity.type('${Paths.file}/outside.txt'),
       FileSystemEntityType.notFound,
     );
+  });
+
+  test('continues after one legacy entry cannot be copied', () async {
+    if (Platform.isWindows) return;
+
+    final source = await Directory('${root.path}/copy-failure').create();
+    final socketPath = '${source.path}/broken.sock';
+    final socket = await ServerSocket.bind(
+      InternetAddress(socketPath, type: InternetAddressType.unix),
+      0,
+    );
+    addTearDown(socket.close);
+    await File('${source.path}/usable.txt').writeAsString('kept');
+
+    final imported = await LocalFiles.importFrom(source.path);
+
+    expect(imported, 1);
+    expect(await File('${Paths.file}/usable.txt').readAsString(), 'kept');
   });
 }
