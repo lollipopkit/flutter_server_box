@@ -1345,6 +1345,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshA11yInputHint => '输入命令后按回车';
+  @override
+  String get sshA11yCursorPrefix => '选中';
 
   @override
   String get sshA11yMode => '无障碍模式';
@@ -1418,6 +1420,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewDetails => '查看详情';
 
   @override
+  @override
+  String get virtKeyA11yClipboard => '剪贴板';
+
+  @override
+  String get virtKeyA11yIME => '键盘';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11ySnippet => '代码片段';
+
+  @override
+  String get virtKeyA11ySudo => 'sudo 密码';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
+  @override
+  String get virtKeyA11yClipboard => '剪貼簿';
+
+  @override
+  String get virtKeyA11yIME => '鍵盤';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11ySnippet => '程式碼片段';
+
+  @override
+  String get virtKeyA11ySudo => 'sudo 密碼';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
   String get virtKeyHelpClipboard => '如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。';
 
   @override
@@ -4085,6 +4121,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshA11yInputHint => '輸入命令後按 Enter';
+  @override
+  String get sshA11yCursorPrefix => '選中';
 
   @override
   String get sshA11yMode => '無障礙模式';

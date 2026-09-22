@@ -107,6 +107,15 @@ extension _VirtKey on SSHPageState {
         break;
       default:
         _terminal.keyInput(key);
+        // Navigation keys move the highlight in a TUI menu. In accessibility
+        // mode the screen reader says where the cursor landed — see
+        // `_announceCursorLine`.
+        if (key == TerminalKey.arrowUp ||
+            key == TerminalKey.arrowDown ||
+            key == TerminalKey.arrowLeft ||
+            key == TerminalKey.arrowRight) {
+          _announceCursorLine();
+        }
         break;
     }
   }

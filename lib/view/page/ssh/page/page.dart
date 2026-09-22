@@ -218,6 +218,17 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// wherever the user moved it.
   bool _a11yInputFocusedOnce = false;
 
+  /// The last line announced to the screen reader, so the next announcement
+  /// can tell a menu item that changed from one the cursor simply moved onto:
+  /// changed text is announced as itself, unchanged text gets the "selected"
+  /// prefix — see [_announceCursorLineNow].
+  String? _a11yLastAnnounced;
+
+  /// Arrow keys redraw the menu several times per press, and each redraw would
+  /// announce on its own. One announcement per burst, after the terminal has
+  /// settled on the new selection.
+  Timer? _a11yAnnounceDebounce;
+
   /// Which step of the virtual keys walkthrough is showing, or null when it is
   /// not running — which is every time but the first.
   int? _introStep;
@@ -348,6 +359,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _virtKeyPage.dispose();
     _discontinuityTimer?.cancel();
     _a11yDebounce?.cancel();
+    _a11yAnnounceDebounce?.cancel();
     _a11yInputCtrl.dispose();
     _a11yInputFocus.dispose();
     if (_a11ySubscribed) {
@@ -495,6 +507,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (a11y && !_a11ySubscribed) {
       _terminal.addListener(_onA11yTerminalChanged);
       _a11ySubscribed = true;
+      // Fill the list with what is already on screen — a session that has
+      // been running is not blank. Direct assignment, not `setState`: this
+      // runs inside `build`, and the frame is about to render the list.
+      _a11yOutput = _terminal.buffer.getText().split('\n');
     }
 
     final bgImage = Stores.setting.sshBgImage.fetch();
@@ -759,8 +775,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   void _onA11yInputSubmitted(String text) {
-    if (text.isEmpty) return;
-    _terminal.textInput(text);
+    // An empty Enter still confirms the TUI menu selection in front of the
+    // cursor — the field is a command line, not a barrier to a bare confirm.
+    if (text.isNotEmpty) {
+      _terminal.textInput(text);
+    }
     _terminal.keyInput(TerminalKey.enter);
     _a11yInputCtrl.clear();
     _a11yInputFocus.requestFocus();
@@ -775,10 +794,63 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   void _refreshA11yOutput() {
+    if (!mounted || !Stores.setting.sshA11yMode.fetch()) return;
+    final buffer = _terminal.buffer;
+    final lines = buffer.getText().split('\n');
+    final oldLines = _a11yOutput;
+    if (!_sameLines(lines, oldLines)) {
+      setState(() => _a11yOutput = lines);
+    }
+
+    // A Space toggle in a TUI menu rewrites the item's own line (the checkbox
+    // cell flips) without the cursor moving — announce the changed item. The
+    // output list itself gets nothing added: the line is replaced in place.
+    final cursor = buffer.absoluteCursorY;
+    if (cursor < 0 || cursor >= lines.length) return;
+    final text = lines[cursor].trim();
+    if (text.isEmpty) return;
+    final prevText =
+        cursor < oldLines.length ? oldLines[cursor].trim() : null;
+    if (prevText == null || prevText == text) return;
+    _a11yLastAnnounced = text;
+    _announceA11y(text);
+  }
+
+  /// Announces the line under the cursor after a navigation key, the way a
+  /// TUI menu user expects: an arrow key moves the highlight, and the screen
+  /// reader says where it landed.
+  ///
+  /// Whether the item's text changed decides the wording. Text that changed
+  /// (the menu scrolled, a checkbox flipped) is announced as itself; text the
+  /// cursor simply moved onto is announced with the "selected" prefix, so the
+  /// reader can tell the two apart.
+  void _announceCursorLine() {
+    if (!Stores.setting.sshA11yMode.fetch()) return;
+    _a11yAnnounceDebounce?.cancel();
+    _a11yAnnounceDebounce =
+        Timer(const Duration(milliseconds: 150), _announceCursorLineNow);
+  }
+
+  void _announceCursorLineNow() {
     if (!mounted) return;
-    final lines = _terminal.buffer.getText().split('\n');
-    if (_sameLines(lines, _a11yOutput)) return;
-    setState(() => _a11yOutput = lines);
+    final buffer = _terminal.buffer;
+    final lines = buffer.getText().split('\n');
+    final cursor = buffer.absoluteCursorY;
+    if (cursor < 0 || cursor >= lines.length) return;
+    final text = lines[cursor].trim();
+    if (text.isEmpty) return;
+    final changed = text != _a11yLastAnnounced;
+    _a11yLastAnnounced = text;
+    _announceA11y(changed ? text : '${l10n.sshA11yCursorPrefix} $text');
+  }
+
+  /// One entry point for every announcement, so a burst of them can be
+  /// collapsed without each caller keeping its own timer.
+  void _announceA11y(String message) {
+    _a11yAnnounceDebounce?.cancel();
+    _a11yAnnounceDebounce = Timer(const Duration(milliseconds: 200), () {
+      if (mounted) SemanticsService.announce(message);
+    });
   }
 
   bool _sameLines(List<String> a, List<String> b) {

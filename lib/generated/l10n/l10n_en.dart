@@ -1436,6 +1436,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sshA11yInputHint => 'Type a command, then press Enter';
+  @override
+  String get sshA11yCursorPrefix => 'Selected';
 
   @override
   String get sshA11yMode => 'Accessibility mode';
@@ -1519,6 +1521,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewDetails => 'View Details';
 
   @override
+  @override
+  String get virtKeyA11yClipboard => 'Clipboard';
+
+  @override
+  String get virtKeyA11yIME => 'Keyboard';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11ySnippet => 'Snippet';
+
+  @override
+  String get virtKeyA11ySudo => 'Sudo password';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
   String get virtKeyHelpClipboard =>
       'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.';
 

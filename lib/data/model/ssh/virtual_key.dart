@@ -240,15 +240,15 @@ extension VirtKeyX on VirtKey {
   /// What the screen reader announces for this key.
   ///
   /// The characters and named keys are readable as [text] already; the icon
-  /// keys get a word that says what they do. The modifier state is announced
-  /// separately, through `Semantics.toggled` where the key is drawn.
+  /// keys get a localized word that says what they do. The modifier state is
+  /// announced separately, through `Semantics.toggled` where the key is drawn.
   String get semanticLabel => switch (this) {
-    VirtKey.sftp => 'SFTP',
-    VirtKey.snippet => 'Snippet',
-    VirtKey.clipboard => 'Clipboard',
-    VirtKey.sudo => 'Sudo password',
-    VirtKey.tmux => 'tmux',
-    VirtKey.ime => 'Keyboard',
+    VirtKey.sftp => l10n.virtKeyA11ySFTP,
+    VirtKey.snippet => l10n.virtKeyA11ySnippet,
+    VirtKey.clipboard => l10n.virtKeyA11yClipboard,
+    VirtKey.sudo => l10n.virtKeyA11ySudo,
+    VirtKey.tmux => l10n.virtKeyA11yTmux,
+    VirtKey.ime => l10n.virtKeyA11yIME,
     _ => text,
   };
 
