@@ -195,17 +195,21 @@ The agent runs as an ordinary user by default. This limits the scope of `full_ac
 
 The configuration file is `config.toml` next to the binary. Every option is documented in [`config.example.toml`](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/config.example.toml). The agent listens on `0.0.0.0:3770`; when `frontend/dist` exists, it also serves the web panel there.
 
-Part of that file can be edited without opening it. Collection intervals, alert rules, notification channels, data retention and the allowed panel origins are editable from the web panel's **Server Settings** page, and from the App: open a server that has an agent and use the settings button in its top bar. Both reach the same agent and write the same file. What is not editable this way is deliberate: the JWT secret, `database_url` and the `[remote_access]` switches stay in the file, so a panel password can never widen what the agent exposes.
+You can edit collection intervals, alert rules, notification channels, data retention, and allowed panel origins without opening the file. Use **Server Settings** in the web panel, or open a server with an agent in the App and select the settings button in its top bar. Both interfaces reach the same agent and write the same file.
 
-Keys and tokens already in the file — a ServerChan key, a Bark key, an iOS push token, an `Authorization` header — are never sent back to an editor. They show as *set* with an empty box; leaving it empty keeps the stored value, and typing into it replaces it. A saved notification channel reaches the agent's rule engine only when it next starts, and so do alert rules, the collection interval, data retention and the allowed origins. Only the extended cycle interval and the two idle-pause settings apply at once. The App marks the fields that need a restart.
+The JWT secret, `database_url`, and `[remote_access]` switches remain file-only settings. This prevents a panel password from widening what the agent exposes.
+
+Keys and tokens already in the file—a ServerChan key, Bark key, iOS push token, or `Authorization` header—are never sent back to an editor. They appear as *set* beside an empty field. Leave the field empty to keep the stored value, or enter a new value to replace it.
+
+Notification channels, alert rules, the collection interval, data retention, and allowed origins take effect after the agent restarts. Only the extended cycle interval and the two idle-pause settings apply immediately. The App marks fields that require a restart.
 
 If the agent must be reachable from another device, use HTTPS: configure built-in TLS with `[server.tls]`, or put the agent behind a reverse proxy. The App supports self-signed certificates when you explicitly enable that option.
 
 ## How far back the App can ask
 
-The chart on a server's detail page draws the window you pick, and which windows are offered comes from the agent rather than from the App. `GET /api/v1/capabilities` reports `retention_days` — `[monitoring.data_retention] metrics_days`, what will not be deleted — and `oldest_sample`, the oldest reading actually stored. The App offers the presets that fall inside the later of the two, greys out the ones that do not, and shows both numbers at the bottom of its range picker.
+The chart on a server's detail page displays the selected time window. Available windows come from the agent, not the App. `GET /api/v1/capabilities` reports `retention_days`—the `[monitoring.data_retention] metrics_days` limit—and `oldest_sample`, the oldest reading actually stored. The App enables presets within the later boundary, disables the others, and shows both values at the bottom of the range picker.
 
-Beside the presets it can name a window outright, which reaches the agent as `GET /api/v1/metrics/history?from=<epoch seconds>&to=<epoch seconds>`. A window reaching back further than the agent kept is answered with the rows there are rather than with an error or a narrower window: the difference is drawn as a gap in the chart, and an agent that quietly moved the start would report a full window. `?minutes=` still works and is what an agent predating `from`/`to` receives.
+The App can also request an exact window with `GET /api/v1/metrics/history?from=<epoch seconds>&to=<epoch seconds>`. If the requested window begins before retained data, the agent returns the rows it has instead of changing the start time or returning an error. The chart displays the missing period as a gap. `?minutes=` remains supported for agents that predate `from` and `to`.
 
 An agent too old to report retention is offered the fixed windows, as before.
 
@@ -247,7 +251,7 @@ There is no option that accepts the password as an argument, because a command l
 
 The new password works at the next login and the agent does not need restarting; it reads the user table on every login. Sessions already signed in continue for up to an hour, the lifetime of a token. To end them at once, change `jwt_secret` in `config.toml` and restart the agent — `systemctl --user restart server_box_monitor`, or `rc-service server-box-monitor restart` under OpenRC — which invalidates every token issued so far.
 
-Then update the password in the App, by editing the server and replacing **Monitor Password**, and in anything else that stores it. Nothing tells a client that the agent's password changed; it simply stops signing in.
+Then edit the server in the App and replace **Monitor Password**. Update any other client that stores the password as well. Clients are not notified when the password changes; they will fail to sign in until updated.
 
 ### A forgotten password
 

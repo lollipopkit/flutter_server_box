@@ -24,7 +24,7 @@ App 还会为诊断和你使用的功能发起独立的网络请求。下文会�
 
 Agent 对话不会加入备份，也不会通过设备同步发送。在你从对话历史中删除前，它会保留在本设备上。Agent 对话仍可能被发送给你配置的 AI provider；详见 [AI 请求](#ai-请求)。
 
-备份只在你主动请求时创建。根据选项和备份格式，备份可能包含服务器设置和凭据、私钥、代码片段、端口映射、容器设置、连接历史以及 App 设置。包含 App 设置时，其中也包括配置的 AI endpoint、model 和 API key。Agent 对话和设备本地状态不会包含在内。
+备份只在你主动请求时创建。根据选项和格式，备份可能包含服务器设置和凭据、私钥、代码片段、端口映射、容器设置、连接历史及 App 设置。如果包含 App 设置，配置的 AI endpoint、model 和 API key 也会进入备份。Agent 对话和设备本地状态不会包含在内。
 
 未设置备份密码时，本地备份可能不加密。设置备份密码后，备份会在写入或上传前加密。自动远程备份要求设置非空的备份密码。备份发送到 iCloud、WebDAV 或 GitHub Gist 后，还会受到对应 provider 的存储、访问和保留规则约束。
 
@@ -68,7 +68,7 @@ App 不会安装 native crash signal handler。平台提供 native crash、ANR �
 
 本项目实现了两个 analytics integration，它们对 identifier 的处理方式不同：
 
-- 本项目使用的 OpenPanel integration 接受**按安装区分的标识符**。它会在设备上保存一个随机的 128-bit 值：开启完整信息时创建，离开完整信息时删除，保存在备份文件之外，且不由设备标识符、账号或硬件信息推导而来。它用于关联同一安装在多次启动中的事件，以及统计不同安装的数量，不用于识别个人或设备。
+- 本项目使用的 OpenPanel integration 接受**按安装区分的标识符**。它是保存在设备上的随机 128-bit 值：开启完整信息时创建，离开该级别时删除，也不会进入备份。该值不由设备标识符、账号或硬件信息推导，只用于关联同一安装在多次启动中的事件，并统计不同安装的数量；它不用于识别个人或设备。
 - App 也实现了 Aptabase integration，但发布版本没有配置它。它不使用持久的安装标识符；事件携带的 session ID 会在闲置一小时后轮换，因此不同启动之间的 session 无法关联。
 
 根据 destination，事件可能携带操作系统及版本、设备类型和可用时的设备型号、App 版本和构建号，以及 locale。事件不包含广告标识符或账号标识符。
@@ -91,7 +91,9 @@ analytics service 还可能根据设备连接时使用的 IP 地址推导大致�
 
 Agent 使用 **设置 → 应用 → AI** 中配置的 OpenAI-compatible endpoint。默认 endpoint 可以替换为其他 provider。只有在你发送 Agent 消息后，App 才会发起请求。
 
-根据操作类型，请求可能包含你的 prompt、选中的终端文本、最近的对话历史、配置的服务器名称，以及 Agent 工作所需的上下文。执行命令或文件操作后，操作结果可能在后续请求中发送，以便模型继续工作。命令输出和文件内容即使不是 Server Box 主动添加的，也可能包含密码、token 或其他秘密；发送前请检查内容，并阅读 provider 的隐私政策。
+根据操作类型，请求可能包含你的 prompt、选中的终端文本、最近的对话历史、配置的服务器名称，以及 Agent 工作所需的上下文。执行命令或文件操作后，结果可能随后续请求发送，让模型继续工作。
+
+命令输出和文件内容可能包含密码、token 或其他敏感信息，即使这些内容并非 Server Box 主动添加。发送前请检查内容，并阅读 provider 的隐私政策。
 
 API key 保存在本机加密的 App 数据库中，并作为 bearer credential 仅发送到你配置的 endpoint。选择在备份中包含 App 设置时，endpoint、model 和 API key 也会包含其中。Server Box 不会通过开发者的服务中转 AI 请求。
 
@@ -109,7 +111,9 @@ API key 保存在本机加密的 App 数据库中，并作为 bearer credential 
 
 下载服务可以看到来自你当前网络的 manifest 或数据文件请求，包括 HTTP 服务通常可见的网络 IP 地址和请求时间。安装完成后，每次位置查询都只读取本机文件；下载服务不会收到按次查询请求，因此无法知道查询了哪些服务器地址、查询数量或查询时间。
 
-坐标不会保存。每次需要时都从已安装的数据集重新计算，因此地球仪显示的位置始终对应当前设备上的数据集；删除数据集后，位置也不再可用。该功能保存的本机记录是服务器最近上报的公网网卡地址结果，包括“未上报公网地址”这一结果。记录保存在 App 加密数据库中，因为只有那台机器能提供这项信息。它不会加入备份或同步；保存满 7 天后，后续的常规状态轮询可以刷新。
+坐标不会保存。每次需要时，App 都会从已安装的数据集重新计算，因此地球仪始终使用设备上的当前数据；删除数据集后，位置也不再可用。
+
+App 只保存服务器最近上报的公网网卡地址结果，包括“未上报公网地址”。这项记录位于 App 的加密数据库中，不会进入备份或同步。记录保存满 7 天后，后续的常规状态轮询可以刷新它。
 
 关闭 **地球仪** 会从服务器页移除按钮，并停止位置解析，但不会删除已下载的数据集或已保存的上报地址结果。如需移除数据文件，请在数据集一行使用 **删除**。上报地址记录没有单独的手动清理入口；删除服务器时，对应记录也会被删除。
 
@@ -143,7 +147,7 @@ Sentry 和 OpenPanel 的 destination 写在源码中，因此从未修改源码�
 
 ## Watch App 和桌面小组件
 
-Watch App、它的 complication，以及 iOS 和 Android 桌面小组件，会直接读取你部署的 Monitor agent。Server Box 会为每个 surface 签发一个只读 credential。该 credential 只能访问 Monitor metrics 接口（`/api/v1/status`、`/api/v1/metrics` 和 `/api/v1/metrics/history`），不能打开 shell、执行命令或浏览文件。
+Watch App、complication 以及 iOS 和 Android 主屏幕小组件会直接读取你部署的 Monitor agent。Server Box 会为每个 surface 签发只读 credential。它只能访问 Monitor metrics 接口（`/api/v1/status`、`/api/v1/metrics` 和 `/api/v1/metrics/history`），不能打开 shell、执行命令或浏览文件。
 
 credential 保存在 Watch 自己的钥匙串中；在 iOS 上保存在共享钥匙串组中；在 Android 上使用 AndroidKeyStore 密钥加密保存。小组件的配置列表会包含服务器名称和 Monitor 地址，以便选择服务器；credential 则单独保存在平台安全存储中。配置了 Monitor 的服务器会自动包含在同步范围内。Watch 可以在**设置**中单独排除服务器；小组件会发布所有配置了 Monitor 的服务器，不使用单独的排除列表。只要 App 能联系 Monitor agent，排除或删除服务器就会吊销对应 Watch 或小组件 credential。
 

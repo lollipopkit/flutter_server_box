@@ -16,7 +16,7 @@ Everything above the byte stream uses one implementation: the same emulator, vir
 | `IshShellBackend` | The Linux interpreter on iOS |
 | `MonitorShellBackend` | Monitor agent's `/api/v1/terminal/ws` endpoint |
 
-The caller opens a session and reads or writes bytes without knowing which backend supplies them. See [Terminal on This Device](/docs/advanced/local-terminal/) for local backends and [Monitor Agent](/docs/advanced/monitor-agent/) for the Monitor backend.
+The caller opens a session and reads or writes bytes without knowing which backend supplies them. See [Terminal on This Device](/docs/advanced/local-terminal/) for local backends and [Monitor agent](/docs/advanced/monitor-agent/) for the Monitor backend.
 
 The sections below describe the SSH path. Other backends expose the same upper-level interface.
 

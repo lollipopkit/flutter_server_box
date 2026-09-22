@@ -16,7 +16,9 @@ Server Box 在 iOS 和 Android 上提供生物识别、主屏幕小组件、后�
 
 ## 主屏幕小组件
 
-小组件需要服务器运行 [Monitor agent](/docs/zh/advanced/monitor-agent/)。安装 agent 后，在 App 中配置服务器，系统小组件会从 App 发布的服务器列表中读取数据；小组件本身不需要手动填写 URL。iOS 小组件需要 iOS 17 或更高版本；这不会影响 iOS App 本身的最低版本。
+小组件需要服务器运行 [Monitor agent](/docs/zh/advanced/monitor-agent/)。安装 agent 后，在 App 中配置服务器。系统小组件会读取 App 发布的服务器列表，无需手动填写 URL。
+
+iOS 小组件需要 iOS 17 或更高版本，但 iOS App 本身仍支持 iOS 15 或更高版本。
 
 ### iOS
 
@@ -60,5 +62,5 @@ iOS 会限制 App 在后台运行。连接可能被系统暂停；回到 App 后
 
 ## 文件集成
 
-- **文档选择器**：选择本地文件用于 SFTP 上传，以及备份的导入和导出
+- **文档选择器**：选择用于 SFTP 上传的本地文件，或导入、导出备份
 - **分享**：将文件导出到其他 App

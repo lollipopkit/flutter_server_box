@@ -141,7 +141,7 @@ fixture 一旦进入 regression test，就不能重新生成来绕过失败。�
 
 ## Integration test
 
-`integration_test/` 用于验证 `flutter test` 无法覆盖的 plugin、FFI、平台 shell 和真实设备行为：
+`integration_test/` 用于验证 `flutter test` 无法回答的问题。Unit test 运行在不加载 plugin 的 `flutter_tester` 中，因此通过 plugin 或 FFI 调用的代码不会在真实 App 环境中执行。Integration test 则运行在已连接的设备或 simulator 上：
 
 | 文件 | 验证内容 |
 |---|---|

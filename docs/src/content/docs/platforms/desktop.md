@@ -3,7 +3,7 @@ title: Desktop Features
 description: Platform-specific features for macOS, Linux, and Windows
 ---
 
-Server Box provides a larger workspace, full keyboard support, and platform-specific window features on desktop.
+On desktop, Server Box provides a larger workspace, full keyboard support, and platform-specific window features.
 
 ## macOS
 

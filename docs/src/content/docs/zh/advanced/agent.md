@@ -5,11 +5,11 @@ description: 让模型诊断和操作服务器，并在每次操作前请求确�
 
 Agent 会将语言模型连接到你已配置的服务器。模型每次提出一个操作，App 都会在执行前请求你的确认。
 
-Agent 自带默认的 API endpoint 和 model，无需先配置即可使用；要换服务商，在设置中修改其中任意一项。只有需要身份验证的服务商才需要填写 API key；填写后，App 会将它作为 bearer token 发送。只有在你发送消息时才会请求服务商。
+Agent 自带默认的 API endpoint 和 model，无需初始配置即可使用。如需更换 provider，在设置中修改对应项目。只有需要身份验证的 provider 才需要 API key；配置后，App 会将它作为 bearer token 发送。在你发送消息前，App 不会请求 provider。
 
 ## 两个入口
 
-**Agent 标签页**可以访问你配置的多个服务器。它可以为未添加到列表的主机建立临时 SSH 连接，也可以读取 Server Box 的服务器状态，例如回答“哪些服务器离线了”。
+**Agent 标签页**可以访问你配置的多个服务器，也可以临时通过 SSH 连接列表之外的主机。它还能读取 Server Box 的状态，例如找出离线服务器。
 
 **SSH Agent**位于终端页面，只针对当前服务器。它可以读取终端上下文；你选中终端输出后提交的问题，会连同选中内容一起发送给模型。
 
@@ -26,7 +26,7 @@ Agent 标签页还可以浮动在其他标签页上方。这样你可以在终�
 | **API key** | 空 |
 | **Protocol** | 自动 |
 
-Endpoint 可以填写服务的 base URL，也可以填写完整的 Chat Completions 或 Responses endpoint。App 会根据所选协议补全路径。选择**自动**时，官方 OpenAI endpoint 使用 Responses，兼容服务使用 Chat Completions；大多数第三方 gateway 无需额外修改即可使用。
+Endpoint 可以填写服务的 base URL，也可以填写完整的 Chat Completions 或 Responses endpoint。App 会根据所选 protocol 补全路径。选择**自动**时，官方 OpenAI endpoint 使用 Responses，兼容服务使用 Chat Completions；大多数第三方 gateway 无需额外配置。
 
 只要服务商支持其中一种协议，就可以配置使用。API key 保存在设备上，与服务器密码使用相同的加密存储。
 

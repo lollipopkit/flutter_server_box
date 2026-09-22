@@ -16,7 +16,7 @@ Enable it at **Settings → App → General → Biometric authentication**. If n
 
 ## Home screen widgets
 
-Widgets require [Monitor agent](/docs/advanced/monitor-agent/) on the server. After installing the agent, configure the server in the App. The widget reads the server list published by the App; you do not enter a URL in the widget.
+Widgets require [Monitor agent](/docs/advanced/monitor-agent/) on the server. After installing the agent, configure the server in the App. The widget reads the server list published by the App, so it does not need a manually entered URL.
 
 The iOS widget requires iOS 17 or later. This does not change the minimum iOS version of the App.
 

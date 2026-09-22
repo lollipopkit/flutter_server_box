@@ -3,7 +3,7 @@ title: Implementation Architecture
 description: Implementation details for Server Box's Flutter, storage, connection, and native layers
 ---
 
-This page covers where the code lives and how the app is wired together. For the system-level model — layers, transports and capabilities, the two status paths, migrations and security — see [System Architecture](/docs/principles/architecture/).
+This page covers where the code lives and how the App is assembled. For the system-level model—layers, transports and capabilities, the two status paths, migrations, and security—see [System Architecture](/docs/principles/architecture/).
 
 ## Layers
 

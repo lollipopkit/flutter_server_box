@@ -111,6 +111,12 @@ test('returns server status', () async {
 });
 ```
 
+## External dependencies
+
+The default test suite must remain deterministic. Parser, model, command-builder, and ordinary Widget tests must not access a network or a real server. When a feature introduces a service boundary, add a targeted fake or fixture.
+
+The SSH end-to-end and real-sshd suites above are exceptions. They run only when their environment variables are configured, so a default `cargo test --workspace` still needs no external service.
+
 ## Storage migration tests
 
 A storage migration usually gets one chance to process a user's data. Once it writes its completion marker, the old data is not read again. A migration bug is therefore more likely to silently lose data than to crash.
@@ -134,12 +140,6 @@ A fixture generated with the current adapter only proves that the current code a
 4. Write the current-version reading test through the public store API, and check that the database encoding contains no fields from the old shape.
 
 The generator is checked in as `.txt` because it targets an old release's API and is not expected to pass analyze in the current tree.
-
-## External dependencies
-
-The default test suite must remain deterministic. Parser, model, command-builder, and ordinary Widget tests must not access a network or a real server. When a feature introduces a service boundary, add a targeted fake or fixture.
-
-The SSH end-to-end and real-sshd suites above are exceptions. They run only when their environment variables are configured, so a default `cargo test --workspace` still needs no external service.
 
 ## Integration tests
 

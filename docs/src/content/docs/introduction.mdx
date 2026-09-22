@@ -9,9 +9,9 @@ Server Box is a cross-platform server management application built with Flutter.
 
 Server Box provides one interface for common server administration tasks. It is useful for system administrators, developers, and people who run servers at home.
 
-There are two ways to connect to a server: **SSH**, or a **[Monitor agent](/docs/advanced/monitor-agent/)** running on the server. SSH requires no additional software on the server and supports the full set of SSH features. Monitor agent is useful when opening an SSH port is inconvenient; it continuously stores monitoring history, so charts can contain data from before the App connects.
+There are two ways to connect to a server: **SSH**, or a **[Monitor agent](/docs/advanced/monitor-agent/)** running on the server. SSH requires no additional server software and provides terminal, SFTP, and port-forwarding features. Monitor agent is useful when opening an SSH port is inconvenient. It also stores monitoring history continuously, so charts can include data collected before the App connects.
 
-The same server can use SSH and Monitor agent at the same time. The App tries them in the configured order and can fall back to the other connection. Capabilities provided by both connections remain available.
+The same server can use SSH and Monitor agent at the same time. The App tries them in the configured order and can fall back to the other connection. Features from both connections remain available.
 
 ## Key features
 

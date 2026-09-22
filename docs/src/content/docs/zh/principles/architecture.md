@@ -90,15 +90,8 @@ parser 以纯函数形式工作，只返回原始计数；差分和滑动窗口�
 
 每个存储迁移都必须保留永久 regression test，并使用旧 release 实际写出的 bytes。当前 adapter 重新生成 fixture 只能证明当前版本与自身一致，不能证明它还能读取旧版本数据。
 
-## 安全架构
+## 安全
 
-### 数据保护
-
-- **密码 / SSH 密钥与已信任的主机指纹**：存放在加密的 SQLite 数据库（设置存储中的 `sshKnownHostFingerprints`）中；加密密钥本身保存在平台安全存储（Keychain/Keystore）
-- **会话数据**：不进行持久化
-
-### 连接安全
-
-- **主机密钥验证**：检测中间人攻击
-- **加密**：标准 SSH 加密
-- **不存储明文**：敏感数据不会以明文存储
+- **凭据和已信任的主机指纹**保存在加密的 SQLite 数据库中（主机指纹位于设置存储的 `sshKnownHostFingerprints`）；数据库密钥保存在平台安全存储（Keychain/Keystore）中。
+- **Session 不会持久化。**
+- **App 始终验证主机密钥**，包括通过 jump server 或 `ProxyCommand` 连接时。

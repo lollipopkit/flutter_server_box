@@ -16,7 +16,7 @@ description: Server Box 终端的工作方式
 | `IshShellBackend` | iOS 上的 Linux interpreter |
 | `MonitorShellBackend` | Monitor agent 的 `/api/v1/terminal/ws` |
 
-调用方只需打开 session 并读写字节流，不需要关心具体 backend。前两种本机实现详见[本机终端](/docs/zh/advanced/local-terminal/)，Monitor backend 详见[Monitor Agent](/docs/zh/advanced/monitor-agent/)。
+调用方只需打开 session 并读写字节流，不需要关心具体 backend。前两种本机实现详见[本机终端](/docs/zh/advanced/local-terminal/)，Monitor backend 详见 [Monitor agent](/docs/zh/advanced/monitor-agent/)。
 
 下文介绍 SSH 路径；其他 backend 提供相同的上层接口。
 
@@ -172,3 +172,7 @@ xterm.dart fork 使用自定义 painter，仅在终端内容变化时重绘。�
 - **Snippet 执行**：将保存的命令插入终端并执行。
 - **SFTP 快速访问**：从终端当前工作目录打开 SFTP 浏览器。
 - **跨 backend**：本机 shell、Alpine 环境和 Monitor terminal 使用与 SSH 相同的上层终端 UI。
+
+## Keep-alive
+
+SSH keep-alive message 位于 protocol 层，与终端中输入或显示的字节无关。详见 [SSH 连接](/docs/zh/principles/ssh/)。
