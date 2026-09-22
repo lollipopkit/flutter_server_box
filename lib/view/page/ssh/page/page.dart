@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:characters/characters.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
@@ -233,12 +234,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// How much of the terminal's current input line was written by the field.
   ///
   /// The field and the terminal stay in sync both ways: every edit here is
-  /// rewritten to the terminal as backspaces plus new text, and unconfirmed
-  /// input already sitting in the terminal (typed with the virtual keys, or
-  /// left behind by a program that stopped halfway) comes back into the
-  /// field. This tracks what is already in the terminal so the next rewrite
-  /// deletes exactly that.
-  int _a11yLastInputLen = 0;
+  /// sent to the terminal as a diff (move the cursor, delete, type), and
+  /// unconfirmed input already sitting in the terminal (typed with the
+  /// virtual keys, or left behind by a program that stopped halfway) comes
+  /// back into the field. These track what the terminal already holds so
+  /// the next diff sends only what actually changed.
+  String _a11yLastInputText = '';
+  int _a11yLastCursor = 0;
 
   /// The terminal's current line when the field was empty — the shell prompt,
   /// a "Password:" query, a TUI prompt. The part of the line after it is
@@ -531,10 +533,20 @@ class SSHPageState extends ConsumerState<SSHPage>
       // been running is not blank. Direct assignment, not `setState`: this
       // runs inside `build`, and the frame is about to render the list.
       _a11yOutput = _terminal.buffer.getText().split('\n');
-      // The line the field starts from: with the field empty, whatever the
-      // current line holds is the prompt baseline unconfirmed input is cut
-      // out of — see `_refreshA11yOutput`.
-      _a11yPromptText = _terminal.buffer.currentLine.toString();
+      // Whatever is already on the input line — prompt, or a command typed
+      // earlier with the virtual keys — starts in the field, so it is not
+      // silently buried under later edits. The user trims the prompt part.
+      final currentLine = _terminal.buffer.currentLine.toString();
+      if (currentLine.isNotEmpty) {
+        _a11yInputCtrl.text = currentLine;
+        _a11yInputCtrl.selection =
+            TextSelection.collapsed(offset: currentLine.length);
+        _a11yLastInputText = currentLine;
+        _a11yLastCursor = currentLine.length;
+      }
+      // With the field empty, whatever the current line holds is the prompt
+      // baseline unconfirmed input is cut out of — see `_refreshA11yOutput`.
+      _a11yPromptText = currentLine;
     }
 
     final bgImage = Stores.setting.sshBgImage.fetch();
@@ -813,65 +825,96 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// backspace over what the field sent before, then type the new text. The
   /// shell echoes it back, so the terminal line tracks the field keystroke by
   /// keystroke — an editor or TUI field on the far side sees each one.
+  /// Syncs the field's text and cursor into the terminal as a small diff,
+  /// not a full rewrite: move the terminal cursor to where the field's
+  /// cursor is, delete whatever the field removed, type whatever it added —
+  /// all measured in graphemes so an emoji is one edit, not two.
+  void _syncA11yToTerminal(String newText, int newCursor) {
+    final oldText = _a11yLastInputText;
+    if (newText == oldText && newCursor == _a11yLastCursor) return;
+
+    // Common prefix, then common suffix — the middle is the only thing that
+    // actually changed.
+    var p = 0;
+    final minLen = oldText.length < newText.length ? oldText.length : newText.length;
+    while (p < minLen && oldText[p] == newText[p]) p++;
+    var s = 0;
+    while (
+        s < oldText.length - p &&
+        s < newText.length - p &&
+        oldText[oldText.length - 1 - s] == newText[newText.length - 1 - s]) {
+      s++;
+    }
+    final oldMid = oldText.substring(p, oldText.length - s);
+    final newMid = newText.substring(p, newText.length - s);
+
+    // 1. Move the terminal cursor from where it was to the edit position.
+    final cursorDelta = p - _a11yLastCursor;
+    for (var i = 0; i < cursorDelta.abs(); i++) {
+      _terminal.keyInput(
+        cursorDelta > 0 ? TerminalKey.arrowRight : TerminalKey.arrowLeft,
+      );
+    }
+    // 2. Drop the part the field removed (Delete key, under the cursor).
+    for (var i = 0; i < oldMid.characters.length; i++) {
+      _terminal.keyInput(TerminalKey.delete);
+    }
+    // 3. Type the part the field added.
+    if (newMid.isNotEmpty) {
+      _terminal.textInput(newMid);
+    }
+
+    _a11yLastInputText = newText;
+    _a11yLastCursor = newCursor;
+  }
+
   void _onA11yInputChanged(String text) {
     if (!mounted || _a11ySyncing || !Stores.setting.sshA11yMode.fetch()) {
       return;
     }
-    for (var i = 0; i < _a11yLastInputLen; i++) {
-      _terminal.keyInput(TerminalKey.backspace);
-    }
-    if (text.isNotEmpty) {
-      _terminal.textInput(text);
-    }
-    _a11yLastInputLen = text.length;
+    final sel = _a11yInputCtrl.selection;
+    _syncA11yToTerminal(text, sel.isValid ? sel.baseOffset : text.length);
   }
 
   void _onA11yInputSubmitted(String text) {
     // The content is already in the terminal — `onChanged` sent it live — so
-    // Enter only confirms. The field is cleared first, silently: a rewrite
-    // firing here would backspace over whatever the shell is now doing.
+    // Enter only confirms. The field is cleared first, silently: a diff
+    // firing here would delete what the shell is now running.
     _a11ySyncing = true;
-    _a11yLastInputLen = 0;
+    _a11yLastInputText = '';
+    _a11yLastCursor = 0;
     _a11yInputCtrl.clear();
     _a11ySyncing = false;
     _terminal.keyInput(TerminalKey.enter);
     _a11yInputFocus.requestFocus();
   }
 
-  /// A character typed with the virtual keyboard goes straight to the
-  /// terminal; put it in the field as well, so the two never disagree.
+  /// A character typed with the virtual keyboard goes into the field at its
+  /// cursor, and the field drives the diff into the terminal.
   void _appendA11yInput(String text) {
     final ctrl = _a11yInputCtrl;
     final at = ctrl.selection.isValid
         ? ctrl.selection.baseOffset
         : ctrl.text.length;
-    if (at < 0 || at > ctrl.text.length) {
-      _a11ySyncing = true;
-      ctrl.text = text;
-      _a11ySyncing = false;
-      _a11yLastInputLen = text.length;
-      return;
-    }
+    final newText = ctrl.text.replaceRange(at, at, text);
     _a11ySyncing = true;
-    ctrl.text = ctrl.text.replaceRange(at, at, text);
+    ctrl.text = newText;
     ctrl.selection = TextSelection.collapsed(offset: at + text.length);
     _a11ySyncing = false;
-    _a11yLastInputLen = ctrl.text.length;
+    _syncA11yToTerminal(newText, at + text.length);
   }
 
-  /// The virtual keyboard's backspace deleted one character in the terminal;
-  /// drop the same character from the field.
+  /// The virtual keyboard's backspace drops one grapheme from the field's
+  /// cursor, and the field drives the diff into the terminal.
   void _deleteA11yInput() {
     final ctrl = _a11yInputCtrl;
     if (ctrl.text.isEmpty) return;
-    final at = ctrl.selection.isValid && ctrl.selection.baseOffset > 0
-        ? ctrl.selection.baseOffset
-        : ctrl.text.length;
+    final newText = ctrl.text.characters.skipLast(1).toString();
     _a11ySyncing = true;
-    ctrl.text = ctrl.text.replaceRange(at - 1, at, '');
-    ctrl.selection = TextSelection.collapsed(offset: at - 1);
+    ctrl.text = newText;
+    ctrl.selection = TextSelection.collapsed(offset: newText.length);
     _a11ySyncing = false;
-    _a11yLastInputLen = ctrl.text.length;
+    _syncA11yToTerminal(newText, newText.length);
   }
 
   /// `Terminal.write` fires `notifyListeners` for every chunk, and a progress
@@ -891,6 +934,25 @@ class SSHPageState extends ConsumerState<SSHPage>
       setState(() => _a11yOutput = lines);
     }
 
+    // The terminal cursor moving left/right on the input line moves the
+    // field's caret too — the two stay in step either way. Only when the
+    // line still starts with the remembered prompt: in a TUI menu the cursor
+    // walks items, not the field's text.
+    if (_a11yInputCtrl.text.isNotEmpty) {
+      final line = buffer.currentLine.toString();
+      if (_a11yPromptText.isNotEmpty && line.startsWith(_a11yPromptText)) {
+        final caret = buffer.cursorX - _a11yPromptText.length;
+        if (caret >= 0 &&
+            caret <= _a11yInputCtrl.text.length &&
+            caret != _a11yLastCursor) {
+          _a11ySyncing = true;
+          _a11yInputCtrl.selection = TextSelection.collapsed(offset: caret);
+          _a11ySyncing = false;
+          _a11yLastCursor = caret;
+        }
+      }
+    }
+
     // Unconfirmed input that is not in the field comes back into it: text
     // typed with the virtual keys, or a program that stopped halfway asking
     // for input. The line is `prompt + input`; the prompt was remembered when
@@ -905,7 +967,8 @@ class SSHPageState extends ConsumerState<SSHPage>
         _a11yInputCtrl.text = input;
         _a11yInputCtrl.selection = TextSelection.collapsed(offset: input.length);
         _a11ySyncing = false;
-        _a11yLastInputLen = input.length;
+        _a11yLastInputText = input;
+        _a11yLastCursor = input.length;
       } else if (line.isNotEmpty && line != _a11yPromptText) {
         // Field empty means nothing of the line is user input — it is the
         // prompt baseline (shell prompt, "Password:", a TUI field label).

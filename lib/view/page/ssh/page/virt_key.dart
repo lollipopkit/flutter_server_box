@@ -90,11 +90,12 @@ extension _VirtKey on SSHPageState {
     final inputRaw = item.inputRaw;
     if (inputRaw != null) {
       HapticFeedback.mediumImpact();
-      _terminal.textInput(inputRaw);
-      // In accessibility mode the field is the input's single source of
-      // truth, so a character typed here lands in it too.
       if (Stores.setting.sshA11yMode.fetch()) {
+        // The field is the input's single source of truth: the character
+        // goes into it, and the whole line is rewritten to the terminal.
         _appendA11yInput(inputRaw);
+      } else {
+        _terminal.textInput(inputRaw);
       }
     }
   }
@@ -131,11 +132,11 @@ extension _VirtKey on SSHPageState {
         _termKey.currentState?.toggleFocus();
         break;
       case VirtualKeyFunc.backspace:
-        _terminal.keyInput(TerminalKey.backspace);
-        // Keep the field in step with the terminal when the backspace key
-        // does the deleting.
         if (Stores.setting.sshA11yMode.fetch()) {
+          // The field drives the deletion; it rewrites the whole line.
           _deleteA11yInput();
+        } else {
+          _terminal.keyInput(TerminalKey.backspace);
         }
         break;
       case VirtualKeyFunc.clipboard:
