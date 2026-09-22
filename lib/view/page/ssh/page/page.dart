@@ -195,6 +195,29 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// terminal above has no reason to rebuild when it does.
   final _virtKeyPage = ValueNotifier(0);
 
+  /// Accessibility mode — the output as plain text lines, read from
+  /// `Buffer.getText()` and kept for the scrollable list that replaces the
+  /// terminal canvas.
+  List<String> _a11yOutput = const [];
+
+  /// The input field that replaces the terminal's own input in accessibility
+  /// mode: a standard [TextField], so the screen reader can type into it.
+  final _a11yInputCtrl = TextEditingController();
+  final _a11yInputFocus = FocusNode();
+
+  /// Collapses the burst of `notifyListeners` a single `write` fires when the
+  /// output is a fast stream (a progress bar redrawing itself, say).
+  Timer? _a11yDebounce;
+
+  /// Set once when the terminal listener for accessibility mode is attached,
+  /// so a rebuild cannot attach a second one to the same [Terminal].
+  bool _a11ySubscribed = false;
+
+  /// Focused once when accessibility mode first comes on screen. Only once:
+  /// a refresh redrawing the output must not keep stealing focus back from
+  /// wherever the user moved it.
+  bool _a11yInputFocusedOnce = false;
+
   /// Which step of the virtual keys walkthrough is showing, or null when it is
   /// not running — which is every time but the first.
   int? _introStep;
@@ -324,6 +347,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     _terminalController.dispose();
     _virtKeyPage.dispose();
     _discontinuityTimer?.cancel();
+    _a11yDebounce?.cancel();
+    _a11yInputCtrl.dispose();
+    _a11yInputFocus.dispose();
+    if (_a11ySubscribed) {
+      _terminal.removeListener(_onA11yTerminalChanged);
+      _a11ySubscribed = false;
+    }
     // The reconnect's own `finally` normally does this, but it only runs when
     // the reconnect returns — and the thing it is waiting on is a connection
     // to a host that is not answering. A dialog left on the root navigator by
@@ -461,6 +491,12 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
     if (floating) return _buildFloatedAway();
 
+    final a11y = Stores.setting.sshA11yMode.fetch();
+    if (a11y && !_a11ySubscribed) {
+      _terminal.addListener(_onA11yTerminalChanged);
+      _a11ySubscribed = true;
+    }
+
     final bgImage = Stores.setting.sshBgImage.fetch();
     final bgFile = bgImage.isEmpty ? null : File(bgImage);
     final hasBg = bgFile != null && bgFile.existsSync();
@@ -581,11 +617,43 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Widget _buildBody(bool hasBg) {
+    if (Stores.setting.sshA11yMode.fetch()) return _buildA11yBody(hasBg);
+    return _buildTerminalBody(hasBg);
+  }
+
+  Widget _buildTerminalBody(bool hasBg) {
+    final terminal = _buildTerminalView(hasBg);
+
+    final step = _introStep;
+    final steps = _introSteps;
+    if (step == null || steps == null || step >= steps.length) return terminal;
+    // Over the terminal and no further: the keys the walkthrough is pointing
+    // at are the `Scaffold`'s bottom bar, outside this body, and so stay lit
+    // while everything it says to look at is dimmed.
+    return Stack(
+      children: [
+        terminal,
+        Positioned.fill(
+          child: GuideView(
+            steps: [for (final step in steps) step.guide],
+            step: step,
+            onStep: setIntroStep,
+            onDone: _endVirtKeyIntro,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The xterm canvas, on its own so accessibility mode can keep it in the
+  /// tree off-stage — the terminal then keeps its real size, and
+  /// `Buffer.getText()` reads lines at their actual width.
+  Widget _buildTerminalView(bool hasBg) {
     final letterCache = Stores.setting.letterCache.fetch();
     final theme = hasBg
         ? _terminalTheme.copyWith(background: Colors.transparent)
         : _terminalTheme;
-    final terminal = SizedBox(
+    return SizedBox(
       height: double.infinity,
       child: Padding(
         padding: EdgeInsets.only(left: _horizonPadding, right: _horizonPadding),
@@ -620,26 +688,105 @@ class SSHPageState extends ConsumerState<SSHPage>
         ),
       ),
     );
+  }
 
-    final step = _introStep;
-    final steps = _introSteps;
-    if (step == null || steps == null || step >= steps.length) return terminal;
-    // Over the terminal and no further: the keys the walkthrough is pointing
-    // at are the `Scaffold`'s bottom bar, outside this body, and so stay lit
-    // while everything it says to look at is dimmed.
-    return Stack(
+  /// Accessibility mode: the output as a scrollable, selectable text list,
+  /// a standard input field beneath it, and the virtual keys below that.
+  ///
+  /// The terminal canvas is kept off-stage — never painted, and excluded from
+  /// the semantics tree — so the session keeps its size and history while the
+  /// screen reader reads the text view instead.
+  Widget _buildA11yBody(bool hasBg) {
+    return Column(
       children: [
-        terminal,
-        Positioned.fill(
-          child: GuideView(
-            steps: [for (final step in steps) step.guide],
-            step: step,
-            onStep: setIntroStep,
-            onDone: _endVirtKeyIntro,
+        Expanded(
+          child: Stack(
+            children: [
+              Offstage(
+                offstage: true,
+                child: _buildTerminalView(hasBg),
+              ),
+              Positioned.fill(child: _buildA11yOutput()),
+            ],
           ),
         ),
+        _buildA11yInputBar(),
       ],
     );
+  }
+
+  /// The output as plain lines. A `ListView` so it scrolls with the terminal's
+  /// history; new output is appended at the bottom without scrolling the view,
+  /// so a screen reader user keeps their place.
+  Widget _buildA11yOutput() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      itemCount: _a11yOutput.length,
+      itemBuilder: (context, index) => SelectableText(
+        _a11yOutput[index],
+        style: _terminalStyle,
+      ),
+    );
+  }
+
+  /// The standard [TextField] accessibility mode types into. Enter submits the
+  /// line to the terminal and clears the field, keeping focus for the next
+  /// command.
+  Widget _buildA11yInputBar() {
+    // Focus the field when the mode first comes on screen, and only then:
+    // taking focus again later would fight the user's own navigation.
+    if (!_a11yInputFocusedOnce) {
+      _a11yInputFocusedOnce = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _a11yInputFocus.requestFocus();
+      });
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      child: TextField(
+        controller: _a11yInputCtrl,
+        focusNode: _a11yInputFocus,
+        style: _terminalStyle,
+        decoration: InputDecoration(
+          hintText: l10n.sshA11yInputHint,
+          isDense: true,
+          border: const OutlineInputBorder(),
+        ),
+        textInputAction: TextInputAction.send,
+        onSubmitted: _onA11yInputSubmitted,
+      ),
+    );
+  }
+
+  void _onA11yInputSubmitted(String text) {
+    if (text.isEmpty) return;
+    _terminal.textInput(text);
+    _terminal.keyInput(TerminalKey.enter);
+    _a11yInputCtrl.clear();
+    _a11yInputFocus.requestFocus();
+  }
+
+  /// `Terminal.write` fires `notifyListeners` for every chunk, and a progress
+  /// bar can rewrite itself hundreds of times a second — collapsing those into
+  /// one refresh per burst keeps the list from churning under the reader.
+  void _onA11yTerminalChanged() {
+    _a11yDebounce?.cancel();
+    _a11yDebounce = Timer(const Duration(milliseconds: 60), _refreshA11yOutput);
+  }
+
+  void _refreshA11yOutput() {
+    if (!mounted) return;
+    final lines = _terminal.buffer.getText().split('\n');
+    if (_sameLines(lines, _a11yOutput)) return;
+    setState(() => _a11yOutput = lines);
+  }
+
+  bool _sameLines(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   Widget _buildBottom() {
@@ -857,33 +1004,39 @@ class SSHPageState extends ConsumerState<SSHPage>
     final group = _introGroup;
     final lit = group == null || item.group == group;
 
-    return InkWell(
-      onTap: () => _doVirtualKey(item, virtKeyNotifier),
-      // Held rather than tapped, and only where there is something to say —
-      // null otherwise, so a key with no help does not answer a hold with a
-      // splash and nothing else. The arrows are out either way: a hold there
-      // repeats the key, and their label is already the whole answer.
-      onLongPress: item.canLongPress || item.help == null
-          ? null
-          : () => _showVirtKeyHelp(item),
-      onTapDown: (details) {
-        if (item.canLongPress) {
-          _virtKeyLongPressTimer = Timer.periodic(
-            const Duration(milliseconds: 137),
-            (_) => _doVirtualKey(item, virtKeyNotifier),
-          );
-        }
-      },
-      onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
-      onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
-      child: AnimatedOpacity(
-        opacity: lit ? 1 : 0.25,
-        duration: Durations.medium1,
-        curve: Curves.easeOut,
-        child: SizedBox(
-          width: virtKeyWidth,
-          height: _kVirtKeyRowHeight,
-          child: Center(child: child),
+    return Semantics(
+      button: true,
+      // The modifiers are toggles; every other key is an ordinary button.
+      toggled: item.toggleable ? selected : null,
+      label: item.semanticLabel,
+      child: InkWell(
+        onTap: () => _doVirtualKey(item, virtKeyNotifier),
+        // Held rather than tapped, and only where there is something to say —
+        // null otherwise, so a key with no help does not answer a hold with a
+        // splash and nothing else. The arrows are out either way: a hold there
+        // repeats the key, and their label is already the whole answer.
+        onLongPress: item.canLongPress || item.help == null
+            ? null
+            : () => _showVirtKeyHelp(item),
+        onTapDown: (details) {
+          if (item.canLongPress) {
+            _virtKeyLongPressTimer = Timer.periodic(
+              const Duration(milliseconds: 137),
+              (_) => _doVirtualKey(item, virtKeyNotifier),
+            );
+          }
+        },
+        onTapCancel: () => _virtKeyLongPressTimer?.cancel(),
+        onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
+        child: AnimatedOpacity(
+          opacity: lit ? 1 : 0.25,
+          duration: Durations.medium1,
+          curve: Curves.easeOut,
+          child: SizedBox(
+            width: virtKeyWidth,
+            height: _kVirtKeyRowHeight,
+            child: Center(child: child),
+          ),
         ),
       ),
     );

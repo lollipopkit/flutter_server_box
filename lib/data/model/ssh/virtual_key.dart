@@ -237,6 +237,21 @@ extension VirtKeyX on VirtKey {
     _ => false,
   };
 
+  /// What the screen reader announces for this key.
+  ///
+  /// The characters and named keys are readable as [text] already; the icon
+  /// keys get a word that says what they do. The modifier state is announced
+  /// separately, through `Semantics.toggled` where the key is drawn.
+  String get semanticLabel => switch (this) {
+    VirtKey.sftp => 'SFTP',
+    VirtKey.snippet => 'Snippet',
+    VirtKey.clipboard => 'Clipboard',
+    VirtKey.sudo => 'Sudo password',
+    VirtKey.tmux => 'tmux',
+    VirtKey.ime => 'Keyboard',
+    _ => text,
+  };
+
   bool get canLongPress => switch (this) {
     VirtKey.up || VirtKey.left || VirtKey.down || VirtKey.right => true,
     _ => false,

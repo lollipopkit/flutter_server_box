@@ -1344,6 +1344,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConfigNoServers => 'SSH 配置中未找到服务器';
 
   @override
+  String get sshA11yInputHint => '输入命令后按回车';
+
+  @override
+  String get sshA11yMode => '无障碍模式';
+
+  @override
+  String get sshA11yModeTip => '以纯文本呈现终端输出，并提供输入框和带标签的按键，方便屏幕阅读器用户使用。';
+
+  @override
   String get sshConfigPermissionDenied => '由于 macOS 权限限制，无法访问 SSH 配置文件。';
 
   @override
@@ -4073,6 +4082,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshConfigNoServers => 'SSH設定中未找到伺服器';
+
+  @override
+  String get sshA11yInputHint => '輸入命令後按 Enter';
+
+  @override
+  String get sshA11yMode => '無障礙模式';
+
+  @override
+  String get sshA11yModeTip => '以純文字呈現終端機輸出，並提供輸入框和帶標籤的按鍵，方便螢幕閱讀器使用者使用。';
 
   @override
   String get sshConfigPermissionDenied => '由於 macOS 權限限制，無法存取 SSH 設定檔案。';

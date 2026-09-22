@@ -2590,6 +2590,24 @@ abstract class AppLocalizations {
   /// **'Would you like to select the SSH config file manually?'**
   String get sshConfigManualSelect;
 
+  /// No description provided for @sshA11yInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command, then press Enter'**
+  String get sshA11yInputHint;
+
+  /// No description provided for @sshA11yMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility mode'**
+  String get sshA11yMode;
+
+  /// No description provided for @sshA11yModeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Render terminal output as plain text with an input field and labeled keys, for screen reader users.'**
+  String get sshA11yModeTip;
+
   /// No description provided for @sshConfigNoServers.
   ///
   /// In en, this message translates to:

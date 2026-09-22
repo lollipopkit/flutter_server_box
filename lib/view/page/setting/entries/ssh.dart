@@ -22,6 +22,7 @@ extension _SSH on _AppSettingsPageState {
         if (isLinux) _buildDesktopTerminal(),
         if (isDesktop) _buildDesktopSshAutoCopyPassword(),
         _buildSSHVirtualKeyAutoOff(),
+        _buildSSHA11yMode(),
         _buildTmuxAuto(),
       ].map((e) => CardX(child: e)).toList(),
     );
@@ -177,6 +178,15 @@ extension _SSH on _AppSettingsPageState {
       title: Text(l10n.sshVirtualKeyAutoOff),
       subtitle: const Text('Ctrl & Alt', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.sshVirtualKeyAutoOff),
+    );
+  }
+
+  Widget _buildSSHA11yMode() {
+    return ListTile(
+      leading: const Icon(Icons.accessibility_new),
+      title: Text(l10n.sshA11yMode),
+      subtitle: Text(l10n.sshA11yModeTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: _setting.sshA11yMode),
     );
   }
 

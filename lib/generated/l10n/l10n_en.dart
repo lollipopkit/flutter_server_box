@@ -1435,6 +1435,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Would you like to select the SSH config file manually?';
 
   @override
+  String get sshA11yInputHint => 'Type a command, then press Enter';
+
+  @override
+  String get sshA11yMode => 'Accessibility mode';
+
+  @override
+  String get sshA11yModeTip =>
+      'Render terminal output as plain text with an input field and labeled keys, for screen reader users.';
+
+  @override
   String get sshConfigNoServers => 'No servers found in SSH config';
 
   @override
