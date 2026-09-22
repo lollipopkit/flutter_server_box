@@ -572,9 +572,7 @@ void main() {
           snippets: {'snippet-1': snippet.toJson()},
           keys: const {},
           portForwards: {'forward-1': forward.toJson()},
-          remoteDesktopProfiles: {
-            'desktop-1': remoteDesktop.toJson(),
-          },
+          remoteDesktopProfiles: {'desktop-1': remoteDesktop.toJson()},
           container: const {
             'backup-server-id': {'host_docker': 'tcp://10.0.0.2:2375'},
           },
@@ -605,7 +603,7 @@ void main() {
           Stores.container.fetch(local.id, ContainerType.docker),
           'tcp://10.0.0.2:2375',
         );
-        expect(Stores.history.sshServerHistory.all, [local.id]);
+        expect(Stores.history.get<List>('sshServerHistory'), isNull);
         expect(json.decode(Stores.history.sshTabs.fetch()) as List, [
           {'sourceId': local.id},
         ]);

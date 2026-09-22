@@ -174,7 +174,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           sessions: _sessions,
           sortVersion: Listenable.merge([_sortVersion, _search]),
           search: _search,
-          actions: [_sortBtn, _searchBtn, _historyBtn],
+          actions: [_sortBtn, _searchBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
           onRootfsOpen: _openRootfs,
@@ -237,13 +237,13 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       child: InlineSearchBar(
         controller: _search,
         child: SessionTabBar(
-        names: _sessions.names,
-        index: _sessions.index,
-        onTap: _sessions.select,
-        onClose: _confirmClose,
-        detailOf: _sessionAddr,
-        sessionActions: _serverActions,
-          leadingActions: [_sortBtn, _searchBtn, _historyBtn],
+          names: _sessions.names,
+          index: _sessions.index,
+          onTap: _sessions.select,
+          onClose: _confirmClose,
+          detailOf: _sessionAddr,
+          sessionActions: _serverActions,
+          leadingActions: [_sortBtn, _searchBtn, _settingsBtn],
         ),
       ),
     ),
@@ -269,9 +269,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // Both act on the terminal that is showing, and now that the rail
         // stays up with none of them open there may be no such terminal. A
         // button that looks tappable and does nothing is worse than no button.
-        actions: current == null
-            ? const []
-            : [..._serverActions, const SizedBox(width: 7)],
+        actions: [
+          if (current == null) _settingsBtn else ..._serverActions,
+          const SizedBox(width: 7),
+        ],
       );
     },
   );
@@ -349,11 +350,6 @@ extension _Sessions on _SSHTabPageState {
       },
     );
     id = tab.id;
-    // History is a list of servers visited. This device is not one of them,
-    // and is one tap away in the rail regardless.
-    if (source case ServerSource(:final spi)) {
-      Stores.history.sshServerHistory.add(spi.id);
-    }
     if (!select) return;
     _saveTabs();
     _sessions.select(_sessions.names.indexOf(tab.name));
@@ -588,8 +584,8 @@ extension _Actions on _SSHTabPageState {
     if (current == null) return const [];
     final onServer = current.data.page.args.spi != null;
     return onServer
-        ? [_agentBtn, _snippetBtn, _floatBtn]
-        : [_snippetBtn, _floatBtn];
+        ? [_agentBtn, _snippetBtn, _settingsBtn, _floatBtn]
+        : [_snippetBtn, _settingsBtn, _floatBtn];
   }
 
   /// Sends the terminal on screen into the window that floats over every tab,
@@ -671,10 +667,15 @@ extension _Actions on _SSHTabPageState {
     onTap: _search.start,
   );
 
-  Widget get _historyBtn => Btn.icon(
-    text: l10n.history,
-    icon: const Icon(Icons.history, size: 18),
-    onTap: _showHistory,
+  Widget get _settingsBtn => Btn.icon(
+    key: const ValueKey('terminal-settings'),
+    text: libL10n.setting,
+    icon: const Icon(Icons.settings_outlined, size: 18),
+    onTap: () => SettingsSectionPage.route.go(
+      context,
+      SettingsSection.ssh,
+      target: NavTarget.root,
+    ),
   );
 
   /// The rail's own way to add a server. On one screen that is the picker's
@@ -699,60 +700,6 @@ extension _Actions on _SSHTabPageState {
               _sortVersion.notify();
             },
           ),
-      ],
-    );
-  }
-
-
-  void _showHistory() {
-    final history = Stores.history.sshServerHistory.all.cast<String>();
-    if (history.isEmpty) {
-      context.showRoundDialog(
-        title: l10n.serverHistory,
-        child: Text(libL10n.empty),
-        actions: [Btn.ok(onTap: context.popDialog)],
-      );
-      return;
-    }
-
-    final servers = ref.read(serversProvider).servers;
-    context.showRoundDialog(
-      title: l10n.serverHistory,
-      child: SizedBox(
-        width: 420,
-        height: 300,
-        child: ListView.builder(
-          itemCount: history.length,
-          itemBuilder: (_, index) {
-            final id = history[index];
-            final spi = servers[id];
-            return ListTile(
-              contentPadding: EdgeInsets.zero,
-              // A server can be deleted while its visits stay in the history.
-              // Saying so beats a row that looks tappable and is not.
-              enabled: spi != null,
-              title: Text(spi?.name ?? id),
-              subtitle: Text(spi?.displayAddr ?? libL10n.unknown),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: spi == null
-                  ? null
-                  : () {
-                      context.popDialog();
-                      _openServer(spi);
-                    },
-            );
-          },
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Stores.history.sshServerHistory.clear();
-            context.popDialog();
-          },
-          child: Text(libL10n.clearHistory),
-        ),
-        Btn.ok(onTap: context.popDialog),
       ],
     );
   }

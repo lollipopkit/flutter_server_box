@@ -1643,9 +1643,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sortByJoinTime => 'Por data de adição';
 
   @override
-  String get serverHistory => 'Histórico do servidor';
-
-  @override
   String get portForwardBetaTitle => 'Encaminhamento de portas (Beta)';
 
   @override

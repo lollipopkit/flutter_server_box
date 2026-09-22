@@ -476,7 +476,6 @@
   "portForward_deleteConfirmFmt": "删除 {name}？",
   "sponsor": "赞助",
   "sortByJoinTime": "按加入时间",
-  "serverHistory": "服务器历史",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "跳板服务器与 ProxyCommand 不能同时使用。",
   "noConnectionMethod": "请配置 SSH、Monitor 或两者",
   "preferredTransport": "优先使用",

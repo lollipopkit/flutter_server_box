@@ -516,7 +516,6 @@
   "portForward_remotePort": "遠端連接埠",
   "portForward_deleteConfirmFmt": "刪除 {name}？",
   "sortByJoinTime": "依加入時間",
-  "serverHistory": "伺服器紀錄",
   "services": "服務",
   "status": "狀態",
   "enable": "啟用",

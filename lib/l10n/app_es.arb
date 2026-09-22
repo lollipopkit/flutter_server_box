@@ -475,7 +475,6 @@
   "portForward_remotePort": "Puerto remoto",
   "portForward_deleteConfirmFmt": "¿Eliminar {name}?",
   "sortByJoinTime": "Por fecha de adición",
-  "serverHistory": "Historial del servidor",
   "tmuxAutoAttach": "Conexión automática a tmux",
   "tmuxAuto": "tmux automático",
   "tmuxAutoTip": "Iniciar o adjuntar tmux automáticamente al conectar por SSH",

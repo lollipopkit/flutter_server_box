@@ -1644,9 +1644,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sortByJoinTime => 'Eklenme zamanına göre';
 
   @override
-  String get serverHistory => 'Sunucu geçmişi';
-
-  @override
   String get portForwardBetaTitle => 'Port Yönlendirme (Beta)';
 
   @override

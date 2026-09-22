@@ -580,7 +580,6 @@
   "portForward_deleteConfirmFmt": "Delete {name}?",
   "sponsor": "Sponsor",
   "sortByJoinTime": "By join time",
-  "serverHistory": "Server history",
   "portForwardBetaTitle": "Port Forward (Beta)",
   "tmuxAutoAttach": "tmux auto-attach",
   "tmuxAuto": "Auto tmux",

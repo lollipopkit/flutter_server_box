@@ -409,7 +409,6 @@
   "portForward_deleteConfirmFmt": "{name}을(를) 삭제하시겠습니까?",
   "sponsor": "후원",
   "sortByJoinTime": "가입 시간순",
-  "serverHistory": "서버 기록",
   "portForwardBetaTitle": "포트 포워딩 (Beta)",
   "containerSegmentsMismatch": "컨테이너 응답 세그먼트 수가 예상과 다릅니다: {count}",
   "containerOperationInProgress": "다른 컨테이너 작업이 이미 진행 중입니다",

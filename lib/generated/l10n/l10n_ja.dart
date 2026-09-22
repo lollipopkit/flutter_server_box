@@ -1547,9 +1547,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sortByJoinTime => '追加した順';
 
   @override
-  String get serverHistory => 'サーバー履歴';
-
-  @override
   String get portForwardBetaTitle => 'ポートフォワード（ベータ）';
 
   @override

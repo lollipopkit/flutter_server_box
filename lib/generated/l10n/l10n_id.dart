@@ -1642,9 +1642,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sortByJoinTime => 'Menurut waktu ditambahkan';
 
   @override
-  String get serverHistory => 'Riwayat server';
-
-  @override
   String get portForwardBetaTitle => 'Penerusan Port (Beta)';
 
   @override

@@ -1646,9 +1646,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sortByJoinTime => 'Əlavə edilmə vaxtına görə';
 
   @override
-  String get serverHistory => 'Server tarixçəsi';
-
-  @override
   String get portForwardBetaTitle => 'Port yönləndirmə (beta)';
 
   @override

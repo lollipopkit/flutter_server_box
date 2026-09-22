@@ -1519,9 +1519,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortByJoinTime => '按加入时间';
 
   @override
-  String get serverHistory => '服务器历史';
-
-  @override
   String get portForwardBetaTitle => '端口映射 (Beta)';
 
   @override
@@ -4296,9 +4293,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sortByJoinTime => '依加入時間';
-
-  @override
-  String get serverHistory => '伺服器紀錄';
 
   @override
   String get portForwardBetaTitle => '連接埠轉送（Beta）';

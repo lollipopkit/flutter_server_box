@@ -475,7 +475,6 @@
   "portForward_remotePort": "Uzak port",
   "portForward_deleteConfirmFmt": "{name} silinsin mi?",
   "sortByJoinTime": "Eklenme zamanına göre",
-  "serverHistory": "Sunucu geçmişi",
   "tmuxAutoAttach": "tmux'a otomatik bağlan",
   "tmuxAuto": "Otomatik tmux",
   "tmuxAutoTip": "SSH ile bağlanırken tmux'u otomatik başlat veya ona bağlan",
