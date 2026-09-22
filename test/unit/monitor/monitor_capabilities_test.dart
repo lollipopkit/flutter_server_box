@@ -21,15 +21,13 @@ void main() {
       expect(caps.terminal, isFalse);
     });
 
-    test('an agent granted full access answers for everything', () {
-      // One grant, not one per feature: anyone who can open a shell through
-      // the agent can run anything in it, so withholding the process page from
-      // the same grant withholds nothing — it only makes the app pretend the
-      // machine is out of reach.
+    test('an agent with terminal and full access grants both', () {
+      // The PTY needs both grants. Commands use full access, while the
+      // terminal endpoint can be disabled independently.
       final spi = Spi(name: 'test', id: 'd', monitorHttp: monitor);
       final caps = ServerCapabilities.of(
         ServerConnectCredential.fromSpi(spi),
-        granted: const MonitorRemoteAccess(fullAccess: true),
+        granted: const MonitorRemoteAccess(terminal: true, fullAccess: true),
       );
       expect(caps.terminal, isTrue);
       expect(caps.shell, isTrue);
@@ -120,8 +118,8 @@ void main() {
     });
 
     test('a terminal alone is not the grant commands need', () {
-      // The terminal reaches the machine's own sshd, which authenticates for
-      // itself. Only `full_access` is the agent acting as the account.
+      // The terminal endpoint alone cannot open a shell as the agent's
+      // account; that also needs full access.
       const caps = MonitorHttpCapabilities(
         MonitorRemoteAccess(terminal: true),
       );
@@ -137,6 +135,7 @@ void main() {
         MonitorRemoteAccess(fullAccess: true),
       );
       expect(caps.shell, isTrue);
+      expect(caps.terminal, isFalse);
       expect(caps.byteStream, isFalse);
     });
 
@@ -151,7 +150,7 @@ void main() {
   group('ServerFuncBtn.availableWith', () {
     const ssh = SshCapabilities();
     const granted = MonitorHttpCapabilities(
-      MonitorRemoteAccess(fullAccess: true),
+      MonitorRemoteAccess(terminal: true, fullAccess: true),
     );
     const refused = MonitorHttpCapabilities(MonitorRemoteAccess.none);
 

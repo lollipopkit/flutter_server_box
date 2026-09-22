@@ -42,6 +42,7 @@ import 'package:server_box/view/widget/agent_common.dart';
 import 'package:server_box/view/widget/agent_entry_appear.dart';
 import 'package:server_box/view/widget/agent_proposal_pager.dart';
 import 'package:server_box/view/widget/agent_user_bubble.dart';
+import 'package:server_box/view/widget/terminal_connection_progress.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
@@ -277,6 +278,22 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
   bool _isPickingSnippet = false;
+  TerminalConnectionStep _connectionStep = TerminalConnectionStep.connecting;
+  String? _connectionFailureDetail;
+  bool _openingTerminal = false;
+  bool _retryInitialConnectionOnResume = false;
+
+  void _setConnectionStep(TerminalConnectionStep step, {String? detail}) {
+    if (!mounted ||
+        (_connectionStep == step && _connectionFailureDetail == detail)) {
+      return;
+    }
+    setState(() {
+      _connectionStep = step;
+      _connectionFailureDetail = detail;
+    });
+  }
+
   String? _tmuxCurrentSession;
   int? _tmuxCurrentWindow;
 
@@ -416,6 +433,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       case AppLifecycleState.resumed:
         if (!_isVisibleSessionPage) return;
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        if (_retryInitialConnectionOnResume && !_openingTerminal) {
+          unawaited(_initTerminal());
+        }
         // Next frame, not this one: the tab the user came back to is decided
         // by the state this frame is built from.
         WidgetsBinding.instance.addPostFrameCallback((_) => _focusTerminal());
@@ -621,15 +641,38 @@ class SSHPageState extends ConsumerState<SSHPage>
       ),
     );
 
+    final terminalWithProgress = Stack(
+      children: [
+        terminal,
+        if (!_adopted)
+          Positioned.fill(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: _connectionStep == TerminalConnectionStep.ready
+                  ? const SizedBox.shrink()
+                  : Center(
+                      child: TerminalConnectionProgress(
+                        step: _connectionStep,
+                        failureDetail: _connectionFailureDetail,
+                        onRetry: () => unawaited(_initTerminal()),
+                      ),
+                    ),
+            ),
+          ),
+      ],
+    );
+
     final step = _introStep;
     final steps = _introSteps;
-    if (step == null || steps == null || step >= steps.length) return terminal;
+    if (step == null || steps == null || step >= steps.length) {
+      return terminalWithProgress;
+    }
     // Over the terminal and no further: the keys the walkthrough is pointing
     // at are the `Scaffold`'s bottom bar, outside this body, and so stay lit
     // while everything it says to look at is dimmed.
     return Stack(
       children: [
-        terminal,
+        terminalWithProgress,
         Positioned.fill(
           child: GuideView(
             steps: [for (final step in steps) step.guide],
@@ -1008,6 +1051,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       if (!mounted) return;
       if (_isVisibleSessionPage) {
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        if (_retryInitialConnectionOnResume && !_openingTerminal) {
+          unawaited(_initTerminal());
+        }
         unawaited(_checkConnectionHealth(immediate: true));
       } else {
         TermSessionManager.hideTerminal(_sessionId);
