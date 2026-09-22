@@ -1169,6 +1169,9 @@ fn windows_custom_commands_have_time_and_output_bounds() {
         },
     );
     assert!(generated.contains("$deadline = [DateTime]::UtcNow.AddSeconds(5)"));
+    assert!(generated.contains(
+        "if (-not $p.HasExited) { taskkill /PID $p.Id /T /F | Out-Null }\n        $p.WaitForExit()"
+    ));
     std::fs::write(&status, generated).unwrap();
 
     let mut child = Command::new("powershell")
