@@ -5,11 +5,11 @@
 //! string would write it into ntex's access log on every connection, and it
 //! stays valid for 24 hours. Instead the client exchanges its JWT — over an
 //! ordinary authenticated `POST` — for a ticket that is single-use, expires in
-//! seconds, and is bound to the terminal endpoint.
+//! seconds, and is bound to one WebSocket endpoint.
 //!
 //! The app takes the same path even though it *could* send a header: one
 //! mechanism to audit and get right rather than two, at the cost of one extra
-//! round trip on a connection that is about to carry an SSH session.
+//! round trip on a connection that is about to carry a terminal or desktop session.
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -34,11 +34,12 @@ const MAX_PER_SUBJECT: usize = 32;
 const ID_BYTES: usize = 16;
 const SECRET_BYTES: usize = 32;
 
-/// The only WebSocket endpoint the agent exposes.
+/// The WebSocket endpoint a ticket authorises.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Purpose {
     Terminal,
+    Desktop,
 }
 
 struct Entry {
@@ -251,6 +252,13 @@ mod tests {
             store.reserve(&ticket, Purpose::Terminal).map(|reservation| store.commit(reservation)),
             Err(TicketError::Unknown)
         );
+    }
+
+    #[test]
+    fn desktop_tickets_cannot_open_terminals() {
+        let store = TicketStore::new();
+        let ticket = store.issue(Purpose::Desktop, "admin").unwrap();
+        assert_eq!(store.reserve(&ticket, Purpose::Terminal).err(), Some(TicketError::WrongPurpose));
     }
 
     #[test]

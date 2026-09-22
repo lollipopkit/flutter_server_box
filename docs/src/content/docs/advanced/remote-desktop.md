@@ -1,25 +1,25 @@
 ---
 title: Remote desktop (RDP and VNC)
-description: Reach graphical desktops through a Server Box SSH connection
+description: Reach graphical desktops through SSH or Monitor HTTP
 ---
 
-Server Box includes RDP and VNC clients on Android, iOS, Linux, macOS, and Windows. Every remote desktop connection travels through the SSH connection already configured for the server. The RDP or VNC port does not need to be exposed to the network where Server Box is running.
+Server Box includes RDP and VNC clients on Android, iOS, Linux, macOS, and Windows. Connections use the server's selected SSH or Monitor HTTP transport. The RDP or VNC port does not need to be exposed to the network where Server Box is running.
 
 ## Configure a desktop
 
-1. Configure SSH for the server. A Monitor-only server cannot open a remote desktop because the Monitor HTTP API does not relay arbitrary TCP streams.
+1. Configure SSH or Monitor HTTP for the server. For Monitor, the agent must allow `remote_access.terminal` and `full_access`; update the agent to a version with `/api/v1/desktop/ws`.
 2. Open the server detail page and select **Remote desktop**.
 3. Add one or more profiles. Profile names are unique within that server.
 4. Select a profile to open it in the **Remote desktop** tab. Opening the same profile again focuses its existing session instead of creating a duplicate.
 
-The target host is resolved from the SSH server's network, not from the phone or computer running Server Box. The defaults are therefore useful when the desktop service runs on the SSH server itself:
+The target host is resolved from the SSH server or Monitor agent's network, not from the phone or computer running Server Box. The defaults are therefore useful when the desktop service runs on that machine:
 
 | Protocol | Default target |
 |---|---|
 | RDP | `127.0.0.1:3389` |
 | VNC | `127.0.0.1:5900` |
 
-An internal hostname or address reachable only from the SSH server also works. SSH passwords, keys, keyboard-interactive authentication, jump servers, and `ProxyCommand` use the same connection path as the terminal and port-forward features.
+An internal hostname or address reachable from that machine also works. SSH passwords, keys, keyboard-interactive authentication, jump servers, and `ProxyCommand` use the same connection path as the terminal and port-forward features. Monitor uses an authenticated WebSocket relay and requires a secure HTTP connection unless the agent and app both allow insecure HTTP.
 
 Passwords are not saved by default. A password entered when a session starts remains in memory for that session and its reconnect attempts. When **Save password** is enabled, it is stored in Server Box's encrypted database and is included in encrypted backup and sync data. Remote desktop passwords are never included in a server QR-code share.
 
@@ -50,7 +50,7 @@ RDP adjusts the remote resolution after the viewport has been stable for 300 ms.
 
 ## Reconnection
 
-Transport failures retry after 1, 2, and 5 seconds. Each attempt confirms the SSH client and creates a new loopback-only tunnel. Authentication failures, rejected certificates, and invalid configuration do not retry automatically.
+Transport failures retry after 1, 2, and 5 seconds. Each attempt creates a new loopback-only tunnel through the selected transport. Authentication failures, rejected certificates, and invalid configuration do not retry automatically.
 
 Desktop platforms and Android use the app's existing background behavior where the operating system permits it. iOS can suspend network work in the background; Server Box checks the session after returning to the foreground and reconnects when necessary.
 

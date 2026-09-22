@@ -1,25 +1,25 @@
 ---
 title: 远程桌面（RDP 和 VNC）
-description: 通过 Server Box 的 SSH 连接访问图形桌面
+description: 通过 SSH 或 Monitor HTTP 访问图形桌面
 ---
 
-Server Box 在 Android、iOS、Linux、macOS 和 Windows 上内置 RDP 与 VNC 客户端。所有远程桌面连接都会经过服务器已有的 SSH 连接，因此不需要把 RDP 或 VNC 端口暴露给运行 Server Box 的网络。
+Server Box 在 Android、iOS、Linux、macOS 和 Windows 上内置 RDP 与 VNC 客户端。连接使用服务器选定的 SSH 或 Monitor HTTP transport，因此不需要把 RDP 或 VNC 端口暴露给运行 Server Box 的网络。
 
 ## 配置远程桌面
 
-1. 先为服务器配置 SSH。只有 Monitor 的服务器无法打开远程桌面，因为 Monitor HTTP API 不提供任意 TCP 流中继。
+1. 为服务器配置 SSH 或 Monitor HTTP。使用 Monitor 时，agent 必须启用 `remote_access.terminal` 和 `full_access`，并更新到支持 `/api/v1/desktop/ws` 的版本。
 2. 打开服务器详情页，选择**远程桌面**。
 3. 添加一个或多个配置；同一服务器内的配置名称不能重复。
 4. 选择配置后，会在**远程桌面**主标签中打开。再次打开同一配置会切换到已有会话，不会重复连接。
 
-目标主机从 SSH 服务器所在的网络解析，而不是从运行 Server Box 的手机或电脑解析。因此，当桌面服务就在 SSH 服务器上时，可以直接使用默认值：
+目标主机从 SSH 服务器或 Monitor agent 所在的网络解析，而不是从运行 Server Box 的手机或电脑解析。因此，当桌面服务就在该机器上时，可以直接使用默认值：
 
 | 协议 | 默认目标 |
 |---|---|
 | RDP | `127.0.0.1:3389` |
 | VNC | `127.0.0.1:5900` |
 
-也可以填写只有 SSH 服务器才能访问的内网主机名或地址。SSH 密码、密钥、键盘交互认证、跳板机和 `ProxyCommand` 与终端及端口转发功能共用同一条连接路径。
+也可以填写该机器可访问的内网主机名或地址。SSH 密码、密钥、键盘交互认证、跳板机和 `ProxyCommand` 与终端及端口转发功能共用同一条连接路径。Monitor 使用经过认证的 WebSocket relay；使用非安全 HTTP 时，agent 和 App 都必须明确允许。
 
 密码默认不保存。启动会话时输入的密码只保留在当前会话内存中，并用于该会话的重连。启用**保存密码**后，密码会进入 Server Box 的加密数据库，并包含在加密备份和同步数据中。通过二维码分享服务器时不会包含远程桌面密码。
 
@@ -50,7 +50,7 @@ RDP 在视口稳定 300 ms 后调整远程分辨率；VNC 使用服务器提供�
 
 ## 断线重连
 
-传输层瞬时故障会在 1、2、5 秒后重试。每次重试都会重新确认 SSH 客户端并创建新的、只监听本机回环地址的临时隧道。认证失败、证书被拒绝和配置错误不会自动重试。
+传输层瞬时故障会在 1、2、5 秒后重试。每次重试都会通过选定的 transport 创建新的、只监听本机回环地址的临时隧道。认证失败、证书被拒绝和配置错误不会自动重试。
 
 桌面平台和 Android 会在操作系统允许时使用 App 现有的后台行为。iOS 可能暂停后台网络任务；回到前台后，Server Box 会检查会话并在需要时重新连接。
 

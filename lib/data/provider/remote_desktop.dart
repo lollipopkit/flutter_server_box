@@ -1,11 +1,16 @@
 import 'dart:async';
+import 'dart:io';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/utils/local_tcp_tunnel.dart';
+import 'package:server_box/core/utils/monitor_desktop_channel.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
@@ -17,6 +22,14 @@ const _retryDelays = [
   Duration(seconds: 2),
   Duration(seconds: 5),
 ];
+
+class MonitorDesktopUnavailable implements Exception {
+  const MonitorDesktopUnavailable();
+
+  @override
+  String toString() =>
+      'Monitor remote desktop requires an updated agent with terminal and full_access enabled.';
+}
 
 class RemoteDesktopCertificatePrompt {
   const RemoteDesktopCertificatePrompt({
@@ -150,9 +163,7 @@ class RemoteDesktopSessionView {
     cursor: cursor ?? this.cursor,
     error: clearError ? null : (error ?? this.error),
     endReason: clearEndReason ? null : (endReason ?? this.endReason),
-    certificate: clearCertificate
-        ? null
-        : (certificate ?? this.certificate),
+    certificate: clearCertificate ? null : (certificate ?? this.certificate),
     visible: visible ?? this.visible,
     viewOnly: viewOnly ?? this.viewOnly,
   );
@@ -167,10 +178,7 @@ class RemoteDesktopSessionView {
 }
 
 class RemoteDesktopSessionsState {
-  const RemoteDesktopSessionsState({
-    this.sessions = const {},
-    this.activeId,
-  });
+  const RemoteDesktopSessionsState({this.sessions = const {}, this.activeId});
 
   final Map<String, RemoteDesktopSessionView> sessions;
   final String? activeId;
@@ -331,9 +339,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final entry = _entries[id];
     final prompt = state.sessions[id]?.certificate;
     if (entry == null || prompt == null) return;
-    final trusted = entry.profile.copyWith(
-      trustedCertSha256: prompt.sha256,
-    );
+    final trusted = entry.profile.copyWith(trustedCertSha256: prompt.sha256);
     Stores.remoteDesktop.put(trusted);
     entry.profile = trusted;
     _replaceView(
@@ -384,13 +390,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     );
   }
 
-  void sendWheel(
-    String id,
-    int x,
-    int y, {
-    int deltaX = 0,
-    int deltaY = 0,
-  }) {
+  void sendWheel(String id, int x, int y, {int deltaX = 0, int deltaY = 0}) {
     _writableEntry(id)?.handle?.sendWheel(
       x: x.clamp(0, 65535),
       y: y.clamp(0, 65535),
@@ -442,7 +442,9 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   }
 
   Future<void> _connect(_SessionEntry entry) async {
-    if (_disposed || entry.closed || _entries[entry.profile.id] != entry) return;
+    if (_disposed || entry.closed || _entries[entry.profile.id] != entry) {
+      return;
+    }
     final generation = ++entry.generation;
     _replaceView(
       entry.profile.id,
@@ -457,17 +459,47 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       ),
     );
 
-    SshLocalTunnel? tunnel;
+    LocalTcpTunnel? tunnel;
+    MonitorHttpClient? monitorClient;
     try {
-      final client = await ref
-          .read(serverProvider(entry.profile.serverId).notifier)
-          .ensureShellClient();
-      if (!_isCurrent(entry, generation)) return;
-      tunnel = await SshLocalTunnel.loopback(
-        client: client,
-        remoteHost: entry.profile.host,
-        remotePort: entry.profile.port,
-      );
+      final server = ref.read(serverProvider(entry.profile.serverId));
+      final spi = server.spi;
+      final monitor = spi.monitorOn;
+      if (spi.transport == ServerTransport.monitorHttp && monitor != null) {
+        monitorClient = MonitorHttpClient(monitor);
+        final client = monitorClient;
+        final capabilities = await client.fetchCapabilities();
+        if (!_isCurrent(entry, generation)) {
+          client.dispose();
+          return;
+        }
+        if (!capabilities.remoteAccess.desktop) {
+          if (spi.sshOn == null) throw const MonitorDesktopUnavailable();
+          client.dispose();
+          monitorClient = null;
+        } else {
+          tunnel = await LocalTcpTunnel.bindWithDialer(
+            bindHost: InternetAddress.loopbackIPv4.address,
+            dialer: () => MonitorDesktopChannel.open(
+              client,
+              host: entry.profile.host,
+              port: entry.profile.port,
+            ),
+          );
+          unawaited(tunnel.done.then((_) => client.dispose()));
+        }
+      }
+      if (tunnel == null) {
+        final client = await ref
+            .read(serverProvider(entry.profile.serverId).notifier)
+            .ensureShellClient();
+        if (!_isCurrent(entry, generation)) return;
+        tunnel = await LocalTcpTunnel.loopback(
+          client: client,
+          remoteHost: entry.profile.host,
+          remotePort: entry.profile.port,
+        );
+      }
       if (!_isCurrent(entry, generation)) {
         await tunnel.close();
         return;
@@ -516,6 +548,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       final failedTunnel = tunnel;
       if (failedTunnel != null && !identical(entry.tunnel, failedTunnel)) {
         await failedTunnel.close().catchError((_) {});
+      } else if (failedTunnel == null) {
+        monitorClient?.dispose();
       }
       if (!_isCurrent(entry, generation)) return;
       Loggers.app.warning('Remote desktop session failed', error, stackTrace);
@@ -541,7 +575,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         generation,
         ffi.RemoteDesktopEndReason.transportError,
         error.toString(),
-        retryable: true,
+        retryable: error is! MonitorDesktopUnavailable,
       );
     }
   }
@@ -555,7 +589,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
       final event = await handle.nextEvent();
       if (event == null || !_isCurrent(entry, generation)) break;
       switch (event) {
-        case ffi.RemoteDesktopEvent_ConnectionState(:final state, :final attempt):
+        case ffi.RemoteDesktopEvent_ConnectionState(
+          :final state,
+          :final attempt,
+        ):
           if (state == ffi.RemoteDesktopConnectionState.connected) {
             entry.retryCount = 0;
           }
@@ -565,7 +602,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
               connectionState: state,
               reconnectAttempt: attempt,
               clearError: state == ffi.RemoteDesktopConnectionState.connected,
-              clearEndReason: state == ffi.RemoteDesktopConnectionState.connected,
+              clearEndReason:
+                  state == ffi.RemoteDesktopConnectionState.connected,
             ),
           );
         case ffi.RemoteDesktopEvent_Frame(
@@ -602,9 +640,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         case ffi.RemoteDesktopEvent_CursorHidden():
           _replaceView(
             entry.profile.id,
-            (view) => view.copyWith(
-              cursor: view.cursor.copyWith(visible: false),
-            ),
+            (view) =>
+                view.copyWith(cursor: view.cursor.copyWith(visible: false)),
           );
         case ffi.RemoteDesktopEvent_CursorPosition(:final x, :final y):
           _replaceView(
@@ -747,11 +784,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final activeId = state.activeId;
     var next = state;
     for (final session in state.sessions.values) {
-      final visible =
-          session.id == activeId && _appVisible && _surfaceVisible;
-      _entries[session.id]?.handle?.setVisible(
-        visible: visible,
-      );
+      final visible = session.id == activeId && _appVisible && _surfaceVisible;
+      _entries[session.id]?.handle?.setVisible(visible: visible);
       if (session.visible != visible) {
         next = next.put(session.copyWith(visible: visible));
       }
@@ -800,6 +834,6 @@ class _SessionEntry {
   int retryCount = 0;
   bool lastErrorRetryable = false;
   bool closed = false;
-  SshLocalTunnel? tunnel;
+  LocalTcpTunnel? tunnel;
   ffi.RemoteDesktopSessionHandle? handle;
 }

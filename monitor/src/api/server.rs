@@ -5,6 +5,7 @@ use crate::{
     api::ws::{
         self,
         audit::{self, Action, Event, Kind, Outcome},
+        desktop::desktop_ws,
         session::SessionStore,
         terminal::{start_reaper, terminal_ws},
         ticket::{Purpose, TicketRequest, TicketResponse, TicketStore},
@@ -243,6 +244,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/capabilities", web::get().to(get_capabilities))
             .route("/ws-ticket", web::post().to(issue_ws_ticket))
             .route("/terminal/ws", web::get().to(terminal_ws))
+            .route("/desktop/ws", web::get().to(desktop_ws))
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
@@ -743,6 +745,8 @@ struct CapabilitiesView {
 #[derive(Serialize)]
 struct RemoteAccessView {
     terminal: bool,
+    /// Whether the app's RDP/VNC TCP relay is available.
+    desktop: bool,
     /// Whether a shell can be opened without SSH credentials. The panel only
     /// offers that entry when this is true — and, being a UI decision, it is
     /// re-checked server-side when the request actually arrives.
@@ -783,6 +787,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
         oldest_sample,
         remote_access: RemoteAccessView {
             terminal: app_state.remote_access.terminal.available(secure),
+            desktop: app_state.full_access_allowed(secure),
             full_access: app_state.full_access_allowed(secure),
             files: app_state.remote_access.fs.available(secure),
         },
@@ -803,34 +808,34 @@ async fn issue_ws_ticket(
     let claims = require_jwt!(&req, &app_state);
 
     let remote_ip = audit::peer_ip(&req);
-    // The purpose is read and dropped: `Purpose` has one variant, so there is
-    // nothing to branch on. It used to be compared and the mismatch declared
-    // `unreachable!()` — a panic guarding a value that arrives in a request
-    // body, which a second variant would have turned into a way to kill the
-    // worker with a POST. Everything below names `Purpose::Terminal` outright.
-    let _ = payload.into_inner();
-    let available = app_state
-        .remote_access
-        .terminal
-        .available(ws::is_secure_transport(&req, app_state.tls_active));
+    let purpose = payload.into_inner().purpose;
+    let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    let available = match purpose {
+        Purpose::Terminal => app_state.remote_access.terminal.available(secure),
+        Purpose::Desktop => app_state.full_access_allowed(secure),
+    };
+    let purpose_name = match purpose {
+        Purpose::Terminal => "terminal",
+        Purpose::Desktop => "desktop",
+    };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
             .subject(&claims.sub)
             .remote_ip(remote_ip)
-            .detail("terminal not available")
+            .detail(format!("{purpose_name} not available"))
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().json(&ErrorResponse {
-            error: "The terminal is not available".to_string(),
+            error: format!("The {purpose_name} is not available"),
         }));
     }
 
-    match app_state.tickets.issue(Purpose::Terminal, &claims.sub) {
+    match app_state.tickets.issue(purpose, &claims.sub) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
                 .subject(&claims.sub)
                 .remote_ip(remote_ip)
-                .detail("terminal")
+                .detail(purpose_name)
                 .record(&app_state.db)
                 .await;
             Ok(HttpResponse::Ok()

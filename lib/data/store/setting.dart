@@ -903,6 +903,7 @@ class SettingStore extends SqliteStore {
 
   late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
   late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
+  late final remoteDesktopSort = propertyDefault('remoteDesktopSort', 0);
 
   /// How the server list is ordered, as an index into `_SortField` and a
   /// direction — the same pair, stored the same way, as the two above.

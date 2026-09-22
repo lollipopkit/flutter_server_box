@@ -206,7 +206,8 @@ enum ServerFuncBtn {
     // without growing a stream this app can point anywhere.
     files => caps.files,
     // A forwarded connection is a byte stream, not a command's output.
-    portForward || remoteDesktop => caps.byteStream,
+    portForward => caps.byteStream,
+    remoteDesktop => caps.desktop,
   };
 
   String get toStr => switch (this) {

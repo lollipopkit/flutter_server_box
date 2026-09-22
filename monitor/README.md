@@ -100,11 +100,14 @@ exactly that:
 | Status, charts, stored history | nothing beyond the login |
 | Processes, systemd, containers, snippets, power | `full_access` (`POST /api/v1/exec`) |
 | Terminal | `full_access` (`/api/v1/terminal/ws`) |
+| Remote desktop (RDP/VNC) | `full_access` (`/api/v1/desktop/ws`) |
 | File browser | `[remote_access.fs] enabled` + `roots` |
 
-SFTP and port forwarding are not offered on a monitor server: the agent has no
-endpoint that relays a connection to an address the app names. Add the server
-over SSH if you need them.
+SFTP and user-configurable port forwarding are not offered on a monitor server.
+Remote desktop uses a dedicated, authenticated TCP relay. It requires
+`[remote_access.terminal] enabled = true` and `full_access = true`, and the
+RDP/VNC target is resolved from the agent's machine. The relay has a global
+limit of eight simultaneous connections.
 
 ## Remote access (optional, off by default)
 

@@ -4,41 +4,44 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 
-typedef SshTunnelDialer = Future<SshTunnelChannel> Function();
+typedef TcpTunnelDialer = Future<TcpTunnelChannel> Function();
 
-/// The byte-stream surface a local SSH tunnel needs from a direct-tcpip
-/// channel. Keeping this seam small makes the listener lifecycle testable
-/// without constructing an authenticated SSH transport.
-abstract interface class SshTunnelChannel {
+/// The byte-stream surface a local tunnel needs from its remote transport.
+/// Keeping this seam small makes the listener lifecycle testable without
+/// constructing an authenticated transport.
+abstract interface class TcpTunnelChannel {
   Stream<List<int>> get stream;
   StreamSink<List<int>> get sink;
   Future<void> close();
 }
 
-/// A local TCP listener whose accepted sockets are carried by SSH
-/// direct-tcpip channels.
+/// A local TCP listener whose accepted sockets use a remote byte channel.
 ///
 /// [loopback] is the remote-desktop entry point: it always asks the OS for an
 /// ephemeral IPv4 loopback port. [bind] also serves the existing configurable
 /// port-forward feature, which may intentionally expose a chosen interface and
 /// port.
-class SshLocalTunnel {
-  SshLocalTunnel._({
+class LocalTcpTunnel {
+  LocalTcpTunnel._({
     required ServerSocket listener,
-    required SshTunnelDialer dialer,
-    required Future<void> sshDone,
+    required TcpTunnelDialer dialer,
+    Future<void>? transportDone,
   }) : _listener = listener,
        _dialer = dialer {
     _subscription = _listener.listen(_accept, onError: _listenerError);
-    unawaited(sshDone.then<void>((_) => close(), onError: (_, _) => close()));
+    if (transportDone != null) {
+      unawaited(
+        transportDone.then<void>((_) => close(), onError: (_, _) => close()),
+      );
+    }
   }
 
   final ServerSocket _listener;
-  final SshTunnelDialer _dialer;
+  final TcpTunnelDialer _dialer;
   final Set<Socket> _pendingSockets = {};
   final Set<_TunnelConnection> _connections = {};
   final Set<Future<void>> _bridges = {};
-  final _openingStops = <Completer<SshTunnelChannel>>{};
+  final _openingStops = <Completer<TcpTunnelChannel>>{};
   final Completer<void> _done = Completer<void>();
   StreamSubscription<Socket>? _subscription;
   Future<void>? _closing;
@@ -50,7 +53,7 @@ class SshLocalTunnel {
   Future<void> get done => _done.future;
 
   /// Opens the loopback-only ephemeral listener used by RDP and VNC sessions.
-  static Future<SshLocalTunnel> loopback({
+  static Future<LocalTcpTunnel> loopback({
     required SSHClient client,
     required String remoteHost,
     required int remotePort,
@@ -62,7 +65,7 @@ class SshLocalTunnel {
   );
 
   /// Opens a configurable local forward while sharing the same lifecycle.
-  static Future<SshLocalTunnel> bind({
+  static Future<LocalTcpTunnel> bind({
     required SSHClient client,
     required String remoteHost,
     required int remotePort,
@@ -71,24 +74,24 @@ class SshLocalTunnel {
   }) => bindWithDialer(
     bindHost: bindHost,
     bindPort: bindPort,
-    sshDone: client.done,
+    transportDone: client.done,
     dialer: () async => _DartSshTunnelChannel(
       await client.forwardLocal(remoteHost, remotePort),
     ),
   );
 
-  /// The lifecycle seam used by tests and alternative SSH transports.
-  static Future<SshLocalTunnel> bindWithDialer({
+  /// The lifecycle seam used by tests and other transports.
+  static Future<LocalTcpTunnel> bindWithDialer({
     required String bindHost,
     int bindPort = 0,
-    required Future<void> sshDone,
-    required SshTunnelDialer dialer,
+    Future<void>? transportDone,
+    required TcpTunnelDialer dialer,
   }) async {
     final listener = await ServerSocket.bind(bindHost, bindPort);
-    return SshLocalTunnel._(
+    return LocalTcpTunnel._(
       listener: listener,
       dialer: dialer,
-      sshDone: sshDone,
+      transportDone: transportDone,
     );
   }
 
@@ -105,11 +108,11 @@ class SshLocalTunnel {
   }
 
   Future<void> _bridge(Socket socket) async {
-    SshTunnelChannel? channel;
-    late final Future<SshTunnelChannel> opening;
+    TcpTunnelChannel? channel;
+    late final Future<TcpTunnelChannel> opening;
     try {
       opening = _dialer();
-      final stopped = Completer<SshTunnelChannel>();
+      final stopped = Completer<TcpTunnelChannel>();
       _openingStops.add(stopped);
       if (_closed) stopped.completeError(StateError('Tunnel closed'));
       try {
@@ -157,14 +160,14 @@ class SshLocalTunnel {
       socket.destroy();
       await channel?.close().catchError((_) {});
       if (!_closed) {
-        Loggers.app.warning('SSH local tunnel connection failed', e, s);
+        Loggers.app.warning('Local TCP tunnel connection failed', e, s);
       }
     }
   }
 
   void _listenerError(Object error, StackTrace stackTrace) {
     if (_closed) return;
-    Loggers.app.warning('SSH local tunnel listener failed', error, stackTrace);
+    Loggers.app.warning('Local TCP tunnel listener failed', error, stackTrace);
     unawaited(close());
   }
 
@@ -205,7 +208,7 @@ class SshLocalTunnel {
   }
 }
 
-class _DartSshTunnelChannel implements SshTunnelChannel {
+class _DartSshTunnelChannel implements TcpTunnelChannel {
   const _DartSshTunnelChannel(this._channel);
 
   final SSHForwardChannel _channel;
@@ -224,7 +227,7 @@ class _TunnelConnection {
   _TunnelConnection(this.socket, this.channel);
 
   final Socket socket;
-  final SshTunnelChannel channel;
+  final TcpTunnelChannel channel;
   bool _closed = false;
 
   Future<void> pipe() => Future.wait([

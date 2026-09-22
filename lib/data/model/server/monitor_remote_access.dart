@@ -12,6 +12,11 @@ class MonitorRemoteAccess {
   /// The agent will serve a terminal over this connection.
   final bool terminal;
 
+  /// The agent will relay an RDP or VNC connection for this app.
+  /// TODO: Remove the legacy-agent missing-field fallback when the minimum
+  /// supported Monitor version advertises this capability.
+  final bool desktop;
+
   /// The agent will let this app reach the machine with no SSH credentials —
   /// a shell, a command, a forwarded port — as the account it runs as.
   ///
@@ -29,6 +34,7 @@ class MonitorRemoteAccess {
 
   const MonitorRemoteAccess({
     this.terminal = false,
+    this.desktop = false,
     this.fullAccess = false,
     this.files = false,
   });
@@ -39,6 +45,7 @@ class MonitorRemoteAccess {
     bool flag(String key) => json[key] == true;
     return MonitorRemoteAccess(
       terminal: flag('terminal'),
+      desktop: flag('desktop'),
       fullAccess: flag('full_access'),
       files: flag('files'),
     );
@@ -46,16 +53,17 @@ class MonitorRemoteAccess {
 
   @override
   String toString() =>
-      'MonitorRemoteAccess(terminal: $terminal, fullAccess: $fullAccess, '
+      'MonitorRemoteAccess(terminal: $terminal, desktop: $desktop, fullAccess: $fullAccess, '
       'files: $files)';
 
   @override
   bool operator ==(Object other) =>
-    other is MonitorRemoteAccess &&
-       terminal == other.terminal &&
-       fullAccess == other.fullAccess &&
-       files == other.files;
+      other is MonitorRemoteAccess &&
+      terminal == other.terminal &&
+      desktop == other.desktop &&
+      fullAccess == other.fullAccess &&
+      files == other.files;
 
   @override
-  int get hashCode => Object.hash(terminal, fullAccess, files);
+  int get hashCode => Object.hash(terminal, desktop, fullAccess, files);
 }

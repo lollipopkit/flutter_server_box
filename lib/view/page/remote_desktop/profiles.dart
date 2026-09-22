@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
@@ -9,9 +10,16 @@ import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/store/entity_store.dart';
 
 final class RemoteDesktopProfilesPage extends ConsumerWidget {
-  const RemoteDesktopProfilesPage({super.key, required this.args});
+  const RemoteDesktopProfilesPage({
+    super.key,
+    required this.args,
+    this.onClose,
+    this.onSessionOpened,
+  });
 
   final SpiRequiredArgs args;
+  final VoidCallback? onClose;
+  final VoidCallback? onSessionOpened;
 
   static const route = AppRouteArg<void, SpiRequiredArgs>(
     page: RemoteDesktopProfilesPage.new,
@@ -23,7 +31,14 @@ final class RemoteDesktopProfilesPage extends ConsumerWidget {
     final profiles = ref.watch(remoteDesktopProfilesProvider(args.spi.id));
     return Scaffold(
       appBar: CustomAppBar(
-        title: TwoLineText(up: 'Remote desktop', down: args.spi.name),
+        leading: onClose == null
+            ? null
+            : IconButton(
+                tooltip: libL10n.close,
+                icon: const Icon(Icons.close),
+                onPressed: onClose,
+              ),
+        title: TwoLineText(up: context.l10n.remoteDesktop, down: args.spi.name),
         actions: [
           IconButton(
             tooltip: libL10n.add,
@@ -132,11 +147,15 @@ final class RemoteDesktopProfilesPage extends ConsumerWidget {
       );
       if (sessionPassword == null) return;
     }
-    ref.read(remoteDesktopSessionsProvider.notifier).open(
-      profile,
-      sessionPassword: sessionPassword,
-    );
-    ref.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
+    if (!context.mounted) return;
+    ref
+        .read(remoteDesktopSessionsProvider.notifier)
+        .open(profile, sessionPassword: sessionPassword);
+    if (onSessionOpened case final callback?) {
+      callback();
+    } else {
+      ref.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
+    }
   }
 
   Future<void> _edit(
@@ -146,21 +165,23 @@ final class RemoteDesktopProfilesPage extends ConsumerWidget {
   ]) async {
     final saved = await showDialog<RemoteDesktopProfile>(
       context: context,
-      builder: (_) => RemoteDesktopProfileDialog(
-        serverId: args.spi.id,
-        existing: existing,
-      ),
+      builder: (_) =>
+          RemoteDesktopProfileDialog(serverId: args.spi.id, existing: existing),
     );
     if (saved == null) return;
     try {
-      final notifier = ref.read(remoteDesktopProfilesProvider(args.spi.id).notifier);
+      final notifier = ref.read(
+        remoteDesktopProfilesProvider(args.spi.id).notifier,
+      );
       if (existing == null) {
         notifier.add(saved);
       } else {
         notifier.update(existing, saved);
       }
     } on DuplicateNameException {
-      if (context.mounted) Toast.show('Profile names must be unique for this server.');
+      if (context.mounted) {
+        Toast.show('Profile names must be unique for this server.');
+      }
     } catch (error, stackTrace) {
       if (context.mounted) context.showErrDialog(error, stackTrace);
     }
@@ -245,7 +266,9 @@ class _RemoteDesktopProfileDialogState
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.existing == null ? 'Add remote desktop' : 'Edit remote desktop'),
+    title: Text(
+      widget.existing == null ? 'Add remote desktop' : 'Edit remote desktop',
+    ),
     content: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 480),
       child: SingleChildScrollView(
@@ -254,8 +277,14 @@ class _RemoteDesktopProfileDialogState
           children: [
             SegmentedButton<RemoteDesktopProtocol>(
               segments: const [
-                ButtonSegment(value: RemoteDesktopProtocol.rdp, label: Text('RDP')),
-                ButtonSegment(value: RemoteDesktopProtocol.vnc, label: Text('VNC')),
+                ButtonSegment(
+                  value: RemoteDesktopProtocol.rdp,
+                  label: Text('RDP'),
+                ),
+                ButtonSegment(
+                  value: RemoteDesktopProtocol.vnc,
+                  label: Text('VNC'),
+                ),
               ],
               selected: {_protocol},
               onSelectionChanged: (selected) {
@@ -274,7 +303,9 @@ class _RemoteDesktopProfileDialogState
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: Input(controller: _host, hint: 'Target host')),
+                Expanded(
+                  child: Input(controller: _host, hint: 'Target host'),
+                ),
                 const SizedBox(width: 8),
                 SizedBox(
                   width: 112,
@@ -288,7 +319,7 @@ class _RemoteDesktopProfileDialogState
             ),
             const SizedBox(height: 8),
             Text(
-              'The target is resolved from the SSH server, so localhost refers to that server.',
+              'The target is resolved from this server, so localhost refers to that server.',
               style: UIs.text12Grey,
             ),
             const SizedBox(height: 8),
@@ -303,21 +334,23 @@ class _RemoteDesktopProfileDialogState
               hint: 'Password (optional)',
               obscureText: true,
             ),
-            SwitchListTile.adaptive(
+            SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Save password'),
-              subtitle: const Text('Stored in the encrypted database and backups.'),
+              subtitle: const Text(
+                'Stored in the encrypted database and backups.',
+              ),
               value: _savePassword,
               onChanged: (value) => setState(() => _savePassword = value),
             ),
-            SwitchListTile.adaptive(
+            SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('View only'),
               value: _viewOnly,
               onChanged: (value) => setState(() => _viewOnly = value),
             ),
             if (_protocol == RemoteDesktopProtocol.vnc)
-              SwitchListTile.adaptive(
+              SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Share session'),
                 value: _shared,
@@ -327,7 +360,10 @@ class _RemoteDesktopProfileDialogState
         ),
       ),
     ),
-    actions: [Btn.cancel(), Btn.ok(onTap: _save)],
+    actions: [
+      Btn.cancel(),
+      Btn.ok(onTap: _save),
+    ],
   );
 
   void _save() {
@@ -440,9 +476,7 @@ class _SessionPasswordDialogState extends State<_SessionPasswordDialog> {
       TextButton(
         onPressed: _connect,
         child: Text(
-          widget.protocol == RemoteDesktopProtocol.vnc
-              ? 'Connect'
-              : libL10n.ok,
+          widget.protocol == RemoteDesktopProtocol.vnc ? 'Connect' : libL10n.ok,
         ),
       ),
     ],

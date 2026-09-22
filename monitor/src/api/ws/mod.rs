@@ -4,6 +4,7 @@
 //! on which endpoint is being opened.
 
 pub mod audit;
+pub mod desktop;
 pub mod session;
 pub mod terminal;
 pub mod ticket;

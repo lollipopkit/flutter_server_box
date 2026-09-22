@@ -107,6 +107,9 @@ ssh_addr = "127.0.0.1:22"
 #
 # Also settable with SBM_FULL_ACCESS=0/1 (env wins over this file), and the
 # panel can turn it off — but never on — from its first-run prompt.
+# Also gates the app's RDP/VNC relay at /api/v1/desktop/ws. The app chooses
+# a host and port reachable from this machine, so this grants network access
+# as well as a shell. The terminal switch below must also be enabled.
 # full_access = false
 
 # In-browser terminal in the panel. The agent acts as an SSH client to

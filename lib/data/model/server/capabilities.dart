@@ -38,6 +38,9 @@ abstract interface class ServerCapabilities {
   /// ever fail.
   bool get byteStream;
 
+  /// RDP/VNC can reach a target through this transport.
+  bool get desktop;
+
   /// Files can be browsed and moved: the file tab, the file button, and either
   /// end of a transfer.
   ///
@@ -119,6 +122,9 @@ class UnionCapabilities implements ServerCapabilities {
   bool get byteStream => a.byteStream || b.byteStream;
 
   @override
+  bool get desktop => a.desktop || b.desktop;
+
+  @override
   bool get files => a.files || b.files;
 
   @override
@@ -175,6 +181,9 @@ class SshCapabilities implements ServerCapabilities {
   bool get byteStream => true;
 
   @override
+  bool get desktop => true;
+
+  @override
   bool get files => true;
 
   @override
@@ -207,10 +216,12 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   @override
   bool get terminal => granted.fullAccess && granted.terminal;
 
-  /// The agent has no endpoint that relays a connection to an address the app
-  /// names. A future endpoint would enable this for every agent at once.
+  /// General-purpose forwarding is still an SSH-only feature.
   @override
   bool get byteStream => false;
+
+  @override
+  bool get desktop => granted.desktop;
 
   /// The agent's own answer, from `GET /api/v1/capabilities`.
   ///

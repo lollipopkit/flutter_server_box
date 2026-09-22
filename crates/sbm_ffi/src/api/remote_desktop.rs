@@ -1,6 +1,6 @@
 //! RDP and VNC client sessions exposed to Flutter.
 //!
-//! The Dart side owns the SSH tunnel and passes its loopback endpoint here.
+//! The Dart side owns the SSH or Monitor tunnel and passes its loopback endpoint here.
 //! Protocol tasks own their sockets and keep only the newest complete frame,
 //! so a slow Flutter image conversion cannot grow a native frame queue.
 
@@ -37,10 +37,10 @@ const CHANNEL_CAPACITY: usize = 64;
 
 #[derive(Clone, Debug)]
 pub struct RdpSessionParams {
-    /// Loopback address of the SSH local tunnel.
+    /// Loopback address of the local tunnel.
     pub connect_host: String,
     pub connect_port: u16,
-    /// Hostname as seen by the SSH server and used for certificate checks.
+    /// Hostname as seen by the remote transport and used for certificate checks.
     pub server_name: String,
     pub server_port: u16,
     pub username: String,
@@ -54,7 +54,7 @@ pub struct RdpSessionParams {
 
 #[derive(Clone, Debug)]
 pub struct VncSessionParams {
-    /// Loopback address of the SSH local tunnel.
+    /// Loopback address of the local tunnel.
     pub connect_host: String,
     pub connect_port: u16,
     pub password: Option<String>,

@@ -5,7 +5,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/diag.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/utils/local_tcp_tunnel.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -216,7 +216,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
     // Connect before binding so a forward cannot look active when there is no
     // authenticated SSH transport behind its listener.
-    final tunnel = await SshLocalTunnel.bind(
+    final tunnel = await LocalTcpTunnel.bind(
       client: await _connectedClient(),
       remoteHost: config.remoteHost!,
       remotePort: config.remotePort!,
@@ -310,7 +310,7 @@ abstract class _ForwardEntry {
 class _LocalForwardEntry extends _ForwardEntry {
   _LocalForwardEntry(this.tunnel);
 
-  final SshLocalTunnel tunnel;
+  final LocalTcpTunnel tunnel;
 
   @override
   Future<void> close() => tunnel.close();

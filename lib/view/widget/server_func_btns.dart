@@ -564,7 +564,11 @@ void runServerFunc(
         ScheduledTasksPage.route.go(context, args);
         break;
       case ServerFuncBtn.remoteDesktop:
-        if (!await _ensureSshClient(context, spi.id, ref)) return;
+        if (spi.sshOn != null &&
+            spi.transport == ServerTransport.ssh &&
+            !await _ensureSshClient(context, spi.id, ref)) {
+          return;
+        }
         if (!context.mounted) return;
         RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi));
         break;

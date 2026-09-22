@@ -228,7 +228,7 @@ void main() {
       expect(usable(serverFuncBtnsFor(monitorOnly, null)), isEmpty);
     });
 
-    test('full access keeps everything but the two that need a byte stream', () {
+    test('full access without desktop relay keeps SSH-only actions out', () {
       final btns = usable(
         serverFuncBtnsFor(
           monitorOnly,
@@ -240,13 +240,24 @@ void main() {
         ),
       );
 
-      // No endpoint relays a connection to an address this app names, so port
-      // forwarding and remote desktop stay out however much else is granted.
+      // Older agents lack the desktop endpoint; generic port forwarding
+      // remains SSH-only even when the agent can run commands.
       expect(btns, isNot(contains(ServerFuncBtn.portForward)));
       expect(btns, isNot(contains(ServerFuncBtn.remoteDesktop)));
       expect(btns, contains(ServerFuncBtn.terminal));
       expect(btns, contains(ServerFuncBtn.files));
       expect(btns, contains(ServerFuncBtn.container));
+    });
+
+    test('desktop relay enables RDP/VNC without generic port forwarding', () {
+      final btns = usable(
+        serverFuncBtnsFor(
+          monitorOnly,
+          const MonitorRemoteAccess(desktop: true, fullAccess: true),
+        ),
+      );
+      expect(btns, contains(ServerFuncBtn.remoteDesktop));
+      expect(btns, isNot(contains(ServerFuncBtn.portForward)));
     });
 
     test('an SSH server is not asked the agent anything', () {

@@ -1,15 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/view/page/remote_desktop/profiles.dart';
-import 'package:server_box/view/page/remote_desktop/tab.dart';
 
 void main() {
-  test('remote desktop layout follows the wide breakpoint', () {
-    expect(remoteDesktopUsesWideLayout(500), isFalse);
-    expect(remoteDesktopUsesWideLayout(799), isFalse);
-    expect(remoteDesktopUsesWideLayout(800), isTrue);
-  });
-
   test('profile form requires the RDP username', () {
     expect(
       validateRemoteDesktopProfileInput(

@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/ssh_local_tunnel.dart';
+import 'package:server_box/core/utils/local_tcp_tunnel.dart';
 
 void main() {
   test('the desktop listener is IPv4 loopback on an ephemeral port', () async {
     final sshDone = Completer<void>();
-    final tunnel = await SshLocalTunnel.bindWithDialer(
+    final tunnel = await LocalTcpTunnel.bindWithDialer(
       bindHost: InternetAddress.loopbackIPv4.address,
-      sshDone: sshDone.future,
+      transportDone: sshDone.future,
       dialer: () async => _EchoChannel(),
     );
     addTearDown(tunnel.close);
@@ -22,9 +22,9 @@ void main() {
   test('each local connection gets its own SSH channel', () async {
     final sshDone = Completer<void>();
     var channels = 0;
-    final tunnel = await SshLocalTunnel.bindWithDialer(
+    final tunnel = await LocalTcpTunnel.bindWithDialer(
       bindHost: InternetAddress.loopbackIPv4.address,
-      sshDone: sshDone.future,
+      transportDone: sshDone.future,
       dialer: () async {
         channels++;
         return _EchoChannel();
@@ -45,9 +45,9 @@ void main() {
   test('SSH disconnect closes the listener and active channels', () async {
     final sshDone = Completer<void>();
     final made = <_EchoChannel>[];
-    final tunnel = await SshLocalTunnel.bindWithDialer(
+    final tunnel = await LocalTcpTunnel.bindWithDialer(
       bindHost: InternetAddress.loopbackIPv4.address,
-      sshDone: sshDone.future,
+      transportDone: sshDone.future,
       dialer: () async {
         final channel = _EchoChannel();
         made.add(channel);
@@ -72,11 +72,11 @@ void main() {
     () async {
       final sshDone = Completer<void>();
       final dialStarted = Completer<void>();
-      final channelReady = Completer<SshTunnelChannel>();
+      final channelReady = Completer<TcpTunnelChannel>();
       final channel = _EchoChannel();
-      final tunnel = await SshLocalTunnel.bindWithDialer(
+      final tunnel = await LocalTcpTunnel.bindWithDialer(
         bindHost: InternetAddress.loopbackIPv4.address,
-        sshDone: sshDone.future,
+        transportDone: sshDone.future,
         dialer: () {
           if (!dialStarted.isCompleted) dialStarted.complete();
           return channelReady.future;
@@ -103,9 +103,9 @@ void main() {
   test('a channel stream error releases both directions', () async {
     final ready = Completer<_FailureChannel>();
     final listening = Completer<void>();
-    final tunnel = await SshLocalTunnel.bindWithDialer(
+    final tunnel = await LocalTcpTunnel.bindWithDialer(
       bindHost: InternetAddress.loopbackIPv4.address,
-      sshDone: Completer<void>().future,
+      transportDone: Completer<void>().future,
       dialer: () async {
         final channel = _FailureChannel(listening);
         ready.complete(channel);
@@ -131,7 +131,7 @@ Future<List<int>> _echo(Socket socket, List<int> bytes) async {
   return (await response.timeout(const Duration(seconds: 1))).toList();
 }
 
-class _EchoChannel implements SshTunnelChannel {
+class _EchoChannel implements TcpTunnelChannel {
   _EchoChannel({Completer<void>? onListen})
     : _controller = StreamController<List<int>>.broadcast(
         onListen: () {

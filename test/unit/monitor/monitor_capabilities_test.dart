@@ -8,14 +8,23 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
 void main() {
+  test('older agents do not advertise desktop relay', () {
+    expect(
+      MonitorRemoteAccess.fromJson(const {'full_access': true}).desktop,
+      isFalse,
+    );
+    expect(
+      MonitorRemoteAccess.fromJson(const {'desktop': true}).desktop,
+      isTrue,
+    );
+  });
+
   group('ServerCapabilities.of', () {
     const monitor = MonitorHttpCredential(addr: 'https://agent:3770');
 
     test('a monitor server answers with what its agent granted', () {
       final spi = Spi(name: 'test', id: 'b', monitorHttp: monitor);
-      final caps = ServerCapabilities.of(
-        ServerConnectCredential.fromSpi(spi),
-      );
+      final caps = ServerCapabilities.of(ServerConnectCredential.fromSpi(spi));
       expect(caps, isA<MonitorHttpCapabilities>());
       expect(caps.shell, isFalse);
       expect(caps.terminal, isFalse);
@@ -37,7 +46,7 @@ void main() {
     test('a server carrying both is valid, and answers for both', () {
       // This used to be the rejected case. Carrying both is a configuration
       // someone can ask for, and what it can do is the union: the agent's
-      // stored history, and the byte stream the agent has no endpoint for.
+      // stored history, and generic port forwarding the agent does not offer.
       // Reporting only the leading transport's answers would take features
       // away over a preference that is about ordering.
       final spi = Spi(
@@ -100,9 +109,7 @@ void main() {
         id: 'c',
         ssh: const SshCredential(ip: '10.0.0.1'),
       );
-      final caps = ServerCapabilities.of(
-        ServerConnectCredential.fromSpi(spi),
-      );
+      final caps = ServerCapabilities.of(ServerConnectCredential.fromSpi(spi));
       expect(caps.shell, isTrue);
       expect(caps.persistentSession, isTrue);
       expect(caps.storedHistory, isFalse);
@@ -120,9 +127,7 @@ void main() {
     test('a terminal alone is not the grant commands need', () {
       // The terminal endpoint alone cannot open a shell as the agent's
       // account; that also needs full access.
-      const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(terminal: true),
-      );
+      const caps = MonitorHttpCapabilities(MonitorRemoteAccess(terminal: true));
       expect(caps.shell, isFalse);
       expect(caps.terminal, isFalse);
     });

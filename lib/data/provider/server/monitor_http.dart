@@ -556,7 +556,11 @@ class MonitorHttpClient {
   /// control JSON in the clear, so it refuses plaintext links that are not
   /// loopback. See `MonitorShellBackend` for the protocol spoken over it.
   Future<WebSocket> openTerminal({Duration? timeout}) =>
-      _openWs(timeout: timeout);
+      _openWs(purpose: 'terminal', url: terminalWsUrl(_addr), timeout: timeout);
+
+  /// Opens the agent's authenticated TCP relay for a desktop session.
+  Future<WebSocket> openDesktop({Duration? timeout}) =>
+      _openWs(purpose: 'desktop', url: desktopWsUrl(_addr), timeout: timeout);
 
   /// What this agent will accept right now, and what it runs on.
   ///
@@ -595,6 +599,10 @@ class MonitorHttpClient {
       )
       .removeFragment();
 
+  @visibleForTesting
+  static Uri desktopWsUrl(String addr) =>
+      terminalWsUrl(addr).replace(path: '/api/v1/desktop/ws');
+
   /// What the agent reads the ticket out of — `TICKET_PROTOCOL_PREFIX` in
   /// `monitor/src/api/ws/terminal.rs`, and `terminalWsProtocol` in the panel.
   /// All three have to say the same thing.
@@ -603,11 +611,15 @@ class MonitorHttpClient {
 
   /// A browser can't put a bearer token on a WebSocket handshake, so the agent
   /// authorises upgrades with a short-lived, single-use ticket instead.
-  Future<WebSocket> _openWs({Duration? timeout}) {
+  Future<WebSocket> _openWs({
+    required String purpose,
+    required Uri url,
+    Duration? timeout,
+  }) {
     return _authed(() async {
       final resp = await _object(
         '/api/v1/ws-ticket',
-        post: const {'purpose': 'terminal'},
+        post: {'purpose': purpose},
       );
       final ticket = resp['ticket'] as String?;
       if (ticket == null || ticket.isEmpty) {
@@ -619,7 +631,7 @@ class MonitorHttpClient {
 
       final socket =
           await WebSocket.connect(
-            terminalWsUrl(_addr).toString(),
+            url.toString(),
             // The ticket rides the subprotocol, not the query string. A URL is
             // what every access log, proxy and error message writes down, and
             // this one authorises a shell — the agent stopped reading
@@ -633,7 +645,7 @@ class MonitorHttpClient {
             timeout ?? const Duration(seconds: 15),
             onTimeout: () => throw MonitorHttpErr(
               type: MonitorHttpErrType.net,
-              message: 'Timed out opening the monitor terminal',
+              message: 'Timed out opening the monitor $purpose',
             ),
           );
       return socket;

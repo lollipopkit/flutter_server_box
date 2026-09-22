@@ -25,6 +25,7 @@ pub enum Kind {
     /// Issuing a WebSocket ticket
     Ticket,
     Terminal,
+    Desktop,
     /// A one-off command run through `api::exec`.
     Exec,
     /// A file operation through `api::fs`. The subject is the verb and the
@@ -45,6 +46,7 @@ impl Kind {
         match self {
             Kind::Ticket => "ticket",
             Kind::Terminal => "terminal",
+            Kind::Desktop => "desktop",
             Kind::Exec => "exec",
             Kind::Fs => "fs",
             Kind::CustomCmd => "custom_cmd",
