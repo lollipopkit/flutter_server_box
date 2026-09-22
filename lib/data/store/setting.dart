@@ -121,6 +121,10 @@ class SettingStore extends SqliteStore {
     true,
   );
 
+  /// Render the terminal as plain text with an input field, for screen
+  /// reader users — see `SSHPage._buildA11yBody`.
+  late final sshA11yMode = propertyDefault('sshA11yMode', false);
+
   late final editorFontSize = propertyDefault('editorFontSize', 12.5);
 
   late final editorFontFamily = propertyDefault('editorFontFamily', '');

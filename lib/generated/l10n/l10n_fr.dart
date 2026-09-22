@@ -1480,6 +1480,22 @@ class AppLocalizationsFr extends AppLocalizations {
       'Activation automatique des touches virtuelles';
 
   @override
+  String get sshA11yMode => 'Accessibility mode';
+
+  @override
+  String get sshA11yModeTip =>
+      'Render terminal output as plain text with an input field and labeled keys, for screen reader users.';
+
+  @override
+  String get sshA11yInputHint => 'Type a command, then press Enter';
+
+  @override
+  String get sshA11yCursorPrefix => 'Selected';
+
+  @override
+  String get sshA11yLineCopied => 'Line copied to clipboard';
+
+  @override
   String get supportFmtArgs =>
       'Les paramètres de mise en forme suivants sont pris en charge :';
 
@@ -1535,6 +1551,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get viewDetails => 'Voir les détails';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
+
+  @override
+  String get virtKeyA11ySudo => 'Sudo password';
+
+  @override
+  String get virtKeyA11ySnippet => 'Snippet';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11yIME => 'Keyboard';
+
+  @override
+  String get virtKeyA11yClipboard => 'Clipboard';
 
   @override
   String get virtKeyHelpClipboard =>

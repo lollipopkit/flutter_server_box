@@ -1359,6 +1359,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
 
   @override
+  String get sshA11yMode => '无障碍模式';
+
+  @override
+  String get sshA11yModeTip => '以纯文本呈现终端输出，并提供输入框和带标签的按键，方便屏幕阅读器用户使用。';
+
+  @override
+  String get sshA11yInputHint => '输入命令后按回车';
+
+  @override
+  String get sshA11yCursorPrefix => '选中';
+
+  @override
+  String get sshA11yLineCopied => '已复制该行到剪贴板';
+
+  @override
   String get supportFmtArgs => '支持以下格式化参数：';
 
   @override
@@ -1407,6 +1422,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewDetails => '查看详情';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
+
+  @override
+  String get virtKeyA11ySudo => 'sudo 密码';
+
+  @override
+  String get virtKeyA11ySnippet => '代码片段';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11yIME => '键盘';
+
+  @override
+  String get virtKeyA11yClipboard => '剪贴板';
 
   @override
   String get virtKeyHelpClipboard => '如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。';
@@ -4090,6 +4123,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
 
   @override
+  String get sshA11yMode => '無障礙模式';
+
+  @override
+  String get sshA11yModeTip => '以純文字呈現終端機輸出，並提供輸入框和帶標籤的按鍵，方便螢幕閱讀器使用者使用。';
+
+  @override
+  String get sshA11yInputHint => '輸入命令後按 Enter';
+
+  @override
+  String get sshA11yCursorPrefix => '選中';
+
+  @override
+  String get sshA11yLineCopied => '已複製該行到剪貼簿';
+
+  @override
   String get supportFmtArgs => '支援以下格式化參數：';
 
   @override
@@ -4138,6 +4186,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get viewDetails => '檢視詳情';
+
+  @override
+  String get virtKeyA11yTmux => 'tmux';
+
+  @override
+  String get virtKeyA11ySudo => 'sudo 密碼';
+
+  @override
+  String get virtKeyA11ySnippet => '程式碼片段';
+
+  @override
+  String get virtKeyA11ySFTP => 'SFTP';
+
+  @override
+  String get virtKeyA11yIME => '鍵盤';
+
+  @override
+  String get virtKeyA11yClipboard => '剪貼簿';
 
   @override
   String get virtKeyHelpClipboard => '如果終端機有選中字元，則復製選中字元至剪貼簿，否則貼上剪貼簿內容至終端機。';

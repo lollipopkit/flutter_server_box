@@ -2620,6 +2620,36 @@ abstract class AppLocalizations {
   /// **'Auto switching of virtual keys'**
   String get sshVirtualKeyAutoOff;
 
+  /// No description provided for @sshA11yMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility mode'**
+  String get sshA11yMode;
+
+  /// No description provided for @sshA11yModeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Render terminal output as plain text with an input field and labeled keys, for screen reader users.'**
+  String get sshA11yModeTip;
+
+  /// No description provided for @sshA11yInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type a command, then press Enter'**
+  String get sshA11yInputHint;
+
+  /// No description provided for @sshA11yCursorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get sshA11yCursorPrefix;
+
+  /// No description provided for @sshA11yLineCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Line copied to clipboard'**
+  String get sshA11yLineCopied;
+
   /// No description provided for @supportFmtArgs.
   ///
   /// In en, this message translates to:
@@ -2715,6 +2745,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View Details'**
   String get viewDetails;
+
+  /// No description provided for @virtKeyA11yTmux.
+  ///
+  /// In en, this message translates to:
+  /// **'tmux'**
+  String get virtKeyA11yTmux;
+
+  /// No description provided for @virtKeyA11ySudo.
+  ///
+  /// In en, this message translates to:
+  /// **'Sudo password'**
+  String get virtKeyA11ySudo;
+
+  /// No description provided for @virtKeyA11ySnippet.
+  ///
+  /// In en, this message translates to:
+  /// **'Snippet'**
+  String get virtKeyA11ySnippet;
+
+  /// No description provided for @virtKeyA11ySFTP.
+  ///
+  /// In en, this message translates to:
+  /// **'SFTP'**
+  String get virtKeyA11ySFTP;
+
+  /// No description provided for @virtKeyA11yIME.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard'**
+  String get virtKeyA11yIME;
+
+  /// No description provided for @virtKeyA11yClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Clipboard'**
+  String get virtKeyA11yClipboard;
 
   /// No description provided for @virtKeyHelpClipboard.
   ///
