@@ -10,9 +10,20 @@ void main() {
   setUpAll(() async {
     root = await Directory.systemTemp.createTemp('serverbox_local_files_');
     Paths.file = (await Directory('${root.path}/device').create()).path;
+    LocalFiles.copyFileExclusiveForTesting =
+        ({required source, required destination}) async {
+          try {
+            await File(destination).create(exclusive: true);
+          } on PathExistsException {
+            return false;
+          }
+          await File(source).copy(destination);
+          return true;
+        };
   });
 
   tearDownAll(() async {
+    LocalFiles.resetCopyFileExclusiveForTesting();
     if (await root.exists()) await root.delete(recursive: true);
   });
 

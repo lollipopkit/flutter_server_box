@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/src/rust/api/file.dart' as ffi;
 
 /// [Paths.file] — this device's files, as the browser and the transfers see
 /// it.
@@ -11,6 +13,18 @@ import 'package:server_box/data/res/build_data.dart';
 /// making that protected directory the browser's root.
 abstract final class LocalFiles {
   static Future<String>? _ensuring;
+  static var _copyFileExclusive = ffi.copyFileExclusive;
+
+  @visibleForTesting
+  static set copyFileExclusiveForTesting(
+    Future<bool> Function({required String source, required String destination})
+    copy,
+  ) => _copyFileExclusive = copy;
+
+  @visibleForTesting
+  static void resetCopyFileExclusiveForTesting() {
+    _copyFileExclusive = ffi.copyFileExclusive;
+  }
 
   /// Creates [Paths.file], copies in anything the documents-directory release
   /// left, and answers with it.
@@ -123,40 +137,7 @@ abstract final class LocalFiles {
   ) async {
     switch (source) {
       case File():
-        RandomAccessFile? output;
-        var created = false;
-        try {
-          final destination = await File(dest).create(exclusive: true);
-          created = true;
-          output = await destination.open(mode: FileMode.writeOnly);
-          await for (final chunk in File(staging).openRead()) {
-            await output.writeFrom(chunk);
-          }
-          return true;
-        } on PathExistsException {
-          return false;
-        } on FileSystemException {
-          if (!created &&
-              await FileSystemEntity.type(dest, followLinks: false) !=
-                  FileSystemEntityType.notFound) {
-            return false;
-          }
-          if (created) {
-            await output?.close();
-            output = null;
-            await File(dest).delete();
-          }
-          rethrow;
-        } catch (_) {
-          if (created) {
-            await output?.close();
-            output = null;
-            await File(dest).delete();
-          }
-          rethrow;
-        } finally {
-          await output?.close();
-        }
+        return _copyFileExclusive(source: staging, destination: dest);
       case Directory():
         if (await FileSystemEntity.type(dest, followLinks: false) !=
             FileSystemEntityType.notFound) {
