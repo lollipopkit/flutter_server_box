@@ -91,6 +91,11 @@ extension _VirtKey on SSHPageState {
     if (inputRaw != null) {
       HapticFeedback.mediumImpact();
       _terminal.textInput(inputRaw);
+      // In accessibility mode the field is the input's single source of
+      // truth, so a character typed here lands in it too.
+      if (Stores.setting.sshA11yMode.fetch()) {
+        _appendA11yInput(inputRaw);
+      }
     }
   }
 
@@ -127,6 +132,11 @@ extension _VirtKey on SSHPageState {
         break;
       case VirtualKeyFunc.backspace:
         _terminal.keyInput(TerminalKey.backspace);
+        // Keep the field in step with the terminal when the backspace key
+        // does the deleting.
+        if (Stores.setting.sshA11yMode.fetch()) {
+          _deleteA11yInput();
+        }
         break;
       case VirtualKeyFunc.clipboard:
         await _onClipboardAction();

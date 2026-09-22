@@ -229,6 +229,25 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// settled on the new selection.
   Timer? _a11yAnnounceDebounce;
 
+  /// How much of the terminal's current input line was written by the field.
+  ///
+  /// The field and the terminal stay in sync both ways: every edit here is
+  /// rewritten to the terminal as backspaces plus new text, and unconfirmed
+  /// input already sitting in the terminal (typed with the virtual keys, or
+  /// left behind by a program that stopped halfway) comes back into the
+  /// field. This tracks what is already in the terminal so the next rewrite
+  /// deletes exactly that.
+  int _a11yLastInputLen = 0;
+
+  /// The terminal's current line when the field was empty — the shell prompt,
+  /// a "Password:" query, a TUI prompt. The part of the line after it is
+  /// unconfirmed input, the only part worth copying back into the field.
+  String _a11yPromptText = '';
+
+  /// Guards the round trip: setting the field's text from the terminal must
+  /// not fire `onChanged` and rewrite the same text back into the terminal.
+  bool _a11ySyncing = false;
+
   /// Which step of the virtual keys walkthrough is showing, or null when it is
   /// not running — which is every time but the first.
   int? _introStep;
@@ -511,6 +530,10 @@ class SSHPageState extends ConsumerState<SSHPage>
       // been running is not blank. Direct assignment, not `setState`: this
       // runs inside `build`, and the frame is about to render the list.
       _a11yOutput = _terminal.buffer.getText().split('\n');
+      // The line the field starts from: with the field empty, whatever the
+      // current line holds is the prompt baseline unconfirmed input is cut
+      // out of — see `_refreshA11yOutput`.
+      _a11yPromptText = _terminal.buffer.currentLine.toString();
     }
 
     final bgImage = Stores.setting.sshBgImage.fetch();
@@ -748,6 +771,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The standard [TextField] accessibility mode types into. Enter submits the
   /// line to the terminal and clears the field, keeping focus for the next
   /// command.
+  ///
+  /// Every edit — typing, backspacing, pasting, selecting and replacing — is
+  /// rewritten to the terminal as it happens ([_onA11yInputChanged]), so a
+  /// program reading keystrokes sees exactly what the field holds.
   Widget _buildA11yInputBar() {
     // Focus the field when the mode first comes on screen, and only then:
     // taking focus again later would fight the user's own navigation.
@@ -769,20 +796,75 @@ class SSHPageState extends ConsumerState<SSHPage>
           border: const OutlineInputBorder(),
         ),
         textInputAction: TextInputAction.send,
+        onChanged: _onA11yInputChanged,
         onSubmitted: _onA11yInputSubmitted,
       ),
     );
   }
 
-  void _onA11yInputSubmitted(String text) {
-    // An empty Enter still confirms the TUI menu selection in front of the
-    // cursor — the field is a command line, not a barrier to a bare confirm.
+  /// Rewrites the field's content into the terminal's current input line:
+  /// backspace over what the field sent before, then type the new text. The
+  /// shell echoes it back, so the terminal line tracks the field keystroke by
+  /// keystroke — an editor or TUI field on the far side sees each one.
+  void _onA11yInputChanged(String text) {
+    if (!mounted || _a11ySyncing || !Stores.setting.sshA11yMode.fetch()) {
+      return;
+    }
+    for (var i = 0; i < _a11yLastInputLen; i++) {
+      _terminal.keyInput(TerminalKey.backspace);
+    }
     if (text.isNotEmpty) {
       _terminal.textInput(text);
     }
-    _terminal.keyInput(TerminalKey.enter);
+    _a11yLastInputLen = text.length;
+  }
+
+  void _onA11yInputSubmitted(String text) {
+    // The content is already in the terminal — `onChanged` sent it live — so
+    // Enter only confirms. The field is cleared first, silently: a rewrite
+    // firing here would backspace over whatever the shell is now doing.
+    _a11ySyncing = true;
+    _a11yLastInputLen = 0;
     _a11yInputCtrl.clear();
+    _a11ySyncing = false;
+    _terminal.keyInput(TerminalKey.enter);
     _a11yInputFocus.requestFocus();
+  }
+
+  /// A character typed with the virtual keyboard goes straight to the
+  /// terminal; put it in the field as well, so the two never disagree.
+  void _appendA11yInput(String text) {
+    final ctrl = _a11yInputCtrl;
+    final at = ctrl.selection.isValid
+        ? ctrl.selection.baseOffset
+        : ctrl.text.length;
+    if (at < 0 || at > ctrl.text.length) {
+      _a11ySyncing = true;
+      ctrl.text = text;
+      _a11ySyncing = false;
+      _a11yLastInputLen = text.length;
+      return;
+    }
+    _a11ySyncing = true;
+    ctrl.text = ctrl.text.replaceRange(at, at, text);
+    ctrl.selection = TextSelection.collapsed(offset: at + text.length);
+    _a11ySyncing = false;
+    _a11yLastInputLen = ctrl.text.length;
+  }
+
+  /// The virtual keyboard's backspace deleted one character in the terminal;
+  /// drop the same character from the field.
+  void _deleteA11yInput() {
+    final ctrl = _a11yInputCtrl;
+    if (ctrl.text.isEmpty) return;
+    final at = ctrl.selection.isValid && ctrl.selection.baseOffset > 0
+        ? ctrl.selection.baseOffset
+        : ctrl.text.length;
+    _a11ySyncing = true;
+    ctrl.text = ctrl.text.replaceRange(at - 1, at, '');
+    ctrl.selection = TextSelection.collapsed(offset: at - 1);
+    _a11ySyncing = false;
+    _a11yLastInputLen = ctrl.text.length;
   }
 
   /// `Terminal.write` fires `notifyListeners` for every chunk, and a progress
@@ -800,6 +882,29 @@ class SSHPageState extends ConsumerState<SSHPage>
     final oldLines = _a11yOutput;
     if (!_sameLines(lines, oldLines)) {
       setState(() => _a11yOutput = lines);
+    }
+
+    // Unconfirmed input that is not in the field comes back into it: text
+    // typed with the virtual keys, or a program that stopped halfway asking
+    // for input. The line is `prompt + input`; the prompt was remembered when
+    // the field was last empty, so only the part after it is copied.
+    if (_a11yInputCtrl.text.isEmpty) {
+      final line = buffer.currentLine.toString();
+      if (_a11yPromptText.isNotEmpty &&
+          line.startsWith(_a11yPromptText) &&
+          line.length > _a11yPromptText.length) {
+        final input = line.substring(_a11yPromptText.length);
+        _a11ySyncing = true;
+        _a11yInputCtrl.text = input;
+        _a11yInputCtrl.selection = TextSelection.collapsed(offset: input.length);
+        _a11ySyncing = false;
+        _a11yLastInputLen = input.length;
+      } else if (line.isNotEmpty && line != _a11yPromptText) {
+        // Field empty means nothing of the line is user input — it is the
+        // prompt baseline (shell prompt, "Password:", a TUI field label).
+        // Remembered so the next unconfirmed input can be cut out of it.
+        _a11yPromptText = line;
+      }
     }
 
     // A Space toggle in a TUI menu rewrites the item's own line (the checkbox
