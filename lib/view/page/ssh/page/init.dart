@@ -108,7 +108,7 @@ extension _Init on SSHPageState {
       } catch (e, st) {
         Loggers.app.warning('Failed to open foreground tmux session', e, st);
         _clearTmuxState();
-        return null;
+        rethrow;
       }
       if (session != null) {
         _saveTmuxState(

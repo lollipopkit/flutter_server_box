@@ -197,9 +197,9 @@ class TerminalSession {
         currentGrant = (await client.fetchCapabilities()).remoteAccess;
       } on MonitorHttpErr {
         // A known grant can still be attempted: the terminal endpoint checks
-        // permission again. SSH remains the fallback when it is configured.
+        // permission again. SSH remains the fallback when it is enabled.
         if ((granted?.fullAccess != true || granted?.terminal != true) &&
-            server.ssh == null) {
+            server.sshOn == null) {
           rethrow;
         }
       } finally {
@@ -215,7 +215,7 @@ class TerminalSession {
       return _backend = agent;
     }
 
-    if (server.ssh == null) throw const TerminalRemoteAccessUnavailable();
+    if (server.sshOn == null) throw const TerminalRemoteAccessUnavailable();
 
     // Before `genClient` rather than after: a connection that never returns is
     // exactly the one worth having a record of, and it is the case where the

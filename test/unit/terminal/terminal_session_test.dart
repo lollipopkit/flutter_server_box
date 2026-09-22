@@ -324,7 +324,7 @@ void main() {
       expect(await session.connect(), isA<MonitorShellBackend>());
     });
 
-    test('a monitor-only terminal reports a denied grant', () async {
+    test('a denied grant does not fall back to disabled SSH', () async {
       final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       addTearDown(() => server.close(force: true));
       server.listen((request) {
@@ -340,6 +340,8 @@ void main() {
       final spi = Spi(
         name: 'agent',
         id: 'agent-denied',
+        ssh: const SshCredential(ip: '127.0.0.1', port: 22, user: 'test'),
+        sshEnabled: false,
         monitorHttp: MonitorHttpCredential(
           addr: 'http://127.0.0.1:${server.port}',
         ),
