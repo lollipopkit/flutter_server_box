@@ -765,36 +765,31 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// history; new output is appended at the bottom without scrolling the view,
   /// so a screen reader user keeps their place.
   Widget _buildA11yOutput() {
-    // The whole list gets the list role, and every non-empty line a listItem
-    // role: TalkBack needs those roles to walk the output as a list. Empty
-    // rows render nothing, so the reader does not stop at silent gaps.
-    //
-    // A [SelectionArea] wraps the list so text can be dragged across rows and
-    // copied, like the original terminal canvas — the rows stay plain [Text]
-    // so their screen-reader labels are clean.
-    return Semantics(
-      role: SemanticsRole.list,
-      explicitChildNodes: true,
-      child: SelectionArea(
-        child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          itemCount: _a11yOutput.length,
-          itemBuilder: (context, index) {
-            final line = _a11yOutput[index];
-            if (line.trim().isEmpty) return const SizedBox.shrink();
-            return Semantics(
-              role: SemanticsRole.listItem,
-              child: Text(
-                line,
-                style: TextStyle(
-                  fontSize: _terminalStyle.fontSize,
-                  height: _terminalStyle.height,
-                  fontFamily: _terminalStyle.fontFamily,
-                ),
+    // A `SelectionArea` keeps the terminal's drag-to-select across rows. On its
+    // own it merges every row's semantics into one selection node and TalkBack
+    // slides past it in silence; each row therefore carries its own
+    // `Semantics(label, excludeSemantics: true)`, which replaces the selection
+    // node for that row with a plain, individually readable text node.
+    return SelectionArea(
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        itemCount: _a11yOutput.length,
+        itemBuilder: (context, index) {
+          final line = _a11yOutput[index];
+          if (line.trim().isEmpty) return const SizedBox.shrink();
+          return Semantics(
+            label: line,
+            excludeSemantics: true,
+            child: Text(
+              line,
+              style: TextStyle(
+                fontSize: _terminalStyle.fontSize,
+                height: _terminalStyle.height,
+                fontFamily: _terminalStyle.fontFamily,
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
