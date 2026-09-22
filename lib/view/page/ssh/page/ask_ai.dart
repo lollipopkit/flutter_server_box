@@ -490,7 +490,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Hairline.color(context)),
       ),
-      child: ExpansionTile(
+      child: ExpandTile(
         initiallyExpanded: widget.autoStart,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
         childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
