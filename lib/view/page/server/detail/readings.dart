@@ -109,12 +109,17 @@ extension on _ServerDetailPageState {
       // on the card twice.
       if (_custom case final window? when wide)
         (k: l10n.window, v: window.to.difference(window.from).toAgoStr),
-      if (axis.bands.firstOrNull case final gap?
-          when (_custom != null || _range != HistoryRange.live) &&
-              w.times.isNotEmpty)
+      if (axis.bands.isNotEmpty &&
+          (_custom != null || _range != HistoryRange.live) &&
+          w.times.isNotEmpty)
         (
           k: l10n.stored,
-          v: Duration(milliseconds: w.times.last - gap.to).toAgoStr,
+          // The span the samples cover, which is what "stored" is asking. Not
+          // the distance from the band's inner edge: for a window whose data
+          // stops early the band is at the tail, and that measured the
+          // shortfall instead — a 24-hour window holding 23 hours read as
+          // "stored 1 hour".
+          v: Duration(milliseconds: w.times.last - w.times.first).toAgoStr,
         ),
       // Only for a window the reader named: how dense it came back is a
       // property of that window, while a preset's density is the same every

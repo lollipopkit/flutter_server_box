@@ -1244,7 +1244,6 @@ async fn get_metrics_history(
     // `i64::div_ceil` is still unstable; both operands are positive here.
     let bucket_secs = ((span_secs + max_points - 1) / max_points).max(1);
 
-
     use sqlx::Row;
     let rows = sqlx::query(
         "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN swap_total > 0 THEN swap_used * 100.0 / swap_total END) AS swap,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= ?2 AND (?3 IS NULL OR timestamp <= ?3)          GROUP BY bucket ORDER BY bucket",
