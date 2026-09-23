@@ -55,7 +55,10 @@ pub fn build_script(
     build_number: String,
 ) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
-    let opts = sbm_parser::script::ScriptOptions { disabled, build_number };
+    let opts = sbm_parser::script::ScriptOptions {
+        disabled,
+        build_number,
+    };
     Ok(sbm_parser::script::build_script(system, &opts))
 }
 
@@ -90,8 +93,7 @@ pub fn install_custom_cmds_command(
             )
         })
         .collect();
-    let script =
-        sbm_parser::script::install_custom_cmds_script(system, &cmds, expect.as_deref());
+    let script = sbm_parser::script::install_custom_cmds_script(system, &cmds, expect.as_deref());
     Ok(wrap_for_default_shell(system, script))
 }
 
@@ -149,7 +151,10 @@ pub fn parse_custom_cmds_fingerprint(output: String) -> Option<String> {
 #[flutter_rust_bridge::frb(sync)]
 pub fn read_custom_cmds_command(system: String) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
-    Ok(wrap_for_default_shell(system, sbm_parser::script::read_custom_cmds_script(system)))
+    Ok(wrap_for_default_shell(
+        system,
+        sbm_parser::script::read_custom_cmds_script(system),
+    ))
 }
 
 /// Windows gets a complete command line, base64-wrapped, for the same reason
@@ -158,9 +163,7 @@ pub fn read_custom_cmds_command(system: String) -> Result<String, String> {
 /// stdin so nothing has to survive quoting either.
 fn wrap_for_default_shell(system: sbm_parser::SystemType, script: String) -> String {
     match system {
-        sbm_parser::SystemType::Windows => {
-            sbm_parser::script::encoded_powershell_command(&script)
-        }
+        sbm_parser::SystemType::Windows => sbm_parser::script::encoded_powershell_command(&script),
         _ => script,
     }
 }
@@ -203,7 +206,11 @@ pub fn install_command(
     script_path: String,
 ) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::install_command(system, &script_dir, &script_path))
+    Ok(sbm_parser::script::install_command(
+        system,
+        &script_dir,
+        &script_path,
+    ))
 }
 
 /// What to write to [`install_command`]'s stdin for `content`.
@@ -226,7 +233,11 @@ pub fn exec_command(
     func: ShellFuncKind,
 ) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
-    Ok(sbm_parser::script::exec_command(system, &script_path, func.into()))
+    Ok(sbm_parser::script::exec_command(
+        system,
+        &script_path,
+        func.into(),
+    ))
 }
 
 /// Command-line flag of a shell function ("s", "e", "p", "sd", "r", "sp");

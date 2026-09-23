@@ -98,7 +98,11 @@ impl LocalShell {
     /// change is attempted: dropping privileges here would only matter if the
     /// agent were root, and the answer to that is to not run it as root — see
     /// the module comment.
-    pub fn spawn(term: &str, cols: u16, rows: u16) -> Result<(Self, mpsc::Receiver<ShellEvent>), SpawnError> {
+    pub fn spawn(
+        term: &str,
+        cols: u16,
+        rows: u16,
+    ) -> Result<(Self, mpsc::Receiver<ShellEvent>), SpawnError> {
         let pty = native_pty_system()
             .openpty(PtySize {
                 rows,
@@ -166,7 +170,10 @@ impl LocalShell {
                         if *delivery_closed {
                             break;
                         }
-                        if reader_tx.blocking_send(ShellEvent::Data(buf[..n].to_vec())).is_err() {
+                        if reader_tx
+                            .blocking_send(ShellEvent::Data(buf[..n].to_vec()))
+                            .is_err()
+                        {
                             break;
                         }
                     }
@@ -187,36 +194,35 @@ impl LocalShell {
         // a blocking wait.
         let reaper = child.clone();
         let exit_delivery_closed = delivery_closed.clone();
-        std::thread::spawn(move || loop {
-            let status = reaper
-                .lock()
-                .unwrap_or_else(|e| e.into_inner())
-                .try_wait();
-            let exit = match status {
-                Ok(Some(status)) => Some(Some(status.exit_code())),
-                Ok(None) => None,
-                Err(_) => Some(None),
-            };
-            if let Some(status) = exit {
-                // Preserve the usual PTY contract that the last output comes
-                // before the exit notification. Unix readers normally reach
-                // EOF immediately; ConPTY gets a short drain window and then
-                // exit is delivered even if its read handle stays open.
-                let (done, ready) = &*reader_done;
-                let done = done.lock().unwrap_or_else(|e| e.into_inner());
-                drop(ready.wait_timeout_while(
-                    done,
-                    std::time::Duration::from_millis(100),
-                    |done| !*done,
-                ));
-                let mut delivery_closed = exit_delivery_closed
-                    .lock()
-                    .unwrap_or_else(|e| e.into_inner());
-                *delivery_closed = true;
-                let _ = tx.blocking_send(ShellEvent::Exit(status));
-                break;
+        std::thread::spawn(move || {
+            loop {
+                let status = reaper.lock().unwrap_or_else(|e| e.into_inner()).try_wait();
+                let exit = match status {
+                    Ok(Some(status)) => Some(Some(status.exit_code())),
+                    Ok(None) => None,
+                    Err(_) => Some(None),
+                };
+                if let Some(status) = exit {
+                    // Preserve the usual PTY contract that the last output comes
+                    // before the exit notification. Unix readers normally reach
+                    // EOF immediately; ConPTY gets a short drain window and then
+                    // exit is delivered even if its read handle stays open.
+                    let (done, ready) = &*reader_done;
+                    let done = done.lock().unwrap_or_else(|e| e.into_inner());
+                    drop(ready.wait_timeout_while(
+                        done,
+                        std::time::Duration::from_millis(100),
+                        |done| !*done,
+                    ));
+                    let mut delivery_closed = exit_delivery_closed
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner());
+                    *delivery_closed = true;
+                    let _ = tx.blocking_send(ShellEvent::Exit(status));
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(10));
             }
-            std::thread::sleep(std::time::Duration::from_millis(10));
         });
 
         Ok((
@@ -246,11 +252,7 @@ impl LocalShell {
 
     /// Ends the shell. Safe to call more than once.
     pub fn kill(&self) {
-        let _ = self
-            .child
-            .lock()
-            .unwrap_or_else(|e| e.into_inner())
-            .kill();
+        let _ = self.child.lock().unwrap_or_else(|e| e.into_inner()).kill();
     }
 }
 
@@ -285,7 +287,10 @@ mod tests {
         })
         .await
         .unwrap_or(false);
-        assert!(queried, "ConPTY should ask for the cursor position; saw {seen:?}");
+        assert!(
+            queried,
+            "ConPTY should ask for the cursor position; saw {seen:?}"
+        );
         shell.write(b"\x1b[1;1R").unwrap();
         seen
     }
@@ -404,7 +409,9 @@ mod tests {
     #[tokio::test]
     #[cfg(unix)]
     async fn the_session_runs_the_configured_shell() {
-        let Some(configured) = passwd_shell() else { return };
+        let Some(configured) = passwd_shell() else {
+            return;
+        };
         let (shell, mut rx) = LocalShell::spawn("xterm-256color", 80, 24).unwrap();
 
         // Compared by file name, not by path: a shell may canonicalise
@@ -422,7 +429,10 @@ mod tests {
                     // The marker rules out matching the echoed command itself
                     if let Some(rest) = seen.split("shell-is-/").nth(1)
                         && rest.contains('\n')
-                        && rest.lines().next().is_some_and(|l| l.trim_end().ends_with(&expected))
+                        && rest
+                            .lines()
+                            .next()
+                            .is_some_and(|l| l.trim_end().ends_with(&expected))
                     {
                         return true;
                     }

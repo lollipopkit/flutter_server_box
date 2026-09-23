@@ -1,4 +1,6 @@
 {
+  "pluginName": "Scheduled",
+  "pluginDescription": "What runs on a timer: the user's crontab and systemd's timers.",
   "reading": "Reading…",
   "retry": "Try again",
   "reload": "Reload",

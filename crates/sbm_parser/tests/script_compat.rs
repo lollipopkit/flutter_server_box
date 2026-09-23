@@ -83,7 +83,12 @@ fn custom_commands_are_not_in_the_status_function() {
             .unwrap()
             .contains("SrvBoxCusCmdSep.")
     );
-    assert!(!win.split("function SbProcess").nth(1).unwrap().contains("SrvBoxCusCmdSep."));
+    assert!(
+        !win.split("function SbProcess")
+            .nth(1)
+            .unwrap()
+            .contains("SrvBoxCusCmdSep.")
+    );
 }
 
 /// Every generated script has to be something the shell will actually parse.
@@ -329,7 +334,11 @@ fn custom_cmd_listing_carries_a_fingerprint() {
     );
     let parsed = script::parse_custom_cmds_listing(&listing).expect("directory exists");
     assert_eq!(parsed.fingerprint, "3010678734-27");
-    assert_eq!(parsed.cmds.len(), 1, "the fingerprint line is not a command");
+    assert_eq!(
+        parsed.cmds.len(),
+        1,
+        "the fingerprint line is not a command"
+    );
 }
 
 /// An expectation reaches the installer as a comparison it makes for itself,
@@ -341,7 +350,10 @@ fn an_install_with_an_expectation_checks_before_it_swaps() {
     for system in [SystemType::Linux, SystemType::Windows] {
         let checked = script::install_custom_cmds_script(system, &cmds, Some("3010678734-27"));
         assert!(checked.contains("3010678734-27"), "{system:?}");
-        assert!(checked.contains(script::CUSTOM_CMD_CONFLICT_MARKER), "{system:?}");
+        assert!(
+            checked.contains(script::CUSTOM_CMD_CONFLICT_MARKER),
+            "{system:?}"
+        );
         // Before anything is written, not after: a check that ran after the
         // swap would report a conflict it had already caused.
         let at_check = checked.find(script::CUSTOM_CMD_CONFLICT_MARKER).unwrap();
@@ -353,7 +365,10 @@ fn an_install_with_an_expectation_checks_before_it_swaps() {
         assert!(at_check < at_write, "{system:?}: {checked}");
 
         let unchecked = script::install_custom_cmds_script(system, &cmds, None);
-        assert!(!unchecked.contains(script::CUSTOM_CMD_CONFLICT_MARKER), "{system:?}");
+        assert!(
+            !unchecked.contains(script::CUSTOM_CMD_CONFLICT_MARKER),
+            "{system:?}"
+        );
     }
 }
 
@@ -378,7 +393,10 @@ fn an_expectation_cannot_become_shell() {
 #[test]
 fn a_host_without_cksum_saves_anyway() {
     let unix = script::install_custom_cmds_script(SystemType::Linux, &[], Some("123-4"));
-    assert!(unix.contains(&format!("!= '{}' ]", script::CUSTOM_CMD_FP_UNAVAILABLE)), "{unix}");
+    assert!(
+        unix.contains(&format!("!= '{}' ]", script::CUSTOM_CMD_FP_UNAVAILABLE)),
+        "{unix}"
+    );
     assert!(unix.contains("command -v cksum"), "{unix}");
 }
 
@@ -407,7 +425,8 @@ fn an_interrupted_install_is_repaired_by_the_paths_that_write() {
         .unwrap();
     assert!(!custom.contains(".bak"), "{custom}");
     assert!(
-        script::read_custom_cmds_script(SystemType::Windows).contains("Move-Item \"$dir.bak\" $dir"),
+        script::read_custom_cmds_script(SystemType::Windows)
+            .contains("Move-Item \"$dir.bak\" $dir"),
     );
 }
 
@@ -438,7 +457,10 @@ fn an_install_reports_the_fingerprint_it_leaves() {
         script::parse_custom_cmds_fingerprint("SrvBoxCusCmdFp old\r\nSrvBoxCusCmdFp new\r\n"),
         Some("new".to_string())
     );
-    assert_eq!(script::parse_custom_cmds_fingerprint("SrvBoxCusCmdFp "), None);
+    assert_eq!(
+        script::parse_custom_cmds_fingerprint("SrvBoxCusCmdFp "),
+        None
+    );
     assert_eq!(script::parse_custom_cmds_fingerprint("nothing here"), None);
 }
 
@@ -460,9 +482,15 @@ fn a_plugin_command_writes_nothing_to_the_users_directory() {
             !readable.contains(script::CUSTOM_CMD_DIR_LEAF),
             "{system:?}: {readable}"
         );
-        assert!(readable.contains(&script::plugin_cmd_marker("zfs")), "{system:?}");
+        assert!(
+            readable.contains(&script::plugin_cmd_marker("zfs")),
+            "{system:?}"
+        );
         // Encoded, so nothing in a command has to survive quoting.
-        assert!(!readable.contains("zpool list -Hp"), "{system:?}: {readable}");
+        assert!(
+            !readable.contains("zpool list -Hp"),
+            "{system:?}: {readable}"
+        );
     }
 }
 
@@ -480,7 +508,10 @@ fn a_plugin_command_is_bounded_the_way_a_custom_one_is() {
         "server_box_custom.XXXXXX",
     ] {
         assert!(inline.contains(fragment), "inline missing {fragment}");
-        assert!(status.contains(fragment), "status script missing {fragment}");
+        assert!(
+            status.contains(fragment),
+            "status script missing {fragment}"
+        );
     }
     assert_sh_parses(&inline);
     assert_sh_parses(&script::inline_cmds_script(SystemType::Linux, &[]));
@@ -500,9 +531,18 @@ fn plugin_output_and_custom_output_are_separate_namespaces() {
     assert_eq!(map[&script::plugin_result_key("zfs")], "plugin said");
     assert_eq!(map[&script::custom_result_key("zfs")], "user said");
 
-    assert_eq!(script::plugin_result_name(&script::plugin_result_key("zfs")), Some("zfs"));
-    assert_eq!(script::plugin_result_name(&script::custom_result_key("zfs")), None);
-    assert_eq!(script::custom_result_name(&script::plugin_result_key("zfs")), None);
+    assert_eq!(
+        script::plugin_result_name(&script::plugin_result_key("zfs")),
+        Some("zfs")
+    );
+    assert_eq!(
+        script::plugin_result_name(&script::custom_result_key("zfs")),
+        None
+    );
+    assert_eq!(
+        script::custom_result_name(&script::plugin_result_key("zfs")),
+        None
+    );
 }
 
 /// Everything a plugin prints is data, including a built-in marker. The
@@ -510,7 +550,10 @@ fn plugin_output_and_custom_output_are_separate_namespaces() {
 #[test]
 fn plugin_output_cannot_forge_a_builtin_section() {
     let forged = script::cmd_marker("cpu");
-    let raw = format!("{}\nbefore\n{forged}\nforged\n", script::plugin_cmd_marker("probe"));
+    let raw = format!(
+        "{}\nbefore\n{forged}\nforged\n",
+        script::plugin_cmd_marker("probe")
+    );
     let map = parse_script_output(&raw);
 
     assert!(!map.contains_key("cpu"));
@@ -533,7 +576,10 @@ fn e2e_inline_plugin_commands_run() {
         ("zfs".to_string(), "printf 'a\\nb'".to_string()),
         // A command whose text would end a heredoc, close a quote and start
         // something new if any of it were taken literally.
-        ("hostile".to_string(), "printf \"EOF'\"; echo \" #\"".to_string()),
+        (
+            "hostile".to_string(),
+            "printf \"EOF'\"; echo \" #\"".to_string(),
+        ),
     ];
     let script = script::inline_cmds_script(SystemType::Linux, &cmds);
     let out = Command::new("sh")
@@ -541,7 +587,11 @@ fn e2e_inline_plugin_commands_run() {
         .arg(&script)
         .output()
         .expect("run the inline script");
-    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
 
     let map = parse_script_output(&String::from_utf8_lossy(&out.stdout));
     assert_eq!(map[&script::plugin_result_key("zfs")], "a\nb");
@@ -551,7 +601,10 @@ fn e2e_inline_plugin_commands_run() {
         std::fs::read_dir(std::env::temp_dir())
             .unwrap()
             .filter_map(Result::ok)
-            .all(|e| !e.file_name().to_string_lossy().starts_with("server_box_plugin")),
+            .all(|e| !e
+                .file_name()
+                .to_string_lossy()
+                .starts_with("server_box_plugin")),
         "the inline script left a command file behind"
     );
 }
@@ -559,7 +612,9 @@ fn e2e_inline_plugin_commands_run() {
 #[test]
 fn a_conflict_is_recognised_in_whatever_carried_it() {
     assert!(script::custom_cmds_conflict("SrvBoxCusCmdConflict"));
-    assert!(script::custom_cmds_conflict("noise\r\nSrvBoxCusCmdConflict\r\nmore"));
+    assert!(script::custom_cmds_conflict(
+        "noise\r\nSrvBoxCusCmdConflict\r\nmore"
+    ));
     assert!(!script::custom_cmds_conflict("mv: cannot stat"));
     assert!(!script::custom_cmds_conflict(""));
 }

@@ -51,20 +51,38 @@ class StoreEntry {
 
   bool get installable => best != null;
 
+  /// Whether the copy on this device is one *this* repository put there.
+  ///
+  /// The question an update is really asking. A plugin id is not owned by
+  /// anybody, so the same id installed from a file, from a working tree, or
+  /// from another repository is a different set of bytes that happens to answer
+  /// to the same name — and replacing it is a choice, not an update.
+  bool get mine => installed?.repoUrl == repo.url;
+
+  /// Installed, and from somewhere this repository cannot update.
+  ///
+  /// What the row says out loud, because the alternative is a plugin that is
+  /// listed as installed and never offered anything, with no way to find out
+  /// why.
+  bool get elsewhere => installed != null && !mine;
+
   /// Whether a newer runnable release exists than the one installed.
   ///
   /// Compares against [best] rather than the newest release: a version this
-  /// app cannot run is not an update it can offer.
+  /// app cannot run is not an update it can offer. And only for a copy this
+  /// repository installed — a working tree's 1.1.0 is not behind a
+  /// repository's 1.0.1, and offering that update wrote a record naming a
+  /// version the app then did not run.
   bool get outdated {
     final have = installed;
     final want = best;
-    if (have == null || want == null) return false;
+    if (have == null || want == null || !mine) return false;
     return PluginVersion.compare(want.version, have.version) > 0;
   }
 
   /// Installed, and the only newer releases need a newer app.
   bool get appTooOld =>
-      installed != null && !outdated && tooNew.isNotEmpty;
+      mine && installed != null && !outdated && tooNew.isNotEmpty;
 }
 
 abstract final class PluginStore {

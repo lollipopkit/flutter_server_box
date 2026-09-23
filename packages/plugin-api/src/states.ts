@@ -12,6 +12,7 @@
  * red-text-and-nothing-else, and the next one would too.
  */
 
+import type { RemoteState } from "./host.ts";
 import type { Node } from "./ui.ts";
 import { card, column, icon, onTap, padding, row, tag, text, tone } from "./ui.ts";
 
@@ -73,7 +74,9 @@ export function notice(n: {
 export type ReasonKind =
   | "denied"
   | "unavailable"
+  | "bad_request"
   | "timeout"
+  | "cancelled"
   | "io"
   | "cert"
   | "decode"
@@ -86,14 +89,38 @@ export type ReasonKind =
  * its own `l10n` key, and [reason] below can only hand back an English
  * sentence. `permission` is set for a refusal and is the one thing the user can
  * act on — they can grant it.
+ *
+ * `remote` is set for `cancelled` and `timeout` from `sb.server.exec`, and says
+ * whether the command was stopped on the server or is still running there. It
+ * is a separate field rather than two more kinds because a plugin that does not
+ * care should not have to know about it, and one that does should not have to
+ * parse a string to find out.
  */
 export function classify(e: unknown): {
   kind: ReasonKind;
   permission?: string;
+  remote?: RemoteState;
 } {
-  // A refusal is *thrown* rather than rejected — an ungranted function is a
-  // stub, not a failing implementation — so it arrives as an ordinary `Error`
-  // with no `kind`, and its message is the only thing that identifies it.
+  const structured = e as {
+    kind?: unknown;
+    permission?: unknown;
+    remote?: unknown;
+  } | null;
+  const kind = typeof structured?.kind === "string" ? structured.kind : "";
+  const permission =
+    typeof structured?.permission === "string" ? structured.permission : undefined;
+  if (kind === "denied") {
+    return {
+      kind: "denied",
+      ...(permission !== undefined ? { permission } : {}),
+    };
+  }
+  if (kind === "unavailable") return { kind: "unavailable" };
+  if (kind === "bad_request") return { kind: "bad_request" };
+
+  // TODO: remove the message fallback after plugins requiring a pre-ABI 4
+  // host are no longer supported. Older hosts did not attach structured
+  // refusal fields.
   const said = `${(e as { message?: unknown } | null)?.message ?? e ?? ""}`;
   if (said.includes("permission denied")) {
     // Left out rather than set to `undefined`: the field means "there is one the
@@ -108,12 +135,20 @@ export function classify(e: unknown): {
   }
   if (said.includes("is not available on")) return { kind: "unavailable" };
 
-  const kind = (e as { kind?: unknown } | null)?.kind;
-  switch (typeof kind === "string" ? kind : "") {
+  // Left out rather than set to `undefined`, for the reason above: the field
+  // means "the host said which", and a run that was not stopped has no answer
+  // to give.
+  const said2 = structured?.remote;
+  const remote: { remote?: RemoteState } =
+    said2 === "stopped" || said2 === "running" ? { remote: said2 } : {};
+
+  switch (kind) {
     case "denied":
       return { kind: "denied" };
     case "timeout":
-      return { kind: "timeout" };
+      return { kind: "timeout", ...remote };
+    case "cancelled":
+      return { kind: "cancelled", ...remote };
     case "io":
       return { kind: "io" };
     case "cert":
@@ -137,7 +172,7 @@ export function classify(e: unknown): {
  * the plugin: "The command did not run" says more than "Something failed".
  */
 export function reason(e: unknown, fallback: string): string {
-  const { kind, permission } = classify(e);
+  const { kind, permission, remote } = classify(e);
   switch (kind) {
     case "denied":
       return permission
@@ -145,8 +180,18 @@ export function reason(e: unknown, fallback: string): string {
         : "This plugin was not given permission for that.";
     case "unavailable":
       return "This host does not offer what the plugin asked for.";
+    case "bad_request":
+      return "The plugin sent a request this host could not read.";
+    // Both say what is happening on the server now, because that is the part
+    // the person in front of it cannot see and may need to act on.
     case "timeout":
-      return "The server did not answer in time.";
+      return remote === "running"
+        ? "The server did not answer in time. The command is still running there."
+        : "The server did not answer in time.";
+    case "cancelled":
+      return remote === "running"
+        ? "Stopped waiting. The command is still running on the server."
+        : "Stopped.";
     case "io":
       return "The server could not be reached.";
     case "cert":

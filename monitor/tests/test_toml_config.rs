@@ -37,21 +37,21 @@ message = "Alert: {{message}}"
         "#;
 
         let config: Config = toml::from_str(toml_content).expect("Failed to parse TOML");
-        
+
         // Test the parsed config
         let server = config.get_server();
         assert_eq!(server.host, "127.0.0.1");
         assert_eq!(server.port, 8080);
-        
+
         let monitoring = config.get_monitoring();
         assert_eq!(monitoring.interval_seconds, 10);
         assert_eq!(monitoring.rules.len(), 1);
         assert_eq!(monitoring.rules[0].name, "Test CPU Rule");
-        
+
         let push_configs = config.get_push();
         assert_eq!(push_configs.len(), 1);
         assert_eq!(push_configs[0].name, "test_webhook");
-        
+
         println!("✓ TOML configuration loaded and validated successfully!");
     }
 

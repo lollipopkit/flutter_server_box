@@ -110,7 +110,6 @@
   "pkgSecurityUnknown": "{manager}에서는 어떤 업데이트가 보안 수정인지 알려 주지 않습니다",
   "pluginInstall": "플러그인 설치",
   "pluginInstalled": "설치됨",
-  "pluginBundled": "기본 제공",
   "pluginDev": "개발",
   "pluginNeedsConsent": "이 업데이트는 동의한 범위를 넘어서는 권한을 요청합니다. 다시 설치하여 검토하세요.",
   "pluginPermissionsAsk": "이 플러그인이 요청하는 권한:",

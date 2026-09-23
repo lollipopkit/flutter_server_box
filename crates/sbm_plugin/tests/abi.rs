@@ -27,8 +27,15 @@ fn load(src: &str, options: InstanceOptions, bridge: Arc<ScriptedBridge>) -> Ins
 
 #[test]
 fn input_reaches_the_plugin_and_the_answer_comes_back() {
-    let mut p = load("export function echo(x) { return x; }", opts(), ScriptedBridge::new());
-    assert_eq!(p.call("echo", br#"{"hello":1}"#).unwrap(), br#"{"hello":1}"#);
+    let mut p = load(
+        "export function echo(x) { return x; }",
+        opts(),
+        ScriptedBridge::new(),
+    );
+    assert_eq!(
+        p.call("echo", br#"{"hello":1}"#).unwrap(),
+        br#"{"hello":1}"#
+    );
     // Twice, because an instance is reused and a host that reset something
     // between calls would only show it on the second.
     assert_eq!(p.call("echo", br#"[1,2]"#).unwrap(), b"[1,2]");
@@ -39,7 +46,11 @@ fn an_export_that_answers_nothing_answers_nothing() {
     let mut p = load("export function go() {}", opts(), ScriptedBridge::new());
     assert_eq!(p.call("go", b"").unwrap(), b"");
     // And `null` is not the same as nothing.
-    let mut p = load("export function go() { return null; }", opts(), ScriptedBridge::new());
+    let mut p = load(
+        "export function go() { return null; }",
+        opts(),
+        ScriptedBridge::new(),
+    );
     assert_eq!(p.call("go", b"").unwrap(), b"null");
 }
 
@@ -58,7 +69,10 @@ fn only_function_exports_are_listed() {
 fn a_missing_export_is_named() {
     let mut p = load("export function open() {}", opts(), ScriptedBridge::new());
     let e = p.call("tick", b"").unwrap_err();
-    assert!(matches!(e, PluginError::NoSuchExport(ref n) if n == "tick"), "{e}");
+    assert!(
+        matches!(e, PluginError::NoSuchExport(ref n) if n == "tick"),
+        "{e}"
+    );
 }
 
 #[test]
@@ -117,7 +131,10 @@ fn the_language_and_a_clock_are_available() {
     "#;
     let mut p = load(src, opts(), ScriptedBridge::new());
     let v: serde_json::Value = serde_json::from_slice(&p.call("probe", b"").unwrap()).unwrap();
-    assert_eq!(v, serde_json::json!({"now": true, "json": true, "regexp": true, "bigint": true}));
+    assert_eq!(
+        v,
+        serde_json::json!({"now": true, "json": true, "regexp": true, "bigint": true})
+    );
 }
 
 #[test]
@@ -160,7 +177,10 @@ fn a_host_call_carries_the_request_and_the_answer_comes_back_as_a_value() {
 #[test]
 fn a_host_failure_is_a_rejection_the_plugin_can_catch() {
     let bridge = ScriptedBridge::new();
-    bridge.answer_err(HostFn::StoreGet, BridgeError::failed("io", "database is locked"));
+    bridge.answer_err(
+        HostFn::StoreGet,
+        BridgeError::failed("io", "database is locked"),
+    );
     let src = r#"
       export async function go() {
         try {
@@ -183,7 +203,12 @@ fn a_host_failure_is_a_rejection_the_plugin_can_catch() {
 #[test]
 fn the_app_refusing_is_not_catchable_as_an_ordinary_failure() {
     let bridge = ScriptedBridge::new();
-    bridge.answer_err(HostFn::StoreGet, BridgeError::Denied { detail: "unknown scope".into() });
+    bridge.answer_err(
+        HostFn::StoreGet,
+        BridgeError::Denied {
+            detail: "unknown scope".into(),
+        },
+    );
     let src = r#"
       export async function go() {
         try { await sb.store.get({}); return "swallowed"; } catch (e) { throw e; }
@@ -191,7 +216,9 @@ fn the_app_refusing_is_not_catchable_as_an_ordinary_failure() {
     "#;
     let mut p = load(src, opts(), Arc::clone(&bridge));
     let e = p.call("go", b"").unwrap_err();
-    let PluginError::Denied(msg) = &e else { panic!("{e}") };
+    let PluginError::Denied(msg) = &e else {
+        panic!("{e}")
+    };
     assert!(msg.contains("unknown scope"), "{msg}");
 }
 
@@ -236,6 +263,38 @@ fn logs_reach_the_bridge_with_their_level() {
     );
 }
 
+/// **The first thing anybody writing JavaScript types.** Without a `console`
+/// a stray `console.log` is a `ReferenceError` that takes the whole call down
+/// — so the habitual debugging statement is a crash, and the message that
+/// would have said why never arrives.
+#[test]
+fn console_reaches_the_log_rather_than_killing_the_call() {
+    let bridge = ScriptedBridge::new();
+    let src = r#"
+      export function go() {
+        console.log("at", 1);
+        console.warn("careful");
+        console.error({ why: "no" });
+        return "done";
+      }
+    "#;
+    let mut p = load(src, opts(), Arc::clone(&bridge));
+
+    assert_eq!(p.call("go", b"").unwrap(), br#""done""#);
+    assert_eq!(
+        bridge.logged(),
+        vec![
+            // Joined with a space and stringified the way `console` does,
+            // because `console.log("at", n)` is how it is written.
+            (LogLevel::Info, "at 1".to_string()),
+            (LogLevel::Warn, "careful".to_string()),
+            // An object as JSON, not as `[object Object]`, which is the whole
+            // reason somebody logged it.
+            (LogLevel::Error, r#"{"why":"no"}"#.to_string()),
+        ]
+    );
+}
+
 // ------------------------------------------------------------------- async
 
 /// The reason for the whole design. While a host call is outstanding the
@@ -243,7 +302,9 @@ fn logs_reach_the_bridge_with_their_level() {
 #[test]
 fn a_deferred_answer_resumes_the_plugin_where_it_left_off() {
     let bridge = ScriptedBridge::new();
-    bridge.answer(HostFn::StoreGet, r#"{"value":"late"}"#).defer(HostFn::StoreGet, 3);
+    bridge
+        .answer(HostFn::StoreGet, r#"{"value":"late"}"#)
+        .defer(HostFn::StoreGet, 3);
     let src = r#"
       export async function go() {
         const before = "a";
@@ -258,7 +319,9 @@ fn a_deferred_answer_resumes_the_plugin_where_it_left_off() {
 #[test]
 fn several_awaits_in_a_row_each_get_their_answer() {
     let bridge = ScriptedBridge::new();
-    bridge.answer(HostFn::StoreGet, r#"{"value":"x"}"#).defer(HostFn::StoreGet, 2);
+    bridge
+        .answer(HostFn::StoreGet, r#"{"value":"x"}"#)
+        .defer(HostFn::StoreGet, 2);
     let src = r#"
       export async function go() {
         let out = "";
@@ -310,8 +373,7 @@ fn a_bridge_that_never_answers_gives_up_rather_than_waiting_forever() {
     let src = "export async function go() { await sb.store.get({}); }";
     let mut o = opts();
     o.host_call_timeout = Duration::from_millis(50);
-    let mut p =
-        Instance::new(src, o, Arc::new(SilentBridge)).expect("plugin did not load");
+    let mut p = Instance::new(src, o, Arc::new(SilentBridge)).expect("plugin did not load");
     let e = p.call("go", b"").unwrap_err();
     assert!(matches!(e, PluginError::Internal(_)), "{e}");
 }
@@ -342,7 +404,9 @@ fn a_plugin_that_throws_is_reported_with_its_message() {
     let src = "export function go() { throw new Error('bmc unreachable'); }";
     let mut p = load(src, opts(), ScriptedBridge::new());
     let e = p.call("go", b"").unwrap_err();
-    let PluginError::Threw(msg) = &e else { panic!("{e}") };
+    let PluginError::Threw(msg) = &e else {
+        panic!("{e}")
+    };
     assert!(msg.contains("bmc unreachable"), "{msg}");
 
     // And the instance is still usable.
@@ -416,7 +480,10 @@ fn a_picked_server_becomes_usable_and_an_invented_one_does_not() {
     o.grants = Grants::new([Permission::ServerExec]);
     let mut p = load(src, o, Arc::clone(&bridge));
 
-    assert!(p.call("invent", b"").is_err(), "an unissued handle was accepted");
+    assert!(
+        p.call("invent", b"").is_err(),
+        "an unissued handle was accepted"
+    );
     p.call("pick", b"").unwrap();
     p.call("invent", b"").unwrap();
     assert_eq!(bridge.funcs().last(), Some(&HostFn::ServerExec));

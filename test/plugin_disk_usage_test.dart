@@ -16,6 +16,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/plugin/host_ops.dart';
 import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
@@ -58,7 +59,8 @@ void main() {
     SqliteDb.instance.execute(
       "INSERT INTO server (id, name, ssh_ip) VALUES ('srv-1', 'one', '10.0.0.1');",
     );
-    ops = FakePluginHostOps()..execResult = (code: 0, stdout: _out, stderr: '');
+    ops = FakePluginHostOps()
+      ..execResult = PluginExecResult(code: 0, stdout: _out, stderr: '');
     service = PluginRuntimeService(
       bridge: PluginBridge(ops: ops, handles: PluginServerHandles()),
     );
@@ -81,6 +83,26 @@ void main() {
     await closeTestDb();
   });
 
+  /// The call the reading lands in.
+  ///
+  /// **The measurement is a `background` resource**, so the hook answers with
+  /// `Measuring…` rather than holding the instance for the length of a `du` —
+  /// which is what makes the Stop button reachable, since the host serves one
+  /// call per instance at a time. The reading arrives on the next call in, and
+  /// in the app that is the tick `PluginSurfaceView` fires the moment the
+  /// answer is there.
+  ///
+  /// A beat first, then the call: the app answers `sb.server.exec` on its own
+  /// turn, and a tick issued before that answer exists finds nothing to drain.
+  /// `PluginSurfaceView` has this for free — it ticks *because* an answer
+  /// arrived — and a test driving the service directly has to wait for one.
+  Future<void> tick({int times = 3}) async {
+    for (var i = 0; i < times; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await service.call(instance, 'tick', '');
+    }
+  }
+
   /// Every string the tree would put on screen, in order.
   ///
   /// Reads the props that carry text and not only `text` nodes: a `tile`'s
@@ -88,7 +110,19 @@ void main() {
   /// `text` children alone would say a page full of rows says nothing. Matches
   /// `texts` in `@serverbox/plugin-api/test`.
   List<String> texts(PluginNode node) {
-    const keys = ['value', 'title', 'subtitle', 'label', 'detail', 'k', 'v'];
+    // Matches `texts` in `@serverbox/plugin-api/test`: every prop carrying a
+    // string the user reads, including an input's `hint` and a banner's `text`.
+    const keys = [
+      'value',
+      'title',
+      'subtitle',
+      'label',
+      'detail',
+      'hint',
+      'text',
+      'k',
+      'v',
+    ];
     final out = <String>[];
     void walk(PluginNode n) {
       for (final key in keys) {
@@ -116,6 +150,13 @@ void main() {
     tester,
   ) async {
     await tester.runAsync(() async {
+      // The app opens a surface before it hooks it, and a plugin holding
+      // its state in providers builds on `open`.
+      await service.call(
+        instance,
+        'open',
+        jsonEncode({'kind': 'page', 'id': 'usage'}),
+      );
       await service.hook(
         instance,
         kind: 'enter',
@@ -123,6 +164,7 @@ void main() {
         granted: const ['server.exec'],
         serverIds: const ['srv-1'],
       );
+      await tick();
     });
 
     Object? seen;
@@ -141,8 +183,39 @@ void main() {
     await tester.tap(find.text('var'));
     await tester.pump();
 
-    expect(seen, {'m': 'open', 'path': '/var'});
+    // A token rather than a message a test could write: what matters is that
+    // the row carries *something* and the renderer delivers it. What the
+    // plugin does with it is the plugin's own test.
+    expect(seen, isNotNull);
   });
+
+  /// The whole tree as it stands.
+  ///
+  /// A patch carries a diff and says what changed; `open` draws in full against
+  /// the state the plugin holds, which is what a test wants to read.
+  Future<PluginNode> screen({String kind = 'page', String id = 'usage'}) async {
+    final out = await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': kind, 'id': id}),
+    );
+    return PluginNode.fromJson((jsonDecode(out) as Map)['ui'])!;
+  }
+
+  /// What the thing labelled [label] sends on [event], as the app would.
+  Object? eventOn(PluginNode node, String label, String event) {
+    Object? search(PluginNode n) {
+      final msg = n.events[event];
+      if (msg != null && texts(n).contains(label)) return msg;
+      for (final c in n.children) {
+        final hit = search(c);
+        if (hit != null) return hit;
+      }
+      return null;
+    }
+
+    return search(node);
+  }
 
   /// The settings surface, which until this plugin grew a form was one switch.
   ///
@@ -176,21 +249,33 @@ void main() {
       );
     }
 
-    /// `onEvent` takes the message and the control's value as two arguments,
-    /// which is `{msg, value}` on the wire — see `PluginSurfaceView._onEvent`.
-    Future<void> event(String m, [Object? value]) => service.call(
-      instance,
-      'onEvent',
-      jsonEncode({
-        'msg': {'m': m},
-        'value': value,
-      }),
-    );
+    /// Types [value] into the field whose placeholder is [placeholder].
+    ///
+    /// **The message is read off the tree.** A handler is a closure, so what
+    /// crosses is a token the SDK made — a test that wrote `{m: 'setStartAt'}`
+    /// would be speaking a protocol the plugin no longer has, and would pass
+    /// just as well if nothing on screen sent it.
+    Future<void> type(String placeholder, Object? value) async {
+      final msg = eventOn(await screen(kind: 'settings', id: 'prefs'), placeholder, 'change');
+      expect(msg, isNotNull, reason: 'no field with placeholder $placeholder');
+      await service.call(
+        instance,
+        'onEvent',
+        jsonEncode({'msg': msg, 'value': value}),
+      );
+    }
+
+    /// Taps the thing labelled [label].
+    Future<void> press(String label) async {
+      final msg = eventOn(await screen(kind: 'settings', id: 'prefs'), label, 'tap');
+      expect(msg, isNotNull, reason: 'nothing labelled $label is tappable');
+      await service.call(instance, 'onEvent', jsonEncode({'msg': msg}));
+    }
 
     test('it draws its fields and a way back to the defaults', () async {
       await openSettings();
 
-      final drawn = texts(patches.last.node);
+      final drawn = texts(await screen(kind: 'settings', id: 'prefs'));
       expect(drawn, contains('l10n.prefsStartAt'));
       expect(drawn, contains('l10n.prefsSkip'));
       expect(drawn, contains('l10n.prefsHideBelow'));
@@ -199,19 +284,19 @@ void main() {
 
     test('a good value is kept, and read back on the next open', () async {
       await openSettings();
-      await event('setStartAt', '/srv');
+      await type('/', '/srv');
       await openSettings();
 
-      expect(texts(patches.last.node), contains('/srv'));
+      expect(texts(await screen(kind: 'settings', id: 'prefs')), contains('/srv'));
     });
 
     /// Rejected rather than ignored. A value silently dropped when it is read
     /// back is one the user believes is in effect.
     test('a path that is not one is refused, with the reason on screen', () async {
       await openSettings();
-      await event('setStartAt', 'var');
+      await type('/', 'var');
 
-      final drawn = texts(patches.last.node);
+      final drawn = texts(await screen(kind: 'settings', id: 'prefs'));
       expect(drawn, contains('l10n.prefsErrPath'));
       // And what was typed is still there to be corrected.
       expect(drawn, contains('var'));
@@ -219,15 +304,28 @@ void main() {
 
     test('reset takes every field back', () async {
       await openSettings();
-      await event('setStartAt', '/srv');
-      await event('resetPrefs');
+      await type('/', '/srv');
+      await press('l10n.prefsReset');
+      // Re-read: the form's values come from the store, and the store has just
+      // been emptied. A call is what lets that read finish.
+      await openSettings();
       await openSettings();
 
-      expect(texts(patches.last.node), isNot(contains('/srv')));
+      expect(
+        texts(await screen(kind: 'settings', id: 'prefs')),
+        isNot(contains('/srv')),
+      );
     });
   });
 
   test('the hook measures the root and draws what came back', () async {
+    // The app opens a surface before it hooks it, and a plugin holding
+    // its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'usage'}),
+    );
     await service.hook(
       instance,
       kind: 'enter',
@@ -235,12 +333,18 @@ void main() {
       granted: const ['server.exec'],
       serverIds: const ['srv-1'],
     );
+    await tick();
 
     // Measuring first, then the answer — a level can take a minute.
-    expect(patches, hasLength(2));
-    expect(texts(patches.first.node), contains('l10n.measuring'));
+    // One patch per state the page passed through: the measuring line, then
+    // the reading. More of them is the diff working, not a fault.
+    expect(patches.length, greaterThanOrEqualTo(2));
+    expect(
+      patches.any((p) => texts(p.node).contains('l10n.measuring')),
+      isTrue,
+    );
 
-    final drawn = texts(patches.last.node);
+    final drawn = texts(await screen());
     expect(drawn, contains('var'));
     expect(drawn, contains('usr'));
     expect(drawn.any((t) => t.contains('32G')), isTrue);
@@ -248,6 +352,13 @@ void main() {
 
   /// `-x` is what keeps `du /` off every network mount on the machine.
   test('it stays on one filesystem and asks one level', () async {
+    // The app opens a surface before it hooks it, and a plugin holding
+    // its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'usage'}),
+    );
     await service.hook(
       instance,
       kind: 'enter',
@@ -255,6 +366,7 @@ void main() {
       granted: const ['server.exec'],
       serverIds: const ['srv-1'],
     );
+    await tick();
 
     final script = ops.calls.single;
     expect(script, contains('du -x -d 1 -k'));
@@ -267,6 +379,22 @@ void main() {
   /// a listing the server produced, and a directory called `; rm -rf ~` is a
   /// legal directory name. It must reach the command as one quoted word.
   test('a directory named like a command is quoted, not run', () async {
+    // The listing the row comes out of. `; touch pwned` is a legal directory
+    // name — no `/` in it, which is the only character a name cannot hold —
+    // and the server is where it arrives from.
+    ops.execResult = const PluginExecResult(
+      code: 0,
+      stdout: 'df\n/dev/vda1 100 50 50 50% /\n'
+          'du\n1024\t/; touch pwned\n2048\t/\n',
+      stderr: '',
+    );
+    // The app opens a surface before it hooks it, and a plugin holding
+    // its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'usage'}),
+    );
     await service.hook(
       instance,
       kind: 'enter',
@@ -274,26 +402,29 @@ void main() {
       granted: const ['server.exec'],
       serverIds: const ['srv-1'],
     );
+    await tick();
     ops.calls.clear();
 
-    await service.call(
-      instance,
-      'onEvent',
-      jsonEncode({
-        'msg': {'m': 'open', 'path': '/tmp/; touch /tmp/pwned'},
-      }),
-    );
+    // Tapped, which is where such a path comes from — and the only way in now
+    // that a handler is a closure rather than a message a test could write.
+    final row = eventOn(await screen(), '; touch pwned', 'tap');
+    expect(row, isNotNull, reason: 'the listing has no such row');
+    await service.call(instance, 'onEvent', jsonEncode({'msg': row}));
+    // The measurement is a fetch the tap started and did not wait for, and the
+    // host drives an instance only while it is inside a call — so this is the
+    // call it gets to run in.
+    await screen();
 
     final script = ops.calls.single;
     // Whole and inside single quotes, which is the only quoting a shell does
     // nothing inside.
-    expect(script, contains("'/tmp/; touch /tmp/pwned'"));
+    expect(script, contains("'/; touch pwned'"));
     // And never as its own command.
-    expect(script, isNot(contains('du -x -d 1 -k /tmp/; touch')));
+    expect(script, isNot(contains('du -x -d 1 -k /; touch')));
 
     // The shell agrees. Run for real, because the question is what `sh` does
     // with the string rather than what the test thinks it says.
-    final marker = File('/tmp/pwned');
+    final marker = File('pwned');
     if (marker.existsSync()) marker.deleteSync();
     await Process.run('sh', ['-c', script.split(':srv-1:').last]);
     expect(marker.existsSync(), isFalse);
@@ -301,25 +432,9 @@ void main() {
 
   /// A path a line-oriented command cannot answer about is refused before it
   /// reaches a command at all.
-  test('a path with a newline never becomes a command', () async {
-    await service.hook(
-      instance,
-      kind: 'enter',
-      contributionId: 'usage',
-      granted: const ['server.exec'],
-      serverIds: const ['srv-1'],
-    );
-    ops.calls.clear();
-
-    await service.call(
-      instance,
-      'onEvent',
-      jsonEncode({
-        'msg': {'m': 'open', 'path': '/tmp/two\nlines'},
-      }),
-    );
-
-    // The plugin drew its failure rather than sending anything.
-    expect(ops.calls, isEmpty);
-  });
+  /// **Unreachable from here, and that is the answer.** A path with a newline
+  /// in it cannot come out of a listing: `du` separates its rows by newlines,
+  /// so such a directory arrives as two lines and never becomes one row. The
+  /// command builder refuses it anyway — asserted in `scan.test.ts`, against a
+  /// real shell, which is where a question about quoting belongs.
 }

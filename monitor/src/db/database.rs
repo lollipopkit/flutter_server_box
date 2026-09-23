@@ -74,9 +74,6 @@ fn connect_options(database_url: &str) -> Result<SqliteConnectOptions> {
         // sets the behaviour for new installs; an existing file reports NONE
         // until the one full VACUUM in `cleanup` converts it.
         .auto_vacuum(SqliteAutoVacuum::Incremental)
-        .pragma(
-            "wal_autocheckpoint",
-            WAL_AUTOCHECKPOINT_PAGES.to_string(),
-        )
+        .pragma("wal_autocheckpoint", WAL_AUTOCHECKPOINT_PAGES.to_string())
         .busy_timeout(Duration::from_secs(30)))
 }

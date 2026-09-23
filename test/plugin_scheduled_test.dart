@@ -14,6 +14,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/plugin/host_ops.dart';
 import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
@@ -60,11 +61,14 @@ void main() {
     }
     patches = [];
     ops = FakePluginHostOps()
-      ..execResult = (code: 0, stdout: _read, stderr: '');
+      ..execResult = PluginExecResult(code: 0, stdout: _read, stderr: '');
     service = PluginRuntimeService(
       bridge: PluginBridge(ops: ops, handles: PluginServerHandles()),
     );
     await service.start();
+    // A plugin sees a name, not an id — and a row titled with an empty
+    // string is one no test can tap and no user can read.
+    service.serverNameLookup = (id) => id;
     instance = await service.load(
       manifestJson: File('$_dir/manifest.json').readAsStringSync(),
       source: File('$_dir/dist/plugin.js').readAsStringSync(),
@@ -89,7 +93,20 @@ void main() {
   /// full of rows reads as empty. Matches `texts` in
   /// `@serverbox/plugin-api/test`.
   List<String> words(PluginNode node) {
-    const keys = ['value', 'title', 'subtitle', 'label', 'detail', 'k', 'v'];
+    // Matches `texts` in `@serverbox/plugin-api/test`: every prop that carries
+    // a string the user reads, including a `banner`'s `text` and an input's
+    // `hint`.
+    const keys = [
+      'value',
+      'title',
+      'subtitle',
+      'label',
+      'detail',
+      'hint',
+      'text',
+      'k',
+      'v',
+    ];
     final out = <String>[];
     void walk(PluginNode n) {
       for (final key in keys) {
@@ -105,13 +122,66 @@ void main() {
     return out;
   }
 
-  Future<void> enter() => service.hook(
-    instance,
-    kind: 'enter',
-    contributionId: 'scheduled',
-    granted: const ['server.exec', 'ui.dialog'],
-    serverIds: const ['srv-1'],
-  );
+  /// Opens the page and hooks it, which is the order the app calls in
+  /// (`PluginSurfaceView`) — and the order a plugin holding its state in
+  /// providers depends on: `open` is the first build, and the hook is the call
+  /// the reading it starts gets to finish in.
+  Future<void> enter() async {
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'scheduled'}),
+    );
+    await service.hook(
+      instance,
+      kind: 'enter',
+      contributionId: 'scheduled',
+      granted: const ['server.exec', 'ui.dialog'],
+      serverIds: const ['srv-1'],
+    );
+  }
+
+  /// The whole tree as it stands.
+  ///
+  /// A patch carries a diff, so reading one says what changed rather than what
+  /// is on screen; `open` draws in full against the state the plugin holds.
+  Future<PluginNode> screen({
+    String kind = 'page',
+    String id = 'scheduled',
+  }) async {
+    final out = await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': kind, 'id': id}),
+    );
+    return PluginNode.fromJson((jsonDecode(out) as Map)['ui'])!;
+  }
+
+  /// What tapping the thing labelled [label] sends, exactly as the app would.
+  ///
+  /// A handler is a closure now, so what crosses is a token the SDK made —
+  /// there is no message to write by hand, and a test that wrote one would be
+  /// speaking a protocol the plugin does not.
+  Object? tapOn(PluginNode node, String label, {String event = 'tap'}) {
+    Object? search(PluginNode n) {
+      final msg = n.events[event];
+      if (msg != null && words(n).contains(label)) return msg;
+      for (final c in n.children) {
+        final hit = search(c);
+        if (hit != null) return hit;
+      }
+      return null;
+    }
+
+    return search(node);
+  }
+
+  /// Taps it, the way the app does.
+  Future<String> tap(String label, {String kind = 'page', String id = 'scheduled'}) async {
+    final msg = tapOn(await screen(kind: kind, id: id), label);
+    expect(msg, isNotNull, reason: 'nothing labelled $label is tappable');
+    return service.call(instance, 'onEvent', jsonEncode({'msg': msg}));
+  }
 
   /// The tab, which is the first surface here that is about the whole fleet.
   ///
@@ -170,16 +240,10 @@ void main() {
       await enterFleet(servers: const ['srv-1']);
       ops.calls.clear();
 
-      // The handle the plugin was given, asked of the bridge — a plugin never
-      // sees a server id, and one made up is refused.
-      final handle = service.bridge.handles.issue('inst-sched', 'srv-1');
-      await service.call(
-        instance,
-        'onEvent',
-        jsonEncode({
-          'msg': {'m': 'openServer', 'server': handle},
-        }),
-      );
+      // Tapped through the tree: the row carries the handle the plugin was
+      // given, inside a closure the SDK holds — a plugin never sees a server
+      // id, and there is no message here to write by hand.
+      await tap('srv-1', kind: 'tab', id: 'fleet');
 
       // The handle the plugin was given, resolved back to a server id by the
       // bridge — a plugin never sees one and cannot make one up.
@@ -211,13 +275,7 @@ void main() {
     // `FakePluginHostOps.prompt` answers `cancelled: false`, so this is the
     // "yes" path; the "no" path is covered against MockHost, which can script
     // a refusal.
-    await service.call(
-      instance,
-      'onEvent',
-      jsonEncode({
-        'msg': {'m': 'toggle', 'line': 1},
-      }),
-    );
+    await tap('0 3 * * *');
 
     expect(ops.calls.where((c) => c.startsWith('prompt:')), hasLength(1));
     // The prompt came first.
@@ -229,13 +287,7 @@ void main() {
   test('the write is compare-and-swap over the whole file', () async {
     await enter();
     ops.calls.clear();
-    await service.call(
-      instance,
-      'onEvent',
-      jsonEncode({
-        'msg': {'m': 'toggle', 'line': 1},
-      }),
-    );
+    await tap('0 3 * * *');
 
     final write = ops.calls.firstWhere((c) => c.contains('crontab -'));
     // The fingerprint it read.
@@ -251,15 +303,9 @@ void main() {
   test('a refusal is told apart from a failure', () async {
     await enter();
     ops.calls.clear();
-    ops.execResult = (code: 0, stdout: 'conflict\n', stderr: '');
+    ops.execResult = PluginExecResult(code: 0, stdout: 'conflict\n', stderr: '');
 
-    await service.call(
-      instance,
-      'onEvent',
-      jsonEncode({
-        'msg': {'m': 'toggle', 'line': 1},
-      }),
-    );
+    await tap('0 3 * * *');
 
     // The write, then a read — never a second write against a fingerprint
     // already known to be stale.
@@ -267,10 +313,9 @@ void main() {
     expect(execs, hasLength(2));
     expect(execs[0], contains('| crontab -'));
     expect(execs[1], contains('systemctl list-timers'));
-    // The note is a translated string, so the tree carries its key.
-    expect(
-      patches.any((p) => words(p.node).contains('l10n.conflict')),
-      isTrue,
-    );
+    // The note is a translated string, so the tree carries its key. Read off
+    // the screen rather than off a patch: a patch is a diff and says what
+    // changed, and what is being asserted is what the page now says.
+    expect(words(await screen()), contains('l10n.conflict'));
   });
 }

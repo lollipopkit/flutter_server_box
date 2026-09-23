@@ -80,7 +80,12 @@ impl ChannelBridge {
     /// since gone — all of which happen and none of which is an error: an
     /// answer arriving after the user closed the page is the ordinary case.
     pub fn answer(&self, call_id: u64, answer: Result<Vec<u8>, BridgeError>) -> bool {
-        let slot = self.outstanding.lock().expect("poisoned").get(&call_id).cloned();
+        let slot = self
+            .outstanding
+            .lock()
+            .expect("poisoned")
+            .get(&call_id)
+            .cloned();
         let Some(slot) = slot else { return false };
         if slot.cancelled.load(Ordering::Acquire) {
             return false;
@@ -107,7 +112,10 @@ impl HostBridge for ChannelBridge {
     fn call(self: &ChannelBridge, ctx: CallCtx<'_>, func: HostFn, request: &[u8]) -> HostCall {
         let call_id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let slot = Arc::new(Slot::default());
-        self.outstanding.lock().expect("poisoned").insert(call_id, Arc::clone(&slot));
+        self.outstanding
+            .lock()
+            .expect("poisoned")
+            .insert(call_id, Arc::clone(&slot));
 
         // Handed out after the slot is registered, so an app that answers
         // before this returns still finds somewhere to put it.
@@ -119,7 +127,11 @@ impl HostBridge for ChannelBridge {
             request: String::from_utf8_lossy(request).into_owned(),
         });
 
-        HostCall::Pending(Box::new(Waiting { call_id, slot, bridge: self.me.clone() }))
+        HostCall::Pending(Box::new(Waiting {
+            call_id,
+            slot,
+            bridge: self.me.clone(),
+        }))
     }
 
     fn log(&self, ctx: CallCtx<'_>, level: LogLevel, message: &str) {
@@ -168,7 +180,11 @@ mod tests {
     use super::*;
     use std::sync::mpsc::{Receiver, channel};
 
-    fn bridge() -> (Arc<ChannelBridge>, Receiver<HostRequest>, Receiver<LogEvent>) {
+    fn bridge() -> (
+        Arc<ChannelBridge>,
+        Receiver<HostRequest>,
+        Receiver<LogEvent>,
+    ) {
         let (req_tx, req_rx) = channel();
         let (log_tx, log_rx) = channel();
         let b = ChannelBridge::new(
@@ -183,7 +199,10 @@ mod tests {
     }
 
     fn ctx<'a>() -> CallCtx<'a> {
-        CallCtx { plugin_id: "app.serverbox.bmc", instance_id: "inst-1" }
+        CallCtx {
+            plugin_id: "app.serverbox.bmc",
+            instance_id: "inst-1",
+        }
     }
 
     fn pending(call: HostCall) -> Box<dyn PendingCall> {
@@ -204,7 +223,10 @@ mod tests {
         assert_eq!(req.plugin_id, "app.serverbox.bmc");
         assert_eq!(req.instance_id, "inst-1");
 
-        assert!(call.poll().is_none(), "answered before the app said anything");
+        assert!(
+            call.poll().is_none(),
+            "answered before the app said anything"
+        );
         assert!(b.answer(req.call_id, Ok(b"{\"status\":200}".to_vec())));
         assert_eq!(call.poll().unwrap().unwrap(), b"{\"status\":200}");
     }
@@ -227,7 +249,10 @@ mod tests {
         let (b, requests, _) = bridge();
         let mut call = pending(b.call(ctx(), HostFn::HttpFetch, b"{}"));
         let req = requests.recv().unwrap();
-        b.answer(req.call_id, Err(BridgeError::failed("timeout", "no answer")));
+        b.answer(
+            req.call_id,
+            Err(BridgeError::failed("timeout", "no answer")),
+        );
         assert_eq!(
             call.poll().unwrap().unwrap_err(),
             BridgeError::failed("timeout", "no answer")
@@ -261,7 +286,10 @@ mod tests {
 
         assert!(!b.answer(9999, Ok(b"null".to_vec())), "an id never issued");
         assert!(b.answer(req.call_id, Ok(b"null".to_vec())));
-        assert!(!b.answer(req.call_id, Ok(b"null".to_vec())), "answered twice");
+        assert!(
+            !b.answer(req.call_id, Ok(b"null".to_vec())),
+            "answered twice"
+        );
         assert!(call.poll().is_some());
     }
 

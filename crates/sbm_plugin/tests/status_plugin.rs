@@ -10,8 +10,8 @@ mod support;
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use sbm_plugin::{Manifest, Permission, Platform, PluginHost};
 use sbm_plugin::status::Tone;
+use sbm_plugin::{Manifest, Permission, Platform, PluginHost};
 use support::ScriptedBridge;
 
 /// A plugin of the shape section 9 describes: two exports, no surface.
@@ -65,7 +65,11 @@ fn loaded() -> (PluginHost, sbm_plugin::InstanceId) {
 #[test]
 fn the_manifest_says_where_it_appears_and_on_what() {
     let m = Manifest::parse(MANIFEST.as_bytes()).unwrap();
-    let status = m.contributes.status.as_ref().expect("a status contribution");
+    let status = m
+        .contributes
+        .status
+        .as_ref()
+        .expect("a status contribution");
     assert_eq!(status.id, "zfs");
     assert!(status.default_on);
     assert_eq!(status.platforms, vec![Platform::Linux, Platform::Bsd]);
@@ -101,9 +105,18 @@ fn a_status_contribution_must_name_a_platform() {
 #[test]
 fn it_answers_a_command_per_platform() {
     let (host, id) = loaded();
-    assert_eq!(host.status_cmd(id, Platform::Linux).unwrap().cmd, "zpool list -Hp");
-    assert_eq!(host.status_cmd(id, Platform::Bsd).unwrap().cmd, "zpool list -Hp");
-    assert_eq!(host.status_cmd(id, Platform::Windows).unwrap().cmd, "Get-Pool");
+    assert_eq!(
+        host.status_cmd(id, Platform::Linux).unwrap().cmd,
+        "zpool list -Hp"
+    );
+    assert_eq!(
+        host.status_cmd(id, Platform::Bsd).unwrap().cmd,
+        "zpool list -Hp"
+    );
+    assert_eq!(
+        host.status_cmd(id, Platform::Windows).unwrap().cmd,
+        "Get-Pool"
+    );
 }
 
 #[test]
@@ -172,7 +185,10 @@ fn a_plugin_that_answers_nonsense_costs_a_row_not_the_card() {
 
     let out = host.status_parse(id, "").unwrap();
     assert_eq!(out.items.len(), 2, "the empty row goes, the others stay");
-    assert_eq!(out.items[0].percent, None, "a percent out of range is dropped");
+    assert_eq!(
+        out.items[0].percent, None,
+        "a percent out of range is dropped"
+    );
     assert_eq!(out.items[1].label.chars().count(), 200);
 }
 
@@ -185,5 +201,8 @@ fn what_it_may_do_is_still_only_what_was_consented_to() {
     assert!(!g.allows(Permission::ServerExec));
 
     let consented = BTreeSet::from([Permission::ServerExec]);
-    assert!(m.resolve_grants(&consented, &BTreeMap::new()).allows(Permission::ServerExec));
+    assert!(
+        m.resolve_grants(&consented, &BTreeMap::new())
+            .allows(Permission::ServerExec)
+    );
 }

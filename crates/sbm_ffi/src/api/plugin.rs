@@ -46,7 +46,10 @@ pub struct PluginFailure {
 
 impl From<PluginError> for PluginFailure {
     fn from(e: PluginError) -> Self {
-        Self { kind: e.kind().to_string(), message: e.to_string() }
+        Self {
+            kind: e.kind().to_string(),
+            message: e.to_string(),
+        }
     }
 }
 
@@ -143,10 +146,7 @@ impl PluginRuntime {
     ///
     /// Both sinks stay open for the runtime's life. A plugin blocks until its
     /// request is answered, so whatever reads `requests` must keep reading.
-    pub fn new(
-        requests: StreamSink<PluginRequest>,
-        logs: StreamSink<PluginLog>,
-    ) -> Self {
+    pub fn new(requests: StreamSink<PluginRequest>, logs: StreamSink<PluginLog>) -> Self {
         let bridge = ChannelBridge::new(
             move |r| {
                 // A closed stream means Dart has gone away; the plugin's own
@@ -199,15 +199,25 @@ impl PluginRuntime {
         // through `self.host`, and the app parses the manifest itself for the
         // install dialog and the editor form. A copy nothing reads is a copy
         // that can disagree.
-        Ok(self.host.load(spec.source, options, Arc::clone(&self.bridge) as Arc<_>)?.0)
+        Ok(self
+            .host
+            .load(spec.source, options, Arc::clone(&self.bridge) as Arc<_>)?
+            .0)
     }
 
     /// Calls one of PLUGINS.md 4.2's exports.
     ///
     /// Not `sync`, and this is the one that would deadlock: it waits for the
     /// plugin, which waits for Dart to answer its host calls.
-    pub fn call(&self, instance: u64, export: String, input: String) -> Result<String, PluginFailure> {
-        let out = self.host.call(InstanceId(instance), &export, input.as_bytes())?;
+    pub fn call(
+        &self,
+        instance: u64,
+        export: String,
+        input: String,
+    ) -> Result<String, PluginFailure> {
+        let out = self
+            .host
+            .call(InstanceId(instance), &export, input.as_bytes())?;
         Ok(String::from_utf8_lossy(&out).into_owned())
     }
 
@@ -218,7 +228,10 @@ impl PluginRuntime {
     /// - `ok` — the JSON the function answers with. `null` for the ones that
     ///   answer nothing.
     /// - `error_kind` plus `error_message` — the app tried and could not. The
-    ///   plugin sees a rejected promise it can catch.
+    ///   plugin sees a rejected promise it can catch. `error_data` is an
+    ///   optional JSON object whose fields are copied onto that `Error` beside
+    ///   `kind`, for a failure that carries one more fact — see
+    ///   [`BridgeError::Failed`].
     /// - `denied` — the app refuses. The plugin cannot catch it, and the call
     ///   ends the way an ungranted function would.
     ///
@@ -231,12 +244,17 @@ impl PluginRuntime {
         ok: Option<String>,
         error_kind: Option<String>,
         error_message: Option<String>,
+        error_data: Option<String>,
         denied: Option<String>,
     ) -> bool {
         let answer = if let Some(detail) = denied {
             Err(BridgeError::Denied { detail })
         } else if let Some(kind) = error_kind {
-            Err(BridgeError::failed(kind, error_message.unwrap_or_default()))
+            Err(BridgeError::Failed {
+                kind,
+                message: error_message.unwrap_or_default(),
+                data: error_data,
+            })
         } else {
             Ok(ok.unwrap_or_else(|| "null".to_string()).into_bytes())
         };
@@ -265,7 +283,9 @@ impl PluginRuntime {
     /// when a surface is rebound.
     #[frb(sync)]
     pub fn issue_server_handle(&self, instance: u64, handle: String) -> Result<(), PluginFailure> {
-        Ok(self.host.issue_server_handle(InstanceId(instance), handle)?)
+        Ok(self
+            .host
+            .issue_server_handle(InstanceId(instance), handle)?)
     }
 
     /// How many requests the app has not answered. For diagnostics.
@@ -366,6 +386,7 @@ pub fn plugin_read_manifest(manifest_json: String) -> Result<PluginManifestInfo,
         id: m.id.clone(),
         version: m.version.clone(),
         abi: m.abi,
+        data_version: m.data_version,
         name: m.name.clone(),
         description: m.description.clone(),
         permissions: m.requested().iter().map(|p| p.name().to_string()).collect(),
@@ -414,6 +435,11 @@ pub struct PluginManifestInfo {
     pub id: String,
     pub version: String,
     pub abi: u32,
+    /// What this version's stored data is shaped like. See `Manifest`.
+    ///
+    /// The app compares it against the version it kept, and offers to put that
+    /// one back only when the two agree.
+    pub data_version: u32,
     pub name: String,
     pub description: String,
     /// Permission names, for the dialog. PLUGINS.md 6.1.
@@ -540,7 +566,10 @@ pub fn plugin_abi_version() -> u32 {
 /// cannot disagree about the list.
 #[frb(sync)]
 pub fn plugin_permissions() -> Vec<String> {
-    Permission::ALL.iter().map(|p| p.name().to_string()).collect()
+    Permission::ALL
+        .iter()
+        .map(|p| p.name().to_string())
+        .collect()
 }
 
 /// Every function a plugin may call, as `sb.http.fetch` and so on.

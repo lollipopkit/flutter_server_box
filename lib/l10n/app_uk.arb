@@ -100,7 +100,6 @@
   "pkgSecurityUnknown": "{manager} не повідомляє, які оновлення усувають проблеми безпеки",
   "pluginInstall": "Установити плагін",
   "pluginInstalled": "Установлено",
-  "pluginBundled": "У комплекті",
   "pluginDev": "Розробка",
   "pluginNeedsConsent": "Це оновлення запитує більше дозволів, ніж ви надали. Перевстановіть його, щоб перевірити їх.",
   "pluginPermissionsAsk": "Цей плагін запитує:",

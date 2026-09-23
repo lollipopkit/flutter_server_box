@@ -121,11 +121,13 @@ void main() {
 
   group('what the app can read without loading anything', () {
     test('the ABI version and the permission list come from the runtime', () {
-      // v2 since `tile`/`summary`/`toggle` and tap-on-any-node. Asserted as a
-      // number rather than compared to itself: the point is that moving the
-      // ABI is a decision somebody makes, and a test that read the same
-      // constant would agree with any value.
-      expect(pluginAbiVersion(), 2);
+      // v4 since `sb.server.cancel`, `cancelKey` on `sb.server.exec`, the
+      // fields a rejected host call may carry beside `kind`, and the
+      // manifest's `data_version`. Asserted as a number rather than compared
+      // to itself: the point is that moving the ABI is a decision somebody
+      // makes, and a test that read the same constant would agree with any
+      // value.
+      expect(pluginAbiVersion(), 4);
       // Read from Rust rather than restated here, so the install dialog and the
       // runtime cannot disagree about what a manifest may ask for.
       expect(
@@ -171,6 +173,75 @@ void main() {
       }
     });
 
+    /// **Understating the ABI is the direction that does damage.** The check is
+    /// one-directional — the host refuses a *higher* number — so a manifest
+    /// that says 2 while the bundle draws a v3 node installs on an app too old
+    /// for it and draws "unknown widget" in every row, reporting nothing.
+    ///
+    /// Read out of the built bundle rather than the source: what matters is
+    /// what ships. A node type survives minification as the string the SDK
+    /// passes to `node(...)`, which is why this can look for one at all.
+    test('every bundled plugin declares an ABI its nodes need', () {
+      // Added in v3. A plugin drawing any of these needs an app that has them.
+      const v3 = [
+        'skeleton', 'banner', 'badge', 'tooltip', 'chip', 'segmented',
+        'dropdown', 'slider', 'menu', 'tabs', 'grid', 'wrap', 'stack',
+        'positioned', 'align', 'flexible', 'reorder', 'container', 'aspect',
+        'constrained', 'opacity', 'clip', 'rich', 'image', 'pie_chart',
+        'dismiss', 'refresh',
+      ];
+
+      for (final dir in Directory('packages/plugins').listSync()) {
+        if (dir is! Directory) continue;
+        final manifest = File('${dir.path}/manifest.json');
+        final bundle = File('${dir.path}/dist/plugin.js');
+        if (!manifest.existsSync() || !bundle.existsSync()) continue;
+
+        final abi =
+            (jsonDecode(manifest.readAsStringSync()) as Map)['abi'] as int;
+        final source = bundle.readAsStringSync();
+        final used = [for (final t in v3) if (source.contains('"$t"')) t];
+        if (used.isEmpty) continue;
+
+        expect(
+          abi,
+          greaterThanOrEqualTo(3),
+          reason: '${manifest.path} draws $used, which is v3',
+        );
+      }
+    });
+
+    /// The same rule for what a bundle *calls*, which is the other half of it:
+    /// a plugin declaring 3 and calling `sb.server.cancel` installs on an app
+    /// that has no such function, and the call throws `is not available` in
+    /// the middle of whatever the user pressed.
+    ///
+    /// A host function survives minification as the property name — `sb` is a
+    /// global the bundler cannot see into — so this can look for one.
+    test('every bundled plugin declares an ABI its host calls need', () {
+      // Added in v4.
+      const v4 = ['server.cancel'];
+
+      for (final dir in Directory('packages/plugins').listSync()) {
+        if (dir is! Directory) continue;
+        final manifest = File('${dir.path}/manifest.json');
+        final bundle = File('${dir.path}/dist/plugin.js');
+        if (!manifest.existsSync() || !bundle.existsSync()) continue;
+
+        final abi =
+            (jsonDecode(manifest.readAsStringSync()) as Map)['abi'] as int;
+        final source = bundle.readAsStringSync();
+        final used = [for (final f in v4) if (source.contains('sb.$f')) f];
+        if (used.isEmpty) continue;
+
+        expect(
+          abi,
+          greaterThanOrEqualTo(4),
+          reason: '${manifest.path} calls $used, which is v4',
+        );
+      }
+    });
+
     test('every host function the app has to implement is listed', () {
       final fns = pluginHostFunctions();
       expect(fns, contains('sb.http.fetch'));
@@ -179,7 +250,11 @@ void main() {
       // rather than running something the user never sees.
       expect(fns, contains('sb.server.list'));
       expect(fns, contains('sb.nav.openTerminal'));
-      expect(fns.length, 16);
+      // Stopping a command is its own function, gated by the grant that starts
+      // one — a plugin cannot cancel through `exec`, because the call it wants
+      // to stop is the one it is not inside.
+      expect(fns, contains('sb.server.cancel'));
+      expect(fns.length, 17);
     });
 
     test('a manifest is read without running anything', () {

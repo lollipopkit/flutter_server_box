@@ -116,7 +116,9 @@ pub struct ParseOptions {
 
 impl Default for ParseOptions {
     fn default() -> Self {
-        Self { temp_divisor: 1000.0 }
+        Self {
+            temp_divisor: 1000.0,
+        }
     }
 }
 

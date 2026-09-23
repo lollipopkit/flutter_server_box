@@ -11,7 +11,7 @@
 //! answers "does this platform have a way to collect this," not "is today's
 //! dispatch code wired up correctly."
 
-use crate::{commands, SystemType};
+use crate::{SystemType, commands};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -86,7 +86,10 @@ pub fn capabilities(system: SystemType) -> Capabilities {
         },
         disks: from_commands(system, &[commands::DISK]),
         net: from_commands(system, &[commands::NET]),
-        temps: hw_from_commands(system, &[commands::TEMP_TYPE, commands::TEMP_VAL, commands::TEMP]),
+        temps: hw_from_commands(
+            system,
+            &[commands::TEMP_TYPE, commands::TEMP_VAL, commands::TEMP],
+        ),
         conn: from_commands(system, &[commands::CONN]),
         uptime: from_commands(system, &[commands::UPTIME]),
         sys: from_commands(system, &[commands::SYS]),

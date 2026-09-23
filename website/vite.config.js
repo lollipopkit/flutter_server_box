@@ -19,6 +19,29 @@ const pluginsDir = path.resolve(__dirname, '../packages/plugins')
  * the version, the ABI and the permissions on screen are the ones in the
  * package.
  */
+/** One `l10n/<locale>.json`, or nothing if it is not there or will not parse. */
+function readTable(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * A manifest string: an `l10n.` key looked up, or the string itself.
+ *
+ * Undefined for a key nothing translates, so the caller falls back rather than
+ * printing `l10n.pluginName` on a public page. The packer refuses to build such
+ * a package at all — see `manifestL10nKeys` in `packages/plugin-tools`.
+ */
+function resolve(value, table) {
+  if (typeof value !== 'string') return undefined
+  if (!value.startsWith('l10n.')) return value
+  const hit = table[value.slice('l10n.'.length)]
+  return typeof hit === 'string' ? hit : undefined
+}
+
 function pluginCatalog() {
   const virtualId = 'virtual:plugin-catalog'
   const resolvedId = `\0${virtualId}`
@@ -32,11 +55,24 @@ function pluginCatalog() {
         if (!fs.existsSync(file)) return undefined
 
         const m = JSON.parse(fs.readFileSync(file, 'utf8'))
+        // A manifest names its plugin with an `l10n.` key, resolved against
+        // the same files the app reads — so this page says what the app says,
+        // in the language the reader picked. English is the fallback and what
+        // the list is sorted by: it is the one locale a package must ship.
+        const strings = {}
+        for (const locale of m.l10n ?? []) {
+          const table = readTable(path.join(pluginsDir, entry.name, 'l10n', `${locale}.json`))
+          strings[locale] = {
+            name: resolve(m.name, table) ?? m.id,
+            description: resolve(m.description, table) ?? '',
+          }
+        }
         return {
           dir: entry.name,
+          strings,
+          name: strings.en?.name ?? m.name ?? m.id,
+          description: strings.en?.description ?? m.description ?? '',
           id: m.id,
-          name: m.name ?? m.id,
-          description: m.description ?? '',
           version: m.version,
           abi: m.abi,
           license: m.license,
@@ -59,6 +95,13 @@ function pluginCatalog() {
       // So `npm run dev` picks up a manifest edit without a restart.
       for (const plugin of plugins) {
         this.addWatchFile(path.join(pluginsDir, plugin.dir, 'manifest.json'))
+        // The names live here now, so an edit to a translation is an edit to
+        // the page.
+        for (const locale of Object.keys(plugin.strings)) {
+          this.addWatchFile(
+            path.join(pluginsDir, plugin.dir, 'l10n', `${locale}.json`),
+          )
+        }
       }
       return `export default ${JSON.stringify(plugins)}`
     },

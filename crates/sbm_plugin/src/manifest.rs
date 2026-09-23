@@ -9,8 +9,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
-use crate::runtime::ABI_VERSION;
 use crate::permission::{Grants, Permission};
+use crate::runtime::ABI_VERSION;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Manifest {
@@ -57,6 +57,21 @@ pub struct Manifest {
     /// PLUGINS.md 9.5.
     #[serde(default = "default_runs_in")]
     pub runs_in: Vec<String>,
+
+    /// What this version's stored data is shaped like. `0` when absent.
+    ///
+    /// Not read by the host for anything the plugin does. It exists so an
+    /// **update can be undone**: the app keeps the directory the previous
+    /// version ran from, and offers to put it back only when that version
+    /// declares the same number. Raise it in the release that starts writing
+    /// something the version before it cannot read, and the app stops offering
+    /// a rollback that would hand old code new data.
+    ///
+    /// A number rather than a flag on the update, because the two versions are
+    /// packaged separately and never meet: the only place the question can be
+    /// answered is in each manifest, about itself.
+    #[serde(default)]
+    pub data_version: u32,
 
     /// Locales `l10n/<locale>.json` exists for. `en` is the fallback and must
     /// be present.
@@ -152,8 +167,12 @@ impl Manifest {
         // whatever the user typed there into the plugin's reach — widening its
         // own grant through a value the permission dialog presented as a
         // setting.
-        let fields: BTreeMap<&str, &ConfigField> =
-            self.config.fields.iter().map(|f| (f.key.as_str(), f)).collect();
+        let fields: BTreeMap<&str, &ConfigField> = self
+            .config
+            .fields
+            .iter()
+            .map(|f| (f.key.as_str(), f))
+            .collect();
         for p in self.permissions.http_patterns() {
             if let Some(key) = p.strip_prefix("$config.") {
                 match fields.get(key) {
@@ -211,15 +230,19 @@ impl Manifest {
 
     /// Whether this plugin may run in [`profile`](crate::hostfn::HostProfile).
     pub fn runs_in_host(&self, profile: crate::hostfn::HostProfile) -> bool {
-        self.runs_in.iter().any(|n| {
-            crate::hostfn::HostProfile::parse(n) == Some(profile)
-        })
+        self.runs_in
+            .iter()
+            .any(|n| crate::hostfn::HostProfile::parse(n) == Some(profile))
     }
 
     /// Every permission the manifest asks for, which is what the install dialog
     /// lists and what `plugin_install.granted` is seeded from.
     pub fn requested(&self) -> Vec<Permission> {
-        self.permissions.declared.keys().filter_map(|n| Permission::parse(n)).collect()
+        self.permissions
+            .declared
+            .keys()
+            .filter_map(|n| Permission::parse(n))
+            .collect()
     }
 }
 
@@ -356,10 +379,7 @@ impl Contributions {
     /// draws it with its own widgets — which is exactly why it is the
     /// contribution an agent can carry.
     pub fn has_ui(&self) -> bool {
-        self.card.is_some()
-            || self.page.is_some()
-            || self.tab.is_some()
-            || self.settings.is_some()
+        self.card.is_some() || self.page.is_some() || self.tab.is_some() || self.settings.is_some()
     }
 }
 
@@ -501,7 +521,10 @@ mod tests {
     fn parses_and_lists_what_it_wants() {
         let m = Manifest::parse(BMC.as_bytes()).unwrap();
         assert_eq!(m.id, "app.serverbox.bmc");
-        assert_eq!(m.requested(), vec![Permission::NetHttp, Permission::UiDialog]);
+        assert_eq!(
+            m.requested(),
+            vec![Permission::NetHttp, Permission::UiDialog]
+        );
         assert_eq!(m.contributes.card.as_ref().unwrap().id, "bmc");
     }
 
@@ -632,10 +655,7 @@ mod tests {
     /// setting.
     #[test]
     fn a_pattern_may_only_name_a_field_marked_as_an_address() {
-        let src = BMC.replace(
-            r#""role": "address", "#,
-            "",
-        );
+        let src = BMC.replace(r#""role": "address", "#, "");
 
         let e = Manifest::parse(src.as_bytes()).unwrap_err().to_string();
         assert!(e.contains("role"), "{e}");

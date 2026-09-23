@@ -31,8 +31,14 @@ async fn migrations_apply_to_a_database_that_already_has_rows() {
         .execute(&pool)
         .await
         .unwrap();
-    sqlx::query("DROP TABLE access_log").execute(&pool).await.unwrap();
-    sqlx::query("DROP TABLE ssh_known_hosts").execute(&pool).await.unwrap();
+    sqlx::query("DROP TABLE access_log")
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("DROP TABLE ssh_known_hosts")
+        .execute(&pool)
+        .await
+        .unwrap();
     sqlx::query("DELETE FROM _sqlx_migrations WHERE version = 6")
         .execute(&pool)
         .await
@@ -134,7 +140,10 @@ async fn the_audit_log_is_cleaned_up_by_the_retention_service() {
     );
     service.cleanup_expired_data().await.unwrap();
 
-    let rows = sqlx::query("SELECT kind FROM access_log").fetch_all(&pool).await.unwrap();
+    let rows = sqlx::query("SELECT kind FROM access_log")
+        .fetch_all(&pool)
+        .await
+        .unwrap();
     assert_eq!(
         rows.len(),
         1,
@@ -203,10 +212,11 @@ async fn migration_009_converts_the_timestamps_already_in_access_log() {
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    let row = sqlx::query("SELECT id, timestamp, subject, remote_ip, ssh_user, detail FROM access_log")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let row =
+        sqlx::query("SELECT id, timestamp, subject, remote_ip, ssh_user, detail FROM access_log")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
     assert_eq!(row.get::<i64, _>("id"), old_id, "the row was renumbered");
     // Every other column carried across the rebuild, not just the one being
     // converted — a copy that names its columns in the wrong order still
@@ -243,13 +253,18 @@ async fn migration_009_converts_the_timestamps_already_in_access_log() {
     .fetch_one(&pool)
     .await
     .unwrap();
-    assert_eq!(indexes, 1, "the timestamp index did not survive the rebuild");
+    assert_eq!(
+        indexes, 1,
+        "the timestamp index did not survive the rebuild"
+    );
 
-    sqlx::query("INSERT INTO access_log (timestamp, kind, action, result) VALUES (?,'ticket','open','ok')")
-        .bind(chrono::Utc::now())
-        .execute(&pool)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO access_log (timestamp, kind, action, result) VALUES (?,'ticket','open','ok')",
+    )
+    .bind(chrono::Utc::now())
+    .execute(&pool)
+    .await
+    .unwrap();
     let next: i64 = sqlx::query_scalar("SELECT max(id) FROM access_log")
         .fetch_one(&pool)
         .await
@@ -310,7 +325,11 @@ async fn the_audit_log_cutoff_is_a_moment_not_a_date() {
         .await
         .unwrap();
     let kept: Vec<String> = kept.iter().map(|r| r.get::<String, _>("detail")).collect();
-    assert_eq!(kept, ["keep"], "kept {kept:?} across the retention boundary");
+    assert_eq!(
+        kept,
+        ["keep"],
+        "kept {kept:?} across the retention boundary"
+    );
 }
 
 #[tokio::test]
@@ -354,13 +373,12 @@ async fn unused_metric_tables_and_policies_are_removed_on_upgrade() {
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
     for table in ["velocity_metrics", "cpu_core_metrics"] {
-        let exists: Option<String> = sqlx::query_scalar(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
-        )
-        .bind(table)
-        .fetch_optional(&pool)
-        .await
-        .unwrap();
+        let exists: Option<String> =
+            sqlx::query_scalar("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+                .bind(table)
+                .fetch_optional(&pool)
+                .await
+                .unwrap();
         assert!(exists.is_none(), "{table} should be dropped");
 
         let policy: Option<i64> = sqlx::query_scalar(
@@ -399,16 +417,46 @@ async fn unused_metric_tables_and_policies_are_removed_on_upgrade() {
 #[test]
 fn shipped_migrations_keep_their_checksums() {
     let pinned: &[(i64, &str)] = &[
-        (1, "ac7a765b2d29d0b1e0b55180fca0fe9c582a84ca8ff15e12f1cdac60eb1879009c86603dfb2bbe9efda4046921c86a5a"),
-        (2, "995500f86fcaba8e42845c708779f6e154be1d9df4627d1acbd7a5d6a445f414f6ac0c4002ba41b07c2830681abacfe9"),
-        (3, "33f9861299257235c1fe0bc1bbce5b9f98386e1333c9da2ed636c572e37acef2266948b4e05c052bcf402b53c6a0b393"),
-        (4, "1afb432633d79277bebc544db394282237b0f286f1a31514fc7279e7993dbde19389553a521b8346b6661f03b0582a73"),
-        (5, "a7cf936c175f498f26c2277f92e6a782a5831e1a3269ef9477876949e5aa3e041e06e95c0544d709536cd7a1e2fafec2"),
-        (6, "bc1d80ef7f88751b0bb2a64974a7efb928301cd61740cfe77d9e2306a8f71d8cfbdd24a2e2e5dc2e5b9094755b9e03f9"),
-        (7, "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5"),
-        (8, "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054"),
-        (9, "f50849af86f5e456829df80ddb0c716540a23bd0a15527925bfb27f5e05b8dd567e83c6e1d08898a93135aa05052877b"),
-        (10, "e2990fe7d849ba8ff97904828ea742a9a4d92e3ca6a2991bdd1f42e6de947448f94f15e922ad74a31d3970a89102aa9f"),
+        (
+            1,
+            "ac7a765b2d29d0b1e0b55180fca0fe9c582a84ca8ff15e12f1cdac60eb1879009c86603dfb2bbe9efda4046921c86a5a",
+        ),
+        (
+            2,
+            "995500f86fcaba8e42845c708779f6e154be1d9df4627d1acbd7a5d6a445f414f6ac0c4002ba41b07c2830681abacfe9",
+        ),
+        (
+            3,
+            "33f9861299257235c1fe0bc1bbce5b9f98386e1333c9da2ed636c572e37acef2266948b4e05c052bcf402b53c6a0b393",
+        ),
+        (
+            4,
+            "1afb432633d79277bebc544db394282237b0f286f1a31514fc7279e7993dbde19389553a521b8346b6661f03b0582a73",
+        ),
+        (
+            5,
+            "a7cf936c175f498f26c2277f92e6a782a5831e1a3269ef9477876949e5aa3e041e06e95c0544d709536cd7a1e2fafec2",
+        ),
+        (
+            6,
+            "bc1d80ef7f88751b0bb2a64974a7efb928301cd61740cfe77d9e2306a8f71d8cfbdd24a2e2e5dc2e5b9094755b9e03f9",
+        ),
+        (
+            7,
+            "d7726fdbe4fad21ac01dc6b9a3058550aa138829baff1e0968a259f33e9b182e60bc4b658e0227fd4418a3c0fbd0a1f5",
+        ),
+        (
+            8,
+            "9961008300f34069365756a67bc45c596baaf1290ddf9825198377feeafe11901c08603bbcabcb14f2df943eacebe054",
+        ),
+        (
+            9,
+            "f50849af86f5e456829df80ddb0c716540a23bd0a15527925bfb27f5e05b8dd567e83c6e1d08898a93135aa05052877b",
+        ),
+        (
+            10,
+            "e2990fe7d849ba8ff97904828ea742a9a4d92e3ca6a2991bdd1f42e6de947448f94f15e922ad74a31d3970a89102aa9f",
+        ),
     ];
     let migrator = sqlx::migrate!("./migrations");
     let mut seen = std::collections::BTreeMap::new();

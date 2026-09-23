@@ -576,9 +576,10 @@ class PluginInstalls extends Table {
 
   /// Where it came from.
   ///
-  /// Null is bundled with the app and `dev` is a directory on a developer's
-  /// machine; anything else is a repository's `index.json` URL, which is a
-  /// row in `plugin_repo`. Kept as the URL rather than a foreign key: a
+  /// `dev` is a directory on a developer's machine and `file` is a `.sbp` the
+  /// user opened; anything else is a repository's address, which is a row in
+  /// `plugin_repo`. Read through `PluginInstall.origin`, which also covers the
+  /// null this column used to hold. Kept as the URL rather than a foreign key: a
   /// repository the user has since removed should still leave its plugins
   /// saying where they came from, and cascading would take a working install
   /// with the row that merely described where to look for updates.
@@ -594,6 +595,19 @@ class PluginInstalls extends Table {
   TextColumn get granted => text()();
 
   IntColumn get installedAt => integer()();
+
+  /// The record this one replaced, as JSON, or null.
+  ///
+  /// What makes an update undoable. The files of the version before are kept
+  /// beside the installed ones (`<id>.prev` under the plugins directory) and
+  /// this is the row that went with them — the version, where it came from,
+  /// and **what the user had agreed it may do**, which is the part that cannot
+  /// be recovered from the directory: `granted` is consent, and re-deriving it
+  /// from the old manifest would grant whatever that version asked for.
+  ///
+  /// One column rather than three, because nothing queries by it: it is read
+  /// only when somebody asks to go back.
+  TextColumn get previous => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

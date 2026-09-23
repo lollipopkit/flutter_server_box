@@ -37,7 +37,11 @@ interface Fields {
 
 const base = "https://github.com/lollipopkit/serverbox-plugins/releases/download";
 
-function sbp(fields: Fields = {}, script = "export const x = 1") {
+function sbp(
+  fields: Fields = {},
+  script = "export const x = 1",
+  l10n: Record<string, Record<string, string>> = {},
+) {
   const manifest = {
     id: "app.serverbox.test",
     version: "1.0.0",
@@ -46,12 +50,14 @@ function sbp(fields: Fields = {}, script = "export const x = 1") {
     description: "A plugin.",
     ...fields,
   };
+  const utf8 = (text: string) => new Uint8Array(new TextEncoder().encode(text));
   const bytes = writeZip([
-    {
-      name: "manifest.json",
-      data: new Uint8Array(new TextEncoder().encode(JSON.stringify(manifest))),
-    },
-    { name: "plugin.js", data: new Uint8Array(new TextEncoder().encode(script)) },
+    { name: "manifest.json", data: utf8(JSON.stringify(manifest)) },
+    { name: "plugin.js", data: utf8(script) },
+    ...Object.entries(l10n).map(([locale, table]) => ({
+      name: `l10n/${locale}.json`,
+      data: utf8(JSON.stringify(table)),
+    })),
   ]);
   return { bytes, fileName: `${manifest.id}-${manifest.version}.sbp` };
 }
@@ -245,6 +251,35 @@ describe("building", () => {
       version: "2.1.0",
       abi: 5,
     });
+  });
+
+  /// A manifest is one document for every language, so a plugin names itself
+  /// with a key. An index has no language — it is one file in a git repository,
+  /// read by every client — so what goes in it is the package's English, and a
+  /// key nothing translates is refused rather than published as `l10n.x`.
+  test("a plugin that names itself with a key is written in english", () => {
+    const packaged = sbp(
+      { name: "l10n.pluginName", description: "l10n.pluginDescription" },
+      "export const x = 1",
+      { en: { pluginName: "Scheduled", pluginDescription: "On a timer." } },
+    );
+
+    const { files } = buildRepo({ packages: [packaged], baseUrl: base });
+
+    expect(pluginsIn(files)[0]).toMatchObject({
+      name: "Scheduled",
+      description: "On a timer.",
+    });
+  });
+
+  test("a key the package does not translate is not published", () => {
+    const packaged = sbp({ name: "l10n.pluginName" }, "export const x = 1", {
+      en: { somethingElse: "no" },
+    });
+
+    expect(() => buildRepo({ packages: [packaged], baseUrl: base })).toThrow(
+      /pluginName/,
+    );
   });
 
   test("license and homepage come from the manifest", () => {

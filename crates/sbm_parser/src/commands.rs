@@ -115,9 +115,18 @@ impl CommandSpec {
 
 /// Linux(App `StatusCmdType`)
 pub const LINUX: &[CommandSpec] = &[
-    CommandSpec { key: ECHO, cmd: "echo __linux" },
-    CommandSpec { key: TIME, cmd: "date +%s" },
-    CommandSpec { key: NET, cmd: "cat /proc/net/dev" },
+    CommandSpec {
+        key: ECHO,
+        cmd: "echo __linux",
+    },
+    CommandSpec {
+        key: TIME,
+        cmd: "date +%s",
+    },
+    CommandSpec {
+        key: NET,
+        cmd: "cat /proc/net/dev",
+    },
     CommandSpec {
         key: SYS,
         // Three keys, not one. `PRETTY_NAME` is prose written for a person and
@@ -137,18 +146,42 @@ pub const LINUX: &[CommandSpec] = &[
         // matching the prose exactly as before.
         cmd: "cat /etc/os-release /usr/lib/os-release 2>/dev/null | grep -E '^(ID|ID_LIKE|PRETTY_NAME)=' || cat /etc/*-release 2>/dev/null | grep ^PRETTY_NAME",
     },
-    CommandSpec { key: CPU, cmd: "cat /proc/stat | grep cpu" },
-    CommandSpec { key: UPTIME, cmd: "uptime" },
-    CommandSpec { key: CONN, cmd: "cat /proc/net/snmp" },
+    CommandSpec {
+        key: CPU,
+        cmd: "cat /proc/stat | grep cpu",
+    },
+    CommandSpec {
+        key: UPTIME,
+        cmd: "uptime",
+    },
+    CommandSpec {
+        key: CONN,
+        cmd: "cat /proc/net/snmp",
+    },
     CommandSpec {
         key: DISK,
         cmd: r#"(lsblk --bytes --json --output FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID 2>/dev/null && echo "LSBLK_SUCCESS") || df -k"#,
     },
-    CommandSpec { key: MEM, cmd: "cat /proc/meminfo | grep -E 'Mem|Swap'" },
-    CommandSpec { key: TEMP_TYPE, cmd: "cat /sys/class/thermal/thermal_zone*/type" },
-    CommandSpec { key: TEMP_VAL, cmd: "cat /sys/class/thermal/thermal_zone*/temp" },
-    CommandSpec { key: HOST, cmd: "cat /etc/hostname" },
-    CommandSpec { key: DISKIO, cmd: "cat /proc/diskstats" },
+    CommandSpec {
+        key: MEM,
+        cmd: "cat /proc/meminfo | grep -E 'Mem|Swap'",
+    },
+    CommandSpec {
+        key: TEMP_TYPE,
+        cmd: "cat /sys/class/thermal/thermal_zone*/type",
+    },
+    CommandSpec {
+        key: TEMP_VAL,
+        cmd: "cat /sys/class/thermal/thermal_zone*/temp",
+    },
+    CommandSpec {
+        key: HOST,
+        cmd: "cat /etc/hostname",
+    },
+    CommandSpec {
+        key: DISKIO,
+        cmd: "cat /proc/diskstats",
+    },
     CommandSpec {
         key: BATTERY,
         cmd: r#"for f in /sys/class/power_supply/*/uevent; do cat "$f"; echo; done"#,
@@ -163,7 +196,10 @@ pub const LINUX: &[CommandSpec] = &[
         key: AMD,
         cmd: "if command -v amd-smi >/dev/null 2>&1; then amd-smi list --json && amd-smi metric --json; elif command -v rocm-smi >/dev/null 2>&1; then rocm-smi --json || rocm-smi --showunique --showuse --showtemp --showfan --showclocks --showmemuse --showpower; elif command -v radeontop >/dev/null 2>&1; then timeout 2s radeontop -d - -l 1 | tail -n +2; else echo \"No AMD GPU monitoring tools found\"; fi",
     },
-    CommandSpec { key: SENSORS, cmd: "sensors" },
+    CommandSpec {
+        key: SENSORS,
+        cmd: "sensors",
+    },
     CommandSpec {
         key: DISK_SMART,
         // Most distros restrict raw ATA/NVMe ioctls to root, and this runs
@@ -188,7 +224,10 @@ pub const LINUX: &[CommandSpec] = &[
         // only if the type were known per device.
         cmd: r#"for d in $(lsblk -dn -o KNAME,TYPE 2>/dev/null | awk '$2 == "disk" && $1 !~ /^zram/ { print $1 }'); do if [ -r "/dev/$d" ]; then smartctl -n standby -a -j "/dev/$d" 2>/dev/null; else sudo -n smartctl -n standby -a -j "/dev/$d" 2>/dev/null; fi; echo; done"#,
     },
-    CommandSpec { key: CPU_BRAND, cmd: r#"cat /proc/cpuinfo | grep "model name""# },
+    CommandSpec {
+        key: CPU_BRAND,
+        cmd: r#"cat /proc/cpuinfo | grep "model name""#,
+    },
     CommandSpec {
         key: IP,
         // Three commands because the first is not everywhere: `ip` is iproute2
@@ -225,10 +264,22 @@ pub const LINUX: &[CommandSpec] = &[
 
 /// BSD/macOS(App `BSDStatusCmdType`)
 pub const BSD: &[CommandSpec] = &[
-    CommandSpec { key: ECHO, cmd: "echo __bsd" },
-    CommandSpec { key: TIME, cmd: "date +%s" },
-    CommandSpec { key: NET, cmd: "netstat -ibn" },
-    CommandSpec { key: SYS, cmd: "uname -or" },
+    CommandSpec {
+        key: ECHO,
+        cmd: "echo __bsd",
+    },
+    CommandSpec {
+        key: TIME,
+        cmd: "date +%s",
+    },
+    CommandSpec {
+        key: NET,
+        cmd: "netstat -ibn",
+    },
+    CommandSpec {
+        key: SYS,
+        cmd: "uname -or",
+    },
     // `-l` (single-shot sample count) is macOS-only; FreeBSD's top has no
     // such flag and instead needs `-b -d 1 -P` for a one-shot per-core batch
     // read. One SystemType::Bsd manifest entry must work on either real OS,
@@ -241,8 +292,14 @@ pub const BSD: &[CommandSpec] = &[
         key: CPU,
         cmd: r#"if [ "$(uname)" = "Darwin" ]; then top -l 1 | grep "CPU usage"; sysctl -n hw.ncpu; else top -b -d 1 -P | grep "^CPU"; fi"#,
     },
-    CommandSpec { key: UPTIME, cmd: "uptime" },
-    CommandSpec { key: DISK, cmd: "df -k" },
+    CommandSpec {
+        key: UPTIME,
+        cmd: "uptime",
+    },
+    CommandSpec {
+        key: DISK,
+        cmd: "df -k",
+    },
     // Darwin: vm_stat supplies page-level data so "used" can exclude
     // cache/inactive (top's PhysMem "used" counts cached files); parser
     // tolerates its absence. FreeBSD has neither `top -l` nor vm_stat, so
@@ -251,7 +308,10 @@ pub const BSD: &[CommandSpec] = &[
         key: MEM,
         cmd: r#"if [ "$(uname)" = "Darwin" ]; then top -l 1 | grep PhysMem; vm_stat; else top -b -d 1 | grep "^Mem:"; fi"#,
     },
-    CommandSpec { key: HOST, cmd: "hostname" },
+    CommandSpec {
+        key: HOST,
+        cmd: "hostname",
+    },
     CommandSpec {
         key: DISK_SMART,
         // `diskutil list` labels each device's role; only "internal,
@@ -276,7 +336,10 @@ pub const BSD: &[CommandSpec] = &[
     // No `ip` here: iproute2 is Linux-only, and `ifconfig` is the one command
     // both Darwin and FreeBSD have. Its output carries netmasks and MAC
     // addresses too, which the parser is written to discard.
-    CommandSpec { key: IP, cmd: "ifconfig 2>/dev/null" },
+    CommandSpec {
+        key: IP,
+        cmd: "ifconfig 2>/dev/null",
+    },
     CommandSpec {
         key: PKG,
         // FreeBSD's pkg and Homebrew, which is what a macOS server has. Both
@@ -288,13 +351,22 @@ pub const BSD: &[CommandSpec] = &[
 
 /// Windows PowerShell(App `WindowsStatusCmdType`)
 pub const WINDOWS: &[CommandSpec] = &[
-    CommandSpec { key: ECHO, cmd: "echo __windows" },
-    CommandSpec { key: TIME, cmd: "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()" },
+    CommandSpec {
+        key: ECHO,
+        cmd: "echo __windows",
+    },
+    CommandSpec {
+        key: TIME,
+        cmd: "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()",
+    },
     CommandSpec {
         key: NET,
         cmd: r#"$s1 = @(Get-WmiObject Win32_PerfRawData_Tcpip_NetworkInterface | Select-Object Name, BytesReceivedPersec, BytesSentPersec, Timestamp_Sys100NS); Start-Sleep -Seconds 1; $s2 = @(Get-WmiObject Win32_PerfRawData_Tcpip_NetworkInterface | Select-Object Name, BytesReceivedPersec, BytesSentPersec, Timestamp_Sys100NS); @($s1, $s2) | ConvertTo-Json -Depth 5"#,
     },
-    CommandSpec { key: SYS, cmd: "(Get-ComputerInfo).OsName" },
+    CommandSpec {
+        key: SYS,
+        cmd: "(Get-ComputerInfo).OsName",
+    },
     CommandSpec {
         key: CPU,
         cmd: "Get-WmiObject -Class Win32_Processor | Select-Object Name, LoadPercentage, NumberOfCores, NumberOfLogicalProcessors | ConvertTo-Json",
@@ -303,7 +375,10 @@ pub const WINDOWS: &[CommandSpec] = &[
         key: UPTIME,
         cmd: r#"$up = (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime; if ($up.Days -gt 0) { "$($up.Days) days, $($up.Hours):$($up.Minutes.ToString('00'))" } else { "$($up.Hours):$($up.Minutes.ToString('00'))" }"#,
     },
-    CommandSpec { key: CONN, cmd: "(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count" },
+    CommandSpec {
+        key: CONN,
+        cmd: "(netstat -an | findstr ESTABLISHED | Measure-Object -Line).Count",
+    },
     CommandSpec {
         key: DISK,
         cmd: "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, Size, FreeSpace, FileSystem | ConvertTo-Json",
@@ -316,7 +391,10 @@ pub const WINDOWS: &[CommandSpec] = &[
         key: TEMP,
         cmd: r#"Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | Select-Object InstanceName, @{Name='Temperature';Expression={[math]::Round(($_.CurrentTemperature - 2732) / 10, 1)}} | ConvertTo-Json"#,
     },
-    CommandSpec { key: HOST, cmd: r#"Write-Output $env:COMPUTERNAME"# },
+    CommandSpec {
+        key: HOST,
+        cmd: r#"Write-Output $env:COMPUTERNAME"#,
+    },
     CommandSpec {
         key: DISKIO,
         cmd: r#"$s1 = @(Get-WmiObject Win32_PerfRawData_PerfDisk_PhysicalDisk | Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec, Timestamp_Sys100NS); Start-Sleep -Seconds 1; $s2 = @(Get-WmiObject Win32_PerfRawData_PerfDisk_PhysicalDisk | Select-Object Name, DiskReadBytesPersec, DiskWriteBytesPersec, Timestamp_Sys100NS); @($s1, $s2) | ConvertTo-Json -Depth 5"#,
@@ -341,7 +419,10 @@ pub const WINDOWS: &[CommandSpec] = &[
         key: DISK_SMART,
         cmd: "Get-PhysicalDisk | Get-StorageReliabilityCounter | Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | ConvertTo-Json",
     },
-    CommandSpec { key: CPU_BRAND, cmd: "(Get-WmiObject -Class Win32_Processor).Name" },
+    CommandSpec {
+        key: CPU_BRAND,
+        cmd: "(Get-WmiObject -Class Win32_Processor).Name",
+    },
     // `-ExpandProperty`, so what comes back is one address per line rather
     // than a table the parser would have to un-format.
     CommandSpec {

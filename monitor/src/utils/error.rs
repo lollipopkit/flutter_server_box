@@ -4,25 +4,25 @@ use thiserror::Error;
 pub enum MonitorError {
     #[error("Configuration error: {0}")]
     Config(#[from] anyhow::Error),
-    
+
     #[error("Database error: {0}")]
     Database(#[from] sqlx::Error),
-    
+
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),
-    
+
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
-    
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Regex error: {0}")]
     Regex(#[from] regex::Error),
-    
+
     #[error("Parse error: {0}")]
     Parse(String),
-    
+
     #[error("Authentication error: {0}")]
     Auth(String),
 
@@ -31,10 +31,10 @@ pub enum MonitorError {
         message: String,
         retry_after_secs: u64,
     },
-    
+
     #[error("Monitoring error: {0}")]
     Monitoring(String),
-    
+
     #[error("Push notification error: {0}")]
     Push(String),
 }
@@ -65,7 +65,10 @@ impl ntex::web::WebResponseError for MonitorError {
 
     fn error_response(&self, _req: &ntex::web::HttpRequest) -> ntex::web::HttpResponse {
         let mut response = ntex::web::HttpResponse::build(self.status_code());
-        if let MonitorError::Quota { retry_after_secs, .. } = self {
+        if let MonitorError::Quota {
+            retry_after_secs, ..
+        } = self
+        {
             response.header(
                 ntex::http::header::RETRY_AFTER,
                 retry_after_secs.to_string(),

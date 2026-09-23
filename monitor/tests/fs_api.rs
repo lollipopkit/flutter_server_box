@@ -48,10 +48,10 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
     web_test::server(move || {
         let state = state.clone();
         async move {
-            App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route("/fs/roots", web::get().to(server_box_monitor::api::fs::roots)),
-            )
+            App::new().state(state).service(web::scope("/api/v1").route(
+                "/fs/roots",
+                web::get().to(server_box_monitor::api::fs::roots),
+            ))
         }
     })
     .await

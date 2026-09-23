@@ -37,22 +37,87 @@ export type Scope =
 /** What the app could not do. Rejected promises carry one of these. */
 export interface HostError extends Error {
   name: "HostError";
-  /** A short machine-readable tag — `io`, `timeout`, `cert`, `decode`. */
+  /**
+   * A short machine-readable tag — `io`, `timeout`, `cert`, `decode`,
+   * `cancelled`.
+   */
   kind: string;
+  /**
+   * Whether the command is still running on the server.
+   *
+   * Set on `cancelled` and `timeout` from {@link Server.exec}, and on nothing
+   * else. See {@link RemoteState}.
+   */
+  remote?: RemoteState;
 }
 
 // -------------------------------------------------------------------- exec
 
+/**
+ * What became of the command after the app stopped waiting for it.
+ *
+ * The two are not the same thing and the app cannot make them the same: an SSH
+ * channel carries a signal, so cancelling really ends the command; one HTTP
+ * request to a monitor agent has nothing to signal down, so the agent goes on
+ * running it until its own timeout. A plugin that says "stopped" over the
+ * second case has told somebody their server is idle while it walks a
+ * filesystem.
+ */
+export type RemoteState =
+  /** It was stopped there. Nothing is left running. */
+  | "stopped"
+  /** Only the waiting stopped. It is still running, and its output goes nowhere. */
+  | "running";
+
 export interface ExecRequest {
   server: ServerHandle;
   script: string;
+
+  /**
+   * How long to wait. The app applies five minutes when this is absent —
+   * there is always a bound, because a plugin holding a host call for ever is
+   * a surface that never draws again.
+   *
+   * Running out rejects with `kind: "timeout"`, carrying
+   * {@link HostError.remote}.
+   */
   timeoutMs?: number;
+
+  /**
+   * A label this plugin picks. `sb.server.cancel({key})` stops every run
+   * carrying it.
+   *
+   * A label rather than something the call hands back, because the two moments
+   * do not meet: a scan is started by `onHook` and stopped by a button several
+   * draws later, and nothing is shared between them. Two runs may carry one
+   * label on purpose — a fleet-wide surface asking twenty machines the same
+   * question stops all twenty at once.
+   *
+   * Scoped to this surface. A label is a string the plugin made up, so it
+   * reaches nothing another plugin — or another surface of this one — started.
+   */
+  cancelKey?: string;
 }
 
 export interface ExecResponse {
   code: number;
   stdout: string;
   stderr: string;
+}
+
+export interface CancelRequest {
+  /** The {@link ExecRequest.cancelKey} of the runs to stop. */
+  key: string;
+}
+
+export interface CancelResult {
+  /**
+   * How many runs the key reached.
+   *
+   * Zero is ordinary rather than a failure: a Stop pressed as the answer came
+   * back names nothing, and the page is already showing the result.
+   */
+  stopped: number;
 }
 
 // -------------------------------------------------------------------- http
@@ -156,9 +221,36 @@ export interface PromptField {
 export interface PromptSpec {
   title: string;
   message?: string;
+  /** The shorthand: a row of text boxes, keyed by {@link PromptField.key}. */
   fields?: PromptField[];
+  /**
+   * The general case: a body you drew, using the same nodes as a surface.
+   *
+   * **Values come back keyed by each control's `change` message**, which must
+   * be a string — the plugin is blocked while the dialog is up and cannot
+   * process events, so the app holds what the controls say and hands the map
+   * back. A control with no `onChange` is not a field.
+   *
+   * ```ts
+   * const answer = await sb.ui.prompt({
+   *   title: l10n("addTitle"),
+   *   node: column([
+   *     onChange(input(job.when, { hint: l10n("fieldWhen") }), "when"),
+   *     onChange(input(job.command, { lines: 3 }), "command"),
+   *     onChange(segmented(kind, [{ value: "cron" }, { value: "timer" }]), "kind"),
+   *   ]),
+   * });
+   * if (!answer.cancelled) save(answer.values.when, answer.values.command);
+   * ```
+   */
+  node?: Node;
   /** The confirming button's label. Defaults to the app's own. */
   confirm?: string;
+  /**
+   * `sheet` raises it from the bottom instead — where a form belongs on a
+   * phone, since the keyboard has somewhere to go.
+   */
+  as?: "dialog" | "sheet";
 }
 
 export interface PromptAnswer {
@@ -175,7 +267,40 @@ export interface ServerSummary {
 }
 
 export interface Server {
+  /**
+   * Runs a command and collects what it printed.
+   *
+   * Rejects rather than resolving when the run was stopped — by
+   * {@link Server.cancel} (`kind: "cancelled"`) or by
+   * {@link ExecRequest.timeoutMs} (`kind: "timeout"`). Rejected on purpose: a
+   * stopped `du` has a *prefix* of its output, and resolving with it would let
+   * a plugin that does not check an extra field draw a partial reading as a
+   * complete one.
+   *
+   * ```ts
+   * try {
+   *   const r = await sb.server.exec({ server, script, cancelKey: "scan" });
+   * } catch (e) {
+   *   const { kind, remote } = classify(e);
+   *   if (kind === "cancelled" && remote === "running") {
+   *     // Say so. The command is still walking that filesystem.
+   *   }
+   * }
+   * ```
+   */
   exec(req: ExecRequest): Promise<ExecResponse>;
+
+  /**
+   * Stops every run this surface started under {@link ExecRequest.cancelKey}.
+   *
+   * Needs `server.exec`, which is the same grant that started them.
+   *
+   * **It stops the app waiting. Whether it stops the command depends on how
+   * the server is reached** — see {@link RemoteState}. The cancelled run's
+   * rejection is where that answer arrives, not here: one key may cover
+   * several machines reached different ways.
+   */
+  cancel(req: CancelRequest): Promise<CancelResult>;
 
   /**
    * Every server the user has, in the order the server tab shows them.

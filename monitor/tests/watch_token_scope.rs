@@ -25,8 +25,8 @@
 use std::sync::{Arc, Once};
 
 use ntex::http::Method;
-use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::App;
+use ntex::web::test::{self as web_test, TestServer};
 use rustls::crypto::ring;
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
@@ -99,7 +99,10 @@ async fn issue_watch_token(srv: &TestServer) -> String {
         .send_json(&json!({ "client_id": "widget:test" }))
         .await
         .unwrap();
-    assert!(resp.status().is_success(), "minting the token itself failed");
+    assert!(
+        resp.status().is_success(),
+        "minting the token itself failed"
+    );
     let body: serde_json::Value = resp.json().await.unwrap();
     body["token"].as_str().unwrap().to_string()
 }
@@ -161,7 +164,11 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         (Method::GET, "/api/v1/fs/list?path=/", None),
         (Method::GET, "/api/v1/fs/stat?path=/", None),
         (Method::GET, "/api/v1/fs/read?path=/etc/hostname", None),
-        (Method::PUT, "/api/v1/fs/write?path=/tmp/sbm-scope-test", None),
+        (
+            Method::PUT,
+            "/api/v1/fs/write?path=/tmp/sbm-scope-test",
+            None,
+        ),
         (
             Method::POST,
             "/api/v1/fs/mkdir",

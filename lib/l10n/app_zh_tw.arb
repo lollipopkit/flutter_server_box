@@ -171,7 +171,6 @@
   "pkgSecurityUnknown": "{manager} 不會指出哪些更新是安全性修正",
   "pluginInstall": "安裝外掛",
   "pluginInstalled": "已安裝",
-  "pluginBundled": "隨附",
   "pluginDev": "開發",
   "pluginNeedsConsent": "此更新要求的權限超出你已同意的範圍。請重新安裝以檢查。",
   "pluginPermissionsAsk": "這個外掛要求：",

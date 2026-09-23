@@ -76,14 +76,22 @@ pub fn parse_pkg(raw: &str) -> PkgUpdates {
     for line in raw.lines() {
         let trimmed = line.trim();
         if let Some(rest) = trimmed.strip_prefix("mgr=") {
-            out.manager = if rest == "none" { String::new() } else { rest.to_string() };
+            out.manager = if rest == "none" {
+                String::new()
+            } else {
+                rest.to_string()
+            };
             continue;
         }
         if let Some(rest) = trimmed.strip_prefix("age=") {
             // A negative age means the server's clock moved backwards between
             // the index being written and this being asked. Dropped rather
             // than clamped to zero, which would read as "just refreshed".
-            out.index_age_secs = rest.parse::<i64>().ok().filter(|v| *v >= 0).map(|v| v as u64);
+            out.index_age_secs = rest
+                .parse::<i64>()
+                .ok()
+                .filter(|v| *v >= 0)
+                .map(|v| v as u64);
             continue;
         }
         body.push_str(line);
@@ -146,7 +154,9 @@ fn parse_apt(body: &str) -> Vec<PkgUpdate> {
 
         // The installed version, in brackets and absent for a new dependency.
         let from = if let Some(inner) = rest.strip_prefix('[') {
-            let Some(close) = inner.find(']') else { continue };
+            let Some(close) = inner.find(']') else {
+                continue;
+            };
             let value = inner[..close].to_string();
             rest = inner[close + 1..].trim_start();
             Some(value)
@@ -156,12 +166,20 @@ fn parse_apt(body: &str) -> Vec<PkgUpdate> {
 
         // `(<to> <origin> [<arch>])`, where the origin may itself be several
         // space-separated words on a package coming from more than one.
-        let Some(inner) = rest.strip_prefix('(') else { continue };
-        let Some(close) = inner.rfind(')') else { continue };
+        let Some(inner) = rest.strip_prefix('(') else {
+            continue;
+        };
+        let Some(close) = inner.rfind(')') else {
+            continue;
+        };
         let mut parts = inner[..close].split_whitespace();
         let Some(to) = parts.next() else { continue };
         let repo: Vec<&str> = parts.filter(|p| !p.starts_with('[')).collect();
-        let repo = if repo.is_empty() { None } else { Some(repo.join(" ")) };
+        let repo = if repo.is_empty() {
+            None
+        } else {
+            Some(repo.join(" "))
+        };
 
         out.push(PkgUpdate {
             name,

@@ -88,11 +88,26 @@ fn test_threshold_temperature() {
 /// Full Go operator set: < <= = >= > (note: single =, not ==)
 #[test]
 fn test_threshold_operators() {
-    assert_eq!(Threshold::parse("<10%").unwrap().compare_type, CompareType::Less);
-    assert_eq!(Threshold::parse("<=10%").unwrap().compare_type, CompareType::LessOrEqual);
-    assert_eq!(Threshold::parse("=10%").unwrap().compare_type, CompareType::Equal);
-    assert_eq!(Threshold::parse(">=10%").unwrap().compare_type, CompareType::GreaterOrEqual);
-    assert_eq!(Threshold::parse(">10%").unwrap().compare_type, CompareType::Greater);
+    assert_eq!(
+        Threshold::parse("<10%").unwrap().compare_type,
+        CompareType::Less
+    );
+    assert_eq!(
+        Threshold::parse("<=10%").unwrap().compare_type,
+        CompareType::LessOrEqual
+    );
+    assert_eq!(
+        Threshold::parse("=10%").unwrap().compare_type,
+        CompareType::Equal
+    );
+    assert_eq!(
+        Threshold::parse(">=10%").unwrap().compare_type,
+        CompareType::GreaterOrEqual
+    );
+    assert_eq!(
+        Threshold::parse(">10%").unwrap().compare_type,
+        CompareType::Greater
+    );
 }
 
 /// Go zero-value behavior: without an operator, CompareType is the zero value (Less)
@@ -155,12 +170,39 @@ fn test_go_config_json_normalize() {
         Some("http://localhost:5700")
     );
     assert!(pushes[0].config.get("body").is_some());
-    assert_eq!(pushes[0].config.get("legacy_go_format").and_then(|v| v.as_bool()), Some(true));
-    assert_eq!(pushes[0].config.get("expected_http_status").and_then(|v| v.as_integer()), Some(202));
+    assert_eq!(
+        pushes[0]
+            .config
+            .get("legacy_go_format")
+            .and_then(|v| v.as_bool()),
+        Some(true)
+    );
+    assert_eq!(
+        pushes[0]
+            .config
+            .get("expected_http_status")
+            .and_then(|v| v.as_integer()),
+        Some(202)
+    );
     assert_eq!(pushes[1].push_type, "serverchan");
-    assert_eq!(pushes[1].config.get("legacy_go_format").and_then(|v| v.as_bool()), Some(true));
-    assert_eq!(pushes[1].config.get("sc_key").and_then(|v| v.as_str()), Some("SCT123"));
-    assert_eq!(pushes[1].config.get("expected_http_status").and_then(|v| v.as_integer()), Some(201));
+    assert_eq!(
+        pushes[1]
+            .config
+            .get("legacy_go_format")
+            .and_then(|v| v.as_bool()),
+        Some(true)
+    );
+    assert_eq!(
+        pushes[1].config.get("sc_key").and_then(|v| v.as_str()),
+        Some("SCT123")
+    );
+    assert_eq!(
+        pushes[1]
+            .config
+            .get("expected_http_status")
+            .and_then(|v| v.as_integer()),
+        Some(201)
+    );
 }
 
 /// Go res.go defaults: interval 7s, rate "1/1m". `name` intentionally
@@ -194,7 +236,8 @@ fn test_go_rate_invalid_falls_back_to_default() {
         "1/18446744073709551615m",
         "1/18446744073709551615h",
     ] {
-        let mut config: Config = serde_json::from_str(&format!(r#"{{"rate": "{}"}}"#, bad)).unwrap();
+        let mut config: Config =
+            serde_json::from_str(&format!(r#"{{"rate": "{}"}}"#, bad)).unwrap();
         config.normalize().unwrap();
         assert_eq!(
             config.get_push_rate(),
@@ -256,7 +299,10 @@ fn test_parse_disk_go_fixture() {
     const KIB: u64 = 1024;
     assert_eq!(disk.total, 40 * GIB + 1014 * MIB + 100 * MIB);
     // Parsing is KiB-granular: 7.3M → 7475 KiB (< 1KiB off Go's byte-level math; display unaffected)
-    assert_eq!(disk.used, 26 * GIB + 602 * MIB + ((7.3 * KIB as f64) as u64) * KIB);
+    assert_eq!(
+        disk.used,
+        26 * GIB + 602 * MIB + ((7.3 * KIB as f64) as u64) * KIB
+    );
     assert_eq!(disk.free, 14 * GIB + 413 * MIB + 93 * MIB);
     // Go web.Status display format
     assert_eq!(
@@ -266,7 +312,6 @@ fn test_parse_disk_go_fixture() {
 }
 
 // ---------- /status endpoint: web/web.go + web/base.go ----------
-
 
 // The Go-compat `GET /status` shape is gone: it answered preformatted strings
 // and no history, which is why nothing built on it could ever draw a trend.

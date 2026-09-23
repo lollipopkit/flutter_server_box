@@ -61,7 +61,10 @@ impl ScriptedBridge {
     }
 
     pub fn answer(self: &Arc<Self>, func: HostFn, json: &str) -> Arc<Self> {
-        self.answers.lock().unwrap().insert(func, Ok(json.to_string()));
+        self.answers
+            .lock()
+            .unwrap()
+            .insert(func, Ok(json.to_string()));
         Arc::clone(self)
     }
 

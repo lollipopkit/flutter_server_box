@@ -13,6 +13,7 @@ import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/migrations/all.dart';
 import 'package:server_box/data/store/migrations/m022_plugin_tables.dart';
+import 'package:server_box/data/store/migrations/m025_plugin_previous.dart';
 import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
@@ -65,6 +66,12 @@ void main() {
       expect(SchemaVersion.current, greaterThan(22));
     });
 
+    /// **The steps together, not the first one alone.** An upgrading install
+    /// gets `m022` and then every step after it; a fresh one gets Drift's
+    /// definition in a single pass. What has to match is where the two end up,
+    /// so a column added by a later step belongs on this side of the
+    /// comparison too — comparing `m022` alone would fail the day one was
+    /// added and say the wrong thing about why.
     test('creates tables Drift would have created identically', () async {
       await createTables(SqliteDb.instance);
       final fromDrift = {
@@ -78,6 +85,8 @@ void main() {
         SqliteDb.instance.execute('DROP TABLE $t;');
       }
       await const PluginTablesMigration().apply();
+      // What an upgrading install runs after it.
+      await const PluginPreviousMigration().apply();
 
       for (final t in _pluginTables) {
         expect(
@@ -140,14 +149,30 @@ void main() {
       expect(store.fetch('nothing'), isNull);
     });
 
-    test('a bundled plugin has no repository, and says so', () {
-      store.put(zfs());
+    /// Three sources, three answers. They were two for a while — a `.sbp` the
+    /// user picked was recorded exactly like one shipped with the app — and the
+    /// store then had no way to tell that the copy it offered an update for was
+    /// not one of its own.
+    test('where it came from reads back as one of three', () {
+      store.put(zfs(repo: 'https://github.com/o/r'));
+      final fromRepo = store.fetch('app.serverbox.zfs')!;
+      expect(fromRepo.origin, PluginOrigin.repo);
+      expect(fromRepo.repoUrl, 'https://github.com/o/r');
 
-      final read = store.fetch('app.serverbox.zfs')!;
-      expect(read.repo, isNull);
-      expect(read.bundled, isTrue);
-      expect(read.isDev, isFalse);
+      expect(zfs(repo: PluginInstall.devRepo).origin, PluginOrigin.dev);
       expect(zfs(repo: PluginInstall.devRepo).isDev, isTrue);
+      expect(zfs(repo: PluginInstall.devRepo).repoUrl, isNull);
+
+      expect(zfs(repo: PluginInstall.fileRepo).origin, PluginOrigin.file);
+      expect(zfs(repo: PluginInstall.fileRepo).repoUrl, isNull);
+
+      // A row written before a file install had a name of its own. Nothing was
+      // ever bundled, so this is what one was.
+      // TODO: drop with the null case in `PluginInstall.origin`.
+      store.put(zfs());
+      final legacy = store.fetch('app.serverbox.zfs')!;
+      expect(legacy.repo, isNull);
+      expect(legacy.origin, PluginOrigin.file);
     });
 
     /// `INSERT OR REPLACE` would have reset every column the statement does

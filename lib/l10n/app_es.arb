@@ -100,7 +100,6 @@
   "pkgSecurityUnknown": "{manager} no indica qué actualizaciones corrigen problemas de seguridad",
   "pluginInstall": "Instalar un plugin",
   "pluginInstalled": "Instalado",
-  "pluginBundled": "Incluido",
   "pluginDev": "Desarrollo",
   "pluginNeedsConsent": "Esta actualización solicita más permisos de los que aceptaste. Vuelve a instalarla para revisarlos.",
   "pluginPermissionsAsk": "Este plugin solicita:",

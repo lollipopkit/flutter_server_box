@@ -115,7 +115,9 @@ async fn reclaim_gives_back_the_pages_a_deletion_freed() -> Result<()> {
     tx.commit().await?;
 
     let before: i64 = pragma(&pool, "PRAGMA page_count").await?;
-    sqlx::query("DELETE FROM system_metrics").execute(&pool).await?;
+    sqlx::query("DELETE FROM system_metrics")
+        .execute(&pool)
+        .await?;
     let freed: i64 = pragma(&pool, "PRAGMA freelist_count").await?;
     assert!(
         freed > 1024,
@@ -148,7 +150,9 @@ async fn a_small_freelist_is_left_alone() -> Result<()> {
         .bind(1.0)
         .execute(&pool)
         .await?;
-    sqlx::query("DELETE FROM system_metrics").execute(&pool).await?;
+    sqlx::query("DELETE FROM system_metrics")
+        .execute(&pool)
+        .await?;
 
     let cleanup = DataCleanupService::new(pool.clone(), DataRetentionConfig::default());
     assert_eq!(cleanup.reclaim_free_pages().await?, 0);

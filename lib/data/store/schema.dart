@@ -96,7 +96,11 @@ abstract final class SchemaVersion {
   /// v22: `plugin_install`, `server_plugin_cfg`, `plugin_kv` and
   ///      `server_plugin_kv` — where an installed plugin's record, its
   ///      per-server configuration and its own data live
-  static const current = 25;
+  /// v23: `homeTabs` from `AppTab` to stable id, so a plugin can contribute one
+  /// v24: `plugin_repo` — the repositories this device reads
+  /// v25: `plugin_install.previous` — the record an update replaced, kept
+  ///      beside the files of the version before it so the update can be undone
+  static const current = 26;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

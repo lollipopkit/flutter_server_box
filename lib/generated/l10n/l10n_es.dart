@@ -631,6 +631,35 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pluginUpdateAll => 'Update all';
 
   @override
+  String get pluginUpdating => 'Updating…';
+
+  @override
+  String get pluginStopAfterThis => 'Stop after this one';
+
+  @override
+  String get pluginStopping => 'Stopping after this one';
+
+  @override
+  String pluginUpdateProgress(int at, int total, String name) {
+    return '$at of $total · $name';
+  }
+
+  @override
+  String pluginWaitingForYou(String name) {
+    return '$name — waiting for you';
+  }
+
+  @override
+  String pluginUpdatedCount(int count) {
+    return '$count updated';
+  }
+
+  @override
+  String pluginUpdatedSome(int done, int failed) {
+    return '$done updated, $failed failed';
+  }
+
+  @override
   String get pluginNeedsNewerApp => 'Needs a newer app';
 
   @override
@@ -667,17 +696,90 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pluginInstalled => 'Instalado';
 
   @override
-  String get pluginBundled => 'Incluido';
+  String get pluginDev => 'Desarrollo';
 
   @override
-  String get pluginDev => 'Desarrollo';
+  String get pluginFromFile => 'Local file';
+
+  @override
+  String pluginInstalledFrom(String source) {
+    return 'installed: $source';
+  }
+
+  @override
+  String get pluginReplace => 'Replace';
+
+  @override
+  String pluginReplaceTip(String from, String to) {
+    return 'The copy on this device came from $from. Installing from $to replaces its files, and updates will come from there afterwards.';
+  }
 
   @override
   String get pluginNeedsConsent =>
       'Esta actualización solicita más permisos de los que aceptaste. Vuelve a instalarla para revisarlos.';
 
   @override
+  String get pluginReport => 'Plugin report';
+
+  @override
+  String pluginRollback(String version) {
+    return 'Go back to $version';
+  }
+
+  @override
+  String get pluginRollbackTip =>
+      'The version this update replaced is still on the device. Going back replaces the files and restores what you had agreed it may do.';
+
+  @override
+  String pluginRollbackDataWarn(String version) {
+    return 'This version stores its data differently from $version. The older one may not read what has been saved since the update.';
+  }
+
+  @override
+  String pluginRolledBack(String version) {
+    return 'Back on $version';
+  }
+
+  @override
   String get pluginPermissionsAsk => 'Este plugin solicita:';
+
+  @override
+  String get permExec => 'Run commands on a server you open it from';
+
+  @override
+  String get permStream => 'Open a connection through a server';
+
+  @override
+  String get permStreamTip =>
+      'It can reach an address that server can reach, which may be inside your network.';
+
+  @override
+  String get permHttp => 'Reach the network';
+
+  @override
+  String get permHttpTip =>
+      'It can send and receive over the internet from this device.';
+
+  @override
+  String get permDialog => 'Show dialogs and messages';
+
+  @override
+  String get permDialogTip =>
+      'What it shows looks like the app\'s own dialogs.';
+
+  @override
+  String get permClipboard => 'Read and write the clipboard';
+
+  @override
+  String get permClipboardTip =>
+      'It can read whatever you copied last, including a password.';
+
+  @override
+  String get permSync => 'Include its data in your backup';
+
+  @override
+  String get permSyncTip =>
+      'Whatever it stores leaves this device with your backup.';
 
   @override
   String get pluginNoPermissions =>

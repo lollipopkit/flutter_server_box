@@ -89,6 +89,7 @@ abstract class RustLibApi extends BaseApi {
     String? ok,
     String? errorKind,
     String? errorMessage,
+    String? errorData,
     String? denied,
   });
 
@@ -340,6 +341,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     String? ok,
     String? errorKind,
     String? errorMessage,
+    String? errorData,
     String? denied,
   }) {
     return handler.executeSync(
@@ -354,6 +356,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_opt_String(ok, serializer);
           sse_encode_opt_String(errorKind, serializer);
           sse_encode_opt_String(errorMessage, serializer);
+          sse_encode_opt_String(errorData, serializer);
           sse_encode_opt_String(denied, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
         },
@@ -362,7 +365,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiPluginPluginRuntimeAnswerConstMeta,
-        argValues: [that, callId, ok, errorKind, errorMessage, denied],
+        argValues: [
+          that,
+          callId,
+          ok,
+          errorKind,
+          errorMessage,
+          errorData,
+          denied,
+        ],
         apiImpl: this,
       ),
     );
@@ -377,6 +388,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           'ok',
           'errorKind',
           'errorMessage',
+          'errorData',
           'denied',
         ],
       );
@@ -2309,22 +2321,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PluginManifestInfo dco_decode_plugin_manifest_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 13)
-      throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
+    if (arr.length != 14)
+      throw Exception('unexpected arr length: expect 14 but see ${arr.length}');
     return PluginManifestInfo(
       id: dco_decode_String(arr[0]),
       version: dco_decode_String(arr[1]),
       abi: dco_decode_u_32(arr[2]),
-      name: dco_decode_String(arr[3]),
-      description: dco_decode_String(arr[4]),
-      permissions: dco_decode_list_String(arr[5]),
-      card: dco_decode_opt_box_autoadd_plugin_card_info(arr[6]),
-      page: dco_decode_opt_box_autoadd_plugin_page_info(arr[7]),
-      settings: dco_decode_opt_box_autoadd_plugin_settings_info(arr[8]),
-      tab: dco_decode_opt_box_autoadd_plugin_tab_info(arr[9]),
-      status: dco_decode_opt_box_autoadd_plugin_status_info(arr[10]),
-      license: dco_decode_opt_String(arr[11]),
-      sourceUrl: dco_decode_opt_String(arr[12]),
+      dataVersion: dco_decode_u_32(arr[3]),
+      name: dco_decode_String(arr[4]),
+      description: dco_decode_String(arr[5]),
+      permissions: dco_decode_list_String(arr[6]),
+      card: dco_decode_opt_box_autoadd_plugin_card_info(arr[7]),
+      page: dco_decode_opt_box_autoadd_plugin_page_info(arr[8]),
+      settings: dco_decode_opt_box_autoadd_plugin_settings_info(arr[9]),
+      tab: dco_decode_opt_box_autoadd_plugin_tab_info(arr[10]),
+      status: dco_decode_opt_box_autoadd_plugin_status_info(arr[11]),
+      license: dco_decode_opt_String(arr[12]),
+      sourceUrl: dco_decode_opt_String(arr[13]),
     );
   }
 
@@ -3055,6 +3068,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_id = sse_decode_String(deserializer);
     final var_version = sse_decode_String(deserializer);
     final var_abi = sse_decode_u_32(deserializer);
+    final var_dataVersion = sse_decode_u_32(deserializer);
     final var_name = sse_decode_String(deserializer);
     final var_description = sse_decode_String(deserializer);
     final var_permissions = sse_decode_list_String(deserializer);
@@ -3073,6 +3087,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       id: var_id,
       version: var_version,
       abi: var_abi,
+      dataVersion: var_dataVersion,
       name: var_name,
       description: var_description,
       permissions: var_permissions,
@@ -3843,6 +3858,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.id, serializer);
     sse_encode_String(self.version, serializer);
     sse_encode_u_32(self.abi, serializer);
+    sse_encode_u_32(self.dataVersion, serializer);
     sse_encode_String(self.name, serializer);
     sse_encode_String(self.description, serializer);
     sse_encode_list_String(self.permissions, serializer);
@@ -4051,7 +4067,10 @@ class PluginRuntimeImpl extends RustOpaque implements PluginRuntime {
   /// - `ok` — the JSON the function answers with. `null` for the ones that
   ///   answer nothing.
   /// - `error_kind` plus `error_message` — the app tried and could not. The
-  ///   plugin sees a rejected promise it can catch.
+  ///   plugin sees a rejected promise it can catch. `error_data` is an
+  ///   optional JSON object whose fields are copied onto that `Error` beside
+  ///   `kind`, for a failure that carries one more fact — see
+  ///   [`BridgeError::Failed`].
   /// - `denied` — the app refuses. The plugin cannot catch it, and the call
   ///   ends the way an ungranted function would.
   ///
@@ -4062,6 +4081,7 @@ class PluginRuntimeImpl extends RustOpaque implements PluginRuntime {
     String? ok,
     String? errorKind,
     String? errorMessage,
+    String? errorData,
     String? denied,
   }) => RustLib.instance.api.crateApiPluginPluginRuntimeAnswer(
     that: this,
@@ -4069,6 +4089,7 @@ class PluginRuntimeImpl extends RustOpaque implements PluginRuntime {
     ok: ok,
     errorKind: errorKind,
     errorMessage: errorMessage,
+    errorData: errorData,
     denied: denied,
   );
 

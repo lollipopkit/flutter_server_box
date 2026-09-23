@@ -86,12 +86,27 @@ export type NodeType =
   | "column"
   | "row"
   | "expanded"
+  | "flexible"
+  | "align"
+  | "wrap"
+  | "stack"
+  | "positioned"
   | "padding"
   | "sized"
   | "scroll"
   | "list"
   | "spacer"
   | "divider"
+  | "refresh"
+  | "dismiss"
+  | "tabs"
+  | "grid"
+  | "reorder"
+  | "container"
+  | "aspect"
+  | "constrained"
+  | "opacity"
+  | "clip"
   // content and controls
   | "card"
   | "tile"
@@ -101,13 +116,27 @@ export type NodeType =
   | "percent"
   | "line_chart"
   | "bar_chart"
+  | "pie_chart"
+  | "banner"
+  | "badge"
+  | "tooltip"
+  | "skeleton"
   | "btn"
   | "input"
   | "toggle"
+  | "checkbox"
+  | "segmented"
+  | "dropdown"
+  | "slider"
+  | "chip"
+  | "menu"
   | "table"
   | "progress"
   | "tag"
   | "text"
+  | "rich"
+  | "span"
+  | "image"
   | "icon";
 
 /**
@@ -117,6 +146,58 @@ export type NodeType =
  * stays readable in dark mode and a plugin cannot ship an unreadable one.
  */
 export type Tone = "normal" | "muted" | "success" | "warning" | "danger";
+
+/**
+ * Where children sit along the axis a {@link row} or {@link column} runs in —
+ * Flutter's `MainAxisAlignment`, by name.
+ *
+ * Asking for one makes the row or column *fill* its axis, because there is
+ * nothing to distribute otherwise.
+ */
+export type Main = "start" | "center" | "end" | "between" | "around" | "evenly";
+
+/** Where children sit across that axis — `CrossAxisAlignment`, by name. */
+export type Cross = "start" | "center" | "end" | "stretch";
+
+/**
+ * A corner or an edge, in reading order.
+ *
+ * `start` is the left in English and the right in Arabic, which is why these
+ * are not called `left` and `right`.
+ */
+export type At =
+  | "topStart"
+  | "top"
+  | "topEnd"
+  | "start"
+  | "center"
+  | "end"
+  | "bottomStart"
+  | "bottom"
+  | "bottomEnd";
+
+/**
+ * How large a piece of text is, by what it *is* rather than in points.
+ *
+ * `md` is body text and the default. `xl` is the figure a {@link summary}
+ * draws, so a heading built by hand lands on the same size as the app's own.
+ * Named for `tone`'s reason: a plugin naming a point size would be shipping a
+ * page that stops matching the app the moment the app's own scale moves.
+ */
+export type TextSize = "xs" | "sm" | "md" | "lg" | "xl";
+
+export type Weight = "normal" | "medium" | "bold";
+
+/** Padding, as `all` or as any of the four sides. A side wins over `all`. */
+export interface Sides {
+  all?: number;
+  /** The leading edge — left in English, right in Arabic. */
+  l?: number;
+  t?: number;
+  /** The trailing edge. */
+  r?: number;
+  b?: number;
+}
 
 /** One line or one set of bars. */
 export interface Series {
@@ -147,13 +228,80 @@ export function on<T extends Node>(n: T, event: string, msg: unknown): T {
   return { ...n, on: { ...(n.on ?? {}), [event]: msg } };
 }
 
+/**
+ * What happens when this is tapped: a **function**, or a message to switch on.
+ *
+ * ```ts
+ * onTap(btn("Reload"), () => ref.invalidate(jobs))   // a closure
+ * onTap(tile({ title }), { m: "open", path })        // a message
+ * ```
+ *
+ * A function is kept by the SDK and crosses as a token — see `callback` in
+ * `surface.ts`. It is the shape to reach for: a plugin that writes closures
+ * never has a handler and a control disagree about what a message means, which
+ * is the bug this replaced.
+ */
+export function onTap<T extends Node>(n: T, handler: EventHandler): T;
+export function onTap<T extends Node>(n: T, msg: unknown): T;
 export function onTap<T extends Node>(n: T, msg: unknown): T {
-  return on(n, "tap", msg);
+  return on(n, "tap", asMessage(msg));
+}
+
+/**
+ * What a control hands back when it fires.
+ *
+ * `value` is the control's own — the text in a box, the state of a switch, the
+ * chosen option. A tap has none.
+ *
+ * Declared as an overload on each `on*` so an arrow function's parameter is
+ * typed: with a bare `unknown` the parameter is implicitly `any` and every
+ * plugin has to annotate it.
+ */
+export type EventHandler = (value?: unknown) => void | Promise<void>;
+
+/**
+ * A function becomes a token; anything else crosses as it is.
+ *
+ * Set by `surface()`, because `ui.ts` cannot depend on the reactive layer
+ * without every plugin that only draws paying for it.
+ */
+let toMessage: ((fn: (value?: unknown) => void | Promise<void>) => unknown) | null = null;
+
+/** @internal Called by `surface()`. */
+export function installCallbacks(
+  fn: (handler: (value?: unknown) => void | Promise<void>) => unknown,
+): void {
+  toMessage = fn;
+}
+
+function asMessage(msg: unknown): unknown {
+  if (typeof msg !== "function") return msg;
+  if (toMessage === null) {
+    throw new Error(
+      "a function handler needs `surface()` — export it with " +
+        "`export const { open, onEvent } = surface(build)`",
+    );
+  }
+  return toMessage(msg as (value?: unknown) => void | Promise<void>);
+}
+
+/**
+ * The second gesture a row has: "what else can I do with this".
+ *
+ * Honoured on any node, like {@link onTap}. On a phone it is how a list row
+ * offers anything beyond its one obvious action.
+ */
+export function onLongPress<T extends Node>(n: T, handler: EventHandler): T;
+export function onLongPress<T extends Node>(n: T, msg: unknown): T;
+export function onLongPress<T extends Node>(n: T, msg: unknown): T {
+  return on(n, "long_press", asMessage(msg));
 }
 
 /** Fires as the value changes, with the current value alongside the message. */
+export function onChange<T extends Node>(n: T, handler: EventHandler): T;
+export function onChange<T extends Node>(n: T, msg: unknown): T;
 export function onChange<T extends Node>(n: T, msg: unknown): T {
-  return on(n, "change", msg);
+  return on(n, "change", asMessage(msg));
 }
 
 /** Sets `tone` on a node that has one. */
@@ -163,15 +311,65 @@ export function tone<T extends Node>(n: T, t: Tone): T {
 
 // ---------------------------------------------------------------- layout
 
-export const column = (children: Node[], p?: { spacing?: number }): Node =>
-  node("column", p, children);
+export const column = (
+  children: Node[],
+  p?: { spacing?: number; main?: Main; cross?: Cross },
+): Node => node("column", p, children);
 
-export const row = (children: Node[], p?: { spacing?: number }): Node =>
-  node("row", p, children);
+export const row = (
+  children: Node[],
+  p?: { spacing?: number; main?: Main; cross?: Cross },
+): Node => node("row", p, children);
 
-export const expanded = (child: Node): Node => node("expanded", undefined, [child]);
+/**
+ * Takes exactly its share of the remaining space, in a {@link row} or a
+ * {@link column}.
+ *
+ * Anywhere else it is the child alone: an `Expanded` outside a flex throws at
+ * layout time and takes the whole surface with it, so the app degrades it
+ * instead.
+ */
+export const expanded = (child: Node, flex?: number): Node =>
+  node("expanded", flex === undefined ? undefined : { flex }, [child]);
 
-export const padding = (all: number, child: Node): Node => node("padding", { all }, [child]);
+/** Takes *at most* its share — the difference from {@link expanded}. */
+export const flexible = (child: Node, flex?: number): Node =>
+  node("flexible", flex === undefined ? undefined : { flex }, [child]);
+
+/** Puts a child somewhere in the space its parent gave it. */
+export const align = (child: Node, at: At = "center"): Node =>
+  node("align", { at }, [child]);
+
+/** {@link align} at the middle, which is most of what it is used for. */
+export const center = (child: Node): Node => align(child, "center");
+
+/**
+ * A row that starts a new line when it runs out of width.
+ *
+ * What a set of tags needs: a `row` of them overflows into a striped bar the
+ * moment one machine has more labels than another.
+ */
+export const wrap = (
+  children: Node[],
+  p?: { spacing?: number; run?: number },
+): Node => node("wrap", p, children);
+
+/**
+ * Children drawn over one another, sized by the first.
+ *
+ * For a badge on a corner, a label over a chart. Position the ones after the
+ * first with {@link positioned}; anywhere else `positioned` is the child alone.
+ */
+export const stack = (children: Node[]): Node => node("stack", undefined, children);
+
+export const positioned = (
+  child: Node,
+  p: { l?: number; t?: number; r?: number; b?: number; width?: number; height?: number },
+): Node => node("positioned", p, [child]);
+
+/** `padding(13, x)` for all four sides, or `padding({t: 13}, x)` for one. */
+export const padding = (edges: number | Sides, child: Node): Node =>
+  node("padding", typeof edges === "number" ? { all: edges } : { ...edges }, [child]);
 
 export const sized = (child: Node, p: { width?: number; height?: number }): Node =>
   node("sized", p, [child]);
@@ -229,6 +427,15 @@ export const tile = (t: {
   subtitle?: Bindable;
   icon?: string;
   trailing?: Node;
+  /**
+   * Whether this row is one of the chosen ones.
+   *
+   * Drawn the way the app draws its own selected rows, which is the point of
+   * having it here: a plugin that expressed a selection by swapping an icon
+   * asked the reader to notice one grey glyph turning into another, and a list
+   * of five picked rows looked the same as a list of five unpicked ones.
+   */
+  selected?: boolean;
 }): Node =>
   node(
     "tile",
@@ -236,6 +443,7 @@ export const tile = (t: {
       title: t.title,
       ...(t.subtitle === undefined ? {} : { subtitle: t.subtitle }),
       ...(t.icon === undefined ? {} : { icon: t.icon }),
+      ...(t.selected ? { selected: true } : {}),
     },
     t.trailing ? [t.trailing] : undefined,
   );
@@ -275,14 +483,174 @@ export const expand = (title: Node, children: Node[]): Node =>
 export const percent = (value: number | Binding, label: string): Node =>
   node("percent", { value, label });
 
-export const lineChart = (series: Series[]): Node => node("line_chart", { series });
+/**
+ * A reading over time, drawn the way the app draws its own history.
+ *
+ * No x axis: the values are a series with no labels for them, and an axis of
+ * indices says nothing. Several series are drawn together with a legend under
+ * them; the unit comes from the first.
+ */
+export const lineChart = (series: Series[], p?: { height?: number }): Node =>
+  node("line_chart", { series, ...p });
 
-export const barChart = (series: Series[]): Node => node("bar_chart", { series });
+/** The same, as bars — grouped by index when there is more than one series. */
+export const barChart = (series: Series[], p?: { height?: number }): Node =>
+  node("bar_chart", { series, ...p });
 
-export const btn = (label: string): Node => node("btn", { label });
+/**
+ * Parts of one whole, which is the question a bar chart cannot answer.
+ *
+ * The values are taken as given: what a share is *of* is the plugin's
+ * business, and normalising here would draw a full circle for a disk that is
+ * half empty.
+ */
+export const pieChart = (slices: { label: string; value: number }[]): Node =>
+  node("pie_chart", { slices });
 
-export const input = (value: string, p?: { hint?: string; secret?: boolean }): Node =>
-  node("input", { value, ...p });
+/**
+ * Something the page has to say about itself: a warning, an error, a note.
+ *
+ * A block rather than a toast, because it is a *state* — this connection has no
+ * `cron`, that directory could not be read — and a toast is gone in three
+ * seconds. `tone` colours it; an `action` is a button on the right.
+ */
+export const banner = (
+  text: Bindable,
+  p?: { icon?: string; action?: Node },
+): Node =>
+  node("banner", { text, ...(p?.icon === undefined ? {} : { icon: p.icon }) },
+    p?.action ? [p.action] : undefined);
+
+/** A count or a dot on the corner of something. */
+export const badge = (child: Node, p?: { label?: string; dot?: boolean }): Node =>
+  node("badge", p, [child]);
+
+/** What a control is for, in words — for the ones an icon cannot say. */
+export const tooltip = (child: Node, message: string): Node =>
+  node("tooltip", { message }, [child]);
+
+/**
+ * The shape of what is coming, while it is being fetched.
+ *
+ * A page that shows a spinner in the middle and then jumps to a full list moves
+ * everything the eye had settled on.
+ */
+export const skeleton = (rows = 3): Node => node("skeleton", { rows });
+
+/**
+ * A box with a background, a border and a corner.
+ *
+ * **Colours are still names**: `bg` and `border` take a {@link Tone} or
+ * `card`/`surface`, and what those look like is the theme's. A tone as a
+ * background is drawn faint, the way a tag is — asking for `danger` gets a
+ * danger-coloured block, not a red rectangle with unreadable text on it.
+ */
+export const container = (
+  child: Node,
+  p: {
+    bg?: Tone | "card" | "surface";
+    border?: Tone | "card" | "surface";
+    borderWidth?: number;
+    radius?: number;
+  } & Sides,
+): Node => node("container", { ...p }, [child]);
+
+/** A box of a given shape, whatever width it is given. */
+export const aspect = (child: Node, ratio: number): Node =>
+  node("aspect", { ratio }, [child]);
+
+export const constrained = (
+  child: Node,
+  p: { minWidth?: number; maxWidth?: number; minHeight?: number; maxHeight?: number },
+): Node => node("constrained", p, [child]);
+
+/** `0` is invisible and `1` is as it is. Out of range is clamped, not refused. */
+export const opacity = (child: Node, value: number): Node =>
+  node("opacity", { value }, [child]);
+
+/** Rounds the corners of whatever is inside — an image, a chart, a container. */
+export const clip = (
+  child: Node,
+  p?: { radius?: number; shape?: "rect" | "oval" },
+): Node => node("clip", p, [child]);
+
+/**
+ * A paragraph with more than one style in it.
+ *
+ * Children are {@link span}s. A span with a tap is a link, which is the reason
+ * this exists at all: a tappable *word* cannot be a row of texts, and a row of
+ * texts does not wrap as a sentence either.
+ */
+export const rich = (spans: Node[]): Node => node("rich", undefined, spans);
+
+/** One run inside a {@link rich}. Takes the same knobs as {@link text}. */
+export const span = (
+  value: string,
+  p?: { size?: TextSize; weight?: Weight; mono?: boolean; tone?: Tone },
+): Node => node("span", { value, ...p });
+
+/**
+ * A file the plugin shipped, from its own `assets/` directory.
+ *
+ * **Only that** — there is no URL form. An image fetched as it is drawn is a
+ * request to somewhere every time a card is on screen, which is a tracking
+ * pixel with extra steps. `.png`, `.jpg`, `.webp`, `.gif` and `.svg`, one flat
+ * directory, no sub-paths.
+ */
+export const image = (
+  asset: string,
+  p?: { width?: number; height?: number; fit?: "contain" | "cover" | "fill" | "none" },
+): Node => node("image", { asset, ...p });
+
+/**
+ * A list the user can put in order.
+ *
+ * The message carries `{from, to}`. **The app applies the move as it happens**
+ * and holds it until your next tree arrives, so answer with one — the rows
+ * spring back to whatever it says.
+ */
+export const reorder = (rows: Node[], msg: unknown): Node =>
+  on(node("reorder", undefined, rows), "reorder", asMessage(msg));
+
+/** A grid of the same thing, where a list would waste a wide window. */
+export const grid = (
+  children: Node[],
+  p?: { columns?: number; ratio?: number; spacing?: number },
+): Node => node("grid", p, children);
+
+/**
+ * `text` is the default and what most buttons should be; `filled` is for the
+ * one action a page is *for*. There is no third weight on purpose — it would
+ * be a decision on every button, and the app itself uses these two.
+ *
+ * `busy` swaps the label for a spinner **and** stops the taps, so a plugin
+ * showing one cannot be asked to do the same thing twice.
+ */
+export const btn = (
+  label: string,
+  p?: { variant?: "text" | "filled"; icon?: string; busy?: boolean },
+): Node => node("btn", { label, ...p });
+
+export const input = (
+  value: string,
+  p?: {
+    hint?: string;
+    secret?: boolean;
+    /** A leading icon, from the fixed set. */
+    icon?: string;
+    /** How many lines tall. More than one grows with what is typed. */
+    lines?: number;
+    /** Which keyboard a phone offers. */
+    keyboard?: "text" | "number" | "url" | "email" | "multiline";
+  },
+): Node => node("input", { value, ...p });
+
+/** Fires when the user presses the keyboard's return key, with the value. */
+export function onSubmit<T extends Node>(n: T, handler: EventHandler): T;
+export function onSubmit<T extends Node>(n: T, msg: unknown): T;
+export function onSubmit<T extends Node>(n: T, msg: unknown): T {
+  return on(n, "submit", asMessage(msg));
+}
 
 /**
  * A setting that is on or off.
@@ -300,6 +668,114 @@ export const toggle = (
   p: { label: string; hint?: string },
 ): Node => node("toggle", { value, ...p });
 
+/**
+ * One of several things being chosen — the sibling of {@link toggle}.
+ *
+ * A switch is a setting that takes effect as you touch it; a checkbox is one
+ * of a set you are picking. Drawn the same way round, so a page of both reads
+ * as one page.
+ */
+export const checkbox = (
+  value: boolean | Binding,
+  p: { label: string; hint?: string },
+): Node => node("checkbox", { value, ...p });
+
+/** One choice out of a few, all of them visible. */
+export interface Choice {
+  value: string;
+  /** Falls back to `value`, which is a machine name rather than a blank row. */
+  label?: string;
+  icon?: string;
+}
+
+/**
+ * One of a few, all visible at once — Material's answer for a small exclusive
+ * choice, which is why there is no radio group: a column of radio buttons
+ * costs a row each and says the same thing.
+ *
+ * Past about five options it stops fitting; that is what {@link dropdown} is
+ * for. `onChange` carries the chosen `value`.
+ */
+export const segmented = (
+  value: string | Binding,
+  options: Choice[],
+): Node => node("segmented", { value, options });
+
+/** One of many, in a menu. With a `label` it is a settings row. */
+export const dropdown = (
+  value: string | Binding,
+  options: Choice[],
+  p?: { label?: string; hint?: string },
+): Node => node("dropdown", { value, options, ...p });
+
+/**
+ * A number in a range, where the range is the point.
+ *
+ * The current value is drawn beside the label, so the setting can be read
+ * without touching it. `divisions` makes it step; leaving it out is continuous.
+ */
+export const slider = (
+  value: number | Binding,
+  p: { min?: number; max?: number; divisions?: number; label?: string },
+): Node => node("slider", { value, ...p });
+
+/**
+ * A chip, which in Material is a *choice*.
+ *
+ * A row of them in a {@link wrap} is a filter bar. `onTap` carries whatever
+ * message you attach; the plugin decides what selecting one means.
+ */
+export const chip = (
+  label: Bindable,
+  p?: { selected?: boolean; icon?: string },
+): Node => node("chip", { label, ...p });
+
+/**
+ * The actions that do not fit on a row, behind one button.
+ *
+ * Each item carries its own `msg`, so a plugin reads one event rather than an
+ * index it has to map back.
+ */
+export const menu = (
+  items: (Choice & { msg?: unknown })[],
+  p?: { icon?: string },
+): Node => node("menu", { options: items, ...p });
+
+/**
+ * Pull to refresh, around whatever scrolls.
+ *
+ * The spinner turns until the plugin's **next tree**, so answer with one. A
+ * plugin that answers with values alone leaves it turning until the app gives
+ * up on it.
+ */
+export const refresh = (child: Node, msg: unknown): Node =>
+  on(node("refresh", undefined, [child]), "refresh", asMessage(msg));
+
+/**
+ * A row that answers a swipe.
+ *
+ * **The row is not removed by the swipe** — it springs back, and the plugin's
+ * next tree is what makes it disappear. Flutter's own `Dismissible` expects the
+ * list to lose the row immediately, which a tree that arrives over a network
+ * cannot promise. Needs a {@link key}.
+ */
+export const dismiss = (child: Node, msg: unknown): Node =>
+  on(node("dismiss", undefined, [child]), "dismiss", asMessage(msg));
+
+/**
+ * Sections of one surface, with the app's own tab bar.
+ *
+ * **The index is the app's.** Switching a tab is a frame, where asking the
+ * plugin first would be a visible pause on something that should feel like part
+ * of the app; attach `onChange` to be told which one is showing, not to decide
+ * it.
+ *
+ * A `tabs` needs a height to give its views: inside a page there is one, inside
+ * a card there is not and it takes a screenful.
+ */
+export const tabs = (labels: string[], views: Node[]): Node =>
+  node("tabs", { labels }, views);
+
 export const table = (header: string[], rows: string[][]): Node =>
   node("table", { header, rows });
 
@@ -309,7 +785,27 @@ export const progress = (value?: number | Binding): Node =>
 
 export const tag = (label: Bindable): Node => node("tag", { label });
 
-export const text = (value: Bindable): Node => node("text", { value });
+/**
+ * A run of text.
+ *
+ * The knobs are named rather than numeric ({@link TextSize}, {@link Weight}) —
+ * the app owns what its type looks like. `mono` is the one case where the face
+ * is the meaning: a command, a path, a hash, where a proportional font makes
+ * two different things look alike. `max` truncates with an ellipsis, and
+ * `select` makes it selectable, which is a different widget rather than a
+ * property.
+ */
+export const text = (
+  value: Bindable,
+  p?: {
+    size?: TextSize;
+    weight?: Weight;
+    mono?: boolean;
+    align?: "start" | "center" | "end";
+    max?: number;
+    select?: boolean;
+  },
+): Node => node("text", { value, ...p });
 
 export const icon = (name: string): Node => node("icon", { name });
 

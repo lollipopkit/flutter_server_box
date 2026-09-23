@@ -43,8 +43,9 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
             continue;
         };
         let physical = processor["NumberOfCores"].as_u64().unwrap_or(1) as usize;
-        let logical =
-            processor["NumberOfLogicalProcessors"].as_u64().unwrap_or(physical as u64) as usize;
+        let logical = processor["NumberOfLogicalProcessors"]
+            .as_u64()
+            .unwrap_or(physical as u64) as usize;
         let idle = 100 - load;
 
         for i in 0..logical {
@@ -93,7 +94,11 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
     if total == 0 || free > total {
         return None;
     }
-    Some(Memory { total, free, avail: free })
+    Some(Memory {
+        total,
+        free,
+        avail: free,
+    })
 }
 
 /// Win32_LogicalDisk JSON (Dart `WindowsParser.parseDisks`), bytes → KiB;
@@ -143,7 +148,10 @@ pub fn parse_temps(raw: &str) -> Temperatures {
         return temps;
     };
     for item in as_list(json) {
-        let name = item["InstanceName"].as_str().unwrap_or("Unknown").to_string();
+        let name = item["InstanceName"]
+            .as_str()
+            .unwrap_or("Unknown")
+            .to_string();
         if let Some(t) = item["Temperature"].as_f64() {
             temps.0.insert(name, t);
         }
@@ -293,8 +301,10 @@ pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
         .filter_map(|p| {
             let reading = p["CurrentReading"].as_f64()?;
             let celsius = reading / 10.0 - 273.15;
-            let name =
-                p["Name"].as_str().filter(|s| !s.is_empty()).unwrap_or("Temperature Probe");
+            let name = p["Name"]
+                .as_str()
+                .filter(|s| !s.is_empty())
+                .unwrap_or("Temperature Probe");
             Some(SensorItem {
                 device: name.to_string(),
                 adapter: "WMI".to_string(),

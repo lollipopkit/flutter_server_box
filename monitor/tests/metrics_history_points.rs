@@ -183,10 +183,7 @@ async fn the_window_is_still_covered() {
     // and the oldest is a partial one, so the span is short of the full hour
     // by up to that much even when everything is right.
     let span = span_secs(&points);
-    assert!(
-        span >= 55 * 60,
-        "20 points over an hour spanned {span}s"
-    );
+    assert!(span >= 55 * 60, "20 points over an hour spanned {span}s");
 }
 
 /// What every watch and widget already in the field sends.
@@ -223,7 +220,6 @@ async fn a_silly_count_is_clamped() {
         nonsense.len()
     );
 }
-
 
 /// `minutes` is a window, and a row outside it is not in the answer.
 ///

@@ -19,9 +19,9 @@
 //! Destructive shell functions (shutdown/reboot/suspend) are NEVER executed
 //! against real hosts — they are covered by text assertions in script_compat.
 
+use sbm_parser::SystemType;
 use sbm_parser::commands;
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
-use sbm_parser::SystemType;
 use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
@@ -554,11 +554,7 @@ fn ssh_e2e_unix_custom_and_disabled() {
     let fresh = parsed.as_ref().map(|l| {
         ssh(
             &host,
-            &script::install_custom_cmds_script(
-                SystemType::Linux,
-                &cmds,
-                Some(&l.fingerprint),
-            ),
+            &script::install_custom_cmds_script(SystemType::Linux, &cmds, Some(&l.fingerprint)),
             None,
         )
     });

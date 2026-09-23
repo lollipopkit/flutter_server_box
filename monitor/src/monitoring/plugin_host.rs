@@ -153,7 +153,10 @@ where
         let answer = work.await;
         *write.lock().expect("poisoned") = Some(answer);
     });
-    HostCall::Pending(Box::new(Spawned { slot, task: Some(task) }))
+    HostCall::Pending(Box::new(Spawned {
+        slot,
+        task: Some(task),
+    }))
 }
 
 struct Spawned {
@@ -241,7 +244,9 @@ async fn store_call(
             .fetch_optional(pool)
             .await
             .map_err(failed)?;
-            Ok(json!({ "value": row.map(|r| r.0) }).to_string().into_bytes())
+            Ok(json!({ "value": row.map(|r| r.0) })
+                .to_string()
+                .into_bytes())
         }
         HostFn::StoreSet => match req.value {
             Some(value) => {
@@ -262,15 +267,13 @@ async fn store_call(
                 Ok(b"null".to_vec())
             }
             None => {
-                sqlx::query(
-                    "DELETE FROM plugin_kv WHERE plugin_id = ? AND scope = ? AND key = ?",
-                )
-                .bind(plugin_id)
-                .bind(&req.scope)
-                .bind(&req.key)
-                .execute(pool)
-                .await
-                .map_err(failed)?;
+                sqlx::query("DELETE FROM plugin_kv WHERE plugin_id = ? AND scope = ? AND key = ?")
+                    .bind(plugin_id)
+                    .bind(&req.scope)
+                    .bind(&req.key)
+                    .execute(pool)
+                    .await
+                    .map_err(failed)?;
                 Ok(b"null".to_vec())
             }
         },
@@ -343,7 +346,13 @@ mod tests {
     }
 
     async fn get(pool: &SqlitePool, id: &str, key: &str) -> String {
-        call(pool, id, HostFn::StoreGet, json!({ "scope": "global", "key": key })).await
+        call(
+            pool,
+            id,
+            HostFn::StoreGet,
+            json!({ "scope": "global", "key": key }),
+        )
+        .await
     }
 
     #[tokio::test]
@@ -384,7 +393,13 @@ mod tests {
 
         assert_eq!(get(&pool, "a", "k").await, r#"{"value":"a's"}"#);
         assert_eq!(
-            call(&pool, "b", HostFn::StoreList, json!({ "scope": "global", "prefix": "" })).await,
+            call(
+                &pool,
+                "b",
+                HostFn::StoreList,
+                json!({ "scope": "global", "prefix": "" })
+            )
+            .await,
             r#"{"keys":["k"]}"#,
         );
     }
@@ -406,7 +421,13 @@ mod tests {
 
         assert_eq!(get(&pool, "p", "k").await, r#"{"value":"global"}"#);
         assert_eq!(
-            call(&pool, "p", HostFn::StoreGet, json!({ "scope": "server", "key": "k" })).await,
+            call(
+                &pool,
+                "p",
+                HostFn::StoreGet,
+                json!({ "scope": "server", "key": "k" })
+            )
+            .await,
             r#"{"value":"server"}"#,
         );
     }
@@ -457,8 +478,13 @@ mod tests {
         let listed = |prefix: &'static str| {
             let pool = pool.clone();
             async move {
-                call(&pool, "p", HostFn::StoreList, json!({ "scope": "global", "prefix": prefix }))
-                    .await
+                call(
+                    &pool,
+                    "p",
+                    HostFn::StoreList,
+                    json!({ "scope": "global", "prefix": prefix }),
+                )
+                .await
             }
         };
 

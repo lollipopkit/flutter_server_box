@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use ntex::io::{Io, Sealed};
 use ntex::service::cfg::SharedCfg;
-use ntex::time::timeout;
 use ntex::time::Seconds;
+use ntex::time::timeout;
 use ntex::util::ByteString;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};

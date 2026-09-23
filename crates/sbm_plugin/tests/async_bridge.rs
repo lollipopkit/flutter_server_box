@@ -64,7 +64,15 @@ impl App {
             })
         };
 
-        (Self { bridge, stop, seen, join: Some(join) }, log_rx)
+        (
+            Self {
+                bridge,
+                stop,
+                seen,
+                join: Some(join),
+            },
+            log_rx,
+        )
     }
 
     fn requests(&self) -> Vec<HostRequest> {
@@ -97,7 +105,9 @@ fn json(v: serde_json::Value) -> Result<Vec<u8>, BridgeError> {
 #[test]
 fn a_plugin_awaits_and_the_app_answers_later() {
     let (app, _logs) = App::start(Duration::from_millis(5), |req| match req.func.as_str() {
-        "sb.server.exec" => json(serde_json::json!({"code": 0, "stdout": "up 3 days", "stderr": ""})),
+        "sb.server.exec" => {
+            json(serde_json::json!({"code": 0, "stdout": "up 3 days", "stderr": ""}))
+        }
         _ => json(serde_json::Value::Null),
     });
 
@@ -196,7 +206,10 @@ fn a_sequence_of_awaits_keeps_the_plugin_state_intact() {
     assert_eq!(host.call(id, "poll", b"").unwrap(), br#""a;bb;ccc;""#);
     // And the state survives into the next call, as it must for a card that
     // polls.
-    assert_eq!(host.call(id, "poll", b"").unwrap(), br#""a;bb;ccc;a;bb;ccc;""#);
+    assert_eq!(
+        host.call(id, "poll", b"").unwrap(),
+        br#""a;bb;ccc;a;bb;ccc;""#
+    );
     assert_eq!(app.requests().len(), 6);
 }
 
@@ -227,7 +240,10 @@ fn an_app_failure_is_caught_by_the_plugin() {
         )
         .unwrap();
 
-    assert_eq!(host.call(id, "go", b"").unwrap(), br#""timeout: the bmc did not answer""#);
+    assert_eq!(
+        host.call(id, "go", b"").unwrap(),
+        br#""timeout: the bmc did not answer""#
+    );
 }
 
 #[test]
@@ -306,8 +322,12 @@ fn two_instances_share_a_bridge_without_crossing() {
     let mut b = opts();
     b.instance_id = "inst-b".into();
 
-    let ia = host.load(src.into(), a, Arc::clone(&app.bridge) as Arc<_>).unwrap();
-    let ib = host.load(src.into(), b, Arc::clone(&app.bridge) as Arc<_>).unwrap();
+    let ia = host
+        .load(src.into(), a, Arc::clone(&app.bridge) as Arc<_>)
+        .unwrap();
+    let ib = host
+        .load(src.into(), b, Arc::clone(&app.bridge) as Arc<_>)
+        .unwrap();
 
     let host = Arc::new(host);
     let ta = {
@@ -407,4 +427,53 @@ fn a_module_whose_top_level_await_fails_does_not_load() {
 
     assert!(format!("{e}").contains("no such server"), "{e}");
     assert!(host.is_empty());
+}
+
+/// **An outstanding call belongs to the instance, not to the export call that
+/// made it.**
+///
+/// A plugin may start work and answer without waiting for it, and it has to:
+/// the host serves one call per instance at a time, so a call that waits for a
+/// four-minute `du` is four minutes in which no tap is delivered and nothing
+/// can stop it. What that costs is that the answer arrives with nobody
+/// waiting, and the plugin has to be handed it on some later call.
+///
+/// `drive` used to inspect the export's promise before looking at what the app
+/// had answered, so a call that resolved straight through — a tick with
+/// nothing to do — left the answer in the outbox and went away. A page that
+/// had deliberately stopped waiting therefore never saw its own reading, and
+/// nothing said so.
+#[test]
+fn an_answer_nobody_waited_for_reaches_the_plugin_on_the_next_call() {
+    let (app, _logs) = App::start(Duration::from_millis(5), |req| match req.func.as_str() {
+        "sb.server.exec" => json(serde_json::json!({"code": 0, "stdout": "31G", "stderr": ""})),
+        _ => json(serde_json::Value::Null),
+    });
+
+    let host = PluginHost::new();
+    let id = host
+        .load(
+            r#"
+              let reading = null;
+              // Started and *not* awaited, which is the whole case.
+              export function start() {
+                sb.server.exec({ server: "bound", script: "du -x /" })
+                  .then((r) => { reading = r.stdout; });
+                return "started";
+              }
+              // Resolves without awaiting anything, like a tick with nothing
+              // to do. It must still be an opportunity for the answer above.
+              export async function poll() { return reading; }
+            "#
+            .into(),
+            opts(),
+            Arc::clone(&app.bridge) as Arc<_>,
+        )
+        .unwrap();
+
+    assert_eq!(host.call(id, "start", b"").unwrap(), br#""started""#);
+    // The app takes 5ms; the call above did not wait for it.
+    std::thread::sleep(Duration::from_millis(30));
+
+    assert_eq!(host.call(id, "poll", b"").unwrap(), br#""31G""#);
 }

@@ -113,9 +113,7 @@ pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut file = private_options()
         .create_new(true)
         .open(&tmp)
-        .map_err(|e| {
-        config_err(format!("Failed to create temp file {}: {e}", tmp.display()))
-    })?;
+        .map_err(|e| config_err(format!("Failed to create temp file {}: {e}", tmp.display())))?;
     let written = file
         .write_all(bytes)
         // fsync before rename: rename only orders the directory entry, it
@@ -183,7 +181,9 @@ fn write_private_new(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
 /// the two generations against each other.
 fn prune_backups(dir: Option<&Path>) {
     let dir = dir.unwrap_or_else(|| Path::new("."));
-    let Ok(entries) = fs::read_dir(dir) else { return };
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
 
     let mut backups: Vec<(std::time::SystemTime, PathBuf)> = entries
         .flatten()
@@ -221,7 +221,10 @@ mod tests {
     fn with_temp_cwd<T>(f: impl FnOnce(&Path) -> T) -> T {
         use std::sync::{Mutex, OnceLock};
         static CWD_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
-        let _guard = CWD_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap_or_else(|e| e.into_inner());
+        let _guard = CWD_LOCK
+            .get_or_init(|| Mutex::new(()))
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         let dir = std::env::temp_dir().join(format!(
             "sbm-config-test-{}-{}",
@@ -267,7 +270,10 @@ mod tests {
                 .map(|e| e.file_name().to_string_lossy().into_owned())
                 .filter(|n| n.contains("tmp-"))
                 .collect();
-            assert!(leftovers.is_empty(), "temp files left behind: {leftovers:?}");
+            assert!(
+                leftovers.is_empty(),
+                "temp files left behind: {leftovers:?}"
+            );
         });
     }
 

@@ -90,7 +90,11 @@ pub async fn fetch(req: FetchRequest, default_timeout: Duration) -> Result<Vec<u
     let client = build_client(req.pin_sha256.clone(), Arc::clone(&seen), timeout, tls)?;
 
     let method = reqwest::Method::from_bytes(
-        req.method.as_deref().unwrap_or("GET").to_uppercase().as_bytes(),
+        req.method
+            .as_deref()
+            .unwrap_or("GET")
+            .to_uppercase()
+            .as_bytes(),
     )
     .map_err(|e| BridgeError::failed("bad_request", format!("sb.http.fetch: {e}")))?;
 
@@ -181,7 +185,9 @@ async fn probe(url: &reqwest::Url, timeout: Duration) -> Result<Vec<u8>, BridgeE
             .await
             .map_err(|e| BridgeError::failed("http", e.to_string()))?;
         // The result is dropped either way, and with it the connection.
-        let _ = TlsConnector::from(Arc::new(config)).connect(name, tcp).await;
+        let _ = TlsConnector::from(Arc::new(config))
+            .connect(name, tcp)
+            .await;
         Ok::<(), BridgeError>(())
     };
     tokio::time::timeout(timeout, handshake)
@@ -371,7 +377,10 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
     if a.len() != b.len() {
         return false;
     }
-    a.bytes().zip(b.bytes()).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+    a.bytes()
+        .zip(b.bytes())
+        .fold(0u8, |acc, (x, y)| acc | (x ^ y))
+        == 0
 }
 
 /// A plugin may shorten the bound and never lengthen it.
@@ -396,7 +405,7 @@ mod tests {
     /// about certificates.
     fn failure(e: BridgeError) -> (String, String) {
         match e {
-            BridgeError::Failed { kind, message } => (kind, message),
+            BridgeError::Failed { kind, message, .. } => (kind, message),
             BridgeError::Denied { detail } => panic!("unexpected denial: {detail}"),
         }
     }
@@ -471,7 +480,10 @@ mod tests {
             pin: Some(pin.to_uppercase()),
             seen: Arc::clone(&seen),
         };
-        assert!(verify(&v, &der).is_ok(), "the reviewed certificate is the one accepted");
+        assert!(
+            verify(&v, &der).is_ok(),
+            "the reviewed certificate is the one accepted"
+        );
         assert_eq!(
             seen.lock().unwrap().clone(),
             Some(vec![1u8, 2, 3, 4]),
@@ -479,7 +491,10 @@ mod tests {
         );
 
         let other = CertificateDer::from(vec![9u8, 9, 9]);
-        assert!(verify(&v, &other).is_err(), "a different certificate is refused");
+        assert!(
+            verify(&v, &other).is_err(),
+            "a different certificate is refused"
+        );
     }
 
     /// `probe` reviews rather than trusts, and sends nothing — which is what
@@ -487,7 +502,10 @@ mod tests {
     #[test]
     fn a_probe_accepts_what_it_is_shown() {
         let seen = Arc::new(Mutex::new(None));
-        let v = Pinned { pin: None, seen: Arc::clone(&seen) };
+        let v = Pinned {
+            pin: None,
+            seen: Arc::clone(&seen),
+        };
 
         assert!(verify(&v, &CertificateDer::from(vec![7u8])).is_ok());
         assert_eq!(seen.lock().unwrap().clone(), Some(vec![7u8]));
@@ -517,7 +535,10 @@ mod tests {
 
     #[test]
     fn a_plugin_may_shorten_the_timeout_and_not_lengthen_it() {
-        assert_eq!(resolve_timeout(Some(1_000), DEFAULT), Duration::from_secs(1));
+        assert_eq!(
+            resolve_timeout(Some(1_000), DEFAULT),
+            Duration::from_secs(1)
+        );
         assert_eq!(resolve_timeout(Some(600_000), DEFAULT), DEFAULT);
         assert_eq!(resolve_timeout(None, DEFAULT), DEFAULT);
     }

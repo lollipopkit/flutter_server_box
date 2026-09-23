@@ -1,8 +1,8 @@
 use crate::core::config::Config;
 use crate::core::config_file;
 use crate::db;
-use crate::monitoring;
 use crate::db::cleanup;
+use crate::monitoring;
 use clap::{Arg, Command};
 use std::sync::Arc;
 use tracing::info;
@@ -151,7 +151,8 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     // Start data cleanup scheduler if configured
     if let Some(retention_config) = config.get_monitoring().data_retention
-        && let Err(e) = cleanup::start_cleanup_scheduler(app_state.db.clone(), retention_config).await
+        && let Err(e) =
+            cleanup::start_cleanup_scheduler(app_state.db.clone(), retention_config).await
     {
         tracing::error!("Failed to start cleanup scheduler: {}", e);
     }
@@ -187,7 +188,8 @@ async fn handle_user(matches: &clap::ArgMatches) -> anyhow::Result<()> {
                 Some(var) => std::env::var(var)
                     .map_err(|_| anyhow::anyhow!("Environment variable {var} is not set"))?,
                 None => {
-                    let first = rpassword::prompt_password(format!("New password for {username}: "))?;
+                    let first =
+                        rpassword::prompt_password(format!("New password for {username}: "))?;
                     let second = rpassword::prompt_password("Confirm password: ")?;
                     if first != second {
                         anyhow::bail!("Passwords do not match");
@@ -245,15 +247,17 @@ async fn handle_config(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 async fn handle_cleanup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     // Load configuration
     let config = Config::load().await?;
-    
+
     // Initialize database
     let db = db::database::init(&config.get_database_url()).await?;
-    
-    let retention_config = config.get_monitoring().data_retention
+
+    let retention_config = config
+        .get_monitoring()
+        .data_retention
         .ok_or_else(|| anyhow::anyhow!("Data retention configuration not found"))?;
-    
+
     let cleanup_service = db::cleanup::DataCleanupService::new(db, retention_config);
-    
+
     match matches.subcommand() {
         Some(("run", _)) => {
             info!("Running data cleanup manually...");
@@ -266,11 +270,11 @@ async fn handle_cleanup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             println!("Database Statistics:");
             println!("  Metrics records: {}", stats.metrics_count);
             println!("  Alerts records: {}", stats.alerts_count);
-            
+
             if let Some(oldest) = stats.oldest_metric {
                 println!("  Oldest metric: {}", oldest);
             }
-            
+
             if let Some(oldest) = stats.oldest_alert {
                 println!("  Oldest alert: {}", oldest);
             }
@@ -284,6 +288,6 @@ async fn handle_cleanup(matches: &clap::ArgMatches) -> anyhow::Result<()> {
             eprintln!("Please specify a cleanup subcommand. Use --help for more information.");
         }
     }
-    
+
     Ok(())
 }

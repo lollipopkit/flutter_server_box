@@ -57,13 +57,17 @@ class PluginPage extends ConsumerWidget {
     // that opened it.
     if (args == null || page == null) {
       return Scaffold(
-        appBar: CustomAppBar(title: Text(args?.plugin.manifest.name ?? '')),
+        appBar: CustomAppBar(title: Text(args?.plugin.name ?? '')),
         body: Center(child: Text(libL10n.empty, style: UIs.textGrey)),
       );
     }
 
     return Scaffold(
-      appBar: CustomAppBar(title: Text(page.label)),
+      // The plugin's own strings: a manifest label may be an `l10n.` key, and
+      // this bar is where the plugin's name is read most often.
+      appBar: CustomAppBar(
+        title: Text(args.plugin.strings.resolve(page.label)),
+      ),
       body: PluginSurfaceView(
         spec: PluginSurfaceSpec(
           pluginId: args.plugin.id,
@@ -79,6 +83,7 @@ class PluginPage extends ConsumerWidget {
           l10n: args.plugin.l10nFor(
             Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
           ),
+          assetDir: args.plugin.dir,
         ),
         service: ref.read(pluginRuntimeProvider),
         // A page is what the user is looking at, so it follows the status

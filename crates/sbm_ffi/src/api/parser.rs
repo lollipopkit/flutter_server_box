@@ -37,11 +37,8 @@ pub fn parse_status_json(
     temp_divisor: f64,
 ) -> Result<String, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
-    let status = sbm_parser::parse_status_opts(
-        system,
-        &raw,
-        sbm_parser::ParseOptions { temp_divisor },
-    );
+    let status =
+        sbm_parser::parse_status_opts(system, &raw, sbm_parser::ParseOptions { temp_divisor });
     serde_json::to_string(&status).map_err(|e| e.to_string())
 }
 
@@ -61,7 +58,10 @@ pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
     Ok(sbm_parser::commands::commands(system)
         .iter()
-        .map(|spec| CommandSpec { key: spec.key.to_string(), cmd: spec.cmd.to_string() })
+        .map(|spec| CommandSpec {
+            key: spec.key.to_string(),
+            cmd: spec.cmd.to_string(),
+        })
         .collect())
 }
 

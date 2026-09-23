@@ -111,8 +111,10 @@ final class PluginHomeTab extends HomeTab {
 
   @override
   String get id => '${plugin.id}:${_tab.id}';
+  // The plugin's own strings, like every other place the app draws one of its
+  // manifest labels: it may be an `l10n.` key.
   @override
-  String get label => _tab.label;
+  String get label => plugin.strings.resolve(_tab.label);
   // One mark for every plugin, as in the other two slots. A plugin naming its
   // own would be naming one of Material's by string, which is a set that
   // changes under it and a name that means nothing when it does.
@@ -163,6 +165,7 @@ class _PluginTabPage extends ConsumerWidget {
         l10n: plugin.l10nFor(
           Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
         ),
+        assetDir: plugin.dir,
       ),
       service: ref.read(pluginRuntimeProvider),
       fleetServerIds: order,

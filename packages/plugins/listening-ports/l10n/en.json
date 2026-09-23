@@ -1,4 +1,7 @@
 {
+  "pluginName": "Listening ports",
+  "pluginDescription": "What is listening on a server, and which of it is reachable from outside.",
+  "pageLabel": "Ports",
   "reading": "Reading…",
   "retry": "Try again",
   "summaryLabel": "Listening",

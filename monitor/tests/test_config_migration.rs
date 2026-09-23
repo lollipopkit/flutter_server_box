@@ -1,6 +1,6 @@
 use server_box_monitor::core::config::Config;
-use std::fs;
 use std::ffi::OsString;
+use std::fs;
 use std::sync::OnceLock;
 
 fn cwd_lock() -> &'static tokio::sync::Mutex<()> {
@@ -63,36 +63,47 @@ async fn config_json_migrates_to_toml() {
     .unwrap();
     // A valid, sufficiently long JWT secret so `resolve_jwt_secret`-adjacent
     // paths aren't exercised by this test
-    let _jwt_secret = unsafe {
-        EnvVarGuard::set("JWT_SECRET", "test-secret-at-least-32-characters-long")
-    };
+    let _jwt_secret =
+        unsafe { EnvVarGuard::set("JWT_SECRET", "test-secret-at-least-32-characters-long") };
 
-    let config = Config::load().await.expect("load should migrate config.json");
+    let config = Config::load()
+        .await
+        .expect("load should migrate config.json");
 
     // In-memory result reflects the migrated config
     assert_eq!(config.get_monitoring().interval_seconds, 5);
     assert_eq!(config.get_monitoring().rules[0].threshold, ">=80%");
 
     // On-disk: config.toml now exists and config.json was renamed, not deleted
-    assert!(dir.join("config.toml").exists(), "migration should write config.toml");
+    assert!(
+        dir.join("config.toml").exists(),
+        "migration should write config.toml"
+    );
     assert_private(&dir.join("config.toml"));
     assert!(
         dir.join("config.json.migrated").exists(),
         "original config.json should be kept, renamed"
     );
-    assert!(!dir.join("config.json").exists(), "config.json should no longer be present under its original name");
+    assert!(
+        !dir.join("config.json").exists(),
+        "config.json should no longer be present under its original name"
+    );
 
     let toml_content = fs::read_to_string(dir.join("config.toml")).unwrap();
     let migrated: Config = toml::from_str(&toml_content).unwrap();
     assert_eq!(migrated.get_monitoring().interval_seconds, 5);
 
     // A subsequent load now takes the config.toml branch directly
-    let reloaded = Config::load().await.expect("reload from migrated config.toml");
+    let reloaded = Config::load()
+        .await
+        .expect("reload from migrated config.toml");
     assert_eq!(reloaded.get_monitoring().interval_seconds, 5);
 
     fs::remove_file(dir.join("config.toml")).unwrap();
     fs::remove_file(dir.join("config.json.migrated")).unwrap();
-    Config::load().await.expect("load should create the default config.toml");
+    Config::load()
+        .await
+        .expect("load should create the default config.toml");
     assert_private(&dir.join("config.toml"));
 
     std::env::set_current_dir(original_cwd).unwrap();
@@ -131,9 +142,8 @@ async fn a_go_config_in_its_historical_home_is_migrated() {
     let original_cwd = std::env::current_dir().unwrap();
     std::env::set_current_dir(&workdir).unwrap();
     let _home = unsafe { EnvVarGuard::set("HOME", root.join("home")) };
-    let _jwt_secret = unsafe {
-        EnvVarGuard::set("JWT_SECRET", "test-secret-at-least-32-characters-long")
-    };
+    let _jwt_secret =
+        unsafe { EnvVarGuard::set("JWT_SECRET", "test-secret-at-least-32-characters-long") };
 
     let config = Config::load().await.unwrap();
 
@@ -141,10 +151,16 @@ async fn a_go_config_in_its_historical_home_is_migrated() {
     assert_eq!(config.get_monitoring().interval_seconds, 9);
     assert!(workdir.join("config.toml").exists());
     assert!(!old_config.exists());
-    assert!(root.join("home/.config/server_box/config.json.migrated").exists());
+    assert!(
+        root.join("home/.config/server_box/config.json.migrated")
+            .exists()
+    );
     let push = &config.get_push()[0];
     assert_eq!(push.push_type, "serverchan");
-    assert_eq!(push.config.get("sc_key").and_then(|v| v.as_str()), Some("SCT123"));
+    assert_eq!(
+        push.config.get("sc_key").and_then(|v| v.as_str()),
+        Some("SCT123")
+    );
 
     std::env::set_current_dir(original_cwd).unwrap();
     fs::remove_dir_all(root).ok();
@@ -153,7 +169,10 @@ async fn a_go_config_in_its_historical_home_is_migrated() {
 #[cfg(unix)]
 fn assert_private(path: &std::path::Path) {
     use std::os::unix::fs::PermissionsExt;
-    assert_eq!(fs::metadata(path).unwrap().permissions().mode() & 0o777, 0o600);
+    assert_eq!(
+        fs::metadata(path).unwrap().permissions().mode() & 0o777,
+        0o600
+    );
 }
 
 #[cfg(not(unix))]

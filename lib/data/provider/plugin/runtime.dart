@@ -98,7 +98,9 @@ class PluginRuntimeService {
     );
     _runtime = runtime;
 
-    _subs.add(requests.stream.listen((req) => unawaited(_answer(runtime, req))));
+    _subs.add(
+      requests.stream.listen((req) => unawaited(_answer(runtime, req))),
+    );
     _subs.add(logs.stream.listen(_log));
   }
 
@@ -115,8 +117,12 @@ class PluginRuntimeService {
         ok: answer.ok,
         errorKind: answer.errorKind,
         errorMessage: answer.errorMessage,
+        errorData: answer.errorData,
         denied: answer.denied,
       );
+      // After the answer is in the runtime's slot, never before: what this
+      // tells the surface is that there is something for the plugin to see.
+      bridge.onAnswered[req.instanceId]?.call();
     } catch (e, s) {
       // The bridge answers rather than throws, so reaching here means the
       // answering itself failed. Answering with the failure is still the only
@@ -169,16 +175,25 @@ class PluginRuntimeService {
     final handle = boundServerId == null
         ? null
         : bridge.handles.bind(instanceId, boundServerId);
-    final id = await runtime.load(
-      spec: ffi.PluginSpec(
-        manifestJson: manifestJson,
-        source: source,
-        instanceId: instanceId,
-        granted: granted,
-        config: [for (final e in config.entries) (e.key, e.value)],
-        boundServer: handle,
-      ),
-    );
+    final BigInt id;
+    try {
+      id = await runtime.load(
+        spec: ffi.PluginSpec(
+          manifestJson: manifestJson,
+          source: source,
+          instanceId: instanceId,
+          granted: granted,
+          config: [for (final e in config.entries) (e.key, e.value)],
+          boundServer: handle,
+        ),
+      );
+    } catch (_) {
+      // Binding happens before module evaluation because top-level code may
+      // already call the host. A module that does not load has no instance to
+      // unload, so this is the only place that can release that binding.
+      bridge.handles.forget(instanceId);
+      rethrow;
+    }
     _instanceIds[id] = instanceId;
     return id;
   }
@@ -198,21 +213,24 @@ class PluginRuntimeService {
   /// reading lazy: `tick` pays for every machine on a timer, and this fires
   /// when somebody looks.
   ///
-  /// Answers nothing. A plugin with something to draw sends it through
-  /// `sb.ui.patch`, which is what lets a slow collection fill a page in as it
-  /// lands instead of holding it blank until every machine has replied.
+  /// **Answers nothing to the plugin.** One with something to draw sends it
+  /// through `sb.ui.patch`, which is what lets a slow collection fill a page
+  /// in as it lands instead of holding it blank until every machine has
+  /// replied. What it answers *the caller* is whatever the plugin threw, or
+  /// null — a hook that failed leaves the surface looking fine, so the one
+  /// place that can say so is here.
   ///
   /// A plugin that exports no `onHook` is not called at all.
-  Future<void> hook(
+  Future<Object?> hook(
     BigInt instance, {
     required String kind,
     required String contributionId,
     required List<String> granted,
     List<String> serverIds = const [],
   }) async {
-    if (!hasExport(instance, _hookExport)) return;
+    if (!hasExport(instance, _hookExport)) return null;
     final instanceId = _instanceIds[instance];
-    if (instanceId == null) return;
+    if (instanceId == null) return null;
 
     // **The gate, and it belongs here rather than in the plugin.** The payload
     // has room for every server, and filling it for a plugin that never asked
@@ -247,8 +265,15 @@ class PluginRuntimeService {
     } catch (e, s) {
       // A hook a plugin threw in is a plugin that will not collect, not a
       // surface that failed to open: the tree it already drew stays.
+      //
+      // **Handed back rather than only logged.** That the surface looks fine
+      // is exactly the problem — a user reports "the plugin is empty" and
+      // nothing on their screen says the collection threw. The caller knows
+      // which plugin this is and records it.
       Loggers.app.warning('Plugin hook $kind/$contributionId', e, s);
+      return e;
     }
+    return null;
   }
 
   /// Mints a handle for [serverId] and tells the runtime it exists.
@@ -303,10 +328,16 @@ class PluginRuntimeService {
   /// instance that is gone.
   Future<void> unload(BigInt instance) async {
     final instanceId = _instanceIds.remove(instance);
+    // Before the wait, not after: unloading waits for the instance's thread,
+    // and that thread is what a command still running holds. A `du` given two
+    // minutes would otherwise keep the surface's teardown — and the SSH
+    // channel under it — for as long as it had left.
+    if (instanceId != null) bridge.runs.forget(instanceId);
     await _runtime?.unload(instance: instance);
     if (instanceId != null) {
       bridge.handles.forget(instanceId);
       bridge.onPatch.remove(instanceId);
+      bridge.onAnswered.remove(instanceId);
     }
   }
 

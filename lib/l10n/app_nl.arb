@@ -100,7 +100,6 @@
   "pkgSecurityUnknown": "{manager} geeft niet aan welke updates beveiligingsproblemen oplossen",
   "pluginInstall": "Plug-in installeren",
   "pluginInstalled": "Geïnstalleerd",
-  "pluginBundled": "Meegeleverd",
   "pluginDev": "Ontwikkeling",
   "pluginNeedsConsent": "Deze update vraagt om meer rechten dan je hebt goedgekeurd. Installeer de plug-in opnieuw om ze te bekijken.",
   "pluginPermissionsAsk": "Deze plug-in vraagt om:",

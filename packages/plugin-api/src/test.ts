@@ -19,6 +19,7 @@ import type {
   HttpResponse,
   PromptAnswer,
   PromptSpec,
+  RemoteState,
   Sb,
   Scope,
   OpenTerminalRequest,
@@ -33,6 +34,7 @@ export type LogLevel = "trace" | "debug" | "info" | "warn" | "error";
 /** One thing the plugin asked the host to do. */
 export type Recorded =
   | { fn: "server.exec"; req: ExecRequest }
+  | { fn: "server.cancel"; key: string }
   | { fn: "server.list" }
   | { fn: "nav.openTerminal"; req: OpenTerminalRequest }
   | { fn: "http.fetch"; req: HttpRequest }
@@ -75,22 +77,33 @@ export interface MockOptions {
   denied?: string[];
 }
 
-function hostError(kind: string, message: string): Error {
-  const e = new Error(message) as Error & { kind: string };
+function hostError(kind: string, message: string, remote?: RemoteState): Error {
+  const e = new Error(message) as Error & { kind: string; remote?: RemoteState };
   e.name = "HostError";
   e.kind = kind;
+  if (remote !== undefined) e.remote = remote;
   return e;
 }
 
 function denied(fn: string, permission: string): Error {
-  const e = new Error(`permission denied: sb.${fn} needs \`${permission}\``);
+  const operation = `sb.${fn}`;
+  const e = new Error(`permission denied: ${operation} needs \`${permission}\``) as Error & {
+    kind: string;
+    operation: string;
+    permission: string;
+  };
   e.name = "PermissionDenied";
+  e.kind = "denied";
+  e.operation = operation;
+  e.permission = permission;
   return e;
 }
 
 /** Which permission each function needs, matching `hostfn.rs`. */
 const PERMISSION: Record<string, string | null> = {
   "server.exec": "server.exec",
+  // Stopping a command is part of running one, so they share a grant.
+  "server.cancel": "server.exec",
   "server.list": "server.list",
   "http.fetch": "net.http",
   "ui.patch": null,
@@ -127,6 +140,24 @@ export class MockHost {
   private prompts: PromptAnswer[] = [];
   private pick: ServerHandle | null = null;
   private execs = new Map<string, ExecResponse>();
+
+  /// Scripts that hang until something cancels them, and what the transport
+  /// would say it did to the command. See {@link MockHost.execWaits}.
+  private waiting = new Map<string, RemoteState>();
+
+  /// Scripts the host refuses outright. See {@link MockHost.execFails}.
+  private failing = new Map<
+    string,
+    { kind: string; message?: string; remote?: RemoteState }
+  >();
+
+  /// Runs in flight that carried a `cancelKey`, by that key. The app's own
+  /// registry is per instance; a mock host serves one plugin, so this is the
+  /// same set.
+  private running = new Map<
+    string,
+    Array<{ reject: (e: Error) => void; remote: RemoteState }>
+  >();
 
   /// Empty until `servers()` scripts one, which is what a plugin sees on a
   /// device with no servers — a state worth being able to test.
@@ -168,6 +199,38 @@ export class MockHost {
 
   exec(script: string, response: Partial<ExecResponse>): this {
     this.execs.set(script, { code: 0, stdout: "", stderr: "", ...response });
+    return this;
+  }
+
+  /**
+   * A command that does not answer until something stops it.
+   *
+   * The long run a plugin gives a `cancelKey` to — a `du` over a whole disk.
+   * Calling it returns a promise that stays pending, so the surface draws its
+   * loading state and the test can go on to press Stop.
+   *
+   * `remote` is what the transport would report having done to the command,
+   * and is the thing worth writing a test about: over SSH it is `stopped`, and
+   * over a monitor agent it is `running` — a plugin has to say something
+   * different in each case, and a mock that only ever produced one of them
+   * would let the other ship untested.
+   */
+  execWaits(script: string, remote: RemoteState = "stopped"): this {
+    this.waiting.set(script, remote);
+    return this;
+  }
+
+  /**
+   * A command the host rejects — a timeout, an unreachable server.
+   *
+   * `remote` belongs on a `timeout`, where it says whether the command is
+   * still running on the server after the app gave up on it.
+   */
+  execFails(
+    script: string,
+    error: { kind: string; message?: string; remote?: RemoteState },
+  ): this {
+    this.failing.set(script, error);
     return this;
   }
 
@@ -228,15 +291,37 @@ export class MockHost {
 
   // -------------------------------------------------------------- the host
 
-  /** Puts this on `globalThis.sb`, and answers a function that removes it. */
+  /**
+   * Puts this on `globalThis.sb`, and answers a function that removes it.
+   *
+   * Removing it also stops every {@link MockHost.execWaits} run still in
+   * flight, which is what the app does when a surface goes away — see
+   * `PluginRuntimeService.unload`. It also has to happen for the test suite to
+   * work at all: a promise that never settles stays in the SDK's `inflight`
+   * set, which is module-global, so one test leaving a hanging run makes every
+   * later `settle()` in the same file wait for ever. That is five tests timing
+   * out and none of them naming the one that left it.
+   */
   install(): () => void {
     const slot = globalThis as { sb?: Sb };
     const previous = slot.sb;
     slot.sb = this.sb();
     return () => {
+      this.stopEverything();
       if (previous === undefined) delete slot.sb;
       else slot.sb = previous;
     };
+  }
+
+  /** Stops every waiting run, whatever key it carries. */
+  stopEverything(): void {
+    for (const key of [...this.running.keys()]) {
+      const held = this.running.get(key) ?? [];
+      this.running.delete(key);
+      for (const { reject, remote } of held) {
+        reject(hostError("cancelled", "the surface went away", remote));
+      }
+    }
   }
 
   sb(): Sb {
@@ -250,9 +335,58 @@ export class MockHost {
         exec: async (req) => {
           check("server.exec");
           this.calls.push({ fn: "server.exec", req });
+
+          const fails = this.failing.get(req.script);
+          if (fails) {
+            throw hostError(
+              fails.kind,
+              fails.message ?? `exec failed: ${fails.kind}`,
+              fails.remote,
+            );
+          }
+
+          const hangs = this.waiting.get(req.script);
+          if (hangs !== undefined) {
+            const key = req.cancelKey;
+            if (key === undefined || key === "") {
+              // A run nothing can reach, which is what the app does too — the
+              // key is the only handle on it. Saying so beats a test that
+              // hangs with no explanation.
+              throw hostError(
+                "io",
+                `execWaits(${req.script}) needs a cancelKey to be stoppable`,
+              );
+            }
+            return new Promise<ExecResponse>((_, reject) => {
+              const held = this.running.get(key) ?? [];
+              held.push({ reject, remote: hangs });
+              this.running.set(key, held);
+            });
+          }
+
           const found = this.execs.get(req.script);
           if (!found) throw hostError("io", `no exec scripted for: ${req.script}`);
           return found;
+        },
+        cancel: async (req) => {
+          check("server.cancel");
+          this.calls.push({ fn: "server.cancel", key: req.key });
+          const held = this.running.get(req.key) ?? [];
+          this.running.delete(req.key);
+          for (const { reject, remote } of held) {
+            // The same shape the app sends, with the answer the script said
+            // this transport would give.
+            reject(
+              hostError(
+                "cancelled",
+                remote === "running"
+                  ? "the app stopped waiting; the command may still be running"
+                  : "the command was stopped on the server",
+                remote,
+              ),
+            );
+          }
+          return { stopped: held.length };
         },
         list: async () => {
           check("server.list");
@@ -434,6 +568,65 @@ export function l10nKeys(node: Node): string[] {
 }
 
 /**
+ * Every `tap` message the tree carries, in order.
+ *
+ * **What a test cannot get from calling `onEvent` directly.** Driving the
+ * handler proves the plugin answers a message; it says nothing about whether
+ * anything on screen sends one. A selection mode whose rows still carried
+ * their old `toggle` passed a test called "picking changes what a tap on a row
+ * means" — the test sent `pick` itself, and on the device every tap disabled a
+ * job instead. Assert on this for anything a user has to reach by tapping.
+ */
+export function taps(node: Node): unknown[] {
+  const out: unknown[] = [];
+  const walk = (n: Node) => {
+    const tap = n.on?.["tap"];
+    if (tap !== undefined) out.push(tap);
+    for (const c of n.c ?? []) walk(c);
+  };
+  walk(node);
+  return out;
+}
+
+/**
+ * What tapping the thing labelled [label] sends — the message to hand back to
+ * `onEvent`, exactly as the app would.
+ *
+ * **Drive a plugin through this rather than by sending a message you wrote.**
+ * A test that sends `{m: "select"}` proves the handler works and says nothing
+ * about whether anything on screen sends one; a selection mode whose rows
+ * still carried their old message passed a test called "picking changes what a
+ * tap on a row means". With closures as handlers there is no message to write
+ * by hand anyway — what crosses is a token, and this is where it comes from.
+ *
+ * Matches a node that carries the event *and* the label, then a node that
+ * carries the event and contains the label — which is how a `tile` with a
+ * title, or a `notice` action, is reached.
+ */
+export function messageOf(node: Node, label: string, event = "tap"): unknown {
+  const labelled = (n: Node) => texts(n).includes(label);
+  const search = (n: Node, deep: boolean): unknown => {
+    const msg = n.on?.[event];
+    if (msg !== undefined) {
+      const own = deep ? labelled(n) : ownTexts(n).includes(label);
+      if (own) return msg;
+    }
+    for (const c of n.c ?? []) {
+      const hit = search(c, deep);
+      if (hit !== undefined) return hit;
+    }
+    return undefined;
+  };
+  return search(node, false) ?? search(node, true);
+}
+
+/** The strings on this node itself, not counting its children. */
+function ownTexts(node: Node): string[] {
+  const { c: _children, ...alone } = node;
+  return texts(alone);
+}
+
+/**
  * Every string a tree would put on screen, in order.
  *
  * Reads the props that carry text, not only `text` nodes — a `tile`'s title
@@ -443,7 +636,21 @@ export function l10nKeys(node: Node): string[] {
  */
 export function texts(node: Node): string[] {
   const out: string[] = [];
-  const keys = ["value", "title", "subtitle", "label", "detail", "k", "v"];
+  // `hint` is on this list because it is on screen: an empty search box is its
+  // placeholder, and a test that could not see one could not find the box
+  // either — `messageOf` matches by what is drawn.
+  const keys = [
+    "value",
+    "title",
+    "subtitle",
+    "label",
+    "detail",
+    "hint",
+    // A `banner` says what it says here, and a page's warnings are banners.
+    "text",
+    "k",
+    "v",
+  ];
   const walk = (n: Node) => {
     for (const key of keys) {
       const v = n.p?.[key];

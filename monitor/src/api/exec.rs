@@ -26,9 +26,9 @@ use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
 use super::server::AppState;
-use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use super::server::verify_auth;
 use super::ws;
+use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 
 /// The bounds on one command — how long it may run and how much of it is kept.
 ///

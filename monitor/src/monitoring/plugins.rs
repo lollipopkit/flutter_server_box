@@ -29,11 +29,11 @@ use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
 
+use sbm_plugin::manifest::Platform;
+use sbm_plugin::status::StatusResult;
 use sbm_plugin::{
     HostBridge, HostProfile, InstanceId, InstanceOptions, Manifest, Permission, PluginHost,
 };
-use sbm_plugin::manifest::Platform;
-use sbm_plugin::status::StatusResult;
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncReadExt;
 use tracing::{error, info, warn};
@@ -141,7 +141,10 @@ impl AgentPlugins {
     /// For the caller that could not build a host to run them in: the agent
     /// carries on reporting what it measures itself.
     pub fn none() -> Self {
-        Self { host: Arc::new(PluginHost::new()), loaded: Vec::new() }
+        Self {
+            host: Arc::new(PluginHost::new()),
+            loaded: Vec::new(),
+        }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -179,8 +182,8 @@ impl AgentPlugins {
         plugin: &LoadedPlugin,
         platform: &str,
     ) -> Result<StatusResult, String> {
-        let parsed = Platform::parse(platform)
-            .ok_or_else(|| format!("unknown platform `{platform}`"))?;
+        let parsed =
+            Platform::parse(platform).ok_or_else(|| format!("unknown platform `{platform}`"))?;
 
         // Off this thread, both times. A call into a plugin blocks until the
         // plugin answers, and a plugin may `await` — a store read, an HTTP
@@ -214,8 +217,8 @@ fn load_one(
     }
     let dir = root.join(&entry.id);
 
-    let manifest_bytes = std::fs::read(dir.join("manifest.json"))
-        .map_err(|e| format!("manifest.json: {e}"))?;
+    let manifest_bytes =
+        std::fs::read(dir.join("manifest.json")).map_err(|e| format!("manifest.json: {e}"))?;
     let manifest = Manifest::parse(&manifest_bytes).map_err(|e| e.to_string())?;
     if manifest.id != entry.id {
         return Err(format!(
@@ -230,15 +233,18 @@ fn load_one(
         return Err("it contributes no status, which is all an agent can run".into());
     };
 
-    let source = std::fs::read_to_string(dir.join("plugin.js"))
-        .map_err(|e| format!("plugin.js: {e}"))?;
+    let source =
+        std::fs::read_to_string(dir.join("plugin.js")).map_err(|e| format!("plugin.js: {e}"))?;
 
     // The operator's list, intersected with what the manifest asks for — the
     // same rule the app applies to what a user consented to, and for the same
     // reason: a plugin updated to want more must not get it because the old
     // line in the file happened to be generous.
-    let consented: BTreeSet<Permission> =
-        entry.grant.iter().filter_map(|n| Permission::parse(n)).collect();
+    let consented: BTreeSet<Permission> = entry
+        .grant
+        .iter()
+        .filter_map(|n| Permission::parse(n))
+        .collect();
     for name in &entry.grant {
         if Permission::parse(name).is_none() {
             return Err(format!("unknown permission `{name}` in its `grant`"));
@@ -259,7 +265,11 @@ fn load_one(
         id: manifest.id.clone(),
         version: manifest.version.clone(),
         instance,
-        platforms: status.platforms.iter().map(|p| p.name().to_string()).collect(),
+        platforms: status
+            .platforms
+            .iter()
+            .map(|p| p.name().to_string())
+            .collect(),
     })
 }
 
@@ -311,14 +321,16 @@ async fn run_locally(script: &str) -> Result<String, String> {
 }
 
 /// [`run_locally`] with the bounds named, so a test can use small ones.
-async fn run_bounded(
-    script: &str,
-    timeout: Duration,
-    max_output: usize,
-) -> Result<String, String> {
+async fn run_bounded(script: &str, timeout: Duration, max_output: usize) -> Result<String, String> {
     let mut command = if cfg!(target_os = "windows") {
         let mut c = tokio::process::Command::new("powershell");
-        c.args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script]);
+        c.args([
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            script,
+        ]);
         c
     } else {
         let mut c = tokio::process::Command::new("sh");
@@ -456,7 +468,12 @@ mod tests {
         "#;
 
         let dir = tempfile::tempdir().unwrap();
-        write_plugin(dir.path(), "p", &manifest("p", r#"["agent"]"#, ""), COUNTING);
+        write_plugin(
+            dir.path(),
+            "p",
+            &manifest("p", r#"["agent"]"#, ""),
+            COUNTING,
+        );
 
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
@@ -582,7 +599,12 @@ mod tests {
     #[test]
     fn the_directory_and_the_manifest_must_agree() {
         let dir = tempfile::tempdir().unwrap();
-        write_plugin(dir.path(), "p", &manifest("other", r#"["agent"]"#, ""), SOURCE);
+        write_plugin(
+            dir.path(),
+            "p",
+            &manifest("other", r#"["agent"]"#, ""),
+            SOURCE,
+        );
 
         assert!(AgentPlugins::load(&config(dir.path(), vec![entry("p")]), bridge()).is_empty());
     }
@@ -593,7 +615,12 @@ mod tests {
     fn a_plugin_that_will_not_load_is_skipped_rather_than_fatal() {
         let dir = tempfile::tempdir().unwrap();
         write_plugin(dir.path(), "bad", "{ not json", SOURCE);
-        write_plugin(dir.path(), "good", &manifest("good", r#"["agent"]"#, ""), SOURCE);
+        write_plugin(
+            dir.path(),
+            "good",
+            &manifest("good", r#"["agent"]"#, ""),
+            SOURCE,
+        );
 
         let loaded = AgentPlugins::load(
             &config(dir.path(), vec![entry("bad"), entry("good")]),

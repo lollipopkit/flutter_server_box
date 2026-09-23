@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/plugin/contributions.dart';
+import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/model/plugin/repo.dart';
 import 'package:server_box/data/model/plugin/repo_record.dart';
 import 'package:server_box/data/provider/plugin/installer.dart';
@@ -264,7 +265,15 @@ void main() {
     // Without an [until] this is a budget rather than a wait: the tests that
     // assert *nothing* happened have no state to watch, and giving up early
     // would be the way they pass for the wrong reason.
-    for (var i = 0; i < (until == null ? 10 : 100); i++) {
+    //
+    // **With one, the ceiling only costs time when something is wrong** — the
+    // loop breaks the moment the condition holds — so it is set for the worst
+    // machine rather than for this one. An install is an HTTP mock, a tar
+    // extraction, a manifest parsed through the FFI and a directory written,
+    // and two seconds of that is comfortable alone and not comfortable with
+    // the rest of the suite running beside it: this failed about one full run
+    // in three and passed every time the file was run on its own.
+    for (var i = 0; i < (until == null ? 10 : 500); i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );
@@ -587,6 +596,76 @@ void main() {
       expect(find.textContaining('Faster on big directories.'), findsOneWidget);
     });
 
+    /// The progress is countable because the number of plugins is known before
+    /// the first one starts — and it is counted in plugins rather than bytes:
+    /// a package is tens of kilobytes, so a byte bar would run to the end and
+    /// then sit through the part that actually takes the time.
+    ///
+    /// Caught mid-run by giving the second plugin a permission the first did
+    /// not have: the consent dialog holds the run open, which is exactly the
+    /// moment the bar has stopped and has to say why.
+    testWidgets('an update all says where it is, and what it is waiting for', (
+      tester,
+    ) async {
+      final ids = ['app.serverbox.one', 'app.serverbox.two'];
+      final plugins = <String, String>{};
+      final packages = <String, List<int>>{};
+      for (final id in ids) {
+        final old = package(id: id, version: '1.0.0');
+        final next = package(
+          id: id,
+          version: '2.0.0',
+          // The second asks for more, so its update stops for an answer.
+          permissions: id == ids.last
+              ? const ['server.exec', 'server.list']
+              : const ['server.exec'],
+        );
+        await tester.runAsync(
+          () => installer.install(
+            old.bytes,
+            consented: {'server.exec'},
+            repo: _repoUrl,
+          ),
+        );
+        plugins[PluginRepoLayout.pathOf(id)!] = _pluginFile(
+          id: id,
+          name: id,
+          versions: [
+            _version(
+              version: '2.0.0',
+              abi: 1,
+              path: next.path,
+              sha256: next.digest,
+            ),
+          ],
+        );
+        packages[next.path] = next.bytes;
+      }
+      serveRepo(plugins, packages: packages);
+      await open(tester);
+
+      await tap(tester, l10n.pluginUpdateAll, until: showing(libL10n.ok));
+
+      // One is done, the second is on screen and the run is held open by its
+      // dialog — so the bar says which plugin, and that it is waiting.
+      expect(installedVersion(ids.first), '2.0.0');
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text(l10n.pluginWaitingForYou(ids.last)), findsOneWidget);
+      // And the row it is at says so too, in place of its button.
+      expect(find.text(l10n.pluginUpdating), findsOneWidget);
+      expect(find.text(l10n.pluginStopAfterThis), findsOneWidget);
+
+      await tap(
+        tester,
+        libL10n.ok,
+        until: () => installedVersion(ids.last) == '2.0.0',
+      );
+
+      // And when it is over there is no bar left behind.
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.text(l10n.pluginUpdating), findsNothing);
+    });
+
     testWidgets('update all takes every one of them', (tester) async {
       // Two plugins, both a version behind, in one repository.
       final ids = ['app.serverbox.one', 'app.serverbox.two'];
@@ -634,6 +713,69 @@ void main() {
           reason: id,
         );
       }
+    });
+  });
+
+  /// The id is the same and the bytes are somebody else's. It happened for
+  /// real: a working tree registered as a development directory sat at a
+  /// version the repository had never published, the row offered an update, and
+  /// taking it wrote a record naming a version from GitHub over a plugin the
+  /// app went on loading from the tree.
+  group('a copy this repository did not install', () {
+    /// Installs 1.0.0 from [from], then serves a repository offering 1.1.0.
+    Future<void> installedElsewhere(WidgetTester tester, String from) async {
+      final have = package();
+      await tester.runAsync(
+        () => installer.install(
+          have.bytes,
+          consented: {'server.exec'},
+          repo: from,
+        ),
+      );
+      serveOne(version: '1.1.0');
+      await open(tester);
+    }
+
+    testWidgets('is not an update, and the row says whose it is', (
+      tester,
+    ) async {
+      await installedElsewhere(tester, PluginInstall.devRepo);
+
+      expect(find.text(l10n.pluginUpdatesAvailable(1)), findsNothing);
+      expect(find.text(l10n.pluginUpdateAll), findsNothing);
+      expect(find.text(libL10n.update), findsNothing);
+      expect(find.text(l10n.pluginReplace), findsOneWidget);
+      expect(
+        find.textContaining(l10n.pluginInstalledFrom('v1.0.0 · ${l10n.pluginDev}')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('replacing it is asked about first', (tester) async {
+      await installedElsewhere(tester, PluginInstall.fileRepo);
+      await tap(tester, l10n.pluginReplace, until: showing(l10n.pluginReplace));
+
+      // The dialog is up and nothing has been touched: the copy on the device
+      // is still the one that was there.
+      expect(find.text(l10n.pluginReplace), findsNWidgets(2));
+      expect(installedVersion(), '1.0.0');
+
+      await tap(tester, libL10n.cancel);
+      final kept = PluginInstallStore.instance.fetch('app.serverbox.test')!;
+      expect(kept.version, '1.0.0');
+      expect(kept.origin, PluginOrigin.file);
+    });
+
+    testWidgets('and going ahead moves it to this repository', (tester) async {
+      await installedElsewhere(tester, PluginInstall.fileRepo);
+      await tap(tester, l10n.pluginReplace, until: showing(l10n.pluginReplace));
+      await tap(tester, libL10n.ok, until: () => installedVersion() == '1.1.0');
+
+      final record = PluginInstallStore.instance.fetch('app.serverbox.test')!;
+      expect(record.version, '1.1.0');
+      // Which is what makes the *next* one an ordinary update.
+      expect(record.repo, _repoUrl);
+      expect(record.granted, {'server.exec'});
     });
   });
 

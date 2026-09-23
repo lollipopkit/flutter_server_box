@@ -7632,6 +7632,17 @@ class $PluginInstallsTable extends PluginInstalls
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _previousMeta = const VerificationMeta(
+    'previous',
+  );
+  @override
+  late final GeneratedColumn<String> previous = GeneratedColumn<String>(
+    'previous',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -7640,6 +7651,7 @@ class $PluginInstallsTable extends PluginInstalls
     enabled,
     granted,
     installedAt,
+    previous,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -7697,6 +7709,12 @@ class $PluginInstallsTable extends PluginInstalls
     } else if (isInserting) {
       context.missing(_installedAtMeta);
     }
+    if (data.containsKey('previous')) {
+      context.handle(
+        _previousMeta,
+        previous.isAcceptableOrUnknown(data['previous']!, _previousMeta),
+      );
+    }
     return context;
   }
 
@@ -7730,6 +7748,10 @@ class $PluginInstallsTable extends PluginInstalls
         DriftSqlType.int,
         data['${effectivePrefix}installed_at'],
       )!,
+      previous: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous'],
+      ),
     );
   }
 
@@ -7752,9 +7774,10 @@ class PluginInstallRow extends DataClass
 
   /// Where it came from.
   ///
-  /// Null is bundled with the app and `dev` is a directory on a developer's
-  /// machine; anything else is a repository's `index.json` URL, which is a
-  /// row in `plugin_repo`. Kept as the URL rather than a foreign key: a
+  /// `dev` is a directory on a developer's machine and `file` is a `.sbp` the
+  /// user opened; anything else is a repository's address, which is a row in
+  /// `plugin_repo`. Read through `PluginInstall.origin`, which also covers the
+  /// null this column used to hold. Kept as the URL rather than a foreign key: a
   /// repository the user has since removed should still leave its plugins
   /// saying where they came from, and cascading would take a working install
   /// with the row that merely described where to look for updates.
@@ -7768,6 +7791,19 @@ class PluginInstallRow extends DataClass
   /// (PLUGINS.md 6.2), and the two are intersected at load.
   final String granted;
   final int installedAt;
+
+  /// The record this one replaced, as JSON, or null.
+  ///
+  /// What makes an update undoable. The files of the version before are kept
+  /// beside the installed ones (`<id>.prev` under the plugins directory) and
+  /// this is the row that went with them — the version, where it came from,
+  /// and **what the user had agreed it may do**, which is the part that cannot
+  /// be recovered from the directory: `granted` is consent, and re-deriving it
+  /// from the old manifest would grant whatever that version asked for.
+  ///
+  /// One column rather than three, because nothing queries by it: it is read
+  /// only when somebody asks to go back.
+  final String? previous;
   const PluginInstallRow({
     required this.id,
     required this.version,
@@ -7775,6 +7811,7 @@ class PluginInstallRow extends DataClass
     required this.enabled,
     required this.granted,
     required this.installedAt,
+    this.previous,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7787,6 +7824,9 @@ class PluginInstallRow extends DataClass
     map['enabled'] = Variable<bool>(enabled);
     map['granted'] = Variable<String>(granted);
     map['installed_at'] = Variable<int>(installedAt);
+    if (!nullToAbsent || previous != null) {
+      map['previous'] = Variable<String>(previous);
+    }
     return map;
   }
 
@@ -7798,6 +7838,9 @@ class PluginInstallRow extends DataClass
       enabled: Value(enabled),
       granted: Value(granted),
       installedAt: Value(installedAt),
+      previous: previous == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previous),
     );
   }
 
@@ -7813,6 +7856,7 @@ class PluginInstallRow extends DataClass
       enabled: serializer.fromJson<bool>(json['enabled']),
       granted: serializer.fromJson<String>(json['granted']),
       installedAt: serializer.fromJson<int>(json['installedAt']),
+      previous: serializer.fromJson<String?>(json['previous']),
     );
   }
   @override
@@ -7825,6 +7869,7 @@ class PluginInstallRow extends DataClass
       'enabled': serializer.toJson<bool>(enabled),
       'granted': serializer.toJson<String>(granted),
       'installedAt': serializer.toJson<int>(installedAt),
+      'previous': serializer.toJson<String?>(previous),
     };
   }
 
@@ -7835,6 +7880,7 @@ class PluginInstallRow extends DataClass
     bool? enabled,
     String? granted,
     int? installedAt,
+    Value<String?> previous = const Value.absent(),
   }) => PluginInstallRow(
     id: id ?? this.id,
     version: version ?? this.version,
@@ -7842,6 +7888,7 @@ class PluginInstallRow extends DataClass
     enabled: enabled ?? this.enabled,
     granted: granted ?? this.granted,
     installedAt: installedAt ?? this.installedAt,
+    previous: previous.present ? previous.value : this.previous,
   );
   PluginInstallRow copyWithCompanion(PluginInstallsCompanion data) {
     return PluginInstallRow(
@@ -7853,6 +7900,7 @@ class PluginInstallRow extends DataClass
       installedAt: data.installedAt.present
           ? data.installedAt.value
           : this.installedAt,
+      previous: data.previous.present ? data.previous.value : this.previous,
     );
   }
 
@@ -7864,14 +7912,15 @@ class PluginInstallRow extends DataClass
           ..write('repo: $repo, ')
           ..write('enabled: $enabled, ')
           ..write('granted: $granted, ')
-          ..write('installedAt: $installedAt')
+          ..write('installedAt: $installedAt, ')
+          ..write('previous: $previous')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, version, repo, enabled, granted, installedAt);
+      Object.hash(id, version, repo, enabled, granted, installedAt, previous);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7881,7 +7930,8 @@ class PluginInstallRow extends DataClass
           other.repo == this.repo &&
           other.enabled == this.enabled &&
           other.granted == this.granted &&
-          other.installedAt == this.installedAt);
+          other.installedAt == this.installedAt &&
+          other.previous == this.previous);
 }
 
 class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
@@ -7891,6 +7941,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
   final Value<bool> enabled;
   final Value<String> granted;
   final Value<int> installedAt;
+  final Value<String?> previous;
   const PluginInstallsCompanion({
     this.id = const Value.absent(),
     this.version = const Value.absent(),
@@ -7898,6 +7949,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
     this.enabled = const Value.absent(),
     this.granted = const Value.absent(),
     this.installedAt = const Value.absent(),
+    this.previous = const Value.absent(),
   });
   PluginInstallsCompanion.insert({
     required String id,
@@ -7906,6 +7958,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
     this.enabled = const Value.absent(),
     required String granted,
     required int installedAt,
+    this.previous = const Value.absent(),
   }) : id = Value(id),
        version = Value(version),
        granted = Value(granted),
@@ -7917,6 +7970,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
     Expression<bool>? enabled,
     Expression<String>? granted,
     Expression<int>? installedAt,
+    Expression<String>? previous,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -7925,6 +7979,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
       if (enabled != null) 'enabled': enabled,
       if (granted != null) 'granted': granted,
       if (installedAt != null) 'installed_at': installedAt,
+      if (previous != null) 'previous': previous,
     });
   }
 
@@ -7935,6 +7990,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
     Value<bool>? enabled,
     Value<String>? granted,
     Value<int>? installedAt,
+    Value<String?>? previous,
   }) {
     return PluginInstallsCompanion(
       id: id ?? this.id,
@@ -7943,6 +7999,7 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
       enabled: enabled ?? this.enabled,
       granted: granted ?? this.granted,
       installedAt: installedAt ?? this.installedAt,
+      previous: previous ?? this.previous,
     );
   }
 
@@ -7967,6 +8024,9 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
     if (installedAt.present) {
       map['installed_at'] = Variable<int>(installedAt.value);
     }
+    if (previous.present) {
+      map['previous'] = Variable<String>(previous.value);
+    }
     return map;
   }
 
@@ -7978,7 +8038,8 @@ class PluginInstallsCompanion extends UpdateCompanion<PluginInstallRow> {
           ..write('repo: $repo, ')
           ..write('enabled: $enabled, ')
           ..write('granted: $granted, ')
-          ..write('installedAt: $installedAt')
+          ..write('installedAt: $installedAt, ')
+          ..write('previous: $previous')
           ..write(')'))
         .toString();
   }
@@ -18254,6 +18315,7 @@ typedef $$PluginInstallsTableCreateCompanionBuilder =
       Value<bool> enabled,
       required String granted,
       required int installedAt,
+      Value<String?> previous,
     });
 typedef $$PluginInstallsTableUpdateCompanionBuilder =
     PluginInstallsCompanion Function({
@@ -18263,6 +18325,7 @@ typedef $$PluginInstallsTableUpdateCompanionBuilder =
       Value<bool> enabled,
       Value<String> granted,
       Value<int> installedAt,
+      Value<String?> previous,
     });
 
 class $$PluginInstallsTableFilterComposer
@@ -18301,6 +18364,11 @@ class $$PluginInstallsTableFilterComposer
 
   ColumnFilters<int> get installedAt => $composableBuilder(
     column: $table.installedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previous => $composableBuilder(
+    column: $table.previous,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -18343,6 +18411,11 @@ class $$PluginInstallsTableOrderingComposer
     column: $table.installedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get previous => $composableBuilder(
+    column: $table.previous,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PluginInstallsTableAnnotationComposer
@@ -18373,6 +18446,9 @@ class $$PluginInstallsTableAnnotationComposer
     column: $table.installedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get previous =>
+      $composableBuilder(column: $table.previous, builder: (column) => column);
 }
 
 class $$PluginInstallsTableTableManager
@@ -18412,6 +18488,7 @@ class $$PluginInstallsTableTableManager
                 Value<bool> enabled = const Value.absent(),
                 Value<String> granted = const Value.absent(),
                 Value<int> installedAt = const Value.absent(),
+                Value<String?> previous = const Value.absent(),
               }) => PluginInstallsCompanion(
                 id: id,
                 version: version,
@@ -18419,6 +18496,7 @@ class $$PluginInstallsTableTableManager
                 enabled: enabled,
                 granted: granted,
                 installedAt: installedAt,
+                previous: previous,
               ),
           createCompanionCallback:
               ({
@@ -18428,6 +18506,7 @@ class $$PluginInstallsTableTableManager
                 Value<bool> enabled = const Value.absent(),
                 required String granted,
                 required int installedAt,
+                Value<String?> previous = const Value.absent(),
               }) => PluginInstallsCompanion.insert(
                 id: id,
                 version: version,
@@ -18435,6 +18514,7 @@ class $$PluginInstallsTableTableManager
                 enabled: enabled,
                 granted: granted,
                 installedAt: installedAt,
+                previous: previous,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

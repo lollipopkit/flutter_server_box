@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/model/plugin/l10n.dart';
 import 'package:server_box/data/model/plugin/node.dart';
@@ -21,9 +23,18 @@ import 'package:server_box/data/model/plugin/node.dart';
 /// also as long as the plugin instance behind it, since the SDK's `frame()`
 /// keeps exactly one previous tree.
 class PluginSurfaceState {
-  PluginSurfaceState({this.l10n = PluginL10n.empty});
+  PluginSurfaceState({this.l10n = PluginL10n.empty, this.assetDir});
 
   PluginL10n l10n;
+
+  /// The plugin's own directory, where an `image` node's file is looked up.
+  ///
+  /// A path rather than the bytes: a package may carry a few hundred kilobytes
+  /// of images and every installed plugin is read at launch, so holding them
+  /// would be memory spent on pictures nothing is showing. Null for a plugin
+  /// with no directory, which is what a test and a not-yet-installed package
+  /// look like.
+  String? assetDir;
 
   /// Widgets by the revision they were built for.
   ///
@@ -113,6 +124,48 @@ class PluginSurfaceState {
     }
   }
 
+  /// Rebuilds the current tree with new presentation inputs.
+  ///
+  /// Locale and asset directory changes do not require a new QuickJS instance:
+  /// neither is plugin state. Cached widgets do need to go, though, because
+  /// they may already contain translated text or an image resolved below the
+  /// previous directory. Bound values stay intact so changing the app locale
+  /// does not blank live readings until the next tick.
+  void refreshPresentation() {
+    _byRev.clear();
+    _leaves.clear();
+  }
+
+  /// Whoever is waiting for the plugin to answer with a new tree.
+  ///
+  /// One at a time: the only thing that waits is a pull-to-refresh, and a
+  /// second pull while the first is turning is the same question.
+  Completer<void>? _waiting;
+
+  /// Completes when this surface next draws a tree.
+  ///
+  /// What a `RefreshIndicator` needs and cannot get otherwise: the plugin's
+  /// work happens in another isolate, over a network, and a future completed
+  /// straight away would flash the spinner and say nothing.
+  ///
+  /// **Capped**, because a plugin may answer with values and no tree, or with
+  /// nothing at all — and a spinner that turns forever is worse than one that
+  /// gives up.
+  Future<void> nextTree({Duration timeout = const Duration(seconds: 20)}) {
+    final waiting = _waiting;
+    if (waiting != null && !waiting.isCompleted) return waiting.future;
+    final next = Completer<void>();
+    _waiting = next;
+    return next.future.timeout(timeout, onTimeout: () {});
+  }
+
+  /// Called by the renderer once a tree has been built.
+  void drew() {
+    final waiting = _waiting;
+    _waiting = null;
+    if (waiting != null && !waiting.isCompleted) waiting.complete();
+  }
+
   void dispose() {
     for (final notifier in _slots.values) {
       notifier.dispose();
@@ -120,5 +173,6 @@ class PluginSurfaceState {
     _slots.clear();
     _byRev.clear();
     _leaves.clear();
+    drew();
   }
 }

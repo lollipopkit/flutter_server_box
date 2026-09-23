@@ -5,7 +5,7 @@ license = "MIT"
 
 [[version]]
 version = "1.1.0"
-abi = 2
+abi = 3
 url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.scheduled-1.1.0/app.serverbox.scheduled-1.1.0.sbp"
-sha256 = "63145c0253b307182fc542b6363abf6bd8e0e1a73f498ae87f78fdb2f71d59a6"
-size = 22357
+sha256 = "7ab50b3622efe8c718b606475e28cd4434f803b83f8fe2165998328aa8bbfc63"
+size = 28989

@@ -253,7 +253,9 @@ mod tests {
     #[test]
     fn a_command_needs_something_to_run() {
         assert_eq!(
-            StatusCmd::parse(br#"{"cmd":"zpool list -Hp"}"#).unwrap().cmd,
+            StatusCmd::parse(br#"{"cmd":"zpool list -Hp"}"#)
+                .unwrap()
+                .cmd,
             "zpool list -Hp"
         );
         assert!(StatusCmd::parse(br#"{"cmd":"  "}"#).is_err());
@@ -265,11 +267,17 @@ mod tests {
     #[test]
     fn a_percent_outside_the_range_is_dropped_not_clamped() {
         for bad in ["1.5", "-0.2", "null"] {
-            let r = parse(&format!(r#"{{"items":[{{"label":"a","value":"b","percent":{bad}}}]}}"#));
+            let r = parse(&format!(
+                r#"{{"items":[{{"label":"a","value":"b","percent":{bad}}}]}}"#
+            ));
             assert_eq!(r.items[0].percent, None, "{bad}");
         }
         let r = parse(r#"{"items":[{"label":"a","value":"b","percent":1}]}"#);
-        assert_eq!(r.items[0].percent, Some(1.0), "the ends of the range are in it");
+        assert_eq!(
+            r.items[0].percent,
+            Some(1.0),
+            "the ends of the range are in it"
+        );
     }
 
     #[test]
@@ -294,7 +302,9 @@ mod tests {
     #[test]
     fn a_label_that_is_really_a_dump_is_cut() {
         let long = "x".repeat(1000);
-        let r = parse(&format!(r#"{{"items":[{{"label":"{long}","value":"v"}}]}}"#));
+        let r = parse(&format!(
+            r#"{{"items":[{{"label":"{long}","value":"v"}}]}}"#
+        ));
         assert_eq!(r.items[0].label.chars().count(), StatusResult::MAX_TEXT);
     }
 
@@ -303,7 +313,9 @@ mod tests {
     #[test]
     fn cutting_does_not_split_a_character() {
         let long = "温".repeat(1000);
-        let r = parse(&format!(r#"{{"items":[{{"label":"{long}","value":"v"}}]}}"#));
+        let r = parse(&format!(
+            r#"{{"items":[{{"label":"{long}","value":"v"}}]}}"#
+        ));
         assert_eq!(r.items[0].label.chars().count(), StatusResult::MAX_TEXT);
         assert!(r.items[0].label.chars().all(|c| c == '温'));
     }
@@ -318,7 +330,10 @@ mod tests {
     #[test]
     fn a_blank_note_is_the_same_as_none() {
         assert_eq!(parse(r#"{"items":[],"note":"   "}"#).note, None);
-        assert_eq!(parse(r#"{"items":[],"note":" 3 of 20 "}"#).note.as_deref(), Some("3 of 20"));
+        assert_eq!(
+            parse(r#"{"items":[],"note":" 3 of 20 "}"#).note.as_deref(),
+            Some("3 of 20")
+        );
     }
 
     /// What is refused is a document that is not this shape at all — everything
@@ -333,7 +348,9 @@ mod tests {
 
     #[test]
     fn an_unknown_tone_is_refused_rather_than_guessed() {
-        assert!(StatusResult::parse(br#"{"items":[{"label":"a","value":"b","tone":"rainbow"}]}"#)
-            .is_err());
+        assert!(
+            StatusResult::parse(br#"{"items":[{"label":"a","value":"b","tone":"rainbow"}]}"#)
+                .is_err()
+        );
     }
 }

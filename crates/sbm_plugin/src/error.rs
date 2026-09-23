@@ -78,7 +78,10 @@ pub enum Refusal {
     /// A host function the manifest did not ask for. Raised by the stub
     /// installed in its place, so it happens on call, never on a check inside a
     /// working implementation.
-    PermissionDenied { function: String, permission: &'static str },
+    PermissionDenied {
+        function: String,
+        permission: &'static str,
+    },
 
     /// A granted function, called with an argument outside what the grant
     /// covers: an `sb.http.fetch` to a host no pattern matches, or
@@ -99,7 +102,10 @@ pub enum Refusal {
     /// 9.5. Told apart from [`PermissionDenied`](Self::PermissionDenied)
     /// because the answers differ: a permission is something the user can
     /// grant, and this is not.
-    Unavailable { function: String, host: &'static str },
+    Unavailable {
+        function: String,
+        host: &'static str,
+    },
 }
 
 impl Refusal {
@@ -112,12 +118,42 @@ impl Refusal {
             Self::Unavailable { .. } => "Unavailable",
         }
     }
+
+    /// Stable code exposed as `Error.kind` to plugin code.
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::PermissionDenied { .. } | Self::OutOfScope { .. } => "denied",
+            Self::BadRequest { .. } => "bad_request",
+            Self::Unavailable { .. } => "unavailable",
+        }
+    }
+
+    /// The host operation that refused the call.
+    pub fn function(&self) -> &str {
+        match self {
+            Self::PermissionDenied { function, .. }
+            | Self::OutOfScope { function, .. }
+            | Self::BadRequest { function, .. }
+            | Self::Unavailable { function, .. } => function,
+        }
+    }
+
+    /// The permission a user can grant, when there is one.
+    pub fn permission(&self) -> Option<&str> {
+        match self {
+            Self::PermissionDenied { permission, .. } => Some(permission),
+            _ => None,
+        }
+    }
 }
 
 impl fmt::Display for Refusal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::PermissionDenied { function, permission } => {
+            Self::PermissionDenied {
+                function,
+                permission,
+            } => {
                 write!(f, "permission denied: {function} needs `{permission}`")
             }
             Self::OutOfScope { function, detail } => {

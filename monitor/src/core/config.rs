@@ -1,5 +1,5 @@
-use crate::core::remote_access::RemoteAccessConfig;
 use crate::core::config_file;
+use crate::core::remote_access::RemoteAccessConfig;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -342,8 +342,9 @@ impl Config {
         if Path::new("config.toml").exists() {
             let content =
                 fs::read_to_string("config.toml").context("Failed to read config.toml")?;
-            let mut config: Self = toml::from_str(&content).context("Failed to parse config.toml")?;
-            
+            let mut config: Self =
+                toml::from_str(&content).context("Failed to parse config.toml")?;
+
             // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides()?;
@@ -352,7 +353,8 @@ impl Config {
         } else if let Some(json_path) = legacy_json_path() {
             let content = fs::read_to_string(&json_path)
                 .with_context(|| format!("Failed to read {}", json_path.display()))?;
-            let mut config: Self = serde_json::from_str(&content).context("Failed to parse config.json")?;
+            let mut config: Self =
+                serde_json::from_str(&content).context("Failed to parse config.json")?;
 
             // Convert from Go format if needed
             config.normalize()?;
@@ -441,7 +443,7 @@ impl Config {
             let interval_seconds = if let Some(interval_str) = &self.legacy.interval {
                 // Parse Go-style interval like "7s"
                 if interval_str.ends_with('s') {
-                    interval_str[..interval_str.len()-1].parse().unwrap_or(7)
+                    interval_str[..interval_str.len() - 1].parse().unwrap_or(7)
                 } else {
                     7
                 }
@@ -451,14 +453,22 @@ impl Config {
 
             let monitoring = MonitoringConfig {
                 interval_seconds,
-                rules: self.legacy.rules.as_ref().map(|go_rules| {
-                    go_rules.iter().map(|gr| MonitoringRule {
-                        name: format!("{} {}", gr.monitor_type, gr.threshold),
-                        monitor_type: gr.monitor_type.clone(),
-                        threshold: gr.threshold.clone(),
-                        matcher: gr.matcher.clone(),
-                    }).collect()
-                }).unwrap_or_default(),
+                rules: self
+                    .legacy
+                    .rules
+                    .as_ref()
+                    .map(|go_rules| {
+                        go_rules
+                            .iter()
+                            .map(|gr| MonitoringRule {
+                                name: format!("{} {}", gr.monitor_type, gr.threshold),
+                                monitor_type: gr.monitor_type.clone(),
+                                threshold: gr.threshold.clone(),
+                                matcher: gr.matcher.clone(),
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
                 data_retention: Some(DataRetentionConfig {
                     metrics_days: 30,
                     alerts_days: 90,
@@ -478,8 +488,10 @@ impl Config {
 
             self.server = Some(server);
             self.monitoring = Some(monitoring);
-            self.database_url = Some(env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string()));
+            self.database_url = Some(
+                env::var("DATABASE_URL")
+                    .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string()),
+            );
             self.jwt_secret = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty());
             self.push = Some(push);
         }
@@ -521,7 +533,9 @@ impl Config {
     }
 
     pub fn get_database_url(&self) -> String {
-        self.database_url.clone().unwrap_or_else(|| "sqlite:serverbox_monitor.db".to_string())
+        self.database_url
+            .clone()
+            .unwrap_or_else(|| "sqlite:serverbox_monitor.db".to_string())
     }
 
     /// Environment variable overrides (take precedence over config files);
@@ -552,7 +566,10 @@ impl Config {
         }
         match (overrides.tls_cert, overrides.tls_key) {
             (Some(cert_path), Some(key_path)) => {
-                server.tls = Some(TlsConfig { cert_path, key_path });
+                server.tls = Some(TlsConfig {
+                    cert_path,
+                    key_path,
+                });
                 server_changed = true;
             }
             (None, None) => {}
@@ -628,8 +645,7 @@ impl Config {
             fs::create_dir_all(dir)
                 .with_context(|| format!("Failed to create {}", dir.display()))?;
         }
-        fs::write(&path, &secret)
-            .with_context(|| format!("Failed to write {}", path.display()))?;
+        fs::write(&path, &secret).with_context(|| format!("Failed to write {}", path.display()))?;
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -647,7 +663,9 @@ impl Config {
         let db_path = db
             .trim_start_matches("sqlite://")
             .trim_start_matches("sqlite:");
-        let dir = Path::new(db_path).parent().unwrap_or_else(|| Path::new("."));
+        let dir = Path::new(db_path)
+            .parent()
+            .unwrap_or_else(|| Path::new("."));
         dir.join("jwt.secret")
     }
 
@@ -730,7 +748,9 @@ impl Config {
     /// minute. See `[monitoring] push_rate`.
     pub fn get_push_rate(&self) -> (usize, std::time::Duration) {
         const DEFAULT: (usize, std::time::Duration) = (1, std::time::Duration::from_secs(60));
-        let Some(rate) = self.get_monitoring().push_rate else { return DEFAULT };
+        let Some(rate) = self.get_monitoring().push_rate else {
+            return DEFAULT;
+        };
         let rate = rate.as_str();
         let Some((times, duration)) = rate.split_once('/') else {
             tracing::warn!("Invalid rate format: {}", rate);
@@ -805,7 +825,9 @@ fn normalize_go_push(push: &GoPush) -> PushConfig {
     // `code` means the same thing for iOS in the current format, so leave it
     // there for that channel.
     if matches!(push_type.as_str(), "webhook" | "serverchan" | "bark")
-        && let Some(code) = config.remove("code").filter(|code| code.as_integer() != Some(0))
+        && let Some(code) = config
+            .remove("code")
+            .filter(|code| code.as_integer() != Some(0))
     {
         config.insert("expected_http_status".to_string(), code);
     }
@@ -864,8 +886,10 @@ impl Default for Config {
                 // `MonitoringConfig::default` already says.
                 ..MonitoringConfig::default()
             }),
-            database_url: Some(env::var("DATABASE_URL")
-                .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
+            database_url: Some(
+                env::var("DATABASE_URL")
+                    .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string()),
+            ),
             jwt_secret: None, // auto-generated on first start when unset, see resolve_jwt_secret
             // Written out so a generated config.toml shows the section and
             // its switches; every switch in it defaults to off
@@ -877,17 +901,32 @@ impl Default for Config {
                     push_type: "webhook".to_string(),
                     config: {
                         let mut table = toml::Table::new();
-                        table.insert("url".to_string(), toml::Value::String("http://localhost:5700".to_string()));
-                        table.insert("method".to_string(), toml::Value::String("POST".to_string()));
-                        
+                        table.insert(
+                            "url".to_string(),
+                            toml::Value::String("http://localhost:5700".to_string()),
+                        );
+                        table.insert(
+                            "method".to_string(),
+                            toml::Value::String("POST".to_string()),
+                        );
+
                         let mut headers = toml::Table::new();
-                        headers.insert("Content-Type".to_string(), toml::Value::String("application/json".to_string()));
+                        headers.insert(
+                            "Content-Type".to_string(),
+                            toml::Value::String("application/json".to_string()),
+                        );
                         table.insert("headers".to_string(), toml::Value::Table(headers));
-                        
+
                         let mut body_template = toml::Table::new();
-                        body_template.insert("message".to_string(), toml::Value::String("Server {{name}}: {{message}}".to_string()));
-                        table.insert("body_template".to_string(), toml::Value::Table(body_template));
-                        
+                        body_template.insert(
+                            "message".to_string(),
+                            toml::Value::String("Server {{name}}: {{message}}".to_string()),
+                        );
+                        table.insert(
+                            "body_template".to_string(),
+                            toml::Value::Table(body_template),
+                        );
+
                         table
                     },
                 },
@@ -897,8 +936,14 @@ impl Default for Config {
                     config: {
                         let mut table = toml::Table::new();
                         table.insert("sc_key".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("desp".to_string(), toml::Value::String("{{message}}".to_string()));
+                        table.insert(
+                            "title".to_string(),
+                            toml::Value::String("ServerBox Monitor".to_string()),
+                        );
+                        table.insert(
+                            "desp".to_string(),
+                            toml::Value::String("{{message}}".to_string()),
+                        );
                         table
                     },
                 },
@@ -907,11 +952,23 @@ impl Default for Config {
                     push_type: "bark".to_string(),
                     config: {
                         let mut table = toml::Table::new();
-                        table.insert("server".to_string(), toml::Value::String("https://api.day.app".to_string()));
+                        table.insert(
+                            "server".to_string(),
+                            toml::Value::String("https://api.day.app".to_string()),
+                        );
                         table.insert("key".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("body".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table.insert("level".to_string(), toml::Value::String("active".to_string()));
+                        table.insert(
+                            "title".to_string(),
+                            toml::Value::String("ServerBox Monitor".to_string()),
+                        );
+                        table.insert(
+                            "body".to_string(),
+                            toml::Value::String("{{message}}".to_string()),
+                        );
+                        table.insert(
+                            "level".to_string(),
+                            toml::Value::String("active".to_string()),
+                        );
                         table
                     },
                 },
@@ -921,9 +978,18 @@ impl Default for Config {
                     config: {
                         let mut table = toml::Table::new();
                         table.insert("token".to_string(), toml::Value::String("".to_string()));
-                        table.insert("title".to_string(), toml::Value::String("ServerBox Monitor".to_string()));
-                        table.insert("content".to_string(), toml::Value::String("{{message}}".to_string()));
-                        table.insert("body_regex".to_string(), toml::Value::String(".*".to_string()));
+                        table.insert(
+                            "title".to_string(),
+                            toml::Value::String("ServerBox Monitor".to_string()),
+                        );
+                        table.insert(
+                            "content".to_string(),
+                            toml::Value::String("{{message}}".to_string()),
+                        );
+                        table.insert(
+                            "body_regex".to_string(),
+                            toml::Value::String(".*".to_string()),
+                        );
                         table.insert("code".to_string(), toml::Value::Integer(200));
                         table
                     },

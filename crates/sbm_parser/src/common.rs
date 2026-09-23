@@ -115,7 +115,12 @@ pub fn parse_os_id(raw: &str) -> Option<String> {
 /// mark is a better answer than none.
 pub fn parse_os_id_like(raw: &str) -> Vec<String> {
     os_release_value(raw, "ID_LIKE")
-        .map(|v| v.to_ascii_lowercase().split_whitespace().map(str::to_string).collect())
+        .map(|v| {
+            v.to_ascii_lowercase()
+                .split_whitespace()
+                .map(str::to_string)
+                .collect()
+        })
         .unwrap_or_default()
 }
 
@@ -196,9 +201,7 @@ mod ip_tests {
 
     #[test]
     fn iproute2_with_prefixes() {
-        let out = parse_ips(
-            "2: eth0    inet 45.32.10.20/23 brd 45.32.11.255 scope global eth0",
-        );
+        let out = parse_ips("2: eth0    inet 45.32.10.20/23 brd 45.32.11.255 scope global eth0");
         // The prefix is not an address, and the broadcast is - discarding it
         // is the caller's job, and it answers the same place anyway.
         assert_eq!(out, vec!["45.32.10.20", "45.32.11.255"]);
@@ -230,19 +233,26 @@ mod ip_tests {
 
     #[test]
     fn powershell_one_per_line() {
-        let out = parse_ips("127.0.0.1
+        let out = parse_ips(
+            "127.0.0.1
 ::1
 fe80::9c1f%12
 10.0.0.7
 45.32.10.20
-");
-        assert_eq!(out, vec!["127.0.0.1", "::1", "fe80::9c1f", "10.0.0.7", "45.32.10.20"]);
+",
+        );
+        assert_eq!(
+            out,
+            vec!["127.0.0.1", "::1", "fe80::9c1f", "10.0.0.7", "45.32.10.20"]
+        );
     }
 
     #[test]
     fn the_same_address_twice_is_one() {
-        let out = parse_ips("inet 45.32.10.20/23 eth0
-inet 45.32.10.20/23 eth0:1");
+        let out = parse_ips(
+            "inet 45.32.10.20/23 eth0
+inet 45.32.10.20/23 eth0:1",
+        );
         assert_eq!(out, vec!["45.32.10.20"]);
     }
 

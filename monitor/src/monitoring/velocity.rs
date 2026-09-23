@@ -1,12 +1,14 @@
 use crate::{
+    monitoring::timeseries::{
+        CpuCoreTime, CpuTimeSeries, NetworkTimeSeries, TimeSeries, VelocityMetrics,
+    },
     utils::error::Result,
-    monitoring::timeseries::{TimeSeries, NetworkTimeSeries, CpuTimeSeries, CpuCoreTime, VelocityMetrics},
 };
 use chrono::{DateTime, Utc};
-use std::sync::Arc;
-use std::collections::HashMap;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VelocityData {
@@ -57,14 +59,17 @@ impl VelocityProcessor {
 
     pub async fn get_current_velocity(&self) -> Result<VelocityMetrics> {
         Ok(VelocityMetrics::new()
-            .with_network_speed(self.network_series.get_rx_speed(), self.network_series.get_tx_speed())
+            .with_network_speed(
+                self.network_series.get_rx_speed(),
+                self.network_series.get_tx_speed(),
+            )
             .with_cpu_usage(self.cpu_series.get_average_usage_percent()))
     }
 
     pub fn get_velocity_history(&self, limit: Option<usize>) -> Vec<&VelocityData> {
         let data = self.metrics_history.get_data();
         let velocity_data: Vec<&VelocityData> = data.iter().map(|ts| &ts.value).collect();
-        
+
         match limit {
             Some(lim) => {
                 if velocity_data.len() > lim {
@@ -78,7 +83,10 @@ impl VelocityProcessor {
     }
 
     pub fn get_network_totals(&self) -> Option<(u64, u64)> {
-        match (self.network_series.get_total_rx(), self.network_series.get_total_tx()) {
+        match (
+            self.network_series.get_total_rx(),
+            self.network_series.get_total_tx(),
+        ) {
             (Some(rx), Some(tx)) => Some((rx, tx)),
             _ => None,
         }
@@ -87,7 +95,6 @@ impl VelocityProcessor {
     pub fn is_ready(&self) -> bool {
         self.network_series.is_ready() && self.cpu_series.is_ready()
     }
-
 }
 
 pub struct VelocityManager {
@@ -125,7 +132,6 @@ impl VelocityManager {
         }
     }
 
-
     /// `timestamp` is the sampling instant of the cycle these values came from,
     /// so the in-memory velocity history lines up with `system_metrics` rows
     /// from the same cycle instead of being stamped on a second clock here.
@@ -141,11 +147,15 @@ impl VelocityManager {
             processor.clone()
         } else {
             let processor = Arc::new(RwLock::new(VelocityProcessor::new()));
-            self.processors.insert(server_name.to_string(), processor.clone());
+            self.processors
+                .insert(server_name.to_string(), processor.clone());
             processor
         };
 
-        processor.write().await.update(rx_bytes, tx_bytes, core_times, timestamp)
+        processor
+            .write()
+            .await
+            .update(rx_bytes, tx_bytes, core_times, timestamp)
     }
 
     pub async fn get_server_velocity(&self, server_name: &str) -> Result<VelocityMetrics> {
@@ -165,7 +175,7 @@ impl VelocityManager {
         if let Some(processor) = self.processors.get(server_name) {
             let processor = processor.read().await;
             let history = processor.get_velocity_history(limit);
-            
+
             Ok(history.into_iter().cloned().collect())
         } else {
             Ok(Vec::new())
@@ -184,7 +194,12 @@ pub struct NetworkSpeedInfo {
 }
 
 impl NetworkSpeedInfo {
-    pub fn new(rx_speed: Option<f64>, tx_speed: Option<f64>, rx_total: Option<u64>, tx_total: Option<u64>) -> Self {
+    pub fn new(
+        rx_speed: Option<f64>,
+        tx_speed: Option<f64>,
+        rx_total: Option<u64>,
+        tx_total: Option<u64>,
+    ) -> Self {
         Self {
             rx_speed_formatted: rx_speed.map(format_speed),
             tx_speed_formatted: tx_speed.map(format_speed),

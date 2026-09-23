@@ -8,8 +8,8 @@
 //! install-then-exec flow the app performs over SSH, inside one container.
 //! Run with `cargo test -p sbm_parser --test alpine_e2e -- --ignored`.
 
-use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
+use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use std::io::Write;
 use std::process::{Command, Stdio};
 

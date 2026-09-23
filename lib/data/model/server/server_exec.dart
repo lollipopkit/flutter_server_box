@@ -42,6 +42,25 @@ class ExecResult {
 
 typedef OnExecOutput = void Function(String chunk);
 
+/// What cancelling a run actually does, which is not the same on every
+/// transport.
+///
+/// Every [ServerExec] takes a `cancel`, and every one of them stops *waiting*.
+/// Only some of them stop the command, and the difference is not a detail: a
+/// user who pressed Stop on a `du -x /` wants to know whether the machine is
+/// still walking that tree. Nothing can be measured after the fact — a
+/// transport that hung up has no one left to ask — so each implementation
+/// declares what it does and callers pass that on.
+enum ExecCancelKind {
+  /// The command is stopped on the server. What arrived before that is the
+  /// result, and there is nothing left running.
+  stopsCommand,
+
+  /// Only the waiting stops. The command runs on there until it finishes or
+  /// the far side's own timeout kills it, and its output goes nowhere.
+  stopsWaiting,
+}
+
 /// Running one command on a server and collecting what it printed.
 ///
 /// The pages that list processes, units and containers, and the ones that run
@@ -59,6 +78,15 @@ typedef OnExecOutput = void Function(String chunk);
 /// stream for SFTP or a forwarded port — asks for that instead, and gets it
 /// from somewhere that can promise it.
 abstract interface class ServerExec {
+  /// What cancelling a run on this transport does. See [ExecCancelKind].
+  ///
+  /// Declared rather than inferred, and on the interface rather than left to
+  /// whoever happens to know: a caller that has to tell a user what pressing
+  /// Stop did cannot find out any other way, and guessing wrong here means
+  /// telling somebody a command stopped when it is still running on their
+  /// server.
+  ExecCancelKind get cancelKind;
+
   /// Runs [script] and collects its output.
   ///
   /// [script] is handed to the server's own shell as the command to run, so it

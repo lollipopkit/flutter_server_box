@@ -403,6 +403,7 @@ ${err.message ?? 'null'}
             l10n: plugin.l10nFor(
               Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
             ),
+            assetDir: plugin.dir,
           ),
           service: ref.read(pluginRuntimeProvider),
           // The shared interval, and only while the surface is on screen —

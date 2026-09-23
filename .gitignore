@@ -124,7 +124,10 @@ android/app/.cxx
 packages/plugins/*/dist/*.sbp
 packages/plugins/*/node_modules/
 
-# A copy `bun run build` drops beside `dist/plugin.js`, so `dist/` is a
-# directory the app's plugin installer will load as-is. The manifest itself
-# lives at each plugin's root.
+# What `bun run build` stages beside `dist/plugin.js`, so `dist/` is a whole
+# plugin directory the app can be pointed at. The originals live at each
+# plugin's root; these are copies, and `bin/stage.ts` writes them from the same
+# list a `.sbp` is packed from.
 packages/plugins/*/dist/manifest.json
+packages/plugins/*/dist/l10n/
+packages/plugins/*/dist/icon.png

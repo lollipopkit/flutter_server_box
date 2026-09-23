@@ -104,7 +104,10 @@ pub struct Grants {
 
 impl Grants {
     pub fn new(granted: impl IntoIterator<Item = Permission>) -> Self {
-        Self { granted: granted.into_iter().collect(), http_patterns: Vec::new() }
+        Self {
+            granted: granted.into_iter().collect(),
+            http_patterns: Vec::new(),
+        }
     }
 
     pub fn with_http_patterns(mut self, patterns: impl IntoIterator<Item = String>) -> Self {
@@ -134,7 +137,9 @@ impl Grants {
         if !self.allows(Permission::NetHttp) {
             return false;
         }
-        let Some(target) = UrlTarget::parse(url) else { return false };
+        let Some(target) = UrlTarget::parse(url) else {
+            return false;
+        };
         self.http_patterns.iter().any(|p| p.matches(&target))
     }
 }
@@ -163,7 +168,10 @@ impl HostPattern {
         let rest = raw.split_once("://").map(|(_, r)| r).unwrap_or(raw);
         let rest = rest.split('/').next().unwrap_or(rest);
         match split_host_port(rest) {
-            (host, port) => Self { host: host.to_ascii_lowercase(), port },
+            (host, port) => Self {
+                host: host.to_ascii_lowercase(),
+                port,
+            },
         }
     }
 
@@ -208,7 +216,10 @@ impl UrlTarget {
         if host.is_empty() || host == "*" {
             return None;
         }
-        Some(Self { host: host.to_ascii_lowercase(), port: port.unwrap_or(default_port) })
+        Some(Self {
+            host: host.to_ascii_lowercase(),
+            port: port.unwrap_or(default_port),
+        })
     }
 }
 

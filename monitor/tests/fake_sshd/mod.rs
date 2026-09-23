@@ -87,9 +87,7 @@ impl Handler for FakeHandler {
             // Force the client onto the interactive path, as a server with an
             // extra factor configured would
             return Ok(Auth::Reject {
-                proceed_with_methods: Some(MethodSet::from(
-                    &[MethodKind::KeyboardInteractive][..],
-                )),
+                proceed_with_methods: Some(MethodSet::from(&[MethodKind::KeyboardInteractive][..])),
                 partial_success: false,
             });
         }
@@ -194,11 +192,7 @@ pub async fn start(interactive: bool) -> String {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap().to_string();
 
-    let key = PrivateKey::random(
-        &mut RandomSource,
-        russh::keys::Algorithm::Ed25519,
-    )
-    .unwrap();
+    let key = PrivateKey::random(&mut RandomSource, russh::keys::Algorithm::Ed25519).unwrap();
     let config = Arc::new(server::Config {
         keys: vec![key],
         ..Default::default()

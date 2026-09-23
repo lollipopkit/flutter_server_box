@@ -29,7 +29,11 @@ use crate::runtime::{Instance, InstanceOptions};
 pub struct InstanceId(pub u64);
 
 enum Command {
-    Call { export: String, input: Vec<u8>, reply: Sender<Result<Vec<u8>, PluginError>> },
+    Call {
+        export: String,
+        input: Vec<u8>,
+        reply: Sender<Result<Vec<u8>, PluginError>>,
+    },
     IssueServerHandle(String),
     Shutdown,
 }
@@ -74,10 +78,14 @@ impl PluginHost {
 
         match ready_rx.recv() {
             Ok(Ok(exports)) => {
-                self.workers
-                    .lock()
-                    .expect("poisoned")
-                    .insert(id, Worker { tx, join: Some(join), exports });
+                self.workers.lock().expect("poisoned").insert(
+                    id,
+                    Worker {
+                        tx,
+                        join: Some(join),
+                        exports,
+                    },
+                );
                 Ok(id)
             }
             Ok(Err(e)) => {
@@ -87,7 +95,9 @@ impl PluginHost {
             // The thread died before answering, which only a panic does.
             Err(_) => {
                 let _ = join.join();
-                Err(PluginError::Internal("the plugin thread stopped while loading".into()))
+                Err(PluginError::Internal(
+                    "the plugin thread stopped while loading".into(),
+                ))
             }
         }
     }
@@ -97,16 +107,15 @@ impl PluginHost {
     /// Calls to one instance are serialised by its channel, so a tap that
     /// arrives during a poll runs after it rather than alongside — which is
     /// what the plugin's own state assumes.
-    pub fn call(
-        &self,
-        id: InstanceId,
-        export: &str,
-        input: &[u8],
-    ) -> Result<Vec<u8>, PluginError> {
+    pub fn call(&self, id: InstanceId, export: &str, input: &[u8]) -> Result<Vec<u8>, PluginError> {
         let (reply, answer) = channel();
         self.send(
             id,
-            Command::Call { export: export.to_string(), input: input.to_vec(), reply },
+            Command::Call {
+                export: export.to_string(),
+                input: input.to_vec(),
+                reply,
+            },
         )?;
         answer.recv().map_err(|_| gone(id))?
     }
@@ -122,7 +131,8 @@ impl PluginHost {
     }
 
     pub fn has_export(&self, id: InstanceId, export: &str) -> bool {
-        self.exports(id).is_ok_and(|e| e.iter().any(|n| n == export))
+        self.exports(id)
+            .is_ok_and(|e| e.iter().any(|n| n == export))
     }
 
     /// Adds a server handle the app issued outside a call.
@@ -151,8 +161,13 @@ impl PluginHost {
     /// a caller needs when the host itself is reachable only through a handle
     /// somebody else owns. See `sbm_ffi`'s `shutdown_plugin_runtimes`.
     pub fn unload_all(&self) -> usize {
-        let ids: Vec<InstanceId> =
-            self.workers.lock().expect("poisoned").keys().copied().collect();
+        let ids: Vec<InstanceId> = self
+            .workers
+            .lock()
+            .expect("poisoned")
+            .keys()
+            .copied()
+            .collect();
         let n = ids.len();
         for id in ids {
             self.unload(id);
@@ -214,7 +229,11 @@ fn run(
 
     while let Ok(command) = rx.recv() {
         match command {
-            Command::Call { export, input, reply } => {
+            Command::Call {
+                export,
+                input,
+                reply,
+            } => {
                 let _ = reply.send(instance.call(&export, &input));
             }
             Command::IssueServerHandle(handle) => instance.issue_server_handle(handle),
@@ -252,7 +271,11 @@ mod tests {
     fn a_plugin_loads_and_answers() {
         let host = host();
         let id = host
-            .load("export function echo(x) { return x; }".into(), opts("i1"), Arc::new(Quiet))
+            .load(
+                "export function echo(x) { return x; }".into(),
+                opts("i1"),
+                Arc::new(Quiet),
+            )
             .unwrap();
         assert_eq!(host.call(id, "echo", b"[1,2]").unwrap(), b"[1,2]");
         assert_eq!(host.exports(id).unwrap(), ["echo"]);
@@ -262,7 +285,9 @@ mod tests {
     #[test]
     fn a_plugin_that_does_not_parse_fails_at_load_and_leaves_nothing_behind() {
         let host = host();
-        let e = host.load("export function (".into(), opts("i1"), Arc::new(Quiet)).unwrap_err();
+        let e = host
+            .load("export function (".into(), opts("i1"), Arc::new(Quiet))
+            .unwrap_err();
         assert!(matches!(e, PluginError::Module(_)), "{e}");
         assert!(host.is_empty());
     }
@@ -367,7 +392,11 @@ mod tests {
     fn calling_an_unloaded_instance_says_so_rather_than_hanging() {
         let host = host();
         let id = host
-            .load("export function go() {}".into(), opts("i1"), Arc::new(Quiet))
+            .load(
+                "export function go() {}".into(),
+                opts("i1"),
+                Arc::new(Quiet),
+            )
             .unwrap();
         host.unload(id);
 

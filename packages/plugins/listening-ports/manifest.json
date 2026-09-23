@@ -1,9 +1,9 @@
 {
   "id": "app.serverbox.ports",
   "version": "1.1.0",
-  "abi": 2,
-  "name": "Listening ports",
-  "description": "What is listening on a server, and which of it is reachable from outside.",
+  "abi": 3,
+  "name": "l10n.pluginName",
+  "description": "l10n.pluginDescription",
   "license": "MIT",
   "l10n": [
     "en",
@@ -15,18 +15,18 @@
   "contributes": {
     "settings": {
       "id": "prefs",
-      "label": "Listening ports",
+      "label": "l10n.pluginName",
       "icon": "port"
     },
     "card": {
       "id": "summary",
-      "label": "Listening ports",
+      "label": "l10n.pluginName",
       "icon": "port",
       "default_on": false
     },
     "page": {
       "id": "ports",
-      "label": "Ports",
+      "label": "l10n.pageLabel",
       "icon": "port",
       "default_on": true,
       "needs": [

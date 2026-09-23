@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:server_box/core/utils/plugin/assets.dart';
 import 'package:server_box/data/model/plugin/l10n.dart';
 
 /// A `.sbp`, read and checked. PLUGINS.md section 2.
@@ -17,6 +18,7 @@ class PluginPackage {
     required this.source,
     required this.l10n,
     this.icon,
+    this.assets = const {},
   });
 
   /// The manifest verbatim, so `plugin_read_manifest` is the one parser.
@@ -30,9 +32,17 @@ class PluginPackage {
 
   final Uint8List? icon;
 
+  /// What an `image` node draws, by file name. `assets/<name>` in the archive.
+  ///
+  /// Only the extensions `PluginAssets.allowed` names, and one flat directory:
+  /// a name with a path in it is refused rather than normalised, so there is no
+  /// `..` to reason about.
+  final Map<String, Uint8List> assets;
+
   static const manifestName = 'manifest.json';
   static const sourceName = 'plugin.js';
   static const l10nDir = 'l10n/';
+  static const assetDir = 'assets/';
   static const iconName = 'icon.png';
 
   /// The whole package, unpacked.
@@ -59,6 +69,7 @@ class PluginPackage {
     String? source;
     Uint8List? icon;
     final l10n = <String, Map<String, String>>{};
+    final assets = <String, Uint8List>{};
     var total = 0;
 
     for (final file in archive) {
@@ -87,6 +98,17 @@ class PluginPackage {
         case iconName:
           icon = content;
         default:
+          if (name.startsWith(assetDir)) {
+            final file = name.substring(assetDir.length);
+            // Refused rather than skipped quietly: a package carrying a name
+            // this build will not read is one whose `image` nodes will draw a
+            // gap, and the packer refuses to write one.
+            if (!PluginAssets.isAllowed(file)) {
+              throw PluginPackageError('$name is not an asset this reads');
+            }
+            assets[file] = content;
+            continue;
+          }
           if (!name.startsWith(l10nDir) || !name.endsWith('.json')) continue;
           final locale = name.substring(
             l10nDir.length,
@@ -110,6 +132,7 @@ class PluginPackage {
       source: source,
       l10n: l10n,
       icon: icon,
+      assets: assets,
     );
   }
 

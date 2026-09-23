@@ -76,7 +76,10 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
         return per_core;
     }
 
-    let mac = regex(&MAC, r"CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle");
+    let mac = regex(
+        &MAC,
+        r"CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle",
+    );
     if let Some(c) = mac.captures(raw) {
         let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
         return cores(f(1), f(2), 0, f(3), 0);
@@ -141,7 +144,11 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
             used += kib;
         }
     }
-    matched.then(|| Memory { total: used + free, free, avail: free })
+    matched.then(|| Memory {
+        total: used + free,
+        free,
+        avail: free,
+    })
 }
 
 /// Available memory from vm_stat pages: total - (active + wired + compressor).
@@ -217,7 +224,9 @@ pub fn parse_net(raw: &str) -> Vec<NetIface> {
     let mut result: Vec<NetIface> = Vec::new();
     for line in &lines[1..] {
         let fields: Vec<&str> = line.split_whitespace().collect();
-        let Some(device) = fields.first() else { continue };
+        let Some(device) = fields.first() else {
+            continue;
+        };
         if device.ends_with('*') || result.iter().any(|n| n.device == *device) {
             continue;
         }

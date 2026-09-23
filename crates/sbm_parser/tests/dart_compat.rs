@@ -5,7 +5,7 @@
 //! Each test names its corresponding Dart case.
 
 use sbm_parser::types::*;
-use sbm_parser::{bsd, commands, linux, windows, SystemType};
+use sbm_parser::{SystemType, bsd, commands, linux, windows};
 use std::collections::HashMap;
 
 // ---------- CPU:cpu_test.dart ----------
@@ -78,7 +78,10 @@ fn cpu_brand_parse_bsd() {
 #[test]
 fn cpu_brand_parse_bsd_no_count_line() {
     let brands = bsd::parse_cpu_brand("Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz\n");
-    assert_eq!(brands, vec![("Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz".to_string(), 1)]);
+    assert_eq!(
+        brands,
+        vec![("Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz".to_string(), 1)]
+    );
 }
 
 /// Empty/whitespace-only output yields no brand entries
@@ -123,9 +126,8 @@ fn cpu_parse_bsd_macos_with_core_count() {
 /// FreeBSD: same trailing-count mechanism
 #[test]
 fn cpu_parse_bsd_freebsd_with_core_count() {
-    let cores = bsd::parse_cpu(
-        "CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle\n4\n",
-    );
+    let cores =
+        bsd::parse_cpu("CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle\n4\n");
     assert_eq!(cores.len(), 4);
     assert_eq!(cores[3].id, "cpu3");
     assert_eq!(cores[0].idle, 91);
@@ -166,8 +168,8 @@ fn mem_parse_bsd_macos() {
 /// Modern macOS top output with commas inside parentheses (regression for an old monitor bug)
 #[test]
 fn mem_parse_bsd_macos_comma_in_parens() {
-    let m = bsd::parse_mem("PhysMem: 61G used (6811M wired, 1251M compressor), 1867M unused.")
-        .unwrap();
+    let m =
+        bsd::parse_mem("PhysMem: 61G used (6811M wired, 1251M compressor), 1867M unused.").unwrap();
     assert_eq!(m.total, 61 * 1024 * 1024 + 1867 * 1024);
     assert_eq!(m.free, 1867 * 1024);
 }
@@ -257,7 +259,10 @@ fn disk_parse_nested_lsblk() {
     assert_eq!(root.used_percent, 45);
 
     let boot = disks.iter().find(|d| d.mount == "/boot").unwrap();
-    assert_eq!(boot.uuid.as_deref(), Some("12345678-abcd-1234-abcd-1234567890ab"));
+    assert_eq!(
+        boot.uuid.as_deref(),
+        Some("12345678-abcd-1234-abcd-1234567890ab")
+    );
 }
 
 /// Dart 'preserves all descendants for intermediate containers'
@@ -315,7 +320,11 @@ fn disk_parse_df_drops_kernel_mounts() {
     assert_eq!(root.size, 235798528);
 
     // The virtiofs share is real storage and stays, wherever it is mounted
-    assert!(disks.iter().any(|d| d.path == "mac" && d.mount == "/mnt/mac"));
+    assert!(
+        disks
+            .iter()
+            .any(|d| d.path == "mac" && d.mount == "/mnt/mac")
+    );
 }
 
 /// One filesystem published under many paths is one row: `/dev/vdb1` appears
@@ -350,10 +359,11 @@ fn disk_parse_lsblk_drops_read_only_images() {
     let disks = linux::parse_disk(include_str!("fixtures/lsblk_nonstorage.json"));
 
     assert!(!disks.iter().any(|d| d.mount.starts_with("/snap/")));
-    assert!(!disks.iter().any(|d| matches!(
-        d.fs_type.as_deref(),
-        Some("squashfs" | "erofs" | "iso9660")
-    )));
+    assert!(
+        !disks
+            .iter()
+            .any(|d| matches!(d.fs_type.as_deref(), Some("squashfs" | "erofs" | "iso9660")))
+    );
 
     let root = disks.iter().find(|d| d.mount == "/").unwrap();
     assert_eq!(root.path, "/dev/vda1");
@@ -465,7 +475,10 @@ fn disk_parse_df_keeps_storage_named_like_a_virtual_fs() {
     let disks = linux::parse_disk(raw);
 
     let mounts: Vec<&str> = disks.iter().map(|d| d.mount.as_str()).collect();
-    assert_eq!(mounts, ["/srv/pool", "/srv/nfs", "/srv/export", "/srv/backup"]);
+    assert_eq!(
+        mounts,
+        ["/srv/pool", "/srv/nfs", "/srv/export", "/srv/backup"]
+    );
 }
 
 /// The first `df` column is a user-controlled source, not a filesystem type.
@@ -485,7 +498,14 @@ fn disk_parse_df_keeps_sources_named_like_filesystem_types() {
     let paths: Vec<&str> = disks.iter().map(|d| d.path.as_str()).collect();
     assert_eq!(
         paths,
-        ["squashfs", "erofs", "iso9660", "snapfuse", "fuse.snapfuse", "swap"]
+        [
+            "squashfs",
+            "erofs",
+            "iso9660",
+            "snapfuse",
+            "fuse.snapfuse",
+            "swap"
+        ]
     );
 
     let (used, size) = disk_usage(&disks);
@@ -516,7 +536,12 @@ fn disk_usage_drops_rows_identified_only_by_filesystem_type() {
         // A swap partition whose mount `lsblk` left empty
         row("/dev/vda2", "swap", "", 4194304),
         // A rootless container layer, recognised by its source
-        row("fuse-overlayfs", "", "/home/u/.local/share/x/merged", 51343636),
+        row(
+            "fuse-overlayfs",
+            "",
+            "/home/u/.local/share/x/merged",
+            51343636,
+        ),
     ];
 
     let (used, size) = disk_usage(&disks);
@@ -681,8 +706,16 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
 /// Dart 'NetSpeed speed calculations for specific device': +1000000B over 1000s → 1000 B/s
 #[test]
 fn net_speed_delta() {
-    let pre = NetIface { device: "eth0".into(), rx_bytes: 1_000_000, tx_bytes: 500_000 };
-    let now = NetIface { device: "eth0".into(), rx_bytes: 2_000_000, tx_bytes: 1_000_000 };
+    let pre = NetIface {
+        device: "eth0".into(),
+        rx_bytes: 1_000_000,
+        tx_bytes: 500_000,
+    };
+    let now = NetIface {
+        device: "eth0".into(),
+        rx_bytes: 2_000_000,
+        tx_bytes: 1_000_000,
+    };
     let (rx, tx) = net_speed(&pre, &now, 1000.0).unwrap();
     assert_eq!(rx, 1000.0);
     assert_eq!(tx, 500.0);
@@ -694,7 +727,8 @@ fn net_speed_delta() {
 
 #[test]
 fn temps_parse_and_priority() {
-    let types = "/sys/class/thermal/thermal_zone0/acpitz\n/sys/class/thermal/thermal_zone1/x86_pkg_temp";
+    let types =
+        "/sys/class/thermal/thermal_zone0/acpitz\n/sys/class/thermal/thermal_zone1/x86_pkg_temp";
     let values = "45000\n55000";
     let temps = linux::parse_temps(types, values, 1000.0);
     assert_eq!(temps.0.get("acpitz"), Some(&45.0));
@@ -902,11 +936,26 @@ fn conn_parse_invalid() {
 fn uptime_parse_formats() {
     use sbm_parser::common::parse_uptime;
     let cases = [
-        ("19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00", Some("61 days, 18:16")),
-        ("19:39:15 up 1 day, 2:34,  1 user,  load average: 0.00, 0.00, 0.00", Some("1 day, 2:34")),
-        ("19:39:15 up 2:34,  1 user,  load average: 0.00, 0.00, 0.00", Some("2:34")),
-        ("19:39:15 up 34 min,  1 user,  load average: 0.00, 0.00, 0.00", Some("34 min")),
-        ("19:39:15 up 5 days,  1 user,  load average: 0.00, 0.00, 0.00", Some("5 days")),
+        (
+            "19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00",
+            Some("61 days, 18:16"),
+        ),
+        (
+            "19:39:15 up 1 day, 2:34,  1 user,  load average: 0.00, 0.00, 0.00",
+            Some("1 day, 2:34"),
+        ),
+        (
+            "19:39:15 up 2:34,  1 user,  load average: 0.00, 0.00, 0.00",
+            Some("2:34"),
+        ),
+        (
+            "19:39:15 up 34 min,  1 user,  load average: 0.00, 0.00, 0.00",
+            Some("34 min"),
+        ),
+        (
+            "19:39:15 up 5 days,  1 user,  load average: 0.00, 0.00, 0.00",
+            Some("5 days"),
+        ),
         ("invalid uptime format", None),
         ("", None),
     ];
@@ -970,16 +1019,35 @@ fn battery_parse_windows() {
 fn sensors_parse_1() {
     let sensors = linux::parse_sensors(include_str!("fixtures/sensors1.txt"));
     let devices: Vec<&str> = sensors.iter().map(|s| s.device.as_str()).collect();
-    assert_eq!(devices, ["coretemp-isa-0000", "acpitz-acpi-0", "iwlwifi_1-virtual-0", "nvme-pci-0400"]);
+    assert_eq!(
+        devices,
+        [
+            "coretemp-isa-0000",
+            "acpitz-acpi-0",
+            "iwlwifi_1-virtual-0",
+            "nvme-pci-0400"
+        ]
+    );
     let adapters: Vec<&str> = sensors.iter().map(|s| s.adapter.as_str()).collect();
-    assert_eq!(adapters, ["ISA adapter", "ACPI interface", "Virtual device", "PCI adapter"]);
+    assert_eq!(
+        adapters,
+        [
+            "ISA adapter",
+            "ACPI interface",
+            "Virtual device",
+            "PCI adapter"
+        ]
+    );
     let summaries: Vec<Option<&str>> = sensors.iter().map(|s| s.summary()).collect();
-    assert_eq!(summaries, [
-        Some("+56.0°C  (high = +105.0°C, crit = +105.0°C)"),
-        Some("+27.8°C  (crit = +119.0°C)"),
-        Some("+56.0°C"),
-        Some("+45.9°C  (low  = -273.1°C, high = +83.8°C)"),
-    ]);
+    assert_eq!(
+        summaries,
+        [
+            Some("+56.0°C  (high = +105.0°C, crit = +105.0°C)"),
+            Some("+27.8°C  (crit = +119.0°C)"),
+            Some("+56.0°C"),
+            Some("+45.9°C  (low  = -273.1°C, high = +83.8°C)"),
+        ]
+    );
 }
 
 /// Dart 'parse sensors2'
@@ -987,14 +1055,25 @@ fn sensors_parse_1() {
 fn sensors_parse_2() {
     let sensors = linux::parse_sensors(include_str!("fixtures/sensors2.txt"));
     let devices: Vec<&str> = sensors.iter().map(|s| s.device.as_str()).collect();
-    assert_eq!(devices, ["asusec-isa-0000", "nct6798-isa-0290", "nvme-pci-0400", "k10temp-pci-00c3"]);
+    assert_eq!(
+        devices,
+        [
+            "asusec-isa-0000",
+            "nct6798-isa-0290",
+            "nvme-pci-0400",
+            "k10temp-pci-00c3"
+        ]
+    );
     let summaries: Vec<Option<&str>> = sensors.iter().map(|s| s.summary()).collect();
-    assert_eq!(summaries, [
-        Some("1.26 V"),
-        Some("1.19 V  (min =  +0.00 V, max =  +1.74 V)"),
-        Some("+45.9°C  (low  = -273.1°C, high = +69.8°C)"),
-        Some("+44.9°C"),
-    ]);
+    assert_eq!(
+        summaries,
+        [
+            Some("1.26 V"),
+            Some("1.19 V  (min =  +0.00 V, max =  +1.74 V)"),
+            Some("+45.9°C  (low  = -273.1°C, high = +69.8°C)"),
+            Some("+44.9°C"),
+        ]
+    );
 }
 
 /// Win32_TemperatureProbe(no Dart reference; new Windows-only parser)
@@ -1160,15 +1239,21 @@ fn smart_parse_fixture() {
 
     assert!(!d.smart_attributes.contains_key("NonExistent"));
     assert_eq!(
-        d.smart_attributes.get("SSD_Life_Left").and_then(|a| a.raw_value.as_i64()),
+        d.smart_attributes
+            .get("SSD_Life_Left")
+            .and_then(|a| a.raw_value.as_i64()),
         Some(93)
     );
     assert_eq!(
-        d.smart_attributes.get("Lifetime_Writes_GiB").and_then(|a| a.raw_value.as_i64()),
+        d.smart_attributes
+            .get("Lifetime_Writes_GiB")
+            .and_then(|a| a.raw_value.as_i64()),
         Some(11520)
     );
     assert_eq!(
-        d.smart_attributes.get("Lifetime_Reads_GiB").and_then(|a| a.raw_value.as_i64()),
+        d.smart_attributes
+            .get("Lifetime_Reads_GiB")
+            .and_then(|a| a.raw_value.as_i64()),
         Some(12361)
     );
 }
@@ -1330,7 +1415,10 @@ fn os_release_absent_leaves_only_pretty_name() {
     use sbm_parser::common::*;
     let raw = "PRETTY_NAME=\"Debian GNU/Linux 12 (bookworm)\"\n";
 
-    assert_eq!(parse_sys_version(raw).as_deref(), Some("Debian GNU/Linux 12 (bookworm)"));
+    assert_eq!(
+        parse_sys_version(raw).as_deref(),
+        Some("Debian GNU/Linux 12 (bookworm)")
+    );
     assert_eq!(parse_os_id(raw), None);
     assert_eq!(parse_os_id_like(raw), Vec::<String>::new());
 }
@@ -1400,9 +1488,8 @@ fn windows_mem_rejects_missing_and_impossible_values() {
 
 #[test]
 fn windows_disks_accept_full_volumes_and_reject_bad_ranges() {
-    let full = windows::parse_disks(
-        r#"{"DeviceID":"C:","Size":1024,"FreeSpace":0,"FileSystem":"NTFS"}"#,
-    );
+    let full =
+        windows::parse_disks(r#"{"DeviceID":"C:","Size":1024,"FreeSpace":0,"FileSystem":"NTFS"}"#);
     assert_eq!(full.len(), 1, "a full volume is a valid reading");
     assert_eq!(full[0].avail, 0);
     assert_eq!(full[0].used_percent, 100);

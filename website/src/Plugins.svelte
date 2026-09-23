@@ -29,6 +29,19 @@
 
   const howPoints = ['sandbox', 'permissions', 'anyRepo']
 
+  // A plugin's own translations, which are what the app shows for it. The
+  // manifest names them with keys, so this page and the app say the same thing
+  // in the same language — and English is behind them, since that is the one
+  // locale every package ships.
+  function stringsOf(plugin) {
+    const tables = plugin.strings ?? {}
+    const language = (locale ?? 'en').split('-')[0]
+    return tables[locale] ?? tables[language] ?? tables.en ?? plugin
+  }
+
+  const nameOf = (plugin) => stringsOf(plugin).name || plugin.id
+  const descriptionOf = (plugin) => stringsOf(plugin).description || ''
+
   function getLocaleBeforeRender() {
     if (typeof window === 'undefined') return undefined
 
@@ -140,10 +153,10 @@
         {#each plugins as plugin}
           <article class="plugin-card">
             <div class="plugin-head">
-              <h3>{plugin.name}</h3>
+              <h3>{nameOf(plugin)}</h3>
               <span class="plugin-version">v{plugin.version}</span>
             </div>
-            <p class="plugin-description">{plugin.description}</p>
+            <p class="plugin-description">{descriptionOf(plugin)}</p>
 
             <dl class="plugin-meta">
               <div>

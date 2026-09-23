@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/plugin/package.dart';
+import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/model/plugin/repo.dart';
 import 'package:server_box/data/model/plugin/repo_record.dart';
 import 'package:server_box/data/model/plugin/store.dart';
@@ -57,6 +58,14 @@ class _PluginStorePageState extends State<PluginStorePage> {
   final _repos = PluginRepoStore.instance;
 
   var _busy = false;
+
+  /// What an "update all" is doing, or null when nothing is.
+  ///
+  /// **Counted in plugins, not in bytes.** A package is tens of kilobytes and
+  /// the download is the quick part; unpacking, writing and republishing what
+  /// the plugin contributes is the rest. A byte bar would run to the end and
+  /// then sit there, which is two meanings in one bar.
+  _UpdateRun? _run;
 
   /// Repository URL to what it last answered. Absent is "not read".
   final _indexes = <String, PluginIndex>{};
@@ -141,6 +150,7 @@ class _PluginStorePageState extends State<PluginStorePage> {
   }
 
   Widget _body(List<StoreEntry> outdated) {
+    final run = _run;
     if (_repos.readAll().isEmpty) {
       return _Empty(
         icon: Icons.dns_outlined,
@@ -163,9 +173,11 @@ class _PluginStorePageState extends State<PluginStorePage> {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      children: [
+    // The head is what a run and an update are about; the plugins follow it.
+    // Built lazily below rather than as one list of children: how long that
+    // list is belongs to somebody else's repository, and building two hundred
+    // rows to show eight is a cost this page does not get to decide.
+    final head = [
         // Above the list, because it is the reason to have opened the page.
         if (outdated.isNotEmpty)
           CardX(
@@ -176,15 +188,33 @@ class _PluginStorePageState extends State<PluginStorePage> {
                 outdated.map((e) => e.listing.name).join(', '),
                 style: UIs.text12Grey,
               ),
-              trailing: Btn.text(
-                text: l10n.pluginUpdateAll,
-                onTap: _busy ? null : () => unawaited(_updateAll(outdated)),
-              ),
+              trailing: run == null
+                  ? Btn.text(
+                      text: l10n.pluginUpdateAll,
+                      onTap: _busy ? null : () => unawaited(_updateAll(outdated)),
+                    )
+                  : Btn.text(
+                      text: l10n.pluginStopAfterThis,
+                      onTap: run.stopping ? null : () => setState(run.stop),
+                    ),
             ),
           ),
-        for (final entry in _entries)
-          _EntryTile(entry: entry, busy: _busy, onTap: _install),
-      ],
+        if (run != null) _RunProgress(run: run),
+    ];
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      itemCount: head.length + _entries.length,
+      itemBuilder: (_, i) {
+        if (i < head.length) return head[i];
+        final entry = _entries[i - head.length];
+        return _EntryTile(
+          entry: entry,
+          busy: _busy,
+          updating: run?.name == entry.listing.name,
+          onTap: _install,
+        );
+      },
     );
   }
 
@@ -198,14 +228,46 @@ class _PluginStorePageState extends State<PluginStorePage> {
   /// repositories, and stopping would make the first slow server decide what
   /// the others get.
   Future<void> _updateAll(List<StoreEntry> outdated) async {
-    var done = 0;
-    for (final entry in outdated) {
-      if (!mounted) return;
-      if (await _install(entry, announce: false)) done++;
+    final run = _UpdateRun(total: outdated.length);
+    setState(() => _run = run);
+    var failed = 0;
+    try {
+      for (final entry in outdated) {
+        if (!mounted) return;
+        // Checked before the next one rather than during: a plugin is written
+        // to disk in one go, and stopping half way through would leave one
+        // whose files and record disagree. The button says so.
+        if (run.stopping) break;
+        setState(() => run.begin(entry.listing.name));
+        if (await _install(entry, announce: false)) {
+          run.done++;
+        } else {
+          failed++;
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _run = null);
     }
-    // One message for the run rather than one per plugin, and the count
-    // because it is how a cancelled or failed one is visible at all.
-    if (mounted && done > 0) Toast.show('${libL10n.saved} ($done)');
+    // One message for the run rather than one per plugin, and both numbers:
+    // a count of what worked, on its own, says nothing about what did not.
+    if (!mounted || run.done + failed == 0) return;
+    Toast.show(
+      failed == 0
+          ? l10n.pluginUpdatedCount(run.done)
+          : l10n.pluginUpdatedSome(run.done, failed),
+    );
+  }
+
+  /// Runs [ask] with the progress row saying it is waiting for an answer.
+  Future<T> _whileAsking<T>(Future<T> Function() ask) async {
+    final run = _run;
+    if (run == null) return ask();
+    setState(() => run.asking = true);
+    try {
+      return await ask();
+    } finally {
+      if (mounted) setState(() => run.asking = false);
+    }
   }
 
   /// Installs [entry]'s best release, answering whether it landed.
@@ -214,15 +276,34 @@ class _PluginStorePageState extends State<PluginStorePage> {
     if (release == null || _busy) return false;
     setState(() => _busy = true);
     try {
+      // A copy this repository did not install is replaced only on purpose.
+      // The id is the same and the bytes are somebody else's: a working tree,
+      // a file that came from who knows where, another repository offering the
+      // same name. Asked before the download, like the checksum question.
+      if (entry.installed case final have? when entry.elsewhere) {
+        final ok = await _whileAsking(
+          () => context.showRoundDialog<bool>(
+            title: l10n.pluginReplace,
+            child: Text(
+              l10n.pluginReplaceTip(have.sourceLabel, entry.repo.label),
+            ),
+            actions: Btnx.cancelRedOk,
+          ),
+        );
+        if (ok != true || !mounted) return false;
+      }
+
       var accept = false;
       if (!release.verifiable) {
         // Asked before anything is downloaded. Afterwards the bytes are
         // already here, and "do you want this anyway" is a worse question than
         // "shall I fetch something nobody can check".
-        final ok = await context.showRoundDialog<bool>(
-          title: l10n.pluginNoChecksum,
-          child: Text(l10n.pluginNoChecksumTip(entry.repo.label)),
-          actions: Btnx.cancelRedOk,
+        final ok = await _whileAsking(
+          () => context.showRoundDialog<bool>(
+            title: l10n.pluginNoChecksum,
+            child: Text(l10n.pluginNoChecksumTip(entry.repo.label)),
+            actions: Btnx.cancelRedOk,
+          ),
         );
         if (ok != true || !mounted) return false;
         accept = true;
@@ -246,13 +327,27 @@ class _PluginStorePageState extends State<PluginStorePage> {
       // when the new version wants something the user has not already agreed
       // to — see `askPluginUpgradeConsent`.
       final installed = entry.installed;
-      final consented = installed == null
-          ? await askPluginConsent(context, manifest)
-          : await askPluginUpgradeConsent(
-              context,
-              manifest,
-              granted: installed.granted,
-            );
+      final installedNow = installed;
+      // Said while a dialog is up: a bar that stops moving looks stuck, and
+      // this one has stopped because it is waiting for the person looking at
+      // it.
+      // The package's own strings, so a manifest that names its plugin with an
+      // `l10n.` key is read in the dialog rather than shown as the key. It is
+      // the only copy of them there is at this point — nothing is installed
+      // yet.
+      final strings = package.l10nFor(
+        Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
+      );
+      final consented = await _whileAsking(
+        () => installedNow == null
+            ? askPluginConsent(context, manifest, strings: strings)
+            : askPluginUpgradeConsent(
+                context,
+                manifest,
+                granted: installedNow.granted,
+                strings: strings,
+              ),
+      );
       if (consented == null || !mounted) return false;
 
       await _installer.install(
@@ -336,11 +431,81 @@ class _PluginStorePageState extends State<PluginStorePage> {
   }
 }
 
+/// What an "update all" is doing.
+///
+/// A plain object rather than a set of fields on the state, because every one
+/// of them is about the same run and they are only ever read together.
+class _UpdateRun {
+  _UpdateRun({required this.total});
+
+  final int total;
+
+  /// How many landed. Not "how many were tried": a plugin whose update failed
+  /// is not progress, and the summary at the end counts both.
+  int done = 0;
+
+  /// The one being updated, for the label. Null before the first.
+  String? name;
+
+  /// Whether a dialog is up. The bar has stopped because it is waiting for
+  /// the person looking at it, which is worth saying.
+  bool asking = false;
+
+  /// Whether the user asked to stop after the current one.
+  bool stopping = false;
+
+  void begin(String next) {
+    name = next;
+    asking = false;
+  }
+
+  void stop() => stopping = true;
+}
+
+/// The bar, and one line saying which plugin and what is happening to it.
+class _RunProgress extends StatelessWidget {
+  const _RunProgress({required this.run});
+
+  final _UpdateRun run;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = run.name;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 3, 20, 11),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 6,
+        children: [
+          // Determinate, because the number of plugins is known before the
+          // first one starts. An indeterminate bar here would be the app
+          // withholding something it has.
+          LinearProgressIndicator(
+            value: run.total == 0 ? null : run.done / run.total,
+            minHeight: 3,
+          ),
+          Text(
+            switch (run) {
+              _ when run.stopping => l10n.pluginStopping,
+              _ when run.asking && name != null => l10n.pluginWaitingForYou(name),
+              _ when name != null =>
+                l10n.pluginUpdateProgress(run.done + 1, run.total, name),
+              _ => l10n.pluginUpdateAll,
+            },
+            style: UIs.text12Grey,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EntryTile extends StatelessWidget {
   const _EntryTile({
     required this.entry,
     required this.busy,
     required this.onTap,
+    this.updating = false,
   });
 
   final StoreEntry entry;
@@ -348,6 +513,11 @@ class _EntryTile extends StatelessWidget {
   /// Something else on the page is downloading. The button says so rather than
   /// looking pressable and being declined.
   final bool busy;
+
+  /// This is the one an "update all" is working on. Said on the row as well as
+  /// in the bar: the bar says how far the run is, the row says which of these
+  /// it is at.
+  final bool updating;
 
   final Future<bool> Function(StoreEntry) onTap;
 
@@ -362,8 +532,13 @@ class _EntryTile extends StatelessWidget {
         title: Text(entry.listing.name, style: UIs.text15),
         subtitle: Text(_subtitle(), style: UIs.text12Grey),
         trailing: switch (entry) {
+          _ when updating => Text(l10n.pluginUpdating, style: UIs.text12Grey),
           _ when best == null => Text(l10n.pluginNeedsNewerApp, style: UIs.text12Grey),
           _ when entry.outdated => Btn.text(text: libL10n.update, onTap: act),
+          // Installed, but not by this repository. Offered as a replacement
+          // rather than as an update, and never taken by "update all": which
+          // of two copies of an id is the real one is not a version question.
+          _ when entry.elsewhere => Btn.text(text: l10n.pluginReplace, onTap: act),
           _ when installed != null => Text(l10n.pluginInstalled, style: UIs.text12Grey),
           _ => Btn.text(text: l10n.pluginInstall, onTap: act),
         },
@@ -376,6 +551,11 @@ class _EntryTile extends StatelessWidget {
       if (entry.best case final r?) 'v${r.version}',
       if (entry.installed case final i? when entry.outdated) '← v${i.version}',
       entry.repo.label,
+      // Which copy is on the device, when it is not one of this repository's.
+      // Without it the row offers to replace something it never named, and a
+      // plugin installed from a working tree reads as simply "installed".
+      if (entry.installed case final i? when entry.elsewhere)
+        l10n.pluginInstalledFrom('v${i.version} · ${i.sourceLabel}'),
       // Said out loud: a conflict resolved silently is one nobody can act on,
       // and which repository this came from decides what its updates will be.
       if (entry.shadowed.isNotEmpty)

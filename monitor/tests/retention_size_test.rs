@@ -11,7 +11,9 @@ async fn size_cap_drops_oldest_rows() {
     std::fs::remove_dir_all(&dir).ok();
     std::fs::create_dir_all(&dir).unwrap();
     let db_path = dir.join("cap.db");
-    let pool = database::init(&format!("sqlite:{}", db_path.display())).await.unwrap();
+    let pool = database::init(&format!("sqlite:{}", db_path.display()))
+        .await
+        .unwrap();
 
     // Bloat well past 1 MB with padded rows; timestamps ascending so
     // "oldest first" is meaningful
@@ -71,7 +73,10 @@ async fn size_cap_drops_oldest_rows() {
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert!(after < before, "row count must shrink ({before} -> {after})");
+    assert!(
+        after < before,
+        "row count must shrink ({before} -> {after})"
+    );
 
     // Survivors are the newest rows: the oldest remaining marker is higher
     // than the number of dropped rows implies for an oldest-first policy
@@ -79,7 +84,11 @@ async fn size_cap_drops_oldest_rows() {
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert_eq!(min_rx as i64 + after, 4000, "deletions must be oldest-first");
+    assert_eq!(
+        min_rx as i64 + after,
+        4000,
+        "deletions must be oldest-first"
+    );
 
     // Disabled cap deletes nothing
     let service_off = DataCleanupService::new(

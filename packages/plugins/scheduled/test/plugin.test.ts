@@ -8,8 +8,15 @@
 
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { MockHost, l10nKeys, texts } from "@serverbox/plugin-api/test";
-import type { HookEvent, Node, ServerHandle } from "@serverbox/plugin-api";
+import {
+  MockHost,
+  find,
+  l10nKeys,
+  messageOf,
+  taps,
+  texts,
+} from "@serverbox/plugin-api/test";
+import type { HookEvent, Node, Plugin, ServerHandle } from "@serverbox/plugin-api";
 import {
   READ_COMMAND,
   added,
@@ -63,6 +70,38 @@ function lastDrawn(host: MockHost): Node {
   return patches[patches.length - 1]!.node;
 }
 
+/**
+ * The whole tree as it stands.
+ *
+ * A patch carries a *diff* — every unchanged subtree is a stub — so reading
+ * one says what changed rather than what is on screen. `open` draws in full
+ * against the state the plugin already holds.
+ */
+function screen(plugin: Plugin, kind = "page", id = "scheduled"): Node {
+  // `open` is synchronous here — `surface()` answers with the tree it drew.
+  const out = plugin.open!({ kind, id } as never) as { ui?: Node };
+  return out.ui!;
+}
+
+/**
+ * Taps the thing labelled [label], the way the app does.
+ *
+ * A handler is a closure, so what crosses is a token the SDK made: there is no
+ * message to write by hand, and a test that wrote one would be speaking a
+ * protocol the plugin does not.
+ */
+async function tap(
+  plugin: Plugin,
+  label: string,
+  opts: { kind?: string; id?: string; value?: unknown; event?: string } = {},
+) {
+  const tree = screen(plugin, opts.kind ?? "page", opts.id ?? "scheduled");
+  const event = opts.event ?? "tap";
+  const msg = messageOf(tree, label, event);
+  expect(msg, `nothing labelled ${label} answers ${event}`).toBeDefined();
+  return await plugin.onEvent!({ msg, value: opts.value });
+}
+
 describe("the fleet tab", () => {
   const fleetEnter = (
     ...servers: [string, string][]
@@ -85,11 +124,11 @@ describe("the fleet tab", () => {
     plugin.open({ kind: "tab", id: "fleet" });
     await plugin.onHook(fleetEnter(["h-1", "web"], ["h-2", "db"]));
 
-    const shown = texts(lastDrawn(host));
+    const shown = texts(screen(plugin, "tab", "fleet"));
     expect(shown).toContain("web");
     expect(shown).toContain("db");
     // One enabled job and one timer per machine, twice.
-    expect(l10nKeys(lastDrawn(host))).toContain("l10n.fleetCount");
+    expect(l10nKeys(screen(plugin, "tab", "fleet"))).toContain("l10n.fleetCount");
     expect(host.called().filter((c) => c === "server.exec")).toHaveLength(2);
   });
 
@@ -118,7 +157,7 @@ describe("the fleet tab", () => {
     await plugin.onHook(fleetEnter(["h-1", "web"], ["h-2", "db"]));
 
     // Both rows are there; the totals only count what answered.
-    const shown = texts(lastDrawn(host));
+    const shown = texts(screen(plugin, "tab", "fleet"));
     expect(shown).toContain("web");
     expect(shown).toContain("db");
   });
@@ -130,7 +169,7 @@ describe("the fleet tab", () => {
 
     plugin.open({ kind: "tab", id: "fleet" });
     await plugin.onHook(fleetEnter(["h-1", "web"]));
-    await plugin.onEvent({ msg: { m: "openServer", server: "h-1" }, value: undefined });
+    await tap(plugin, "web", { kind: "tab", id: "fleet" });
 
     expect(host.called()).toContain("nav.openServer");
   });
@@ -157,16 +196,18 @@ describe("reading", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    const drawn = texts(lastDrawn(host));
+    const drawn = texts(screen(plugin));
     expect(drawn).toContain("/opt/backup.sh");
     expect(drawn).toContain("logrotate.timer");
     // The breakdown is a translated sentence with the counts as arguments, so
     // what the tree carries is the key — the app substitutes when it draws.
     // `breakdownOff` here because one of the fixture's jobs is disabled; the
     // plain `breakdown` is the same sentence without that count.
-    expect(l10nKeys(lastDrawn(host))).toContain("l10n.breakdownOff");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.breakdownOff");
     // `MAILTO=root` is a setting, not a job.
     expect(drawn).not.toContain("MAILTO=root");
   });
@@ -183,8 +224,10 @@ describe("turning a job off", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
-    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
+    await tap(plugin, "0 3 * * *");
 
     expect(host.callsTo("ui.prompt")).toHaveLength(1);
     expect(host.callsTo("ui.prompt")[0]!.spec.message).toContain(
@@ -202,15 +245,17 @@ describe("turning a job off", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
-    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
+    await tap(plugin, "0 3 * * *");
 
     const scripts = host.callsTo("server.exec").map((c) => c.req.script);
     expect(scripts).toHaveLength(2);
     // The fingerprint it read is what it says it is replacing.
     expect(scripts[1]).toContain(`!= '${SUM}'`);
     // And the row is off now, without another read.
-    expect(l10nKeys(lastDrawn(host))).toContain("l10n.tagOff");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.tagOff");
   });
 
   // The reason compare-and-swap is here: a crontab is the only copy, and
@@ -223,18 +268,21 @@ describe("turning a job off", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
-    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
+    await tap(plugin, "0 3 * * *");
+    // The reload is a fetch the handler started and did not wait for, so it
+    // lands after the call — which is what a patch is for.
+    await new Promise((done) => setTimeout(done, 0));
 
     const scripts = host.callsTo("server.exec").map((c) => c.req.script);
     // read · write · read. Never a second write against a fingerprint that is
     // already known to be stale.
     expect(scripts).toEqual([READ_COMMAND, WRITE_OFF, READ_COMMAND]);
-    expect(
-      host.callsTo("ui.patch").some((p) =>
-        l10nKeys(p.node).includes("l10n.conflict"),
-      ),
-    ).toBe(true);
+    // And the page says why it reloaded, which is the half that makes a
+    // conflict a message rather than a list that changed under somebody.
+    expect(l10nKeys(screen(plugin))).toContain("l10n.conflict");
   });
 
   test("a write that failed says so and leaves the list alone", async () => {
@@ -245,13 +293,15 @@ describe("turning a job off", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
-    await plugin.onEvent({ msg: { m: "toggle", line: 1 } });
+    await tap(plugin, "0 3 * * *");
 
-    const drawn = texts(lastDrawn(host));
+    const drawn = texts(screen(plugin));
     expect(drawn.some((t) => t.includes("no crontab for you"))).toBe(true);
     // Still on, because the write did not happen.
-    expect(l10nKeys(lastDrawn(host))).toContain("l10n.tagOn");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.tagOn");
   });
 
   test("a line that is not a job is not toggled", async () => {
@@ -259,9 +309,14 @@ describe("turning a job off", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
     // `MAILTO=root` is line 0 and is not a job.
-    await plugin.onEvent({ msg: { m: "toggle", line: 0 } });
+    // Nothing to tap: a line that is not a job is not a row, so there is no
+    // handler to reach. It used to be checked by sending the message itself,
+    // which is a claim about the handler rather than about what is reachable.
+    expect(messageOf(screen(plugin), "MAILTO=root")).toBeUndefined();
 
     expect(host.callsTo("ui.prompt")).toHaveLength(0);
     expect(host.callsTo("server.exec")).toHaveLength(1);
@@ -282,9 +337,11 @@ describe("adding and editing", () => {
       .answerPrompt({ values: { when: "@daily", command: "/opt/new.sh" } });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "add" } });
+    await tap(plugin, "l10n.add");
 
     expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
       READ_COMMAND,
@@ -304,9 +361,13 @@ describe("adding and editing", () => {
       });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "edit", line: 1 } });
+    // A long press, which is where a list row keeps its second action: a tap
+    // turns the job off, and editing it is the other thing to do with it.
+    await tap(plugin, "0 3 * * *", { event: "long_press" });
 
     expect(host.callsTo("server.exec")[1]!.req.script).toBe(write);
   });
@@ -319,12 +380,14 @@ describe("adding and editing", () => {
     });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "add" } });
+    await tap(plugin, "l10n.add");
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
-    expect(l10nKeys(lastDrawn(host))).toContain("l10n.errBadSchedule");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.errBadSchedule");
   });
 
   test("a job with no command is refused too", async () => {
@@ -333,21 +396,25 @@ describe("adding and editing", () => {
     });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "add" } });
+    await tap(plugin, "l10n.add");
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
-    expect(l10nKeys(lastDrawn(host))).toContain("l10n.errNoCommand");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.errNoCommand");
   });
 
   test("cancelling writes nothing", async () => {
     const host = base().answerPrompt({ cancelled: true });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "add" } });
+    await tap(plugin, "l10n.add");
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
   });
@@ -364,12 +431,14 @@ describe("removing jobs", () => {
       .confirmNext();
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "select" } });
-    await plugin.onEvent({ msg: { m: "pick", line: 1 } });
-    await plugin.onEvent({ msg: { m: "pick", line: 2 } });
-    await plugin.onEvent({ msg: { m: "remove" } });
+    await tap(plugin, "l10n.select");
+    await tap(plugin, "0 3 * * *");
+    await tap(plugin, "30 4 * * 0");
+    await tap(plugin, "l10n.remove\u001F2");
 
     expect(host.callsTo("server.exec").map((c) => c.req.script)).toEqual([
       READ_COMMAND,
@@ -383,27 +452,65 @@ describe("removing jobs", () => {
       .answerPrompt({ cancelled: true });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "select" } });
-    await plugin.onEvent({ msg: { m: "pick", line: 1 } });
-    await plugin.onEvent({ msg: { m: "remove" } });
+    await tap(plugin, "l10n.select");
+    await tap(plugin, "0 3 * * *");
+    await tap(plugin, "l10n.remove\u001F1");
 
     expect(host.callsTo("server.exec")).toHaveLength(1);
   });
 
+  /// **Asserted by tapping, not by sending a message.** This test used to send
+  /// `pick` itself and check that no dialog opened, which is a claim about
+  /// `onEvent` — and it passed while every row on screen still carried its
+  /// `toggle`, so entering selection mode and tapping a row disabled the job.
   test("picking changes what a tap on a row means", async () => {
     const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
     restore = host.install();
     const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
     await plugin.onHook(enter);
 
-    await plugin.onEvent({ msg: { m: "select" } });
-    const out = await plugin.onEvent({ msg: { m: "pick", line: 1 } });
+    // Outside selection, a tap on a row asks whether to turn it off.
+    await tap(plugin, "0 3 * * *");
+    expect(host.callsTo("ui.prompt")).toHaveLength(1);
 
-    // No dialog and no write: the same tap that opened the editor a moment ago
-    // now picks.
-    expect(host.callsTo("ui.prompt")).toHaveLength(0);
-    expect(l10nKeys(out.ui!)).toContain("l10n.remove");
+    await tap(plugin, "l10n.select");
+    await tap(plugin, "0 3 * * *");
+
+    // The same tap now picks: no second dialog, and the count moves.
+    expect(host.callsTo("ui.prompt")).toHaveLength(1);
+    expect(l10nKeys(screen(plugin)).some((k) => k.startsWith("l10n.remove"))).toBe(
+      true,
+    );
+    // And the row says it is chosen, or a selection is a count with nothing
+    // behind it. The tint carries it — the app's own selected row — with the
+    // icon as the affordance beside it.
+    const row = find(screen(plugin), "cron:1|true|true");
+    expect(row).toBeDefined();
+    expect(JSON.stringify(row)).toContain('"selected":true');
+    expect(JSON.stringify(row)).toContain('"check"');
+  });
+
+  /// Leaving it puts the rows back, or the page is stuck in a mode whose only
+  /// way out is a tap that does something else.
+  test("cancelling selection gives the rows back their old tap", async () => {
+    const host = new MockHost().exec(READ_COMMAND, { stdout: READ });
+    restore = host.install();
+    const plugin = await load();
+    // The app opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "scheduled" });
+    await plugin.onHook(enter);
+
+    await tap(plugin, "l10n.select");
+    await tap(plugin, "l10n.cancel");
+
+    // Back to asking, which is what a tap on a row means outside selection.
+    await tap(plugin, "0 3 * * *");
+    expect(host.callsTo("ui.prompt")).toHaveLength(1);
   });
 });

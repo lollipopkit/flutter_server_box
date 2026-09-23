@@ -1,9 +1,9 @@
 {
   "id": "app.serverbox.scheduled",
   "version": "1.1.0",
-  "abi": 2,
-  "name": "Scheduled",
-  "description": "What runs on a timer: the user's crontab and systemd's timers.",
+  "abi": 3,
+  "name": "l10n.pluginName",
+  "description": "l10n.pluginDescription",
   "license": "MIT",
   "l10n": [
     "en",
@@ -17,18 +17,18 @@
   "contributes": {
     "settings": {
       "id": "prefs",
-      "label": "Scheduled",
+      "label": "l10n.pluginName",
       "icon": "clock"
     },
     "tab": {
       "id": "fleet",
-      "label": "Scheduled",
+      "label": "l10n.pluginName",
       "icon": "clock",
       "default_on": false
     },
     "page": {
       "id": "scheduled",
-      "label": "Scheduled",
+      "label": "l10n.pluginName",
       "icon": "clock",
       "default_on": true,
       "needs": [

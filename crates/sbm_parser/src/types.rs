@@ -56,7 +56,11 @@ pub fn cpu_used_percent(pre: &CpuCore, now: &CpuCore) -> f64 {
     }
     let idle_delta = now.idle as i64 - pre.idle as i64;
     let used = idle_delta as f64 / total_delta as f64;
-    if used.is_nan() { 0.0 } else { 100.0 - used * 100.0 }
+    if used.is_nan() {
+        0.0
+    } else {
+        100.0 - used * 100.0
+    }
 }
 
 /// Memory in KiB (Dart `Memory`, from meminfo)
@@ -73,7 +77,11 @@ impl Memory {
         if self.total == 0 {
             return 0.0;
         }
-        let avail = if self.avail == 0 { self.free } else { self.avail };
+        let avail = if self.avail == 0 {
+            self.free
+        } else {
+            self.avail
+        };
         avail as f64 / self.total as f64
     }
 
@@ -422,7 +430,11 @@ pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
         if !disk.is_storage() {
             return;
         }
-        let unique = format!("{}:{}", disk.path, disk.kname.as_deref().unwrap_or("unknown"));
+        let unique = format!(
+            "{}:{}",
+            disk.path,
+            disk.kname.as_deref().unwrap_or("unknown")
+        );
         if !seen.contains(&unique) {
             seen.push(unique);
             *used += disk.used;

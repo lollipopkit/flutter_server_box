@@ -497,7 +497,9 @@ pub fn install_custom_cmds_script(
             );
             // What the caller's next save is checked against, so it does not
             // have to read the directory back to find out.
-            out.push_str(&format!("echo \"{CUSTOM_CMD_FP_PREFIX} $(sb_fp \"$d\")\"\n"));
+            out.push_str(&format!(
+                "echo \"{CUSTOM_CMD_FP_PREFIX} $(sb_fp \"$d\")\"\n"
+            ));
             out
         }
     }
@@ -719,10 +721,7 @@ pub fn inline_cmds_script(system: SystemType, cmds: &[(String, String)]) -> Stri
 
     match system {
         SystemType::Windows => {
-            let mut out = format!(
-                "{}$t = [IO.Path]::GetTempPath()\n",
-                windows_cmd_runner("")
-            );
+            let mut out = format!("{}$t = [IO.Path]::GetTempPath()\n", windows_cmd_runner(""));
             for (name, cmd) in cmds {
                 out.push_str(&format!(
                     "$c = Join-Path $t (\"server_box_plugin_{{0}}.ps1\" -f $PID)\n\
@@ -1423,5 +1422,3 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
         }
     }
 }
-
-

@@ -313,6 +313,11 @@ class _ScriptedServerNotifier extends ServerNotifier {
 /// is what is under test: a probe that answers "present" skips the install, and
 /// a test that counted calls would pass whichever branch ran.
 class _ScriptedExec implements ServerExec {
+  /// These drive a scripted transport rather than a real one; a test that
+  /// cancels asserts on what the caller did, not on what a server did.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsCommand;
+
   _ScriptedExec({
     required this.exit,
     this.installFails = false,
@@ -365,6 +370,11 @@ class _ScriptedExec implements ServerExec {
 /// A server this device cannot reach, which is what a poll meets on a phone
 /// that has moved between networks.
 class _UnreachableExec implements ServerExec {
+  /// These drive a scripted transport rather than a real one; a test that
+  /// cancels asserts on what the caller did, not on what a server did.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsCommand;
+
   @override
   Future<ExecResult> run(
     String script, {

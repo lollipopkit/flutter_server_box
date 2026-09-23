@@ -17,8 +17,22 @@ use crate::permission::Permission;
 /// JSON.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HostFn {
-    /// `{server, script, timeoutMs?}` → `{code, stdout, stderr}`
+    /// `{server, script, timeoutMs?, cancelKey?}` → `{code, stdout, stderr}`
     ServerExec,
+
+    /// `{key}` → `{stopped: <n>}`
+    ///
+    /// Stops every [`ServerExec`](HostFn::ServerExec) this instance started
+    /// under `cancelKey`. The runs reject with `cancelled`, carrying whether
+    /// the command was stopped **on the server** or only stopped being waited
+    /// for — which is not the same thing and not the host's to decide: an SSH
+    /// channel carries a signal, one HTTP request to an agent does not.
+    ///
+    /// Keyed by a label the plugin picks rather than by a handle the host
+    /// issues, because the thing being cancelled is usually not the thing the
+    /// user pressed: a scan is started by a hook and stopped by a button
+    /// several draws later, with no value shared between them.
+    ServerCancel,
 
     /// `{url, method, headers?, body?, bodyEncoding?, via?, server?,
     ///   pinSha256?, probeCert?, timeoutMs?}`
@@ -138,6 +152,7 @@ impl HostFn {
     /// being missing on a user's device.
     pub const ALL: &'static [HostFn] = &[
         Self::ServerExec,
+        Self::ServerCancel,
         Self::HttpFetch,
         Self::UiPatch,
         Self::UiPrompt,
@@ -158,7 +173,7 @@ impl HostFn {
     /// The object on `sb` this hangs off.
     pub const fn namespace(self) -> &'static str {
         match self {
-            Self::ServerExec | Self::ServerList => "server",
+            Self::ServerExec | Self::ServerCancel | Self::ServerList => "server",
             Self::HttpFetch => "http",
             Self::UiPatch | Self::UiPrompt | Self::UiPickServer | Self::UiToast => "ui",
             Self::StoreGet | Self::StoreSet | Self::StoreList => "store",
@@ -172,6 +187,7 @@ impl HostFn {
     pub const fn method(self) -> &'static str {
         match self {
             Self::ServerExec => "exec",
+            Self::ServerCancel => "cancel",
             Self::ServerList => "list",
             Self::HttpFetch => "fetch",
             Self::UiPatch => "patch",
@@ -229,6 +245,10 @@ impl HostFn {
     pub const fn permission(self) -> Option<Permission> {
         match self {
             Self::ServerExec => Some(Permission::ServerExec),
+            // Stopping a command is part of running one. A plugin without the
+            // grant has nothing to cancel, so this gate never refuses a call
+            // that could have done anything — it keeps the pair together.
+            Self::ServerCancel => Some(Permission::ServerExec),
             Self::ServerList => Some(Permission::ServerList),
             // Opening a terminal is causing commands to run on that machine,
             // which is what `server.exec` is. That it is the user who types
@@ -252,7 +272,15 @@ impl HostFn {
     /// Every namespace that appears on `sb`, including the two installed
     /// directly.
     pub const NAMESPACES: &'static [&'static str] = &[
-        "server", "http", "ui", "store", "diag", "nav", "clipboard", "config", "log",
+        "server",
+        "http",
+        "ui",
+        "store",
+        "diag",
+        "nav",
+        "clipboard",
+        "config",
+        "log",
     ];
 
     pub fn parse(path: &str) -> Option<Self> {
@@ -271,8 +299,13 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
-    pub const ALL: &'static [LogLevel] =
-        &[Self::Trace, Self::Debug, Self::Info, Self::Warn, Self::Error];
+    pub const ALL: &'static [LogLevel] = &[
+        Self::Trace,
+        Self::Debug,
+        Self::Info,
+        Self::Warn,
+        Self::Error,
+    ];
 
     /// The method name on `sb.log`.
     pub const fn name(self) -> &'static str {
@@ -356,6 +389,7 @@ mod tests {
         for f in HostFn::ALL {
             let _: &'static str = match f {
                 HostFn::ServerExec
+                | HostFn::ServerCancel
                 | HostFn::ServerList
                 | HostFn::NavOpenTerminal
                 | HostFn::HttpFetch
@@ -373,7 +407,7 @@ mod tests {
                 | HostFn::ClipboardWrite => f.method(),
             };
         }
-        assert_eq!(HostFn::ALL.len(), 16);
+        assert_eq!(HostFn::ALL.len(), 17);
     }
 
     /// Every namespace a function hangs off has to be one the bindings create,

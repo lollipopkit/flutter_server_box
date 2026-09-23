@@ -5,7 +5,7 @@ license = "MIT"
 
 [[version]]
 version = "1.1.0"
-abi = 2
+abi = 3
 url = "https://github.com/lollipopkit/serverbox-plugins/releases/download/app.serverbox.ports-1.1.0/app.serverbox.ports-1.1.0.sbp"
-sha256 = "ad02720915534585ae07f09bb09cc74c31997057a8f5614c42789a1d70ed4572"
-size = 15061
+sha256 = "bcc8e1d0aabdbb9002611bb29eb8e9d8bc6400f5b56b790f79744474dce9ee13"
+size = 22159

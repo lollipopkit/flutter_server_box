@@ -21,7 +21,19 @@ pub enum BridgeError {
     /// The host tried and failed. Becomes a rejected `Promise`, so the plugin
     /// can `catch` it — a BMC that did not answer is a card that says so, not
     /// a plugin that dies.
-    Failed { kind: String, message: String },
+    ///
+    /// `data` is a JSON object whose own fields are copied onto the `Error`
+    /// beside `kind`. It exists because a `kind` is a *class* of failure and
+    /// some failures carry one more fact that changes what a plugin should do
+    /// — a cancelled `sb.server.exec` says whether the command was stopped on
+    /// the server or merely stopped being waited for, and those are different
+    /// things to tell a user. Folding that into the kind string would make
+    /// every plugin parse it.
+    Failed {
+        kind: String,
+        message: String,
+        data: Option<String>,
+    },
 
     /// The call was outside what the grant covers, decided by the app rather
     /// than here: a server handle the app no longer recognises, a directory
@@ -32,7 +44,24 @@ pub enum BridgeError {
 
 impl BridgeError {
     pub fn failed(kind: impl Into<String>, message: impl Into<String>) -> Self {
-        Self::Failed { kind: kind.into(), message: message.into() }
+        Self::Failed {
+            kind: kind.into(),
+            message: message.into(),
+            data: None,
+        }
+    }
+
+    /// The same, carrying a JSON object of extra fields for the `Error`.
+    pub fn failed_with(
+        kind: impl Into<String>,
+        message: impl Into<String>,
+        data: impl Into<String>,
+    ) -> Self {
+        Self::Failed {
+            kind: kind.into(),
+            message: message.into(),
+            data: Some(data.into()),
+        }
     }
 }
 

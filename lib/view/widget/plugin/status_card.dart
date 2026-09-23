@@ -4,13 +4,16 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
+import 'package:server_box/data/model/plugin/health.dart';
 import 'package:server_box/data/model/plugin/installed.dart';
+import 'package:server_box/data/model/plugin/l10n.dart';
 import 'package:server_box/data/model/server/plugin_status_reading.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/store/plugin.dart';
+import 'package:server_box/data/store/plugin_health.dart';
 import 'package:server_box/src/rust/api/plugin.dart' as ffi;
 import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
@@ -180,6 +183,7 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
     }
 
     BigInt? instance;
+    final started = Stopwatch()..start();
     try {
       instance = await _service.load(
         manifestJson: plugin.manifestJson,
@@ -227,6 +231,11 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
       }
 
       final result = await _service.statusParse(instance, mine);
+      recordPluginEvent(
+        plugin.id,
+        stage: PluginStage.status,
+        elapsed: started.elapsed,
+      );
       if (!mounted || generation != _generation) return;
       setState(() {
         _result = _readingOf(result);
@@ -234,6 +243,15 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
       });
     } catch (e, s) {
       Loggers.app.warning('Status plugin ${plugin.id}', e, s);
+      // A status card keeps the last readings that worked and shows the
+      // failure beside them, which is right on screen and useless in a report
+      // written a week later. This is the record of it.
+      recordPluginEvent(
+        plugin.id,
+        stage: PluginStage.status,
+        elapsed: started.elapsed,
+        failure: pluginFailureTag(e),
+      );
       if (!mounted || generation != _generation) return;
       // Kept, not cleared: the readings from the last collection that worked
       // are more useful than a blank card, and the failure is shown beside
@@ -268,9 +286,14 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
     // that must not disagree with what is on screen.
     final result = _fromAgent ?? _result;
     final error = _fromAgent != null ? null : _error;
+    // A status contribution's readings are strings the plugin returned, so an
+    // `l10n.` key is how it names one in the user's language — the same rule
+    // the rendered surfaces follow, and the reason a card that only drew what
+    // it was handed showed keys where every other surface showed sentences.
+    final strings = widget.plugin.strings;
     final title = result?.title.isNotEmpty == true
-        ? result!.title
-        : widget.plugin.manifest.name;
+        ? strings.resolve(result!.title)
+        : widget.plugin.name;
 
     return CardX(
       child: Padding(
@@ -289,9 +312,9 @@ class _PluginStatusCardState extends ConsumerState<PluginStatusCard> {
             if (result == null && error == null) UIs.centerLoading,
             for (final item
                 in result?.items ?? const <PluginStatusItemReading>[])
-              _Reading(item: item),
+              _Reading(item: item, strings: strings),
             if (result?.note case final note?)
-              Text(note, style: UIs.text12Grey),
+              Text(strings.resolve(note), style: UIs.text12Grey),
             if (error != null)
               Text(
                 error,
@@ -326,9 +349,12 @@ PluginStatusReading _readingOf(ffi.PluginStatusResult r) => PluginStatusReading(
 
 /// One reading, drawn the way the app draws its own.
 class _Reading extends StatelessWidget {
-  const _Reading({required this.item});
+  const _Reading({required this.item, required this.strings});
 
   final PluginStatusItemReading item;
+
+  /// The plugin's own, for a label or a value it named with a key.
+  final PluginL10n strings;
 
   @override
   Widget build(BuildContext context) {
@@ -343,15 +369,16 @@ class _Reading extends StatelessWidget {
       _ => null,
     };
     final percent = item.percent;
+    final value = strings.resolve(item.value);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         KvRow(
-          k: item.label,
-          v: item.value,
+          k: strings.resolve(item.label),
+          v: value,
           vBuilder: tone == null
               ? null
-              : () => Text(item.value, style: TextStyle(fontSize: 11, color: tone)),
+              : () => Text(value, style: TextStyle(fontSize: 11, color: tone)),
         ),
         // Absent where the reading is not a proportion — a temperature, a
         // count — and dropped rather than clamped when it was out of range.

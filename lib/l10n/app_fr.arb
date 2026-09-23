@@ -100,7 +100,6 @@
   "pkgSecurityUnknown": "{manager} n’indique pas quelles mises à jour corrigent des failles de sécurité",
   "pluginInstall": "Installer un plugin",
   "pluginInstalled": "Installé",
-  "pluginBundled": "Fourni avec l’app",
   "pluginDev": "Développement",
   "pluginNeedsConsent": "Cette mise à jour demande plus d’autorisations que vous n’en avez accordé. Réinstallez-la pour les examiner.",
   "pluginPermissionsAsk": "Ce plugin demande :",

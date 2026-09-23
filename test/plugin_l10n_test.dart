@@ -22,13 +22,20 @@ const _plugins = [
   'packages/plugins/scheduled',
 ];
 
-/// Every key the plugin's own source asks for.
+/// Every key the plugin asks for: from its source, and from its manifest.
 ///
-/// Read from `src/`, not from `dist/plugin.js`: the bundler renames imported
-/// functions, so `l10n("measuring")` is `n("measuring")` by the time it is
-/// built and no honest pattern finds it there.
+/// The source is read from `src/`, not from `dist/plugin.js`: the bundler
+/// renames imported functions, so `l10n("measuring")` is `n("measuring")` by
+/// the time it is built and no honest pattern finds it there.
+///
+/// The manifest names keys too — what the plugin is called, what each
+/// contribution's button says — and those go missing the same way, drawing
+/// `l10n.pluginName` as a tab title. They are a *different* file from the one
+/// the bundler writes, which is why looking only at the script left the whole
+/// set unchecked.
 Set<String> _keysUsedIn(String dir) {
   final out = <String>{};
+  out.addAll(_manifestKeys(dir));
   // Every quoted literal in *key position* inside an `l10n(...)` call.
   //
   // Not just the first argument: `l10n(off ? "a" : "b")` is how a key gets
@@ -51,6 +58,31 @@ Set<String> _keysUsedIn(String dir) {
       for (final k in literal.allMatches(at < 0 ? args : args.substring(at))) {
         out.add(k.group(1)!);
       }
+    }
+  }
+  return out;
+}
+
+/// The keys `manifest.json` names: its own two strings and each contribution's
+/// label. `manifestL10nKeys` in `packages/plugin-tools` is the same walk, one
+/// step earlier — it refuses to pack a manifest whose keys have no English.
+Set<String> _manifestKeys(String dir) {
+  final out = <String>{};
+  void take(Object? value) {
+    if (value is String && value.startsWith(PluginL10n.prefix)) {
+      out.add(value.substring(PluginL10n.prefix.length));
+    }
+  }
+
+  final manifest =
+      jsonDecode(File('$dir/manifest.json').readAsStringSync())
+          as Map<String, dynamic>;
+  take(manifest['name']);
+  take(manifest['description']);
+  final contributes = manifest['contributes'];
+  if (contributes is Map) {
+    for (final one in contributes.values) {
+      if (one is Map) take(one['label']);
     }
   }
   return out;
@@ -120,9 +152,29 @@ void main() {
         }
       });
 
+      /// The other way a plugin arrives: a desktop build pointed at its
+      /// directory reads `dist/`, and the build used to stage the script and
+      /// the manifest into it and nothing else — so a plugin loaded that way
+      /// drew `l10n.summaryLabel` in every row while the packaged copy of the
+      /// same plugin was translated. Both are staged from one list now.
+      test('the directory a development install reads carries them', () {
+        final staged = Directory('$dir/dist/l10n');
+
+        expect(
+          staged.existsSync(),
+          isTrue,
+          reason: 'run `bun run build` in $dir',
+        );
+        final there = staged
+            .listSync()
+            .whereType<File>()
+            .map((f) => f.path.split('/').last.replaceAll('.json', ''));
+        expect(there, unorderedEquals(locales));
+      });
+
       /// The packer left these out entirely until it was fixed, so a plugin
       /// installed from a `.sbp` was English-only while the same directory
-      /// installed as a development plugin was not.
+      /// loaded as a development plugin was not.
       test('the package carries them', () {
         final sbp = Directory('$dir/dist')
             .listSync()

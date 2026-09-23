@@ -62,9 +62,17 @@ Map<String, Object?> _listing(
 PluginRepoRecord _repo(String host, DateTime at) =>
     PluginRepoRecord(url: 'https://$host/plugins', addedAt: at);
 
-PluginInstall _installed(String id, String version) => PluginInstall(
+/// [repo] defaults to the first repository's address, because that is the case
+/// every version test is about: a copy this repository installed, which is the
+/// only kind it can offer an update for.
+PluginInstall _installed(
+  String id,
+  String version, {
+  String? repo = 'https://a.example/plugins',
+}) => PluginInstall(
   id: id,
   version: version,
+  repo: repo,
   granted: const {},
   installedAt: DateTime(2026),
 );
@@ -200,6 +208,62 @@ void main() {
 
       expect(entries.single.outdated, isFalse);
       expect(entries.single.appTooOld, isFalse);
+    });
+
+    /// The copy on the device is not this repository's, so its version is not
+    /// a version this repository is behind or ahead of. It happened for real:
+    /// a working tree at 1.1.0 was registered as a development directory while
+    /// the repository listed 1.0.1, the row offered an update, and taking it
+    /// wrote a record naming 1.0.1 from GitHub over a plugin the app went on
+    /// loading from the tree.
+    test('a copy from somewhere else is never an update', () {
+      for (final origin in [
+        PluginInstall.devRepo,
+        PluginInstall.fileRepo,
+        'https://b.example/plugins',
+        null,
+      ]) {
+        final entries = PluginStore.merge(
+          repos: [first],
+          indexes: {
+            first.url: _index([
+              _listing('a.b.c', versions: [('1.0.0', 1), ('1.1.0', 2)]),
+            ]),
+          },
+          installed: {'a.b.c': _installed('a.b.c', '1.0.0', repo: origin)},
+          abi: 2,
+        );
+
+        final entry = entries.single;
+        expect(entry.mine, isFalse, reason: '$origin');
+        expect(entry.elsewhere, isTrue, reason: '$origin');
+        expect(entry.outdated, isFalse, reason: '$origin');
+        expect(PluginStore.outdated(entries), isEmpty, reason: '$origin');
+        // Still installed, and still listed: what changes is who may replace
+        // it, which is a question the row asks rather than answers.
+        expect(entry.installed, isNotNull, reason: '$origin');
+      }
+    });
+
+    /// And "up to date" is not the answer either — that reading would leave a
+    /// plugin installed from a file looking current against a repository that
+    /// has never met it.
+    test('a copy from somewhere else is not up to date either', () {
+      final entries = PluginStore.merge(
+        repos: [first],
+        indexes: {
+          first.url: _index([
+            _listing('a.b.c', versions: [('1.0.0', 1), ('2.0.0', 9)]),
+          ]),
+        },
+        installed: {
+          'a.b.c': _installed('a.b.c', '1.0.0', repo: PluginInstall.fileRepo),
+        },
+        abi: 2,
+      );
+
+      expect(entries.single.appTooOld, isFalse);
+      expect(entries.single.elsewhere, isTrue);
     });
 
     /// `1.10` after `1.9`, which a string comparison gets backwards.

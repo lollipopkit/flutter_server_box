@@ -53,8 +53,10 @@ pub(crate) fn install(ctx: &Ctx<'_>, state: Arc<State>, outbox: Outbox) -> rquic
         // differs. See `HostFn::available_in`.
         if !f.available_in(state.profile) {
             let target: Object = sb.get(f.namespace())?;
-            let refusal =
-                Refusal::Unavailable { function: f.path(), host: state.profile.name() };
+            let refusal = Refusal::Unavailable {
+                function: f.path(),
+                host: state.profile.name(),
+            };
             let state = Arc::clone(&state);
             target.set(
                 f.method(),
@@ -71,8 +73,10 @@ pub(crate) fn install(ctx: &Ctx<'_>, state: Arc<State>, outbox: Outbox) -> rquic
             // Not granted: this name is a function that throws, and no code
             // path in the real implementation is reachable at all.
             Some(p) if !state.grants.allows(p) => {
-                let refusal =
-                    Refusal::PermissionDenied { function: f.path(), permission: p.name() };
+                let refusal = Refusal::PermissionDenied {
+                    function: f.path(),
+                    permission: p.name(),
+                };
                 let state = Arc::clone(&state);
                 target.set(
                     f.method(),
@@ -100,6 +104,7 @@ pub(crate) fn install(ctx: &Ctx<'_>, state: Arc<State>, outbox: Outbox) -> rquic
     install_log(ctx, &sb, Arc::clone(&state))?;
 
     globals.set("sb", sb)?;
+    install_console(ctx, &globals, state)?;
     Ok(())
 }
 
@@ -135,7 +140,11 @@ fn dispatch<'js>(
     // `sb.clipboard.read()` — so the argument is optional and a missing one is
     // the same as `undefined`. The bridge is handed JSON either way, so it
     // never has to tell an empty body from an absent one.
-    let request = match arg.0.and_then(|v| ctx.json_stringify(v).transpose()).transpose()? {
+    let request = match arg
+        .0
+        .and_then(|v| ctx.json_stringify(v).transpose())
+        .transpose()?
+    {
         Some(s) => s.to_string()?.into_bytes(),
         None => b"null".to_vec(),
     };
@@ -147,7 +156,10 @@ fn dispatch<'js>(
 
     let (promise, resolve, reject) = ctx.promise()?;
     let call = state.bridge.call(
-        CallCtx { plugin_id: &state.plugin_id, instance_id: &state.instance_id },
+        CallCtx {
+            plugin_id: &state.plugin_id,
+            instance_id: &state.instance_id,
+        },
         func,
         &request,
     );
@@ -157,13 +169,20 @@ fn dispatch<'js>(
             state.record_response(func, &value);
             resolve.call::<_, ()>((decode(ctx, &value)?,))?;
         }
-        HostCall::Ready(Err(crate::bridge::BridgeError::Failed { kind, message })) => {
-            reject.call::<_, ()>((failure(ctx, &kind, &message)?,))?;
+        HostCall::Ready(Err(crate::bridge::BridgeError::Failed {
+            kind,
+            message,
+            data,
+        })) => {
+            reject.call::<_, ()>((failure(ctx, &kind, &message, data.as_deref())?,))?;
         }
         // The app refusing is the same kind of answer as the stub above, and
         // must not be catchable as an ordinary failure.
         HostCall::Ready(Err(crate::bridge::BridgeError::Denied { detail })) => {
-            let refusal = Refusal::OutOfScope { function: func.path(), detail };
+            let refusal = Refusal::OutOfScope {
+                function: func.path(),
+                detail,
+            };
             state.refuse(refusal.clone());
             return Err(throw(ctx, &refusal));
         }
@@ -187,7 +206,12 @@ pub(crate) fn settle<'js>(
     outstanding: Outstanding,
     answer: Result<Vec<u8>, crate::bridge::BridgeError>,
 ) -> rquickjs::Result<Option<(HostFn, Vec<u8>)>> {
-    let Outstanding { func, resolve, reject, .. } = outstanding;
+    let Outstanding {
+        func,
+        resolve,
+        reject,
+        ..
+    } = outstanding;
     let resolve = resolve.restore(ctx)?;
     let reject = reject.restore(ctx)?;
     match answer {
@@ -195,8 +219,12 @@ pub(crate) fn settle<'js>(
             resolve.call::<_, ()>((decode(ctx, &value)?,))?;
             Ok(Some((func, value)))
         }
-        Err(crate::bridge::BridgeError::Failed { kind, message }) => {
-            reject.call::<_, ()>((failure(ctx, &kind, &message)?,))?;
+        Err(crate::bridge::BridgeError::Failed {
+            kind,
+            message,
+            data,
+        }) => {
+            reject.call::<_, ()>((failure(ctx, &kind, &message, data.as_deref())?,))?;
             Ok(None)
         }
         // Rejected rather than thrown, because by now there is no plugin frame
@@ -204,9 +232,12 @@ pub(crate) fn settle<'js>(
         // carrying on is that the refusal is recorded and the host fails the
         // call whatever the plugin answers.
         Err(crate::bridge::BridgeError::Denied { detail }) => {
-            let refusal = Refusal::OutOfScope { function: func.path(), detail };
+            let refusal = Refusal::OutOfScope {
+                function: func.path(),
+                detail,
+            };
             state.refuse(refusal.clone());
-            let err = error_value(ctx, refusal.kind(), &refusal.to_string())?;
+            let err = refusal_value(ctx, &refusal)?;
             reject.call::<_, ()>((err,))?;
             Ok(None)
         }
@@ -236,7 +267,10 @@ fn install_log(ctx: &Ctx<'_>, sb: &Object<'_>, state: Arc<State>) -> rquickjs::R
             level.name(),
             Func::from(move |message: String| {
                 state.bridge.log(
-                    CallCtx { plugin_id: &state.plugin_id, instance_id: &state.instance_id },
+                    CallCtx {
+                        plugin_id: &state.plugin_id,
+                        instance_id: &state.instance_id,
+                    },
                     level,
                     &message,
                 );
@@ -245,6 +279,78 @@ fn install_log(ctx: &Ctx<'_>, sb: &Object<'_>, state: Arc<State>) -> rquickjs::R
     }
     let _ = ctx;
     Ok(())
+}
+
+/// `console`, forwarded to `sb.log`.
+///
+/// **The first thing anybody writing JavaScript types.** Without it a stray
+/// `console.log` is a `ReferenceError` that takes the whole call down — so a
+/// plugin author's habitual debugging statement is a crash, and the message
+/// that would have said why never arrives. Every method maps onto a level the
+/// app already has; `log` is `info`, as it is everywhere else.
+///
+/// Arguments are joined with a space, because `console.log("at", n)` is how it
+/// is actually written.
+fn install_console<'js>(
+    ctx: &Ctx<'js>,
+    globals: &Object<'js>,
+    state: Arc<State>,
+) -> rquickjs::Result<()> {
+    let console = Object::new(ctx.clone())?;
+    for (name, level) in [
+        ("log", LogLevel::Info),
+        ("info", LogLevel::Info),
+        ("debug", LogLevel::Debug),
+        ("trace", LogLevel::Trace),
+        ("warn", LogLevel::Warn),
+        ("error", LogLevel::Error),
+    ] {
+        let state = Arc::clone(&state);
+        console.set(
+            name,
+            Func::from(move |args: rquickjs::function::Rest<Value<'_>>| {
+                let message = args.iter().map(stringify).collect::<Vec<_>>().join(" ");
+                state.bridge.log(
+                    CallCtx {
+                        plugin_id: &state.plugin_id,
+                        instance_id: &state.instance_id,
+                    },
+                    level,
+                    &message,
+                );
+            }),
+        )?;
+    }
+    globals.set("console", console)?;
+    Ok(())
+}
+
+/// One argument as `console` would print it.
+///
+/// A string goes through as it is — quoting it would be noise in a log line.
+/// Everything else goes through JSON, which is what a plugin author wants to
+/// see and what `[object Object]` would have hidden. Anything JSON cannot
+/// carry — `undefined`, a function, a cycle — falls back to a word for it
+/// rather than failing: a logging statement must never be the thing that
+/// breaks.
+fn stringify(value: &Value<'_>) -> String {
+    if let Some(text) = value.as_string().and_then(|s| s.to_string().ok()) {
+        return text;
+    }
+    if let Ok(Some(json)) = value.ctx().json_stringify(value.clone()) {
+        if let Ok(text) = json.to_string() {
+            return text;
+        }
+    }
+    if value.is_undefined() {
+        return "undefined".to_string();
+    }
+    if value.is_function() {
+        return "[function]".to_string();
+    }
+    // A cycle, or something else JSON refuses. The type is more use than
+    // nothing, and this is a log line rather than a value anybody parses.
+    format!("[{}]", value.type_name())
 }
 
 /// The app's JSON answer as a JavaScript value.
@@ -257,10 +363,36 @@ fn decode<'js>(ctx: &Ctx<'js>, value: &[u8]) -> rquickjs::Result<Value<'js>> {
 
 /// What a rejected `Promise` carries: an `Error` with `kind` and `message`, so
 /// a plugin can branch on `e.kind === "timeout"` without parsing a string.
-fn failure<'js>(ctx: &Ctx<'js>, kind: &str, message: &str) -> rquickjs::Result<Value<'js>> {
+///
+/// `data` is a JSON object whose own fields are copied on beside `kind`, for
+/// the failures that carry one more fact — see [`BridgeError::Failed`]. Three
+/// names are never overwritten from it (`name`, `message`, `kind`), because a
+/// plugin reads those to decide what happened at all and an app that could
+/// move them would be able to make a failure describe itself as something
+/// else. Anything that is not a JSON object is ignored: a malformed extra is
+/// not a reason to lose the failure it was attached to.
+fn failure<'js>(
+    ctx: &Ctx<'js>,
+    kind: &str,
+    message: &str,
+    data: Option<&str>,
+) -> rquickjs::Result<Value<'js>> {
     let err = error_value(ctx, "HostError", message)?;
     if let Some(obj) = err.as_object() {
         obj.set("kind", kind)?;
+        if let Some(raw) = data.filter(|d| !d.is_empty()) {
+            if let Ok(parsed) = ctx.json_parse(raw.as_bytes().to_vec()) {
+                if let Some(extra) = parsed.as_object() {
+                    for entry in extra.props::<String, Value<'js>>() {
+                        let Ok((name, value)) = entry else { continue };
+                        if matches!(name.as_str(), "name" | "message" | "kind") {
+                            continue;
+                        }
+                        obj.set(name, value)?;
+                    }
+                }
+            }
+        }
     }
     Ok(err)
 }
@@ -274,9 +406,22 @@ fn error_value<'js>(ctx: &Ctx<'js>, name: &str, message: &str) -> rquickjs::Resu
     Ok(value)
 }
 
+/// A refusal with fields plugin code can branch on without parsing prose.
+fn refusal_value<'js>(ctx: &Ctx<'js>, refusal: &Refusal) -> rquickjs::Result<Value<'js>> {
+    let value = error_value(ctx, refusal.kind(), &refusal.to_string())?;
+    if let Some(obj) = value.as_object() {
+        obj.set("kind", refusal.code())?;
+        obj.set("operation", refusal.function())?;
+        if let Some(permission) = refusal.permission() {
+            obj.set("permission", permission)?;
+        }
+    }
+    Ok(value)
+}
+
 /// Raises a refusal as a JavaScript exception.
 fn throw(ctx: &Ctx<'_>, refusal: &Refusal) -> rquickjs::Error {
-    match error_value(ctx, refusal.kind(), &refusal.to_string()) {
+    match refusal_value(ctx, refusal) {
         Ok(v) => ctx.throw(v),
         Err(e) => e,
     }

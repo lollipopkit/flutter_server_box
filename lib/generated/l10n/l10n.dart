@@ -1185,6 +1185,48 @@ abstract class AppLocalizations {
   /// **'Update all'**
   String get pluginUpdateAll;
 
+  /// No description provided for @pluginUpdating.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating…'**
+  String get pluginUpdating;
+
+  /// No description provided for @pluginStopAfterThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop after this one'**
+  String get pluginStopAfterThis;
+
+  /// No description provided for @pluginStopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping after this one'**
+  String get pluginStopping;
+
+  /// No description provided for @pluginUpdateProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{at} of {total} · {name}'**
+  String pluginUpdateProgress(int at, int total, String name);
+
+  /// No description provided for @pluginWaitingForYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} — waiting for you'**
+  String pluginWaitingForYou(String name);
+
+  /// No description provided for @pluginUpdatedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} updated'**
+  String pluginUpdatedCount(int count);
+
+  /// No description provided for @pluginUpdatedSome.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} updated, {failed} failed'**
+  String pluginUpdatedSome(int done, int failed);
+
   /// No description provided for @pluginNeedsNewerApp.
   ///
   /// In en, this message translates to:
@@ -1239,17 +1281,35 @@ abstract class AppLocalizations {
   /// **'Installed'**
   String get pluginInstalled;
 
-  /// No description provided for @pluginBundled.
-  ///
-  /// In en, this message translates to:
-  /// **'Bundled'**
-  String get pluginBundled;
-
   /// No description provided for @pluginDev.
   ///
   /// In en, this message translates to:
   /// **'Development'**
   String get pluginDev;
+
+  /// No description provided for @pluginFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Local file'**
+  String get pluginFromFile;
+
+  /// No description provided for @pluginInstalledFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'installed: {source}'**
+  String pluginInstalledFrom(String source);
+
+  /// No description provided for @pluginReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get pluginReplace;
+
+  /// No description provided for @pluginReplaceTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The copy on this device came from {from}. Installing from {to} replaces its files, and updates will come from there afterwards.'**
+  String pluginReplaceTip(String from, String to);
 
   /// No description provided for @pluginNeedsConsent.
   ///
@@ -1257,11 +1317,107 @@ abstract class AppLocalizations {
   /// **'This update asks for more than you agreed to. Reinstall it to review.'**
   String get pluginNeedsConsent;
 
+  /// No description provided for @pluginReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Plugin report'**
+  String get pluginReport;
+
+  /// No description provided for @pluginRollback.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back to {version}'**
+  String pluginRollback(String version);
+
+  /// No description provided for @pluginRollbackTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The version this update replaced is still on the device. Going back replaces the files and restores what you had agreed it may do.'**
+  String get pluginRollbackTip;
+
+  /// No description provided for @pluginRollbackDataWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'This version stores its data differently from {version}. The older one may not read what has been saved since the update.'**
+  String pluginRollbackDataWarn(String version);
+
+  /// No description provided for @pluginRolledBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back on {version}'**
+  String pluginRolledBack(String version);
+
   /// No description provided for @pluginPermissionsAsk.
   ///
   /// In en, this message translates to:
   /// **'This plugin asks to:'**
   String get pluginPermissionsAsk;
+
+  /// No description provided for @permExec.
+  ///
+  /// In en, this message translates to:
+  /// **'Run commands on a server you open it from'**
+  String get permExec;
+
+  /// No description provided for @permStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a connection through a server'**
+  String get permStream;
+
+  /// No description provided for @permStreamTip.
+  ///
+  /// In en, this message translates to:
+  /// **'It can reach an address that server can reach, which may be inside your network.'**
+  String get permStreamTip;
+
+  /// No description provided for @permHttp.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach the network'**
+  String get permHttp;
+
+  /// No description provided for @permHttpTip.
+  ///
+  /// In en, this message translates to:
+  /// **'It can send and receive over the internet from this device.'**
+  String get permHttpTip;
+
+  /// No description provided for @permDialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Show dialogs and messages'**
+  String get permDialog;
+
+  /// No description provided for @permDialogTip.
+  ///
+  /// In en, this message translates to:
+  /// **'What it shows looks like the app\'s own dialogs.'**
+  String get permDialogTip;
+
+  /// No description provided for @permClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Read and write the clipboard'**
+  String get permClipboard;
+
+  /// No description provided for @permClipboardTip.
+  ///
+  /// In en, this message translates to:
+  /// **'It can read whatever you copied last, including a password.'**
+  String get permClipboardTip;
+
+  /// No description provided for @permSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Include its data in your backup'**
+  String get permSync;
+
+  /// No description provided for @permSyncTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Whatever it stores leaves this device with your backup.'**
+  String get permSyncTip;
 
   /// No description provided for @pluginNoPermissions.
   ///

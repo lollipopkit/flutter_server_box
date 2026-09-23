@@ -11,34 +11,41 @@
  * config-management run — so a read-modify-write that does not say what it
  * believed it was replacing discards whatever landed in between. Same
  * reasoning as the app's own custom-command directory.
+ *
+ * Written against the SDK's tracked state: the reading is a `resource`, the
+ * selection and the warning line are `state`s, and every handler is a closure. What that removes is every line this file used to spend on *when to
+ * redraw* — and the bug that came with them, where entering selection mode
+ * changed the toolbar and left every row doing what it did before.
  */
 
 import {
+  banner,
   card,
+  classify,
   column,
   divider,
   expanded,
+  resource,
+  input,
   key,
-  onTap,
-  onChange,
-  classify,
   l10n,
   notice,
+  onChange,
+  onLongPress,
+  onTap,
   padding,
   scroll,
+  skeleton,
+  state,
   summary,
+  surface,
   tag,
   text,
   tile,
   toggle,
   tone,
   type HookEvent,
-  type Plugin,
-  type PluginEvent,
   type ServerHandle,
-  type Surface,
-  type SurfaceKind,
-  type UiOutput,
 } from "@serverbox/plugin-api";
 import {
   added,
@@ -54,13 +61,79 @@ import {
   type Schedule,
 } from "./schedule.ts";
 
-type State =
-  | { at: "loading" }
-  | { at: "ready"; schedule: Schedule; note?: string }
-  | { at: "failed"; why: string };
+/**
+ * The server this instance is about, in three states.
+ *
+ * `undefined` is *not asked yet* and `null` is *asked, and there is none* — a
+ * page about to read something, and a page that cannot. Nothing is read until
+ * the hook has answered, which is what keeps `open` from running a command
+ * (PLUGINS.md 4.4).
+ */
+const server = state<ServerHandle | null | undefined>(undefined);
 
-let state: State = { at: "loading" };
-let server: ServerHandle | null = null;
+/// Whether the systemd half is read. A preference, so `global`.
+const TIMERS_KEY = "includeTimers";
+
+/**
+ * Whether timers are included, as the read and the settings form both see it.
+ *
+ * Absent means on: a machine with systemd has timers and they belong in a list
+ * of what is scheduled. The setting is for turning them off.
+ */
+const timersOn = state(true);
+
+/** The reading. It reads [server] and [timersOn], so either one re-runs it. */
+const schedule = resource(async () => {
+  const handle = server.value;
+  if (!handle) throw new NoServer();
+  const r = await sb.server.exec({
+    server: handle,
+    script: readCommand({ timers: timersOn.value }),
+  });
+  return parse(r.stdout);
+});
+
+/**
+ * The crontab as this plugin has just written it.
+ *
+ * **An answer, not a second copy.** A write hands back the new fingerprint, so
+ * re-reading the machine after every edit would be one more command on a
+ * machine somebody is actively editing. Cleared whenever the read runs again,
+ * which is what keeps the read the source and this the shortcut.
+ */
+const written = state<Schedule | null>(null);
+
+/** The line under the summary: a conflict, a refused schedule, a failure. */
+const note = state<string | null>(null);
+
+/**
+ * Which jobs are picked, by line, and whether picking is on.
+ *
+ * The same shape the disk-usage plugin uses, deliberately: two plugins in one
+ * app that both let you pick a set and remove it should not have two ways of
+ * doing it.
+ *
+ * Cleared on every read, because a line number is an index into a file that
+ * has just been replaced.
+ */
+const selecting = state(false);
+const selected = state<ReadonlySet<number>>(new Set());
+
+/** One machine's answer, as the tab has it so far. */
+type FleetRow = {
+  name: string;
+  server: ServerHandle;
+} & (
+  | { at: "reading" }
+  | { at: "ready"; jobs: number; timers: number; next: string | null }
+  | { at: "failed"; why: string }
+);
+
+const fleet = state<readonly FleetRow[]>([]);
+
+/// A surface bound to no machine, which is what a settings page and a page
+/// opened on a server that has gone both are.
+class NoServer extends Error {}
 
 /**
  * What went wrong, in the user's language.
@@ -69,6 +142,7 @@ let server: ServerHandle | null = null;
  * ships no translations and wrong for one that does.
  */
 function whyOf(e: unknown): string {
+  if (e instanceof NoServer) return l10n("errNoServer");
   const { kind, permission } = classify(e);
   switch (kind) {
     case "denied":
@@ -88,100 +162,66 @@ function whyOf(e: unknown): string {
   }
 }
 
-/// Whether the systemd half is read. A preference, so `global`.
-const TIMERS_KEY = "includeTimers";
+const app = surface((ctx) => {
+  if (ctx.kind === "settings") return settingsView();
+  if (ctx.kind === "tab") return fleetView();
+  return pageView();
+});
+
+export const { open, onEvent, dispose } = app;
 
 /**
- * Which jobs are picked, by line, and whether picking is on.
+ * The hook: which machines, and the reading that follows.
  *
- * The same shape the disk-usage plugin uses, deliberately: two plugins in one
- * app that both let you pick a set and remove it should not have two ways of
- * doing it.
- *
- * Cleared on every read, because a line number is an index into a file that
- * has just been replaced.
+ * `settle` is not optional — the host drives an instance only while it is
+ * inside a call, so a fetch a build started would not progress until something
+ * else called in.
  */
-let selecting = false;
-let selected = new Set<number>();
+export async function onHook(event: HookEvent): Promise<void> {
+  timersOn.value = await storedTimers();
 
-function clearSelection(): void {
-  selecting = false;
-  selected = new Set();
+  if (event.contribution === "fleet") {
+    await readFleet(event.servers);
+    return;
+  }
+  server.value = event.servers[0]?.server ?? null;
+  await app.settle();
 }
 
-/**
- * The last value [includeTimers] read, for `view` — which is synchronous.
- *
- * A cache and not the source: the setting lives in the store, and this is only
- * so an empty page can say whether systemd was asked at all.
- */
-let timersOn = true;
-
-async function includeTimers(): Promise<boolean> {
+async function storedTimers(): Promise<boolean> {
   try {
-    const stored = (await sb.store.get({ scope: "global", key: TIMERS_KEY }))
-      .value;
-    // Absent means on: a machine with systemd has timers and they belong in a
-    // list of what is scheduled. The setting is for turning them off.
-    timersOn = stored !== "0";
+    const stored = await sb.store.get({ scope: "global", key: TIMERS_KEY });
+    return stored.value !== "0";
   } catch {
-    timersOn = true;
+    return true;
   }
-  return timersOn;
 }
 
-export function open(surface: Surface): UiOutput {
-  surfaceKind = surface.kind;
-  if (surface.kind === "settings") {
-    // Drawn from the hook rather than started here. **A promise a plugin leaves
-    // running when a call returns does not progress**: the runtime drives an
-    // instance only while it is inside a call, so the store read this form
-    // needs would sit outstanding until something else happened to call in.
-    // The hook is the call that always follows `open`, so that is where the
-    // waiting belongs.
-    return { ui: padding(17, text(l10n("reading"))) };
-  }
-  if (surface.kind === "tab") return { ui: fleetView() };
-  return { ui: view() };
-}
-
-/**
- * Which surface this instance is drawing.
- *
- * Set in `open`, which the host calls before the hook. Each surface is its own
- * instance, so the tab's copy of this module is not the page's.
- */
-let surfaceKind: SurfaceKind = "page";
-
-/** One machine's answer, as the tab has it so far. */
-type FleetRow = {
-  name: string;
-  server: ServerHandle;
-} & (
-  | { at: "reading" }
-  | { at: "ready"; jobs: number; timers: number; next: string | null }
-  | { at: "failed"; why: string }
-);
-
-let fleet: FleetRow[] = [];
+// ------------------------------------------------------------------- the tab
 
 /**
  * Every machine, one after another.
  *
  * **Serial, and drawn after each answer.** The alternative is a command on
  * every server at once, which on a fleet of twenty is twenty connections
- * opening because somebody looked at a tab. Patching as they land is what
- * `sb.ui.patch` is for — see PLUGINS.md 4.4 — and it means a slow machine at
- * the end costs a row that says so rather than an empty page.
+ * opening because somebody looked at a tab. Each answer sets the state and the
+ * page follows — a slow machine at the end costs a row that says so rather
+ * than an empty page.
  */
-async function readFleet(servers: { server: ServerHandle; name: string }[]): Promise<void> {
-  fleet = servers.map((s) => ({ at: "reading", name: s.name, server: s.server }));
-  await patchFleet();
-  if (servers.length === 0) return;
+async function readFleet(
+  servers: { server: ServerHandle; name: string }[],
+): Promise<void> {
+  const rows: FleetRow[] = servers.map((s) => ({
+    at: "reading",
+    name: s.name,
+    server: s.server,
+  }));
+  fleet.value = [...rows];
+  if (rows.length === 0) return;
 
-  const script = readCommand({ timers: await includeTimers() });
-  for (let i = 0; i < servers.length; i++) {
-    const at = servers[i]!;
+  const script = readCommand({ timers: timersOn.peek() });
+  for (let i = 0; i < rows.length; i++) {
+    const at = rows[i]!;
     try {
       const r = await sb.server.exec({ server: at.server, script });
       const parsed = parse(r.stdout);
@@ -189,7 +229,7 @@ async function readFleet(servers: { server: ServerHandle; name: string }[]): Pro
         .map((t) => t.next)
         .filter((n) => n && n !== "-")
         .sort()[0];
-      fleet[i] = {
+      rows[i] = {
         at: "ready",
         name: at.name,
         server: at.server,
@@ -198,17 +238,10 @@ async function readFleet(servers: { server: ServerHandle; name: string }[]): Pro
         next: next ?? null,
       };
     } catch (e) {
-      fleet[i] = { at: "failed", name: at.name, server: at.server, why: whyOf(e) };
+      rows[i] = { at: "failed", name: at.name, server: at.server, why: whyOf(e) };
     }
-    await patchFleet();
-  }
-}
-
-async function patchFleet(): Promise<void> {
-  try {
-    await sb.ui.patch({ path: "", node: fleetView() });
-  } catch {
-    // Nobody is looking at the tab any more.
+    // A new array each time, because that is what says it changed.
+    fleet.value = [...rows];
   }
 }
 
@@ -220,7 +253,8 @@ async function patchFleet(): Promise<void> {
  * the question a row raises.
  */
 function fleetView() {
-  if (fleet.length === 0) {
+  const rows = fleet.value;
+  if (rows.length === 0) {
     return notice({
       icon: "info",
       title: l10n("fleetEmptyTitle"),
@@ -228,7 +262,7 @@ function fleetView() {
     });
   }
 
-  const ready = fleet.filter((r) => r.at === "ready");
+  const ready = rows.filter((r) => r.at === "ready");
   const jobs = ready.reduce((n, r) => n + (r.at === "ready" ? r.jobs : 0), 0);
   const timers = ready.reduce((n, r) => n + (r.at === "ready" ? r.timers : 0), 0);
 
@@ -239,13 +273,17 @@ function fleetView() {
       // Said while it is still going, because a total that grows without
       // explanation reads as a number that cannot be trusted.
       detail:
-        ready.length === fleet.length
-          ? l10n("fleetOn", `${fleet.length}`)
-          : l10n("fleetReading", `${ready.length}`, `${fleet.length}`),
-      actions: [onTap(tag(l10n("reload")), { m: "reloadFleet" })],
+        ready.length === rows.length
+          ? l10n("fleetOn", `${rows.length}`)
+          : l10n("fleetReading", `${ready.length}`, `${rows.length}`),
+      actions: [
+        onTap(tag(l10n("reload")), () =>
+          readFleet(rows.map((r) => ({ server: r.server, name: r.name }))),
+        ),
+      ],
     }),
     divider(),
-    expanded(scroll([card(fleet.map(fleetRow))])),
+    expanded(scroll([card(rows.map((row) => fleetRow(row)))])),
   ]);
 }
 
@@ -271,314 +309,93 @@ function fleetRow(row: FleetRow) {
             ? tone(tag(row.next), "muted")
             : undefined,
       }),
-      { m: "openServer", server: row.server },
+      async () => {
+        try {
+          // No permission of its own: opening a server the user can already
+          // see is navigation, not disclosure.
+          await sb.nav.openServer({ server: row.server });
+        } catch {
+          // A handle the host will not resolve any more — the server was
+          // deleted while the tab was open. Nothing to navigate to, and taking
+          // the surface down over a tap that went nowhere is worse.
+        }
+      },
     ),
     `${row.server}`,
   );
 }
 
-/// The settings surface, which reads the store and so draws after it answers.
-async function drawSettings(): Promise<void> {
-  const on = await includeTimers();
-  const node = card([
+// -------------------------------------------------------------- the settings
+
+function settingsView() {
+  return card([
     onChange(
-      toggle(on, {
+      toggle(timersOn.value, {
         label: l10n("prefsTimers"),
         hint: l10n("prefsTimersHint"),
       }),
-      { m: "setTimers" },
+      async (value) => {
+        const on = value === true;
+        timersOn.value = on;
+        await sb.store.set({
+          scope: "global",
+          key: TIMERS_KEY,
+          value: on ? "1" : "0",
+        });
+      },
     ),
   ]);
-  try {
-    await sb.ui.patch({ path: "", node });
-  } catch {
-    // Nobody is looking at the settings page any more.
-  }
 }
 
-export async function onHook(event: HookEvent): Promise<void> {
-  // A settings surface collects nothing: its form is drawn from the store by
-  // `open`, and the hook is only what pumps that promise. Without this the
-  // "no server" branch below draws the page's error over the form — a settings
-  // surface is bound to no machine, so `event.servers` is empty by design.
-  if (surfaceKind === "settings") {
-    // Nothing to collect: the form is the store, and this is the call that gets
-    // to wait for it.
-    await drawSettings();
-    return;
-  }
-  if (surfaceKind === "tab") {
-    await readFleet(event.servers);
-    return;
-  }
-  const first = event.servers[0];
-  if (!first) {
-    state = { at: "failed", why: l10n("errNoServer") };
-    await draw();
-    return;
-  }
-  server = first.server;
-  await read();
-}
+// ------------------------------------------------------------------ the page
 
-export async function onEvent({ msg, value }: PluginEvent): Promise<UiOutput> {
-  const m = msg as { m: string; line?: number; server?: ServerHandle };
-  if (m.m === "setTimers") {
-    await sb.store.set({
-      scope: "global",
-      key: TIMERS_KEY,
-      value: value === true ? "1" : "0",
-    });
-    await drawSettings();
-    return {};
-  }
-  if (m.m === "reloadFleet") {
-    await readFleet(fleet.map((r) => ({ server: r.server, name: r.name })));
-    return {};
-  }
-  if (m.m === "openServer" && m.server) {
-    try {
-      // No permission of its own: opening a server the user can already see is
-      // navigation, not disclosure.
-      await sb.nav.openServer({ server: m.server });
-    } catch {
-      // A handle the host will not resolve any more — the server was deleted
-      // while the tab was open, or this instance outlived its hook. Nothing to
-      // navigate to, and taking the whole surface down over a tap that went
-      // nowhere is worse than the tap doing nothing.
-    }
-    return {};
-  }
-  if (m.m === "reload") {
-    state = { at: "loading" };
-    await draw();
-    await read();
-  }
-  if (m.m === "add") {
-    await editJob(null);
-    return {};
-  }
-  if (m.m === "edit" && typeof m.line === "number") {
-    await editJob(m.line);
-    return {};
-  }
-  if (m.m === "select") {
-    selecting = true;
-    return { ui: view() };
-  }
-  if (m.m === "cancelSelect") {
-    clearSelection();
-    return { ui: view() };
-  }
-  if (m.m === "pick" && typeof m.line === "number") {
-    if (selected.has(m.line)) {
-      selected.delete(m.line);
-    } else {
-      selected.add(m.line);
-    }
-    return { ui: view() };
-  }
-  if (m.m === "remove") {
-    await removeJobs();
-    return {};
-  }
-  if (m.m === "toggle" && typeof m.line === "number") {
-    await toggleJob(m.line);
-  }
-  return {};
-}
+function pageView() {
+  // Nothing is read until the hook names a server: a provider is built the
+  // first time something watches it, so not watching `schedule` here is what
+  // keeps `open` from running a command.
+  if (server.value === undefined) return skeleton(4);
 
-/**
- * Draws, and does not mind if nobody is looking.
- *
- * `sb.ui.patch` rejects when the surface is gone, which is right; awaiting it
- * unguarded would turn that into the work stopping.
- */
-async function draw(): Promise<void> {
-  try {
-    await sb.ui.patch({ path: "", node: view() });
-  } catch {
-    // Nothing to report to a surface that is not there.
-  }
-}
-
-async function read(): Promise<void> {
-  const handle = server;
-  if (!handle) return;
-  try {
-    const r = await sb.server.exec({
-      server: handle,
-      script: readCommand({ timers: await includeTimers() }),
-    });
-    state = { at: "ready", schedule: parse(r.stdout) };
-  } catch (e) {
-    state = { at: "failed", why: whyOf(e) };
-  }
-  await draw();
-}
-
-/**
- * Writes `next` as the whole crontab, and folds the answer back into state.
- *
- * One place, because every edit is the same act: there is no way to change one
- * line of a crontab, so add, edit, delete and toggle all replace the file —
- * and all of them have to handle the same three answers.
- *
- * **Compare-and-swap.** The fingerprint is what was read; a machine whose
- * crontab moved since answers `conflict`, and the reply to that is to reload
- * rather than to write again. Writing anyway is what loses somebody's change.
- */
-async function write(next: string[]): Promise<void> {
-  const handle = server;
-  if (!handle || state.at !== "ready") return;
-  const { schedule } = state;
-
-  try {
-    const r = await sb.server.exec({
-      server: handle,
-      script: writeCommand(next, schedule.fingerprint),
-    });
-    const result = parseWrite(r.stdout);
-    if (result.at === "conflict") {
-      state = { at: "ready", schedule, note: l10n("conflict") };
-      await draw();
-      await read();
-      return;
-    }
-    if (result.at === "failed") {
-      state = { at: "ready", schedule, note: result.why };
-      await draw();
-      return;
-    }
-    state = {
-      at: "ready",
-      schedule: {
-        ...schedule,
-        cronLines: next,
-        jobs: parse(sectioned(next)).jobs,
-        fingerprint: result.fingerprint,
-      },
-    };
-  } catch (e) {
-    state = { at: "ready", schedule, note: whyOf(e) };
-  }
-  await draw();
-}
-
-async function toggleJob(line: number): Promise<void> {
-  if (state.at !== "ready") return;
-  const job = state.schedule.jobs.find((j) => j.line === line);
-  if (!job) return;
-
-  const answer = await sb.ui.prompt({
-    title: l10n(job.disabled ? "confirmEnable" : "confirmDisable"),
-    // The command rather than the line number: a person confirming this needs
-    // to see what stops running. Not translated — it is the user's own text.
-    message: `${job.when}\n${job.command}`,
-    confirm: l10n(job.disabled ? "enable" : "disable"),
+  const body = schedule.when({
+    loading: () => skeleton(4),
+    error: (e) =>
+      notice({
+        kind: "failed",
+        icon: "warning",
+        title: l10n("errTitle"),
+        detail: whyOf(e),
+        actions: [{ label: l10n("retry"), msg: () => reload() }],
+      }),
+    data: (read) => jobsView(written.value ?? read),
   });
-  if (answer.cancelled) return;
 
-  await write(toggled(state.schedule.cronLines, line));
+  // **Above the reading, not inside it.** A conflict is answered by reloading,
+  // so the message about it would be drawn by the state the reload replaces —
+  // it disappeared for as long as the re-read took, which is exactly when
+  // somebody is looking for the reason the list changed.
+  const warning = note.value;
+  if (!warning) return body;
+  return column([
+    padding(13, banner(warning, { icon: "warning" })),
+    expanded(body),
+  ]);
 }
 
-/**
- * Adds a job, or edits one.
- *
- * The same form either way, because it is the same two values — and a person
- * who has just written a schedule in one dialog should not meet a different
- * one when they correct it.
- *
- * The schedule is checked before anything is written. `crontab` accepts a line
- * it cannot parse and simply never runs it, so refusing here is the only
- * moment anybody finds out.
- */
-async function editJob(line: number | null): Promise<void> {
-  if (state.at !== "ready") return;
-  const job =
-    line === null ? null : state.schedule.jobs.find((j) => j.line === line);
-  if (line !== null && !job) return;
-
-  const answer = await sb.ui.prompt({
-    title: l10n(job ? "editTitle" : "addTitle"),
-    fields: [
-      { key: "when", label: l10n("fieldWhen"), value: job?.when ?? "0 3 * * *" },
-      { key: "command", label: l10n("fieldCommand"), value: job?.command ?? "" },
-    ],
-    confirm: l10n("save"),
-  });
-  if (answer.cancelled) return;
-
-  const when = (answer.values.when ?? "").trim();
-  const command = (answer.values.command ?? "").trim();
-  if (!command) {
-    state = { ...state, note: l10n("errNoCommand") };
-    await draw();
-    return;
-  }
-  if (!isSchedule(when)) {
-    // Named rather than described: the person typed it and needs to see which
-    // part was refused.
-    state = { ...state, note: l10n("errBadSchedule", when) };
-    await draw();
-    return;
-  }
-
-  await write(
-    job
-      ? edited(state.schedule.cronLines, job.line, { when, command })
-      : added(state.schedule.cronLines, { when, command }),
-  );
-}
-
-/**
- * Removes the picked jobs.
- *
- * By line, and all in one write: removing them one at a time would be one
- * compare-and-swap per job, and the second would meet the fingerprint the
- * first had just changed.
- */
-async function removeJobs(): Promise<void> {
-  if (state.at !== "ready") return;
-  const jobs = state.schedule.jobs.filter((j) => selected.has(j.line));
-  if (jobs.length === 0) {
-    clearSelection();
-    await draw();
-    return;
-  }
-
-  const answer = await sb.ui.prompt({
-    title:
-      jobs.length === 1
-        ? l10n("confirmRemoveOne")
-        : l10n("confirmRemove", `${jobs.length}`),
-    // The user's own lines, which is what they are deciding about.
-    message: jobs.map((j) => `${j.when}  ${j.command}`).join("\n"),
-    confirm: l10n("remove"),
-  });
-  if (answer.cancelled) return;
-
-  const lines = jobs.map((j) => j.line);
+/** Reads the machine again, dropping whatever this plugin last wrote. */
+function reload(): void {
+  written.value = null;
+  note.value = null;
   clearSelection();
-  await write(removed(state.schedule.cronLines, lines));
+  schedule.reload();
 }
 
-/** The lines as [parse] expects to be handed them, for re-reading in place. */
-const sectioned = (lines: string[]) => `cron\n${lines.join("\n")}\n`;
+function clearSelection(): void {
+  selecting.value = false;
+  selected.value = new Set();
+}
 
-function view() {
-  if (state.at === "loading") return padding(17, text(l10n("reading")));
-  if (state.at === "failed") {
-    return notice({
-      kind: "failed",
-      icon: "warning",
-      title: l10n("errTitle"),
-      detail: state.why,
-      actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
-    });
-  }
-
-  const { schedule: s, note } = state;
+function jobsView(s: Schedule) {
+  const picking = selecting.value;
+  const picked = selected.value;
   const total = s.jobs.length + s.timers.length;
   const off = s.jobs.filter((j) => j.disabled).length;
 
@@ -590,70 +407,89 @@ function view() {
       // different things a person may be looking for.
       detail:
         off > 0
-          ? l10n(
-              "breakdownOff",
-              `${s.jobs.length}`,
-              `${s.timers.length}`,
-              `${off}`,
-            )
+          ? l10n("breakdownOff", `${s.jobs.length}`, `${s.timers.length}`, `${off}`)
           : l10n("breakdown", `${s.jobs.length}`, `${s.timers.length}`),
-      actions: selecting
+      actions: picking
         ? [
-            onTap(tone(tag(l10n("cancel")), "muted"), { m: "cancelSelect" }),
-            onTap(
-              tone(tag(l10n("remove", `${selected.size}`)), "danger"),
-              { m: "remove" },
+            onTap(tone(tag(l10n("cancel")), "muted"), () => clearSelection()),
+            onTap(tone(tag(l10n("remove", `${picked.size}`)), "danger"), () =>
+              removeJobs(s),
             ),
           ]
         : [
             ...(s.hasCron
               ? [
-                  onTap(tag(l10n("add")), { m: "add" }),
+                  onTap(tag(l10n("add")), () => editJob(s, null)),
                   ...(s.jobs.length === 0
                     ? []
-                    : [onTap(tag(l10n("select")), { m: "select" })]),
+                    : [
+                        onTap(
+                          tag(l10n("select")),
+                          () => (selecting.value = true),
+                        ),
+                      ]),
                 ]
               : []),
-            onTap(tag(l10n("reload")), { m: "reload" }),
+            onTap(tag(l10n("reload")), () => reload()),
           ],
     }),
-    ...(note ? [padding(13, tone(text(note), "warning"))] : []),
     divider(),
     expanded(
       scroll([
-        ...(s.hasCron && s.jobs.length > 0 ? [card(s.jobs.map(cronRow))] : []),
+        ...(s.hasCron && s.jobs.length > 0
+          ? [card(s.jobs.map((job) => cronRow(s, job, picking, picked)))]
+          : []),
         ...(s.timers.length > 0 ? [card(s.timers.map(timerRow))] : []),
-        ...(total > 0
-          ? []
-          : [
-              s.hasCron
-                ? notice({
-                    icon: "clock",
-                    title: l10n("emptyTitle"),
-                    detail: l10n(
-                      s.timers.length === 0 && timersOn
-                        ? "emptyDetailNoTimers"
-                        : "emptyDetail",
-                    ),
-                    actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
-                  })
-                : notice({
-                    icon: "clock",
-                    title: l10n("emptyNoCronTitle"),
-                    detail: l10n("emptyNoCronDetail"),
-                    actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
-                  }),
-            ]),
+        ...(total > 0 ? [] : [emptyFor(s)]),
       ]),
     ),
   ]);
 }
 
-function cronRow(job: CronJob) {
-  return key(
+function emptyFor(s: Schedule) {
+  if (!s.hasCron) {
+    return notice({
+      icon: "clock",
+      title: l10n("emptyNoCronTitle"),
+      detail: l10n("emptyNoCronDetail"),
+      actions: [{ label: l10n("retry"), msg: () => reload() }],
+    });
+  }
+  // Hoisted, because the key has to be visible to a reader — and to the test
+  // that checks every key a plugin names is translated, which cannot see one
+  // inside a call with its own parentheses.
+  const askedForTimers = s.timers.length === 0 && timersOn.value;
+  return notice({
+    icon: "clock",
+    title: l10n("emptyTitle"),
+    detail: l10n(askedForTimers ? "emptyDetailNoTimers" : "emptyDetail"),
+    actions: [{ label: l10n("retry"), msg: () => reload() }],
+  });
+}
+
+function cronRow(
+  s: Schedule,
+  job: CronJob,
+  picking: boolean,
+  picked: ReadonlySet<number>,
+) {
+  // **In selection mode a tap picks the row.** The bar changed and the rows did
+  // not, so entering it left every tap doing what it did before — asking to
+  // disable the job — while `Remove 0` could never count past zero.
+  const chosen = picked.has(job.line);
+  // **Editing was implemented and unreachable.** `editJob` handled a line and
+  // nothing on screen ever asked for one — the same class of gap as the
+  // selection mode that changed the toolbar and left the rows alone. A long
+  // press is where a list row keeps its second action, and it is the app's own
+  // gesture for "what else can I do with this".
+  const row = onLongPress(
     onTap(
       tile({
-        icon: "clock",
+        // The row itself says it is chosen — the app tints a selected
+        // `ListTile` the way it tints its own. The icon alone was one grey
+        // glyph turning into another, which is a selection nobody sees.
+        selected: chosen,
+        icon: picking ? (chosen ? "check" : "clock") : "clock",
         // The schedule leads. A list of cron lines is read for *when*, and the
         // command is what you check once you have found the one you meant.
         title: job.when,
@@ -664,10 +500,25 @@ function cronRow(job: CronJob) {
           ? tone(tag(l10n("tagOff")), "muted")
           : tag(l10n("tagOn")),
       }),
-      { m: "toggle", line: job.line },
+      picking ? () => pick(job.line) : () => toggleJob(s, job.line),
     ),
-    `cron:${job.line}`,
+    // Nothing while picking: the gesture belongs to the selection then, and an
+    // editor opening from a list you are choosing in is a dialog nobody asked
+    // for.
+    picking ? () => pick(job.line) : () => editJob(s, job.line),
   );
+  return key(
+    row,
+    // The mode and the choice are part of the row's identity, so a row that
+    // changed only in what a tap means is still a different row.
+    `cron:${job.line}|${chosen}|${picking}`,
+  );
+}
+
+function pick(line: number): void {
+  const next = new Set(selected.peek());
+  if (!next.delete(line)) next.add(line);
+  selected.value = next;
 }
 
 /**
@@ -694,4 +545,159 @@ function timerRow(t: {
   );
 }
 
-export default { open, onHook, onEvent } satisfies Plugin;
+// ----------------------------------------------------------------- the write
+
+/**
+ * Writes `next` as the whole crontab, and folds the answer back into state.
+ *
+ * One place, because every edit is the same act: there is no way to change one
+ * line of a crontab, so add, edit, delete and toggle all replace the file —
+ * and all of them have to handle the same three answers.
+ *
+ * **Compare-and-swap.** The fingerprint is what was read; a machine whose
+ * crontab moved since answers `conflict`, and the reply to that is to reload
+ * rather than to write again. Writing anyway is what loses somebody's change.
+ */
+async function write(s: Schedule, next: string[]): Promise<void> {
+  const handle = server.peek();
+  if (!handle) return;
+
+  try {
+    const r = await sb.server.exec({
+      server: handle,
+      script: writeCommand(next, s.fingerprint),
+    });
+    const result = parseWrite(r.stdout);
+    if (result.at === "conflict") {
+      reload();
+      note.value = l10n("conflict");
+      return;
+    }
+    if (result.at === "failed") {
+      note.value = result.why;
+      return;
+    }
+    note.value = null;
+    written.value = {
+      ...s,
+      cronLines: next,
+      jobs: parse(sectioned(next)).jobs,
+      fingerprint: result.fingerprint,
+    };
+  } catch (e) {
+    note.value = whyOf(e);
+  }
+}
+
+async function toggleJob(s: Schedule, line: number): Promise<void> {
+  const job = s.jobs.find((j) => j.line === line);
+  if (!job) return;
+
+  const answer = await sb.ui.prompt({
+    title: l10n(job.disabled ? "confirmEnable" : "confirmDisable"),
+    // The command rather than the line number: a person confirming this needs
+    // to see what stops running. Not translated — it is the user's own text.
+    message: `${job.when}\n${job.command}`,
+    confirm: l10n(job.disabled ? "enable" : "disable"),
+  });
+  if (answer.cancelled) return;
+
+  await write(s, toggled(s.cronLines, line));
+}
+
+/**
+ * Adds a job, or edits one.
+ *
+ * The same form either way, because it is the same two values — and a person
+ * who has just written a schedule in one dialog should not meet a different
+ * one when they correct it.
+ *
+ * **The body is a tree**, so the two fields are the app's own inputs rather
+ * than bare boxes: the command grows with what is typed. Their `onChange`
+ * messages are the field names — the host holds what the controls say while
+ * the plugin waits for the answer, keyed by exactly those.
+ *
+ * The schedule is checked before anything is written. `crontab` accepts a line
+ * it cannot parse and simply never runs it, so refusing here is the only
+ * moment anybody finds out.
+ */
+async function editJob(
+  s: Schedule,
+  line: number | null,
+): Promise<void> {
+  const job = line === null ? null : s.jobs.find((j) => j.line === line);
+  if (line !== null && !job) return;
+
+  const answer = await sb.ui.prompt({
+    title: l10n(job ? "editTitle" : "addTitle"),
+    node: column(
+      [
+        onChange(
+          input(job?.when ?? "0 3 * * *", { hint: l10n("fieldWhen") }),
+          "when",
+        ),
+        onChange(
+          input(job?.command ?? "", { hint: l10n("fieldCommand"), lines: 3 }),
+          "command",
+        ),
+      ],
+      { spacing: 9 },
+    ),
+    confirm: l10n("save"),
+  });
+  if (answer.cancelled) return;
+
+  const nextWhen = (answer.values["when"] ?? "").trim();
+  const command = (answer.values["command"] ?? "").trim();
+  if (!command) {
+    note.value = l10n("errNoCommand");
+    return;
+  }
+  if (!isSchedule(nextWhen)) {
+    // Named rather than described: the person typed it and needs to see which
+    // part was refused.
+    note.value = l10n("errBadSchedule", nextWhen);
+    return;
+  }
+
+  await write(
+    s,
+    job
+      ? edited(s.cronLines, job.line, { when: nextWhen, command })
+      : added(s.cronLines, { when: nextWhen, command }),
+  );
+}
+
+/**
+ * Removes the picked jobs.
+ *
+ * By line, and all in one write: removing them one at a time would be one
+ * compare-and-swap per job, and the second would meet the fingerprint the
+ * first had just changed.
+ */
+async function removeJobs(s: Schedule): Promise<void> {
+  const picked = selected.peek();
+  const jobs = s.jobs.filter((j) => picked.has(j.line));
+  if (jobs.length === 0) {
+    clearSelection();
+    return;
+  }
+
+  const answer = await sb.ui.prompt({
+    title:
+      jobs.length === 1
+        ? l10n("confirmRemoveOne")
+        : l10n("confirmRemove", `${jobs.length}`),
+    // The user's own lines, which is what they are deciding about.
+    message: jobs.map((j) => `${j.when}  ${j.command}`).join("\n"),
+    confirm: l10n("remove"),
+  });
+  if (answer.cancelled) return;
+
+  const lines = jobs.map((j) => j.line);
+  clearSelection();
+  await write(s, removed(s.cronLines, lines));
+}
+
+/** The lines as [parse] expects to be handed them, for re-reading in place. */
+const sectioned = (lines: string[]) => `cron\n${lines.join("\n")}\n`;

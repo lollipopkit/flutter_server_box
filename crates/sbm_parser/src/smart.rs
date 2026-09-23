@@ -69,7 +69,10 @@ fn parse_block(block: &str) -> Option<DiskSmart> {
     // holds no reading, and emitting it would show the disk with every field
     // blank. Bit 2 (`4`, "some SMART command failed") is a partial read and
     // is kept — see the macOS fixture.
-    if data["smartctl"]["exit_status"].as_i64().is_some_and(|s| s & 2 != 0) {
+    if data["smartctl"]["exit_status"]
+        .as_i64()
+        .is_some_and(|s| s & 2 != 0)
+    {
         return None;
     }
 
@@ -82,8 +85,7 @@ fn parse_block(block: &str) -> Option<DiskSmart> {
         model: str_of(&data["model_name"])
             .or_else(|| str_of(&data["model_family"]))
             .or_else(|| str_of(&data["device"]["model_name"])),
-        serial: str_of(&data["serial_number"])
-            .or_else(|| str_of(&data["device"]["serial_number"])),
+        serial: str_of(&data["serial_number"]).or_else(|| str_of(&data["device"]["serial_number"])),
         power_on_hours: data["power_on_time"]["hours"]
             .as_i64()
             .or_else(|| attributes.get("Power_On_Hours")?.raw_value.as_i64()),

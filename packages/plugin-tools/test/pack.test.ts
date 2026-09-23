@@ -23,9 +23,16 @@ interface PluginDir {
   source?: string | null;
   l10n?: Record<string, string>;
   icon?: Uint8Array;
+  assets?: Record<string, Uint8Array>;
 }
 
-function plugin({ manifest, source = "export const x = 1", l10n, icon }: PluginDir) {
+function plugin({
+  manifest,
+  source = "export const x = 1",
+  l10n,
+  icon,
+  assets,
+}: PluginDir) {
   const dir = mkdtempSync(join(tmpdir(), "sbp-"));
   made.push(dir);
   const m = manifest ?? {
@@ -50,6 +57,12 @@ function plugin({ manifest, source = "export const x = 1", l10n, icon }: PluginD
     }
   }
   if (icon) writeFileSync(join(dir, "icon.png"), icon);
+  if (assets) {
+    mkdirSync(join(dir, "assets"), { recursive: true });
+    for (const [name, data] of Object.entries(assets)) {
+      writeFileSync(join(dir, "assets", name), data);
+    }
+  }
   return dir;
 }
 
@@ -149,11 +162,57 @@ describe("refusing to write one", () => {
     ).toThrow(/en\.json/);
   });
 
+  /// A manifest names its plugin and its contributions with `l10n.` keys, so
+  /// those go missing exactly like the script's — and look the same from the
+  /// outside: a tab called `l10n.pluginName`. Refused here rather than
+  /// warned about, because the repository index is written from `en` and has
+  /// nothing to fall back to.
+  test("a manifest key with no english behind it", () => {
+    const manifest = {
+      id: "a.b",
+      version: "1.0.0",
+      abi: 2,
+      name: "l10n.pluginName",
+      l10n: ["en"],
+      contributes: { page: { id: "p", label: "l10n.pageLabel" } },
+    };
+
+    expect(() =>
+      packPlugin(plugin({ manifest, l10n: { en: '{"pluginName":"Test"}' } })),
+    ).toThrow(/pageLabel/);
+
+    const packed = packPlugin(
+      plugin({
+        manifest,
+        l10n: { en: '{"pluginName":"Test","pageLabel":"Page"}' },
+      }),
+    );
+    // And the manifest goes in as it was written: the keys are the app's to
+    // resolve, in whichever language it is running in.
+    expect(packed.manifest.name).toBe("l10n.pluginName");
+  });
+
+  /// A file the app will not draw is a plugin drawing a gap on somebody else's
+  /// device, and the author hears about it from a bug report.
+  test("an asset the app does not read", () => {
+    expect(() =>
+      packPlugin(plugin({ assets: { "notes.txt": new Uint8Array([1]) } })),
+    ).toThrow(/assets\/notes\.txt/);
+  });
+
   test("more than the app will unpack", () => {
     expect(() =>
       packPlugin(plugin({ source: "x".repeat(maxTotalBytes + 1) })),
     ).toThrow(/at most/);
   });
+});
+
+test("an image the plugin ships goes in under assets/", () => {
+  const packed = packPlugin(
+    plugin({ assets: { "diagram.svg": new Uint8Array([60, 115]) } }),
+  );
+
+  expect(packed.entries).toContain("assets/diagram.svg");
 });
 
 /// Not an error: the file is packed and the app reads it, so it works. But

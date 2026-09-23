@@ -59,7 +59,10 @@ abstract class PluginRuntime implements RustOpaqueInterface {
   /// - `ok` — the JSON the function answers with. `null` for the ones that
   ///   answer nothing.
   /// - `error_kind` plus `error_message` — the app tried and could not. The
-  ///   plugin sees a rejected promise it can catch.
+  ///   plugin sees a rejected promise it can catch. `error_data` is an
+  ///   optional JSON object whose fields are copied onto that `Error` beside
+  ///   `kind`, for a failure that carries one more fact — see
+  ///   [`BridgeError::Failed`].
   /// - `denied` — the app refuses. The plugin cannot catch it, and the call
   ///   ends the way an ungranted function would.
   ///
@@ -70,6 +73,7 @@ abstract class PluginRuntime implements RustOpaqueInterface {
     String? ok,
     String? errorKind,
     String? errorMessage,
+    String? errorData,
     String? denied,
   });
 
@@ -260,6 +264,12 @@ class PluginManifestInfo {
   final String id;
   final String version;
   final int abi;
+
+  /// What this version's stored data is shaped like. See `Manifest`.
+  ///
+  /// The app compares it against the version it kept, and offers to put that
+  /// one back only when the two agree.
+  final int dataVersion;
   final String name;
   final String description;
 
@@ -287,6 +297,7 @@ class PluginManifestInfo {
     required this.id,
     required this.version,
     required this.abi,
+    required this.dataVersion,
     required this.name,
     required this.description,
     required this.permissions,
@@ -304,6 +315,7 @@ class PluginManifestInfo {
       id.hashCode ^
       version.hashCode ^
       abi.hashCode ^
+      dataVersion.hashCode ^
       name.hashCode ^
       description.hashCode ^
       permissions.hashCode ^
@@ -323,6 +335,7 @@ class PluginManifestInfo {
           id == other.id &&
           version == other.version &&
           abi == other.abi &&
+          dataVersion == other.dataVersion &&
           name == other.name &&
           description == other.description &&
           permissions == other.permissions &&

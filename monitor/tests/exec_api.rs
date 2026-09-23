@@ -187,9 +187,7 @@ async fn the_configured_output_cap_is_what_truncates() {
 async fn stdout_and_stderr_are_reported_separately() {
     let srv = test_server(app_state(true).await).await;
     let cmd = platform_command("echo out; echo err 1>&2", "echo out&echo err>&2");
-    let body = post(&srv, json!({"cmd": cmd}))
-        .await
-        .unwrap();
+    let body = post(&srv, json!({"cmd": cmd})).await.unwrap();
 
     assert_eq!(body["stdout"], platform_line("out"));
     assert_eq!(body["stderr"], platform_line("err"));
@@ -327,12 +325,9 @@ async fn env_adds_to_the_environment_rather_than_replacing_it() {
         "test -n \"$PATH\" && echo has-path",
         "if defined PATH echo has-path",
     );
-    let body = post(
-        &srv,
-        json!({"cmd": cmd, "env": {"SBM_TEST": "x"}}),
-    )
-    .await
-    .unwrap();
+    let body = post(&srv, json!({"cmd": cmd, "env": {"SBM_TEST": "x"}}))
+        .await
+        .unwrap();
 
     assert_eq!(body["stdout"], platform_line("has-path"));
 }
@@ -391,11 +386,12 @@ async fn the_command_is_audited() {
         .await
         .unwrap();
 
-    let subject: Option<String> =
-        sqlx::query_scalar("SELECT subject FROM access_log WHERE kind = 'exec' ORDER BY id DESC LIMIT 1")
-            .fetch_one(&db)
-            .await
-            .unwrap();
+    let subject: Option<String> = sqlx::query_scalar(
+        "SELECT subject FROM access_log WHERE kind = 'exec' ORDER BY id DESC LIMIT 1",
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
     assert_eq!(subject.as_deref(), Some("echo audited-command"));
 }
 
@@ -408,10 +404,11 @@ async fn a_refusal_is_audited() {
     let srv = test_server(state).await;
     let _ = post(&srv, json!({"cmd": "echo nope"})).await;
 
-    let outcome: Option<String> =
-        sqlx::query_scalar("SELECT result FROM access_log WHERE kind = 'exec' ORDER BY id DESC LIMIT 1")
-            .fetch_one(&db)
-            .await
-            .unwrap();
+    let outcome: Option<String> = sqlx::query_scalar(
+        "SELECT result FROM access_log WHERE kind = 'exec' ORDER BY id DESC LIMIT 1",
+    )
+    .fetch_one(&db)
+    .await
+    .unwrap();
     assert_eq!(outcome.as_deref(), Some("denied"));
 }

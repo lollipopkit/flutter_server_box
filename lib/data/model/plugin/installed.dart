@@ -1,3 +1,5 @@
+// Prefixed: this class has an `l10n` of its own, and it is the plugin's.
+import 'package:server_box/core/extension/context/locale.dart' as app;
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/plugin/icons.dart';
 import 'package:server_box/data/model/plugin/install.dart';
@@ -16,6 +18,7 @@ class InstalledPlugin {
     required this.manifest,
     required this.source,
     required this.l10n,
+    this.dir,
   });
 
   final PluginInstall record;
@@ -28,6 +31,13 @@ class InstalledPlugin {
 
   /// Locale to its strings.
   final Map<String, Map<String, String>> l10n;
+
+  /// Where its files are: the app's own directory, or the developer's.
+  ///
+  /// What an `image` node needs, and the reason it is a path rather than the
+  /// bytes — every installed plugin is read at launch, and holding a package's
+  /// pictures would be memory spent on something nothing is showing.
+  final String? dir;
 
   String get id => record.id;
 
@@ -47,6 +57,25 @@ class InstalledPlugin {
   /// What the settings page shows as "this update wants more".
   bool get needsConsent =>
       manifest.permissions.any((p) => !record.granted.contains(p));
+
+  /// The strings for the language the app is in.
+  ///
+  /// For everything the *manifest* carries — its name, its description, the
+  /// label on each contribution. A manifest is one document for every language,
+  /// so what it holds is either a plain string or an `l10n.` key into these,
+  /// which is the rule a plugin's rendered nodes already follow.
+  ///
+  /// Read from the global rather than from a `BuildContext`: a [Feature]'s
+  /// label is a closure the app calls while laying out a bar, with no context
+  /// of the plugin's to hand. It is re-read on every call, so switching
+  /// language moves these with everything else.
+  PluginL10n get strings => l10nFor(app.l10n.localeName);
+
+  /// What to call it, translated. [ffi.PluginManifestInfo.name] is what the
+  /// manifest literally says, which may be a key.
+  String get name => strings.resolve(manifest.name);
+
+  String get description => strings.resolve(manifest.description);
 
   PluginL10n l10nFor(String locale) {
     final language = locale.split(RegExp('[-_]')).first;
@@ -87,6 +116,7 @@ class InstalledPlugin {
     manifest: manifest,
     source: source,
     l10n: l10n,
+    dir: dir,
   );
 
   /// The button it puts in the server function bar, or null.
@@ -107,7 +137,7 @@ class InstalledPlugin {
       id: '$id:${page.id}',
       slot: FeatureSlot.funcBtn,
       icon: PluginIcons.of(page.icon),
-      label: () => page.label,
+      label: () => strings.resolve(page.label),
       needs: needs.isEmpty
           ? null
           : (caps) => needs.every((test) => test(caps)),
@@ -137,7 +167,7 @@ class InstalledPlugin {
       id: '$id:${tab.id}',
       slot: FeatureSlot.homeTab,
       icon: PluginIcons.of(tab.icon),
-      label: () => tab.label,
+      label: () => strings.resolve(tab.label),
     );
   }
 
@@ -161,6 +191,6 @@ class InstalledPlugin {
         id: '$id:$contributionId',
         slot: FeatureSlot.detailCard,
         icon: PluginIcons.of(icon),
-        label: () => label,
+        label: () => strings.resolve(label),
       );
 }

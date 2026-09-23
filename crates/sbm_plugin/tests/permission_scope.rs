@@ -24,6 +24,7 @@ use support::ScriptedBridge;
 fn argument(f: HostFn) -> &'static str {
     match f {
         HostFn::ServerExec => r#"{ server: "bound", script: "uptime" }"#,
+        HostFn::ServerCancel => r#"{ key: "scan" }"#,
         HostFn::HttpFetch => r#"{ url: "https://10.0.0.9/redfish/v1/" }"#,
         HostFn::UiPatch => r#"{ path: "/c/0", node: { t: "text" } }"#,
         HostFn::UiPrompt => r#"{ title: "2fa", fields: [] }"#,
@@ -135,8 +136,35 @@ fn catching_a_refusal_does_not_let_the_call_succeed() {
     let mut p = Instance::new(src, o, ScriptedBridge::new()).unwrap();
 
     let e = p.call("go", b"").unwrap_err();
-    let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
+    let PluginError::Denied(msg) = &e else {
+        panic!("{e:?}")
+    };
     assert!(msg.contains("ui.dialog"), "{msg}");
+}
+
+/// Plugin code branches on stable fields rather than English text.
+#[test]
+fn a_refusal_exposes_its_code_operation_and_permission() {
+    let src = r#"
+      let seen;
+      try { sb.ui.prompt({ title: "confirm" }); }
+      catch (e) {
+        seen = { name: e.name, kind: e.kind, operation: e.operation,
+                 permission: e.permission };
+      }
+      export function inspect() { return seen; }
+    "#;
+    let mut p = Instance::new(
+        src,
+        InstanceOptions::new("test.plugin", "inst-1"),
+        ScriptedBridge::new(),
+    )
+    .unwrap();
+
+    assert_eq!(
+        p.call("inspect", b"").unwrap(),
+        br#"{"name":"PermissionDenied","kind":"denied","operation":"sb.ui.prompt","permission":"ui.dialog"}"#
+    );
 }
 
 /// And the instance is usable afterwards: one refused call is not a dead
@@ -157,7 +185,11 @@ fn a_refusal_does_not_carry_into_the_next_call() {
 
 /// What 6.1 calls always granted, and therefore what every manifest gets.
 fn always_granted() -> Vec<HostFn> {
-    HostFn::ALL.iter().copied().filter(|f| f.permission().is_none()).collect()
+    HostFn::ALL
+        .iter()
+        .copied()
+        .filter(|f| f.permission().is_none())
+        .collect()
 }
 
 #[test]
@@ -173,6 +205,7 @@ fn a_manifest_that_asks_for_nothing_reaches_only_what_is_always_granted() {
 fn server_exec_is_reachable_only_with_its_permission() {
     let mut expected = always_granted();
     expected.push(HostFn::ServerExec);
+    expected.push(HostFn::ServerCancel);
     expected.push(HostFn::NavOpenTerminal);
     assert_scope(Grants::new([Permission::ServerExec]), &expected);
 }
@@ -194,6 +227,7 @@ fn server_list_is_its_own_permission() {
 fn server_exec_does_not_imply_server_list() {
     let mut expected = always_granted();
     expected.push(HostFn::ServerExec);
+    expected.push(HostFn::ServerCancel);
     expected.push(HostFn::NavOpenTerminal);
     assert_scope(Grants::new([Permission::ServerExec]), &expected);
 
@@ -224,23 +258,26 @@ fn clipboard_gates_both_directions_together() {
 fn net_http_with_a_matching_pattern_reaches_the_bridge() {
     let mut expected = always_granted();
     expected.push(HostFn::HttpFetch);
-    let grants =
-        Grants::new([Permission::NetHttp]).with_http_patterns(["10.0.0.9".to_string()]);
+    let grants = Grants::new([Permission::NetHttp]).with_http_patterns(["10.0.0.9".to_string()]);
     assert_scope(grants, &expected);
 }
 
 #[test]
 fn net_http_with_a_pattern_that_does_not_match_is_out_of_scope_not_denied() {
     let bridge = ScriptedBridge::new();
-    let grants =
-        Grants::new([Permission::NetHttp]).with_http_patterns(["10.0.0.10".to_string()]);
+    let grants = Grants::new([Permission::NetHttp]).with_http_patterns(["10.0.0.10".to_string()]);
     let mut p = instance(grants, Arc::clone(&bridge));
 
     let e = p.call(&export_for(HostFn::HttpFetch), b"").unwrap_err();
-    let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
+    let PluginError::Denied(msg) = &e else {
+        panic!("{e:?}")
+    };
     assert!(msg.contains("out of scope"), "{msg}");
     assert!(!msg.contains("permission denied"), "{msg}");
-    assert!(!bridge.funcs().contains(&HostFn::HttpFetch), "the app was asked anyway");
+    assert!(
+        !bridge.funcs().contains(&HostFn::HttpFetch),
+        "the app was asked anyway"
+    );
 }
 
 /// The all-permissions case, which is what a hand-built table would most easily
@@ -275,7 +312,9 @@ fn a_ui_call_on_the_agent_throws_and_never_reaches_the_app() {
     let mut p = Instance::new(src, o, Arc::clone(&bridge) as _).unwrap();
 
     let e = p.call("go", b"").unwrap_err();
-    let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
+    let PluginError::Denied(msg) = &e else {
+        panic!("{e:?}")
+    };
     // Named as what it is. A permission is something the user can grant, and
     // this is not — so the two must not read the same.
     assert!(msg.contains("does not exist on the agent host"), "{msg}");
@@ -317,7 +356,9 @@ fn the_agent_still_enforces_permissions_on_what_it_has() {
     let mut p = Instance::new(src, o, Arc::clone(&bridge) as _).unwrap();
 
     let e = p.call("go", b"").unwrap_err();
-    let PluginError::Denied(msg) = &e else { panic!("{e:?}") };
+    let PluginError::Denied(msg) = &e else {
+        panic!("{e:?}")
+    };
     assert!(msg.contains("permission denied"), "{msg}");
     assert!(msg.contains("net.http"), "{msg}");
 }
@@ -376,7 +417,9 @@ fn nothing_that_needs_a_user_or_a_server_handle_reaches_the_agent() {
             || f.namespace() == "nav"
             || f.namespace() == "clipboard"
             || path == "sb.server.list"
-            || path == "sb.server.exec";
+            || path == "sb.server.exec"
+            // Nothing to stop: `sb.server.exec` is not there either.
+            || path == "sb.server.cancel";
         assert_eq!(
             !f.available_in(HostProfile::Agent),
             absent,
@@ -436,8 +479,7 @@ fn sb_carries_nothing_the_table_does_not_name() {
     o.grants = Grants::new(Permission::ALL.iter().copied());
     let mut p = Instance::new(src, o, ScriptedBridge::new()).unwrap();
 
-    let found: BTreeSet<String> =
-        serde_json::from_slice(&p.call("names", b"").unwrap()).unwrap();
+    let found: BTreeSet<String> = serde_json::from_slice(&p.call("names", b"").unwrap()).unwrap();
 
     let mut expected: BTreeSet<String> = HostFn::ALL.iter().map(|f| f.path()).collect();
     expected.insert("sb.config.get".into());
@@ -509,6 +551,7 @@ fn nothing_on_sb_can_change_a_server() {
         touching,
         [
             "sb.server.exec",
+            "sb.server.cancel",
             "sb.server.list",
             "sb.nav.openServer",
             "sb.nav.openTerminal",
@@ -521,5 +564,8 @@ fn nothing_on_sb_can_change_a_server() {
         .filter(|f| f.namespace() == "config")
         .map(|f| f.path())
         .collect();
-    assert!(config.is_empty(), "config is installed directly and only as `get`");
+    assert!(
+        config.is_empty(),
+        "config is installed directly and only as `get`"
+    );
 }

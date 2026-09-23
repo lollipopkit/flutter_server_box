@@ -316,7 +316,11 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let agent_plugins = match crate::monitoring::plugin_host::AgentBridge::new(app_state.db.clone())
     {
         Ok(bridge) => crate::monitoring::plugins::AgentPlugins::load(
-            app_state.config.plugins.as_ref().unwrap_or(&Default::default()),
+            app_state
+                .config
+                .plugins
+                .as_ref()
+                .unwrap_or(&Default::default()),
             std::sync::Arc::new(bridge),
         ),
         // Nothing a plugin could reach would work, so none is loaded. The

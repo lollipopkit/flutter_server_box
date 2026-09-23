@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/plugin/host_ops.dart';
 import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
@@ -43,7 +44,8 @@ void main() {
     manifestJson = File('$_dir/manifest.json').readAsStringSync();
     final source = File('$_dir/dist/plugin.js').readAsStringSync();
 
-    ops = FakePluginHostOps()..execResult = (code: 0, stdout: _ss, stderr: '');
+    ops = FakePluginHostOps()
+      ..execResult = PluginExecResult(code: 0, stdout: _ss, stderr: '');
     service = PluginRuntimeService(
       bridge: PluginBridge(ops: ops, handles: PluginServerHandles()),
     );
@@ -90,6 +92,26 @@ void main() {
   PluginNode nodeOf(String raw) =>
       PluginNode.fromJson(jsonDecode(raw) as Map<String, dynamic>)!;
 
+  /// What tapping the thing labelled [label] sends, exactly as the app would.
+  ///
+  /// `messageOf` in `@serverbox/plugin-api/test` is the same walk on the other
+  /// side. Both exist for one reason: a handler is a closure, so what crosses
+  /// is a token, and a test that made up a message would be speaking a
+  /// protocol the plugin does not.
+  Object? tapOn(PluginNode node, String label) {
+    Object? search(PluginNode n) {
+      final msg = n.events['tap'];
+      if (msg != null && texts(n).contains(label)) return msg;
+      for (final c in n.children) {
+        final hit = search(c);
+        if (hit != null) return hit;
+      }
+      return null;
+    }
+
+    return search(node);
+  }
+
   test('the bundle loads and exports what the app calls', () {
     final exports = service.exports(instance);
 
@@ -103,9 +125,11 @@ void main() {
     final decoded = jsonDecode(manifestJson) as Map<String, dynamic>;
     final page = (decoded['contributes'] as Map)['page'] as Map;
 
-    // v2, because it draws `tile` and `summary`. Declaring v1 would let an
-    // app that has neither install it and draw "unknown widget" per row.
-    expect(decoded['abi'], 2);
+    // v3, because it draws `skeleton` and `tile`'s `selected`. Declaring less
+    // would let an app that has neither install it and draw "unknown widget"
+    // per row — the understating trap the whole axis exists to prevent, and
+    // what `every bundled plugin declares an ABI its nodes need` holds.
+    expect(decoded['abi'], 3);
     expect(page['id'], 'ports');
     // `needs` is the app's own `availableWith` switch moved into data: the
     // button must not appear on a server that cannot run a command.
@@ -170,9 +194,10 @@ void main() {
     );
 
     expect(ops.calls, isEmpty);
-    expect(texts(nodeOf((jsonDecode(out) as Map)['ui'].toString().isEmpty
-        ? out
-        : jsonEncode((jsonDecode(out) as Map)['ui']))), contains('l10n.reading'));
+    // The shape of what is coming rather than a word for it: a page that
+    // showed a spinner and then jumped to a full list moves everything the
+    // eye had settled on.
+    expect(((jsonDecode(out) as Map)['ui'] as Map)['t'], 'skeleton');
   });
 
   /// The whole point of the hook: the host says which machines, the plugin
@@ -181,6 +206,13 @@ void main() {
     PluginPatch? seen;
     service.bridge.onPatch['inst-ports'] = (p) => seen = p;
 
+    // The app opens a surface before it hooks it (`PluginSurfaceView`),
+    // and a plugin holding its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'ports'}),
+    );
     await service.hook(
       instance,
       kind: 'enter',
@@ -210,6 +242,13 @@ void main() {
   /// app ever sees it. Worth naming, because a plugin's command is the part a
   /// user consented to `server.exec` for.
   test('what it runs is a read-only probe', () async {
+    // The app opens a surface before it hooks it (`PluginSurfaceView`),
+    // and a plugin holding its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'ports'}),
+    );
     await service.hook(
       instance,
       kind: 'enter',
@@ -236,6 +275,17 @@ void main() {
 
   /// Filtering is a decision about a reading already in hand.
   test('the exposed filter answers a tree without going back out', () async {
+    // The tree the app is showing, which is where the tap comes from.
+    PluginPatch? seen;
+    service.bridge.onPatch['inst-ports'] = (p) => seen = p;
+
+    // The app opens a surface before it hooks it (`PluginSurfaceView`),
+    // and a plugin holding its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'ports'}),
+    );
     await service.hook(
       instance,
       kind: 'enter',
@@ -245,14 +295,16 @@ void main() {
     );
     final before = ops.calls.length;
 
+    // **The message is read off the tree, not written here.** A handler is a
+    // closure now, so what crosses is a token the SDK made — a test that wrote
+    // `{m: 'exposed'}` would be testing a protocol the plugin no longer
+    // speaks, and would pass just as well if nothing on screen sent it.
     final out = await service.call(
       instance,
       'onEvent',
-      // The shape the app sends: one object, because the host calls every
-      // export with exactly one argument.
-      jsonEncode({
-        'msg': {'m': 'exposed'},
-      }),
+      // One object, because the host calls every export with exactly one
+      // argument.
+      jsonEncode({'msg': tapOn(seen!.node, 'l10n.filterAll')}),
     );
 
     expect(ops.calls, hasLength(before));
@@ -285,6 +337,13 @@ void main() {
     PluginPatch? seen;
     service.bridge.onPatch['inst-bare'] = (p) => seen = p;
 
+    // The app opens a surface before it hooks it (`PluginSurfaceView`),
+    // and a plugin holding its state in providers builds on `open`.
+    await service.call(
+      instance,
+      'open',
+      jsonEncode({'kind': 'page', 'id': 'ports'}),
+    );
     await service.hook(
       bare,
       kind: 'enter',

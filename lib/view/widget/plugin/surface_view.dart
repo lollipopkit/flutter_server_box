@@ -3,10 +3,12 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/data/model/plugin/health.dart';
 import 'package:server_box/data/model/plugin/l10n.dart';
 import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/provider/plugin/runtime.dart';
+import 'package:server_box/data/store/plugin_health.dart';
 import 'package:server_box/view/widget/plugin/render.dart';
 import 'package:server_box/view/widget/plugin/surface.dart';
 
@@ -22,6 +24,7 @@ class PluginSurfaceSpec {
     this.config = const {},
     this.serverId,
     this.l10n = PluginL10n.empty,
+    this.assetDir,
   });
 
   final String pluginId;
@@ -45,11 +48,36 @@ class PluginSurfaceSpec {
 
   final PluginL10n l10n;
 
-  /// Unique per surface for as long as it is open, which is also the lifetime
-  /// of the SDK's `frame()` state — one instance tracks one tree, so two
-  /// surfaces of one plugin must not share an instance.
-  String get instanceId =>
+  /// The plugin's own directory, where an `image` node's file is looked up.
+  final String? assetDir;
+
+  /// The stable contribution this surface displays.
+  ///
+  /// This is not a runtime instance id. Two copies of the same page have the
+  /// same key and still need separate callbacks, handles and QuickJS state.
+  String get contributionKey =>
       '$pluginId:$kind:$contributionId:${serverId ?? '-'}';
+
+  /// Inputs captured when a QuickJS instance is created.
+  bool runtimeDiffersFrom(PluginSurfaceSpec other) =>
+      contributionKey != other.contributionKey ||
+      manifestJson != other.manifestJson ||
+      source != other.source ||
+      !_sameSet(granted, other.granted) ||
+      !_sameMap(config, other.config);
+
+  static bool _sameSet(List<String> a, List<String> b) =>
+      a.length == b.length && a.toSet().containsAll(b);
+
+  static bool _sameMap(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if (b[entry.key] != entry.value || !b.containsKey(entry.key)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 /// A plugin's surface: one instance, its tree, and the refresh that drives it.
@@ -91,9 +119,15 @@ class PluginSurfaceView extends StatefulWidget {
 }
 
 class _PluginSurfaceViewState extends State<PluginSurfaceView> {
-  late final _state = PluginSurfaceState(l10n: widget.spec.l10n);
+  static int _nextInstance = 0;
+
+  late final _state = PluginSurfaceState(
+    l10n: widget.spec.l10n,
+    assetDir: widget.spec.assetDir,
+  );
 
   BigInt? _instance;
+  String? _runtimeInstanceId;
   PluginNode? _tree;
   String? _error;
   Timer? _timer;
@@ -101,6 +135,24 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
   /// Bumped whenever the instance is replaced, so a call that outlives it
   /// publishes nothing. Every await re-checks it.
   int _generation = 0;
+
+  /// How many callers are waiting for this plugin instance right now.
+  ///
+  /// **The runtime serves one call per instance at a time**, and it delivers
+  /// an outstanding host call's answer only while it is inside one. So an
+  /// answer that arrives during a call is drained by that call, and one that
+  /// arrives while this is zero reaches the plugin only if something calls in
+  /// — which is what [_onHostAnswered] is for.
+  int _callsInFlight = 0;
+
+  /// An answer arrived while a call was running. See [_onHostAnswered].
+  bool _answeredDuringCall = false;
+
+  /// A periodic or answer-driven tick already entered the runtime.
+  bool _tickRunning = false;
+
+  /// At least one more tick was requested while the current one ran.
+  bool _tickQueued = false;
 
   @override
   void initState() {
@@ -111,12 +163,23 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
   @override
   void didUpdateWidget(covariant PluginSurfaceView old) {
     super.didUpdateWidget(old);
-    if (old.spec.instanceId != widget.spec.instanceId ||
-        old.spec.source != widget.spec.source) {
-      unawaited(_reload());
-    } else if (old.refreshInterval != widget.refreshInterval) {
-      _restartTimer();
+    final presentationChanged =
+        old.spec.l10n != widget.spec.l10n ||
+        old.spec.assetDir != widget.spec.assetDir;
+    if (presentationChanged) {
+      _state
+        ..l10n = widget.spec.l10n
+        ..assetDir = widget.spec.assetDir;
     }
+    if (widget.spec.runtimeDiffersFrom(old.spec)) {
+      unawaited(_reload());
+      return;
+    }
+    if (presentationChanged) {
+      _state.refreshPresentation();
+      setState(() {});
+    }
+    if (old.refreshInterval != widget.refreshInterval) _restartTimer();
   }
 
   @override
@@ -124,8 +187,13 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
     _timer?.cancel();
     _generation++;
     final instance = _instance;
+    final runtimeInstanceId = _runtimeInstanceId;
     _instance = null;
-    widget.service.bridge.onPatch.remove(widget.spec.instanceId);
+    _runtimeInstanceId = null;
+    if (runtimeInstanceId != null) {
+      widget.service.bridge.onPatch.remove(runtimeInstanceId);
+      widget.service.bridge.onAnswered.remove(runtimeInstanceId);
+    }
     // Not awaited, and not skipped: unloading waits for the plugin's thread,
     // which is not something `dispose` may do — but the instance has to go, or
     // its thread outlives every surface that ever showed it.
@@ -143,6 +211,7 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
     final old = _instance;
     _generation++;
     _instance = null;
+    _runtimeInstanceId = null;
     if (old != null) await widget.service.unload(old);
     if (!mounted) return;
     // The new instance numbers its revisions from the start, and the cache is
@@ -154,11 +223,13 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
   Future<void> _load() async {
     final generation = ++_generation;
     final spec = widget.spec;
+    final runtimeInstanceId = '${spec.contributionKey}#${_nextInstance++}';
+    final started = Stopwatch()..start();
     try {
       final instance = await widget.service.load(
         manifestJson: spec.manifestJson,
         source: spec.source,
-        instanceId: spec.instanceId,
+        instanceId: runtimeInstanceId,
         granted: spec.granted,
         config: spec.config,
         boundServerId: spec.serverId,
@@ -168,26 +239,51 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
         return;
       }
       _instance = instance;
-      widget.service.bridge.onPatch[spec.instanceId] = _applyPatch;
+      _runtimeInstanceId = runtimeInstanceId;
+      widget.service.bridge.onPatch[runtimeInstanceId] = _applyPatch;
+      widget.service.bridge.onAnswered[runtimeInstanceId] = _onHostAnswered;
 
       // `init` before `open`, and only if the plugin has one: it is where a
       // plugin reads its stored state, and a surface drawn before it would
       // show the empty version of everything.
       if (widget.service.hasExport(instance, 'init')) {
-        await widget.service.call(
-          instance,
-          'init',
-          jsonEncode({
-            'server': spec.serverId == null
-                ? null
-                : widget.service.bridge.handles.issue(
-                    spec.instanceId,
-                    spec.serverId!,
-                  ),
-            'locale': Localizations.maybeLocaleOf(context)?.toLanguageTag() ??
-                'en',
-          }),
-        );
+        _beginCall();
+        final initStarted = Stopwatch()..start();
+        try {
+          await widget.service.call(
+            instance,
+            'init',
+            jsonEncode({
+              'server': spec.serverId == null
+                  ? null
+                  : widget.service.bridge.handles.issue(
+                      runtimeInstanceId,
+                      spec.serverId!,
+                    ),
+              'locale':
+                  Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
+            }),
+          );
+          recordPluginEvent(
+            spec.pluginId,
+            stage: PluginStage.init,
+            elapsed: initStarted.elapsed,
+          );
+        } catch (e) {
+          // Recorded and rethrown: the `catch` below turns it into the message
+          // on screen, and what is added here is the *stage*. Without it a
+          // plugin that reads its stored state and throws reads as a load
+          // failure, which is a different thing to go and look at.
+          recordPluginEvent(
+            spec.pluginId,
+            stage: PluginStage.init,
+            elapsed: initStarted.elapsed,
+            failure: pluginFailureTag(e),
+          );
+          rethrow;
+        } finally {
+          _endCall();
+        }
         if (!mounted || generation != _generation) return;
       }
 
@@ -199,7 +295,7 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
           'id': spec.contributionId,
           if (spec.serverId != null)
             'server': widget.service.bridge.handles.issue(
-              spec.instanceId,
+              runtimeInstanceId,
               spec.serverId!,
             ),
         }),
@@ -214,6 +310,15 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
       unawaited(_fireHook('enter'));
     } catch (e, s) {
       Loggers.app.warning('Loading ${spec.pluginId}', e, s);
+      // Recorded whether or not this surface is still on screen: a plugin that
+      // will not compile is the same fact either way, and it is the one a
+      // report most needs — nothing after it has run.
+      recordPluginEvent(
+        spec.pluginId,
+        stage: PluginStage.load,
+        elapsed: started.elapsed,
+        failure: pluginFailureTag(e),
+      );
       if (!mounted || generation != _generation) return;
       setState(() => _error = '$e');
     }
@@ -230,15 +335,36 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
     final instance = _instance;
     if (instance == null) return;
     final spec = widget.spec;
-    await widget.service.hook(
-      instance,
-      kind: kind,
-      contributionId: spec.contributionId,
-      granted: spec.granted,
-      serverIds: spec.serverId != null
-          ? [spec.serverId!]
-          : (widget.fleetServerIds ?? const []),
-    );
+    _beginCall();
+    final started = Stopwatch()..start();
+    try {
+      // What the plugin threw, or null. A hook that failed leaves the tree it
+      // already drew on screen, so nothing the user can see says the
+      // collection threw — which is why it is recorded rather than only
+      // logged.
+      final failed = await widget.service.hook(
+        instance,
+        kind: kind,
+        contributionId: spec.contributionId,
+        granted: spec.granted,
+        serverIds: spec.serverId != null
+            ? [spec.serverId!]
+            : (widget.fleetServerIds ?? const []),
+      );
+      // Only when there was one to run. A plugin that exports no `onHook`
+      // collects somewhere else, and recording a success for a call that did
+      // not happen would clear the failure count of the call that did.
+      if (widget.service.hasExport(instance, 'onHook')) {
+        recordPluginEvent(
+          spec.pluginId,
+          stage: PluginStage.hook,
+          elapsed: started.elapsed,
+          failure: failed == null ? null : pluginFailureTag(failed),
+        );
+      }
+    } finally {
+      _endCall();
+    }
   }
 
   void _restartTimer() {
@@ -249,17 +375,72 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
   }
 
   Future<void> _tick() async {
-    final instance = _instance;
-    if (instance == null) return;
-    if (!widget.service.hasExport(instance, 'tick')) {
-      // Nothing to call. Stopping the timer rather than calling into a
-      // missing export every interval for the life of the surface.
-      _timer?.cancel();
-      _timer = null;
+    if (_tickRunning) {
+      _tickQueued = true;
       return;
     }
-    await _callForUi(_generation, 'tick', '');
+    _tickRunning = true;
+    try {
+      do {
+        _tickQueued = false;
+        final instance = _instance;
+        if (instance == null) return;
+        if (!widget.service.hasExport(instance, 'tick')) {
+          // Nothing to call. Stopping the timer rather than calling into a
+          // missing export every interval for the life of the surface.
+          _timer?.cancel();
+          _timer = null;
+          return;
+        }
+        await _callForUi(_generation, 'tick', '');
+      } while (_tickQueued && mounted && _instance != null);
+    } finally {
+      _tickRunning = false;
+    }
   }
+
+  /// The app finished something the plugin asked for.
+  ///
+  /// **A call is the only thing that hands an answer to a plugin**, and the
+  /// plugin cannot ask for one. Work a call deliberately did not wait for — a
+  /// scan the user can stop, which is the only kind that leaves the instance
+  /// free to be told to stop it — therefore arrives with nobody to give it to,
+  /// and on a surface with no refresh interval nothing would ever come along.
+  /// So this is what calls in.
+  ///
+  /// **Deferred rather than skipped while a call is running.** A call in
+  /// progress usually drains its own answers, but not always: the in-flight
+  /// count spans the future, and the export's promise may have settled before
+  /// the answer
+  /// landed — a window in which "the call will take it" is false and nothing
+  /// else was going to. Deferring costs one extra call after a call that had
+  /// answers, and that call's own delivery pass takes whatever was stranded.
+  void _onHostAnswered() {
+    if (_instance == null || !mounted) return;
+    if (_callsInFlight > 0) {
+      // The tick itself drives every answer it waits for. Scheduling another
+      // tick for those answers creates a loop when `onTick` performs a host
+      // call: tick -> answer -> tick forever. Timer ticks are still coalesced
+      // by [_tick], and an answer that arrives during any other export gets
+      // one follow-up tick below.
+      if (!_tickRunning) _answeredDuringCall = true;
+      return;
+    }
+    unawaited(_tick());
+  }
+
+  /// Ends a call, and follows it with a tick if anything landed during it.
+  void _endCall() {
+    assert(_callsInFlight > 0);
+    _callsInFlight--;
+    if (_callsInFlight > 0) return;
+    if (!_answeredDuringCall) return;
+    _answeredDuringCall = false;
+    if (!mounted || _instance == null) return;
+    unawaited(_tick());
+  }
+
+  void _beginCall() => _callsInFlight++;
 
   Future<void> _onEvent(Object? msg, Object? value) async {
     final instance = _instance;
@@ -279,8 +460,18 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
   Future<void> _callForUi(int generation, String export, String input) async {
     final instance = _instance;
     if (instance == null) return;
+    _beginCall();
+    final started = Stopwatch()..start();
     try {
       final raw = await widget.service.call(instance, export, input);
+      // Before the tree is read: what this records is that the plugin
+      // answered, and how long it took. Whether the app could then draw what
+      // it said is the branch below and is its own failure.
+      recordPluginEvent(
+        widget.spec.pluginId,
+        stage: _stageOf(export),
+        elapsed: started.elapsed,
+      );
       if (!mounted || generation != _generation) return;
 
       final decoded = raw.isEmpty ? null : jsonDecode(raw);
@@ -303,7 +494,18 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
       }
       final tree = PluginNode.fromJson(ui);
       if (tree == null) {
-        setState(() => _error = 'the plugin answered a tree that will not read');
+        // The plugin ran and answered; what it answered is not a tree. A
+        // *drawing* failure, which is one of the three things "the plugin does
+        // nothing" turns out to be.
+        recordPluginEvent(
+          widget.spec.pluginId,
+          stage: PluginStage.patch,
+          elapsed: started.elapsed,
+          failure: 'bad_tree',
+        );
+        setState(
+          () => _error = 'the plugin answered a tree that will not read',
+        );
         return;
       }
       _state.seedSlots(tree);
@@ -313,10 +515,27 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
       });
     } catch (e, s) {
       Loggers.app.warning('$export on ${widget.spec.pluginId}', e, s);
+      recordPluginEvent(
+        widget.spec.pluginId,
+        stage: _stageOf(export),
+        elapsed: started.elapsed,
+        failure: pluginFailureTag(e),
+      );
       if (!mounted || generation != _generation) return;
       setState(() => _error = '$e');
+    } finally {
+      _endCall();
     }
   }
+
+  /// Which stage an export call is, for the record.
+  static PluginStage _stageOf(String export) => switch (export) {
+    'open' => PluginStage.open,
+    'tick' => PluginStage.tick,
+    'onEvent' => PluginStage.event,
+    'init' => PluginStage.init,
+    _ => PluginStage.open,
+  };
 
   /// Replaces the subtree a JSON Pointer names in the tree on screen.
   ///
@@ -379,7 +598,9 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
   @override
   Widget build(BuildContext context) {
     final error = _error;
-    if (error != null) return _Failed(pluginId: widget.spec.pluginId, detail: error);
+    if (error != null) {
+      return _Failed(pluginId: widget.spec.pluginId, detail: error);
+    }
     final tree = _tree;
     if (tree == null) return UIs.centerLoading;
     return PluginRenderer(tree: tree, state: _state, onEvent: _onEvent);
@@ -390,6 +611,16 @@ class _PluginSurfaceViewState extends State<PluginSurfaceView> {
 ///
 /// Named and visible rather than an empty space: a card that silently is not
 /// there is indistinguishable from one the user turned off.
+/// What a plugin that threw looks like.
+///
+/// **Whole, scrollable and selectable.** What lands here is a JavaScript error
+/// with the plugin's own stack under it, and it used to be clipped at three
+/// lines with an ellipsis — which cut off exactly the part naming the function
+/// that failed. The person reading this is the plugin's author, and the next
+/// thing they do is paste it somewhere.
+///
+/// Monospace for the same reason: a stack is code, and a proportional font
+/// makes two frames that differ look alike.
 class _Failed extends StatelessWidget {
   const _Failed({required this.pluginId, required this.detail});
 
@@ -409,10 +640,28 @@ class _Failed extends StatelessWidget {
             spacing: 5,
             children: [
               Icon(Icons.error_outline, size: 17, color: color),
-              Text(pluginId, style: TextStyle(color: color)),
+              Expanded(
+                child: Text(
+                  pluginId,
+                  style: TextStyle(color: color),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
-          Text(detail, style: UIs.textGrey, maxLines: 3, overflow: TextOverflow.ellipsis),
+          Flexible(
+            child: SingleChildScrollView(
+              child: SelectableText(
+                detail,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -232,13 +232,16 @@ pub const fn full_access_default() -> bool {
 /// Env normally beats the config file, matching how the rest of monitor's
 /// settings behave for container deployments where editing a file is awkward.
 fn full_access_from_env() -> Option<bool> {
-    match std::env::var("SBM_FULL_ACCESS").ok()?.trim().to_ascii_lowercase().as_str() {
+    match std::env::var("SBM_FULL_ACCESS")
+        .ok()?
+        .trim()
+        .to_ascii_lowercase()
+        .as_str()
+    {
         "1" | "true" | "yes" | "on" => Some(true),
         "0" | "false" | "no" | "off" => Some(false),
         other => {
-            tracing::warn!(
-                "Ignoring SBM_FULL_ACCESS={other:?}: expected a boolean"
-            );
+            tracing::warn!("Ignoring SBM_FULL_ACCESS={other:?}: expected a boolean");
             None
         }
     }
@@ -296,7 +299,11 @@ impl RemoteAccessConfig {
             full_access: resolve_full_access(self.full_access, full_access_from_env()),
             terminal: Terminal {
                 enabled: self.terminal.enabled,
-                max_sessions: self.terminal.max_sessions.filter(|&n| n > 0).unwrap_or(slots),
+                max_sessions: self
+                    .terminal
+                    .max_sessions
+                    .filter(|&n| n > 0)
+                    .unwrap_or(slots),
                 scrollback_bytes: self
                     .terminal
                     .scrollback_bytes
@@ -553,7 +560,10 @@ mod tests {
         ];
         for (mem, scrollback, slots) in table {
             let r = resolved(Some(mem));
-            assert_eq!(r.terminal.scrollback_bytes, scrollback, "scrollback at {mem} bytes");
+            assert_eq!(
+                r.terminal.scrollback_bytes, scrollback,
+                "scrollback at {mem} bytes"
+            );
             assert_eq!(r.terminal.max_sessions, slots, "sessions at {mem} bytes");
         }
     }
@@ -693,8 +703,14 @@ mod tests {
         for mem in [64 * 1024 * 1024, 512 * 1024 * 1024, 2 * GIB, 256 * GIB] {
             let r = resolved(Some(mem));
             assert!(r.exec.max_output_bytes >= MIN_EXEC_BYTES, "output at {mem}");
-            assert!(r.exec.max_request_bytes >= MIN_EXEC_BYTES, "request at {mem}");
-            assert!(r.exec.max_output_bytes <= MAX_EXEC_BYTES, "output cap at {mem}");
+            assert!(
+                r.exec.max_request_bytes >= MIN_EXEC_BYTES,
+                "request at {mem}"
+            );
+            assert!(
+                r.exec.max_output_bytes <= MAX_EXEC_BYTES,
+                "output cap at {mem}"
+            );
         }
         assert_eq!(
             resolved(None).exec.timeout,

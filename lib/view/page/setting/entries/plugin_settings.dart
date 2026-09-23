@@ -37,7 +37,9 @@ class PluginSettingsPage extends ConsumerWidget {
       if (plugin.manifest.settings case final settings?)
         SettingsNode.leaf(
           id: 'plugin.${plugin.id}',
-          title: settings.label,
+          // The plugin's own, like every other string of its that the app
+          // draws: a manifest label may be an `l10n.` key.
+          title: plugin.strings.resolve(settings.label),
           icon: PluginIcons.of(settings.icon),
           page: () => PluginSettingsPage(plugin: plugin, embedded: true),
         ),
@@ -72,6 +74,7 @@ class PluginSettingsPage extends ConsumerWidget {
         l10n: plugin.l10nFor(
           Localizations.maybeLocaleOf(context)?.toLanguageTag() ?? 'en',
         ),
+        assetDir: plugin.dir,
       ),
       service: ref.read(pluginRuntimeProvider),
       // No ticking. A settings page shows what the user typed, and redrawing
@@ -81,7 +84,7 @@ class PluginSettingsPage extends ConsumerWidget {
     );
     if (embedded) return Scaffold(body: body);
     return Scaffold(
-      appBar: CustomAppBar(title: Text(settings.label)),
+      appBar: CustomAppBar(title: Text(plugin.strings.resolve(settings.label))),
       body: body,
     );
   }

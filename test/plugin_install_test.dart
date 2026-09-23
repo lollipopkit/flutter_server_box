@@ -10,14 +10,18 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/plugin/assets.dart';
 import 'package:server_box/core/utils/plugin/package.dart';
 import 'package:server_box/data/model/app/feature.dart';
 import 'package:server_box/data/model/plugin/contributions.dart';
 import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/provider/plugin/installer.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/migrations/m025_plugin_previous.dart';
 import 'package:server_box/data/store/plugin.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/view/page/home_tab.dart';
+import 'package:server_box/view/page/setting/entries/plugin_settings.dart';
 
 import 'helpers/plugin_sbp.dart';
 import 'helpers/test_db.dart';
@@ -63,6 +67,8 @@ List<int> sbp({
 
 void main() {
   setUpAll(initRustLibForTest);
+
+  _migration();
 
   group('reading a package', () {
     test('it comes back with everything that was in it', () {
@@ -200,6 +206,176 @@ void main() {
 
     /// Each contribution goes in its own slot and only its own. An id in a row
     /// that has nothing to draw for it is a gap the user cannot explain.
+    /// **An update that turns out to be broken has to be undoable.** The old
+    /// files used to be deleted before the new ones moved in, so recovering
+    /// meant finding a `.sbp` for the version before — which for a repository
+    /// install is a release nobody keeps a link to.
+    group('going back to the version before', () {
+      Future<void> installVersion(
+        String version, {
+        int dataVersion = 0,
+        Set<String> consented = const {'server.exec'},
+      }) async {
+        await installer.install(
+          sbp(
+            manifest: jsonEncode({
+              'id': 'app.serverbox.zfs',
+              'version': version,
+              'abi': 1,
+              if (dataVersion != 0) 'data_version': dataVersion,
+              'name': 'ZFS',
+              'permissions': {'server.exec': true},
+            }),
+            source: 'export function open() { return { ui: null }; }',
+          ),
+          consented: consented,
+        );
+      }
+
+      test('a first install has nothing to go back to', () async {
+        await installVersion('1.0.0');
+
+        expect(await installer.rollbackOf('app.serverbox.zfs'), isNull);
+        expect(installer.prevDirOf('app.serverbox.zfs').existsSync(), isFalse);
+      });
+
+      test('an update keeps the version it replaced', () async {
+        await installVersion('1.0.0');
+        await installVersion('1.1.0');
+
+        final back = await installer.rollbackOf('app.serverbox.zfs');
+        expect(back, isNotNull);
+        expect(back!.from, '1.1.0');
+        expect(back.to, '1.0.0');
+        expect(back.dataCompatible, isTrue);
+      });
+
+      test('going back restores the files and the record', () async {
+        await installVersion('1.0.0');
+        await installVersion('1.1.0');
+
+        final plugin = await installer.rollback('app.serverbox.zfs');
+
+        expect(plugin?.manifest.version, '1.0.0');
+        expect(PluginInstallStore().fetch('app.serverbox.zfs')?.version, '1.0.0');
+        // The files on disk, not only the record: the two disagreeing is what
+        // "installed 1.0.1 and ran 1.1.0" was.
+        final manifest = File(
+          installer.dirOf('app.serverbox.zfs').path.joinPath('manifest.json'),
+        ).readAsStringSync();
+        expect(jsonDecode(manifest), containsPair('version', '1.0.0'));
+      });
+
+      /// **`granted` is consent and cannot be re-derived.** Reading it back
+      /// off the old manifest would grant whatever that version asked for,
+      /// which is exactly what the install dialog exists to prevent.
+      test('and what the user had agreed to, not what the manifest asks',
+          () async {
+        await installVersion('1.0.0', consented: const {});
+        await installVersion('1.1.0', consented: const {'server.exec'});
+        expect(
+          PluginInstallStore().fetch('app.serverbox.zfs')?.granted,
+          {'server.exec'},
+        );
+
+        await installer.rollback('app.serverbox.zfs');
+
+        expect(PluginInstallStore().fetch('app.serverbox.zfs')?.granted, isEmpty);
+      });
+
+      /// One level. Two updates back is not a state anybody asked for, and
+      /// keeping every version a plugin has ever been is a directory that only
+      /// grows.
+      test('only one version is kept, however many updates there were',
+          () async {
+        await installVersion('1.0.0');
+        await installVersion('1.1.0');
+        await installVersion('1.2.0');
+
+        expect((await installer.rollbackOf('app.serverbox.zfs'))?.to, '1.1.0');
+      });
+
+      test('and going back twice is not offered', () async {
+        await installVersion('1.0.0');
+        await installVersion('1.1.0');
+        await installer.rollback('app.serverbox.zfs');
+
+        expect(await installer.rollbackOf('app.serverbox.zfs'), isNull);
+        expect(installer.prevDirOf('app.serverbox.zfs').existsSync(), isFalse);
+      });
+
+      /// **A version that raised `data_version` writes records the version
+      /// before it cannot read** — and the old code will not say so, it will
+      /// misread them. Offered anyway, because whether that is worse than the
+      /// update being broken is the user's call; what is not optional is
+      /// telling them.
+      test('a data format change is reported rather than hidden', () async {
+        await installVersion('1.0.0');
+        await installVersion('2.0.0', dataVersion: 1);
+
+        final back = await installer.rollbackOf('app.serverbox.zfs');
+        expect(back, isNotNull);
+        expect(back!.dataCompatible, isFalse);
+      });
+
+      test('an unchanged data version reads as compatible', () async {
+        await installVersion('1.0.0', dataVersion: 2);
+        await installVersion('1.1.0', dataVersion: 2);
+
+        expect(
+          (await installer.rollbackOf('app.serverbox.zfs'))?.dataCompatible,
+          isTrue,
+        );
+      });
+
+      test('uninstalling takes the kept version with it', () async {
+        await installVersion('1.0.0');
+        await installVersion('1.1.0');
+
+        await installer.uninstall('app.serverbox.zfs');
+
+        expect(installer.prevDirOf('app.serverbox.zfs').existsSync(), isFalse);
+      });
+
+      /// The window between the two renames: a process that died there left a
+      /// record naming files that are not on disk, and every launch after that
+      /// skipped the plugin without saying why.
+      test('an install interrupted between the two renames is put back',
+          () async {
+        await installVersion('1.0.0');
+        await installVersion('1.1.0');
+
+        // What a crash after the first rename and before the second leaves.
+        installer.dirOf('app.serverbox.zfs').deleteSync(recursive: true);
+
+        final plugins = await installer.refresh();
+
+        expect(plugins.single.manifest.version, '1.0.0');
+        expect(PluginInstallStore().fetch('app.serverbox.zfs')?.version, '1.0.0');
+        expect(installer.prevDirOf('app.serverbox.zfs').existsSync(), isFalse);
+      });
+
+      /// And one that died while unpacking leaves a whole copy of a package
+      /// nothing points at.
+      test('a staging directory nothing finished is cleaned up', () async {
+        await installVersion('1.0.0');
+        final staging = Directory('${installer.dirOf('app.serverbox.zfs').path}.new');
+        staging.createSync(recursive: true);
+        File(staging.path.joinPath('manifest.json')).writeAsStringSync('{}');
+
+        await installer.refresh();
+
+        expect(staging.existsSync(), isFalse);
+        // And the installed copy is untouched.
+        expect(
+          File(
+            installer.dirOf('app.serverbox.zfs').path.joinPath('manifest.json'),
+          ).existsSync(),
+          isTrue,
+        );
+      });
+    });
+
     test('a status contribution does not land in the function bar', () async {
       await installer.install(sbp(), consented: {'server.exec'});
 
@@ -446,9 +622,13 @@ void main() {
       expect(await installer.refresh(), isEmpty);
     });
 
-    test('a bundled plugin has no repository, a dev one says so', () async {
-      final bundled = await installer.install(sbp(), consented: const {});
-      expect(bundled.record.bundled, isTrue);
+    test('an install records where it came from', () async {
+      final fromFile = await installer.install(
+        sbp(),
+        consented: const {},
+        repo: PluginInstall.fileRepo,
+      );
+      expect(fromFile.record.origin, PluginOrigin.file);
 
       final dev = await installer.install(
         sbp(manifest: _manifest(id: 'app.serverbox.dev')),
@@ -456,6 +636,253 @@ void main() {
         repo: PluginInstall.devRepo,
       );
       expect(dev.record.isDev, isTrue);
+    });
+
+    /// A directory used to win over the app's own copy for any id it named, so
+    /// installing a package for a plugin that was also registered as a working
+    /// tree wrote a record naming a version and a repository — and then kept
+    /// loading the tree. The record said 1.0.1 from GitHub; the app ran 1.1.0
+    /// from `dist/`, and nothing on either page could say so.
+    test('installing a package takes the id back from a development directory',
+        () async {
+      final dir = await Directory.systemTemp.createTemp('sbm_plugin_dev');
+      addTearDown(() => dir.delete(recursive: true));
+      await File(dir.path.joinPath(PluginPackage.manifestName))
+          .writeAsString(_manifest(version: '9.9.9'));
+      await File(dir.path.joinPath(PluginPackage.sourceName))
+          .writeAsString('export function statusCmd() { return { cmd: "d" }; }');
+
+      await installer.addDevDir(dir.path, consented: const {});
+      expect(setting.pluginDevDirs.fetch(), [dir.path]);
+
+      await installer.install(
+        sbp(manifest: _manifest(version: '1.0.1')),
+        consented: const {},
+        repo: 'https://github.com/o/r',
+      );
+
+      // The registration is gone, so the next refresh cannot bring the
+      // directory back.
+      expect(setting.pluginDevDirs.fetch(), isEmpty);
+      final plugin = (await installer.refresh()).single;
+      expect(plugin.record.origin, PluginOrigin.repo);
+      expect(plugin.record.version, '1.0.1');
+      expect(plugin.manifest.version, '1.0.1', reason: 'the package, not the tree');
+    });
+
+    /// What an `image` node draws. Written into the plugin's own directory, and
+    /// the directory is what the surface is given — a package's pictures are
+    /// not held in memory, because every installed plugin is read at launch and
+    /// most of them are not on screen.
+    test('the assets a package carries are installed beside it', () async {
+      final plugin = await installer.install(
+        sbp(extra: {'assets/logo.png': const [0x89, 0x50, 0x4e, 0x47]}),
+        consented: {'server.exec'},
+      );
+
+      expect(plugin.dir, installer.dirOf(plugin.id).path);
+      expect(
+        File(plugin.dir!.joinPath('assets/logo.png')).existsSync(),
+        isTrue,
+      );
+      expect(
+        PluginAssets.pathOf(plugin.dir, 'logo.png'),
+        endsWith('assets/logo.png'),
+      );
+    });
+
+    /// The classic archive attack, in the one directory a plugin may name a
+    /// file in. Refused rather than normalised: there is no `..` to reason
+    /// about if a separator is not allowed at all.
+    test('an asset name with a path in it reaches nothing', () async {
+      for (final name in const ['../evil.png', 'a/b.png', '.hidden.png']) {
+        expect(PluginAssets.isAllowed(name), isFalse, reason: name);
+        expect(PluginAssets.pathOf('/tmp/p', name), isNull, reason: name);
+      }
+      // And a file this build would not draw is refused by the reader, so a
+      // package cannot smuggle one in beside the pictures.
+      expect(
+        () => PluginPackage.read(sbp(extra: {'assets/run.sh': const [1, 2]})),
+        throwsA(isA<PluginPackageError>()),
+      );
+    });
+
+    /// A manifest is one document for every language, so a plugin names itself
+    /// and its contributions with keys and the app resolves them where they are
+    /// drawn. Left unresolved, they are what the interface says: a tab titled
+    /// `l10n.pluginName`, a store dialog headed `l10n.pluginName 1.1.0`, in an
+    /// app that is otherwise translated.
+    test('a manifest that names itself with a key is read in a language',
+        () async {
+      final plugin = await installer.install(
+        sbp(
+          manifest: jsonEncode({
+            'id': 'app.serverbox.zfs',
+            'version': '1.0.0',
+            'abi': 1,
+            'name': 'l10n.pluginName',
+            'description': 'l10n.pluginDescription',
+            'permissions': const {'server.exec': true},
+            'contributes': {
+              'status': {
+                'id': 'zfs',
+                'label': 'l10n.pluginName',
+                'platforms': ['linux'],
+              },
+              'card': {'id': 'c', 'label': 'l10n.cardLabel'},
+              'page': {'id': 'p', 'label': 'l10n.pageLabel'},
+              'tab': {'id': 't', 'label': 'l10n.tabLabel'},
+              'settings': {'id': 's', 'label': 'l10n.settingsLabel'},
+            },
+          }),
+          l10n: const {
+            'en': {
+              'pluginName': 'Pools',
+              'pluginDescription': 'What ZFS has.',
+              'cardLabel': 'Card',
+              'pageLabel': 'Page',
+              'tabLabel': 'Fleet',
+              'settingsLabel': 'Prefs',
+            },
+          },
+        ),
+        consented: const {'server.exec'},
+        repo: PluginInstall.fileRepo,
+      );
+
+      expect(plugin.name, 'Pools');
+      expect(plugin.description, 'What ZFS has.');
+      // Every surface the manifest can name, because each is drawn by a
+      // different widget and each was a separate place to forget: the card and
+      // the status reading on the server page, the button in the function bar,
+      // the tab on the home page, the section in settings.
+      expect(plugin.statusFeature?.label(), 'Pools');
+      expect(plugin.cardFeature?.label(), 'Card');
+      expect(plugin.pageFeature?.label(), 'Page');
+      expect(plugin.tabFeature?.label(), 'Fleet');
+      expect(PluginHomeTab(plugin).label, 'Fleet');
+      PluginContributions.publish([plugin]);
+      expect(
+        PluginSettingsPage.nodes().single.title,
+        'Prefs',
+        reason: 'the settings menu leaf',
+      );
+      // And the manifest itself is untouched: the keys are what was installed,
+      // and the language is decided every time one is drawn.
+      expect(plugin.manifest.name, 'l10n.pluginName');
+    });
+
+    /// The record is the answer to "what is installed", including which files
+    /// to read. A directory used to win for any id it named, whatever the
+    /// record said — so a device already in that state (a directory listed from
+    /// an older build, a record from the store) has to come out of it reading
+    /// the copy the record describes.
+    test('the record decides which files are read, not the directory list',
+        () async {
+      final dir = await Directory.systemTemp.createTemp('sbm_plugin_dev');
+      addTearDown(() => dir.delete(recursive: true));
+      await File(dir.path.joinPath(PluginPackage.manifestName))
+          .writeAsString(_manifest(version: '9.9.9'));
+      await File(dir.path.joinPath(PluginPackage.sourceName))
+          .writeAsString('export function statusCmd() { return { cmd: "d" }; }');
+
+      await installer.install(
+        sbp(manifest: _manifest(version: '1.0.1')),
+        consented: const {},
+        repo: 'https://github.com/o/r',
+      );
+      // Listed behind the installer's back, which is the state an install
+      // through the old code left.
+      setting.pluginDevDirs.put([dir.path]);
+
+      final plugin = (await installer.refresh()).single;
+      expect(plugin.manifest.version, '1.0.1');
+      expect(plugin.record.version, '1.0.1');
+    });
+
+    /// The version a development directory *is*, not the one it was when it
+    /// was added: those files are edited in place, and a number frozen at
+    /// registration is one nothing on disk agrees with.
+    test('a development directory reports the version it currently has',
+        () async {
+      final dir = await Directory.systemTemp.createTemp('sbm_plugin_dev');
+      addTearDown(() => dir.delete(recursive: true));
+      final manifest = File(dir.path.joinPath(PluginPackage.manifestName));
+      await manifest.writeAsString(_manifest(version: '1.0.0'));
+      await File(dir.path.joinPath(PluginPackage.sourceName))
+          .writeAsString('export function statusCmd() { return { cmd: "d" }; }');
+
+      final added = await installer.addDevDir(dir.path, consented: const {});
+      expect(added.record.version, '1.0.0');
+
+      await manifest.writeAsString(_manifest(version: '1.1.0'));
+      expect((await installer.refresh()).single.record.version, '1.1.0');
+    });
+  });
+}
+
+/// The column that keeps the replaced record, on an install that predates it.
+///
+/// A schema step is three edits — the class, `SchemaVersion.current` and
+/// `kSchemaMigrations` — and none of them is visible in the step's own test,
+/// which calls `apply()` directly. What is checkable here is the step itself:
+/// a table without the column gets it, and one that already has it is left
+/// alone. `ALTER TABLE ... ADD COLUMN` on an existing name is an error rather
+/// than a no-op, and a migration is not repeatable.
+void _migration() {
+  group('the column an update is kept in', () {
+    setUp(openTestDb);
+    tearDown(closeTestDb);
+
+    bool hasPrevious() => SqliteDb.instance
+        .select('PRAGMA table_info(plugin_install);')
+        .any((row) => row['name'] == 'previous');
+
+    test('a table written before it gets it', () async {
+      // What the table looked like at v25, from `m022`'s own DDL minus the
+      // column being added.
+      SqliteDb.instance.execute('DROP TABLE plugin_install;');
+      SqliteDb.instance.execute('''
+CREATE TABLE plugin_install (
+  id TEXT NOT NULL PRIMARY KEY,
+  version TEXT NOT NULL,
+  repo TEXT,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  granted TEXT NOT NULL,
+  installed_at INTEGER NOT NULL
+) WITHOUT ROWID;
+''');
+      expect(hasPrevious(), isFalse);
+
+      await const PluginPreviousMigration().apply();
+
+      expect(hasPrevious(), isTrue);
+    });
+
+    /// A fresh install gets the column from `createTables`, so this step runs
+    /// over a table that already has it.
+    test('and one that already has it is left alone', () async {
+      expect(hasPrevious(), isTrue);
+
+      await const PluginPreviousMigration().apply();
+
+      expect(hasPrevious(), isTrue);
+    });
+
+    /// A record written before the column existed reads as "nothing to go
+    /// back to", which is what it is.
+    test('a row written without one has no previous version', () async {
+      final store = PluginInstallStore();
+      store.put(
+        PluginInstall(
+          id: 'app.serverbox.zfs',
+          version: '1.0.0',
+          granted: const {},
+          installedAt: DateTime.now(),
+        ),
+      );
+
+      expect(store.fetch('app.serverbox.zfs')?.previous, isNull);
     });
   });
 }

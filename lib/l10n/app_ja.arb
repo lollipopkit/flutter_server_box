@@ -100,7 +100,6 @@
   "pkgSecurityUnknown": "{manager} では、どの更新がセキュリティ修正か判別できません",
   "pluginInstall": "プラグインをインストール",
   "pluginInstalled": "インストール済み",
-  "pluginBundled": "同梱",
   "pluginDev": "開発",
   "pluginNeedsConsent": "この更新では、同意済みの範囲を超える権限が要求されています。再インストールして内容を確認してください。",
   "pluginPermissionsAsk": "このプラグインが要求する権限：",

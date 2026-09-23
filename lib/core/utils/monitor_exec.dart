@@ -27,6 +27,11 @@ class MonitorExec implements ServerExec {
 
   final MonitorHttpClient client;
 
+  /// One request carries the whole run, so there is no channel to signal down.
+  /// Abandoning it leaves the agent running the command to its own timeout.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsWaiting;
+
   @override
   Future<ExecResult> run(
     String script, {

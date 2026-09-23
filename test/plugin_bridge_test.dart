@@ -13,6 +13,8 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/plugin/host_ops.dart';
+import 'package:server_box/data/model/plugin/l10n.dart';
+import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/plugin/bridge.dart';
 import 'package:server_box/data/store/plugin.dart';
 
@@ -30,9 +32,21 @@ class _Recorded {
 class _FakeOps implements PluginHostOps {
   final calls = <_Recorded>[];
 
-  PluginExecResult execResult = (code: 0, stdout: 'ok', stderr: '');
+  PluginExecResult execResult = const PluginExecResult(
+    code: 0,
+    stdout: 'ok',
+    stderr: '',
+  );
   Object? execThrows;
+
+  /// Set to have `exec` wait for the `cancel` it was given rather than answer,
+  /// which is what a long command looks like from here.
+  PluginExecResult Function()? execAfterCancel;
   PluginPromptResult promptResult = (cancelled: true, values: {});
+
+  /// The body the last prompt was given, if it was given one.
+  PluginNode? promptNode;
+  bool promptSheet = false;
   String? picked;
   String? clipboard = 'copied';
 
@@ -41,10 +55,18 @@ class _FakeOps implements PluginHostOps {
     String serverId,
     String script, {
     Duration? timeout,
+    Future<void>? cancel,
   }) async {
     calls.add(_Recorded('exec', '$serverId|$script|${timeout?.inMilliseconds}'));
     final thrown = execThrows;
     if (thrown != null) throw thrown;
+    final after = execAfterCancel;
+    if (after != null) {
+      // Answers only once the caller asks it to stop, which is the whole of
+      // what a long command does here.
+      await cancel;
+      return after();
+    }
     return execResult;
   }
 
@@ -105,9 +127,17 @@ class _FakeOps implements PluginHostOps {
     String? message,
     List<PluginPromptField> fields = const [],
     String? confirm,
+    PluginNode? node,
+    PluginL10n strings = PluginL10n.empty,
+    bool sheet = false,
   }) async {
+    promptNode = node;
+    promptSheet = sheet;
     calls.add(
-      _Recorded('prompt', '$title|${fields.map((f) => f.key).join(',')}'),
+      _Recorded(
+        'prompt',
+        '$title|${fields.map((f) => '${f.key}=${f.label}').join(',')}',
+      ),
     );
     return promptResult;
   }
@@ -273,6 +303,191 @@ void main() {
 
       expect(answer.errorKind, 'bad_request');
       expect(answer.errorMessage, contains('not JSON'));
+    });
+  });
+
+  /// Giving up on a command, and saying what that did to it.
+  ///
+  /// The second half is the one with no other check on it. Whether the command
+  /// was stopped **on the server** is the transport's answer — an SSH channel
+  /// carries a signal, one HTTP request to an agent does not — and a plugin
+  /// that reported "stopped" for the second case would tell somebody their
+  /// server is idle while it walks a filesystem.
+  group('stopping a command', () {
+    /// A run answers a rejection rather than an empty result on purpose: a
+    /// stopped `du` has a *prefix* of its output, and a plugin that did not
+    /// check an extra field would draw it as a complete reading.
+    test('a stopped run rejects, saying the command was stopped', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+      ops.execAfterCancel = () => const PluginExecResult(
+        code: -1,
+        stdout: 'partial',
+        stderr: '',
+        end: PluginExecEnd.cancelled,
+        stoppedCommand: true,
+      );
+
+      final running = call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /',
+        'cancelKey': 'scan',
+      });
+      // The tap, which is a separate call: the plugin is not inside the one
+      // above by the time somebody presses Stop.
+      final stopped = await call('sb.server.cancel', {'key': 'scan'});
+      final answer = await running;
+
+      expect(decoded(stopped), {'stopped': 1});
+      expect(answer.errorKind, 'cancelled');
+      expect(jsonDecode(answer.errorData!), {'remote': 'stopped'});
+    });
+
+    /// The case the distinction exists for.
+    test('a transport that only stopped waiting says so', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+      ops.execAfterCancel = () => const PluginExecResult(
+        code: -1,
+        stdout: '',
+        stderr: '',
+        end: PluginExecEnd.cancelled,
+        stoppedCommand: false,
+      );
+
+      final running = call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /',
+        'cancelKey': 'scan',
+      });
+      await call('sb.server.cancel', {'key': 'scan'});
+      final answer = await running;
+
+      expect(answer.errorKind, 'cancelled');
+      expect(jsonDecode(answer.errorData!), {'remote': 'running'});
+      expect(answer.errorMessage, contains('may still be running'));
+    });
+
+    /// A timeout is the same mechanism and carries the same answer, so a
+    /// plugin that handles one handles the other.
+    test('a timeout carries what happened to the command too', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+      ops.execResult = const PluginExecResult(
+        code: -1,
+        stdout: '',
+        stderr: '',
+        end: PluginExecEnd.timedOut,
+        stoppedCommand: false,
+      );
+
+      final answer = await call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /',
+      });
+
+      expect(answer.errorKind, 'timeout');
+      expect(jsonDecode(answer.errorData!), {'remote': 'running'});
+    });
+
+    /// **A key is scoped to the instance that issued it.** It is a string the
+    /// plugin made up, not a handle the host gave out, so without this a
+    /// settings surface could stop a page's reading — or one plugin could stop
+    /// another's, since both may reasonably call theirs `scan`.
+    test('a key reaches nothing another instance started', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+      ops.execAfterCancel = () => const PluginExecResult(
+        code: -1,
+        stdout: '',
+        stderr: '',
+        end: PluginExecEnd.cancelled,
+        stoppedCommand: true,
+      );
+
+      final running = call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /',
+        'cancelKey': 'scan',
+      });
+
+      final elsewhere = await bridge.answer(
+        pluginId: 'app.serverbox.test',
+        instanceId: 'inst-2',
+        func: 'sb.server.cancel',
+        request: jsonEncode({'key': 'scan'}),
+      );
+      expect(decoded(elsewhere), {'stopped': 0});
+
+      // And its own instance still can, which is what says the run was there
+      // to be reached at all.
+      expect(decoded(await call('sb.server.cancel', {'key': 'scan'})), {
+        'stopped': 1,
+      });
+      await running;
+    });
+
+    /// Not a failure: a Stop pressed as the answer came back names nothing,
+    /// and the page is already showing the result.
+    test('a key nothing is running under answers zero', () async {
+      expect(decoded(await call('sb.server.cancel', {'key': 'scan'})), {
+        'stopped': 0,
+      });
+    });
+
+    test('a request with no key is refused rather than stopping everything',
+        () async {
+      final answer = await call('sb.server.cancel', {});
+      expect(answer.errorKind, 'bad_request');
+    });
+
+    /// A surface that goes away is one nobody is waiting for. Without this its
+    /// commands run to their own timeout, holding an SSH channel and — on a
+    /// phone — whatever wakes the radio to read from it.
+    test('unloading stops what the instance had outstanding', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+      ops.execAfterCancel = () => const PluginExecResult(
+        code: -1,
+        stdout: '',
+        stderr: '',
+        end: PluginExecEnd.cancelled,
+        stoppedCommand: true,
+      );
+
+      final running = call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /',
+        'cancelKey': 'scan',
+      });
+      bridge.runs.forget('inst-1');
+
+      expect((await running).errorKind, 'cancelled');
+    });
+
+    /// One key covers several machines on purpose: a fleet-wide surface asks
+    /// twenty servers the same question, and stopping is stopping all of them.
+    test('one key stops every run carrying it', () async {
+      final handle = handles.bind('inst-1', 'srv-1');
+      ops.execAfterCancel = () => const PluginExecResult(
+        code: -1,
+        stdout: '',
+        stderr: '',
+        end: PluginExecEnd.cancelled,
+        stoppedCommand: true,
+      );
+
+      final first = call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /a',
+        'cancelKey': 'scan',
+      });
+      final second = call('sb.server.exec', {
+        'server': handle,
+        'script': 'du -x /b',
+        'cancelKey': 'scan',
+      });
+
+      expect(decoded(await call('sb.server.cancel', {'key': 'scan'})), {
+        'stopped': 2,
+      });
+      expect((await first).errorKind, 'cancelled');
+      expect((await second).errorKind, 'cancelled');
     });
   });
 
@@ -552,10 +767,102 @@ void main() {
         ],
       });
 
-      expect('${ops.calls.single}', 'prompt(Sign in|user,pwd)');
+      expect('${ops.calls.single}', 'prompt(Sign in|user=User,pwd=Password)');
       expect(decoded(answer), {
         'cancelled': false,
         'values': {'user': 'admin'},
+      });
+    });
+
+    /// Every other surface resolves `l10n.` where it draws — the renderer does
+    /// it for every node — and this was the one place a plugin's string
+    /// reached a widget without passing through it. A fully translated plugin
+    /// raised a dialog headed `l10n.addTitle` over boxes labelled
+    /// `l10n.fieldWhen` and `l10n.fieldCommand`.
+    test('a prompt is shown in the language the plugin was translated into',
+        () async {
+      final translating = PluginBridge(
+        ops: ops,
+        handles: handles,
+        store: PluginKvStore(),
+        strings: (id) => id == 'app.serverbox.test'
+            ? const PluginL10n(
+                active: {'addTitle': '新建任务', 'fieldWhen': '时间'},
+                fallback: {'addTitle': 'New job', 'fieldWhen': 'When'},
+              )
+            : PluginL10n.empty,
+      );
+
+      await translating.answer(
+        pluginId: 'app.serverbox.test',
+        instanceId: 'inst-1',
+        func: 'sb.ui.prompt',
+        request: jsonEncode({
+          'title': 'l10n.addTitle',
+          'fields': [
+            {'key': 'when', 'label': 'l10n.fieldWhen', 'value': '0 3 * * *'},
+          ],
+        }),
+      );
+
+      await translating.answer(
+        pluginId: 'app.serverbox.test',
+        instanceId: 'inst-1',
+        func: 'sb.ui.toast',
+        request: jsonEncode({'text': 'l10n.addTitle', 'kind': 'success'}),
+      );
+
+      expect(ops.calls.map((c) => '$c'), [
+        'prompt(新建任务|when=时间)',
+        'toast(success|新建任务)',
+      ]);
+    });
+
+    /// The label is what the user reads; the value is the plugin's data on its
+    /// way to a box and back. Resolving that would rewrite a crontab line that
+    /// happened to start with the prefix.
+    test('a prompt does not translate what is in the box', () async {
+      ops.promptResult = (cancelled: false, values: {'when': 'l10n.x'});
+
+      final answer = await call('sb.ui.prompt', {
+        'title': 't',
+        'fields': [
+          {'key': 'when', 'label': 'When', 'value': 'l10n.notAKey'},
+        ],
+      });
+
+      expect(decoded(answer), {
+        'cancelled': false,
+        'values': {'when': 'l10n.x'},
+      });
+    });
+
+    /// The shorthand is a row of text boxes; a body is the general case. A
+    /// plugin's editor needs a choice beside a command, and a list of
+    /// `TextField`s cannot be one.
+    test('a prompt may carry a body the plugin drew', () async {
+      ops.promptResult = (cancelled: false, values: {'when': '0 3 * * *'});
+
+      final answer = await call('sb.ui.prompt', {
+        'title': 'Edit',
+        'as': 'sheet',
+        'node': {
+          't': 'column',
+          'c': [
+            {
+              't': 'input',
+              'p': {'value': '0 3 * * *'},
+              'on': {'change': 'when'},
+            },
+          ],
+        },
+      });
+
+      expect(ops.promptNode?.type, 'column');
+      expect(ops.promptSheet, isTrue);
+      expect(decoded(answer), {
+        'cancelled': false,
+        'values': {'when': '0 3 * * *'},
       });
     });
 

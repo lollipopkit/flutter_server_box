@@ -10,17 +10,17 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use rquickjs::promise::{MaybePromise, PromiseState};
 use rquickjs::CaughtError;
+use rquickjs::promise::{MaybePromise, PromiseState};
 use rquickjs::{
     CatchResultExt, Context, Ctx, Function, Module, Object, Persistent, Runtime as QjsRuntime,
     Value,
 };
 
-use crate::hostfn::HostProfile;
 use crate::bindings::{self, Outbox, Outstanding};
 use crate::bridge::{BridgeError, HostBridge};
 use crate::error::PluginError;
+use crate::hostfn::HostProfile;
 use crate::permission::Grants;
 use crate::scope::State;
 
@@ -45,7 +45,26 @@ use crate::scope::State;
 /// - **v1** — the original set.
 /// - **v2** — `tile`, `summary` and `toggle` nodes; `tap` honoured on any node
 ///   rather than only on `btn`; `icon` on every contribution.
-pub const ABI_VERSION: u32 = 2;
+/// - **v3** — the set a page needs to look like the app around it.
+///   *Layout*: `flexible`, `align`, `wrap`, `stack`, `positioned`, `grid`;
+///   `main`/`cross` on a row and a column; per-side padding.
+///   *Type*: named size, weight, `mono`, `max` and `select` on `text`.
+///   *Controls*: `checkbox`, `segmented`, `dropdown`, `slider`, `chip`, `menu`,
+///   `tabs`; `variant`/`icon`/`busy` on `btn`; `icon`/`lines`/`keyboard` and a
+///   `submit` event on `input`; `selected` on `tile`; `long_press` on any node.
+///   *Display*: `banner`, `badge`, `tooltip`, `skeleton`, `pie_chart`, and real
+///   line and bar charts for the series `line_chart`/`bar_chart` already took.
+///   *Host*: `refresh` and `dismiss` wrappers, and a `sb.ui.prompt` whose body
+///   is a node tree — raised as a dialog or as a sheet.
+/// - **v4** — giving up on work, and going back to the version before.
+///   *Host*: `sb.server.cancel`, and `cancelKey` on `sb.server.exec`; a
+///   rejected host call may carry fields beside `kind`, which is how a
+///   cancelled or timed-out run says whether the command was stopped **on the
+///   server** or only stopped being waited for.
+///   *Manifest*: `data_version` — what the plugin's stored data is shaped
+///   like, which is what decides whether the app may offer to put the previous
+///   version back.
+pub const ABI_VERSION: u32 = 4;
 
 /// How long one call may run JavaScript before it is stopped.
 ///
@@ -87,7 +106,11 @@ const POLL_BACKOFF_AFTER: Duration = Duration::from_millis(50);
 /// nothing has happened. The cost is up to 25 ms added to a call that already
 /// took seconds.
 fn poll_interval(waiting: Duration) -> Duration {
-    if waiting < POLL_BACKOFF_AFTER { POLL_INTERVAL } else { POLL_INTERVAL_MAX }
+    if waiting < POLL_BACKOFF_AFTER {
+        POLL_INTERVAL
+    } else {
+        POLL_INTERVAL_MAX
+    }
 }
 
 /// Everything an instance needs that is not the source.
@@ -209,53 +232,55 @@ impl Instance {
         let loaded = {
             let state = Arc::clone(&state);
             let outbox = Rc::clone(&outbox);
-            ctx.with(|ctx| -> Result<(Persistent<Object<'static>>, Vec<String>), PluginError> {
-                bindings::install(&ctx, Arc::clone(&state), Rc::clone(&outbox))
-                    .map_err(|e| PluginError::Internal(format!("install sb: {e}")))?;
+            ctx.with(
+                |ctx| -> Result<(Persistent<Object<'static>>, Vec<String>), PluginError> {
+                    bindings::install(&ctx, Arc::clone(&state), Rc::clone(&outbox))
+                        .map_err(|e| PluginError::Internal(format!("install sb: {e}")))?;
 
-                let declared = Module::declare(ctx.clone(), "plugin", source)
-                    .catch(&ctx)
+                    let declared = Module::declare(ctx.clone(), "plugin", source)
+                        .catch(&ctx)
+                        .map_err(|e| PluginError::Module(e.to_string()))?;
+                    let (module, pending) = declared
+                        .eval()
+                        .catch(&ctx)
+                        .map_err(|e| PluginError::Module(e.to_string()))?;
+
+                    // Driven the same way a call is, rather than with
+                    // `Promise::finish`. A module that awaits a host function at
+                    // top level — `const accounts = await sb.store.list(...)` is
+                    // the natural way to write it — leaves a promise nothing in the
+                    // job queue can settle, and `finish` answers `WouldBlock`,
+                    // which reaches the user as a plugin that will not load for no
+                    // stated reason.
+                    let arm = || {
+                        *deadline.lock().expect("poisoned") =
+                            options.time_limit.map(|d| Instant::now() + d)
+                    };
+                    drive(
+                        &ctx,
+                        MaybePromise::from_value(pending.into_value()),
+                        &outbox,
+                        &state,
+                        options.host_call_timeout,
+                        &arm,
+                    )
                     .map_err(|e| PluginError::Module(e.to_string()))?;
-                let (module, pending) = declared
-                    .eval()
-                    .catch(&ctx)
-                    .map_err(|e| PluginError::Module(e.to_string()))?;
 
-                // Driven the same way a call is, rather than with
-                // `Promise::finish`. A module that awaits a host function at
-                // top level — `const accounts = await sb.store.list(...)` is
-                // the natural way to write it — leaves a promise nothing in the
-                // job queue can settle, and `finish` answers `WouldBlock`,
-                // which reaches the user as a plugin that will not load for no
-                // stated reason.
-                let arm = || {
-                    *deadline.lock().expect("poisoned") =
-                        options.time_limit.map(|d| Instant::now() + d)
-                };
-                drive(
-                    &ctx,
-                    MaybePromise::from_value(pending.into_value()),
-                    &outbox,
-                    &state,
-                    options.host_call_timeout,
-                    &arm,
-                )
-                .map_err(|e| PluginError::Module(e.to_string()))?;
-
-                let ns = module
-                    .namespace()
-                    .map_err(|e| PluginError::Module(format!("exports: {e}")))?;
-                let mut exports = Vec::new();
-                for entry in ns.props::<String, Value>() {
-                    let (name, value) =
-                        entry.map_err(|e| PluginError::Module(format!("exports: {e}")))?;
-                    if value.is_function() {
-                        exports.push(name);
+                    let ns = module
+                        .namespace()
+                        .map_err(|e| PluginError::Module(format!("exports: {e}")))?;
+                    let mut exports = Vec::new();
+                    for entry in ns.props::<String, Value>() {
+                        let (name, value) =
+                            entry.map_err(|e| PluginError::Module(format!("exports: {e}")))?;
+                        if value.is_function() {
+                            exports.push(name);
+                        }
                     }
-                }
-                exports.sort();
-                Ok((Persistent::save(&ctx, ns), exports))
-            })?
+                    exports.sort();
+                    Ok((Persistent::save(&ctx, ns), exports))
+                },
+            )?
         };
         *deadline.lock().expect("poisoned") = None;
         let (namespace, exports) = loaded;
@@ -344,10 +369,23 @@ impl Instance {
                     .map_err(|e| PluginError::BadAnswer(format!("input is not JSON: {e}")))?
             };
 
-            let pending: MaybePromise = func
-                .call((arg,))
-                .catch(&ctx)
-                .map_err(from_caught)?;
+            // **Everything the app has answered since the last call, before
+            // this one runs.** An outstanding host call belongs to the
+            // instance rather than to the export that made it: a plugin may
+            // start work and answer without waiting for it, and it has to —
+            // the host serves one call per instance, so a call that waits for
+            // a four-minute `du` is four minutes in which no tap is
+            // delivered and nothing can stop it.
+            //
+            // Before, not after: an export reads its state when it runs, so an
+            // answer handed over afterwards is one the export already decided
+            // without. That was the whole of the bug — a page that had
+            // deliberately stopped waiting drew its loading state for ever,
+            // and nothing said why.
+            deliver(&ctx, &outbox, &state, &arm)?;
+            while ctx.execute_pending_job() {}
+
+            let pending: MaybePromise = func.call((arg,)).catch(&ctx).map_err(from_caught)?;
 
             let settled = drive(&ctx, pending, &outbox, &state, host_call_timeout, &arm);
 
@@ -385,6 +423,19 @@ impl Drop for Instance {
 /// This is what makes `await` in a plugin worth anything: while a host call is
 /// outstanding the plugin's own stack is unwound, so the instance is holding
 /// nothing but memory, and the thread is free to carry another instance.
+///
+/// **Answers are delivered before the value is inspected, and that ordering is
+/// the contract.** An outstanding call belongs to the instance rather than to
+/// the export call that made it: a plugin may start work and answer without
+/// waiting for it, which is the only way a long command can be stopped — the
+/// host serves one call per instance, so a call that waits for a four-minute
+/// `du` is four minutes in which no tap is delivered. Inspecting the promise
+/// first meant such an answer was only ever handed over to a call that
+/// happened to `await` something itself; a call that resolved straight through
+/// left it in the outbox, and a page that had stopped waiting on purpose never
+/// saw its own reading. Now every call is an opportunity, which is what
+/// "the host drives an instance only while it is inside a call" was supposed
+/// to mean.
 fn drive<'js>(
     ctx: &Ctx<'js>,
     pending: MaybePromise<'js>,
@@ -396,13 +447,21 @@ fn drive<'js>(
     let mut waited_since: Option<Instant> = None;
 
     loop {
-        // Microtasks first: a promise resolved by the last round of answers
-        // only reaches the plugin when the queue runs.
+        if deliver(ctx, outbox, state, arm)? {
+            waited_since = None;
+        }
+
+        // A promise resolved by the answers above only reaches the plugin when
+        // the queue runs.
         while ctx.execute_pending_job() {}
 
         match pending.state() {
             PromiseState::Resolved => {
-                let value = pending.result::<Value>().transpose().catch(ctx).map_err(from_caught)?;
+                let value = pending
+                    .result::<Value>()
+                    .transpose()
+                    .catch(ctx)
+                    .map_err(from_caught)?;
                 return Ok(value.unwrap_or_else(|| Value::new_undefined(ctx.clone())));
             }
             PromiseState::Rejected => return Err(rejection(ctx, &pending)),
@@ -418,30 +477,43 @@ fn drive<'js>(
             ));
         }
 
-        let ready = take_ready(outbox);
-        if ready.is_empty() {
-            let since = *waited_since.get_or_insert_with(Instant::now);
-            if since.elapsed() > host_call_timeout {
-                return Err(PluginError::Internal(format!(
-                    "the app did not answer within {host_call_timeout:?}"
-                )));
-            }
-            std::thread::sleep(poll_interval(since.elapsed()));
-            continue;
+        let since = *waited_since.get_or_insert_with(Instant::now);
+        if since.elapsed() > host_call_timeout {
+            return Err(PluginError::Internal(format!(
+                "the app did not answer within {host_call_timeout:?}"
+            )));
         }
+        std::thread::sleep(poll_interval(since.elapsed()));
+    }
+}
 
-        waited_since = None;
-        // The plugin is about to run again, so it gets a fresh deadline. Time
-        // spent waiting for the app is not the plugin's.
-        arm();
-        for (outstanding, answer) in ready {
-            let recorded = bindings::settle(ctx, state, outstanding, answer)
-                .map_err(|e| PluginError::Internal(format!("settle: {e}")))?;
-            if let Some((func, value)) = recorded {
-                state.record_response(func, &value);
-            }
+/// Settles every host call the app has answered, and says whether there was
+/// one.
+///
+/// Called at the top of every export call as well as inside [`drive`], because
+/// an answer nobody is waiting for still has to reach the plugin — see the
+/// comment at its other call site.
+fn deliver<'js>(
+    ctx: &Ctx<'js>,
+    outbox: &Outbox,
+    state: &Arc<State>,
+    arm: &dyn Fn(),
+) -> Result<bool, PluginError> {
+    let ready = take_ready(outbox);
+    if ready.is_empty() {
+        return Ok(false);
+    }
+    // The plugin is about to run again, so it gets a fresh deadline. Time
+    // spent waiting for the app is not the plugin's.
+    arm();
+    for (outstanding, answer) in ready {
+        let recorded = bindings::settle(ctx, state, outstanding, answer)
+            .map_err(|e| PluginError::Internal(format!("settle: {e}")))?;
+        if let Some((func, value)) = recorded {
+            state.record_response(func, &value);
         }
     }
+    Ok(true)
 }
 
 /// Everything the app has answered since the last look.
@@ -513,9 +585,10 @@ fn encode<'js>(ctx: &Ctx<'js>, value: Value<'js>) -> Result<Vec<u8>, PluginError
         .json_stringify(value)
         .map_err(|e| PluginError::BadAnswer(format!("answer is not JSON: {e}")))?
     {
-        Some(s) => {
-            Ok(s.to_string().map_err(|e| PluginError::BadAnswer(e.to_string()))?.into_bytes())
-        }
+        Some(s) => Ok(s
+            .to_string()
+            .map_err(|e| PluginError::BadAnswer(e.to_string()))?
+            .into_bytes()),
         None => Ok(Vec::new()),
     }
 }

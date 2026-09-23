@@ -10,9 +10,9 @@
  * once it was packaged.
  *
  * What goes in is fixed by what `PluginPackage.read` looks for, and nothing
- * else does: `manifest.json`, `plugin.js`, `l10n/<locale>.json`, `icon.png`.
- * Anything else in the directory is the author's own business and is left
- * where it is.
+ * else does: `manifest.json`, `plugin.js`, `l10n/<locale>.json`, `icon.png`
+ * and `assets/*`. Anything else in the directory is the author's own business
+ * and is left where it is.
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -53,15 +53,35 @@ export const manifestName = "manifest.json";
 export const sourceName = "plugin.js";
 export const iconName = "icon.png";
 export const l10nDir = "l10n";
+export const assetDir = "assets";
 
 /**
- * Reads [dir] and returns the archive, or throws with what is wrong.
+ * What an `image` node may draw, by extension.
  *
- * Throws rather than warns for anything that would produce a package the app
- * refuses or half-reads. A packer that succeeds and hands back something
- * uninstallable moves the failure to whoever downloads it.
+ * The same list the app reads (`PluginAssets.allowed`). Anything else in
+ * `assets/` is refused rather than dropped: a package whose picture is not
+ * carried is a plugin drawing a gap on somebody else's device, and the author
+ * finds out from a bug report.
  */
-export function packPlugin(dir: string): PackedPlugin {
+export const assetExtensions = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"];
+
+/**
+ * Everything a plugin directory is made of, checked.
+ *
+ * **One list, because a plugin arrives two ways and both have to carry the same
+ * files.** A `.sbp` is this zipped; a development directory is this on disk,
+ * staged into `dist/` by the build. They were two lists once — the build copied
+ * the manifest and the script and nothing else — so a plugin loaded from its
+ * directory drew `l10n.summaryLabel` in every row while the packaged copy of
+ * the same plugin was translated. That is the omission the packer itself had,
+ * one path over.
+ */
+export function pluginEntries(dir: string): {
+  manifest: PackManifest;
+  manifestJson: string;
+  entries: ZipEntry[];
+  warnings: string[];
+} {
   const manifestPath = join(dir, manifestName);
   if (!existsSync(manifestPath)) {
     throw new Error(`${dir} has no ${manifestName}`);
@@ -119,6 +139,96 @@ export function packPlugin(dir: string): PackedPlugin {
 
   const icon = join(dir, iconName);
   if (existsSync(icon)) entries.push({ name: iconName, data: bytesOf(icon) });
+
+  // One flat directory, and a name with a path in it is refused rather than
+  // normalised — so there is no `..` for either side to reason about.
+  const assets = join(dir, assetDir);
+  if (existsSync(assets)) {
+    for (const name of readdirSync(assets).sort()) {
+      const at = name.lastIndexOf(".");
+      const ext = at <= 0 ? "" : name.slice(at).toLowerCase();
+      if (!assetExtensions.includes(ext)) {
+        throw new Error(
+          `${assetDir}/${name} is not a file the app reads ` +
+            `(${assetExtensions.join(", ")})`,
+        );
+      }
+      entries.push({
+        name: `${assetDir}/${name}`,
+        data: bytesOf(join(assets, name)),
+      });
+    }
+  }
+
+  checkManifestKeys(manifestJson, join(dirPath, "en.json"));
+
+  return { manifest, manifestJson, entries, warnings };
+}
+
+/**
+ * Every `l10n.` key the manifest uses has an English string behind it.
+ *
+ * A manifest is one document for every language, so a plugin names itself and
+ * its contributions with keys. Which means the *manifest's* keys can go missing
+ * exactly like the script's, and the failure looks the same: a tab called
+ * `l10n.fleetLabel`, a store row called `l10n.pluginName`. Checked here because
+ * this is the last moment before those strings become somebody else's
+ * download — and because the repository index is written from `en` and cannot
+ * fall back to anything.
+ */
+function checkManifestKeys(manifestJson: string, enPath: string): void {
+  const keys = manifestL10nKeys(manifestJson);
+  if (keys.length === 0) return;
+  const table = existsSync(enPath)
+    ? (JSON.parse(readFileSync(enPath, "utf8")) as Record<string, unknown>)
+    : {};
+  const missing = keys.filter((k) => typeof table[k] !== "string");
+  if (missing.length > 0) {
+    throw new Error(
+      `${manifestName} uses ${missing.map((k) => `l10n.${k}`).join(", ")} ` +
+        `and ${enPath} has no such string`,
+    );
+  }
+}
+
+/** The keys a manifest names: its own strings, and each contribution's label. */
+export function manifestL10nKeys(manifestJson: string): string[] {
+  const out: string[] = [];
+  const take = (v: unknown) => {
+    if (typeof v === "string" && v.startsWith("l10n.")) {
+      out.push(v.slice("l10n.".length));
+    }
+  };
+  let raw: unknown;
+  try {
+    raw = JSON.parse(manifestJson);
+  } catch {
+    return out;
+  }
+  if (typeof raw !== "object" || raw === null) return out;
+  const m = raw as Record<string, unknown>;
+  take(m["name"]);
+  take(m["description"]);
+  const contributes = m["contributes"];
+  if (typeof contributes === "object" && contributes !== null) {
+    for (const one of Object.values(contributes as Record<string, unknown>)) {
+      if (typeof one === "object" && one !== null) {
+        take((one as Record<string, unknown>)["label"]);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Reads [dir] and returns the archive, or throws with what is wrong.
+ *
+ * Throws rather than warns for anything that would produce a package the app
+ * refuses or half-reads. A packer that succeeds and hands back something
+ * uninstallable moves the failure to whoever downloads it.
+ */
+export function packPlugin(dir: string): PackedPlugin {
+  const { manifest, manifestJson, entries, warnings } = pluginEntries(dir);
 
   let total = 0;
   for (const entry of entries) {

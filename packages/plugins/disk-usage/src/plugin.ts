@@ -7,12 +7,19 @@
  * the large one. A whole-tree scan would answer the same question and take
  * minutes to do it.
  *
- * Collected in `onHook` like every page here — see PLUGINS.md 4.4 — and the
+ * Collected from the hook like every page here — see PLUGINS.md 4.4 — and the
  * path is remembered per server, so coming back lands where you left rather
  * than at `/` again.
+ *
+ * Written against the SDK's tracked state: the reading is a `resource` that
+ * reads the path, so *descending is setting a value* and everything else
+ * follows. What
+ * that removes is every `await draw()` this file used to carry, and with them
+ * the question of which of them was forgotten.
  */
 
 import {
+  banner,
   btn,
   card,
   classify,
@@ -20,6 +27,7 @@ import {
   commandReason,
   divider,
   expanded,
+  resource,
   input,
   isUsablePath,
   key,
@@ -32,19 +40,17 @@ import {
   scroll,
   shellQuote,
   sized,
+  skeleton,
+  state,
   summary,
+  surface,
   tag,
   text,
   tile,
   toggle,
   tone,
   type HookEvent,
-  type Plugin,
-  type PluginEvent,
   type ServerHandle,
-  type Surface,
-  type SurfaceKind,
-  type UiOutput,
 } from "@serverbox/plugin-api";
 import {
   command,
@@ -62,14 +68,143 @@ import {
  * by construction. Two minutes is long enough for a full `/var` on a spinning
  * disk and short enough that a mount which is not answering gives up rather
  * than holding the page for ever.
- *
- * Not cancellable: `sb.server.exec` takes a timeout and nothing else. Recorded
- * in the README as the thing writing this plugin found missing.
  */
 const TIMEOUT_MS = 120_000;
 
+/**
+ * The label the scan runs under, so a button can stop one.
+ *
+ * A guess at four minutes is not a decision anybody can make before the scan
+ * starts, which is why the timeout above is not enough on its own: what a
+ * person actually does is watch it for a while and then decide. One label for
+ * the whole plugin, because one surface measures one directory at a time —
+ * descending replaces the reading rather than adding to it.
+ */
+const SCAN = "scan";
+
 const ROOT = "/";
 const LAST_PATH_KEY = "lastPath";
+
+/// Settings. Global rather than per server: how the measurement is taken is
+/// the user's preference, not a property of any one machine — unlike
+/// [LAST_PATH_KEY], which is where *that* machine was left.
+const CROSS_FS_KEY = "crossFilesystems";
+const START_AT_KEY = "startAt";
+const SORT_KEY = "sortBy";
+
+/** Names left out of a listing, and the size a row has to reach to be in one. */
+const SKIP_KEY = "skipNames";
+const HIDE_BELOW_KEY = "hideBelowMib";
+
+/**
+ * How the rows are ordered. Largest first is the default because the question
+ * is where the space went; by name is for finding one you already know of.
+ */
+type SortBy = "size" | "name";
+const sortBy = state<SortBy>("size");
+
+/** The server this instance is about. `undefined` is *not asked yet*. */
+const server = state<ServerHandle | null | undefined>(undefined);
+
+/** The directory on screen. Setting it *is* descending. */
+const path = state<string | null>(null);
+
+/** What a delete is doing, or null. Drawn over the reading while it runs. */
+const removing = state<number | null>(null);
+
+/**
+ * Which children are picked, by absolute path, and whether picking is on.
+ *
+ * Cleared whenever the level changes: a selection is about what is in front of
+ * you, and carrying one into another directory would mean a delete that
+ * removes something off screen.
+ */
+const selecting = state(false);
+const selected = state<ReadonlySet<string>>(new Set());
+
+interface Settings {
+  crossFilesystems: boolean;
+  startAt: string;
+  /** Directory names to leave out of a listing. */
+  skip: string[];
+  /** Rows under this are left out. Zero shows everything. */
+  hideBelowBytes: number;
+}
+
+const DEFAULTS: Settings = {
+  crossFilesystems: false,
+  startAt: ROOT,
+  skip: [],
+  hideBelowBytes: 0,
+};
+
+/**
+ * What the settings page holds.
+ *
+ * A resource rather than a value, because it is four store reads — and the form
+ * has all three of its states for free: the page says "reading" while they are
+ * outstanding instead of drawing an empty form that fills in under the user.
+ */
+const prefs = resource(async () => settings());
+
+/**
+ * What the settings form holds that the store does not.
+ *
+ * A field the user is halfway through typing is not a setting yet, and a
+ * rejected one must not jump back to the stored value while they are looking at
+ * why it was rejected. Both live here, and only until the surface goes.
+ */
+const draft = state<ReadonlyMap<string, string>>(new Map());
+
+/// The switch's own, for the same reason: what it shows is what was just
+/// tapped, and re-reading four keys to learn that would put the form back into
+/// its loading state for a moment.
+const crossDraft = state<boolean | null>(null);
+const rejected = state<ReadonlyMap<string, string>>(new Map());
+
+/**
+ * The reading: one level, and the filters as they were when it was taken.
+ *
+ * Reading [path] is what makes descending work — a row sets it and this runs.
+ * The filters are carried with the answer rather than read by the view: they
+ * come from the store, the view is a pure function, and applying a setting to
+ * a measurement taken before it was changed is how a list disagrees with the
+ * page that produced it.
+ */
+const level = resource(async () => {
+  const handle = server.value;
+  const at = path.value;
+  if (!handle) throw new NoServer();
+  if (at === null) throw new NoServer();
+
+  const s = await settings();
+  const r = await sb.server.exec({
+    server: handle,
+    script: command(at, { crossFilesystems: s.crossFilesystems }),
+    timeoutMs: TIMEOUT_MS,
+    cancelKey: SCAN,
+  });
+  const scan = parse(at, r.stdout);
+
+  // After the answer, and in its own `try`. Remembering where you were is a
+  // convenience; a store that would not write must not take the measurement
+  // down with it — which is what happened while the two were together.
+  try {
+    await sb.store.set({ scope: "server", key: LAST_PATH_KEY, value: at });
+  } catch {
+    // Nothing to tell the user: the level they asked for is on screen.
+  }
+  return { scan, filters: { skip: s.skip, hideBelowBytes: s.hideBelowBytes } };
+}, {
+  // A `du` over a full disk is minutes, and the host runs one call at a time
+  // per instance — so a call that waited for this is a call in which the Stop
+  // button above cannot be pressed. The page draws `Measuring…`, the call
+  // answers with it, and the reading arrives on the next tick.
+  background: true,
+});
+
+/// A surface bound to no machine, or one with no directory yet.
+class NoServer extends Error {}
 
 /**
  * What went wrong, in the user's language.
@@ -78,14 +213,23 @@ const LAST_PATH_KEY = "lastPath";
  * for a plugin that ships no translations and wrong for one that does.
  */
 function whyOf(e: unknown): string {
-  const { kind, permission } = classify(e);
+  if (e instanceof NoServer) return l10n("errNoServer");
+  const { kind, permission, remote } = classify(e);
   switch (kind) {
     case "denied":
       return permission ? l10n("errDenied", permission) : l10n("errDeniedPlain");
     case "unavailable":
       return l10n("errUnavailable");
+    // Both of these carry what the app could not decide for itself: whether
+    // `du` is still walking that filesystem. Over SSH it is not; over a
+    // monitor agent it is, and somebody watching their server's load needs to
+    // be told rather than left to work it out.
     case "timeout":
-      return l10n("errTimeout");
+      return remote === "running" ? l10n("errTimeoutRunning") : l10n("errTimeout");
+    case "cancelled":
+      return remote === "running"
+        ? l10n("errCancelledRunning")
+        : l10n("errCancelled");
     case "io":
       return l10n("errIo");
     case "cert":
@@ -116,51 +260,7 @@ function commandWhy(r: { code: number; stderr: string }): string {
   return commandReason(r, l10n("errDeleteFailed"));
 }
 
-/// Settings. Global rather than per server: how the measurement is taken is
-/// the user's preference, not a property of any one machine — unlike
-/// [LAST_PATH_KEY], which is where *that* machine was left.
-const CROSS_FS_KEY = "crossFilesystems";
-const START_AT_KEY = "startAt";
-const SORT_KEY = "sortBy";
-
-/**
- * How the rows are ordered. Largest first is the default because the question
- * is where the space went; by name is for finding one you already know of.
- */
-type SortBy = "size" | "name";
-let sortBy: SortBy = "size";
-
-async function loadSort(): Promise<void> {
-  try {
-    const stored = (await sb.store.get({ scope: "global", key: SORT_KEY }))
-      .value;
-    sortBy = stored === "name" ? "name" : "size";
-  } catch {
-    sortBy = "size";
-  }
-}
-
-/** Names left out of a listing, and the size a row has to reach to be in one. */
-const SKIP_KEY = "skipNames";
-const HIDE_BELOW_KEY = "hideBelowMib";
-
-interface Settings {
-  crossFilesystems: boolean;
-  startAt: string;
-  /** Directory names to leave out of a listing. */
-  skip: string[];
-  /** Rows under this are left out. Zero shows everything. */
-  hideBelowBytes: number;
-}
-
-const DEFAULTS: Settings = {
-  crossFilesystems: false,
-  startAt: ROOT,
-  skip: [],
-  hideBelowBytes: 0,
-};
-
-/** Read once per collection rather than kept, so an edit applies next scan. */
+/** Read per scan rather than kept, so an edit applies to the next one. */
 async function settings(): Promise<Settings> {
   try {
     const [cross, start, skip, hide] = await Promise.all([
@@ -219,514 +319,184 @@ export function filtered(
   return { shown, hidden: children.length - shown.length };
 }
 
-/**
- * The filters as the last scan read them.
- *
- * Kept here because the view is synchronous and the store is not, and refreshed
- * where the scan reads everything else — so an edit applies to the next scan
- * rather than half-applying to the one on screen.
- */
-let filters = { skip: [] as string[], hideBelowBytes: 0 };
+const app = surface((ctx) =>
+  ctx.kind === "settings" ? settingsView() : pageView(),
+);
 
 /**
- * What the settings form holds that the store does not.
+ * `tick` is exported although this plugin polls nothing.
  *
- * A field the user is halfway through typing is not a setting yet, and a
- * rejected one must not jump back to the stored value while they are looking at
- * why it was rejected. Both live here, and only until the surface goes.
+ * It is what a `background` resource needs to arrive at all: the host delivers
+ * an outstanding host call's answer only while it is inside a call, and a scan
+ * no call waits for has no other way in. The app calls this as soon as the
+ * answer is there, so the reading is not actually deferred by an interval —
+ * but without the export there is nothing to call.
  */
-const draft = new Map<string, string>();
-const rejected = new Map<string, string>();
-
-type State =
-  | { at: "idle" }
-  | { at: "scanning"; path: string }
-  | { at: "deleting"; path: string; count: number }
-  | { at: "ready"; scan: Scan }
-  | { at: "failed"; path: string; why: string };
-
-let state: State = { at: "idle" };
-let server: ServerHandle | null = null;
-
-/**
- * Which children are picked, by absolute path, and whether picking is on.
- *
- * Cleared whenever the level changes: a selection is about what is in front of
- * you, and carrying one into another directory would mean a delete that
- * removes something off screen.
- */
-let selecting = false;
-let selected = new Set<string>();
-
-function clearSelection(): void {
-  selecting = false;
-  selected = new Set();
-}
-
-/**
- * Which surface this instance is drawing.
- *
- * Set in `open`, which the host calls before the hook. Each surface is its own
- * instance, so the settings page's copy of this module is not the page's.
- */
-let surfaceKind: SurfaceKind = "page";
-
-export function open(surface: Surface): UiOutput {
-  surfaceKind = surface.kind;
-  // The settings page is not bound to a server and does not measure anything,
-  // so it answers from the store rather than from `state`.
-  if (surface.kind === "settings") {
-    // Drawn from the hook rather than started here. **A promise a plugin leaves
-    // running when a call returns does not progress**: the runtime drives an
-    // instance only while it is inside a call, so the store read this form
-    // needs would sit outstanding until something else happened to call in.
-    // The hook is the call that always follows `open`, so that is where the
-    // waiting belongs.
-    return { ui: padding(17, text(l10n("reading"))) };
-  }
-  return { ui: view() };
-}
+export const { open, onEvent, tick, dispose } = app;
 
 export async function onHook(event: HookEvent): Promise<void> {
-  // A settings surface collects nothing: its form is drawn from the store by
-  // `open`, and the hook is only what pumps that promise. Without this the
-  // "no server" branch below draws the page's error over the form — a settings
-  // surface is bound to no machine, so `event.servers` is empty by design.
-  if (surfaceKind === "settings") {
-    // Nothing to collect: the form is the store, and this is the call that gets
-    // to wait for it.
-    await drawSettings();
-    return;
-  }
   const first = event.servers[0];
   if (!first) {
-    state = { at: "failed", path: ROOT, why: l10n("errNoServer") };
-    await draw();
+    // A settings surface is bound to no machine by design; so is a page opened
+    // on a server that has gone. The page says which.
+    server.value = null;
+    await app.settle();
     return;
   }
-  server = first.server;
-  await loadSort();
+
+  server.value = first.server;
+  sortBy.value = (await storedSort()) === "name" ? "name" : "size";
   // Where this server was left. Per server, because "the big directory" is a
   // property of the machine and not of the person looking at it.
-  const remembered = (await sb.store.get({ scope: "server", key: LAST_PATH_KEY }))
-    .value;
-  // Where this machine was left, or where the user said to start.
-  await scan(remembered ?? (await settings()).startAt);
-}
-
-export async function onEvent({ msg, value }: PluginEvent): Promise<UiOutput> {
-  const m = msg as { m: string; path?: string };
-  if (m.m === "setCrossFs") {
-    await sb.store.set({
-      scope: "global",
-      key: CROSS_FS_KEY,
-      value: value === true ? "1" : "0",
-    });
-    await drawSettings();
-    return {};
-  }
-  if (m.m === "setStartAt") {
-    const typed = `${value ?? ""}`.trim();
-    draft.set(START_AT_KEY, typed);
-    // Rejected here rather than ignored at read time, which is what it used to
-    // be: a value that is silently not used is one the user believes is in
-    // effect. Empty clears it, which is how a text field says "back to the
-    // default".
-    // Absolute, because that is what "start at" means: a relative path
-    // resolves against whatever directory the command happens to run in, which
-    // is the user's home and not what anybody typing `var` meant.
-    if (typed !== "" && !(typed.startsWith("/") && isUsablePath(typed))) {
-      rejected.set(START_AT_KEY, l10n("prefsErrPath"));
-      await drawSettings();
-      return {};
-    }
-    rejected.delete(START_AT_KEY);
-    await sb.store.set({
-      scope: "global",
-      key: START_AT_KEY,
-      value: typed === "" ? null : typed,
-    });
-    await drawSettings();
-    return {};
-  }
-  if (m.m === "setSkip") {
-    const typed = `${value ?? ""}`;
-    draft.set(SKIP_KEY, typed);
-    // Free text with nothing to get wrong: anything that is not a name simply
-    // matches no directory. Stored as typed so the field reads back the way it
-    // was written.
-    await sb.store.set({
-      scope: "global",
-      key: SKIP_KEY,
-      value: splitNames(typed).length === 0 ? null : typed.trim(),
-    });
-    return {};
-  }
-  if (m.m === "setHideBelow") {
-    const typed = `${value ?? ""}`.trim();
-    draft.set(HIDE_BELOW_KEY, typed);
-    const n = Number.parseInt(typed, 10);
-    if (typed !== "" && (!Number.isFinite(n) || n < 0 || `${n}` !== typed)) {
-      rejected.set(HIDE_BELOW_KEY, l10n("prefsErrNumber"));
-      await drawSettings();
-      return {};
-    }
-    rejected.delete(HIDE_BELOW_KEY);
-    await sb.store.set({
-      scope: "global",
-      key: HIDE_BELOW_KEY,
-      value: typed === "" || n === 0 ? null : `${n}`,
-    });
-    await drawSettings();
-    return {};
-  }
-  if (m.m === "resetPrefs") {
-    // Every key this form owns, back to absent. Absent rather than written
-    // defaults: what a default is belongs to the build, and a stored copy of
-    // one is a value that stops following it.
-    for (const key of [CROSS_FS_KEY, START_AT_KEY, SKIP_KEY, HIDE_BELOW_KEY]) {
-      await sb.store.set({ scope: "global", key, value: null });
-    }
-    draft.clear();
-    rejected.clear();
-    await drawSettings();
-    return {};
-  }
-  if (m.m === "open" && m.path) {
-    await scan(m.path);
-    return {};
-  }
-  if (m.m === "up") {
-    const from = current();
-    const parent = from === null ? null : parentOf(from);
-    if (parent !== null) await scan(parent);
-    return {};
-  }
-  if (m.m === "reload") {
-    const from = current();
-    if (from !== null) await scan(from);
-    return {};
-  }
-  if (m.m === "sort") {
-    sortBy = sortBy === "size" ? "name" : "size";
-    // Remembered, because the order somebody chose is a preference and not a
-    // property of the directory they happened to be in.
-    try {
-      await sb.store.set({ scope: "global", key: SORT_KEY, value: sortBy });
-    } catch {
-      // The order is applied either way; only the memory of it is lost.
-    }
-    return { ui: view() };
-  }
-  if (m.m === "select") {
-    selecting = true;
-    return { ui: view() };
-  }
-  if (m.m === "cancelSelect") {
-    clearSelection();
-    return { ui: view() };
-  }
-  if (m.m === "pick" && m.path) {
-    if (selected.has(m.path)) {
-      selected.delete(m.path);
-    } else {
-      selected.add(m.path);
-    }
-    return { ui: view() };
-  }
-  if (m.m === "delete") {
-    await remove();
-    return {};
-  }
-  return {};
-}
-
-/**
- * Deletes what is picked, after asking.
- *
- * The one thing here that changes a machine, so:
- *
- * - The user is asked, with the paths and the total listed. `sb.ui.prompt`
- *   with no fields is a confirmation, and the manifest asks for `ui.dialog`
- *   because of this and nothing else.
- * - Every path is quoted, and `--` ends the options — a directory called
- *   `-rf` is a legal directory name and it arrives here out of a listing this
- *   plugin asked the server for.
- * - The current directory is never among the candidates (it is not one of its
- *   own children) and `/` is refused outright, so there is no arrangement of
- *   taps that removes the level being looked at.
- *
- * What `rm` could not remove is reported rather than swallowed: a delete that
- * silently did nothing is worse than one that says it failed.
- */
-async function remove(): Promise<void> {
-  const handle = server;
-  if (!handle || state.at !== "ready") return;
-  const paths = state.scan.children
-    .filter((c) => selected.has(c.path))
-    .filter((c) => c.path !== "/" && isUsablePath(c.path));
-  if (paths.length === 0) {
-    clearSelection();
-    await draw();
-    return;
-  }
-
-  const bytes = paths.reduce((n, c) => n + c.bytes, 0);
-  const answer = await sb.ui.prompt({
-    title:
-      paths.length === 1
-        ? l10n("confirmOne")
-        : l10n("confirmMany", `${paths.length}`),
-    // The paths are the user's own and are not translated; the sentence around
-    // them is.
-    message: [
-      l10n("confirmBody", humanBytes(bytes), state.scan.path),
-      "",
-      ...paths.map((c) => c.path),
-    ].join("\n"),
-    confirm: l10n("confirmAction"),
-  });
-  if (answer.cancelled) return;
-
-  const script = `rm -rf -- ${paths.map((c) => shellQuote(c.path)).join(" ")}`;
-  const at = state.scan.path;
-  // Drawn before it runs. Removing a large tree takes as long as measuring one
-  // did, and a page that did not change reads as a button that did nothing.
-  state = { at: "deleting", path: at, count: paths.length };
-  await draw();
+  let remembered: string | null = null;
   try {
-    const r = await sb.server.exec({
-      server: handle,
-      script,
-      timeoutMs: TIMEOUT_MS,
-    });
-    if (r.code !== 0) {
-      state = {
-        at: "failed",
-        path: at,
-        why: commandWhy(r),
-      };
-      clearSelection();
-      await draw();
-      return;
-    }
-  } catch (e) {
-    state = { at: "failed", path: at, why: whyOf(e) };
-    clearSelection();
-    await draw();
-    return;
-  }
-
-  clearSelection();
-  // Measured again rather than subtracted: what `rm` actually removed is a
-  // question for the machine, and the sizes beside every other row moved too.
-  await scan(at);
-}
-
-function current(): string | null {
-  switch (state.at) {
-    case "ready":
-      return state.scan.path;
-    case "scanning":
-    case "deleting":
-    case "failed":
-      return state.path;
-    case "idle":
-      return null;
-  }
-}
-
-/**
- * Draws, and does not mind if nobody is looking.
- *
- * `sb.ui.patch` rejects when the surface is not on screen — the app is right
- * to say so, since a plugin streaming a log should be able to tell — but a
- * plugin that awaits it unguarded turns "nobody is watching" into "the work
- * stops". The first version of this did exactly that: the `Measuring…` patch
- * threw and the measurement never ran.
- */
-async function draw(): Promise<void> {
-  try {
-    await sb.ui.patch({ path: "", node: view() });
+    remembered = (await sb.store.get({ scope: "server", key: LAST_PATH_KEY }))
+      .value;
   } catch {
-    // Nothing to do about it, and nothing to report to a surface that is gone.
+    remembered = null;
   }
+  path.value = remembered ?? (await settings()).startAt;
+  await app.settle();
 }
 
-/**
- * The settings surface.
- *
- * What it shows lives in the store, so it draws once the store has answered
- * rather than synchronously out of `open` — which is why `open` returns a
- * placeholder for this surface and this patches over it.
- */
-async function drawSettings(): Promise<void> {
-  const s = await settings();
-  const node = column([
-    card([
-      onChange(
-        toggle(s.crossFilesystems, {
-          label: l10n("prefsCrossFs"),
-          hint: l10n("prefsCrossFsHint"),
-        }),
-        { m: "setCrossFs" },
-      ),
-    ]),
-    field({
-      key: START_AT_KEY,
-      label: l10n("prefsStartAt"),
-      hint: l10n("prefsStartAtHint"),
-      placeholder: ROOT,
-      stored: s.startAt,
-      msg: "setStartAt",
-    }),
-    field({
-      key: SKIP_KEY,
-      label: l10n("prefsSkip"),
-      hint: l10n("prefsSkipHint"),
-      placeholder: "node_modules .cache",
-      stored: s.skip.join(" "),
-      msg: "setSkip",
-    }),
-    field({
-      key: HIDE_BELOW_KEY,
-      label: l10n("prefsHideBelow"),
-      hint: l10n("prefsHideBelowHint"),
-      placeholder: "0",
-      stored: s.hideBelowBytes === 0 ? "" : `${s.hideBelowBytes / 1024 / 1024}`,
-      msg: "setHideBelow",
-    }),
-    padding(13, onTap(btn(l10n("prefsReset")), { m: "resetPrefs" })),
-  ]);
+async function storedSort(): Promise<string | null> {
   try {
-    await sb.ui.patch({ path: "", node });
+    return (await sb.store.get({ scope: "global", key: SORT_KEY })).value;
   } catch {
-    // Nobody is looking at the settings page any more.
+    return null;
   }
 }
 
-/**
- * One row of the form: a label, what it is for, the field, and why the last
- * thing typed into it was not kept.
- *
- * The value comes from the draft when there is one, so a rejected edit stays on
- * screen next to its reason — redrawing the stored value under somebody who is
- * being told their input is wrong takes away the thing they need to fix.
- */
-function field(f: {
-  key: string;
-  label: string;
-  hint: string;
-  placeholder: string;
-  stored: string;
-  msg: string;
-}) {
-  const why = rejected.get(f.key);
-  return padding(
-    13,
-    column(
-      [
-        text(f.label),
-        tone(text(f.hint), "muted"),
-        onChange(input(draft.get(f.key) ?? f.stored, { hint: f.placeholder }), {
-          m: f.msg,
-        }),
-        ...(why ? [tone(text(why), "danger")] : []),
-      ],
-      { spacing: 5 },
-    ),
-  );
-}
+// ------------------------------------------------------------------ the page
 
-async function scan(path: string): Promise<void> {
-  const handle = server;
-  if (!handle) return;
-
-  // A selection is about what is in front of you. Carried into another
-  // directory it would mean a delete that removes something off screen.
-  clearSelection();
-
-  // Drawn before the command runs. A level can take a minute, and a tap that
-  // shows nothing for a minute reads as a tap that did nothing.
-  state = { at: "scanning", path };
-  await draw();
-
-  try {
-    // One read for everything the scan needs, including the two filters the
-    // view applies — the view is synchronous and the store is not, so they are
-    // taken here and applied to what this scan produces.
-    const s = await settings();
-    filters = { skip: s.skip, hideBelowBytes: s.hideBelowBytes };
-    const r = await sb.server.exec({
-      server: handle,
-      script: command(path, { crossFilesystems: s.crossFilesystems }),
-      timeoutMs: TIMEOUT_MS,
-    });
-    state = { at: "ready", scan: parse(path, r.stdout) };
-  } catch (e) {
-    state = { at: "failed", path, why: whyOf(e) };
+function pageView() {
+  // Nothing is measured until the hook names a server and a directory: a
+  // resource runs the first time something reads it, so not reading `level`
+  // here is what keeps `open` from running a command.
+  if (server.value === undefined || path.value === null) {
+    return skeleton(5);
   }
-  await draw();
 
-  // After the answer is drawn, and in its own `try`. Remembering where you
-  // were is a convenience; a store that would not write must not take the
-  // measurement down with it — which is what happened while this was inside
-  // the block above, and is why the two are separated here.
-  if (state.at === "ready") {
-    try {
-      await sb.store.set({ scope: "server", key: LAST_PATH_KEY, value: path });
-    } catch {
-      // Nothing to tell the user: the level they asked for is on screen.
-    }
-  }
-}
-
-function view() {
-  if (state.at === "idle") return padding(17, text("…"));
-  if (state.at === "scanning") {
+  const count = removing.value;
+  if (count !== null) {
+    // Drawn over the reading while it runs. Removing a large tree takes as
+    // long as measuring one did, and a page that did not change reads as a
+    // button that did nothing.
     return column([
-      bar(state.path),
-      divider(),
-      padding(17, text(l10n("measuring"))),
-    ]);
-  }
-  if (state.at === "deleting") {
-    return column([
-      bar(state.path),
+      bar(),
       divider(),
       padding(
         17,
-        text(
-          state.count === 1
-            ? l10n("removingOne")
-            : l10n("removing", `${state.count}`),
-        ),
+        text(count === 1 ? l10n("removingOne") : l10n("removing", `${count}`)),
       ),
     ]);
   }
-  if (state.at === "failed") {
-    const up = parentOf(state.path);
-    return column([
-      bar(state.path),
-      divider(),
-      notice({
-        kind: "failed",
-        icon: "warning",
-        title: l10n("errTitle", state.path),
-        detail: state.why,
-        actions: [
-          { label: l10n("retry"), msg: { m: "reload" } },
-          // Somewhere to go. Without this a directory that cannot be read is a
-          // page with no way off it.
-          ...(up === null ? [] : [{ label: l10n("up"), msg: { m: "up" } }]),
-        ],
-      }),
-    ]);
-  }
 
-  const { scan: s } = state;
+  const body = level.when({
+    loading: () =>
+      column([bar({ measuring: true }), divider(), padding(17, text(l10n("measuring")))]),
+    error: (e) => failedView(e),
+    data: ({ scan, filters }) => levelView(scan, filters),
+  });
+
+  // **Above the reading, not instead of it.** What `rm` refused is about the
+  // delete, and the measurement on screen is still good — replacing it with a
+  // failure would take away the list the user is deciding from.
+  const failed = failure.value;
+  if (!failed) return body;
+  return column([
+    padding(13, banner(failed, { icon: "warning" })),
+    expanded(body),
+  ]);
+}
+
+function failedView(e: unknown) {
+  const at = path.value ?? ROOT;
+  const up = parentOf(at);
+  return column([
+    bar(),
+    divider(),
+    notice({
+      kind: "failed",
+      icon: "warning",
+      title: l10n("errTitle", at),
+      detail: whyOf(e),
+      actions: [
+        { label: l10n("retry"), msg: () => reload() },
+        // Somewhere to go. Without this a directory that cannot be read is a
+        // page with no way off it.
+        ...(up === null ? [] : [{ label: l10n("up"), msg: () => descend(up) }]),
+      ],
+    }),
+  ]);
+}
+
+/**
+ * The path and the way out, for the states that have no reading yet.
+ *
+ * While a scan is running the reload turns into a Stop. Reloading during one
+ * would start a second scan of a directory the first is still walking, and
+ * `du -x /` on a full disk is minutes of a machine's IO — so the control that
+ * is there is the one somebody actually wants after the first minute.
+ */
+function bar(state: { measuring?: boolean } = {}) {
+  const at = path.value ?? ROOT;
+  const up = parentOf(at);
+  return summary({
+    label: at,
+    value: "…",
+    actions: [
+      ...(up === null ? [] : [onTap(tag("↑"), () => descend(up))]),
+      state.measuring
+        ? onTap(tone(tag(l10n("stop")), "danger"), () => stopScan())
+        : onTap(tag(l10n("reload")), () => reload()),
+    ],
+  });
+}
+
+/**
+ * Gives up on the scan that is running.
+ *
+ * Nothing is drawn here: the reading rejects, and the error view says what
+ * happened — including whether the command is still running on the server,
+ * which is the host's answer and not this plugin's to guess.
+ */
+async function stopScan(): Promise<void> {
+  try {
+    await sb.server.cancel({ key: SCAN });
+  } catch {
+    // Refused, or nothing was running. Either way the page is about to draw
+    // whatever the reading became.
+  }
+}
+
+/** Measures this level again. A new answer replaces whatever went wrong. */
+function reload(): void {
+  failure.value = null;
+  level.reload();
+}
+
+/** Goes to [to], which is what setting the path means. */
+function descend(to: string): void {
+  clearSelection();
+  failure.value = null;
+  path.value = to;
+}
+
+function clearSelection(): void {
+  selecting.value = false;
+  selected.value = new Set();
+}
+
+function levelView(
+  s: Scan,
+  filters: { skip: string[]; hideBelowBytes: number },
+) {
   const fs = s.filesystem;
   const up = parentOf(s.path);
+  const picking = selecting.value;
+  const picked = selected.value;
+  const by = sortBy.value;
 
   return column([
     summary({
@@ -737,39 +507,31 @@ function view() {
       // The filesystem behind it, because "31G in /var" only means something
       // beside the size of the disk it is on.
       detail: fs
-        ? l10n(
-            "filesystem",
-            humanBytes(fs.usedBytes),
-            humanBytes(fs.sizeBytes),
-          )
+        ? l10n("filesystem", humanBytes(fs.usedBytes), humanBytes(fs.sizeBytes))
         : undefined,
-      actions: selecting
+      actions: picking
         ? [
-            onTap(tone(tag(l10n("cancel")), "muted"), { m: "cancelSelect" }),
+            onTap(tone(tag(l10n("cancel")), "muted"), () => clearSelection()),
             // The count is in the label because it is the whole question a
             // person asks before pressing it.
-            onTap(
-              tone(tag(l10n("delete", `${selected.size}`)), "danger"),
-              { m: "delete" },
+            onTap(tone(tag(l10n("delete", `${picked.size}`)), "danger"), () =>
+              remove(s),
             ),
           ]
         : [
-            ...(up === null ? [] : [onTap(tag("↑"), { m: "up" })]),
+            ...(up === null ? [] : [onTap(tag("↑"), () => descend(up))]),
             ...(s.children.length === 0
               ? []
               : [
-                  onTap(
-                    tag(l10n(sortBy === "size" ? "sortSize" : "sortName")),
-                    { m: "sort" },
+                  onTap(tag(l10n(by === "size" ? "sortSize" : "sortName")), () =>
+                    flipSort(by),
                   ),
-                  onTap(tag(l10n("select")), { m: "select" }),
+                  onTap(tag(l10n("select")), () => (selecting.value = true)),
                 ]),
-            onTap(tag(l10n("reload")), { m: "reload" }),
+            onTap(tag(l10n("reload")), () => reload()),
           ],
     }),
-    ...(fs
-      ? [padding(13, percent(fs.usedBytes / fs.sizeBytes, ""))]
-      : []),
+    ...(fs ? [padding(13, percent(fs.usedBytes / fs.sizeBytes, ""))] : []),
     // The total is short by whatever is in them, so it is said next to the
     // total rather than tucked away.
     ...(s.unreadable > 0
@@ -796,13 +558,25 @@ function view() {
                 icon: "folder",
                 title: l10n("emptyTitle"),
                 detail: l10n("emptyDetail"),
-                actions: [{ label: l10n("retry"), msg: { m: "reload" } }],
+                actions: [{ label: l10n("retry"), msg: () => reload() }],
               }),
             ]
-          : rowsFor(s),
+          : rowsFor(s, filters, by, picking, picked),
       ),
     ),
   ]);
+}
+
+async function flipSort(by: SortBy): Promise<void> {
+  const next: SortBy = by === "size" ? "name" : "size";
+  sortBy.value = next;
+  // Remembered, because the order somebody chose is a preference and not a
+  // property of the directory they happened to be in.
+  try {
+    await sb.store.set({ scope: "global", key: SORT_KEY, value: next });
+  } catch {
+    // The order is applied either way; only the memory of it is lost.
+  }
 }
 
 /**
@@ -812,39 +586,38 @@ function view() {
  * saying so is how somebody concludes a directory is nearly empty, when what
  * happened is a threshold they set weeks ago.
  */
-function rowsFor(s: { children: Entry[]; totalBytes: number }) {
+function rowsFor(
+  s: { children: Entry[]; totalBytes: number },
+  filters: { skip: string[]; hideBelowBytes: number },
+  by: SortBy,
+  picking: boolean,
+  picked: ReadonlySet<string>,
+) {
   const { shown, hidden } = filtered(s.children, filters);
   return [
-    card(ordered(shown).map((c) => rowFor(c, s.totalBytes))),
+    card(
+      ordered(shown, by).map((c) =>
+        rowFor(c, s.totalBytes, picking, picked),
+      ),
+    ),
     ...(hidden === 0
       ? []
       : [padding(11, tone(text(l10n("hiddenByFilter", `${hidden}`)), "muted"))]),
   ];
 }
 
-/** The path, the way back up, and a way to ask again. */
-/** The path and the way out, for the states that have no reading yet. */
-function bar(path: string) {
-  const up = parentOf(path);
-  return summary({
-    label: path,
-    value: "…",
-    actions: [
-      ...(up === null ? [] : [onTap(tag("↑"), { m: "up" })]),
-      onTap(tag("Reload"), { m: "reload" }),
-    ],
-  });
-}
-
 /**
  * The rows in the order the user asked for.
  *
- * A copy, because `Scan.children` is what the parser produced and sorting it
- * in place would make the order depend on how many times it had been drawn.
+ * A copy, because `Scan.children` is what the parser produced and sorting it in
+ * place would make the order depend on how many times it had been drawn.
  */
-function ordered(children: { name: string; path: string; bytes: number }[]) {
+function ordered(
+  children: { name: string; path: string; bytes: number }[],
+  by: SortBy,
+) {
   const out = [...children];
-  if (sortBy === "name") {
+  if (by === "name") {
     // `localeCompare` so `Étage` sorts where a person expects, and numeric so
     // `log.10` follows `log.9` rather than `log.1`.
     out.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
@@ -857,37 +630,293 @@ function ordered(children: { name: string; path: string; bytes: number }[]) {
 function rowFor(
   child: { path: string; name: string; bytes: number },
   total: number,
+  picking: boolean,
+  picked: ReadonlySet<string>,
 ) {
   // A share of the parent rather than of the disk: the question at this level
   // is which of *these* took the space.
   const share = total > 0 ? child.bytes / total : 0;
-  const picked = selected.has(child.path);
+  const chosen = picked.has(child.path);
   return key(
     onTap(
       tile({
-        // The icon carries the state while picking, so a row says which it is
-        // without a second control taking the width the size needs.
-        icon: selecting ? (picked ? "check" : "folder") : "folder",
+        // The tint is what a selection reads as — the app's own selected row —
+        // and the icon is the affordance beside it. The icon alone was one
+        // grey glyph turning into another.
+        selected: chosen,
+        icon: picking ? (chosen ? "check" : "folder") : "folder",
         title: child.name,
-        // The size and the share of the parent, right-aligned at a fixed
-        // width so every bar starts and ends in the same place. A column of
-        // bars that share an edge is a chart; one bar per card is not.
+        // The size and the share of the parent, right-aligned at a fixed width
+        // so every bar starts and ends in the same place. A column of bars that
+        // share an edge is a chart; one bar per card is not.
         trailing: sized(
-          column(
-            [text(humanBytes(child.bytes)), percent(share, "")],
-            { spacing: 5 },
-          ),
+          column([text(humanBytes(child.bytes)), percent(share, "")], {
+            spacing: 5,
+          }),
           { width: 96 },
         ),
       }),
-      selecting
-        ? { m: "pick", path: child.path }
-        : { m: "open", path: child.path },
+      picking ? () => pick(child.path) : () => descend(child.path),
     ),
     // The state is part of the identity, or a row would keep the widget it had
     // before it was picked.
-    `${child.path}|${picked}|${selecting}`,
+    `${child.path}|${chosen}|${picking}`,
   );
 }
 
-export default { open, onHook, onEvent } satisfies Plugin;
+function pick(at: string): void {
+  const next = new Set(selected.peek());
+  if (!next.delete(at)) next.add(at);
+  selected.value = next;
+}
+
+// ---------------------------------------------------------------- the delete
+
+/**
+ * Deletes what is picked, after asking.
+ *
+ * The one thing here that changes a machine, so:
+ *
+ * - The user is asked, with the paths and the total listed. `sb.ui.prompt`
+ *   with no body is a confirmation, and the manifest asks for `ui.dialog`
+ *   because of this and nothing else.
+ * - Every path is quoted, and `--` ends the options — a directory called `-rf`
+ *   is a legal directory name and it arrives here out of a listing this plugin
+ *   asked the server for.
+ * - The current directory is never among the candidates (it is not one of its
+ *   own children) and `/` is refused outright, so there is no arrangement of
+ *   taps that removes the level being looked at.
+ *
+ * What `rm` could not remove is reported rather than swallowed: a delete that
+ * silently did nothing is worse than one that says it failed.
+ */
+async function remove(s: Scan): Promise<void> {
+  const handle = server.peek();
+  const picked = selected.peek();
+  if (!handle) return;
+  const paths = s.children
+    .filter((c) => picked.has(c.path))
+    .filter((c) => c.path !== "/" && isUsablePath(c.path));
+  if (paths.length === 0) {
+    clearSelection();
+    return;
+  }
+
+  const bytes = paths.reduce((n, c) => n + c.bytes, 0);
+  const answer = await sb.ui.prompt({
+    title:
+      paths.length === 1
+        ? l10n("confirmOne")
+        : l10n("confirmMany", `${paths.length}`),
+    // The paths are the user's own and are not translated; the sentence around
+    // them is.
+    message: [
+      l10n("confirmBody", humanBytes(bytes), s.path),
+      "",
+      ...paths.map((c) => c.path),
+    ].join("\n"),
+    confirm: l10n("confirmAction"),
+  });
+  if (answer.cancelled) return;
+
+  const script = `rm -rf -- ${paths.map((c) => shellQuote(c.path)).join(" ")}`;
+  removing.value = paths.length;
+  try {
+    const r = await sb.server.exec({
+      server: handle,
+      script,
+      timeoutMs: TIMEOUT_MS,
+    });
+    if (r.code !== 0) {
+      removing.value = null;
+      clearSelection();
+      failure.value = commandWhy(r);
+      return;
+    }
+  } catch (e) {
+    removing.value = null;
+    clearSelection();
+    failure.value = whyOf(e);
+    return;
+  }
+
+  removing.value = null;
+  clearSelection();
+  // Measured again rather than subtracted: what `rm` actually removed is a
+  // question for the machine, and the sizes beside every other row moved too.
+  reload();
+}
+
+/**
+ * What a delete said when it could not.
+ *
+ * Its own value rather than the reading's error: the measurement on screen is
+ * still good, and replacing it with a failure would take away the list the
+ * user is deciding from.
+ */
+const failure = state<string | null>(null);
+
+// -------------------------------------------------------------- the settings
+
+function settingsView() {
+  return prefs.when({
+    loading: () => padding(17, text(l10n("reading"))),
+    error: () => padding(17, text(l10n("errUnknown"))),
+    data: (s) =>
+      column([
+        card([
+          onChange(
+            toggle(crossDraft.value ?? s.crossFilesystems, {
+              label: l10n("prefsCrossFs"),
+              hint: l10n("prefsCrossFsHint"),
+            }),
+            async (value) => {
+              crossDraft.value = value === true;
+              await sb.store.set({
+                scope: "global",
+                key: CROSS_FS_KEY,
+                value: value === true ? "1" : "0",
+              });
+            },
+          ),
+        ]),
+        field({
+          key: START_AT_KEY,
+          label: l10n("prefsStartAt"),
+          hint: l10n("prefsStartAtHint"),
+          placeholder: ROOT,
+          stored: s.startAt,
+          save: (typed) => saveStartAt(typed),
+        }),
+        field({
+          key: SKIP_KEY,
+          label: l10n("prefsSkip"),
+          hint: l10n("prefsSkipHint"),
+          placeholder: "node_modules .cache",
+          stored: s.skip.join(" "),
+          save: (typed) => saveSkip(typed),
+        }),
+        field({
+          key: HIDE_BELOW_KEY,
+          label: l10n("prefsHideBelow"),
+          hint: l10n("prefsHideBelowHint"),
+          placeholder: "0",
+          stored: s.hideBelowBytes === 0 ? "" : `${s.hideBelowBytes / 1024 / 1024}`,
+          save: (typed) => saveHideBelow(typed),
+        }),
+        padding(13, onTap(btn(l10n("prefsReset")), () => resetPrefs())),
+      ]),
+  });
+}
+
+/**
+ * One row of the form: a label, what it is for, the field, and why the last
+ * thing typed into it was not kept.
+ *
+ * The value comes from the draft when there is one, so a rejected edit stays on
+ * screen next to its reason — redrawing the stored value under somebody who is
+ * being told their input is wrong takes away the thing they need to fix.
+ */
+function field(
+  f: {
+    key: string;
+    label: string;
+    hint: string;
+    placeholder: string;
+    stored: string;
+    save: (typed: string) => Promise<void>;
+  },
+) {
+  const why = rejected.value.get(f.key);
+  const typed = draft.value.get(f.key);
+  return padding(
+    13,
+    column(
+      [
+        text(f.label),
+        tone(text(f.hint), "muted"),
+        onChange(
+          input(typed ?? f.stored, { hint: f.placeholder }),
+          (value) => f.save(`${value ?? ""}`),
+        ),
+        ...(why ? [tone(text(why), "danger")] : []),
+      ],
+      { spacing: 5 },
+    ),
+  );
+}
+
+function setIn(
+  which: typeof draft | typeof rejected,
+  key: string,
+  value: string | null,
+): void {
+  const next = new Map(which.peek());
+  if (value === null) next.delete(key);
+  else next.set(key, value);
+  which.value = next;
+}
+
+async function saveStartAt(raw: string): Promise<void> {
+  const typed = raw.trim();
+  setIn(draft, START_AT_KEY, typed);
+  // Rejected here rather than ignored at read time, which is what it used to
+  // be: a value that is silently not used is one the user believes is in
+  // effect. Empty clears it, which is how a text field says "back to the
+  // default".
+  //
+  // Absolute, because that is what "start at" means: a relative path resolves
+  // against whatever directory the command happens to run in, which is the
+  // user's home and not what anybody typing `var` meant.
+  if (typed !== "" && !(typed.startsWith("/") && isUsablePath(typed))) {
+    setIn(rejected, START_AT_KEY, l10n("prefsErrPath"));
+    return;
+  }
+  setIn(rejected, START_AT_KEY, null);
+  await sb.store.set({
+    scope: "global",
+    key: START_AT_KEY,
+    value: typed === "" ? null : typed,
+  });
+}
+
+async function saveSkip(typed: string): Promise<void> {
+  setIn(draft, SKIP_KEY, typed);
+  // Free text with nothing to get wrong: anything that is not a name simply
+  // matches no directory. Stored as typed so the field reads back the way it
+  // was written.
+  await sb.store.set({
+    scope: "global",
+    key: SKIP_KEY,
+    value: splitNames(typed).length === 0 ? null : typed.trim(),
+  });
+}
+
+async function saveHideBelow(raw: string): Promise<void> {
+  const typed = raw.trim();
+  setIn(draft, HIDE_BELOW_KEY, typed);
+  const n = Number.parseInt(typed, 10);
+  if (typed !== "" && (!Number.isFinite(n) || n < 0 || `${n}` !== typed)) {
+    setIn(rejected, HIDE_BELOW_KEY, l10n("prefsErrNumber"));
+    return;
+  }
+  setIn(rejected, HIDE_BELOW_KEY, null);
+  await sb.store.set({
+    scope: "global",
+    key: HIDE_BELOW_KEY,
+    value: typed === "" || n === 0 ? null : `${n}`,
+  });
+}
+
+async function resetPrefs(): Promise<void> {
+  // Every key this form owns, back to absent. Absent rather than written
+  // defaults: what a default is belongs to the build, and a stored copy of one
+  // is a value that stops following it.
+  for (const key of [CROSS_FS_KEY, START_AT_KEY, SKIP_KEY, HIDE_BELOW_KEY]) {
+    await sb.store.set({ scope: "global", key, value: null });
+  }
+  draft.value = new Map();
+  rejected.value = new Map();
+  crossDraft.value = null;
+  prefs.reload();
+}

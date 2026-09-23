@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/plugin/install.dart';
 import 'package:server_box/data/model/plugin/repo_record.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/plugin_health.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// What the app knows about the plugins on this device. PLUGINS.md section 7.
@@ -23,18 +24,19 @@ class PluginInstallStore {
 
   /// Every install, oldest first — which is the order they were added in and
   /// the order a list of them reads best in.
+  static const _columns =
+      'id, version, repo, enabled, granted, installed_at, previous';
+
   List<PluginInstall> readAll() {
     final rows = _db.select(
-      'SELECT id, version, repo, enabled, granted, installed_at '
-      'FROM plugin_install ORDER BY installed_at, id;',
+      'SELECT $_columns FROM plugin_install ORDER BY installed_at, id;',
     );
     return [for (final row in rows) _fromRow(row)];
   }
 
   PluginInstall? fetch(String id) {
     final rows = _db.select(
-      'SELECT id, version, repo, enabled, granted, installed_at '
-      'FROM plugin_install WHERE id = ?;',
+      'SELECT $_columns FROM plugin_install WHERE id = ?;',
       [id],
     );
     final row = rows.singleOrNull;
@@ -56,12 +58,12 @@ class PluginInstallStore {
   void put(PluginInstall install) {
     _db.execute(
       'INSERT INTO plugin_install '
-      '(id, version, repo, enabled, granted, installed_at) '
-      'VALUES (?, ?, ?, ?, ?, ?) '
+      '(id, version, repo, enabled, granted, installed_at, previous) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT (id) DO UPDATE SET '
       'version = excluded.version, repo = excluded.repo, '
       'enabled = excluded.enabled, granted = excluded.granted, '
-      'installed_at = excluded.installed_at;',
+      'installed_at = excluded.installed_at, previous = excluded.previous;',
       [
         install.id,
         install.version,
@@ -69,6 +71,10 @@ class PluginInstallStore {
         install.enabled ? 1 : 0,
         jsonEncode(install.granted.toList()..sort()),
         install.installedAt.millisecondsSinceEpoch,
+        // Named in the update too, so a record written without one clears it:
+        // a rollback that left `previous` behind would offer to go back again,
+        // to files that are no longer there.
+        install.previous == null ? null : jsonEncode(install.previous!.toJson()),
       ],
     );
   }
@@ -96,6 +102,17 @@ class PluginInstallStore {
         PluginKvStore.instance.removePlugin(id);
       }
     });
+    // Whichever the user chose. What was recorded is what *this build* did
+    // with the files that are now gone, so keeping it would put stages and
+    // durations from a removed copy into the next install's report — and it
+    // is not the plugin's data in the first place, so `keepData` does not
+    // cover it.
+    try {
+      PluginHealthStore.instance.removePlugin(id);
+    } catch (_) {
+      // Its own store, and not part of the transaction above: losing a
+      // diagnostic is not a reason to fail an uninstall.
+    }
   }
 
   PluginInstall _fromRow(Row row) => PluginInstall(
@@ -107,7 +124,24 @@ class PluginInstallStore {
     installedAt: DateTime.fromMillisecondsSinceEpoch(
       row['installed_at'] as int? ?? 0,
     ),
+    previous: _previous(row['previous']),
   );
+
+  /// The replaced record, or null for anything this build cannot read.
+  ///
+  /// Unreadable means "there is nothing to go back to", which is the safe
+  /// reading: the alternative is offering a rollback whose consent set the app
+  /// had to guess at.
+  static PluginInstall? _previous(Object? raw) {
+    if (raw is! String || raw.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return null;
+      return PluginInstall.fromJson(decoded.cast<String, dynamic>());
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 /// One server's configuration for one plugin.

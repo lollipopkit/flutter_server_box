@@ -1,5 +1,28 @@
 import 'dart:convert';
 
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/plugin/repo_record.dart';
+
+/// Where an installed plugin came from, which is what decides who may replace
+/// it.
+///
+/// One stored column — a sentinel or a repository address — read here as a
+/// total answer. It used to be a nullable URL, so three sources shared two
+/// values: a `.sbp` the user picked was recorded exactly like one shipped with
+/// the app, and the settings page called it "Bundled" although no build has
+/// ever shipped a plugin. The store then had no way to tell that the copy it
+/// was offering an update for was not one of its own.
+enum PluginOrigin {
+  /// A directory on the developer's machine, re-read on every refresh.
+  dev,
+
+  /// A `.sbp` the user opened. Nothing knows where it will come from next.
+  file,
+
+  /// A repository, which is the only origin an update can come from.
+  repo,
+}
+
 /// One installed plugin, as the app records it. PLUGINS.md section 7.
 ///
 /// The record, not the plugin: what was unpacked from the `.sbp` are files,
@@ -19,6 +42,7 @@ class PluginInstall {
     required this.installedAt,
     this.repo,
     this.enabled = true,
+    this.previous,
   });
 
   /// The manifest's reverse-DNS id, which everything else keys on.
@@ -27,8 +51,8 @@ class PluginInstall {
   /// The installed version, as the manifest spells it.
   final String version;
 
-  /// Which repository it came from. Null is bundled with the app; [devRepo] is
-  /// a directory on the developer's machine.
+  /// Where it came from: a repository's address, or one of the sentinels
+  /// [devRepo] and [fileRepo]. Read through [origin] rather than compared.
   final String? repo;
 
   /// Whether the user has it switched on.
@@ -47,14 +71,45 @@ class PluginInstall {
 
   final DateTime installedAt;
 
+  /// The record this one replaced, or null.
+  ///
+  /// **What makes an update undoable.** The files of the version before are
+  /// kept beside the installed ones and this is the row that went with them —
+  /// including `granted`, which is the part the directory cannot supply: it is
+  /// what the user *agreed to*, and re-deriving it from the old manifest would
+  /// grant whatever that version asked for.
+  ///
+  /// One level, never a chain. Two updates back is not a state anybody asked
+  /// for, and keeping every version a plugin has ever been is a directory that
+  /// only grows.
+  final PluginInstall? previous;
+
   /// [repo] for a plugin loaded from a directory on the developer's machine —
   /// no packaging, no signature, and marked as such wherever it is listed.
   static const devRepo = 'dev';
 
-  /// Whether this came with the app rather than from a repository.
-  bool get bundled => repo == null;
+  /// [repo] for a `.sbp` the user opened from a file picker.
+  ///
+  /// Neither sentinel can collide with a repository, which is always an
+  /// absolute URL.
+  static const fileRepo = 'file';
 
-  bool get isDev => repo == devRepo;
+  /// Where it came from. See [PluginOrigin].
+  PluginOrigin get origin => switch (repo) {
+    devRepo => PluginOrigin.dev,
+    fileRepo => PluginOrigin.file,
+    // TODO: drop the null case once no install predates `fileRepo`. No build
+    // has ever shipped a plugin, so a null column is a `.sbp` the user opened,
+    // written when that had no name of its own.
+    null => PluginOrigin.file,
+    _ => PluginOrigin.repo,
+  };
+
+  bool get isDev => origin == PluginOrigin.dev;
+
+  /// The repository this came from, or null when it came from somewhere a
+  /// repository cannot update.
+  String? get repoUrl => origin == PluginOrigin.repo ? repo : null;
 
   PluginInstall copyWith({
     String? id,
@@ -64,6 +119,8 @@ class PluginInstall {
     bool? enabled,
     Set<String>? granted,
     DateTime? installedAt,
+    PluginInstall? previous,
+    bool clearPrevious = false,
   }) => PluginInstall(
     id: id ?? this.id,
     version: version ?? this.version,
@@ -71,6 +128,7 @@ class PluginInstall {
     enabled: enabled ?? this.enabled,
     granted: granted ?? this.granted,
     installedAt: installedAt ?? this.installedAt,
+    previous: clearPrevious ? null : (previous ?? this.previous),
   );
 
   /// For anything that has to carry the record as text — a diagnostic, a
@@ -82,6 +140,9 @@ class PluginInstall {
     'enabled': enabled,
     'granted': granted.toList()..sort(),
     'installedAt': installedAt.millisecondsSinceEpoch,
+    // Left out rather than nested: what is stored in `previous` is one record,
+    // and a record carrying its own predecessor would let a chain build up
+    // through repeated updates.
   };
 
   factory PluginInstall.fromJson(Map<String, dynamic> json) => PluginInstall(
@@ -121,11 +182,25 @@ class PluginInstall {
           enabled == other.enabled &&
           granted.length == other.granted.length &&
           granted.containsAll(other.granted) &&
-          installedAt == other.installedAt;
+          installedAt == other.installedAt &&
+          previous == other.previous;
 
   @override
   int get hashCode => Object.hash(id, version, repo, enabled, installedAt);
 
   @override
   String toString() => 'PluginInstall($id@$version, repo: $repo)';
+}
+
+extension PluginInstallX on PluginInstall {
+  /// Where it came from, in one line, for a list to say so in.
+  ///
+  /// Here rather than in each page, because the settings list and the store row
+  /// are answering the same question and reading a repository two different
+  /// ways — one by address, one by name — reads as two different things.
+  String get sourceLabel => switch (origin) {
+    PluginOrigin.dev => l10n.pluginDev,
+    PluginOrigin.file => l10n.pluginFromFile,
+    PluginOrigin.repo => PluginRepoRecord.labelOfAddress(repo!),
+  };
 }

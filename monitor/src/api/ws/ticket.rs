@@ -102,11 +102,7 @@ impl TicketStore {
     }
 
     /// Claims a ticket while an HTTP upgrade is attempted.
-    pub fn reserve(
-        &self,
-        raw: &str,
-        purpose: Purpose,
-    ) -> TicketResult<TicketReservation> {
+    pub fn reserve(&self, raw: &str, purpose: Purpose) -> TicketResult<TicketReservation> {
         self.reserve_at(raw, purpose, Instant::now())
     }
 
@@ -269,7 +265,11 @@ mod tests {
         let now = Instant::now();
         let ticket = store.issue_at(Purpose::Terminal, "admin", now).unwrap();
         assert_eq!(
-            store.consume_at(&ticket, Purpose::Terminal, now + TTL + Duration::from_secs(1)),
+            store.consume_at(
+                &ticket,
+                Purpose::Terminal,
+                now + TTL + Duration::from_secs(1)
+            ),
             Err(TicketError::Expired)
         );
     }
@@ -314,7 +314,11 @@ mod tests {
         assert_eq!(store.len(), 10);
 
         store
-            .issue_at(Purpose::Terminal, "admin", now + TTL + Duration::from_secs(1))
+            .issue_at(
+                Purpose::Terminal,
+                "admin",
+                now + TTL + Duration::from_secs(1),
+            )
             .unwrap();
         assert_eq!(store.len(), 1, "expired tickets should not accumulate");
     }
@@ -328,9 +332,7 @@ mod tests {
                 .issue_at(Purpose::Terminal, &format!("user{i}"), now)
                 .unwrap();
         }
-        assert!(store
-            .issue_at(Purpose::Terminal, "extra", now)
-            .is_err());
+        assert!(store.issue_at(Purpose::Terminal, "extra", now).is_err());
     }
 
     #[test]
@@ -344,9 +346,11 @@ mod tests {
             store.issue_at(Purpose::Terminal, "admin", now),
             Err(MonitorError::Quota { retry_after_secs, .. }) if retry_after_secs == TTL.as_secs()
         ));
-        assert!(store
-            .issue_at(Purpose::Terminal, "someone-else", now)
-            .is_ok());
+        assert!(
+            store
+                .issue_at(Purpose::Terminal, "someone-else", now)
+                .is_ok()
+        );
     }
 
     #[test]
@@ -365,7 +369,10 @@ mod tests {
     fn the_subject_survives_the_round_trip() {
         let store = TicketStore::new();
         let ticket = store.issue(Purpose::Terminal, "someone").unwrap();
-        assert_eq!(store.consume(&ticket, Purpose::Terminal).unwrap(), "someone");
+        assert_eq!(
+            store.consume(&ticket, Purpose::Terminal).unwrap(),
+            "someone"
+        );
     }
 
     #[test]

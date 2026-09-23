@@ -51,7 +51,10 @@ impl Threshold {
         } else if s.ends_with('c') {
             (ThresholdType::Temperature, len - 1)
         } else {
-            return Err(MonitorError::Monitoring(format!("invalid threshold: {}", s)));
+            return Err(MonitorError::Monitoring(format!(
+                "invalid threshold: {}",
+                s
+            )));
         };
 
         let (compare_type, start_idx) = match (chars[0], chars.get(1)) {
@@ -65,7 +68,10 @@ impl Threshold {
         };
 
         if start_idx >= end_idx {
-            return Err(MonitorError::Monitoring(format!("invalid threshold: {}", s)));
+            return Err(MonitorError::Monitoring(format!(
+                "invalid threshold: {}",
+                s
+            )));
         }
         let value_str: String = chars[start_idx..end_idx].iter().collect();
 

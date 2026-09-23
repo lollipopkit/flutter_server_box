@@ -37,7 +37,10 @@ void main() {
     // Both halves, because neither is visible in the step's own test: missing
     // the version leaves every install on the old one with a green suite, and
     // missing the list throws at launch on a user's device.
-    expect(SchemaVersion.current, 25);
+    // Past this step rather than equal to it: `current` moves again with the
+    // next one, and a test that pinned it would fail on every schema change
+    // for a reason that has nothing to do with repositories.
+    expect(SchemaVersion.current, greaterThan(24));
     // The step's `from` is the version it migrates *from*, so 24. Numbering it
     // 25 leaves a gap, and the only place that shows is a `StateError` at
     // launch on a device that already had the app.

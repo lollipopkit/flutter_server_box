@@ -22,10 +22,7 @@ pub enum Verdict {
     /// Nothing recorded yet; this call stored it.
     Pinned,
     /// A key is on record and this isn't it.
-    Mismatch {
-        expected: String,
-        actual: String,
-    },
+    Mismatch { expected: String, actual: String },
 }
 
 /// OpenSSH's `SHA256:...` form, the same string `ssh-keygen -lf` prints, so an
@@ -118,8 +115,14 @@ mod tests {
         let pool = pool().await;
         let k = key(KEY_A);
 
-        assert_eq!(verify(&pool, "127.0.0.1:22", &k).await.unwrap(), Verdict::Pinned);
-        assert_eq!(verify(&pool, "127.0.0.1:22", &k).await.unwrap(), Verdict::Known);
+        assert_eq!(
+            verify(&pool, "127.0.0.1:22", &k).await.unwrap(),
+            Verdict::Pinned
+        );
+        assert_eq!(
+            verify(&pool, "127.0.0.1:22", &k).await.unwrap(),
+            Verdict::Known
+        );
     }
 
     #[tokio::test]
@@ -146,9 +149,18 @@ mod tests {
         let a = key(KEY_A);
         let b = key(KEY_B);
 
-        assert_eq!(verify(&pool, "127.0.0.1:22", &a).await.unwrap(), Verdict::Pinned);
-        assert_eq!(verify(&pool, "127.0.0.1:2222", &b).await.unwrap(), Verdict::Pinned);
-        assert_eq!(verify(&pool, "127.0.0.1:22", &a).await.unwrap(), Verdict::Known);
+        assert_eq!(
+            verify(&pool, "127.0.0.1:22", &a).await.unwrap(),
+            Verdict::Pinned
+        );
+        assert_eq!(
+            verify(&pool, "127.0.0.1:2222", &b).await.unwrap(),
+            Verdict::Pinned
+        );
+        assert_eq!(
+            verify(&pool, "127.0.0.1:22", &a).await.unwrap(),
+            Verdict::Known
+        );
     }
 
     #[tokio::test]
@@ -158,15 +170,13 @@ mod tests {
         let b = key(KEY_B);
         let addr = "127.0.0.1:22";
         let expected = fingerprint(&a);
-        sqlx::query(
-            "INSERT INTO ssh_known_hosts (addr, key_type, fingerprint) VALUES (?, ?, ?)",
-        )
-        .bind(addr)
-        .bind(a.algorithm().to_string())
-        .bind(&expected)
-        .execute(&pool)
-        .await
-        .unwrap();
+        sqlx::query("INSERT INTO ssh_known_hosts (addr, key_type, fingerprint) VALUES (?, ?, ?)")
+            .bind(addr)
+            .bind(a.algorithm().to_string())
+            .bind(&expected)
+            .execute(&pool)
+            .await
+            .unwrap();
 
         assert!(matches!(
             pin_or_compare(&pool, addr, b.algorithm().as_ref(), &fingerprint(&b))

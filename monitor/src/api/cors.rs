@@ -29,7 +29,9 @@ pub struct Cors {
 
 impl Cors {
     pub fn new(origins: Vec<String>) -> Self {
-        Self { origins: Rc::new(origins) }
+        Self {
+            origins: Rc::new(origins),
+        }
     }
 }
 
@@ -37,7 +39,10 @@ impl<S> Middleware<S, SharedCfg> for Cors {
     type Service = CorsService<S>;
 
     fn create(&self, service: S, _: SharedCfg) -> Self::Service {
-        CorsService { service, origins: self.origins.clone() }
+        CorsService {
+            service,
+            origins: self.origins.clone(),
+        }
     }
 }
 
@@ -76,7 +81,10 @@ where
             let res = HttpResponse::NoContent()
                 .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.as_str())
                 .header(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOW_METHODS)
-                .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "authorization, content-type")
+                .header(
+                    header::ACCESS_CONTROL_ALLOW_HEADERS,
+                    "authorization, content-type",
+                )
                 .header(header::ACCESS_CONTROL_MAX_AGE, "3600")
                 .header(header::VARY, "Origin")
                 .finish();

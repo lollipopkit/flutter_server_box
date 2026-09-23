@@ -1,4 +1,7 @@
 {
+  "pluginName": "监听端口",
+  "pluginDescription": "服务器上有什么在监听，其中哪些可以从外部访问。",
+  "pageLabel": "端口",
   "reading": "读取中…",
   "retry": "重试",
   "summaryLabel": "监听中",

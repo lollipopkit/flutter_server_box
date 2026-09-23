@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,8 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server_picker.dart' as picker;
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/plugin/host_ops.dart';
+import 'package:server_box/data/model/plugin/l10n.dart';
+import 'package:server_box/data/model/plugin/node.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/plugin/http.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -14,6 +18,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/plugin/dialog.dart';
 
 /// The app doing what a plugin asked for. PLUGINS.md section 4.3.
 ///
@@ -71,23 +76,62 @@ class AppPluginHostOps implements PluginHostOps {
     );
   }
 
+  /// How long a plugin's command may run when it named no `timeoutMs`.
+  ///
+  /// There has to be one. Without it a plugin whose command never returns
+  /// holds a host call until the runtime's own ceiling and then reports a
+  /// timeout that names the wrong thing — and a plugin author has no reason to
+  /// think an absent field means "for ever".
+  static const defaultExecTimeout = Duration(minutes: 5);
+
   @override
   Future<PluginExecResult> exec(
     String serverId,
     String script, {
     Duration? timeout,
+    Future<void>? cancel,
   }) async {
     // `ensureExec` is the one place that decides how a command reaches a
     // server — SSH or a monitor agent's `/exec`, with the fallback — so a
     // plugin's command travels the same way the app's own do and needs to know
     // about neither.
     final exec = await ref.read(serverProvider(serverId).notifier).ensureExec();
-    final result = await exec.run(script);
-    return (
-      code: result.exitCode ?? -1,
-      stdout: result.stdout,
-      stderr: result.stderr,
+
+    // One future for both, because the transport takes one and the two mean
+    // the same thing to it. Which of them fired is remembered here, since that
+    // is the whole difference the plugin sees.
+    final stop = Completer<void>();
+    var end = PluginExecEnd.finished;
+    void stopWith(PluginExecEnd why) {
+      if (stop.isCompleted) return;
+      end = why;
+      stop.complete();
+    }
+
+    // `timeoutMs` used to be accepted and then dropped: `run` was called with
+    // no `cancel` at all, so a plugin asking for two minutes got whatever the
+    // transport happened to allow. It is honoured here, and it is the only
+    // bound a plugin that never calls `sb.server.cancel` has.
+    final timer = Timer(
+      timeout ?? defaultExecTimeout,
+      () => stopWith(PluginExecEnd.timedOut),
     );
+    // Unawaited on purpose: a cancel that never comes must not hold the run.
+    unawaited(cancel?.then((_) => stopWith(PluginExecEnd.cancelled)));
+
+    try {
+      final result = await exec.run(script, cancel: stop.future);
+      return PluginExecResult(
+        code: result.exitCode ?? -1,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        end: end,
+        // The transport's own answer, never a guess: see [ExecCancelKind].
+        stoppedCommand: PluginExecResult.stoppedBy(exec.cancelKind),
+      );
+    } finally {
+      timer.cancel();
+    }
   }
 
   @override
@@ -107,9 +151,23 @@ class AppPluginHostOps implements PluginHostOps {
     String? message,
     List<PluginPromptField> fields = const [],
     String? confirm,
+    PluginNode? node,
+    PluginL10n strings = PluginL10n.empty,
+    bool sheet = false,
   }) async {
     final context = _context;
     if (context == null) return (cancelled: true, values: const <String, String>{});
+
+    if (node != null) {
+      return _promptWithNode(
+        context,
+        title: title,
+        message: message,
+        node: node,
+        strings: strings,
+        sheet: sheet,
+      );
+    }
 
     final controllers = {
       for (final field in fields)
@@ -152,6 +210,86 @@ class AppPluginHostOps implements PluginHostOps {
       }
     }
   }
+
+  /// The general case: a body the plugin drew.
+  ///
+  /// The values come back keyed by each control's `change` message, because
+  /// the plugin is blocked waiting for this and cannot process events while it
+  /// is up — see `PluginNodeDialog`.
+  Future<PluginPromptResult> _promptWithNode(
+    BuildContext context, {
+    required String title,
+    required PluginNode node,
+    required PluginL10n strings,
+    String? message,
+    bool sheet = false,
+  }) async {
+    final key = GlobalKey<PluginNodeDialogState>();
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (message != null) ...[
+          Text(message, style: UIs.textGrey),
+          UIs.height13,
+        ],
+        PluginNodeDialog(key: key, node: node, strings: strings),
+      ],
+    );
+
+    final ok = sheet
+        ? await _sheet(context, title: title, body: body)
+        : await context.showRoundDialog<bool>(
+            title: title,
+            child: body,
+            actions: Btnx.cancelOk,
+          );
+    // The values are read from the state before the route is gone; `values` is
+    // a copy, so nothing here holds a widget's map after it is disposed.
+    final values = key.currentState?.values ?? const <String, String>{};
+    if (ok != true) return (cancelled: true, values: const <String, String>{});
+    return (cancelled: false, values: values);
+  }
+
+  /// The same thing from the bottom, which is where a form belongs on a phone:
+  /// the keyboard has somewhere to go, and the sheet is as tall as it needs.
+  Future<bool?> _sheet(
+    BuildContext context, {
+    required String title,
+    required Widget body,
+  }) => showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    useRootNavigator: true,
+    builder: (ctx) => SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 17,
+          right: 17,
+          top: 17,
+          bottom: MediaQuery.viewInsetsOf(ctx).bottom + 17,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: UIs.text15Bold),
+            UIs.height13,
+            Flexible(child: body),
+            UIs.height13,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 7,
+              children: [
+                Btn.text(text: libL10n.cancel, onTap: () => ctx.pop(false)),
+                Btn.text(text: libL10n.ok, onTap: () => ctx.pop(true)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   @override
   Future<String?> pickServer() async {

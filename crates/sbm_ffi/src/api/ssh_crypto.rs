@@ -154,13 +154,12 @@ impl SshBlockCipher {
             CipherState::Ctr256(c) => c.apply_keystream(&mut buf),
             state => {
                 if buf.len() % AES_BLOCK != 0 {
-                    return Err(format!(
-                        "CBC takes whole blocks, got {} bytes",
-                        buf.len()
-                    ));
+                    return Err(format!("CBC takes whole blocks, got {} bytes", buf.len()));
                 }
                 for chunk in buf.chunks_exact_mut(AES_BLOCK) {
-                    let block = chunk.try_into().expect("chunks_exact_mut gives whole blocks");
+                    let block = chunk
+                        .try_into()
+                        .expect("chunks_exact_mut gives whole blocks");
                     match state {
                         CipherState::CbcEnc128(c) => c.encrypt_block(block),
                         CipherState::CbcEnc192(c) => c.encrypt_block(block),
@@ -215,18 +214,10 @@ impl SshMac {
         // mid-handshake, where an `Err` is a fall back to pointycastle.
         let keyed = |e| format!("{algorithm} rejected a {}-byte key: {e}", key.len());
         let state = match algorithm.as_str() {
-            "hmac-md5" => MacState::Md5(
-                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
-            ),
-            "hmac-sha1" => MacState::Sha1(
-                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
-            ),
-            "hmac-sha2-256" => MacState::Sha256(
-                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
-            ),
-            "hmac-sha2-512" => MacState::Sha512(
-                hmac::Hmac::new_from_slice(&key).map_err(keyed)?,
-            ),
+            "hmac-md5" => MacState::Md5(hmac::Hmac::new_from_slice(&key).map_err(keyed)?),
+            "hmac-sha1" => MacState::Sha1(hmac::Hmac::new_from_slice(&key).map_err(keyed)?),
+            "hmac-sha2-256" => MacState::Sha256(hmac::Hmac::new_from_slice(&key).map_err(keyed)?),
+            "hmac-sha2-512" => MacState::Sha512(hmac::Hmac::new_from_slice(&key).map_err(keyed)?),
             other => return Err(format!("unsupported mac: {other}")),
         };
         let full = match &state {
@@ -260,10 +251,30 @@ impl SshMac {
     #[flutter_rust_bridge::frb(sync)]
     pub fn compute(&self, data: Vec<u8>) -> Vec<u8> {
         let mut tag = match &self.state {
-            MacState::Md5(m) => m.clone().chain_update(&data).finalize().into_bytes().to_vec(),
-            MacState::Sha1(m) => m.clone().chain_update(&data).finalize().into_bytes().to_vec(),
-            MacState::Sha256(m) => m.clone().chain_update(&data).finalize().into_bytes().to_vec(),
-            MacState::Sha512(m) => m.clone().chain_update(&data).finalize().into_bytes().to_vec(),
+            MacState::Md5(m) => m
+                .clone()
+                .chain_update(&data)
+                .finalize()
+                .into_bytes()
+                .to_vec(),
+            MacState::Sha1(m) => m
+                .clone()
+                .chain_update(&data)
+                .finalize()
+                .into_bytes()
+                .to_vec(),
+            MacState::Sha256(m) => m
+                .clone()
+                .chain_update(&data)
+                .finalize()
+                .into_bytes()
+                .to_vec(),
+            MacState::Sha512(m) => m
+                .clone()
+                .chain_update(&data)
+                .finalize()
+                .into_bytes()
+                .to_vec(),
         };
         tag.truncate(self.mac_size);
         tag
@@ -301,8 +312,8 @@ mod tests {
         let iv = hex("f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff");
         let plain = hex("6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e51");
 
-        let mut whole = SshBlockCipher::new("aes256-ctr".into(), key.clone(), iv.clone(), true)
-            .unwrap();
+        let mut whole =
+            SshBlockCipher::new("aes256-ctr".into(), key.clone(), iv.clone(), true).unwrap();
         let once = whole.process(plain.clone()).unwrap();
 
         let mut split = SshBlockCipher::new("aes256-ctr".into(), key, iv, true).unwrap();
@@ -359,8 +370,7 @@ mod tests {
             SshBlockCipher::new("aes256-cbc".into(), key.clone(), iv.clone(), true).unwrap();
         let once = whole.process(plain.clone()).unwrap();
 
-        let mut split =
-            SshBlockCipher::new("aes256-cbc".into(), key, iv, true).unwrap();
+        let mut split = SshBlockCipher::new("aes256-cbc".into(), key, iv, true).unwrap();
         let mut twice = split.process(plain[..16].to_vec()).unwrap();
         twice.extend(split.process(plain[16..].to_vec()).unwrap());
 
@@ -377,8 +387,13 @@ mod tests {
 
     #[test]
     fn unknown_algorithms_are_reported_not_guessed() {
-        assert!(SshBlockCipher::new("aes256-gcm@openssh.com".into(), vec![0; 32], vec![0; 16], true)
-            .is_err());
+        assert!(SshBlockCipher::new(
+            "aes256-gcm@openssh.com".into(),
+            vec![0; 32],
+            vec![0; 16],
+            true
+        )
+        .is_err());
         assert!(SshMac::new("hmac-ripemd160".into(), vec![0; 20], 20).is_err());
     }
 
@@ -416,7 +431,10 @@ mod tests {
     #[test]
     fn mac_state_does_not_leak_between_calls() {
         let mac = SshMac::new("hmac-sha2-256".into(), vec![7; 32], 32).unwrap();
-        assert_eq!(mac.compute(b"packet".to_vec()), mac.compute(b"packet".to_vec()));
+        assert_eq!(
+            mac.compute(b"packet".to_vec()),
+            mac.compute(b"packet".to_vec())
+        );
     }
 
     /// The `-96` variants are the full tag cut to 12 bytes.
@@ -425,7 +443,10 @@ mod tests {
         let full = SshMac::new("hmac-sha2-256".into(), vec![7; 32], 32).unwrap();
         let cut = SshMac::new("hmac-sha2-256".into(), vec![7; 32], 12).unwrap();
         assert_eq!(cut.mac_size(), 12);
-        assert_eq!(cut.compute(b"packet".to_vec()), full.compute(b"packet".to_vec())[..12]);
+        assert_eq!(
+            cut.compute(b"packet".to_vec()),
+            full.compute(b"packet".to_vec())[..12]
+        );
     }
 
     #[test]

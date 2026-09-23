@@ -30,7 +30,7 @@
  */
 import { createHash } from "node:crypto";
 
-import { manifestName, parseManifest } from "./pack.ts";
+import { l10nDir, manifestName, parseManifest } from "./pack.ts";
 import { readZip } from "./zip.ts";
 
 /** The schema a repository announces in `repo.toml`. */
@@ -376,12 +376,77 @@ export function buildRepo({
   return { files: out, notes };
 }
 
-/** Reads the manifest out of a `.sbp`. */
+/**
+ * Reads the manifest out of a `.sbp`, as a repository has to read it.
+ *
+ * **`l10n.` keys resolved against the package's English table.** A manifest is
+ * one document for every language, so a plugin names itself with a key and the
+ * app looks it up in whichever language it is running in. An index has no
+ * language — it is one text file in a git repository, read by every client —
+ * so English is what goes in it, and this is where that is decided.
+ */
 export function manifestOf(bytes: Uint8Array, where: string) {
   const files = readZip(bytes);
   const manifest = files.get(manifestName);
   if (!manifest) throw new Error(`${where} has no ${manifestName}`);
-  return parseManifest(new TextDecoder().decode(manifest), where);
+  const parsed = parseManifest(new TextDecoder().decode(manifest), where);
+  const english = englishOf(files, where);
+  return {
+    ...parsed,
+    ...(parsed.name === undefined
+      ? {}
+      : { name: resolveL10n(parsed.name, english, where) }),
+    ...(parsed.description === undefined
+      ? {}
+      : { description: resolveL10n(parsed.description, english, where) }),
+  };
+}
+
+/** The prefix that marks a manifest string as a key. `PluginL10n.prefix`. */
+export const l10nPrefix = "l10n.";
+
+/**
+ * [value] with an `l10n.` key looked up, or [value] itself.
+ *
+ * **Throws for a key nothing translates**, rather than passing `l10n.name`
+ * through into a repository where every client would show it. The app is
+ * lenient about this for a good reason — a missing key names itself on screen,
+ * which is how you find it — but an index is written once and read by
+ * everybody.
+ */
+export function resolveL10n(
+  value: string,
+  table: Record<string, string>,
+  where: string,
+): string {
+  if (!value.startsWith(l10nPrefix)) return value;
+  const key = value.slice(l10nPrefix.length);
+  const hit = table[key];
+  if (hit === undefined) {
+    throw new Error(`${where}: ${l10nDir}/en.json has no ${key}`);
+  }
+  return hit;
+}
+
+/** A package's `en` strings, which is the one locale a manifest must ship. */
+function englishOf(
+  files: Map<string, Uint8Array>,
+  where: string,
+): Record<string, string> {
+  const raw = files.get(`${l10nDir}/en.json`);
+  if (!raw) return {};
+  let decoded: unknown;
+  try {
+    decoded = JSON.parse(new TextDecoder().decode(raw));
+  } catch (e) {
+    throw new Error(`${where}: ${l10nDir}/en.json is not JSON: ${e}`);
+  }
+  if (typeof decoded !== "object" || decoded === null) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(decoded as Record<string, unknown>)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
 }
 
 /**

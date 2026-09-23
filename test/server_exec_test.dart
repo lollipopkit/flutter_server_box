@@ -9,6 +9,11 @@ import 'package:server_box/data/provider/container.dart';
 
 /// Records what it was asked to run instead of running it.
 class _RecordingExec implements ServerExec {
+  /// These drive a scripted transport rather than a real one; a test that
+  /// cancels asserts on what the caller did, not on what a server did.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsCommand;
+
   String? script;
   String? entry;
   String? stdin;

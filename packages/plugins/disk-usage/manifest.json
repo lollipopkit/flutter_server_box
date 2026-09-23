@@ -1,9 +1,9 @@
 {
   "id": "app.serverbox.diskusage",
-  "version": "1.1.0",
-  "abi": 2,
-  "name": "Disk usage",
-  "description": "Where the space went, one directory at a time.",
+  "version": "1.2.0",
+  "abi": 4,
+  "name": "l10n.pluginName",
+  "description": "l10n.pluginDescription",
   "license": "MIT",
   "l10n": [
     "en",
@@ -16,12 +16,12 @@
   "contributes": {
     "settings": {
       "id": "prefs",
-      "label": "Disk usage",
+      "label": "l10n.pluginName",
       "icon": "chart"
     },
     "page": {
       "id": "usage",
-      "label": "Usage",
+      "label": "l10n.pageLabel",
       "icon": "chart",
       "default_on": true,
       "needs": [

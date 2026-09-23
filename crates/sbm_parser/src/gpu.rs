@@ -38,7 +38,9 @@ pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
                 .find(|c| c.has_tag_name("temperature"))
                 .and_then(|t| child_text(t, "gpu_temp"))?;
 
-            let power = gpu.children().find(|c| c.has_tag_name("gpu_power_readings"));
+            let power = gpu
+                .children()
+                .find(|c| c.has_tag_name("gpu_power_readings"));
             let power_draw = power.and_then(|p| child_text(p, "power_draw"));
             let power_limit = power.and_then(|p| child_text(p, "current_power_limit"));
 
@@ -120,7 +122,11 @@ fn parse_amd_gpu(gpu: &Value) -> Option<AmdSmiItem> {
     let memory = GpuMem {
         total: amd_int(mem.get("total").or_else(|| mem.get("total_memory"))),
         used: amd_int(mem.get("used").or_else(|| mem.get("used_memory"))),
-        unit: mem.get("unit").and_then(|v| v.as_str()).unwrap_or("MB").to_string(),
+        unit: mem
+            .get("unit")
+            .and_then(|v| v.as_str())
+            .unwrap_or("MB")
+            .to_string(),
         processes: mem
             .get("processes")
             .and_then(|v| v.as_array())

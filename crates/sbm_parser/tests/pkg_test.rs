@@ -4,7 +4,7 @@
 //! notices and column headers they print around the rows — those are exactly
 //! what a parser written against a tidied-up sample gets wrong.
 
-use sbm_parser::pkg::{parse_pkg, PkgUpdates};
+use sbm_parser::pkg::{PkgUpdates, parse_pkg};
 
 fn of(raw: &str) -> PkgUpdates {
     parse_pkg(raw)
@@ -49,13 +49,21 @@ fn apt_reads_inst_lines_and_skips_conf() {
     let names: Vec<&str> = r.items.iter().map(|i| i.name.as_str()).collect();
     assert_eq!(
         names,
-        ["base-files", "libssl3", "openssl", "linux-image-6.1.0-18-amd64"]
+        [
+            "base-files",
+            "libssl3",
+            "openssl",
+            "linux-image-6.1.0-18-amd64"
+        ]
     );
 
     let ssl = &r.items[1];
     assert_eq!(ssl.from.as_deref(), Some("3.0.11-1~deb12u2"));
     assert_eq!(ssl.to, "3.0.13-1~deb12u1");
-    assert_eq!(ssl.repo.as_deref(), Some("Debian-Security:12/stable-security"));
+    assert_eq!(
+        ssl.repo.as_deref(),
+        Some("Debian-Security:12/stable-security")
+    );
     assert!(ssl.security);
 
     assert!(!r.items[0].security, "Debian:12.6/stable is not security");
@@ -65,7 +73,11 @@ fn apt_reads_inst_lines_and_skips_conf() {
 #[test]
 fn apt_new_dependency_has_no_from() {
     let r = of(APT);
-    let new = r.items.iter().find(|i| i.name.starts_with("linux-image")).unwrap();
+    let new = r
+        .items
+        .iter()
+        .find(|i| i.name.starts_with("linux-image"))
+        .unwrap();
 
     assert_eq!(new.from, None);
     assert_eq!(new.to, "6.1.76-1");
@@ -80,7 +92,8 @@ fn apt_counts_security_separately() {
 /// that could not be read.
 #[test]
 fn apt_with_nothing_pending_is_supported_and_empty() {
-    let r = of("mgr=apt\nage=120\n0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n");
+    let r =
+        of("mgr=apt\nage=120\n0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n");
 
     assert!(r.supported());
     assert_eq!(r.total(), 0);
@@ -123,7 +136,10 @@ fn dnf_reads_three_columns_and_stops_at_obsoleting() {
     assert_eq!(r.total(), 3, "the obsoleting section is not an update");
 
     let k = &r.items[0];
-    assert_eq!(k.name, "kernel-core", "the arch suffix is not part of the name");
+    assert_eq!(
+        k.name, "kernel-core",
+        "the arch suffix is not part of the name"
+    );
     assert_eq!(k.to, "5.14.0-427.13.1.el9_4");
     assert_eq!(k.repo.as_deref(), Some("baseos"));
     // dnf's check-update does not print what is installed.
@@ -165,7 +181,9 @@ fn zypper_reads_the_table_under_the_rule() {
 
 #[test]
 fn pacman_reads_the_arrow_form() {
-    let r = of("mgr=pacman\nage=600\nlinux 6.7.4.arch1-1 -> 6.7.6.arch1-1\nopenssl 3.2.1-1 -> 3.2.1-2 [ignored]\n");
+    let r = of(
+        "mgr=pacman\nage=600\nlinux 6.7.4.arch1-1 -> 6.7.6.arch1-1\nopenssl 3.2.1-1 -> 3.2.1-2 [ignored]\n",
+    );
 
     assert_eq!(r.total(), 2);
     assert_eq!(r.items[0].from.as_deref(), Some("6.7.4.arch1-1"));

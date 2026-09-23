@@ -21,6 +21,11 @@ import 'package:server_box/data/res/store.dart';
 abstract class LocalExec implements ServerExec {
   const LocalExec();
 
+  /// The process is this app's own, so cancelling really ends it — by signal
+  /// here, by hanging the guest session up on iOS.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsCommand;
+
   /// What names this machine where a server id is expected.
   ///
   /// Reserved rather than generated: server ids come from `ShortId`, whose

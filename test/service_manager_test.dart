@@ -10,6 +10,11 @@ import 'package:server_box/data/service/service_manager.dart';
 import 'package:server_box/data/service/systemd.dart';
 
 final class _QueueExec implements ServerExec {
+  /// These drive a scripted transport rather than a real one; a test that
+  /// cancels asserts on what the caller did, not on what a server did.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsCommand;
+
   _QueueExec(List<ExecResult> results) : results = Queue.of(results);
 
   final Queue<ExecResult> results;

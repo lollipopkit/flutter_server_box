@@ -401,14 +401,26 @@ mod tests {
             assert_eq!(sig.r.len(), width, "{curve} r width");
             assert_eq!(sig.s.len(), width, "{curve} s width");
             assert!(
-                ecdsa_verify(curve.into(), public.clone(), msg.clone(), sig.r.clone(), sig.s.clone()),
+                ecdsa_verify(
+                    curve.into(),
+                    public.clone(),
+                    msg.clone(),
+                    sig.r.clone(),
+                    sig.s.clone()
+                ),
                 "{curve}"
             );
 
             let mut tampered = sig.r.clone();
             tampered[width - 1] ^= 1;
             assert!(
-                !ecdsa_verify(curve.into(), public.clone(), msg.clone(), tampered, sig.s.clone()),
+                !ecdsa_verify(
+                    curve.into(),
+                    public.clone(),
+                    msg.clone(),
+                    tampered,
+                    sig.s.clone()
+                ),
                 "{curve} tampered r"
             );
 
@@ -424,7 +436,13 @@ mod tests {
     #[test]
     fn ecdsa_refuses_an_unknown_curve() {
         assert!(ecdsa_sign("nistp192".into(), vec![0; 24], vec![]).is_err());
-        assert!(!ecdsa_verify("nistp192".into(), vec![], vec![], vec![], vec![]));
+        assert!(!ecdsa_verify(
+            "nistp192".into(),
+            vec![],
+            vec![],
+            vec![],
+            vec![]
+        ));
     }
 
     /// SSH carries r and s as mpints, so a value with leading zeroes arrives
@@ -432,7 +450,10 @@ mod tests {
     /// the same place, and anything that genuinely does not fit must not.
     #[test]
     fn joining_r_and_s_handles_mpint_widths() {
-        assert_eq!(join_rs::<4>(&[1, 2], &[3]).unwrap(), vec![0, 0, 1, 2, 0, 0, 0, 3]);
+        assert_eq!(
+            join_rs::<4>(&[1, 2], &[3]).unwrap(),
+            vec![0, 0, 1, 2, 0, 0, 0, 3]
+        );
         assert_eq!(join_rs::<2>(&[0, 1, 2], &[3, 4]).unwrap(), vec![1, 2, 3, 4]);
         assert!(join_rs::<2>(&[9, 1, 2], &[3, 4]).is_none());
     }

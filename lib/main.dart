@@ -23,6 +23,7 @@ import 'package:server_box/core/utils/rootfs_manifest_source.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/core/utils/ssh_native_crypto.dart';
 import 'package:server_box/data/model/server/dist_license.dart';
+import 'package:server_box/data/provider/plugin/dev_watcher.dart';
 import 'package:server_box/data/provider/plugin/installer.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -445,7 +446,13 @@ Future<void> _doDbMigrate() async {
   // an app that cannot start because of something the user installed is worse
   // than one plugin that does not appear.
   try {
-    await PluginInstaller(root: PluginInstaller.appRoot).refresh();
+    final installer = PluginInstaller(root: PluginInstaller.appRoot);
+    await installer.refresh();
+    // And keeps reading them: a plugin loaded from a development directory is
+    // re-read whenever its files move, so the loop is edit, build, look —
+    // rather than edit, build, restart the app, navigate back. Desktop only,
+    // and asleep until a directory is registered. PLUGINS.md 8.2.
+    PluginDevWatcher(installer: installer).start();
   } catch (e, s) {
     Loggers.app.warning('Reading the installed plugins', e, s);
   }

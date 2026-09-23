@@ -106,6 +106,11 @@ class SshExec implements ServerExec {
   /// minutes, for the Agent.
   static const drainTimeout = Duration(seconds: 5);
 
+  /// The channel carries `SIGKILL` and then closes, so the command really
+  /// stops.
+  @override
+  ExecCancelKind get cancelKind => ExecCancelKind.stopsCommand;
+
   @override
   Future<ExecResult> run(
     String script, {

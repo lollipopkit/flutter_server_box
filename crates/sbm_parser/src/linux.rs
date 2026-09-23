@@ -20,7 +20,15 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
             continue;
         }
         let parse = |i: usize| fields[i].parse::<u64>();
-        match (parse(1), parse(2), parse(3), parse(4), parse(5), parse(6), parse(7)) {
+        match (
+            parse(1),
+            parse(2),
+            parse(3),
+            parse(4),
+            parse(5),
+            parse(6),
+            parse(7),
+        ) {
             (Ok(user), Ok(sys), Ok(nice), Ok(idle), Ok(iowait), Ok(irq), Ok(softirq)) => {
                 cores.push(CpuCore {
                     id: id.to_string(),
@@ -100,7 +108,10 @@ fn parse_lsblk(json: &serde_json::Value) -> Vec<Disk> {
     for device in devices {
         let fstype = device["fstype"].as_str();
         let mount = device["mountpoint"].as_str().unwrap_or("");
-        let children = device["children"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+        let children = device["children"]
+            .as_array()
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
         let (size, used, avail, _) = lsblk_fs_fields(device);
         let has_stats = size != 0 || used != 0 || avail != 0;
         let has_own_fs = fstype.is_some_and(|fs| disk_type_should_calc(fs, mount));
@@ -389,13 +400,17 @@ fn parse_battery_block(lines: &[&str]) -> Option<Battery> {
         }
     }
     Some(Battery {
-        percent: map.get("POWER_SUPPLY_CAPACITY").and_then(|v| v.parse().ok()),
+        percent: map
+            .get("POWER_SUPPLY_CAPACITY")
+            .and_then(|v| v.parse().ok()),
         status: BatteryStatus::parse(map.get("POWER_SUPPLY_STATUS").copied()),
         name: map
             .get("POWER_SUPPLY_MODEL_NAME")
             .or_else(|| map.get("POWER_SUPPLY_NAME"))
             .map(|s| s.to_string()),
-        cycle: map.get("POWER_SUPPLY_CYCLE_COUNT").and_then(|v| v.parse().ok()),
+        cycle: map
+            .get("POWER_SUPPLY_CYCLE_COUNT")
+            .and_then(|v| v.parse().ok()),
         tech: map.get("POWER_SUPPLY_TECHNOLOGY").map(|s| s.to_string()),
     })
 }
@@ -416,7 +431,12 @@ pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
         .into_iter()
         .filter(|lines| lines.len() >= 3)
         .map(|lines| {
-            let adapter = lines[1].split(':').next_back().unwrap_or("").trim().to_string();
+            let adapter = lines[1]
+                .split(':')
+                .next_back()
+                .unwrap_or("")
+                .trim()
+                .to_string();
             let details = lines[2..]
                 .iter()
                 .filter_map(|line| {

@@ -10,7 +10,7 @@
 
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { MockHost, find, l10nKeys, texts } from "@serverbox/plugin-api/test";
+import { MockHost, find, l10nKeys, messageOf, texts } from "@serverbox/plugin-api/test";
 import type { HookEvent, Node, ServerHandle } from "@serverbox/plugin-api";
 import { COMMAND } from "../src/parse.ts";
 
@@ -48,7 +48,8 @@ describe("the collection", () => {
     // The point of collecting in the hook: `open` holds the surface until it
     // answers, and this is a command on a machine that may be asleep.
     expect(host.called()).toEqual([]);
-    expect(l10nKeys(out.ui!)).toContain("l10n.reading");
+    // The shape of what is coming, so the page does not jump when it arrives.
+    expect(out.ui!.t).toBe("skeleton");
   });
 
   test("the hook runs the command and patches the rows in", async () => {
@@ -60,11 +61,14 @@ describe("the collection", () => {
     await plugin.onHook(enter());
 
     // Two `store.get` first: the page opens on whichever filter the settings
-    // page says is the default, and in whichever order was last chosen.
+    // page says is the default, and in whichever order was last chosen. Then
+    // the reading, and a patch for each state it passes through — the loading
+    // one is what the page shows while the command runs.
     expect(host.called()).toEqual([
       "store.get",
       "store.get",
       "server.exec",
+      "ui.patch",
       "ui.patch",
     ]);
     // The whole tree, because what changed is the body — a JSON Pointer into a
@@ -73,7 +77,7 @@ describe("the collection", () => {
     const patch = host.callsTo("ui.patch")[0]!;
     expect(patch.path).toBe("");
 
-    const drawn = texts(patch.node);
+    const drawn = texts(screen(plugin));
     // The port is the row's title, so it stands alone. The process shares the
     // subtitle with the protocol and the address — a row that carried only a
     // process name spent a line saying "—" whenever reading it needed root.
@@ -82,7 +86,7 @@ describe("the collection", () => {
     expect(drawn.some((t) => t.includes("sshd"))).toBe(true);
     // The count is a translated sentence with the number as an argument, so
     // the key is what the tree carries — the app substitutes.
-    const keys = l10nKeys(patch.node);
+    const keys = l10nKeys(screen(plugin));
     expect(keys).toContain("l10n.ports");
     // The one thing this list is opened to find out.
     expect(keys).toContain("l10n.exposedCount");
@@ -95,6 +99,8 @@ describe("the collection", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter("h-42"));
 
     expect(host.callsTo("server.exec")[0]!.req.server).toBe(
@@ -109,13 +115,13 @@ describe("the collection", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
 
     // `errNoTool` is the sentence that names both commands and what to install
     // instead — the half that makes it a message rather than a diagnosis.
-    expect(l10nKeys(host.callsTo("ui.patch")[0]!.node)).toContain(
-      "l10n.errNoTool",
-    );
+    expect(l10nKeys(screen(plugin))).toContain("l10n.errNoTool");
   });
 
   /// A refused or failed command is a page that says so and offers the way
@@ -127,9 +133,11 @@ describe("the collection", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
 
-    const node = host.callsTo("ui.patch")[0]!.node;
+    const node = screen(plugin);
     expect(l10nKeys(node)).toContain("l10n.errTitle");
     expect(l10nKeys(node)).toContain("l10n.retry");
     // And never the JavaScript error, which is a fact about this code rather
@@ -142,34 +150,37 @@ describe("the collection", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook({ kind: "enter", contribution: "ports", servers: [] });
 
     expect(host.callsTo("server.exec")).toHaveLength(0);
-    expect(host.callsTo("ui.patch")).toHaveLength(1);
+    // And the page says which of the two empty states it is in.
+    expect(l10nKeys(screen(plugin))).toContain("l10n.errNoServer");
   });
 });
 
 describe("the controls", () => {
-  test("reload draws before it runs, so the tap is visible", async () => {
+  /// Tapped through the tree rather than by sending a message: with a closure
+  /// as the handler there is no message to write by hand, and a test that
+  /// wrote one proved the handler worked and said nothing about whether
+  /// anything on screen sends it.
+  test("reload runs the command again and redraws", async () => {
     const host = new MockHost().exec(COMMAND, { stdout: SS });
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
-    await plugin.onEvent({ msg: { m: "reload" } });
+    const before = host.callsTo("server.exec").length;
 
-    // patch(rows) · exec · patch("Reading…") · exec · patch(rows): the middle
-    // patch is the point — on a machine that takes seconds the button has to
-    // have done something.
-    expect(host.called()).toEqual([
-      "store.get",
-      "store.get",
-      "server.exec",
-      "ui.patch",
-      "ui.patch",
-      "server.exec",
-      "ui.patch",
-    ]);
+    await plugin.onEvent({ msg: messageOf(screen(plugin), "l10n.reload") });
+
+    // The command runs inside the call the tap started — the host drives an
+    // instance only while it is in one — so there is nothing to wait for here.
+    expect(host.callsTo("server.exec").length).toBe(before + 1);
+    expect(texts(screen(plugin))).toContain("22");
   });
 
   /// Filtering is a local decision about a reading already in hand, so it
@@ -179,12 +190,14 @@ describe("the controls", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
     const before = host.callsTo("server.exec").length;
-    const out = await plugin.onEvent({ msg: { m: "exposed" } });
+    await plugin.onEvent({ msg: messageOf(screen(plugin), "l10n.filterAll") });
 
     expect(host.callsTo("server.exec")).toHaveLength(before);
-    const drawn = texts(out.ui!);
+    const drawn = texts(screen(plugin));
     expect(drawn).toContain("22");
     expect(drawn).not.toContain("6379");
   });
@@ -198,8 +211,10 @@ describe("the rows", () => {
     restore = host.install();
     const plugin = await load();
 
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
-    const tree = host.callsTo("ui.patch")[0]!.node;
+    const tree = screen(plugin);
 
     expect(find(tree, "tcp:0.0.0.0:22")).toBeDefined();
     expect(find(tree, "tcp:127.0.0.1:6379")).toBeDefined();
@@ -223,30 +238,46 @@ ${Array.from(
     const few = new MockHost().exec(COMMAND, { stdout: SS });
     restore = few.install();
     let plugin = await load();
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
-    expect(l10nKeys(lastPatch(few))).not.toContain("l10n.searchHint");
+    expect(l10nKeys(screen(plugin))).not.toContain("l10n.searchHint");
     restore();
 
     const many = host12();
     restore = many.install();
     plugin = await load();
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
-    expect(l10nKeys(lastPatch(many))).toContain("l10n.searchHint");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.searchHint");
   });
 
   test("it matches a port by prefix, a process and an address", async () => {
     const host = host12();
     restore = host.install();
     const plugin = await load();
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
 
     // "800" finds 8000..8009 and not 8010 or 8011 — which is what somebody
     // typing three digits means.
-    const byPort = texts((await plugin.onEvent({ msg: { m: "search" }, value: "800" })).ui!);
+    // Read from the tree each time, as a tap does: every draw is a new tree
+    // with new tokens in it, and the app taps what is on screen.
+    await plugin.onEvent({
+      msg: messageOf(screen(plugin), "l10n.searchHint", "change"),
+      value: "800",
+    });
+    const byPort = texts(screen(plugin));
     expect(byPort).toContain("8000");
     expect(byPort).not.toContain("8010");
 
-    const byProcess = texts((await plugin.onEvent({ msg: { m: "search" }, value: "svc7" })).ui!);
+    await plugin.onEvent({
+      msg: messageOf(screen(plugin), "l10n.searchHint", "change"),
+      value: "svc7",
+    });
+    const byProcess = texts(screen(plugin));
     expect(byProcess).toContain("8007");
     expect(byProcess).not.toContain("8006");
   });
@@ -255,11 +286,16 @@ ${Array.from(
     const host = host12();
     restore = host.install();
     const plugin = await load();
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
 
-    const out = await plugin.onEvent({ msg: { m: "search" }, value: "nothing-like-this" });
+    await plugin.onEvent({
+      msg: messageOf(screen(plugin), "l10n.searchHint", "change"),
+      value: "nothing-like-this",
+    });
 
-    const keys = l10nKeys(out.ui!);
+    const keys = l10nKeys(screen(plugin));
     expect(keys).toContain("l10n.emptySearchTitle");
     expect(keys).toContain("l10n.clear");
   });
@@ -268,11 +304,13 @@ ${Array.from(
     const host = host12();
     restore = host.install();
     const plugin = await load();
+    // The host always opens a surface before it hooks it.
+    plugin.open({ kind: "page", id: "ports" });
     await plugin.onHook(enter());
 
-    const out = await plugin.onEvent({ msg: { m: "sort" } });
+    await plugin.onEvent({ msg: messageOf(screen(plugin), "l10n.sortPort") });
 
-    expect(l10nKeys(out.ui!)).toContain("l10n.sortProcess");
+    expect(l10nKeys(screen(plugin))).toContain("l10n.sortProcess");
     expect(host.value("global", "sortBy")).toBe("process");
   });
 });
@@ -289,11 +327,13 @@ describe("the card", () => {
     plugin.open({ kind: "card", id: "summary" });
     await plugin.onHook({ ...enter(), contribution: "summary" });
 
-    const shown = texts(lastPatch(host));
+    const shown = texts(screen(plugin, "card", "summary"));
     // Two listeners, one of them on 0.0.0.0.
     expect(shown).toContain("22");
     expect(shown).not.toContain("6379");
-    expect(l10nKeys(lastPatch(host))).toContain("l10n.exposedCount");
+    expect(l10nKeys(screen(plugin, "card", "summary"))).toContain(
+      "l10n.exposedCount",
+    );
   });
 
   /// A card is one of several on that page, and every one of them ticking would
@@ -322,8 +362,9 @@ tcp   LISTEN 0 511  127.0.0.1:6379 0.0.0.0:* users:(("redis-server",pid=9,fd=6))
     plugin.open({ kind: "card", id: "summary" });
     await plugin.onHook({ ...enter(), contribution: "summary" });
 
-    expect(l10nKeys(lastPatch(host))).toContain("l10n.exposedNone");
-    expect(texts(lastPatch(host))).not.toContain("6379");
+    const card = screen(plugin, "card", "summary");
+    expect(l10nKeys(card)).toContain("l10n.exposedNone");
+    expect(texts(card)).not.toContain("6379");
   });
 
   /// Compact rather than a notice with a retry: a failure on a card is not the
@@ -336,14 +377,29 @@ tcp   LISTEN 0 511  127.0.0.1:6379 0.0.0.0:* users:(("redis-server",pid=9,fd=6))
     plugin.open({ kind: "card", id: "summary" });
     await plugin.onHook({ ...enter(), contribution: "summary" });
 
-    const keys = l10nKeys(lastPatch(host));
+    const keys = l10nKeys(screen(plugin, "card", "summary"));
     expect(keys.some((k) => k.startsWith("l10n.err"))).toBeTrue();
     expect(keys).not.toContain("l10n.retry");
   });
 });
 
-/** The tree of the last patch, which is what is on screen. */
+/** The tree of the last patch, for when the patch itself is the subject. */
 function lastPatch(host: MockHost): Node {
   const patches = host.callsTo("ui.patch");
   return patches[patches.length - 1]!.node;
+}
+
+/**
+ * The whole tree as it stands.
+ *
+ * A patch carries a *diff* — every unchanged subtree is a stub — so reading one
+ * says what changed rather than what is on screen. `open` draws in full against
+ * the state the plugin already holds, which is what a test wants to assert on.
+ */
+function screen(
+  plugin: { open: (s: { kind: string; id: string }) => { ui?: Node } },
+  kind = "page",
+  id = "ports",
+): Node {
+  return plugin.open({ kind, id }).ui!;
 }

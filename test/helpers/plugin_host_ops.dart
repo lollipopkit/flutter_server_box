@@ -11,19 +11,35 @@
 library;
 
 import 'package:server_box/data/model/plugin/host_ops.dart';
+import 'package:server_box/data/model/plugin/l10n.dart';
+import 'package:server_box/data/model/plugin/node.dart';
 
 class FakePluginHostOps implements PluginHostOps {
   final calls = <String>[];
-  PluginExecResult execResult = (code: 0, stdout: 'up 3 days', stderr: '');
+  PluginExecResult execResult = const PluginExecResult(
+    code: 0,
+    stdout: 'up 3 days',
+    stderr: '',
+  );
   String? picked;
+
+  /// Set to have `exec` answer only once the caller asks it to stop, which is
+  /// what a command longer than anybody waits for looks like from here.
+  PluginExecResult Function()? execAfterCancel;
 
   @override
   Future<PluginExecResult> exec(
     String serverId,
     String script, {
     Duration? timeout,
+    Future<void>? cancel,
   }) async {
     calls.add('exec:$serverId:$script');
+    final after = execAfterCancel;
+    if (after != null) {
+      await cancel;
+      return after();
+    }
     return execResult;
   }
 
@@ -64,6 +80,9 @@ class FakePluginHostOps implements PluginHostOps {
     String? message,
     List<PluginPromptField> fields = const [],
     String? confirm,
+    PluginNode? node,
+    PluginL10n strings = PluginL10n.empty,
+    bool sheet = false,
   }) async {
     calls.add('prompt:$title');
     return (cancelled: false, values: {'user': 'admin'});

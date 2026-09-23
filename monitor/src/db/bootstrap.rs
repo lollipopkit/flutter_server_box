@@ -48,10 +48,7 @@ fn write_initial_credentials(path: &Path, password: &str) -> Result<()> {
     writeln!(file, "Initial ServerBox Monitor credentials")?;
     writeln!(file, "username: {INITIAL_ADMIN}")?;
     writeln!(file, "password: {password}")?;
-    writeln!(
-        file,
-        "Change the password, then securely delete this file."
-    )?;
+    writeln!(file, "Change the password, then securely delete this file.")?;
     file.sync_all()?;
     Ok(())
 }

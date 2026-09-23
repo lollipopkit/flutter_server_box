@@ -112,7 +112,11 @@ pub async fn replace(
     let ReplaceRequest { commands, expect } = body.into_inner();
     // Names, never bodies: a command's text is what the user typed and may
     // hold anything, including something they would not want in a log.
-    let subject = commands.iter().map(|c| c.name.as_str()).collect::<Vec<_>>().join(", ");
+    let subject = commands
+        .iter()
+        .map(|c| c.name.as_str())
+        .collect::<Vec<_>>()
+        .join(", ");
     match custom_cmds::replace(&commands, expect.as_deref()) {
         Ok(()) => {
             Event::new(Kind::CustomCmd, Action::Open, Outcome::Ok)
@@ -148,7 +152,9 @@ pub async fn replace(
 /// panel can only report it. A conflict is neither — the request was fine and
 /// so is the machine, and the answer is to reload and try again.
 fn error_response(e: Error) -> HttpResponse {
-    let body = ErrorResponse { error: e.to_string() };
+    let body = ErrorResponse {
+        error: e.to_string(),
+    };
     match e {
         Error::Invalid(_) => HttpResponse::BadRequest().json(&body),
         Error::Conflict => HttpResponse::Conflict().json(&body),

@@ -1,8 +1,7 @@
 use anyhow::Result;
 use chrono::Utc;
 use server_box_monitor::monitoring::{
-    timeseries::CpuCoreTime, DiskMetrics, MemoryMetrics, NetworkMetrics,
-    SwapMetrics, SystemMetrics,
+    DiskMetrics, MemoryMetrics, NetworkMetrics, SwapMetrics, SystemMetrics, timeseries::CpuCoreTime,
 };
 use sqlx::{Row, SqlitePool};
 
@@ -20,11 +19,32 @@ fn sample_metrics() -> SystemMetrics {
         cpu_usage: 12.5,
         // The per-core table was removed. A non-empty snapshot proves storage
         // does not still attempt to write it.
-        cpu_cores: vec![CpuCoreTime { used: 25, total: 100, usage_percent: Some(25.0) }],
-        memory: MemoryMetrics { total: 100, used: 50, free: 50, usage_percent: 50.0 },
-        swap: SwapMetrics { total: 0, used: 0, usage_percent: 0.0 },
-        disk: DiskMetrics { total: 100, used: 50, free: 50, usage_percent: 50.0 },
-        network: NetworkMetrics { rx_bytes: 0, tx_bytes: 0 },
+        cpu_cores: vec![CpuCoreTime {
+            used: 25,
+            total: 100,
+            usage_percent: Some(25.0),
+        }],
+        memory: MemoryMetrics {
+            total: 100,
+            used: 50,
+            free: 50,
+            usage_percent: 50.0,
+        },
+        swap: SwapMetrics {
+            total: 0,
+            used: 0,
+            usage_percent: 0.0,
+        },
+        disk: DiskMetrics {
+            total: 100,
+            used: 50,
+            free: 50,
+            usage_percent: 50.0,
+        },
+        network: NetworkMetrics {
+            rx_bytes: 0,
+            tx_bytes: 0,
+        },
         temperature: None,
         temps: vec![],
         sys: None,
@@ -55,7 +75,11 @@ fn sample_metrics() -> SystemMetrics {
 // Small local constructors so this test doesn't need to import sbm_parser
 // directly just to build two fields' worth of nested structs
 fn sbm_parser_types_diskio(dev: &str, read: i64, write: i64) -> sbm_parser::types::DiskIoPiece {
-    sbm_parser::types::DiskIoPiece { dev: dev.to_string(), sectors_read: read, sectors_write: write }
+    sbm_parser::types::DiskIoPiece {
+        dev: dev.to_string(),
+        sectors_read: read,
+        sectors_write: write,
+    }
 }
 
 fn sbm_parser_types_battery(percent: Option<i64>) -> sbm_parser::types::Battery {
@@ -78,9 +102,11 @@ async fn store_metrics_writes_diskio_and_battery_columns() -> Result<()> {
 
     server_box_monitor::monitoring::store_metrics(&pool, &metrics).await?;
 
-    let row = sqlx::query("SELECT diskio_read_bytes, diskio_write_bytes, battery_percent FROM system_metrics")
-        .fetch_one(&pool)
-        .await?;
+    let row = sqlx::query(
+        "SELECT diskio_read_bytes, diskio_write_bytes, battery_percent FROM system_metrics",
+    )
+    .fetch_one(&pool)
+    .await?;
 
     let read_bytes: i64 = row.get("diskio_read_bytes");
     let write_bytes: i64 = row.get("diskio_write_bytes");

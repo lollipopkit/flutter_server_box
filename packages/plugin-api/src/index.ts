@@ -34,6 +34,8 @@ export * from "./ui.ts";
 export * from "./frame.ts";
 export * from "./shell.ts";
 export * from "./states.ts";
+export * from "./state.ts";
+export * from "./surface.ts";
 
 /**
  * The host ABI this SDK is written against.
@@ -52,5 +54,24 @@ export * from "./states.ts";
  * - **v1** — the original set.
  * - **v2** — `tile`, `summary` and `toggle` nodes; `tap` honoured on any node
  *   rather than only on `btn`; `icon` on every contribution.
+ * - **v3** — the set a page needs to look like the app around it.
+ *   *Layout*: `flexible`, `align`, `center`, `wrap`, `stack`, `positioned`,
+ *   `grid`; `main`/`cross` on a row and a column; per-side `padding`.
+ *   *Type*: named size, weight, `mono`, `max` and `select` on `text`.
+ *   *Controls*: `checkbox`, `segmented`, `dropdown`, `slider`, `chip`, `menu`,
+ *   `tabs`; `variant`/`icon`/`busy` on `btn`; `icon`/`lines`/`keyboard` and
+ *   `onSubmit` on `input`; `selected` on `tile`; `onLongPress` on any node.
+ *   *Display*: `banner`, `badge`, `tooltip`, `skeleton`, `pieChart`, and real
+ *   line and bar charts for the series `lineChart`/`barChart` already took.
+ *   *Host*: `refresh` and `dismiss`, and a `sb.ui.prompt` whose body is a node
+ *   tree — raised as a dialog or as a sheet.
+ * - **v4** — giving up on work, and going back to the version before.
+ *   *Host*: `sb.server.cancel`, and `cancelKey` on `sb.server.exec`; a rejected
+ *   host call may carry fields beside `kind`, which is how a cancelled or
+ *   timed-out run says whether the command was stopped **on the server** or
+ *   only stopped being waited for (`classify(e).remote`).
+ *   *Manifest*: `data_version` — what this version's stored data is shaped
+ *   like, which is what decides whether the app may offer to put the previous
+ *   version back.
  */
-export const ABI_VERSION = 2;
+export const ABI_VERSION = 4;

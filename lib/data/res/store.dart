@@ -7,6 +7,7 @@ import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/entity_store.dart';
 import 'package:server_box/data/store/history.dart';
 import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
+import 'package:server_box/data/store/plugin_health.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/self_addr.dart';
@@ -59,6 +60,10 @@ abstract final class Stores {
   /// here can work it out again.
   static SelfAddrStore get selfAddr => getIt<SelfAddrStore>();
 
+  /// What each plugin has been doing. Device-local and never a user edit — see
+  /// [PluginHealthStore].
+  static PluginHealthStore get pluginHealth => getIt<PluginHealthStore>();
+
   /// What each server was last seen running. A cache of an observation, not a
   /// record anyone edits — see [ServerDistStore].
   static ServerDistStore get serverDist => getIt<ServerDistStore>();
@@ -109,6 +114,9 @@ abstract final class Stores {
       () => PortForwardStore.instance,
     );
     getIt.registerLazySingleton<SelfAddrStore>(() => SelfAddrStore.instance);
+    getIt.registerLazySingleton<PluginHealthStore>(
+      () => PluginHealthStore.instance,
+    );
 
     // First and on its own: everything below reaches the database, and a
     // `Future.wait` invokes every element before awaiting any of them — so
@@ -141,6 +149,8 @@ abstract final class Stores {
       // is is not something the user did, so it must not move the clock sync
       // reads.
       selfAddr.init(),
+      // Same reason: what a plugin did is not something the user did.
+      pluginHealth.init(),
       // Not a table to create — only the per-launch sweep of expired rows.
       connectionStats.init(),
     ]);

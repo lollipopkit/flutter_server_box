@@ -15,7 +15,7 @@ pub struct TimeSeries<T> {
     max_points: usize,
 }
 
-impl<T> TimeSeries<T> 
+impl<T> TimeSeries<T>
 where
     T: Clone,
 {
@@ -28,12 +28,12 @@ where
 
     pub fn add_point(&mut self, value: T, timestamp: DateTime<Utc>) {
         let point = TimeSeriesData { timestamp, value };
-        
+
         // Remove oldest point if we're at capacity
         if self.data.len() >= self.max_points {
             self.data.pop_front();
         }
-        
+
         self.data.push_back(point);
     }
 
@@ -72,7 +72,6 @@ impl<T> TimeSequence<T> {
         self.old = self.new.take();
         self.new = Some(value);
     }
-
 
     pub fn is_ready(&self) -> bool {
         self.old.is_some() && self.new.is_some()
@@ -232,7 +231,6 @@ impl CpuTimeSeries {
         self.last_update = Some(timestamp);
     }
 
-
     /// The usage `adapt_cpu` already computed for the latest sample. Recomputing
     /// a delta here would be wrong on Bsd/Windows, where `total` is constant
     /// between samples — see `core_usage_percent`.
@@ -316,7 +314,11 @@ mod tests {
     use chrono::Duration;
 
     fn core(used: u64, total: u64) -> CpuCoreTime {
-        CpuCoreTime { used, total, usage_percent: None }
+        CpuCoreTime {
+            used,
+            total,
+            usage_percent: None,
+        }
     }
 
     #[test]
@@ -324,7 +326,10 @@ mod tests {
         // Busy since boot is 50%, but only 20% of the last window was busy
         let prev = core(500, 1000);
         let now = core(520, 1100);
-        assert_eq!(core_usage_percent(SystemType::Linux, Some(prev), now), Some(20.0));
+        assert_eq!(
+            core_usage_percent(SystemType::Linux, Some(prev), now),
+            Some(20.0)
+        );
     }
 
     #[test]
@@ -349,8 +354,14 @@ mod tests {
         // zero and always report 0 — the regression this guards against
         let prev = core(1200, 10000);
         let now = core(8400, 10000);
-        assert_eq!(core_usage_percent(SystemType::Bsd, Some(prev), now), Some(84.0));
-        assert_eq!(core_usage_percent(SystemType::Windows, Some(prev), now), Some(84.0));
+        assert_eq!(
+            core_usage_percent(SystemType::Bsd, Some(prev), now),
+            Some(84.0)
+        );
+        assert_eq!(
+            core_usage_percent(SystemType::Windows, Some(prev), now),
+            Some(84.0)
+        );
         assert_eq!(core_usage_percent(SystemType::Bsd, None, now), Some(84.0));
         assert_eq!(core_usage_percent(SystemType::Bsd, None, core(0, 0)), None);
     }
@@ -360,7 +371,10 @@ mod tests {
         // Guards the storage path that used to write (total - used) / total
         let prev = core(0, 0);
         let now = core(1000, 10000);
-        assert_eq!(core_usage_percent(SystemType::Bsd, Some(prev), now), Some(10.0));
+        assert_eq!(
+            core_usage_percent(SystemType::Bsd, Some(prev), now),
+            Some(10.0)
+        );
         assert_eq!(
             core_usage_percent(SystemType::Linux, Some(core(0, 0)), core(1000, 10000)),
             Some(10.0)
@@ -372,8 +386,16 @@ mod tests {
         let mut series = CpuTimeSeries::new();
         series.update(
             vec![
-                CpuCoreTime { used: 1, total: 10, usage_percent: Some(10.0) },
-                CpuCoreTime { used: 3, total: 10, usage_percent: Some(30.0) },
+                CpuCoreTime {
+                    used: 1,
+                    total: 10,
+                    usage_percent: Some(10.0),
+                },
+                CpuCoreTime {
+                    used: 3,
+                    total: 10,
+                    usage_percent: Some(30.0),
+                },
             ],
             Utc::now(),
         );
@@ -392,7 +414,14 @@ mod tests {
         assert!(!series.is_ready());
         assert_eq!(series.get_average_usage_percent(), None);
 
-        series.update(vec![CpuCoreTime { used: 4, total: 10, usage_percent: Some(40.0) }], Utc::now());
+        series.update(
+            vec![CpuCoreTime {
+                used: 4,
+                total: 10,
+                usage_percent: Some(40.0),
+            }],
+            Utc::now(),
+        );
         assert_eq!(series.get_average_usage_percent(), Some(40.0));
     }
 
@@ -425,7 +454,11 @@ mod tests {
     #[test]
     fn a_failed_cycle_does_not_wipe_the_series() {
         let mut series = CpuTimeSeries::new();
-        let sample = CpuCoreTime { used: 4, total: 10, usage_percent: Some(40.0) };
+        let sample = CpuCoreTime {
+            used: 4,
+            total: 10,
+            usage_percent: Some(40.0),
+        };
         series.update(vec![sample], Utc::now());
         series.update(vec![], Utc::now());
         assert_eq!(series.get_average_usage_percent(), Some(40.0));

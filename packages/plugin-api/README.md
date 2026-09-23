@@ -30,6 +30,109 @@ const view = () =>
 That runs under `bun test` against `MockHost` from `@serverbox/plugin-api/test`
 — no QuickJS, no app, no build step.
 
+## State that tracks itself
+
+A plugin holds its state in values that know who read them, and builds from
+them. `surface()` writes the exports the host calls:
+
+```ts
+import { card, resource, skeleton, state, surface, tile } from "@serverbox/plugin-api";
+
+const filter = state("");
+const jobs = resource(async () => read(filter.value));
+
+export const { open, onEvent, tick, dispose } = surface(
+  () =>
+    jobs.when({
+      loading: () => skeleton(),
+      error: (e) => notice({ title: "Could not read", detail: `${e}` }),
+      data: (list) => card(list.map((j) => tile({ title: j.when }))),
+    }),
+  { onTick: () => jobs.reload() },
+);
+```
+
+Four things follow, and each is something every plugin used to write by hand:
+
+- **No `return { ui: view() }`.** Changing a value redraws what read it.
+  Forgetting that return is precisely what a dead control is: the plugin handled
+  the tap, moved its state, and answered with nothing.
+- **Nothing to declare.** Reading `filter.value` while building *is* the
+  subscription, and a branch that stops being drawn stops causing redraws. There
+  is no `ref` to thread through the functions that draw your rows.
+- **A handler is a closure**: `onTap(btn("Run"), () => jobs.reload())`. The SDK
+  keeps the function and sends the app a token in its place, so nothing writes a
+  `switch` over message shapes. Messages still work and are still what crosses.
+- **Loading and failure are states of the value**, not flags beside it. A page
+  cannot forget to clear a spinner it does not own.
+
+`state`, `computed`, `resource`, `effect` and `family` are the five.
+`.value` reads *and* subscribes; `.peek()` reads without subscribing, which is
+what a handler wants; `.update(fn)` is `x.value = fn(x.value)`.
+
+**Tracking is synchronous**: what a body reads before its first `await` is what
+it depends on. A `resource` that needs a value should read it at the top —
+which is also where it reads best.
+
+**What a call starts, the call finishes.** The app drives a plugin only while it
+is inside a call, so a fetch left running when one returns does not progress —
+`surface()` therefore waits for what your handler set in motion before it
+answers, sending each state on the way out as a patch. That is why the loading
+line appears on a machine that takes a minute, and why `onHook` must `await
+app.settle()`: it is the call the first reading gets to run in.
+
+A change that lands while nothing is on screen is dropped rather than queued:
+`sb.ui.patch` answers `no_surface`, and the next `open` sends a whole tree.
+
+## Work somebody may want to stop
+
+The app serves **one call per instance at a time**. A call that waits for a
+four-minute `du` is four minutes in which no tap is delivered, so the Stop
+button you drew cannot be pressed and nothing else on the page moves either.
+
+Two things go together:
+
+```ts
+// The call does not wait for this one. Export `tick`, which is what the
+// reading arrives on — the app calls it as soon as the answer is there.
+const level = resource(async () => {
+  return await sb.server.exec({
+    server: server.value,
+    script: `du -x -d 1 ${shellQuote(path.value)}`,
+    timeoutMs: 120_000,
+    cancelKey: "scan",       // the label a Stop names
+  });
+}, { background: true });
+
+export const { open, onEvent, tick, dispose } = app;
+
+// From a button, in a call of its own — which only exists because the one
+// above did not hold the instance.
+onTap(tag("Stop"), () => sb.server.cancel({ key: "scan" }));
+```
+
+A stopped or timed-out run **rejects**; it does not resolve with what it had.
+A `du` that was stopped holds a prefix of its output, and resolving with that
+would let a plugin draw a partial reading as a complete one.
+
+`classify(e)` then gives two things, and the second is the one to say out loud:
+
+```ts
+const { kind, remote } = classify(e);   // "cancelled" | "timeout"
+if (remote === "running") {
+  // Only the waiting stopped. The command is still running on the server.
+}
+```
+
+The app cannot decide `remote` for you and neither can this SDK: an SSH channel
+carries a signal, so cancelling really ends the command; one HTTP request to a
+monitor agent has nothing to signal down, so the agent runs it to its own
+timeout. Reporting "stopped" over the second case tells somebody their server
+is idle while it walks a filesystem.
+
+Leave `background` off for the short reads waiting was invented for — a store
+lookup, one `systemctl status`. Those belong inside the call.
+
 ## The two files
 
 **`plugin.js`** exports what it implements and omits the rest. `open` alone is a
@@ -57,7 +160,7 @@ Every export may be `async`, and the host awaits it.
 {
   "id": "com.example.thing",
   "version": "1.0.0",
-  "abi": 2,
+  "abi": 3,
   "name": "Thing",
   "description": "One sentence, shown wherever the plugin is listed.",
   "license": "MIT",
@@ -75,6 +178,19 @@ Every export may be `async`, and the host awaits it.
 one is a separate entry with its own id, because where it goes decides what it
 is given.
 
+**`name`, `description` and every `label` may be an `l10n.` key**, resolved
+against `l10n/<locale>.json` exactly like a string in a node. A manifest is one
+document for every language, so writing them out means a plugin whose own rows
+are translated and whose tab, button and install dialog are not.
+
+```json
+"name": "l10n.pluginName",
+"contributes": { "page": { "id": "thing", "label": "l10n.pageLabel" } }
+```
+
+`en` is what a repository index carries — an index is one text file with no
+locale — so `bun run pack` refuses a key `l10n/en.json` has no string for.
+
 ## `abi` is the compatibility axis, not the app's version
 
 `ABI_VERSION` from this package is the number to put in the manifest. The app
@@ -88,6 +204,17 @@ and draws "unknown widget" in every row, reporting nothing.
 - **v1** — the original set.
 - **v2** — `tile`, `summary` and `toggle` nodes; `tap` honoured on any node
   rather than only on `btn`; `icon` on every contribution.
+- **v3** — the set a page needs to look like the app around it.
+  *Layout*: `flexible`, `align`, `center`, `wrap`, `stack`, `positioned`,
+  `grid`; `main`/`cross` alignment on a row and a column; per-side `padding`.
+  *Type*: named size, weight, `mono`, `max` and `select` on `text`.
+  *Controls*: `checkbox`, `segmented`, `dropdown`, `slider`, `chip`, `menu`,
+  `tabs`; `variant`/`icon`/`busy` on `btn`; `icon`/`lines`/`keyboard` and
+  `onSubmit` on `input`; `selected` on `tile`; `onLongPress` on any node.
+  *Display*: `banner`, `badge`, `tooltip`, `skeleton`, `pieChart`, and real line
+  and bar charts.
+  *Host*: `refresh` and `dismiss`, and a `sb.ui.prompt` whose body is a node
+  tree — as a dialog or as a sheet.
 
 ## Permissions
 
@@ -140,10 +267,25 @@ The official one is
 [`lollipopkit/serverbox-plugins`](https://github.com/lollipopkit/serverbox-plugins),
 and it takes pull requests.
 
-On a desktop there is a third way, and it is the one to develop with: **point the
-app at the plugin's directory.** Settings → Plugins → add a development
-directory. The files are read where they are on every launch, so editing
-`plugin.js` and restarting is the whole cycle.
+### The loop
+
+```sh
+bun run dev        # rebuilds dist/ on every save
+```
+
+Point the app at the plugin's directory once (Settings → Plugins → add a
+development directory) and **it reloads when the files change** — no restart, no
+repack, no navigating back. It is Flutter's hot *restart* rather than hot
+reload: the plugin's state lives in its JavaScript instance and there is nothing
+to carry across a new script.
+
+`console.log` works and goes to the app's log, with `warn` and `error` at their
+own levels — as does `sb.log.*`, which is the same thing with a name. An
+uncaught throw draws the message and the plugin's stack in place of the surface,
+whole and selectable.
+
+A development directory is desktop-only, for the reason it exists: a phone has
+no directory anybody edits files in.
 
 ## Testing
 

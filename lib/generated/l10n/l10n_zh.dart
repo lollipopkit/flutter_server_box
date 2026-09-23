@@ -581,6 +581,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pluginUpdateAll => 'Update all';
 
   @override
+  String get pluginUpdating => 'Updating…';
+
+  @override
+  String get pluginStopAfterThis => 'Stop after this one';
+
+  @override
+  String get pluginStopping => 'Stopping after this one';
+
+  @override
+  String pluginUpdateProgress(int at, int total, String name) {
+    return '$at of $total · $name';
+  }
+
+  @override
+  String pluginWaitingForYou(String name) {
+    return '$name — waiting for you';
+  }
+
+  @override
+  String pluginUpdatedCount(int count) {
+    return '$count updated';
+  }
+
+  @override
+  String pluginUpdatedSome(int done, int failed) {
+    return '$done updated, $failed failed';
+  }
+
+  @override
   String get pluginNeedsNewerApp => 'Needs a newer app';
 
   @override
@@ -617,16 +646,85 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pluginInstalled => '已安装';
 
   @override
-  String get pluginBundled => '随包';
+  String get pluginDev => '开发';
 
   @override
-  String get pluginDev => '开发';
+  String get pluginFromFile => '本地文件';
+
+  @override
+  String pluginInstalledFrom(String source) {
+    return '已安装：$source';
+  }
+
+  @override
+  String get pluginReplace => '替换';
+
+  @override
+  String pluginReplaceTip(String from, String to) {
+    return '本机上的这份来自 $from。从 $to 安装会替换它的文件，之后的更新也来自那里。';
+  }
 
   @override
   String get pluginNeedsConsent => '此更新申请了你未同意的权限，重新安装以查看。';
 
   @override
+  String get pluginReport => '插件报告';
+
+  @override
+  String pluginRollback(String version) {
+    return '回到 $version';
+  }
+
+  @override
+  String get pluginRollbackTip => '这次更新替换掉的那个版本还在本机。回退会换回它的文件，并恢复你当时同意它做的事。';
+
+  @override
+  String pluginRollbackDataWarn(String version) {
+    return '当前版本保存数据的方式与 $version 不同，旧版本可能读不了更新之后存下的内容。';
+  }
+
+  @override
+  String pluginRolledBack(String version) {
+    return '已回到 $version';
+  }
+
+  @override
   String get pluginPermissionsAsk => '该插件申请：';
+
+  @override
+  String get permExec => 'Run commands on a server you open it from';
+
+  @override
+  String get permStream => 'Open a connection through a server';
+
+  @override
+  String get permStreamTip =>
+      'It can reach an address that server can reach, which may be inside your network.';
+
+  @override
+  String get permHttp => 'Reach the network';
+
+  @override
+  String get permHttpTip =>
+      'It can send and receive over the internet from this device.';
+
+  @override
+  String get permDialog => 'Show dialogs and messages';
+
+  @override
+  String get permDialogTip => '它显示的内容看起来和应用自己的对话框一样。';
+
+  @override
+  String get permClipboard => 'Read and write the clipboard';
+
+  @override
+  String get permClipboardTip => '它能读取你最近复制的内容，包括密码。';
+
+  @override
+  String get permSync => 'Include its data in your backup';
+
+  @override
+  String get permSyncTip => '它存储的内容会随备份离开本机。';
 
   @override
   String get pluginNoPermissions => '不申请任何自身之外的能力。';
@@ -2602,9 +2700,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pluginInstalled => '已安裝';
-
-  @override
-  String get pluginBundled => '隨附';
 
   @override
   String get pluginDev => '開發';

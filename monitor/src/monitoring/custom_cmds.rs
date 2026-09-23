@@ -350,7 +350,12 @@ mod tests {
     fn replacing_removes_what_is_gone() {
         let tmp = std::env::temp_dir().join("sbm_custom_cmds_replace/custom_cmds");
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
-        write_dir(&tmp, &[cmd("old", "echo old"), cmd("kept", "echo kept")], None).unwrap();
+        write_dir(
+            &tmp,
+            &[cmd("old", "echo old"), cmd("kept", "echo kept")],
+            None,
+        )
+        .unwrap();
         write_dir(&tmp, &[cmd("kept", "echo kept")], None).unwrap();
         assert_eq!(read_dir(&tmp).unwrap(), vec![cmd("kept", "echo kept")]);
         let _ = std::fs::remove_dir_all(tmp.parent().unwrap());
@@ -406,17 +411,35 @@ mod tests {
     /// Order is part of what is stored, so a reorder has to be a change.
     #[test]
     fn a_fingerprint_covers_order_names_and_bodies() {
-        let a = CustomCmd { name: "a".into(), cmd: "x".into() };
-        let b = CustomCmd { name: "b".into(), cmd: "y".into() };
-        assert_ne!(fingerprint(&[a.clone(), b.clone()]), fingerprint(&[b, a.clone()]));
+        let a = CustomCmd {
+            name: "a".into(),
+            cmd: "x".into(),
+        };
+        let b = CustomCmd {
+            name: "b".into(),
+            cmd: "y".into(),
+        };
+        assert_ne!(
+            fingerprint(&[a.clone(), b.clone()]),
+            fingerprint(&[b, a.clone()])
+        );
         assert_ne!(
             fingerprint(&[a.clone()]),
-            fingerprint(&[CustomCmd { name: "a".into(), cmd: "z".into() }])
+            fingerprint(&[CustomCmd {
+                name: "a".into(),
+                cmd: "z".into()
+            }])
         );
         // Length-prefixed, so no pair of concatenations can collide.
         assert_ne!(
-            fingerprint(&[CustomCmd { name: "ab".into(), cmd: "c".into() }]),
-            fingerprint(&[CustomCmd { name: "a".into(), cmd: "bc".into() }])
+            fingerprint(&[CustomCmd {
+                name: "ab".into(),
+                cmd: "c".into()
+            }]),
+            fingerprint(&[CustomCmd {
+                name: "a".into(),
+                cmd: "bc".into()
+            }])
         );
         assert_eq!(fingerprint(&[a.clone()]), fingerprint(&[a]));
     }

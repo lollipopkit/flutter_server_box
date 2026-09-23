@@ -1,4 +1,6 @@
 {
+  "pluginName": "定时任务",
+  "pluginDescription": "按时间运行的任务：用户的 crontab 和 systemd timer。",
   "reading": "读取中…",
   "retry": "重试",
   "reload": "刷新",

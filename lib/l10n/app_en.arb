@@ -217,31 +217,148 @@
   "pluginNoRepos": "No repositories",
   "pluginNoReposTip": "A repository is a git repository of plugins, added by its address. Plugins are installed from one, and it decides what runs on your servers.",
   "pluginUpdateAll": "Update all",
+  "pluginUpdating": "Updating…",
+  "pluginStopAfterThis": "Stop after this one",
+  "pluginStopping": "Stopping after this one",
+  "pluginUpdateProgress": "{at} of {total} · {name}",
+  "@pluginUpdateProgress": {
+    "placeholders": {
+      "at": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginWaitingForYou": "{name} — waiting for you",
+  "@pluginWaitingForYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginUpdatedCount": "{count} updated",
+  "@pluginUpdatedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pluginUpdatedSome": "{done} updated, {failed} failed",
+  "@pluginUpdatedSome": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
   "pluginNeedsNewerApp": "Needs a newer app",
   "pluginNewerNeedsApp": "v{version} needs a newer app",
   "@pluginNewerNeedsApp": {
-    "placeholders": { "version": { "type": "String" } }
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   },
   "pluginAlsoIn": "also in {count} other",
   "@pluginAlsoIn": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "pluginUpdatesAvailable": "{count} updates available",
   "@pluginUpdatesAvailable": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "pluginNoChecksum": "No checksum",
   "pluginNoChecksumTip": "{repo} did not say what this package should be, so nothing about the bytes can be checked. Install it only if you trust that repository.",
   "@pluginNoChecksumTip": {
-    "placeholders": { "repo": { "type": "String" } }
+    "placeholders": {
+      "repo": {
+        "type": "String"
+      }
+    }
   },
   "pluginChecksumFailed": "The package is not the one the repository described",
   "pluginInstall": "Install a plugin",
   "pluginInstalled": "Installed",
-  "pluginBundled": "Bundled",
   "pluginDev": "Development",
+  "pluginFromFile": "Local file",
+  "pluginInstalledFrom": "installed: {source}",
+  "@pluginInstalledFrom": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginReplace": "Replace",
+  "pluginReplaceTip": "The copy on this device came from {from}. Installing from {to} replaces its files, and updates will come from there afterwards.",
+  "@pluginReplaceTip": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
   "pluginNeedsConsent": "This update asks for more than you agreed to. Reinstall it to review.",
+  "pluginReport": "Plugin report",
+  "pluginRollback": "Go back to {version}",
+  "@pluginRollback": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginRollbackTip": "The version this update replaced is still on the device. Going back replaces the files and restores what you had agreed it may do.",
+  "pluginRollbackDataWarn": "This version stores its data differently from {version}. The older one may not read what has been saved since the update.",
+  "@pluginRollbackDataWarn": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "pluginRolledBack": "Back on {version}",
+  "@pluginRolledBack": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "pluginPermissionsAsk": "This plugin asks to:",
+  "permExec": "Run commands on a server you open it from",
+  "permStream": "Open a connection through a server",
+  "permStreamTip": "It can reach an address that server can reach, which may be inside your network.",
+  "permHttp": "Reach the network",
+  "permHttpTip": "It can send and receive over the internet from this device.",
+  "permDialog": "Show dialogs and messages",
+  "permDialogTip": "What it shows looks like the app's own dialogs.",
+  "permClipboard": "Read and write the clipboard",
+  "permClipboardTip": "It can read whatever you copied last, including a password.",
+  "permSync": "Include its data in your backup",
+  "permSyncTip": "Whatever it stores leaves this device with your backup.",
   "pluginNoPermissions": "It asks for nothing outside itself.",
   "pluginUninstallKeepData": "Keep its settings and data",
   "pluginRunsOnServer": "It runs commands on your servers. Only install one you trust.",

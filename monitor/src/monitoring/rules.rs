@@ -1,11 +1,16 @@
-use crate::{core::config::{Config, MonitoringRule}, monitoring::SystemMetrics, utils::error::Result, monitoring::velocity::VelocityManager};
 use crate::monitoring::threshold::{Threshold, ThresholdType};
+use crate::{
+    core::config::{Config, MonitoringRule},
+    monitoring::SystemMetrics,
+    monitoring::velocity::VelocityManager,
+    utils::error::Result,
+};
 use tracing::{info, warn};
 
 pub async fn check_rules_with_velocity(
-    metrics: &SystemMetrics, 
-    config: &Config, 
-    velocity_manager: &VelocityManager
+    metrics: &SystemMetrics,
+    config: &Config,
+    velocity_manager: &VelocityManager,
 ) -> Result<()> {
     for rule in &config.get_monitoring().rules {
         if let Err(e) = check_enhanced_rule(rule, metrics, config, velocity_manager).await {
@@ -16,10 +21,10 @@ pub async fn check_rules_with_velocity(
 }
 
 async fn check_enhanced_rule(
-    rule: &MonitoringRule, 
-    metrics: &SystemMetrics, 
-    config: &Config, 
-    velocity_manager: &VelocityManager
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+    config: &Config,
+    velocity_manager: &VelocityManager,
 ) -> Result<()> {
     let (should_alert, _current_value, formatted_value) = match rule.monitor_type.as_str() {
         "cpu" => check_cpu_rule(rule, metrics).await?,
@@ -37,14 +42,11 @@ async fn check_enhanced_rule(
     if should_alert {
         let message = format!(
             "Alert: {} - {} {} (threshold: {})",
-            rule.name,
-            rule.matcher,
-            formatted_value,
-            rule.threshold
+            rule.name, rule.matcher, formatted_value, rule.threshold
         );
-        
+
         info!("Triggering enhanced alert: {}", message);
-        
+
         let (rate_times, rate_window) = config.get_push_rate();
         let limiter = crate::monitoring::push::PushRateLimiter::global();
         for push_config in &config.get_push() {
@@ -54,23 +56,33 @@ async fn check_enhanced_rule(
             }
             match crate::monitoring::push::send_notification(config, push_config, &message).await {
                 Ok(()) => limiter.acquire(&push_config.name),
-                Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
+                Err(e) => warn!(
+                    "Failed to send push notification via '{}': {}",
+                    push_config.name, e
+                ),
             }
         }
     }
-    
+
     Ok(())
 }
-
 
 /// Percentage/temperature threshold check, Go-compatible format (e.g. ">=77%", ">=70c")
 fn should_trigger_alert(threshold: &str, value: f64) -> Result<bool> {
     match Threshold::parse(threshold) {
-        Ok(t) if matches!(t.threshold_type, ThresholdType::Percent | ThresholdType::Temperature) => {
+        Ok(t)
+            if matches!(
+                t.threshold_type,
+                ThresholdType::Percent | ThresholdType::Temperature
+            ) =>
+        {
             Ok(t.is_true(value))
         }
         Ok(t) => {
-            warn!("Threshold type {:?} not applicable here: {}", t.threshold_type, threshold);
+            warn!(
+                "Threshold type {:?} not applicable here: {}",
+                t.threshold_type, threshold
+            );
             Ok(false)
         }
         Err(_) => {
@@ -80,9 +92,12 @@ fn should_trigger_alert(threshold: &str, value: f64) -> Result<bool> {
     }
 }
 
-async fn check_cpu_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
+async fn check_cpu_rule(
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    
+
     if matcher == "cpu" || matcher.is_empty() {
         let cpu_usage = metrics.cpu_usage as f64;
         let should_alert = should_trigger_alert(&rule.threshold, cpu_usage)?;
@@ -116,9 +131,12 @@ async fn check_cpu_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resul
     }
 }
 
-async fn check_memory_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
+async fn check_memory_rule(
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    
+
     match matcher.as_str() {
         "used" | "memory" | "" => {
             let usage = metrics.memory.usage_percent as f64;
@@ -145,9 +163,12 @@ async fn check_memory_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Re
     }
 }
 
-async fn check_swap_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
+async fn check_swap_rule(
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    
+
     match matcher.as_str() {
         "used" | "swap" | "" => {
             let usage = metrics.swap.usage_percent as f64;
@@ -168,7 +189,10 @@ async fn check_swap_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resu
     }
 }
 
-async fn check_disk_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
+async fn check_disk_rule(
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+) -> Result<(bool, f64, String)> {
     let usage = metrics.disk.usage_percent as f64;
     let should_alert = should_trigger_alert(&rule.threshold, usage)?;
     let formatted = format!("{:.2}%", usage);
@@ -178,10 +202,13 @@ async fn check_disk_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resu
 async fn check_network_rule(
     rule: &MonitoringRule,
     metrics: &SystemMetrics,
-    velocity_manager: &VelocityManager
+    velocity_manager: &VelocityManager,
 ) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    if let Ok(velocity_metrics) = velocity_manager.get_server_velocity(&metrics.server_name).await {
+    if let Ok(velocity_metrics) = velocity_manager
+        .get_server_velocity(&metrics.server_name)
+        .await
+    {
         let (value, _unit) = match matcher.as_str() {
             "rx" | "in" => {
                 if let Some(speed) = velocity_metrics.network_rx_speed {
@@ -203,17 +230,20 @@ async fn check_network_rule(
                 (rx + tx, "B/s")
             }
         };
-        
+
         let should_alert = should_trigger_speed_alert(&rule.threshold, value)?;
         let formatted = format_network_speed(value);
-        
+
         Ok((should_alert, value, formatted))
     } else {
         Ok((false, 0.0, "0 B/s".to_string()))
     }
 }
 
-async fn check_temperature_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Result<(bool, f64, String)> {
+async fn check_temperature_rule(
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+) -> Result<(bool, f64, String)> {
     if let Some(temp) = metrics.temperature {
         let temp_value = temp as f64;
         let should_alert = should_trigger_alert(&rule.threshold, temp_value)?;
@@ -231,7 +261,10 @@ fn should_trigger_speed_alert(threshold: &str, value: f64) -> Result<bool> {
             Ok(t.is_true(value))
         }
         Ok(t) => {
-            warn!("Threshold type {:?} not applicable for network: {}", t.threshold_type, threshold);
+            warn!(
+                "Threshold type {:?} not applicable for network: {}",
+                t.threshold_type, threshold
+            );
             Ok(false)
         }
         Err(_) => {
@@ -269,13 +302,13 @@ mod tests {
         // Test various threshold formats
         assert!(should_trigger_alert(">=77%", 80.0).unwrap());
         assert!(!should_trigger_alert(">=77%", 70.0).unwrap());
-        
+
         assert!(should_trigger_alert(">77%", 78.0).unwrap());
         assert!(!should_trigger_alert(">77%", 77.0).unwrap());
-        
+
         assert!(should_trigger_alert("<=10%", 5.0).unwrap());
         assert!(!should_trigger_alert("<=10%", 15.0).unwrap());
-        
+
         assert!(should_trigger_alert("<10%", 9.0).unwrap());
         assert!(!should_trigger_alert("<10%", 10.0).unwrap());
     }
@@ -283,7 +316,7 @@ mod tests {
     #[tokio::test]
     async fn test_rule_evaluation() {
         let config = Config::default();
-        
+
         let _metrics = SystemMetrics {
             timestamp: Utc::now(),
             extended_updated_at: Utc::now(),
@@ -333,7 +366,7 @@ mod tests {
             disk_smart: vec![],
             pkg: Default::default(),
             plugin_status: Default::default(),
-        ips: vec![],
+            ips: vec![],
             custom_cmds: vec![],
             amd_cache: vec![],
         };

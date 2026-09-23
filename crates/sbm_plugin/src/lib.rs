@@ -14,8 +14,8 @@ mod scope;
 
 pub mod bridge;
 pub mod channel;
-pub mod host;
 pub mod error;
+pub mod host;
 pub mod hostfn;
 pub mod manifest;
 pub mod permission;
@@ -24,13 +24,13 @@ pub mod status;
 
 pub use bridge::{BridgeError, CallCtx, HostBridge, HostCall, PendingCall};
 pub use channel::{ChannelBridge, HostRequest, LogEvent};
-pub use host::{InstanceId, PluginHost};
 pub use error::{PluginError, Refusal};
+pub use host::{InstanceId, PluginHost};
 pub use hostfn::{HostFn, HostProfile, LogLevel, exports};
 pub use manifest::{Manifest, Platform};
 pub use permission::{Grants, HostPattern, Permission};
-pub use status::{StatusCmd, StatusItem, StatusResult};
 pub use runtime::{
     ABI_VERSION, DEFAULT_HOST_CALL_TIMEOUT, DEFAULT_MEMORY_LIMIT, DEFAULT_STACK_LIMIT,
     DEFAULT_TIME_LIMIT, Instance, InstanceOptions,
 };
+pub use status::{StatusCmd, StatusItem, StatusResult};
