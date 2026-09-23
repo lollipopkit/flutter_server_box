@@ -262,10 +262,19 @@ class SSHPageState extends ConsumerState<SSHPage>
   String _a11yLastInputText = '';
   int _a11yLastCursor = 0;
 
-  /// The terminal's current line when the field was empty — the shell prompt,
-  /// a "Password:" query, a TUI prompt. The part of the line after it is
-  /// unconfirmed input, the only part worth copying back into the field.
-  String _a11yPromptText = '';
+  /// Anchor of the command currently being edited, expressed in the terminal's
+  /// own coordinates rather than a copied prompt string:
+  /// - [_a11yPromptY] is the absolute row where the command's logical line
+  ///   starts — its prompt row; rows below it that are `isWrapped` belong to a
+  ///   command that wrapped onto the next physical row;
+  /// - [_a11yPromptCells] is how many leading cells on that row are the prompt
+  ///   itself, including the space the prompt ends in.
+  ///
+  /// Reading the command with the terminal's `getText` from this anchor keeps
+  /// a wrapped command, a wide-character prompt and a clear-and-redraw correct,
+  /// instead of guessing with string prefixes.
+  int _a11yPromptY = -1;
+  int _a11yPromptCells = 0;
 
   /// Set right after Enter. Between sending Enter and the shell drawing the
   /// next prompt, the just-submitted command is briefly still the terminal's
@@ -413,6 +422,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yAnnounceDebounce?.cancel();
     _a11yPromptGuardTimer?.cancel();
     _a11yInputCtrl.removeListener(_onA11yFieldListener);
+    AppRouteObserver.removeListener(_onA11yRouteChange);
     _a11yInputCtrl.dispose();
     _a11yInputFocus.dispose();
     _a11yScrollCtrl.dispose();
@@ -472,6 +482,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     _bindVisibilityListener();
     _setupDiscontinuityTimer();
     _a11yInputCtrl.addListener(_onA11yFieldListener);
+    // Refresh when returning from a pushed page (SFTP, settings, a sheet): the
+    // terminal may have changed while it was covered, with no notification the
+    // accessible view caught.
+    AppRouteObserver.addListener(_onA11yRouteChange);
 
     // Adopt whatever the provider already has, so a server that is connected
     // for status does not connect a second time just to show a terminal. This
@@ -516,6 +530,16 @@ class SSHPageState extends ConsumerState<SSHPage>
         // Next frame, not this one: the tab the user came back to is decided
         // by the state this frame is built from.
         WidgetsBinding.instance.addPostFrameCallback((_) => _focusTerminal());
+        // The terminal may have changed while the app was backgrounded; bring
+        // the accessible output list and field back in sync.
+        if (Stores.setting.sshA11yMode.fetch()) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _refreshA11yOutput();
+              _a11yJumpToBottom();
+            }
+          });
+        }
         unawaited(_checkConnectionHealth(immediate: true));
         if (_discontinuityTimer == null || !_discontinuityTimer!.isActive) {
           _setupDiscontinuityTimer();
@@ -568,10 +592,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       // been running is not blank. Direct assignment, not `setState`: this
       // runs inside `build`, and the frame is about to render the list.
       _a11yOutput = _readA11yLines();
-      // The prompt baseline is the current line up to the caret, read without
-      // right-trimming so its trailing space is kept (see
-      // [_a11yReadPromptLine]); the field starts empty.
-      _a11yPromptText = _a11yReadPromptLine();
+      // The field starts empty; the prompt anchor is learned on the first
+      // post-layout refresh (see [_mirrorA11yField]), once the terminal has
+      // its real viewport and a correct cursor column.
+      _a11yPromptY = -1;
+      _a11yPromptCells = 0;
       _a11ySyncing = true;
       _a11ySetField('');
       _a11ySyncing = false;
@@ -1230,6 +1255,20 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11yDebounce = Timer(const Duration(milliseconds: 60), _refreshA11yOutput);
   }
 
+  /// A page covering the terminal (SFTP, settings, a sheet) was popped: the
+  /// terminal may have changed while hidden, with no notification this view
+  /// caught, so re-read the output and the field once this page is visible.
+  void _onA11yRouteChange(RouteSettings? settings, RouteType type) {
+    if (type != RouteType.pop) return;
+    if (!mounted || !Stores.setting.sshA11yMode.fetch()) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && Stores.setting.sshA11yMode.fetch()) {
+        _refreshA11yOutput();
+        _a11yJumpToBottom();
+      }
+    });
+  }
+
   /// Whether the output column is parked at its bottom edge. Before the first
   /// layout there is no position yet, which counts as "at the bottom" so the
   /// initial view lands on the newest output.
@@ -1255,45 +1294,64 @@ class SSHPageState extends ConsumerState<SSHPage>
     return text.split('\n');
   }
 
-  /// The prompt baseline of the current line up to the caret, read
-  /// un-trimmed so the space the prompt ends in (e.g. `~$ `) is kept. Reading
-  /// it trimmed would make the baseline one cell short and hand that space to
-  /// the field as a phantom leading space.
-  String _a11yReadPromptLine() {
-    final buffer = _terminal.buffer;
-    final end = buffer.cursorX.clamp(0, buffer.viewWidth);
-    return buffer.currentLine.getText(0, end, false);
+  /// Absolute row where the cursor's logical line starts: walk up while the
+  /// rows above it are wrapped continuations of the same logical line.
+  int _a11yLogicalTopY(Buffer buffer) {
+    var y = buffer.absoluteCursorY;
+    while (y > 0 && buffer.lines[y].isWrapped) {
+      y--;
+    }
+    return y;
+  }
+
+  /// Reads the command on the logical line starting at [topY], skipping
+  /// [promptCells] leading cells on its first row. This goes through the
+  /// terminal's own `getText`, which joins wrapped rows and handles wide
+  /// characters — so a command longer than the screen width stays one field
+  /// value and the caret lands on the right character. With [toCursor] it
+  /// stops at the caret (the text before it); otherwise it reads to the end of
+  /// the cursor's row.
+  String _a11yReadCommand(
+    Buffer buffer,
+    int topY,
+    int promptCells, {
+    required bool toCursor,
+  }) {
+    final curY = buffer.absoluteCursorY;
+    final endX = toCursor ? buffer.cursorX : buffer.viewWidth - 1;
+    final text = buffer.getText(
+      BufferRangeLine(CellOffset(promptCells, topY), CellOffset(endX, curY)),
+    );
+    return toCursor ? text : text.trimRight();
   }
 
   /// Makes the field a one-way mirror of what is actually on the terminal's
-  /// input line: the part of the current line after the prompt baseline. The
-  /// terminal is the single source of truth — Enter consuming the line, a
-  /// program reading it, or the shell drawing a fresh prompt all flow back
-  /// into the field on their own, including clearing it. The field is only
-  /// left untouched while the terminal is still echoing the keystrokes we
-  /// just sent (the field holds our last edit and the line has not caught
-  /// up), so typing and backspacing are never pulled backwards mid-echo.
+  /// input line, located by the [_a11yPromptY]/[_a11yPromptCells] anchor and
+  /// read with the terminal's own `getText`. The terminal is the single source
+  /// of truth: Enter consuming the line, a program reading it, a clear and
+  /// redraw, or a fresh prompt all flow back into the field and its caret on
+  /// their own. The field is only left untouched while the terminal is still
+  /// echoing the keystrokes we just sent, so typing is never pulled backwards.
   void _mirrorA11yField() {
     final buffer = _terminal.buffer;
-    final full = buffer.currentLine.getText();
-    final prompt = _a11yPromptText;
+    final curY = buffer.absoluteCursorY;
+    final topY = _a11yLogicalTopY(buffer);
     final field = _a11yInputCtrl.text;
 
     // Right after Enter, the submitted command's echo is still the current
     // line for a frame or two. Wait until the terminal has actually moved on
-    // before mirroring again: the caret is back within the prompt (a bare new
-    // prompt) or it left the submitted row. Until then leave the already
-    // cleared field exactly as it is.
+    // — the caret is back within the prompt on the same row, or it left the
+    // submitted row — before mirroring again.
     if (_a11yAwaitPrompt) {
-      final barePrompt = buffer.cursorX <= prompt.length;
-      final movedRow = buffer.absoluteCursorY != _a11ySubmittedCursorY;
+      final barePrompt =
+          topY == _a11yPromptY && buffer.cursorX <= _a11yPromptCells;
+      final movedRow = curY != _a11ySubmittedCursorY;
       if (!barePrompt && !movedRow) {
         return;
       }
       _a11yAwaitPrompt = false;
       _a11yPromptGuardTimer?.cancel();
       if (barePrompt) {
-        _a11yPromptText = _a11yReadPromptLine();
         _a11ySyncing = true;
         _a11ySetField('');
         _a11ySyncing = false;
@@ -1301,30 +1359,57 @@ class SSHPageState extends ConsumerState<SSHPage>
       }
     }
 
-    String? input;
-    if (buffer.cursorX <= prompt.length) {
-      // Caret at or before the end of the prompt — nothing typed yet. This is
-      // robust to the trimmed `full` having lost the prompt's trailing space.
-      input = '';
-    } else if (prompt.isNotEmpty && full.startsWith(prompt)) {
-      input = full.substring(prompt.length);
-    } else {
-      // The cursor row is not the known prompt: command output scrolling past,
-      // a long command wrapped to the next physical row, a TUI screen, or a
-      // changed prompt. If the user is mid-input that content must not be
-      // overwritten by whatever the cursor happens to be on — leave it alone.
-      // Only when the field is already empty do we adopt the row as the new
-      // baseline (a changed prompt, a password query, a TUI input line).
-      if (field.isNotEmpty) {
+    String input;
+    var caret = 0;
+    if (topY == _a11yPromptY) {
+      // The cursor is on the anchored command's logical line (possibly after
+      // it wrapped onto more physical rows).
+      input = _a11yReadCommand(buffer, topY, _a11yPromptCells, toCursor: false);
+      final beforeCaret = _a11yReadCommand(
+        buffer,
+        topY,
+        _a11yPromptCells,
+        toCursor: true,
+      );
+      caret = beforeCaret.characters.length.clamp(0, input.characters.length);
+    } else if (field.isNotEmpty) {
+      // The command moved to another logical row. Ctrl+L clears the screen and
+      // the shell repaints the same command lower down: if it still matches
+      // the field, follow it by moving the anchor; otherwise this is program
+      // output or a TUI, and the field is left exactly as it is.
+      final repainted = _a11yReadCommand(
+        buffer,
+        topY,
+        _a11yPromptCells,
+        toCursor: false,
+      );
+      if (repainted == field) {
+        _a11yPromptY = topY;
+        final beforeCaret = _a11yReadCommand(
+          buffer,
+          topY,
+          _a11yPromptCells,
+          toCursor: true,
+        );
+        input = field;
+        caret = beforeCaret.characters.length.clamp(0, field.characters.length);
+      } else {
         return;
       }
-      _a11yPromptText = _a11yReadPromptLine();
+    } else {
+      // Empty field and the cursor on a new logical line: a fresh prompt, a
+      // password query, a TUI input line, or the prompt after a clear. Adopt
+      // it as the new anchor with no input. On the first (non-wrapped) row the
+      // caret column is the prompt width; a wrapped row has no prompt prefix.
+      _a11yPromptY = topY;
+      _a11yPromptCells = curY == topY ? buffer.cursorX : 0;
       input = '';
+      caret = 0;
     }
 
     // Leave the field untouched while the terminal is still echoing the
-    // keystrokes we just sent (the field holds our last edit and the line has
-    // not caught up), so typing and backspacing are never pulled backwards.
+    // keystrokes we just sent, so typing and backspacing are never pulled
+    // backwards mid-echo.
     final echoing =
         field.isNotEmpty && field == _a11yLastInputText && input != field;
     if (echoing) return;
@@ -1332,26 +1417,34 @@ class SSHPageState extends ConsumerState<SSHPage>
     _a11ySyncing = true;
     if (input == field) {
       // Same text — only the caret can have moved (terminal arrow keys).
-      final caret = buffer.cursorX - prompt.length;
-      if (caret >= 0 && caret <= field.length && caret != _a11yLastCursor) {
-        _a11yInputCtrl.selection = TextSelection.collapsed(offset: caret);
+      final want = _graphemesToCodeUnits(input, caret);
+      final current = _a11yInputCtrl.selection.baseOffset;
+      if (want >= 0 &&
+          want <= input.length &&
+          want != current &&
+          caret != _a11yLastCursor) {
+        _a11yInputCtrl.selection = TextSelection.collapsed(offset: want);
         _a11yLastCursor = caret;
       }
     } else {
-      _a11ySetField(input);
+      _a11ySetField(input, caret: caret);
     }
     _a11ySyncing = false;
   }
 
-  /// Sets the field text and the matching sync bookkeeping in one place, with
-  /// the caret at the end. Callers are responsible for [_a11ySyncing].
-  void _a11ySetField(String text) {
+  /// Sets the field text and the matching sync bookkeeping in one place. The
+  /// [caret] is a grapheme offset (defaults to the end). Callers are
+  /// responsible for [_a11ySyncing].
+  void _a11ySetField(String text, {int? caret}) {
+    final graphemes = caret ?? text.characters.length;
     _a11yInputCtrl.value = TextEditingValue(
       text: text,
-      selection: TextSelection.collapsed(offset: text.length),
+      selection: TextSelection.collapsed(
+        offset: _graphemesToCodeUnits(text, graphemes),
+      ),
     );
     _a11yLastInputText = text;
-    _a11yLastCursor = text.characters.length;
+    _a11yLastCursor = graphemes;
   }
 
   void _refreshA11yOutput() {
@@ -1374,13 +1467,16 @@ class SSHPageState extends ConsumerState<SSHPage>
     // The field mirrors the terminal, always.
     _mirrorA11yField();
 
-    // Event-driven speech, with no regard to which key fired. A TUI redraws
-    // the same screen rows in place when the highlight moves, an item is
-    // toggled or a choice confirmed — that is an in-place redraw (same number
-    // of logical lines), so speak the cursor row. Streaming command output
-    // instead grows the line count and is read from the list, not spoken.
+    // Event-driven speech for in-place TUI redraws. A full-screen program
+    // (dialogs, editors, menus) runs on the terminal's *alternate* buffer and
+    // repaints the same rows when the highlight moves, an item is toggled or a
+    // choice confirmed — that is an in-place redraw (same number of logical
+    // lines), so speak the cursor row. The primary buffer is the shell: its
+    // streaming output and a `clear`/Ctrl+L grow or wipe lines and are read
+    // from the list, never announced as a selected menu item.
     final cursorY = buffer.absoluteCursorY;
-    if (lines.length == oldLines.length &&
+    if (_terminal.isUsingAltBuffer &&
+        lines.length == oldLines.length &&
         cursorY >= 0 &&
         cursorY < buffer.height) {
       final text = buffer.lines[cursorY].getText().trim();
@@ -1395,6 +1491,11 @@ class SSHPageState extends ConsumerState<SSHPage>
           _announceA11y('${l10n.sshA11yCursorPrefix} $text');
         }
       }
+    } else if (!_terminal.isUsingAltBuffer) {
+      // Back on the shell: drop the TUI's last line so a later program starts
+      // its announcements fresh instead of matching stale menu text.
+      _a11yLastAnnounced = null;
+      _a11yLastAnnouncedY = -1;
     }
   }
 
