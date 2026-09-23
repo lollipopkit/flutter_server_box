@@ -285,7 +285,7 @@ The agent reports its current capabilities through `GET /api/v1/capabilities`, a
 
 **Status, charts, and stored history** require only panel login credentials.
 
-**`full_access`** gives an authenticated user a shell and command execution as the user running the agent. The App's process, systemd, container, snippet, power-control, and terminal features depend on this grant.
+**`full_access`** gives an authenticated user a shell and command execution as the user running the agent. The App's process, systemd, container, snippet, power-control, and terminal features depend on this grant. Remote desktop (RDP and VNC) does too: the agent dials the desktop's address from its own machine over `/api/v1/stream/ws`, as the same account and under the same grant. It has no switch of its own for that reason — anyone who can open a shell can forward a port from it.
 
 There is one `full_access` switch because anyone who can open a shell can run arbitrary commands in it. Disabling a separate “commands” switch would not reduce that access. It defaults to enabled on Linux and disabled on macOS and Windows. The panel can disable it, but cannot enable it again; re-enabling requires a configuration-file change.
 
