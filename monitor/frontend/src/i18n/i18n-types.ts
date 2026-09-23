@@ -829,6 +829,171 @@ type RootTranslation = {
 	 */
 	powerActionSent: RequiredParams<'action'>
 	/**
+	 * C​o​n​t​a​i​n​e​r​s
+	 */
+	containers: string
+	/**
+	 * I​m​a​g​e​s
+	 */
+	containerImages: string
+	/**
+	 * {​r​u​n​t​i​m​e​}​ ​{​v​e​r​s​i​o​n​}
+	 * @param {unknown} runtime
+	 * @param {unknown} version
+	 */
+	containerRuntime: RequiredParams<'runtime' | 'version'>
+	/**
+	 * U​n​k​n​o​w​n
+	 */
+	containerUnknown: string
+	/**
+	 * T​h​e​s​e​ ​c​o​n​t​a​i​n​e​r​s​ ​c​a​n​ ​b​e​ ​l​i​s​t​e​d​ ​h​e​r​e​ ​b​u​t​ ​n​o​t​ ​c​h​a​n​g​e​d​.​ ​C​h​a​n​g​i​n​g​ ​o​n​e​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​g​r​a​n​t​ ​a​s​ ​t​h​e​ ​s​h​e​l​l​,​ ​b​e​c​a​u​s​e​ ​a​n​y​o​n​e​ ​w​h​o​ ​c​a​n​ ​o​p​e​n​ ​a​ ​s​h​e​l​l​ ​c​a​n​ ​r​u​n​ ​t​h​e​ ​r​u​n​t​i​m​e​ ​i​n​ ​i​t​.
+	 */
+	containerReadOnly: string
+	/**
+	 * I​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​:​ ​{​i​m​a​g​e​s​}​.​ ​A​ ​p​r​u​n​e​ ​w​o​u​l​d​ ​r​e​c​l​a​i​m​ ​{​r​e​c​l​a​i​m​a​b​l​e​}​.
+	 * @param {unknown} images
+	 * @param {unknown} reclaimable
+	 */
+	containerUsage: RequiredParams<'images' | 'reclaimable'>
+	/**
+	 * N​o​ ​c​o​n​t​a​i​n​e​r​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	containerEmpty: string
+	/**
+	 * N​o​ ​i​m​a​g​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	containerNoImages: string
+	/**
+	 * S​t​a​r​t
+	 */
+	containerStart: string
+	/**
+	 * S​t​o​p
+	 */
+	containerStop: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	containerRestart: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	containerRemove: string
+	/**
+	 * L​o​g​s
+	 */
+	containerLogs: string
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	containerRunning: string
+	/**
+	 * E​x​i​t​e​d
+	 */
+	containerExited: string
+	/**
+	 * C​r​e​a​t​e​d
+	 */
+	containerCreated: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	containerPaused: string
+	/**
+	 * R​e​s​t​a​r​t​i​n​g
+	 */
+	containerRestarting: string
+	/**
+	 * R​e​m​o​v​i​n​g
+	 */
+	containerRemoving: string
+	/**
+	 * D​e​a​d
+	 */
+	containerDead: string
+	/**
+	 * C​P​U
+	 */
+	containerCpu: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	containerMemory: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	containerNetwork: string
+	/**
+	 * D​i​s​k
+	 */
+	containerDisk: string
+	/**
+	 * u​s​a​g​e​ ​u​n​k​n​o​w​n
+	 */
+	containerUsageUnknown: string
+	/**
+	 * u​n​u​s​e​d
+	 */
+	containerUnused: string
+	/**
+	 * i​n​ ​u​s​e​ ​b​y​ ​{​c​o​u​n​t​}
+	 * @param {unknown} count
+	 */
+	containerInUse: RequiredParams<'count'>
+	/**
+	 * {​c​o​u​n​t​}​ ​i​m​a​g​e​s​ ​a​r​e​ ​u​n​u​s​e​d​ ​b​y​ ​a​n​y​ ​c​o​n​t​a​i​n​e​r​.
+	 * @param {unknown} count
+	 */
+	containerUnusedImages: RequiredParams<'count'>
+	/**
+	 * R​e​m​o​v​e​ ​s​t​o​p​p​e​d​ ​c​o​n​t​a​i​n​e​r​s
+	 */
+	containerPruneContainers: string
+	/**
+	 * R​e​m​o​v​e​ ​u​n​u​s​e​d​ ​v​o​l​u​m​e​s
+	 */
+	containerPruneVolumes: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​?​ ​I​t​s​ ​w​r​i​t​a​b​l​e​ ​l​a​y​e​r​ ​i​s​ ​l​o​s​t​;​ ​a​n​y​t​h​i​n​g​ ​k​e​p​t​ ​i​n​ ​a​ ​v​o​l​u​m​e​ ​o​r​ ​a​ ​b​i​n​d​ ​m​o​u​n​t​ ​s​t​a​y​s​.
+	 * @param {unknown} name
+	 */
+	containerRemoveConfirm: RequiredParams<'name'>
+	/**
+	 * F​o​r​c​e
+	 */
+	containerRemoveForce: string
+	/**
+	 * S​t​o​p​s​ ​t​h​e​ ​c​o​n​t​a​i​n​e​r​ ​f​i​r​s​t​.​ ​W​i​t​h​o​u​t​ ​t​h​i​s​,​ ​a​ ​r​u​n​n​i​n​g​ ​c​o​n​t​a​i​n​e​r​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	containerRemoveForceHint: string
+	/**
+	 * L​a​s​t​ ​{​l​i​n​e​s​}​ ​l​i​n​e​s​ ​f​r​o​m​ ​{​n​a​m​e​}​.
+	 * @param {unknown} lines
+	 * @param {unknown} name
+	 */
+	containerLogsFor: RequiredParams<'lines' | 'name'>
+	/**
+	 * T​h​i​s​ ​c​o​n​t​a​i​n​e​r​ ​h​a​s​ ​w​r​i​t​t​e​n​ ​n​o​t​h​i​n​g​.
+	 */
+	containerLogsEmpty: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​d​o​c​k​e​r​ ​o​r​ ​p​o​d​m​a​n​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
+	 */
+	containerNotInstalled: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​e​r​e​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​c​o​n​t​a​i​n​e​r​ ​r​u​n​t​i​m​e​ ​t​o​ ​t​a​l​k​ ​t​o​.
+	 */
+	containerUnsupportedPlatform: string
+	/**
+	 * T​h​e​ ​r​u​n​t​i​m​e​ ​i​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​b​u​t​ ​w​i​l​l​ ​n​o​t​ ​t​a​l​k​ ​t​o​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​a​s​.​ ​O​n​ ​t​h​e​ ​m​a​c​h​i​n​e​,​ ​a​d​d​ ​t​h​a​t​ ​a​c​c​o​u​n​t​ ​t​o​ ​t​h​e​ ​r​u​n​t​i​m​e​’​s​ ​g​r​o​u​p​ ​—​ ​f​o​r​ ​D​o​c​k​e​r​,​ ​`​u​s​e​r​m​o​d​ ​-​a​G​ ​d​o​c​k​e​r​ ​<​u​s​e​r​>​`​.
+	 */
+	containerPermissionDenied: string
+	/**
+	 * T​h​e​ ​r​u​n​t​i​m​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
+	 */
+	containerUnreadable: string
+	/**
 	 * S​c​h​e​d​u​l​e
 	 */
 	cron: string
@@ -1786,6 +1951,162 @@ export type TranslationFunctions = {
 	 * Sent: {action}. If the machine is going down, this panel loses it until it is back.
 	 */
 	powerActionSent: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Containers
+	 */
+	containers: () => LocalizedString
+	/**
+	 * Images
+	 */
+	containerImages: () => LocalizedString
+	/**
+	 * {runtime} {version}
+	 */
+	containerRuntime: (arg: { runtime: unknown, version: unknown }) => LocalizedString
+	/**
+	 * Unknown
+	 */
+	containerUnknown: () => LocalizedString
+	/**
+	 * These containers can be listed here but not changed. Changing one is the same grant as the shell, because anyone who can open a shell can run the runtime in it.
+	 */
+	containerReadOnly: () => LocalizedString
+	/**
+	 * Images on this machine: {images}. A prune would reclaim {reclaimable}.
+	 */
+	containerUsage: (arg: { images: unknown, reclaimable: unknown }) => LocalizedString
+	/**
+	 * No containers on this machine.
+	 */
+	containerEmpty: () => LocalizedString
+	/**
+	 * No images on this machine.
+	 */
+	containerNoImages: () => LocalizedString
+	/**
+	 * Start
+	 */
+	containerStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	containerStop: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	containerRestart: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	containerRemove: () => LocalizedString
+	/**
+	 * Logs
+	 */
+	containerLogs: () => LocalizedString
+	/**
+	 * Running
+	 */
+	containerRunning: () => LocalizedString
+	/**
+	 * Exited
+	 */
+	containerExited: () => LocalizedString
+	/**
+	 * Created
+	 */
+	containerCreated: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	containerPaused: () => LocalizedString
+	/**
+	 * Restarting
+	 */
+	containerRestarting: () => LocalizedString
+	/**
+	 * Removing
+	 */
+	containerRemoving: () => LocalizedString
+	/**
+	 * Dead
+	 */
+	containerDead: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	containerCpu: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	containerMemory: () => LocalizedString
+	/**
+	 * Network
+	 */
+	containerNetwork: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	containerDisk: () => LocalizedString
+	/**
+	 * usage unknown
+	 */
+	containerUsageUnknown: () => LocalizedString
+	/**
+	 * unused
+	 */
+	containerUnused: () => LocalizedString
+	/**
+	 * in use by {count}
+	 */
+	containerInUse: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * {count} images are unused by any container.
+	 */
+	containerUnusedImages: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Remove stopped containers
+	 */
+	containerPruneContainers: () => LocalizedString
+	/**
+	 * Remove unused volumes
+	 */
+	containerPruneVolumes: () => LocalizedString
+	/**
+	 * Remove {name}? Its writable layer is lost; anything kept in a volume or a bind mount stays.
+	 */
+	containerRemoveConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Force
+	 */
+	containerRemoveForce: () => LocalizedString
+	/**
+	 * Stops the container first. Without this, a running container is refused.
+	 */
+	containerRemoveForceHint: () => LocalizedString
+	/**
+	 * Last {lines} lines from {name}.
+	 */
+	containerLogsFor: (arg: { lines: unknown, name: unknown }) => LocalizedString
+	/**
+	 * This container has written nothing.
+	 */
+	containerLogsEmpty: () => LocalizedString
+	/**
+	 * This machine has no docker or podman command, so there is nothing to show or change here.
+	 */
+	containerNotInstalled: () => LocalizedString
+	/**
+	 * The agent runs on Windows, where this panel has no container runtime to talk to.
+	 */
+	containerUnsupportedPlatform: () => LocalizedString
+	/**
+	 * The runtime is on this machine but will not talk to the account the agent runs as. On the machine, add that account to the runtime’s group — for Docker, `usermod -aG docker <user>`.
+	 */
+	containerPermissionDenied: () => LocalizedString
+	/**
+	 * The runtime answered in a way this agent could not read.
+	 */
+	containerUnreadable: () => LocalizedString
 	/**
 	 * Schedule
 	 */

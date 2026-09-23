@@ -14,6 +14,7 @@
     Network,
     CircleAlert,
     CalendarClock,
+    Container,
     Power,
     RefreshCw,
   } from '@lucide/svelte'
@@ -267,6 +268,11 @@
         {#if capabilities?.remote_access?.power}
           <IconButton label={$LL.powerControl()} onclick={() => (powerOpen = true)}>
             <Power class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.containers}
+          <IconButton label={$LL.containers()} onclick={() => layout.navigate('containers')}>
+            <Container class="w-4 h-4" />
           </IconButton>
         {/if}
         {#if capabilities?.remote_access?.cron}

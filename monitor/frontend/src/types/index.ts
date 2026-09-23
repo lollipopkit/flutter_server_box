@@ -118,9 +118,15 @@ export interface RemoteAccess {
   /// but its own field, because an agent that predates the route answers
   /// `full_access` and would 404 the request.
   power?: boolean
-  /// Whether `/api/v1/cron` will change this machine's schedule, on the same
-  /// grant and for the same reason as `power`.
+  /// Whether `/api/v1/cron` answers this agent at all — its own field for the
+  /// same reason, but reporting that the endpoint is *served* rather than that
+  /// this caller may write to it. Reading the schedule needs only the panel
+  /// login, so what the caller may change is `editable` in the response body.
   cron?: boolean
+  /// Whether `/api/v1/containers` answers this agent at all. Reported the same
+  /// way as `cron`, and for the same reason: listing containers runs the
+  /// runtime as the agent's own user.
+  containers?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -475,4 +481,156 @@ export interface FsEntry {
 /// so this is the whole of what the panel can browse.
 export interface FsRootsResponse {
   roots: string[];
+}
+
+/// A normalised container state, from either runtime's own words.
+export type ContainerStatus =
+  | 'running'
+  | 'exited'
+  | 'created'
+  | 'paused'
+  | 'restarting'
+  | 'removing'
+  | 'dead'
+  | 'unknown'
+
+/// Which runtime answered. Its name is also the command it is asked under.
+export type ContainerType = 'docker' | 'podman'
+
+/// One sample of a running container's resource use.
+///
+/// Every field is the runtime's own rendering of a quantity, kept as text
+/// because both runtimes print two quantities in one field (`1.2MiB / 7.6GiB`)
+/// and neither is a number this side can recompute. The pair is split so the
+/// row can lay it out; nothing here is a sentence, so nothing here is
+/// translated.
+export interface ContainerStats {
+  cpu: string | null
+  /// Podman's average over the sample window. Docker reports none.
+  cpu_avg: string | null
+  mem: string | null
+  net_down: string | null
+  net_up: string | null
+  disk_read: string | null
+  disk_write: string | null
+}
+
+/// Which action, without which container.
+export type ContainerActionKind =
+  | 'start'
+  | 'stop'
+  | 'restart'
+  | 'remove'
+  | 'logs'
+  | 'terminal'
+
+export interface ContainerRow {
+  id: string | null
+  name: string | null
+  image: string | null
+  /// The compose project this container belongs to. Also what the list is
+  /// grouped by.
+  project: string | null
+  working_dir: string | null
+  /// Published ports condensed to `host→container`. Null when there are none.
+  ports: string | null
+  /// The runtime's own lifecycle text, verbatim.
+  raw_status: string | null
+  status: ContainerStatus
+  /// Absent for a container that is not running, and for one the runtime did
+  /// not answer for.
+  stats: ContainerStats | null
+  /// Which actions this container's state is offered under. Sent by the agent
+  /// rather than derived here: whether an unrecognised state groups with a
+  /// stopped one is a rule, and a second implementation of it would drift.
+  actions: ContainerActionKind[]
+}
+
+export interface ContainerImage {
+  /// Always present: a runtime that names no repository has `<none>`.
+  repository: string
+  tag: string | null
+  id: string | null
+  digest: string | null
+  size: string | null
+  /// How many containers use this image. `null` is *unknown*, never zero:
+  /// reading Docker's `N/A` as zero is how a prune comes to offer an image
+  /// that is in use.
+  containers: number | null
+  /// The runtime's own creation text: absolute on current Docker, relative on
+  /// older ones and on Podman.
+  created_at: string | null
+  /// Podman's creation time in Unix seconds.
+  created: number | null
+}
+
+export interface ContainerDiskUsage {
+  image_count: number | null
+  /// Summed over every type the runtime reported — images, stopped containers,
+  /// unused volumes, build cache — because that is what the prune actions
+  /// between them reclaim.
+  reclaimable_bytes: number | null
+}
+
+/// Which of the four things the panel asked for. One route for all of them.
+export type ContainerPart = 'containers' | 'images' | 'usage' | 'logs'
+
+/// Why the runtime could not answer, as its own word so the panel phrases it
+/// in its own language. `null` alongside `available: false` means the machine
+/// said something this agent does not classify, and `reason` is that text.
+export type ContainerReason =
+  | 'not_installed'
+  | 'unsupported_platform'
+  | 'permission_denied'
+  | 'unreadable'
+
+export interface ContainerRuntime {
+  kind: ContainerType
+  /// The *client's* version, or null when the machine did not report one: it
+  /// is the client that reads the socket, so it is the client's version that
+  /// decides how a stats row is shaped.
+  version: string | null
+}
+
+export interface ContainerView {
+  part: ContainerPart
+  /// Whether the machine has a runtime this agent could talk to. `false` is a
+  /// state of the machine, not a failure of the caller, so the page has one
+  /// shape to draw either way.
+  available: boolean
+  reason_kind: ContainerReason | null
+  /// What the machine said, verbatim. Never translated: it is the only thing
+  /// that distinguishes one failure from another.
+  reason: string | null
+  runtime: ContainerRuntime | null
+  /// Whether this panel may change anything. A hint for the UI; the agent
+  /// re-checks it on every write.
+  editable: boolean
+  containers: ContainerRow[]
+  images: ContainerImage[]
+  usage: ContainerDiskUsage | null
+  /// The container's log, for `part: 'logs'`.
+  logs: string | null
+}
+
+/// One change to one container.
+///
+/// An action rather than a command line: the agent composes the command, so a
+/// build that does not implement an action refuses it while deserializing
+/// instead of reaching a shell.
+export type ContainerAction =
+  | { action: 'start'; id: string }
+  | { action: 'stop'; id: string }
+  | { action: 'restart'; id: string }
+  | { action: 'remove'; id: string; force: boolean }
+  | { action: 'prune_containers' }
+  | { action: 'prune_volumes' }
+
+/// What a change answered: the listing as it now stands, plus how the command
+/// went.
+export interface ContainerActionResult extends ContainerView {
+  exit_code: number | null
+  /// What the runtime printed, with the agent's own scaffolding dropped out of
+  /// it. Empty when the action succeeded quietly.
+  output: string
 }

@@ -1,6 +1,10 @@
 import type {
   CardOrderPayload,
   Capabilities,
+  ContainerAction,
+  ContainerActionResult,
+  ContainerPart,
+  ContainerView,
   CronEdit,
   CronView,
   CustomCmd,
@@ -371,6 +375,32 @@ export const api = {
       '/cron',
       { method: 'PUT', body: JSON.stringify(edit) },
       'Failed to save the schedule',
+    ),
+  /// The runtime's containers, images or disk usage — one at a time.
+  ///
+  /// Reading is not gated on the shell grant — the runtime is run as the
+  /// agent's own user, like its crontab — so a panel that may only look is told
+  /// `editable: false` rather than refused.
+  ///
+  /// `part: 'logs'` is the one that names a container: a log belongs to one,
+  /// and the agent refuses the request rather than guessing which.
+  getContainers: (part: ContainerPart, id?: string) =>
+    request<ContainerView>(
+      `/containers?part=${part}${id ? `&id=${encodeURIComponent(id)}` : ''}`,
+      {},
+      'Failed to fetch the containers',
+    ),
+  /// Performs one change and answers with the listing as it now stands.
+  ///
+  /// Every action answers with both halves in one round trip: the refreshed
+  /// listing, which is the thing the page draws, and `exit_code`/`output`,
+  /// which is what the runtime said about the change. A refusal to talk to this
+  /// caller at all is a 403 rather than a body.
+  actContainer: (action: ContainerAction) =>
+    request<ContainerActionResult>(
+      '/containers',
+      { method: 'POST', body: JSON.stringify(action) },
+      'Failed to change the container',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

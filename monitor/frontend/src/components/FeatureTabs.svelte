@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CalendarClock, type Icon as LucideIcon } from '@lucide/svelte'
+  import { CalendarClock, Container, type Icon as LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -22,6 +22,7 @@
   /// feature added to the list without a label here is a type error instead of
   /// a tab that renders an empty string.
   const PRESENTATION: Record<FeatureId, { label: () => string; icon: typeof LucideIcon }> = {
+    containers: { label: () => $LL.containers(), icon: Container },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
   }
 

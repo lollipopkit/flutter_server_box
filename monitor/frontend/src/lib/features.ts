@@ -20,7 +20,7 @@ import type { RemoteAccess } from '../types'
 ///
 /// It is a subset of `View` — `layout.svelte.ts` widens `View` with this type
 /// rather than repeating the names, so the two cannot drift.
-export type FeatureId = 'cron'
+export type FeatureId = 'containers' | 'cron'
 
 export interface FeatureSpec {
   /// The `View` this feature renders as, and how `layout.navigate` names it.
@@ -33,16 +33,25 @@ export interface FeatureSpec {
   capability: keyof RemoteAccess
 }
 
-export const FEATURES: FeatureSpec[] = [{ id: 'cron', capability: 'cron' }]
+export const FEATURES: FeatureSpec[] = [
+  { id: 'containers', capability: 'containers' },
+  { id: 'cron', capability: 'cron' },
+]
 
 /// The features this agent serves.
 ///
 /// Strictly `=== true`, so a capability that is missing and one that is off
-/// both leave the feature out. Hiding it is right either way — the agent would
-/// answer 404 or 403, and a tab that opens onto a refusal is worse than one
-/// that is not there. The two are not told apart here because nothing acts on
-/// the difference yet; when the Dashboard wants to say "this agent is too old
-/// for that", it can say so where it lists servers rather than per tab.
+/// both leave the feature out. An agent older than the endpoint is the one that
+/// answers 404, and a tab that opens onto a refusal is worse than one that is
+/// not there — which is why each feature names its own field rather than
+/// checking a shared grant, since a wider grant would put a tab on screen for
+/// an agent that never served it.
+///
+/// A grant that only withholds *writes* does not remove a tab: the page goes
+/// read-only off `editable` in the response instead, which is what `cron` and
+/// `containers` report. The two cases are not told apart here because nothing
+/// acts on the difference yet; when the Dashboard wants to say "this agent is
+/// too old for that", it can say so where it lists servers rather than per tab.
 export function enabledFeatures(remoteAccess: RemoteAccess | undefined): FeatureSpec[] {
   return FEATURES.filter((feature) => remoteAccess?.[feature.capability] === true)
 }
