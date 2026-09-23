@@ -205,8 +205,13 @@ enum ServerFuncBtn {
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
     files => caps.files,
-    // A forwarded connection is a byte stream, not a command's output.
-    portForward || remoteDesktop => caps.byteStream,
+    // A forwarded connection and a remote desktop are both one TCP connection
+    // to an address this app names, but only the remote desktop can take it
+    // from either transport: the forward page still opens through the SSH
+    // client, so it asks the narrower question until it is moved onto the same
+    // dialer.
+    portForward => caps.byteStream,
+    remoteDesktop => caps.tcpRelay,
   };
 
   String get toStr => switch (this) {

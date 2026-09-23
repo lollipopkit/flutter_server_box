@@ -38,6 +38,17 @@ abstract interface class ServerCapabilities {
   /// ever fail.
   bool get byteStream;
 
+  /// A TCP connection to an address this app names can be carried — what
+  /// remote desktop needs, and what port forwarding will need.
+  ///
+  /// Its own question rather than [byteStream] read twice, because the two come
+  /// apart in both directions. An SSH direct-tcpip channel carries one; a
+  /// monitor agent carries none until it is told to relay one, which it answers
+  /// with `RemoteAccess.stream`. And [byteStream] also means SFTP, which runs
+  /// through an SSH channel this app cannot put anywhere else — so an agent
+  /// that can relay a socket still cannot answer for a file transfer.
+  bool get tcpRelay;
+
   /// Files can be browsed and moved: the file tab, the file button, and either
   /// end of a transfer.
   ///
@@ -119,6 +130,9 @@ class UnionCapabilities implements ServerCapabilities {
   bool get byteStream => a.byteStream || b.byteStream;
 
   @override
+  bool get tcpRelay => a.tcpRelay || b.tcpRelay;
+
+  @override
   bool get files => a.files || b.files;
 
   @override
@@ -174,6 +188,11 @@ class SshCapabilities implements ServerCapabilities {
   @override
   bool get byteStream => true;
 
+  /// A direct-tcpip channel is exactly this: a TCP connection to an address the
+  /// app names, carrying something that is not a shell.
+  @override
+  bool get tcpRelay => true;
+
   @override
   bool get files => true;
 
@@ -207,10 +226,21 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   @override
   bool get terminal => granted.fullAccess && granted.terminal;
 
-  /// The agent has no endpoint that relays a connection to an address the app
-  /// names. A future endpoint would enable this for every agent at once.
+  /// Always false, and this is the one place the two stream questions come
+  /// apart: a relay exists now (`tcpRelay`), but SFTP runs through an SSH
+  /// channel this app cannot point at an agent's socket, so the file browser
+  /// keeps asking for the agent's own file API instead.
   @override
   bool get byteStream => false;
+
+  /// Whether the agent will dial an address this app names — see
+  /// [MonitorRemoteAccess.stream].
+  ///
+  /// Not [byteStream]: SFTP moves a file through an SSH channel this app has no
+  /// way to point at an agent's socket, so an agent that relays TCP is still
+  /// not somewhere a file transfer can go.
+  @override
+  bool get tcpRelay => granted.stream;
 
   /// The agent's own answer, from `GET /api/v1/capabilities`.
   ///

@@ -75,4 +75,27 @@ void main() {
       expect(url.toString(), isNot(contains('a=1')));
     });
   });
+
+  group('the relay upgrade', () {
+    test('lands on the relay endpoint, on the same host', () {
+      // The same contract as the terminal's, one path along — see
+      // `monitor/src/api/ws/stream.rs`.
+      final url = MonitorHttpClient.streamWsUrl('https://a.example:3770');
+
+      expect(url.toString(), startsWith('wss://'));
+      expect(url.host, 'a.example');
+      expect(url.port, 3770);
+      expect(url.path, '/api/v1/stream/ws');
+    });
+
+    test('carries no address of its own', () {
+      // The target travels in the `open` control frame, not in the URL: it is
+      // the operator's own network, and there is no reason for it to be written
+      // into every access log between here and the agent.
+      final url = MonitorHttpClient.streamWsUrl('https://a.example:3770');
+
+      expect(url.hasQuery, isFalse);
+      expect(url.hasFragment, isFalse);
+    });
+  });
 }

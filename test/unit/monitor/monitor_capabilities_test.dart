@@ -127,16 +127,30 @@ void main() {
       expect(caps.terminal, isFalse);
     });
 
-    test('full access still carries no byte stream', () {
-      // The agent has no endpoint that relays a connection to an address the
-      // app names, so SFTP and port forwarding stay out of reach — and stay
-      // hidden rather than opening a page that cannot load.
+    test('full access carries no SSH byte stream, but does relay TCP', () {
+      // The agent has no channel this app can point at an SFTP subsystem, so
+      // `byteStream` — which is what the file transfer asks — stays false and
+      // the file browser keeps using the agent's own API. What it *can* do is
+      // dial an address the app names, which is the question remote desktop
+      // asks instead (`tcpRelay`).
       const caps = MonitorHttpCapabilities(
-        MonitorRemoteAccess(fullAccess: true),
+        MonitorRemoteAccess(fullAccess: true, stream: true),
       );
       expect(caps.shell, isTrue);
       expect(caps.terminal, isFalse);
       expect(caps.byteStream, isFalse);
+      expect(caps.tcpRelay, isTrue);
+    });
+
+    test('an old agent reports full access and no relay', () {
+      // The endpoint is newer than the grant, so an agent that predates it
+      // reports `full_access` and would still refuse the upgrade. Reading
+      // `fullAccess` for this is what would offer a session that cannot open.
+      const caps = MonitorHttpCapabilities(
+        MonitorRemoteAccess(fullAccess: true),
+      );
+      expect(caps.shell, isTrue);
+      expect(caps.tcpRelay, isFalse);
     });
 
     test('no session to be in the middle of', () {
@@ -150,6 +164,11 @@ void main() {
   group('ServerFuncBtn.availableWith', () {
     const ssh = SshCapabilities();
     const granted = MonitorHttpCapabilities(
+      MonitorRemoteAccess(terminal: true, fullAccess: true, stream: true),
+    );
+    /// What an agent older than the relay endpoint reports: the grant, with no
+    /// endpoint behind it.
+    const grantedBeforeRelay = MonitorHttpCapabilities(
       MonitorRemoteAccess(terminal: true, fullAccess: true),
     );
     const refused = MonitorHttpCapabilities(MonitorRemoteAccess.none);
@@ -173,20 +192,29 @@ void main() {
       expect(ServerFuncBtn.power.availableWith(refused), isFalse);
     });
 
-    test('a full-access agent offers everything but the byte streams', () {
+    test('a full-access agent offers everything but the SSH-only streams', () {
       // Files are not among them: full access is the shell grant, and the file
-      // API is a grant of its own — see the next test.
+      // API is a grant of its own — see the next test. Port forwarding is not
+      // either: the forward page still opens through the SSH client.
       expect(ServerFuncBtn.files.availableWith(granted), isFalse);
       expect(ServerFuncBtn.portForward.availableWith(granted), isFalse);
-      expect(ServerFuncBtn.remoteDesktop.availableWith(granted), isFalse);
       for (final btn in ServerFuncBtn.values) {
         if (btn == ServerFuncBtn.files ||
-            btn == ServerFuncBtn.portForward ||
-            btn == ServerFuncBtn.remoteDesktop) {
+            btn == ServerFuncBtn.portForward) {
           continue;
         }
         expect(btn.availableWith(granted), isTrue, reason: btn.name);
       }
+    });
+
+    test('remote desktop follows the relay, not the grant behind it', () {
+      // The endpoint is what the session needs, and an agent that has the
+      // grant but not the endpoint cannot carry one.
+      expect(ServerFuncBtn.remoteDesktop.availableWith(granted), isTrue);
+      expect(
+        ServerFuncBtn.remoteDesktop.availableWith(grantedBeforeRelay),
+        isFalse,
+      );
     });
 
     test('the file entry follows the agent\'s file grant alone', () {

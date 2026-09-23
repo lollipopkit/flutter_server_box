@@ -564,7 +564,13 @@ void runServerFunc(
         ScheduledTasksPage.route.go(context, args);
         break;
       case ServerFuncBtn.remoteDesktop:
-        if (!await _ensureSshClient(context, spi.id, ref)) return;
+        // A monitor server has nothing to connect here: the agent dials the
+        // target when the session opens, and the profile page works without it.
+        // Asking for an SSH client would refuse the one transport this button
+        // was just made available on — see `_ensureSshClient`.
+        if (spi.sshOn != null && !await _ensureSshClient(context, spi.id, ref)) {
+          return;
+        }
         if (!context.mounted) return;
         RemoteDesktopProfilesPage.route.go(context, SpiRequiredArgs(spi));
         break;
