@@ -47,7 +47,7 @@ final class RemoteDesktopProfileEditArgs {
     required this.serverId,
     this.profile,
     this.onClose,
-    this.onSessionOpened,
+    this.onTestSessionOpening,
   });
 
   final String serverId;
@@ -55,7 +55,7 @@ final class RemoteDesktopProfileEditArgs {
   /// The profile being edited, or null for one being added.
   final RemoteDesktopProfile? profile;
   final VoidCallback? onClose;
-  final VoidCallback? onSessionOpened;
+  final ValueChanged<String?>? onTestSessionOpening;
 }
 
 class _RemoteDesktopProfileEditPageState
@@ -387,13 +387,18 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
       if (!mounted) return;
     }
 
-    final opened = await openRemoteDesktop(
-      context,
-      ref,
-      profile,
-      sessionPassword: _password.text,
-    );
-    if (opened && mounted) widget.args.onSessionOpened?.call();
+    try {
+      await openRemoteDesktop(
+        context,
+        ref,
+        profile,
+        sessionPassword: _password.text,
+        onOpening: () => widget.args.onTestSessionOpening?.call(profile.id),
+        switchToTab: false,
+      );
+    } finally {
+      widget.args.onTestSessionOpening?.call(null);
+    }
   }
 }
 
@@ -460,7 +465,7 @@ extension _Utils on _RemoteDesktopProfileEditPageState {
   }
 }
 
-/// Opens [profile] on the remote desktop tab.
+/// Opens [profile], switching to the remote desktop tab for list actions.
 ///
 /// Shared by the list's rows and the editor's Test action: both have the same
 /// question to answer — a profile with no stored password needs one before
@@ -471,6 +476,8 @@ Future<bool> openRemoteDesktop(
   WidgetRef ref,
   RemoteDesktopProfile profile, {
   String? sessionPassword,
+  VoidCallback? onOpening,
+  bool switchToTab = true,
 }) async {
   var password = sessionPassword?.isNotEmpty == true
       ? sessionPassword
@@ -479,10 +486,13 @@ Future<bool> openRemoteDesktop(
     password = await _askPassword(context, profile);
     if (password == null) return false;
   }
+  onOpening?.call();
   ref
       .read(remoteDesktopSessionsProvider.notifier)
       .open(profile, sessionPassword: password);
-  ref.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
+  if (switchToTab) {
+    ref.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
+  }
   return true;
 }
 

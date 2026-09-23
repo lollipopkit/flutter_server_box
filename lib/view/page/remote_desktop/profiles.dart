@@ -31,6 +31,7 @@ final class RemoteDesktopProfilesPage extends ConsumerStatefulWidget {
     required this.args,
     this.onBack,
     this.onSessionOpened,
+    this.onTestSessionOpening,
   });
 
   final SpiRequiredArgs args;
@@ -38,6 +39,7 @@ final class RemoteDesktopProfilesPage extends ConsumerStatefulWidget {
   /// When embedded in the remote desktop tab, keep the form in its pane.
   final VoidCallback? onBack;
   final VoidCallback? onSessionOpened;
+  final ValueChanged<String?>? onTestSessionOpening;
 
   static const route = AppRouteArg<void, SpiRequiredArgs>(
     page: RemoteDesktopProfilesPage.new,
@@ -87,7 +89,7 @@ class _RemoteDesktopProfilesPageState
                 serverId: widget.args.spi.id,
                 profile: editing,
                 onClose: () => setState(() => _editing = null),
-                onSessionOpened: widget.onSessionOpened,
+                onTestSessionOpening: widget.onTestSessionOpening,
               ),
             );
       return NestedNavigator(

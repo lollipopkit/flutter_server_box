@@ -62,8 +62,8 @@ class _SortOrder {
       case _SortField.name:
         final sorted = order.toList();
         sorted.sort((a, b) {
-          final nameA = servers[a]?.name ?? '';
-          final nameB = servers[b]?.name ?? '';
+          final nameA = (servers[a]?.name ?? '').toLowerCase();
+          final nameB = (servers[b]?.name ?? '').toLowerCase();
           return ascending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
         });
         return sorted;

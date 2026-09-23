@@ -335,13 +335,16 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     if (entry == null || prompt == null) return;
     final trusted = entry.profile.copyWith(trustedCertSha256: prompt.sha256);
     // What is written is the stored record, not the draft the session may have
-    // been opened from: the editor's corner button connects with unsaved edits,
+    // been opened from: Test connects with unsaved edits,
     // and persisting those here would save a form nobody pressed Save on — or
     // create a record for a profile that does not exist yet. Trusting a
     // certificate is a decision about a connection, and it must not carry a
     // form's contents into the database with it.
     final stored = Stores.remoteDesktop.fetchOneRaw(id);
-    if (stored != null) {
+    if (stored != null &&
+        stored.protocol == trusted.protocol &&
+        stored.host == trusted.host &&
+        stored.port == trusted.port) {
       Stores.remoteDesktop.put(
         stored.copyWith(trustedCertSha256: prompt.sha256),
       );

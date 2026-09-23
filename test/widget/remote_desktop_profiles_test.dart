@@ -42,11 +42,17 @@ class _FixedRemoteDesktopSessions extends RemoteDesktopSessions {
 
   @override
   RemoteDesktopSessionsState build() => initial;
+
+  @override
+  Future<void> close(String id) async => state = state.remove(id);
 }
 
 class _NoConnectRemoteDesktopSessions extends RemoteDesktopSessions {
   @override
   RemoteDesktopSessionsState build() => const RemoteDesktopSessionsState();
+
+  @override
+  Future<void> close(String id) async => state = state.remove(id);
 
   @override
   String open(
@@ -190,6 +196,41 @@ void main() {
     );
   });
 
+  testWidgets('closing the active session keeps the server editor open', (
+    tester,
+  ) async {
+    final profile = Stores.remoteDesktop.fetchForServer(sid).single;
+    final other = profile.copyWith(id: 'rdp-2', name: 'Other');
+    final sessions = RemoteDesktopSessionsState(
+      sessions: {
+        profile.id: RemoteDesktopSessionView(profile: profile),
+        other.id: RemoteDesktopSessionView(profile: other),
+      },
+      activeId: profile.id,
+    );
+    await pumpPage(
+      tester,
+      width: 834,
+      home: const RemoteDesktopTabPage(),
+      sessions: sessions,
+    );
+    await tester.tap(find.text('web'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(RemoteDesktopTabPage)),
+    );
+    await container
+        .read(remoteDesktopSessionsProvider.notifier)
+        .close(profile.id);
+    await tester.pumpAndSettle();
+
+    expect(container.read(remoteDesktopSessionsProvider).activeId, other.id);
+    expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
+  });
+
   testWidgets('switching servers slides the right pane', (tester) async {
     Stores.server.put(
       spiFixture(
@@ -263,6 +304,15 @@ void main() {
   testWidgets('the rail sorts servers and groups them by tag', (tester) async {
     Stores.server.put(
       spiFixture(
+        id: 'srv-lower',
+        name: 'aardvark',
+        ip: 'lower',
+        tags: ['prod'],
+        autoConnect: false,
+      ),
+    );
+    Stores.server.put(
+      spiFixture(
         id: 'srv-alpha',
         name: 'Alpha',
         ip: 'alpha',
@@ -298,6 +348,10 @@ void main() {
     expect(
       tester.getTopLeft(find.text('Beta')).dy,
       lessThan(tester.getTopLeft(find.text('Alpha')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Alpha')).dy,
+      lessThan(tester.getTopLeft(find.text('aardvark')).dy),
     );
   });
 
@@ -477,7 +531,7 @@ void main() {
     expect(container.read(remoteDesktopSessionsProvider).sessions, isEmpty);
   });
 
-  testWidgets('password prompt stays mounted through its exit animation', (
+  testWidgets('Test preserves unsaved edits through the password prompt', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1200, 1600);
@@ -507,6 +561,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
     await tester.pumpAndSettle();
+    final hostInput = find.byWidgetPredicate(
+      (widget) => widget is Input && widget.label == libL10n.host,
+    );
+    await tester.enterText(
+      find.descendant(of: hostInput, matching: find.byType(TextField)),
+      '192.0.2.10',
+    );
     await tester.tap(find.widgetWithText(TextButton, 'Test'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -523,5 +584,15 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
+    expect(tester.widget<Input>(hostInput).controller?.text, '192.0.2.10');
+    expect(Stores.remoteDesktop.fetchOneRaw('rdp-1')?.host, '127.0.0.1');
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(RemoteDesktopTabPage)),
+    );
+    expect(
+      container.read(remoteDesktopSessionsProvider).active?.profile.host,
+      '192.0.2.10',
+    );
   });
 }

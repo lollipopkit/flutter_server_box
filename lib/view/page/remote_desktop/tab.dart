@@ -33,6 +33,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   String? _shownCertificate;
   String? _selectedServerId;
   bool _showPicker = false;
+  String? _testingSessionId;
   late final _sortBySetting = Stores.setting.remoteDesktopSortBy.listenable();
   late final _sortAscSetting = Stores.setting.remoteDesktopSortAsc.listenable();
 
@@ -85,20 +86,23 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
             !_showPicker,
       );
     });
-    ref.listen(
-      remoteDesktopSessionsProvider.select((value) => value.activeId),
-      (previous, next) {
-        if (next == null || next == previous) return;
-        if (_selectedServerId == null && !_showPicker) return;
-        setState(() {
-          _selectedServerId = null;
-          _showPicker = false;
-        });
-        _sessions.setSurfaceVisible(
-          ref.read(currentHomeTabProvider) == AppTab.remoteDesktop,
-        );
-      },
-    );
+    ref.listen(remoteDesktopSessionsProvider, (previous, next) {
+      final activeId = next.activeId;
+      if (activeId == null ||
+          activeId == previous?.activeId ||
+          (previous?.sessions.containsKey(activeId) ?? false) ||
+          activeId == _testingSessionId) {
+        return;
+      }
+      if (_selectedServerId == null && !_showPicker) return;
+      setState(() {
+        _selectedServerId = null;
+        _showPicker = false;
+      });
+      _sessions.setSurfaceVisible(
+        ref.read(currentHomeTabProvider) == AppTab.remoteDesktop,
+      );
+    });
     ref.listen(
       remoteDesktopSessionsProvider.select(
         (value) => value.active?.certificate,
@@ -154,6 +158,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
           args: SpiRequiredArgs(spi),
           onBack: _clearSelection,
           onSessionOpened: _showActiveSession,
+          onTestSessionOpening: (id) => _testingSessionId = id,
         );
       }
     }
