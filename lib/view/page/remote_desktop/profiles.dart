@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
+import 'package:server_box/view/page/remote_desktop/pane_slide.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
@@ -21,12 +22,22 @@ import 'package:server_box/view/widget/pane_settings.dart';
 /// that did not: the list filled the window and the form arrived as a modal
 /// over the list that opened it.
 ///
-/// A tap selects, and the row menu still connects, so a profile that is already
-/// set up is one gesture from a session either way.
+/// A profile can be connected or edited directly from its list row.
+/// Inside the remote desktop tab, the enclosing server rail owns the other
+/// column, so this page shows the list and form in that column in turn.
 final class RemoteDesktopProfilesPage extends ConsumerStatefulWidget {
-  const RemoteDesktopProfilesPage({super.key, required this.args});
+  const RemoteDesktopProfilesPage({
+    super.key,
+    required this.args,
+    this.onBack,
+    this.onSessionOpened,
+  });
 
   final SpiRequiredArgs args;
+
+  /// When embedded in the remote desktop tab, keep the form in its pane.
+  final VoidCallback? onBack;
+  final VoidCallback? onSessionOpened;
 
   static const route = AppRouteArg<void, SpiRequiredArgs>(
     page: RemoteDesktopProfilesPage.new,
@@ -68,35 +79,54 @@ class _RemoteDesktopProfilesPageState
       });
     }
 
-    return PaneSettings.listenAll((paneWidth, paneCollapsed) {
-      return AdaptivePanes.detail(
-        listWidth: paneWidth,
-        onListWidthChanged: PaneSettings.saveWidth,
-        collapsed: paneCollapsed,
-        onCollapsedChanged: PaneSettings.saveCollapsed,
-        collapseTooltip: libL10n.fold,
-        expandTooltip: libL10n.open,
-        detailId: _editing,
-        onCloseDetail: () => setState(() => _editing = null),
-        // Never null, so the two columns are what this page looks like from the
-        // moment it opens. A null builder hands the whole width back to the
-        // list, which made the first thing anyone saw a full-width list that
-        // rearranged itself into a column as soon as a row was tapped.
-        //
-        // `_editing` is the sentinel for a new profile, so the pane shows a
-        // form for it exactly as it does for a saved one — and shows nothing at
-        // all for an id whose record has just gone.
-        detailBuilder: (_) => _editing == null || gone
-            ? const EmptyPane(icon: Icons.desktop_windows_outlined)
-            : RemoteDesktopProfileEditPage(
-                args: RemoteDesktopProfileEditArgs(
-                  serverId: widget.args.spi.id,
-                  profile: editing,
-                ),
+    if (widget.onBack != null) {
+      final pane = _editing == null || gone
+          ? _buildList(profiles, false)
+          : RemoteDesktopProfileEditPage(
+              args: RemoteDesktopProfileEditArgs(
+                serverId: widget.args.spi.id,
+                profile: editing,
+                onClose: () => setState(() => _editing = null),
+                onSessionOpened: widget.onSessionOpened,
               ),
-        listBuilder: (_, split) => _buildList(profiles, split),
+            );
+      return NestedNavigator(
+        rootId: gone ? null : _editing,
+        rootBuilder: (_) => pane,
       );
-    });
+    }
+
+    return RemoteDesktopPaneSlide(
+      child: PaneSettings.listenAll((paneWidth, paneCollapsed) {
+        return AdaptivePanes.detail(
+          listWidth: paneWidth,
+          onListWidthChanged: PaneSettings.saveWidth,
+          collapsed: paneCollapsed,
+          onCollapsedChanged: PaneSettings.saveCollapsed,
+          collapseTooltip: libL10n.fold,
+          expandTooltip: libL10n.open,
+          detailId: _editing,
+          onCloseDetail: () => setState(() => _editing = null),
+          // Never null, so the two columns are what this page looks like from the
+          // moment it opens. A null builder hands the whole width back to the
+          // list, which made the first thing anyone saw a full-width list that
+          // rearranged itself into a column as soon as a row was tapped.
+          //
+          // `_editing` is the sentinel for a new profile, so the pane shows a
+          // form for it exactly as it does for a saved one — and shows nothing at
+          // all for an id whose record has just gone.
+          detailBuilder: (_) => _editing == null || gone
+              ? const EmptyPane(icon: Icons.desktop_windows_outlined)
+              : RemoteDesktopProfileEditPage(
+                  args: RemoteDesktopProfileEditArgs(
+                    serverId: widget.args.spi.id,
+                    profile: editing,
+                  ),
+                ),
+          listBuilder: (_, split) => _buildList(profiles, split),
+        );
+      }),
+    );
   }
 }
 
@@ -106,10 +136,15 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
   Widget _buildList(List<RemoteDesktopProfile> profiles, bool split) {
     return Scaffold(
       appBar: CustomAppBar(
-        // No back button of its own: this is the list a detail is closed back
-        // to, and `CustomAppBar` would otherwise offer the pane's close-detail
-        // button here, where it has nothing to close.
-        leading: const SizedBox.shrink(),
+        // A route's list is already the back destination for its detail.
+        // Embedded in the tab, Back returns to the session or server picker.
+        leading: widget.onBack == null
+            ? const SizedBox.shrink()
+            : IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              ),
         title: TwoLineText(up: 'Remote desktop', down: widget.args.spi.name),
         actions: [
           Btn.icon(
@@ -152,26 +187,66 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
 
   /// The whole width: what each profile is and where it points.
   Widget _buildCards(List<RemoteDesktopProfile> profiles) {
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 4, bottom: 77),
-      itemCount: profiles.length,
-      itemBuilder: (_, index) => CardTile(
-        key: ValueKey(profiles[index].id),
-        icon: profiles[index].protocol == RemoteDesktopProtocol.rdp
-            ? Icons.desktop_windows_outlined
-            : Icons.connected_tv_outlined,
-        title: profiles[index].name,
-        subtitle:
-            '${profiles[index].protocol.name.toUpperCase()} · '
-            '${profiles[index].host}:${profiles[index].port}',
-        // The chevron `CardTile` defaults to, or the mark that says a session
-        // is already open on this profile. Passing null would say the row opens
-        // nothing, which is the opposite of what a tap here does.
-        trailing: _isOpen(profiles[index])
-            ? const _LiveMark()
-            : const Icon(Icons.chevron_right),
-        onTap: () => _edit(profiles[index], false),
-        onLongPress: () => _showRowMenu(profiles[index], null),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: ListView.builder(
+          padding: const EdgeInsets.only(top: 4, bottom: 77),
+          itemCount: profiles.length,
+          itemBuilder: (_, index) {
+            final profile = profiles[index];
+            return LayoutBuilder(
+              builder: (_, constraints) {
+                final compact = constraints.maxWidth < 480;
+                return CardTile(
+                  key: ValueKey(profile.id),
+                  icon: profile.protocol == RemoteDesktopProtocol.rdp
+                      ? Icons.desktop_windows_outlined
+                      : Icons.connected_tv_outlined,
+                  title: profile.name,
+                  subtitle:
+                      '${profile.protocol.name.toUpperCase()} · '
+                      '${profile.host}:${profile.port}',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isOpen(profile)) ...[
+                        const _LiveMark(),
+                        const SizedBox(width: 8),
+                      ],
+                      if (compact)
+                        IconButton(
+                          tooltip: 'Connect',
+                          icon: const Icon(Icons.play_arrow),
+                          onPressed: () => _connect(profile),
+                        )
+                      else
+                        TextButton.icon(
+                          onPressed: () => _connect(profile),
+                          icon: const Icon(Icons.play_arrow),
+                          label: const Text('Connect'),
+                        ),
+                      if (compact)
+                        IconButton(
+                          tooltip: libL10n.edit,
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () => _edit(profile, false),
+                        )
+                      else
+                        TextButton.icon(
+                          onPressed: () => _edit(profile, false),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: Text(libL10n.edit),
+                        ),
+                    ],
+                  ),
+                  onTap: () => _connect(profile),
+                  onLongPress: () => _showRowMenu(profile, null),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -219,10 +294,16 @@ final class _LiveMark extends StatelessWidget {
 // --- Actions ---
 
 extension _Actions on _RemoteDesktopProfilesPageState {
+  Future<void> _connect(RemoteDesktopProfile profile) async {
+    if (await openRemoteDesktop(context, ref, profile) && mounted) {
+      widget.onSessionOpened?.call();
+    }
+  }
+
   /// Opens [profile] — or a new one when null — in the editor beside the list,
   /// or over it when there is no room for a second column.
   void _edit(RemoteDesktopProfile? profile, bool split) {
-    if (split) {
+    if (split || widget.onBack != null) {
       setState(() => _editing = profile?.id ?? _newProfile);
       return;
     }
@@ -242,7 +323,7 @@ extension _Actions on _RemoteDesktopProfilesPageState {
         ContextMenuAction(
           text: 'Connect',
           icon: Icons.play_arrow,
-          onTap: () => openRemoteDesktop(context, ref, profile),
+          onTap: () => _connect(profile),
         ),
         ContextMenuAction(
           text: libL10n.edit,

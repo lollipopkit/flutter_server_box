@@ -29,9 +29,39 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
 import 'package:server_box/view/page/remote_desktop/profiles.dart';
+import 'package:server_box/view/page/remote_desktop/tab.dart';
+import 'package:server_box/view/widget/group_title.dart';
 
 import '../helpers/spi_fixture.dart';
 import '../helpers/test_db.dart';
+
+class _FixedRemoteDesktopSessions extends RemoteDesktopSessions {
+  _FixedRemoteDesktopSessions(this.initial);
+
+  final RemoteDesktopSessionsState initial;
+
+  @override
+  RemoteDesktopSessionsState build() => initial;
+}
+
+class _NoConnectRemoteDesktopSessions extends RemoteDesktopSessions {
+  @override
+  RemoteDesktopSessionsState build() => const RemoteDesktopSessionsState();
+
+  @override
+  String open(
+    RemoteDesktopProfile profile, {
+    String? sessionPassword,
+    int width = 1280,
+    int height = 720,
+    int scaleFactor = 100,
+  }) {
+    state = state
+        .put(RemoteDesktopSessionView(profile: profile))
+        .select(profile.id);
+    return profile.id;
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -75,7 +105,12 @@ void main() {
 
   /// Pumps the page at [width], so a split layout can be asked for by number
   /// rather than by device.
-  Future<void> pumpPage(WidgetTester tester, {required double width}) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    required double width,
+    Widget? home,
+    RemoteDesktopSessionsState? sessions,
+  }) async {
     // The view, not `setSurfaceSize` — that changes layout without changing
     // what `MediaQuery` reports.
     tester.view.physicalSize = Size(width, 1600);
@@ -84,6 +119,12 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [
+          if (sessions != null)
+            remoteDesktopSessionsProvider.overrideWith(
+              () => _FixedRemoteDesktopSessions(sessions),
+            ),
+        ],
         child: MaterialApp(
           localizationsDelegates: const [
             LibLocalizations.delegate,
@@ -91,9 +132,11 @@ void main() {
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,
-          home: RemoteDesktopProfilesPage(
-            args: SpiRequiredArgs(Stores.server.fetch().single),
-          ),
+          home:
+              home ??
+              RemoteDesktopProfilesPage(
+                args: SpiRequiredArgs(Stores.server.fetch().single),
+              ),
         ),
       ),
     );
@@ -101,6 +144,162 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
+
+  testWidgets(
+    'the remote desktop rail opens server profiles without a session',
+    (tester) async {
+      await pumpPage(tester, width: 834, home: const RemoteDesktopTabPage());
+
+      expect(find.byType(SideBarTile), findsOneWidget);
+      expect(find.byType(EmptyPane), findsOneWidget);
+      expect(find.text(libL10n.running.toUpperCase()), findsNothing);
+
+      await tester.tap(find.byType(SideBarTile));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(RemoteDesktopProfilesPage), findsOneWidget);
+      expect(find.text('Windows'), findsOneWidget);
+      expect(find.byType(SideBarTile), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
+      expect(find.byType(SideBarTile), findsOneWidget);
+    },
+  );
+
+  testWidgets('the rail puts open sessions in a running group', (tester) async {
+    final profile = Stores.remoteDesktop.fetchForServer(sid).single;
+    final session = RemoteDesktopSessionView(profile: profile);
+    await pumpPage(
+      tester,
+      width: 834,
+      home: const RemoteDesktopTabPage(),
+      sessions: RemoteDesktopSessionsState(sessions: {session.id: session}),
+    );
+
+    expect(find.text(libL10n.running.toUpperCase()), findsOneWidget);
+    expect(find.text('Windows'), findsOneWidget);
+    expect(find.byType(CustomAppBar), findsNothing);
+    expect(
+      tester.getTopLeft(find.text(libL10n.running.toUpperCase())).dy,
+      lessThan(tester.getTopLeft(find.text('Windows')).dy),
+    );
+  });
+
+  testWidgets('switching servers slides the right pane', (tester) async {
+    Stores.server.put(
+      spiFixture(
+        id: 'srv-other',
+        name: 'other',
+        ip: 'other',
+        autoConnect: false,
+      ),
+    );
+    await pumpPage(tester, width: 834, home: const RemoteDesktopTabPage());
+
+    await tester.tap(find.text('web'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('other'));
+    await tester.pump();
+    expect(find.byType(RemoteDesktopProfilesPage), findsNWidgets(2));
+    final incoming = find.widgetWithText(CustomAppBar, 'other');
+    final startingX = tester.getTopLeft(incoming).dx;
+
+    await tester.pumpAndSettle();
+    expect(find.byType(RemoteDesktopProfilesPage), findsOneWidget);
+    expect(tester.getTopLeft(incoming).dx, lessThan(startingX));
+  });
+
+  testWidgets('adding a profile slides the editor in the right pane', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      await pumpPage(tester, width: 834, home: const RemoteDesktopTabPage());
+      await tester.tap(find.text('web'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(libL10n.add));
+      await tester.pump();
+      final editor = find.byType(RemoteDesktopProfileEditPage);
+      expect(editor, findsOneWidget);
+      final startingX = tester.getTopLeft(editor).dx;
+
+      await tester.pumpAndSettle();
+      final restingX = tester.getTopLeft(editor).dx;
+      expect(restingX, lessThan(startingX));
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.getTopLeft(editor).dx, greaterThan(restingX));
+      await tester.pumpAndSettle();
+      expect(editor, findsNothing);
+      expect(find.text('Windows'), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
+
+  testWidgets(
+    'a narrow remote desktop tab can pick a server without a session',
+    (tester) async {
+      await pumpPage(tester, width: 500, home: const RemoteDesktopTabPage());
+
+      expect(find.byType(SideBarTile), findsOneWidget);
+      expect(find.byTooltip(libL10n.sort), findsOneWidget);
+      await tester.tap(find.byType(SideBarTile));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(RemoteDesktopProfilesPage), findsOneWidget);
+      expect(find.text('Windows'), findsOneWidget);
+    },
+  );
+
+  testWidgets('the rail sorts servers and groups them by tag', (tester) async {
+    Stores.server.put(
+      spiFixture(
+        id: 'srv-alpha',
+        name: 'Alpha',
+        ip: 'alpha',
+        tags: ['prod'],
+        autoConnect: false,
+      ),
+    );
+    Stores.server.put(
+      spiFixture(
+        id: 'srv-beta',
+        name: 'Beta',
+        ip: 'beta',
+        tags: ['prod'],
+        autoConnect: false,
+      ),
+    );
+    await pumpPage(tester, width: 834, home: const RemoteDesktopTabPage());
+    expect(find.text('Alpha'), findsOneWidget);
+    expect(find.text('Beta'), findsOneWidget);
+    expect(find.text('PROD'), findsOneWidget);
+    expect(find.text('SERVERS'), findsNothing);
+
+    await tester.tap(find.byTooltip(libL10n.sort));
+    await tester.pumpAndSettle();
+    expect(find.byType(SheetChoiceTile), findsNWidgets(4));
+    expect(find.byType(SwitchListTile), findsNothing);
+    await tester.tap(find.text('${libL10n.sortByName} (Z-A)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PROD'), findsOneWidget);
+    expect(find.text('Alpha'), findsOneWidget);
+    expect(find.text('Beta'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Beta')).dy,
+      lessThan(tester.getTopLeft(find.text('Alpha')).dy),
+    );
+  });
 
   testWidgets('a wide window puts the editor beside the list', (tester) async {
     await pumpPage(tester, width: 1200);
@@ -114,39 +313,64 @@ void main() {
 
     await tester.tap(find.byType(SideBarTile));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    final incomingX = tester
+        .getTopLeft(find.byType(RemoteDesktopProfileEditPage))
+        .dx;
+    await tester.pumpAndSettle();
 
     // Beside the list, not over it: the rail is still on screen.
     expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
     expect(find.byType(SideBarTile), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byType(RemoteDesktopProfileEditPage)).dx,
+      lessThan(incomingX),
+    );
   });
 
   testWidgets('a narrow window keeps the list and opens the editor over it', (
     tester,
   ) async {
-    await pumpPage(tester, width: 500);
+    await pumpPage(tester, width: 320);
 
     expect(find.byType(SideBarTile), findsNothing);
     expect(find.byType(CardTile), findsOneWidget);
 
-    await tester.tap(find.byType(CardTile));
+    expect(find.byTooltip('Connect'), findsOneWidget);
+    expect(find.byTooltip(libL10n.edit), findsOneWidget);
+
+    await tester.tap(find.byTooltip(libL10n.edit));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the form draws Material switches, not platform-adaptive ones', (
+  testWidgets('profile cards show connect and edit within a capped list', (
     tester,
   ) async {
-    // On iOS is where the difference shows: a plain `SwitchListTile` draws a
-    // Material switch on every platform, while `SwitchListTile.adaptive` draws
-    // a `CupertinoSwitch` there — which is what made this form the only
-    // Cupertino-looking one in an app that is Material on all of them.
-    //
-    // Cleared before the body ends rather than in a tear-down: the binding
-    // checks that no foundation debug variable was left changed as the last
-    // thing it does, which is before any tear-down runs.
+    await pumpPage(
+      tester,
+      width: 1200,
+      home: RemoteDesktopProfilesPage(
+        args: SpiRequiredArgs(spi),
+        onBack: () {},
+      ),
+    );
+
+    expect(find.widgetWithText(TextButton, 'Connect'), findsOneWidget);
+    expect(find.widgetWithText(TextButton, libL10n.edit), findsOneWidget);
+    expect(tester.getSize(find.byType(CardTile)).width, lessThanOrEqualTo(620));
+
+    await tester.tap(find.widgetWithText(TextButton, 'Connect'));
+    await tester.pumpAndSettle();
+    expect(find.text('RDP password'), findsOneWidget);
+    expect(find.byType(RemoteDesktopProfileEditPage), findsNothing);
+  });
+
+  testWidgets('the form uses server editor sections and Material switches', (
+    tester,
+  ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       await pumpPage(tester, width: 1200);
@@ -154,30 +378,60 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.byType(SwitchListTile), findsWidgets);
-      expect(
-        find.byType(CupertinoSwitch),
-        findsNothing,
-        reason: 'an adaptive switch is a Cupertino one on iOS',
-      );
+      expect(find.byType(GroupTitle), findsNWidgets(3));
+      expect(find.byType(SegmentedTabs<RemoteDesktopProtocol>), findsOneWidget);
+      expect(find.byType(SegmentedButton<RemoteDesktopProtocol>), findsNothing);
+      expect(find.byType(SwitchX), findsNWidgets(2));
+      expect(find.byType(CupertinoSwitch), findsNothing);
+      expect(find.byType(PageColumns), findsNothing);
+      expect(find.byType(FloatingActionButton), findsNothing);
+      expect(find.widgetWithText(FilledButton, libL10n.save), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Test'), findsOneWidget);
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
   });
 
+  testWidgets('the fl_lib protocol selector updates the default port', (
+    tester,
+  ) async {
+    await pumpPage(tester, width: 1200);
+    await tester.tap(find.byType(SideBarTile));
+    await tester.pumpAndSettle();
+
+    final port = find.byWidgetPredicate(
+      (widget) => widget is Input && widget.label == libL10n.port,
+    );
+    expect(tester.widget<Input>(port).controller?.text, '3389');
+
+    await tester.tap(find.text('VNC'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<SegmentedTabs<RemoteDesktopProtocol>>(
+            find.byType(SegmentedTabs<RemoteDesktopProtocol>),
+          )
+          .selected,
+      RemoteDesktopProtocol.vnc,
+    );
+    expect(tester.widget<Input>(port).controller?.text, '5900');
+    expect(find.text('Share session'), findsOneWidget);
+    expect(find.text('Username'), findsNothing);
+  });
+
   testWidgets('the form is not a dialog', (tester) async {
     await pumpPage(tester, width: 500);
-    await tester.tap(find.byType(CardTile));
+    await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(AlertDialog), findsNothing);
-    // A dialog would be on the root navigator, over the page; a page has a
-    // bar of its own with the save action on it.
+    // The editor keeps Save in its own app bar.
     expect(
       find.descendant(
         of: find.byType(RemoteDesktopProfileEditPage),
-        matching: find.byTooltip(libL10n.save),
+        matching: find.widgetWithText(FilledButton, libL10n.save),
       ),
       findsOneWidget,
     );
@@ -186,7 +440,7 @@ void main() {
   testWidgets('connecting refuses a password that could not be sent', (
     tester,
   ) async {
-    // The corner button authenticates with what is typed even when the save
+    // Test authenticates with what is typed even when the save
     // switch is off, so it has to validate that password too. A VNC password
     // over eight bytes is refused by the server, which would present it as a
     // failed session rather than as the field that has to change.
@@ -209,7 +463,7 @@ void main() {
       find.byType(TextField).last,
       'far-too-long-for-classic-vnc',
     );
-    await tester.tap(find.byTooltip('Connect'));
+    await tester.tap(find.widgetWithText(TextButton, 'Test'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -221,5 +475,53 @@ void main() {
       tester.element(find.byType(RemoteDesktopProfilesPage)),
     );
     expect(container.read(remoteDesktopSessionsProvider).sessions, isEmpty);
+  });
+
+  testWidgets('password prompt stays mounted through its exit animation', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          remoteDesktopSessionsProvider.overrideWith(
+            _NoConnectRemoteDesktopSessions.new,
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [
+            LibLocalizations.delegate,
+            ...AppLocalizations.localizationsDelegates,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: ResponsivePoints.builder,
+          home: const RemoteDesktopTabPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('web'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, libL10n.edit));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Test'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      ),
+      'temporary-password',
+    );
+    await tester.tap(find.widgetWithText(TextButton, libL10n.ok));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(tester.takeException(), isNull);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }

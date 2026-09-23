@@ -157,9 +157,7 @@ class RemoteDesktopSessionView {
     cursor: cursor ?? this.cursor,
     error: clearError ? null : (error ?? this.error),
     endReason: clearEndReason ? null : (endReason ?? this.endReason),
-    certificate: clearCertificate
-        ? null
-        : (certificate ?? this.certificate),
+    certificate: clearCertificate ? null : (certificate ?? this.certificate),
     visible: visible ?? this.visible,
     viewOnly: viewOnly ?? this.viewOnly,
   );
@@ -174,10 +172,7 @@ class RemoteDesktopSessionView {
 }
 
 class RemoteDesktopSessionsState {
-  const RemoteDesktopSessionsState({
-    this.sessions = const {},
-    this.activeId,
-  });
+  const RemoteDesktopSessionsState({this.sessions = const {}, this.activeId});
 
   final Map<String, RemoteDesktopSessionView> sessions;
   final String? activeId;
@@ -338,9 +333,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final entry = _entries[id];
     final prompt = state.sessions[id]?.certificate;
     if (entry == null || prompt == null) return;
-    final trusted = entry.profile.copyWith(
-      trustedCertSha256: prompt.sha256,
-    );
+    final trusted = entry.profile.copyWith(trustedCertSha256: prompt.sha256);
     // What is written is the stored record, not the draft the session may have
     // been opened from: the editor's corner button connects with unsaved edits,
     // and persisting those here would save a form nobody pressed Save on — or
@@ -349,7 +342,9 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     // form's contents into the database with it.
     final stored = Stores.remoteDesktop.fetchOneRaw(id);
     if (stored != null) {
-      Stores.remoteDesktop.put(stored.copyWith(trustedCertSha256: prompt.sha256));
+      Stores.remoteDesktop.put(
+        stored.copyWith(trustedCertSha256: prompt.sha256),
+      );
     }
     // In memory either way, including for a draft: the session about to
     // reconnect is this one, and it has to remember what it just accepted.
@@ -402,13 +397,7 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     );
   }
 
-  void sendWheel(
-    String id,
-    int x,
-    int y, {
-    int deltaX = 0,
-    int deltaY = 0,
-  }) {
+  void sendWheel(String id, int x, int y, {int deltaX = 0, int deltaY = 0}) {
     _writableEntry(id)?.handle?.sendWheel(
       x: x.clamp(0, 65535),
       y: y.clamp(0, 65535),
@@ -460,7 +449,9 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   }
 
   Future<void> _connect(_SessionEntry entry) async {
-    if (_disposed || entry.closed || _entries[entry.profile.id] != entry) return;
+    if (_disposed || entry.closed || _entries[entry.profile.id] != entry) {
+      return;
+    }
     final generation = ++entry.generation;
     _replaceView(
       entry.profile.id,
@@ -482,7 +473,6 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         await tunnel?.close();
         return;
       }
-
       final handle = switch (entry.profile.protocol) {
         RemoteDesktopProtocol.rdp => ffi.RemoteDesktopSessionHandle.startRdp(
           params: ffi.RdpSessionParams(
@@ -683,9 +673,22 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
   ) async {
     while (_isCurrent(entry, generation) && identical(entry.handle, handle)) {
       final event = await handle.nextEvent();
-      if (event == null || !_isCurrent(entry, generation)) break;
+      if (!_isCurrent(entry, generation)) return;
+      if (event == null) {
+        await _connectionEnded(
+          entry,
+          generation,
+          ffi.RemoteDesktopEndReason.serverDisconnected,
+          'Remote desktop connection ended unexpectedly',
+          retryable: true,
+        );
+        return;
+      }
       switch (event) {
-        case ffi.RemoteDesktopEvent_ConnectionState(:final state, :final attempt):
+        case ffi.RemoteDesktopEvent_ConnectionState(
+          :final state,
+          :final attempt,
+        ):
           if (state == ffi.RemoteDesktopConnectionState.connected) {
             entry.retryCount = 0;
           }
@@ -695,7 +698,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
               connectionState: state,
               reconnectAttempt: attempt,
               clearError: state == ffi.RemoteDesktopConnectionState.connected,
-              clearEndReason: state == ffi.RemoteDesktopConnectionState.connected,
+              clearEndReason:
+                  state == ffi.RemoteDesktopConnectionState.connected,
             ),
           );
         case ffi.RemoteDesktopEvent_Frame(
@@ -732,9 +736,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         case ffi.RemoteDesktopEvent_CursorHidden():
           _replaceView(
             entry.profile.id,
-            (view) => view.copyWith(
-              cursor: view.cursor.copyWith(visible: false),
-            ),
+            (view) =>
+                view.copyWith(cursor: view.cursor.copyWith(visible: false)),
           );
         case ffi.RemoteDesktopEvent_CursorPosition(:final x, :final y):
           _replaceView(
@@ -877,11 +880,8 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final activeId = state.activeId;
     var next = state;
     for (final session in state.sessions.values) {
-      final visible =
-          session.id == activeId && _appVisible && _surfaceVisible;
-      _entries[session.id]?.handle?.setVisible(
-        visible: visible,
-      );
+      final visible = session.id == activeId && _appVisible && _surfaceVisible;
+      _entries[session.id]?.handle?.setVisible(visible: visible);
       if (session.visible != visible) {
         next = next.put(session.copyWith(visible: visible));
       }

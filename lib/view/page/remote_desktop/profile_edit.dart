@@ -7,11 +7,13 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/store/entity_store.dart';
+import 'package:server_box/view/widget/group_title.dart';
 
 /// One profile's form: the fields, and the ways out of it.
 ///
@@ -21,8 +23,8 @@ import 'package:server_box/data/store/entity_store.dart';
 /// (`RemoteDesktopProfilesPage`), where a modal over the list that opened it is
 /// the one shape the pane layout exists to avoid.
 ///
-/// Connecting lives in the corner button, not in the list rows: opening a
-/// session is what a profile is *for*, and the corner is what a thumb reaches.
+/// Connecting lives in the app bar, not in the list rows: opening a session
+/// is what a profile is for, and the action stays visible while the form scrolls.
 /// The list rows still offer it, so a profile that is already set up does not
 /// have to be opened to be used.
 final class RemoteDesktopProfileEditPage extends ConsumerStatefulWidget {
@@ -41,12 +43,19 @@ final class RemoteDesktopProfileEditPage extends ConsumerStatefulWidget {
 }
 
 final class RemoteDesktopProfileEditArgs {
-  const RemoteDesktopProfileEditArgs({required this.serverId, this.profile});
+  const RemoteDesktopProfileEditArgs({
+    required this.serverId,
+    this.profile,
+    this.onClose,
+    this.onSessionOpened,
+  });
 
   final String serverId;
 
   /// The profile being edited, or null for one being added.
   final RemoteDesktopProfile? profile;
+  final VoidCallback? onClose;
+  final VoidCallback? onSessionOpened;
 }
 
 class _RemoteDesktopProfileEditPageState
@@ -66,7 +75,7 @@ class _RemoteDesktopProfileEditPageState
   ///
   /// Not per save: connecting from here opens a session keyed by the profile's
   /// id, so an id that changed on save would leave the session pointing at a
-  /// record that no longer exists — and a second Connect would open a second
+  /// record that no longer exists — and a second Test would open a second
   /// session for one profile.
   late final String _id = widget.args.profile?.id ?? ShortId.generate();
 
@@ -103,13 +112,24 @@ class _RemoteDesktopProfileEditPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
+        leading: widget.args.onClose == null
+            ? null
+            : IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _leave,
+              ),
         title: Text(
-          widget.args.profile == null ? 'Add remote desktop' : 'Edit remote desktop',
+          widget.args.profile == null
+              ? 'Add remote desktop'
+              : 'Edit remote desktop',
         ),
         actions: _buildActions(),
       ),
-      body: _buildForm(),
-      floatingActionButton: _buildConnectButton(),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: _buildForm(),
+      ),
     );
   }
 }
@@ -118,91 +138,150 @@ class _RemoteDesktopProfileEditPageState
 
 extension _Widgets on _RemoteDesktopProfileEditPageState {
   Widget _buildForm() {
-    return PageColumns(
-      bottomInset: 77,
-      children: [
-        _buildProtocolPicker(),
-        Input(controller: _name, label: libL10n.name),
-        Row(
-          children: [
-            Expanded(child: Input(controller: _host, label: libL10n.host)),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 112,
-              child: Input(
-                controller: _port,
-                label: libL10n.port,
-                type: TextInputType.number,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(13, 7, 13, 34),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 620),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Input(
+                controller: _name,
+                label: libL10n.name,
+                icon: Icons.drive_file_rename_outline,
               ),
+              GroupTitle(
+                context.l10n.connection,
+                right: _protocol.name.toUpperCase(),
+              ),
+              _buildProtocolPicker(),
+              Row(
+                children: [
+                  Expanded(
+                    child: Input(
+                      controller: _host,
+                      label: libL10n.host,
+                      icon: Icons.dns_outlined,
+                      suggestion: false,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 124,
+                    child: Input(
+                      controller: _port,
+                      label: libL10n.port,
+                      type: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(3, 0, 3, 7),
+                child: Text(
+                  'The target is resolved from the SSH server or monitor agent. '
+                  'Localhost refers to that machine.',
+                  style: UIs.text12Grey,
+                ),
+              ),
+              GroupTitle(context.l10n.authShort),
+              if (_protocol == RemoteDesktopProtocol.rdp) ...[
+                Input(
+                  controller: _username,
+                  label: 'Username',
+                  icon: Icons.person_outline,
+                ),
+                Input(
+                  controller: _domain,
+                  label: 'Domain (optional)',
+                  icon: Icons.domain_outlined,
+                ),
+              ],
+              Input(
+                controller: _password,
+                label: 'Password (optional)',
+                icon: Icons.password,
+                obscureText: true,
+                suggestion: false,
+              ),
+              _buildSwitch(
+                title: 'Save password',
+                subtitle: 'Stored in the encrypted database and backups.',
+                icon: Icons.save_outlined,
+                value: _savePassword,
+                onChanged: (value) => setState(() => _savePassword = value),
+              ),
+              GroupTitle(context.l10n.behaviour),
+              _buildSwitch(
+                title: 'View only',
+                icon: Icons.visibility_outlined,
+                value: _viewOnly,
+                onChanged: (value) => setState(() => _viewOnly = value),
+              ),
+              if (_protocol == RemoteDesktopProtocol.vnc)
+                _buildSwitch(
+                  title: 'Share session',
+                  icon: Icons.people_outline,
+                  value: _shared,
+                  onChanged: (value) => setState(() => _shared = value),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitch({
+    required String title,
+    required IconData icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    String? subtitle,
+  }) => ListTile(
+    leading: Icon(icon),
+    title: Text(title),
+    subtitle: subtitle == null ? null : Text(subtitle, style: UIs.text12Grey),
+    trailing: SwitchX(value: value, onChanged: onChanged),
+    onTap: () => onChanged(!value),
+  ).cardx;
+
+  Widget _buildProtocolPicker() {
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.all(13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.desktop_windows_outlined),
+                SizedBox(width: 13),
+                Text('Protocol'),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SegmentedTabs<RemoteDesktopProtocol>(
+              expand: true,
+              segments: const [
+                SegmentedTab(value: RemoteDesktopProtocol.rdp, label: 'RDP'),
+                SegmentedTab(value: RemoteDesktopProtocol.vnc, label: 'VNC'),
+              ],
+              selected: _protocol,
+              onSelected: (next) {
+                setState(() {
+                  final oldDefault = _protocol.defaultPort.toString();
+                  _protocol = next;
+                  if (_port.text.isEmpty || _port.text == oldDefault) {
+                    _port.text = next.defaultPort.toString();
+                  }
+                });
+              },
             ),
           ],
         ),
-        Text(
-          'The target is resolved from the SSH server, or from the monitor '
-          'agent carrying the connection, so localhost refers to that machine.',
-          style: UIs.text12Grey,
-        ),
-        if (_protocol == RemoteDesktopProtocol.rdp) ...[
-          Input(controller: _username, label: 'Username'),
-          Input(controller: _domain, label: 'Domain (optional)'),
-        ],
-        Input(
-          controller: _password,
-          label: 'Password (optional)',
-          obscureText: true,
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Save password'),
-          subtitle: const Text(
-            'Stored in the encrypted database and backups.',
-          ),
-          value: _savePassword,
-          onChanged: (value) => setState(() => _savePassword = value),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('View only'),
-          value: _viewOnly,
-          onChanged: (value) => setState(() => _viewOnly = value),
-        ),
-        if (_protocol == RemoteDesktopProtocol.vnc)
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Share session'),
-            value: _shared,
-            onChanged: (value) => setState(() => _shared = value),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildProtocolPicker() {
-    return SegmentedButton<RemoteDesktopProtocol>(
-      segments: const [
-        ButtonSegment(value: RemoteDesktopProtocol.rdp, label: Text('RDP')),
-        ButtonSegment(value: RemoteDesktopProtocol.vnc, label: Text('VNC')),
-      ],
-      selected: {_protocol},
-      onSelectionChanged: (selected) {
-        final next = selected.single;
-        setState(() {
-          final oldDefault = _protocol.defaultPort.toString();
-          _protocol = next;
-          if (_port.text.isEmpty || _port.text == oldDefault) {
-            _port.text = next.defaultPort.toString();
-          }
-        });
-      },
-    );
-  }
-
-  Widget _buildConnectButton() {
-    return FloatingActionButton(
-      heroTag: 'remoteDesktopConnect',
-      tooltip: 'Connect',
-      onPressed: _connect,
-      child: const Icon(Icons.play_arrow),
+      ),
     );
   }
 }
@@ -213,10 +292,10 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
   List<Widget> _buildActions() {
     final existing = widget.args.profile;
     return [
-      IconButton(
-        onPressed: _save,
-        tooltip: libL10n.save,
-        icon: const Icon(Icons.save),
+      TextButton(
+        onPressed: _connect,
+        style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+        child: const Text('Test'),
       ),
       if (existing != null)
         IconButton(
@@ -224,6 +303,17 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
           tooltip: libL10n.delete,
           icon: const Icon(Icons.delete),
         ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7),
+        child: FilledButton(
+          onPressed: _save,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 17),
+            visualDensity: VisualDensity.compact,
+          ),
+          child: Text(libL10n.save),
+        ),
+      ),
     ];
   }
 
@@ -274,8 +364,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
   /// Opens a session for what the fields say right now, saved or not.
   ///
   /// The draft rather than the stored record, so a host can be corrected and
-  /// tried without committing it first — the same loop the snippet editor's run
-  /// button exists for. It carries [_id], so saving afterwards updates the
+  /// tried without committing it first. It carries [_id], so saving afterwards updates the
   /// record the session was opened from.
   Future<void> _connect() async {
     // The typed password is validated even when it is not being saved: it is
@@ -290,17 +379,21 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
     // fields are tried, so the old connection goes rather than being focused:
     // `open` on an existing id only selects it.
     final sessions = ref.read(remoteDesktopSessionsProvider.notifier);
-    if (ref.read(remoteDesktopSessionsProvider).sessions.containsKey(profile.id)) {
+    if (ref
+        .read(remoteDesktopSessionsProvider)
+        .sessions
+        .containsKey(profile.id)) {
       await sessions.close(profile.id);
       if (!mounted) return;
     }
 
-    await openRemoteDesktop(
+    final opened = await openRemoteDesktop(
       context,
       ref,
       profile,
       sessionPassword: _password.text,
     );
+    if (opened && mounted) widget.args.onSessionOpened?.call();
   }
 }
 
@@ -309,7 +402,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
 extension _Utils on _RemoteDesktopProfileEditPageState {
   /// What the fields say, or null after saying why they say nothing usable.
   ///
-  /// [connecting] is for the corner button: it validates the password the typed
+  /// [connecting] is for Test: it validates the password the typed
   /// field holds rather than only a saved one, because that is the password the
   /// session about to open will present. Saving excludes it when the save
   /// switch is off, which is the whole point of that switch.
@@ -351,10 +444,13 @@ extension _Utils on _RemoteDesktopProfileEditPageState {
 
   /// Leaves the editor, wherever it is.
   ///
-  /// A pushed page pops. As the content pane's root page there is nothing to
-  /// pop — `context.pop()` there does nothing and looks broken — so the way out
-  /// is closing the pane, which hands the width back to the list.
+  /// An embedded form returns to its list, a detail closes its pane, and a
+  /// pushed page pops its route.
   void _leave() {
+    if (widget.args.onClose case final onClose?) {
+      onClose();
+      return;
+    }
     final closePane = PaneScope.closeDetailOf(context);
     if (closePane != null) {
       closePane();
@@ -366,11 +462,11 @@ extension _Utils on _RemoteDesktopProfileEditPageState {
 
 /// Opens [profile] on the remote desktop tab.
 ///
-/// Shared by the list's rows and the editor's corner button: both have the same
+/// Shared by the list's rows and the editor's Test action: both have the same
 /// question to answer — a profile with no stored password needs one before
 /// there is anything to connect with — and answering it twice is how the two
 /// would come to disagree.
-Future<void> openRemoteDesktop(
+Future<bool> openRemoteDesktop(
   BuildContext context,
   WidgetRef ref,
   RemoteDesktopProfile profile, {
@@ -381,12 +477,13 @@ Future<void> openRemoteDesktop(
       : profile.password;
   if (password == null) {
     password = await _askPassword(context, profile);
-    if (password == null) return;
+    if (password == null) return false;
   }
   ref
       .read(remoteDesktopSessionsProvider.notifier)
       .open(profile, sessionPassword: password);
   ref.read(homeTabRequestProvider.notifier).go(AppTab.remoteDesktop);
+  return true;
 }
 
 /// The password a profile without a stored one cannot connect without.
@@ -398,41 +495,42 @@ Future<String?> _askPassword(
   RemoteDesktopProfile profile,
 ) {
   final controller = TextEditingController();
-  return context
-      .showRoundDialog<String>(
-        title: '${profile.protocol.name.toUpperCase()} password',
-        childBuilder: (dialogContext) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (profile.username case final username?) ...[
-              Text(username, style: UIs.text13Grey),
-              const SizedBox(height: 8),
-            ],
-            Input(
-              controller: controller,
-              hint: 'Password',
-              obscureText: true,
-              autoFocus: true,
-              onSubmitted: (value) =>
-                  _answerPassword(dialogContext, profile, value),
-            ),
+  return context.showRoundDialog<String>(
+    title: '${profile.protocol.name.toUpperCase()} password',
+    childBuilder: (dialogContext) => DisposeWith(
+      notifiers: [controller],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (profile.username case final username?) ...[
+            Text(username, style: UIs.text13Grey),
+            const SizedBox(height: 8),
           ],
-        ),
-        actionsBuilder: (dialogContext) => [
-          Btn.cancel(),
-          TextButton(
-            onPressed: () =>
-                _answerPassword(dialogContext, profile, controller.text),
-            child: Text(
-              profile.protocol == RemoteDesktopProtocol.vnc
-                  ? 'Connect'
-                  : libL10n.ok,
-            ),
+          Input(
+            controller: controller,
+            hint: 'Password',
+            obscureText: true,
+            autoFocus: true,
+            onSubmitted: (value) =>
+                _answerPassword(dialogContext, profile, value),
           ),
         ],
-      )
-      .whenComplete(controller.dispose);
+      ),
+    ),
+    actionsBuilder: (dialogContext) => [
+      Btn.cancel(),
+      TextButton(
+        onPressed: () =>
+            _answerPassword(dialogContext, profile, controller.text),
+        child: Text(
+          profile.protocol == RemoteDesktopProtocol.vnc
+              ? 'Connect'
+              : libL10n.ok,
+        ),
+      ),
+    ],
+  );
 }
 
 /// Answers the password dialog, or refuses the answer and leaves it open.

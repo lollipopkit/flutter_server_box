@@ -8,9 +8,9 @@ Server Box includes RDP and VNC clients on Android, iOS, Linux, macOS, and Windo
 ## Configure a desktop
 
 1. Configure a way in for the server: SSH, or a Monitor agent whose `remote_access.full_access` is on. With both configured, the remote desktop follows the server's **Try first** preference and falls back to the other.
-2. Open the server detail page and select **Remote desktop**.
+2. Open the **Remote desktop** tab and select the server, or select **Remote desktop** from the server detail page.
 3. Add one or more profiles. Profile names are unique within that server.
-4. Select a profile and use the corner button to open it in the **Remote desktop** tab. Opening the same profile again focuses its existing session instead of creating a duplicate. The row menu can connect without opening the profile first.
+4. In the **Remote desktop** tab, select the server and use a profile's **Connect** or **Edit** button. In the editor, **Test** opens a session using the current form values and replaces an existing session for that profile. **Connect** focuses an existing session instead of creating a duplicate.
 
 The target host is resolved from the server's network, not from the phone or computer running Server Box — from the SSH server over SSH, and from the agent's own machine over a Monitor agent. The defaults are therefore useful when the desktop service runs on that machine itself:
 

@@ -722,7 +722,7 @@ async fn run_rdp(
                         }
                     }
                     Some(RdpOutputEvent::ConnectionFailure(error)) => {
-                        let message = error.to_string();
+                        let message = error.report().to_string();
                         let reason = classify_rdp_failure(&message);
                         events.event(RemoteDesktopEvent::Error {
                             message: message.clone(),
