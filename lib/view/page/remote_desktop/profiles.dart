@@ -61,7 +61,8 @@ class _RemoteDesktopProfilesPageState
     };
     // A profile deleted from under the pane. Cleared next frame rather than
     // now, because this runs during a build.
-    if (_editing is String && editing == null) {
+    final gone = _editing is String && editing == null;
+    if (gone) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _editing is String) setState(() => _editing = null);
       });
@@ -81,7 +82,11 @@ class _RemoteDesktopProfilesPageState
         // moment it opens. A null builder hands the whole width back to the
         // list, which made the first thing anyone saw a full-width list that
         // rearranged itself into a column as soon as a row was tapped.
-        detailBuilder: (_) => _editing == null && editing == null
+        //
+        // `_editing` is the sentinel for a new profile, so the pane shows a
+        // form for it exactly as it does for a saved one — and shows nothing at
+        // all for an id whose record has just gone.
+        detailBuilder: (_) => _editing == null || gone
             ? const EmptyPane(icon: Icons.desktop_windows_outlined)
             : RemoteDesktopProfileEditPage(
                 args: RemoteDesktopProfileEditArgs(

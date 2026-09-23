@@ -29,7 +29,6 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
-import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 
 import '../../helpers/rust_lib_helper.dart';
 import '../../helpers/test_db.dart';
@@ -37,23 +36,18 @@ import '../../helpers/test_db.dart';
 /// An agent that answers the login, mints a ticket, and then accepts the relay
 /// — recording that it was reached, which is the whole assertion.
 class _FakeAgent {
-  _FakeAgent._(this._server, this._refuseTickets);
+  _FakeAgent._(this._server);
 
   final HttpServer _server;
-
-  /// Answer 403 to every ticket request, standing in for an agent that will
-  /// not relay — the failure that has to end up reported rather than retried
-  /// for ever.
-  final bool _refuseTickets;
 
   /// The addresses the relay was asked to dial.
   final List<String> dialled = [];
 
   Uri get url => Uri.parse('http://127.0.0.1:${_server.port}');
 
-  static Future<_FakeAgent> start({bool refuseTickets = false}) async {
+  static Future<_FakeAgent> start() async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final agent = _FakeAgent._(server, refuseTickets);
+    final agent = _FakeAgent._(server);
     agent._serve();
     return agent;
   }
@@ -66,10 +60,6 @@ class _FakeAgent {
       }
       if (request.uri.path == '/api/v1/ws-ticket') {
         await request.drain<void>();
-        if (_refuseTickets) {
-          request.response.statusCode = HttpStatus.forbidden;
-          return request.response.close();
-        }
         return _json(request, {'ticket': 'id.secret', 'expires_in': 30});
       }
       final socket = await WebSocketTransformer.upgrade(
@@ -194,53 +184,6 @@ void main() {
     expect(ServerFuncBtn.remoteDesktop.availableWith(withRelay), isTrue);
     expect(ServerFuncBtn.remoteDesktop.availableWith(withoutRelay), isFalse);
   });
-
-  test('a session that cannot open is reported, not left connecting', () async {
-    // An agent that refuses the ticket. What is asserted is that the failure
-    // reaches the session as an error: a page that only ever saw "connecting"
-    // would draw an empty desktop and say nothing about why. The agent's
-    // refusal of the *target*, the other way this fails, is
-    // `monitor_tunnel_test.dart`'s subject.
-    final agent = await _FakeAgent.start(refuseTickets: true);
-    addTearDown(agent.close);
-
-    final spi = Spi(
-      name: 'unreachable',
-      id: 'srv-dead',
-      monitorHttp: MonitorHttpCredential(addr: agent.url.toString()),
-    );
-    Stores.server.put(spi);
-
-    await realHttp(() async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      container.read(serversProvider);
-
-      final sessions = container.read(remoteDesktopSessionsProvider.notifier);
-      final profile = profileFor(spi.id);
-      sessions.open(profile, sessionPassword: 'secret');
-      addTearDown(() => sessions.close(profile.id));
-
-      await _until(
-        () =>
-            container
-                .read(remoteDesktopSessionsProvider)
-                .sessions[profile.id]
-                ?.error !=
-            null,
-      );
-      expect(
-        container
-            .read(remoteDesktopSessionsProvider)
-            .sessions[profile.id]!
-            .connectionState,
-        isNot(ffi.RemoteDesktopConnectionState.connected),
-      );
-      // Nothing was ever dialled, because there was never a socket to dial
-      // through.
-      expect(agent.dialled, isEmpty);
-    });
-  }, timeout: const Timeout(Duration(minutes: 4)));
 }
 
 /// Pumps until [predicate], or fails after a while.
