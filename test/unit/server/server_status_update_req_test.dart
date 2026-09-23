@@ -151,12 +151,15 @@ __SBM_GPU_END__
       // `getStatus` parses into the status it was handed; the private copy is
       // made by `ServerNotifier._copyStatus` before it gets here. What matters
       // is that a copy is independent, which `Cpus.copy` is asserted on below.
-      expect(result.cpu.now.single.user, 14);
+      // The summary row in front, then the one pseudo-core: a single reading
+      // with no `hw.ncpu` after it is one core.
+      expect(result.cpu.now.map((c) => c.id), ['cpu', 'cpu0']);
+      expect(result.cpu.now.first.user, 14);
 
       final snapshot = Cpus.copy(result.cpu);
       result.cpu.update([SingleCpuCore('cpu', 99, 0, 0, 1, 0, 0, 0)]);
       expect(
-        snapshot.now.single.user,
+        snapshot.now.first.user,
         14,
         reason: 'a copy must stop tracking the original',
       );
@@ -180,6 +183,29 @@ __SBM_GPU_END__
 
       expect(identical(result.history, previous.history), isTrue);
       expect(result.history.length, 2);
+    });
+
+    test('a macOS CPU has a reading from its second poll on', () async {
+      // `top` gives percentages, not the cumulative ticks usage is the
+      // difference of. Two snapshots each sum to about 100, so taken as
+      // counters the window's total barely moves and the reading was "none"
+      // on most polls — with both of these it would be 0 over 0.
+      Future<ServerStatus> poll(ServerStatus prev, String line) => getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.bsd,
+          ss: prev,
+          parsedOutput: {BSDStatusCmdType.cpu.name: '$line\n4'},
+        ),
+      );
+      var ss = await poll(
+        InitStatus.status,
+        'CPU usage: 10.00% user, 10.00% sys, 80.00% idle',
+      );
+      ss = await poll(ss, 'CPU usage: 30.00% user, 10.00% sys, 60.00% idle');
+
+      expect(ss.cpu.usedPercent(), closeTo(40, 0.5));
+      // The four cores `hw.ncpu` reported, behind the summary row.
+      expect(ss.cpu.coresCount, 4);
     });
 
     test('Windows CPU brand comes from the processor record', () async {

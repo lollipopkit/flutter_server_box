@@ -2620,6 +2620,36 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transportOff => 'desligado';
 
   @override
+  String get thisDevice => 'Este dispositivo';
+
+  @override
+  String get localServerTip =>
+      'Lê este dispositivo diretamente, executando aqui o script de status. SSH e Monitor HTTP não são usados, e as suas configurações são mantidas.';
+
+  @override
+  String get localServerUnsupported =>
+      'Esta plataforma não consegue ler este dispositivo como servidor. Linux, Windows e a versão DMG do macOS conseguem.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Abre o ambiente de trabalho RDP ou VNC de um servidor dentro da app. A conexão passa pela conexão SSH do servidor ou pelo seu agente Monitor, por isso a porta do ambiente de trabalho não precisa de estar acessível a partir da rede.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Guarde um perfil por ambiente de trabalho a partir do botão Área de trabalho remota de um servidor ou do separador Área de trabalho remota.';
+
+  @override
+  String get localServerIntro =>
+      'Adiciona como servidor o dispositivo que executa o ServerBox. Estado, processos, serviços, contentores, terminal e ficheiros funcionam sem SSH nem agente Monitor.';
+
+  @override
+  String get localServerAdd => 'Adicionar este dispositivo';
+
+  @override
+  String get localServerIntroFooter =>
+      'Também pode ser ativado mais tarde, na página de edição de um servidor, em Conexão.';
+
+  @override
   String get transportSectionOff =>
       'Desligado. Os campos abaixo ficam guardados para quando você ligar de novo.';
 

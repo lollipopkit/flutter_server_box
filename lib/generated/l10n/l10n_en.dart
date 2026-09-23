@@ -2603,6 +2603,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transportOff => 'off';
 
   @override
+  String get thisDevice => 'This device';
+
+  @override
+  String get localServerTip =>
+      'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.';
+
+  @override
+  String get localServerUnsupported =>
+      'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.';
+
+  @override
+  String get localServerIntro =>
+      'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.';
+
+  @override
+  String get localServerAdd => 'Add this device';
+
+  @override
+  String get localServerIntroFooter =>
+      'It can also be turned on later, in a server\'s edit page under Connection.';
+
+  @override
   String get transportSectionOff =>
       'Off. The fields below are kept for when you turn it back on.';
 

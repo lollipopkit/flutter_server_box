@@ -7,6 +7,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
@@ -35,7 +37,7 @@ import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/data/provider/server/monitor_http_source.dart';
-import 'package:server_box/data/provider/server/ssh_source.dart';
+import 'package:server_box/data/provider/server/script_source.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
@@ -508,10 +510,12 @@ class ServerNotifier extends _$ServerNotifier {
       case ServerConnectCredentialSsh():
         // Connecting is inseparable from fetching here (auth prompts, script
         // install, session bookkeeping), so the SSH path drives the state
-        // machine itself and hands the reading half to SshDataSource
+        // machine itself and hands the reading half to ScriptDataSource
         await _getDataSsh(interactive: interactive, operation: operation);
       case ServerConnectCredentialMonitorHttp(:final monitor):
         await _getDataMonitorHttp(monitor, operation);
+      case ServerConnectCredentialLocal():
+        await _getDataLocal(interactive: interactive, operation: operation);
     }
   }
 
@@ -519,17 +523,17 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Only the monitor HTTP source is cached: it owns a `Dio` session and a
   /// login token, so reusing it across refreshes avoids re-authenticating, and
-  /// it must be rebuilt when the connection config changes. [SshDataSource] is
-  /// stateless — the connection it reads through belongs to this notifier — so
-  /// the SSH path constructs one per refresh instead.
+  /// it must be rebuilt when the connection config changes.
+  /// [ScriptDataSource] is stateless — what it reads through belongs to this
+  /// notifier — so the SSH and local paths construct one per refresh instead.
   ServerDataSource _resolveSource(ServerConnectCredential credential) {
     switch (credential) {
-      case ServerConnectCredentialSsh():
-        return SshDataSource(
+      case ServerConnectCredentialSsh() || ServerConnectCredentialLocal():
+        return ScriptDataSource(
           spi: state.spi,
           runScript: () => throw StateError(
-            'SSH status output is supplied by _getDataSsh, which runs the '
-            'script as part of its connect-and-fetch flow',
+            'Script output is supplied by _getDataSsh and _getDataLocal, '
+            'which run the script as part of their fetch flow',
           ),
         );
       case ServerConnectCredentialMonitorHttp():
@@ -640,6 +644,170 @@ class ServerNotifier extends _$ServerNotifier {
             );
       _setFailedState(_copyStatus(state.status, err: err, setErr: true));
     }
+  }
+
+  /// How long one command on this device may take before the poll gives up on
+  /// it. The bound the SSH path puts on its exec reads, for the same commands.
+  static const _localCmdTimeout = Duration(seconds: 30);
+
+  /// Status of this device (`Spi.local`): the same script the SSH path runs,
+  /// started as a process here.
+  ///
+  /// What the SSH flow does minus the connection. There is no handshake to
+  /// time or record, no session to register, and no `uname` round trip — the
+  /// platform is known. What stays is the script, installed on the first poll
+  /// and again after anything that clears [_scriptWritten], and the extended
+  /// commands on their own schedule.
+  Future<void> _getDataLocal({
+    required bool interactive,
+    required int operation,
+  }) async {
+    final spi = state.spi;
+    final sid = spi.id;
+
+    // Said on the card rather than attempted: a phone reading a server synced
+    // from a desktop would otherwise run the desktop's script on itself.
+    if (!LocalServer.isSupported) {
+      _failLocal(
+        LocalServerErrType.unsupported,
+        'Local server on ${Pfs.type.name}',
+        operation: operation,
+        countAttempt: false,
+      );
+      return;
+    }
+
+    if (!TryLimiter.canTry(sid)) {
+      if (state.conn != ServerConn.failed) {
+        updateConnection(ServerConn.failed);
+      }
+      return;
+    }
+
+    updateStatus(_copyStatus(state.status, err: null, setErr: true));
+    if (state.conn < ServerConn.connecting) {
+      updateConnection(ServerConn.connecting);
+    }
+
+    final system = spi.customSystemType ?? LocalServer.systemType;
+    if (state.status.system != system) {
+      // Whatever was installed was generated for the previous answer.
+      _scriptWritten = false;
+      updateStatus(_copyStatus(state.status, system: system));
+    }
+
+    final ServerExec exec;
+    try {
+      exec = await ensureScriptExec();
+    } catch (e) {
+      _failLocal(LocalServerErrType.writeScript, e, operation: operation);
+      return;
+    }
+    if (!_isRefreshCurrent(operation, spi)) return;
+    if (state.conn != ServerConn.finished) {
+      updateConnection(ServerConn.loading);
+    }
+
+    final String raw;
+    final int latencyMs;
+    try {
+      final elapsed = Stopwatch()..start();
+      raw = await _runLocal(
+        exec,
+        ShellFunc.status.exec(
+          spi.id,
+          systemType: system,
+          customDir: spi.custom?.scriptDir,
+        ),
+      );
+      latencyMs = elapsed.elapsedMilliseconds;
+      if (!_isRefreshCurrent(operation, spi)) return;
+      // The script is gone from under the app — the default directory is a
+      // temporary one, which the OS cleans on its own schedule. Reinstalled
+      // on the next poll.
+      if (!ffi.containsScriptSegment(raw: raw) &&
+          _hasEnabledStatusCommands(spi, system)) {
+        _scriptWritten = false;
+        throw raw.isEmpty
+            ? 'Empty response from this device'
+            : 'No status segments in response, raw:\n$raw';
+      }
+    } catch (e) {
+      _failLocal(LocalServerErrType.getStatus, e, operation: operation);
+      return;
+    }
+
+    try {
+      final extended = await _refreshExtendedRaw(
+        force: interactive,
+        operation: operation,
+        run: (cmd) => _runLocal(exec, cmd),
+      );
+      // Extended output first, for the reason the SSH path gives: built-in
+      // markers are trusted only before the first custom section.
+      final combined = extended.isEmpty ? raw : '$extended\n$raw';
+      final source = ScriptDataSource(
+        spi: spi,
+        runScript: () async => combined,
+      );
+      final status = await source.fetchStatus(_copyStatus(state.status));
+      status.diskSmartAt = _extendedAcceptedAt;
+      if (!_isRefreshCurrent(operation, spi)) return;
+      updateStatus(status, latencyMs: latencyMs);
+    } catch (e, s) {
+      Loggers.app.warning('Local status', e, s);
+      _failLocal(
+        LocalServerErrType.getStatus,
+        e,
+        operation: operation,
+        message: 'Parse failed: $e\n\n$raw',
+      );
+      return;
+    }
+
+    if (!_isRefreshCurrent(operation, spi)) return;
+    updateConnection(ServerConn.finished);
+    TryLimiter.reset(sid);
+  }
+
+  /// Runs [cmd] on this device and answers its stdout, stopping it after
+  /// [_localCmdTimeout].
+  ///
+  /// Stdout alone, as the SSH status read takes it: on Windows, PowerShell
+  /// writes progress records to stderr, and the parser reads one stream.
+  Future<String> _runLocal(ServerExec exec, String cmd) async {
+    final cancel = Completer<void>();
+    final timer = Timer(_localCmdTimeout, cancel.complete);
+    try {
+      final result = await exec.run(cmd, cancel: cancel.future);
+      if (cancel.isCompleted) {
+        throw TimeoutException('Local command', _localCmdTimeout);
+      }
+      return result.stdout;
+    } finally {
+      timer.cancel();
+    }
+  }
+
+  /// [_failSsh] for this device: the same bookkeeping minus the terminal
+  /// session, which a local server never registers.
+  void _failLocal(
+    LocalServerErrType type,
+    Object e, {
+    required int operation,
+    bool countAttempt = true,
+    String? message,
+  }) {
+    if (!_isRefreshCurrent(operation, state.spi)) return;
+    if (countAttempt) TryLimiter.inc(state.spi.id);
+    final err = LocalServerErr(
+      type: type,
+      // The inner error's own words when it has them — `ensureScriptExec`
+      // throws an [SSHErr] whatever carried the command.
+      message: message ?? (e is Err ? e.message : null) ?? e.toString(),
+    );
+    _setFailedState(_copyStatus(state.status, err: err, setErr: true));
+    Loggers.app.warning('Local ${state.spi.name}', err);
   }
 
   /// Prefills [ServerStatus.history] from whatever trend data the source
@@ -796,6 +964,11 @@ class ServerNotifier extends _$ServerNotifier {
         // must not be attempted twice.
         if (probe) await source.fetchCapabilities();
         return source.exec;
+      case ServerConnectCredentialLocal():
+        if (!LocalServer.isSupported) {
+          throw const LocalServerErr(type: LocalServerErrType.unsupported);
+        }
+        return LocalServer.exec();
     }
   }
 
@@ -812,6 +985,9 @@ class ServerNotifier extends _$ServerNotifier {
       return currentExec is MonitorExec &&
           identical(currentExec.client, exec.client);
     }
+    // Nothing is held open, so the only way one stops being current is the
+    // server stopping being this device — which the check above already saw.
+    if (exec is ProcessExec) return spi.local;
     return false;
   }
 
@@ -986,7 +1162,10 @@ class ServerNotifier extends _$ServerNotifier {
     final spi = state.spi;
     final gen = _operationGeneration;
     final origSpi = spi;
-    if (spi.ssh == null) {
+    // [Spix.sshOn], not the stored credential: SSH switched off, or parked
+    // behind `Spi.local`, is configuration the user asked this app not to
+    // dial.
+    if (spi.sshOn == null) {
       throw SSHErr(
         type: SSHErrType.connect,
         message: 'No SSH credential configured for ${spi.name}',
@@ -1443,9 +1622,19 @@ class ServerNotifier extends _$ServerNotifier {
       // Segments the status function no longer carries, refreshed on their own
       // schedule and concatenated here: the parser splits by separator, so one
       // combined output parses exactly as the two runs would have
+      final client = state.client;
       final extended = await _refreshExtendedRaw(
         force: interactive,
         operation: operation,
+        // Timing discarded: the extended commands take seconds by design, and
+        // what is wanted from them is their output.
+        run: client == null
+            ? null
+            : (cmd) async => (await _runStatusCommandWithExec(
+                client,
+                cmd,
+                isWindows: state.status.system == SystemType.windows,
+              )).raw,
       );
       // Built-in markers are trusted only before the first custom section;
       // custom output may contain marker-looking text. Extended status has no
@@ -1454,7 +1643,10 @@ class ServerNotifier extends _$ServerNotifier {
 
       // Use the same conversion contract as the monitor path: raw transport
       // output becomes a ServerStatus plus one trend sample.
-      final source = SshDataSource(spi: spi, runScript: () async => combined);
+      final source = ScriptDataSource(
+        spi: spi,
+        runScript: () async => combined,
+      );
       final status = await source.fetchStatus(_copyStatus(state.status));
       // Shell output carries no sampling instant, so the nearest thing is when
       // the run that produced these segments came back.
@@ -1486,20 +1678,22 @@ class ServerNotifier extends _$ServerNotifier {
   /// (or [force], for a user-initiated refresh) and returns its output,
   /// falling back to the last successful one.
   ///
-  /// Deliberately on the exec path rather than the persistent shell: these
-  /// commands can take seconds, and a timeout there would drop the whole
-  /// connection to exec for good (see [_runStatusCommand]).
+  /// [run] executes one command and answers its stdout, or is null when
+  /// there is nothing to run it on. Over SSH it is deliberately the exec path
+  /// rather than the persistent shell: these commands can take seconds, and a
+  /// timeout there would drop the whole connection to exec for good (see
+  /// [_runStatusCommand]).
   Future<String> _refreshExtendedRaw({
     required bool force,
     required int operation,
+    required Future<String> Function(String cmd)? run,
   }) async {
     final fetchedAt = _extendedFetchedAt;
     final due =
         force ||
         fetchedAt == null ||
         DateTime.now().difference(fetchedAt) >= _extendedStatusInterval;
-    final client = state.client;
-    if (!due || client == null) return _extendedRaw;
+    if (!due || run == null) return _extendedRaw;
 
     // Stamped before the run, so a remote that can't answer (an older script
     // without the function, until the next connect reinstalls it) is retried
@@ -1512,13 +1706,7 @@ class ServerNotifier extends _$ServerNotifier {
         systemType: state.status.system,
         customDir: spi.custom?.scriptDir,
       );
-      // Timing discarded: the extended commands take seconds by design, and
-      // what this method is after is their output.
-      final (:raw, elapsedMs: _) = await _runStatusCommandWithExec(
-        client,
-        cmd,
-        isWindows: state.status.system == SystemType.windows,
-      );
+      final raw = await run(cmd);
       // The cache belongs to the notifier, not to this run: without the check
       // a refresh against the address the server used to have would leave the
       // old machine's SMART and GPU segments here, and the next poll of the

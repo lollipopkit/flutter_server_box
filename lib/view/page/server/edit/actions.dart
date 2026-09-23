@@ -436,8 +436,12 @@ extension _Actions on _ServerEditPageState {
   }
 
   void _onSave() async {
-    final useSsh = _useSsh.value;
-    final useMonitorHttp = _useMonitorHttp.value;
+    final local = _local.value;
+    // What is going to be dialled, which is what the checks below are about.
+    // The switches themselves are stored as they are: this device parks both
+    // methods rather than turning them off.
+    final useSsh = _useSsh.value && !local;
+    final useMonitorHttp = _useMonitorHttp.value && !local;
     final keyIdx = _keyIdx.value;
     // `-1` is not an index into anything. It is what the key-auth switch
     // writes when it is turned on before a key is picked, and it stands for
@@ -624,9 +628,11 @@ extension _Actions on _ServerEditPageState {
     }
 
     final spi = Spi(
-      name: _nameController.text.isEmpty
-          ? (ssh?.ip ?? monitorHttp?.addr ?? '')
-          : _nameController.text,
+      name: _nameController.text.isNotEmpty
+          ? _nameController.text
+          : local
+          ? Platform.localHostname
+          : (ssh?.ip ?? monitorHttp?.addr ?? ''),
       ssh: ssh,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       autoConnect: _autoConnect.value,
@@ -643,8 +649,9 @@ extension _Actions on _ServerEditPageState {
                 ? ServerTransport.monitorHttp
                 : ServerTransport.ssh)
           : null,
-      sshEnabled: useSsh,
-      monitorEnabled: useMonitorHttp,
+      sshEnabled: _useSsh.value,
+      monitorEnabled: _useMonitorHttp.value,
+      local: local,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
       customSystemType: _systemType.value,
@@ -695,6 +702,7 @@ extension _Actions on _ServerEditPageState {
       data: {
         'ssh': '$useSsh',
         'monitor': '$useMonitorHttp',
+        'local': '$local',
         // The same two key sources the validation above counts, and for the
         // same reason: a server imported with an IdentityFile has its key in
         // `_keyPath` and no `selectedKey`, so testing only the latter filed it
@@ -884,10 +892,16 @@ extension _Utils on _ServerEditPageState {
     // nothing configured is off however the flag reads, and one that is
     // configured and switched off shows its fields under a section that says
     // it is off.
-    _useSsh.value = spi.sshOn != null;
-    _useMonitorHttp.value = spi.monitorOn != null;
+    //
+    // Read as though the server were not this device: `sshOn`, `monitorOn`
+    // and `transport` all answer "nothing is dialled" for one, and what the
+    // form shows is what turning that off would bring back.
+    final dialled = spi.copyWith(local: false);
+    _local.value = spi.local;
+    _useSsh.value = dialled.sshOn != null;
+    _useMonitorHttp.value = dialled.monitorOn != null;
     _preferMonitorHttp.value =
-        spi.transport == ServerTransport.monitorHttp;
+        dialled.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
       _monitorUserCtrl.text = monitorHttp.user ?? '';

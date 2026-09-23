@@ -103,7 +103,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiNoResponse => 'Cavab yoxdur';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Uzaq masaüstü';
 
   @override
   String get askAiAgentWelcome => 'Bu serverdə nə edək?';
@@ -2613,6 +2613,36 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String get transportOff => 'bağlı';
+
+  @override
+  String get thisDevice => 'Bu cihaz';
+
+  @override
+  String get localServerTip =>
+      'Status skriptini burada işlədərək bu cihazı birbaşa oxuyur. SSH və Monitor HTTP istifadə olunmur, onların ayarları saxlanılır.';
+
+  @override
+  String get localServerUnsupported =>
+      'Bu platforma bu cihazı server kimi oxuya bilmir. Linux, Windows və macOS DMG versiyası dəstəkləyir.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Serverin RDP və ya VNC masaüstünü tətbiqin içində açır. Bağlantı serverin SSH bağlantısı və ya Monitor agenti üzərindən keçir, ona görə masaüstü portunun şəbəkədən əlçatan olması lazım deyil.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Hər masaüstü üçün profili serverdəki Uzaq masaüstü düyməsindən və ya Uzaq masaüstü tabından saxlayın.';
+
+  @override
+  String get localServerIntro =>
+      'ServerBox işləyən cihazı server kimi əlavə edir. Status, proseslər, xidmətlər, konteynerlər, terminal və fayllar SSH və ya Monitor agenti olmadan işləyir.';
+
+  @override
+  String get localServerAdd => 'Bu cihazı əlavə et';
+
+  @override
+  String get localServerIntroFooter =>
+      'Bunu sonra serverin redaktə səhifəsində Bağlantı bölməsində də aktiv etmək olar.';
 
   @override
   String get transportSectionOff =>

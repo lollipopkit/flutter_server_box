@@ -341,6 +341,49 @@ fn disk_parse_df_collapses_repeated_mounts() {
     assert_ne!(orbstack[0].used, orbstack[1].used);
 }
 
+/// macOS `df -k`: one APFS container (`disk3`) published as seven volumes,
+/// each reporting the container's size and free space, beside the volumes the
+/// OS manages for itself and the read-only images it mounts. What is left is
+/// the system snapshot at `/`, the data volume, and a share.
+#[test]
+fn disk_parse_df_macos_keeps_the_volumes_a_user_has() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_macos_apfs.txt"));
+    let mounts: Vec<_> = disks.iter().map(|d| d.mount.as_str()).collect();
+    assert_eq!(
+        mounts,
+        ["/", "/System/Volumes/Data", "/Users/me/OrbStack"],
+        "system volumes, cryptexes and app wrappers are not the user's storage"
+    );
+}
+
+/// The container counts once, as its size less its free space. Summed per
+/// volume this machine had a 7 TB total and read 26% while its data volume
+/// was at 95%.
+#[test]
+fn disk_usage_counts_an_apfs_container_once() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_macos_apfs.txt"));
+    let (used, size) = disk_usage(&disks);
+    assert_eq!(size, 971_298_980 + 74_776_576);
+    assert_eq!(used, (971_298_980 - 51_601_252) + 26_604_836);
+}
+
+/// Partitions of one disk that is not APFS report sizes of their own, and are
+/// two filesystems rather than two views of one.
+#[test]
+fn disk_usage_keeps_partitions_with_their_own_numbers_apart() {
+    let part = |path: &str, size: u64, used: u64| Disk {
+        path: path.into(),
+        mount: format!("/Volumes/{path}"),
+        size,
+        used,
+        avail: size - used,
+        used_percent: 0,
+        ..Disk::default()
+    };
+    let disks = [part("/dev/disk4s1", 100, 10), part("/dev/disk4s2", 300, 30)];
+    assert_eq!(disk_usage(&disks), (40, 400));
+}
+
 /// A snap-heavy Ubuntu mounts one squashfs per installed revision, each 100%
 /// full by construction. They filled the device list ahead of the machine's
 /// actual disks and added their whole size to the total. A mounted ISO is the

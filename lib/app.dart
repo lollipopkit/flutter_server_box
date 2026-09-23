@@ -1,15 +1,20 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
+import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';

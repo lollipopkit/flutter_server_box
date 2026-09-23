@@ -362,6 +362,14 @@ class SettingStore extends SqliteStore {
     0,
   );
 
+  /// The revision of the feature pages in the intro this install has seen.
+  ///
+  /// Its own counter for `diagnosticsConsentVer`'s reason: `introVer` holds a
+  /// build number, which is above any small constant, so a page keyed on it
+  /// could never appear for anyone who has finished an intro. Each page names
+  /// the revision it arrived in, and completing the intro records the latest.
+  late final featureIntroVer = propertyDefault('featureIntroVer', 0);
+
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Width of the list column, wherever one shares the window with what it

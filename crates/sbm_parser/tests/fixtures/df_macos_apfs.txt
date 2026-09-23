@@ -1,0 +1,18 @@
+Filesystem                                                                                  1024-blocks      Used  Available Capacity iused               ifree %iused  Mounted on
+/dev/disk3s1s1                                                                                971298980  13339728   51601252    21%  484014           516012520    0%   /
+devfs                                                                                               217       217          0   100%     752                   0  100%   /dev
+/dev/disk3s6                                                                                  971298980   1048676   51601252     2%       1           516012520    0%   /System/Volumes/VM
+/dev/disk3s2                                                                                  971298980  11129012   51601252    18%    1123           516012520    0%   /System/Volumes/Preboot
+/dev/disk3s4                                                                                  971298980     77072   51601252     1%      65           516012520    0%   /System/Volumes/Update
+/dev/disk1s2                                                                                     563200      6164     542936     2%       1             5429360    0%   /System/Volumes/xarts
+/dev/disk1s1                                                                                     563200      6068     542936     2%      39             5429360    0%   /System/Volumes/iSCPreboot
+/dev/disk1s3                                                                                     563200      3128     542936     1%     110             5429360    0%   /System/Volumes/Hardware
+/dev/disk3s5                                                                                  971298980 891944576   51601252    95% 7745400           516012520    1%   /System/Volumes/Data
+map auto_home                                                                                         0         0          0   100%       0                   0     -   /System/Volumes/Data/home
+/Applications/Example.app/Wrapper                                                           971298980 817338928  127209176    87% 7724372          1272091760    1%   /private/var/folders/xx/yyyy/X/APPID
+/dev/disk5s1                                                                                   18124800  17586672     491796    98%  683808             4917960   12%   /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.tFSeek
+/dev/disk7s1                                                                                    9113600   8797140     288552    97%  333686             2885520   10%   /private/var/run/com.apple.security.cryptexd/mnt/com.apple.WatchOS.SimulatorRuntime-v24.18.362.0.QbPI2J
+/dev/disk9s1                                                                                    3219456   3098224     107784    97%     563             1077840    0%   /private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.ikrWQk
+/dev/disk3s3                                                                                  971298980   1956816   51601252     4%      79           516012520    0%   /Volumes/Recovery
+devices -- file:///Users/me/Library/Containers/com.apple.CoreDevice.CoreDeviceService/Data/  1073741824         0 1073741824     0%       0 9223372036854775807    0%   /Users/me/Library/Developer/CoreDevice/DeviceFS
+OrbStack:/OrbStack                                                                             74776576  26604836   48171740    36%       0                   0     -   /Users/me/OrbStack

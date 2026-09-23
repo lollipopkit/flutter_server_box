@@ -17,7 +17,8 @@ part 'server_private_info.g.dart';
 enum SpiValidationError {
   jumpServerAndProxyCommandConflict,
 
-  /// Neither [Spi.ssh] nor [Spi.monitorHttp] is configured.
+  /// Neither [Spi.ssh] nor [Spi.monitorHttp] is configured, and the server
+  /// is not [Spi.local].
   ///
   /// This used to be the opposite complaint — carrying *both* was the error.
   /// A server may now carry both, with [Spi.preferredTransport] saying which
@@ -33,7 +34,11 @@ enum SpiValidationError {
 /// outlives the build that wrote it.
 enum ServerTransport {
   ssh,
-  monitorHttp;
+  monitorHttp,
+
+  /// This device, with no connection at all — see [Spi.local]. Never stored
+  /// as a preference: a local server has nothing to order.
+  local;
 
   static ServerTransport? fromName(Object? name) =>
       ServerTransport.values.firstWhereOrNull((e) => e.name == name);
@@ -90,6 +95,23 @@ abstract class Spi with _$Spi {
     /// what those servers were doing.
     @Default(true) bool sshEnabled,
     @Default(true) bool monitorEnabled,
+
+    /// This server is the device the app runs on: commands are processes
+    /// started here, the terminal is a local pty and the files are this
+    /// device's own.
+    ///
+    /// Excludes the other two rather than joining the order. "This device"
+    /// needs no address and no credential, and a record that is local and
+    /// also dials an address would be two machines under one name. [ssh] and
+    /// [monitorHttp] are kept when this is on, the same way a switched-off
+    /// method keeps its fields, so turning it off does not mean retyping them;
+    /// [Spix.sshOn] and [Spix.monitorOn] are what stop them being dialled.
+    ///
+    /// Means whichever device reads the record. A backup restored or a sync
+    /// pulled on another machine shows that machine, and on a platform
+    /// without `LocalServer.isSupported` the server reports that it cannot be
+    /// read rather than reaching for an address.
+    @Default(false) bool local,
 
     /// Which of the two is tried first, when both are configured.
     ///
@@ -207,13 +229,19 @@ extension Spix on Spi {
   /// switch off — that is the point of the switch — so it answers "is there a
   /// host to put in the form", which is a different question and the one the
   /// editor asks.
-  SshCredential? get sshOn => sshEnabled ? ssh : null;
+  SshCredential? get sshOn => sshEnabled && !local ? ssh : null;
 
   /// This server's monitor agent, or null when there is none *or* when it is
   /// switched off. The peer of [sshOn]; [Spix.monitor] is the stored one.
-  MonitorHttpCredential? get monitorOn => monitorEnabled ? monitor : null;
+  ///
+  /// Both are null on a [Spi.local] server, whatever is on file.
+  MonitorHttpCredential? get monitorOn =>
+      monitorEnabled && !local ? monitor : null;
 
   SpiValidationError? validate() {
+    // Nothing is dialled, so nothing about the parked configuration can be in
+    // conflict.
+    if (local) return null;
     // The credential that is going to be *dialled*, not the one on file. With
     // SSH switched off its settings are kept and never used, so a conflict
     // among them is not a reason to refuse the record — and the fields it
@@ -246,6 +274,7 @@ extension Spix on Spi {
   /// falls back to the monitor endpoint for servers that have no SSH
   /// configuration, and finally to the opaque [Spi.id].
   String get displayAddr {
+    if (local) return 'localhost';
     final s = ssh;
     // A tunneled server has no address of its own — showing `user@:22` would
     // be noise, and showing `127.0.0.1` would be wrong on every such server
@@ -265,6 +294,7 @@ extension Spix on Spi {
   /// that can do everything, so a server that gains an agent does not quietly
   /// lose its terminal.
   ServerTransport get transport {
+    if (local) return ServerTransport.local;
     final hasSsh = sshOn != null;
     final hasMonitor = monitorOn != null;
     if (!hasMonitor) return ServerTransport.ssh;
@@ -307,6 +337,7 @@ extension Spix on Spi {
 
   /// Returns true if the connection info is the same as [other].
   bool isSameAs(Spi other) {
+    if (local != other.local) return false;
     final a = ssh, b = other.ssh;
     if (a == null || b == null) return a == b;
     return a.isSameAs(b);

@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -33,7 +34,11 @@ void main() {
 
   /// Opens the editor on [server] and hands back what a save would persist,
   /// read through JSON the way storage reads it.
-  Future<Spi? Function()> pumpEditor(WidgetTester tester, Spi server) async {
+  Future<Spi? Function()> pumpEditor(
+    WidgetTester tester,
+    Spi server, {
+    List<Spi> others = const [],
+  }) async {
     FlutterSecureStorage.setMockInitialValues({});
     Spi? persisted;
 
@@ -41,7 +46,11 @@ void main() {
       ProviderScope(
         overrides: [
           serversProvider.overrideWith(
-            () => _PersistingServersNotifier(server, (v) => persisted = v),
+            () => _PersistingServersNotifier(
+              server,
+              (v) => persisted = v,
+              others: others,
+            ),
           ),
           privateKeyProvider.overrideWithValue(const PrivateKeyState()),
         ],
@@ -142,18 +151,46 @@ void main() {
 
     expect(persisted(), isNull);
   });
+
+  group('this device', () {
+    const me = Spi(name: 'me', id: 'me-id', local: true);
+    // Nothing to offer where this build cannot read this device.
+    final unsupported = !LocalServer.isSupported;
+
+    testWidgets('is offered while no server is it', (tester) async {
+      await pumpEditor(tester, both);
+      expect(find.text(app_locale.l10n.thisDevice), findsOneWidget);
+    }, skip: unsupported);
+
+    testWidgets('is not offered once another server is it', (tester) async {
+      // Two would be one machine polled twice under two names.
+      await pumpEditor(tester, both, others: [me]);
+      expect(find.text(app_locale.l10n.thisDevice), findsNothing);
+    }, skip: unsupported);
+
+    testWidgets('stays on the server that is it', (tester) async {
+      // Its own switch, or it could never be turned back into a remote one.
+      await pumpEditor(tester, me);
+      expect(find.text(app_locale.l10n.thisDevice), findsWidgets);
+    }, skip: unsupported);
+  });
 }
 
 final class _PersistingServersNotifier extends ServersNotifier {
-  _PersistingServersNotifier(this.initialServer, this.onPersist);
+  _PersistingServersNotifier(
+    this.initialServer,
+    this.onPersist, {
+    this.others = const [],
+  });
 
   final Spi initialServer;
   final ValueChanged<Spi> onPersist;
+  final List<Spi> others;
 
   @override
   ServersState build() => ServersState(
-    servers: {initialServer.id: initialServer},
-    serverOrder: [initialServer.id],
+    servers: {for (final s in [initialServer, ...others]) s.id: s},
+    serverOrder: [initialServer.id, for (final s in others) s.id],
   );
 
   @override
