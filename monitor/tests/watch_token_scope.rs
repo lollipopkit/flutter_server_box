@@ -197,6 +197,22 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/custom-cmds",
             Some(json!({ "commands": [] })),
         ),
+        (Method::GET, "/api/v1/cron", None),
+        // An empty schedule, for the reason the two push bodies below are
+        // malformed: the panel-login half of this test reaches the handler, and
+        // a body that passed validation would rewrite the crontab of whatever
+        // user runs the suite.
+        (
+            Method::PUT,
+            "/api/v1/cron",
+            Some(json!({
+                "op": "upsert",
+                "line_index": null,
+                "schedule": "",
+                "command": "scope",
+                "enabled": true,
+            })),
+        ),
         (Method::GET, "/api/v1/push", None),
         // Both bodies name a channel type this agent has no sender for, so the
         // panel-login half of this test stops at validation. Auth is checked

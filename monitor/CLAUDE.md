@@ -171,6 +171,29 @@ the panel password can't switch it on); shared admission checks live in
   response says `editable` so the editor can go read-only instead of failing on
   save. The store is `monitoring::custom_cmds` (write-aside-and-rename, stray
   files skipped, names never logged — only the audit `subject`).
+- **`GET/PUT /api/v1/cron`** — the scheduled tasks of the account the agent
+  runs as: `crontab` itself, not `/etc/cron.d`, not `-u` for another account,
+  not systemd timers. Reading needs only the panel login and answers `editable`
+  so the page can go read-only instead of failing on save; **writing is gated on
+  `full_access`**, the same grant as the shell — the schedule is arranging for
+  code to run on a timer as the agent's user. The model is
+  `sbm_parser::cron` rather than a command sent through `/exec`: which line a job
+  is, what a disabled job looks like on disk and what may not be written at all
+  is a model, and the app reads the same crontab over SSH and would otherwise
+  reimplement it. A PUT is an operation on **one line**, addressed by its index
+  in the listing the client was given — a client that round-tripped the whole
+  document would be the thing that decides how a disabled line is spelled, and
+  the file is re-read at the moment of the write, so only the index can be
+  stale. An index that is out of range, or that has come to hold a comment, is
+  refused as `unknownLine`; a schedule or command that would damage the file is
+  refused before the machine is touched at all. Nothing was ever installed to
+  read: a machine with no `crontab(1)`, or Windows, answers 200 with
+  `available: false` and a `reason_kind`, and a crontab that does not exist yet
+  is an empty document rather than an error. The expansion a client draws
+  (minutes/hours/day fields, the next run) is done here, against the machine's
+  own clock from the listing script's `date +'%s %z'`. `tests/cron_api.rs`
+  covers the refusals and the audit row and deliberately performs no successful
+  save — the suite runs against the crontab of whoever runs it.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",

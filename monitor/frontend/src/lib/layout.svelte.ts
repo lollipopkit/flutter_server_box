@@ -5,7 +5,16 @@
 /// selected server's config.toml, reached from a gear icon on its dashboard.
 /// 'terminal' = an SSH session on the selected server, reached from its
 /// dashboard and only offered when that agent reports the feature available.
-export type View = 'dashboard' | 'panel' | 'server-settings' | 'terminal' | 'files'
+/// 'cron' = the selected server's crontab, reached the same way and offered on
+/// the agent's own `cron` capability — the shell's grant, but its own field,
+/// because an agent that predates the route would answer the wider grant.
+export type View =
+  | 'dashboard'
+  | 'panel'
+  | 'server-settings'
+  | 'terminal'
+  | 'files'
+  | 'cron'
 
 class LayoutStore {
   collapsed = $state(window.localStorage.getItem('sidebar.collapsed') === '1')

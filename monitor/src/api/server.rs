@@ -272,6 +272,13 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 web::resource("/power").route(web::post().to(crate::api::power::power)),
             )
             .service(
+                // One crontab document, which is small; and one edit, which is
+                // smaller. The default 32 KiB applies to both.
+                web::resource("/cron")
+                    .route(web::get().to(crate::api::cron::list))
+                    .route(web::put().to(crate::api::cron::edit)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -781,6 +788,14 @@ struct RemoteAccessView {
     /// by the same switch — anyone who can open a shell can run `shutdown` in
     /// it — but a client asks about the endpoint it is about to call.
     power: bool,
+    /// Whether `/api/v1/cron` will change the agent account's crontab.
+    ///
+    /// Its own field for [`Self::stream`]'s reason: an agent older than the
+    /// endpoint answers `full_access` and would 404 the request. A write is
+    /// granted by the same switch — scheduling a job is arranging for code to
+    /// run as that user, which is what the shell already means — while reading
+    /// the schedule needs only the panel login, so `cron` reports the write.
+    cron: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -817,6 +832,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             files: app_state.remote_access.fs.available(secure),
             stream: app_state.full_access_allowed(secure),
             power: app_state.full_access_allowed(secure),
+            cron: app_state.full_access_allowed(secure),
         },
     }))
 }

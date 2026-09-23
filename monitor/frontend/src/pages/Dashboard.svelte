@@ -13,6 +13,7 @@
     ShieldCheck,
     Network,
     CircleAlert,
+    CalendarClock,
     Power,
     RefreshCw,
   } from '@lucide/svelte'
@@ -264,8 +265,13 @@
           </IconButton>
         {/if}
         {#if capabilities?.remote_access?.power}
-          <IconButton label={$LL.power()} onclick={() => (powerOpen = true)}>
+          <IconButton label={$LL.powerControl()} onclick={() => (powerOpen = true)}>
             <Power class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.cron}
+          <IconButton label={$LL.cron()} onclick={() => layout.navigate('cron')}>
+            <CalendarClock class="w-4 h-4" />
           </IconButton>
         {/if}
         <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>

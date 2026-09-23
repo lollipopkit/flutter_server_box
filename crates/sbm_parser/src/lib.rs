@@ -15,6 +15,7 @@ pub mod bsd;
 pub mod capabilities;
 pub mod commands;
 pub mod common;
+pub mod cron;
 pub mod gpu;
 pub mod linux;
 pub mod script;

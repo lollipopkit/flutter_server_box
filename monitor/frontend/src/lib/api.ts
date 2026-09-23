@@ -1,6 +1,8 @@
 import type {
   CardOrderPayload,
   Capabilities,
+  CronEdit,
+  CronView,
   CustomCmd,
   CustomCmdsView,
   FsEntry,
@@ -348,6 +350,27 @@ export const api = {
       '/power',
       { method: 'POST', body: JSON.stringify({ action, password: password || null }) },
       'Failed to reach the machine',
+    ),
+  /// The account's crontab, read at the agent's own user.
+  ///
+  /// Reading is not gated on the shell grant — the schedule is the agent user's
+  /// own, like the custom commands — so a panel that may only look is told
+  /// `editable: false` rather than refused.
+  getCron: () => request<CronView>('/cron', {}, 'Failed to fetch the schedule'),
+  /// Applies one change and answers with the schedule as it now stands.
+  ///
+  /// The file is re-read on the agent at the moment of the write, so only the
+  /// `line_index` can be stale — and an index that no longer names a job is
+  /// refused (400) rather than applied to whatever moved into its place. A
+  /// schedule or command that would damage the file is refused before the
+  /// machine is touched at all; either refusal arrives as `ApiError.message`,
+  /// holding the rule's own name (`scheduleEmpty`, `commandEmpty`,
+  /// `lineBreak`, `macro`, `fieldCount`, or `unknownLine` for a stale index).
+  editCron: (edit: CronEdit) =>
+    request<CronView>(
+      '/cron',
+      { method: 'PUT', body: JSON.stringify(edit) },
+      'Failed to save the schedule',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

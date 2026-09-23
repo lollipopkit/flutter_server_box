@@ -47,6 +47,10 @@ pub enum Kind {
     /// name, and the row that matters most here is the one written *before* the
     /// machine goes down.
     Power,
+    /// A change to the account's crontab through `api::cron`. Its own kind for
+    /// `Power`'s reason: what it edits is a file the machine acts on later, and
+    /// the subject is the operation and the schedule, never the command.
+    Cron,
 }
 
 impl Kind {
@@ -60,6 +64,7 @@ impl Kind {
             Kind::CustomCmd => "custom_cmd",
             Kind::Push => "push",
             Kind::Power => "power",
+            Kind::Cron => "cron",
         }
     }
 }
@@ -77,6 +82,14 @@ pub enum Action {
     /// was made. Its own action rather than `Open`, which for a terminal means
     /// a shell and is answered with a session handle this has none of.
     Connect,
+    /// This endpoint's own verb: a change the caller described was applied, or
+    /// was attempted and failed. Its own action for `Connect`'s reason —
+    /// `Open`/`Close` describe a session's lifecycle, and a single write that
+    /// either landed or did not has no lifecycle to record. Recorded once,
+    /// after the outcome is known, unlike the power endpoint's row: there the
+    /// machine going down *is* the success, so the intent has to be written
+    /// down before it can be.
+    Write,
 }
 
 impl Action {
@@ -88,6 +101,7 @@ impl Action {
             Action::Close => "close",
             Action::Denied => "denied",
             Action::Connect => "connect",
+            Action::Write => "write",
         }
     }
 }

@@ -829,6 +829,157 @@ type RootTranslation = {
 	 */
 	powerActionSent: RequiredParams<'action'>
 	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	cron: string
+	/**
+	 * C​r​o​n​t​a​b​ ​o​f​ ​{​u​s​e​r​}
+	 * @param {unknown} user
+	 */
+	cronForUser: RequiredParams<'user'>
+	/**
+	 * N​e​w​ ​j​o​b
+	 */
+	cronAdd: string
+	/**
+	 * E​d​i​t​ ​j​o​b
+	 */
+	cronEditJob: string
+	/**
+	 * S​c​h​e​d​u​l​e
+	 */
+	cronSchedule: string
+	/**
+	 * F​i​v​e​ ​f​i​e​l​d​s​:​ ​m​i​n​u​t​e​,​ ​h​o​u​r​,​ ​d​a​y​ ​o​f​ ​m​o​n​t​h​,​ ​m​o​n​t​h​,​ ​d​a​y​ ​o​f​ ​w​e​e​k​.​ ​A​n​ ​@​m​a​c​r​o​ ​s​u​c​h​ ​a​s​ ​@​d​a​i​l​y​ ​i​s​ ​a​c​c​e​p​t​e​d​ ​t​o​o​.
+	 */
+	cronScheduleHint: string
+	/**
+	 * C​o​m​m​a​n​d
+	 */
+	cronCommand: string
+	/**
+	 * R​u​n​ ​b​y​ ​a​ ​s​h​e​l​l​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​u​s​e​r​.​ ​U​s​e​ ​a​b​s​o​l​u​t​e​ ​p​a​t​h​s​ ​—​ ​a​ ​j​o​b​’​s​ ​P​A​T​H​ ​i​s​ ​n​e​a​r​l​y​ ​e​m​p​t​y​.
+	 */
+	cronCommandHint: string
+	/**
+	 * E​n​a​b​l​e​d
+	 */
+	cronEnabled: string
+	/**
+	 * A​ ​p​a​u​s​e​d​ ​j​o​b​ ​i​s​ ​k​e​p​t​ ​a​s​ ​a​ ​c​o​m​m​e​n​t​,​ ​s​o​ ​i​t​ ​s​t​o​p​s​ ​r​u​n​n​i​n​g​ ​a​n​d​ ​s​t​a​y​s​ ​o​n​ ​t​h​e​ ​p​a​g​e​.
+	 */
+	cronDisabledHint: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	cronDisabled: string
+	/**
+	 * E​n​a​b​l​e
+	 */
+	cronEnable: string
+	/**
+	 * P​a​u​s​e
+	 */
+	cronDisable: string
+	/**
+	 * D​e​l​e​t​e​ ​j​o​b
+	 */
+	cronRemove: string
+	/**
+	 * N​o​ ​j​o​b​s​ ​y​e​t​.
+	 */
+	cronEmpty: string
+	/**
+	 * T​h​i​s​ ​s​c​h​e​d​u​l​e​ ​c​a​n​ ​b​e​ ​r​e​a​d​ ​h​e​r​e​ ​b​u​t​ ​n​o​t​ ​c​h​a​n​g​e​d​.​ ​C​h​a​n​g​i​n​g​ ​i​t​ ​a​r​r​a​n​g​e​s​ ​f​o​r​ ​c​o​d​e​ ​t​o​ ​r​u​n​ ​o​n​ ​a​ ​t​i​m​e​r​ ​a​s​ ​t​h​e​ ​a​g​e​n​t​’​s​ ​u​s​e​r​,​ ​w​h​i​c​h​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​g​r​a​n​t​ ​a​s​ ​t​h​e​ ​s​h​e​l​l​.
+	 */
+	cronReadOnly: string
+	/**
+	 * O​t​h​e​r​ ​l​i​n​e​s
+	 */
+	cronPreserved: string
+	/**
+	 * C​o​m​m​e​n​t​s​,​ ​e​n​v​i​r​o​n​m​e​n​t​ ​a​s​s​i​g​n​m​e​n​t​s​ ​a​n​d​ ​l​i​n​e​s​ ​t​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​w​r​i​t​t​e​n​ ​b​a​c​k​ ​u​n​c​h​a​n​g​e​d​.
+	 */
+	cronPreservedHint: string
+	/**
+	 * A​t​ ​e​v​e​r​y​ ​r​e​s​t​a​r​t
+	 */
+	cronReboot: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​r​e​a​d​ ​t​h​i​s​ ​e​x​p​r​e​s​s​i​o​n​,​ ​s​o​ ​t​h​e​ ​j​o​b​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​w​r​i​t​t​e​n​.
+	 */
+	cronUnparsed: string
+	/**
+	 * T​h​e​ ​c​r​o​n​t​a​b​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	cronUnreadable: string
+	/**
+	 * E​v​e​r​y​ ​m​i​n​u​t​e
+	 */
+	cronEveryMinute: string
+	/**
+	 * E​v​e​r​y​ ​h​o​u​r​ ​a​t​ ​m​i​n​u​t​e​ ​{​m​i​n​u​t​e​}
+	 * @param {unknown} minute
+	 */
+	cronHourly: RequiredParams<'minute'>
+	/**
+	 * E​v​e​r​y​ ​d​a​y​ ​a​t​ ​{​t​i​m​e​}
+	 * @param {unknown} time
+	 */
+	cronDailyAt: RequiredParams<'time'>
+	/**
+	 * N​e​x​t​ ​r​u​n​ ​{​i​n​}
+	 * @param {unknown} in
+	 */
+	cronNextRun: RequiredParams<'in'>
+	/**
+	 * i​n​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​u​t​e​s
+	 * @param {unknown} minutes
+	 */
+	cronInMinutes: RequiredParams<'minutes'>
+	/**
+	 * i​n​ ​{​h​o​u​r​s​}​ ​h​o​u​r​s
+	 * @param {unknown} hours
+	 */
+	cronInHours: RequiredParams<'hours'>
+	/**
+	 * i​n​ ​{​d​a​y​s​}​ ​d​a​y​s
+	 * @param {unknown} days
+	 */
+	cronInDays: RequiredParams<'days'>
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​ ​c​o​m​m​a​n​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​s​h​o​w​ ​o​r​ ​c​h​a​n​g​e​ ​h​e​r​e​.
+	 */
+	cronNotInstalled: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​u​n​s​ ​o​n​ ​W​i​n​d​o​w​s​,​ ​w​h​i​c​h​ ​h​a​s​ ​n​o​ ​c​r​o​n​t​a​b​.
+	 */
+	cronUnsupportedPlatform: string
+	/**
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​i​s​ ​e​m​p​t​y​.
+	 */
+	cronInvalidScheduleEmpty: string
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​i​s​ ​e​m​p​t​y​.
+	 */
+	cronInvalidCommandEmpty: string
+	/**
+	 * A​ ​l​i​n​e​ ​b​r​e​a​k​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​t​w​o​ ​j​o​b​s​,​ ​s​o​ ​i​t​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	cronInvalidLineBreak: string
+	/**
+	 * T​h​i​s​ ​a​p​p​ ​d​o​e​s​ ​n​o​t​ ​k​n​o​w​ ​t​h​a​t​ ​@​m​a​c​r​o​.​ ​U​s​e​ ​t​h​e​ ​f​i​v​e​-​f​i​e​l​d​ ​f​o​r​m​ ​i​n​s​t​e​a​d​.
+	 */
+	cronInvalidMacro: string
+	/**
+	 * T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​t​o​ ​b​e​ ​f​i​v​e​ ​w​h​i​t​e​s​p​a​c​e​-​s​e​p​a​r​a​t​e​d​ ​f​i​e​l​d​s​.
+	 */
+	cronInvalidFieldCount: string
+	/**
+	 * T​h​a​t​ ​j​o​b​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​a​t​ ​t​h​a​t​ ​p​o​s​i​t​i​o​n​.​ ​T​h​e​ ​s​c​h​e​d​u​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	cronInvalidUnknownLine: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -1635,6 +1786,150 @@ export type TranslationFunctions = {
 	 * Sent: {action}. If the machine is going down, this panel loses it until it is back.
 	 */
 	powerActionSent: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Schedule
+	 */
+	cron: () => LocalizedString
+	/**
+	 * Crontab of {user}
+	 */
+	cronForUser: (arg: { user: unknown }) => LocalizedString
+	/**
+	 * New job
+	 */
+	cronAdd: () => LocalizedString
+	/**
+	 * Edit job
+	 */
+	cronEditJob: () => LocalizedString
+	/**
+	 * Schedule
+	 */
+	cronSchedule: () => LocalizedString
+	/**
+	 * Five fields: minute, hour, day of month, month, day of week. An @macro such as @daily is accepted too.
+	 */
+	cronScheduleHint: () => LocalizedString
+	/**
+	 * Command
+	 */
+	cronCommand: () => LocalizedString
+	/**
+	 * Run by a shell as the agent’s user. Use absolute paths — a job’s PATH is nearly empty.
+	 */
+	cronCommandHint: () => LocalizedString
+	/**
+	 * Enabled
+	 */
+	cronEnabled: () => LocalizedString
+	/**
+	 * A paused job is kept as a comment, so it stops running and stays on the page.
+	 */
+	cronDisabledHint: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	cronDisabled: () => LocalizedString
+	/**
+	 * Enable
+	 */
+	cronEnable: () => LocalizedString
+	/**
+	 * Pause
+	 */
+	cronDisable: () => LocalizedString
+	/**
+	 * Delete job
+	 */
+	cronRemove: () => LocalizedString
+	/**
+	 * No jobs yet.
+	 */
+	cronEmpty: () => LocalizedString
+	/**
+	 * This schedule can be read here but not changed. Changing it arranges for code to run on a timer as the agent’s user, which is the same grant as the shell.
+	 */
+	cronReadOnly: () => LocalizedString
+	/**
+	 * Other lines
+	 */
+	cronPreserved: () => LocalizedString
+	/**
+	 * Comments, environment assignments and lines this app does not read. They are written back unchanged.
+	 */
+	cronPreservedHint: () => LocalizedString
+	/**
+	 * At every restart
+	 */
+	cronReboot: () => LocalizedString
+	/**
+	 * This app does not read this expression, so the job is shown as written.
+	 */
+	cronUnparsed: () => LocalizedString
+	/**
+	 * The crontab could not be read.
+	 */
+	cronUnreadable: () => LocalizedString
+	/**
+	 * Every minute
+	 */
+	cronEveryMinute: () => LocalizedString
+	/**
+	 * Every hour at minute {minute}
+	 */
+	cronHourly: (arg: { minute: unknown }) => LocalizedString
+	/**
+	 * Every day at {time}
+	 */
+	cronDailyAt: (arg: { time: unknown }) => LocalizedString
+	/**
+	 * Next run {in}
+	 */
+	cronNextRun: (arg: { in: unknown }) => LocalizedString
+	/**
+	 * in {minutes} minutes
+	 */
+	cronInMinutes: (arg: { minutes: unknown }) => LocalizedString
+	/**
+	 * in {hours} hours
+	 */
+	cronInHours: (arg: { hours: unknown }) => LocalizedString
+	/**
+	 * in {days} days
+	 */
+	cronInDays: (arg: { days: unknown }) => LocalizedString
+	/**
+	 * This machine has no crontab command, so there is nothing to show or change here.
+	 */
+	cronNotInstalled: () => LocalizedString
+	/**
+	 * The agent runs on Windows, which has no crontab.
+	 */
+	cronUnsupportedPlatform: () => LocalizedString
+	/**
+	 * The schedule is empty.
+	 */
+	cronInvalidScheduleEmpty: () => LocalizedString
+	/**
+	 * The command is empty.
+	 */
+	cronInvalidCommandEmpty: () => LocalizedString
+	/**
+	 * A line break would split this into two jobs, so it is refused.
+	 */
+	cronInvalidLineBreak: () => LocalizedString
+	/**
+	 * This app does not know that @macro. Use the five-field form instead.
+	 */
+	cronInvalidMacro: () => LocalizedString
+	/**
+	 * The schedule has to be five whitespace-separated fields.
+	 */
+	cronInvalidFieldCount: () => LocalizedString
+	/**
+	 * That job is no longer at that position. The schedule has been read again.
+	 */
+	cronInvalidUnknownLine: () => LocalizedString
 	/**
 	 * Close
 	 */

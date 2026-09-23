@@ -118,7 +118,86 @@ export interface RemoteAccess {
   /// but its own field, because an agent that predates the route answers
   /// `full_access` and would 404 the request.
   power?: boolean
+  /// Whether `/api/v1/cron` will change this machine's schedule, on the same
+  /// grant and for the same reason as `power`.
+  cron?: boolean
 }
+
+/// One job in the account's crontab, with its schedule already expanded.
+///
+/// The expansion is done on the server, against the server's own clock: cron
+/// matches an expression against the machine's wall time, so a client that
+/// interpreted it in the viewer's timezone would name a time the job does not
+/// run at.
+export interface CronJobView {
+  /// Index into the listing the client was given. This is what an edit
+  /// addresses, and the agent re-reads the file at write time — an index that
+  /// no longer names a job is refused rather than applied to whatever moved
+  /// into its place.
+  line_index: number
+  schedule: string
+  command: string
+  /// Whether the job runs. A disabled job is a commented-out line on disk; the
+  /// spelling is the agent's, which is why a client never writes the text back.
+  enabled: boolean
+  /// Whether the schedule is one this app reads. `false` means the fields
+  /// below are empty, and the expression is shown as written.
+  parsed: boolean
+  is_reboot: boolean
+  minutes: number[]
+  hours: number[]
+  days_of_month: number[]
+  months: number[]
+  days_of_week: number[]
+  /// Whether the day fields actually narrow the schedule. A `*` there means
+  /// "every", which is not the same as a list that happens to cover everything —
+  /// cron's day-of-month/day-of-week rule is an OR, and an OR of two
+  /// unrestricted fields is every day.
+  day_of_month_restricted: boolean
+  day_of_week_restricted: boolean
+  /// The server's own wall clock, `YYYY-MM-DDTHH:MM`. Null when the schedule
+  /// has no next run within the search window, or when the machine could not
+  /// report its UTC offset (an old agent, or a `date` without `%z`) — in which
+  /// case the schedule still lists and only the next run is unplaceable.
+  next_run: string | null
+}
+
+/// Why a crontab could not be read, as its own word so the panel phrases it in
+/// its own language. `null` alongside `available: false` means the machine said
+/// something this agent does not classify, and `reason` is that text.
+export type CronReason = 'not_installed' | 'unsupported_platform' | 'unreadable'
+
+export interface CronView {
+  /// Whether the crontab could be read at all. `false` is a state of the
+  /// machine — no `crontab(1)`, a platform that has none — not a failure of the
+  /// caller, so it is a field and the page has one shape to draw either way.
+  available: boolean
+  reason_kind: CronReason | null
+  /// What the machine said, verbatim. Never translated: it is the only thing
+  /// that distinguishes one failure from another.
+  reason: string | null
+  /// The account whose crontab this is, as the machine named it.
+  user: string | null
+  /// The agent machine's wall clock when it was read, `YYYY-MM-DDTHH:MM`.
+  now: string | null
+  jobs: CronJobView[]
+  /// Comments, environment assignments and anything else that is not a job.
+  /// Shown so a crontab another tool manages does not look like it lost them.
+  preserved: string[]
+  /// Whether this panel may change the schedule. A hint for the UI; the agent
+  /// re-checks it on every write.
+  editable: boolean
+}
+
+/// One change to one line.
+///
+/// An operation rather than a whole document: a client that round-tripped the
+/// text would be the thing that decides how a disabled line is spelled, and a
+/// client that got it slightly wrong would rewrite a file it does not own.
+export type CronEdit =
+  | { op: 'upsert'; line_index: number | null; schedule: string; command: string; enabled: boolean }
+  | { op: 'remove'; line_index: number }
+  | { op: 'set_enabled'; line_index: number; enabled: boolean }
 
 export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
 
