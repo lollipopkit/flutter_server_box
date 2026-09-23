@@ -214,6 +214,13 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             })),
         ),
         (Method::GET, "/api/v1/containers?part=containers", None),
+        // A container's own output is reachable from the panel login, and a
+        // watch token reaches `/metrics` and nothing else.
+        (
+            Method::GET,
+            "/api/v1/containers?part=logs&id=sbm-scope-test-nonexistent",
+            None,
+        ),
         // An id no container can have, for the reason the cron body above is an
         // empty schedule: the panel-login half of this test reaches the
         // handler, and every other action here would really change the runtime

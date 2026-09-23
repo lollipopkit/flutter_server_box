@@ -145,13 +145,24 @@ impl ContainerCmd {
     /// freshness marker — a marker reused across refreshes would let an
     /// answer to the previous one be read as an answer to this one.
     pub fn exec_selected(cmds: &[Self], ty: ContainerType, separator: &str) -> String {
-        let joined = cmds
-            .iter()
-            .map(|cmd| cmd.exec(ty))
-            .collect::<Vec<_>>()
-            .join(&format!("\necho {separator}\n"));
-        format!("sh -c '{}'", joined.replace('\'', "'\\''"))
+        let commands: Vec<String> = cmds.iter().map(|cmd| cmd.exec(ty)).collect();
+        join_commands(&commands, separator)
     }
+}
+
+/// Several command lines as one shell invocation, told apart by `separator`.
+///
+/// The strings are joined rather than built from [`ContainerCmd`]s because one
+/// command this module builds is not one of them: a log read is about a
+/// container, so it carries an id, and [`ContainerCmd`] is `Copy` precisely
+/// because every one of its cases is the same for every machine.
+///
+/// The separator is written *between* the commands, so N commands produce N
+/// segments when the answer is split — not N+1, and not a leading marker that
+/// someone has to remember to skip.
+pub fn join_commands(commands: &[String], separator: &str) -> String {
+    let joined = commands.join(&format!("\necho {separator}\n"));
+    format!("sh -c '{}'", joined.replace('\'', "'\\''"))
 }
 
 /// Split a batched answer back into one segment per command.
@@ -447,11 +458,32 @@ pub enum ContainerActionKind {
 /// been up for a year does not send a year of lines.
 pub fn logs_command(ty: ContainerType, id: &str) -> String {
     format!(
-        "{} logs -f --tail 100 {}",
+        "{} logs -f --tail {} {}",
         ty.name(),
+        LOG_TAIL,
         single_quote(id)
     )
 }
+
+/// The last [`LOG_TAIL`] lines of a container's log, as one bounded read.
+///
+/// Not [`logs_command`] without its `-f`: a caller that asked for a stream
+/// holds a connection open for as long as the container writes, and one that
+/// asked for this holds it for as long as the runtime takes to print. The count
+/// is a `u32` rather than text so it cannot carry a shell metacharacter, and the
+/// id goes through [`single_quote`] like every other caller-supplied value.
+pub fn logs_tail_command(ty: ContainerType, id: &str, tail: u32) -> String {
+    format!(
+        "{} logs --tail {} {}",
+        ty.name(),
+        tail,
+        single_quote(id)
+    )
+}
+
+/// How many log lines a bounded read asks for. Long enough to cover a container
+/// that failed at startup, short enough to fit one request's response.
+pub const LOG_TAIL: u32 = 100;
 
 /// Open a shell inside a container.
 ///
@@ -1992,6 +2024,54 @@ mod tests {
             shell_command(ContainerType::Podman, "abc"),
             "podman exec -it 'abc' sh -c \"command -v bash && exec bash || command -v ash && exec ash || exec sh\""
         );
+    }
+
+    #[test]
+    fn a_bounded_log_read_does_not_follow() {
+        // The difference from `logs_command` is the whole point: a caller that
+        // asked for this one gets an answer and a closed connection.
+        assert_eq!(
+            logs_tail_command(ContainerType::Docker, "abc", 100),
+            "docker logs --tail 100 'abc'"
+        );
+        assert!(!logs_tail_command(ContainerType::Docker, "abc", 100).contains(" -f "));
+        assert_eq!(
+            logs_tail_command(ContainerType::Podman, "abc", 5),
+            "podman logs --tail 5 'abc'"
+        );
+    }
+
+    #[test]
+    fn a_log_read_quotes_the_id_it_was_given() {
+        assert_eq!(
+            logs_tail_command(ContainerType::Docker, "a'; rm -rf /; echo '", 10),
+            r#"docker logs --tail 10 'a'\''; rm -rf /; echo '\'''"#
+        );
+    }
+
+    #[test]
+    fn batched_commands_are_joined_and_quoted_once() {
+        let commands = vec![
+            ContainerCmd::Version.exec(ContainerType::Docker),
+            logs_tail_command(ContainerType::Docker, "it's", 10),
+        ];
+        let cmd = join_commands(&commands, "SEP");
+        assert!(cmd.starts_with("sh -c '"));
+        assert!(cmd.ends_with('\''));
+        assert!(cmd.contains("\necho SEP\n"));
+        // The inner single quote is escaped for the outer `sh -c` as well as by
+        // the id's own quoting, and there is exactly one escaping pass over the
+        // whole batch — a second would double it.
+        assert!(cmd.contains(r"'\''"), "{cmd}");
+        assert_eq!(
+            sbm_parser_marker_count(&cmd, "SEP"),
+            1,
+            "one marker between two commands: {cmd}"
+        );
+    }
+
+    fn sbm_parser_marker_count(cmd: &str, separator: &str) -> usize {
+        cmd.matches(&format!("echo {separator}")).count()
     }
 
     #[test]

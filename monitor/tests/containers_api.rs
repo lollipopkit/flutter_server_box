@@ -83,10 +83,15 @@ fn harmless_action() -> serde_json::Value {
     json!({ "action": "start", "id": "sbm-scope-test-nonexistent" })
 }
 
-async fn get(srv: &TestServer, part: Option<&str>) -> Result<serde_json::Value, u16> {
-    let path = match part {
-        Some(part) => format!("/api/v1/containers?part={part}"),
-        None => "/api/v1/containers".to_owned(),
+async fn get(
+    srv: &TestServer,
+    part: Option<&str>,
+    id: Option<&str>,
+) -> Result<serde_json::Value, u16> {
+    let path = match (part, id) {
+        (Some(part), Some(id)) => format!("/api/v1/containers?part={part}&id={id}"),
+        (Some(part), None) => format!("/api/v1/containers?part={part}"),
+        (None, _) => "/api/v1/containers".to_owned(),
     };
     let resp = srv
         .get(&path)
@@ -154,7 +159,7 @@ async fn changing_is_refused_when_full_access_is_off() {
 #[ntex::test]
 async fn reading_is_allowed_without_full_access() {
     let srv = test_server(app_state(false).await).await;
-    let body = get(&srv, None).await.expect("the listing is readable");
+    let body = get(&srv, None, None).await.expect("the listing is readable");
     assert_eq!(body["editable"], false);
 }
 
@@ -164,7 +169,7 @@ async fn reading_is_allowed_without_full_access() {
 #[ntex::test]
 async fn the_default_part_is_the_container_list() {
     let srv = test_server(app_state(true).await).await;
-    let body = get(&srv, None).await.expect("the listing is readable");
+    let body = get(&srv, None, None).await.expect("the listing is readable");
     assert_eq!(body["part"], "containers");
     assert_eq!(body["editable"], true);
 }
@@ -174,8 +179,10 @@ async fn the_default_part_is_the_container_list() {
 #[ntex::test]
 async fn every_part_answers_with_its_own_shape() {
     let srv = test_server(app_state(true).await).await;
-    for part in ["containers", "images", "usage"] {
-        let body = get(&srv, Some(part)).await.expect("the listing is readable");
+    for part in ["containers", "images", "usage", "logs"] {
+        let body = get(&srv, Some(part), Some("sbm-scope-test-nonexistent"))
+            .await
+            .expect("the listing is readable");
         assert_eq!(body["part"], part);
         assert!(body["editable"].is_boolean());
         if body["available"] == true {
@@ -193,12 +200,34 @@ async fn every_part_answers_with_its_own_shape() {
     }
 }
 
+/// The part that is about one container has to be told which. A request that
+/// named none is refused before the runtime is run, so a malformed one costs
+/// nothing on the machine.
+#[ntex::test]
+async fn a_part_about_one_container_needs_its_id() {
+    let srv = test_server(app_state(true).await).await;
+    assert_eq!(get(&srv, Some("logs"), None).await.unwrap_err(), 400);
+    assert_eq!(get(&srv, Some("logs"), Some("")).await.unwrap_err(), 400);
+}
+
+/// A read that names a container which does not exist is not a failed request:
+/// the runtime printed something, and what it printed is the answer.
+#[ntex::test]
+async fn a_log_read_the_runtime_refused_still_answers() {
+    let srv = test_server(app_state(true).await).await;
+    let body = get(&srv, Some("logs"), Some("sbm-scope-test-nonexistent"))
+        .await
+        .expect("the read is answered");
+    assert_eq!(body["part"], "logs");
+    assert!(body["logs"].is_null() || body["logs"].is_string());
+}
+
 /// A part this build does not have is refused by the extractor, before any
 /// handler — and therefore before the runtime is run.
 #[ntex::test]
 async fn an_unknown_part_is_rejected() {
     let srv = test_server(app_state(true).await).await;
-    assert_eq!(get(&srv, Some("volumes")).await.unwrap_err(), 400);
+    assert_eq!(get(&srv, Some("volumes"), None).await.unwrap_err(), 400);
 }
 
 /// An action this build does not implement is refused while deserializing,
@@ -267,7 +296,7 @@ async fn reading_is_not_audited() {
     let state = app_state(true).await;
     let db = state.db.clone();
     let srv = test_server(state).await;
-    let _ = get(&srv, None).await.expect("the listing is readable");
+    let _ = get(&srv, None, None).await.expect("the listing is readable");
 
     let count: i64 = sqlx::query_scalar("SELECT count(*) FROM access_log")
         .fetch_one(&db)

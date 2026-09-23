@@ -66,13 +66,13 @@ use sbm_parser::container::{
 /// over is reported like any other unreadable answer rather than as a crash.
 const MAX_OUTPUT_BYTES: u64 = 8 * 1024 * 1024;
 
-/// Which of the three things the panel is asking for.
+/// Which of the four things the panel is asking for.
 ///
-/// One route rather than three, because the three share a runtime probe, a
-/// reason vocabulary and an `editable` answer, and three handlers would be
-/// three copies of that. They are *not* fetched together: `system df` walks the
-/// whole image store, which on a host with many images is hundreds of
-/// milliseconds that a page refreshing every few seconds must not pay.
+/// One route rather than four, because the four share a runtime probe, a reason
+/// vocabulary and an `editable` answer, and four handlers would be four copies
+/// of that. They are *not* fetched together: `system df` walks the whole image
+/// store, which on a host with many images is hundreds of milliseconds that a
+/// page refreshing every few seconds must not pay.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ContainerPart {
@@ -83,6 +83,14 @@ pub enum ContainerPart {
     Images,
     /// How much space a prune would reclaim.
     Usage,
+    /// The last lines of one container's log, named by `id`.
+    ///
+    /// Its own part rather than an `/exec` call from the panel: what it prints
+    /// is the runtime's own text, the command is one this endpoint already
+    /// builds for the app, and the panel never composes a command line. It is
+    /// a bounded read — the app's log view follows the output, and a request
+    /// that did would never answer.
+    Logs,
 }
 
 impl ContainerPart {
@@ -92,13 +100,19 @@ impl ContainerPart {
             Self::Containers => "containers",
             Self::Images => "images",
             Self::Usage => "usage",
+            Self::Logs => "logs",
         }
+    }
+
+    /// Whether this part needs `id` to be answered at all.
+    fn needs_id(self) -> bool {
+        matches!(self, Self::Logs)
     }
 }
 
 #[derive(Serialize)]
 struct ContainerListResponse {
-    /// Which of the three this answers. Echoed because a response is read
+    /// Which of the four this answers. Echoed because a response is read
     /// beside a request that may have been made minutes ago, and the panel
     /// keeps one object per part.
     part: ContainerPart,
@@ -123,6 +137,9 @@ struct ContainerListResponse {
     containers: Vec<ContainerRow>,
     images: Vec<ContainerImage>,
     usage: Option<DiskUsage>,
+    /// The container's log, for [`ContainerPart::Logs`]. `None` elsewhere, and
+    /// `None` for a log the runtime refused to print — the reason says which.
+    logs: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -162,6 +179,14 @@ struct ContainerRow {
     /// Absent for a container that is not running, and for one the runtime did
     /// not answer for — a stopped container has no sample to give.
     stats: Option<ContainerStats>,
+    /// Which actions this container's state is offered under, from
+    /// [`sbm_parser::container::menu_items`].
+    ///
+    /// Sent rather than derived by the client: "an unrecognised state is
+    /// grouped with a stopped one, and a container that will not start is
+    /// exactly the one whose logs are wanted" is a rule, and a second
+    /// implementation of it would be the one that drifts.
+    actions: Vec<sbm_parser::container::ContainerActionKind>,
 }
 
 /// Reads one part of the machine's container state.
@@ -175,12 +200,23 @@ pub async fn list(
     }
     let secure = ws::is_secure_transport(&req, app_state.tls_active);
     let editable = app_state.full_access_allowed(secure);
-    Ok(HttpResponse::Ok().json(&read(query.part.unwrap_or_default(), editable).await))
+    let part = query.part.unwrap_or_default();
+    let id = query.id.as_deref();
+    // A part that is about one container and was not told which is a request
+    // that cannot be answered, not one to guess a default for. Refused before
+    // the runtime is run, so a malformed request costs nothing on the machine.
+    if part.needs_id() && id.is_none_or(str::is_empty) {
+        return Ok(HttpResponse::BadRequest().finish());
+    }
+    Ok(HttpResponse::Ok().json(&read(part, id, editable).await))
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ContainerQuery {
     part: Option<ContainerPart>,
+    /// Which container a part about one is about. Ignored by the parts that are
+    /// about the machine, so a client may carry it along without harm.
+    id: Option<String>,
 }
 
 /// Performs one change and reports how the machine answered.
@@ -209,7 +245,7 @@ pub async fn act(
 
     let action = body.into_inner();
     let Some(runtime) = detect_runtime().await else {
-        return Ok(HttpResponse::Ok().json(&read(ContainerPart::Containers, true).await));
+        return Ok(HttpResponse::Ok().json(&read(ContainerPart::Containers, None, true).await));
     };
 
     let command_text = action.exec(runtime);
@@ -250,7 +286,7 @@ pub async fn act(
     // caller that had to ask again would be asking about a machine that has
     // since moved, and the page has one object to update either way.
     let mut response =
-        serde_json::to_value(read(ContainerPart::Containers, true).await).unwrap_or_default();
+        serde_json::to_value(read(ContainerPart::Containers, None, true).await).unwrap_or_default();
     if let Some(output) = result {
         let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
         let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
@@ -282,7 +318,7 @@ fn action_subject(action: &ContainerAction) -> String {
 }
 
 /// Everything this endpoint can answer, gathered per part.
-async fn read(part: ContainerPart, editable: bool) -> ContainerListResponse {
+async fn read(part: ContainerPart, id: Option<&str>, editable: bool) -> ContainerListResponse {
     let empty = |kind: Option<ContainerReason>, reason: Option<String>| ContainerListResponse {
         part,
         available: false,
@@ -293,6 +329,7 @@ async fn read(part: ContainerPart, editable: bool) -> ContainerListResponse {
         containers: Vec::new(),
         images: Vec::new(),
         usage: None,
+        logs: None,
     };
 
     if system_type() == sbm_parser::SystemType::Windows {
@@ -304,7 +341,7 @@ async fn read(part: ContainerPart, editable: bool) -> ContainerListResponse {
     // are two different things to say to a user.
     let mut last: Option<Probe> = None;
     for ty in [ContainerType::Docker, ContainerType::Podman] {
-        let probe = probe(ty, part).await;
+        let probe = probe(ty, part, id).await;
         match probe {
             Probe::NotInstalled { .. } => {
                 last = Some(probe);
@@ -354,12 +391,21 @@ enum Probe {
 /// across calls would let a stale answer be split against commands it was not
 /// an answer to, and the split is by *position*, so a short answer would attach
 /// one command's output to another command's name.
-async fn probe(ty: ContainerType, part: ContainerPart) -> Probe {
-    let mut cmds = vec![ContainerCmd::Version];
+async fn probe(ty: ContainerType, part: ContainerPart, id: Option<&str>) -> Probe {
+    let mut cmds = vec![ContainerCmd::Version.exec(ty)];
     cmds.extend(match part {
-        ContainerPart::Containers => vec![ContainerCmd::Ps, ContainerCmd::Stats],
-        ContainerPart::Images => vec![ContainerCmd::Images],
-        ContainerPart::Usage => vec![ContainerCmd::Df],
+        ContainerPart::Containers => [ContainerCmd::Ps, ContainerCmd::Stats]
+            .map(|cmd| cmd.exec(ty))
+            .to_vec(),
+        ContainerPart::Images => vec![ContainerCmd::Images.exec(ty)],
+        ContainerPart::Usage => vec![ContainerCmd::Df.exec(ty)],
+        // `read` refuses this part without an id, so an empty one here is the
+        // path that never runs rather than a container named "".
+        ContainerPart::Logs => vec![sbm_parser::container::logs_tail_command(
+            ty,
+            id.unwrap_or_default(),
+            sbm_parser::container::LOG_TAIL,
+        )],
     });
 
     let separator = format!(
@@ -370,7 +416,7 @@ async fn probe(ty: ContainerType, part: ContainerPart) -> Probe {
             .unwrap_or_default(),
         part.as_str()
     );
-    let command_text = ContainerCmd::exec_selected(&cmds, ty, &separator);
+    let command_text = sbm_parser::container::join_commands(&cmds, &separator);
     let command_text = sbm_parser::container::build_runtime_command(&command_text, ty, None, false);
 
     let Some(output) = run_local(&command_text, None).await else {
@@ -454,6 +500,7 @@ async fn finish(part: ContainerPart, probe: Probe, editable: bool) -> ContainerL
             containers: Vec::new(),
             images: Vec::new(),
             usage: None,
+            logs: None,
         }
     };
 
@@ -474,31 +521,36 @@ async fn finish(part: ContainerPart, probe: Probe, editable: bool) -> ContainerL
     let version = sbm_parser::container::parse_version(&segments[0]);
     let version_text = version.as_deref();
 
-    let (containers, images, usage) = match part {
+    let mut containers = Vec::new();
+    let mut images = Vec::new();
+    let mut usage = None;
+    let mut logs = None;
+
+    match part {
         ContainerPart::Containers => {
-            let containers = sbm_parser::container::parse_docker_ps(&segments[1]);
+            let listed = sbm_parser::container::parse_docker_ps(&segments[1]);
             let stats_rows = sbm_parser::container::parse_stats_rows(&segments[2]);
-            let rows = containers
+            containers = listed
                 .into_iter()
                 .map(|container| ContainerRow {
                     stats: sbm_parser::container::find_stats_row(&stats_rows, container.id.as_deref())
                         .and_then(|raw| sbm_parser::container::parse_stats(ty, raw, version_text)),
+                    actions: sbm_parser::container::menu_items(container.status),
                     container,
                 })
                 .collect();
-            (rows, Vec::new(), None)
         }
-        ContainerPart::Images => (
-            Vec::new(),
-            sbm_parser::container::parse_images(&segments[1], ty),
-            None,
-        ),
-        ContainerPart::Usage => (
-            Vec::new(),
-            Vec::new(),
-            sbm_parser::container::parse_disk_usage(&segments[1]),
-        ),
-    };
+        ContainerPart::Images => {
+            images = sbm_parser::container::parse_images(&segments[1], ty);
+        }
+        ContainerPart::Usage => {
+            usage = sbm_parser::container::parse_disk_usage(&segments[1]);
+        }
+        // The runtime's own text, passed through as it printed it: it is the
+        // container's output, and a client that reformatted it would be drawing
+        // something the container did not write.
+        ContainerPart::Logs => logs = Some(segments[1].trim_matches('\n').to_owned()),
+    }
 
     ContainerListResponse {
         part,
@@ -513,6 +565,7 @@ async fn finish(part: ContainerPart, probe: Probe, editable: bool) -> ContainerL
         containers,
         images,
         usage,
+        logs,
     }
 }
 
