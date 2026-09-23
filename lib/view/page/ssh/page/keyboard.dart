@@ -40,7 +40,9 @@ extension _Keyboard on SSHPageState {
     // — the pages stay alive, that is what `wantKeepAlive` is for. Without this
     // an Escape typed in one terminal reached all of them, and every key was
     // handled as many times as there were tabs.
-    if (!_isVisibleSessionPage) return false;
+    if (!mounted || !_keyboardHandlerActive || !_isVisibleSessionPage) {
+      return false;
+    }
     if (event is KeyDownEvent) {
       // The clipboard chords are deliberately *not* here. `TerminalView` binds
       // all of them already — Cmd+C/V, Ctrl+Shift+C/V and Ctrl+V, in

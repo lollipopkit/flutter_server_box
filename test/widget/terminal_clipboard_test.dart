@@ -133,6 +133,16 @@ void main() {
     expect(find.byType(TerminalView), findsOneWidget);
   });
 
+  testWidgets('disposed terminal ignores hardware keys', (tester) async {
+    await pump(tester);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    expect(tester.takeException(), isNull);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+  });
+
   testWidgets('with nothing selected, a right-click pastes', (tester) async {
     await pump(tester);
 
