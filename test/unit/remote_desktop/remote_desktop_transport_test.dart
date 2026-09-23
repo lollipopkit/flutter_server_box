@@ -37,18 +37,23 @@ import '../../helpers/test_db.dart';
 /// An agent that answers the login, mints a ticket, and then accepts the relay
 /// — recording that it was reached, which is the whole assertion.
 class _FakeAgent {
-  _FakeAgent._(this._server);
+  _FakeAgent._(this._server, this._refuseTickets);
 
   final HttpServer _server;
 
+  /// Answer 403 to every ticket request, standing in for an agent that will
+  /// not relay — the failure that has to end up reported rather than retried
+  /// for ever.
+  final bool _refuseTickets;
+
   /// The addresses the relay was asked to dial.
-  final dialled = <String>[];
+  final List<String> dialled = [];
 
   Uri get url => Uri.parse('http://127.0.0.1:${_server.port}');
 
-  static Future<_FakeAgent> start() async {
+  static Future<_FakeAgent> start({bool refuseTickets = false}) async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final agent = _FakeAgent._(server);
+    final agent = _FakeAgent._(server, refuseTickets);
     agent._serve();
     return agent;
   }
@@ -61,6 +66,10 @@ class _FakeAgent {
       }
       if (request.uri.path == '/api/v1/ws-ticket') {
         await request.drain<void>();
+        if (_refuseTickets) {
+          request.response.statusCode = HttpStatus.forbidden;
+          return request.response.close();
+        }
         return _json(request, {'ticket': 'id.secret', 'expires_in': 30});
       }
       final socket = await WebSocketTransformer.upgrade(
@@ -171,7 +180,7 @@ void main() {
       });
       expect(agent.dialled, ['127.0.0.1:5900']);
     });
-  }, timeout: const Timeout(Duration(seconds: 30)));
+  }, timeout: const Timeout(Duration(minutes: 4)));
 
   test('the entry is offered exactly when the relay is', () {
     // The pair that has to agree: the button's gate and the session's ability.
@@ -187,17 +196,18 @@ void main() {
   });
 
   test('a session that cannot open is reported, not left connecting', () async {
-    // A port nothing is listening on, so the login is refused immediately
-    // rather than timing out. What is asserted is that the failure reaches the
-    // session as an error: a page that only ever saw "connecting" would draw an
-    // empty desktop and say nothing about why.
-    //
-    // The agent's own refusal of a *target* — the other way this fails — is
-    // `monitor_tunnel_test.dart`'s subject, where it is deterministic.
+    // An agent that refuses the ticket. What is asserted is that the failure
+    // reaches the session as an error: a page that only ever saw "connecting"
+    // would draw an empty desktop and say nothing about why. The agent's
+    // refusal of the *target*, the other way this fails, is
+    // `monitor_tunnel_test.dart`'s subject.
+    final agent = await _FakeAgent.start(refuseTickets: true);
+    addTearDown(agent.close);
+
     final spi = Spi(
       name: 'unreachable',
       id: 'srv-dead',
-      monitorHttp: const MonitorHttpCredential(addr: 'http://127.0.0.1:1'),
+      monitorHttp: MonitorHttpCredential(addr: agent.url.toString()),
     );
     Stores.server.put(spi);
 
@@ -226,18 +236,22 @@ void main() {
             .connectionState,
         isNot(ffi.RemoteDesktopConnectionState.connected),
       );
+      // Nothing was ever dialled, because there was never a socket to dial
+      // through.
+      expect(agent.dialled, isEmpty);
     });
-  }, timeout: const Timeout(Duration(seconds: 60)));
+  }, timeout: const Timeout(Duration(minutes: 4)));
 }
 
-/// Pumps until [predicate], or fails after a few seconds.
+/// Pumps until [predicate], or fails after a while.
 ///
 /// The provider does its work on real async: a tunnel is dialled through a real
 /// socket, and there is no frame here to pump. The deadline is generous because
-/// a whole-directory run has other suites' processes competing for the machine,
-/// and a login plus a ticket plus an upgrade is three round trips.
+/// `flutter test` runs a whole suite's files at once, and a login plus a ticket
+/// plus an upgrade is three round trips against a machine that is busy with
+/// thirty other test processes.
 Future<void> _until(bool Function() predicate) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 25));
+  final deadline = DateTime.now().add(const Duration(minutes: 2));
   while (!predicate()) {
     if (DateTime.now().isAfter(deadline)) {
       fail('the condition never became true');
