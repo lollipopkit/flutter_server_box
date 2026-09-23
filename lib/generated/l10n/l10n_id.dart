@@ -102,7 +102,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiNoResponse => 'Tidak ada respons';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Desktop jarak jauh';
 
   @override
   String get askAiAgentWelcome => 'Apa yang akan kita lakukan di server ini?';
@@ -2602,6 +2602,36 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get transportOff => 'nonaktif';
+
+  @override
+  String get thisDevice => 'Perangkat ini';
+
+  @override
+  String get localServerTip =>
+      'Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan Monitor HTTP tidak digunakan, dan pengaturannya tetap disimpan.';
+
+  @override
+  String get localServerUnsupported =>
+      'Platform ini tidak dapat membaca perangkat ini sebagai server. Linux, Windows, dan versi DMG macOS mendukungnya.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Buka desktop RDP atau VNC sebuah server di dalam aplikasi. Koneksi melewati koneksi SSH server atau agen Monitor-nya, jadi port desktop tidak perlu dapat dijangkau dari jaringan.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Simpan satu profil per desktop dari tombol Desktop jarak jauh pada server, atau dari tab Desktop jarak jauh.';
+
+  @override
+  String get localServerIntro =>
+      'Tambahkan perangkat yang menjalankan ServerBox sebagai server. Status, proses, layanan, kontainer, terminal, dan berkas berfungsi tanpa SSH atau agen Monitor.';
+
+  @override
+  String get localServerAdd => 'Tambahkan perangkat ini';
+
+  @override
+  String get localServerIntroFooter =>
+      'Ini juga bisa diaktifkan nanti, di halaman edit server pada bagian Koneksi.';
 
   @override
   String get transportSectionOff =>

@@ -7,6 +7,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
@@ -147,7 +148,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: widget.onBack,
               ),
-        title: TwoLineText(up: 'Remote desktop', down: widget.args.spi.name),
+        title: TwoLineText(up: l10n.remoteDesktop, down: widget.args.spi.name),
         actions: [
           Btn.icon(
             text: libL10n.add,

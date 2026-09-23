@@ -232,9 +232,11 @@ extension _Init on SSHPageState {
             _connectionStep == TerminalConnectionStep.openingShell
                 ? TerminalConnectionStep.shellFailed
                 : TerminalConnectionStep.connectionFailed,
-            detail: error is TerminalRemoteAccessUnavailable
-                ? l10n.monitorNoRemoteAccess
-                : null,
+            detail: switch (error) {
+              TerminalRemoteAccessUnavailable() => l10n.monitorNoRemoteAccess,
+              LocalServerErr() => error.solution,
+              _ => null,
+            },
           );
           TermSessionManager.updateStatus(
             _sessionId,

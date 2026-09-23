@@ -17,7 +17,7 @@ mixin _$Snippet {
 
 /// Generated. A snippet used to be keyed by [name], so renaming one was a
 /// delete and an insert — and `snippetOrder` still pointed at the old name.
- String get id; String get name; String get script; List<String>? get tags; String? get note;/// List of server id that this snippet should be auto run on
+ String get id; String get name; String get script; List<String>? get tags; String? get note;/// Server ids on which this snippet runs automatically.
  List<String>? get autoRunOn;
 /// Create a copy of Snippet
 /// with the given fields replaced by the non-null parameter values.
@@ -235,9 +235,9 @@ class _Snippet implements Snippet {
 }
 
 @override final  String? note;
-/// List of server id that this snippet should be auto run on
+/// Server ids on which this snippet runs automatically.
  final  List<String>? _autoRunOn;
-/// List of server id that this snippet should be auto run on
+/// Server ids on which this snippet runs automatically.
 @override List<String>? get autoRunOn {
   final value = _autoRunOn;
   if (value == null) return null;

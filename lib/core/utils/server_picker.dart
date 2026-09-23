@@ -152,9 +152,13 @@ class _ServerPickerSheetState extends ConsumerState<_ServerPickerSheet> {
     if (spi.tags?.any((t) => t.toLowerCase().contains(_needle)) ?? false) {
       return true;
     }
-    final addr = spi.ssh?.ip ?? spi.monitor?.addr ?? '';
-    return addr.toLowerCase().contains(_needle);
+    return _addrOf(spi).toLowerCase().contains(_needle);
   }
+
+  /// This device has no address of its own; one parked in its settings is
+  /// another machine's.
+  static String _addrOf(Spi spi) =>
+      spi.local ? 'localhost' : spi.ssh?.ip ?? spi.monitor?.addr ?? '';
 
   bool _matchesTag(Spi spi) =>
       _tag == TagSwitcher.kDefaultTag || (spi.tags?.contains(_tag) ?? false);
@@ -192,7 +196,7 @@ extension _Widgets on _ServerPickerSheetState {
       ),
       subtitle: Text(
         [
-          spi.ssh?.ip ?? spi.monitor?.addr ?? '',
+          _ServerPickerSheetState._addrOf(spi),
           ...?spi.tags,
         ].where((e) => e.isNotEmpty).join(' · '),
         maxLines: 1,

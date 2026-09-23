@@ -65,7 +65,7 @@ extension AppTabViewX on AppTab {
       AppTab.file => libL10n.file,
       AppTab.agent => 'Agent',
       AppTab.benchmark => l10n.benchmark,
-      AppTab.remoteDesktop => 'Remote desktop',
+      AppTab.remoteDesktop => l10n.remoteDesktop,
     };
   }
 

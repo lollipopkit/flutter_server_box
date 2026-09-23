@@ -103,7 +103,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiNoResponse => 'Sin respuesta';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Escritorio remoto';
 
   @override
   String get askAiAgentWelcome => '¿Qué hacemos en este servidor?';
@@ -2639,6 +2639,36 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get transportOff => 'desactivado';
+
+  @override
+  String get thisDevice => 'Este dispositivo';
+
+  @override
+  String get localServerTip =>
+      'Lee este dispositivo directamente ejecutando aquí el script de estado. No se usan SSH ni Monitor HTTP, y su configuración se conserva.';
+
+  @override
+  String get localServerUnsupported =>
+      'Esta plataforma no puede leer este dispositivo como servidor. Linux, Windows y la versión DMG de macOS sí pueden.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Abre el escritorio RDP o VNC de un servidor dentro de la app. La conexión pasa por la conexión SSH del servidor o por su agente Monitor, así que el puerto del escritorio no tiene que ser accesible desde la red.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Guarda un perfil por escritorio desde el botón Escritorio remoto de un servidor o desde la pestaña Escritorio remoto.';
+
+  @override
+  String get localServerIntro =>
+      'Añade como servidor el dispositivo que ejecuta ServerBox. El estado, los procesos, los servicios, los contenedores, la terminal y los archivos funcionan sin SSH ni agente Monitor.';
+
+  @override
+  String get localServerAdd => 'Añadir este dispositivo';
+
+  @override
+  String get localServerIntroFooter =>
+      'También puede activarse más tarde, en la página de edición de un servidor, en Conexión.';
 
   @override
   String get transportSectionOff =>

@@ -2,6 +2,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
@@ -55,6 +57,9 @@ class ServerFilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serverProvider(args.spi.id));
 
+    if (args.spi.local && state.capabilities.files) {
+      return _LocalServerFilePage(args: args);
+    }
     if (serverFilesUseAgent(args.spi, state.remoteAccess)) {
       return _MonitorFilePage(args: args);
     }
@@ -71,6 +76,63 @@ class ServerFilePage extends ConsumerWidget {
         // something the app can turn on from here.
         explain: l10n.serverFilesUnavailableTip,
         icon: Icons.folder_off_outlined,
+      ),
+    );
+  }
+}
+
+/// The files of a server that is this device (`Spi.local`).
+///
+/// [LocalFileBackend] over the whole filesystem, which is what separates it
+/// from `LocalFilePage`: that one is the app's own files directory, where
+/// downloads land and uploads are picked from. A server's file browser shows
+/// the machine, so it opens at home and goes up to the root.
+class _LocalServerFilePage extends StatelessWidget {
+  const _LocalServerFilePage({required this.args});
+
+  final SftpPageArgs args;
+
+  /// `/`, or on Windows the drive holding home — `LocalFileBackend` takes
+  /// forward slashes everywhere and has no view above the drive letters.
+  static String get _root {
+    final home = LocalShellBackend.homeDir;
+    if (!isWindows || home == null) return '/';
+    final drive = RegExp(r'^[A-Za-z]:').firstMatch(home)?.group(0);
+    return drive == null ? '/' : '$drive/';
+  }
+
+  static String? get _home => LocalShellBackend.homeDir?.replaceAll(r'\', '/');
+
+  @override
+  Widget build(BuildContext context) {
+    final spi = args.spi;
+    final lastPath = Stores.setting.sftpOpenLastPath.fetch()
+        ? Stores.history.sftpLastPath.fetch(spi.id)
+        : null;
+    return FileBrowserPage(
+      args: FileBrowserArgs(
+        backend: const LocalFileBackend(),
+        root: _root,
+        initialPath: args.initPath ?? lastPath ?? _home,
+        homePath: _home,
+        isPickDir: args.isSelect,
+        actionsSink: args.actionsSink,
+        onPathChanged: (path) {
+          args.onPathChanged?.call(path);
+          if (Stores.setting.sftpOpenLastPath.fetch()) {
+            Stores.history.sftpLastPath.put(spi.id, path);
+          }
+        },
+        extraActions: (_) => [
+          IconButton(
+            tooltip: libL10n.mission,
+            icon: const Icon(Icons.downloading),
+            onPressed: () => showTransfers(context),
+          ),
+        ],
+        // This device's files are this device's, whichever page lists them:
+        // a transfer from here needs no server to reach them.
+        refOf: LocalFileRef.new,
       ),
     );
   }

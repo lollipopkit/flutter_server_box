@@ -437,7 +437,9 @@ void runServerFunc(
         // the case that API exists for. The same predicate `ServerFilePage`
         // picks the backend with, so the connection made here is the one the
         // page then uses.
-        if (!serverFilesUseAgent(
+        // Nor does this device, whose files are read in place.
+        if (!spi.local &&
+            !serverFilesUseAgent(
               spi,
               ref.read(serverProvider(spi.id)).remoteAccess,
             ) &&
@@ -587,7 +589,9 @@ void _gotoSSH(Spi spi, BuildContext context, WidgetRef ref) async {
   // an address the system `ssh` could dial: their bytes travel over the
   // agent's WebSocket, which only this app speaks. The built-in terminal is
   // the only option for them regardless of the setting.
-  final ssh = spi.ssh;
+  // `sshOn` rather than the stored credential: with SSH switched off, or on a
+  // server that is this device, there is nothing for `ssh` to dial either.
+  final ssh = spi.sshOn;
   final useBuiltin =
       isMobile || !useSystemSsh || ssh == null;
 

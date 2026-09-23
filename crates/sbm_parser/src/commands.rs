@@ -207,7 +207,14 @@ pub const BSD: &[CommandSpec] = &[
         cmd: r#"if [ "$(uname)" = "Darwin" ]; then top -l 1 | grep "CPU usage"; sysctl -n hw.ncpu; else top -b -d 1 -P | grep "^CPU"; fi"#,
     },
     CommandSpec { key: UPTIME, cmd: "uptime" },
-    CommandSpec { key: DISK, cmd: "df -k" },
+    // `mount` after a marker, for the filesystem type `df` does not print: it
+    // is what tells the volumes of one APFS container, which all report the
+    // container's numbers, from partitions that merely match (see
+    // `bsd::parse_disk`). Same `(type, ...)` shape on macOS and FreeBSD.
+    CommandSpec {
+        key: DISK,
+        cmd: r#"df -k; echo __SBM_MOUNTS__; mount 2>/dev/null"#,
+    },
     // Darwin: vm_stat supplies page-level data so "used" can exclude
     // cache/inactive (top's PhysMem "used" counts cached files); parser
     // tolerates its absence. FreeBSD has neither `top -l` nor vm_stat, so

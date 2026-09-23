@@ -248,10 +248,21 @@ void _applyCpu(ServerStatus ss, Map<String, dynamic> status, SystemType system) 
   var cores = _coresFromJson(status['cpu'] as List);
   if (cores.isEmpty) return;
 
-  if (system == SystemType.windows) {
-    // Windows provides instantaneous percentages only. Add them to the previous
-    // pseudo-counters to simulate cumulative ticks.
-    cores = _accumulateWindowsCpu(cores, ss.cpu.now);
+  switch (system) {
+    // Both report instantaneous percentages rather than `/proc/stat`'s
+    // cumulative ticks, and [Cpus] reads usage off the difference between two
+    // samples. Two percentage snapshots each sum to about 100, so taken as
+    // counters the window's total moves by nothing, or backwards, and the
+    // reading was "none" on most polls. Adding each to the previous
+    // pseudo-counter turns them into ticks.
+    case SystemType.windows:
+      cores = _accumulatePercentCpu(cores.skip(1).toList(), ss.cpu.now);
+    case SystemType.bsd:
+      // No summary row here: macOS repeats its one aggregate reading per
+      // core, and FreeBSD's `-P` gives the cores alone.
+      cores = _accumulatePercentCpu(cores, ss.cpu.now);
+    case SystemType.linux:
+      break;
   }
   ss.cpu.update(cores);
 
@@ -264,24 +275,43 @@ void _applyCpu(ServerStatus ss, Map<String, dynamic> status, SystemType system) 
   }
 }
 
-List<SingleCpuCore> _accumulateWindowsCpu(
+/// [fresh] percentage readings for each core, as pseudo-counters: each field
+/// added to the same core's field in [prev], with the summary row [Cpus]
+/// expects at index 0 rebuilt as the sum of the cores.
+///
+/// [prev] carries that summary at index 0, so its cores start at 1.
+List<SingleCpuCore> _accumulatePercentCpu(
   List<SingleCpuCore> fresh,
   List<SingleCpuCore> prev,
 ) {
-  // The first entry in `fresh` and `prev` is the CPU summary; per-core entries
-  // start at index 1.
   final cores = <SingleCpuCore>[];
-  var totalUser = 0;
-  var totalIdle = 0;
-  for (var i = 1; i < fresh.length; i++) {
-    final p = i < prev.length ? prev[i] : null;
-    final user = (p?.user ?? 0) + fresh[i].user;
-    final idle = (p?.idle ?? 0) + fresh[i].idle;
-    totalUser += user;
-    totalIdle += idle;
-    cores.add(SingleCpuCore(fresh[i].id, user, 0, 0, idle, 0, 0, 0));
+  var user = 0, sys = 0, nice = 0, idle = 0, iowait = 0, irq = 0, softirq = 0;
+  for (var i = 0; i < fresh.length; i++) {
+    final f = fresh[i];
+    final p = i + 1 < prev.length ? prev[i + 1] : null;
+    final core = SingleCpuCore(
+      f.id,
+      (p?.user ?? 0) + f.user,
+      (p?.sys ?? 0) + f.sys,
+      (p?.nice ?? 0) + f.nice,
+      (p?.idle ?? 0) + f.idle,
+      (p?.iowait ?? 0) + f.iowait,
+      (p?.irq ?? 0) + f.irq,
+      (p?.softirq ?? 0) + f.softirq,
+    );
+    user += core.user;
+    sys += core.sys;
+    nice += core.nice;
+    idle += core.idle;
+    iowait += core.iowait;
+    irq += core.irq;
+    softirq += core.softirq;
+    cores.add(core);
   }
-  cores.insert(0, SingleCpuCore('cpu', totalUser, 0, 0, totalIdle, 0, 0, 0));
+  cores.insert(
+    0,
+    SingleCpuCore('cpu', user, sys, nice, idle, iowait, irq, softirq),
+  );
   return cores;
 }
 

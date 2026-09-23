@@ -4486,6 +4486,54 @@ abstract class AppLocalizations {
   /// **'off'**
   String get transportOff;
 
+  /// No description provided for @thisDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get thisDevice;
+
+  /// No description provided for @localServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.'**
+  String get localServerTip;
+
+  /// No description provided for @localServerUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.'**
+  String get localServerUnsupported;
+
+  /// No description provided for @remoteDesktopIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.'**
+  String get remoteDesktopIntro;
+
+  /// No description provided for @remoteDesktopIntroProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.'**
+  String get remoteDesktopIntroProfiles;
+
+  /// No description provided for @localServerIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.'**
+  String get localServerIntro;
+
+  /// No description provided for @localServerAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add this device'**
+  String get localServerAdd;
+
+  /// No description provided for @localServerIntroFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'It can also be turned on later, in a server\'s edit page under Connection.'**
+  String get localServerIntroFooter;
+
   /// No description provided for @transportSectionOff.
   ///
   /// In en, this message translates to:

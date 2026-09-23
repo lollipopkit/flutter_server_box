@@ -173,7 +173,7 @@ pub fn parse_status_opts(
             status.cpu = bsd::parse_cpu(get(commands::CPU));
             status.cpu_brand = bsd::parse_cpu_brand(get(commands::CPU_BRAND));
             status.mem = bsd::parse_mem(get(commands::MEM));
-            status.disks = linux::parse_disk(get(commands::DISK));
+            status.disks = bsd::parse_disk(get(commands::DISK));
             status.net = bsd::parse_net(get(commands::NET));
             status.sys = common::parse_hostname(get(commands::SYS));
             // `smartctl -a -j` output is the same generic JSON shape on

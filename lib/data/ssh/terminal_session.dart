@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/utils/ish_shell.dart';
+import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -147,6 +148,14 @@ class TerminalSession {
       _ownsBackend = true;
       return;
     }
+    // A server that is this device holds no connection either. Left for
+    // [connect] where the platform cannot run one, so the refusal is said.
+    if (spi?.local == true) {
+      if (!LocalServer.isSupported) return;
+      _backend = LocalShellBackend();
+      _ownsBackend = true;
+      return;
+    }
     if (client != null && !client.isClosed) {
       _backend = SshShellBackend(client);
       _ownsBackend = false;
@@ -188,8 +197,20 @@ class TerminalSession {
       return _backend = _localBackend(local);
     }
 
-    var currentGrant = granted;
     final server = spi!;
+    // The host's own shell, never a userland: the machine this server stands
+    // for is the one the app runs on.
+    if (server.local) {
+      if (!LocalServer.isSupported) {
+        throw const LocalServerErr(type: LocalServerErrType.unsupported);
+      }
+      Diag.crumb(SbDiag.terminal, 'open local server shell', data: {
+        'session': session,
+      });
+      return _backend = LocalShellBackend();
+    }
+
+    var currentGrant = granted;
     final monitor = server.monitor;
     if (server.transport == ServerTransport.monitorHttp && monitor != null) {
       final client = MonitorHttpClient(monitor);

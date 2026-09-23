@@ -149,6 +149,11 @@ class Servers extends Table with SyncMeta {
   BoolColumn get monitorEnabled =>
       boolean().withDefault(const Constant(true))();
 
+  /// Whether this server is the device reading the row — `Spi.local`. The
+  /// third way a row satisfies the CHECK below, and the one that needs no
+  /// address. False for every row written before it.
+  BoolColumn get isLocal => boolean().withDefault(const Constant(false))();
+
   TextColumn get monitorAddr => text().nullable()();
   TextColumn get monitorUser => text().nullable()();
   TextColumn get monitorPwd => text().nullable()();
@@ -203,7 +208,8 @@ class Servers extends Table with SyncMeta {
 
   @override
   List<String> get customConstraints => [
-    // Reached over SSH, over a monitor agent, or both — but never neither.
+    // Reached over SSH, over a monitor agent, or both — or it is this device,
+    // which is reached without either. Never none of those.
     //
     // It used to be an exclusive-or. Both at once is now a configuration the
     // user can ask for: an agent that reports status without a shell open, and
@@ -211,7 +217,7 @@ class Servers extends Table with SyncMeta {
     // [preferredTransport] saying which is tried first. What stays is that a
     // server has to be reachable *somehow*; a row with neither is not a
     // server, it is a name.
-    'CHECK (ssh_ip IS NOT NULL OR monitor_addr IS NOT NULL)',
+    'CHECK (ssh_ip IS NOT NULL OR monitor_addr IS NOT NULL OR is_local = 1)',
     'CHECK (ssh_port IS NULL OR ssh_port BETWEEN 1 AND 65535)',
   ];
 }

@@ -144,6 +144,7 @@ String _transportName(ServerState si) {
   return switch (si.spi.transport) {
     ServerTransport.monitorHttp => 'monitor',
     ServerTransport.ssh => 'SSH',
+    ServerTransport.local => 'localhost',
   };
 }
 
@@ -198,23 +199,51 @@ class _SecretTextState extends State<SecretText> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          _shown ? widget.value : '•' * widget.value.length,
-          style: UIs.text13Grey,
-          overflow: TextOverflow.ellipsis,
-        ),
-        IconButton(
-          padding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          iconSize: 15,
-          icon: Icon(
-            _shown ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        // Flexible, and one line: an IPv6 address is 39 characters, masked or
+        // not, and at its own width it pushed the button out of the card.
+        Flexible(
+          child: Text(
+            _shown ? widget.value : '•' * widget.value.length,
+            style: UIs.text13Grey,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
           ),
+        ),
+        _button(
+          icon: _shown
+              ? Icons.visibility_off_outlined
+              : Icons.visibility_outlined,
           tooltip: _shown ? libL10n.close : libL10n.open,
           onPressed: () => setState(() => _shown = !_shown),
         ),
+        // The value itself, whether or not it is on screen: a narrow window
+        // cuts it short, and copying it is how to get the rest.
+        _button(
+          icon: Icons.copy_outlined,
+          tooltip: libL10n.copy,
+          onPressed: () {
+            Pfs.copy(widget.value);
+            Toast.success(libL10n.success);
+          },
+        ),
       ],
+    );
+  }
+
+  static Widget _button({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      padding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      iconSize: 15,
+      icon: Icon(icon),
+      tooltip: tooltip,
+      onPressed: onPressed,
     );
   }
 }

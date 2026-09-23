@@ -620,6 +620,10 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         final granted = ref.read(serverProvider(spi.id)).remoteAccess;
         if (granted != null && !granted.stream) return null;
         return credential;
+      // `LocalCapabilities.tcpRelay` is false: this device reaches its own
+      // desktop without a relay, and the page is not offered for it.
+      case ServerConnectCredentialLocal():
+        return null;
     }
   }
 
@@ -666,6 +670,9 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         }
         unawaited(tunnel.done.whenComplete(client.dispose));
         return tunnel;
+      case ServerConnectCredentialLocal():
+        // Never reached: [_relayCapable] refuses this credential.
+        throw StateError('No relay to this device');
     }
   }
 
