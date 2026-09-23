@@ -19,6 +19,7 @@ pub mod container;
 pub mod cron;
 pub mod gpu;
 pub mod linux;
+pub mod proc;
 pub mod script;
 pub mod smart;
 pub mod types;

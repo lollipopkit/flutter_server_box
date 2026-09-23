@@ -1,5 +1,18 @@
 //! Cross-platform lightweight text parsing (Dart reference: server_status_update_req.dart)
 
+/// Quote one argument for `/bin/sh`.
+///
+/// Every value that reaches a command line in this crate was typed by a user or
+/// printed by a program, so none of it is trusted: a container name is a string
+/// a removed image can be made to leave behind, and a process's start identity
+/// is whatever `/proc` had at the moment it was read.
+///
+/// One implementation for the whole crate. A second one is the one that would
+/// be missing a case.
+pub fn single_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
 /// `uptime` output (Dart `_parseUpTime`):
 /// "up 61 days, 18:16, 1 user, ..." → "61 days, 18:16";"up 34 min, ..." → "34 min"
 pub fn parse_uptime(raw: &str) -> Option<String> {
@@ -188,6 +201,28 @@ fn ip_tokens(raw: &str) -> Vec<&str> {
         tokens.push(&raw[from..]);
     }
     tokens
+}
+
+#[cfg(test)]
+mod quote_tests {
+    use super::single_quote;
+
+    #[test]
+    fn escapes_untrusted_command_arguments() {
+        assert_eq!(single_quote("abc"), "'abc'");
+        assert_eq!(
+            single_quote("abc'; touch /tmp/pwn; echo '"),
+            r#"'abc'\''; touch /tmp/pwn; echo '\'''"#
+        );
+    }
+
+    /// The two callers name a container and a process's start identity. Both
+    /// arrive from text this crate read off a machine, so both are the case
+    /// that matters and neither is a name a runtime would accept.
+    #[test]
+    fn a_dollar_home_survives_as_a_literal() {
+        assert_eq!(single_quote("$HOME/x"), "'$HOME/x'");
+    }
 }
 
 #[cfg(test)]

@@ -36,6 +36,10 @@ use std::sync::LazyLock;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+/// Kept at this path because it was public here, and one argument-quoting rule
+/// for the whole crate is the point — see [`crate::common::single_quote`].
+pub use crate::common::single_quote;
+
 /// The prefix of the marker line this module's caller echoes between batched
 /// commands, so their outputs can be told apart.
 ///
@@ -199,15 +203,6 @@ pub fn is_podman_emulation(stderr: &str) -> bool {
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
-
-/// Quote one argument for `/bin/sh`.
-///
-/// Every value that reaches a command line here was typed by a user or printed
-/// by a runtime, so none of it is trusted: a container name is a string a
-/// removed image can be made to leave behind.
-pub fn single_quote(value: &str) -> String {
-    format!("'{}'", value.replace('\'', "'\\''"))
-}
 
 /// The command line for one runtime call, with the runtime's environment.
 ///
@@ -1542,15 +1537,6 @@ mod tests {
     // -----------------------------------------------------------------------
     // Quoting and command construction
     // -----------------------------------------------------------------------
-
-    #[test]
-    fn single_quote_escapes_untrusted_command_arguments() {
-        assert_eq!(single_quote("abc"), "'abc'");
-        assert_eq!(
-            single_quote("abc'; touch /tmp/pwn; echo '"),
-            r#"'abc'\''; touch /tmp/pwn; echo '\'''"#
-        );
-    }
 
     #[test]
     fn build_run_cmd_quotes_every_untrusted_argument() {
