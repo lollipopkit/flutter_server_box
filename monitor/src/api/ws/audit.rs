@@ -68,6 +68,13 @@ pub enum Kind {
     /// the subject is the verb and the unit — which may be a unit that no
     /// longer exists by the time the row is read.
     Service,
+    /// A create, change or removal of one account through `api::users`. Its own
+    /// kind for `Container`'s reason: reading this endpoint is not recorded at
+    /// all, so a row here is always a change, and the subject is the verb and
+    /// the account name. The password a draft carries is never in it — nor in
+    /// the subject of the `chpasswd` this runs, which is one command's own
+    /// business rather than a fact about the machine.
+    User,
 }
 
 impl Kind {
@@ -85,6 +92,7 @@ impl Kind {
             Kind::Container => "container",
             Kind::Process => "process",
             Kind::Service => "service",
+            Kind::User => "user",
         }
     }
 }

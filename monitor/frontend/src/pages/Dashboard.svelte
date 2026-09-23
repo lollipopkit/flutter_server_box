@@ -19,6 +19,7 @@
     Power,
     RefreshCw,
     ServerCog,
+    Users,
   } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
@@ -285,6 +286,11 @@
         {#if capabilities?.remote_access?.services}
           <IconButton label={$LL.services()} onclick={() => layout.navigate('services')}>
             <ServerCog class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.users}
+          <IconButton label={$LL.users()} onclick={() => layout.navigate('users')}>
+            <Users class="w-4 h-4" />
           </IconButton>
         {/if}
         {#if capabilities?.remote_access?.cron}

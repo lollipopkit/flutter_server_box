@@ -32,6 +32,10 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  UserActRequest,
+  UserActResult,
+  UserPart,
+  UserView,
   WsTicketPurpose,
   WsTicketResponse,
 } from '../types'
@@ -467,6 +471,35 @@ export const api = {
   actService: (payload: ServiceActRequest) =>
     request<ServiceActResult>(
       '/services',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
+    ),
+  /// The machine's accounts, or one account's own records — one at a time.
+  ///
+  /// Reading is not gated on the shell grant — the catalogs are read as the
+  /// agent's own user, like its crontab — so a panel that may only look is told
+  /// `editable: false` rather than refused.
+  ///
+  /// `part: 'detail'` is the one that names an account: a password record
+  /// belongs to one, and the agent refuses the request rather than guessing
+  /// which.
+  getUsers: (part: UserPart = 'list', name?: string) =>
+    request<UserView>(
+      `/users?${new URLSearchParams({ part, ...(name ? { name } : {}) })}`,
+      {},
+      'Failed to fetch the accounts',
+    ),
+  /// Creates, changes or removes one account and answers with what the machine
+  /// said.
+  ///
+  /// A write refused before it ran arrives as an `ApiError` holding the stable
+  /// code — `invalidName`, `lineBreak`, `passwordLineBreak`, `renaming`,
+  /// `rootNotDeletable`, `userExists`, `agentAccount`, `missingDraft`,
+  /// `missingName`, or `noSuchUser` (404) for an account that is not in the
+  /// catalog the agent just read.
+  actUser: (payload: UserActRequest) =>
+    request<UserActResult>(
+      '/users',
       { method: 'POST', body: JSON.stringify(payload) },
       'Failed to reach the machine',
     ),

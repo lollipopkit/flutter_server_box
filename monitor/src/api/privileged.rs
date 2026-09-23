@@ -28,7 +28,7 @@
 //! command and one whose account does not answers with a failure that names
 //! the reason.
 
-use sbm_parser::service::CommandOutput;
+use sbm_parser::output::CommandOutput;
 use tokio::process::Command as TokioCommand;
 
 use crate::utils::command::{self, Limits};

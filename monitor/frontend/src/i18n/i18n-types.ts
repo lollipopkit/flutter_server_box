@@ -1441,6 +1441,223 @@ type RootTranslation = {
 	 */
 	serviceRetryAsRoot: string
 	/**
+	 * S​y​s​t​e​m​ ​u​s​e​r​ ​m​a​n​a​g​e​m​e​n​t​ ​c​u​r​r​e​n​t​l​y​ ​s​u​p​p​o​r​t​s​ ​L​i​n​u​x​ ​s​e​r​v​e​r​s​.
+	 */
+	userUnsupportedPlatform: string
+	/**
+	 * C​u​r​r​e​n​t​ ​a​c​c​o​u​n​t
+	 */
+	userCurrent: string
+	/**
+	 * S​y​s​t​e​m​ ​a​c​c​o​u​n​t
+	 */
+	userSystemAccount: string
+	/**
+	 * U​I​D
+	 */
+	userUid: string
+	/**
+	 * L​o​g​i​n​ ​e​n​a​b​l​e​d
+	 */
+	userLoginEnabled: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	userDetailAccount: string
+	/**
+	 * S​e​c​u​r​i​t​y
+	 */
+	userDetailSecurity: string
+	/**
+	 * S​S​H​ ​k​e​y​s
+	 */
+	userSshKeys: string
+	/**
+	 * E​x​p​i​r​e​s
+	 */
+	userExpires: string
+	/**
+	 * N​e​v​e​r
+	 */
+	userNever: string
+	/**
+	 * S​e​t
+	 */
+	userPasswordSet: string
+	/**
+	 * L​o​c​k​e​d
+	 */
+	userPasswordLocked: string
+	/**
+	 * N​o​n​e
+	 */
+	userPasswordNone: string
+	/**
+	 * S​u​p​e​r​u​s​e​r
+	 */
+	userSuperuser: string
+	/**
+	 * C​o​m​m​e​n​t
+	 */
+	userComment: string
+	/**
+	 * P​r​i​m​a​r​y​ ​g​r​o​u​p
+	 */
+	userPrimaryGroup: string
+	/**
+	 * S​u​p​p​l​e​m​e​n​t​a​r​y​ ​g​r​o​u​p​s
+	 */
+	userSupplementaryGroups: string
+	/**
+	 * L​o​g​i​n​ ​s​h​e​l​l
+	 */
+	userLoginShell: string
+	/**
+	 * C​r​e​a​t​e​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y
+	 */
+	userCreateHome: string
+	/**
+	 * M​o​v​e​ ​t​h​e​ ​e​x​i​s​t​i​n​g​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​ ​w​h​e​n​ ​t​h​e​ ​p​a​t​h​ ​c​h​a​n​g​e​s
+	 */
+	userMoveHome: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​e​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y
+	 */
+	userRemoveHome: string
+	/**
+	 * L​e​a​v​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​e​m​p​t​y​ ​t​o​ ​c​r​e​a​t​e​ ​a​ ​p​a​s​s​w​o​r​d​-​l​o​c​k​e​d​ ​a​c​c​o​u​n​t​.
+	 */
+	userPasswordCreateTip: string
+	/**
+	 * L​e​a​v​e​ ​t​h​e​ ​p​a​s​s​w​o​r​d​ ​e​m​p​t​y​ ​t​o​ ​k​e​e​p​ ​t​h​e​ ​e​x​i​s​t​i​n​g​ ​p​a​s​s​w​o​r​d​.
+	 */
+	userPasswordEditTip: string
+	/**
+	 * U​s​e​r​s
+	 */
+	users: string
+	/**
+	 * {​c​o​u​n​t​}​ ​a​c​c​o​u​n​t​s
+	 * @param {unknown} count
+	 */
+	userSubtitle: RequiredParams<'count'>
+	/**
+	 * N​a​m​e​,​ ​h​o​m​e​ ​o​r​ ​U​I​D
+	 */
+	userSearchHint: string
+	/**
+	 * N​o​ ​a​c​c​o​u​n​t​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	userEmpty: string
+	/**
+	 * N​o​ ​a​c​c​o​u​n​t​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	userNoMatch: string
+	/**
+	 * T​h​e​s​e​ ​a​c​c​o​u​n​t​s​ ​c​a​n​ ​b​e​ ​l​i​s​t​e​d​ ​h​e​r​e​ ​b​u​t​ ​n​o​t​ ​c​h​a​n​g​e​d​.​ ​C​h​a​n​g​i​n​g​ ​o​n​e​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​g​r​a​n​t​ ​a​s​ ​t​h​e​ ​s​h​e​l​l​:​ ​a​n​y​o​n​e​ ​w​h​o​ ​c​a​n​ ​o​p​e​n​ ​a​ ​s​h​e​l​l​ ​c​a​n​ ​r​u​n​ ​u​s​e​r​a​d​d​ ​i​n​ ​i​t​.
+	 */
+	userReadOnly: string
+	/**
+	 * N​e​w​ ​u​s​e​r
+	 */
+	userAdd: string
+	/**
+	 * E​d​i​t​ ​u​s​e​r
+	 */
+	userEdit: string
+	/**
+	 * D​e​l​e​t​e​ ​u​s​e​r
+	 */
+	userDelete: string
+	/**
+	 * L​o​g​i​n​ ​d​i​s​a​b​l​e​d
+	 */
+	userLoginDisabled: string
+	/**
+	 * H​o​m​e​ ​d​i​r​e​c​t​o​r​y
+	 */
+	userHome: string
+	/**
+	 * S​u​d​o​ ​r​u​l​e
+	 */
+	userSudo: string
+	/**
+	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​s​p​a​c​e​s​.​ ​C​l​e​a​r​i​n​g​ ​i​t​ ​r​e​m​o​v​e​s​ ​e​v​e​r​y​ ​g​r​o​u​p​ ​b​u​t​ ​t​h​e​ ​p​r​i​m​a​r​y​ ​o​n​e​.
+	 */
+	userGroupsHint: string
+	/**
+	 * P​a​s​s​w​o​r​d​ ​c​h​a​n​g​e​d
+	 */
+	userPasswordChanged: string
+	/**
+	 * N​o​t​ ​r​e​a​d​a​b​l​e​ ​f​r​o​m​ ​h​e​r​e
+	 */
+	userUnreadableField: string
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​c​a​t​a​l​o​g​s​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​d​.
+	 */
+	userUnreadable: string
+	/**
+	 * T​h​a​t​ ​a​c​c​o​u​n​t​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​e​ ​c​a​t​a​l​o​g​.​ ​T​h​e​ ​l​i​s​t​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	userNoSuchUser: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​T​h​e​ ​a​c​c​o​u​n​t​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​g​o​;​ ​a​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​a​s​ ​i​t​ ​k​e​e​p​s​ ​r​u​n​n​i​n​g​.
+	 * @param {unknown} name
+	 */
+	userDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * C​r​e​a​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	userDoneCreated: RequiredParams<'name'>
+	/**
+	 * C​h​a​n​g​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	userDoneEdited: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	userDoneDeleted: RequiredParams<'name'>
+	/**
+	 * T​h​e​ ​c​o​m​m​a​n​d​ ​f​a​i​l​e​d​.
+	 */
+	userCommandFailed: string
+	/**
+	 * u​s​e​r​a​d​d​ ​d​o​e​s​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​a​t​ ​n​a​m​e​:​ ​i​t​ ​h​a​s​ ​t​o​ ​s​t​a​r​t​ ​w​i​t​h​ ​a​ ​l​o​w​e​r​c​a​s​e​ ​l​e​t​t​e​r​ ​o​r​ ​a​n​ ​u​n​d​e​r​s​c​o​r​e​,​ ​a​n​d​ ​h​o​l​d​ ​o​n​l​y​ ​l​o​w​e​r​c​a​s​e​ ​l​e​t​t​e​r​s​,​ ​d​i​g​i​t​s​,​ ​u​n​d​e​r​s​c​o​r​e​s​,​ ​d​o​t​s​ ​a​n​d​ ​d​a​s​h​e​s​.
+	 */
+	userInvalidName: string
+	/**
+	 * A​ ​l​i​n​e​ ​b​r​e​a​k​ ​w​o​u​l​d​ ​s​p​l​i​t​ ​t​h​i​s​ ​i​n​t​o​ ​t​w​o​ ​c​o​m​m​a​n​d​s​,​ ​s​o​ ​i​t​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	userInvalidLineBreak: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​g​r​o​u​p​ ​n​a​m​e​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​a​c​c​e​p​t​s​.
+	 */
+	userInvalidGroup: string
+	/**
+	 * A​ ​p​a​s​s​w​o​r​d​ ​w​i​t​h​ ​a​ ​l​i​n​e​ ​b​r​e​a​k​ ​i​n​ ​i​t​ ​i​s​ ​r​e​f​u​s​e​d​.
+	 */
+	userPasswordLineBreak: string
+	/**
+	 * A​ ​u​s​e​r​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​n​a​m​e​d​ ​h​e​r​e​:​ ​t​h​e​ ​n​a​m​e​ ​i​s​ ​w​h​a​t​ ​e​v​e​r​y​ ​f​i​l​e​ ​a​n​d​ ​p​r​o​c​e​s​s​ ​o​n​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​k​n​o​w​s​ ​i​t​ ​b​y​.
+	 */
+	userRenaming: string
+	/**
+	 * r​o​o​t​ ​c​a​n​n​o​t​ ​b​e​ ​r​e​m​o​v​e​d​.
+	 */
+	userRootNotDeletable: string
+	/**
+	 * A​ ​u​s​e​r​ ​w​i​t​h​ ​t​h​a​t​ ​n​a​m​e​ ​a​l​r​e​a​d​y​ ​e​x​i​s​t​s​.
+	 */
+	userUserExists: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​t​h​e​ ​a​c​c​o​u​n​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​t​s​e​l​f​ ​r​u​n​s​ ​a​s​,​ ​s​o​ ​i​t​ ​i​s​ ​n​o​t​ ​r​e​m​o​v​e​d​ ​h​e​r​e​.
+	 */
+	userAgentAccount: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -2827,6 +3044,218 @@ export type TranslationFunctions = {
 	 * Retry as root
 	 */
 	serviceRetryAsRoot: () => LocalizedString
+	/**
+	 * System user management currently supports Linux servers.
+	 */
+	userUnsupportedPlatform: () => LocalizedString
+	/**
+	 * Current account
+	 */
+	userCurrent: () => LocalizedString
+	/**
+	 * System account
+	 */
+	userSystemAccount: () => LocalizedString
+	/**
+	 * UID
+	 */
+	userUid: () => LocalizedString
+	/**
+	 * Login enabled
+	 */
+	userLoginEnabled: () => LocalizedString
+	/**
+	 * Account
+	 */
+	userDetailAccount: () => LocalizedString
+	/**
+	 * Security
+	 */
+	userDetailSecurity: () => LocalizedString
+	/**
+	 * SSH keys
+	 */
+	userSshKeys: () => LocalizedString
+	/**
+	 * Expires
+	 */
+	userExpires: () => LocalizedString
+	/**
+	 * Never
+	 */
+	userNever: () => LocalizedString
+	/**
+	 * Set
+	 */
+	userPasswordSet: () => LocalizedString
+	/**
+	 * Locked
+	 */
+	userPasswordLocked: () => LocalizedString
+	/**
+	 * None
+	 */
+	userPasswordNone: () => LocalizedString
+	/**
+	 * Superuser
+	 */
+	userSuperuser: () => LocalizedString
+	/**
+	 * Comment
+	 */
+	userComment: () => LocalizedString
+	/**
+	 * Primary group
+	 */
+	userPrimaryGroup: () => LocalizedString
+	/**
+	 * Supplementary groups
+	 */
+	userSupplementaryGroups: () => LocalizedString
+	/**
+	 * Login shell
+	 */
+	userLoginShell: () => LocalizedString
+	/**
+	 * Create home directory
+	 */
+	userCreateHome: () => LocalizedString
+	/**
+	 * Move the existing home directory when the path changes
+	 */
+	userMoveHome: () => LocalizedString
+	/**
+	 * Remove the home directory
+	 */
+	userRemoveHome: () => LocalizedString
+	/**
+	 * Leave the password empty to create a password-locked account.
+	 */
+	userPasswordCreateTip: () => LocalizedString
+	/**
+	 * Leave the password empty to keep the existing password.
+	 */
+	userPasswordEditTip: () => LocalizedString
+	/**
+	 * Users
+	 */
+	users: () => LocalizedString
+	/**
+	 * {count} accounts
+	 */
+	userSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Name, home or UID
+	 */
+	userSearchHint: () => LocalizedString
+	/**
+	 * No accounts on this machine.
+	 */
+	userEmpty: () => LocalizedString
+	/**
+	 * No account matches the filter.
+	 */
+	userNoMatch: () => LocalizedString
+	/**
+	 * These accounts can be listed here but not changed. Changing one is the same grant as the shell: anyone who can open a shell can run useradd in it.
+	 */
+	userReadOnly: () => LocalizedString
+	/**
+	 * New user
+	 */
+	userAdd: () => LocalizedString
+	/**
+	 * Edit user
+	 */
+	userEdit: () => LocalizedString
+	/**
+	 * Delete user
+	 */
+	userDelete: () => LocalizedString
+	/**
+	 * Login disabled
+	 */
+	userLoginDisabled: () => LocalizedString
+	/**
+	 * Home directory
+	 */
+	userHome: () => LocalizedString
+	/**
+	 * Sudo rule
+	 */
+	userSudo: () => LocalizedString
+	/**
+	 * Separated by spaces. Clearing it removes every group but the primary one.
+	 */
+	userGroupsHint: () => LocalizedString
+	/**
+	 * Password changed
+	 */
+	userPasswordChanged: () => LocalizedString
+	/**
+	 * Not readable from here
+	 */
+	userUnreadableField: () => LocalizedString
+	/**
+	 * The account catalogs could not be read.
+	 */
+	userUnreadable: () => LocalizedString
+	/**
+	 * That account is no longer in the catalog. The list has been read again.
+	 */
+	userNoSuchUser: () => LocalizedString
+	/**
+	 * Delete {name}? The account and its files go; anything running as it keeps running.
+	 */
+	userDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Created {name}.
+	 */
+	userDoneCreated: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Changed {name}.
+	 */
+	userDoneEdited: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Removed {name}.
+	 */
+	userDoneDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * The command failed.
+	 */
+	userCommandFailed: () => LocalizedString
+	/**
+	 * useradd does not accept that name: it has to start with a lowercase letter or an underscore, and hold only lowercase letters, digits, underscores, dots and dashes.
+	 */
+	userInvalidName: () => LocalizedString
+	/**
+	 * A line break would split this into two commands, so it is refused.
+	 */
+	userInvalidLineBreak: () => LocalizedString
+	/**
+	 * That is not a group name this machine accepts.
+	 */
+	userInvalidGroup: () => LocalizedString
+	/**
+	 * A password with a line break in it is refused.
+	 */
+	userPasswordLineBreak: () => LocalizedString
+	/**
+	 * A user cannot be renamed here: the name is what every file and process on the machine knows it by.
+	 */
+	userRenaming: () => LocalizedString
+	/**
+	 * root cannot be removed.
+	 */
+	userRootNotDeletable: () => LocalizedString
+	/**
+	 * A user with that name already exists.
+	 */
+	userUserExists: () => LocalizedString
+	/**
+	 * That is the account the agent itself runs as, so it is not removed here.
+	 */
+	userAgentAccount: () => LocalizedString
 	/**
 	 * Close
 	 */

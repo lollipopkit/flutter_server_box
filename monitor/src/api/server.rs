@@ -315,6 +315,17 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::service::act)),
             )
             .service(
+                // A read with a query string — a part and an account name — and
+                // one write, so the default 32 KiB applies to both. Laid out
+                // like the service one for the same reason: the two parts are
+                // one endpoint's reading of one machine, and a part this build
+                // does not have gets the same refusal as any other malformed
+                // request.
+                web::resource("/users")
+                    .route(web::get().to(crate::api::users::list))
+                    .route(web::post().to(crate::api::users::act)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -859,6 +870,13 @@ struct RemoteAccessView {
     /// agent's own user, acting on a unit is `full_access`, and the response
     /// says which of the two this caller has.
     services: bool,
+    /// Whether `/api/v1/users` answers this agent at all.
+    ///
+    /// Its own field for [`Self::stream`]'s reason, and `true` for
+    /// [`Self::cron`]'s: the catalog is read as the agent's own user, writing
+    /// an account is `full_access`, and the response says which of the two this
+    /// caller has.
+    users: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -902,6 +920,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             containers: true,
             process: true,
             services: true,
+            users: true,
         },
     }))
 }

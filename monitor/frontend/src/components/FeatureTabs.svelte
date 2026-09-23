@@ -4,6 +4,7 @@
     CalendarClock,
     Container,
     ServerCog,
+    Users,
     type Icon as LucideIcon,
   } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
@@ -31,6 +32,7 @@
     containers: { label: () => $LL.containers(), icon: Container },
     process: { label: () => $LL.processes(), icon: Activity },
     services: { label: () => $LL.services(), icon: ServerCog },
+    users: { label: () => $LL.users(), icon: Users },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
   }
 

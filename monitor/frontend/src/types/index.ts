@@ -135,6 +135,12 @@ export interface RemoteAccess {
   /// way as the two above: the listing commands run as the agent's own user,
   /// and acting on a unit is `editable` in the response body.
   services?: boolean
+  /// Whether `/api/v1/users` answers this agent at all. Reported the same way:
+  /// the catalog is read as the agent's own user, and writing an account is
+  /// `editable` in the response body. Linux only in practice — the page draws
+  /// the platform answer rather than being hidden, since an agent on a
+  /// supported platform is the ordinary case and a hidden tab says nothing.
+  users?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -919,3 +925,165 @@ export interface ServiceActResult {
   stdout: string
   stderr: string
 }
+
+/// Whether an account can be logged into with a password.
+///
+/// `none` is an empty password field, which lets anyone in — a different thing
+/// from `locked`, and the half that must not be drawn as the safe one.
+export type UserPasswordState = 'set' | 'locked' | 'none'
+
+/// Why the machine gave no catalog, as its own word so the page phrases it in
+/// its own language. `null` alongside `available: false` means the machine said
+/// something the agent does not classify, and `reason` is that text.
+export type UserReason = 'unsupported_platform' | 'unreadable' | 'no_such_user'
+
+/// One account, as the agent read it out of `/etc/passwd` and `/etc/group`.
+export interface SystemUser {
+  name: string
+  uid: number
+  gid: number
+  /// The gecos field, whole: everything up to the first comma is conventionally
+  /// the full name, and splitting it is a presentation decision.
+  comment: string
+  home: string
+  shell: string
+  primary_group: string | null
+  /// Without the primary group, sorted. An empty list means it is in none.
+  supplementary_groups: string[]
+}
+
+/// One account as the page draws it: the account, plus the flags the agent
+/// derived so that no rule here is a second implementation of one.
+export interface UserRow extends SystemUser {
+  is_root: boolean
+  /// Below the machine's own threshold, from [`UserView.uid_min`]. Not a
+  /// constant: a distribution that sets 500 answers for itself.
+  system: boolean
+  /// The shell is `nologin` or `false`, so no password or key login. About the
+  /// shell only — a locked password is `password_state` in the detail.
+  login_disabled: boolean
+  /// The account the agent itself runs as.
+  agent_account: boolean
+  /// Whether the agent would remove it: false for root and for its own account.
+  /// Whether *this caller* may is `editable` in the response.
+  deletable: boolean
+}
+
+/// What `/etc/shadow`, the account's `authorized_keys` and sudoers say.
+///
+/// Every field may be `null`, and `null` means "not readable from here" rather
+/// than "absent": all three sources are root-only on a normal machine, and an
+/// unprivileged session would otherwise report every account as having no
+/// password and no keys.
+export interface UserDetail {
+  password_state: UserPasswordState | null
+  /// Unix milliseconds. Shadow counts days, and the agent multiplies.
+  password_changed_millis: number | null
+  expires_millis: number | null
+  /// Empty is the only thing that means never — an unreadable field is `null`
+  /// above rather than `true` here.
+  never_expires: boolean
+  /// Distinct key types in file order. An empty list means the file was read
+  /// and held none; `null` means it could not be read.
+  ssh_key_types: string[] | null
+  /// The right-hand side of the account's sudoers entry, e.g. `NOPASSWD: ALL`.
+  sudo_rule: string | null
+}
+
+export type UserPart = 'list' | 'detail'
+
+/// One part of the machine's accounts.
+export interface UserView {
+  part: UserPart
+  /// Whether the accounts could be read. `false` is a state of the machine —
+  /// not Linux, no readable catalog — not a failure of the caller, so it is a
+  /// field and the page has one shape to draw.
+  available: boolean
+  reason_kind: UserReason | null
+  /// What the machine said, verbatim. Never translated: it is the only thing
+  /// that distinguishes one failure from another.
+  reason: string | null
+  /// Whether this panel may change an account. A hint for the UI; the agent
+  /// re-checks it on the write itself.
+  editable: boolean
+  /// The account the agent runs as, and the one it will not remove. `null` when
+  /// no catalog could be read.
+  agent_account: string | null
+  /// The uid below which this machine counts an account as a system one.
+  uid_min: number | null
+  users: UserRow[]
+  /// The account a detail is about, echoed because a response is read beside a
+  /// request that may be older.
+  name: string | null
+  detail: UserDetail | null
+}
+
+/// What a caller wants an account to be — the same fields for a new account and
+/// for a change to one, because the two forms ask for the same things. An empty
+/// `home` or `primary_group` is left alone (neither can be cleared); an empty
+/// `comment` and an empty group list *are* the values and clear what was there.
+export interface UserDraft {
+  name: string
+  comment: string
+  home: string
+  shell: string
+  primary_group: string
+  supplementary_groups: string[]
+  /// Whether a new account gets a home directory.
+  create_home: boolean
+  /// Whether an existing home directory is moved when `home` changes.
+  move_home: boolean
+  /// A system account, with no aging and a uid below the machine's threshold.
+  system: boolean
+  /// The password to set, when the caller is setting one. Omitted or empty
+  /// leaves the account's password alone. It travels inside the script the
+  /// agent runs, never as a command-line argument.
+  password?: string
+}
+
+export type UserAction = 'create' | 'edit' | 'delete'
+
+/// One write, as the page describes it.
+///
+/// Two passwords may travel here and neither reaches a command line: the
+/// account's own inside `draft`, and the `sudo` one as its own field — omitted
+/// until the first attempt comes back `sudo_rejected`.
+export interface UserActRequest {
+  action: UserAction
+  draft?: UserDraft
+  /// Which account a change or a removal is about. The account as it is comes
+  /// from a catalog the agent reads at the moment of the write.
+  name?: string
+  /// Whether a removal takes the home directory with it.
+  remove_home?: boolean
+  /// The `sudo` password, when the caller has one.
+  password?: string
+}
+
+export interface UserActResult {
+  succeeded: boolean
+  sudo_rejected: boolean
+  exit_code: number | null
+  stdout: string
+  stderr: string
+}
+
+/// Why a write was refused before it ran, as a stable code the page phrases.
+/// A `UserError` case from the shared parser, or one of the endpoint's own:
+/// `missingDraft`, `missingName`, `unsupportedPlatform`, `unreadable`,
+/// `userExists`, `agentAccount`, `noSuchUser`.
+export type UserRefusalCode =
+  | 'invalidName'
+  | 'lineBreak'
+  | 'invalidPrimaryGroup'
+  | 'invalidSupplementaryGroup'
+  | 'passwordLineBreak'
+  | 'renaming'
+  | 'rootNotDeletable'
+  | 'missingDraft'
+  | 'missingName'
+  | 'unsupportedPlatform'
+  | 'unreadable'
+  | 'userExists'
+  | 'agentAccount'
+  | 'noSuchUser'

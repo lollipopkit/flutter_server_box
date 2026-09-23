@@ -19,11 +19,13 @@ pub mod container;
 pub mod cron;
 pub mod gpu;
 pub mod linux;
+pub mod output;
 pub mod proc;
 pub mod script;
 pub mod service;
 pub mod smart;
 pub mod types;
+pub mod users;
 pub mod windows;
 
 use std::collections::HashMap;

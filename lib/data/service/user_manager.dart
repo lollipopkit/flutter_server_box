@@ -1,3 +1,9 @@
+// TODO(migration): the account catalog, its parsers and the create/change/
+// remove commands are ported to `sbm_parser::users` (locked by
+// `crates/sbm_parser/tests/user_compat.rs` against the same cases) because the
+// monitor agent manages a machine's accounts with the same rules this app does
+// over SSH. Delete this implementation and read it through the FFI boundary
+// once the FFI result is asserted identical against those cases.
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/system_user.dart';

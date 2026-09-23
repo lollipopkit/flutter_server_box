@@ -1,3 +1,7 @@
+// TODO(migration): `sbm_parser::users::SystemUser` is this model, ported so the
+// monitor agent reads an account by the same rules. Delete this one and read it
+// through the FFI boundary once the FFI result is asserted identical against
+// `crates/sbm_parser/tests/user_compat.rs`.
 final class ServerUser {
   const ServerUser({
     required this.name,

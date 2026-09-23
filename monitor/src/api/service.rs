@@ -46,9 +46,10 @@ use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
 use crate::monitoring::system_type;
 use crate::utils::command::Limits;
 use sbm_parser::SystemType;
+use sbm_parser::output::CommandOutput;
 use sbm_parser::service::{
-    CommandOutput, OpenRcOutputs, ProcdOutputs, ServiceAction, ServiceListing, ServiceListingNotice,
-    ServiceLog, ServiceManagerProbe, ServiceManagerType, ServiceScope, ServiceUnit, SystemdOutputs,
+    OpenRcOutputs, ProcdOutputs, ServiceAction, ServiceListing, ServiceListingNotice, ServiceLog,
+    ServiceManagerProbe, ServiceManagerType, ServiceScope, ServiceUnit, SystemdOutputs,
     parse_openrc_listing, parse_probe, parse_procd_listing, parse_systemd_listing,
 };
 

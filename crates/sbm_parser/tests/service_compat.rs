@@ -14,6 +14,7 @@
 
 use std::collections::HashMap;
 
+use sbm_parser::output::CommandOutput;
 use sbm_parser::service::*;
 
 const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../test/fixtures/systemd/");
