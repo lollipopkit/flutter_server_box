@@ -5,16 +5,20 @@
 /// selected server's config.toml, reached from a gear icon on its dashboard.
 /// 'terminal' = an SSH session on the selected server, reached from its
 /// dashboard and only offered when that agent reports the feature available.
-/// 'cron' = the selected server's crontab, reached the same way and offered on
-/// the agent's own `cron` capability — the shell's grant, but its own field,
-/// because an agent that predates the route would answer the wider grant.
+///
+/// The machine-management screens (`lib/features.ts`) are part of this union
+/// and reached from the feature bar, which is why the list of them is not
+/// repeated here: `FeatureTabs` derives it from the current agent's
+/// capabilities, so a screen an agent does not serve is not offered.
+import type { FeatureId } from './features'
+
 export type View =
   | 'dashboard'
   | 'panel'
   | 'server-settings'
   | 'terminal'
   | 'files'
-  | 'cron'
+  | FeatureId
 
 class LayoutStore {
   collapsed = $state(window.localStorage.getItem('sidebar.collapsed') === '1')

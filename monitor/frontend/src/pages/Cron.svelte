@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Badge, Button, Card, IconButton, Input, Modal, Spinner } from '@serverbox/webui'
   import { CircleAlert, Pencil, Plus, Power, RefreshCw, Trash2 } from '@lucide/svelte'
+  import FeatureTabs from '../components/FeatureTabs.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import { api } from '../lib/api'
   import { LL } from '../i18n/i18n-svelte'
@@ -194,6 +195,10 @@
   containerClass="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
   {onback}
 >
+  {#snippet tabs()}
+    <FeatureTabs active="cron" />
+  {/snippet}
+
   {#snippet actions()}
     {#if editable && view?.available}
       <IconButton label={$LL.cronAdd()} onclick={openNew}>

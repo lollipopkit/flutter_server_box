@@ -1,0 +1,48 @@
+/// Which features a managed machine has, and which of them this agent serves.
+///
+/// The list is one list. The tab bar draws it, the Dashboard's entry opens it,
+/// and a feature page says which of them it is — the alternative, every page
+/// naming its neighbours, makes the set of features a property of whichever
+/// page you happen to be looking at, and a page added later ends up reachable
+/// only from the pages written after it.
+///
+/// Ordering is by what the thing is rather than by when it was built — the
+/// running machine first (containers, processes, services), then the machine's
+/// own configuration (users, schedule). TODO: benchmark, AI, snippets, PVE, BMC
+/// and sync join this list as they land; the bar scrolls rather than wrapping.
+///
+/// How each one is *drawn* (its label and its icon) is deliberately not here:
+/// a label is `$LL` and an icon is a component, and this module is imported by
+/// plain TypeScript. `components/FeatureTabs.svelte` owns that.
+import type { RemoteAccess } from '../types'
+
+/// A machine-management screen this panel may open.
+///
+/// It is a subset of `View` — `layout.svelte.ts` widens `View` with this type
+/// rather than repeating the names, so the two cannot drift.
+export type FeatureId = 'cron'
+
+export interface FeatureSpec {
+  /// The `View` this feature renders as, and how `layout.navigate` names it.
+  id: FeatureId
+  /// The `remote_access` field that says this agent serves it.
+  ///
+  /// Its own field per feature rather than one shared grant: an agent older
+  /// than the endpoint answers `full_access` and would 404 the request, so a
+  /// check against the wider grant would put a tab on screen that cannot load.
+  capability: keyof RemoteAccess
+}
+
+export const FEATURES: FeatureSpec[] = [{ id: 'cron', capability: 'cron' }]
+
+/// The features this agent serves.
+///
+/// Strictly `=== true`, so a capability that is missing and one that is off
+/// both leave the feature out. Hiding it is right either way — the agent would
+/// answer 404 or 403, and a tab that opens onto a refusal is worse than one
+/// that is not there. The two are not told apart here because nothing acts on
+/// the difference yet; when the Dashboard wants to say "this agent is too old
+/// for that", it can say so where it lists servers rather than per tab.
+export function enabledFeatures(remoteAccess: RemoteAccess | undefined): FeatureSpec[] {
+  return FEATURES.filter((feature) => remoteAccess?.[feature.capability] === true)
+}
