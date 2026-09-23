@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
-import 'package:server_box/view/page/remote_desktop/profiles.dart';
+import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
 import 'package:server_box/view/page/remote_desktop/tab.dart';
 
 void main() {
