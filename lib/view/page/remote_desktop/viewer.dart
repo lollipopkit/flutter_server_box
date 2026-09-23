@@ -594,7 +594,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
             onPointerMove: (event) => _pointerMove(event, transform, session),
             onPointerUp: (event) => _pointerUp(event, transform, session),
             onPointerHover: (event) => _pointerHover(event, transform, session),
-            onPointerCancel: (event) => _pointerCancel(session),
+            onPointerCancel: (event) => _pointerCancel(event, session),
             onPointerSignal: (event) => _pointerSignal(event, transform, session),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -823,7 +823,13 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   ///
   /// It sent the touchpad's position in *viewport* coordinates as if they
   /// were desktop pixels, which put the release somewhere else entirely.
-  void _pointerCancel(RemoteDesktopSessionView session) {
+  void _pointerCancel(
+    PointerCancelEvent event,
+    RemoteDesktopSessionView session,
+  ) {
+    // A finger the direct path was ignoring holds nothing. Cancelling it
+    // released the finger that did, mid-drag, and stopped following it.
+    if (!_touchpad(event) && !_isDirectPointer(event)) return;
     _resetTouchpad();
     _directPointer = null;
     _buttons = 0;

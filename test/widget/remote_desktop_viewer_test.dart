@@ -547,6 +547,40 @@ void main() {
 
       // Only the first finger: pressed, dragged, let go.
       expect(sessions.buttons, [1, 1, 0]);
+      // The middle of a 320×180 desktop drawn at 4×, and 40 points to the
+      // right: the second finger's landing and moves are nowhere in it.
+      expect(sessions.points, const [
+        Offset(160, 85),
+        Offset(170, 85),
+        Offset(170, 85),
+      ]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('cancelling an ignored finger leaves the drag alone', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      await first.down(canvas);
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await second.down(canvas + const Offset(80, 0));
+      await second.cancel();
+      await first.moveBy(const Offset(40, 0));
+      await first.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // Still pressed through the move, and let go once, by the first finger.
+      expect(sessions.buttons, [1, 1, 0]);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
