@@ -76,7 +76,11 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   int _touches = 0;
   int _maxTouches = 0;
   bool _touchMoved = false;
-  Offset? _lastTouch;
+  /// Where each finger on the touchpad was last counted from: where it landed
+  /// until the gesture has moved, then where it was on its last move. Per
+  /// finger, so a finger left down when another lifts carries on from its own
+  /// position rather than the other's.
+  final _touchAt = <int, Offset>{};
 
   /// The finger the direct path is following; the rest are ignored.
   int? _directPointer;
@@ -759,10 +763,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     if (session.viewOnly) return;
     if (_touchpad(event)) return _touchpadMove(event, transform, session);
     if (!_isDirectPointer(event)) return;
-    // Clamped while something is held, so a drag that leaves the picture
-    // stays pressed at its edge rather than going silent.
+    // Clamped while something is held on the desktop, so a drag that leaves
+    // the picture stays pressed at its edge rather than going silent. Only
+    // when the desktop was told of the press ([_buttons], the last state
+    // sent): a press that landed outside the picture was never sent, and
+    // clamping it would press the edge for it.
     final buttons = _buttonMask(event.buttons);
-    final point = transform.toRemote(event.localPosition, clamp: buttons != 0);
+    final point = transform.toRemote(
+      event.localPosition,
+      clamp: buttons != 0 && _buttons != 0,
+    );
     if (point == null) return;
     _buttons = buttons;
     _sendPointer(session, point);

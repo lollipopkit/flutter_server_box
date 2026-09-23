@@ -15,6 +15,7 @@ extension _TouchpadX on _RemoteDesktopViewerState {
   ) {
     _touches++;
     _maxTouches = math.max(_maxTouches, _touches);
+    _touchAt[event.pointer] = event.localPosition;
     if (_touches > 1) {
       // A second finger: a right click or a scroll, not a tap and drag. The
       // tap before it was still a tap, and its click is owed.
@@ -26,7 +27,6 @@ extension _TouchpadX on _RemoteDesktopViewerState {
       return;
     }
     _touchMoved = false;
-    _lastTouch = event.localPosition;
 
     final tap = _lastTap;
     if (_pendingClick != null &&
@@ -50,20 +50,28 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     RemoteDesktopViewportTransform transform,
     RemoteDesktopSessionView session,
   ) {
-    if (session.viewOnly || _touches != 1) return;
-    final previous = _lastTouch ?? event.localPosition;
+    if (session.viewOnly) return;
+    final previous = _touchAt[event.pointer];
+    if (previous == null) return;
     final delta = event.localPosition - previous;
-    // A finger wanders a few points between landing and lifting. Until it has
-    // gone further than a tap can, it is still a tap: the pointer stays put,
-    // so the click lands where the pointer was drawn, and [_lastTouch] stays
-    // at the landing point, so crossing the slop moves the pointer by the
-    // whole way the finger went. Counting any move over one point made most
-    // real taps neither click nor arm a drag.
+    // A finger wanders a few points between landing and lifting. Until one
+    // has gone further than a tap can, it is still a tap: the pointer stays
+    // put, so the click lands where the pointer was drawn, and [_touchAt]
+    // stays at the landing point, so crossing the slop moves the pointer by
+    // the whole way the finger went. Counting any move over one point made
+    // most real taps neither click nor arm a drag.
+    //
+    // Any finger counts. Two fingers moving together are a scroll, and
+    // lifting them is not a two-finger tap — which was a right click at the
+    // end of every scroll.
     if (!_touchMoved) {
       if (delta.distance <= kTouchSlop) return;
       _touchMoved = true;
     }
-    _lastTouch = event.localPosition;
+    _touchAt[event.pointer] = event.localPosition;
+    // Only one finger moves the pointer; two are the scroll or the pinch the
+    // gesture detector underneath handles.
+    if (_touches != 1) return;
 
     final from = _pointerOr(transform);
     if (from == null) return;
@@ -90,8 +98,8 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     RemoteDesktopSessionView session,
   ) {
     _touches = math.max(0, _touches - 1);
+    _touchAt.remove(event.pointer);
     if (_touches > 0) return;
-    _lastTouch = null;
     final twoFingers = _maxTouches >= 2;
     final moved = _touchMoved;
     final tapDrag = _tapDrag;
@@ -159,7 +167,7 @@ extension _TouchpadX on _RemoteDesktopViewerState {
     _touches = 0;
     _maxTouches = 0;
     _touchMoved = false;
-    _lastTouch = null;
+    _touchAt.clear();
   }
 }
 

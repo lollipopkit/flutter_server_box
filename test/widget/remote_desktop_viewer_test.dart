@@ -350,6 +350,63 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
+    testWidgets('a two-finger scroll does not end in a right click', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await first.down(canvas);
+      await second.down(canvas + const Offset(60, 0));
+      for (var i = 0; i < 4; i++) {
+        await first.moveBy(const Offset(0, 20));
+        await second.moveBy(const Offset(0, 20));
+      }
+      await first.up();
+      await second.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      expect(sessions.buttons, isNot(contains(4)));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    // It measured every finger from the first one's position, so the finger
+    // left down jumped the pointer by the distance between the two.
+    testWidgets('the finger left down moves the pointer from where it is', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await first.down(canvas);
+      await second.down(canvas + const Offset(300, 0));
+      await first.up();
+      await second.moveBy(const Offset(30, 0));
+      await second.moveBy(const Offset(10, 0));
+      await second.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // 40 points at the 1× this desktop is drawn at, from the middle.
+      expect(sessions.points.last, const Offset(680, 360));
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
     // A real finger wanders a few points between landing and lifting. That
     // counted as a move, so the tap neither clicked nor armed tap and drag.
     testWidgets('a tap that wanders a few points is still a tap', (
@@ -490,6 +547,30 @@ void main() {
 
       // Only the first finger: pressed, dragged, let go.
       expect(sessions.buttons, [1, 1, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    // Pressed outside the picture, the desktop never heard of the press, so
+    // coming into the picture must not press its edge.
+    testWidgets('a mouse pressed outside the picture presses nothing', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      final viewer = tester.getRect(find.byType(RemoteDesktopViewer));
+      final picture = tester.getRect(find.byType(RawImage));
+      // Beside the picture: the letterbox under it.
+      final outside = Offset(viewer.center.dx, viewer.bottom - 2);
+      expect(picture.contains(outside), isFalse);
+      expect(picture.bottom, lessThan(outside.dy));
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.down(outside);
+      await mouse.moveBy(const Offset(40, 0));
+      await tester.pump();
+
+      expect(sessions.buttons, isNot(contains(1)));
+      await mouse.up();
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
