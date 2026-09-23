@@ -282,6 +282,25 @@ class SSHPageState extends ConsumerState<SSHPage>
   String? _connectionFailureDetail;
   bool _openingTerminal = false;
   bool _retryInitialConnectionOnResume = false;
+  bool _keyboardHandlerReady = false;
+  bool _keyboardHandlerAttached = false;
+  bool _keyboardHandlerActive = true;
+
+  void _attachKeyboardHandler() {
+    if (!_keyboardHandlerReady ||
+        !_keyboardHandlerActive ||
+        _keyboardHandlerAttached) {
+      return;
+    }
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    _keyboardHandlerAttached = true;
+  }
+
+  void _detachKeyboardHandler() {
+    if (!_keyboardHandlerAttached) return;
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    _keyboardHandlerAttached = false;
+  }
 
   void _setConnectionStep(TerminalConnectionStep step, {String? detail}) {
     if (!mounted ||
@@ -312,6 +331,20 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Future<void> openAgentFromToolbar() =>
       _showAskAiPanel(autoStart: false);
+
+  @override
+  void deactivate() {
+    _keyboardHandlerActive = false;
+    _detachKeyboardHandler();
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _keyboardHandlerActive = true;
+    _attachKeyboardHandler();
+  }
 
   @override
   void dispose() {
@@ -361,7 +394,8 @@ class SSHPageState extends ConsumerState<SSHPage>
       _handleVirtKeySettingsChanged,
     );
 
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    _keyboardHandlerActive = false;
+    _detachKeyboardHandler();
 
     if (--_sshConnCount <= 0) {
       WakelockPlus.disable();
@@ -1207,13 +1241,16 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
     await _showHelp();
+    if (!mounted) return;
     // After the dialog, and after nothing else: it points at the key row, so
     // it has to be the only thing on screen when it runs.
     _startVirtKeyIntroWhenVisible();
     await _initTerminal();
+    if (!mounted) return;
 
     if (Stores.setting.sshWakeLock.fetch()) WakelockPlus.enable();
 
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    _keyboardHandlerReady = true;
+    _attachKeyboardHandler();
   }
 }
