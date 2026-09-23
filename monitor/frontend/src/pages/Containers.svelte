@@ -87,9 +87,18 @@
   }
 
   $effect(() => {
+    // `tab` is read here, so switching tabs re-runs this; the button below only
+    // sets the state. Calling `load` from both would fetch the same part twice.
     void load(tab)
     void loadUsage()
   })
+
+  /// The listing on screen is stale if it answers for a server the sidebar has
+  /// since left, so `loadUsage` is re-run beside every refresh.
+  async function refresh() {
+    await load()
+    await loadUsage()
+  }
 
   /// Every change answers with the listing as it now stands, so one request
   /// both writes and refreshes.
@@ -268,7 +277,7 @@
         <Eraser class="w-4 h-4" />
       </IconButton>
     {/if}
-    <IconButton label={$LL.refresh()} onclick={() => void load()} disabled={loading}>
+    <IconButton label={$LL.refresh()} onclick={() => void refresh()} disabled={loading}>
       <RefreshCw class="w-4 h-4" />
     </IconButton>
   {/snippet}
@@ -315,10 +324,7 @@
             ? 'border-primary text-fg-strong'
             : 'border-transparent text-muted-fg hover:text-fg'}"
           aria-current={tab === name ? 'page' : undefined}
-          onclick={() => {
-            tab = name
-            void load(name)
-          }}
+          onclick={() => (tab = name)}
         >
           {name === 'containers' ? $LL.containers() : $LL.containerImages()}
         </button>
