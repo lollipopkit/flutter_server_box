@@ -20,6 +20,7 @@ import 'package:server_box/view/page/remote_desktop/input.dart';
 
 part 'cursor.dart';
 part 'guide.dart';
+part 'touchpad.dart';
 
 /// Where the session on screen sits among the open ones, and what opens the
 /// rest.
@@ -77,13 +78,18 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   bool _touchMoved = false;
   Offset? _lastTouch;
 
-  /// The last one-finger tap on the touchpad: when, and where the finger was.
-  /// A touch landing soon after it, near it, holds the button down — tap and
-  /// drag, as on a laptop's touchpad.
+  /// The finger the direct path is following; the rest are ignored.
+  int? _directPointer;
+
+  /// The last one-finger tap on the touchpad, whose click has not been sent
+  /// yet: when, and where the finger was. See [_TapDrag].
   ({Duration at, Offset position})? _lastTap;
 
-  /// Holding the button down since the second touch of a tap and drag landed.
-  bool _dragging = false;
+  /// Sends [_lastTap]'s click once no second touch has come for it. Non-null
+  /// for exactly as long as that click is owed.
+  Timer? _pendingClick;
+
+  _TapDrag _tapDrag = _TapDrag.none;
   _TouchMode _touchMode = _TouchMode.trackpad;
   double _scaleStart = 1;
   Timer? _resizeTimer;
@@ -126,8 +132,9 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _input?.releaseAll();
     _input = null;
     _resetCursor();
-    _lastTap = null;
-    _dragging = false;
+    // Owed to the session that was showing, not to this one.
+    _resetTouchpad();
+    _directPointer = null;
     _resizeTimer?.cancel();
     _resizeTimer = null;
     _lastResizeViewport = null;
@@ -137,6 +144,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   @override
   void dispose() {
     _resizeTimer?.cancel();
+    _pendingClick?.cancel();
     _input?.releaseAll();
     _keyboardFocus.removeListener(_onFocusChanged);
     _keyboardFocus.dispose();
@@ -710,11 +718,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       RemoteDesktopViewer.debugTouchScreenOverride ?? isMobile;
 
   /// Whether [event] moves the pointer the way a laptop's touchpad does,
-  /// rather than pressing where it lands.
+  /// rather than pressing where it lands. See [_TouchpadX].
   bool _touchpad(PointerEvent event) =>
       _touchScreen &&
       event.kind == ui.PointerDeviceKind.touch &&
       _touchMode == _TouchMode.trackpad;
+
+  // Two kinds of input, and nothing shared between them but the pointer they
+  // move. A touchpad has to guess — whether a tap is a click, whether the
+  // next touch is a drag — and waits to find out; a mouse, a pen or a direct
+  // finger says what its buttons are doing, and is forwarded as it says it.
 
   void _pointerDown(
     PointerDownEvent event,
@@ -724,35 +737,19 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _keyboardFocus.requestFocus();
     _noteInputKind(event.kind);
     if (session.viewOnly) return;
+    if (_touchpad(event)) return _touchpadDown(event, transform, session);
+    _flushPendingClick(session);
+    // One finger at a time. The others are a pinch or a scroll, which the
+    // gesture detector underneath handles.
     if (event.kind == ui.PointerDeviceKind.touch) {
-      _touches++;
-      _maxTouches = math.max(_maxTouches, _touches);
-      if (_touches == 1) _touchMoved = false;
-      _lastTouch = event.localPosition;
-      if (_touches > 1) return;
+      if (_directPointer != null) return;
+      _directPointer = event.pointer;
     }
-    final trackpad = _touchpad(event);
-    final point = trackpad
-        ? _pointerOr(transform)
-        : transform.toRemote(event.localPosition);
+    final point = transform.toRemote(event.localPosition);
     if (point == null) return;
-    if (trackpad) {
-      final tap = _lastTap;
-      _lastTap = null;
-      // The tap before this has already clicked, so pressing here is also
-      // what makes lifting straight away a double click.
-      _dragging =
-          tap != null &&
-          event.timeStamp - tap.at <= kDoubleTapTimeout &&
-          (event.localPosition - tap.position).distance <= kDoubleTapSlop;
-    }
-    _buttons = trackpad ? _touchpadButtons : _buttonMask(event.buttons);
+    _buttons = _buttonMask(event.buttons);
     _sendPointer(session, point);
   }
-
-  /// What the touchpad holds down. Never the button a finger on the glass
-  /// reports — see [_pointerMove].
-  int get _touchpadButtons => _dragging ? 1 : 0;
 
   void _pointerMove(
     PointerMoveEvent event,
@@ -760,30 +757,14 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     RemoteDesktopSessionView session,
   ) {
     if (session.viewOnly) return;
-    final trackpad = _touchpad(event);
-    final Offset? point;
-    if (trackpad) {
-      if (_touches != 1) return;
-      final previous = _lastTouch ?? event.localPosition;
-      _lastTouch = event.localPosition;
-      final delta = event.localPosition - previous;
-      if (delta.distance > 1) _touchMoved = true;
-      // Moved in desktop pixels, by as far as the finger moved across the
-      // picture of the desktop — so the pointer keeps up with the finger at
-      // any zoom, and stays where it was on the desktop when the zoom changes.
-      final from = _pointerOr(transform);
-      point = from == null
-          ? null
-          : transform.clampToDesktop(from + delta / transform.scale);
-    } else {
-      point = transform.toRemote(event.localPosition, clamp: _touchScreen);
-    }
+    if (_touchpad(event)) return _touchpadMove(event, transform, session);
+    if (!_isDirectPointer(event)) return;
+    // Clamped while something is held, so a drag that leaves the picture
+    // stays pressed at its edge rather than going silent.
+    final buttons = _buttonMask(event.buttons);
+    final point = transform.toRemote(event.localPosition, clamp: buttons != 0);
     if (point == null) return;
-    // A finger on the glass reports the primary button for as long as it is
-    // down. On a touchpad that is not a press — the finger moves the pointer,
-    // and a click is a tap, sent from [_pointerUp] — so forwarding it turned
-    // every move into a drag that selected whatever the pointer crossed.
-    _buttons = trackpad ? _touchpadButtons : _buttonMask(event.buttons);
+    _buttons = buttons;
     _sendPointer(session, point);
   }
 
@@ -803,58 +784,38 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _sendPointer(session, point);
   }
 
+  /// A button let go is sent as let go. This used to send a whole click on
+  /// the way up — press again, then release — which for a mouse repeated a
+  /// press the desktop had already had.
   void _pointerUp(
     PointerUpEvent event,
     RemoteDesktopViewportTransform transform,
     RemoteDesktopSessionView session,
   ) {
-    if (event.kind == ui.PointerDeviceKind.touch) {
-      _touches = math.max(0, _touches - 1);
-      if (_touches > 0) return;
-      _lastTouch = null;
-    }
+    if (_touchpad(event)) return _touchpadUp(event, transform, session);
+    if (!_isDirectPointer(event)) return;
+    _directPointer = null;
     if (session.viewOnly) return;
-    final trackpad = _touchpad(event);
-    final point = trackpad
-        ? _pointerOr(transform)
-        : transform.toRemote(event.localPosition, clamp: _touchScreen);
+    // Clamped: a release outside the picture is still the release.
+    final point = transform.toRemote(event.localPosition, clamp: true);
     if (point == null) return;
-    if (trackpad && _dragging) {
-      // The end of a tap and drag: let go where the pointer is, and click
-      // nothing more.
-      _dragging = false;
-      _maxTouches = 0;
-      _touchMoved = false;
-      _buttons = 0;
-      _sendPointer(session, point);
-      return;
-    }
-    final tapped = trackpad
-        ? (_maxTouches >= 2 && !_touchMoved ? 4 : (!_touchMoved ? 1 : 0))
-        : (_buttons == 0 ? 1 : _buttons);
-    _maxTouches = 0;
-    _touchMoved = false;
-    if (trackpad && tapped == 1) {
-      _lastTap = (at: event.timeStamp, position: event.localPosition);
-    }
-    if (tapped == 0) return;
-    _buttons = tapped;
-    _sendPointer(session, point);
-    _buttons = 0;
+    _buttons = _buttonMask(event.buttons);
     _sendPointer(session, point);
   }
+
+  /// Whether [event] is the finger the direct path follows. Anything that is
+  /// not a finger always is.
+  bool _isDirectPointer(PointerEvent event) =>
+      event.kind != ui.PointerDeviceKind.touch ||
+      event.pointer == _directPointer;
 
   /// Lets go of anything held, where the pointer already is.
   ///
   /// It sent the touchpad's position in *viewport* coordinates as if they
   /// were desktop pixels, which put the release somewhere else entirely.
   void _pointerCancel(RemoteDesktopSessionView session) {
-    _dragging = false;
-    _lastTap = null;
-    _touches = 0;
-    _maxTouches = 0;
-    _touchMoved = false;
-    _lastTouch = null;
+    _resetTouchpad();
+    _directPointer = null;
     _buttons = 0;
     final point = _pointer.value;
     if (point != null) _sendPointer(session, point);

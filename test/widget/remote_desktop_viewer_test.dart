@@ -11,7 +11,7 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
-import 'package:flutter/gestures.dart' show PointerDeviceKind;
+import 'package:flutter/gestures.dart' show PointerDeviceKind, kDoubleTapTimeout;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -251,8 +251,16 @@ void main() {
       await finger.up(timeStamp: const Duration(milliseconds: 400));
       await tester.pump();
 
-      // The tap's click, then pressed through the drag and let go once.
-      expect(sessions.buttons, [0, 1, 0, 1, 1, 1, 1, 0]);
+      // One press through the drag and one release: no click before it. A
+      // click there made the press the second half of a double click, which
+      // the desktop acted on instead of dragging.
+      expect(sessions.buttons, [1, 1, 1, 1, 0]);
+      // Pressed where the pointer was — the middle of the desktop — before
+      // it moved.
+      expect(sessions.points.first, const Offset(640, 360));
+      // And nothing arrives later from the tap it started with.
+      await tester.pump(kDoubleTapTimeout * 2);
+      expect(sessions.buttons, hasLength(5));
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
@@ -269,7 +277,10 @@ void main() {
       await finger.up(timeStamp: const Duration(milliseconds: 280));
       await tester.pump();
 
-      expect(sessions.buttons, [0, 1, 0, 1, 0]);
+      expect(sessions.buttons, [1, 0, 1, 0]);
+      // And nothing more once the wait for a second touch is over.
+      await tester.pump(kDoubleTapTimeout * 2);
+      expect(sessions.buttons, [1, 0, 1, 0]);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
@@ -288,7 +299,8 @@ void main() {
       await finger.up(timeStamp: const Duration(milliseconds: 2100));
       await tester.pump();
 
-      expect(sessions.buttons, [0, 1, 0, 0, 0]);
+      // Too late for a drag: the tap clicks, then the touch only moves.
+      expect(sessions.buttons, [1, 0, 0]);
       await tester.pumpWidget(const SizedBox.shrink());
     });
 
@@ -300,8 +312,81 @@ void main() {
       );
       await tester.pump();
 
-      // Down moves nothing; the click is sent whole on the way up.
-      expect(sessions.buttons, [0, 1, 0]);
+      // Held back while a second touch could still make it a tap and drag,
+      // then sent whole.
+      expect(sessions.buttons, isEmpty);
+      await tester.pump(kDoubleTapTimeout);
+      expect(sessions.buttons, [1, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a second finger after a tap is a right click, not a drag', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      await first.down(canvas);
+      await first.up(timeStamp: const Duration(milliseconds: 80));
+      await first.down(canvas, timeStamp: const Duration(milliseconds: 200));
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await second.down(
+        canvas + const Offset(40, 0),
+        timeStamp: const Duration(milliseconds: 210),
+      );
+      await second.up(timeStamp: const Duration(milliseconds: 280));
+      await first.up(timeStamp: const Duration(milliseconds: 290));
+      await tester.pump(kDoubleTapTimeout);
+
+      // The tap's own click, then the two-finger tap's right click.
+      expect(sessions.buttons, [1, 0, 4, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    // A real finger wanders a few points between landing and lifting. That
+    // counted as a move, so the tap neither clicked nor armed tap and drag.
+    testWidgets('a tap that wanders a few points is still a tap', (
+      tester,
+    ) async {
+      final sessions = await pumpConnected(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+
+      final finger = await tester.createGesture(kind: PointerDeviceKind.touch);
+      await finger.down(canvas);
+      await finger.moveBy(
+        const Offset(3, 2),
+        timeStamp: const Duration(milliseconds: 30),
+      );
+      await finger.moveBy(
+        const Offset(2, -3),
+        timeStamp: const Duration(milliseconds: 60),
+      );
+      await finger.up(timeStamp: const Duration(milliseconds: 90));
+      // And the second touch of a tap and drag, wandering the same way first.
+      await finger.down(canvas, timeStamp: const Duration(milliseconds: 250));
+      await finger.moveBy(
+        const Offset(2, 2),
+        timeStamp: const Duration(milliseconds: 270),
+      );
+      await finger.moveBy(
+        const Offset(60, 0),
+        timeStamp: const Duration(milliseconds: 300),
+      );
+      await finger.up(timeStamp: const Duration(milliseconds: 400));
+      await tester.pump();
+
+      // The wanders move nothing, and the tap arms the drag: pressed once the
+      // second touch moves, and let go once.
+      expect(sessions.buttons, [1, 1, 0]);
+      // Where the pointer was drawn, not a few points off it.
+      expect(sessions.points.first, const Offset(640, 360));
       await tester.pumpWidget(const SizedBox.shrink());
     });
   });
@@ -351,9 +436,9 @@ void main() {
       await finger.up();
       await tester.pump();
 
-      // Starts in the middle of the desktop, and 40 points across a picture
-      // drawn at 4× is 10 desktop pixels.
-      expect(sessions.points.first, const Offset(160, 90));
+      // Starts in the middle of the desktop (160, 90), and 40 points across a
+      // picture drawn at 4× is 10 desktop pixels.
+      expect(sessions.points.first, const Offset(165, 90));
       expect(sessions.points.last, const Offset(170, 90));
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -377,6 +462,60 @@ void main() {
       expect(sessions.points.last.dx - sessions.points.first.dx, 10);
       // The system's own pointer is on screen; a second one would trail it.
       expect(find.byKey(RemoteDesktopViewer.cursorKey), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a direct finger presses where it lands, and one at a time', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = false;
+      final sessions = await pumpFramed(tester);
+      final canvas = tester.getCenter(find.byType(RemoteDesktopViewer));
+
+      final first = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 1,
+      );
+      await first.down(canvas);
+      final second = await tester.createGesture(
+        kind: PointerDeviceKind.touch,
+        pointer: 2,
+      );
+      await second.down(canvas + const Offset(80, 0));
+      await second.moveBy(const Offset(40, 0));
+      await second.up();
+      await first.moveBy(const Offset(40, 0));
+      await first.up();
+      await tester.pump(kDoubleTapTimeout);
+
+      // Only the first finger: pressed, dragged, let go.
+      expect(sessions.buttons, [1, 1, 0]);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    // A mouse says what its buttons do; nothing waits and nothing is made up.
+    testWidgets('a mouse click is sent as it happens, and a drag as a drag', (
+      tester,
+    ) async {
+      RemoteDesktopViewer.debugTouchScreenOverride = true;
+      final sessions = await pumpFramed(tester);
+      final canvas = tester.getCenter(find.byKey(RemoteDesktopViewer.cursorKey));
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.down(canvas);
+      await mouse.up();
+      await tester.pump();
+      expect(sessions.buttons, [1, 0]);
+
+      await mouse.down(canvas);
+      await mouse.moveBy(const Offset(40, 0));
+      // Out past the picture, and let go there.
+      await mouse.moveBy(const Offset(4000, 0));
+      await mouse.up();
+      await tester.pump(kDoubleTapTimeout);
+      expect(sessions.buttons, [1, 0, 1, 1, 1, 0]);
+      // Held at the edge, not dropped.
+      expect(sessions.points.last.dx, _RecordingSessions.framedSize.width - 1);
       await tester.pumpWidget(const SizedBox.shrink());
     });
   });
