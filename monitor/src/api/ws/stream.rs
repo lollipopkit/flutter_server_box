@@ -281,6 +281,13 @@ async fn open(
     host: &str,
     port: u16,
 ) -> Option<Message> {
+    // Subscribed before anything else, so a revocation landing anywhere between
+    // this line and the relay task subscribing for itself is still delivered:
+    // the broadcast only reaches receivers that existed when it was sent, and
+    // the check below is what a revocation racing the connect would otherwise
+    // slip past.
+    let revoked = ctx.state.full_access_revoked.subscribe();
+
     // Re-checked at the moment of use rather than trusted from the handshake:
     // the grant can be turned off while a ticket is outstanding, and the
     // capabilities a client was told earlier are not a boundary.
@@ -342,8 +349,9 @@ async fn open(
     // The grant this connection was opened under, which the panel can take
     // away from a running process. Without this the socket would keep carrying
     // bytes after `full_access` was switched off — the flag is only consulted
-    // when something is *started*.
-    let revoked = ctx.state.full_access_revoked.subscribe();
+    // when something is *started*. The receiver was taken at the top of this
+    // function, so a revocation racing the connect is delivered rather than
+    // missed.
     let revocation_sink = sink.clone();
 
     spawn(async move {
