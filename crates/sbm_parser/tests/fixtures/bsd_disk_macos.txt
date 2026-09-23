@@ -16,3 +16,21 @@ map auto_home                                                                   
 /dev/disk3s3                                                                                  971298980   1956816   51601252     4%      79           516012520    0%   /Volumes/Recovery
 devices -- file:///Users/me/Library/Containers/com.apple.CoreDevice.CoreDeviceService/Data/  1073741824         0 1073741824     0%       0 9223372036854775807    0%   /Users/me/Library/Developer/CoreDevice/DeviceFS
 OrbStack:/OrbStack                                                                             74776576  26604836   48171740    36%       0                   0     -   /Users/me/OrbStack
+__SBM_MOUNTS__
+/dev/disk3s1s1 on / (apfs, sealed, local, read-only, journaled)
+devfs on /dev (devfs, local, nobrowse)
+/dev/disk3s6 on /System/Volumes/VM (apfs, local, noexec, journaled, noatime, nobrowse)
+/dev/disk3s2 on /System/Volumes/Preboot (apfs, local, journaled, nobrowse)
+/dev/disk3s4 on /System/Volumes/Update (apfs, local, journaled, nobrowse)
+/dev/disk1s2 on /System/Volumes/xarts (apfs, local, noexec, journaled, noatime, nobrowse)
+/dev/disk1s1 on /System/Volumes/iSCPreboot (apfs, local, journaled, nobrowse)
+/dev/disk1s3 on /System/Volumes/Hardware (apfs, local, journaled, nobrowse)
+/dev/disk3s5 on /System/Volumes/Data (apfs, local, journaled, nobrowse, protect, root data)
+map auto_home on /System/Volumes/Data/home (autofs, automounted, nobrowse)
+/Applications/Example.app/Wrapper on /private/var/folders/xx/yyyy/X/APPID (nullfs, local, nodev, nosuid, read-only, nobrowse, mounted by me)
+/dev/disk5s1 on /private/var/run/com.apple.security.cryptexd/mnt/com.apple.iPhoneOS.SimulatorRuntime-v24.1.434.0.tFSeek (apfs, sealed, local, read-only, journaled, nobrowse)
+/dev/disk7s1 on /private/var/run/com.apple.security.cryptexd/mnt/com.apple.WatchOS.SimulatorRuntime-v24.18.362.0.QbPI2J (apfs, sealed, local, read-only, journaled, nobrowse)
+/dev/disk9s1 on /private/var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v27.1.266.1.ikrWQk (apfs, sealed, local, read-only, journaled, nobrowse)
+/dev/disk3s3 on /Volumes/Recovery (apfs, local, journaled, nobrowse)
+devices -- file:///Users/me/Library/Containers/com.apple.CoreDevice.CoreDeviceService/Data/ on /Users/me/Library/Developer/CoreDevice/DeviceFS (devicefs, local, nodev, nosuid, noowners, noatime, quarantine, nobrowse, fskit, mounted by me)
+OrbStack:/OrbStack on /Users/me/OrbStack (nfs, nodev, nosuid, noatime, mounted by me)

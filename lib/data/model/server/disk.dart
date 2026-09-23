@@ -263,9 +263,13 @@ class DiskUsage {
   /// every volume in it reports, or null for anything else.
   ///
   /// `/dev/disk3s5` and `/dev/disk3s1s1` (a snapshot of `disk3s1`) are both in
-  /// `disk3`. Keyed on the numbers as well as the name, so partitions of one
-  /// non-APFS disk, which report sizes of their own, are never merged.
+  /// `disk3`. Only for a filesystem known to be APFS: partitions of another
+  /// kind on one disk are separate filesystems, and two of them can report the
+  /// same size and free space without sharing anything. Keyed on the numbers
+  /// as well, since the name alone does not say which container a volume
+  /// shares.
   static (String, BigInt, BigInt)? _apfsContainer(Disk disk) {
+    if (disk.fsTyp != 'apfs') return null;
     final m = _apfsVolume.firstMatch(disk.path);
     if (m == null) return null;
     return (m.group(1)!, disk.size, disk.avail);

@@ -471,13 +471,18 @@ pub struct SmartAttributeFlags {
     pub auto_keep: bool,
 }
 
-/// The APFS container a `df` source is a volume of, with the size and free
-/// space every volume in it reports — see [`disk_usage`].
+/// The APFS container a volume is in, with the size and free space every
+/// volume in it reports — see [`disk_usage`].
 ///
 /// `/dev/disk3s5` and `/dev/disk3s1s1` (a snapshot of `disk3s1`) are both in
-/// `disk3`. Keyed on the numbers as well as the name, so partitions of one
-/// non-APFS disk, which report sizes of their own, are never merged.
+/// `disk3`. Only for a filesystem known to be APFS: partitions of another
+/// kind on one disk are separate filesystems, and two of them can report the
+/// same size and free space without sharing anything. Keyed on the numbers as
+/// well, since the name alone does not say which container a volume shares.
 fn apfs_container(disk: &Disk) -> Option<(String, u64, u64)> {
+    if disk.fs_type.as_deref() != Some("apfs") {
+        return None;
+    }
     let rest = disk.path.strip_prefix("/dev/disk")?;
     let digits = rest.find(|c: char| !c.is_ascii_digit())?;
     if digits == 0 || !rest[digits..].starts_with('s') {

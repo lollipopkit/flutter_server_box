@@ -84,8 +84,10 @@ void main() {
   });
 
   group('DiskUsage', () {
-    Disk apfs(String path, String mount, int used) => Disk(
+    Disk apfs(String path, String mount, int used, {String? fs = 'apfs'}) =>
+        Disk(
       path: path,
+      fsTyp: fs,
       mount: mount,
       usedPercent: 0,
       used: BigInt.from(used),
@@ -102,6 +104,18 @@ void main() {
       ]);
       expect(usage.size, BigInt.from(1000));
       expect(usage.used, BigInt.from(950));
+    });
+
+    test('equal partitions that are not APFS stay two filesystems', () {
+      // Matching size and free space is not a shared container.
+      for (final fs in ['exfat', 'hfs', null]) {
+        final usage = DiskUsage.parse([
+          apfs('/dev/disk4s1', '/Volumes/A', 15, fs: fs),
+          apfs('/dev/disk4s2', '/Volumes/B', 15, fs: fs),
+        ]);
+        expect(usage.size, BigInt.from(2000), reason: '$fs');
+        expect(usage.used, BigInt.from(30), reason: '$fs');
+      }
     });
 
     test('macOS system volumes and images are not storage', () {

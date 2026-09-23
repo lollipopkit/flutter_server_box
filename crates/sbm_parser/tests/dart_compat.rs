@@ -341,17 +341,24 @@ fn disk_parse_df_collapses_repeated_mounts() {
     assert_ne!(orbstack[0].used, orbstack[1].used);
 }
 
-/// macOS `df -k`: one APFS container (`disk3`) published as seven volumes,
-/// each reporting the container's size and free space, beside the volumes the
-/// OS manages for itself and the read-only images it mounts. What is left is
-/// the system snapshot at `/`, the data volume, and a share.
+/// macOS `df -k` and `mount`: one APFS container (`disk3`) published as
+/// seven volumes, each reporting the container's size and free space, beside
+/// the volumes the OS manages for itself and the read-only images it mounts.
+/// What is left is the system snapshot at `/`, the data volume, and a share.
 #[test]
-fn disk_parse_df_macos_keeps_the_volumes_a_user_has() {
-    let disks = linux::parse_disk(include_str!("fixtures/df_macos_apfs.txt"));
-    let mounts: Vec<_> = disks.iter().map(|d| d.mount.as_str()).collect();
+fn disk_parse_bsd_macos_keeps_the_volumes_a_user_has() {
+    let disks = bsd::parse_disk(include_str!("fixtures/bsd_disk_macos.txt"));
+    let rows: Vec<_> = disks
+        .iter()
+        .map(|d| (d.mount.as_str(), d.fs_type.as_deref()))
+        .collect();
     assert_eq!(
-        mounts,
-        ["/", "/System/Volumes/Data", "/Users/me/OrbStack"],
+        rows,
+        [
+            ("/", Some("apfs")),
+            ("/System/Volumes/Data", Some("apfs")),
+            ("/Users/me/OrbStack", Some("nfs")),
+        ],
         "system volumes, cryptexes and app wrappers are not the user's storage"
     );
 }
@@ -361,27 +368,53 @@ fn disk_parse_df_macos_keeps_the_volumes_a_user_has() {
 /// was at 95%.
 #[test]
 fn disk_usage_counts_an_apfs_container_once() {
-    let disks = linux::parse_disk(include_str!("fixtures/df_macos_apfs.txt"));
+    let disks = bsd::parse_disk(include_str!("fixtures/bsd_disk_macos.txt"));
     let (used, size) = disk_usage(&disks);
     assert_eq!(size, 971_298_980 + 74_776_576);
     assert_eq!(used, (971_298_980 - 51_601_252) + 26_604_836);
 }
 
-/// Partitions of one disk that is not APFS report sizes of their own, and are
-/// two filesystems rather than two views of one.
-#[test]
-fn disk_usage_keeps_partitions_with_their_own_numbers_apart() {
-    let part = |path: &str, size: u64, used: u64| Disk {
+fn partition(path: &str, fs_type: Option<&str>) -> Disk {
+    Disk {
         path: path.into(),
         mount: format!("/Volumes/{path}"),
-        size,
-        used,
-        avail: size - used,
-        used_percent: 0,
+        fs_type: fs_type.map(Into::into),
+        size: 300,
+        used: 30,
+        avail: 270,
+        used_percent: 10,
         ..Disk::default()
-    };
-    let disks = [part("/dev/disk4s1", 100, 10), part("/dev/disk4s2", 300, 30)];
-    assert_eq!(disk_usage(&disks), (40, 400));
+    }
+}
+
+/// Two partitions of one disk with the same size and the same free space are
+/// still two filesystems. Matching numbers are not a shared container; only
+/// APFS volumes share one.
+#[test]
+fn disk_usage_keeps_equal_partitions_that_are_not_apfs_apart() {
+    for fs_type in [Some("exfat"), Some("hfs"), None] {
+        let disks = [
+            partition("/dev/disk4s1", fs_type),
+            partition("/dev/disk4s2", fs_type),
+        ];
+        assert_eq!(disk_usage(&disks), (60, 600), "{fs_type:?}");
+    }
+    let apfs = [
+        partition("/dev/disk4s1", Some("apfs")),
+        partition("/dev/disk4s2", Some("apfs")),
+    ];
+    assert_eq!(disk_usage(&apfs), (30, 300));
+}
+
+/// Output from a script older than the `mount` table carries no types, so
+/// nothing is taken for a container — the totals are what they were.
+#[test]
+fn disk_parse_bsd_without_the_mount_table_has_no_types() {
+    let raw = include_str!("fixtures/bsd_disk_macos.txt");
+    let (df, _) = raw.split_once(bsd::MOUNTS_MARKER).unwrap();
+    let disks = bsd::parse_disk(df);
+    assert!(disks.iter().all(|d| d.fs_type.is_none()));
+    assert_eq!(disks.len(), 3);
 }
 
 /// A snap-heavy Ubuntu mounts one squashfs per installed revision, each 100%

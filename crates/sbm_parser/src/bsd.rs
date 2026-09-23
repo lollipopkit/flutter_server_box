@@ -252,3 +252,40 @@ pub fn parse_net(raw: &str) -> Vec<NetIface> {
     }
     result
 }
+
+/// Where `mount`'s table starts in the disk segment — see the BSD `DISK`
+/// command.
+pub const MOUNTS_MARKER: &str = "__SBM_MOUNTS__";
+
+/// `df -k`, then [`MOUNTS_MARKER`] and `mount`, whose
+/// `source on mount (type, options)` lines give each row its filesystem type.
+///
+/// The type is what [`disk_usage`] needs before it counts volumes as one APFS
+/// container: `df` alone cannot tell them from separate partitions whose
+/// numbers happen to match. Output without the table — an older script —
+/// parses as the `df` it is, with no types.
+pub fn parse_disk(raw: &str) -> Vec<Disk> {
+    static MOUNT_LINE: OnceLock<Regex> = OnceLock::new();
+
+    let (df, mounts) = raw.split_once(MOUNTS_MARKER).unwrap_or((raw, ""));
+    let mut disks = crate::linux::parse_disk(df);
+    let line = regex(&MOUNT_LINE, r"^(.+?) on (.+) \(([^,)]+)");
+    let types: Vec<(&str, &str, &str)> = mounts
+        .lines()
+        .filter_map(|l| line.captures(l.trim_end()))
+        .filter_map(|c| {
+            let (src, mnt, ty) = (c.get(1)?, c.get(2)?, c.get(3)?);
+            Some((src.as_str(), mnt.as_str(), ty.as_str().trim()))
+        })
+        .collect();
+    for disk in &mut disks {
+        disk.fs_type = types
+            .iter()
+            .find(|(src, mnt, _)| *src == disk.path && *mnt == disk.mount)
+            .map(|(_, _, ty)| ty.to_string());
+    }
+    // A type can exclude what the source alone did not — a FreeBSD tmpfs is
+    // named by its mount point, not by `tmpfs`.
+    disks.retain(Disk::is_storage);
+    disks
+}
