@@ -8,7 +8,7 @@
     Square,
     ToggleLeft,
     ToggleRight,
-    type Icon as LucideIcon,
+    type LucideIcon,
   } from '@lucide/svelte'
   import FeatureTabs from '../components/FeatureTabs.svelte'
   import PageHeader from '../components/PageHeader.svelte'
@@ -164,7 +164,7 @@
   /// How each action is drawn, in the agent's own order. The set a unit
   /// carries is the agent's; this is only the label and the icon. A `Record`
   /// over every action for the same reason as `STATES`.
-  const ACTIONS: Record<ServiceAction, { label: () => string; icon: typeof LucideIcon }> = {
+  const ACTIONS: Record<ServiceAction, { label: () => string; icon: LucideIcon }> = {
     start: { label: () => $LL.serviceActionStart(), icon: Play },
     stop: { label: () => $LL.serviceActionStop(), icon: Square },
     restart: { label: () => $LL.serviceActionRestart(), icon: RotateCw },

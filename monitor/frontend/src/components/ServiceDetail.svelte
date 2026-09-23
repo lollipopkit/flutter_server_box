@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FileText, Info, ScrollText, type Icon as LucideIcon } from '@lucide/svelte'
+  import { FileText, Info, ScrollText, type LucideIcon } from '@lucide/svelte'
   import { Card, Spinner } from '@serverbox/webui'
   import { api } from '../lib/api'
   import { LL } from '../i18n/i18n-svelte'
@@ -52,7 +52,7 @@
     void load()
   })
 
-  const PARTS: Record<Tab, { label: () => string; icon: typeof LucideIcon }> = {
+  const PARTS: Record<Tab, { label: () => string; icon: LucideIcon }> = {
     logs: { label: () => $LL.serviceLogs(), icon: ScrollText },
     definition: { label: () => $LL.serviceDefinition(), icon: FileText },
     status: { label: () => $LL.serviceStatus(), icon: Info },

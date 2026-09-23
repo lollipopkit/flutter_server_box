@@ -8,8 +8,9 @@
 ///
 /// Ordering is by what the thing is rather than by when it was built — the
 /// running machine first (containers, processes, services), then the machine's
-/// own configuration (users, schedule). TODO: benchmark, AI, snippets, PVE, BMC
-/// and sync join this list as they land; the bar scrolls rather than wrapping.
+/// own configuration (users, schedule, desktops). TODO: benchmark, AI, snippets,
+/// PVE, BMC and sync join this list as they land; the bar scrolls rather than
+/// wrapping.
 ///
 /// How each one is *drawn* (its label and its icon) is deliberately not here:
 /// a label is `$LL` and an icon is a component, and this module is imported by
@@ -20,7 +21,7 @@ import type { RemoteAccess } from '../types'
 ///
 /// It is a subset of `View` — `layout.svelte.ts` widens `View` with this type
 /// rather than repeating the names, so the two cannot drift.
-export type FeatureId = 'containers' | 'process' | 'services' | 'users' | 'cron'
+export type FeatureId = 'containers' | 'process' | 'services' | 'users' | 'cron' | 'desktop'
 
 export interface FeatureSpec {
   /// The `View` this feature renders as, and how `layout.navigate` names it.
@@ -39,6 +40,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'services', capability: 'services' },
   { id: 'users', capability: 'users' },
   { id: 'cron', capability: 'cron' },
+  { id: 'desktop', capability: 'desktop' },
 ]
 
 /// The features this agent serves.

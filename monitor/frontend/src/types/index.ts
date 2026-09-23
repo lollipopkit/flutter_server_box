@@ -141,6 +141,23 @@ export interface RemoteAccess {
   /// the platform answer rather than being hidden, since an agent on a
   /// supported platform is the ordinary case and a hidden tab says nothing.
   users?: boolean
+  /// Whether `/api/v1/desktop` answers this agent at all — a saved route list
+  /// needs only the panel login.
+  ///
+  /// **Not whether a session may be opened**, which is `stream` and is checked
+  /// again when the socket opens: a route list is a list, and what a route is
+  /// worth is decided by the relay. An agent that predates this endpoint
+  /// answers `full_access` and would 404 the request, which is why it is not
+  /// reported as the wider grant.
+  desktop?: boolean
+  /// Whether `/api/v1/stream/ws` will relay a TCP connection from this agent,
+  /// which is what opening a desktop session needs.
+  ///
+  /// The same grant as `full_access` — the relay dials as the agent's own user,
+  /// so anyone who could open a shell could `ssh -L` from it — but its own
+  /// field, because an agent older than the relay answers `full_access` and
+  /// would still refuse the upgrade. Absent means no.
+  stream?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -237,7 +254,10 @@ export interface PowerResult {
   timed_out: boolean
 }
 
-export type WsTicketPurpose = 'terminal'
+/// What a single-use ticket authorises. One purpose per endpoint it can be
+/// spent on, and the agent refuses a ticket at the wrong one — a ticket is
+/// minted only when the endpoint it names is available to this caller.
+export type WsTicketPurpose = 'terminal' | 'stream'
 
 export interface WsTicketResponse {
   ticket: string
@@ -1087,3 +1107,67 @@ export type UserRefusalCode =
   | 'userExists'
   | 'agentAccount'
   | 'noSuchUser'
+
+/// Which protocol a saved route speaks.
+///
+/// The relay is a byte stream and does not translate between the two, so this
+/// is what decides which client runs a session. Stored by name and never by
+/// index: a `config.toml` outlives the build that wrote it.
+export type DesktopProtocol = 'vnc' | 'rdp'
+
+/// A protocol the agent offers, and the port a route of it is given when none
+/// is named.
+///
+/// Sent by the agent rather than hard-coded here, so a protocol a later build
+/// adds — or a default port it changes — reaches this panel without a change
+/// of its own.
+export interface DesktopProtocolView {
+  id: DesktopProtocol
+  default_port: number
+}
+
+/// One saved route to a desktop: a destination **the agent** can reach.
+///
+/// That is the whole reason it is stored on the agent rather than in this
+/// browser: a desktop is usually reachable from the machine the agent runs on
+/// and from nowhere the panel is, so the agent is the client's way in.
+///
+/// **No credential is in one.** The password a desktop asks for is typed in
+/// this browser — the process that runs the session — and travels to the
+/// desktop through the relay, so there is nothing here to withhold and the
+/// listing is safe to read whole.
+export interface DesktopTarget {
+  /// Names the route and is its identity: unique across the set, which is why a
+  /// route is edited by name rather than by position.
+  name: string
+  protocol: DesktopProtocol
+  /// An address this agent can reach. `127.0.0.1` is the machine it runs on.
+  host: string
+  port: number
+  username?: string | null
+  /// The RDP domain, which Windows authentication may need. Kept for a VNC
+  /// route too, so making one an RDP route cannot silently lose it.
+  domain?: string | null
+  /// Take the session view-only.
+  view_only: boolean
+  /// Whether the desktop may be shared with the sessions already on it.
+  shared: boolean
+}
+
+/// The saved routes, and the protocols available for a new one.
+export interface DesktopRoutesView {
+  targets: DesktopTarget[]
+  protocols: DesktopProtocolView[]
+}
+
+/// Why a route was refused before the file was written, as a stable code the
+/// page phrases. One list, all of them about the request rather than about the
+/// machine — a value too long to be a name, two routes answering to one name, a
+/// host that is not one, a port no desktop listens on.
+export type DesktopRefusalCode =
+  | 'invalidName'
+  | 'duplicateName'
+  | 'invalidHost'
+  | 'invalidPort'
+  | 'invalidUsername'
+  | 'invalidDomain'

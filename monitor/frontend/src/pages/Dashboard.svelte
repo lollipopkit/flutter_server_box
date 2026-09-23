@@ -15,6 +15,7 @@
     Activity,
     CircleAlert,
     CalendarClock,
+    MonitorPlay,
     Container,
     Power,
     RefreshCw,
@@ -296,6 +297,11 @@
         {#if capabilities?.remote_access?.cron}
           <IconButton label={$LL.cron()} onclick={() => layout.navigate('cron')}>
             <CalendarClock class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.desktop}
+          <IconButton label={$LL.desktop()} onclick={() => layout.navigate('desktop')}>
+            <MonitorPlay class="w-4 h-4" />
           </IconButton>
         {/if}
         <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>

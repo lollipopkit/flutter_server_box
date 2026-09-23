@@ -9,6 +9,8 @@ import type {
   CronView,
   CustomCmd,
   CustomCmdsView,
+  DesktopRoutesView,
+  DesktopTarget,
   FsEntry,
   FsRootsResponse,
   HistoryPoint,
@@ -502,6 +504,27 @@ export const api = {
       '/users',
       { method: 'POST', body: JSON.stringify(payload) },
       'Failed to reach the machine',
+    ),
+  /// The saved desktop routes of this agent, and the protocols it offers.
+  ///
+  /// A route is a destination **the agent** can reach, not a live session:
+  /// nothing here dials anything. A session is the relay below, which is
+  /// `full_access` and is checked again when the socket opens — while this
+  /// listing needs only the panel login.
+  getDesktopRoutes: () =>
+    request<DesktopRoutesView>('/desktop', {}, 'Failed to fetch the desktops'),
+  /// The whole set, in order, like the custom commands: the order is part of
+  /// what is stored, so a move has no smaller expression than the new list —
+  /// and a renamed route is then an ordinary edit rather than a second verb.
+  ///
+  /// A route that could not be dialled is refused before the file is written,
+  /// as an `ApiError` holding a stable code (`invalidName`, `duplicateName`,
+  /// `invalidHost`, `invalidPort`, `invalidUsername`, `invalidDomain`).
+  updateDesktopRoutes: (targets: DesktopTarget[]) =>
+    request<DesktopRoutesView>(
+      '/desktop',
+      { method: 'PUT', body: JSON.stringify({ targets }) },
+      'Failed to save the desktops',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

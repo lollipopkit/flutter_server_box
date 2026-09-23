@@ -75,6 +75,12 @@ pub enum Kind {
     /// the subject of the `chpasswd` this runs, which is one command's own
     /// business rather than a fact about the machine.
     User,
+    /// A change to the desktops this agent can reach through `api::desktop`.
+    /// Its own kind for `Push`'s reason — the subject is the route names, and
+    /// the row is about the agent's own configuration rather than about the
+    /// machine. The session itself is recorded as `Stream`, which is what
+    /// opening one is.
+    Desktop,
 }
 
 impl Kind {
@@ -93,6 +99,7 @@ impl Kind {
             Kind::Process => "process",
             Kind::Service => "service",
             Kind::User => "user",
+            Kind::Desktop => "desktop",
         }
     }
 }

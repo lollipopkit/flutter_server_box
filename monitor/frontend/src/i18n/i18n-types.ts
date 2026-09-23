@@ -1658,6 +1658,154 @@ type RootTranslation = {
 	 */
 	userAgentAccount: string
 	/**
+	 * D​e​s​k​t​o​p​s
+	 */
+	desktop: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​a​v​e​d​ ​r​o​u​t​e​s
+	 * @param {unknown} count
+	 */
+	desktopSubtitle: RequiredParams<'count'>
+	/**
+	 * N​o​ ​d​e​s​k​t​o​p​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
+	 */
+	desktopEmpty: string
+	/**
+	 * N​e​w​ ​d​e​s​k​t​o​p
+	 */
+	desktopAdd: string
+	/**
+	 * E​d​i​t​ ​d​e​s​k​t​o​p
+	 */
+	desktopEdit: string
+	/**
+	 * D​e​l​e​t​e​ ​d​e​s​k​t​o​p
+	 */
+	desktopDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?
+	 * @param {unknown} name
+	 */
+	desktopDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * A​ ​r​o​u​t​e​ ​i​s​ ​a​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​c​h​.​ ​T​h​e​ ​s​e​s​s​i​o​n​ ​r​u​n​s​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​a​n​d​ ​i​t​s​ ​b​y​t​e​s​ ​t​r​a​v​e​l​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​a​g​e​n​t​,​ ​s​o​ ​a​ ​d​e​s​k​t​o​p​ ​b​e​h​i​n​d​ ​i​t​ ​i​s​ ​r​e​a​c​h​a​b​l​e​ ​w​i​t​h​o​u​t​ ​p​u​b​l​i​s​h​i​n​g​ ​i​t​.
+	 */
+	desktopRouteNote: string
+	/**
+	 * N​a​m​e
+	 */
+	desktopName: string
+	/**
+	 * P​r​o​t​o​c​o​l
+	 */
+	desktopProtocol: string
+	/**
+	 * H​o​s​t
+	 */
+	desktopHost: string
+	/**
+	 * A​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​c​h​ ​—​ ​1​2​7​.​0​.​0​.​1​ ​i​s​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​t​ ​r​u​n​s​ ​o​n​.
+	 */
+	desktopHostHint: string
+	/**
+	 * P​o​r​t
+	 */
+	desktopPort: string
+	/**
+	 * U​s​e​r​n​a​m​e
+	 */
+	desktopUsername: string
+	/**
+	 * D​o​m​a​i​n
+	 */
+	desktopDomain: string
+	/**
+	 * V​i​e​w​ ​o​n​l​y
+	 */
+	desktopViewOnly: string
+	/**
+	 * S​h​a​r​e​ ​w​i​t​h​ ​t​h​e​ ​s​e​s​s​i​o​n​s​ ​a​l​r​e​a​d​y​ ​o​n​ ​i​t
+	 */
+	desktopShared: string
+	/**
+	 * O​p​e​n​ ​s​e​s​s​i​o​n
+	 */
+	desktopConnect: string
+	/**
+	 * T​r​y​ ​a​g​a​i​n
+	 */
+	desktopReconnect: string
+	/**
+	 * E​n​d​ ​s​e​s​s​i​o​n
+	 */
+	desktopDisconnect: string
+	/**
+	 * C​o​n​n​e​c​t​i​n​g​…
+	 */
+	desktopConnecting: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	desktopPassword: string
+	/**
+	 * S​e​n​t​ ​t​o​ ​t​h​e​ ​d​e​s​k​t​o​p​ ​f​r​o​m​ ​t​h​i​s​ ​b​r​o​w​s​e​r​,​ ​t​h​r​o​u​g​h​ ​t​h​e​ ​a​g​e​n​t​.​ ​T​h​e​ ​a​g​e​n​t​ ​s​t​o​r​e​s​ ​n​o​ ​p​a​s​s​w​o​r​d​ ​f​o​r​ ​a​ ​r​o​u​t​e​.
+	 */
+	desktopPasswordHint: string
+	/**
+	 * L​e​a​v​e​ ​i​t​ ​e​m​p​t​y​ ​i​f​ ​t​h​e​ ​d​e​s​k​t​o​p​ ​h​a​s​ ​n​o​ ​p​a​s​s​w​o​r​d​.
+	 */
+	desktopPasswordNone: string
+	/**
+	 * T​h​e​ ​d​e​s​k​t​o​p​ ​a​s​k​e​d​ ​f​o​r​ ​a​ ​p​a​s​s​w​o​r​d​ ​a​n​d​ ​n​o​n​e​ ​w​a​s​ ​g​i​v​e​n​.​ ​O​p​e​n​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​a​g​a​i​n​ ​w​i​t​h​ ​o​n​e​.
+	 */
+	desktopPasswordRequired: string
+	/**
+	 * T​h​e​ ​c​o​n​n​e​c​t​i​o​n​ ​e​n​d​e​d​.
+	 */
+	desktopUnreachable: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​r​e​l​a​y​ ​c​o​n​n​e​c​t​i​o​n​s​,​ ​s​o​ ​a​ ​s​e​s​s​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​r​o​u​t​e​s​ ​c​a​n​ ​s​t​i​l​l​ ​b​e​ ​e​d​i​t​e​d​.
+	 */
+	desktopNoStream: string
+	/**
+	 * R​D​P​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​p​a​n​e​l​ ​y​e​t​.​ ​T​h​e​ ​r​o​u​t​e​ ​i​s​ ​s​a​v​e​d​,​ ​a​n​d​ ​t​h​e​ ​a​p​p​ ​c​a​n​ ​o​p​e​n​ ​i​t​.
+	 */
+	desktopRdpUnsupported: string
+	/**
+	 * S​a​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	desktopDoneSaved: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	desktopDoneDeleted: RequiredParams<'name'>
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​,​ ​h​a​s​ ​t​o​ ​b​e​ ​u​n​i​q​u​e​,​ ​a​n​d​ ​m​a​y​ ​n​o​t​ ​h​o​l​d​ ​a​ ​l​i​n​e​ ​b​r​e​a​k​.
+	 */
+	desktopInvalidName: string
+	/**
+	 * T​w​o​ ​r​o​u​t​e​s​ ​c​a​n​n​o​t​ ​a​n​s​w​e​r​ ​t​o​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​.
+	 */
+	desktopDuplicateName: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​h​a​s​ ​t​o​ ​b​e​ ​o​n​e​ ​h​o​s​t​ ​n​a​m​e​ ​o​r​ ​a​d​d​r​e​s​s​,​ ​w​i​t​h​ ​n​o​ ​s​p​a​c​e​s​.
+	 */
+	desktopInvalidHost: string
+	/**
+	 * T​h​e​ ​p​o​r​t​ ​h​a​s​ ​t​o​ ​b​e​ ​b​e​t​w​e​e​n​ ​1​ ​a​n​d​ ​6​5​5​3​5​.
+	 */
+	desktopInvalidPort: string
+	/**
+	 * T​h​e​ ​u​s​e​r​ ​n​a​m​e​ ​m​a​y​ ​n​o​t​ ​h​o​l​d​ ​a​ ​s​p​a​c​e​ ​o​r​ ​a​ ​l​i​n​e​ ​b​r​e​a​k​.
+	 */
+	desktopInvalidUsername: string
+	/**
+	 * T​h​e​ ​d​o​m​a​i​n​ ​m​a​y​ ​n​o​t​ ​h​o​l​d​ ​a​ ​s​p​a​c​e​ ​o​r​ ​a​ ​l​i​n​e​ ​b​r​e​a​k​.
+	 */
+	desktopInvalidDomain: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -3256,6 +3404,150 @@ export type TranslationFunctions = {
 	 * That is the account the agent itself runs as, so it is not removed here.
 	 */
 	userAgentAccount: () => LocalizedString
+	/**
+	 * Desktops
+	 */
+	desktop: () => LocalizedString
+	/**
+	 * {count} saved routes
+	 */
+	desktopSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No desktops saved on this agent yet.
+	 */
+	desktopEmpty: () => LocalizedString
+	/**
+	 * New desktop
+	 */
+	desktopAdd: () => LocalizedString
+	/**
+	 * Edit desktop
+	 */
+	desktopEdit: () => LocalizedString
+	/**
+	 * Delete desktop
+	 */
+	desktopDelete: () => LocalizedString
+	/**
+	 * Delete {name}?
+	 */
+	desktopDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * A route is an address this agent can reach. The session runs in this browser and its bytes travel through the agent, so a desktop behind it is reachable without publishing it.
+	 */
+	desktopRouteNote: () => LocalizedString
+	/**
+	 * Name
+	 */
+	desktopName: () => LocalizedString
+	/**
+	 * Protocol
+	 */
+	desktopProtocol: () => LocalizedString
+	/**
+	 * Host
+	 */
+	desktopHost: () => LocalizedString
+	/**
+	 * An address this agent can reach — 127.0.0.1 is the machine it runs on.
+	 */
+	desktopHostHint: () => LocalizedString
+	/**
+	 * Port
+	 */
+	desktopPort: () => LocalizedString
+	/**
+	 * Username
+	 */
+	desktopUsername: () => LocalizedString
+	/**
+	 * Domain
+	 */
+	desktopDomain: () => LocalizedString
+	/**
+	 * View only
+	 */
+	desktopViewOnly: () => LocalizedString
+	/**
+	 * Share with the sessions already on it
+	 */
+	desktopShared: () => LocalizedString
+	/**
+	 * Open session
+	 */
+	desktopConnect: () => LocalizedString
+	/**
+	 * Try again
+	 */
+	desktopReconnect: () => LocalizedString
+	/**
+	 * End session
+	 */
+	desktopDisconnect: () => LocalizedString
+	/**
+	 * Connecting…
+	 */
+	desktopConnecting: () => LocalizedString
+	/**
+	 * Password
+	 */
+	desktopPassword: () => LocalizedString
+	/**
+	 * Sent to the desktop from this browser, through the agent. The agent stores no password for a route.
+	 */
+	desktopPasswordHint: () => LocalizedString
+	/**
+	 * Leave it empty if the desktop has no password.
+	 */
+	desktopPasswordNone: () => LocalizedString
+	/**
+	 * The desktop asked for a password and none was given. Open the session again with one.
+	 */
+	desktopPasswordRequired: () => LocalizedString
+	/**
+	 * The connection ended.
+	 */
+	desktopUnreachable: () => LocalizedString
+	/**
+	 * This agent does not relay connections, so a session cannot be opened from here. The routes can still be edited.
+	 */
+	desktopNoStream: () => LocalizedString
+	/**
+	 * RDP cannot be opened from this panel yet. The route is saved, and the app can open it.
+	 */
+	desktopRdpUnsupported: () => LocalizedString
+	/**
+	 * Saved {name}.
+	 */
+	desktopDoneSaved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Deleted {name}.
+	 */
+	desktopDoneDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * A name is required, has to be unique, and may not hold a line break.
+	 */
+	desktopInvalidName: () => LocalizedString
+	/**
+	 * Two routes cannot answer to the same name.
+	 */
+	desktopDuplicateName: () => LocalizedString
+	/**
+	 * The address has to be one host name or address, with no spaces.
+	 */
+	desktopInvalidHost: () => LocalizedString
+	/**
+	 * The port has to be between 1 and 65535.
+	 */
+	desktopInvalidPort: () => LocalizedString
+	/**
+	 * The user name may not hold a space or a line break.
+	 */
+	desktopInvalidUsername: () => LocalizedString
+	/**
+	 * The domain may not hold a space or a line break.
+	 */
+	desktopInvalidDomain: () => LocalizedString
 	/**
 	 * Close
 	 */

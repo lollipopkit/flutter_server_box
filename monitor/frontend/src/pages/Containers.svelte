@@ -9,7 +9,7 @@
     ScrollText,
     Square,
     Trash2,
-    type Icon as LucideIcon,
+    type LucideIcon,
   } from '@lucide/svelte'
   import FeatureTabs from '../components/FeatureTabs.svelte'
   import PageHeader from '../components/PageHeader.svelte'
@@ -151,7 +151,7 @@
   /// command and the app's `docker exec -it` comes with it.
   const BUTTONS: Record<
     ContainerActionKind,
-    { label: () => string; icon: typeof LucideIcon } | null
+    { label: () => string; icon: LucideIcon } | null
   > = {
     start: { label: () => $LL.containerStart(), icon: Play },
     stop: { label: () => $LL.containerStop(), icon: Square },

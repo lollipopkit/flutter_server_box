@@ -1,6 +1,7 @@
 pub mod containers;
 pub mod cron;
 pub mod custom_cmds;
+pub mod desktop;
 pub mod exec;
 pub mod fs;
 pub mod power;

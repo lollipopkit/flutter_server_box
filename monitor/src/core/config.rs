@@ -19,6 +19,12 @@ pub struct Config {
     pub jwt_secret: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<Vec<PushConfig>>,
+    /// The desktops this agent can reach, as routes the panel connects
+    /// through. Absent in every config written before the feature existed,
+    /// hence `Option`; see [`DesktopConfig`] for why nothing is stored here
+    /// that may not be read back.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub desktop: Option<DesktopConfig>,
     /// WebSocket access to the local sshd — off unless present and enabled.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
@@ -307,6 +313,89 @@ pub struct PushConfig {
     pub push_type: String,
     #[serde(flatten)]
     pub config: toml::Table,
+}
+
+/// Desktops this agent can reach, as saved routes rather than live sessions.
+///
+/// A route is a destination the agent's own account can dial — which is the
+/// whole point of the relay it is used through, since the browser can reach the
+/// agent and often nothing behind it. The address is therefore interpreted
+/// here, so a route may name `127.0.0.1` or a private address without that
+/// desktop being reachable from the panel's network.
+///
+/// **No credential is stored here, unlike [`PushConfig`].** A desktop
+/// protocol's password is sent by the client to the desktop, and over the relay
+/// the client *is* the browser: a value kept here would have to be handed back
+/// out through the API before anything could use it, which is exactly what the
+/// write-only convention exists to prevent. So the operator types it once per
+/// session, and `config.toml` holds only what may be read by anyone who may
+/// list the routes.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct DesktopConfig {
+    /// Stored in the order given: the listing is what the panel draws, and the
+    /// order is the operator's.
+    #[serde(default)]
+    pub targets: Vec<DesktopTarget>,
+}
+
+/// One saved route to a desktop.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DesktopTarget {
+    /// Names the route and is its identity in the panel — unique across the
+    /// set, which is why a route is edited by name rather than by position.
+    pub name: String,
+    pub protocol: DesktopProtocol,
+    pub host: String,
+    pub port: u16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
+    /// The RDP domain, which Windows authentication may need and VNC has no
+    /// equivalent of. Kept for both rather than branched on: a route that
+    /// becomes an RDP one should not silently lose it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub domain: Option<String>,
+    /// Whether the session is taken view-only. A protocol feature, not this
+    /// agent's — it is passed through to the client that runs the session.
+    #[serde(default)]
+    pub view_only: bool,
+    /// Whether the desktop may be shared with the sessions already on it.
+    #[serde(default = "default_shared")]
+    pub shared: bool,
+}
+
+fn default_shared() -> bool {
+    true
+}
+
+/// Which protocol a route speaks.
+///
+/// The two are not interchangeable and the relay does not translate between
+/// them: it is a byte stream, and the client that runs the session is chosen by
+/// this. Serialized by name, never by index, so a case added here cannot change
+/// what a stored `config.toml` means.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum DesktopProtocol {
+    Vnc,
+    Rdp,
+}
+
+impl DesktopProtocol {
+    /// The port a route with this protocol is given when none is named. Both
+    /// are the IANA-assigned ones, and both are what the app offers.
+    pub fn default_port(self) -> u16 {
+        match self {
+            Self::Vnc => 5900,
+            Self::Rdp => 3389,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Vnc => "vnc",
+            Self::Rdp => "rdp",
+        }
+    }
 }
 
 // Go-compatible structures
@@ -648,6 +737,12 @@ impl Config {
         self.push.clone().unwrap_or_default()
     }
 
+    /// The saved desktop routes, empty when the section is absent — which is
+    /// what every config written before the feature says.
+    pub fn get_desktop(&self) -> DesktopConfig {
+        self.desktop.clone().unwrap_or_default()
+    }
+
     /// The raw section as written (or its all-off defaults when absent).
     /// Call `.resolve(..)` on it to fill in the memory-derived capacities.
     pub fn get_remote_access(&self) -> RemoteAccessConfig {
@@ -943,6 +1038,11 @@ impl Default for Config {
                 },
             ]),
             legacy: LegacyGoConfig::default(),
+            // Written out as an empty section, like the push channels above: a
+            // generated config.toml should show what it is possible to
+            // configure, and an absent table would read as "not a thing this
+            // agent does".
+            desktop: Some(DesktopConfig::default()),
         }
     }
 }

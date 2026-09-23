@@ -281,6 +281,38 @@ the panel password can't switch it on); shared admission checks live in
     for a different one.
   - `tests/user_api.rs`; `crates/sbm_parser/tests/user_compat.rs` is the port's
     own assertion against the cases the Dart suite held.
+- **`GET/PUT /api/v1/desktop`** — the remote desktops saved on this agent: a
+  name, a protocol, an address the *agent* can reach, and the two options a
+  session is opened with. `[desktop]` in `config.toml`, edited through
+  `config_file`'s read-modify-write under `AppState.config_write`, like
+  `/settings` and `/push`.
+  - **The address is why this is stored here and not in the browser.** A
+    desktop is usually reachable from the machine the agent runs on and from
+    nowhere the panel is, so the agent is the client's way in — which is also
+    why the panel's own page has no way to name an address of its own.
+  - **No credential is in one.** The password a desktop asks for is typed in
+    the browser that runs the session and travels to the desktop through the
+    relay, so there is nothing here to withhold — which is the one place this
+    differs from `/push`, whose credentials are write-only. The listing is
+    therefore readable by any panel login, and `remote_access.desktop` reports
+    that this endpoint is *served*; opening a session is `remote_access.stream`
+    (the `/api/v1/stream/ws` relay) and is checked again at the socket.
+  - A `PUT` replaces the whole set, because the order is part of what is stored
+    and there is no smaller expression for a move. The protocols and their
+    default ports come *from the agent* in the response, so a protocol a later
+    build adds reaches the panel without a change of its own.
+  - **A refusal the caller could have avoided is made before the file is
+    written**, and answered 400 with a stable code rather than a sentence:
+    `invalidName`/`duplicateName`/`invalidHost`/`invalidPort`/`invalidUsername`/
+    `invalidDomain`, phrased by the panel in the viewer's language
+    (`frontend/src/lib/desktopRefusal.ts`). A host that is merely down is not a
+    refusal — it is worth keeping, and its reachability is answered when a
+    session dials it.
+  - The audit row names the routes and **never the addresses** (`"office (vnc),
+    lab (vnc)"`), because the access log is not a place to keep a map of
+    somebody's network. `tests/desktop_api.rs` asserts that, the round trip, the
+    nine refusals, and that a route list is editable with `full_access` off
+    while the relay stays shut.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",

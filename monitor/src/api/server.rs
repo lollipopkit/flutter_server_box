@@ -326,6 +326,14 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::users::act)),
             )
             .service(
+                // A read with no body and a whole set of routes, which is small
+                // either way — the default 32 KiB applies to both, as it does
+                // to the crontab's own replace.
+                web::resource("/desktop")
+                    .route(web::get().to(crate::api::desktop::list))
+                    .route(web::put().to(crate::api::desktop::replace)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -877,6 +885,17 @@ struct RemoteAccessView {
     /// an account is `full_access`, and the response says which of the two this
     /// caller has.
     users: bool,
+    /// Whether `/api/v1/desktop` answers this agent at all.
+    ///
+    /// Its own field for [`Self::stream`]'s reason: an agent older than the
+    /// endpoint answers `full_access` and would 404 the request.
+    ///
+    /// `true` for [`Self::cron`]'s reason, and it is the field a client is most
+    /// likely to misread: it says this agent *has saved routes*, not that a
+    /// session may be opened. Opening one is [`Self::stream`], checked again
+    /// when the socket opens — a route list is a list, and what a route is
+    /// worth is decided by the relay.
+    desktop: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -921,6 +940,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             process: true,
             services: true,
             users: true,
+            desktop: true,
         },
     }))
 }
