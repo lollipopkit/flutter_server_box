@@ -34,6 +34,13 @@ class MonitorTunnelChannel implements SshTunnelChannel {
 
   bool _finished = false;
 
+  /// The socket's close, started once and awaited by [close].
+  ///
+  /// Held rather than called twice: `_finish` reaches the close from paths that
+  /// cannot await it, and [close] has to be able to wait for that same close
+  /// rather than start a second one.
+  Future<void>? _closing;
+
   /// Dials [host]:[port] from the agent and hands back the channel.
   ///
   /// The address travels on the socket rather than in the URL: it is the
@@ -80,14 +87,28 @@ class MonitorTunnelChannel implements SshTunnelChannel {
 
   @override
   Future<void> close() async {
+    _finish();
+    final closing = _closing;
+    if (closing != null) await closing;
+  }
+
+  /// Ends the connection: the stream ends, a waiting handshake is refused, and
+  /// the socket is closed.
+  ///
+  /// One place rather than two, because every path here means the same thing —
+  /// the agent said `error` or `exit`, the socket errored or closed, or a write
+  /// failed — and a path that only stopped feeding the stream left the socket
+  /// open, with the agent still holding a connection nothing was reading.
+  void _finish() {
     if (_finished) return;
     _finished = true;
-    await _socket.close().catchError((_) {});
-    // Not awaited: a single-subscription controller's `close()` future only
-    // completes once the stream has been listened to and drained, and a
-    // connection that was opened and abandoned has no listener — which hung
-    // every teardown waiting on it. Readers still see the stream end.
-    unawaited(_data.close());
+    // Not awaited: this runs from `onDone` and from a failing write, neither of
+    // which has anywhere to await it. A single-subscription controller's
+    // `close()` future only completes once the stream has been listened to and
+    // drained, and a connection that was opened and abandoned has no listener —
+    // which hung every teardown waiting on it. Readers still see the stream end.
+    if (!_data.isClosed) unawaited(_data.close());
+    _closing ??= _socket.close().catchError((_) {});
     if (!_ready.isCompleted) {
       // A close before `ready` is the failure this channel reports; a caller
       // waiting on the handshake must not be left waiting for a socket that
@@ -149,20 +170,6 @@ class MonitorTunnelChannel implements SshTunnelChannel {
         // ignored rather than treated as a failure: the bytes are the
         // connection, and this side has nothing to negotiate.
         break;
-    }
-  }
-
-  void _finish() {
-    if (_finished) return;
-    _finished = true;
-    if (!_data.isClosed) _data.close();
-    if (!_ready.isCompleted) {
-      _ready.completeError(
-        const MonitorHttpErr(
-          type: MonitorHttpErrType.net,
-          message: 'The monitor agent closed the connection',
-        ),
-      );
     }
   }
 

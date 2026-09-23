@@ -278,8 +278,23 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
   /// button exists for. It carries [_id], so saving afterwards updates the
   /// record the session was opened from.
   Future<void> _connect() async {
-    final profile = _draft();
+    // The typed password is validated even when it is not being saved: it is
+    // what this connection authenticates with, and a VNC one that is too long
+    // or not ASCII would otherwise be sent and refused by the server rather
+    // than caught on the field that has to change.
+    final profile = _draft(connecting: true);
     if (profile == null || !mounted) return;
+
+    // A session for this id may already be open — carrying the host and
+    // password as they were when it started. This button is how corrected
+    // fields are tried, so the old connection goes rather than being focused:
+    // `open` on an existing id only selects it.
+    final sessions = ref.read(remoteDesktopSessionsProvider.notifier);
+    if (ref.read(remoteDesktopSessionsProvider).sessions.containsKey(profile.id)) {
+      await sessions.close(profile.id);
+      if (!mounted) return;
+    }
+
     await openRemoteDesktop(
       context,
       ref,
@@ -293,15 +308,21 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
 
 extension _Utils on _RemoteDesktopProfileEditPageState {
   /// What the fields say, or null after saying why they say nothing usable.
-  RemoteDesktopProfile? _draft() {
+  ///
+  /// [connecting] is for the corner button: it validates the password the typed
+  /// field holds rather than only a saved one, because that is the password the
+  /// session about to open will present. Saving excludes it when the save
+  /// switch is off, which is the whole point of that switch.
+  RemoteDesktopProfile? _draft({bool connecting = false}) {
     final port = int.tryParse(_port.text.trim());
+    final withPassword = _savePassword || connecting;
     final error = validateRemoteDesktopProfileInput(
       name: _name.text,
       host: _host.text,
       port: port,
       protocol: _protocol,
       username: _username.text,
-      password: _savePassword ? _password.text : '',
+      password: withPassword ? _password.text : '',
     );
     if (error != null) {
       Toast.show(error);

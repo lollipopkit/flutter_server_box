@@ -341,7 +341,18 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final trusted = entry.profile.copyWith(
       trustedCertSha256: prompt.sha256,
     );
-    Stores.remoteDesktop.put(trusted);
+    // What is written is the stored record, not the draft the session may have
+    // been opened from: the editor's corner button connects with unsaved edits,
+    // and persisting those here would save a form nobody pressed Save on — or
+    // create a record for a profile that does not exist yet. Trusting a
+    // certificate is a decision about a connection, and it must not carry a
+    // form's contents into the database with it.
+    final stored = Stores.remoteDesktop.fetchOneRaw(id);
+    if (stored != null) {
+      Stores.remoteDesktop.put(stored.copyWith(trustedCertSha256: prompt.sha256));
+    }
+    // In memory either way, including for a draft: the session about to
+    // reconnect is this one, and it has to remember what it just accepted.
     entry.profile = trusted;
     _replaceView(
       id,
@@ -558,19 +569,64 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
     final spi = ref.read(serversProvider).servers[entry.profile.serverId];
     if (spi == null) return null;
 
-    final primary = ServerConnectCredential.fromSpi(spi);
-    try {
-      return await _tunnelOver(entry, primary);
-    } catch (error, stackTrace) {
-      final fallback = ServerConnectCredential.fallbackOf(spi);
-      if (fallback == null) rethrow;
-      Loggers.app.info(
-        'Remote desktop over ${spi.transport.name} for ${spi.name} failed, '
-        'falling back to ${spi.fallbackTransport?.name}',
-        error,
-        stackTrace,
-      );
-      return _tunnelOver(entry, fallback);
+    final primary = _relayCapable(spi, ServerConnectCredential.fromSpi(spi));
+    Object? primaryError;
+    StackTrace? primaryTrace;
+    if (primary != null) {
+      try {
+        return await _tunnelOver(entry, primary);
+      } catch (error, stackTrace) {
+        primaryError = error;
+        primaryTrace = stackTrace;
+        Loggers.app.info(
+          'Remote desktop over ${spi.transport.name} for ${spi.name} failed',
+          error,
+          stackTrace,
+        );
+      }
+    }
+
+    // Reached for an agent that will not relay as well as for a leading
+    // transport that failed: both mean the same thing to this session, which is
+    // "not this way".
+    final fallback = ServerConnectCredential.fallbackOf(spi);
+    final other = fallback == null ? null : _relayCapable(spi, fallback);
+    if (other != null) return _tunnelOver(entry, other);
+
+    // Nothing left to try. What actually failed is the better answer when
+    // something did; only a server whose transports were both unusable before
+    // either was attempted gets the sentence about neither carrying one.
+    if (primaryError != null) {
+      Error.throwWithStackTrace(primaryError, primaryTrace!);
+    }
+    throw StateError(
+      'Neither transport of ${spi.name} can carry a remote desktop',
+    );
+  }
+
+  /// [credential] when it can carry a TCP connection, or null when it cannot.
+  ///
+  /// A monitor credential is only a way in when the agent said it will relay:
+  /// an agent older than the endpoint reports `full_access` and would refuse
+  /// the upgrade, and an agent with the grant switched off answers 403. Binding
+  /// a tunnel over one of those fails at the dial, after a loopback listener
+  /// has been opened — so the question is asked here, where the answer can
+  /// still choose the other transport.
+  ///
+  /// A grant that has not been read yet is not a "no". Nothing has asked this
+  /// agent, and treating "not looked" as "cannot" would hide a server that can,
+  /// which is the same mistake the server list refuses to make.
+  ServerConnectCredential? _relayCapable(
+    Spi spi,
+    ServerConnectCredential credential,
+  ) {
+    switch (credential) {
+      case ServerConnectCredentialSsh():
+        return credential;
+      case ServerConnectCredentialMonitorHttp():
+        final granted = ref.read(serverProvider(spi.id)).remoteAccess;
+        if (granted != null && !granted.stream) return null;
+        return credential;
     }
   }
 
@@ -593,17 +649,30 @@ class RemoteDesktopSessions extends _$RemoteDesktopSessions {
         // accepted socket is bridged to the agent's relay — the agent dials the
         // target from its own machine, which is what makes `localhost` on a
         // profile mean that machine.
-        return SshLocalTunnel.bindWithDialer(
-          bindHost: InternetAddress.loopbackIPv4.address,
-          dialer: () => MonitorTunnelChannel.dial(
-            client: MonitorHttpClient(monitor),
-            remoteHost: entry.profile.host,
-            remotePort: entry.profile.port,
-          ),
-          // No SSH connection to outlive: the relay socket is opened per
-          // attempt, and `MonitorTunnelChannel.close` is what ends it.
-          sshDone: Completer<void>().future,
-        );
+        //
+        // One client for the tunnel's life rather than one per dial: it holds
+        // the login the relay socket is authorised with, and a fresh one per
+        // attempt would log in again each time.
+        final client = MonitorHttpClient(monitor);
+        final SshLocalTunnel tunnel;
+        try {
+          tunnel = await SshLocalTunnel.bindWithDialer(
+            bindHost: InternetAddress.loopbackIPv4.address,
+            dialer: () => MonitorTunnelChannel.dial(
+              client: client,
+              remoteHost: entry.profile.host,
+              remotePort: entry.profile.port,
+            ),
+            // No SSH connection to outlive: the relay socket is opened per
+            // attempt, and `MonitorTunnelChannel.close` is what ends it.
+            sshDone: Completer<void>().future,
+          );
+        } catch (_) {
+          client.dispose();
+          rethrow;
+        }
+        unawaited(tunnel.done.whenComplete(client.dispose));
+        return tunnel;
     }
   }
 

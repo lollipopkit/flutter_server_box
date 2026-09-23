@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
+import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/remote_desktop.dart';
@@ -180,5 +181,45 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('connecting refuses a password that could not be sent', (
+    tester,
+  ) async {
+    // The corner button authenticates with what is typed even when the save
+    // switch is off, so it has to validate that password too. A VNC password
+    // over eight bytes is refused by the server, which would present it as a
+    // failed session rather than as the field that has to change.
+    Stores.remoteDesktop.put(
+      const RemoteDesktopProfile(
+        id: 'vnc-1',
+        serverId: sid,
+        name: 'Screen',
+        protocol: RemoteDesktopProtocol.vnc,
+        host: '127.0.0.1',
+        port: 5900,
+      ),
+    );
+    await pumpPage(tester, width: 1200);
+    await tester.tap(find.text('Screen'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    await tester.enterText(
+      find.byType(TextField).last,
+      'far-too-long-for-classic-vnc',
+    );
+    await tester.tap(find.byTooltip('Connect'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // Still on the form, and no session was started for it — which is what the
+    // refusal is for: the alternative is a session that opens and then fails at
+    // authentication.
+    expect(find.byType(RemoteDesktopProfileEditPage), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(RemoteDesktopProfilesPage)),
+    );
+    expect(container.read(remoteDesktopSessionsProvider).sessions, isEmpty);
   });
 }

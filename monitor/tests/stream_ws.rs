@@ -61,7 +61,7 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
     .await
 }
 
-/// A listener that uppercases everything it receives and echoes it back.
+/// A listener that echoes everything it receives.
 ///
 /// Enough of a peer to prove the bytes went through in both directions, which
 /// is the whole of what this endpoint does — it understands neither RDP nor
@@ -244,4 +244,44 @@ async fn input_before_open_is_refused_rather_than_buffered() {
         .unwrap();
 
     assert_eq!(next_control(&io, &codec).await["code"], "bad_request");
+}
+
+#[ntex::test]
+async fn revoking_full_access_ends_a_running_relay() {
+    // The flag `full_access_allowed` reads is only consulted when something is
+    // started, so a connection already carrying bytes would otherwise outlive
+    // the grant the panel just took away — and the app would go on showing a
+    // desktop it is no longer allowed to reach.
+    let target = echo_server().await;
+    let state = app_state(true).await;
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state.clone()).await;
+    let (io, codec) = open_stream(&srv, &ticket).await;
+
+    assert_eq!(request(&io, &codec, &target).await["type"], "ready");
+
+    // What `DELETE /api/v1/remote-access/full-access` does.
+    state
+        .full_access_off
+        .store(true, std::sync::atomic::Ordering::Release);
+    let _ = state.full_access_revoked.send(());
+
+    let reply = next_control(&io, &codec).await;
+    assert_eq!(reply["type"], "error");
+    assert_eq!(reply["code"], "full_access_disabled");
+}
+
+#[ntex::test]
+async fn a_relay_opened_before_revocation_still_starts_after_a_reconnect() {
+    // The other half of the rule: what was refused has to stay refused, so a
+    // client that reports the close and tries again is turned away at the
+    // upgrade rather than getting a second connection.
+    let state = app_state(true).await;
+    state
+        .full_access_off
+        .store(true, std::sync::atomic::Ordering::Release);
+    let ticket = state.tickets.issue(Purpose::Stream, "admin").unwrap();
+    let srv = test_server(state).await;
+
+    assert!(stream_connection(&srv, &ticket).await.is_err());
 }

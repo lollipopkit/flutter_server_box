@@ -26,7 +26,7 @@ use sqlx::SqlitePool;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock, Semaphore};
+use tokio::sync::{Mutex, RwLock, Semaphore, broadcast};
 use tracing::info;
 
 const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
@@ -91,6 +91,15 @@ pub struct AppState {
     /// applies to the running process rather than waiting for a restart.
     /// One-way: nothing here can switch it back on.
     pub full_access_off: Arc<AtomicBool>,
+    /// Fired when the panel turns that access off, so work already running
+    /// under the grant ends with it.
+    ///
+    /// The flag above answers "may this start now", which every handler asks
+    /// afresh; this answers "may this carry on", which only a long-lived
+    /// connection has to be told. The terminal uses a session store for the
+    /// same purpose (`SessionStore::close_local`); a relay has no session to
+    /// look up, so it holds a subscription instead.
+    pub full_access_revoked: broadcast::Sender<()>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -122,6 +131,7 @@ impl AppState {
             sessions,
             login_throttle: Arc::new(LoginThrottle::new()),
             full_access_off: Arc::new(AtomicBool::new(false)),
+            full_access_revoked: broadcast::channel(1).0,
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -1053,6 +1063,9 @@ async fn disable_full_access(
     }
 
     app_state.full_access_off.store(true, Ordering::Release);
+    // Told as well as flagged: the flag stops the next request, this ends the
+    // long-lived ones already carrying bytes.
+    let _ = app_state.full_access_revoked.send(());
     let closed = app_state.sessions.close_local();
     tracing::info!(
         "Access without SSH disabled from the panel by {}; closed {closed} local terminal sessions",

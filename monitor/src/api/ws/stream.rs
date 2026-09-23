@@ -41,7 +41,7 @@ use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::sync::mpsc;
+use tokio::sync::{broadcast, mpsc};
 
 use super::audit::{self, Action, Event, Kind, Outcome};
 use super::ticket::Purpose;
@@ -318,7 +318,7 @@ async fn open(
 
     // Back from it. A send failure means the socket is gone, which the
     // disconnect handler above has already read as the end.
-    let sink = sink.clone();
+    let reading_sink = sink.clone();
     let reading = async move {
         let mut buffer = vec![0u8; READ_BUFFER];
         loop {
@@ -326,27 +326,68 @@ async fn open(
                 Ok(0) => break,
                 Ok(read) => {
                     let frame = Message::Binary(Bytes::copy_from_slice(&buffer[..read]));
-                    if sink.send(frame).await.is_err() {
+                    if reading_sink.send(frame).await.is_err() {
                         break;
                     }
                 }
                 Err(_) => break,
             }
         }
-        let _ = sink.send(ServerMsg::Exit.frame()).await;
-        let _ = sink.send(Message::Close(Some(CloseCode::Normal.into()))).await;
+        let _ = reading_sink.send(ServerMsg::Exit.frame()).await;
+        let _ = reading_sink
+            .send(Message::Close(Some(CloseCode::Normal.into())))
+            .await;
     };
+
+    // The grant this connection was opened under, which the panel can take
+    // away from a running process. Without this the socket would keep carrying
+    // bytes after `full_access` was switched off — the flag is only consulted
+    // when something is *started*.
+    let revoked = ctx.state.full_access_revoked.subscribe();
+    let revocation_sink = sink.clone();
 
     spawn(async move {
         tokio::select! {
             _ = writing => {}
             _ = reading => {}
+            _ = awaiting_revocation(revoked) => {
+                // Said before closing, so the app reports why rather than
+                // reconnecting into a refusal it cannot see.
+                let _ = revocation_sink
+                    .send(
+                        ServerMsg::Error {
+                            code: "full_access_disabled",
+                            message: "Full access has been disabled",
+                        }
+                        .frame(),
+                    )
+                    .await;
+                let _ = revocation_sink
+                    .send(Message::Close(Some(CloseCode::Normal.into())))
+                    .await;
+            }
         }
     });
     // The caller waits for this before treating the connection as usable: a
     // relay that answers `error` must not be raced by bytes the client already
     // wrote into it.
     Some(ServerMsg::Ready.frame())
+}
+
+/// Resolves when the panel turns full access off, or never.
+///
+/// A `broadcast` receiver answers `Err` once the sender is gone, and a `select!`
+/// arm backed by a future that completes immediately would spin. Neither can
+/// happen while the agent is running — the sender lives in `AppState` — but a
+/// closed channel is treated as "no signal" rather than as a revocation, since
+/// guessing here would close every relay the moment a state was dropped.
+async fn awaiting_revocation(mut revoked: broadcast::Receiver<()>) {
+    loop {
+        match revoked.recv().await {
+            Ok(()) | Err(broadcast::error::RecvError::Lagged(_)) => return,
+            Err(broadcast::error::RecvError::Closed) => std::future::pending().await,
+        }
+    }
 }
 
 async fn audit_connect(ctx: &Rc<ConnCtx>, host: &str, port: u16, outcome: Outcome) {
@@ -356,7 +397,7 @@ async fn audit_connect(ctx: &Rc<ConnCtx>, host: &str, port: u16, outcome: Outcom
         // The address is the whole of what this endpoint was asked for, and it
         // is the operator's own network being dialled — worth recording, and
         // nothing a credential could be read out of.
-        .detail(&format!("{host}:{port}"))
+        .detail(format!("{host}:{port}"))
         .record(&ctx.state.db)
         .await;
 }

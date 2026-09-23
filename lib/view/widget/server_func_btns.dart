@@ -564,11 +564,14 @@ void runServerFunc(
         ScheduledTasksPage.route.go(context, args);
         break;
       case ServerFuncBtn.remoteDesktop:
-        // A monitor server has nothing to connect here: the agent dials the
-        // target when the session opens, and the profile page works without it.
-        // Asking for an SSH client would refuse the one transport this button
-        // was just made available on — see `_ensureSshClient`.
-        if (spi.sshOn != null && !await _ensureSshClient(context, spi.id, ref)) {
+        // A monitor-backed server has nothing to connect here: the agent dials
+        // the target when the session opens, and the profile page works without
+        // it. Asking for an SSH client whenever SSH happens to be configured
+        // would refuse the transport this button was just made available on —
+        // a server carrying both can fall through to the agent, and only
+        // `_openTunnel` knows which one the session will end up using.
+        final hasOtherWayIn = spi.sshOn == null || spi.monitorOn != null;
+        if (!hasOtherWayIn && !await _ensureSshClient(context, spi.id, ref)) {
           return;
         }
         if (!context.mounted) return;
