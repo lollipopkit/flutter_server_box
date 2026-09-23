@@ -279,6 +279,17 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::cron::edit)),
             )
             .service(
+                // A read with no body, and one action — a verb, a container id
+                // and a flag — so the default 32 KiB applies to both. The part
+                // is a query parameter rather than a path segment: the three
+                // are one table of commands with one reason vocabulary, and a
+                // client that asked for a part this build does not have gets
+                // the same refusal as any other malformed request.
+                web::resource("/containers")
+                    .route(web::get().to(crate::api::containers::list))
+                    .route(web::post().to(crate::api::containers::act)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -788,14 +799,27 @@ struct RemoteAccessView {
     /// by the same switch — anyone who can open a shell can run `shutdown` in
     /// it — but a client asks about the endpoint it is about to call.
     power: bool,
-    /// Whether `/api/v1/cron` will change the agent account's crontab.
+    /// Whether `/api/v1/cron` answers this agent at all.
     ///
     /// Its own field for [`Self::stream`]'s reason: an agent older than the
-    /// endpoint answers `full_access` and would 404 the request. A write is
-    /// granted by the same switch — scheduling a job is arranging for code to
-    /// run as that user, which is what the shell already means — while reading
-    /// the schedule needs only the panel login, so `cron` reports the write.
+    /// endpoint answers `full_access` and would 404 the request.
+    ///
+    /// `true` rather than the write grant, which is what this used to report.
+    /// Reading the schedule needs only the panel login — the agent runs
+    /// `crontab -l` as its own user, reaching nothing it could not already
+    /// reach — and the client has implemented the read-only page for that case
+    /// all along, unreachable because the field hid it. What the caller may
+    /// *change* is `editable` in the response, and it is re-checked on the
+    /// write, so a UI hint is still not a boundary. `power` keeps reporting the
+    /// grant because it has nothing to read.
     cron: bool,
+    /// Whether `/api/v1/containers` answers this agent at all.
+    ///
+    /// Its own field for [`Self::stream`]'s reason, and `true` for
+    /// [`Self::cron`]'s: listing containers runs the runtime as the agent's own
+    /// user, changing one is `full_access`, and the response says which of the
+    /// two this caller has.
+    containers: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -832,7 +856,11 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             files: app_state.remote_access.fs.available(secure),
             stream: app_state.full_access_allowed(secure),
             power: app_state.full_access_allowed(secure),
-            cron: app_state.full_access_allowed(secure),
+            // Served, not grantable — the endpoint is in the route table for
+            // any build that answers this, and the read needs only the panel
+            // login. See `RemoteAccessView::cron`.
+            cron: true,
+            containers: true,
         },
     }))
 }

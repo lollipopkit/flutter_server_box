@@ -630,7 +630,9 @@ pub struct ContainerImage {
     /// reading that as zero is how a prune dialog comes to offer an image that
     /// is in use. See [`count_unused_tagged_images`].
     pub containers: Option<i64>,
-    /// Docker's relative text (`2 weeks ago`).
+    /// The runtime's own creation text, passed through unparsed: Docker's
+    /// `CreatedAt` is an absolute timestamp on current versions and relative
+    /// text (`2 weeks ago`) on older ones, and Podman prints the relative form.
     pub created_at: Option<String>,
     /// Podman's creation time in Unix seconds.
     pub created: Option<i64>,

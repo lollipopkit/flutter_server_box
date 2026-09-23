@@ -283,8 +283,13 @@ async fn a_refused_write_is_audited() {
 /// The grant is a UI hint to the client, so the answer the client reads has to
 /// name the endpoint it is about to call — an agent older than `/cron` reports
 /// `full_access` and would answer 404.
+///
+/// It reports the endpoint being *served*, not the write grant. Reading the
+/// schedule needs only the panel login, and the panel has implemented the
+/// read-only page for that case all along — reporting the grant hid a
+/// reachable page behind a switch that has nothing to do with reaching it.
 #[ntex::test]
-async fn capabilities_report_cron_over_the_same_grant_as_the_shell() {
+async fn capabilities_report_cron_being_served() {
     let srv = test_server(app_state(true).await).await;
     let resp = srv
         .get("/api/v1/capabilities")
@@ -303,10 +308,12 @@ async fn capabilities_report_cron_over_the_same_grant_as_the_shell() {
     assert_eq!(body["remote_access"]["cron"], true);
 }
 
-/// And the other way round: the panel hides the entry rather than offering a
-/// button that answers 403.
+/// And the other way round: with the write grant off the tab stays, and the
+/// page it opens goes read-only off `editable` rather than failing on a save.
+/// `power` is the one that still reports the grant, because it has nothing to
+/// read.
 #[ntex::test]
-async fn capabilities_report_cron_off_when_the_grant_is_off() {
+async fn capabilities_report_cron_with_the_grant_off() {
     let srv = test_server(app_state(false).await).await;
     let resp = srv
         .get("/api/v1/capabilities")
@@ -317,5 +324,6 @@ async fn capabilities_report_cron_off_when_the_grant_is_off() {
     let body: serde_json::Value = resp.json().await.unwrap();
 
     assert_eq!(body["remote_access"]["full_access"], false);
-    assert_eq!(body["remote_access"]["cron"], false);
+    assert_eq!(body["remote_access"]["cron"], true);
+    assert_eq!(body["remote_access"]["power"], false);
 }

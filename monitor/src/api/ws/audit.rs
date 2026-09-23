@@ -51,6 +51,11 @@ pub enum Kind {
     /// `Power`'s reason: what it edits is a file the machine acts on later, and
     /// the subject is the operation and the schedule, never the command.
     Cron,
+    /// A change to a container or to the runtime's leftovers through
+    /// `api::containers`. Its own kind because the subject is an action and a
+    /// container, and because reading this endpoint is not recorded at all —
+    /// a row here is always a change, which is not true of `Exec` or `Fs`.
+    Container,
 }
 
 impl Kind {
@@ -65,6 +70,7 @@ impl Kind {
             Kind::Push => "push",
             Kind::Power => "power",
             Kind::Cron => "cron",
+            Kind::Container => "container",
         }
     }
 }

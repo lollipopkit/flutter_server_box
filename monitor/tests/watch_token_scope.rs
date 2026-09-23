@@ -213,6 +213,17 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
                 "enabled": true,
             })),
         ),
+        (Method::GET, "/api/v1/containers?part=containers", None),
+        // An id no container can have, for the reason the cron body above is an
+        // empty schedule: the panel-login half of this test reaches the
+        // handler, and every other action here would really change the runtime
+        // of whoever runs the suite. `start` on an id that does not exist is
+        // refused by the runtime itself and stops nothing.
+        (
+            Method::POST,
+            "/api/v1/containers",
+            Some(json!({ "action": "start", "id": "sbm-scope-test-nonexistent" })),
+        ),
         (Method::GET, "/api/v1/push", None),
         // Both bodies name a channel type this agent has no sender for, so the
         // panel-login half of this test stops at validation. Auth is checked
