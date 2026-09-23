@@ -290,9 +290,11 @@ void main() {
     (tester) async {
       await pumpPage(tester, width: 500, home: const RemoteDesktopTabPage());
 
-      expect(find.byType(SideBarTile), findsOneWidget);
+      // The picker's cards, not the rail a wide window puts beside a surface.
+      expect(find.byType(SideBarTile), findsNothing);
+      expect(find.byType(CardTile), findsOneWidget);
       expect(find.byTooltip(libL10n.sort), findsOneWidget);
-      await tester.tap(find.byType(SideBarTile));
+      await tester.tap(find.byType(CardTile));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 

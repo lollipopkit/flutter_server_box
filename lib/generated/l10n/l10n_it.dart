@@ -3025,4 +3025,85 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Adatta alla finestra';
+
+  @override
+  String get remoteDesktopActualSize => 'Dimensioni effettive';
+
+  @override
+  String get remoteDesktopZoom => 'Ingrandimento';
+
+  @override
+  String get remoteDesktopViewOnly => 'Solo visualizzazione';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Disattiva solo visualizzazione';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'Invia testo degli appunti';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Mostra tastiera';
+
+  @override
+  String get remoteDesktopMoreControls => 'Altri controlli';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Usa puntatore diretto';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'Usa puntatore del touchpad';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Invia Ctrl+Alt+Canc';
+
+  @override
+  String get remoteDesktopReconnect => 'Riconnetti';
+
+  @override
+  String get remoteDesktopFullScreen => 'Schermo intero';
+
+  @override
+  String get remoteDesktopCloseSession => 'Chiudi sessione';
+
+  @override
+  String get remoteDesktopConnected => 'Connesso';
+
+  @override
+  String get remoteDesktopConnecting => 'Connessione in corso';
+
+  @override
+  String get remoteDesktopReconnecting => 'Riconnessione in corso';
+
+  @override
+  String get remoteDesktopDisconnected => 'Disconnesso';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Touchpad';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Un dito muove il puntatore come un touchpad e un tocco fa clic. Tocca con due dita per il clic destro, trascina con due dita per scorrere e pizzica per lo zoom. Tocca due volte e tieni il dito appoggiato per trascinare.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Apre la tastiera su schermo. Ciò che digiti viene inviato al desktop remoto.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Smette di inviare puntatore e tasti, così puoi guardare senza fare clic per errore.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Qui trovi Ctrl+Alt+Canc, la riconnessione e lo schermo intero.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Anche il puntatore diretto, in cui un dito fa clic dove tocca.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'Gli appunti VNC supportano solo testo Latin-1.';
 }

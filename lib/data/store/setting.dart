@@ -1048,6 +1048,16 @@ class SettingStore extends SqliteStore {
   /// the button changes anything until it is pressed.
   late final globeGuided = propertyDefault('globeGuided', false);
 
+  /// Whether the remote desktop viewer's walkthrough has been shown.
+  ///
+  /// Once per install. On a touch screen the canvas is a touchpad — one
+  /// finger moves the pointer rather than clicking where it lands — and
+  /// nothing on screen says so, nor that two fingers right-click and scroll.
+  late final remoteDesktopGuided = propertyDefault(
+    'remoteDesktopGuided',
+    false,
+  );
+
   /// Removes settings for UI choices that no longer exist. Idempotent so old
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.

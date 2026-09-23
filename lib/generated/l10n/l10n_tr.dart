@@ -2984,4 +2984,86 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get authShort => 'Kimlik';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Pencereye sığdır';
+
+  @override
+  String get remoteDesktopActualSize => 'Gerçek boyut';
+
+  @override
+  String get remoteDesktopZoom => 'Yakınlaştırma';
+
+  @override
+  String get remoteDesktopViewOnly => 'Yalnızca görüntüle';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Yalnızca görüntülemeyi kapat';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'Pano metnini gönder';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Klavyeyi göster';
+
+  @override
+  String get remoteDesktopMoreControls => 'Diğer denetimler';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Doğrudan işaretçiyi kullan';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer =>
+      'Dokunmatik yüzey işaretçisini kullan';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Ctrl+Alt+Delete gönder';
+
+  @override
+  String get remoteDesktopReconnect => 'Yeniden bağlan';
+
+  @override
+  String get remoteDesktopFullScreen => 'Tam ekran';
+
+  @override
+  String get remoteDesktopCloseSession => 'Oturumu kapat';
+
+  @override
+  String get remoteDesktopConnected => 'Bağlandı';
+
+  @override
+  String get remoteDesktopConnecting => 'Bağlanıyor';
+
+  @override
+  String get remoteDesktopReconnecting => 'Yeniden bağlanıyor';
+
+  @override
+  String get remoteDesktopDisconnected => 'Bağlantı kesildi';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Dokunmatik yüzey';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Tek parmak işaretçiyi dokunmatik yüzey gibi hareket ettirir, dokunmak tıklar. Sağ tık için iki parmakla dokunun, kaydırmak için iki parmakla sürükleyin, yakınlaştırmak için sıkıştırın. Sürüklemek için iki kez dokunup parmağınızı kaldırmayın.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Ekran klavyesini açar. Yazdıklarınız uzak masaüstüne gönderilir.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'İşaretçi ve tuşların gönderilmesini durdurur; yanlışlıkla tıklamadan bakabilirsiniz.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Delete, yeniden bağlanma ve tam ekran burada.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Parmağın dokunduğu yeri tıklayan doğrudan işaretçi de burada.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'VNC panosu yalnızca Latin-1 metnini destekler.';
 }

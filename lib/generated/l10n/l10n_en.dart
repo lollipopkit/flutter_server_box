@@ -2985,4 +2985,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Fit to window';
+
+  @override
+  String get remoteDesktopActualSize => 'Actual size';
+
+  @override
+  String get remoteDesktopZoom => 'Zoom';
+
+  @override
+  String get remoteDesktopViewOnly => 'View only';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Disable view only';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'Send clipboard text';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Show keyboard';
+
+  @override
+  String get remoteDesktopMoreControls => 'More controls';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Use direct pointer';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'Use touchpad pointer';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Send Ctrl+Alt+Delete';
+
+  @override
+  String get remoteDesktopReconnect => 'Reconnect';
+
+  @override
+  String get remoteDesktopFullScreen => 'Full screen';
+
+  @override
+  String get remoteDesktopCloseSession => 'Close session';
+
+  @override
+  String get remoteDesktopConnected => 'Connected';
+
+  @override
+  String get remoteDesktopConnecting => 'Connecting';
+
+  @override
+  String get remoteDesktopReconnecting => 'Reconnecting';
+
+  @override
+  String get remoteDesktopDisconnected => 'Disconnected';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Touchpad';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'One finger moves the pointer like a touchpad, and a tap clicks. Tap with two fingers to right-click, drag with two to scroll, and pinch to zoom. Tap twice and keep the finger down to drag.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Opens the on-screen keyboard. What you type is sent to the remote desktop.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Stops sending the pointer and keys, so you can look without clicking anything by accident.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Delete, reconnecting and full screen are in here.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'So is a direct pointer, where a finger clicks what it touches.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'VNC clipboard supports Latin-1 text only.';
 }

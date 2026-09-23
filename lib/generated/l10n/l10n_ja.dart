@@ -2831,4 +2831,84 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get authShort => '認証';
+
+  @override
+  String get remoteDesktopFitToWindow => 'ウィンドウに合わせる';
+
+  @override
+  String get remoteDesktopActualSize => '実際のサイズ';
+
+  @override
+  String get remoteDesktopZoom => 'ズーム';
+
+  @override
+  String get remoteDesktopViewOnly => '表示のみ';
+
+  @override
+  String get remoteDesktopDisableViewOnly => '表示のみを無効にする';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'クリップボードのテキストを送信';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'キーボードを表示';
+
+  @override
+  String get remoteDesktopMoreControls => 'その他の操作';
+
+  @override
+  String get remoteDesktopUseDirectPointer => '直接ポインターを使う';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'タッチパッドポインターを使う';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Ctrl+Alt+Delete を送信';
+
+  @override
+  String get remoteDesktopReconnect => '再接続';
+
+  @override
+  String get remoteDesktopFullScreen => '全画面表示';
+
+  @override
+  String get remoteDesktopCloseSession => 'セッションを閉じる';
+
+  @override
+  String get remoteDesktopConnected => '接続済み';
+
+  @override
+  String get remoteDesktopConnecting => '接続中';
+
+  @override
+  String get remoteDesktopReconnecting => '再接続中';
+
+  @override
+  String get remoteDesktopDisconnected => '切断';
+
+  @override
+  String get remoteDesktopGuideTouch => 'タッチパッド';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      '1本指でタッチパッドのようにポインターを動かし、タップでクリックします。2本指タップで右クリック、2本指ドラッグでスクロール、ピンチでズームします。2回タップして指を離さずに動かすとドラッグできます。';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      '画面キーボードを開きます。入力した内容はリモートデスクトップに送信されます。';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'ポインターとキー入力の送信を止め、誤ってクリックせずに画面を確認できます。';
+
+  @override
+  String get remoteDesktopGuideMoreTip => 'Ctrl+Alt+Delete、再接続、全画面表示はここにあります。';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      '指で触れた場所をクリックするダイレクトポインターにもここで切り替えられます。';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'VNC のクリップボードは Latin-1 テキストのみ対応しています。';
 }

@@ -2988,4 +2988,85 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Sesuaikan dengan jendela';
+
+  @override
+  String get remoteDesktopActualSize => 'Ukuran sebenarnya';
+
+  @override
+  String get remoteDesktopZoom => 'Perbesar/perkecil';
+
+  @override
+  String get remoteDesktopViewOnly => 'Hanya lihat';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Nonaktifkan hanya lihat';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'Kirim teks papan klip';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Tampilkan keyboard';
+
+  @override
+  String get remoteDesktopMoreControls => 'Kontrol lainnya';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Gunakan penunjuk langsung';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'Gunakan penunjuk touchpad';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Kirim Ctrl+Alt+Delete';
+
+  @override
+  String get remoteDesktopReconnect => 'Hubungkan kembali';
+
+  @override
+  String get remoteDesktopFullScreen => 'Layar penuh';
+
+  @override
+  String get remoteDesktopCloseSession => 'Tutup sesi';
+
+  @override
+  String get remoteDesktopConnected => 'Terhubung';
+
+  @override
+  String get remoteDesktopConnecting => 'Menghubungkan';
+
+  @override
+  String get remoteDesktopReconnecting => 'Menghubungkan kembali';
+
+  @override
+  String get remoteDesktopDisconnected => 'Terputus';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Touchpad';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Satu jari menggerakkan penunjuk seperti touchpad, dan ketukan mengeklik. Ketuk dengan dua jari untuk klik kanan, seret dengan dua jari untuk menggulir, dan cubit untuk memperbesar. Ketuk dua kali dan tahan jari untuk menyeret.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Membuka keyboard layar. Yang Anda ketik dikirim ke desktop jarak jauh.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Berhenti mengirim penunjuk dan tombol, sehingga Anda bisa melihat tanpa tidak sengaja mengeklik.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Delete, sambung ulang, dan layar penuh ada di sini.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Begitu juga penunjuk langsung, di mana jari mengeklik tempat yang disentuhnya.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'Clipboard VNC hanya mendukung teks Latin-1.';
 }

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/inset.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/tag_group.dart';
@@ -163,53 +165,87 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       }
     }
     if (!split && (_showPicker || state.active == null)) {
-      return _buildRail(state, servers, groups);
+      return _buildPicker(state, servers, groups);
     }
     final active = state.active;
     if (active == null) return _empty();
-    return Scaffold(
-      appBar: split ? null : _switcherBar(state, active),
-      body: RemoteDesktopViewer(sessionId: active.id),
+    // One bar, the viewer's own: in a single column its name opens the other
+    // sessions, as the terminal tab's does.
+    return RemoteDesktopViewer(
+      sessionId: active.id,
+      switcher: split
+          ? null
+          : (
+              position:
+                  state.ordered.indexWhere((e) => e.id == active.id) + 1,
+              total: state.sessions.length,
+              onTap: () => _showSessions(state),
+            ),
     );
   }
 
-  /// The bar of a single column: which of the sessions is on screen, and the
-  /// way to the rest of them.
-  PreferredSizeWidget _switcherBar(
+  /// The first page of a single column: the servers, as cards, under the
+  /// same bar the terminal and file tabs put over their pickers.
+  ///
+  /// Not the rail. The rail is an index beside a surface; on its own it is a
+  /// column of small rows with nothing on the other side of them.
+  Widget _buildPicker(
     RemoteDesktopSessionsState state,
-    RemoteDesktopSessionView active,
-  ) => PreferredSize(
-    preferredSize: const Size.fromHeight(SessionTabBar.height),
-    child: SizedBox(
-      height: SessionTabBar.height,
-      child: Row(
-        children: [
-          Expanded(
-            child: SessionSwitcherLabel(
-              name: active.profile.name,
-              position: state.ordered.indexWhere((e) => e.id == active.id) + 1,
-              total: state.sessions.length,
-              icon: Icons.desktop_windows_outlined,
-              onTap: () => _showSessions(state),
-            ),
+    ServersState servers,
+    List<TagGroup<String>> groups,
+  ) => Scaffold(
+    appBar: _pickerBar(state),
+    body: servers.servers.isEmpty
+        ? const EmptyPane(icon: Icons.dns_outlined)
+        : ListView(
+            padding: context.padBottom(UIs.roundRectCardPadding),
+            children: [
+              for (final group in groups) ...[
+                if (group.label case final label?) CenterGreyTitle(label),
+                for (final id in group.items)
+                  if (servers.servers[id] case final spi?)
+                    CardTile(
+                      key: ValueKey('server:$id'),
+                      // No fallback icon: with marks off every row would
+                      // carry the same one, which says nothing.
+                      leading: distIcon(spi.id, size: 24),
+                      title: spi.name,
+                      subtitle: spi.displayAddr,
+                      onTap: () => _selectServer(spi),
+                    ),
+              ],
+            ],
           ),
-          IconButton(
-            tooltip: libL10n.servers,
-            icon: const Icon(Icons.dns_outlined),
-            onPressed: _openPicker,
-          ),
-          IconButton(
-            tooltip: libL10n.close,
-            icon: const Icon(Icons.close),
-            onPressed: () => ref
-                .read(remoteDesktopSessionsProvider.notifier)
-                .close(active.id),
-          ),
-          const SizedBox(width: 5),
-        ],
-      ),
-    ),
   );
+
+  /// The terminal tab's strip: the picker as its leading entry, the running
+  /// sessions behind the switcher.
+  PreferredSizeWidget _pickerBar(RemoteDesktopSessionsState state) {
+    final sessions = state.ordered;
+    return SessionTabBar(
+      names: [libL10n.add, for (final session in sessions) session.profile.name],
+      index: 0,
+      onTap: (index) {
+        if (index > 0) _selectSession(sessions[index - 1].id);
+      },
+      onClose: (index) {
+        if (index > 0) _sessions.close(sessions[index - 1].id);
+      },
+      detailOf: (index) => _sessionDetail(sessions[index - 1]),
+      sessionActions: const [],
+      leadingActions: [_sortBtn],
+    );
+  }
+
+  Widget get _sortBtn => Btn.icon(
+    text: libL10n.sort,
+    icon: Icon(_SortOrder.stored.icon, size: 18),
+    onTap: _showSortSheet,
+  );
+
+  String _sessionDetail(RemoteDesktopSessionView session) =>
+      '${session.profile.protocol.name.toUpperCase()} · '
+      '${_connectionStateLabel(session.connectionState)}';
 
   Widget _empty() => const EmptyPane(icon: Icons.desktop_windows_outlined);
 
@@ -220,15 +256,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
   ) => ListView(
     padding: const EdgeInsets.only(top: 4, bottom: 77),
     children: [
-      SideBarActions(
-        actions: [
-          Btn.icon(
-            text: libL10n.sort,
-            icon: Icon(_SortOrder.stored.icon, size: 18),
-            onTap: _showSortSheet,
-          ),
-        ],
-      ),
+      SideBarActions(actions: [_sortBtn]),
       if (state.ordered.isNotEmpty) SideBarSection(libL10n.running),
       for (final session in state.ordered)
         SideBarTile(
@@ -363,10 +391,7 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
                   ),
                 ),
                 title: Text(session.profile.name),
-                subtitle: Text(
-                  '${session.profile.protocol.name.toUpperCase()} · '
-                  '${_connectionStateLabel(session.connectionState)}',
-                ),
+                subtitle: Text(_sessionDetail(session)),
                 trailing: IconButton(
                   tooltip: libL10n.close,
                   icon: const Icon(Icons.close),
@@ -384,6 +409,17 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
                   Navigator.of(sheetContext).pop();
                 },
               ),
+            const Divider(height: 17, indent: 17, endIndent: 17),
+            // Last, as in the terminal's sheet: back to the picker, under the
+            // name and icon its entry in the strip has.
+            ListTile(
+              leading: const Icon(MingCute.add_circle_fill),
+              title: Text(libL10n.add),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _openPicker();
+              },
+            ),
           ],
         ),
       ),
