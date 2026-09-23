@@ -303,6 +303,18 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::process::kill)),
             )
             .service(
+                // A read with a query string — a part and a unit key — and one
+                // action, so the default 32 KiB applies to both. The part is a
+                // query parameter rather than a path segment, like the
+                // container one: the four are one table of commands with one
+                // reason vocabulary, and a client that asked for a part this
+                // build does not have gets the same refusal as any other
+                // malformed request.
+                web::resource("/services")
+                    .route(web::get().to(crate::api::service::list))
+                    .route(web::post().to(crate::api::service::act)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -840,6 +852,13 @@ struct RemoteAccessView {
     /// show it, signalling a process is `full_access`, and the response says
     /// which of the two this caller has.
     process: bool,
+    /// Whether `/api/v1/services` answers this agent at all.
+    ///
+    /// Its own field for [`Self::stream`]'s reason, and `true` for
+    /// [`Self::cron`]'s: the listing commands are read-only and run as the
+    /// agent's own user, acting on a unit is `full_access`, and the response
+    /// says which of the two this caller has.
+    services: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -882,6 +901,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             cron: true,
             containers: true,
             process: true,
+            services: true,
         },
     }))
 }

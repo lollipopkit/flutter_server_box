@@ -12,11 +12,13 @@
     SquareTerminal,
     ShieldCheck,
     Network,
+    Activity,
     CircleAlert,
     CalendarClock,
     Container,
     Power,
     RefreshCw,
+    ServerCog,
   } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
@@ -273,6 +275,16 @@
         {#if capabilities?.remote_access?.containers}
           <IconButton label={$LL.containers()} onclick={() => layout.navigate('containers')}>
             <Container class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.process}
+          <IconButton label={$LL.processes()} onclick={() => layout.navigate('process')}>
+            <Activity class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.services}
+          <IconButton label={$LL.services()} onclick={() => layout.navigate('services')}>
+            <ServerCog class="w-4 h-4" />
           </IconButton>
         {/if}
         {#if capabilities?.remote_access?.cron}

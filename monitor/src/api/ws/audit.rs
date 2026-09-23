@@ -62,6 +62,12 @@ pub enum Kind {
     /// naming it is the only record of which process was signalled, since the
     /// number may belong to something else by the time the row is read.
     Process,
+    /// A start, stop, restart, enable or disable of one service unit through
+    /// `api::service`. Its own kind for `Container`'s reason: reading this
+    /// endpoint is not recorded at all, so a row here is always a change, and
+    /// the subject is the verb and the unit — which may be a unit that no
+    /// longer exists by the time the row is read.
+    Service,
 }
 
 impl Kind {
@@ -78,6 +84,7 @@ impl Kind {
             Kind::Cron => "cron",
             Kind::Container => "container",
             Kind::Process => "process",
+            Kind::Service => "service",
         }
     }
 }

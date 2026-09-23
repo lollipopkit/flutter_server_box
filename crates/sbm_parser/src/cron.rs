@@ -235,6 +235,26 @@ fn days_from_civil(year: i32, month: u32, day: u32) -> i64 {
     era * 146_097 + doe - 719_468
 }
 
+/// A UTC date-time as Unix milliseconds, for a caller that reads an instant
+/// the cron calendar cannot hold: [`CivilTime`] has no seconds field, because
+/// no cron expression can name one.
+///
+/// Lives beside [`days_from_civil`] rather than being its own copy of the
+/// algorithm — `service` is the second caller and will not be the last.
+pub(crate) fn utc_millis(
+    year: i32,
+    month: u32,
+    day: u32,
+    hour: u32,
+    minute: u32,
+    second: u32,
+) -> i64 {
+    days_from_civil(year, month, day) * 86_400_000
+        + i64::from(hour) * 3_600_000
+        + i64::from(minute) * 60_000
+        + i64::from(second) * 1_000
+}
+
 /// The inverse of [`days_from_civil`].
 fn civil_from_days(days: i64) -> (i32, u32, u32) {
     let z = days + 719_468;

@@ -2,6 +2,12 @@ import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/service.dart';
 
+// TODO(migration): the whole of this directory is ported to
+// `sbm_parser::service` (model, commands and parsers, locked by
+// `crates/sbm_parser/tests/service_compat.rs` against `test/fixtures/systemd/`)
+// because the monitor agent lists a machine's units with the same rules this
+// app does over SSH. Delete this implementation and read it through the FFI
+// boundary once the FFI result is asserted identical against those fixtures.
 abstract interface class ServiceManagerBackend {
   ServiceManagerType get type;
 

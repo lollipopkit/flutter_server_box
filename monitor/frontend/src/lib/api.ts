@@ -24,6 +24,10 @@ import type {
   PushListView,
   PushPayload,
   PushTestResult,
+  ServiceActRequest,
+  ServiceActResult,
+  ServicePart,
+  ServiceView,
   SettingsPayload,
   SettingsView,
   StatusResponse,
@@ -433,6 +437,36 @@ export const api = {
   signalProcess: (payload: ProcessSignalRequest) =>
     request<ProcessSignalResult>(
       '/process',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
+    ),
+  /// One part of a machine's service state: the units, or one unit's log, its
+  /// definition or the manager's own status of it.
+  ///
+  /// Reading is not gated on the shell grant — the listing commands run as the
+  /// agent's own user — so a panel that may only look is told `editable: false`
+  /// rather than refused.
+  ///
+  /// The three parts that are about one unit are addressed by the `key` the
+  /// listing gave it, never by a name typed here: the agent resolves it
+  /// against a listing it runs itself, so the scope and the type are its
+  /// answers. A key no longer in that listing is answered `available: false`
+  /// with `reason_kind: 'no_such_unit'`.
+  getServices: (part: ServicePart = 'list', key?: string) =>
+    request<ServiceView>(
+      `/services?${new URLSearchParams({ part, ...(key ? { key } : {}) })}`,
+      {},
+      'Failed to fetch the services',
+    ),
+  /// Performs one action and answers with what the manager said.
+  ///
+  /// The action is one of the `actions` the listing put on the unit, so a page
+  /// cannot offer one the machine does not have. Acting on a unit that is not
+  /// in the current listing is a 404; a caller that may not change anything is
+  /// a 403.
+  actService: (payload: ServiceActRequest) =>
+    request<ServiceActResult>(
+      '/services',
       { method: 'POST', body: JSON.stringify(payload) },
       'Failed to reach the machine',
     ),

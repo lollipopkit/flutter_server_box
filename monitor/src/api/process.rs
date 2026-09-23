@@ -43,6 +43,7 @@ use ntex::web::{self, HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 use tokio::process::Command as TokioCommand;
 
+use super::privileged;
 use super::server::AppState;
 use super::server::verify_auth;
 use super::ws;
@@ -547,9 +548,7 @@ pub async fn kill(
     // either.
     if system != SystemType::Windows && outcome_of(&output) == Some(ProcKillOutcome::Denied) {
         output = run_sudo(&command_text, request.password.as_deref()).await;
-        sudo_rejected = output
-            .as_ref()
-            .is_some_and(|output| sbm_parser::script::sudo_password_rejected(&String::from_utf8_lossy(&output.stderr)));
+        sudo_rejected = privileged::sudo_rejected(output.as_ref());
     }
 
     let outcome = outcome_of(&output).unwrap_or(ProcKillOutcome::Failed);
@@ -606,20 +605,18 @@ fn outcome_of(output: &Option<std::process::Output>) -> Option<ProcKillOutcome> 
 ///
 /// The Unix text is POSIX shell and is handed to `sh` as its standard input,
 /// which is the shape [`sbm_parser::proc::kill_command`] documents and the same
-/// one the app feeds it over SSH. The Windows text is a complete command line
-/// — `powershell.exe -EncodedCommand <base64>` — so it is run as one: it holds
-/// nothing a command interpreter would read as syntax, since every value in it
-/// is a PID or base64.
+/// one the app feeds it over SSH — [`privileged::as_self`]. The Windows text is
+/// a complete command line — `powershell.exe -EncodedCommand <base64>` — so it
+/// is run as one: it holds nothing a command interpreter would read as syntax,
+/// since every value in it is a PID or base64. That branch is this endpoint's
+/// own; it is the only caller whose text is not shell.
 async fn run_plain(command_text: &str, system: SystemType) -> Option<std::process::Output> {
-    let command = if system == SystemType::Windows {
-        let mut command = TokioCommand::new("cmd");
-        command.args(["/C", command_text]);
-        command
-    } else {
-        TokioCommand::new("sh")
-    };
-    let stdin = (system != SystemType::Windows).then_some(command_text.as_bytes());
-    command::run(command, "process kill", Limits::DEFAULT, stdin)
+    if system != SystemType::Windows {
+        return privileged::as_self(command_text, "process kill", Limits::DEFAULT).await;
+    }
+    let mut command = TokioCommand::new("cmd");
+    command.args(["/C", command_text]);
+    command::run(command, "process kill", Limits::DEFAULT, None)
         .await
         .unwrap_or_else(|error| {
             tracing::warn!("process kill: {error}");
@@ -627,37 +624,9 @@ async fn run_plain(command_text: &str, system: SystemType) -> Option<std::proces
         })
 }
 
-/// Runs the stop script as root.
-///
-/// `sudo -n` when there is no password: without it sudo would read the script
-/// itself as the password it is waiting for, and the stop would not happen. The
-/// password, when there is one, comes first on the same pipe and sudo consumes
-/// exactly that line — the script follows it.
+/// Runs the stop script as root, [`privileged::as_root`].
 async fn run_sudo(command_text: &str, password: Option<&str>) -> Option<std::process::Output> {
-    let entry = if password.is_some() {
-        "sudo -S -p '' sh"
-    } else {
-        "sudo -n sh"
-    };
-    let mut command = TokioCommand::new("sh");
-    command.arg("-c").arg(entry);
-    let mut stdin = String::new();
-    if let Some(password) = password {
-        stdin.push_str(password);
-        stdin.push('\n');
-    }
-    stdin.push_str(command_text);
-    command::run(
-        command,
-        "process kill",
-        Limits::DEFAULT,
-        Some(stdin.as_bytes()),
-    )
-    .await
-    .unwrap_or_else(|error| {
-        tracing::warn!("process kill: {error}");
-        None
-    })
+    privileged::as_root(command_text, "process kill", Limits::DEFAULT, password).await
 }
 
 fn now_millis() -> i64 {

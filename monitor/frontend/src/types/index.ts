@@ -131,6 +131,10 @@ export interface RemoteAccess {
   /// as `cron`: `ps` shows the agent's own user the table `top` would show it,
   /// and signalling a process is `editable` in the response body.
   process?: boolean
+  /// Whether `/api/v1/services` answers this agent at all. Reported the same
+  /// way as the two above: the listing commands run as the agent's own user,
+  /// and acting on a unit is `editable` in the response body.
+  services?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -766,4 +770,152 @@ export interface ProcessSignalResult {
   /// `sudo` refused the password that was sent. The one outcome the caller can
   /// act on, which is why it is a field rather than a status code.
   sudo_rejected: boolean
+}
+
+/// Which of the known service managers a machine runs. `null` where the
+/// detector found one this agent cannot list — `detected_name` is then what it
+/// found instead, in the machine's own words.
+export type ServiceManagerType = 'systemd' | 'procd' | 'openrc'
+
+/// What the machine said about its own init, for a page that has to explain a
+/// machine it cannot list.
+export interface ServiceManagerView {
+  type: ServiceManagerType | null
+  /// What the machine called it: `systemd`, `procd`, `launchd`, `init`.
+  detected_name: string
+  /// `systemd (Debian GNU/Linux)`, or the OS name alone.
+  description: string
+}
+
+export type ServiceUnitType = 'service' | 'socket' | 'mount' | 'timer'
+
+/// Whose unit it is. systemd's `--user` scope is the only second one that
+/// exists, which is why the page only draws it where `supports_user_scope`.
+export type ServiceScope = 'system' | 'user'
+
+export type ServiceState = 'running' | 'stopped' | 'failed' | 'starting' | 'stopping' | 'unknown'
+
+export type ServiceAction = 'start' | 'stop' | 'restart' | 'enable' | 'disable'
+
+/// One unit, as the agent read it.
+export interface ServiceUnit {
+  /// What the page sends back to ask about this unit or to act on it. Derived
+  /// by the agent so the listing and the two requests cannot spell it
+  /// differently.
+  key: string
+  /// Without the type suffix: `sshd`, not `sshd.service`.
+  name: string
+  full_name: string
+  type: ServiceUnitType
+  scope: ServiceScope
+  state: ServiceState
+  description: string | null
+  /// Startup registration. `null` where the manager cannot report it, which is
+  /// not the same as "not registered".
+  enabled: boolean | null
+  /// The manager's own word for startup registration, which says more than
+  /// `enabled` can: a `static` or `masked` unit cannot be enabled at all.
+  /// Drawn verbatim rather than translated — it is the manager's vocabulary.
+  unit_file_state: string | null
+  /// The manager's finer state: `running`, `exited`, `dead`, `start-pre`.
+  sub_state: string | null
+  /// Why the last run ended, where the manager says: `exit-code`, `signal`,
+  /// `timeout`.
+  result: string | null
+  /// The main process's exit status, present only where `result` is
+  /// `exit-code`.
+  exit_status: number | null
+  memory_bytes: number | null
+  /// When the unit entered its current state, in Unix milliseconds at the
+  /// machine's own clock. See the agent's note on the clock shift.
+  since_millis: number | null
+  /// When a timer next fires, in Unix milliseconds.
+  next_elapse_millis: number | null
+  /// What may be done to it, derived by the agent from the state and the
+  /// startup registration so that a page drawing its own set would be a second
+  /// implementation of that rule.
+  actions: ServiceAction[]
+  /// `unit_file_state`, or `enabled`/`disabled` in the same words where the
+  /// manager has no such state to report.
+  startup: string | null
+}
+
+export type ServicePart = 'list' | 'logs' | 'definition' | 'status'
+
+/// Why the machine gave no listing, as its own word so the page phrases it in
+/// its own language. `null` alongside `available: false` means the machine
+/// said something the agent does not classify, and `reason` is that text.
+export type ServiceReason =
+  | 'unsupported_manager'
+  | 'unsupported_platform'
+  | 'unreadable'
+  | 'no_such_unit'
+  | 'no_log'
+
+/// A part of the listing that is missing while the rest of it is readable.
+export type ServiceListingNotice = 'user_scope_unavailable' | 'details_unavailable'
+
+export interface ServiceLogLine {
+  /// The time as the manager printed it, already localised by `journalctl`.
+  time: string | null
+  text: string
+}
+
+export interface ServiceLog {
+  lines: ServiceLogLine[]
+  /// The log was read but not parsed — a format this agent does not know.
+  /// Drawn as raw text rather than as an empty log.
+  unreadable: boolean
+}
+
+/// One part of the machine's service state.
+export interface ServiceView {
+  part: ServicePart
+  /// Whether this part could be read at all. `false` is a state of the machine
+  /// — no manager this agent lists, no unit by that key — not a failure of the
+  /// caller, so it is a field and the page has one shape to draw.
+  available: boolean
+  reason_kind: ServiceReason | null
+  /// What the machine said, verbatim. Never translated: it is the only thing
+  /// that distinguishes one failure from another.
+  reason: string | null
+  manager: ServiceManagerView | null
+  /// Whether this panel may change a unit. A hint for the UI; the agent
+  /// re-checks it on the action itself.
+  editable: boolean
+  /// Whether the machine has a second account scope at all.
+  supports_user_scope: boolean
+  units: ServiceUnit[]
+  notice: ServiceListingNotice | null
+  /// What the machine said about the notice, verbatim.
+  detail: string | null
+  /// The machine's own clock at the moment the listing was read.
+  sampled_at_millis: number | null
+  log: ServiceLog | null
+  /// A unit's definition or the manager's own status, for `part: 'definition'`
+  /// and `part: 'status'`.
+  text: string | null
+}
+
+/// One action on one unit.
+///
+/// The password travels as its own field rather than inside a command, for the
+/// reason `/power`'s does: a password in a command line lands in the machine's
+/// process list and in the agent's audit row. Omitted until the first attempt
+/// comes back `sudo_rejected`.
+export interface ServiceActRequest {
+  key: string
+  action: ServiceAction
+  password?: string
+}
+
+export interface ServiceActResult {
+  /// Whether the manager's command exited zero. What the machine said about it
+  /// is in `stderr`, and it is the only thing that distinguishes one failure
+  /// from another.
+  succeeded: boolean
+  sudo_rejected: boolean
+  exit_code: number | null
+  stdout: string
+  stderr: string
 }
