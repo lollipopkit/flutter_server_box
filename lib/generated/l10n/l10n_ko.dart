@@ -2838,4 +2838,85 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get authShort => '인증';
+
+  @override
+  String get remoteDesktopFitToWindow => '창에 맞춤';
+
+  @override
+  String get remoteDesktopActualSize => '실제 크기';
+
+  @override
+  String get remoteDesktopZoom => '확대/축소';
+
+  @override
+  String get remoteDesktopViewOnly => '보기 전용';
+
+  @override
+  String get remoteDesktopDisableViewOnly => '보기 전용 해제';
+
+  @override
+  String get remoteDesktopSendClipboardText => '클립보드 텍스트 보내기';
+
+  @override
+  String get remoteDesktopShowKeyboard => '키보드 표시';
+
+  @override
+  String get remoteDesktopMoreControls => '추가 제어';
+
+  @override
+  String get remoteDesktopUseDirectPointer => '직접 포인터 사용';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => '터치패드 포인터 사용';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Ctrl+Alt+Delete 보내기';
+
+  @override
+  String get remoteDesktopReconnect => '다시 연결';
+
+  @override
+  String get remoteDesktopFullScreen => '전체 화면';
+
+  @override
+  String get remoteDesktopCloseSession => '세션 닫기';
+
+  @override
+  String get remoteDesktopConnected => '연결됨';
+
+  @override
+  String get remoteDesktopConnecting => '연결 중';
+
+  @override
+  String get remoteDesktopReconnecting => '다시 연결 중';
+
+  @override
+  String get remoteDesktopDisconnected => '연결 끊김';
+
+  @override
+  String get remoteDesktopGuideTouch => '터치패드';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      '한 손가락으로 터치패드처럼 포인터를 움직이고, 탭하면 클릭합니다. 두 손가락 탭은 오른쪽 클릭, 두 손가락 드래그는 스크롤, 핀치는 확대/축소입니다. 두 번 탭한 뒤 손가락을 떼지 않고 움직이면 드래그합니다.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      '화면 키보드를 엽니다. 입력한 내용은 원격 데스크톱으로 전송됩니다.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      '포인터와 키 입력 전송을 멈춰 실수로 클릭하지 않고 화면을 볼 수 있습니다.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Delete, 다시 연결, 전체 화면은 여기에 있습니다.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      '손가락이 닿은 곳을 클릭하는 직접 포인터로도 여기서 전환할 수 있습니다.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'VNC 클립보드는 Latin-1 텍스트만 지원합니다.';
 }

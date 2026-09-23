@@ -5,6 +5,7 @@
 
 pub mod audit;
 pub mod session;
+pub mod stream;
 pub mod terminal;
 pub mod ticket;
 

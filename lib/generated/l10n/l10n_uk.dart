@@ -3007,4 +3007,88 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get authShort => 'Автор.';
+
+  @override
+  String get remoteDesktopFitToWindow => 'За розміром вікна';
+
+  @override
+  String get remoteDesktopActualSize => 'Фактичний розмір';
+
+  @override
+  String get remoteDesktopZoom => 'Масштаб';
+
+  @override
+  String get remoteDesktopViewOnly => 'Лише перегляд';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Вимкнути режим перегляду';
+
+  @override
+  String get remoteDesktopSendClipboardText =>
+      'Надіслати текст із буфера обміну';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Показати клавіатуру';
+
+  @override
+  String get remoteDesktopMoreControls => 'Інші елементи керування';
+
+  @override
+  String get remoteDesktopUseDirectPointer =>
+      'Використовувати прямий вказівник';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer =>
+      'Використовувати вказівник тачпада';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Надіслати Ctrl+Alt+Delete';
+
+  @override
+  String get remoteDesktopReconnect => 'Перепідключитися';
+
+  @override
+  String get remoteDesktopFullScreen => 'На весь екран';
+
+  @override
+  String get remoteDesktopCloseSession => 'Закрити сеанс';
+
+  @override
+  String get remoteDesktopConnected => 'Підключено';
+
+  @override
+  String get remoteDesktopConnecting => 'Підключення';
+
+  @override
+  String get remoteDesktopReconnecting => 'Повторне підключення';
+
+  @override
+  String get remoteDesktopDisconnected => 'Відключено';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Тачпад';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Один палець рухає вказівник як тачпад, дотик — клік. Дотик двома пальцями — правий клік, перетягування двома — прокручування, щипок — масштаб. Торкніться двічі й не відпускайте палець, щоб перетягувати.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Відкриває екранну клавіатуру. Введений текст надсилається на віддалений робочий стіл.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Припиняє надсилання вказівника й клавіш, щоб дивитися без випадкових кліків.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Тут є Ctrl+Alt+Delete, повторне підключення та повноекранний режим.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'А також прямий вказівник: палець клікає там, де торкається.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.';
 }

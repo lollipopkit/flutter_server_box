@@ -34,11 +34,17 @@ const MAX_PER_SUBJECT: usize = 32;
 const ID_BYTES: usize = 16;
 const SECRET_BYTES: usize = 32;
 
-/// The only WebSocket endpoint the agent exposes.
+/// The only WebSocket endpoints the agent exposes.
+///
+/// One per endpoint, and the ticket carries which — a ticket minted for one is
+/// refused at the other, so a client cannot trade a stream ticket for a shell
+/// (or the reverse) by changing the URL it upgrades against.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Purpose {
     Terminal,
+    /// A raw TCP connection, for the app's port forwarding and remote desktop.
+    Stream,
 }
 
 struct Entry {

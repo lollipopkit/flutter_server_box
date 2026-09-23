@@ -5157,6 +5157,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auth'**
   String get authShort;
+
+  /// No description provided for @remoteDesktopFitToWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to window'**
+  String get remoteDesktopFitToWindow;
+
+  /// No description provided for @remoteDesktopActualSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual size'**
+  String get remoteDesktopActualSize;
+
+  /// No description provided for @remoteDesktopZoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom'**
+  String get remoteDesktopZoom;
+
+  /// No description provided for @remoteDesktopViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'View only'**
+  String get remoteDesktopViewOnly;
+
+  /// No description provided for @remoteDesktopDisableViewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable view only'**
+  String get remoteDesktopDisableViewOnly;
+
+  /// No description provided for @remoteDesktopSendClipboardText.
+  ///
+  /// In en, this message translates to:
+  /// **'Send clipboard text'**
+  String get remoteDesktopSendClipboardText;
+
+  /// No description provided for @remoteDesktopShowKeyboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Show keyboard'**
+  String get remoteDesktopShowKeyboard;
+
+  /// No description provided for @remoteDesktopMoreControls.
+  ///
+  /// In en, this message translates to:
+  /// **'More controls'**
+  String get remoteDesktopMoreControls;
+
+  /// No description provided for @remoteDesktopUseDirectPointer.
+  ///
+  /// In en, this message translates to:
+  /// **'Use direct pointer'**
+  String get remoteDesktopUseDirectPointer;
+
+  /// No description provided for @remoteDesktopUseTouchpadPointer.
+  ///
+  /// In en, this message translates to:
+  /// **'Use touchpad pointer'**
+  String get remoteDesktopUseTouchpadPointer;
+
+  /// No description provided for @remoteDesktopSendCtrlAltDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Ctrl+Alt+Delete'**
+  String get remoteDesktopSendCtrlAltDelete;
+
+  /// No description provided for @remoteDesktopReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get remoteDesktopReconnect;
+
+  /// No description provided for @remoteDesktopFullScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full screen'**
+  String get remoteDesktopFullScreen;
+
+  /// No description provided for @remoteDesktopCloseSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Close session'**
+  String get remoteDesktopCloseSession;
+
+  /// No description provided for @remoteDesktopConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get remoteDesktopConnected;
+
+  /// No description provided for @remoteDesktopConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting'**
+  String get remoteDesktopConnecting;
+
+  /// No description provided for @remoteDesktopReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting'**
+  String get remoteDesktopReconnecting;
+
+  /// No description provided for @remoteDesktopDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get remoteDesktopDisconnected;
+
+  /// No description provided for @remoteDesktopGuideTouch.
+  ///
+  /// In en, this message translates to:
+  /// **'Touchpad'**
+  String get remoteDesktopGuideTouch;
+
+  /// No description provided for @remoteDesktopGuideTouchTip.
+  ///
+  /// In en, this message translates to:
+  /// **'One finger moves the pointer like a touchpad, and a tap clicks. Tap with two fingers to right-click, drag with two to scroll, and pinch to zoom. Tap twice and keep the finger down to drag.'**
+  String get remoteDesktopGuideTouchTip;
+
+  /// No description provided for @remoteDesktopGuideKeyboardTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the on-screen keyboard. What you type is sent to the remote desktop.'**
+  String get remoteDesktopGuideKeyboardTip;
+
+  /// No description provided for @remoteDesktopGuideViewOnlyTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops sending the pointer and keys, so you can look without clicking anything by accident.'**
+  String get remoteDesktopGuideViewOnlyTip;
+
+  /// No description provided for @remoteDesktopGuideMoreTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Ctrl+Alt+Delete, reconnecting and full screen are in here.'**
+  String get remoteDesktopGuideMoreTip;
+
+  /// No description provided for @remoteDesktopGuidePointerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'So is a direct pointer, where a finger clicks what it touches.'**
+  String get remoteDesktopGuidePointerTip;
+
+  /// No description provided for @remoteDesktopVncClipboardLatin1Only.
+  ///
+  /// In en, this message translates to:
+  /// **'VNC clipboard supports Latin-1 text only.'**
+  String get remoteDesktopVncClipboardLatin1Only;
 }
 
 class _AppLocalizationsDelegate

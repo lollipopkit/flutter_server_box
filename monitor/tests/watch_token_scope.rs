@@ -151,6 +151,14 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/ws-ticket",
             Some(json!({ "purpose": "terminal" })),
         ),
+        // The relay, which is the other endpoint a ticket authorises. Its
+        // upgrade takes no bearer token either, so this is the HTTP half: a
+        // watch token must not be able to mint a ticket for it.
+        (
+            Method::POST,
+            "/api/v1/ws-ticket",
+            Some(json!({ "purpose": "stream" })),
+        ),
         (
             Method::POST,
             "/api/v1/exec",

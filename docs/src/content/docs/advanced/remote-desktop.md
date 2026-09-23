@@ -1,25 +1,25 @@
 ---
 title: Remote desktop (RDP and VNC)
-description: Reach graphical desktops through a Server Box SSH connection
+description: Reach graphical desktops through a Server Box SSH connection or Monitor agent
 ---
 
-Server Box includes RDP and VNC clients on Android, iOS, Linux, macOS, and Windows. Every remote desktop connection travels through the SSH connection already configured for the server. The RDP or VNC port does not need to be exposed to the network where Server Box is running.
+Server Box includes RDP and VNC clients on Android, iOS, Linux, macOS, and Windows. Every remote desktop connection travels through a connection already configured for the server — SSH, or a Monitor agent with full access. The RDP or VNC port does not need to be exposed to the network where Server Box is running.
 
 ## Configure a desktop
 
-1. Configure SSH for the server. A Monitor-only server cannot open a remote desktop because the Monitor HTTP API does not relay arbitrary TCP streams.
-2. Open the server detail page and select **Remote desktop**.
+1. Configure a way in for the server: SSH, or a Monitor agent whose `remote_access.full_access` is on. With both configured, the remote desktop follows the server's **Try first** preference and falls back to the other.
+2. Open the **Remote desktop** tab and select the server, or select **Remote desktop** from the server detail page.
 3. Add one or more profiles. Profile names are unique within that server.
-4. Select a profile to open it in the **Remote desktop** tab. Opening the same profile again focuses its existing session instead of creating a duplicate.
+4. In the **Remote desktop** tab, select the server and use a profile's **Connect** or **Edit** button. In the editor, **Test** opens a session using the current form values and replaces an existing session for that profile. **Connect** focuses an existing session instead of creating a duplicate.
 
-The target host is resolved from the SSH server's network, not from the phone or computer running Server Box. The defaults are therefore useful when the desktop service runs on the SSH server itself:
+The target host is resolved from the server's network, not from the phone or computer running Server Box — from the SSH server over SSH, and from the agent's own machine over a Monitor agent. The defaults are therefore useful when the desktop service runs on that machine itself:
 
 | Protocol | Default target |
 |---|---|
 | RDP | `127.0.0.1:3389` |
 | VNC | `127.0.0.1:5900` |
 
-An internal hostname or address reachable only from the SSH server also works. SSH passwords, keys, keyboard-interactive authentication, jump servers, and `ProxyCommand` use the same connection path as the terminal and port-forward features.
+An internal hostname or address reachable only from that machine also works. SSH passwords, keys, keyboard-interactive authentication, jump servers, and `ProxyCommand` use the same connection path as the terminal and port-forward features. Over a Monitor agent, the connection is dialled by the agent as the account it runs as — which is the same grant as its shell, so it is offered only when `full_access` is on, and never over a plaintext link that is not loopback.
 
 Passwords are not saved by default. A password entered when a session starts remains in memory for that session and its reconnect attempts. When **Save password** is enabled, it is stored in Server Box's encrypted database and is included in encrypted backup and sync data. Remote desktop passwords are never included in a server QR-code share.
 
@@ -38,7 +38,7 @@ Changing a profile's protocol, target host, or target port clears its saved cert
 
 ## Sessions and controls
 
-The Remote desktop tab retains several simultaneous RDP and VNC sessions. Wide windows show a session list beside the current desktop. Narrow windows use the session name at the top to open the switcher.
+The Remote desktop tab retains several simultaneous RDP and VNC sessions. Wide windows show a session list beside the current desktop, with the list column draggable and foldable like every other rail in the app. Narrow windows use the session name at the top to open the switcher.
 
 The viewer provides fit-to-window, 1:1, fixed zoom levels, full screen, reconnect, close, view-only mode, clipboard send, the soft keyboard, and Ctrl+Alt+Delete. Desktop platforms support physical keyboard input, left/middle/right mouse buttons, and scrolling. Losing keyboard focus releases held RDP keys.
 
@@ -50,7 +50,7 @@ RDP adjusts the remote resolution after the viewport has been stable for 300 ms.
 
 ## Reconnection
 
-Transport failures retry after 1, 2, and 5 seconds. Each attempt confirms the SSH client and creates a new loopback-only tunnel. Authentication failures, rejected certificates, and invalid configuration do not retry automatically.
+Transport failures retry after 1, 2, and 5 seconds. Each attempt confirms the connection and creates a new loopback-only tunnel — an SSH direct-tcpip channel, or the agent's TCP relay. Authentication failures, rejected certificates, and invalid configuration do not retry automatically.
 
 Desktop platforms and Android use the app's existing background behavior where the operating system permits it. iOS can suspend network work in the background; Server Box checks the session after returning to the foreground and reconnects when necessary.
 

@@ -2779,6 +2779,82 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authShort => '认证';
+
+  @override
+  String get remoteDesktopFitToWindow => '适合窗口';
+
+  @override
+  String get remoteDesktopActualSize => '实际大小';
+
+  @override
+  String get remoteDesktopZoom => '缩放';
+
+  @override
+  String get remoteDesktopViewOnly => '仅查看';
+
+  @override
+  String get remoteDesktopDisableViewOnly => '关闭仅查看';
+
+  @override
+  String get remoteDesktopSendClipboardText => '发送剪贴板文本';
+
+  @override
+  String get remoteDesktopShowKeyboard => '显示键盘';
+
+  @override
+  String get remoteDesktopMoreControls => '更多控制';
+
+  @override
+  String get remoteDesktopUseDirectPointer => '使用直接指针';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => '使用触控板指针';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => '发送 Ctrl+Alt+Delete';
+
+  @override
+  String get remoteDesktopReconnect => '重新连接';
+
+  @override
+  String get remoteDesktopFullScreen => '全屏';
+
+  @override
+  String get remoteDesktopCloseSession => '关闭会话';
+
+  @override
+  String get remoteDesktopConnected => '已连接';
+
+  @override
+  String get remoteDesktopConnecting => '正在连接';
+
+  @override
+  String get remoteDesktopReconnecting => '正在重新连接';
+
+  @override
+  String get remoteDesktopDisconnected => '已断开连接';
+
+  @override
+  String get remoteDesktopGuideTouch => '触控板';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      '单指像触控板一样移动指针，轻点即单击。双指轻点为右键，双指拖动为滚动，双指捏合为缩放。轻点两下且第二下不松手，即可拖动。';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip => '打开屏幕键盘，输入的内容会发送到远程桌面。';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip => '停止发送指针和按键，只查看画面，不会误点。';
+
+  @override
+  String get remoteDesktopGuideMoreTip => 'Ctrl+Alt+Delete、重新连接和全屏都在这里。';
+
+  @override
+  String get remoteDesktopGuidePointerTip => '这里也可以切换为直接指针：手指点到哪里就点击哪里。';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪贴板仅支持 Latin-1 文本。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -5554,4 +5630,80 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authShort => '認證';
+
+  @override
+  String get remoteDesktopFitToWindow => '符合視窗';
+
+  @override
+  String get remoteDesktopActualSize => '實際大小';
+
+  @override
+  String get remoteDesktopZoom => '縮放';
+
+  @override
+  String get remoteDesktopViewOnly => '僅供檢視';
+
+  @override
+  String get remoteDesktopDisableViewOnly => '停用僅供檢視';
+
+  @override
+  String get remoteDesktopSendClipboardText => '傳送剪貼簿文字';
+
+  @override
+  String get remoteDesktopShowKeyboard => '顯示鍵盤';
+
+  @override
+  String get remoteDesktopMoreControls => '更多控制項';
+
+  @override
+  String get remoteDesktopUseDirectPointer => '使用直接指標';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => '使用觸控板指標';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => '傳送 Ctrl+Alt+Delete';
+
+  @override
+  String get remoteDesktopReconnect => '重新連線';
+
+  @override
+  String get remoteDesktopFullScreen => '全螢幕';
+
+  @override
+  String get remoteDesktopCloseSession => '關閉工作階段';
+
+  @override
+  String get remoteDesktopConnected => '已連線';
+
+  @override
+  String get remoteDesktopConnecting => '正在連線';
+
+  @override
+  String get remoteDesktopReconnecting => '正在重新連線';
+
+  @override
+  String get remoteDesktopDisconnected => '已中斷連線';
+
+  @override
+  String get remoteDesktopGuideTouch => '觸控板';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      '單指像觸控板一樣移動指標，輕點即單擊。雙指輕點為右鍵，雙指拖曳為捲動，雙指捏合為縮放。輕點兩下且第二下不放開，即可拖曳。';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip => '開啟螢幕鍵盤，輸入的內容會傳送到遠端桌面。';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip => '停止傳送指標和按鍵，只檢視畫面，不會誤點。';
+
+  @override
+  String get remoteDesktopGuideMoreTip => 'Ctrl+Alt+Delete、重新連線和全螢幕都在這裡。';
+
+  @override
+  String get remoteDesktopGuidePointerTip => '這裡也可以切換為直接指標：手指點到哪裡就點擊哪裡。';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪貼簿僅支援 Latin-1 文字。';
 }

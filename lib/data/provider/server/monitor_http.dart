@@ -558,6 +558,19 @@ class MonitorHttpClient {
   Future<WebSocket> openTerminal({Duration? timeout}) =>
       _openWs(timeout: timeout);
 
+  /// Opens the agent's TCP relay and returns the raw WebSocket.
+  ///
+  /// The connection itself is asked for over the socket rather than in the URL
+  /// — the address is the operator's own network and there is no reason to
+  /// write it into every access log between here and the agent. See
+  /// `MonitorTunnelChannel` for the protocol spoken over it.
+  ///
+  /// `remote_access.full_access` authorises it, the same grant as the terminal:
+  /// whoever can open a shell can `ssh -L` from it, so a separate switch would
+  /// withhold nothing.
+  Future<WebSocket> openStream({Duration? timeout}) =>
+      _openWs(timeout: timeout, purpose: 'stream', path: '/api/v1/stream/ws');
+
   /// What this agent will accept right now, and what it runs on.
   ///
   /// Reports what the agent will *do*, not what its config asks for — the
@@ -587,13 +600,26 @@ class MonitorHttpClient {
   /// is whatever the user typed, and reading `HTTPS://` as plaintext would
   /// dial `ws://` at a TLS port and hang.
   @visibleForTesting
-  static Uri terminalWsUrl(String addr) => Uri.parse(addr)
-      .replace(
-        scheme: addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
-        path: '/api/v1/terminal/ws',
-        queryParameters: const <String, String>{},
-      )
-      .removeFragment();
+  static Uri terminalWsUrl(String addr) =>
+      _wsUrl(addr, '/api/v1/terminal/ws');
+
+  /// The relay's upgrade URL. Same contract, one endpoint further along.
+  @visibleForTesting
+  static Uri streamWsUrl(String addr) => _wsUrl(addr, '/api/v1/stream/ws');
+
+  static Uri _wsUrl(String addr, String path) {
+    // Rebuilt rather than `.replace`d: an empty `queryParameters` map is a
+    // query, so the URL came out with a bare `?` on the end — the same
+    // cosmetic half of the bug the empty fragment used to be.
+    final base = Uri.parse(addr);
+    return Uri(
+      scheme: addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
+      userInfo: base.userInfo,
+      host: base.host,
+      port: base.hasPort ? base.port : null,
+      path: path,
+    );
+  }
 
   /// What the agent reads the ticket out of — `TICKET_PROTOCOL_PREFIX` in
   /// `monitor/src/api/ws/terminal.rs`, and `terminalWsProtocol` in the panel.
@@ -603,11 +629,19 @@ class MonitorHttpClient {
 
   /// A browser can't put a bearer token on a WebSocket handshake, so the agent
   /// authorises upgrades with a short-lived, single-use ticket instead.
-  Future<WebSocket> _openWs({Duration? timeout}) {
+  ///
+  /// [purpose] and [path] are the two halves of which endpoint this is; the
+  /// ticket carries the first and the agent checks it against the second, so a
+  /// ticket minted for one is refused at the other.
+  Future<WebSocket> _openWs({
+    Duration? timeout,
+    String purpose = 'terminal',
+    String path = '/api/v1/terminal/ws',
+  }) {
     return _authed(() async {
       final resp = await _object(
         '/api/v1/ws-ticket',
-        post: const {'purpose': 'terminal'},
+        post: {'purpose': purpose},
       );
       final ticket = resp['ticket'] as String?;
       if (ticket == null || ticket.isEmpty) {
@@ -619,7 +653,7 @@ class MonitorHttpClient {
 
       final socket =
           await WebSocket.connect(
-            terminalWsUrl(_addr).toString(),
+            _wsUrl(_addr, path).toString(),
             // The ticket rides the subprotocol, not the query string. A URL is
             // what every access log, proxy and error message writes down, and
             // this one authorises a shell — the agent stopped reading

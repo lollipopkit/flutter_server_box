@@ -194,6 +194,19 @@ the panel password can't switch it on); shared admission checks live in
   account the browser authenticated as; the panel password alone grants no
   shell. Frame type is the channel selector: Binary = PTY bytes, Text = control
   JSON (`api/ws/terminal.rs` documents the messages).
+- **`/api/v1/stream/ws`** — a raw TCP connection to an address the app names,
+  gated on `full_access` exactly like the shell and `/exec`: it dials as the
+  agent's account, so anyone who could open a shell could `ssh -L` from it and
+  a switch of its own would withhold nothing. This is what the app's remote
+  desktop uses on a monitor-only server, and what port forwarding would use
+  next; the agent understands neither RDP nor VNC, which is what makes it one
+  endpoint for both. Text frames are the request and control JSON
+  (`{"type":"open","host":..,"port":..}` first, then `ready`/`error`/`exit`),
+  Binary frames are the bytes. **One socket is one connection and there is no
+  session store and no replay** — RDP and VNC reconnect above this, and a
+  resumed byte stream would be a corrupted one rather than a shorter one. The
+  address travels in the frame, not the URL, so it stays out of access logs.
+  `tests/stream_ws.rs`.
 
 Things that are easy to get wrong here, and are locked by tests:
 

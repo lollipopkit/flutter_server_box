@@ -3018,4 +3018,86 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Ajustar à janela';
+
+  @override
+  String get remoteDesktopActualSize => 'Tamanho real';
+
+  @override
+  String get remoteDesktopZoom => 'Ampliação';
+
+  @override
+  String get remoteDesktopViewOnly => 'Somente visualização';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Desativar somente visualização';
+
+  @override
+  String get remoteDesktopSendClipboardText =>
+      'Enviar texto da área de transferência';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Mostrar teclado';
+
+  @override
+  String get remoteDesktopMoreControls => 'Mais controles';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Usar ponteiro direto';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'Usar ponteiro do touchpad';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Enviar Ctrl+Alt+Delete';
+
+  @override
+  String get remoteDesktopReconnect => 'Reconectar';
+
+  @override
+  String get remoteDesktopFullScreen => 'Tela cheia';
+
+  @override
+  String get remoteDesktopCloseSession => 'Fechar sessão';
+
+  @override
+  String get remoteDesktopConnected => 'Conectado';
+
+  @override
+  String get remoteDesktopConnecting => 'Conectando';
+
+  @override
+  String get remoteDesktopReconnecting => 'Reconectando';
+
+  @override
+  String get remoteDesktopDisconnected => 'Desconectado';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Touchpad';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Um dedo move o ponteiro como um touchpad e um toque clica. Toque com dois dedos para clique direito, arraste com dois para rolar e faça pinça para zoom. Toque duas vezes e mantenha o dedo para arrastar.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Abre o teclado na tela. O que você digitar é enviado para a área de trabalho remota.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Para de enviar o ponteiro e as teclas, para você olhar sem clicar por engano.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Del, reconectar e tela cheia ficam aqui.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Assim como o ponteiro direto, em que o dedo clica onde toca.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'A área de transferência VNC só aceita texto Latin-1.';
 }

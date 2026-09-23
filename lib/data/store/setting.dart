@@ -357,7 +357,10 @@ class SettingStore extends SqliteStore {
   /// permanently below it for anyone who has ever seen one, and a newly added
   /// page could never appear. Bumping `kDiagnosticsConsentVer` shows this again,
   /// which is what a change to what is collected would need.
-  late final diagnosticsConsentVer = propertyDefault('diagnosticsConsentVer', 0);
+  late final diagnosticsConsentVer = propertyDefault(
+    'diagnosticsConsentVer',
+    0,
+  );
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
@@ -904,6 +907,14 @@ class SettingStore extends SqliteStore {
   late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
   late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
 
+  /// The remote desktop server picker has the terminal picker's four orders,
+  /// but keeps its own choice so changing tabs does not change the ordering.
+  late final remoteDesktopSortBy = propertyDefault('remoteDesktopSortBy', 0);
+  late final remoteDesktopSortAsc = propertyDefault(
+    'remoteDesktopSortAsc',
+    true,
+  );
+
   /// How the server list is ordered, as an index into `_SortField` and a
   /// direction — the same pair, stored the same way, as the two above.
   ///
@@ -1036,6 +1047,16 @@ class SettingStore extends SqliteStore {
   /// a list that already looks finished, so nothing on the server tab suggests
   /// the button changes anything until it is pressed.
   late final globeGuided = propertyDefault('globeGuided', false);
+
+  /// Whether the remote desktop viewer's walkthrough has been shown.
+  ///
+  /// Once per install. On a touch screen the canvas is a touchpad — one
+  /// finger moves the pointer rather than clicking where it lands — and
+  /// nothing on screen says so, nor that two fingers right-click and scroll.
+  late final remoteDesktopGuided = propertyDefault(
+    'remoteDesktopGuided',
+    false,
+  );
 
   /// Removes settings for UI choices that no longer exist. Idempotent so old
   /// installs are cleaned without another migration flag becoming permanent

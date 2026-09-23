@@ -3016,4 +3016,85 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Aan venster aanpassen';
+
+  @override
+  String get remoteDesktopActualSize => 'Ware grootte';
+
+  @override
+  String get remoteDesktopZoom => 'Inzoomen';
+
+  @override
+  String get remoteDesktopViewOnly => 'Alleen bekijken';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Alleen bekijken uitschakelen';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'Klembordtekst verzenden';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Toetsenbord tonen';
+
+  @override
+  String get remoteDesktopMoreControls => 'Meer bedieningselementen';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Directe aanwijzer gebruiken';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'Touchpad-aanwijzer gebruiken';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Ctrl+Alt+Delete verzenden';
+
+  @override
+  String get remoteDesktopReconnect => 'Opnieuw verbinden';
+
+  @override
+  String get remoteDesktopFullScreen => 'Volledig scherm';
+
+  @override
+  String get remoteDesktopCloseSession => 'Sessie sluiten';
+
+  @override
+  String get remoteDesktopConnected => 'Verbonden';
+
+  @override
+  String get remoteDesktopConnecting => 'Verbinden';
+
+  @override
+  String get remoteDesktopReconnecting => 'Opnieuw verbinden';
+
+  @override
+  String get remoteDesktopDisconnected => 'Verbinding verbroken';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Touchpad';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Eén vinger beweegt de aanwijzer als een touchpad en tikken klikt. Tik met twee vingers voor rechtsklikken, sleep met twee om te scrollen en knijp om te zoomen. Tik twee keer en houd je vinger neer om te slepen.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Opent het schermtoetsenbord. Wat je typt, wordt naar het externe bureaublad gestuurd.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Stopt met het verzenden van aanwijzer en toetsen, zodat je kunt kijken zonder per ongeluk te klikken.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Del, opnieuw verbinden en volledig scherm staan hier.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Net als de directe aanwijzer, waarbij een vinger klikt waar hij tikt.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'Het VNC-klembord ondersteunt alleen Latin-1-tekst.';
 }

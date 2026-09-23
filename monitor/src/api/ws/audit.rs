@@ -27,6 +27,10 @@ pub enum Kind {
     Terminal,
     /// A one-off command run through `api::exec`.
     Exec,
+    /// A raw TCP connection relayed through `api::ws::stream` — a remote
+    /// desktop session or a forwarded port. The detail is the address, which
+    /// is the operator's own network rather than anything a client sent.
+    Stream,
     /// A file operation through `api::fs`. The subject is the verb and the
     /// path, never the contents.
     Fs,
@@ -46,6 +50,7 @@ impl Kind {
             Kind::Ticket => "ticket",
             Kind::Terminal => "terminal",
             Kind::Exec => "exec",
+            Kind::Stream => "stream",
             Kind::Fs => "fs",
             Kind::CustomCmd => "custom_cmd",
             Kind::Push => "push",
@@ -62,6 +67,10 @@ pub enum Action {
     Detach,
     Close,
     Denied,
+    /// This endpoint's own verb: a connection to an address the caller named
+    /// was made. Its own action rather than `Open`, which for a terminal means
+    /// a shell and is answered with a session handle this has none of.
+    Connect,
 }
 
 impl Action {
@@ -72,6 +81,7 @@ impl Action {
             Action::Detach => "detach",
             Action::Close => "close",
             Action::Denied => "denied",
+            Action::Connect => "connect",
         }
     }
 }

@@ -3044,4 +3044,87 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'Ajuster à la fenêtre';
+
+  @override
+  String get remoteDesktopActualSize => 'Taille réelle';
+
+  @override
+  String get remoteDesktopZoom => 'Agrandissement';
+
+  @override
+  String get remoteDesktopViewOnly => 'Lecture seule';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Désactiver la lecture seule';
+
+  @override
+  String get remoteDesktopSendClipboardText =>
+      'Envoyer le texte du presse-papiers';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Afficher le clavier';
+
+  @override
+  String get remoteDesktopMoreControls => 'Plus de commandes';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Utiliser le pointeur direct';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer =>
+      'Utiliser le pointeur du pavé tactile';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Envoyer Ctrl+Alt+Suppr';
+
+  @override
+  String get remoteDesktopReconnect => 'Reconnecter';
+
+  @override
+  String get remoteDesktopFullScreen => 'Plein écran';
+
+  @override
+  String get remoteDesktopCloseSession => 'Fermer la session';
+
+  @override
+  String get remoteDesktopConnected => 'Connecté';
+
+  @override
+  String get remoteDesktopConnecting => 'Connexion en cours';
+
+  @override
+  String get remoteDesktopReconnecting => 'Reconnexion en cours';
+
+  @override
+  String get remoteDesktopDisconnected => 'Déconnecté';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Pavé tactile';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Un doigt déplace le pointeur comme un pavé tactile, et un appui clique. Appuyez avec deux doigts pour un clic droit, glissez avec deux doigts pour défiler et pincez pour zoomer. Appuyez deux fois et gardez le doigt posé pour faire glisser.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Ouvre le clavier à l\'écran. Ce que vous tapez est envoyé au bureau à distance.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Arrête d\'envoyer le pointeur et les touches, pour regarder sans cliquer par erreur.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Ctrl+Alt+Suppr, la reconnexion et le plein écran sont ici.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Tout comme le pointeur direct, où un doigt clique là où il touche.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'Le presse-papiers VNC ne prend en charge que le texte Latin-1.';
 }

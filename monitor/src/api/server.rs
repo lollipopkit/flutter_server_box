@@ -26,7 +26,7 @@ use sqlx::SqlitePool;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock, Semaphore};
+use tokio::sync::{Mutex, RwLock, Semaphore, broadcast};
 use tracing::info;
 
 const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
@@ -91,6 +91,15 @@ pub struct AppState {
     /// applies to the running process rather than waiting for a restart.
     /// One-way: nothing here can switch it back on.
     pub full_access_off: Arc<AtomicBool>,
+    /// Fired when the panel turns that access off, so work already running
+    /// under the grant ends with it.
+    ///
+    /// The flag above answers "may this start now", which every handler asks
+    /// afresh; this answers "may this carry on", which only a long-lived
+    /// connection has to be told. The terminal uses a session store for the
+    /// same purpose (`SessionStore::close_local`); a relay has no session to
+    /// look up, so it holds a subscription instead.
+    pub full_access_revoked: broadcast::Sender<()>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -122,6 +131,7 @@ impl AppState {
             sessions,
             login_throttle: Arc::new(LoginThrottle::new()),
             full_access_off: Arc::new(AtomicBool::new(false)),
+            full_access_revoked: broadcast::channel(1).0,
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -243,6 +253,7 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/capabilities", web::get().to(get_capabilities))
             .route("/ws-ticket", web::post().to(issue_ws_ticket))
             .route("/terminal/ws", web::get().to(terminal_ws))
+            .route("/stream/ws", web::get().to(crate::api::ws::stream::stream_ws))
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
@@ -751,6 +762,14 @@ struct RemoteAccessView {
     /// into [`Self::full_access`]: the file API is confined to the roots the
     /// operator named, so it can be on while the shell is off.
     files: bool,
+    /// Whether `/api/v1/stream/ws` will relay a TCP connection.
+    ///
+    /// Its own field even though it is granted by the same switch as
+    /// [`Self::full_access`], because it is a different question for a client:
+    /// an agent that predates the endpoint reports `full_access` and would
+    /// still refuse the upgrade. Staying equal to `full_access` on every agent
+    /// that has it is the point — a client reads this one, not that one.
+    stream: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -785,6 +804,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             terminal: app_state.remote_access.terminal.available(secure),
             full_access: app_state.full_access_allowed(secure),
             files: app_state.remote_access.fs.available(secure),
+            stream: app_state.full_access_allowed(secure),
         },
     }))
 }
@@ -793,8 +813,11 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
 /// authorises one WebSocket upgrade — see `api::ws::ticket` for why the
 /// upgrade can't just carry the JWT.
 ///
-/// Refuses to mint a ticket while the terminal is unavailable, so a client
-/// finds out here rather than at a failed handshake.
+/// Refuses to mint a ticket while the endpoint it is for is unavailable, so a
+/// client finds out here rather than at a failed handshake. The purpose is
+/// checked rather than assumed: it arrives in a request body, and issuing a
+/// terminal ticket for a client that asked for a stream would hand it exactly
+/// the authorisation it did not qualify for.
 async fn issue_ws_ticket(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
@@ -803,34 +826,39 @@ async fn issue_ws_ticket(
     let claims = require_jwt!(&req, &app_state);
 
     let remote_ip = audit::peer_ip(&req);
-    // The purpose is read and dropped: `Purpose` has one variant, so there is
-    // nothing to branch on. It used to be compared and the mismatch declared
-    // `unreachable!()` — a panic guarding a value that arrives in a request
-    // body, which a second variant would have turned into a way to kill the
-    // worker with a POST. Everything below names `Purpose::Terminal` outright.
-    let _ = payload.into_inner();
-    let available = app_state
-        .remote_access
-        .terminal
-        .available(ws::is_secure_transport(&req, app_state.tls_active));
+    let purpose = payload.into_inner().purpose;
+    let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    let (available, detail) = match purpose {
+        Purpose::Terminal => (
+            app_state.remote_access.terminal.available(secure),
+            "terminal not available",
+        ),
+        Purpose::Stream => (
+            app_state.full_access_allowed(secure),
+            "full access not available",
+        ),
+    };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
             .subject(&claims.sub)
             .remote_ip(remote_ip)
-            .detail("terminal not available")
+            .detail(detail)
             .record(&app_state.db)
             .await;
         return Ok(HttpResponse::Forbidden().json(&ErrorResponse {
-            error: "The terminal is not available".to_string(),
+            error: detail.to_string(),
         }));
     }
 
-    match app_state.tickets.issue(Purpose::Terminal, &claims.sub) {
+    match app_state.tickets.issue(purpose, &claims.sub) {
         Ok(ticket) => {
             Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
                 .subject(&claims.sub)
                 .remote_ip(remote_ip)
-                .detail("terminal")
+                .detail(match purpose {
+                    Purpose::Terminal => "terminal",
+                    Purpose::Stream => "stream",
+                })
                 .record(&app_state.db)
                 .await;
             Ok(HttpResponse::Ok()
@@ -1035,6 +1063,9 @@ async fn disable_full_access(
     }
 
     app_state.full_access_off.store(true, Ordering::Release);
+    // Told as well as flagged: the flag stops the next request, this ends the
+    // long-lived ones already carrying bytes.
+    let _ = app_state.full_access_revoked.send(());
     let closed = app_state.sessions.close_local();
     tracing::info!(
         "Access without SSH disabled from the panel by {}; closed {closed} local terminal sessions",

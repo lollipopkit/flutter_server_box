@@ -7,22 +7,55 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/frame_decoder.dart';
 import 'package:server_box/view/page/remote_desktop/geometry.dart';
 import 'package:server_box/view/page/remote_desktop/input.dart';
+
+part 'cursor.dart';
+part 'guide.dart';
+
+/// Where the session on screen sits among the open ones, and what opens the
+/// rest.
+typedef RemoteDesktopSwitcher = ({
+  int position,
+  int total,
+  VoidCallback onTap,
+});
 
 class RemoteDesktopViewer extends ConsumerStatefulWidget {
   const RemoteDesktopViewer({
     super.key,
     required this.sessionId,
     this.fullScreen = false,
+    this.switcher,
   });
 
   final String sessionId;
   final bool fullScreen;
+
+  /// Makes the name in the toolbar the way to the other sessions.
+  ///
+  /// A single column has no bar above the viewer, so the switcher goes here
+  /// rather than in a second row repeating the name. Null leaves the name a
+  /// label.
+  final RemoteDesktopSwitcher? switcher;
+
+  /// The layer the pointer is drawn on, for tests to find.
+  @visibleForTesting
+  static const cursorKey = ValueKey('remote-desktop-cursor');
+
+  /// Stands in for the platform when deciding whether touches drive a
+  /// touchpad pointer. The test host is a desktop, and that path is the one
+  /// that needs covering.
+  @visibleForTesting
+  static bool? debugTouchScreenOverride;
 
   @override
   ConsumerState<RemoteDesktopViewer> createState() =>
@@ -38,16 +71,39 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   RemoteDesktopScaleMode _scaleMode = RemoteDesktopScaleMode.fit;
   double _customScale = 1;
   Offset _pan = Offset.zero;
-  Offset _remotePointer = Offset.zero;
   int _buttons = 0;
   int _touches = 0;
   int _maxTouches = 0;
   bool _touchMoved = false;
   Offset? _lastTouch;
+
+  /// The last one-finger tap on the touchpad: when, and where the finger was.
+  /// A touch landing soon after it, near it, holds the button down — tap and
+  /// drag, as on a laptop's touchpad.
+  ({Duration at, Offset position})? _lastTap;
+
+  /// Holding the button down since the second touch of a tap and drag landed.
+  bool _dragging = false;
   _TouchMode _touchMode = _TouchMode.trackpad;
   double _scaleStart = 1;
   Timer? _resizeTimer;
   Size? _lastResizeViewport;
+
+  /// What the walkthrough points at. See [_GuideX].
+  final _canvasKey = GlobalKey();
+  final _viewOnlyKey = GlobalKey();
+  final _keyboardKey = GlobalKey();
+  final _moreKey = GlobalKey();
+  bool _guideHandled = false;
+
+  /// Where the remote pointer is, in desktop pixels. See [_CursorX].
+  final _pointer = ValueNotifier<Offset?>(null);
+
+  /// What drove the pointer last, which decides whether it is drawn here.
+  ui.PointerDeviceKind? _inputKind;
+  (int, int)? _serverCursorAt;
+  Uint8List? _cursorRgba;
+  ui.Image? _cursorImage;
 
   @override
   void initState() {
@@ -69,7 +125,9 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     if (oldWidget.sessionId == widget.sessionId) return;
     _input?.releaseAll();
     _input = null;
-    _remotePointer = Offset.zero;
+    _resetCursor();
+    _lastTap = null;
+    _dragging = false;
     _resizeTimer?.cancel();
     _resizeTimer = null;
     _lastResizeViewport = null;
@@ -85,11 +143,17 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _imeFocus.dispose();
     _imeController.dispose();
     _frame.dispose();
+    _pointer.dispose();
+    _cursorImage?.dispose();
     if (widget.fullScreen && isMobile) {
       unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     }
     super.dispose();
   }
+
+  /// `setState` for the parts of this state in extensions, which may not call
+  /// a protected member themselves.
+  void _update(VoidCallback change) => setState(change);
 
   void _onFocusChanged() {
     if (!_keyboardFocus.hasFocus) _input?.releaseAll();
@@ -127,6 +191,8 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     );
     if (session == null) return const SizedBox.shrink();
     _ensureInput(session);
+    _syncCursor(session);
+    _scheduleGuide(session);
     final pixels = session.frameBgra;
     if (pixels != null && session.width > 0 && session.height > 0) {
       _frame.submit(
@@ -136,7 +202,9 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         sequence: session.frameSequence,
       );
     }
-    return ColoredBox(
+    // Material rather than a bare colour: the hidden IME field below needs
+    // one, and a host page is not obliged to provide it.
+    return Material(
       color: Colors.black,
       child: Column(
         children: [
@@ -148,133 +216,159 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     );
   }
 
+  /// The server tab's bar: [SessionTabBar.height] tall, the switcher on the
+  /// left, [Btn.icon]s at 18pt on the right.
   Widget _toolbar(RemoteDesktopSessionView session) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
     final notifier = ref.read(remoteDesktopSessionsProvider.notifier);
     final connected = session.connectionState ==
         ffi.RemoteDesktopConnectionState.connected;
+    final switcher = widget.switcher;
+
+    /// A toggle drawn in the primary while it is on, as the globe button is.
+    Color? on(bool active) => active ? scheme.primary : null;
+
+    /// `Btn.icon` has no disabled look of its own: a null `onTap` only stops
+    /// the ink, so the icon is dimmed here to say so.
+    Widget btn(
+      String text,
+      IconData icon,
+      VoidCallback? onTap, {
+      Color? color,
+      Key? key,
+    }) => Btn.icon(
+      key: key,
+      text: text,
+      icon: Icon(
+        icon,
+        size: 18,
+        color: onTap == null ? scheme.onSurface.withValues(alpha: 0.38) : color,
+      ),
+      onTap: onTap,
+    );
+
     return Material(
-      color: Theme.of(context).colorScheme.surface,
+      color: scheme.surface,
       child: SizedBox(
-        height: 44,
+        height: SessionTabBar.height,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final compact = remoteDesktopUsesCompactToolbar(constraints.maxWidth);
+            final compact = remoteDesktopUsesCompactToolbar(
+              constraints.maxWidth,
+            );
             return Row(
               children: [
-            const SizedBox(width: 8),
-            _connectionDot(session.connectionState),
-            const SizedBox(width: 7),
-            Expanded(
-              child: Text(
-                session.profile.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (!compact) ...[
-              IconButton(
-                tooltip: 'Fit to window',
-                onPressed: () => setState(() {
-                  _scaleMode = RemoteDesktopScaleMode.fit;
-                  _pan = Offset.zero;
-                }),
-                icon: Icon(
-                  Icons.fit_screen,
-                  color: _scaleMode == RemoteDesktopScaleMode.fit
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
+                Expanded(
+                  child: SessionSwitcherLabel(
+                    name: session.profile.name,
+                    position: switcher?.position,
+                    total: switcher?.total ?? 0,
+                    leading: _connectionDot(session.connectionState),
+                    onTap: switcher?.onTap,
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Actual size',
-                onPressed: () => setState(() {
-                  _scaleMode = RemoteDesktopScaleMode.actual;
-                  _pan = Offset.zero;
-                }),
-                icon: Icon(
-                  Icons.one_x_mobiledata,
-                  color: _scaleMode == RemoteDesktopScaleMode.actual
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-                ),
-              ),
-              PopupMenuButton<double>(
-                tooltip: 'Zoom',
-                icon: const Icon(Icons.zoom_in),
-                onSelected: (value) => setState(() {
-                  _customScale = value;
-                  _scaleMode = RemoteDesktopScaleMode.custom;
-                }),
-                itemBuilder: (_) => [
-                  for (final zoom in const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
-                    PopupMenuItem(value: zoom, child: Text('${(zoom * 100).round()}%')),
+                if (!compact) ...[
+                  btn(
+                    l10n.remoteDesktopFitToWindow,
+                    Icons.fit_screen,
+                    () => _setScaleMode(RemoteDesktopScaleMode.fit),
+                    color: on(_scaleMode == RemoteDesktopScaleMode.fit),
+                  ),
+                  btn(
+                    l10n.remoteDesktopActualSize,
+                    Icons.one_x_mobiledata,
+                    () => _setScaleMode(RemoteDesktopScaleMode.actual),
+                    color: on(_scaleMode == RemoteDesktopScaleMode.actual),
+                  ),
+                  _menuBtn<double>(
+                    text: l10n.remoteDesktopZoom,
+                    icon: Icons.zoom_in,
+                    color: on(_scaleMode == RemoteDesktopScaleMode.custom),
+                    items: () => [
+                      for (final zoom in const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
+                        PopupMenuItem(
+                          value: zoom,
+                          child: Text('${(zoom * 100).round()}%'),
+                        ),
+                    ],
+                    onSelected: (value) => setState(() {
+                      _customScale = value;
+                      _scaleMode = RemoteDesktopScaleMode.custom;
+                    }),
+                  ),
                 ],
-              ),
-            ],
-            IconButton(
-              tooltip: session.viewOnly ? 'Disable view only' : 'View only',
-              onPressed: () => notifier.setViewOnly(session.id, !session.viewOnly),
-              icon: Icon(session.viewOnly ? Icons.visibility : Icons.mouse),
-            ),
-            if (!compact)
-              IconButton(
-                tooltip: 'Send clipboard text',
-                onPressed: connected && !session.viewOnly
-                    ? () => _sendClipboard(session)
-                    : null,
-                icon: const Icon(Icons.content_paste),
-              ),
-            IconButton(
-              tooltip: 'Show keyboard',
-              onPressed: session.viewOnly ? null : _showKeyboard,
-              icon: const Icon(Icons.keyboard),
-            ),
-            PopupMenuButton<_ViewerAction>(
-              tooltip: 'More controls',
-              onSelected: (action) => _runAction(action, session),
-              itemBuilder: (_) => [
-                if (compact)
-                  const PopupMenuItem(
-                    value: _ViewerAction.fit,
-                    child: Text('Fit to window'),
+                btn(
+                  session.viewOnly
+                      ? l10n.remoteDesktopDisableViewOnly
+                      : l10n.remoteDesktopViewOnly,
+                  session.viewOnly ? Icons.visibility : Icons.mouse,
+                  () => notifier.setViewOnly(session.id, !session.viewOnly),
+                  key: _viewOnlyKey,
+                ),
+                if (!compact)
+                  btn(
+                    l10n.remoteDesktopSendClipboardText,
+                    Icons.content_paste,
+                    connected && !session.viewOnly
+                        ? () => _sendClipboard(session)
+                        : null,
                   ),
-                if (compact)
-                  const PopupMenuItem(
-                    value: _ViewerAction.actual,
-                    child: Text('Actual size'),
-                  ),
-                if (compact)
-                  const PopupMenuItem(
-                    value: _ViewerAction.clipboard,
-                    child: Text('Send clipboard text'),
-                  ),
-                if (isMobile)
-                  PopupMenuItem(
-                    value: _ViewerAction.touchMode,
-                    child: Text(
-                      _touchMode == _TouchMode.trackpad
-                          ? 'Use direct pointer'
-                          : 'Use touchpad pointer',
+                btn(
+                  l10n.remoteDesktopShowKeyboard,
+                  Icons.keyboard,
+                  session.viewOnly ? null : _showKeyboard,
+                  key: _keyboardKey,
+                ),
+                _menuBtn<_ViewerAction>(
+                  key: _moreKey,
+                  text: l10n.remoteDesktopMoreControls,
+                  icon: Icons.more_horiz,
+                  items: () => [
+                    if (compact)
+                      PopupMenuItem(
+                        value: _ViewerAction.fit,
+                        child: Text(l10n.remoteDesktopFitToWindow),
+                      ),
+                    if (compact)
+                      PopupMenuItem(
+                        value: _ViewerAction.actual,
+                        child: Text(l10n.remoteDesktopActualSize),
+                      ),
+                    if (compact)
+                      PopupMenuItem(
+                        value: _ViewerAction.clipboard,
+                        child: Text(l10n.remoteDesktopSendClipboardText),
+                      ),
+                    if (isMobile)
+                      PopupMenuItem(
+                        value: _ViewerAction.touchMode,
+                        child: Text(
+                          _touchMode == _TouchMode.trackpad
+                              ? l10n.remoteDesktopUseDirectPointer
+                              : l10n.remoteDesktopUseTouchpadPointer,
+                        ),
+                      ),
+                    PopupMenuItem(
+                      value: _ViewerAction.ctrlAltDelete,
+                      child: Text(l10n.remoteDesktopSendCtrlAltDelete),
                     ),
-                  ),
-                const PopupMenuItem(
-                  value: _ViewerAction.ctrlAltDelete,
-                  child: Text('Send Ctrl+Alt+Delete'),
+                    PopupMenuItem(
+                      value: _ViewerAction.reconnect,
+                      child: Text(l10n.remoteDesktopReconnect),
+                    ),
+                    PopupMenuItem(
+                      value: _ViewerAction.fullScreen,
+                      child: Text(l10n.remoteDesktopFullScreen),
+                    ),
+                    PopupMenuItem(
+                      value: _ViewerAction.close,
+                      child: Text(l10n.remoteDesktopCloseSession),
+                    ),
+                  ],
+                  onSelected: (action) => _runAction(action, session),
                 ),
-                const PopupMenuItem(
-                  value: _ViewerAction.reconnect,
-                  child: Text('Reconnect'),
-                ),
-                const PopupMenuItem(
-                  value: _ViewerAction.fullScreen,
-                  child: Text('Full screen'),
-                ),
-                const PopupMenuItem(
-                  value: _ViewerAction.close,
-                  child: Text('Close session'),
-                ),
-              ],
-            ),
+                const SizedBox(width: 7),
               ],
             );
           },
@@ -283,7 +377,47 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     );
   }
 
+  void _setScaleMode(RemoteDesktopScaleMode mode) => setState(() {
+    _scaleMode = mode;
+    _pan = Offset.zero;
+  });
+
+  /// A [Btn.icon] that opens a menu under itself.
+  ///
+  /// Not a `PopupMenuButton`: that draws an `IconButton`, a size and a colour
+  /// apart from the buttons beside it.
+  Widget _menuBtn<T>({
+    Key? key,
+    required String text,
+    required IconData icon,
+    required List<PopupMenuEntry<T>> Function() items,
+    required void Function(T value) onSelected,
+    Color? color,
+  }) => Builder(
+    key: key,
+    builder: (btnContext) => Btn.icon(
+      text: text,
+      icon: Icon(icon, size: 18, color: color),
+      onTap: () async {
+        final box = btnContext.findRenderObject();
+        final overlay = Overlay.of(btnContext).context.findRenderObject();
+        if (box is! RenderBox || overlay is! RenderBox) return;
+        final origin = box.localToGlobal(Offset.zero, ancestor: overlay);
+        final picked = await showMenu<T>(
+          context: btnContext,
+          position: RelativeRect.fromRect(
+            origin & box.size,
+            Offset.zero & overlay.size,
+          ),
+          items: items(),
+        );
+        if (picked != null && mounted) onSelected(picked);
+      },
+    ),
+  );
+
   Widget _connectionDot(ffi.RemoteDesktopConnectionState state) {
+    final l10n = context.l10n;
     final color = switch (state) {
       ffi.RemoteDesktopConnectionState.connected => Colors.green,
       ffi.RemoteDesktopConnectionState.connecting ||
@@ -291,7 +425,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       ffi.RemoteDesktopConnectionState.disconnected => Colors.red,
     };
     return Tooltip(
-      message: state.name,
+      message: switch (state) {
+        ffi.RemoteDesktopConnectionState.connected =>
+          l10n.remoteDesktopConnected,
+        ffi.RemoteDesktopConnectionState.connecting =>
+          l10n.remoteDesktopConnecting,
+        ffi.RemoteDesktopConnectionState.reconnecting =>
+          l10n.remoteDesktopReconnecting,
+        ffi.RemoteDesktopConnectionState.disconnected =>
+          l10n.remoteDesktopDisconnected,
+      },
       child: Container(
         width: 9,
         height: 9,
@@ -306,7 +449,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       if (text != null && text.runes.any((rune) => rune > 0xff)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('VNC clipboard supports Latin-1 text only.')),
+            SnackBar(content: Text(context.l10n.remoteDesktopVncClipboardLatin1Only)),
           );
         }
         return;
@@ -327,15 +470,9 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     final notifier = ref.read(remoteDesktopSessionsProvider.notifier);
     switch (action) {
       case _ViewerAction.fit:
-        setState(() {
-          _scaleMode = RemoteDesktopScaleMode.fit;
-          _pan = Offset.zero;
-        });
+        _setScaleMode(RemoteDesktopScaleMode.fit);
       case _ViewerAction.actual:
-        setState(() {
-          _scaleMode = RemoteDesktopScaleMode.actual;
-          _pan = Offset.zero;
-        });
+        _setScaleMode(RemoteDesktopScaleMode.actual);
       case _ViewerAction.clipboard:
         await _sendClipboard(session);
       case _ViewerAction.touchMode:
@@ -435,13 +572,16 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
           customScale: _customScale,
           pan: _pan,
         );
+        _placePointer(transform);
         return Focus(
           focusNode: _keyboardFocus,
           child: Listener(
+            key: _canvasKey,
             behavior: HitTestBehavior.opaque,
             onPointerDown: (event) => _pointerDown(event, transform, session),
             onPointerMove: (event) => _pointerMove(event, transform, session),
             onPointerUp: (event) => _pointerUp(event, transform, session),
+            onPointerHover: (event) => _pointerHover(event, transform, session),
             onPointerCancel: (event) => _pointerCancel(session),
             onPointerSignal: (event) => _pointerSignal(event, transform, session),
             child: GestureDetector(
@@ -459,7 +599,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
                     _scaleMode = RemoteDesktopScaleMode.custom;
                   });
                 } else if (!session.viewOnly) {
-                  final point = transform.toRemote(_remotePointer, clamp: true);
+                  final point = _pointerOr(transform);
                   if (point != null) {
                     ref.read(remoteDesktopSessionsProvider.notifier).sendWheel(
                       session.id,
@@ -488,6 +628,20 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
                         )
                       else
                         _status(session),
+                      if (_frame.image != null && _drawsCursor)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: CustomPaint(
+                              key: RemoteDesktopViewer.cursorKey,
+                              painter: _CursorPainter(
+                                pointer: _pointer,
+                                transform: transform,
+                                cursor: session.cursor,
+                                image: _cursorImage,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -523,6 +677,15 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
         viewport == _lastResizeViewport) {
       return;
     }
+    // A soft keyboard shrinks the canvas by its height — the scaffolds above
+    // resize for it — and that is not a new screen. Sending it squashed every
+    // window on the remote desktop to the strip above the keyboard, then
+    // stretched them back when it closed. [_lastResizeViewport] is left as
+    // it was, so the canvas returning to that size afterwards sends nothing.
+    //
+    // Asked of the `View`: a `Scaffold` takes the inset it resized for out of
+    // the `MediaQuery` its body sees, so below one this reads zero.
+    if (View.of(context).viewInsets.bottom > 0) return;
     _lastResizeViewport = viewport;
     _resizeTimer?.cancel();
     _resizeTimer = Timer(const Duration(milliseconds: 300), () {
@@ -543,12 +706,23 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     });
   }
 
+  bool get _touchScreen =>
+      RemoteDesktopViewer.debugTouchScreenOverride ?? isMobile;
+
+  /// Whether [event] moves the pointer the way a laptop's touchpad does,
+  /// rather than pressing where it lands.
+  bool _touchpad(PointerEvent event) =>
+      _touchScreen &&
+      event.kind == ui.PointerDeviceKind.touch &&
+      _touchMode == _TouchMode.trackpad;
+
   void _pointerDown(
     PointerDownEvent event,
     RemoteDesktopViewportTransform transform,
     RemoteDesktopSessionView session,
   ) {
     _keyboardFocus.requestFocus();
+    _noteInputKind(event.kind);
     if (session.viewOnly) return;
     if (event.kind == ui.PointerDeviceKind.touch) {
       _touches++;
@@ -557,17 +731,28 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       _lastTouch = event.localPosition;
       if (_touches > 1) return;
     }
-    final trackpad = isMobile &&
-        event.kind == ui.PointerDeviceKind.touch &&
-        _touchMode == _TouchMode.trackpad;
+    final trackpad = _touchpad(event);
     final point = trackpad
-        ? transform.toRemote(_remotePointer, clamp: true)
+        ? _pointerOr(transform)
         : transform.toRemote(event.localPosition);
     if (point == null) return;
-    if (!trackpad) _remotePointer = event.localPosition;
-    _buttons = trackpad ? 0 : _buttonMask(event.buttons);
+    if (trackpad) {
+      final tap = _lastTap;
+      _lastTap = null;
+      // The tap before this has already clicked, so pressing here is also
+      // what makes lifting straight away a double click.
+      _dragging =
+          tap != null &&
+          event.timeStamp - tap.at <= kDoubleTapTimeout &&
+          (event.localPosition - tap.position).distance <= kDoubleTapSlop;
+    }
+    _buttons = trackpad ? _touchpadButtons : _buttonMask(event.buttons);
     _sendPointer(session, point);
   }
+
+  /// What the touchpad holds down. Never the button a finger on the glass
+  /// reports — see [_pointerMove].
+  int get _touchpadButtons => _dragging ? 1 : 0;
 
   void _pointerMove(
     PointerMoveEvent event,
@@ -575,23 +760,46 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     RemoteDesktopSessionView session,
   ) {
     if (session.viewOnly) return;
-    Offset local = event.localPosition;
-    if (isMobile &&
-        event.kind == ui.PointerDeviceKind.touch &&
-        _touchMode == _TouchMode.trackpad) {
+    final trackpad = _touchpad(event);
+    final Offset? point;
+    if (trackpad) {
       if (_touches != 1) return;
-      final previous = _lastTouch ?? local;
-      _lastTouch = local;
-      final delta = local - previous;
+      final previous = _lastTouch ?? event.localPosition;
+      _lastTouch = event.localPosition;
+      final delta = event.localPosition - previous;
       if (delta.distance > 1) _touchMoved = true;
-      _remotePointer += delta;
-      local = _remotePointer;
+      // Moved in desktop pixels, by as far as the finger moved across the
+      // picture of the desktop — so the pointer keeps up with the finger at
+      // any zoom, and stays where it was on the desktop when the zoom changes.
+      final from = _pointerOr(transform);
+      point = from == null
+          ? null
+          : transform.clampToDesktop(from + delta / transform.scale);
     } else {
-      _remotePointer = local;
+      point = transform.toRemote(event.localPosition, clamp: _touchScreen);
     }
-    final point = transform.toRemote(local, clamp: isMobile);
     if (point == null) return;
-    _buttons = _buttonMask(event.buttons);
+    // A finger on the glass reports the primary button for as long as it is
+    // down. On a touchpad that is not a press — the finger moves the pointer,
+    // and a click is a tap, sent from [_pointerUp] — so forwarding it turned
+    // every move into a drag that selected whatever the pointer crossed.
+    _buttons = trackpad ? _touchpadButtons : _buttonMask(event.buttons);
+    _sendPointer(session, point);
+  }
+
+  /// A mouse moving with no button down. Without this the remote pointer
+  /// only followed the mouse while a button was held, so nothing on the
+  /// desktop knew where it was until something was clicked.
+  void _pointerHover(
+    PointerHoverEvent event,
+    RemoteDesktopViewportTransform transform,
+    RemoteDesktopSessionView session,
+  ) {
+    _noteInputKind(event.kind);
+    if (session.viewOnly) return;
+    final point = transform.toRemote(event.localPosition);
+    if (point == null) return;
+    _buttons = 0;
     _sendPointer(session, point);
   }
 
@@ -606,19 +814,29 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
       _lastTouch = null;
     }
     if (session.viewOnly) return;
-    final trackpad = isMobile &&
-        event.kind == ui.PointerDeviceKind.touch &&
-        _touchMode == _TouchMode.trackpad;
-    final local = trackpad
-        ? _remotePointer
-        : event.localPosition;
-    final point = transform.toRemote(local, clamp: isMobile);
+    final trackpad = _touchpad(event);
+    final point = trackpad
+        ? _pointerOr(transform)
+        : transform.toRemote(event.localPosition, clamp: _touchScreen);
     if (point == null) return;
+    if (trackpad && _dragging) {
+      // The end of a tap and drag: let go where the pointer is, and click
+      // nothing more.
+      _dragging = false;
+      _maxTouches = 0;
+      _touchMoved = false;
+      _buttons = 0;
+      _sendPointer(session, point);
+      return;
+    }
     final tapped = trackpad
         ? (_maxTouches >= 2 && !_touchMoved ? 4 : (!_touchMoved ? 1 : 0))
         : (_buttons == 0 ? 1 : _buttons);
     _maxTouches = 0;
     _touchMoved = false;
+    if (trackpad && tapped == 1) {
+      _lastTap = (at: event.timeStamp, position: event.localPosition);
+    }
     if (tapped == 0) return;
     _buttons = tapped;
     _sendPointer(session, point);
@@ -626,17 +844,20 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
     _sendPointer(session, point);
   }
 
+  /// Lets go of anything held, where the pointer already is.
+  ///
+  /// It sent the touchpad's position in *viewport* coordinates as if they
+  /// were desktop pixels, which put the release somewhere else entirely.
   void _pointerCancel(RemoteDesktopSessionView session) {
+    _dragging = false;
+    _lastTap = null;
     _touches = 0;
     _maxTouches = 0;
     _touchMoved = false;
     _lastTouch = null;
     _buttons = 0;
-    final point = Offset(
-      _remotePointer.dx.clamp(0, math.max(0, session.width - 1)),
-      _remotePointer.dy.clamp(0, math.max(0, session.height - 1)),
-    );
-    _sendPointer(session, point);
+    final point = _pointer.value;
+    if (point != null) _sendPointer(session, point);
   }
 
   void _pointerSignal(
@@ -665,6 +886,7 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
   }
 
   void _sendPointer(RemoteDesktopSessionView session, Offset point) {
+    _pointer.value = point;
     ref.read(remoteDesktopSessionsProvider.notifier).sendPointer(
       session.id,
       point.dx.round(),

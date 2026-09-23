@@ -545,11 +545,10 @@ class _PickPage extends ConsumerWidget {
             for (final spi in found)
               CardTile(
                 key: ValueKey(spi.id),
-                // The mark where the generic icon was, and the generic icon
-                // still behind it: `distIcon` answers null when marks are off,
-                // and `icon` is what that falls through to.
+                // No generic icon behind the mark: `distIcon` answers null
+                // when marks are off, and the same icon on every server row
+                // would tell them apart from nothing.
                 leading: distIcon(spi.id, size: 24),
-                icon: Icons.dns,
                 title: spi.name,
                 subtitle: spi.displayAddr,
                 onTap: () => onServer(spi),

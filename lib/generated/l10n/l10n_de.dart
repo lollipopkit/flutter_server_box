@@ -3025,4 +3025,85 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get authShort => 'Auth';
+
+  @override
+  String get remoteDesktopFitToWindow => 'An Fenster anpassen';
+
+  @override
+  String get remoteDesktopActualSize => 'Tatsächliche Größe';
+
+  @override
+  String get remoteDesktopZoom => 'Vergrößerung';
+
+  @override
+  String get remoteDesktopViewOnly => 'Nur Ansicht';
+
+  @override
+  String get remoteDesktopDisableViewOnly => 'Nur Ansicht deaktivieren';
+
+  @override
+  String get remoteDesktopSendClipboardText => 'Text aus Zwischenablage senden';
+
+  @override
+  String get remoteDesktopShowKeyboard => 'Tastatur anzeigen';
+
+  @override
+  String get remoteDesktopMoreControls => 'Weitere Steuerelemente';
+
+  @override
+  String get remoteDesktopUseDirectPointer => 'Direkten Zeiger verwenden';
+
+  @override
+  String get remoteDesktopUseTouchpadPointer => 'Touchpad-Zeiger verwenden';
+
+  @override
+  String get remoteDesktopSendCtrlAltDelete => 'Strg+Alt+Entf senden';
+
+  @override
+  String get remoteDesktopReconnect => 'Erneut verbinden';
+
+  @override
+  String get remoteDesktopFullScreen => 'Vollbild';
+
+  @override
+  String get remoteDesktopCloseSession => 'Sitzung schließen';
+
+  @override
+  String get remoteDesktopConnected => 'Verbunden';
+
+  @override
+  String get remoteDesktopConnecting => 'Verbindung wird hergestellt';
+
+  @override
+  String get remoteDesktopReconnecting => 'Verbindung wird wiederhergestellt';
+
+  @override
+  String get remoteDesktopDisconnected => 'Getrennt';
+
+  @override
+  String get remoteDesktopGuideTouch => 'Touchpad';
+
+  @override
+  String get remoteDesktopGuideTouchTip =>
+      'Ein Finger bewegt den Zeiger wie ein Touchpad, Tippen klickt. Mit zwei Fingern tippen für Rechtsklick, mit zwei Fingern ziehen zum Scrollen, Finger spreizen zum Zoomen. Zweimal tippen und den Finger liegen lassen, um zu ziehen.';
+
+  @override
+  String get remoteDesktopGuideKeyboardTip =>
+      'Öffnet die Bildschirmtastatur. Die Eingabe wird an den Remote-Desktop gesendet.';
+
+  @override
+  String get remoteDesktopGuideViewOnlyTip =>
+      'Zeiger und Tasten werden nicht mehr gesendet, damit Sie sich umsehen können, ohne versehentlich zu klicken.';
+
+  @override
+  String get remoteDesktopGuideMoreTip =>
+      'Strg+Alt+Entf, Neu verbinden und Vollbild finden Sie hier.';
+
+  @override
+  String get remoteDesktopGuidePointerTip =>
+      'Ebenso den direkten Zeiger, bei dem ein Finger dort klickt, wo er tippt.';
+
+  @override
+  String get remoteDesktopVncClipboardLatin1Only =>
+      'Die VNC-Zwischenablage unterstützt nur Latin-1-Text.';
 }

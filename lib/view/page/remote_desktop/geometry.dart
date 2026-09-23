@@ -58,15 +58,19 @@ class RemoteDesktopViewportTransform {
   Offset? toRemote(Offset local, {bool clamp = false}) {
     if (destination.isEmpty) return null;
     if (!clamp && !destination.contains(local)) return null;
-    final point = Offset(
-      (local.dx - destination.left) / scale,
-      (local.dy - destination.top) / scale,
-    );
-    return Offset(
-      point.dx.clamp(0, math.max(0, desktop.width - 1)),
-      point.dy.clamp(0, math.max(0, desktop.height - 1)),
+    return clampToDesktop(
+      Offset(
+        (local.dx - destination.left) / scale,
+        (local.dy - destination.top) / scale,
+      ),
     );
   }
+
+  /// [remote] kept on the desktop, whose last pixel is one short of its size.
+  Offset clampToDesktop(Offset remote) => Offset(
+    remote.dx.clamp(0, math.max(0, desktop.width - 1)),
+    remote.dy.clamp(0, math.max(0, desktop.height - 1)),
+  );
 
   Offset toLocal(Offset remote) => Offset(
     destination.left + remote.dx * scale,

@@ -27,10 +27,20 @@ class MonitorRemoteAccess {
   /// what the default gives.
   final bool files;
 
+  /// The agent will relay a TCP connection to an address this app names.
+  ///
+  /// Granted by the same switch as [fullAccess] — anyone who can open a shell
+  /// can `ssh -L` from it, so withholding this would withhold nothing — but a
+  /// separate answer for a client: an agent older than the endpoint reports
+  /// `full_access` and would still refuse the upgrade, and this is what says
+  /// which of the two it is.
+  final bool stream;
+
   const MonitorRemoteAccess({
     this.terminal = false,
     this.fullAccess = false,
     this.files = false,
+    this.stream = false,
   });
 
   static const none = MonitorRemoteAccess();
@@ -41,21 +51,23 @@ class MonitorRemoteAccess {
       terminal: flag('terminal'),
       fullAccess: flag('full_access'),
       files: flag('files'),
+      stream: flag('stream'),
     );
   }
 
   @override
   String toString() =>
       'MonitorRemoteAccess(terminal: $terminal, fullAccess: $fullAccess, '
-      'files: $files)';
+      'files: $files, stream: $stream)';
 
   @override
   bool operator ==(Object other) =>
     other is MonitorRemoteAccess &&
        terminal == other.terminal &&
        fullAccess == other.fullAccess &&
-       files == other.files;
+       files == other.files &&
+       stream == other.stream;
 
   @override
-  int get hashCode => Object.hash(terminal, fullAccess, files);
+  int get hashCode => Object.hash(terminal, fullAccess, files, stream);
 }
