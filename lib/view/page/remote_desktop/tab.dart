@@ -9,6 +9,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/src/rust/api/remote_desktop.dart' as ffi;
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 
 class RemoteDesktopTabPage extends ConsumerStatefulWidget {
   const RemoteDesktopTabPage({super.key});
@@ -71,52 +72,78 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
       },
     );
     final active = state.active;
-    if (active == null) return _empty();
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final wide = remoteDesktopUsesWideLayout(constraints.maxWidth);
-        if (wide) {
-          return Row(
-            children: [
-              SizedBox(width: 260, child: _sessionList(state)),
-              const VerticalDivider(width: 1),
-              Expanded(child: RemoteDesktopViewer(sessionId: active.id)),
-            ],
-          );
-        }
-        return Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(SessionTabBar.height),
-            child: SizedBox(
-              height: SessionTabBar.height,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SessionSwitcherLabel(
-                      name: active.profile.name,
-                      position: state.ordered.indexWhere((e) => e.id == active.id) + 1,
-                      total: state.sessions.length,
-                      icon: Icons.desktop_windows_outlined,
-                      onTap: () => _showSessions(state),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: libL10n.close,
-                    icon: const Icon(Icons.close),
-                    onPressed: () => ref
-                        .read(remoteDesktopSessionsProvider.notifier)
-                        .close(active.id),
-                  ),
-                  const SizedBox(width: 5),
-                ],
-              ),
-            ),
-          ),
-          body: RemoteDesktopViewer(sessionId: active.id),
-        );
-      },
+    // The same shape the terminal and file tabs have: a rail of what is open
+    // beside the thing itself, and one column where there is no room for two.
+    // The layout used to be laid out here — a `Row` with a fixed 260-point
+    // list — which meant no drag, no fold, and a width the other tabs' rails
+    // did not share.
+    return SbPaneList(
+      // Nothing open is nothing to put beside: the column is not reserved for
+      // an empty surface.
+      hasContent: active != null,
+      sideBuilder: (_) => _sessionRail(state),
+      builder: (_, split) => _buildSurface(state, split),
     );
   }
+
+  Widget _buildSurface(RemoteDesktopSessionsState state, bool split) {
+    final active = state.active;
+    if (active == null) return _empty();
+    return Scaffold(
+      appBar: split ? _sessionBar(active) : _switcherBar(state, active),
+      body: RemoteDesktopViewer(sessionId: active.id),
+    );
+  }
+
+  /// The bar of a single column: which of the sessions is on screen, and the
+  /// way to the rest of them.
+  PreferredSizeWidget _switcherBar(
+    RemoteDesktopSessionsState state,
+    RemoteDesktopSessionView active,
+  ) => PreferredSize(
+    preferredSize: const Size.fromHeight(SessionTabBar.height),
+    child: SizedBox(
+      height: SessionTabBar.height,
+      child: Row(
+        children: [
+          Expanded(
+            child: SessionSwitcherLabel(
+              name: active.profile.name,
+              position: state.ordered.indexWhere((e) => e.id == active.id) + 1,
+              total: state.sessions.length,
+              icon: Icons.desktop_windows_outlined,
+              onTap: () => _showSessions(state),
+            ),
+          ),
+          IconButton(
+            tooltip: libL10n.close,
+            icon: const Icon(Icons.close),
+            onPressed: () => ref
+                .read(remoteDesktopSessionsProvider.notifier)
+                .close(active.id),
+          ),
+          const SizedBox(width: 5),
+        ],
+      ),
+    ),
+  );
+
+  /// The bar beside the rail: the rail switches sessions and starts them, so
+  /// all this has to say is which one is on screen.
+  PreferredSizeWidget _sessionBar(RemoteDesktopSessionView active) =>
+      CustomAppBar(
+        title: Text(active.profile.name),
+        actions: [
+          Btn.icon(
+            text: libL10n.close,
+            icon: const Icon(Icons.close, size: 18),
+            onTap: () => ref
+                .read(remoteDesktopSessionsProvider.notifier)
+                .close(active.id),
+          ),
+          const SizedBox(width: 7),
+        ],
+      );
 
   Widget _empty() => Scaffold(
     body: Center(
@@ -139,71 +166,41 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     ),
   );
 
-  Widget _sessionList(RemoteDesktopSessionsState state) => Material(
-    color: Theme.of(context).colorScheme.surfaceContainerLow,
-    child: Column(
-      children: [
-        SizedBox(
-          height: SessionTabBar.height,
-          child: Row(
-            children: [
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Text(
-                  'Remote desktop',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-              ),
-              Text('${state.sessions.length}', style: UIs.text13Grey),
-              const SizedBox(width: 14),
-            ],
-          ),
+  /// The rail: a name and whether it is connected, like every other rail here.
+  Widget _sessionRail(RemoteDesktopSessionsState state) => ListView(
+    padding: const EdgeInsets.only(top: 4, bottom: 77),
+    children: [
+      for (final session in state.ordered)
+        SideBarTile(
+          key: ValueKey(session.id),
+          title: session.profile.name,
+          icon: Icons.desktop_windows_outlined,
+          selected: state.activeId == session.id,
+          live: session.connectionState ==
+              ffi.RemoteDesktopConnectionState.connected,
+          onTap: () => ref
+              .read(remoteDesktopSessionsProvider.notifier)
+              .select(session.id),
+          onMenu: (at) => _showSessionMenu(session, at),
         ),
-        const Divider(height: 1),
-        Expanded(
-          child: ListView.builder(
-            itemCount: state.ordered.length,
-            itemBuilder: (_, index) => _sessionTile(state.ordered[index], state.activeId),
-          ),
-        ),
-      ],
-    ),
+    ],
   );
 
-  Widget _sessionTile(RemoteDesktopSessionView session, String? activeId) {
-    final active = activeId == session.id;
-    final color = switch (session.connectionState) {
-      ffi.RemoteDesktopConnectionState.connected => Colors.green,
-      ffi.RemoteDesktopConnectionState.connecting ||
-      ffi.RemoteDesktopConnectionState.reconnecting => Colors.orange,
-      ffi.RemoteDesktopConnectionState.disconnected => Colors.red,
-    };
-    return ListTile(
-      selected: active,
-      leading: Semantics(
-        label: _connectionStateLabel(session.connectionState),
-        excludeSemantics: true,
-        child: Tooltip(
-          message: _connectionStateLabel(session.connectionState),
-          excludeFromSemantics: true,
-          child: Icon(Icons.circle, size: 10, color: color),
+  void _showSessionMenu(RemoteDesktopSessionView session, Offset? at) {
+    showContextMenu(
+      context,
+      [
+        ContextMenuAction(
+          text: libL10n.close,
+          icon: Icons.close,
+          destructive: true,
+          onTap: () => ref
+              .read(remoteDesktopSessionsProvider.notifier)
+              .close(session.id),
         ),
-      ),
-      title: Text(session.profile.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(
-        '${session.profile.protocol.name.toUpperCase()} · '
-        '${_connectionStateLabel(session.connectionState)}',
-      ),
-      trailing: IconButton(
-        tooltip: libL10n.close,
-        icon: const Icon(Icons.close, size: 18),
-        onPressed: () => ref
-            .read(remoteDesktopSessionsProvider.notifier)
-            .close(session.id),
-      ),
-      onTap: () => ref
-          .read(remoteDesktopSessionsProvider.notifier)
-          .select(session.id),
+      ],
+      title: session.profile.name,
+      at: at,
     );
   }
 
@@ -313,5 +310,3 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     }
   }
 }
-
-bool remoteDesktopUsesWideLayout(double width) => width >= 800;
