@@ -20,7 +20,7 @@ import type { RemoteAccess } from '../types'
 ///
 /// It is a subset of `View` — `layout.svelte.ts` widens `View` with this type
 /// rather than repeating the names, so the two cannot drift.
-export type FeatureId = 'containers' | 'cron'
+export type FeatureId = 'containers' | 'process' | 'cron'
 
 export interface FeatureSpec {
   /// The `View` this feature renders as, and how `layout.navigate` names it.
@@ -35,6 +35,7 @@ export interface FeatureSpec {
 
 export const FEATURES: FeatureSpec[] = [
   { id: 'containers', capability: 'containers' },
+  { id: 'process', capability: 'process' },
   { id: 'cron', capability: 'cron' },
 ]
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CalendarClock, Container, type Icon as LucideIcon } from '@lucide/svelte'
+  import { Activity, CalendarClock, Container, type Icon as LucideIcon } from '@lucide/svelte'
   import { enabledFeatures, type FeatureId } from '../lib/features'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
@@ -23,6 +23,7 @@
   /// a tab that renders an empty string.
   const PRESENTATION: Record<FeatureId, { label: () => string; icon: typeof LucideIcon }> = {
     containers: { label: () => $LL.containers(), icon: Container },
+    process: { label: () => $LL.processes(), icon: Activity },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
   }
 

@@ -16,6 +16,10 @@ import type {
   LoginResponse,
   PowerAction,
   PowerResult,
+  ProcessSignalRequest,
+  ProcessSignalResult,
+  ProcessSortMode,
+  ProcessView,
   PushEntry,
   PushListView,
   PushPayload,
@@ -401,6 +405,36 @@ export const api = {
       '/containers',
       { method: 'POST', body: JSON.stringify(action) },
       'Failed to change the container',
+    ),
+  /// One reading of the machine's process table.
+  ///
+  /// Reading is not gated on the shell grant — `ps` shows the agent's own user
+  /// the table `top` would show it — so a panel that may only look is told
+  /// `editable: false` rather than refused.
+  ///
+  /// The order is asked of the agent rather than applied here: which orders a
+  /// table can answer depends on the columns *this* machine printed, and the
+  /// response says both. `ascending` is omitted unless the user has chosen a
+  /// direction, so the mode's own default applies.
+  getProcess: (sort?: ProcessSortMode, ascending?: boolean) =>
+    request<ProcessView>(
+      `/process?${new URLSearchParams({
+        ...(sort ? { sort } : {}),
+        ...(ascending === undefined ? {} : { ascending: String(ascending) }),
+      })}`,
+      {},
+      'Failed to fetch the process list',
+    ),
+  /// Sends one signal and answers with what happened.
+  ///
+  /// The agent runs the same script the app runs over SSH, which checks the
+  /// PID's start identity before signalling it and retries as root with
+  /// `password` when the process belongs to another account.
+  signalProcess: (payload: ProcessSignalRequest) =>
+    request<ProcessSignalResult>(
+      '/process',
+      { method: 'POST', body: JSON.stringify(payload) },
+      'Failed to reach the machine',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

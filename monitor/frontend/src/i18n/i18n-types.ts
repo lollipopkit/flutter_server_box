@@ -1145,6 +1145,149 @@ type RootTranslation = {
 	 */
 	cronInvalidUnknownLine: string
 	/**
+	 * P​r​o​c​e​s​s​e​s
+	 */
+	processes: string
+	/**
+	 * R​e​a​d​ ​a​t​ ​{​t​i​m​e​}​ ​·​ ​{​c​o​u​n​t​}​ ​p​r​o​c​e​s​s​e​s
+	 * @param {unknown} count
+	 * @param {unknown} time
+	 */
+	processSampledAt: RequiredParams<'count' | 'time'>
+	/**
+	 * N​a​m​e​,​ ​u​s​e​r​ ​o​r​ ​P​I​D
+	 */
+	processSearchHint: string
+	/**
+	 * S​h​o​w​ ​{​c​o​u​n​t​}​ ​k​e​r​n​e​l​ ​t​h​r​e​a​d​s
+	 * @param {unknown} count
+	 */
+	processKernelThreads: RequiredParams<'count'>
+	/**
+	 * L​o​a​d​ ​{​o​n​e​}​ ​{​f​i​v​e​}​ ​{​f​i​f​t​e​e​n​}
+	 * @param {unknown} fifteen
+	 * @param {unknown} five
+	 * @param {unknown} one
+	 */
+	processLoad: RequiredParams<'fifteen' | 'five' | 'one'>
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​r​o​w​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.​ ​T​h​e​y​ ​a​r​e​ ​n​o​t​ ​l​i​s​t​e​d​ ​h​e​r​e​.
+	 */
+	processIssue: string
+	/**
+	 * N​o​ ​p​r​o​c​e​s​s​e​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	processNone: string
+	/**
+	 * N​o​ ​p​r​o​c​e​s​s​ ​m​a​t​c​h​e​s​ ​t​h​e​ ​f​i​l​t​e​r​.
+	 */
+	processNoMatch: string
+	/**
+	 * T​h​e​s​e​ ​p​r​o​c​e​s​s​e​s​ ​c​a​n​ ​b​e​ ​l​i​s​t​e​d​ ​h​e​r​e​ ​b​u​t​ ​n​o​t​ ​s​i​g​n​a​l​l​e​d​.​ ​S​i​g​n​a​l​l​i​n​g​ ​o​n​e​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​g​r​a​n​t​ ​a​s​ ​t​h​e​ ​s​h​e​l​l​,​ ​b​e​c​a​u​s​e​ ​a​n​y​o​n​e​ ​w​h​o​ ​c​a​n​ ​o​p​e​n​ ​a​ ​s​h​e​l​l​ ​c​a​n​ ​r​u​n​ ​k​i​l​l​ ​i​n​ ​i​t​.
+	 */
+	processReadOnly: string
+	/**
+	 * C​P​U
+	 */
+	processCpu: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	processMemory: string
+	/**
+	 * R​S​S
+	 */
+	processRss: string
+	/**
+	 * {​c​o​u​n​t​}​ ​t​h​r​e​a​d​s
+	 * @param {unknown} count
+	 */
+	processThreads: RequiredParams<'count'>
+	/**
+	 * S​t​o​p
+	 */
+	processStop: string
+	/**
+	 * F​o​r​c​e​ ​k​i​l​l
+	 */
+	processForceKill: string
+	/**
+	 * S​e​n​d​ ​a​ ​s​i​g​n​a​l​ ​t​o​ ​{​n​a​m​e​}​ ​(​P​I​D​ ​{​p​i​d​}​)​?
+	 * @param {unknown} name
+	 * @param {unknown} pid
+	 */
+	processStopConfirm: RequiredParams<'name' | 'pid'>
+	/**
+	 * R​e​t​r​y​ ​a​s​ ​r​o​o​t
+	 */
+	processRetryAsRoot: string
+	/**
+	 * {​s​i​g​n​a​l​}​ ​s​e​n​t​ ​t​o​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 * @param {unknown} signal
+	 */
+	processKillSucceeded: RequiredParams<'name' | 'signal'>
+	/**
+	 * T​h​a​t​ ​p​r​o​c​e​s​s​ ​h​a​s​ ​c​h​a​n​g​e​d​ ​o​r​ ​e​x​i​t​e​d​.​ ​T​h​e​ ​t​a​b​l​e​ ​h​a​s​ ​b​e​e​n​ ​r​e​a​d​ ​a​g​a​i​n​.
+	 */
+	processKillTargetChanged: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​d​o​e​s​ ​n​o​t​ ​o​w​n​ ​t​h​a​t​ ​p​r​o​c​e​s​s​.
+	 */
+	processKillDenied: string
+	/**
+	 * T​h​e​ ​s​i​g​n​a​l​ ​f​a​i​l​e​d​.
+	 */
+	processKillFailed: string
+	/**
+	 * T​h​e​ ​t​a​b​l​e​ ​d​i​d​ ​n​o​t​ ​f​i​n​i​s​h​ ​p​r​i​n​t​i​n​g​ ​i​n​ ​t​i​m​e​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
+	 */
+	processDidNotFinish: string
+	/**
+	 * T​h​e​ ​t​a​b​l​e​ ​i​s​ ​l​a​r​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​r​e​a​d​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​i​s​ ​s​h​o​w​n​ ​h​e​r​e​.
+	 */
+	processTooLarge: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​p​r​i​n​t​e​d​ ​a​n​ ​e​m​p​t​y​ ​t​a​b​l​e​.
+	 */
+	processEmpty: string
+	/**
+	 * T​h​e​ ​m​a​c​h​i​n​e​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​w​a​y​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​.
+	 */
+	processUnreadable: string
+	/**
+	 * C​P​U
+	 */
+	processSortCpu: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	processSortMem: string
+	/**
+	 * R​S​S
+	 */
+	processSortRss: string
+	/**
+	 * R​e​a​d
+	 */
+	processSortRead: string
+	/**
+	 * W​r​i​t​e
+	 */
+	processSortWrite: string
+	/**
+	 * P​I​D
+	 */
+	processSortPid: string
+	/**
+	 * U​s​e​r
+	 */
+	processSortUser: string
+	/**
+	 * N​a​m​e
+	 */
+	processSortName: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -2251,6 +2394,138 @@ export type TranslationFunctions = {
 	 * That job is no longer at that position. The schedule has been read again.
 	 */
 	cronInvalidUnknownLine: () => LocalizedString
+	/**
+	 * Processes
+	 */
+	processes: () => LocalizedString
+	/**
+	 * Read at {time} · {count} processes
+	 */
+	processSampledAt: (arg: { count: unknown, time: unknown }) => LocalizedString
+	/**
+	 * Name, user or PID
+	 */
+	processSearchHint: () => LocalizedString
+	/**
+	 * Show {count} kernel threads
+	 */
+	processKernelThreads: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Load {one} {five} {fifteen}
+	 */
+	processLoad: (arg: { fifteen: unknown, five: unknown, one: unknown }) => LocalizedString
+	/**
+	 * The machine printed rows this agent could not read. They are not listed here.
+	 */
+	processIssue: () => LocalizedString
+	/**
+	 * No processes on this machine.
+	 */
+	processNone: () => LocalizedString
+	/**
+	 * No process matches the filter.
+	 */
+	processNoMatch: () => LocalizedString
+	/**
+	 * These processes can be listed here but not signalled. Signalling one is the same grant as the shell, because anyone who can open a shell can run kill in it.
+	 */
+	processReadOnly: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	processCpu: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	processMemory: () => LocalizedString
+	/**
+	 * RSS
+	 */
+	processRss: () => LocalizedString
+	/**
+	 * {count} threads
+	 */
+	processThreads: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * Stop
+	 */
+	processStop: () => LocalizedString
+	/**
+	 * Force kill
+	 */
+	processForceKill: () => LocalizedString
+	/**
+	 * Send a signal to {name} (PID {pid})?
+	 */
+	processStopConfirm: (arg: { name: unknown, pid: unknown }) => LocalizedString
+	/**
+	 * Retry as root
+	 */
+	processRetryAsRoot: () => LocalizedString
+	/**
+	 * {signal} sent to {name}.
+	 */
+	processKillSucceeded: (arg: { name: unknown, signal: unknown }) => LocalizedString
+	/**
+	 * That process has changed or exited. The table has been read again.
+	 */
+	processKillTargetChanged: () => LocalizedString
+	/**
+	 * This account does not own that process.
+	 */
+	processKillDenied: () => LocalizedString
+	/**
+	 * The signal failed.
+	 */
+	processKillFailed: () => LocalizedString
+	/**
+	 * The table did not finish printing in time, so nothing is shown here.
+	 */
+	processDidNotFinish: () => LocalizedString
+	/**
+	 * The table is larger than this agent will read, so nothing is shown here.
+	 */
+	processTooLarge: () => LocalizedString
+	/**
+	 * The machine printed an empty table.
+	 */
+	processEmpty: () => LocalizedString
+	/**
+	 * The machine answered in a way this agent could not read.
+	 */
+	processUnreadable: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	processSortCpu: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	processSortMem: () => LocalizedString
+	/**
+	 * RSS
+	 */
+	processSortRss: () => LocalizedString
+	/**
+	 * Read
+	 */
+	processSortRead: () => LocalizedString
+	/**
+	 * Write
+	 */
+	processSortWrite: () => LocalizedString
+	/**
+	 * PID
+	 */
+	processSortPid: () => LocalizedString
+	/**
+	 * User
+	 */
+	processSortUser: () => LocalizedString
+	/**
+	 * Name
+	 */
+	processSortName: () => LocalizedString
 	/**
 	 * Close
 	 */

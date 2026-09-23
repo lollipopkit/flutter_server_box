@@ -5,6 +5,7 @@
   import Sidebar from './components/Sidebar.svelte'
   import Dashboard from './pages/Dashboard.svelte'
   import Containers from './pages/Containers.svelte'
+  import Process from './pages/Process.svelte'
   import Cron from './pages/Cron.svelte'
   import Files from './pages/Files.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
@@ -37,6 +38,8 @@
             <Files />
           {:else if layout.view === 'containers'}
             <Containers onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'process'}
+            <Process onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'cron'}
             <Cron onback={() => layout.back('dashboard')} />
           {:else}
