@@ -216,6 +216,71 @@ the panel password can't switch it on); shared admission checks live in
   refusals, and one signal to a PID no process holds; the one successful stop it
   makes is of a process it started itself, and only where the platform has a
   stop at all (BSD has none).
+- **`GET/POST /api/v1/containers`** — the containers on the machine, with
+  `part=containers|images|usage|logs`. The model is
+  `sbm_parser::container` — which fields to ask for, how Podman's dialect is
+  told from Docker's, how a container's state is read out of either one's
+  wording and what a prune may remove — ported from the app's Dart fixture
+  suite, so the panel never composes a command line. A `POST` is a
+  `ContainerAction` as a tagged object, and an action this build does not
+  implement is refused while deserializing rather than reaching a shell.
+  Reading needs only the panel login and changing one is `full_access`; the
+  response says `editable` so the page goes read-only instead of failing on a
+  click. The runtime is detected (`docker` first, then `podman`, honouring the
+  client that prints `Emulate Docker CLI using podman` and otherwise answers
+  every Docker command), and **there is no way to name the runtime or the
+  socket** — a remote `DOCKER_HOST` is a real case the app supports and this
+  endpoint does not yet (TODO: an agent-side setting). Logs are a bounded
+  `logs` part rather than the panel composing `/exec`.
+  `tests/containers_api.rs`.
+- **`GET/POST /api/v1/services`** — the systemd/procd/OpenRC units of the
+  machine, with `part=list|logs|definition|status`. Three manager backends in
+  `sbm_parser::service`, whose Dart counterpart's fixture suite is
+  `tests/service_compat.rs` (fed the real output under `test/fixtures/systemd/`).
+  **A unit's key is the agent's** (`"{scope}:{full_name}"`), not the panel's:
+  with a second way of spelling one, a listing and a request about a unit can
+  disagree and the unit reads as missing. Reading needs only the panel login and
+  acting on one is `full_access`. **Logs are read as the agent's own account and
+  never through `sudo`** — what the journal shows root is a different question
+  from the one the page asks. Timestamps are asked for with `TZ=UTC` and the
+  offset read out of the value, so the panel draws one instant in the reader's
+  zone without shifting the machine's. `monitor/src/api/privileged.rs` (`as_self`
+  / `as_root`) was extracted here and `process` moved onto it.
+  `tests/service_api.rs` mounts the real `configure_api`; where the machine's
+  detector answers launchd the listing cases are skipped rather than asserted
+  into a refusal.
+- **`GET/POST /api/v1/users`** — the machine's accounts: the catalog and one
+  account's own records, with `part=list|detail` (`detail` needs `name` and is
+  answered 400 without it), and the writes `create|edit|delete`. The model is
+  `sbm_parser::users` — the `/etc/passwd` and `/etc/group` catalog, the
+  account's `/etc/shadow`, `authorized_keys` and sudoers, and the `useradd` /
+  `usermod` / `userdel` command texts — ported from the app's Dart fixture suite,
+  so the app over SSH and the agent in a local shell read one machine the same
+  way. **Linux only**: another platform answers 200 with `available: false` and
+  `reason_kind: unsupported_platform`, because macOS has `dscl` behind a
+  directory service and Windows has neither the files nor the commands, so a
+  port is a different implementation rather than a different parser. Reading
+  needs only the panel login and writing is `full_access`.
+  - **A refusal the caller could have avoided is made before the machine is
+    touched**, and answered 400 with a stable code rather than a sentence (404
+    for `noSuchUser`, which is a state of the machine and not a mistake in the
+    request) — an unreadable machine is 200 with a reason, because the panel
+    draws a page either way and stops on a code. The codes are
+    `sbm_parser::users::UserError`'s plus this endpoint's own, and the panel
+    phrases them in the viewer's language (`lib/userRefusal.ts`).
+  - The catalog carries what the panel cannot derive: `agent_account` (the one
+    account this endpoint must not remove — it is a process on this machine and
+    `userdel -r` would take the home the service reads its config from) and
+    `uid_min` from `/etc/login.defs`. Both are `None` when the catalog could not
+    be read, so no name is offered for removal on a page the machine did not
+    answer for. `remove_home` is asked separately rather than assumed.
+  - The account's own password travels inside the generated script down the same
+    pipe as the `sudo` password, never on a command line. The `sudo` password is
+    `api::privileged`'s field and a refusal to it answers `sudo_rejected` as a
+    field rather than a failed request, since the caller's next move is to ask
+    for a different one.
+  - `tests/user_api.rs`; `crates/sbm_parser/tests/user_compat.rs` is the port's
+    own assertion against the cases the Dart suite held.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",
