@@ -828,9 +828,15 @@ async fn execute_commands(system: SystemType, include_extended: bool) -> Result<
 /// [`crate::utils::command::run`], which is what makes the pipe close behind
 /// it. Null is the ordinary case: the account the agent runs as is expected
 /// either to be root or to hold NOPASSWD for the specific command.
+///
+/// `limits` is the caller's, not this function's: a power action runs a fixed
+/// pair of lines, while `SbProcess` prints a row per process and is as large
+/// as the machine's process list. One bound for both would either cut a table
+/// short or let a power action buffer far more than it can produce.
 pub(crate) async fn run_local_shell_func(
     func: sbm_parser::script::ShellFunc,
     stdin: Option<&[u8]>,
+    limits: command::Limits,
 ) -> Result<Option<std::process::Output>> {
     let system = system_type();
     let path = script_path(system);
@@ -855,7 +861,7 @@ pub(crate) async fn run_local_shell_func(
     // into a string: [`command::run`] distinguishes the output cap from a spawn
     // or pipe failure by `ErrorKind`, and a caller that reports the cap as a
     // field loses that the moment it is formatted.
-    command::run(command, func.name(), command::Limits::DEFAULT, stdin)
+    command::run(command, func.name(), limits, stdin)
         .await
         .map_err(MonitorError::from)
 }
@@ -1433,10 +1439,11 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn a_shell_function_runs_locally_and_answers() {
-        let output = run_local_shell_func(sbm_parser::script::ShellFunc::Process, None)
-            .await
-            .expect("the status script should be runnable")
-            .expect("ps should not take the full timeout");
+        let output =
+            run_local_shell_func(sbm_parser::script::ShellFunc::Process, None, command::Limits::DEFAULT)
+                .await
+                .expect("the status script should be runnable")
+                .expect("ps should not take the full timeout");
 
         assert!(output.status.success(), "ps exited with {}", output.status);
         assert!(

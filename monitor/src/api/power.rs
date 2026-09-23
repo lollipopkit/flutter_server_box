@@ -126,8 +126,12 @@ pub async fn power(
         .record(&app_state.db)
         .await;
 
-    let output = run_local_shell_func(action.shell_func(), body.password.as_deref().map(str::as_bytes))
-        .await;
+    let output = run_local_shell_func(
+        action.shell_func(),
+        body.password.as_deref().map(str::as_bytes),
+        crate::utils::command::Limits::DEFAULT,
+    )
+    .await;
     let output = match output {
         Ok(output) => output,
         // Reported as a field rather than as a failure: what the command

@@ -56,6 +56,12 @@ pub enum Kind {
     /// container, and because reading this endpoint is not recorded at all —
     /// a row here is always a change, which is not true of `Exec` or `Fs`.
     Container,
+    /// A signal sent to one process through `api::process`. Its own kind for
+    /// `Container`'s reason, plus one of its own: the subject is a PID and the
+    /// signal, and the PID came off a listing that this agent wrote — a row
+    /// naming it is the only record of which process was signalled, since the
+    /// number may belong to something else by the time the row is read.
+    Process,
 }
 
 impl Kind {
@@ -71,6 +77,7 @@ impl Kind {
             Kind::Power => "power",
             Kind::Cron => "cron",
             Kind::Container => "container",
+            Kind::Process => "process",
         }
     }
 }

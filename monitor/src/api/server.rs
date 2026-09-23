@@ -109,6 +109,10 @@ pub struct AppState {
     /// precisely so ordinary use doesn't contend here, yet they still edit
     /// one file and must not race.
     pub config_write: Arc<Mutex<()>>,
+    /// The last process table this agent read, kept because a read/write speed
+    /// is a difference against the previous reading and there has to be one
+    /// somewhere — see `api::process`.
+    pub process_sample: Arc<Mutex<Option<crate::api::process::ProcessSample>>>,
 }
 
 impl AppState {
@@ -139,6 +143,7 @@ impl AppState {
             live_settings,
             last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
             config_write: Arc::new(Mutex::new(())),
+            process_sample: Arc::new(Mutex::new(None)),
         })
     }
 
@@ -288,6 +293,14 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 web::resource("/containers")
                     .route(web::get().to(crate::api::containers::list))
                     .route(web::post().to(crate::api::containers::act)),
+            )
+            .service(
+                // A read with a query string, and one action — a PID, the
+                // identity the listing gave it and a signal — so the default
+                // 32 KiB applies to both.
+                web::resource("/process")
+                    .route(web::get().to(crate::api::process::list))
+                    .route(web::post().to(crate::api::process::kill)),
             )
             .service(
                 // A streamed body, so ntex's payload limit must not
@@ -820,6 +833,13 @@ struct RemoteAccessView {
     /// user, changing one is `full_access`, and the response says which of the
     /// two this caller has.
     containers: bool,
+    /// Whether `/api/v1/process` answers this agent at all.
+    ///
+    /// Its own field for [`Self::stream`]'s reason, and `true` for
+    /// [`Self::cron`]'s: `ps` shows the agent's own user the table `top` would
+    /// show it, signalling a process is `full_access`, and the response says
+    /// which of the two this caller has.
+    process: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -861,6 +881,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             // login. See `RemoteAccessView::cron`.
             cron: true,
             containers: true,
+            process: true,
         },
     }))
 }

@@ -1048,8 +1048,12 @@ pub enum ProcSignal {
 }
 
 impl ProcSignal {
-    /// The shell's name for it.
-    fn name(self) -> &'static str {
+    /// The shell's name for it, upper-case as `kill -s` takes it.
+    ///
+    /// Public because it is also the word an audit row names the signal with:
+    /// a caller that spelled its own would be a second vocabulary for the same
+    /// two things.
+    pub fn name(self) -> &'static str {
         match self {
             Self::Term => "TERM",
             Self::Kill => "KILL",

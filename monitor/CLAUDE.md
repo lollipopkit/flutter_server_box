@@ -194,6 +194,28 @@ the panel password can't switch it on); shared admission checks live in
   own clock from the listing script's `date +'%s %z'`. `tests/cron_api.rs`
   covers the refusals and the audit row and deliberately performs no successful
   save — the suite runs against the crontab of whoever runs it.
+- **`GET/POST /api/v1/process`** — the machine's process table, and the signal
+  that stops one process. The table is
+  `sbm_parser::script::ShellFunc::Process` run locally — the same text the app
+  uploads and calls with `-p` over SSH — and the stop is
+  `sbm_parser::proc::kill_command`, so neither the panel nor the app composes a
+  command or parses `ps`. Reading needs only the panel login; **signalling is
+  `full_access`**, the same grant as the shell, and the response says
+  `editable` so the page can go read-only instead of failing on a click. The
+  table is parsed once per request and **the reading is kept on the agent**,
+  because a read/write speed is a difference against the previous reading: a
+  request inside a two-second window is answered with the stored reading
+  reordered rather than with a second `ps` a few milliseconds later, and a
+  reading older than thirty seconds is dropped rather than divided by. The
+  response reports the columns the machine filled, the orders that leaves
+  available and which one it answered in, so the page draws no rule of its own;
+  a PID is checked against the start identity the listing gave it before any
+  signal is sent, and a stop that this account may not make is retried through
+  `sudo` with a password from the body, never from a command line.
+  `tests/process_api.rs` asserts the table against the process that asked, the
+  refusals, and one signal to a PID no process holds; the one successful stop it
+  makes is of a process it started itself, and only where the platform has a
+  stop at all (BSD has none).
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",

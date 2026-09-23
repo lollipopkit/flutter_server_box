@@ -4,6 +4,7 @@ pub mod custom_cmds;
 pub mod exec;
 pub mod fs;
 pub mod power;
+pub mod process;
 pub mod push;
 pub mod cors;
 pub mod auth;
