@@ -190,6 +190,18 @@ const ko = {
 	retentionCleanupHours: '실행 주기 (시간)',
 	retentionMaxDbSizeMb: '크기 상한 (MB)',
 	retentionInvalid: '은(는) 올바른 값이 아닙니다',
+	powerControl: '전원',
+	powerShutdown: '종료',
+	powerReboot: '재부팅',
+	powerSuspend: '절전',
+	powerNote: 'agent는 머신과 함께 멈추므로 이 패널에서 다시 켤 수 없습니다. 머신에서 실행 중인 것은 모두 끝납니다.',
+	powerPassword: 'sudo 비밀번호',
+	powerPasswordHint: 'agent가 root로 실행되거나 해당 계정이 이 명령에 비밀번호 없는 sudo를 가진 경우 비워 두세요.',
+	powerRejected: '머신이 그 비밀번호를 거부했습니다. 아무 일도 일어나지 않았습니다.',
+	powerFailed: '명령이 실패했습니다.',
+	powerTimeout: '응답이 돌아오지 않았습니다. 이미 종료 중인 머신이 이런 모습입니다.',
+	powerActionSent: '전송됨: {action}. 머신이 종료되면 이 패널은 다시 켜질 때까지 연결을 잃습니다.',
+	close: '닫기',
 } satisfies Translation
 
 export default ko

@@ -146,6 +146,18 @@ the panel password can't switch it on); shared admission checks live in
   A caller that must outlive any configured timeout should start the work
   detached and poll it in short requests instead of asking for a longer one.
   `tests/exec_api.rs`.
+- **`POST /api/v1/power`** — shut down, reboot or suspend the machine the agent
+  runs on. Gated on `full_access`, like the shell and `/exec`: anyone who can
+  open a shell can run `shutdown` in it, so a switch of its own would withhold
+  nothing. The command text is the shared status script's
+  (`sbm_parser::script::ShellFunc::{Shutdown,Reboot,Suspend}`), run locally by
+  `monitoring::run_local_shell_func` — so what the panel asks for is what the
+  app runs over SSH, and a change to either reaches both. A `sudo -S` password
+  travels in the body, never in a command line, and a refusal comes back as a
+  field (`sudo_rejected`) rather than as a failed request, since the caller's
+  next move is to ask for a different one. `tests/power_api.rs` covers the
+  refusals and the audit row; the execution path is not exercised there, because
+  the only thing it can do is power off the test machine.
 - **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
   are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
   than anything in this agent's config. The same directory the app writes over

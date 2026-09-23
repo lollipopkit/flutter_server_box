@@ -190,6 +190,18 @@ const pt = {
 	retentionCleanupHours: 'Executar a cada (horas)',
 	retentionMaxDbSizeMb: 'Limite de tamanho (MB)',
 	retentionInvalid: 'não é um valor válido',
+	powerControl: 'Energia',
+	powerShutdown: 'Desligar',
+	powerReboot: 'Reiniciar',
+	powerSuspend: 'Suspender',
+	powerNote: 'O agente para junto com a máquina, portanto este painel não consegue voltar a ligá-la. Tudo o que estiver a correr nela termina.',
+	powerPassword: 'Palavra-passe do sudo',
+	powerPasswordHint: 'Deixe em branco se o agente correr como root, ou se a sua conta tiver sudo sem palavra-passe para este comando.',
+	powerRejected: 'A máquina recusou essa palavra-passe. Não aconteceu nada.',
+	powerFailed: 'O comando falhou.',
+	powerTimeout: 'Não chegou resposta, que é o aspeto de uma máquina já a desligar-se.',
+	powerActionSent: 'Enviado: {action}. Se a máquina se desligar, este painel perde-a até ela voltar.',
+	close: 'Fechar',
 } satisfies Translation
 
 export default pt

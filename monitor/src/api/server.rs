@@ -268,6 +268,10 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::exec::exec)),
             )
             .service(
+                // One action and a password, so the default 32 KiB applies.
+                web::resource("/power").route(web::post().to(crate::api::power::power)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -770,6 +774,13 @@ struct RemoteAccessView {
     /// still refuse the upgrade. Staying equal to `full_access` on every agent
     /// that has it is the point — a client reads this one, not that one.
     stream: bool,
+    /// Whether `/api/v1/power` will shut the machine down.
+    ///
+    /// Its own field for [`Self::stream`]'s reason: an agent older than the
+    /// endpoint answers `full_access` and would 404 the request. It is granted
+    /// by the same switch — anyone who can open a shell can run `shutdown` in
+    /// it — but a client asks about the endpoint it is about to call.
+    power: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -805,6 +816,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             full_access: app_state.full_access_allowed(secure),
             files: app_state.remote_access.fs.available(secure),
             stream: app_state.full_access_allowed(secure),
+            power: app_state.full_access_allowed(secure),
         },
     }))
 }

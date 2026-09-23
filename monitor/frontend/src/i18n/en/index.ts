@@ -190,6 +190,18 @@ const en = {
 	retentionCleanupHours: 'Run every (hours)',
 	retentionMaxDbSizeMb: 'Size cap (MB)',
 	retentionInvalid: 'is not a valid value',
+	powerControl: 'Power',
+	powerShutdown: 'Shut down',
+	powerReboot: 'Reboot',
+	powerSuspend: 'Suspend',
+	powerNote: 'The agent stops with the machine, so this panel cannot start it again. Anything running on it ends.',
+	powerPassword: 'Sudo password',
+	powerPasswordHint: 'Leave blank when the agent runs as root, or when its account has passwordless sudo for this command.',
+	powerRejected: 'The machine refused that password. Nothing happened.',
+	powerFailed: 'The command failed.',
+	powerTimeout: 'No answer came back, which is what a machine already going down looks like.',
+	powerActionSent: 'Sent: {action}. If the machine is going down, this panel loses it until it is back.',
+	close: 'Close',
 } satisfies BaseTranslation
 
 export default en

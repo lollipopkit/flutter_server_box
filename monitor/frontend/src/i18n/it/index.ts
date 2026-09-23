@@ -190,6 +190,18 @@ const it = {
 	retentionCleanupHours: 'Esegui ogni (ore)',
 	retentionMaxDbSizeMb: 'Tetto di dimensione (MB)',
 	retentionInvalid: 'non è un valore valido',
+	powerControl: 'Alimentazione',
+	powerShutdown: 'Spegni',
+	powerReboot: 'Riavvia',
+	powerSuspend: 'Sospendi',
+	powerNote: 'L\'agente si ferma con la macchina, quindi questo pannello non può riaccenderla. Tutto ciò che vi è in esecuzione termina.',
+	powerPassword: 'Password sudo',
+	powerPasswordHint: 'Lascia vuoto se l\'agente viene eseguito come root, o se il suo account ha sudo senza password per questo comando.',
+	powerRejected: 'La macchina ha rifiutato quella password. Non è successo nulla.',
+	powerFailed: 'Il comando non è riuscito.',
+	powerTimeout: 'Non è arrivata alcuna risposta, che è l\'aspetto di una macchina già in fase di spegnimento.',
+	powerActionSent: 'Inviato: {action}. Se la macchina si spegne, questo pannello la perde finché non torna.',
+	close: 'Chiudi',
 } satisfies Translation
 
 export default it

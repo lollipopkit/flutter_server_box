@@ -138,9 +138,10 @@ Check these first:
   and scheduled tasks all need `full_access`, which is itself gated on
   `[remote_access.terminal] enabled`. File browsing needs
   `[remote_access.fs] enabled` together with a non-empty `roots`.
-- SFTP and port forwarding are never available through the agent at all. No
-  endpoint relays a connection to an address the app names, so those need
-  SSH configured for the same server in the app.
+- SFTP transfers and port forwarding need SSH configured for the same server
+  in the app. The agent has a TCP relay (`/api/v1/stream/ws`) and remote
+  desktop uses it, but the file-transfer and forward pages reach the machine
+  through the app's SSH client, which an agent cannot stand in for.
 - The terminal and the file API refuse plaintext requests arriving over the
   network. Loopback callers and a same-host reverse proxy are fine without
   TLS.
@@ -287,6 +288,10 @@ The agent reports its current capabilities through `GET /api/v1/capabilities`, a
 
 **`full_access`** gives an authenticated user a shell and command execution as the user running the agent. The App's process, systemd, container, snippet, power-control, and terminal features depend on this grant. Remote desktop (RDP and VNC) does too: the agent dials the desktop's address from its own machine over `/api/v1/stream/ws`, as the same account and under the same grant. It has no switch of its own for that reason — anyone who can open a shell can forward a port from it.
 
+**Power control** is `POST /api/v1/power` with an action of `shutdown`, `reboot` or `suspend`. The same grant as the shell and for the same reason: anyone who can open a shell can run `shutdown` in it, so there is nothing to withhold behind a second switch. The command text is the shared status script's, so what the agent runs is what the App runs over SSH.
+
+`sudo -S` needs a password when the agent does not run as root, and that password travels in the request body, never in a command line — a password in a command line lands in the machine's process list. A password `sudo` refuses is answered as a field rather than as a failed request, because the caller's next move is to ask for a different one.
+
 There is one `full_access` switch because anyone who can open a shell can run arbitrary commands in it. Disabling a separate “commands” switch would not reduce that access. It defaults to enabled on Linux and disabled on macOS and Windows. The panel can disable it, but cannot enable it again; re-enabling requires a configuration-file change.
 
 **The panel password is equivalent to shell access as the agent user.** This is why `install.sh` runs the agent as an ordinary user by default. If you run it as root, disable `full_access`.
@@ -303,9 +308,9 @@ Unless `[remote_access.terminal] allow_insecure = true` is configured, the termi
 
 ## Unsupported features
 
-A server configured only through Monitor HTTP does not provide SFTP or port forwarding. The agent has no endpoint that relays a connection to an address chosen by the App, so it cannot carry either feature. File **browsing** can use the agent's file API, but that API moves file contents rather than providing an arbitrary TCP byte stream.
+A server configured only through Monitor HTTP does not provide SFTP transfers or port forwarding. The agent's file API moves file contents, and it cannot stand in for the SSH channel that the file-transfer and port-forward pages open. Remote desktop is the exception: it needs one TCP connection to an address the client names, which `/api/v1/stream/ws` provides, so RDP and VNC work over the agent alone.
 
-If you need SFTP or port forwarding, configure SSH for the same server in the App.
+If you need SFTP transfers or port forwarding, configure SSH for the same server in the App.
 
 ## Widgets, push, and the Watch app
 

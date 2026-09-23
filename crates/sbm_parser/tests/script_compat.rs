@@ -1266,3 +1266,36 @@ fn custom_cmd_file_names_sort_by_order() {
         None,
     );
 }
+
+#[test]
+fn a_rejected_sudo_password_is_told_apart_from_a_failing_command() {
+    // The three phrasings this has to recognise: util-linux, a PAM stack that
+    // words it differently, and the no-password path.
+    for stderr in [
+        "Sorry, try again.\nsudo: 1 incorrect password attempt",
+        "sudo: 1 incorrect password attempt",
+        "sudo: a password is required",
+        // Still recognised when it is not the first line — `sudo -S` writes
+        // the prompt to stderr before the failure, and a caller reading only
+        // the first line would miss it.
+        "Password: \nsudo: a password is required\n",
+    ] {
+        assert!(script::sudo_password_rejected(stderr), "{stderr:?}");
+    }
+
+    // What a command's own failure looks like, which is the whole reason this
+    // distinction exists: both exit non-zero, and only one of them means the
+    // caller should ask for a password again.
+    for stderr in [
+        "",
+        "sh: systemctl: not found",
+        "Failed to power off system via logind: Access denied",
+        "sudo: unable to resolve host box",
+    ] {
+        assert!(!script::sudo_password_rejected(stderr), "{stderr:?}");
+    }
+
+    // The code a caller reports it as. Read by the app and by the agent, so it
+    // is a constant rather than a literal at each call site.
+    assert_eq!(script::SUDO_PASSWORD_REJECTED, 2);
+}

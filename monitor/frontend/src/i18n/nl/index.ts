@@ -190,6 +190,18 @@ const nl = {
 	retentionCleanupHours: 'Uitvoeren elke (uren)',
 	retentionMaxDbSizeMb: 'Groottelimiet (MB)',
 	retentionInvalid: 'is geen geldige waarde',
+	powerControl: 'Voeding',
+	powerShutdown: 'Afsluiten',
+	powerReboot: 'Herstarten',
+	powerSuspend: 'Slaapstand',
+	powerNote: 'De agent stopt met de machine, dus dit paneel kan hem niet meer aanzetten. Alles wat erop draait eindigt.',
+	powerPassword: 'sudo-wachtwoord',
+	powerPasswordHint: 'Laat leeg als de agent als root draait, of als zijn account sudo zonder wachtwoord heeft voor dit commando.',
+	powerRejected: 'De machine weigerde dat wachtwoord. Er is niets gebeurd.',
+	powerFailed: 'Het commando is mislukt.',
+	powerTimeout: 'Er kwam geen antwoord terug, wat eruitziet als een machine die al aan het afsluiten is.',
+	powerActionSent: 'Verzonden: {action}. Sluit de machine af, dan verliest dit paneel hem tot hij terug is.',
+	close: 'Sluiten',
 } satisfies Translation
 
 export default nl

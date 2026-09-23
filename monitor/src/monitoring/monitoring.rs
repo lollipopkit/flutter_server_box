@@ -2,6 +2,7 @@ use crate::{
     api::server::AppState,
     core::config::{Config, MonitoringConfig},
     monitoring::timeseries::{CpuCoreTime, core_usage_percent},
+    utils::command,
     utils::error::{MonitorError, Result},
 };
 use chrono::{DateTime, Utc};
@@ -10,18 +11,20 @@ use sbm_parser::{ServerStatus, SystemType};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
-use std::process::Stdio;
 use std::sync::Arc;
-use tokio::io::AsyncReadExt;
-use tokio::process::{Child, Command as TokioCommand};
-use tokio::time::{Duration, sleep, timeout, timeout_at};
+use tokio::process::Command as TokioCommand;
+use tokio::time::{Duration, sleep};
 use tracing::{error, info};
 
-/// CLI tools are optional and must not stop the core sampling loop when a
-/// driver, disk, or network filesystem leaves one stuck in kernel I/O.
-const EXTERNAL_COMMAND_TIMEOUT: Duration = Duration::from_secs(30);
-const MAX_COMMAND_OUTPUT_BYTES: u64 = 1024 * 1024;
-const OUTPUT_DRAIN_MINIMUM: Duration = Duration::from_millis(10);
+/// Runs a CLI tool with the default bounds — see [`crate::utils::command`],
+/// which owns the timeout, the output cap and the termination of a command
+/// that exceeds either.
+async fn command_output(
+    command: TokioCommand,
+    label: &str,
+) -> std::io::Result<Option<std::process::Output>> {
+    command::run(command, label, command::Limits::DEFAULT, None).await
+}
 
 /// The subset of `MonitoringConfig` that takes effect immediately on a
 /// settings save, instead of requiring a restart — resolved once from
@@ -635,7 +638,7 @@ async fn sample_linux_gpus(system: SystemType) -> Vec<sbm_parser::types::GpuItem
 /// Build the status script shared with the app (`sbm_parser::script`). Only
 /// the extended cycle runs it, for the shell functions in `EXTENDED_FUNCS` —
 /// everything `sbm_native` covers no longer needs a generated script at all.
-fn build_status_script(system: SystemType) -> String {
+pub(crate) fn build_status_script(system: SystemType) -> String {
     sbm_parser::script::build_script(
         system,
         &sbm_parser::script::ScriptOptions {
@@ -681,7 +684,7 @@ fn monitor_script_disabled(system: SystemType) -> Vec<String> {
 }
 
 /// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`
-fn script_path(system: SystemType) -> std::path::PathBuf {
+pub(crate) fn script_path(system: SystemType) -> std::path::PathBuf {
     let name = match system {
         SystemType::Windows => "status.ps1",
         _ => "status.sh",
@@ -691,13 +694,31 @@ fn script_path(system: SystemType) -> std::path::PathBuf {
 
 /// Write the script if missing or outdated (tmp reapers / version upgrades);
 /// checked every cycle before exec
-fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
+///
+/// The directory is made private first, and the caller finds out if that
+/// failed rather than getting a script anyway. It sits under the system temp
+/// directory, which is world-writable, so without this any local account could
+/// replace `status.sh` between the write and the exec — and
+/// [`run_local_shell_func`] runs this file with a `sudo -S` password on its
+/// standard input. A directory only its owner can write to removes the swap,
+/// and refusing when the mode cannot be set covers the case where the
+/// directory already existed and belongs to someone else (a `chmod` we are not
+/// entitled to make fails, which is the signal).
+///
+/// Not a substitute for a private directory of its own — `/tmp` is still
+/// shared, and the file's own mode stays 0755 so the shell can read it.
+pub(crate) fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     let up_to_date = std::fs::read_to_string(path).is_ok_and(|existing| existing == content);
     if up_to_date {
         return Ok(());
     }
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))?;
+        }
     }
     std::fs::write(path, content)?;
     #[cfg(unix)]
@@ -791,225 +812,52 @@ async fn execute_commands(system: SystemType, include_extended: bool) -> Result<
     Ok(execution)
 }
 
-/// Runs a CLI tool with bounded time and output collection.
+/// Run one function of the generated script locally, on this machine.
 ///
-/// `Child::wait_with_output` consumes the child, which makes it impossible to
-/// signal it if its wait future expires. Read the pipes independently instead,
-/// retaining the child so a timeout can stop it before awaiting the readers.
-async fn command_output(
-    command: TokioCommand,
-    label: &str,
-) -> std::io::Result<Option<std::process::Output>> {
-    command_output_with_timeout(command, label, EXTERNAL_COMMAND_TIMEOUT).await
-}
+/// For the functions that are not part of a status cycle at all — the power
+/// actions — where the agent is the machine rather than a client of it. The
+/// command text is [`sbm_parser::script::exec_command`]'s, so what the panel
+/// runs is the same script the app would run over SSH, and a change to either
+/// function reaches both.
+///
+/// The script is written first rather than assumed: a monitor-only install
+/// never had the app install it, and a missing file means the shell exits 127
+/// with the action silently not happening.
+///
+/// `stdin` carries a sudo password when the caller has one — see
+/// [`crate::utils::command::run`], which is what makes the pipe close behind
+/// it. Null is the ordinary case: the account the agent runs as is expected
+/// either to be root or to hold NOPASSWD for the specific command.
+pub(crate) async fn run_local_shell_func(
+    func: sbm_parser::script::ShellFunc,
+    stdin: Option<&[u8]>,
+) -> Result<Option<std::process::Output>> {
+    let system = system_type();
+    let path = script_path(system);
+    ensure_script(&path, &build_status_script(system)).map_err(|e| {
+        MonitorError::Monitoring(format!("Status script error: {e}"))
+    })?;
 
-async fn command_output_with_timeout(
-    mut command: TokioCommand,
-    label: &str,
-    command_timeout: Duration,
-) -> std::io::Result<Option<std::process::Output>> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        // Its descendants inherit this group. On timeout, ending the group
-        // prevents a shell child such as smartctl from outliving its script.
-        command.as_std_mut().process_group(0);
-    }
-    command
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .kill_on_drop(true);
-    let deadline = tokio::time::Instant::now() + command_timeout;
-    let mut child = command.spawn()?;
-    let process_group = child.id();
-    let stdout = child.stdout.take().expect("stdout was requested as piped");
-    let stderr = child.stderr.take().expect("stderr was requested as piped");
-    // Whichever pipe fills first says so, and the wait below stops waiting.
-    // `take` ends the reader at the cap and leaves the pipe undrained, so a
-    // child that keeps writing blocks on a full pipe and never exits: without
-    // this, `child.wait()` ran to the full timeout and the segment was then
-    // discarded as a timeout rather than reported as too much output. A wide
-    // `smartctl` sweep or `nvidia-smi -q -x` on a many-GPU host reaches it.
-    let (overflow_tx, overflow_rx) = tokio::sync::oneshot::channel::<()>();
-    let overflow_tx = std::sync::Arc::new(std::sync::Mutex::new(Some(overflow_tx)));
-    let announce = {
-        let overflow_tx = overflow_tx.clone();
-        move || {
-            if let Ok(mut slot) = overflow_tx.lock()
-                && let Some(tx) = slot.take()
-            {
-                let _ = tx.send(());
-            }
-        }
+    let command = if cfg!(target_os = "windows") {
+        let mut command = TokioCommand::new("powershell");
+        command
+            .args(["-ExecutionPolicy", "Bypass", "-File"])
+            .arg(&path)
+            .arg(format!("-{}", func.flag()));
+        command
+    } else {
+        let mut command = TokioCommand::new("sh");
+        command.arg(&path).arg(format!("-{}", func.flag()));
+        command
     };
-    let stdout = tokio::spawn({
-        let announce = announce.clone();
-        async move {
-            let mut bytes = Vec::new();
-            let mut stdout = stdout.take(MAX_COMMAND_OUTPUT_BYTES + 1);
-            let read = stdout.read_to_end(&mut bytes).await.map(|_| bytes);
-            if read
-                .as_ref()
-                .is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES)
-            {
-                announce();
-            }
-            read
-        }
-    });
-    let stderr = tokio::spawn(async move {
-        let mut bytes = Vec::new();
-        let mut stderr = stderr.take(MAX_COMMAND_OUTPUT_BYTES + 1);
-        let read = stderr.read_to_end(&mut bytes).await.map(|_| bytes);
-        if read
-            .as_ref()
-            .is_ok_and(|b| b.len() as u64 > MAX_COMMAND_OUTPUT_BYTES)
-        {
-            announce();
-        }
-        read
-    });
-    let stdout_abort = stdout.abort_handle();
-    let stderr_abort = stderr.abort_handle();
 
-    let waited = tokio::select! {
-        // Biased so a child that both overflowed and exited is reported as
-        // overflow, which is the more useful of the two.
-        biased;
-        _ = overflow_rx => {
-            tracing::warn!(
-                "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes and was terminated"
-            );
-            terminate_command(&mut child, process_group).await?;
-            stdout_abort.abort();
-            stderr_abort.abort();
-            tokio::spawn(async move { let _ = child.wait().await; });
-            return Err(std::io::Error::other(format!(
-                "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
-            )));
-        }
-        waited = timeout_at(deadline, child.wait()) => waited,
-    };
-    let status = match waited {
-        Ok(status) => status?,
-        Err(_) => {
-            tracing::warn!(
-                "{label} exceeded {} seconds and was terminated",
-                command_timeout.as_secs()
-            );
-            terminate_command(&mut child, process_group).await?;
-            // A shell can leave descendants holding either pipe. Do not join
-            // their readers after the deadline: a timed-out collection must
-            // never turn into an unbounded wait on inherited handles.
-            stdout_abort.abort();
-            stderr_abort.abort();
-            tokio::spawn(async move {
-                // Reap the direct child eventually without holding up the
-                // monitoring loop. Its process group was already signalled
-                // above on Unix, and `start_kill` was requested elsewhere.
-                let _ = child.wait().await;
-            });
-            return Ok(None);
-        }
-    };
-    let remaining = deadline
-        .saturating_duration_since(tokio::time::Instant::now())
-        .max(OUTPUT_DRAIN_MINIMUM);
-    let output = timeout(remaining, async {
-        let stdout = stdout
-            .await
-            .map_err(|e| std::io::Error::other(format!("{label} stdout task failed: {e}")))??;
-        let stderr = stderr
-            .await
-            .map_err(|e| std::io::Error::other(format!("{label} stderr task failed: {e}")))??;
-        Ok::<_, std::io::Error>((stdout, stderr))
-    })
-    .await;
-    let (stdout, stderr) = match output {
-        Ok(output) => output?,
-        Err(_) => {
-            tracing::warn!("{label} left output pipes open after exit and was terminated");
-            terminate_process_group(process_group);
-            stdout_abort.abort();
-            stderr_abort.abort();
-            return Ok(None);
-        }
-    };
-    if stdout.len() as u64 > MAX_COMMAND_OUTPUT_BYTES
-        || stderr.len() as u64 > MAX_COMMAND_OUTPUT_BYTES
-    {
-        return Err(std::io::Error::other(format!(
-            "{label} produced more than {MAX_COMMAND_OUTPUT_BYTES} bytes of output"
-        )));
-    }
-    Ok(Some(std::process::Output {
-        status,
-        stdout,
-        stderr,
-    }))
-}
-
-async fn terminate_command(child: &mut Child, process_group: Option<u32>) -> std::io::Result<()> {
-    if terminate_process_group(process_group) {
-        return Ok(());
-    }
-
-    #[cfg(windows)]
-    if let Some(pid) = child.id() {
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        if TokioCommand::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/T", "/F"])
-            .creation_flags(CREATE_NO_WINDOW)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .await
-            .is_ok_and(|status| status.success())
-        {
-            return Ok(());
-        }
-    }
-
-    child.start_kill()
-}
-
-fn terminate_process_group(_process_group: Option<u32>) -> bool {
-    #[cfg(unix)]
-    if let Some(id) = _process_group
-        // `process_group(0)` above makes the direct child's PID its process
-        // group ID. A negative PID is POSIX's "signal the group" form.
-        && unsafe { kill_process_group(-(id as i32), 9) } == 0
-    {
-        return true;
-    }
-    // Windows has no group to signal, and `start_kill` — which is all this
-    // used to fall back to — ends the process that was spawned and nothing it
-    // spawned in turn. A `powershell -File` running the status script leaves
-    // whatever it started (smartctl, a battery query) alive and holding the
-    // pipes it inherited, so the reader that timed out cannot finish and the
-    // next extended cycle starts another one beside it. `taskkill /T` walks
-    // the tree by parent PID, which is the relationship Windows does keep.
-    //
-    // Not awaited, and still answers `false`: this runs on a path where the
-    // caller has stopped reading, and `terminate_command`'s own `start_kill`
-    // stays as the guarantee about the direct child.
-    #[cfg(windows)]
-    if let Some(id) = _process_group {
-        let _ = std::process::Command::new("taskkill")
-            .args(["/T", "/F", "/PID", &id.to_string()])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn();
-    }
-    false
-}
-
-#[cfg(unix)]
-unsafe extern "C" {
-    #[link_name = "kill"]
-    fn kill_process_group(pid: i32, signal: i32) -> i32;
+    // The error is passed through as [`MonitorError::Io`] rather than flattened
+    // into a string: [`command::run`] distinguishes the output cap from a spawn
+    // or pipe failure by `ErrorKind`, and a caller that reports the cap as a
+    // field loses that the moment it is formatted.
+    command::run(command, func.name(), command::Limits::DEFAULT, stdin)
+        .await
+        .map_err(MonitorError::from)
 }
 
 fn carry_forward_opt<T>(fresh: Option<T>, prev: Option<T>) -> Option<T> {
@@ -1564,8 +1412,37 @@ mod tests {
             use std::os::unix::fs::PermissionsExt;
             let mode = std::fs::metadata(&path).unwrap().permissions().mode();
             assert_eq!(mode & 0o777, 0o755);
+            // The directory is private: [`run_local_shell_func`] runs this file
+            // with a `sudo -S` password on its stdin, and the system temp
+            // directory is world-writable.
+            let dir_mode = std::fs::metadata(&dir).unwrap().permissions().mode();
+            assert_eq!(dir_mode & 0o777, 0o700);
         }
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// One function of the generated script, run locally.
+    ///
+    /// `Process` rather than one of the three the panel's power page asks for:
+    /// this asserts the mechanism — the script is written where the shell can
+    /// find it, the interpreter is named for the platform, and the flag selects
+    /// the function — and shutting this machine down is not a thing a test can
+    /// do. `SbShutdown` and `SbProcess` differ by the flag and the command text
+    /// inside one file, so what is left uncovered here is the text, which is
+    /// `sbm_parser`'s and is checked there.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn a_shell_function_runs_locally_and_answers() {
+        let output = run_local_shell_func(sbm_parser::script::ShellFunc::Process, None)
+            .await
+            .expect("the status script should be runnable")
+            .expect("ps should not take the full timeout");
+
+        assert!(output.status.success(), "ps exited with {}", output.status);
+        assert!(
+            !output.stdout.is_empty(),
+            "the process table should have rows"
+        );
     }
 
     #[test]
@@ -2313,104 +2190,4 @@ mod tests {
         assert_eq!(raw.get("host").map(String::as_str), Some("real-host"));
     }
 
-    #[tokio::test]
-    async fn a_stuck_external_command_is_terminated() {
-        let command = if cfg!(windows) {
-            let mut command = TokioCommand::new("powershell");
-            command.args(["-NoProfile", "-Command", "Start-Sleep -Seconds 2"]);
-            command
-        } else {
-            let mut command = TokioCommand::new("sh");
-            command.args(["-c", "sleep 2"]);
-            command
-        };
-        let started = std::time::Instant::now();
-        let output = command_output_with_timeout(command, "test sleep", Duration::from_millis(100))
-            .await
-            .unwrap();
-
-        assert!(output.is_none());
-        assert!(started.elapsed() < Duration::from_secs(1));
-    }
-
-    #[cfg(windows)]
-    #[tokio::test]
-    async fn a_timed_out_windows_command_cannot_leave_a_descendant() {
-        let dir = tempfile::tempdir().unwrap();
-        let marker = dir.path().join("survived");
-        let child_path = dir.path().join("child.ps1");
-        let marker_arg = marker.to_string_lossy().replace('\'', "''");
-        std::fs::write(
-            &child_path,
-            format!("Start-Sleep -Seconds 2; Set-Content -LiteralPath '{marker_arg}' -Value alive"),
-        )
-        .unwrap();
-        let child_arg = child_path.to_string_lossy().replace('\'', "''");
-        let parent_script = format!(
-            "$q = '\"' + '{child_arg}' + '\"'; Start-Process powershell -WindowStyle Hidden -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',$q); Start-Sleep -Seconds 30"
-        );
-        let mut command = TokioCommand::new("powershell");
-        command.args(["-NoProfile", "-Command", &parent_script]);
-
-        let output =
-            command_output_with_timeout(command, "test process tree", Duration::from_millis(200))
-                .await
-                .unwrap();
-        assert!(output.is_none());
-        tokio::time::sleep(Duration::from_secs(3)).await;
-        assert!(!marker.exists());
-    }
-
-    #[tokio::test]
-    async fn an_external_command_cannot_silently_truncate_output() {
-        // Comfortably over the cap rather than one byte over it. At exactly
-        // `MAX + 1` the reader reaches its `take` limit in the same moment the
-        // child finishes writing and exits, so the two things this races —
-        // the overflow and the wait — become ready together, and the test
-        // stops being about either. Well over, the reader hits the cap while
-        // the child is still writing and then blocks on a full pipe, which is
-        // the case the announcement exists for.
-        const OVER_CAP: usize = 4 * 1024 * 1024;
-        let ps_write = format!(
-            "$out = [Console]::OpenStandardOutput(); $bytes = New-Object byte[] {OVER_CAP}; $out.Write($bytes, 0, $bytes.Length)"
-        );
-
-        let command = if cfg!(windows) {
-            let mut command = TokioCommand::new("powershell");
-            command.args(["-NoProfile", "-Command", &ps_write]);
-            command
-        } else {
-            let mut command = TokioCommand::new("sh");
-            command.args(["-c", &format!("head -c {OVER_CAP} /dev/zero")]);
-            command
-        };
-
-        // Generous, because the number is not the subject. What is asserted is
-        // that too much output is *reported* as too much; how long this
-        // machine takes to start a process and move four megabytes is the CI
-        // runner's business. Measured at 179 ms on an idle Windows box against
-        // a 5-second budget, which windows-latest still exceeded often enough
-        // to fail three of five runs — and which 70 runs here, twelve of them
-        // concurrent, never reproduced. Detection that is actually broken
-        // fails this just the same, only later.
-        //
-        // Says what it got instead of `unwrap_err`, which reported only
-        // "Ok value: None" and did not separate a child that wrote nothing
-        // from one that wrote enough and was never noticed.
-        let error = match command_output_with_timeout(
-            command,
-            "test output",
-            Duration::from_secs(30),
-        )
-        .await
-        {
-            Err(error) => error,
-            Ok(output) => panic!(
-                "expected an overflow error, got {:?}",
-                output.map(|o| (o.status, o.stdout.len(), o.stderr.len()))
-            ),
-        };
-
-        assert!(error.to_string().contains("more than"));
-    }
 }

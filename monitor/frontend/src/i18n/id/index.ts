@@ -190,6 +190,18 @@ const id = {
 	retentionCleanupHours: 'Jalankan setiap (jam)',
 	retentionMaxDbSizeMb: 'Batas ukuran (MB)',
 	retentionInvalid: 'bukan nilai yang sah',
+	powerControl: 'Daya',
+	powerShutdown: 'Matikan',
+	powerReboot: 'Mulai ulang',
+	powerSuspend: 'Tangguhkan',
+	powerNote: 'Agent ikut berhenti bersama mesin, jadi panel ini tidak dapat menyalakannya lagi. Semua yang berjalan di mesin itu berakhir.',
+	powerPassword: 'Kata sandi sudo',
+	powerPasswordHint: 'Biarkan kosong jika agent berjalan sebagai root, atau jika akunnya memiliki sudo tanpa kata sandi untuk perintah ini.',
+	powerRejected: 'Mesin menolak kata sandi itu. Tidak terjadi apa-apa.',
+	powerFailed: 'Perintah gagal.',
+	powerTimeout: 'Tidak ada jawaban yang kembali, itulah tampilan mesin yang sudah mulai mati.',
+	powerActionSent: 'Terkirim: {action}. Jika mesinnya mati, panel ini kehilangannya sampai menyala lagi.',
+	close: 'Tutup',
 } satisfies Translation
 
 export default id

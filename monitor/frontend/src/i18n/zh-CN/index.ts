@@ -190,6 +190,18 @@ const zh_CN = {
 	retentionCleanupHours: '执行间隔（小时）',
 	retentionMaxDbSizeMb: '体积上限（MB）',
 	retentionInvalid: '不是有效的值',
+	powerControl: '电源',
+	powerShutdown: '关机',
+	powerReboot: '重启',
+	powerSuspend: '休眠',
+	powerNote: 'agent 会随机器一起停止，因此此面板无法再把它启动。机器上正在运行的进程都会结束。',
+	powerPassword: 'sudo 密码',
+	powerPasswordHint: 'agent 以 root 运行时留空；其账号对该命令配置了免密 sudo 时同样留空。',
+	powerRejected: '机器拒绝了这个密码，未执行任何操作。',
+	powerFailed: '命令执行失败。',
+	powerTimeout: '未收到返回，机器已经在关停时就是这个结果。',
+	powerActionSent: '已发送：{action}。如果机器正在关停，此面板会与其失联，直到它重新启动。',
+	close: '关闭',
 } satisfies Translation
 
 export default zh_CN

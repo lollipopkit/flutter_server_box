@@ -190,6 +190,18 @@ const zh_TW = {
 	retentionCleanupHours: '執行間隔（小時）',
 	retentionMaxDbSizeMb: '容量上限（MB）',
 	retentionInvalid: '不是有效的值',
+	powerControl: '電源',
+	powerShutdown: '關機',
+	powerReboot: '重新啟動',
+	powerSuspend: '休眠',
+	powerNote: 'agent 會隨機器一起停止，因此此面板無法再將它啟動。機器上正在執行的程序都會結束。',
+	powerPassword: 'sudo 密碼',
+	powerPasswordHint: 'agent 以 root 執行時留空；其帳號對該命令設定了免密 sudo 時同樣留空。',
+	powerRejected: '機器拒絕了這個密碼，未執行任何操作。',
+	powerFailed: '命令執行失敗。',
+	powerTimeout: '未收到回傳，機器已經在關停時就是這個結果。',
+	powerActionSent: '已送出：{action}。若機器正在關停，此面板會與它失聯，直到它重新啟動。',
+	close: '關閉',
 } satisfies Translation
 
 export default zh_TW

@@ -190,6 +190,18 @@ const de = {
 	retentionCleanupHours: 'Ausführen alle (Stunden)',
 	retentionMaxDbSizeMb: 'Größenbegrenzung (MB)',
 	retentionInvalid: 'ist kein gültiger Wert',
+	powerControl: 'Energie',
+	powerShutdown: 'Herunterfahren',
+	powerReboot: 'Neustart',
+	powerSuspend: 'Bereitschaft',
+	powerNote: 'Der Agent endet mit der Maschine, dieses Panel kann sie also nicht wieder starten. Alles, was auf ihr läuft, wird beendet.',
+	powerPassword: 'sudo-Passwort',
+	powerPasswordHint: 'Leer lassen, wenn der Agent als root läuft oder sein Konto für diesen Befehl passwortloses sudo hat.',
+	powerRejected: 'Die Maschine hat das Passwort abgelehnt. Es ist nichts passiert.',
+	powerFailed: 'Der Befehl ist fehlgeschlagen.',
+	powerTimeout: 'Es kam keine Antwort zurück — so sieht eine Maschine aus, die bereits herunterfährt.',
+	powerActionSent: 'Gesendet: {action}. Fährt die Maschine herunter, verliert dieses Panel sie, bis sie wieder da ist.',
+	close: 'Schließen',
 } satisfies Translation
 
 export default de

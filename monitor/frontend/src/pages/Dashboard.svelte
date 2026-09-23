@@ -13,6 +13,7 @@
     ShieldCheck,
     Network,
     CircleAlert,
+    Power,
     RefreshCw,
   } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
@@ -21,6 +22,7 @@
   import LoginForm from '../components/LoginForm.svelte'
   import OsIcon from '../components/OsIcon.svelte'
   import PageHeader from '../components/PageHeader.svelte'
+  import PowerModal from '../components/PowerModal.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
@@ -163,6 +165,7 @@
   const connected = $derived(health.status[servers.currentId] ?? false)
 
   let detail = $state<DetailKind | null>(null)
+  let powerOpen = $state(false)
 
   // Cards derive from numeric metrics (uniform layout: one big figure plus a
   // detail line) instead of parsing the preformatted /status strings
@@ -258,6 +261,11 @@
         {#if capabilities?.remote_access?.files}
           <IconButton label={$LL.files()} onclick={() => layout.navigate('files')}>
             <FolderOpen class="w-4 h-4" />
+          </IconButton>
+        {/if}
+        {#if capabilities?.remote_access?.power}
+          <IconButton label={$LL.power()} onclick={() => (powerOpen = true)}>
+            <Power class="w-4 h-4" />
           </IconButton>
         {/if}
         <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>
@@ -521,3 +529,5 @@
     {/if}
   </main>
 {/if}
+
+<PowerModal open={powerOpen} onclose={() => (powerOpen = false)} />

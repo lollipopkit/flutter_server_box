@@ -190,6 +190,18 @@ const ja = {
 	retentionCleanupHours: '実行間隔（時間）',
 	retentionMaxDbSizeMb: 'サイズ上限（MB）',
 	retentionInvalid: 'は有効な値ではありません',
+	powerControl: '電源',
+	powerShutdown: 'シャットダウン',
+	powerReboot: '再起動',
+	powerSuspend: 'サスペンド',
+	powerNote: 'agent はマシンとともに停止するため、このパネルから再び起動することはできません。マシン上で動作中のものはすべて終了します。',
+	powerPassword: 'sudo パスワード',
+	powerPasswordHint: 'agent が root で動作している場合、またはそのアカウントがこのコマンドにパスワードなしの sudo を持つ場合は空欄にしてください。',
+	powerRejected: 'マシンはこのパスワードを拒否しました。何も行われていません。',
+	powerFailed: 'コマンドが失敗しました。',
+	powerTimeout: '応答が返りませんでした。すでに停止処理中のマシンはこのようになります。',
+	powerActionSent: '送信しました: {action}。マシンが停止する場合、このパネルは復帰するまで接続を失います。',
+	close: '閉じる',
 } satisfies Translation
 
 export default ja

@@ -190,6 +190,18 @@ const uk = {
 	retentionCleanupHours: 'Запускати кожні (годин)',
 	retentionMaxDbSizeMb: 'Обмеження розміру (МБ)',
 	retentionInvalid: '— неприпустиме значення',
+	powerControl: 'Живлення',
+	powerShutdown: 'Вимкнути',
+	powerReboot: 'Перезавантажити',
+	powerSuspend: 'Сплячий режим',
+	powerNote: 'Агент зупиняється разом із машиною, тож ця панель не зможе її знову ввімкнути. Усе, що на ній працює, завершиться.',
+	powerPassword: 'Пароль sudo',
+	powerPasswordHint: 'Залиште порожнім, якщо агент працює від root або його обліковий запис має sudo без пароля для цієї команди.',
+	powerRejected: 'Машина відхилила цей пароль. Нічого не сталося.',
+	powerFailed: 'Команда не виконалася.',
+	powerTimeout: 'Відповіді не надійшло — так виглядає машина, яка вже вимикається.',
+	powerActionSent: 'Надіслано: {action}. Якщо машина вимикається, ця панель втратить її до повернення.',
+	close: 'Закрити',
 } satisfies Translation
 
 export default uk

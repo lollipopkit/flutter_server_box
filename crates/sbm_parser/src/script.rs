@@ -573,6 +573,37 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
     }
 }
 
+/// The exit code a caller reports when `sudo` would not take the password it
+/// was given, or was given none at all.
+///
+/// A number rather than an error because it travels with the rest of the
+/// result: what the command printed is still worth reading, and a caller that
+/// does not care about sudo can treat it as any other non-zero exit.
+pub const SUDO_PASSWORD_REJECTED: i32 = 2;
+
+/// A sudo password the machine rejected, told apart from any other failure.
+///
+/// `sudo` says so on stderr and then exits non-zero like everything else, so
+/// without reading what it said a wrong password is indistinguishable from the
+/// command itself failing — and the caller has no reason to ask for a new one.
+///
+/// The wording differs by implementation, hence three phrases: util-linux's
+/// `Sorry, try again.`, the same via a PAM stack that reports
+/// `incorrect password attempt`, and `a password is required` for the case
+/// where none was offered and `-n`-like behaviour was wanted.
+///
+/// TODO(migration): the app carries its own copy of this list in
+/// `lib/data/model/server/server_exec.dart` (`_sudoRejected`); it should read
+/// this one through the FFI boundary instead.
+pub fn sudo_password_rejected(stderr: &str) -> bool {
+    const REJECTED: [&str; 3] = [
+        "Sorry, try again.",
+        "incorrect password attempt",
+        "a password is required",
+    ];
+    REJECTED.iter().any(|phrase| stderr.contains(phrase))
+}
+
 /// Split script output into a command key → output map.
 ///
 /// Built-in sections are keyed by the command key; custom commands by

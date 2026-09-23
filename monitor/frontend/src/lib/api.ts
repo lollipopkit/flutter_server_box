@@ -8,6 +8,8 @@ import type {
   HistoryPoint,
   LoginRequest,
   LoginResponse,
+  PowerAction,
+  PowerResult,
   PushEntry,
   PushListView,
   PushPayload,
@@ -334,6 +336,18 @@ export const api = {
       '/push/test',
       { method: 'POST', body: JSON.stringify({ push, message }) },
       'Failed to send the test notification',
+    ),
+  /// Shuts the machine down, reboots it or suspends it.
+  ///
+  /// The password travels as its own field rather than inside a command, for
+  /// the reason `/exec`'s `stdin` does: a password in a command line lands in
+  /// the machine's process list and in the agent's audit row. Omitted when the
+  /// agent runs as root, which is when no `sudo` is reached at all.
+  power: (action: PowerAction, password?: string) =>
+    request<PowerResult>(
+      '/power',
+      { method: 'POST', body: JSON.stringify({ action, password: password || null }) },
+      'Failed to reach the machine',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

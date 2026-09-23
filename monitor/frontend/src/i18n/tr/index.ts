@@ -190,6 +190,18 @@ const tr = {
 	retentionCleanupHours: 'Çalıştırma aralığı (saat)',
 	retentionMaxDbSizeMb: 'Boyut sınırı (MB)',
 	retentionInvalid: 'geçerli bir değer değil',
+	powerControl: 'Güç',
+	powerShutdown: 'Kapat',
+	powerReboot: 'Yeniden başlat',
+	powerSuspend: 'Askıya al',
+	powerNote: 'Agent makineyle birlikte durur, bu yüzden bu panel onu yeniden başlatamaz. Makinede çalışan her şey sona erer.',
+	powerPassword: 'sudo parolası',
+	powerPasswordHint: 'Agent root olarak çalışıyorsa ya da hesabının bu komut için parolasız sudo yetkisi varsa boş bırakın.',
+	powerRejected: 'Makine bu parolayı reddetti. Hiçbir şey olmadı.',
+	powerFailed: 'Komut başarısız oldu.',
+	powerTimeout: 'Yanıt gelmedi; kapanmakta olan bir makine böyle görünür.',
+	powerActionSent: 'Gönderildi: {action}. Makine kapanıyorsa bu panel geri gelene kadar onu kaybeder.',
+	close: 'Kapat',
 } satisfies Translation
 
 export default tr

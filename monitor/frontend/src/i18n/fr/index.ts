@@ -190,6 +190,18 @@ const fr = {
 	retentionCleanupHours: 'Exécuter toutes les (heures)',
 	retentionMaxDbSizeMb: 'Plafond de taille (Mo)',
 	retentionInvalid: 'n\'est pas une valeur valide',
+	powerControl: 'Alimentation',
+	powerShutdown: 'Éteindre',
+	powerReboot: 'Redémarrer',
+	powerSuspend: 'Veille',
+	powerNote: 'L\'agent s\'arrête avec la machine : ce panneau ne peut donc pas la rallumer. Tout ce qui y tourne s\'arrête.',
+	powerPassword: 'Mot de passe sudo',
+	powerPasswordHint: 'Laissez vide si l\'agent tourne en root, ou si son compte a sudo sans mot de passe pour cette commande.',
+	powerRejected: 'La machine a refusé ce mot de passe. Rien ne s\'est produit.',
+	powerFailed: 'La commande a échoué.',
+	powerTimeout: 'Aucune réponse n\'est revenue, ce qui est l\'aspect d\'une machine déjà en train de s\'éteindre.',
+	powerActionSent: 'Envoyé : {action}. Si la machine s\'éteint, ce panneau la perd jusqu\'à son retour.',
+	close: 'Fermer',
 } satisfies Translation
 
 export default fr

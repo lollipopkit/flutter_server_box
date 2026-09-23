@@ -124,8 +124,9 @@ ServerBox app 没有为 <host> 上的 Monitor agent 提供 <功能>。请先查�
   容器、进程、systemd、电源和计划任务都需要 `full_access`,而它本身以
   `[remote_access.terminal] enabled` 为前提。文件浏览需要
   `[remote_access.fs] enabled` 加上非空的 `roots`。
-- SFTP 和端口转发在 agent 上根本不存在。没有任何 endpoint 能把连接中继到
-  app 指定的地址,所以这两项需要在 app 里为同一台服务器另行配置 SSH。
+- SFTP 传输和端口转发需要在 app 里为同一台服务器另行配置 SSH。agent 有
+  TCP 中继（`/api/v1/stream/ws`），远程桌面会使用它，但文件传输和端口转发
+  页面是通过 app 自己的 SSH client 抵达机器的，agent 无法代替。
 - 终端和文件 API 会拒绝从网络上到达的明文请求。loopback 调用方和同机反向
   代理无需 TLS。
 - 只要该小节下有任何开关开启，agent 启动时就会记录一行 `Remote access:`
@@ -268,6 +269,10 @@ agent 会通过 `GET /api/v1/capabilities` 告诉 App 当前允许的功能，Ap
 
 **`full_access`** 允许已登录用户直接获得 agent 所属用户的 shell，并执行命令。因此，进程、systemd 单元、容器、代码片段、电源控制和终端等功能都依赖它。远程桌面（RDP 和 VNC）同样依赖它：agent 会以同一账户、在同一授权下，经 `/api/v1/stream/ws` 从自身所在机器连接桌面地址。正因如此它没有单独的开关——能打开 shell 的人本就能从中转发端口。
 
+**电源控制**是 `POST /api/v1/power`，action 取 `shutdown`、`reboot` 或 `suspend`。它与 shell 同一授权，原因也相同：能打开 shell 的人本就能在其中执行 `shutdown`，没有可以另外扣下的东西。命令文本取自共享的状态脚本，因此 agent 执行的内容与 App 通过 SSH 执行的一致。
+
+agent 不以 root 运行时，`sudo -S` 需要密码，该密码放在请求体中，绝不出现在命令行里——命令行中的密码会留在机器的进程列表里。`sudo` 拒绝密码时以字段返回，而不是作为请求失败，因为调用方的下一步是要求换一个密码。
+
 `full_access` 只有一个开关：能获得 shell 的用户也能在 shell 中执行任意命令，因此无法通过单独关闭“命令”来缩小权限范围。Linux 默认开启，macOS 和 Windows 默认关闭。面板可以关闭它，但不能重新开启；重新开启必须修改配置文件。
 
 **面板密码等同于 agent 用户的 shell 访问权限。** 因此 `install.sh` 默认以普通用户运行 agent。如果确实需要以 root 用户运行，请关闭 `full_access`。
@@ -284,9 +289,9 @@ agent 会将请求解析为真实路径，跟随 symlink，并拒绝 `..` 路径
 
 ## 不支持的功能
 
-仅配置 Monitor HTTP 的服务器不提供 SFTP 和端口转发。agent 没有把连接中继到 App 指定地址的 endpoint，因此无法承载这两种功能。文件**浏览**可以通过 agent 的文件 API 工作，但它传输的是文件内容，而不是提供任意 TCP 字节流。
+仅配置 Monitor HTTP 的服务器不提供 SFTP 传输和端口转发。agent 的文件 API 传输的是文件内容，无法代替文件传输和端口转发页面所开启的 SSH channel。远程桌面是例外：它只需要一条到客户端指定地址的 TCP 连接，由 `/api/v1/stream/ws` 提供，因此 RDP 和 VNC 可以只靠 agent 工作。
 
-如果需要 SFTP 或端口转发，请在 App 中同时为该服务器配置 SSH。
+如果需要 SFTP 传输或端口转发，请在 App 中同时为该服务器配置 SSH。
 
 ## 小组件、推送和 Watch App
 

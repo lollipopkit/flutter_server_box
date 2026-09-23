@@ -113,6 +113,29 @@ export interface RemoteAccess {
   /// Whether the agent's confined file API is available. Absent on agents
   /// predating remote file access.
   files?: boolean
+  /// Whether `/api/v1/power` will shut this machine down. Absent on agents
+  /// predating the endpoint, and granted by the same switch as `full_access` —
+  /// but its own field, because an agent that predates the route answers
+  /// `full_access` and would 404 the request.
+  power?: boolean
+}
+
+export type PowerAction = 'shutdown' | 'reboot' | 'suspend'
+
+/// What the machine did.
+///
+/// The action is destructive and one-shot, so the shapes worth telling apart
+/// are: it ran (`exit_code` 0), sudo refused the password (`sudo_rejected`,
+/// which is the one outcome the caller can do something about), and anything
+/// else. A machine suspending under a command that then never returns is
+/// normal, which is why a timeout is a field rather than an error.
+export interface PowerResult {
+  exit_code: number | null
+  stdout: string
+  stderr: string
+  sudo_rejected: boolean
+  truncated: boolean
+  timed_out: boolean
 }
 
 export type WsTicketPurpose = 'terminal'

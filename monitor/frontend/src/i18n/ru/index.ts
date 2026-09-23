@@ -190,6 +190,18 @@ const ru = {
 	retentionCleanupHours: 'Запускать каждые (часов)',
 	retentionMaxDbSizeMb: 'Ограничение размера (МБ)',
 	retentionInvalid: '— недопустимое значение',
+	powerControl: 'Питание',
+	powerShutdown: 'Выключить',
+	powerReboot: 'Перезагрузить',
+	powerSuspend: 'Спящий режим',
+	powerNote: 'Агент останавливается вместе с машиной, поэтому эта панель не сможет её снова включить. Всё, что на ней работает, завершится.',
+	powerPassword: 'Пароль sudo',
+	powerPasswordHint: 'Оставьте пустым, если агент работает от root или у его учётной записи есть sudo без пароля для этой команды.',
+	powerRejected: 'Машина отклонила этот пароль. Ничего не произошло.',
+	powerFailed: 'Команда не выполнилась.',
+	powerTimeout: 'Ответ не пришёл — так выглядит машина, которая уже выключается.',
+	powerActionSent: 'Отправлено: {action}. Если машина выключается, эта панель потеряет её до возвращения.',
+	close: 'Закрыть',
 } satisfies Translation
 
 export default ru

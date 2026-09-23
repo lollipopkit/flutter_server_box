@@ -42,6 +42,11 @@ pub enum Kind {
     /// subject is the channel names and types, plus the host a test webhook
     /// went to — never a key, a token or a header value.
     Push,
+    /// A shutdown, reboot or suspend asked of `api::power`. Its own kind rather
+    /// than `Exec`, whose subject is the command text: this one is an action
+    /// name, and the row that matters most here is the one written *before* the
+    /// machine goes down.
+    Power,
 }
 
 impl Kind {
@@ -54,6 +59,7 @@ impl Kind {
             Kind::Fs => "fs",
             Kind::CustomCmd => "custom_cmd",
             Kind::Push => "push",
+            Kind::Power => "power",
         }
     }
 }
