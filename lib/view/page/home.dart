@@ -28,6 +28,7 @@ import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:server_box/view/widget/legacy_status_notice.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
 import 'package:server_box/view/widget/server_share.dart';
+import 'package:server_box/view/widget/themed_icon.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 part 'home/lifecycle.dart';
@@ -86,6 +87,7 @@ class _HomePageState extends ConsumerState<HomePage>
   Future<void>? _authed;
 
   late final _notifier = ref.read(serversProvider.notifier);
+
   /// What the user arranged: the bar, and the rail.
   late List<AppTab> _barTabs = Stores.setting.homeTabs.fetch();
 
@@ -415,9 +417,7 @@ class _HomePageState extends ConsumerState<HomePage>
               ),
           ],
         ),
-        bottomNavigationBar: narrow && !_wantsWindow
-            ? _buildBottomBar()
-            : null,
+        bottomNavigationBar: narrow && !_wantsWindow ? _buildBottomBar() : null,
       ),
     );
 
@@ -494,11 +494,7 @@ class _HomePageState extends ConsumerState<HomePage>
             // Focused so the bindings are reachable without clicking
             // something first, and skipping traversal so Tab still walks the
             // actual controls.
-            child: Focus(
-              autofocus: true,
-              skipTraversal: true,
-              child: withBack,
-            ),
+            child: Focus(autofocus: true, skipTraversal: true, child: withBack),
           );
 
     if (Platform.isMacOS) {

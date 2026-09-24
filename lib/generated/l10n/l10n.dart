@@ -125,6 +125,108 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
+  /// No description provided for @appearanceSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearanceSettings;
+
+  /// No description provided for @appearancePreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme preset'**
+  String get appearancePreset;
+
+  /// No description provided for @appearanceThemeSchemaRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Supported theme schema'**
+  String get appearanceThemeSchemaRange;
+
+  /// No description provided for @appearanceThemeInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Install theme'**
+  String get appearanceThemeInstall;
+
+  /// No description provided for @appearanceThemeStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme store'**
+  String get appearanceThemeStore;
+
+  /// No description provided for @appearanceThemeStoreUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme catalog URL'**
+  String get appearanceThemeStoreUrl;
+
+  /// No description provided for @appearanceInvalidTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid theme package or catalog'**
+  String get appearanceInvalidTheme;
+
+  /// No description provided for @appearanceFontFamilies.
+  ///
+  /// In en, this message translates to:
+  /// **'UI font families'**
+  String get appearanceFontFamilies;
+
+  /// No description provided for @appearanceFontFamiliesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'One name per line; fonts are tried in order.'**
+  String get appearanceFontFamiliesTip;
+
+  /// No description provided for @appearanceFontImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import UI font file'**
+  String get appearanceFontImport;
+
+  /// No description provided for @appearanceGradient.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradient'**
+  String get appearanceGradient;
+
+  /// No description provided for @appearanceNoBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'No background'**
+  String get appearanceNoBackground;
+
+  /// No description provided for @appearanceIcons.
+  ///
+  /// In en, this message translates to:
+  /// **'In-app icons'**
+  String get appearanceIcons;
+
+  /// No description provided for @appearanceCorners.
+  ///
+  /// In en, this message translates to:
+  /// **'Corners'**
+  String get appearanceCorners;
+
+  /// No description provided for @appearanceCardCorners.
+  ///
+  /// In en, this message translates to:
+  /// **'Card corners'**
+  String get appearanceCardCorners;
+
+  /// No description provided for @appearanceTileCorners.
+  ///
+  /// In en, this message translates to:
+  /// **'Tile corners'**
+  String get appearanceTileCorners;
+
+  /// No description provided for @appearanceButtonCorners.
+  ///
+  /// In en, this message translates to:
+  /// **'Button corners'**
+  String get appearanceButtonCorners;
+
   /// No description provided for @crashCollect.
   ///
   /// In en, this message translates to:
@@ -5307,6 +5409,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VNC clipboard supports Latin-1 text only.'**
   String get remoteDesktopVncClipboardLatin1Only;
+
+/// No description provided for @appearanceThemeModeLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This theme only supports {mode}. Select another theme to change the mode.'**
+  String appearanceThemeModeLocked(String mode);
 }
 
 class _AppLocalizationsDelegate

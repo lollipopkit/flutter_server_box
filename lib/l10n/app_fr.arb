@@ -1,5 +1,22 @@
 {
   "@@locale": "fr",
+  "appearanceSettings": "Apparence",
+  "appearancePreset": "Thème prédéfini",
+  "appearanceThemeSchemaRange": "Schéma de thème pris en charge",
+  "appearanceThemeInstall": "Installer un thème",
+  "appearanceThemeStore": "Boutique de thèmes",
+  "appearanceThemeStoreUrl": "URL du catalogue de thèmes",
+  "appearanceInvalidTheme": "Pack de thème ou catalogue invalide",
+  "appearanceFontFamilies": "Familles de polices de l’interface",
+  "appearanceFontFamiliesTip": "Un nom par ligne ; les polices sont essayées dans l’ordre.",
+  "appearanceFontImport": "Importer un fichier de police pour l’interface",
+  "appearanceGradient": "Dégradé",
+  "appearanceNoBackground": "Sans arrière-plan",
+  "appearanceIcons": "Icônes dans l’application",
+  "appearanceCorners": "Coins",
+  "appearanceCardCorners": "Coins des cartes",
+  "appearanceTileCorners": "Coins des éléments",
+  "appearanceButtonCorners": "Coins des boutons",
   "crashCollect": "Données de diagnostic",
   "crashCollectIntro": "ServerBox enregistre ce qui se passe pendant son fonctionnement afin de pouvoir corriger les problèmes. Choisissez la quantité d'informations envoyée.",
   "crashCollectNone": "Rien",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Arrête d'envoyer le pointeur et les touches, pour regarder sans cliquer par erreur.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Suppr, la reconnexion et le plein écran sont ici.",
   "remoteDesktopGuidePointerTip": "Tout comme le pointeur direct, où un doigt clique là où il touche.",
-  "remoteDesktopVncClipboardLatin1Only": "Le presse-papiers VNC ne prend en charge que le texte Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Le presse-papiers VNC ne prend en charge que le texte Latin-1.",
+"appearanceThemeModeLocked": "Ce thème prend uniquement en charge le mode {mode}. Choisissez un autre thème pour changer de mode."
 }

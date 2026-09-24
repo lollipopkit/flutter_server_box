@@ -9,6 +9,59 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Apparence';
+
+  @override
+  String get appearancePreset => 'Thème prédéfini';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Schéma de thème pris en charge';
+
+  @override
+  String get appearanceThemeInstall => 'Installer un thème';
+
+  @override
+  String get appearanceThemeStore => 'Boutique de thèmes';
+
+  @override
+  String get appearanceThemeStoreUrl => 'URL du catalogue de thèmes';
+
+  @override
+  String get appearanceInvalidTheme => 'Pack de thème ou catalogue invalide';
+
+  @override
+  String get appearanceFontFamilies => 'Familles de polices de l’interface';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Un nom par ligne ; les polices sont essayées dans l’ordre.';
+
+  @override
+  String get appearanceFontImport =>
+      'Importer un fichier de police pour l’interface';
+
+  @override
+  String get appearanceGradient => 'Dégradé';
+
+  @override
+  String get appearanceNoBackground => 'Sans arrière-plan';
+
+  @override
+  String get appearanceIcons => 'Icônes dans l’application';
+
+  @override
+  String get appearanceCorners => 'Coins';
+
+  @override
+  String get appearanceCardCorners => 'Coins des cartes';
+
+  @override
+  String get appearanceTileCorners => 'Coins des éléments';
+
+  @override
+  String get appearanceButtonCorners => 'Coins des boutons';
+
+  @override
   String get crashCollect => 'Données de diagnostic';
 
   @override
@@ -3127,4 +3180,8 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'Le presse-papiers VNC ne prend en charge que le texte Latin-1.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Ce thème prend uniquement en charge le mode $mode. Choisissez un autre thème pour changer de mode.';
+  }
 }

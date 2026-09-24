@@ -1,5 +1,22 @@
 {
   "@@locale": "ja",
+  "appearanceSettings": "外観",
+  "appearancePreset": "テーマプリセット",
+  "appearanceThemeSchemaRange": "対応テーマ schema",
+  "appearanceThemeInstall": "テーマをインストール",
+  "appearanceThemeStore": "テーマストア",
+  "appearanceThemeStoreUrl": "テーマカタログの URL",
+  "appearanceInvalidTheme": "テーマパッケージまたはカタログが無効です",
+  "appearanceFontFamilies": "UI フォントファミリー",
+  "appearanceFontFamiliesTip": "1 行に 1 つの名前を入力してください。上から順に使用します。",
+  "appearanceFontImport": "UI フォントファイルをインポート",
+  "appearanceGradient": "グラデーション",
+  "appearanceNoBackground": "背景なし",
+  "appearanceIcons": "アプリ内アイコン",
+  "appearanceCorners": "角丸",
+  "appearanceCardCorners": "カードの角丸",
+  "appearanceTileCorners": "タイルの角丸",
+  "appearanceButtonCorners": "ボタンの角丸",
   "crashCollect": "診断データ",
   "crashCollectIntro": "ServerBox は問題を修正できるよう、実行中に起きたことを記録します。送信する情報量を選べます。",
   "crashCollectNone": "送信しない",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "ポインターとキー入力の送信を止め、誤ってクリックせずに画面を確認できます。",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、再接続、全画面表示はここにあります。",
   "remoteDesktopGuidePointerTip": "指で触れた場所をクリックするダイレクトポインターにもここで切り替えられます。",
-  "remoteDesktopVncClipboardLatin1Only": "VNC のクリップボードは Latin-1 テキストのみ対応しています。"
+  "remoteDesktopVncClipboardLatin1Only": "VNC のクリップボードは Latin-1 テキストのみ対応しています。",
+"appearanceThemeModeLocked": "このテーマは{mode}のみ対応しています。モードを変更するには、別のテーマを選択してください。"
 }

@@ -1,5 +1,22 @@
 {
   "@@locale": "pt",
+  "appearanceSettings": "Aparência",
+  "appearancePreset": "Tema predefinido",
+  "appearanceThemeSchemaRange": "Schema de tema compatível",
+  "appearanceThemeInstall": "Instalar tema",
+  "appearanceThemeStore": "Loja de temas",
+  "appearanceThemeStoreUrl": "URL do catálogo de temas",
+  "appearanceInvalidTheme": "Pacote de tema ou catálogo inválido",
+  "appearanceFontFamilies": "Famílias de fontes da interface",
+  "appearanceFontFamiliesTip": "Um nome por linha; as fontes são testadas pela ordem.",
+  "appearanceFontImport": "Importar arquivo de fonte da interface",
+  "appearanceGradient": "Gradiente",
+  "appearanceNoBackground": "Sem plano de fundo",
+  "appearanceIcons": "Ícones no app",
+  "appearanceCorners": "Cantos",
+  "appearanceCardCorners": "Cantos dos cartões",
+  "appearanceTileCorners": "Cantos dos itens",
+  "appearanceButtonCorners": "Cantos dos botões",
   "crashCollect": "Dados de diagnóstico",
   "crashCollectIntro": "O ServerBox registra o que acontece durante a execução para que os problemas possam ser corrigidos. Escolha quanta informação enviar.",
   "crashCollectNone": "Nada",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Para de enviar o ponteiro e as teclas, para você olhar sem clicar por engano.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Del, reconectar e tela cheia ficam aqui.",
   "remoteDesktopGuidePointerTip": "Assim como o ponteiro direto, em que o dedo clica onde toca.",
-  "remoteDesktopVncClipboardLatin1Only": "A área de transferência VNC só aceita texto Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "A área de transferência VNC só aceita texto Latin-1.",
+"appearanceThemeModeLocked": "Este tema só suporta {mode}. Selecione outro tema para alterar o modo."
 }

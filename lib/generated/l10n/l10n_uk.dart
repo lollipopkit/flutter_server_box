@@ -9,6 +9,58 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Вигляд';
+
+  @override
+  String get appearancePreset => 'Готова тема';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Підтримувана схема теми';
+
+  @override
+  String get appearanceThemeInstall => 'Установити тему';
+
+  @override
+  String get appearanceThemeStore => 'Магазин тем';
+
+  @override
+  String get appearanceThemeStoreUrl => 'URL каталогу тем';
+
+  @override
+  String get appearanceInvalidTheme => 'Недійсний пакет теми або каталог';
+
+  @override
+  String get appearanceFontFamilies => 'Сімейства шрифтів інтерфейсу';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Одна назва в рядку; шрифти застосовуються за порядком.';
+
+  @override
+  String get appearanceFontImport => 'Імпортувати файл шрифту інтерфейсу';
+
+  @override
+  String get appearanceGradient => 'Градієнт';
+
+  @override
+  String get appearanceNoBackground => 'Без тла';
+
+  @override
+  String get appearanceIcons => 'Піктограми в застосунку';
+
+  @override
+  String get appearanceCorners => 'Кути';
+
+  @override
+  String get appearanceCardCorners => 'Кути карток';
+
+  @override
+  String get appearanceTileCorners => 'Кути плиток';
+
+  @override
+  String get appearanceButtonCorners => 'Кути кнопок';
+
+  @override
   String get crashCollect => 'Діагностичні дані';
 
   @override
@@ -3091,4 +3143,8 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Ця тема підтримує лише режим «$mode». Щоб змінити режим, виберіть іншу тему.';
+  }
 }

@@ -1,5 +1,22 @@
 {
   "@@locale": "ru",
+  "appearanceSettings": "Внешний вид",
+  "appearancePreset": "Готовая тема",
+  "appearanceThemeSchemaRange": "Поддерживаемая схема темы",
+  "appearanceThemeInstall": "Установить тему",
+  "appearanceThemeStore": "Магазин тем",
+  "appearanceThemeStoreUrl": "URL каталога тем",
+  "appearanceInvalidTheme": "Недопустимый пакет темы или каталог",
+  "appearanceFontFamilies": "Семейства шрифтов интерфейса",
+  "appearanceFontFamiliesTip": "Одно название в строке; шрифты применяются по порядку.",
+  "appearanceFontImport": "Импортировать файл шрифта интерфейса",
+  "appearanceGradient": "Градиент",
+  "appearanceNoBackground": "Без фона",
+  "appearanceIcons": "Значки в приложении",
+  "appearanceCorners": "Углы",
+  "appearanceCardCorners": "Углы карточек",
+  "appearanceTileCorners": "Углы элементов",
+  "appearanceButtonCorners": "Углы кнопок",
   "crashCollect": "Диагностические данные",
   "crashCollectIntro": "ServerBox записывает происходящее во время работы, чтобы можно было исправлять проблемы. Выберите, сколько данных отправлять.",
   "crashCollectNone": "Ничего",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Прекращает отправку указателя и клавиш, чтобы смотреть без случайных щелчков.",
   "remoteDesktopGuideMoreTip": "Здесь находятся Ctrl+Alt+Delete, переподключение и полноэкранный режим.",
   "remoteDesktopGuidePointerTip": "А также прямой указатель: палец щёлкает там, где касается.",
-  "remoteDesktopVncClipboardLatin1Only": "Буфер обмена VNC поддерживает только текст в кодировке Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Буфер обмена VNC поддерживает только текст в кодировке Latin-1.",
+"appearanceThemeModeLocked": "Эта тема поддерживает только режим «{mode}». Для смены режима выберите другую тему."
 }

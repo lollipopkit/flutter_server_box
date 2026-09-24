@@ -1,5 +1,22 @@
 {
   "@@locale": "es",
+  "appearanceSettings": "Apariencia",
+  "appearancePreset": "Tema predefinido",
+  "appearanceThemeSchemaRange": "Esquema de tema compatible",
+  "appearanceThemeInstall": "Instalar tema",
+  "appearanceThemeStore": "Tienda de temas",
+  "appearanceThemeStoreUrl": "URL del catálogo de temas",
+  "appearanceInvalidTheme": "Paquete de tema o catálogo no válido",
+  "appearanceFontFamilies": "Familias de fuentes de la interfaz",
+  "appearanceFontFamiliesTip": "Un nombre por línea; las fuentes se prueban en orden.",
+  "appearanceFontImport": "Importar archivo de fuente de la interfaz",
+  "appearanceGradient": "Degradado",
+  "appearanceNoBackground": "Sin fondo",
+  "appearanceIcons": "Iconos de la aplicación",
+  "appearanceCorners": "Esquinas",
+  "appearanceCardCorners": "Esquinas de tarjetas",
+  "appearanceTileCorners": "Esquinas de elementos",
+  "appearanceButtonCorners": "Esquinas de botones",
   "crashCollect": "Datos de diagnóstico",
   "crashCollectIntro": "ServerBox registra lo que ocurre mientras se ejecuta para poder solucionar los problemas. Elige cuánta información se envía.",
   "crashCollectNone": "Nada",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Deja de enviar el puntero y las teclas, para mirar sin hacer clic por accidente.",
   "remoteDesktopGuideMoreTip": "Aquí están Ctrl+Alt+Supr, reconectar y pantalla completa.",
   "remoteDesktopGuidePointerTip": "También el puntero directo, en el que un dedo hace clic donde toca.",
-  "remoteDesktopVncClipboardLatin1Only": "El portapapeles VNC solo admite texto Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "El portapapeles VNC solo admite texto Latin-1.",
+"appearanceThemeModeLocked": "Este tema solo admite {mode}. Selecciona otro tema para cambiar de modo."
 }

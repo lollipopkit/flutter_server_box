@@ -164,61 +164,65 @@ class _AppNavRailState extends State<AppNavRail>
       // is painted over is a whole tab.
       child: RepaintBoundary(
         child: AnimatedBuilder(
-        animation: _open,
-        builder: (context, _) {
-          final open = _open.value;
-          return SizedBox(
-            width: lerpDouble(
-              NavRailMetrics.width,
-              NavRailMetrics.expandedWidth,
-              open,
-            ),
-            child: Material(
-              // Opaque whatever it is doing: open, it is painted over the tab
-              // beside it, and the shadow is what says so. Shut, the colour is
-              // the one already behind it and the shadow is nothing.
-              color: theme.scaffoldBackgroundColor,
-              surfaceTintColor: Colors.transparent,
-              // On or off rather than eased in: a shadow is recomputed
-              // wherever its elevation lands, and 200ms of that buys a
-              // gradient nobody watches under a panel that is still moving.
-              elevation: open == 0 ? 0 : 3,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.only(
-                        top: NavRailMetrics.padding,
-                      ),
-                      child: Column(
-                        children: [
-                          for (final (at, item) in widget.items.indexed)
-                            _NavRailTile(
-                              item: item,
-                              selected: at == widget.selectedIndex,
-                              open: open,
-                              onTap: () => widget.onSelected(at),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (widget.footer case final footer?)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: NavRailMetrics.padding,
-                      ),
-                      child: _NavRailTile(
-                        item: footer,
-                        selected: widget.footerSelected,
-                        open: open,
-                        onTap: widget.onFooterTap ?? () {},
-                      ),
-                    ),
-                ],
+          animation: _open,
+          builder: (context, _) {
+            final open = _open.value;
+            return SizedBox(
+              width: lerpDouble(
+                NavRailMetrics.width,
+                NavRailMetrics.expandedWidth,
+                open,
               ),
-            ),
-          );
+              child: Material(
+                // Opaque whatever it is doing: open, it is painted over the tab
+                // beside it, and the shadow is what says so. Shut, the colour is
+                // the one already behind it and the shadow is nothing.
+                color:
+                    NavigationRailTheme.of(context).backgroundColor ??
+                    theme.scaffoldBackgroundColor,
+                surfaceTintColor: Colors.transparent,
+                // On or off rather than eased in: a shadow is recomputed
+                // wherever its elevation lands, and 200ms of that buys a
+                // gradient nobody watches under a panel that is still moving.
+                elevation:
+                    NavigationRailTheme.of(context).elevation ??
+                    (open == 0 ? 0 : 3),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(
+                          top: NavRailMetrics.padding,
+                        ),
+                        child: Column(
+                          children: [
+                            for (final (at, item) in widget.items.indexed)
+                              _NavRailTile(
+                                item: item,
+                                selected: at == widget.selectedIndex,
+                                open: open,
+                                onTap: () => widget.onSelected(at),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (widget.footer case final footer?)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: NavRailMetrics.padding,
+                        ),
+                        child: _NavRailTile(
+                          item: footer,
+                          selected: widget.footerSelected,
+                          open: open,
+                          onTap: widget.onFooterTap ?? () {},
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
           },
         ),
       ),
@@ -264,7 +268,12 @@ class _NavRailTile extends StatelessWidget {
 
   Widget _build(BuildContext context, double on) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = Color.lerp(scheme.outline, scheme.onSecondaryContainer, on);
+    final railTheme = NavigationRailTheme.of(context);
+    final fg = Color.lerp(
+      railTheme.unselectedIconTheme?.color ?? scheme.outline,
+      railTheme.selectedIconTheme?.color ?? scheme.onSecondaryContainer,
+      on,
+    );
 
     // Halfway, which is where the name has room to be read and the badge has
     // room to sit after it. Below it the badge is on the indicator's corner;
@@ -285,8 +294,12 @@ class _NavRailTile extends StatelessWidget {
       height: NavRailMetrics.indicatorHeight,
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          shape: const StadiumBorder(),
-          color: Color.lerp(Colors.transparent, scheme.secondaryContainer, on),
+          shape: railTheme.indicatorShape ?? const StadiumBorder(),
+          color: Color.lerp(
+            Colors.transparent,
+            railTheme.indicatorColor ?? scheme.secondaryContainer,
+            on,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -308,13 +321,13 @@ class _NavRailTile extends StatelessWidget {
                       size: NavRailMetrics.iconSize,
                       color: fg,
                     ),
-                // Round the glyph and nothing else.
-                //
-                // A `Tooltip` builds two different trees — with an
-                // `OverlayPortal` and without — depending on whether it is
-                // allowed to show anything, so turning it off halfway through
-                // the opening re-parents everything under it. Under it here is
-                // one `Icon`, which has nothing to lose by that.
+                    // Round the glyph and nothing else.
+                    //
+                    // A `Tooltip` builds two different trees — with an
+                    // `OverlayPortal` and without — depending on whether it is
+                    // allowed to show anything, so turning it off halfway through
+                    // the opening re-parents everything under it. Under it here is
+                    // one `Icon`, which has nothing to lose by that.
                     child: TooltipVisibility(
                       // Only while the name is not on the row already.
                       visible: !named,
@@ -354,8 +367,10 @@ class _NavRailTile extends StatelessWidget {
                       // The colour, not an `Opacity` around it — see
                       // [NavRailBadge.opacity].
                       color: Color.lerp(
-                        Colors.grey,
-                        scheme.onSecondaryContainer,
+                        railTheme.unselectedLabelTextStyle?.color ??
+                            Colors.grey,
+                        railTheme.selectedLabelTextStyle?.color ??
+                            scheme.onSecondaryContainer,
                         on,
                       )?.withValues(alpha: open),
                     ),
@@ -387,7 +402,7 @@ class _NavRailTile extends StatelessWidget {
         onTap: onTap,
         // The pill's own shape. A rectangle under a stadium reads as a second
         // control behind the first.
-        customBorder: const StadiumBorder(),
+        customBorder: railTheme.indicatorShape ?? const StadiumBorder(),
         // The hover and nothing else: the rail opens under the pointer and the
         // pill moves to what was tapped, so a ripple on top of those two is a
         // third thing answering one movement of the mouse.

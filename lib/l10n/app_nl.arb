@@ -1,5 +1,22 @@
 {
   "@@locale": "nl",
+  "appearanceSettings": "Uiterlijk",
+  "appearancePreset": "Thema-instelling",
+  "appearanceThemeSchemaRange": "Ondersteund themaschema",
+  "appearanceThemeInstall": "Thema installeren",
+  "appearanceThemeStore": "Themawinkel",
+  "appearanceThemeStoreUrl": "URL van themacatalogus",
+  "appearanceInvalidTheme": "Ongeldig themapakket of ongeldige catalogus",
+  "appearanceFontFamilies": "Lettertypefamilies voor de interface",
+  "appearanceFontFamiliesTip": "Eén naam per regel; lettertypen worden op volgorde geprobeerd.",
+  "appearanceFontImport": "Lettertypebestand voor de interface importeren",
+  "appearanceGradient": "Kleurverloop",
+  "appearanceNoBackground": "Geen achtergrond",
+  "appearanceIcons": "Pictogrammen in de app",
+  "appearanceCorners": "Hoeken",
+  "appearanceCardCorners": "Kaarthoeken",
+  "appearanceTileCorners": "Tegelhoeken",
+  "appearanceButtonCorners": "Knophoeken",
   "crashCollect": "Diagnostische gegevens",
   "crashCollectIntro": "ServerBox legt vast wat er tijdens het gebruik gebeurt, zodat problemen kunnen worden opgelost. Kies hoeveel informatie er wordt verstuurd.",
   "crashCollectNone": "Niets",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Stopt met het verzenden van aanwijzer en toetsen, zodat je kunt kijken zonder per ongeluk te klikken.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Del, opnieuw verbinden en volledig scherm staan hier.",
   "remoteDesktopGuidePointerTip": "Net als de directe aanwijzer, waarbij een vinger klikt waar hij tikt.",
-  "remoteDesktopVncClipboardLatin1Only": "Het VNC-klembord ondersteunt alleen Latin-1-tekst."
+  "remoteDesktopVncClipboardLatin1Only": "Het VNC-klembord ondersteunt alleen Latin-1-tekst.",
+"appearanceThemeModeLocked": "Dit thema ondersteunt alleen {mode}. Kies een ander thema om de modus te wijzigen."
 }

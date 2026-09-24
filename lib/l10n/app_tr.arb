@@ -1,5 +1,22 @@
 {
   "@@locale": "tr",
+  "appearanceSettings": "Görünüm",
+  "appearancePreset": "Tema ön ayarı",
+  "appearanceThemeSchemaRange": "Desteklenen tema schema sürümü",
+  "appearanceThemeInstall": "Tema yükle",
+  "appearanceThemeStore": "Tema mağazası",
+  "appearanceThemeStoreUrl": "Tema kataloğu URL’si",
+  "appearanceInvalidTheme": "Geçersiz tema paketi veya katalog",
+  "appearanceFontFamilies": "Arayüz yazı tipi aileleri",
+  "appearanceFontFamiliesTip": "Her satıra bir ad yazın; yazı tipleri sırayla denenir.",
+  "appearanceFontImport": "Arayüz yazı tipi dosyasını içe aktar",
+  "appearanceGradient": "Gradyan",
+  "appearanceNoBackground": "Arka plan yok",
+  "appearanceIcons": "Uygulama içi simgeler",
+  "appearanceCorners": "Köşeler",
+  "appearanceCardCorners": "Kart köşeleri",
+  "appearanceTileCorners": "Kutucuk köşeleri",
+  "appearanceButtonCorners": "Düğme köşeleri",
   "crashCollect": "Tanılama verileri",
   "crashCollectIntro": "ServerBox, sorunların düzeltilebilmesi için çalışırken olanları kaydeder. Ne kadar bilgi gönderileceğini seçin.",
   "crashCollectNone": "Hiçbir şey",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "İşaretçi ve tuşların gönderilmesini durdurur; yanlışlıkla tıklamadan bakabilirsiniz.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, yeniden bağlanma ve tam ekran burada.",
   "remoteDesktopGuidePointerTip": "Parmağın dokunduğu yeri tıklayan doğrudan işaretçi de burada.",
-  "remoteDesktopVncClipboardLatin1Only": "VNC panosu yalnızca Latin-1 metnini destekler."
+  "remoteDesktopVncClipboardLatin1Only": "VNC panosu yalnızca Latin-1 metnini destekler.",
+"appearanceThemeModeLocked": "Bu tema yalnızca {mode} modunu destekler. Modu değiştirmek için başka bir tema seçin."
 }

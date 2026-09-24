@@ -1,5 +1,22 @@
 {
   "@@locale": "ko",
+  "appearanceSettings": "모양",
+  "appearancePreset": "테마 프리셋",
+  "appearanceThemeSchemaRange": "지원하는 테마 schema",
+  "appearanceThemeInstall": "테마 설치",
+  "appearanceThemeStore": "테마 스토어",
+  "appearanceThemeStoreUrl": "테마 카탈로그 URL",
+  "appearanceInvalidTheme": "유효하지 않은 테마 패키지 또는 카탈로그",
+  "appearanceFontFamilies": "UI 글꼴 목록",
+  "appearanceFontFamiliesTip": "한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.",
+  "appearanceFontImport": "UI 글꼴 파일 가져오기",
+  "appearanceGradient": "그라데이션",
+  "appearanceNoBackground": "배경 없음",
+  "appearanceIcons": "앱 내 아이콘",
+  "appearanceCorners": "모서리",
+  "appearanceCardCorners": "카드 모서리",
+  "appearanceTileCorners": "타일 모서리",
+  "appearanceButtonCorners": "버튼 모서리",
   "crashCollect": "진단 데이터",
   "crashCollectIntro": "ServerBox는 문제를 해결할 수 있도록 실행 중 발생한 일을 기록합니다. 전송할 정보의 양을 선택할 수 있습니다.",
   "crashCollectNone": "전송 안 함",
@@ -895,5 +912,6 @@
   "remoteDesktopGuideViewOnlyTip": "포인터와 키 입력 전송을 멈춰 실수로 클릭하지 않고 화면을 볼 수 있습니다.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, 다시 연결, 전체 화면은 여기에 있습니다.",
   "remoteDesktopGuidePointerTip": "손가락이 닿은 곳을 클릭하는 직접 포인터로도 여기서 전환할 수 있습니다.",
-  "remoteDesktopVncClipboardLatin1Only": "VNC 클립보드는 Latin-1 텍스트만 지원합니다."
+  "remoteDesktopVncClipboardLatin1Only": "VNC 클립보드는 Latin-1 텍스트만 지원합니다.",
+"appearanceThemeModeLocked": "이 테마는 {mode}만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요."
 }

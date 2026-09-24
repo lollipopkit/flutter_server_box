@@ -1,5 +1,22 @@
 {
   "@@locale": "zh_TW",
+  "appearanceSettings": "外觀",
+  "appearancePreset": "主題方案",
+  "appearanceThemeSchemaRange": "支援的主題 schema",
+  "appearanceThemeInstall": "安裝主題",
+  "appearanceThemeStore": "主題商店",
+  "appearanceThemeStoreUrl": "主題目錄 URL",
+  "appearanceInvalidTheme": "主題套件或目錄無效",
+  "appearanceFontFamilies": "介面字型列表",
+  "appearanceFontFamiliesTip": "每行一個字型名稱，依序 fallback。",
+  "appearanceFontImport": "匯入介面字型檔案",
+  "appearanceGradient": "漸層",
+  "appearanceNoBackground": "無背景",
+  "appearanceIcons": "App 內圖示",
+  "appearanceCorners": "圓角",
+  "appearanceCardCorners": "卡片圓角",
+  "appearanceTileCorners": "Tile 圓角",
+  "appearanceButtonCorners": "按鈕圓角",
   "crashCollect": "診斷資料",
   "crashCollectIntro": "ServerBox 會記錄執行期間發生的情況，以便修正問題。你可以選擇要傳送多少資料。",
   "crashCollectNone": "不傳送",
@@ -893,5 +910,6 @@
   "remoteDesktopGuideViewOnlyTip": "停止傳送指標和按鍵，只檢視畫面，不會誤點。",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、重新連線和全螢幕都在這裡。",
   "remoteDesktopGuidePointerTip": "這裡也可以切換為直接指標：手指點到哪裡就點擊哪裡。",
-  "remoteDesktopVncClipboardLatin1Only": "VNC 剪貼簿僅支援 Latin-1 文字。"
+  "remoteDesktopVncClipboardLatin1Only": "VNC 剪貼簿僅支援 Latin-1 文字。",
+"appearanceThemeModeLocked": "此主題僅支援{mode}。如需切換模式，請選擇其他主題。"
 }

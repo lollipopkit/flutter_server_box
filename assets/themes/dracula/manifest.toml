@@ -1,0 +1,36 @@
+id = "dracula"
+name = "Dracula"
+modes = ["dark"]
+
+[schema]
+min = 1
+max = 1
+
+[colors]
+mode = 2
+seed = 0xFFBD93F9
+
+[colors.palette.dark]
+primary = 0xFFBD93F9
+onPrimary = 0xFF21222C
+primaryContainer = 0xFF433D59
+onPrimaryContainer = 0xFFF8F8F2
+secondary = 0xFFFF79C6
+onSecondary = 0xFF21222C
+secondaryContainer = 0xFF433D59
+onSecondaryContainer = 0xFFF8F8F2
+surface = 0xFF21222C
+surfaceDim = 0xFF21222C
+surfaceBright = 0xFF41434D
+surfaceContainerLowest = 0xFF1A1B23
+surfaceContainerLow = 0xFF282A36
+surfaceContainer = 0xFF282A36
+surfaceContainerHigh = 0xFF30323E
+surfaceContainerHighest = 0xFF393A45
+onSurface = 0xFFF8F8F2
+onSurfaceVariant = 0xFFA5AECF
+outline = 0xFFA5AECF
+outlineVariant = 0xFF494B54
+surfaceTint = 0x00000000
+error = 0xFFFF5555
+onError = 0xFF21222C

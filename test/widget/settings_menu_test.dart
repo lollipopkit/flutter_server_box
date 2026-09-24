@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/data/model/app/builtin_theme.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -44,9 +48,15 @@ void main() {
     getIt.registerSingleton<ServerStore>(ServerStore());
   });
 
+  tearDownAll(() async {
+    if (pathsSet && Directory(Paths.doc).existsSync()) {
+      await Directory(Paths.doc).delete(recursive: true);
+    }
+  });
+
   tearDown(() async {
     await getIt.reset();
-    await SqliteDb.close();
+    await closeTestDb();
     await tempDir.delete(recursive: true);
   });
 
@@ -208,6 +218,280 @@ void main() {
 
     expect(fillOf(libL10n.sequence), scheme.secondaryContainer);
     expect(fillOf(libL10n.general), Colors.transparent);
+  });
+
+  testWidgets('appearance and theme share a page with separate groups', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester);
+
+    final appearance = AppLocalizations.of(
+      tester.element(find.byKey(settingsHeaderKey)),
+    )!;
+    expect(headerTab(appearance.appearanceSettings), findsNothing);
+    expect(headerTab(libL10n.theme), findsOneWidget);
+    expect(headerTab(libL10n.font), findsOneWidget);
+
+    await tester.tap(headerTab(libL10n.theme));
+    await settle(tester);
+    final content = find.byType(AppSettingsPage);
+    expect(
+      find.descendant(
+        of: content,
+        matching: find.text(appearance.appearanceSettings.toUpperCase()),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: content,
+        matching: find.text(libL10n.theme.toUpperCase()),
+      ),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(ListTile, libL10n.themeMode), findsOneWidget);
+    expect(
+      find.widgetWithText(ListTile, libL10n.primaryColorSeed),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(ListTile, appearance.appearancePreset),
+      findsOneWidget,
+    );
+    for (final label in [
+      appearance.appearanceThemeInstall,
+      appearance.appearanceThemeStore,
+    ]) {
+      expect(
+        find.descendant(
+          of: find.widgetWithText(ListTile, label),
+          matching: find.byIcon(Icons.keyboard_arrow_right),
+        ),
+        findsOneWidget,
+      );
+    }
+    for (final label in [
+      libL10n.themeMode,
+      libL10n.primaryColorSeed,
+      appearance.appearancePreset,
+    ]) {
+      expect(
+        find.descendant(
+          of: find.widgetWithText(ListTile, label),
+          matching: find.byIcon(Icons.keyboard_arrow_right),
+        ),
+        findsNothing,
+      );
+    }
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceThemeStoreUrl),
+      findsOneWidget,
+    );
+    final installTile = find.widgetWithText(
+      ListTile,
+      appearance.appearanceThemeInstall,
+    );
+    final installTip = tester.widget<TipText>(
+      find.descendant(of: installTile, matching: find.byType(TipText)),
+    );
+    expect(
+      installTip.tip,
+      '${appearance.appearanceThemeSchemaRange}: ${ThemePackages.supportedSchemaRange}',
+    );
+    expect(tester.widget<ListTile>(installTile).subtitle, isNull);
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceCardCorners),
+      findsNothing,
+    );
+    expect(find.widgetWithText(ListTile, libL10n.opacity), findsNothing);
+
+    final image = File('${tempDir.path}/custom.png');
+    image.writeAsBytesSync(
+      base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lXcAAAAASUVORK5CYII=',
+      ),
+    );
+    Stores.setting.appThemePreset.put('custom');
+    Stores.setting.appBackgroundStyle.put('image');
+    Stores.setting.appBackgroundPath.put(image.path);
+    await tester.tap(headerTab(libL10n.font));
+    await settle(tester);
+    await tester.tap(headerTab(libL10n.theme));
+    await settle(tester);
+    expect(
+      find.widgetWithText(ExpansionTile, appearance.appearanceCorners),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceCardCorners),
+      findsNothing,
+    );
+    await tester.ensureVisible(
+      find.widgetWithText(ExpansionTile, appearance.appearanceCorners),
+    );
+    await tester.tap(
+      find.widgetWithText(ExpansionTile, appearance.appearanceCorners),
+    );
+    await settle(tester);
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceCardCorners),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceTileCorners),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceButtonCorners),
+      findsOneWidget,
+    );
+    expect(find.widgetWithText(ListTile, libL10n.opacity), findsOneWidget);
+
+    await tester.tap(headerTab(libL10n.font));
+    await settle(tester);
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceFontImport),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.widgetWithText(ListTile, appearance.appearanceFontImport),
+        matching: find.byIcon(Icons.keyboard_arrow_right),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  test(
+    'renames the development Classic preset without resetting appearance',
+    () async {
+      Stores.setting.appThemePreset.put('classic');
+      Stores.setting.colorSeed.put(0xff123456);
+      Stores.setting.themeMode.put(ThemeMode.light.index);
+      await ThemePackages.prepareSelectedTheme();
+      expect(Stores.setting.appThemePreset.fetch(), 'default');
+      expect(ThemePackages.activeTheme!.name, 'Default');
+      expect(Stores.setting.colorSeed.fetch(), 0xff123456);
+      expect(Stores.setting.themeMode.fetch(), ThemeMode.light.index);
+    },
+  );
+
+  for (final (legacyMode, expectedMode) in [
+    (3, ThemeMode.dark),
+    (4, ThemeMode.system),
+  ]) {
+    test(
+      'migrates legacy theme mode $legacyMode to AMOLED and $expectedMode',
+      () async {
+        Stores.setting.themeMode.put(legacyMode);
+        await ThemePackages.prepareSelectedTheme();
+        expect(Stores.setting.appThemePreset.fetch(), 'amoled');
+        expect(Stores.setting.themeMode.fetch(), expectedMode.index);
+        expect(ThemePackages.effectiveMode, expectedMode);
+        expect(ThemePackages.activeTheme!.lockedMode, isNull);
+        // Subsequent startup must preserve a new user preference.
+        Stores.setting.themeMode.put(ThemeMode.light.index);
+        await ThemePackages.prepareSelectedTheme();
+        expect(Stores.setting.themeMode.fetch(), ThemeMode.light.index);
+        expect(ThemePackages.effectiveMode, ThemeMode.light);
+      },
+    );
+  }
+
+  testWidgets(
+    'theme arrow preview cancels with Escape and commits with Enter',
+    (tester) async {
+      ThemePackages.select(
+        ThemePackages.defaultTheme,
+        preset: BuiltinTheme.defaultTheme.id,
+      );
+      final originalSeed = Stores.setting.colorSeed.fetch();
+      await tester.runAsync(
+        () => ThemePackages.loadBuiltin(BuiltinTheme.amoled),
+      );
+      await pump(tester, width: 1200);
+      await tester.tap(menuRow(libL10n.app));
+      await settle(tester);
+      await tester.tap(headerTab(libL10n.theme));
+      await settle(tester);
+      final appearance = AppLocalizations.of(
+        tester.element(find.byKey(settingsHeaderKey)),
+      )!;
+      final row = find.widgetWithText(ListTile, appearance.appearancePreset);
+      await tester.tap(row);
+      await settle(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+      expect(ThemePackages.preview.value?.id, 'amoled');
+      expect(ThemePackages.activePalette(dark: true)['surface'], 0xff000000);
+      expect(Stores.setting.appThemePreset.fetch(), 'default');
+      expect(Stores.setting.colorSeed.fetch(), originalSeed);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settle(tester);
+      expect(find.byType(RowsSheet), findsNothing);
+      expect(ThemePackages.preview.value, isNull);
+      expect(Stores.setting.appThemePreset.fetch(), 'default');
+      expect(ThemePackages.activeTheme!.id, 'default');
+
+      await tester.tap(row);
+      await settle(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await settle(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await settle(tester);
+      expect(find.byType(RowsSheet), findsNothing);
+      expect(ThemePackages.preview.value, isNull);
+      expect(Stores.setting.appThemePreset.fetch(), 'amoled');
+    },
+  );
+
+  testWidgets('built-in presets apply their appearance without a package', (
+    tester,
+  ) async {
+    await pump(tester, width: 1200);
+    await tester.tap(menuRow(libL10n.app));
+    await settle(tester);
+    await tester.tap(headerTab(libL10n.theme));
+    await settle(tester);
+    final appearance = AppLocalizations.of(
+      tester.element(find.byKey(settingsHeaderKey)),
+    )!;
+    for (final builtin in BuiltinTheme.values.reversed) {
+      await tester.tap(
+        find.widgetWithText(ListTile, appearance.appearancePreset),
+      );
+      await settle(tester);
+      late ThemePackage theme;
+      await tester.runAsync(() async {
+        await tester.tap(find.text(builtin.label).last);
+        theme = await ThemePackages.loadBuiltin(builtin);
+      });
+      await settle(tester);
+      expect(Stores.setting.appThemePreset.fetch(), theme.id);
+      expect(Stores.setting.colorSeed.fetch(), theme.seed);
+      expect(Stores.setting.themeMode.fetch(), theme.mode);
+      expect(Stores.setting.appThemePackage.fetch(), isEmpty);
+      expect(Stores.setting.appBackgroundStyle.fetch(), 'none');
+      expect(Stores.setting.appCardRadius.fetch(), theme.cardRadius);
+      final modeRow = tester.widget<ListTile>(
+        find.widgetWithText(ListTile, libL10n.themeMode),
+      );
+      expect(modeRow.enabled, theme.lockedMode == null);
+      if (theme.lockedMode != null) {
+        expect(modeRow.onTap, isNull);
+        expect(
+          (modeRow.subtitle as Text).data,
+          appearance.appearanceThemeModeLocked(
+            theme.lockedMode == ThemeMode.dark ? libL10n.dark : libL10n.bright,
+          ),
+        );
+      } else {
+        expect(modeRow.subtitle, isNull);
+        expect(modeRow.onTap, isNotNull);
+      }
+    }
   });
 
   testWidgets('a subject with one page gets no tabs', (tester) async {
@@ -453,7 +737,9 @@ void main() {
     expect(edgeFade(), findsNothing);
   });
 
-  testWidgets('a level wider than its window fades at the edge', (tester) async {
+  testWidgets('a level wider than its window fades at the edge', (
+    tester,
+  ) async {
     // Narrow enough that the app group's leaves cannot all be on screen.
     await pump(tester, width: 320);
 
@@ -471,12 +757,14 @@ void main() {
     await tester.tap(menuRow(libL10n.app));
     await settle(tester, 20);
 
-    // The fourth tab of the app group, so the animation crosses two others.
+    // A later tab in the app group, so the animation crosses others.
     final target = AppLocalizations.of(
       tester.element(find.byKey(settingsTabsKey)),
     )!.homeTabs;
     final titles = <String>[barTitle(tester)];
 
+    await tester.ensureVisible(tabRow(target));
+    await settle(tester, 20);
     await tester.tap(tabRow(target));
     for (var i = 0; i < 20; i++) {
       await tester.pump(const Duration(milliseconds: 20));

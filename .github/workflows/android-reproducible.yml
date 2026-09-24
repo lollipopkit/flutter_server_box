@@ -77,6 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
@@ -183,6 +184,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           persist-credentials: false
 
       - name: Download first build

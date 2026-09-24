@@ -9,6 +9,58 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Tampilan';
+
+  @override
+  String get appearancePreset => 'Preset tema';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Skema tema yang didukung';
+
+  @override
+  String get appearanceThemeInstall => 'Pasang tema';
+
+  @override
+  String get appearanceThemeStore => 'Toko tema';
+
+  @override
+  String get appearanceThemeStoreUrl => 'URL katalog tema';
+
+  @override
+  String get appearanceInvalidTheme => 'Paket tema atau katalog tidak valid';
+
+  @override
+  String get appearanceFontFamilies => 'Daftar keluarga font antarmuka';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Satu nama per baris; font dicoba sesuai urutan.';
+
+  @override
+  String get appearanceFontImport => 'Impor berkas font antarmuka';
+
+  @override
+  String get appearanceGradient => 'Gradasi';
+
+  @override
+  String get appearanceNoBackground => 'Tanpa latar belakang';
+
+  @override
+  String get appearanceIcons => 'Ikon dalam aplikasi';
+
+  @override
+  String get appearanceCorners => 'Sudut';
+
+  @override
+  String get appearanceCardCorners => 'Sudut kartu';
+
+  @override
+  String get appearanceTileCorners => 'Sudut tile';
+
+  @override
+  String get appearanceButtonCorners => 'Sudut tombol';
+
+  @override
   String get crashCollect => 'Data diagnostik';
 
   @override
@@ -3069,4 +3121,8 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'Clipboard VNC hanya mendukung teks Latin-1.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Tema ini hanya mendukung $mode. Pilih tema lain untuk mengubah mode.';
+  }
 }

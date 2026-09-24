@@ -9,6 +9,60 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Uiterlijk';
+
+  @override
+  String get appearancePreset => 'Thema-instelling';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Ondersteund themaschema';
+
+  @override
+  String get appearanceThemeInstall => 'Thema installeren';
+
+  @override
+  String get appearanceThemeStore => 'Themawinkel';
+
+  @override
+  String get appearanceThemeStoreUrl => 'URL van themacatalogus';
+
+  @override
+  String get appearanceInvalidTheme =>
+      'Ongeldig themapakket of ongeldige catalogus';
+
+  @override
+  String get appearanceFontFamilies => 'Lettertypefamilies voor de interface';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Eén naam per regel; lettertypen worden op volgorde geprobeerd.';
+
+  @override
+  String get appearanceFontImport =>
+      'Lettertypebestand voor de interface importeren';
+
+  @override
+  String get appearanceGradient => 'Kleurverloop';
+
+  @override
+  String get appearanceNoBackground => 'Geen achtergrond';
+
+  @override
+  String get appearanceIcons => 'Pictogrammen in de app';
+
+  @override
+  String get appearanceCorners => 'Hoeken';
+
+  @override
+  String get appearanceCardCorners => 'Kaarthoeken';
+
+  @override
+  String get appearanceTileCorners => 'Tegelhoeken';
+
+  @override
+  String get appearanceButtonCorners => 'Knophoeken';
+
+  @override
   String get crashCollect => 'Diagnostische gegevens';
 
   @override
@@ -3097,4 +3151,8 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'Het VNC-klembord ondersteunt alleen Latin-1-tekst.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Dit thema ondersteunt alleen $mode. Kies een ander thema om de modus te wijzigen.';
+  }
 }

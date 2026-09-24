@@ -1,5 +1,22 @@
 {
   "@@locale": "de",
+  "appearanceSettings": "Darstellung",
+  "appearancePreset": "Designvorlage",
+  "appearanceThemeSchemaRange": "Unterstütztes Theme-Schema",
+  "appearanceThemeInstall": "Design installieren",
+  "appearanceThemeStore": "Design-Store",
+  "appearanceThemeStoreUrl": "URL des Designkatalogs",
+  "appearanceInvalidTheme": "Ungültiges Designpaket oder ungültiger Katalog",
+  "appearanceFontFamilies": "Schriftfamilien der Oberfläche",
+  "appearanceFontFamiliesTip": "Ein Name pro Zeile; Schriften werden der Reihe nach versucht.",
+  "appearanceFontImport": "Schriftdatei für die Oberfläche importieren",
+  "appearanceGradient": "Farbverlauf",
+  "appearanceNoBackground": "Kein Hintergrund",
+  "appearanceIcons": "Symbole in der App",
+  "appearanceCorners": "Ecken",
+  "appearanceCardCorners": "Kartenecken",
+  "appearanceTileCorners": "Kachelecken",
+  "appearanceButtonCorners": "Schaltflächenecken",
   "crashCollect": "Diagnosedaten",
   "crashCollectIntro": "ServerBox zeichnet während des Betriebs auf, was passiert, damit Probleme behoben werden können. Wählen Sie, wie viele Informationen gesendet werden.",
   "crashCollectNone": "Nichts",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Zeiger und Tasten werden nicht mehr gesendet, damit Sie sich umsehen können, ohne versehentlich zu klicken.",
   "remoteDesktopGuideMoreTip": "Strg+Alt+Entf, Neu verbinden und Vollbild finden Sie hier.",
   "remoteDesktopGuidePointerTip": "Ebenso den direkten Zeiger, bei dem ein Finger dort klickt, wo er tippt.",
-  "remoteDesktopVncClipboardLatin1Only": "Die VNC-Zwischenablage unterstützt nur Latin-1-Text."
+  "remoteDesktopVncClipboardLatin1Only": "Die VNC-Zwischenablage unterstützt nur Latin-1-Text.",
+"appearanceThemeModeLocked": "Dieses Theme unterstützt nur {mode}. Wähle ein anderes Theme, um den Modus zu ändern."
 }

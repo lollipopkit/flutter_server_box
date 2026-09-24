@@ -9,6 +9,57 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get appearanceSettings => '外观';
+
+  @override
+  String get appearancePreset => '主题方案';
+
+  @override
+  String get appearanceThemeSchemaRange => '支持的主题 schema';
+
+  @override
+  String get appearanceThemeInstall => '安装主题';
+
+  @override
+  String get appearanceThemeStore => '主题商店';
+
+  @override
+  String get appearanceThemeStoreUrl => '主题目录 URL';
+
+  @override
+  String get appearanceInvalidTheme => '主题包或目录无效';
+
+  @override
+  String get appearanceFontFamilies => '界面字体列表';
+
+  @override
+  String get appearanceFontFamiliesTip => '每行一个字体名称，按顺序 fallback。';
+
+  @override
+  String get appearanceFontImport => '导入界面字体文件';
+
+  @override
+  String get appearanceGradient => '渐变';
+
+  @override
+  String get appearanceNoBackground => '无背景';
+
+  @override
+  String get appearanceIcons => 'App 内图标';
+
+  @override
+  String get appearanceCorners => '圆角';
+
+  @override
+  String get appearanceCardCorners => '卡片圆角';
+
+  @override
+  String get appearanceTileCorners => 'Tile 圆角';
+
+  @override
+  String get appearanceButtonCorners => '按钮圆角';
+
+  @override
   String get crashCollect => '诊断信息';
 
   @override
@@ -2855,11 +2906,66 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪贴板仅支持 Latin-1 文本。';
+
+String appearanceThemeModeLocked(String mode) {
+    return '此主题仅支持$mode。如需切换模式，请选择其他主题。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
+
+  @override
+  String get appearanceSettings => '外觀';
+
+  @override
+  String get appearancePreset => '主題方案';
+
+  @override
+  String get appearanceThemeSchemaRange => '支援的主題 schema';
+
+  @override
+  String get appearanceThemeInstall => '安裝主題';
+
+  @override
+  String get appearanceThemeStore => '主題商店';
+
+  @override
+  String get appearanceThemeStoreUrl => '主題目錄 URL';
+
+  @override
+  String get appearanceInvalidTheme => '主題套件或目錄無效';
+
+  @override
+  String get appearanceFontFamilies => '介面字型列表';
+
+  @override
+  String get appearanceFontFamiliesTip => '每行一個字型名稱，依序 fallback。';
+
+  @override
+  String get appearanceFontImport => '匯入介面字型檔案';
+
+  @override
+  String get appearanceGradient => '漸層';
+
+  @override
+  String get appearanceNoBackground => '無背景';
+
+  @override
+  String get appearanceIcons => 'App 內圖示';
+
+  @override
+  String get appearanceCorners => '圓角';
+
+  @override
+  String get appearanceCardCorners => '卡片圓角';
+
+  @override
+  String get appearanceTileCorners => 'Tile 圓角';
+
+  @override
+  String get appearanceButtonCorners => '按鈕圓角';
 
   @override
   String get crashCollect => '診斷資料';
@@ -5706,4 +5812,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪貼簿僅支援 Latin-1 文字。';
+
+String appearanceThemeModeLocked(String mode) {
+    return '此主題僅支援$mode。如需切換模式，請選擇其他主題。';
+  }
 }

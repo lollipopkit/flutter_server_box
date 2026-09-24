@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -9,7 +11,9 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
+import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/chart_palette.dart';
 import 'package:server_box/data/res/store.dart';
@@ -30,17 +34,76 @@ Widget _buildHomeWithWindowFrame() {
 /// system, each in both brightnesses — and anything not passed here is a
 /// property three of them silently do not have.
 ThemeData _theme({Color? seed, Brightness? brightness}) {
+  final cardRadius =
+      (ThemePackages.preview.value?.cardRadius ??
+              Stores.setting.appCardRadius.fetch())
+          .clamp(0.0, 40.0);
+  final tileRadius =
+      (ThemePackages.preview.value?.tileRadius ??
+              Stores.setting.appTileRadius.fetch())
+          .clamp(0.0, 40.0);
+  final buttonRadius =
+      (ThemePackages.preview.value?.buttonRadius ??
+              Stores.setting.appButtonRadius.fetch())
+          .clamp(0.0, 40.0);
+  var colorScheme = ColorScheme.fromSeed(
+    seedColor:
+        seed ??
+        Color(
+          ThemePackages.preview.value?.seed ?? Stores.setting.colorSeed.fetch(),
+        ),
+    brightness: brightness ?? Brightness.light,
+  );
+  if (ThemePackages.preview.value != null ||
+      Stores.setting.appThemePaletteEnabled.fetch()) {
+    colorScheme = ThemePackages.applyPalette(
+      colorScheme,
+      ThemePackages.activePalette(dark: brightness == Brightness.dark),
+    );
+  }
+  final cardShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(cardRadius),
+  );
+  final tileShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(tileRadius),
+  );
+  final buttonShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(buttonRadius),
+  );
+  final buttonStyle = ButtonStyle(shape: WidgetStatePropertyAll(buttonShape));
+  final fontFamilies = AppFont.families;
+  final backgroundStyle =
+      ThemePackages.preview.value?.backgroundStyle ??
+      Stores.setting.appBackgroundStyle.fetch();
+  final backgroundPath = (ThemePackages.preview.value != null
+      ? ThemePackages.preview.value!.backgroundPath ?? ''
+      : Stores.setting.appBackgroundPath.fetch());
+  final hasBackground =
+      backgroundStyle == 'gradient' ||
+      (backgroundStyle == 'image' && backgroundPath.isNotEmpty);
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
-    colorSchemeSeed: seed,
+    colorScheme: colorScheme,
+    fontFamily: fontFamilies.firstOrNull,
+    fontFamilyFallback: fontFamilies.length > 1
+        ? fontFamilies.skip(1).toList()
+        : null,
+    scaffoldBackgroundColor: hasBackground ? Colors.transparent : null,
+    cardTheme: CardThemeData(shape: cardShape, elevation: 0),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
+    filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: buttonStyle),
+    textButtonTheme: TextButtonThemeData(style: buttonStyle),
+    navigationBarTheme: NavigationBarThemeData(indicatorShape: buttonShape),
+    dialogTheme: DialogThemeData(shape: cardShape),
     // `centerTitle` for the bars that are a plain `AppBar` rather than a
     // `CustomAppBar`, which now defaults to the same thing itself.
     appBarTheme: const AppBarTheme(
       scrolledUnderElevation: 0,
       centerTitle: false,
     ),
-    listTileTheme: _listTileTheme,
+    listTileTheme: _listTileTheme.copyWith(shape: tileShape),
     // Material's back button is an arrow with a shaft on Android and a bare
     // `arrow_back_ios_new` on Apple — two glyphs for one control, decided by
     // the platform rather than by this app. A chevron is the one every pane,
@@ -68,7 +131,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
   //
   // Only reaches a bare `Icon`. `AppBar`, `IconButton`, `NavigationBar` and
   // the rail each resolve a size from their own defaults and are unaffected.
-  return base.copyWith(
+  final styled = base.copyWith(
     iconTheme: base.iconTheme.copyWith(size: 19),
     // Material's bar title is `titleLarge` at 22, drawn for a page that is one
     // thing. Every bar in this app sits over a form or a list whose own rows
@@ -103,6 +166,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     // `copyWith(fontSize: 13)` applied *after* this one, so the two cannot be
     // combined — dense simply wins.
     listTileTheme: _listTileTheme.copyWith(
+      shape: tileShape,
       titleTextStyle: base.textTheme.bodyLarge?.copyWith(
         inherit: false,
         fontSize: 14,
@@ -115,6 +179,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
       ),
     ),
   );
+  return ThemePackages.activeTheme?.components.apply(styled) ?? styled;
 }
 
 /// A top-level function so that [ActionIconThemeData] can be `const` — a
@@ -151,10 +216,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
-  late final Listenable _appListenable = Listenable.merge([
-    RNodes.app,
-    Stores.setting.locale.listenable(),
-  ]);
   bool _transparentNavBarConfigured = false;
 
   @override
@@ -171,9 +232,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _appListenable,
+      listenable: Listenable.merge([
+        RNodes.app,
+        ThemePackages.preview,
+        Stores.setting.locale.listenable(),
+      ]),
       builder: (context, _) {
-        if (!Stores.setting.useSystemPrimaryColor.fetch()) {
+        if (!(ThemePackages.preview.value?.systemColor ??
+            Stores.setting.useSystemPrimaryColor.fetch())) {
           return _build(context);
         }
 
@@ -183,7 +249,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget _build(BuildContext context) {
-    final colorSeed = Color(Stores.setting.colorSeed.fetch());
+    final colorSeed = Color(
+      ThemePackages.preview.value?.seed ?? Stores.setting.colorSeed.fetch(),
+    );
 
     UIs.colorSeed = colorSeed;
     UIs.primaryColor = colorSeed;
@@ -211,7 +279,10 @@ class _MyAppState extends State<MyApp> {
           UIs.primaryColor = light.primary;
           UIs.colorSeed = light.primary;
         } else {
-          final fallbackColor = Color(Stores.setting.colorSeed.fetch());
+          final fallbackColor = Color(
+            ThemePackages.preview.value?.seed ??
+                Stores.setting.colorSeed.fetch(),
+          );
           UIs.primaryColor = fallbackColor;
           UIs.colorSeed = fallbackColor;
         }
@@ -239,13 +310,7 @@ class _MyAppState extends State<MyApp> {
     required ThemeData light,
     required ThemeData dark,
   }) {
-    final tMode = Stores.setting.themeMode.fetch();
-    // Issue #57
-    final themeMode = switch (tMode) {
-      1 || 2 => ThemeMode.values[tMode],
-      3 => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
+    final themeMode = ThemePackages.effectiveMode;
     final locale = Stores.setting.locale.fetch().toLocale;
 
     return MaterialApp(
@@ -269,7 +334,72 @@ class _MyAppState extends State<MyApp> {
         // that was picked, which the two builders above keep current whether
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
-        return ToastHost(child: ResponsivePoints.builder(ctx, child));
+        final content = ToastHost(child: ResponsivePoints.builder(ctx, child));
+        final backgroundStyle =
+            ThemePackages.preview.value?.backgroundStyle ??
+            Stores.setting.appBackgroundStyle.fetch();
+        final backgroundPath = (ThemePackages.preview.value != null
+            ? ThemePackages.preview.value!.backgroundPath ?? ''
+            : Stores.setting.appBackgroundPath.fetch());
+        if (backgroundStyle == 'none' ||
+            (backgroundStyle == 'image' && backgroundPath.isEmpty)) {
+          return content;
+        }
+        final surface = Theme.of(ctx).colorScheme.surface;
+        final accent = Theme.of(ctx).colorScheme.primary;
+        final image = backgroundStyle == 'image'
+            ? Image.file(
+                File(backgroundPath),
+                fit: BoxFit.cover,
+                cacheWidth: 4096,
+                cacheHeight: 4096,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              )
+            : const SizedBox.shrink();
+        final blur =
+            (ThemePackages.preview.value?.blur ??
+                    Stores.setting.appBackgroundBlur.fetch())
+                .clamp(0.0, 30.0);
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: backgroundStyle == 'gradient'
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color.lerp(surface, accent, 0.22)!,
+                            surface,
+                            Color.lerp(surface, accent, 0.12)!,
+                          ],
+                        ),
+                      ),
+                    )
+                  : ColoredBox(
+                      color: surface,
+                      child: Opacity(
+                        opacity:
+                            (ThemePackages.preview.value?.opacity ??
+                                    Stores.setting.appBackgroundOpacity.fetch())
+                                .clamp(0.0, 0.6),
+                        child: blur == 0
+                            ? image
+                            : ImageFiltered(
+                                imageFilter: ui.ImageFilter.blur(
+                                  sigmaX: blur,
+                                  sigmaY: blur,
+                                  tileMode: ui.TileMode.clamp,
+                                ),
+                                child: image,
+                              ),
+                      ),
+                    ),
+            ),
+            Positioned.fill(child: content),
+          ],
+        );
       },
       locale: locale,
       localizationsDelegates: const [
@@ -282,7 +412,7 @@ class _MyAppState extends State<MyApp> {
       title: BuildData.name,
       themeMode: themeMode,
       theme: light.fixWindowsFont,
-      darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
+      darkTheme: dark.fixWindowsFont,
       home: FutureBuilder<List<IntroPageBuilder>>(
         future: _introFuture,
         builder: (context, snapshot) {

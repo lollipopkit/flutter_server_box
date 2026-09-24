@@ -1,5 +1,22 @@
 {
   "@@locale": "en",
+  "appearanceSettings": "Appearance",
+  "appearancePreset": "Theme preset",
+  "appearanceThemeSchemaRange": "Supported theme schema",
+  "appearanceThemeInstall": "Install theme",
+  "appearanceThemeStore": "Theme store",
+  "appearanceThemeStoreUrl": "Theme catalog URL",
+  "appearanceInvalidTheme": "Invalid theme package or catalog",
+  "appearanceFontFamilies": "UI font families",
+  "appearanceFontFamiliesTip": "One name per line; fonts are tried in order.",
+  "appearanceFontImport": "Import UI font file",
+  "appearanceGradient": "Gradient",
+  "appearanceNoBackground": "No background",
+  "appearanceIcons": "In-app icons",
+  "appearanceCorners": "Corners",
+  "appearanceCardCorners": "Card corners",
+  "appearanceTileCorners": "Tile corners",
+  "appearanceButtonCorners": "Button corners",
   "crashCollect": "Diagnostic data",
   "crashCollectIntro": "ServerBox records what happens while it runs so problems can be fixed. Choose how much information to send.",
   "crashCollectNone": "Nothing",
@@ -1154,5 +1171,7 @@
   "remoteDesktopGuideViewOnlyTip": "Stops sending the pointer and keys, so you can look without clicking anything by accident.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, reconnecting and full screen are in here.",
   "remoteDesktopGuidePointerTip": "So is a direct pointer, where a finger clicks what it touches.",
-  "remoteDesktopVncClipboardLatin1Only": "VNC clipboard supports Latin-1 text only."
+  "remoteDesktopVncClipboardLatin1Only": "VNC clipboard supports Latin-1 text only.",
+"appearanceThemeModeLocked": "This theme only supports {mode}. Select another theme to change the mode.",
+  "@appearanceThemeModeLocked": {"placeholders": {"mode": {"type": "String"}}}
 }

@@ -9,6 +9,60 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Darstellung';
+
+  @override
+  String get appearancePreset => 'Designvorlage';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Unterstütztes Theme-Schema';
+
+  @override
+  String get appearanceThemeInstall => 'Design installieren';
+
+  @override
+  String get appearanceThemeStore => 'Design-Store';
+
+  @override
+  String get appearanceThemeStoreUrl => 'URL des Designkatalogs';
+
+  @override
+  String get appearanceInvalidTheme =>
+      'Ungültiges Designpaket oder ungültiger Katalog';
+
+  @override
+  String get appearanceFontFamilies => 'Schriftfamilien der Oberfläche';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Ein Name pro Zeile; Schriften werden der Reihe nach versucht.';
+
+  @override
+  String get appearanceFontImport =>
+      'Schriftdatei für die Oberfläche importieren';
+
+  @override
+  String get appearanceGradient => 'Farbverlauf';
+
+  @override
+  String get appearanceNoBackground => 'Kein Hintergrund';
+
+  @override
+  String get appearanceIcons => 'Symbole in der App';
+
+  @override
+  String get appearanceCorners => 'Ecken';
+
+  @override
+  String get appearanceCardCorners => 'Kartenecken';
+
+  @override
+  String get appearanceTileCorners => 'Kachelecken';
+
+  @override
+  String get appearanceButtonCorners => 'Schaltflächenecken';
+
+  @override
   String get crashCollect => 'Diagnosedaten';
 
   @override
@@ -3106,4 +3160,8 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'Die VNC-Zwischenablage unterstützt nur Latin-1-Text.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Dieses Theme unterstützt nur $mode. Wähle ein anderes Theme, um den Modus zu ändern.';
+  }
 }

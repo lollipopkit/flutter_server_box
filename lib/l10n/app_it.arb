@@ -1,5 +1,22 @@
 {
   "@@locale": "it",
+  "appearanceSettings": "Aspetto",
+  "appearancePreset": "Tema predefinito",
+  "appearanceThemeSchemaRange": "Schema del tema supportato",
+  "appearanceThemeInstall": "Installa tema",
+  "appearanceThemeStore": "Negozio temi",
+  "appearanceThemeStoreUrl": "URL del catalogo temi",
+  "appearanceInvalidTheme": "Pacchetto tema o catalogo non valido",
+  "appearanceFontFamilies": "Famiglie di caratteri dell’interfaccia",
+  "appearanceFontFamiliesTip": "Un nome per riga; i caratteri vengono provati in ordine.",
+  "appearanceFontImport": "Importa file di caratteri per l’interfaccia",
+  "appearanceGradient": "Sfumatura",
+  "appearanceNoBackground": "Nessuno sfondo",
+  "appearanceIcons": "Icone nell’app",
+  "appearanceCorners": "Angoli",
+  "appearanceCardCorners": "Angoli delle schede",
+  "appearanceTileCorners": "Angoli degli elementi",
+  "appearanceButtonCorners": "Angoli dei pulsanti",
   "crashCollect": "Dati diagnostici",
   "crashCollectIntro": "ServerBox registra ciò che accade durante l'esecuzione per poter risolvere i problemi. Scegli quanti dati inviare.",
   "crashCollectNone": "Niente",
@@ -889,5 +906,6 @@
   "remoteDesktopGuideViewOnlyTip": "Smette di inviare puntatore e tasti, così puoi guardare senza fare clic per errore.",
   "remoteDesktopGuideMoreTip": "Qui trovi Ctrl+Alt+Canc, la riconnessione e lo schermo intero.",
   "remoteDesktopGuidePointerTip": "Anche il puntatore diretto, in cui un dito fa clic dove tocca.",
-  "remoteDesktopVncClipboardLatin1Only": "Gli appunti VNC supportano solo testo Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Gli appunti VNC supportano solo testo Latin-1.",
+"appearanceThemeModeLocked": "Questo tema supporta solo {mode}. Seleziona un altro tema per cambiare modalità."
 }

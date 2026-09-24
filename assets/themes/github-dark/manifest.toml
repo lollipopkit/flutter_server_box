@@ -1,0 +1,36 @@
+id = "github-dark"
+name = "GitHub Dark"
+modes = ["dark"]
+
+[schema]
+min = 1
+max = 1
+
+[colors]
+mode = 2
+seed = 0xFF58A6FF
+
+[colors.palette.dark]
+primary = 0xFF58A6FF
+onPrimary = 0xFF0D1117
+primaryContainer = 0xFF22344A
+onPrimaryContainer = 0xFFC9D1D9
+secondary = 0xFF79C0FF
+onSecondary = 0xFF0D1117
+secondaryContainer = 0xFF22344A
+onSecondaryContainer = 0xFFC9D1D9
+surface = 0xFF0D1117
+surfaceDim = 0xFF0D1117
+surfaceBright = 0xFF2B3138
+surfaceContainerLowest = 0xFF0A0E12
+surfaceContainerLow = 0xFF161B22
+surfaceContainer = 0xFF161B22
+surfaceContainerHigh = 0xFF1D2229
+surfaceContainerHighest = 0xFF242A31
+onSurface = 0xFFC9D1D9
+onSurfaceVariant = 0xFF8B949E
+outline = 0xFF8B949E
+outlineVariant = 0xFF33383F
+surfaceTint = 0x00000000
+error = 0xFFFF7B72
+onError = 0xFF0D1117

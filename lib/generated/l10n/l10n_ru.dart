@@ -9,6 +9,58 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Внешний вид';
+
+  @override
+  String get appearancePreset => 'Готовая тема';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Поддерживаемая схема темы';
+
+  @override
+  String get appearanceThemeInstall => 'Установить тему';
+
+  @override
+  String get appearanceThemeStore => 'Магазин тем';
+
+  @override
+  String get appearanceThemeStoreUrl => 'URL каталога тем';
+
+  @override
+  String get appearanceInvalidTheme => 'Недопустимый пакет темы или каталог';
+
+  @override
+  String get appearanceFontFamilies => 'Семейства шрифтов интерфейса';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Одно название в строке; шрифты применяются по порядку.';
+
+  @override
+  String get appearanceFontImport => 'Импортировать файл шрифта интерфейса';
+
+  @override
+  String get appearanceGradient => 'Градиент';
+
+  @override
+  String get appearanceNoBackground => 'Без фона';
+
+  @override
+  String get appearanceIcons => 'Значки в приложении';
+
+  @override
+  String get appearanceCorners => 'Углы';
+
+  @override
+  String get appearanceCardCorners => 'Углы карточек';
+
+  @override
+  String get appearanceTileCorners => 'Углы элементов';
+
+  @override
+  String get appearanceButtonCorners => 'Углы кнопок';
+
+  @override
   String get crashCollect => 'Диагностические данные';
 
   @override
@@ -3094,4 +3146,8 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'Буфер обмена VNC поддерживает только текст в кодировке Latin-1.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Эта тема поддерживает только режим «$mode». Для смены режима выберите другую тему.';
+  }
 }

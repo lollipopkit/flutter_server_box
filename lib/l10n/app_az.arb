@@ -1,5 +1,22 @@
 {
   "@@locale": "az",
+  "appearanceSettings": "Görünüş",
+  "appearancePreset": "Tema dəsti",
+  "appearanceThemeSchemaRange": "Dəstəklənən mövzu schema-sı",
+  "appearanceThemeInstall": "Mövzu quraşdır",
+  "appearanceThemeStore": "Mövzu mağazası",
+  "appearanceThemeStoreUrl": "Mövzu kataloqu URL-si",
+  "appearanceInvalidTheme": "Mövzu paketi və ya kataloq etibarsızdır",
+  "appearanceFontFamilies": "İnterfeys şrift ailələri",
+  "appearanceFontFamiliesTip": "Hər sətirə bir ad yazın; şriftlər ardıcıllıqla yoxlanır.",
+  "appearanceFontImport": "İnterfeys şrift faylını idxal et",
+  "appearanceGradient": "Qradient",
+  "appearanceNoBackground": "Fon yoxdur",
+  "appearanceIcons": "Tətbiqdaxili ikonlar",
+  "appearanceCorners": "Künclər",
+  "appearanceCardCorners": "Kart küncləri",
+  "appearanceTileCorners": "Element küncləri",
+  "appearanceButtonCorners": "Düymə küncləri",
   "crashCollect": "Diaqnostika məlumatları",
   "crashCollectIntro": "ServerBox problemləri aradan qaldırmaq üçün işləyərkən baş verənləri qeydə alır. Göndəriləcək məlumatın həcmini seç.",
   "crashCollectNone": "Heç nə",
@@ -1088,5 +1105,6 @@
   "remoteDesktopGuideViewOnlyTip": "Göstərici və düymələrin göndərilməsini dayandırır ki, təsadüfən klikləmədən baxa biləsiniz.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, yenidən qoşulma və tam ekran buradadır.",
   "remoteDesktopGuidePointerTip": "Barmağın toxunduğu yeri klikləyən birbaşa göstərici də buradadır.",
-  "remoteDesktopVncClipboardLatin1Only": "VNC mübadilə buferi yalnız Latin-1 mətnini dəstəkləyir."
+  "remoteDesktopVncClipboardLatin1Only": "VNC mübadilə buferi yalnız Latin-1 mətnini dəstəkləyir.",
+"appearanceThemeModeLocked": "Bu mövzu yalnız {mode} rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin."
 }

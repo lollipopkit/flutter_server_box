@@ -130,18 +130,12 @@ abstract final class TerminalLook {
 
   /// The terminal's own theme setting, falling back to the app's and then to
   /// what the system asked for.
-  static bool isDark(BuildContext context) => switch (Stores
-      .setting
-      .termTheme
-      .fetch()) {
-    1 => false,
-    2 => true,
-    _ => switch (Stores.setting.themeMode.fetch()) {
-      1 => false,
-      2 || 3 => true,
-      _ => context.isDark,
-    },
-  };
+  static bool isDark(BuildContext context) =>
+      switch (Stores.setting.termTheme.fetch()) {
+        1 => false,
+        2 => true,
+        _ => context.isDark,
+      };
 
   static TerminalTheme themeOf(BuildContext context) {
     final theme = isDark(context) ? TerminalThemes.dark : TerminalThemes.light;

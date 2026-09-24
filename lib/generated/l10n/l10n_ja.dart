@@ -9,6 +9,57 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get appearanceSettings => '外観';
+
+  @override
+  String get appearancePreset => 'テーマプリセット';
+
+  @override
+  String get appearanceThemeSchemaRange => '対応テーマ schema';
+
+  @override
+  String get appearanceThemeInstall => 'テーマをインストール';
+
+  @override
+  String get appearanceThemeStore => 'テーマストア';
+
+  @override
+  String get appearanceThemeStoreUrl => 'テーマカタログの URL';
+
+  @override
+  String get appearanceInvalidTheme => 'テーマパッケージまたはカタログが無効です';
+
+  @override
+  String get appearanceFontFamilies => 'UI フォントファミリー';
+
+  @override
+  String get appearanceFontFamiliesTip => '1 行に 1 つの名前を入力してください。上から順に使用します。';
+
+  @override
+  String get appearanceFontImport => 'UI フォントファイルをインポート';
+
+  @override
+  String get appearanceGradient => 'グラデーション';
+
+  @override
+  String get appearanceNoBackground => '背景なし';
+
+  @override
+  String get appearanceIcons => 'アプリ内アイコン';
+
+  @override
+  String get appearanceCorners => '角丸';
+
+  @override
+  String get appearanceCardCorners => 'カードの角丸';
+
+  @override
+  String get appearanceTileCorners => 'タイルの角丸';
+
+  @override
+  String get appearanceButtonCorners => 'ボタンの角丸';
+
+  @override
   String get crashCollect => '診断データ';
 
   @override
@@ -2911,4 +2962,8 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC のクリップボードは Latin-1 テキストのみ対応しています。';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'このテーマは$modeのみ対応しています。モードを変更するには、別のテーマを選択してください。';
+  }
 }

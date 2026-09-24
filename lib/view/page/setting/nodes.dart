@@ -21,6 +21,18 @@ List<SettingsNode> _buildNodes() {
           page: () => const AppSettingsPage(section: SettingsSection.app),
         ),
         SettingsNode.leaf(
+          id: 'app.theme',
+          title: libL10n.theme,
+          icon: Icons.style_outlined,
+          page: () => const AppSettingsPage(section: SettingsSection.theme),
+        ),
+        SettingsNode.leaf(
+          id: 'app.font',
+          title: libL10n.font,
+          icon: Icons.font_download_outlined,
+          page: () => const AppSettingsPage(section: SettingsSection.font),
+        ),
+        SettingsNode.leaf(
           id: 'app.privacy',
           title: l10n.privacy,
           icon: Icons.privacy_tip_outlined,

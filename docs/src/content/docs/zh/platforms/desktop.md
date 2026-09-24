@@ -36,8 +36,10 @@ App 会记住窗口大小和位置，并在下次启动时恢复。
 
 - 浅色
 - 深色
-- AMOLED（纯黑背景）
-- 自动 AMOLED（深色系统主题下使用纯黑背景）
+
+AMOLED 已改为内置主题，Dark 使用纯黑背景，Light 使用标准浅色配色。
+原 AMOLED 自动迁移为 Dark + AMOLED，原自动 AMOLED 迁移为 System + AMOLED。
+主题包声明支持 Light 和/或 Dark；只支持一种模式时，ThemeMode 会锁定并显示说明。
 - 跟随系统
 
 ### 与移动端相比

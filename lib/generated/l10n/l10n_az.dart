@@ -9,6 +9,59 @@ class AppLocalizationsAz extends AppLocalizations {
   AppLocalizationsAz([String locale = 'az']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Görünüş';
+
+  @override
+  String get appearancePreset => 'Tema dəsti';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Dəstəklənən mövzu schema-sı';
+
+  @override
+  String get appearanceThemeInstall => 'Mövzu quraşdır';
+
+  @override
+  String get appearanceThemeStore => 'Mövzu mağazası';
+
+  @override
+  String get appearanceThemeStoreUrl => 'Mövzu kataloqu URL-si';
+
+  @override
+  String get appearanceInvalidTheme =>
+      'Mövzu paketi və ya kataloq etibarsızdır';
+
+  @override
+  String get appearanceFontFamilies => 'İnterfeys şrift ailələri';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Hər sətirə bir ad yazın; şriftlər ardıcıllıqla yoxlanır.';
+
+  @override
+  String get appearanceFontImport => 'İnterfeys şrift faylını idxal et';
+
+  @override
+  String get appearanceGradient => 'Qradient';
+
+  @override
+  String get appearanceNoBackground => 'Fon yoxdur';
+
+  @override
+  String get appearanceIcons => 'Tətbiqdaxili ikonlar';
+
+  @override
+  String get appearanceCorners => 'Künclər';
+
+  @override
+  String get appearanceCardCorners => 'Kart küncləri';
+
+  @override
+  String get appearanceTileCorners => 'Element küncləri';
+
+  @override
+  String get appearanceButtonCorners => 'Düymə küncləri';
+
+  @override
   String get crashCollect => 'Diaqnostika məlumatları';
 
   @override
@@ -3084,4 +3137,8 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC mübadilə buferi yalnız Latin-1 mətnini dəstəkləyir.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Bu mövzu yalnız $mode rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin.';
+  }
 }

@@ -1,5 +1,22 @@
 {
   "@@locale": "zh",
+  "appearanceSettings": "外观",
+  "appearancePreset": "主题方案",
+  "appearanceThemeSchemaRange": "支持的主题 schema",
+  "appearanceThemeInstall": "安装主题",
+  "appearanceThemeStore": "主题商店",
+  "appearanceThemeStoreUrl": "主题目录 URL",
+  "appearanceInvalidTheme": "主题包或目录无效",
+  "appearanceFontFamilies": "界面字体列表",
+  "appearanceFontFamiliesTip": "每行一个字体名称，按顺序 fallback。",
+  "appearanceFontImport": "导入界面字体文件",
+  "appearanceGradient": "渐变",
+  "appearanceNoBackground": "无背景",
+  "appearanceIcons": "App 内图标",
+  "appearanceCorners": "圆角",
+  "appearanceCardCorners": "卡片圆角",
+  "appearanceTileCorners": "Tile 圆角",
+  "appearanceButtonCorners": "按钮圆角",
   "crashCollect": "诊断信息",
   "crashCollectIntro": "ServerBox 会记录运行过程中发生的情况，以便修复问题。你可以选择要发送多少信息。",
   "crashCollectNone": "不发送",
@@ -893,5 +910,6 @@
   "remoteDesktopGuideViewOnlyTip": "停止发送指针和按键，只查看画面，不会误点。",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、重新连接和全屏都在这里。",
   "remoteDesktopGuidePointerTip": "这里也可以切换为直接指针：手指点到哪里就点击哪里。",
-  "remoteDesktopVncClipboardLatin1Only": "VNC 剪贴板仅支持 Latin-1 文本。"
+  "remoteDesktopVncClipboardLatin1Only": "VNC 剪贴板仅支持 Latin-1 文本。",
+"appearanceThemeModeLocked": "此主题仅支持{mode}。如需切换模式，请选择其他主题。"
 }

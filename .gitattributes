@@ -14,3 +14,13 @@ monitor/migrations/*.sql text eol=lf
 # Ed25519 verifies the original bytes, including line endings.
 test/fixtures/rootfs_manifest/signed.json text eol=lf
 test/fixtures/rootfs_manifest/*.sig -text
+
+# New binary artwork and packaged themes use Git LFS. Existing Git history is
+# left unchanged; migrate tracked assets separately if their size warrants it.
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.webp filter=lfs diff=lfs merge=lfs -text
+*.avif filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.fsbt filter=lfs diff=lfs merge=lfs -text

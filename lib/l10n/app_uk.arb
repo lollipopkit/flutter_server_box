@@ -1,5 +1,22 @@
 {
   "@@locale": "uk",
+  "appearanceSettings": "Вигляд",
+  "appearancePreset": "Готова тема",
+  "appearanceThemeSchemaRange": "Підтримувана схема теми",
+  "appearanceThemeInstall": "Установити тему",
+  "appearanceThemeStore": "Магазин тем",
+  "appearanceThemeStoreUrl": "URL каталогу тем",
+  "appearanceInvalidTheme": "Недійсний пакет теми або каталог",
+  "appearanceFontFamilies": "Сімейства шрифтів інтерфейсу",
+  "appearanceFontFamiliesTip": "Одна назва в рядку; шрифти застосовуються за порядком.",
+  "appearanceFontImport": "Імпортувати файл шрифту інтерфейсу",
+  "appearanceGradient": "Градієнт",
+  "appearanceNoBackground": "Без тла",
+  "appearanceIcons": "Піктограми в застосунку",
+  "appearanceCorners": "Кути",
+  "appearanceCardCorners": "Кути карток",
+  "appearanceTileCorners": "Кути плиток",
+  "appearanceButtonCorners": "Кути кнопок",
   "crashCollect": "Діагностичні дані",
   "crashCollectIntro": "ServerBox записує те, що відбувається під час роботи, щоб можна було виправляти проблеми. Виберіть, скільки даних надсилати.",
   "crashCollectNone": "Нічого",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Припиняє надсилання вказівника й клавіш, щоб дивитися без випадкових кліків.",
   "remoteDesktopGuideMoreTip": "Тут є Ctrl+Alt+Delete, повторне підключення та повноекранний режим.",
   "remoteDesktopGuidePointerTip": "А також прямий вказівник: палець клікає там, де торкається.",
-  "remoteDesktopVncClipboardLatin1Only": "Буфер обміну VNC підтримує лише текст у кодуванні Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.",
+"appearanceThemeModeLocked": "Ця тема підтримує лише режим «{mode}». Щоб змінити режим, виберіть іншу тему."
 }

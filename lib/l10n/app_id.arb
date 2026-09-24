@@ -1,5 +1,22 @@
 {
   "@@locale": "id",
+  "appearanceSettings": "Tampilan",
+  "appearancePreset": "Preset tema",
+  "appearanceThemeSchemaRange": "Skema tema yang didukung",
+  "appearanceThemeInstall": "Pasang tema",
+  "appearanceThemeStore": "Toko tema",
+  "appearanceThemeStoreUrl": "URL katalog tema",
+  "appearanceInvalidTheme": "Paket tema atau katalog tidak valid",
+  "appearanceFontFamilies": "Daftar keluarga font antarmuka",
+  "appearanceFontFamiliesTip": "Satu nama per baris; font dicoba sesuai urutan.",
+  "appearanceFontImport": "Impor berkas font antarmuka",
+  "appearanceGradient": "Gradasi",
+  "appearanceNoBackground": "Tanpa latar belakang",
+  "appearanceIcons": "Ikon dalam aplikasi",
+  "appearanceCorners": "Sudut",
+  "appearanceCardCorners": "Sudut kartu",
+  "appearanceTileCorners": "Sudut tile",
+  "appearanceButtonCorners": "Sudut tombol",
   "crashCollect": "Data diagnostik",
   "crashCollectIntro": "ServerBox mencatat apa yang terjadi saat berjalan agar masalah dapat diperbaiki. Pilih jumlah informasi yang dikirim.",
   "crashCollectNone": "Tidak ada",
@@ -886,5 +903,6 @@
   "remoteDesktopGuideViewOnlyTip": "Berhenti mengirim penunjuk dan tombol, sehingga Anda bisa melihat tanpa tidak sengaja mengeklik.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, sambung ulang, dan layar penuh ada di sini.",
   "remoteDesktopGuidePointerTip": "Begitu juga penunjuk langsung, di mana jari mengeklik tempat yang disentuhnya.",
-  "remoteDesktopVncClipboardLatin1Only": "Clipboard VNC hanya mendukung teks Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Clipboard VNC hanya mendukung teks Latin-1.",
+"appearanceThemeModeLocked": "Tema ini hanya mendukung {mode}. Pilih tema lain untuk mengubah mode."
 }

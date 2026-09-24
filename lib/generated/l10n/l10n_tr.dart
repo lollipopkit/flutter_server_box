@@ -9,6 +9,58 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Görünüm';
+
+  @override
+  String get appearancePreset => 'Tema ön ayarı';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Desteklenen tema schema sürümü';
+
+  @override
+  String get appearanceThemeInstall => 'Tema yükle';
+
+  @override
+  String get appearanceThemeStore => 'Tema mağazası';
+
+  @override
+  String get appearanceThemeStoreUrl => 'Tema kataloğu URL’si';
+
+  @override
+  String get appearanceInvalidTheme => 'Geçersiz tema paketi veya katalog';
+
+  @override
+  String get appearanceFontFamilies => 'Arayüz yazı tipi aileleri';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Her satıra bir ad yazın; yazı tipleri sırayla denenir.';
+
+  @override
+  String get appearanceFontImport => 'Arayüz yazı tipi dosyasını içe aktar';
+
+  @override
+  String get appearanceGradient => 'Gradyan';
+
+  @override
+  String get appearanceNoBackground => 'Arka plan yok';
+
+  @override
+  String get appearanceIcons => 'Uygulama içi simgeler';
+
+  @override
+  String get appearanceCorners => 'Köşeler';
+
+  @override
+  String get appearanceCardCorners => 'Kart köşeleri';
+
+  @override
+  String get appearanceTileCorners => 'Kutucuk köşeleri';
+
+  @override
+  String get appearanceButtonCorners => 'Düğme köşeleri';
+
+  @override
   String get crashCollect => 'Tanılama verileri';
 
   @override
@@ -3066,4 +3118,8 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC panosu yalnızca Latin-1 metnini destekler.';
+
+String appearanceThemeModeLocked(String mode) {
+    return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
+  }
 }
