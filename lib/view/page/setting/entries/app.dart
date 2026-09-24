@@ -59,7 +59,7 @@ extension _App on _AppSettingsPageState {
 
   void _markCustomTheme() {
     if (_setting.appThemePreset.fetch() != 'custom' ||
-        _setting.appBackgroundStyle.fetch() != 'image' ||
+        _setting.appBackgroundStyle.fetch() != BackgroundStyle.image ||
         _setting.appBackgroundPath.fetch().isEmpty) {
       return;
     }
@@ -355,17 +355,13 @@ extension _App on _AppSettingsPageState {
     final mode = (data['mode'] as num).toInt();
     final seed = (data['seed'] as num).toInt();
     final systemColor = data['systemColor'] as bool;
-    final icons = data['icons'] as String;
+    final icons = IconStyle.parse(data['icons']);
     final opacity = (data['opacity'] as num).toDouble();
     final blur = (data['blur'] as num).toDouble();
     final card = (data['card'] as num).toDouble();
     final tile = (data['tile'] as num).toDouble();
     final button = (data['button'] as num).toDouble();
-    if (mode < 0 ||
-        mode > 2 ||
-        seed < 0 ||
-        seed > 0xffffffff ||
-        !['classic', 'mingcute'].contains(icons)) {
+    if (mode < 0 || mode > 2 || seed < 0 || seed > 0xffffffff || icons == null) {
       throw const FormatException('Invalid custom theme');
     }
     return ThemePackage(
@@ -384,7 +380,7 @@ extension _App on _AppSettingsPageState {
       // A custom theme is the user's own background and radii, so it carries no
       // package images and no splash: both of those are a package's.
       iconFiles: const {},
-      backgroundStyle: 'image',
+      backgroundStyle: BackgroundStyle.image,
       backgroundFile: path,
       directory: '',
       opacity: opacity.clamp(0.0, 0.6),
@@ -564,6 +560,13 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  /// What each icon family is called. Neither is translated: one is the app's
+  /// own set and the other is the one it borrows.
+  String _iconStyleLabel(IconStyle style) => switch (style) {
+    IconStyle.classic => 'Classic',
+    IconStyle.mingcute => 'MingCute',
+  };
+
   SettingsRow _buildAppIcons() {
     final label = l10n.appearanceIcons;
     return SettingsRow(
@@ -572,14 +575,14 @@ extension _App on _AppSettingsPageState {
         leading: const Icon(Icons.widgets_outlined),
         title: Text(label),
         trailing: _setting.appIconStyle.listenable().listenVal(
-          (style) => Text(style == 'mingcute' ? 'MingCute' : 'Classic'),
+          (style) => Text(_iconStyleLabel(style)),
         ),
         onTap: () async {
-          final style = await context.showPickSingleDialog<String>(
+          final style = await context.showPickSingleDialog<IconStyle>(
             title: label,
-            items: ['classic', 'mingcute'],
+            items: IconStyle.values,
             initial: _setting.appIconStyle.fetch(),
-            display: (value) => value == 'mingcute' ? 'MingCute' : 'Classic',
+            display: _iconStyleLabel,
           );
           if (style == null) return;
           _setting.appIconStyle.put(style);
@@ -709,7 +712,7 @@ extension _App on _AppSettingsPageState {
       _setting.appThemePackage.put('');
       _setting.appThemePaletteEnabled.put(false);
       _setting.appBackgroundPath.put(dest.path);
-      _setting.appBackgroundStyle.put('image');
+      _setting.appBackgroundStyle.put(BackgroundStyle.image);
       _setting.appThemePreset.put('custom');
       _markCustomTheme();
       setStateSafe(() {});
@@ -770,7 +773,8 @@ extension _App on _AppSettingsPageState {
           leading: const Icon(Icons.blur_on),
           title: Text(label),
           enabled:
-              style == 'image' && _setting.appBackgroundPath.fetch().isNotEmpty,
+              style == BackgroundStyle.image &&
+              _setting.appBackgroundPath.fetch().isNotEmpty,
           trailing: _setting.appBackgroundBlur.listenable().listenVal(
             (radius) => Text('${radius.round()}'),
           ),

@@ -4,6 +4,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
@@ -128,7 +129,7 @@ class _AppTabIcon extends StatelessWidget {
         final mingcute =
             (ThemePackages.preview.value?.iconStyle ??
                 Stores.setting.appIconStyle.fetch()) ==
-            'mingcute';
+            IconStyle.mingcute;
         final icon = mingcute
             ? switch (tab) {
                 AppTab.server =>

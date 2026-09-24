@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/package_image.dart';
 
@@ -104,7 +105,7 @@ class ThemedIcon extends StatelessWidget {
         final selected =
             (ThemePackages.preview.value?.iconStyle ??
                     Stores.setting.appIconStyle.fetch()) ==
-                'mingcute'
+                IconStyle.mingcute
             ? (_mingcute[icon] ?? icon)
             : icon;
         final fallback = Icon(selected, size: size, color: color);

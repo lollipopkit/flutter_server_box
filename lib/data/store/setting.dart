@@ -10,6 +10,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/res/url.dart';
@@ -97,7 +98,15 @@ class SettingStore extends SqliteStore {
   );
 
   /// App-wide icon family. The launcher icon is selected by the platform.
-  late final appIconStyle = propertyDefault('appIconStyle', 'classic');
+  ///
+  /// Stored as the enum's name, which is what was stored before it was one, so
+  /// an install that wrote the string reads back unchanged.
+  late final appIconStyle = propertyDefault(
+    'appIconStyle',
+    IconStyle.classic,
+    fromObj: IconStyle.parse,
+    toObj: (style) => style?.name,
+  );
 
   /// Component shapes can be edited in the custom image theme.
   late final appCardRadius = propertyDefault('appCardRadius', 13.0);
@@ -105,7 +114,12 @@ class SettingStore extends SqliteStore {
   late final appButtonRadius = propertyDefault('appButtonRadius', 30.0);
 
   /// A device-local image behind the app's surfaces.
-  late final appBackgroundStyle = propertyDefault('appBackgroundStyle', 'none');
+  late final appBackgroundStyle = propertyDefault(
+    'appBackgroundStyle',
+    BackgroundStyle.none,
+    fromObj: BackgroundStyle.parse,
+    toObj: (style) => style?.name,
+  );
   late final appBackgroundPath = propertyDefault('appBackgroundPath', '');
   late final appCustomBackgroundPath = propertyDefault(
     'appCustomBackgroundPath',

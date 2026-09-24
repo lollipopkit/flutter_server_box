@@ -7,12 +7,14 @@ import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show Color, ColorScheme, ThemeMode;
+import 'package:flutter/material.dart'
+    show Brightness, Color, ColorScheme, ThemeMode;
 import 'package:flutter/services.dart'
     show AssetBundle, AssetManifest, rootBundle;
 import 'package:server_box/core/service/theme_components.dart';
 import 'package:server_box/core/service/theme_palette.dart';
 import 'package:server_box/data/model/app/builtin_theme.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:toml/toml.dart';
 import 'package:xml/xml.dart' as xml;
@@ -92,7 +94,7 @@ final class ThemePackage {
   final bool systemColor;
   final Map<String, int> paletteLight;
   final Map<String, int> paletteDark;
-  final String iconStyle;
+  final IconStyle iconStyle;
 
   /// Icon key to the file that carries it, inside `icons/`. The extension is
   /// part of the value because the file decides how it is drawn: a PNG is
@@ -103,7 +105,7 @@ final class ThemePackage {
   /// one follows the ambient icon color, which is what an icon did before a
   /// package could say otherwise.
   final Map<String, Object> iconColors;
-  final String backgroundStyle;
+  final BackgroundStyle backgroundStyle;
   final double opacity;
   final double blur;
   final double cardRadius;
@@ -114,7 +116,8 @@ final class ThemePackage {
   final String? backgroundFile;
   final ThemeComponents components;
 
-  String? get backgroundPath => backgroundStyle == 'image'
+  String? get backgroundPath =>
+      backgroundStyle == BackgroundStyle.image
       ? backgroundFile ?? directory.joinPath('background.img')
       : null;
 
@@ -241,9 +244,22 @@ abstract final class ThemePackages {
   /// `test/unit/theme_schema_test.dart` holds the two lists equal, so a value
   /// added here and not there is an author writing what the schema offers and
   /// this build refusing it.
-  static const modes = {'light', 'dark'};
-  static const iconStyles = {'classic', 'mingcute'};
-  static const backgroundStyles = {'none', 'gradient', 'image'};
+  ///
+  /// Each is the enum's own `name`, which is the spelling a manifest carries,
+  /// so the set cannot drift from the type the value is read into.
+  static final modes = {
+    for (final mode in _declaredModes) mode.name,
+  };
+  static final iconStyles = {
+    for (final style in IconStyle.values) style.name,
+  };
+  static final backgroundStyles = {
+    for (final style in BackgroundStyle.values) style.name,
+  };
+
+  /// The modes a package may declare. Absent `system` on purpose: a package
+  /// either works in a brightness or refuses to carry it.
+  static const _declaredModes = {ThemeMode.light, ThemeMode.dark};
 
   /// The one file name a background image may have, at the archive root.
   static const backgroundImages = {
@@ -288,9 +304,9 @@ abstract final class ThemePackages {
     systemColor: false,
     paletteLight: {},
     paletteDark: {},
-    iconStyle: 'classic',
+    iconStyle: IconStyle.classic,
     iconFiles: {},
-    backgroundStyle: 'none',
+    backgroundStyle: BackgroundStyle.none,
     opacity: 0.18,
     blur: 0,
     cardRadius: 13,
@@ -588,20 +604,18 @@ abstract final class ThemePackages {
     final palette = colors['palette'] == null
         ? <String, dynamic>{}
         : _map(colors['palette'], 'palette');
-    if (!palette.keys.every((key) => key == 'light' || key == 'dark')) {
+    if (palette.keys.any((key) => brightnessByName(key) == null)) {
       throw const FormatException('Invalid palette brightness');
     }
-    final paletteLight = _palette(palette['light']);
-    final paletteDark = _palette(palette['dark']);
+    final paletteLight = _palette(palette[Brightness.light.name]);
+    final paletteDark = _palette(palette[Brightness.dark.name]);
     final components = ThemeComponents.parse(data['components']);
     final icons = _map(data['icons'], 'icons');
     if (!icons.keys.every(iconFields.contains)) {
       throw const FormatException('Unknown icon field');
     }
-    final style = icons['style'];
-    if (!iconStyles.contains(style)) {
-      throw const FormatException('Invalid icon style');
-    }
+    final style = IconStyle.parse(icons['style']);
+    if (style == null) throw const FormatException('Invalid icon style');
     final imageMap = icons['images'] == null
         ? <String, dynamic>{}
         : _map(icons['images'], 'icon images');
@@ -617,8 +631,8 @@ abstract final class ThemePackages {
     );
     final splash = _splash(data['splash']);
     final background = _map(data['background'], 'background');
-    final backgroundStyle = background['type'];
-    if (!backgroundStyles.contains(backgroundStyle)) {
+    final backgroundStyle = BackgroundStyle.parse(background['type']);
+    if (backgroundStyle == null) {
       throw const FormatException('Invalid background type');
     }
     final opacity = _fraction(background['opacity'], maxBackgroundOpacity);
@@ -630,7 +644,7 @@ abstract final class ThemePackages {
 
     final usedAssets = <String>{'manifest.toml'};
     Uint8List? backgroundBytes;
-    if (backgroundStyle == 'image') {
+    if (backgroundStyle == BackgroundStyle.image) {
       final path = background['image'];
       if (!backgroundImages.contains(path)) {
         throw const FormatException('Invalid background path');
@@ -722,15 +736,18 @@ abstract final class ThemePackages {
           'mode': mode,
           'seed': seed,
           'systemColor': systemColor,
-          'palette': {'light': paletteLight, 'dark': paletteDark},
+          'palette': {
+            Brightness.light.name: paletteLight,
+            Brightness.dark.name: paletteDark,
+          },
         },
         'icons': {
-          'style': style,
+          'style': style.name,
           'images': iconFiles.keys.toList(),
           if (iconColors.isNotEmpty) 'colors': iconColors,
         },
         'background': {
-          'type': backgroundStyle,
+          'type': backgroundStyle.name,
           'opacity': opacity,
           'blur': blur,
         },
@@ -807,11 +824,9 @@ abstract final class ThemePackages {
       final shapes = _map(data['shapes'], 'shapes');
       final carried = (icons['images'] as List).cast<String>();
       if (!carried.every(iconKeys.contains)) return null;
-      final style = icons['style'] as String;
-      final bgStyle = background['type'] as String;
-      if (!iconStyles.contains(style) || !backgroundStyles.contains(bgStyle)) {
-        return null;
-      }
+      final style = IconStyle.parse(icons['style']);
+      final bgStyle = BackgroundStyle.parse(background['type']);
+      if (style == null || bgStyle == null) return null;
       // The manifest names keys and not files, so which format each icon is in
       // is a question for the directory. Both are asked for, in the order a
       // package would have been written either way.
@@ -852,8 +867,8 @@ abstract final class ThemePackages {
         modes: _themeModes(data['modes']),
         seed: _integer(colors['seed'], 0, 0xffffffff),
         systemColor: colors['systemColor'] as bool,
-        paletteLight: _palette(palette['light']),
-        paletteDark: _palette(palette['dark']),
+        paletteLight: _palette(palette[Brightness.light.name]),
+        paletteDark: _palette(palette[Brightness.dark.name]),
         components: ThemeComponents.parse(data['components']),
         iconStyle: style,
         iconFiles: iconFiles,
@@ -1010,7 +1025,7 @@ abstract final class ThemePackages {
         'mode': settings.themeMode.fetch(),
         'seed': settings.colorSeed.fetch(),
         'systemColor': settings.useSystemPrimaryColor.fetch(),
-        'icons': settings.appIconStyle.fetch(),
+        'icons': settings.appIconStyle.fetch().name,
         'opacity': settings.appBackgroundOpacity.fetch(),
         'blur': settings.appBackgroundBlur.fetch(),
         'card': settings.appCardRadius.fetch(),
@@ -1029,7 +1044,7 @@ abstract final class ThemePackages {
     }
     final background = Stores.setting.appBackgroundPath.fetch();
     if (preset == 'custom' &&
-        (Stores.setting.appBackgroundStyle.fetch() != 'image' ||
+        (Stores.setting.appBackgroundStyle.fetch() != BackgroundStyle.image ||
             background.isEmpty ||
             !File(background).existsSync())) {
       _selectDefaultFallback();
@@ -1042,10 +1057,16 @@ abstract final class ThemePackages {
   static void _selectDefaultFallback() =>
       select(defaultTheme, preset: BuiltinTheme.defaultTheme.id);
 
-  static const _defaults = {
+  /// What a manifest that omits a field is read as, spelled the way the
+  /// manifest spells it.
+  static final _defaults = {
     'colors': {'mode': 0, 'seed': 0xFF880E4F, 'systemColor': false},
-    'icons': {'style': 'classic', 'images': <String, String>{}},
-    'background': {'type': 'none', 'opacity': 0.18, 'blur': 0},
+    'icons': {'style': IconStyle.classic.name, 'images': <String, String>{}},
+    'background': {
+      'type': BackgroundStyle.none.name,
+      'opacity': 0.18,
+      'blur': 0,
+    },
     'shapes': {'card': 12, 'tile': 8, 'button': 10},
   };
 
@@ -1092,13 +1113,19 @@ abstract final class ThemePackages {
     if (raw is! List ||
         raw.isEmpty ||
         raw.length > 2 ||
-        raw.toSet().length != raw.length ||
-        raw.any((mode) => mode != 'light' && mode != 'dark')) {
+        raw.toSet().length != raw.length) {
       throw const FormatException('Declare supported theme modes: light, dark');
     }
-    return Set.unmodifiable(
-      raw.map((mode) => mode == 'light' ? ThemeMode.light : ThemeMode.dark),
-    );
+    return Set.unmodifiable(raw.map(_declaredMode));
+  }
+
+  /// One declared mode, refused when the manifest named something else. The
+  /// spellings are [ThemeMode]'s own `name`s — see [_declaredModes].
+  static ThemeMode _declaredMode(Object? raw) {
+    for (final mode in _declaredModes) {
+      if (mode.name == raw) return mode;
+    }
+    throw const FormatException('Declare supported theme modes: light, dark');
   }
 
   static (int, int) _schemaRange(Object? raw) {

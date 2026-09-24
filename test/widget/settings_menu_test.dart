@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/builtin_theme.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -314,7 +315,7 @@ void main() {
       ),
     );
     Stores.setting.appThemePreset.put('custom');
-    Stores.setting.appBackgroundStyle.put('image');
+    Stores.setting.appBackgroundStyle.put(BackgroundStyle.image);
     Stores.setting.appBackgroundPath.put(image.path);
     await tester.tap(headerTab(libL10n.font));
     await settle(tester);
@@ -473,7 +474,7 @@ void main() {
       expect(Stores.setting.colorSeed.fetch(), theme.seed);
       expect(Stores.setting.themeMode.fetch(), theme.mode);
       expect(Stores.setting.appThemePackage.fetch(), isEmpty);
-      expect(Stores.setting.appBackgroundStyle.fetch(), 'none');
+      expect(Stores.setting.appBackgroundStyle.fetch(), BackgroundStyle.none);
       expect(Stores.setting.appCardRadius.fetch(), theme.cardRadius);
       final modeRow = tester.widget<ListTile>(
         find.widgetWithText(ListTile, libL10n.themeMode),

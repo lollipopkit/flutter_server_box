@@ -16,6 +16,7 @@ import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -84,8 +85,8 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
       ? ThemePackages.preview.value!.backgroundPath ?? ''
       : Stores.setting.appBackgroundPath.fetch());
   final hasBackground =
-      backgroundStyle == 'gradient' ||
-      (backgroundStyle == 'image' && backgroundPath.isNotEmpty);
+      backgroundStyle == BackgroundStyle.gradient ||
+      (backgroundStyle == BackgroundStyle.image && backgroundPath.isNotEmpty);
   // Resolve fonts before deriving component styles so titles and tiles keep
   // the same fallback fonts as ordinary text.
   final base = ThemeData(
@@ -348,13 +349,14 @@ class _MyAppState extends State<MyApp> {
         final backgroundPath = (ThemePackages.preview.value != null
             ? ThemePackages.preview.value!.backgroundPath ?? ''
             : Stores.setting.appBackgroundPath.fetch());
-        if (backgroundStyle == 'none' ||
-            (backgroundStyle == 'image' && backgroundPath.isEmpty)) {
+        if (backgroundStyle == BackgroundStyle.none ||
+            (backgroundStyle == BackgroundStyle.image &&
+                backgroundPath.isEmpty)) {
           return ThemeSplashGate(child: content);
         }
         final surface = Theme.of(ctx).colorScheme.surface;
         final accent = Theme.of(ctx).colorScheme.primary;
-        final image = backgroundStyle == 'image'
+        final image = backgroundStyle == BackgroundStyle.image
             ? Image.file(
                 File(backgroundPath),
                 fit: BoxFit.cover,
@@ -371,7 +373,7 @@ class _MyAppState extends State<MyApp> {
           child: Stack(
             children: [
             Positioned.fill(
-              child: backgroundStyle == 'gradient'
+              child: backgroundStyle == BackgroundStyle.gradient
                   ? DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(

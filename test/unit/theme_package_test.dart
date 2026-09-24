@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:toml/toml.dart';
 
 void main() {
@@ -165,9 +166,9 @@ void main() {
         expect(theme.mode, 0);
         expect(theme.seed, 0xff880e4f);
         expect(theme.systemColor, false);
-        expect(theme.iconStyle, 'classic');
+        expect(theme.iconStyle, IconStyle.classic);
         expect(theme.iconFiles, isEmpty);
-        expect(theme.backgroundStyle, 'none');
+        expect(theme.backgroundStyle, BackgroundStyle.none);
         expect((theme.opacity, theme.blur), (0.18, 0));
         expect(
           (theme.cardRadius, theme.tileRadius, theme.buttonRadius),

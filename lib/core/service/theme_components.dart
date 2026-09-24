@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:server_box/core/service/theme_palette.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 
 /// Validated component overrides. Common values are merged with Light/Dark
 /// overrides, then with the active button state. Missing fields inherit Flutter.
@@ -148,7 +149,9 @@ final class ThemeComponents {
     });
     final data = <String, dynamic>{};
     for (final entry in table(raw).entries) {
-      data[entry.key] = entry.key == 'light' || entry.key == 'dark'
+      // A key of one of the two brightnesses opens a table of components;
+      // anything else is a component itself.
+      data[entry.key] = brightnessByName(entry.key) != null
           ? group(entry.value)
           : component(entry.key, entry.value);
     }
