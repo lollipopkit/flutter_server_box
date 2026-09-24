@@ -187,6 +187,7 @@ class MetricChart extends StatelessWidget {
               bars,
               series: spec.series,
               format: spec.format,
+              tooltipStyle: Theme.of(context).textTheme.bodyMedium!,
               binaryScale: spec.binaryScale,
               window: spec.window,
               bands: spec.bands,
@@ -409,6 +410,7 @@ Widget buildHistoryLineChart(
   List<LineChartBarData> bars, {
   required List<HistorySeries> series,
   required String Function(double) format,
+  required TextStyle tooltipStyle,
   bool binaryScale = false,
   ({int from, int to})? window,
   List<ChartBand> bands = const [],
@@ -498,7 +500,7 @@ Widget buildHistoryLineChart(
               // series repeated what the legend already encodes, and on the
               // tooltip's own background the lighter series read as washed
               // out next to the darker ones.
-              const TextStyle(
+              tooltipStyle.copyWith(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,

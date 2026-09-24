@@ -72,8 +72,8 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     return CardX(
       key: ValueKey(key),
       child: ListTile(
-        title: RichText(
-          text: TextSpan(
+        title: Text.rich(
+          TextSpan(
             children: [
               WidgetSpan(child: Icon(funcBtn.icon)),
               const WidgetSpan(child: UIs.width13),

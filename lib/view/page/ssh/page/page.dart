@@ -414,7 +414,6 @@ class SSHPageState extends ConsumerState<SSHPage>
     WidgetsBinding.instance.addObserver(this);
     _terminalShell = ref.read(terminalShellProvider.notifier);
     _attachAgentHost();
-    _initStoredCfg();
     _reloadVirtKeys();
     Stores.setting.virtKeyRows.listenable().addListener(
       _handleVirtKeySettingsChanged,
@@ -491,6 +490,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _initStoredCfg();
     _isDark = TerminalLook.isDark(context);
     _media = context.mediaQuery;
 
