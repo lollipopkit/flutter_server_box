@@ -36,8 +36,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String themeStoreUpdatedFmt(String ago) {
-    return '$ago更新于';
+    return '$ago更新';
   }
+
+  @override
+  String get themeStoreUpdatedJustNow => '刚刚更新';
+
+  @override
+  String get themeStoreSortInUse => '在用优先';
 
   @override
   String appearanceThemeNeedsNewerApp(String version) {
@@ -3101,8 +3107,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String themeStoreUpdatedFmt(String ago) {
-    return '$ago更新於';
+    return '$ago更新';
   }
+
+  @override
+  String get themeStoreUpdatedJustNow => '剛剛更新';
+
+  @override
+  String get themeStoreSortInUse => '在用優先';
 
   @override
   String appearanceThemeNeedsNewerApp(String version) {

@@ -40,6 +40,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get themeStoreUpdatedJustNow => 'たった今更新';
+
+  @override
+  String get themeStoreSortInUse => '使用中を先頭';
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '新しいバージョンのアプリが必要です: $version';
   }

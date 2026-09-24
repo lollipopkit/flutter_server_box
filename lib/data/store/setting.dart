@@ -10,6 +10,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/app/theme_sort.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
@@ -67,6 +68,12 @@ class SettingStore extends SqliteStore {
   late final appThemePaletteEnabled = propertyDefault(
     'appThemePaletteEnabled',
     true,
+  );
+
+  /// How the theme store's list is ordered, by [ThemeSort.name].
+  late final themeStoreSort = propertyDefault(
+    'themeStoreSort',
+    ThemeSort.inUse.name,
   );
 
   /// The theme store's last answer, as the JSON it was read from.

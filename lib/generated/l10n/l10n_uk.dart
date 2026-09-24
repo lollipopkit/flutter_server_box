@@ -40,6 +40,12 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get themeStoreUpdatedJustNow => 'щойно оновлено';
+
+  @override
+  String get themeStoreSortInUse => 'Спочатку використовувана';
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Потрібна новіша версія застосунку: $version';
   }

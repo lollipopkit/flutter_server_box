@@ -41,6 +41,12 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get themeStoreUpdatedJustNow => 'atualizado agora mesmo';
+
+  @override
+  String get themeStoreSortInUse => 'Em uso primeiro';
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'É necessário usar uma versão mais recente do app: $version';
   }

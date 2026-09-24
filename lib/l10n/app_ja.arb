@@ -9,6 +9,8 @@
   "themeStoreRefreshFailed": "テーマカタログを読み取れませんでした。",
   "themeStoreDeleteTheme": "「{name}」を削除しますか？ファイルはこの端末から削除されます。使用中のテーマの場合、アプリは既定のテーマに戻ります。",
   "themeStoreUpdatedFmt": "{ago}に更新",
+  "themeStoreUpdatedJustNow": "たった今更新",
+  "themeStoreSortInUse": "使用中を先頭",
   "appearanceThemeNeedsNewerApp": "新しいバージョンのアプリが必要です: {version}",
   "appearanceFontFamilies": "UI フォントファミリー",
   "appearanceFontFamiliesTip": "1 行に 1 つの名前を入力してください。上から順に使用します。",

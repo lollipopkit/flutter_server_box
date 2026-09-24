@@ -3,18 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/theme_repo.dart';
+import 'package:server_box/data/model/app/theme_sort.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/theme_store/rows.dart';
 
-const _kPad = 13.0;
-
-/// What the theme catalog offers, and what this device already has.
+/// What the theme catalog offers, and what this device has.
 ///
-/// The two are on one page because they are the same decision seen twice:
-/// installing puts a theme in the list below, and taking one off this device is
-/// the only way off that list. The catalog is kept between runs, so opening the
-/// page shows themes rather than a spinner, and refreshing is something the
-/// user asks for instead of something the page needs before it is usable.
+/// One list, not two. A theme installed from the catalog is the theme the
+/// catalog lists, so drawing them apart drew `Aurora` twice and left the reader
+/// to work out that the two were one; a row that names the theme and says what
+/// is true of it — in use, on this device, or only in the store — is the same
+/// information with the cross-reference done. See [ThemeRow].
+///
+/// The catalog is kept between runs, so opening the page shows themes rather
+/// than a spinner, and refreshing is something the user asks for instead of
+/// something the page needs before it is usable. What is on screen when nothing
+/// has been read yet is what this device has.
 final class ThemeStorePage extends StatefulWidget {
   const ThemeStorePage({super.key});
 
@@ -35,12 +40,20 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   bool _busy = false;
 
   /// Set when the last refresh produced nothing, and cleared by one that did.
-  /// What the page does about it depends on whether themes are on screen.
+  /// A failure is drawn on the caption rather than over the list, since a
+  /// catalog that could not be read still leaves the themes already here.
   String? _failure;
 
   /// What a row is waiting on, by the identity of what it applies to. Either
   /// action blocks the page, so only one row is ever in this state.
   String? _working;
+
+  /// The query, and whether the bar is a field.
+  final _search = InlineSearchController();
+
+  /// How the list is ordered, held here as well as in the setting so a choice
+  /// in the sheet redraws without a second read.
+  late ThemeSort _sort = ThemeSort.fromStored(_setting.themeStoreSort.fetch());
 
   /// The builders and actions below are extensions, which are not the class and
   /// cannot reach its `setState`.
@@ -56,6 +69,12 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
     // The cache is on screen from the first frame; this only brings it up to
     // date, so a launch with no network still shows the themes there were.
     Future.microtask(_refresh);
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
   }
 
   /// The catalog as the last run left it, or an empty one.
@@ -109,8 +128,8 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
 
   /// Reports a refresh that produced nothing.
   ///
-  /// With themes already on screen the line under the bar is what says so, and
-  /// a dialog over them would only interrupt; with none, the message is the
+  /// With themes already on screen the caption under the bar is what says so,
+  /// and a dialog over them would only interrupt; with none, the message is the
   /// whole page.
   void _fail(String message) {
     setState(() => _failure = message);
@@ -120,9 +139,25 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // The bar is the field while a search is on, as on every other list in
+      // the app that searches.
       appBar: CustomAppBar(
-        title: Text(l10n.appearanceThemeStore),
+        title: InlineSearchBar(
+          controller: _search,
+          hint: libL10n.theme,
+          child: Text(l10n.appearanceThemeStore),
+        ),
         actions: [
+          Btn.icon(
+            text: libL10n.search,
+            icon: const Icon(Icons.search, size: 18),
+            onTap: _search.start,
+          ),
+          Btn.icon(
+            text: libL10n.sort,
+            icon: Icon(_sortIcon(_sort), size: 18),
+            onTap: _showSortSheet,
+          ),
           if (_busy)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 11),
@@ -148,22 +183,96 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
 
 extension on _ThemeStorePageState {
   Widget _buildBody() {
-    final fetchedAt = _store.fetchedAt;
-    if (fetchedAt == null) {
-      if (_failure case final failure?) return _issueBody(failure);
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [SizedBox(height: 280, child: UIs.centerLoading)],
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildStaleness(fetchedAt),
-        Expanded(
-          child: RefreshIndicator(onRefresh: _refresh, child: _buildList()),
+    return ListenableBuilder(
+      listenable: _search,
+      builder: (context, _) {
+        final rows = buildThemeRows(
+          installed: _installed,
+          items: _store.items,
+          activeInstallationId: _setting.appThemePackage.fetch(),
+          query: _search.needle,
+          sort: _sort,
+        );
+        // Nothing read and nothing on this device: the first read is still out,
+        // or it came back empty and said why. Either way there is no list to
+        // draw, so the page is the answer rather than a caption on one.
+        if (rows.isEmpty && _store.fetchedAt == null) {
+          if (_failure case final failure?) return _issueBody(failure);
+          return const Center(child: UIs.centerLoading);
+        }
+        return RefreshIndicator(onRefresh: _refresh, child: _buildList(rows));
+      },
+    );
+  }
+
+  /// The list, in one column the width of a settings form.
+  ///
+  /// A row here is a name, a description and a row of facts, and on a wide
+  /// window a full-bleed list puts its title against one edge and its buttons
+  /// against the other. The page is opened from settings, where the content is
+  /// capped the same way, so going full-bleed after it reads as a different
+  /// app.
+  Widget _buildList(List<ThemeRow> rows) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: PageColumns.columnWidth),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(left: 7, right: 7, top: 7, bottom: 27),
+          children: [
+            _buildCaption(),
+            if (rows.isEmpty) _buildEmpty() else for (final row in rows) _row(row),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+
+  /// What the catalog behind the list is, and how long ago it was read.
+  ///
+  /// The page is usable without a refresh, so this is the only thing that says
+  /// how old what is on screen is: a theme's version and repository are on its
+  /// own row, and a catalog nobody has re-read otherwise looks like a fresh one.
+  Widget _buildCaption() {
+    final fetchedAt = _store.fetchedAt;
+    final text =
+        _failure ??
+        (fetchedAt == null ? null : _updatedAgo(fetchedAt));
+    if (text == null) return UIs.placeholder;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(3, 3, 3, 9),
+      child: Text(
+        text,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.right,
+        style: UIs.text12Grey,
+      ),
+    );
+  }
+
+  /// How long ago the catalog was read.
+  ///
+  /// The minute is spelled out rather than taken from `toAgoStr`, whose
+  /// "just now" is a sentence of its own and reads as "updated Just now" under
+  /// a verb.
+  String _updatedAgo(DateTime fetchedAt) {
+    final elapsed = DateTime.now().difference(fetchedAt);
+    if (elapsed < const Duration(minutes: 1)) {
+      return l10n.themeStoreUpdatedJustNow;
+    }
+    return l10n.themeStoreUpdatedFmt(fetchedAt.toAgoStr());
+  }
+
+  Widget _buildEmpty() {
+    // Two different empties, and the way out of each is different: a query that
+    // matched nothing is cleared in the bar, and a store with nothing in it is
+    // refreshed from the bar.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 27),
+      child: _search.active
+          ? EmptyMark(icon: Icons.search_off, label: _search.text.text)
+          : EmptyMark(icon: Icons.storefront_outlined, label: libL10n.empty),
     );
   }
 
@@ -184,146 +293,102 @@ extension on _ThemeStorePageState {
     );
   }
 
-  /// Which repositories the catalog on screen came from, and how long ago it
-  /// was read.
+  /// One theme.
   ///
-  /// The page is usable without a refresh, so this line is the only thing that
-  /// says what is on it: an ago string that has been saying "5 days" is what a
-  /// catalog nobody re-read looks like.
-  Widget _buildStaleness(DateTime fetchedAt) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(_kPad, 8, _kPad, 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _store.repos.join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: UIs.text12Grey,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  _failure ?? l10n.themeStoreUpdatedFmt(fetchedAt.toAgoStr()),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
-                  style: UIs.text12Grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (_busy)
-          const LinearProgressIndicator(minHeight: 2)
-        else
-          Divider(height: 2, color: Hairline.color(context)),
-      ],
-    );
-  }
+  /// What the row can do is what is true of it: tapping installs a theme the
+  /// catalog has and this device does not, switches to one it does, and does
+  /// nothing to the one already on. The catalog's description and version stay
+  /// on the row after an install — they are as true of the installed copy, and
+  /// a second row saying them again is what the page used to do.
+  Widget _row(ThemeRow row) {
+    final release = row.item?.release;
+    final facts = [
+      if (row.item case final item?) item.repo,
+      if (release != null) 'v${release.version}',
+      if (release?.size case final size?) size.bytes2Str,
+    ].join(' · ');
+    final description = row.item?.listing.description.trim() ?? '';
+    final subtitle = [
+      if (description.isNotEmpty) description,
+      if (facts.isNotEmpty) facts,
+      // A theme imported from a file has neither: the manifest id is the only
+      // thing that says which theme the row is.
+      if (description.isEmpty && facts.isEmpty) row.id,
+    ].join('\n');
 
-  Widget _buildList() {
-    final active = _setting.appThemePackage.fetch();
-    final installedIds = {for (final theme in _installed) theme.id};
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        _sectionHeader(l10n.appearancePreset),
-        if (_installed.isEmpty)
-          _note(libL10n.empty)
-        else
-          for (final theme in _installed)
-            _installedRow(theme, active: active),
-        _sectionHeader(l10n.appearanceThemeStore),
-        if (_store.items.isEmpty)
-          _note(libL10n.empty)
-        else
-          for (final item in _store.items)
-            _storeRow(item, installed: installedIds.contains(item.listing.id)),
-      ],
-    );
-  }
-
-  Widget _sectionHeader(String text) => Padding(
-    padding: const EdgeInsets.fromLTRB(_kPad, 18, _kPad, 6),
-    child: Text(text, style: UIs.text13Bold),
-  );
-
-  Widget _note(String text) => Padding(
-    padding: const EdgeInsets.fromLTRB(_kPad, 6, _kPad, 18),
-    child: Text(text, style: UIs.text12Grey),
-  );
-
-  /// One theme installed on this device.
-  ///
-  /// Two actions on one row: tapping puts the theme on, and the button takes it
-  /// off. Which one is on is marked rather than spelled out, since a row saying
-  /// "in use" is the row that does not with a word added.
-  Widget _installedRow(ThemePackage theme, {required String active}) {
-    final inUse = active.isNotEmpty && theme.installationId == active;
-    final busy = _working == theme.installationId;
-    final colorScheme = Theme.of(context).colorScheme;
+    final busy = _working == row.key;
+    final scheme = Theme.of(context).colorScheme;
     return ListTile(
-      title: Text(theme.name),
-      subtitle: Text(theme.id, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(row.name),
+      subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (inUse) Icon(Icons.check, size: 18, color: colorScheme.primary),
+          if (row.inUse) Icon(Icons.check, size: 18, color: scheme.primary),
           if (busy)
             const SizedBox.square(
               dimension: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          else
+          else if (row.installed case final theme?)
             Btn.icon(
               text: libL10n.delete,
               icon: const Icon(Icons.delete_outline, size: 18),
               onTap: () => _delete(theme),
+            )
+          else if (row.item case final item?)
+            Btn.icon(
+              text: l10n.appearanceThemeInstall,
+              icon: const Icon(Icons.file_download_outlined, size: 18),
+              onTap: () => _install(item),
             ),
         ],
       ),
-      onTap: busy ? null : () => _apply(theme),
+      onTap: busy
+          ? null
+          : switch ((row.installed, row.item)) {
+              (final theme?, _) => () => _apply(theme),
+              (_, final item?) => () => _install(item),
+              _ => null,
+            },
+    ).cardx;
+  }
+}
+
+// --- The bar's sort ---
+
+extension on _ThemeStorePageState {
+  Future<void> _showSortSheet() async {
+    final sort = await showRowsSheet<ThemeSort>(
+      context,
+      rows: (ctx) => [
+        for (final option in ThemeSort.values)
+          SheetChoiceTile(
+            title: _sortLabel(option),
+            icon: _sortIcon(option),
+            selected: option == _sort,
+            onTap: () => Navigator.of(ctx).pop(option),
+          ),
+      ],
     );
+    if (sort == null || sort == _sort || !mounted) return;
+    _setting.themeStoreSort.put(sort.name);
+    _rebuild(() => _sort = sort);
   }
 
-  /// One theme a repository offers.
-  ///
-  /// A version this build cannot read is drawn as a row that says so rather
-  /// than hidden: the answer to "is there one" is yes, and what to do about it
-  /// is a sentence of its own.
-  Widget _storeRow(ThemeStoreItem item, {required bool installed}) {
-    final release = item.release;
-    final facts = [
-      item.repo,
-      if (release != null) 'v${release.version}',
-      if (release?.size case final size?) size.bytes2Str,
-    ].join(' · ');
-    final description = item.listing.description.trim();
-    final subtitle = release == null
-        ? '${l10n.appearanceThemeNeedsNewerApp(item.newestVersion ?? '')}\n'
-              '$facts'
-        : description.isEmpty
-        ? facts
-        : '$description\n$facts';
-    return ListTile(
-      title: Text(item.label),
-      subtitle: Text(subtitle, maxLines: 3, overflow: TextOverflow.ellipsis),
-      trailing: installed
-          ? Icon(
-              Icons.check,
-              size: 18,
-              color: Theme.of(context).colorScheme.primary,
-            )
-          : null,
-      onTap: () => _install(item),
-    );
-  }
+  /// `(A-Z)` and its reverse are not translated, for the reason the server
+  /// list's sort labels give: alphabetical order reads as A-Z in any language.
+  String _sortLabel(ThemeSort sort) => switch (sort) {
+    ThemeSort.inUse => l10n.themeStoreSortInUse,
+    ThemeSort.nameAsc => '${libL10n.sortByName} (A-Z)',
+    ThemeSort.nameDesc => '${libL10n.sortByName} (Z-A)',
+  };
+
+  IconData _sortIcon(ThemeSort sort) => switch (sort) {
+    ThemeSort.inUse => Icons.vertical_align_top,
+    ThemeSort.nameAsc => Icons.sort_by_alpha,
+    ThemeSort.nameDesc => Icons.sort,
+  };
 }
 
 // --- Actions ---

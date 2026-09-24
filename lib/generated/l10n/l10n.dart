@@ -179,6 +179,18 @@ abstract class AppLocalizations {
   /// **'updated {ago}'**
   String themeStoreUpdatedFmt(String ago);
 
+  /// How long ago the catalog on screen was read, when that was under a minute. Spelled out rather than composed with themeStoreUpdatedFmt because "just now" is a sentence of its own in every language.
+  ///
+  /// In en, this message translates to:
+  /// **'updated just now'**
+  String get themeStoreUpdatedJustNow;
+
+  /// Sort option for the theme store: the theme in use, then the themes on this device, then what only the catalog offers.
+  ///
+  /// In en, this message translates to:
+  /// **'In use first'**
+  String get themeStoreSortInUse;
+
   /// Shown when a selected theme requires a newer app version. {version} is the required version.
   ///
   /// In en, this message translates to:

@@ -40,6 +40,12 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get themeStoreUpdatedJustNow => 'az önce güncellendi';
+
+  @override
+  String get themeStoreSortInUse => 'Kullanımda olan önce';
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Daha yeni bir uygulama sürümü gerekiyor: $version';
   }

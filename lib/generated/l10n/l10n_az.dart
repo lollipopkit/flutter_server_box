@@ -41,6 +41,12 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
+  String get themeStoreUpdatedJustNow => 'indi yeniləndi';
+
+  @override
+  String get themeStoreSortInUse => 'İstifadədə olan əvvəl';
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Daha yeni tətbiq tələb olunur: $version';
   }

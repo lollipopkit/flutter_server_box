@@ -9,6 +9,8 @@
   "themeStoreRefreshFailed": "Impossibile leggere il catalogo dei temi.",
   "themeStoreDeleteTheme": "Eliminare «{name}»? I suoi file vengono rimossi da questo dispositivo. Se è il tema in uso, l'app torna al tema predefinito.",
   "themeStoreUpdatedFmt": "aggiornato {ago}",
+  "themeStoreUpdatedJustNow": "aggiornato adesso",
+  "themeStoreSortInUse": "In uso per primi",
   "appearanceThemeNeedsNewerApp": "È necessaria una versione più recente dell’app: {version}",
   "appearanceFontFamilies": "Famiglie di caratteri dell’interfaccia",
   "appearanceFontFamiliesTip": "Un nome per riga; i caratteri vengono provati in ordine.",

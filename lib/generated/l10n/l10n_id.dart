@@ -40,6 +40,12 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get themeStoreUpdatedJustNow => 'baru saja diperbarui';
+
+  @override
+  String get themeStoreSortInUse => 'Yang digunakan dulu';
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Memerlukan aplikasi versi lebih baru: $version';
   }
