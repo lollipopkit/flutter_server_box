@@ -593,9 +593,13 @@ void main() {
           .first,
     );
 
-    /// A rail beside an empty tab, on a page whose scaffold is [scaffold].
-    Widget railOn(Color? scaffold) => MaterialApp(
-      theme: ThemeData(scaffoldBackgroundColor: scaffold),
+    /// A rail beside an empty tab, on a page whose scaffold is [scaffold], with
+    /// the theme's own rail colour [rail] where one is given.
+    Widget railOn(Color? scaffold, {Color? rail}) => MaterialApp(
+      theme: ThemeData(
+        scaffoldBackgroundColor: scaffold,
+        navigationRailTheme: NavigationRailThemeData(backgroundColor: rail),
+      ),
       home: Scaffold(
         body: Row(
           children: [
@@ -621,8 +625,9 @@ void main() {
       WidgetTester tester, {
       required bool hover,
       required Color? scaffold,
+      Color? rail,
     }) async {
-      await tester.pumpWidget(railOn(scaffold));
+      await tester.pumpWidget(railOn(scaffold, rail: rail));
       await tester.pump();
       if (!hover) return;
 
@@ -639,8 +644,9 @@ void main() {
       WidgetTester tester, {
       required bool hover,
       required Color? scaffold,
+      Color? rail,
     }) async {
-      await pointerOnRail(tester, hover: hover, scaffold: scaffold);
+      await pointerOnRail(tester, hover: hover, scaffold: scaffold, rail: rail);
       return railOf(tester).color;
     }
 
@@ -683,6 +689,24 @@ void main() {
       expect(
         await colorAt(tester, hover: true, scaffold: page),
         page,
+      );
+    });
+
+    testWidgets('and takes one the theme set, alpha and all', (tester) async {
+      // A colour carrying alpha failed the opaque test as though it were no
+      // colour at all, so a theme asking for a rail at 54% was answered with the
+      // surface's — in both shapes, since the colour is the panel and the two
+      // ends of the fade are the same colour.
+      const asked = Color(0x8A000000);
+      const page = Color(0xFF123456);
+
+      expect(
+        await colorAt(tester, hover: false, scaffold: page, rail: asked),
+        asked,
+      );
+      expect(
+        await colorAt(tester, hover: true, scaffold: page, rail: asked),
+        asked,
       );
     });
 

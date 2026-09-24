@@ -172,7 +172,19 @@ class _AppNavRailState extends State<AppNavRail>
     // that switched at the end of it would be a panel changing its mind about
     // what it is after it has finished arriving.
     final surface = theme.colorScheme.surface;
-    final chrome = railTheme.backgroundColor ?? theme.scaffoldBackgroundColor;
+    // What the page under the rail is painted with. Which of the two shapes
+    // above is which, read off the one thing that tells them apart: a page with
+    // no colour of its own is the wallpaper, and there the shut rail is part of
+    // the page rather than a panel waiting to open.
+    final page = theme.scaffoldBackgroundColor;
+    // What the panel opens to. A rail colour of the theme's own, and otherwise
+    // the page's — except where the page has none to give, which is the case
+    // just above.
+    //
+    // A colour the theme asked for is the panel's whatever its alpha: a rail
+    // set at 54% failed the opaque test below as though it were no colour at
+    // all, and was drawn with the surface's instead.
+    final panel = railTheme.backgroundColor ?? (page.a == 0 ? surface : page);
 
     return MouseRegion(
       onEnter: (_) => _ctrl.forward(),
@@ -191,9 +203,18 @@ class _AppNavRailState extends State<AppNavRail>
                 open,
               ),
               child: Material(
-                color: chrome.a == 1
-                    ? chrome
-                    : Color.lerp(surface.withValues(alpha: 0), surface, open)!,
+                // Which of the two is asked of the *page*, not of the colour
+                // being painted: a page with no colour is what the fade is
+                // for, whatever the panel turns out to be. Asked of the panel,
+                // an opaque one over a wallpaper would hold a slab of the
+                // scheme's surface across the shut rail.
+                color: page.a == 1
+                    ? panel
+                    : Color.lerp(
+                        panel.withValues(alpha: 0),
+                        panel,
+                        open,
+                      )!,
                 surfaceTintColor: Colors.transparent,
                 // With the colour rather than on or off: a shadow is cast by
                 // the shape whether or not the colour on it is opaque, so a
