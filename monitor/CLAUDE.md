@@ -108,6 +108,8 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 - **`types/`**: TypeScript type definitions
 - Tests: vitest + @testing-library/svelte; type gate via svelte-check (part of `npm run build`)
 - Multi-server: the panel keeps a server list (per-server URL + session) in localStorage; it can be served by an agent itself (same-origin) or hosted statically (e.g. Cloudflare Pages) talking to several agents
+  - **The panel an agent serves holds the one server it is served by** — `ServersStore.servedByAgent`. One `dist` is served both by an agent and by Pages, so it is asked of the origin at startup rather than read off the build: `confirmSameOrigin()`'s probe, and assumed until it answers. `add()` is refused there and both add affordances (`Sidebar`, the empty state) are absent; nothing changes for a panel the origin does not answer for. `unreachable` counts as the agent's own, since the page was loaded *from* it.
+  - The vite dev server is the one deployment the question cannot be asked of: it proxies `/api` to the agent `make monitor-dev` starts, so the probe reaches that agent and answers as though the panel were its own. `import.meta.env.DEV` is what exempts it, and no shipped build has it — an agent's panel and a Pages panel are both production builds, so it cannot be what tells those two apart.
 
 ### Hosting the panel on Cloudflare Pages
 

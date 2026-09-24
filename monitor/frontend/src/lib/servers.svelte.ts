@@ -37,6 +37,23 @@ class ServersStore {
   list = $state<ServerEntry[]>([])
   currentId = $state('')
 
+  /// Whether this panel is the agent's own: whether the origin the page came
+  /// from is an agent that serves it.
+  ///
+  /// The panel an agent serves is that machine's face and holds the one server
+  /// it is served by; a panel hosted apart from any agent is a client of
+  /// several. Which of the two it is cannot be read off the build — one `dist`
+  /// is served both ways — so it is asked of the origin, by
+  /// [confirmSameOrigin], and assumed until that answer arrives.
+  ///
+  /// The vite dev server is the one deployment the question cannot be asked of:
+  /// it proxies `/api` to the agent `make monitor-dev` starts, so the probe
+  /// reaches that agent and answers as though this were its own panel, while a
+  /// dev server is the one deployment that does hold several. `DEV` is true
+  /// there and in no shipped build — an agent's panel and a Pages panel are
+  /// both production builds, so this cannot be what tells those two apart.
+  servedByAgent = $state(!import.meta.env.DEV)
+
   constructor() {
     let sessions: Record<string, { token: string; username: string | null }> = {}
     try {
@@ -97,8 +114,13 @@ class ServersStore {
     return this.list.length === 0
   }
 
-  /// Drops the assumed same-origin entry when this origin turns out not to be
-  /// an agent.
+  /// Asks the origin whether it is an agent: records the answer as
+  /// [servedByAgent], and drops the assumed same-origin entry when it is not.
+  ///
+  /// Asked whatever the list holds, rather than only when there is an entry to
+  /// drop: the same answer decides whether this panel holds one server or
+  /// several, and a panel whose list is already someone else's was still served
+  /// from somewhere.
   ///
   /// The entry is a guess made before anything has been asked: right when an
   /// agent serves the panel, wrong when the panel is hosted statically, where
@@ -111,9 +133,14 @@ class ServersStore {
   /// matters either way: if this origin were the agent and it were down, there
   /// would be no panel here to run this.
   async confirmSameOrigin() {
+    const reachable = await probe('')
+    // The dev server keeps the answer it started with: reaching a second agent
+    // is the reason it is there, and the probe's answer about the one it
+    // proxies to is not about where the panel was served from.
+    if (!import.meta.env.DEV) this.servedByAgent = reachable !== 'not-an-agent'
     const local = this.list.find((s) => s.id === LOCAL_ID)
     if (!local || local.url !== '' || this.list.length !== 1) return
-    if ((await probe('')) !== 'not-an-agent') return
+    if (reachable !== 'not-an-agent') return
     this.list = []
     this.currentId = ''
     this.#persist()
@@ -123,7 +150,14 @@ class ServersStore {
     return !!this.current?.token
   }
 
+  /// Adds a server and selects it.
+  ///
+  /// Refused on the panel an agent serves: that panel holds the one server it
+  /// is served by, and a second is not something it has to offer. The
+  /// affordances are absent there as well — this is what holds if one is
+  /// reached anyway.
   add(url: string) {
+    if (this.servedByAgent) return
     const entry: ServerEntry = {
       id: newId(),
       url: normalizeAgentUrl(url),
