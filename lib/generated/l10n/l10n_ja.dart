@@ -2431,32 +2431,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connectionTip => '両方を同時に有効にできます。並び順が接続を試す順序です。';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return 'ドラッグで順序を変更できます。最初に $first を試し、応答がなければ $second がセッションを引き受けます。';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return '$name だけが有効なので、切り替え先はありません。';
-  }
-
-  @override
   String get transportNoneOn => 'どちらも無効です — このサーバーには接続できません。';
-
-  @override
-  String get transportOffKept => '無効 — 設定は保持され、接続は行いません';
-
-  @override
-  String get transportDialledFirst => '最初に試す';
-
-  @override
-  String get transportFallback => '予備';
-
-  @override
-  String get transportOnlyMethod => '唯一の方法';
-
-  @override
-  String get transportOff => '無効';
 
   @override
   String get thisDevice => 'このデバイス';
@@ -2502,9 +2477,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get optional => '任意';
-
-  @override
-  String get optionalTip => '接続にはどれも必要ありません。開くと、その項目がフォームを置き換えます。';
 
   @override
   String get sshAdvanced => 'SSH 詳細';
@@ -2942,122 +2914,116 @@ class AppLocalizationsJa extends AppLocalizations {
       'VNC のクリップボードは Latin-1 テキストのみ対応しています。';
 
   @override
-  String get remoteDesktopConnect => 'Connect';
+  String get remoteDesktopAddProfile => 'プロファイルを追加';
 
   @override
-  String get remoteDesktopAddProfile => 'Add profile';
+  String get remoteDesktopNoProfiles => 'リモートデスクトップのプロファイルがありません';
 
   @override
-  String get remoteDesktopNoProfiles => 'No remote desktop profiles';
+  String get remoteDesktopAdd => 'リモートデスクトップを追加';
 
   @override
-  String get remoteDesktopAdd => 'Add remote desktop';
-
-  @override
-  String get remoteDesktopEdit => 'Edit remote desktop';
+  String get remoteDesktopEdit => 'リモートデスクトップを編集';
 
   @override
   String get remoteDesktopTargetTip =>
-      'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.';
+      '接続先は SSH サーバーまたは Monitor エージェントから解決されます。localhost はそのマシンを指します。';
 
   @override
-  String get remoteDesktopDomain => 'Domain (optional)';
+  String get remoteDesktopDomain => 'ドメイン（任意）';
 
   @override
-  String get remoteDesktopPassword => 'Password (optional)';
+  String get remoteDesktopPassword => 'パスワード（任意）';
 
   @override
-  String get remoteDesktopSavePassword => 'Save password';
+  String get remoteDesktopSavePassword => 'パスワードを保存';
 
   @override
   String get remoteDesktopSavePasswordTip =>
-      'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.';
+      '暗号化データベースに保存されます。バックアップには保存済みのパスワードが含まれ、バックアップパスワードを設定した場合にのみ暗号化されます。';
 
   @override
-  String get remoteDesktopShareSession => 'Share session';
+  String get remoteDesktopShareSession => 'セッションを共有';
 
   @override
-  String get remoteDesktopProtocol => 'Protocol';
+  String get remoteDesktopProtocol => 'プロトコル';
 
   @override
-  String get remoteDesktopUniqueName =>
-      'Profile names must be unique for this server.';
+  String get remoteDesktopUniqueName => 'このサーバーではプロファイル名を重複させられません。';
 
   @override
   String get remoteDesktopVncPasswordLength =>
-      'Classic VNC passwords are limited to 8 ASCII bytes.';
+      '従来の VNC パスワードは 8 ASCII バイトまでです。';
 
   @override
-  String get remoteDesktopNameRequired => 'Enter a profile name.';
+  String get remoteDesktopNameRequired => 'プロファイル名を入力してください。';
 
   @override
-  String get remoteDesktopHostRequired => 'Enter a target host.';
+  String get remoteDesktopHostRequired => '接続先ホストを入力してください。';
 
   @override
-  String get remoteDesktopPortRequired => 'Enter a valid port.';
+  String get remoteDesktopPortRequired => '有効なポートを入力してください。';
 
   @override
-  String get remoteDesktopUsernameRequired => 'Enter the RDP username.';
+  String get remoteDesktopUsernameRequired => 'RDP のユーザー名を入力してください。';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
-      'Classic VNC passwords must contain ASCII characters only.';
+      '従来の VNC パスワードは ASCII 文字のみ使用できます。';
 
   @override
-  String get remoteDesktopCertificateRequired =>
-      'Certificate confirmation required';
+  String get remoteDesktopCertificateRequired => '証明書の確認が必要です';
 
   @override
-  String get remoteDesktopWaiting => 'Waiting for desktop…';
+  String get remoteDesktopWaiting => 'デスクトップを待機しています…';
 
   @override
-  String get remoteDesktopCertificateChanged =>
-      'Remote desktop certificate changed';
+  String get remoteDesktopCertificateChanged => 'リモートデスクトップの証明書が変更されました';
 
   @override
-  String get remoteDesktopTrustCertificate => 'Trust certificate?';
+  String get remoteDesktopTrustCertificate => '証明書を信頼しますか？';
 
   @override
   String get remoteDesktopCertificateChangedTip =>
-      'The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.';
+      '証明書のフィンガープリントが保存された値と一致しません。信頼を置き換える前に新しいフィンガープリントを確認してください。';
 
   @override
   String get remoteDesktopCertificateUnverifiedTip =>
-      'The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.';
+      'システムはこの証明書を検証できませんでした。続行する前に SHA-256 フィンガープリントを確認してください。';
 
   @override
-  String get remoteDesktopReplaceTrust => 'Replace trust';
+  String get remoteDesktopReplaceTrust => '信頼を置き換える';
 
   @override
-  String get remoteDesktopTrustReconnect => 'Trust and reconnect';
+  String get remoteDesktopTrustReconnect => '信頼して再接続';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
-    return 'Delete remote desktop profile “$name”?';
+    return 'リモートデスクトップのプロファイル「$name」を削除しますか？';
   }
 
   @override
   String remoteDesktopReconnectAttempt(int attempt) {
-    return 'Reconnecting ($attempt/3)…';
+    return '再接続中（$attempt/3）…';
   }
 
   @override
   String remoteDesktopPreviousCertificate(String fingerprint) {
-    return 'Previously trusted\n$fingerprint';
+    return '以前に信頼したフィンガープリント\n$fingerprint';
   }
 
   @override
   String remoteDesktopCertificateSubject(String subject) {
-    return 'Subject: $subject';
+    return 'サブジェクト：$subject';
   }
 
   @override
   String remoteDesktopCertificateIssuer(String issuer) {
-    return 'Issuer: $issuer';
+    return '発行者：$issuer';
   }
 
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
-    return 'Valid: $start – $end';
+    return '有効期間：$start – $end';
   }
 }

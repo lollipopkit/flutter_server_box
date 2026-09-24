@@ -2574,33 +2574,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Both can be on at once. The order is the order they are dialled.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return 'Drag to change the order. $first is dialled first; if it does not answer, $second carries the session on its own.';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return 'Only $name is on, so there is nothing to fall back to.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Both are off — this server cannot be connected.';
-
-  @override
-  String get transportOffKept => 'off — settings kept, never dialled';
-
-  @override
-  String get transportDialledFirst => 'dialled first';
-
-  @override
-  String get transportFallback => 'fallback';
-
-  @override
-  String get transportOnlyMethod => 'only method';
-
-  @override
-  String get transportOff => 'off';
 
   @override
   String get thisDevice => 'This device';
@@ -2648,10 +2623,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get optional => 'Optional';
-
-  @override
-  String get optionalTip =>
-      'Nothing here is needed to connect. Open one and its fields take over the form.';
 
   @override
   String get sshAdvanced => 'SSH advanced';
@@ -3096,9 +3067,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC clipboard supports Latin-1 text only.';
-
-  @override
-  String get remoteDesktopConnect => 'Connect';
 
   @override
   String get remoteDesktopAddProfile => 'Add profile';

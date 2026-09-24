@@ -91,9 +91,24 @@ void main() {
     expect(find.text('Monitor HTTP'), findsOneWidget);
     expect(find.text('SSH'), findsWidgets);
     expect(find.text(app_locale.l10n.connection.toUpperCase()), findsOneWidget);
-    // Order and addresses remain visible without redundant role labels.
-    expect(find.text(app_locale.l10n.transportDialledFirst), findsNothing);
-    expect(find.text(app_locale.l10n.transportFallback), findsNothing);
+    // Order and addresses remain visible without redundant role labels: the
+    // number says when a method is dialled, the row says where.
+    final agentRow = find.ancestor(
+      of: find.text('https://agent:3770'),
+      matching: find.byType(Row),
+    );
+    final sshRow = find.ancestor(
+      of: find.text('root@10.0.0.4:22'),
+      matching: find.byType(Row),
+    );
+    expect(
+      find.descendant(of: agentRow.first, matching: find.text('1')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sshRow.first, matching: find.text('2')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('switching a method off keeps its configuration', (tester) async {
@@ -110,7 +125,6 @@ void main() {
     await settle(tester);
 
     expect(find.text(app_locale.l10n.transportSectionOff), findsOneWidget);
-    expect(find.text(app_locale.l10n.transportOffKept), findsNothing);
 
     await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
     await settle(tester);

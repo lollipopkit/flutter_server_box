@@ -2591,34 +2591,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Обидва можуть бути увімкнені одночасно. Порядок — це порядок, у якому до них звертаються.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return 'Перетягніть, щоб змінити порядок. Спершу $first; якщо він не відповідає, сеанс бере на себе $second.';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return 'Увімкнено лише $name, тож перемикатися нема на що.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Обидва вимкнені — до цього сервера неможливо під\'єднатися.';
-
-  @override
-  String get transportOffKept =>
-      'вимкнено — налаштування збережено, звернень немає';
-
-  @override
-  String get transportDialledFirst => 'звертаємось першим';
-
-  @override
-  String get transportFallback => 'запасний';
-
-  @override
-  String get transportOnlyMethod => 'єдиний спосіб';
-
-  @override
-  String get transportOff => 'вимкнено';
 
   @override
   String get thisDevice => 'Цей пристрій';
@@ -2666,10 +2640,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get optional => 'Необов\'язкове';
-
-  @override
-  String get optionalTip =>
-      'Нічого з цього не потрібно для під\'єднання. Відкрийте один — і його поля займуть місце форми.';
 
   @override
   String get sshAdvanced => 'SSH, додатково';
@@ -3123,122 +3093,120 @@ class AppLocalizationsUk extends AppLocalizations {
       'Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.';
 
   @override
-  String get remoteDesktopConnect => 'Connect';
+  String get remoteDesktopAddProfile => 'Додати профіль';
 
   @override
-  String get remoteDesktopAddProfile => 'Add profile';
+  String get remoteDesktopNoProfiles =>
+      'Немає профілів віддаленого робочого стола';
 
   @override
-  String get remoteDesktopNoProfiles => 'No remote desktop profiles';
+  String get remoteDesktopAdd => 'Додати віддалений робочий стіл';
 
   @override
-  String get remoteDesktopAdd => 'Add remote desktop';
-
-  @override
-  String get remoteDesktopEdit => 'Edit remote desktop';
+  String get remoteDesktopEdit => 'Редагувати віддалений робочий стіл';
 
   @override
   String get remoteDesktopTargetTip =>
-      'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.';
+      'Адресу визначає SSH-сервер або агент Monitor. localhost указує на цю машину.';
 
   @override
-  String get remoteDesktopDomain => 'Domain (optional)';
+  String get remoteDesktopDomain => 'Домен (необов\'язково)';
 
   @override
-  String get remoteDesktopPassword => 'Password (optional)';
+  String get remoteDesktopPassword => 'Пароль (необов\'язково)';
 
   @override
-  String get remoteDesktopSavePassword => 'Save password';
+  String get remoteDesktopSavePassword => 'Зберегти пароль';
 
   @override
   String get remoteDesktopSavePasswordTip =>
-      'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.';
+      'Зберігається в зашифрованій базі даних. Резервні копії містять збережені паролі й шифруються лише за наявності пароля резервної копії.';
 
   @override
-  String get remoteDesktopShareSession => 'Share session';
+  String get remoteDesktopShareSession => 'Поділитися сеансом';
 
   @override
-  String get remoteDesktopProtocol => 'Protocol';
+  String get remoteDesktopProtocol => 'Протокол';
 
   @override
   String get remoteDesktopUniqueName =>
-      'Profile names must be unique for this server.';
+      'Імена профілів мають бути унікальними для цього сервера.';
 
   @override
   String get remoteDesktopVncPasswordLength =>
-      'Classic VNC passwords are limited to 8 ASCII bytes.';
+      'Класичні паролі VNC обмежені 8 байтами ASCII.';
 
   @override
-  String get remoteDesktopNameRequired => 'Enter a profile name.';
+  String get remoteDesktopNameRequired => 'Введіть ім\'я профілю.';
 
   @override
-  String get remoteDesktopHostRequired => 'Enter a target host.';
+  String get remoteDesktopHostRequired => 'Введіть цільовий хост.';
 
   @override
-  String get remoteDesktopPortRequired => 'Enter a valid port.';
+  String get remoteDesktopPortRequired => 'Введіть дійсний порт.';
 
   @override
-  String get remoteDesktopUsernameRequired => 'Enter the RDP username.';
+  String get remoteDesktopUsernameRequired => 'Введіть ім\'я користувача RDP.';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
-      'Classic VNC passwords must contain ASCII characters only.';
+      'Класичні паролі VNC можуть містити лише символи ASCII.';
 
   @override
   String get remoteDesktopCertificateRequired =>
-      'Certificate confirmation required';
+      'Потрібне підтвердження сертифіката';
 
   @override
-  String get remoteDesktopWaiting => 'Waiting for desktop…';
+  String get remoteDesktopWaiting => 'Очікування робочого стола…';
 
   @override
   String get remoteDesktopCertificateChanged =>
-      'Remote desktop certificate changed';
+      'Сертифікат віддаленого робочого стола змінився';
 
   @override
-  String get remoteDesktopTrustCertificate => 'Trust certificate?';
+  String get remoteDesktopTrustCertificate => 'Довіряти сертифікату?';
 
   @override
   String get remoteDesktopCertificateChangedTip =>
-      'The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.';
+      'Відбиток сертифіката більше не збігається зі збереженим значенням. Перевірте новий відбиток, перш ніж замінювати довіру.';
 
   @override
   String get remoteDesktopCertificateUnverifiedTip =>
-      'The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.';
+      'Система не змогла перевірити цей сертифікат. Перевірте його відбиток SHA-256, перш ніж продовжити.';
 
   @override
-  String get remoteDesktopReplaceTrust => 'Replace trust';
+  String get remoteDesktopReplaceTrust => 'Замінити довіру';
 
   @override
-  String get remoteDesktopTrustReconnect => 'Trust and reconnect';
+  String get remoteDesktopTrustReconnect => 'Довіряти й підключитися знову';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
-    return 'Delete remote desktop profile “$name”?';
+    return 'Видалити профіль віддаленого робочого стола «$name»?';
   }
 
   @override
   String remoteDesktopReconnectAttempt(int attempt) {
-    return 'Reconnecting ($attempt/3)…';
+    return 'Повторне підключення ($attempt/3)…';
   }
 
   @override
   String remoteDesktopPreviousCertificate(String fingerprint) {
-    return 'Previously trusted\n$fingerprint';
+    return 'Раніше довірений відбиток\n$fingerprint';
   }
 
   @override
   String remoteDesktopCertificateSubject(String subject) {
-    return 'Subject: $subject';
+    return 'Суб\'єкт: $subject';
   }
 
   @override
   String remoteDesktopCertificateIssuer(String issuer) {
-    return 'Issuer: $issuer';
+    return 'Видавець: $issuer';
   }
 
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
-    return 'Valid: $start – $end';
+    return 'Дійсний: $start – $end';
   }
 }

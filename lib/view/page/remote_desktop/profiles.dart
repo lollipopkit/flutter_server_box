@@ -219,7 +219,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                       ],
                       if (compact)
                         IconButton(
-                          tooltip: l10n.remoteDesktopConnect,
+                          tooltip: l10n.connect,
                           icon: const Icon(Icons.play_arrow),
                           onPressed: () => _connect(profile),
                         )
@@ -227,7 +227,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                         TextButton.icon(
                           onPressed: () => _connect(profile),
                           icon: const Icon(Icons.play_arrow),
-                          label: Text(l10n.remoteDesktopConnect),
+                          label: Text(l10n.connect),
                         ),
                       if (compact)
                         IconButton(
@@ -324,7 +324,7 @@ extension _Actions on _RemoteDesktopProfilesPageState {
       context,
       [
         ContextMenuAction(
-          text: l10n.remoteDesktopConnect,
+          text: l10n.connect,
           icon: Icons.play_arrow,
           onTap: () => _connect(profile),
         ),

@@ -2603,34 +2603,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Beide können gleichzeitig an sein. Die Reihenfolge ist die Reihenfolge, in der gewählt wird.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return 'Zum Ändern der Reihenfolge ziehen. $first wird zuerst gewählt; antwortet es nicht, trägt $second die Sitzung allein.';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return 'Nur $name ist an, es gibt also nichts, worauf ausgewichen werden könnte.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Beide sind aus — dieser Server kann nicht verbunden werden.';
-
-  @override
-  String get transportOffKept =>
-      'aus — Einstellungen bleiben, wird nie gewählt';
-
-  @override
-  String get transportDialledFirst => 'zuerst gewählt';
-
-  @override
-  String get transportFallback => 'Ausweichweg';
-
-  @override
-  String get transportOnlyMethod => 'einziger Weg';
-
-  @override
-  String get transportOff => 'aus';
 
   @override
   String get thisDevice => 'Dieses Gerät';
@@ -2678,10 +2652,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get optional => 'Optional';
-
-  @override
-  String get optionalTip =>
-      'Nichts hiervon ist zum Verbinden nötig. Öffnen Sie eines, und seine Felder übernehmen das Formular.';
 
   @override
   String get sshAdvanced => 'SSH erweitert';
@@ -3138,122 +3108,120 @@ class AppLocalizationsDe extends AppLocalizations {
       'Die VNC-Zwischenablage unterstützt nur Latin-1-Text.';
 
   @override
-  String get remoteDesktopConnect => 'Connect';
+  String get remoteDesktopAddProfile => 'Profil hinzufügen';
 
   @override
-  String get remoteDesktopAddProfile => 'Add profile';
+  String get remoteDesktopNoProfiles => 'Keine Remotedesktop-Profile';
 
   @override
-  String get remoteDesktopNoProfiles => 'No remote desktop profiles';
+  String get remoteDesktopAdd => 'Remotedesktop hinzufügen';
 
   @override
-  String get remoteDesktopAdd => 'Add remote desktop';
-
-  @override
-  String get remoteDesktopEdit => 'Edit remote desktop';
+  String get remoteDesktopEdit => 'Remotedesktop bearbeiten';
 
   @override
   String get remoteDesktopTargetTip =>
-      'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.';
+      'Das Ziel wird über den SSH-Server oder den Monitor-Agent aufgelöst. localhost meint diese Maschine.';
 
   @override
-  String get remoteDesktopDomain => 'Domain (optional)';
+  String get remoteDesktopDomain => 'Domäne (optional)';
 
   @override
-  String get remoteDesktopPassword => 'Password (optional)';
+  String get remoteDesktopPassword => 'Passwort (optional)';
 
   @override
-  String get remoteDesktopSavePassword => 'Save password';
+  String get remoteDesktopSavePassword => 'Passwort speichern';
 
   @override
   String get remoteDesktopSavePasswordTip =>
-      'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.';
+      'Wird in der verschlüsselten Datenbank gespeichert. Backups enthalten gespeicherte Passwörter und sind nur verschlüsselt, wenn ein Backup-Passwort gesetzt ist.';
 
   @override
-  String get remoteDesktopShareSession => 'Share session';
+  String get remoteDesktopShareSession => 'Sitzung teilen';
 
   @override
-  String get remoteDesktopProtocol => 'Protocol';
+  String get remoteDesktopProtocol => 'Protokoll';
 
   @override
   String get remoteDesktopUniqueName =>
-      'Profile names must be unique for this server.';
+      'Profilnamen müssen für diesen Server eindeutig sein.';
 
   @override
   String get remoteDesktopVncPasswordLength =>
-      'Classic VNC passwords are limited to 8 ASCII bytes.';
+      'Klassische VNC-Passwörter sind auf 8 ASCII-Bytes begrenzt.';
 
   @override
-  String get remoteDesktopNameRequired => 'Enter a profile name.';
+  String get remoteDesktopNameRequired => 'Geben Sie einen Profilnamen ein.';
 
   @override
-  String get remoteDesktopHostRequired => 'Enter a target host.';
+  String get remoteDesktopHostRequired => 'Geben Sie einen Ziel-Host ein.';
 
   @override
-  String get remoteDesktopPortRequired => 'Enter a valid port.';
+  String get remoteDesktopPortRequired => 'Geben Sie einen gültigen Port ein.';
 
   @override
-  String get remoteDesktopUsernameRequired => 'Enter the RDP username.';
+  String get remoteDesktopUsernameRequired =>
+      'Geben Sie den RDP-Benutzernamen ein.';
 
   @override
   String get remoteDesktopVncPasswordAscii =>
-      'Classic VNC passwords must contain ASCII characters only.';
+      'Klassische VNC-Passwörter dürfen nur ASCII-Zeichen enthalten.';
 
   @override
   String get remoteDesktopCertificateRequired =>
-      'Certificate confirmation required';
+      'Bestätigung des Zertifikats erforderlich';
 
   @override
-  String get remoteDesktopWaiting => 'Waiting for desktop…';
+  String get remoteDesktopWaiting => 'Warte auf Desktop…';
 
   @override
   String get remoteDesktopCertificateChanged =>
-      'Remote desktop certificate changed';
+      'Zertifikat des Remotedesktops hat sich geändert';
 
   @override
-  String get remoteDesktopTrustCertificate => 'Trust certificate?';
+  String get remoteDesktopTrustCertificate => 'Zertifikat vertrauen?';
 
   @override
   String get remoteDesktopCertificateChangedTip =>
-      'The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.';
+      'Der Fingerabdruck des Zertifikats stimmt nicht mehr mit dem gespeicherten Wert überein. Prüfen Sie den neuen Fingerabdruck, bevor Sie das Vertrauen ersetzen.';
 
   @override
   String get remoteDesktopCertificateUnverifiedTip =>
-      'The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.';
+      'Das System konnte dieses Zertifikat nicht verifizieren. Prüfen Sie seinen SHA-256-Fingerabdruck, bevor Sie fortfahren.';
 
   @override
-  String get remoteDesktopReplaceTrust => 'Replace trust';
+  String get remoteDesktopReplaceTrust => 'Vertrauen ersetzen';
 
   @override
-  String get remoteDesktopTrustReconnect => 'Trust and reconnect';
+  String get remoteDesktopTrustReconnect => 'Vertrauen und neu verbinden';
 
   @override
   String remoteDesktopDeleteProfile(String name) {
-    return 'Delete remote desktop profile “$name”?';
+    return 'Remotedesktop-Profil „$name“ löschen?';
   }
 
   @override
   String remoteDesktopReconnectAttempt(int attempt) {
-    return 'Reconnecting ($attempt/3)…';
+    return 'Verbindung wird wiederhergestellt ($attempt/3)…';
   }
 
   @override
   String remoteDesktopPreviousCertificate(String fingerprint) {
-    return 'Previously trusted\n$fingerprint';
+    return 'Zuvor vertraut\n$fingerprint';
   }
 
   @override
   String remoteDesktopCertificateSubject(String subject) {
-    return 'Subject: $subject';
+    return 'Subjekt: $subject';
   }
 
   @override
   String remoteDesktopCertificateIssuer(String issuer) {
-    return 'Issuer: $issuer';
+    return 'Aussteller: $issuer';
   }
 
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
-    return 'Valid: $start – $end';
+    return 'Gültig: $start – $end';
   }
 }

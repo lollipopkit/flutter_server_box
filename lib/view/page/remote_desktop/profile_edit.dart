@@ -531,7 +531,7 @@ Future<String?> _askPassword(
             _answerPassword(dialogContext, profile, controller.text),
         child: Text(
           profile.protocol == RemoteDesktopProtocol.vnc
-              ? l10n.remoteDesktopConnect
+              ? l10n.connect
               : libL10n.ok,
         ),
       ),
