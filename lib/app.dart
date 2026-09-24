@@ -35,6 +35,8 @@ Widget _buildHomeWithWindowFrame() {
 /// system, each in both brightnesses — and anything not passed here is a
 /// property three of them silently do not have.
 ThemeData _theme({Color? seed, Brightness? brightness}) {
+  // Resolve fonts before deriving component styles so titles and tiles keep
+  // the same fallback fonts as ordinary text.
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
@@ -61,7 +63,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     switchTheme: const SwitchThemeData(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     ),
-  );
+  ).fixWindowsFont;
   // Copied onto the resolved one rather than passed to the constructor: an
   // `IconThemeData` carrying only a size has a null colour, and `Icon` answers
   // a null colour with `IconThemeData.fallback()` — black, in both themes.
@@ -286,8 +288,8 @@ class _MyAppState extends State<MyApp> {
       navigatorObservers: [AppRouteObserver.instance],
       title: BuildData.name,
       themeMode: themeMode,
-      theme: light.fixWindowsFont,
-      darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
+      theme: light,
+      darkTheme: tMode < 3 ? dark : dark.toAmoled,
       home: FutureBuilder<List<IntroPageBuilder>>(
         future: _introFuture,
         builder: (context, snapshot) {
