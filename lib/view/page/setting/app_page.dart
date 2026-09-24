@@ -6,6 +6,8 @@ part of 'entry.dart';
 /// controllers on it — survives moving between them.
 enum SettingsSection {
   app,
+  /// What the app looks like: the theme in all of its parts, and the font.
+  appearance,
   privacy,
   ai,
   server,
@@ -24,6 +26,7 @@ enum SettingsSection {
   /// nothing at all.
   String get title => switch (this) {
     SettingsSection.app => libL10n.app,
+    SettingsSection.appearance => l10n.appearanceSettings,
     SettingsSection.privacy => l10n.privacy,
     SettingsSection.ai => libL10n.ai,
     SettingsSection.server => libL10n.server,
@@ -43,6 +46,7 @@ enum SettingsSection {
   /// "General", and the subject is the half that tells them apart.
   String get breadcrumb => switch (this) {
     SettingsSection.app => '${libL10n.app} › ${libL10n.general}',
+    SettingsSection.appearance => '${libL10n.app} › ${l10n.appearanceSettings}',
     SettingsSection.privacy => '${libL10n.app} › ${l10n.privacy}',
     SettingsSection.ai => '${libL10n.app} › ${libL10n.ai}',
     SettingsSection.fullScreen => '${libL10n.app} › ${l10n.fullScreen}',
@@ -216,6 +220,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   /// every one of them — see [_buildSearch].
   List<SettingsGroup> _groupsOf(SettingsSection section) => switch (section) {
     SettingsSection.app => _buildApp(),
+    SettingsSection.appearance => _buildAppearance(),
     SettingsSection.privacy => _buildPrivacy(),
     SettingsSection.ai => _buildAskAiConfig(),
     SettingsSection.server => _buildServer(),
@@ -261,7 +266,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
               SettingsRow(
                 hit.leaf.title,
                 () => ListTile(
-                  leading: Icon(hit.leaf.icon),
+                  leading: ThemedIcon(hit.leaf.icon),
                   title: Text(hit.leaf.title),
                   subtitle: hit.parent == null
                       ? null

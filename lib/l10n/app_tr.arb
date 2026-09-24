@@ -1,5 +1,28 @@
 {
   "@@locale": "tr",
+  "appearanceSettings": "Görünüm",
+  "appearancePreset": "Tema ön ayarı",
+  "appearanceThemeSchemaRange": "Desteklenen tema schema sürümü",
+  "appearanceThemeInstall": "Tema yükle",
+  "appearanceThemeStore": "Tema mağazası",
+  "appearanceInvalidTheme": "Geçersiz tema paketi veya katalog",
+  "themeStoreRefreshFailed": "Tema kataloğu okunamadı.",
+  "themeStoreDeleteTheme": "“{name}” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.",
+  "themeStoreUpdatedFmt": "{ago} güncellendi",
+  "themeStoreUpdatedJustNow": "az önce güncellendi",
+  "themeStoreSortInUse": "Kullanımda olan önce",
+  "themeStoreMakeOwnFmt": "Kendi temanızı mı yapmak istiyorsunuz? [Nasıl yapılacağına]({doc}) bakın — katkınız için teşekkürler!",
+  "appearanceThemeNeedsNewerApp": "Daha yeni bir uygulama sürümü gerekiyor: {version}",
+  "appearanceFontFamilies": "Arayüz yazı tipi aileleri",
+  "appearanceFontFamiliesTip": "Her satıra bir ad yazın; yazı tipleri sırayla denenir.",
+  "appearanceFontImport": "Arayüz yazı tipi dosyasını içe aktar",
+  "appearanceGradient": "Gradyan",
+  "appearanceNoBackground": "Arka plan yok",
+  "appearanceIcons": "Uygulama içi simgeler",
+  "appearanceCorners": "Köşeler",
+  "appearanceCardCorners": "Kart köşeleri",
+  "appearanceTileCorners": "Kutucuk köşeleri",
+  "appearanceButtonCorners": "Düğme köşeleri",
   "crashCollect": "Tanılama verileri",
   "crashCollectIntro": "ServerBox, sorunların düzeltilebilmesi için çalışırken olanları kaydeder. Ne kadar bilgi gönderileceğini seçin.",
   "crashCollectNone": "Hiçbir şey",
@@ -169,7 +192,9 @@
   "mismatchSystem": "Eşleşmeyen sistem: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Yansı",
@@ -231,10 +256,18 @@
   "rootfsUpdateTip": "{distro} {installed} kurulu, {latest} var. Güncelleme tüm konteyneri değiştirir: {pm} verisi kaybolur",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Silmeden önce {name} üzerindeki terminalleri kapat",
@@ -549,14 +582,20 @@
   "geoDataCurrent": "{month} zaten yüklü.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**İndirme: {download} · Cihazdaki depolama alanı: {disk}.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Performans testi",
@@ -745,7 +784,14 @@
   "vendor": "Üretici",
   "connection": "Bağlantı",
   "connectionTip": "İkisi aynı anda açık olabilir. Sıra, denendikleri sıradır.",
+  "transportOrderFmt": "Sırayı değiştirmek için sürükleyin. Önce {first} denenir; yanıt vermezse oturumu tek başına {second} taşır.",
+  "transportOnlyFmt": "Yalnızca {name} açık, dolayısıyla geri dönülecek bir şey yok.",
   "transportNoneOn": "İkisi de kapalı — bu sunucuya bağlanılamaz.",
+  "transportOffKept": "kapalı — ayarlar saklanıyor, hiç denenmiyor",
+  "transportDialledFirst": "önce denenir",
+  "transportFallback": "yedek",
+  "transportOnlyMethod": "tek yöntem",
+  "transportOff": "kapalı",
   "thisDevice": "Bu cihaz",
   "localServerTip": "Durum betiğini burada çalıştırarak bu cihazı doğrudan okur. SSH ve Monitor HTTP kullanılmaz; ayarları korunur.",
   "localServerUnsupported": "Bu platform bu cihazı sunucu olarak okuyamaz. Linux, Windows ve macOS DMG sürümü destekler.",
@@ -759,6 +805,7 @@
   "plainHttpEditTip": "Kimlik bilgileri ve ölçümler ağdan şifrelenmeden geçer. Bunu bir LAN veya Tailscale adresiyle sınırlayın ya da aracıyı TLS arkasına alın.",
   "behaviour": "Davranış",
   "optional": "İsteğe bağlı",
+  "optionalTip": "Buradaki hiçbir şey bağlanmak için gerekli değil. Birini açın, alanları formun yerini alsın.",
   "sshAdvanced": "SSH gelişmiş",
   "sshAdvancedTip": "Yedek hedef, ProxyCommand, atlama sunucusu, dosya aktarımı, uzak yol",
   "appearanceAndPlace": "Görünüm ve konum",
@@ -918,5 +965,41 @@
   "remoteDesktopPreviousCertificate": "Daha önce güvenilen\n{fingerprint}",
   "remoteDesktopCertificateSubject": "Konu: {subject}",
   "remoteDesktopCertificateIssuer": "Veren: {issuer}",
-  "remoteDesktopCertificateValidity": "Geçerlilik: {start} – {end}"
+  "remoteDesktopCertificateValidity": "Geçerlilik: {start} – {end}",
+  "appearanceThemeModeLocked": "Bu tema yalnızca {mode} modunu destekler. Modu değiştirmek için başka bir tema seçin.",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

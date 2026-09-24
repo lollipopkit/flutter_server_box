@@ -192,7 +192,13 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
       if (!mounted) return;
       context.showRoundDialog(
         title: libL10n.attention,
-        child: Text(l10n.fileTooLarge(entry.name, size, '1m')),
+        child: Text(
+          l10n.fileTooLarge(
+            entry.name,
+            size.bytes2Str,
+            Miscs.editorMaxSize.bytes2Str,
+          ),
+        ),
       );
       return;
     }

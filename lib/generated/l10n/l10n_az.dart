@@ -9,6 +9,85 @@ class AppLocalizationsAz extends AppLocalizations {
   AppLocalizationsAz([String locale = 'az']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Görünüş';
+
+  @override
+  String get appearancePreset => 'Tema dəsti';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Dəstəklənən mövzu schema-sı';
+
+  @override
+  String get appearanceThemeInstall => 'Mövzu quraşdır';
+
+  @override
+  String get appearanceThemeStore => 'Mövzu mağazası';
+
+  @override
+  String get appearanceInvalidTheme =>
+      'Mövzu paketi və ya kataloq etibarsızdır';
+
+  @override
+  String get themeStoreRefreshFailed => 'Tema kataloqu oxuna bilmədi.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name” silinsin? Faylları bu cihazdan silinir. İstifadə olunan temadırsa, tətbiq standart temaya qayıdır.';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago yeniləndi';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => 'indi yeniləndi';
+
+  @override
+  String get themeStoreSortInUse => 'İstifadədə olan əvvəl';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Öz temanızı yaratmaq istəyirsiniz? [Necə yaradılır]($doc) baxın — töhfəniz üçün təşəkkürlər!';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return 'Daha yeni tətbiq tələb olunur: $version';
+  }
+
+  @override
+  String get appearanceFontFamilies => 'İnterfeys şrift ailələri';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Hər sətirə bir ad yazın; şriftlər ardıcıllıqla yoxlanır.';
+
+  @override
+  String get appearanceFontImport => 'İnterfeys şrift faylını idxal et';
+
+  @override
+  String get appearanceGradient => 'Qradient';
+
+  @override
+  String get appearanceNoBackground => 'Fon yoxdur';
+
+  @override
+  String get appearanceIcons => 'Tətbiqdaxili ikonlar';
+
+  @override
+  String get appearanceCorners => 'Künclər';
+
+  @override
+  String get appearanceCardCorners => 'Kart küncləri';
+
+  @override
+  String get appearanceTileCorners => 'Element küncləri';
+
+  @override
+  String get appearanceButtonCorners => 'Düymə küncləri';
+
+  @override
   String get crashCollect => 'Diaqnostika məlumatları';
 
   @override
@@ -88,7 +167,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get askAiCommandInserted => 'Əmr terminala daxil edildi';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return 'Parametrlərdə $fields məlumatlarını təyin et.';
   }
 
@@ -310,7 +389,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get agentToolFailed => 'Alətin icrası uğursuz oldu.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count alət çağırışı';
   }
 
@@ -438,7 +517,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Vərəqdəki hər şeylə birdəfəyə əlaqə qurmaq və ya əlaqəni kəsmək üçün vərəqi basıb saxla və ya sağ kliklə.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count etiket';
   }
 
@@ -507,7 +586,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get icloudBackupStateWaiting => 'iCloud gözlənilir';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return 'Son ehtiyat nüsxə: $lastModified\nVəziyyət: $remoteState';
   }
 
@@ -553,12 +632,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get clearAllStatsTitle => 'Bütün statistikanı təmizlə';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return '\"$serverName\" serverinin əlaqə statistikasını təmizləmək istədiyinə əminsən? Bu əməliyyatı geri qaytarmaq mümkün deyil.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return '$serverName statistikasını təmizlə';
   }
 
@@ -636,7 +715,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get displayCpuIndex => 'CPU indeksini göstər';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return '$fileName bu cihaza endirilsin?';
   }
 
@@ -689,7 +768,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Bu tətbiqi F-Droid vasitəsilə endirmisənsə, bu seçimi söndürmək tövsiyə olunur.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return '\'$file\' faylı çox böyükdür: $size, maksimum $sizeMax';
   }
 
@@ -861,12 +940,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get jumpServer => 'Vasitəçi server';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return '$serverName üçün vasitəçi serverlər tapılmadı: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '\"$name\" artıq mövcuddur';
   }
 
@@ -923,7 +1002,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'DNS serverləri. Boş olduqda standart dəyərlər bərpa olunur';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return '$myGithub tərəfindən ❤️ ilə hazırlanıb';
   }
 
@@ -934,7 +1013,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get maxRetryCount => 'Serverlə yenidən əlaqə cəhdlərinin sayı';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'Uyğun olmayan sistem: $system';
   }
 
@@ -984,7 +1063,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get privateKey => 'Məxfi açar';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return '[$keyId] məxfi açarı tapılmadı.';
   }
 
@@ -1202,16 +1281,16 @@ class AppLocalizationsAz extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed quraşdırılıb; $latest mövcuddur. Yeniləmə bütün konteyneri əvəz edir: $pm məlumatları itirilir';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return '$name sistemini silməzdən əvvəl ondakı terminalları bağla';
   }
 
@@ -1219,7 +1298,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get rootfsSubtitle => 'Bu cihazda Linux istifadəçi mühiti';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return '$distro $version endirilir (təxminən $size MB) və bu cihazda arxivdən çıxarılır.';
   }
 
@@ -1243,7 +1322,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get homeDir => 'Ev qovluğu';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count seçilib';
   }
 
@@ -1371,12 +1450,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'Aktivləşdirildikdə temperatur dəyəri milliselsi əvəzinə Selsi kimi qəbul ediləcək. Yalnız temperatur səhv göstərildikdə aktivləşdir (məsələn, 58°C əvəzinə 0.1°C göstərildikdə).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return 'Sərf olunan vaxt: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'Bütün serverlər artıq mövcuddur ($duplicateCount təkrar tapıldı)';
   }
 
@@ -1391,7 +1470,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'Sistem SSH istifadə et';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount təkrar ötürüləcək';
   }
 
@@ -1399,7 +1478,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshConfigFound => 'Sistemində SSH konfiqurasiyası tapıldı.';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return '$totalCount server tapıldı';
   }
 
@@ -1415,12 +1494,12 @@ class AppLocalizationsAz extends AppLocalizations {
       'İlk server yaradılarkən ~/.ssh/config faylını oxumaq üçün sorğu göstər';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'SSH konfiqurasiyasından $count server idxal edildi';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return '$serverName üçün SSH host açarı dəyişib. Yalnız bu serverə etibar edirsənsə davam et.';
   }
 
@@ -1434,12 +1513,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sshKnownHostKeysTip => 'Bu tətbiqin qəbul etdiyi host açarları';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return '$serverName serverindən yeni SSH host açarı alındı. Etibar etməzdən əvvəl barmaq izini yoxla.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return 'Saxlanmış barmaq izi: $fingerprint';
   }
 
@@ -1458,7 +1537,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'macOS icazələrinə görə SSH konfiqurasiya faylına daxil olmaq mümkün deyil.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount server idxal ediləcək';
   }
 
@@ -1477,7 +1556,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Yuxu rejimi funksiyası root icazəsi və systemd dəstəyi tələb edir.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return '$val rejiminə keç';
   }
 
@@ -1635,7 +1714,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get portForward_remotePort => 'Uzaq port';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return '$name silinsin?';
   }
 
@@ -1909,7 +1988,7 @@ class AppLocalizationsAz extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return 'çıxış statusu $code';
   }
 
@@ -2063,12 +2142,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get geoDataRemoveFailed => 'Məlumatları silmək mümkün olmadı.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '$month artıq quraşdırılıb.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**Endirmə: $download · Cihazda tutulan yer: $disk.** Tam məlumat toplusu bu cihazda saxlanılır və sonrakı bütün coğrafi mövqe sorğuları yerli olaraq icra olunur. Server ünvanları və sorğu fəaliyyəti endirmə servisinə göndərilmir.\n\nHər ay yenilənir. Yeni versiya əlavə nüsxə saxlamadan quraşdırılmış məlumatları əvəz edir. Məlumatları istənilən vaxt silə bilərsən.';
   }
 
@@ -2145,7 +2224,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Disk sınağının hansı fayl sistemini ölçəcəyini müəyyən edir. Boş saxlanıldıqda daxil olduğun hesabın ev qovluğu istifadə olunur.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return 'Təxminən $minutes dəq';
   }
 
@@ -2347,7 +2426,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Mövcud parolu saxlamaq üçün parolu boş saxlayın.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func bu serverin bağlantı üsulunda mövcud deyil.';
   }
 
@@ -2386,12 +2465,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get beyondRetention => 'bu agentin saxladığından uzaq';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'Agent $kept saxlayır';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return 'ən köhnə ölçmə $time';
   }
 
@@ -2413,7 +2492,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get waitingFirstSample => 'İlk ölçmə gözlənilir';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return 'saat $time';
   }
 
@@ -2421,47 +2500,47 @@ class AppLocalizationsAz extends AppLocalizations {
   String get stored => 'saxlanılan';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return 'son ölçmə $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return 'Aşağıdakıların hamısı $time tarixindəndir, $ago.';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return '$time tarixindən əvvəl məlumat yoxdur';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return '$range yüklənir…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return '$metric üçün saxlanılan tarixçə yoxdur';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count cihaz';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count cihaz · ən məşğulu $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$total cihazdan $plotted ədədi';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count sensor · ən istisi $name';
   }
 
@@ -2469,12 +2548,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get oneDeviceAtLeast => 'Qrafikdə ən azı bir cihaz qalır.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$total $what arasından $shown';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count $what';
   }
 
@@ -2533,12 +2612,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get diskAllPassed => 'hamısı PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '$count xəbərdarlıq';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total cihazdan $wrong';
   }
 
@@ -2546,17 +2625,17 @@ class AppLocalizationsAz extends AppLocalizations {
   String get diskSmartSortedTip => 'Ən pisdən sıralanıb';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return '$ago oxundu';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count proses';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count nasaz';
   }
 
@@ -2570,7 +2649,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get window => 'pəncərə';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return '$total içindən';
   }
 
@@ -2585,8 +2664,34 @@ class AppLocalizationsAz extends AppLocalizations {
       'Hər ikisi eyni anda açıq ola bilər. Sıra, onların yığılma sırasıdır.';
 
   @override
+  String transportOrderFmt(String first, String second) {
+    return 'Sıranı dəyişmək üçün sürüşdürün. Əvvəlcə $first yığılır; cavab verməsə, sessiyanı $second təkbaşına aparır.';
+  }
+
+  @override
+  String transportOnlyFmt(String name) {
+    return 'Yalnız $name açıqdır, ona görə də geri dönüləcək bir şey yoxdur.';
+  }
+
+  @override
   String get transportNoneOn =>
       'Hər ikisi bağlıdır — bu serverə qoşulmaq mümkün deyil.';
+
+  @override
+  String get transportOffKept =>
+      'bağlı — parametrlər saxlanılır, heç vaxt yığılmır';
+
+  @override
+  String get transportDialledFirst => 'əvvəlcə yığılır';
+
+  @override
+  String get transportFallback => 'ehtiyat';
+
+  @override
+  String get transportOnlyMethod => 'yeganə üsul';
+
+  @override
+  String get transportOff => 'bağlı';
 
   @override
   String get thisDevice => 'Bu cihaz';
@@ -2636,6 +2741,10 @@ class AppLocalizationsAz extends AppLocalizations {
   String get optional => 'İstəyə bağlı';
 
   @override
+  String get optionalTip =>
+      'Burada heç nə qoşulmaq üçün lazım deyil. Birini açın, onun sahələri formanı əvəz edir.';
+
+  @override
   String get sshAdvanced => 'SSH əlavə';
 
   @override
@@ -2672,7 +2781,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get tagNewHint => 'Yeni teq';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return '#$tag yarat';
   }
 
@@ -2680,12 +2789,12 @@ class AppLocalizationsAz extends AppLocalizations {
   String get tagOnThisServer => 'bu serverdə';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count server';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return 'bu serverdə $count';
   }
 
@@ -2724,7 +2833,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2735,7 +2844,7 @@ class AppLocalizationsAz extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total tapşırıq · $enabled aktiv';
   }
 
@@ -2756,7 +2865,7 @@ class AppLocalizationsAz extends AppLocalizations {
       'Söndürüləndə sətir şərh kimi yazılır.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return '$user üçün planlaşdırılmış tapşırıq yoxdur. Buraya əlavə edilənlər həmin hesabın crontab-ına yazılır.';
   }
 
@@ -2798,42 +2907,42 @@ class AppLocalizationsAz extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return 'Hər $minutes dəqiqədən bir';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return 'Hər saatın :$minute-ci dəqiqəsində';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return 'Hər $hours saatdan bir';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return 'Hər $hours saatdan bir, :$minute-ci dəqiqədə';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return 'Hər gün saat $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return 'İş günləri saat $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return 'Hər $day saat $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return 'Hər ayın $day-ci günü saat $time';
   }
 
@@ -3200,5 +3309,10 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Etibarlıdır: $start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return 'Bu mövzu yalnız $mode rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin.';
   }
 }

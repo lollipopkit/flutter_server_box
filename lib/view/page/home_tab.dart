@@ -2,7 +2,10 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/benchmark/tab.dart';
 import 'package:server_box/view/page/remote_desktop/tab.dart';
@@ -12,6 +15,7 @@ import 'package:server_box/view/page/ssh/tab.dart';
 import 'package:server_box/view/page/storage/tab.dart';
 import 'package:server_box/view/widget/conn_count_badge.dart';
 import 'package:server_box/view/widget/nav_rail.dart';
+import 'package:server_box/view/widget/themed_icon.dart';
 
 extension AppTabViewX on AppTab {
   Widget get page {
@@ -29,28 +33,12 @@ extension AppTabViewX on AppTab {
   /// The tab's mark. Also what a page *listing* tabs draws — the settings page
   /// that turns them on and reorders them.
   Widget get icon {
-    return switch (this) {
-      AppTab.server => const Icon(BoxIcons.bx_server),
-      AppTab.ssh => const Icon(Icons.terminal_outlined),
-      AppTab.snippet => const Icon(Icons.code_outlined),
-      AppTab.file => const Icon(Icons.folder_open),
-      AppTab.agent => const Icon(Icons.auto_awesome_outlined),
-      AppTab.benchmark => const Icon(Icons.speed_outlined),
-      AppTab.remoteDesktop => const Icon(Icons.desktop_windows_outlined),
-    };
+    return _AppTabIcon(tab: this, selected: false);
   }
 
   /// The filled form, for the tab being looked at.
   Widget get selectedIcon {
-    return switch (this) {
-      AppTab.server => const Icon(BoxIcons.bxs_server),
-      AppTab.ssh => const Icon(Icons.terminal),
-      AppTab.snippet => const Icon(Icons.code),
-      AppTab.file => const Icon(Icons.folder),
-      AppTab.agent => const Icon(Icons.auto_awesome),
-      AppTab.benchmark => const Icon(Icons.speed),
-      AppTab.remoteDesktop => const Icon(Icons.desktop_windows),
-    };
+    return _AppTabIcon(tab: this, selected: true);
   }
 
   String get label {
@@ -122,6 +110,68 @@ extension AppTabViewX on AppTab {
   /// would be answering a question the row is not about.
   Widget _counted(Widget icon) =>
       this == AppTab.server ? ConnCountBadge(child: icon) : icon;
+}
+
+class _AppTabIcon extends StatelessWidget {
+  const _AppTabIcon({required this.tab, required this.selected});
+
+  final AppTab tab;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Stores.setting.appIconStyle.listenable(),
+        ThemePackages.preview,
+      ]),
+      builder: (context, _) {
+        final mingcute =
+            (ThemePackages.preview.value?.iconStyle ??
+                Stores.setting.appIconStyle.fetch()) ==
+            IconStyle.mingcute;
+        final icon = mingcute
+            ? switch (tab) {
+                AppTab.server =>
+                  selected ? MingCute.server_fill : MingCute.server_line,
+                AppTab.ssh =>
+                  selected ? MingCute.terminal_fill : MingCute.terminal_line,
+                AppTab.file =>
+                  selected
+                      ? MingCute.folder_open_fill
+                      : MingCute.folder_open_line,
+                AppTab.snippet =>
+                  selected ? MingCute.code_fill : MingCute.code_line,
+                AppTab.agent =>
+                  selected ? MingCute.magic_2_fill : MingCute.magic_2_line,
+                AppTab.benchmark =>
+                  selected ? MingCute.dashboard_fill : MingCute.dashboard_line,
+                AppTab.remoteDesktop =>
+                  selected ? MingCute.computer_fill : MingCute.computer_line,
+              }
+            : switch (tab) {
+                AppTab.server =>
+                  selected ? BoxIcons.bxs_server : BoxIcons.bx_server,
+                AppTab.ssh =>
+                  selected ? Icons.terminal : Icons.terminal_outlined,
+                AppTab.file => selected ? Icons.folder : Icons.folder_open,
+                AppTab.snippet => selected ? Icons.code : Icons.code_outlined,
+                AppTab.agent =>
+                  selected ? Icons.auto_awesome : Icons.auto_awesome_outlined,
+                AppTab.benchmark =>
+                  selected ? Icons.speed : Icons.speed_outlined,
+                AppTab.remoteDesktop =>
+                  selected
+                      ? Icons.desktop_windows
+                      : Icons.desktop_windows_outlined,
+              };
+        return ThemeIconAsset(
+          keyName: tabIconKey(tab, selected: selected),
+          fallback: Icon(icon),
+        );
+      },
+    );
+  }
 }
 
 /// Adds the long press and the right-click, and nothing when there is no menu.

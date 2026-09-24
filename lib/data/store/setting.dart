@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/ask_ai_config.dart';
+import 'package:server_box/data/model/app/builtin_theme.dart';
 import 'package:server_box/data/model/app/diagnostics_level.dart';
 import 'package:server_box/data/model/app/float_shell_config.dart';
 import 'package:server_box/data/model/app/linux_distro.dart';
@@ -9,6 +10,9 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/app/theme_sort.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
+import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/store/field_prop.dart';
@@ -50,6 +54,90 @@ class SettingStore extends SqliteStore {
   /// Seed color used to generate the color scheme.
   late final colorSeed = propertyDefault('primaryColor', 4287106639);
 
+  /// Built-in, installed, or custom image theme currently selected.
+  late final appThemePreset = propertyDefault(
+    'appThemePreset',
+    BuiltinTheme.defaultTheme.id,
+  );
+
+  /// Last custom theme, so selecting a built-in preset does not discard it.
+  late final appCustomTheme = propertyDefault('appCustomTheme', '');
+
+  /// Hash of the installed theme whose image/icon assets are active.
+  late final appThemePackage = propertyDefault('appThemePackage', '');
+  late final appThemePaletteEnabled = propertyDefault(
+    'appThemePaletteEnabled',
+    true,
+  );
+
+  /// How the theme store's list is ordered, by [ThemeSort.name].
+  late final themeStoreSort = propertyDefault(
+    'themeStoreSort',
+    ThemeSort.inUse.name,
+  );
+
+  /// The theme store's last answer, as the JSON it was read from.
+  ///
+  /// Held so a page can open on the themes it showed last time instead of on a
+  /// spinner. A map rather than a decoded model, because the shape is the theme
+  /// service's business and this directory does not import it: the service
+  /// writes [ThemeStore.toJson] and reads it back with [ThemeStore.fromJson],
+  /// and the store only owns the key.
+  ///
+  /// A map rather than a string holding one, which is what a second `jsonEncode`
+  /// on the way in would make it — see `setting_value_shape_test.dart`.
+  ///
+  /// Not a user edit, so it does not stamp the store's last-modified time — a
+  /// refresh is the app re-reading a catalog, and a sync that took it for a
+  /// change would push one device's cache at every other device. It is also
+  /// device-local, so a backup does not carry it: a list of what a catalog
+  /// offered when one phone last looked is not something to restore onto
+  /// another, which would show it as what the catalog offers now.
+  late final themeStoreCache = propertyDefault<Map<String, dynamic>>(
+    'themeStoreCache',
+    const {},
+    updateLastModified: false,
+  );
+
+  /// App-wide icon family. The launcher icon is selected by the platform.
+  ///
+  /// Stored as the enum's name, which is what was stored before it was one, so
+  /// an install that wrote the string reads back unchanged.
+  late final appIconStyle = propertyDefault(
+    'appIconStyle',
+    IconStyle.classic,
+    fromObj: IconStyle.parse,
+    toObj: (style) => style?.name,
+  );
+
+  /// Component shapes can be edited in the custom image theme.
+  late final appCardRadius = propertyDefault('appCardRadius', 13.0);
+  late final appTileRadius = propertyDefault('appTileRadius', 9.0);
+  late final appButtonRadius = propertyDefault('appButtonRadius', 30.0);
+
+  /// A device-local image behind the app's surfaces.
+  late final appBackgroundStyle = propertyDefault(
+    'appBackgroundStyle',
+    BackgroundStyle.none,
+    fromObj: BackgroundStyle.parse,
+    toObj: (style) => style?.name,
+  );
+  late final appBackgroundPath = propertyDefault('appBackgroundPath', '');
+  late final appCustomBackgroundPath = propertyDefault(
+    'appCustomBackgroundPath',
+    '',
+  );
+  late final appBackgroundOpacity = propertyDefault(
+    'appBackgroundOpacity',
+    0.18,
+  );
+  late final appBackgroundBlur = propertyDefault('appBackgroundBlur', 0.0);
+
+  /// Font names are tried in order; the platform's default follows the list.
+  late final appFontFamilies = listProperty<String>('appFontFamilies');
+  late final appImportedFontPath = propertyDefault('appImportedFontPath', '');
+  late final appImportedFontName = propertyDefault('appImportedFontName', '');
+
   late final serverStatusUpdateInterval = propertyDefault(
     'serverStatusUpdateInterval',
     Defaults.updateInterval,
@@ -58,7 +146,7 @@ class SettingStore extends SqliteStore {
   // Maximum number of server connection retries.
   late final maxRetryCount = propertyDefault('maxRetryCount', 2);
 
-  // Night mode: 0 -> auto, 1 -> light, 2 -> dark, 3 -> AMOLED, 4 -> AUTO-AMOLED
+  // ThemeMode: 0 -> system, 1 -> light, 2 -> dark.
   late final themeMode = propertyDefault('themeMode', 0);
 
   // Path to the terminal font file.
@@ -81,12 +169,20 @@ class SettingStore extends SqliteStore {
   /// drawn in, and a row has only so much width.
   late final trayMetrics = listProperty<String>(
     'trayMetrics',
-    defaultValue: const ['cpu', 'mem'],
+    defaultValue: [TrayMetric.cpu.name, TrayMetric.mem.name],
   );
 
-  /// Which series the row's chart draws, by [TrayMetric.name]. Empty draws
-  /// none.
-  late final trayChart = propertyDefault('trayChart', 'cpu');
+  /// Which series the row's chart draws, by [TrayMetric.name]. The empty name
+  /// draws none.
+  ///
+  /// Stored as a name rather than as the enum, and this is the one setting here
+  /// that is: the value it holds has one more member than [TrayMetric] does.
+  /// `propertyDefault` takes a non-nullable element type, so "draws nothing"
+  /// has nowhere to live in one and is spelled as the absent name.
+  /// [TrayMetric.byName] reads the setting back, answering null for that name
+  /// and for one this build does not know alike — both draw nothing, which is
+  /// the same answer either way.
+  late final trayChart = propertyDefault('trayChart', TrayMetric.cpu.name);
 
   /// One line per server instead of two, and no chart.
   ///
@@ -566,7 +662,17 @@ class SettingStore extends SqliteStore {
   /// Handled beside the internal keys rather than by giving them internal
   /// names, so an install that has already answered the question keeps its
   /// answer instead of being quietly reset by a rename.
-  static const deviceLocalKeys = {'agentLocalExec', 'liveActivity'};
+  static const deviceLocalKeys = {
+    'agentLocalExec',
+    'liveActivity',
+    // TODO(appearance): package image bytes when backups can carry theme assets.
+    'appBackgroundPath',
+    'appCustomBackgroundPath',
+    // TODO(appearance): include installed theme/font assets in backup packages.
+    'appThemePackage',
+    'appImportedFontPath',
+    'themeStoreCache',
+  };
 
   /// The floating Agent's placement and size, as one row.
   ///
@@ -1085,6 +1191,8 @@ class SettingStore extends SqliteStore {
       'fgService',
       'noNotiPerm',
       'showDistIcon',
+      // The platform now selects launcher icon appearances automatically.
+      'appIconPreset',
       // The detail page no longer has a user-defined card order. Its remaining
       // optional cards follow the declaration order, so this row has no reader.
       'detailCardOrder',

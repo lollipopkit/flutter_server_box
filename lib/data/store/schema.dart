@@ -93,7 +93,8 @@ abstract final class SchemaVersion {
   /// v27: `server.ssh_allow_legacy_algorithms`
   /// v28: the retired SSH recent-server history removed from `kv`
   /// v29: `server.is_local`, and the "reached somehow" CHECK relaxed for it
-  static const current = 29;
+  /// v30: the theme catalog address dropped, now that the catalog is compiled in
+  static const current = 30;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

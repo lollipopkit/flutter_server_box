@@ -65,6 +65,7 @@ export default defineConfig({
 						{ label: 'Globe View', translations: { zh: '地球仪视图' }, slug: 'advanced/globe' },
 						{ label: 'Custom Commands', translations: { zh: '自定义命令' }, slug: 'advanced/custom-commands' },
 						{ label: 'Custom Logo', translations: { zh: '自定义 Logo' }, slug: 'advanced/custom-logo' },
+						{ label: 'Theme Packages', translations: { zh: '主题包' }, slug: 'advanced/theme-packages' },
 						{ label: 'JSON Settings', translations: { zh: 'JSON 设置' }, slug: 'advanced/json-settings' },
 						{ label: 'Common Issues', translations: { zh: '常见问题' }, slug: 'advanced/troubleshooting' },
 					],
@@ -96,6 +97,7 @@ export default defineConfig({
 						{ label: 'Code Generation', translations: { zh: '代码生成' }, slug: 'development/codegen' },
 						{ label: 'Building', translations: { zh: '构建' }, slug: 'development/building' },
 						{ label: 'Testing', translations: { zh: '测试' }, slug: 'development/testing' },
+						{ label: 'Themes', translations: { zh: '主题' }, slug: 'development/themes' },
 					],
 				},
 				// Its own entry rather than a line in a group: the app links

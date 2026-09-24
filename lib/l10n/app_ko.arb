@@ -1,5 +1,28 @@
 {
   "@@locale": "ko",
+  "appearanceSettings": "모양",
+  "appearancePreset": "테마 프리셋",
+  "appearanceThemeSchemaRange": "지원하는 테마 schema",
+  "appearanceThemeInstall": "테마 설치",
+  "appearanceThemeStore": "테마 스토어",
+  "appearanceInvalidTheme": "유효하지 않은 테마 패키지 또는 카탈로그",
+  "themeStoreRefreshFailed": "테마 카탈로그를 읽을 수 없습니다.",
+  "themeStoreDeleteTheme": "“{name}”을(를) 삭제할까요? 파일이 이 기기에서 제거됩니다. 사용 중인 테마라면 앱이 기본 테마로 돌아갑니다.",
+  "themeStoreUpdatedFmt": "{ago} 업데이트",
+  "themeStoreUpdatedJustNow": "방금 업데이트",
+  "themeStoreSortInUse": "사용 중 우선",
+  "themeStoreMakeOwnFmt": "직접 테마를 만들고 싶다면 [테마 제작 안내]({doc})를 확인해 보세요. 기여해 주셔서 감사합니다!",
+  "appearanceThemeNeedsNewerApp": "최신 버전의 앱이 필요합니다: {version}",
+  "appearanceFontFamilies": "UI 글꼴 목록",
+  "appearanceFontFamiliesTip": "한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.",
+  "appearanceFontImport": "UI 글꼴 파일 가져오기",
+  "appearanceGradient": "그라데이션",
+  "appearanceNoBackground": "배경 없음",
+  "appearanceIcons": "앱 내 아이콘",
+  "appearanceCorners": "모서리",
+  "appearanceCardCorners": "카드 모서리",
+  "appearanceTileCorners": "타일 모서리",
+  "appearanceButtonCorners": "버튼 모서리",
   "crashCollect": "진단 데이터",
   "crashCollectIntro": "ServerBox는 문제를 해결할 수 있도록 실행 중 발생한 일을 기록합니다. 전송할 정보의 양을 선택할 수 있습니다.",
   "crashCollectNone": "전송 안 함",
@@ -170,8 +193,12 @@
   "jumpServersNotFoundFmt": "{serverName}에 대한 점프 서버를 찾을 수 없습니다: {jumpIds}",
   "@jumpServersNotFoundFmt": {
     "placeholders": {
-      "serverName": {},
-      "jumpIds": {}
+      "serverName": {
+        "type": "String"
+      },
+      "jumpIds": {
+        "type": "String"
+      }
     }
   },
   "noJumpServerAvailable": "사용 가능한 점프 서버가 없습니다.",
@@ -195,7 +222,9 @@
   "mismatchSystem": "시스템이 일치하지 않습니다: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "미러",
@@ -276,10 +305,18 @@
   "rootfsUpdateTip": "{distro} {installed}이(가) 설치되어 있고 {latest}가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: {pm} 데이터가 사라집니다",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name}의 터미널을 닫은 뒤 삭제하세요",
@@ -558,14 +595,20 @@
   "geoDataCurrent": "이미 {month} 데이터입니다.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**다운로드: {download} · 기기 저장 공간: {disk}.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "벤치마크",
@@ -754,7 +797,14 @@
   "vendor": "제조사",
   "connection": "연결",
   "connectionTip": "둘 다 동시에 켤 수 있습니다. 순서가 곧 연결을 시도하는 순서입니다.",
+  "transportOrderFmt": "끌어서 순서를 바꿉니다. {first}을(를) 먼저 시도하고, 응답이 없으면 {second}이(가) 세션을 단독으로 맡습니다.",
+  "transportOnlyFmt": "{name}만 켜져 있어 대체할 것이 없습니다.",
   "transportNoneOn": "둘 다 꺼져 있습니다 — 이 서버에는 연결할 수 없습니다.",
+  "transportOffKept": "꺼짐 — 설정은 보관되며 연결하지 않음",
+  "transportDialledFirst": "먼저 시도",
+  "transportFallback": "대체",
+  "transportOnlyMethod": "유일한 방법",
+  "transportOff": "꺼짐",
   "thisDevice": "이 기기",
   "localServerTip": "상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor HTTP는 사용하지 않으며 해당 설정은 유지됩니다.",
   "localServerUnsupported": "이 플랫폼에서는 이 기기를 서버로 읽을 수 없습니다. Linux, Windows, macOS DMG 버전에서 지원됩니다.",
@@ -768,6 +818,7 @@
   "plainHttpEditTip": "자격 증명과 측정값이 암호화되지 않은 채 네트워크를 지납니다. LAN이나 Tailscale 주소로 제한하거나, 에이전트를 TLS 뒤에 두세요.",
   "behaviour": "동작",
   "optional": "선택",
+  "optionalTip": "여기 있는 것은 연결에 필요하지 않습니다. 하나를 열면 그 항목이 양식을 대신합니다.",
   "sshAdvanced": "SSH 고급",
   "sshAdvancedTip": "대체 대상, ProxyCommand, 점프 서버, 파일 전송, 원격 경로",
   "appearanceAndPlace": "모양과 위치",
@@ -927,5 +978,20 @@
   "remoteDesktopPreviousCertificate": "이전에 신뢰한 지문\n{fingerprint}",
   "remoteDesktopCertificateSubject": "주체: {subject}",
   "remoteDesktopCertificateIssuer": "발급자: {issuer}",
-  "remoteDesktopCertificateValidity": "유효 기간: {start} – {end}"
+  "remoteDesktopCertificateValidity": "유효 기간: {start} – {end}",
+  "appearanceThemeModeLocked": "이 테마는 {mode}만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

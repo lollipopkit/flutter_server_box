@@ -1,5 +1,28 @@
 {
   "@@locale": "uk",
+  "appearanceSettings": "Вигляд",
+  "appearancePreset": "Готова тема",
+  "appearanceThemeSchemaRange": "Підтримувана схема теми",
+  "appearanceThemeInstall": "Установити тему",
+  "appearanceThemeStore": "Магазин тем",
+  "appearanceInvalidTheme": "Недійсний пакет теми або каталог",
+  "themeStoreRefreshFailed": "Не вдалося прочитати каталог тем.",
+  "themeStoreDeleteTheme": "Видалити «{name}»? Його файли буде видалено з цього пристрою. Якщо це тема, що використовується, застосунок повернеться до типової теми.",
+  "themeStoreUpdatedFmt": "оновлено {ago}",
+  "themeStoreUpdatedJustNow": "щойно оновлено",
+  "themeStoreSortInUse": "Спочатку використовувана",
+  "themeStoreMakeOwnFmt": "Хочете створити власну тему? Дивіться [як її створити]({doc}) — дякуємо за ваш внесок!",
+  "appearanceThemeNeedsNewerApp": "Потрібна новіша версія застосунку: {version}",
+  "appearanceFontFamilies": "Сімейства шрифтів інтерфейсу",
+  "appearanceFontFamiliesTip": "Одна назва в рядку; шрифти застосовуються за порядком.",
+  "appearanceFontImport": "Імпортувати файл шрифту інтерфейсу",
+  "appearanceGradient": "Градієнт",
+  "appearanceNoBackground": "Без тла",
+  "appearanceIcons": "Піктограми в застосунку",
+  "appearanceCorners": "Кути",
+  "appearanceCardCorners": "Кути карток",
+  "appearanceTileCorners": "Кути плиток",
+  "appearanceButtonCorners": "Кути кнопок",
   "crashCollect": "Діагностичні дані",
   "crashCollectIntro": "ServerBox записує те, що відбувається під час роботи, щоб можна було виправляти проблеми. Виберіть, скільки даних надсилати.",
   "crashCollectNone": "Нічого",
@@ -170,7 +193,9 @@
   "mismatchSystem": "Невідповідна система: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Дзеркало",
@@ -232,10 +257,18 @@
   "rootfsUpdateTip": "Встановлено {distro} {installed}, доступний {latest}. Оновлення замінить весь контейнер: дані {pm} буде втрачено",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Закрийте термінали на {name}, перш ніж видаляти",
@@ -549,14 +582,20 @@
   "geoDataCurrent": "{month} вже встановлено.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Розмір завантаження: {download} · Місце на пристрої: {disk}.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Тест продуктивності",
@@ -745,7 +784,14 @@
   "vendor": "Виробник",
   "connection": "З'єднання",
   "connectionTip": "Обидва можуть бути увімкнені одночасно. Порядок — це порядок, у якому до них звертаються.",
+  "transportOrderFmt": "Перетягніть, щоб змінити порядок. Спершу {first}; якщо він не відповідає, сеанс бере на себе {second}.",
+  "transportOnlyFmt": "Увімкнено лише {name}, тож перемикатися нема на що.",
   "transportNoneOn": "Обидва вимкнені — до цього сервера неможливо під'єднатися.",
+  "transportOffKept": "вимкнено — налаштування збережено, звернень немає",
+  "transportDialledFirst": "звертаємось першим",
+  "transportFallback": "запасний",
+  "transportOnlyMethod": "єдиний спосіб",
+  "transportOff": "вимкнено",
   "thisDevice": "Цей пристрій",
   "localServerTip": "Зчитує цей пристрій напряму, запускаючи тут скрипт стану. SSH і Monitor HTTP не використовуються, їхні налаштування зберігаються.",
   "localServerUnsupported": "На цій платформі не можна читати цей пристрій як сервер. Підтримуються Linux, Windows і DMG-збірка для macOS.",
@@ -759,6 +805,7 @@
   "plainHttpEditTip": "Облікові дані й показники йдуть мережею без шифрування. Обмежтеся локальною мережею чи адресою Tailscale або поставте агента за TLS.",
   "behaviour": "Поведінка",
   "optional": "Необов'язкове",
+  "optionalTip": "Нічого з цього не потрібно для під'єднання. Відкрийте один — і його поля займуть місце форми.",
   "sshAdvanced": "SSH, додатково",
   "sshAdvancedTip": "Запасна адреса, ProxyCommand, проміжний сервер, передавання файлів, шлях на сервері",
   "appearanceAndPlace": "Вигляд і місце",
@@ -918,5 +965,48 @@
   "remoteDesktopPreviousCertificate": "Раніше довірений відбиток\n{fingerprint}",
   "remoteDesktopCertificateSubject": "Суб'єкт: {subject}",
   "remoteDesktopCertificateIssuer": "Видавець: {issuer}",
-  "remoteDesktopCertificateValidity": "Дійсний: {start} – {end}"
+  "remoteDesktopCertificateValidity": "Дійсний: {start} – {end}",
+  "appearanceThemeModeLocked": "Ця тема підтримує лише режим «{mode}». Щоб змінити режим, виберіть іншу тему.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

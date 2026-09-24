@@ -64,6 +64,21 @@ void main() {
 
     await pumpFonts(['Test CJK']);
     await pumpFonts(['Other CJK']);
+
+    // A UI family the terminal already carries is not added twice. The UI list
+    // is appended on every theme change, so a duplicate here is one that
+    // accumulates rather than one that is merely drawn once.
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(fontFamilyFallback: const ['sans-serif']),
+      home: const Scaffold(body: log),
+    ));
+    await tester.pumpAndSettle();
+    final fallback = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .textStyle
+        .fontFamilyFallback;
+    expect(fallback.where((f) => f == 'sans-serif'), hasLength(1));
+    expect(fallback, const TerminalStyle().fontFamilyFallback);
   });
 
   testWidgets('a progress line is overwritten, not run together', (

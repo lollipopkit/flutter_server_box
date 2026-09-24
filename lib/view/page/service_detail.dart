@@ -207,7 +207,9 @@ extension on _ServiceDetailViewState {
                   onPressed: () => _run(unit, ServiceAction.stop),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: scheme.error,
-                    side: BorderSide(color: scheme.error.withValues(alpha: 0.5)),
+                    side: BorderSide(
+                      color: scheme.error.withValues(alpha: 0.5),
+                    ),
                   ),
                   icon: const Icon(Icons.stop, size: 17),
                   label: Text(ServiceAction.stop.displayName),
@@ -395,7 +397,9 @@ extension on _ServiceDetailViewState {
           children: [
             for (var j = i; j < i + columns; j++) ...[
               if (j > i) const SizedBox(width: 9),
-              Expanded(child: j < tiles.length ? tile(tiles[j]) : UIs.placeholder),
+              Expanded(
+                child: j < tiles.length ? tile(tiles[j]) : UIs.placeholder,
+              ),
             ],
           ],
         ),
@@ -483,7 +487,9 @@ extension on _ServiceDetailViewState {
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(13),
         child: ListTile(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+          ),
           leading: Icon(icon, size: 20),
           title: Text(label),
           trailing: const Icon(Icons.chevron_right, size: 19),
@@ -609,11 +615,10 @@ abstract final class ServiceUi {
     return [
       stateWord(unit),
       if (unit.state == ServiceState.failed) ?unit.result,
-      if (unit.state != ServiceState.failed &&
-          unit.subState != stateWord(unit))
+      if (unit.state != ServiceState.failed && unit.subState != stateWord(unit))
         ?unit.subState,
       if (unit.exitStatus case final code?)
-        context.l10n.serviceExitStatus('$code'),
+        context.l10n.serviceExitStatus(code),
     ].join(' · ');
   }
 

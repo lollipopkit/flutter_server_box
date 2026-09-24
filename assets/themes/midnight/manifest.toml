@@ -1,0 +1,36 @@
+id = "midnight"
+name = "Midnight"
+modes = ["dark"]
+
+[schema]
+min = 1
+max = 1
+
+[colors]
+mode = 2
+seed = 0xFF8EBBE8
+
+[colors.palette.dark]
+primary = 0xFF8EBBE8
+onPrimary = 0xFF101820
+primaryContainer = 0xFF2E3F50
+onPrimaryContainer = 0xFFDCE5EF
+secondary = 0xFF91C9BE
+onSecondary = 0xFF101820
+secondaryContainer = 0xFF2E3F50
+onSecondaryContainer = 0xFFDCE5EF
+surface = 0xFF101820
+surfaceDim = 0xFF101820
+surfaceBright = 0xFF303B46
+surfaceContainerLowest = 0xFF0D131A
+surfaceContainerLow = 0xFF19242F
+surfaceContainer = 0xFF19242F
+surfaceContainerHigh = 0xFF212C37
+surfaceContainerHighest = 0xFF29333E
+onSurface = 0xFFDCE5EF
+onSurfaceVariant = 0xFFA3B3C4
+outline = 0xFFA3B3C4
+outlineVariant = 0xFF38434E
+surfaceTint = 0x00000000
+error = 0xFFF09898
+onError = 0xFF101820

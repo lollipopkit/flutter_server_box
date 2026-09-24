@@ -102,7 +102,8 @@ extension _HomePageStrip on _HomePageState {
           },
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
           destinations: [
-            for (final tab in shown) tab.navDestination(onMenu: _navMenuFor(tab)),
+            for (final tab in shown)
+              tab.navDestination(onMenu: _navMenuFor(tab)),
             // One slot, holding whichever of the two is needed. While
             // anything is behind "more" that is where the settings live, as
             // they always have; with every tab turned on there is nothing left
@@ -114,14 +115,14 @@ extension _HomePageStrip on _HomePageState {
             // addresses — tapping it pushes rather than switches.
             if (overflow > 0)
               NavigationDestination(
-                icon: const Icon(Icons.more_horiz),
-                selectedIcon: const Icon(Icons.more_horiz),
+                icon: const ThemedIcon(Icons.more_horiz),
+                selectedIcon: const ThemedIcon(Icons.more_horiz),
                 label: libL10n.more,
               )
             else
               NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings),
+                icon: const ThemedIcon(Icons.settings_outlined),
+                selectedIcon: const ThemedIcon(Icons.settings),
                 label: libL10n.setting,
               ),
           ],
@@ -242,8 +243,8 @@ extension _HomePageStrip on _HomePageState {
               tab.navRailItem(onMenu: _navMenuFor(tab)),
             if (more)
               NavRailItem(
-                icon: const Icon(Icons.more_horiz),
-                selectedIcon: const Icon(Icons.more_horiz),
+                icon: const ThemedIcon(Icons.more_horiz),
+                selectedIcon: const ThemedIcon(Icons.more_horiz),
                 label: libL10n.more,
               ),
           ],
@@ -257,8 +258,8 @@ extension _HomePageStrip on _HomePageState {
           // because that is what it is — what it shows arrives beside this
           // rail rather than over it.
           footer: NavRailItem(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings),
+            icon: const ThemedIcon(Icons.settings_outlined),
+            selectedIcon: const ThemedIcon(Icons.settings),
             label: libL10n.setting,
           ),
           footerSelected: _settingsOpen,
@@ -313,7 +314,8 @@ extension _HomePageNav on _HomePageState {
       _ => null,
     };
     if (menu == null) return null;
-    return (at) => showContextMenu(context, menu.actions, title: menu.title, at: at);
+    return (at) =>
+        showContextMenu(context, menu.actions, title: menu.title, at: at);
   }
 
   /// Asked first, unlike disconnecting servers.
@@ -325,7 +327,9 @@ extension _HomePageNav on _HomePageState {
     final ok = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text(
-        libL10n.askContinue('${libL10n.close} ${libL10n.all} ${libL10n.terminal}'),
+        libL10n.askContinue(
+          '${libL10n.close} ${libL10n.all} ${libL10n.terminal}',
+        ),
       ),
       actions: Btnx.okReds,
     );

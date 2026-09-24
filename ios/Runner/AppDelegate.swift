@@ -44,6 +44,11 @@ import ActivityKit
             CrashDiagnostics.shared.start()
         }
 
+        // TODO(appearance): remove after installs using the old alternate icon have migrated.
+        if application.alternateIconName != nil {
+            application.setAlternateIconName(nil)
+        }
+
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 

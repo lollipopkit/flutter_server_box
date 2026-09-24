@@ -1,5 +1,28 @@
 {
   "@@locale": "ja",
+  "appearanceSettings": "外観",
+  "appearancePreset": "テーマプリセット",
+  "appearanceThemeSchemaRange": "対応テーマ schema",
+  "appearanceThemeInstall": "テーマをインストール",
+  "appearanceThemeStore": "テーマストア",
+  "appearanceInvalidTheme": "テーマパッケージまたはカタログが無効です",
+  "themeStoreRefreshFailed": "テーマカタログを読み取れませんでした。",
+  "themeStoreDeleteTheme": "「{name}」を削除しますか？ファイルはこの端末から削除されます。使用中のテーマの場合、アプリは既定のテーマに戻ります。",
+  "themeStoreUpdatedFmt": "{ago}に更新",
+  "themeStoreUpdatedJustNow": "たった今更新",
+  "themeStoreSortInUse": "使用中を先頭",
+  "themeStoreMakeOwnFmt": "自分のテーマを作りたい方は[テーマ作成ガイド]({doc})をご覧ください。ご協力ありがとうございます！",
+  "appearanceThemeNeedsNewerApp": "新しいバージョンのアプリが必要です: {version}",
+  "appearanceFontFamilies": "UI フォントファミリー",
+  "appearanceFontFamiliesTip": "1 行に 1 つの名前を入力してください。上から順に使用します。",
+  "appearanceFontImport": "UI フォントファイルをインポート",
+  "appearanceGradient": "グラデーション",
+  "appearanceNoBackground": "背景なし",
+  "appearanceIcons": "アプリ内アイコン",
+  "appearanceCorners": "角丸",
+  "appearanceCardCorners": "カードの角丸",
+  "appearanceTileCorners": "タイルの角丸",
+  "appearanceButtonCorners": "ボタンの角丸",
   "crashCollect": "診断データ",
   "crashCollectIntro": "ServerBox は問題を修正できるよう、実行中に起きたことを記録します。送信する情報量を選べます。",
   "crashCollectNone": "送信しない",
@@ -169,7 +192,9 @@
   "mismatchSystem": "システムが一致しません: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "ミラー",
@@ -231,10 +256,18 @@
   "rootfsUpdateTip": "{distro} {installed} が入っていて、{latest} があります。更新はコンテナ全体を置き換えます：{pm} のデータは失われます",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name} のターミナルを閉じてから削除してください",
@@ -549,14 +582,20 @@
   "geoDataCurrent": "すでに {month} のデータです。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**ダウンロード：{download} · 端末上の使用容量：{disk}。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "ベンチマーク",
@@ -745,7 +784,14 @@
   "vendor": "ベンダー",
   "connection": "接続",
   "connectionTip": "両方を同時に有効にできます。並び順が接続を試す順序です。",
+  "transportOrderFmt": "ドラッグで順序を変更できます。最初に {first} を試し、応答がなければ {second} がセッションを引き受けます。",
+  "transportOnlyFmt": "{name} だけが有効なので、切り替え先はありません。",
   "transportNoneOn": "どちらも無効です — このサーバーには接続できません。",
+  "transportOffKept": "無効 — 設定は保持され、接続は行いません",
+  "transportDialledFirst": "最初に試す",
+  "transportFallback": "予備",
+  "transportOnlyMethod": "唯一の方法",
+  "transportOff": "無効",
   "thisDevice": "このデバイス",
   "localServerTip": "ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor HTTP は使用せず、その設定は保持されます。",
   "localServerUnsupported": "このプラットフォームでは、このデバイスをサーバーとして読み取れません。Linux、Windows、macOS の DMG 版が対応しています。",
@@ -759,6 +805,7 @@
   "plainHttpEditTip": "認証情報と計測値が暗号化されずにネットワークを通ります。LAN か Tailscale のアドレスに限定するか、エージェントを TLS の背後に置いてください。",
   "behaviour": "動作",
   "optional": "任意",
+  "optionalTip": "接続にはどれも必要ありません。開くと、その項目がフォームを置き換えます。",
   "sshAdvanced": "SSH 詳細",
   "sshAdvancedTip": "代替の接続先、ProxyCommand、踏み台、ファイル転送、リモートのパス",
   "appearanceAndPlace": "外観と場所",
@@ -918,5 +965,20 @@
   "remoteDesktopPreviousCertificate": "以前に信頼したフィンガープリント\n{fingerprint}",
   "remoteDesktopCertificateSubject": "サブジェクト：{subject}",
   "remoteDesktopCertificateIssuer": "発行者：{issuer}",
-  "remoteDesktopCertificateValidity": "有効期間：{start} – {end}"
+  "remoteDesktopCertificateValidity": "有効期間：{start} – {end}",
+  "appearanceThemeModeLocked": "このテーマは{mode}のみ対応しています。モードを変更するには、別のテーマを選択してください。",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

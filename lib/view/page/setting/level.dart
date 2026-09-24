@@ -163,7 +163,9 @@ final class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = selected ? scheme.onSecondaryContainer : scheme.onSurfaceVariant;
+    final color = selected
+        ? scheme.onSecondaryContainer
+        : scheme.onSurfaceVariant;
 
     // Which tab is on is a colour and a pill, neither of which a screen reader
     // has any way to read. `TabBar` says it for its own tabs; this bar is not
@@ -192,7 +194,7 @@ final class _TabButton extends StatelessWidget {
                   color: selected ? scheme.secondaryContainer : null,
                   borderRadius: BorderRadius.circular(_indicator.height / 2),
                 ),
-                child: Icon(icon, size: 20, color: color),
+                child: ThemedIcon(icon, size: 20, color: color),
               ),
               if (label != null) ...[
                 const SizedBox(height: 3),
@@ -372,7 +374,9 @@ final class _SettingsPages extends StatefulWidget {
 }
 
 class _SettingsPagesState extends State<_SettingsPages> {
-  late final PageController _controller = PageController(initialPage: _indexOf(widget.selectedId));
+  late final PageController _controller = PageController(
+    initialPage: _indexOf(widget.selectedId),
+  );
 
   /// Where a tap is currently being animated to, and null the rest of the time.
   ///
@@ -416,7 +420,9 @@ class _SettingsPagesState extends State<_SettingsPages> {
           // choice like any other — reported now rather than dropped, or the
           // tabs would keep pointing at a page nobody is on.
           final landed = _controller.page?.round();
-          if (landed != null && landed != target && landed < widget.leaves.length) {
+          if (landed != null &&
+              landed != target &&
+              landed < widget.leaves.length) {
             widget.onChanged(widget.leaves[landed]);
           }
         });

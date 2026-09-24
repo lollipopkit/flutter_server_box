@@ -108,7 +108,7 @@ final class _SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return CardX(
       child: ListTile(
-        leading: Icon(node.icon, size: 20),
+        leading: ThemedIcon(node.icon, size: 20),
         title: Text(
           node.title,
           maxLines: 1,
@@ -150,10 +150,7 @@ final class _SettingsList extends StatelessWidget {
       key: settingsMenuKey,
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 9),
-          child: search,
-        ),
+        Padding(padding: const EdgeInsets.only(bottom: 9), child: search),
         if (results case final results?)
           results
         else
@@ -310,9 +307,7 @@ final class _SettingsMenuRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.2,
-                      fontWeight: selected
-                          ? FontWeight.w500
-                          : FontWeight.w400,
+                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                       color: fg,
                     ),
                   ),
@@ -367,10 +362,7 @@ final class _SettingsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(9, 9, 9, 4),
-          child: search,
-        ),
+        Padding(padding: const EdgeInsets.fromLTRB(9, 9, 9, 4), child: search),
         Expanded(
           child: ListView(
             key: settingsMenuKey,

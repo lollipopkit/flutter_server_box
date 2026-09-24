@@ -9,6 +9,84 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Вигляд';
+
+  @override
+  String get appearancePreset => 'Готова тема';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Підтримувана схема теми';
+
+  @override
+  String get appearanceThemeInstall => 'Установити тему';
+
+  @override
+  String get appearanceThemeStore => 'Магазин тем';
+
+  @override
+  String get appearanceInvalidTheme => 'Недійсний пакет теми або каталог';
+
+  @override
+  String get themeStoreRefreshFailed => 'Не вдалося прочитати каталог тем.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return 'Видалити «$name»? Його файли буде видалено з цього пристрою. Якщо це тема, що використовується, застосунок повернеться до типової теми.';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return 'оновлено $ago';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => 'щойно оновлено';
+
+  @override
+  String get themeStoreSortInUse => 'Спочатку використовувана';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Хочете створити власну тему? Дивіться [як її створити]($doc) — дякуємо за ваш внесок!';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return 'Потрібна новіша версія застосунку: $version';
+  }
+
+  @override
+  String get appearanceFontFamilies => 'Сімейства шрифтів інтерфейсу';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Одна назва в рядку; шрифти застосовуються за порядком.';
+
+  @override
+  String get appearanceFontImport => 'Імпортувати файл шрифту інтерфейсу';
+
+  @override
+  String get appearanceGradient => 'Градієнт';
+
+  @override
+  String get appearanceNoBackground => 'Без тла';
+
+  @override
+  String get appearanceIcons => 'Піктограми в застосунку';
+
+  @override
+  String get appearanceCorners => 'Кути';
+
+  @override
+  String get appearanceCardCorners => 'Кути карток';
+
+  @override
+  String get appearanceTileCorners => 'Кути плиток';
+
+  @override
+  String get appearanceButtonCorners => 'Кути кнопок';
+
+  @override
   String get crashCollect => 'Діагностичні дані';
 
   @override
@@ -88,7 +166,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiCommandInserted => 'Команду вставлено в термінал';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return 'Налаштуйте $fields у налаштуваннях.';
   }
 
@@ -308,7 +386,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentToolFailed => 'Не вдалося виконати інструмент.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return 'Викликів інструментів: $count';
   }
 
@@ -436,7 +514,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Натисніть і утримуйте вкладку — або клацніть правою кнопкою — щоб підключити чи відключити все одразу.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return 'Тегів: $count';
   }
 
@@ -505,7 +583,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get icloudBackupStateWaiting => 'Очікування iCloud';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return 'Остання копія: $lastModified\nСтан: $remoteState';
   }
 
@@ -551,12 +629,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get clearAllStatsTitle => 'Очистити всю статистику';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return 'Ви впевнені, що хочете очистити статистику з\'єднань для сервера \"$serverName\"? Цю дію не можна скасувати.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return 'Очистити статистику $serverName';
   }
 
@@ -634,7 +712,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get displayCpuIndex => 'Відобразити індекс ЦП';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return 'Завантажити $fileName на локальний комп\'ютер?';
   }
 
@@ -687,7 +765,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Якщо ви завантажили цей застосунок з F-Droid, рекомендується відключити цю опцію.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return 'Файл \'$file\' занадто великий ($size), макс $sizeMax';
   }
 
@@ -858,12 +936,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get jumpServer => 'Стрибковий Сервер';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return 'Проміжні сервери для $serverName не знайдено: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '«$name» вже існує';
   }
 
@@ -918,7 +996,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get linuxNetTip => 'DNS-сервери. Порожньо — повернути типові значення';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return 'Зроблено з ❤️ від $myGithub';
   }
 
@@ -930,7 +1008,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Кількість повторних спроб підключення до сервера';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'Невідповідна система: $system';
   }
 
@@ -980,7 +1058,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get privateKey => 'Приватний ключ';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return 'Приватний ключ [$keyId] не знайдено.';
   }
 
@@ -1196,16 +1274,16 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return 'Встановлено $distro $installed, доступний $latest. Оновлення замінить весь контейнер: дані $pm буде втрачено';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return 'Закрийте термінали на $name, перш ніж видаляти';
   }
 
@@ -1214,7 +1292,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Користувацьке середовище Linux на цьому пристрої';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return 'Завантажує $distro $version (близько $size МБ) і розпаковує на пристрої.';
   }
 
@@ -1238,7 +1316,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get homeDir => 'Домівка';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return 'Вибрано: $count';
   }
 
@@ -1368,12 +1446,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'Якщо увімкнено, значення температури вважається градусами Цельсія, а не мілліцельсія. Вмикайте, лише якщо температура показується неправильно (наприклад, 0,1 °C замість 58 °C).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return 'Витрачений час: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
   }
 
@@ -1389,7 +1467,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'Використовувати системний SSH';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount дублікатів буде пропущено';
   }
 
@@ -1397,7 +1475,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshConfigFound => 'Ми знайшли SSH-конфігурацію у вашій системі';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return 'Знайдено $totalCount серверів';
   }
 
@@ -1413,12 +1491,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'Пропозиція прочитати ~/.ssh/config при створенні першого сервера';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'Імпортовано $count серверів з SSH-конфігурації';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return 'SSH-ключ хоста для $serverName змінено. Продовжуйте лише якщо довіряєте цьому серверу.';
   }
 
@@ -1432,12 +1510,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshKnownHostKeysTip => 'Ключі хостів, які прийняв цей застосунок';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return 'Отримано новий SSH-ключ хоста від $serverName. Перевірте відбиток перед тим, як довіряти.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return 'Збережений відбиток: $fingerprint';
   }
 
@@ -1456,7 +1534,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Неможливо отримати доступ до файлу конфігурації SSH через дозволи macOS.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount серверів буде імпортовано';
   }
 
@@ -1476,7 +1554,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Функція призупинення потребує адміністративних прав та підтримки systemd.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return 'Переключитися на $val';
   }
 
@@ -1634,7 +1712,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get portForward_remotePort => 'Віддалений порт';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return 'Видалити $name?';
   }
 
@@ -1914,7 +1992,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return 'код завершення $code';
   }
 
@@ -2067,12 +2145,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get geoDataRemoveFailed => 'Не вдалося видалити дані.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '$month вже встановлено.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**Розмір завантаження: $download · Місце на пристрої: $disk.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.';
   }
 
@@ -2149,7 +2227,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Визначає файлову систему для тестування диска. Якщо залишити поле порожнім, буде використано домашній каталог облікового запису.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return 'Близько $minutes хв.';
   }
 
@@ -2352,7 +2430,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Залиште поле порожнім, щоб зберегти поточний пароль.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func недоступно через це підключення до сервера.';
   }
 
@@ -2391,12 +2469,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get beyondRetention => 'далі, ніж зберігає цей агент';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'Агент зберігає $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return 'найстаріший замір $time';
   }
 
@@ -2418,7 +2496,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get waitingFirstSample => 'Очікування першого заміру';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return 'о $time';
   }
 
@@ -2426,47 +2504,47 @@ class AppLocalizationsUk extends AppLocalizations {
   String get stored => 'збережено';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return 'останній замір $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return 'Усе нижче — станом на $time ($ago).';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return 'немає даних до $time';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return 'Завантаження $range…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return 'Немає збереженої історії для «$metric»';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return 'пристроїв: $count';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return 'пристроїв: $count · найзавантаженіший — $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$plotted із $total пристроїв';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return 'датчиків: $count · найгарячіший — $name';
   }
 
@@ -2475,12 +2553,12 @@ class AppLocalizationsUk extends AppLocalizations {
       'Щонайменше один пристрій лишається на графіку.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$shown із $total ($what)';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$what: $count';
   }
 
@@ -2539,12 +2617,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get diskAllPassed => 'усі PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return 'попереджень: $count';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$wrong із $total пристроїв';
   }
 
@@ -2552,17 +2630,17 @@ class AppLocalizationsUk extends AppLocalizations {
   String get diskSmartSortedTip => 'Найгірші вгорі';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return 'прочитано $ago';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return 'процесів: $count';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count з помилками';
   }
 
@@ -2576,7 +2654,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get window => 'вікно';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return 'з $total';
   }
 
@@ -2591,8 +2669,34 @@ class AppLocalizationsUk extends AppLocalizations {
       'Обидва можуть бути увімкнені одночасно. Порядок — це порядок, у якому до них звертаються.';
 
   @override
+  String transportOrderFmt(String first, String second) {
+    return 'Перетягніть, щоб змінити порядок. Спершу $first; якщо він не відповідає, сеанс бере на себе $second.';
+  }
+
+  @override
+  String transportOnlyFmt(String name) {
+    return 'Увімкнено лише $name, тож перемикатися нема на що.';
+  }
+
+  @override
   String get transportNoneOn =>
       'Обидва вимкнені — до цього сервера неможливо під\'єднатися.';
+
+  @override
+  String get transportOffKept =>
+      'вимкнено — налаштування збережено, звернень немає';
+
+  @override
+  String get transportDialledFirst => 'звертаємось першим';
+
+  @override
+  String get transportFallback => 'запасний';
+
+  @override
+  String get transportOnlyMethod => 'єдиний спосіб';
+
+  @override
+  String get transportOff => 'вимкнено';
 
   @override
   String get thisDevice => 'Цей пристрій';
@@ -2642,6 +2746,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get optional => 'Необов\'язкове';
 
   @override
+  String get optionalTip =>
+      'Нічого з цього не потрібно для під\'єднання. Відкрийте один — і його поля займуть місце форми.';
+
+  @override
   String get sshAdvanced => 'SSH, додатково';
 
   @override
@@ -2678,7 +2786,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tagNewHint => 'Новий тег';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return 'Створити #$tag';
   }
 
@@ -2686,12 +2794,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tagOnThisServer => 'на цьому сервері';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return 'серверів: $count';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '$count на цьому сервері';
   }
 
@@ -2731,7 +2839,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2742,7 +2850,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return 'Усього: $total · увімкнено: $enabled';
   }
 
@@ -2763,7 +2871,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Якщо вимкнено, рядок записується як коментар.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return 'У користувача $user немає запланованих завдань. Додані тут завдання записуються до crontab цього облікового запису.';
   }
 
@@ -2807,42 +2915,42 @@ class AppLocalizationsUk extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return 'Кожні $minutes хв.';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return 'Щогодини о :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return 'Кожні $hours год.';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return 'Кожні $hours год. о :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return 'Щодня о $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return 'У будні о $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return 'Щоразу в $day о $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return '$day-го числа кожного місяця о $time';
   }
 
@@ -3208,5 +3316,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Дійсний: $start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return 'Ця тема підтримує лише режим «$mode». Щоб змінити режим, виберіть іншу тему.';
   }
 }

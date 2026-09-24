@@ -231,10 +231,20 @@ extension _Sections on _BenchmarkResultPageState {
               maxY: maxY,
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
-                  getTooltipItem: (group, _, rod, _) => BarTooltipItem(
-                    '${rows[group.x].bs}\n${_rate(rod.toY)}',
-                    Theme.of(context).textTheme.bodyMedium!.merge(UIs.text12),
-                  ),
+                  getTooltipItem: (group, _, rod, _) {
+                    final font = Theme.of(context).textTheme.bodyMedium;
+                    return BarTooltipItem(
+                      '${rows[group.x].bs}\n${_rate(rod.toY)}',
+                      // Only the families come from the theme. A tooltip is
+                      // 12pt, and the rest of `bodyMedium` is a 14pt body's:
+                      // its line height (1.43) and tracking (0.25) spread the
+                      // two rows of the label apart.
+                      UIs.text12.copyWith(
+                        fontFamily: font?.fontFamily,
+                        fontFamilyFallback: font?.fontFamilyFallback,
+                      ),
+                    );
+                  },
                 ),
               ),
               titlesData: FlTitlesData(

@@ -48,7 +48,7 @@ class BenchmarkRunningCard extends StatelessWidget {
             // reports no progress inside a phase.
             Text(
               l10n.benchmarkEstimatedTime(
-                '${BenchmarkEstimate(run.options).minutes}',
+                BenchmarkEstimate(run.options).minutes,
               ),
               style: UIs.text12Grey,
             ),
@@ -94,7 +94,9 @@ class BenchmarkRunningCard extends StatelessWidget {
                   constraints: const BoxConstraints(maxHeight: 140),
                   padding: const EdgeInsets.all(11),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: SingleChildScrollView(

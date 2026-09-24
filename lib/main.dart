@@ -12,9 +12,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/diag.dart';
+import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/native_exit.dart';
+import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/service/widget_sync.dart';
 import 'package:server_box/core/sync.dart';
@@ -89,40 +91,36 @@ Future<void> _runInZone(Future<void> Function() body) async {
     },
   );
 
-  await runZonedGuarded(
-    body,
-    (e, s) {
-      // `CrashLog.handleErrors` also installs `PlatformDispatcher.onError`,
-      // and inside a guarded zone that handler is never reached: the zone
-      // takes async errors first, and the two are alternatives rather than
-      // layers. So this is the only place an uncaught async error is seen,
-      // and marking has to happen here or not at all.
-      //
-      // Reporting has to happen here for the same reason, and it is the same
-      // reason again that it cannot be left to `CrashLog`: that class only
-      // sees what its own handlers catch, and this is precisely what they do
-      // not. Most uncaught errors in this app are async, so without this the
-      // sink hears about almost none of them.
-      //
-      // `LocalDiagnosticsSink.error` logs it, so logging it here as well would
-      // record it twice — and with no sink installed nothing would be recorded
-      // at all, which is what the fallback covers.
-      if (Diag.enabled) {
-        Diag.error(e, s, 'Zone error');
-      } else {
-        Loggers.app.severe('Zone error', e, s);
-      }
-      // Recorded either way above; only what the next launch does about it is
-      // gated. A server that answers with something this app cannot parse is
-      // not the app ending badly — see [CrashReport.isAppFault].
-      //
-      // The error travels into the marker so the next launch can report it if
-      // nothing here did. Whether it is kept is decided by `CrashLog`, against
-      // whether a sink was uploading at this moment — see [CrashLog.uploadsNow].
-      if (CrashReport.isAppFault(e)) CrashLog.markUnhandled(e, s);
-    },
-    zoneSpecification: zoneSpec,
-  );
+  await runZonedGuarded(body, (e, s) {
+    // `CrashLog.handleErrors` also installs `PlatformDispatcher.onError`,
+    // and inside a guarded zone that handler is never reached: the zone
+    // takes async errors first, and the two are alternatives rather than
+    // layers. So this is the only place an uncaught async error is seen,
+    // and marking has to happen here or not at all.
+    //
+    // Reporting has to happen here for the same reason, and it is the same
+    // reason again that it cannot be left to `CrashLog`: that class only
+    // sees what its own handlers catch, and this is precisely what they do
+    // not. Most uncaught errors in this app are async, so without this the
+    // sink hears about almost none of them.
+    //
+    // `LocalDiagnosticsSink.error` logs it, so logging it here as well would
+    // record it twice — and with no sink installed nothing would be recorded
+    // at all, which is what the fallback covers.
+    if (Diag.enabled) {
+      Diag.error(e, s, 'Zone error');
+    } else {
+      Loggers.app.severe('Zone error', e, s);
+    }
+    // Recorded either way above; only what the next launch does about it is
+    // gated. A server that answers with something this app cannot parse is
+    // not the app ending badly — see [CrashReport.isAppFault].
+    //
+    // The error travels into the marker so the next launch can report it if
+    // nothing here did. Whether it is kept is decided by `CrashLog`, against
+    // whether a sink was uploading at this moment — see [CrashLog.uploadsNow].
+    if (CrashReport.isAppFault(e)) CrashLog.markUnhandled(e, s);
+  }, zoneSpecification: zoneSpec);
 }
 
 Future<void> _initApp() async {
@@ -256,6 +254,9 @@ Future<void> _initData() async {
   if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 
   FontUtils.loadFrom(Stores.setting.fontPath.fetch());
+  await ThemePackages.prepareSelectedTheme();
+  ThemePackages.reconcileSelection();
+  await AppFont.loadStored();
 }
 
 void _setupDebug() {
@@ -417,9 +418,7 @@ Future<void> _doPlatformRelated() async {
     unawaited(
       (() async {
         try {
-          await MethodChans.setPrivacyBlur(
-            Stores.setting.privacyBlur.fetch(),
-          );
+          await MethodChans.setPrivacyBlur(Stores.setting.privacyBlur.fetch());
         } catch (e, s) {
           Loggers.app.warning('setPrivacyBlur failed', e, s);
         }

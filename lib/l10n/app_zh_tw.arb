@@ -1,5 +1,28 @@
 {
   "@@locale": "zh_TW",
+  "appearanceSettings": "外觀",
+  "appearancePreset": "主題方案",
+  "appearanceThemeSchemaRange": "支援的主題 schema",
+  "appearanceThemeInstall": "安裝主題",
+  "appearanceThemeStore": "主題商店",
+  "appearanceInvalidTheme": "主題套件或目錄無效",
+  "themeStoreRefreshFailed": "無法讀取主題目錄。",
+  "themeStoreDeleteTheme": "刪除「{name}」？其檔案將從本機移除。如果它正在使用中，應用程式將回到預設主題。",
+  "themeStoreUpdatedFmt": "{ago}更新",
+  "themeStoreUpdatedJustNow": "剛剛更新",
+  "themeStoreSortInUse": "在用優先",
+  "themeStoreMakeOwnFmt": "如果你想製作自己的主題，歡迎查看[主題製作指南]({doc})，感謝你的貢獻！",
+  "appearanceThemeNeedsNewerApp": "需要較新版本的 App：{version}",
+  "appearanceFontFamilies": "介面字型列表",
+  "appearanceFontFamiliesTip": "每行一個字型名稱，依序 fallback。",
+  "appearanceFontImport": "匯入介面字型檔案",
+  "appearanceGradient": "漸層",
+  "appearanceNoBackground": "無背景",
+  "appearanceIcons": "App 內圖示",
+  "appearanceCorners": "圓角",
+  "appearanceCardCorners": "卡片圓角",
+  "appearanceTileCorners": "Tile 圓角",
+  "appearanceButtonCorners": "按鈕圓角",
   "crashCollect": "診斷資料",
   "crashCollectIntro": "ServerBox 會記錄執行期間發生的情況，以便修正問題。你可以選擇要傳送多少資料。",
   "crashCollectNone": "不傳送",
@@ -260,7 +283,9 @@
   "mismatchSystem": "系統不匹配：{system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "鏡像",
@@ -340,10 +365,18 @@
   "rootfsUpdateTip": "已安裝 {distro} {installed}，現有 {latest}。更新會重新下載並替換整個容器：{pm} 資料會遺失",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "請先關閉 {name} 上的終端，再刪除",
@@ -351,9 +384,15 @@
   "rootfsInstallTip": "下載 {distro} {version}（約 {size} MB）並解壓到本機。",
   "@rootfsInstallTip": {
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "nameAlreadyExistsFmt": "「{name}」已存在",
@@ -567,14 +606,20 @@
   "geoDataCurrent": "已經是 {month} 的資料。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**下載大小：{download} · 本機空間：{disk}。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "效能測試",
@@ -715,7 +760,14 @@
   "vendor": "廠商",
   "connection": "連線方式",
   "connectionTip": "兩個可以同時開啟。順序就是撥接的順序。",
+  "transportOrderFmt": "拖曳可調整順序。先撥 {first}；它不回應時，{second} 獨自承擔工作階段。",
+  "transportOnlyFmt": "只開啟了 {name}，沒有可回落的對象。",
   "transportNoneOn": "兩個都關閉了 —— 這台伺服器無法連線。",
+  "transportOffKept": "已關閉 —— 設定保留，不會撥接",
+  "transportDialledFirst": "先撥",
+  "transportFallback": "回落",
+  "transportOnlyMethod": "唯一方式",
+  "transportOff": "已關閉",
   "thisDevice": "本機",
   "localServerTip": "直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor HTTP，兩者的設定會保留。",
   "localServerUnsupported": "目前平台無法將本機作為伺服器讀取。Linux、Windows 和 macOS DMG 版本支援。",
@@ -729,6 +781,7 @@
   "plainHttpEditTip": "憑證和指標會以明文穿過網路。請限制在區域網路或 Tailscale 位址內，或者把代理放到 TLS 後面。",
   "behaviour": "行為",
   "optional": "選用",
+  "optionalTip": "這裡的東西都不是連線所必需的。展開一項，它的欄位會接管表單。",
   "sshAdvanced": "SSH 進階",
   "sshAdvancedTip": "備用位址、ProxyCommand、跳板機、檔案傳輸、遠端路徑",
   "appearanceAndPlace": "外觀與位置",
@@ -925,5 +978,6 @@
   "remoteDesktopPreviousCertificate": "先前信任的指紋\n{fingerprint}",
   "remoteDesktopCertificateSubject": "主體：{subject}",
   "remoteDesktopCertificateIssuer": "簽發者：{issuer}",
-  "remoteDesktopCertificateValidity": "有效期：{start} – {end}"
+  "remoteDesktopCertificateValidity": "有效期：{start} – {end}",
+  "appearanceThemeModeLocked": "此主題僅支援{mode}。如需切換模式，請選擇其他主題。"
 }

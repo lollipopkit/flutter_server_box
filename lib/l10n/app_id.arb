@@ -1,5 +1,28 @@
 {
   "@@locale": "id",
+  "appearanceSettings": "Tampilan",
+  "appearancePreset": "Preset tema",
+  "appearanceThemeSchemaRange": "Skema tema yang didukung",
+  "appearanceThemeInstall": "Pasang tema",
+  "appearanceThemeStore": "Toko tema",
+  "appearanceInvalidTheme": "Paket tema atau katalog tidak valid",
+  "themeStoreRefreshFailed": "Tidak dapat membaca katalog tema.",
+  "themeStoreDeleteTheme": "Hapus “{name}”? Berkasnya dihapus dari perangkat ini. Jika ini tema yang sedang dipakai, aplikasi kembali ke tema bawaan.",
+  "themeStoreUpdatedFmt": "diperbarui {ago}",
+  "themeStoreUpdatedJustNow": "baru saja diperbarui",
+  "themeStoreSortInUse": "Yang digunakan dulu",
+  "themeStoreMakeOwnFmt": "Ingin membuat tema sendiri? Lihat [cara membuatnya]({doc}) — terima kasih atas kontribusimu!",
+  "appearanceThemeNeedsNewerApp": "Memerlukan aplikasi versi lebih baru: {version}",
+  "appearanceFontFamilies": "Daftar keluarga font antarmuka",
+  "appearanceFontFamiliesTip": "Satu nama per baris; font dicoba sesuai urutan.",
+  "appearanceFontImport": "Impor berkas font antarmuka",
+  "appearanceGradient": "Gradasi",
+  "appearanceNoBackground": "Tanpa latar belakang",
+  "appearanceIcons": "Ikon dalam aplikasi",
+  "appearanceCorners": "Sudut",
+  "appearanceCardCorners": "Sudut kartu",
+  "appearanceTileCorners": "Sudut tile",
+  "appearanceButtonCorners": "Sudut tombol",
   "crashCollect": "Data diagnostik",
   "crashCollectIntro": "ServerBox mencatat apa yang terjadi saat berjalan agar masalah dapat diperbaiki. Pilih jumlah informasi yang dikirim.",
   "crashCollectNone": "Tidak ada",
@@ -169,7 +192,9 @@
   "mismatchSystem": "Sistem tidak cocok: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Mirror",
@@ -231,10 +256,18 @@
   "rootfsUpdateTip": "{distro} {installed} terpasang, ada {latest}. Pembaruan mengganti seluruh kontainer: data {pm} hilang",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Tutup terminal di {name} sebelum menghapusnya",
@@ -549,14 +582,20 @@
   "geoDataCurrent": "{month} sudah terpasang.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Unduhan: {download} · Penyimpanan di perangkat: {disk}.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Uji performa",
@@ -745,7 +784,14 @@
   "vendor": "Vendor",
   "connection": "Koneksi",
   "connectionTip": "Keduanya bisa aktif bersamaan. Urutannya adalah urutan pemanggilan.",
+  "transportOrderFmt": "Seret untuk mengubah urutan. {first} dipanggil lebih dulu; jika tidak menjawab, {second} menanggung sesi sendirian.",
+  "transportOnlyFmt": "Hanya {name} yang aktif, jadi tidak ada cadangan.",
   "transportNoneOn": "Keduanya nonaktif — server ini tidak dapat dihubungi.",
+  "transportOffKept": "nonaktif — pengaturan disimpan, tidak pernah dipanggil",
+  "transportDialledFirst": "dipanggil lebih dulu",
+  "transportFallback": "cadangan",
+  "transportOnlyMethod": "satu-satunya cara",
+  "transportOff": "nonaktif",
   "thisDevice": "Perangkat ini",
   "localServerTip": "Membaca perangkat ini secara langsung dengan menjalankan skrip status di sini. SSH dan Monitor HTTP tidak digunakan, dan pengaturannya tetap disimpan.",
   "localServerUnsupported": "Platform ini tidak dapat membaca perangkat ini sebagai server. Linux, Windows, dan versi DMG macOS mendukungnya.",
@@ -759,6 +805,7 @@
   "plainHttpEditTip": "Kredensial dan metrik melintasi jaringan tanpa enkripsi. Batasi pada LAN atau alamat Tailscale, atau tempatkan agen di belakang TLS.",
   "behaviour": "Perilaku",
   "optional": "Opsional",
+  "optionalTip": "Tidak ada di sini yang diperlukan untuk terhubung. Buka salah satu dan kolomnya mengambil alih formulir.",
   "sshAdvanced": "SSH lanjutan",
   "sshAdvancedTip": "Tujuan cadangan, ProxyCommand, server lompat, transport berkas, jalur jarak jauh",
   "appearanceAndPlace": "Tampilan & lokasi",
@@ -918,5 +965,41 @@
   "remoteDesktopPreviousCertificate": "Sebelumnya dipercaya\n{fingerprint}",
   "remoteDesktopCertificateSubject": "Subjek: {subject}",
   "remoteDesktopCertificateIssuer": "Penerbit: {issuer}",
-  "remoteDesktopCertificateValidity": "Berlaku: {start} – {end}"
+  "remoteDesktopCertificateValidity": "Berlaku: {start} – {end}",
+  "appearanceThemeModeLocked": "Tema ini hanya mendukung {mode}. Pilih tema lain untuk mengubah mode.",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

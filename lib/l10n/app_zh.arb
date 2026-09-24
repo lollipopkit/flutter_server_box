@@ -1,5 +1,28 @@
 {
   "@@locale": "zh",
+  "appearanceSettings": "外观",
+  "appearancePreset": "主题方案",
+  "appearanceThemeSchemaRange": "支持的主题 schema",
+  "appearanceThemeInstall": "安装主题",
+  "appearanceThemeStore": "主题商店",
+  "appearanceInvalidTheme": "主题包或目录无效",
+  "themeStoreRefreshFailed": "无法读取主题目录。",
+  "themeStoreDeleteTheme": "删除“{name}”？其文件将从本机移除。如果它正在使用中，应用将返回默认主题。",
+  "themeStoreUpdatedFmt": "{ago}更新",
+  "themeStoreUpdatedJustNow": "刚刚更新",
+  "themeStoreSortInUse": "在用优先",
+  "themeStoreMakeOwnFmt": "如果你想制作自己的主题，欢迎查看[主题制作指南]({doc})，感谢你的贡献！",
+  "appearanceThemeNeedsNewerApp": "需要更新版本的 App：{version}",
+  "appearanceFontFamilies": "界面字体列表",
+  "appearanceFontFamiliesTip": "每行一个字体名称，按顺序 fallback。",
+  "appearanceFontImport": "导入界面字体文件",
+  "appearanceGradient": "渐变",
+  "appearanceNoBackground": "无背景",
+  "appearanceIcons": "App 内图标",
+  "appearanceCorners": "圆角",
+  "appearanceCardCorners": "卡片圆角",
+  "appearanceTileCorners": "Tile 圆角",
+  "appearanceButtonCorners": "按钮圆角",
   "crashCollect": "诊断信息",
   "crashCollectIntro": "ServerBox 会记录运行过程中发生的情况，以便修复问题。你可以选择要发送多少信息。",
   "crashCollectNone": "不发送",
@@ -261,7 +284,9 @@
   "mismatchSystem": "系统不匹配：{system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "镜像",
@@ -341,10 +366,18 @@
   "rootfsUpdateTip": "已安装 {distro} {installed}，新版本为 {latest}。更新会重新下载并替换整个容器，{pm} 中的数据将丢失。",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "请先关闭 {name} 上的终端，再删除",
@@ -352,9 +385,15 @@
   "rootfsInstallTip": "下载 {distro} {version}(约 {size} MB)并解压到本机。",
   "@rootfsInstallTip": {
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "nameAlreadyExistsFmt": "「{name}」已存在",
@@ -587,14 +626,20 @@
   "geoDataCurrent": "已经是 {month} 的数据。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**下载大小：{download} · 本机占用：{disk}。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "性能测试",
@@ -748,7 +793,14 @@
   "vendor": "厂商",
   "connection": "连接方式",
   "connectionTip": "两个可以同时开启。顺序就是拨号的顺序。",
+  "transportOrderFmt": "拖动可调整顺序。先拨 {first}；它不应答时，{second} 独自承担会话。",
+  "transportOnlyFmt": "只开启了 {name}，没有可回落的对象。",
   "transportNoneOn": "两个都关闭了 —— 这台服务器无法连接。",
+  "transportOffKept": "已关闭 —— 设置保留，不会拨号",
+  "transportDialledFirst": "先拨",
+  "transportFallback": "回落",
+  "transportOnlyMethod": "唯一方式",
+  "transportOff": "已关闭",
   "thisDevice": "本机",
   "localServerTip": "直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor HTTP，二者的设置会保留。",
   "localServerUnsupported": "当前平台无法将本机作为服务器读取。Linux、Windows 和 macOS DMG 版本支持。",
@@ -762,6 +814,7 @@
   "plainHttpEditTip": "凭据和指标会以明文穿过网络。请限制在局域网或 Tailscale 地址内，或者把代理放到 TLS 后面。",
   "behaviour": "行为",
   "optional": "可选",
+  "optionalTip": "这里的东西都不是连接所必需的。展开一项，它的字段会接管表单。",
   "sshAdvanced": "SSH 高级",
   "sshAdvancedTip": "备用地址、ProxyCommand、跳板机、文件传输、远端路径",
   "sshLegacyAlgorithms": "兼容旧版算法",
@@ -925,5 +978,6 @@
   "remoteDesktopPreviousCertificate": "此前信任的指纹\n{fingerprint}",
   "remoteDesktopCertificateSubject": "主题：{subject}",
   "remoteDesktopCertificateIssuer": "颁发者：{issuer}",
-  "remoteDesktopCertificateValidity": "有效期：{start} – {end}"
+  "remoteDesktopCertificateValidity": "有效期：{start} – {end}",
+  "appearanceThemeModeLocked": "此主题仅支持{mode}。如需切换模式，请选择其他主题。"
 }

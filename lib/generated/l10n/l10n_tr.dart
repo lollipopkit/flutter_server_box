@@ -9,6 +9,84 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Görünüm';
+
+  @override
+  String get appearancePreset => 'Tema ön ayarı';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Desteklenen tema schema sürümü';
+
+  @override
+  String get appearanceThemeInstall => 'Tema yükle';
+
+  @override
+  String get appearanceThemeStore => 'Tema mağazası';
+
+  @override
+  String get appearanceInvalidTheme => 'Geçersiz tema paketi veya katalog';
+
+  @override
+  String get themeStoreRefreshFailed => 'Tema kataloğu okunamadı.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago güncellendi';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => 'az önce güncellendi';
+
+  @override
+  String get themeStoreSortInUse => 'Kullanımda olan önce';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Kendi temanızı mı yapmak istiyorsunuz? [Nasıl yapılacağına]($doc) bakın — katkınız için teşekkürler!';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return 'Daha yeni bir uygulama sürümü gerekiyor: $version';
+  }
+
+  @override
+  String get appearanceFontFamilies => 'Arayüz yazı tipi aileleri';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'Her satıra bir ad yazın; yazı tipleri sırayla denenir.';
+
+  @override
+  String get appearanceFontImport => 'Arayüz yazı tipi dosyasını içe aktar';
+
+  @override
+  String get appearanceGradient => 'Gradyan';
+
+  @override
+  String get appearanceNoBackground => 'Arka plan yok';
+
+  @override
+  String get appearanceIcons => 'Uygulama içi simgeler';
+
+  @override
+  String get appearanceCorners => 'Köşeler';
+
+  @override
+  String get appearanceCardCorners => 'Kart köşeleri';
+
+  @override
+  String get appearanceTileCorners => 'Kutucuk köşeleri';
+
+  @override
+  String get appearanceButtonCorners => 'Düğme köşeleri';
+
+  @override
   String get crashCollect => 'Tanılama verileri';
 
   @override
@@ -88,7 +166,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiCommandInserted => 'Komut terminale eklendi';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return 'Lütfen Ayarlar\'da $fields öğesini yapılandırın.';
   }
 
@@ -309,7 +387,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentToolFailed => 'Araç çalıştırılamadı.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count araç çağrısı';
   }
 
@@ -436,7 +514,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count etiket';
   }
 
@@ -506,7 +584,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get icloudBackupStateWaiting => 'iCloud bekleniyor';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return 'Son yedekleme: $lastModified\nDurum: $remoteState';
   }
 
@@ -552,12 +630,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clearAllStatsTitle => 'Tüm İstatistikleri Temizle';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return '\"$serverName\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return '$serverName İstatistiklerini Temizle';
   }
 
@@ -635,7 +713,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get displayCpuIndex => 'CPU indeksini göster';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return '$fileName dosyasını yerel cihaza indir?';
   }
 
@@ -688,7 +766,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu uygulamayı F-Droid\'den indirdiyseniz, bu seçeneği kapatmanız önerilir.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return '\'$file\' dosyası çok büyük $size, maksimum $sizeMax';
   }
 
@@ -857,12 +935,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get jumpServer => 'Atlama sunucusu';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return '$serverName için atlama sunucuları bulunamadı: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '\"$name\" zaten mevcut';
   }
 
@@ -918,7 +996,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get linuxNetTip => 'DNS sunucuları. Boş bırakınca varsayılana döner';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return '$myGithub tarafından ❤️ ile yapıldı';
   }
 
@@ -929,7 +1007,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get maxRetryCount => 'Sunucu yeniden bağlantı sayısı';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'Eşleşmeyen sistem: $system';
   }
 
@@ -979,7 +1057,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get privateKey => 'Özel Anahtar';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return 'Özel anahtar [$keyId] bulunamadı.';
   }
 
@@ -1197,16 +1275,16 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed kurulu, $latest var. Güncelleme tüm konteyneri değiştirir: $pm verisi kaybolur';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return 'Silmeden önce $name üzerindeki terminalleri kapat';
   }
 
@@ -1214,7 +1292,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rootfsSubtitle => 'Bu cihazdaki bir Linux kullanıcı alanı';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return '$distro $version (yaklaşık $size MB) indirir ve bu cihaza açar.';
   }
 
@@ -1238,7 +1316,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeDir => 'Ana klasör';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count seçildi';
   }
 
@@ -1367,12 +1445,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Açıkken sıcaklık değeri milisantigrat yerine santigrat olarak işlenir. Yalnızca sıcaklık yanlış görünüyorsa aç (örneğin 58 °C yerine 0,1 °C).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return 'Harcanan süre: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
   }
 
@@ -1387,7 +1465,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'Sistem SSH\'ini kullan';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount kopya atlanacak';
   }
 
@@ -1395,7 +1473,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshConfigFound => 'Sisteminizde SSH yapılandırması bulduk';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return '$totalCount sunucu bulundu';
   }
 
@@ -1411,12 +1489,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'İlk sunucu oluşturulurken ~/.ssh/config okuma istemi';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'SSH yapılandırmasından $count sunucu içe aktarıldı';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return '$serverName için SSH ana bilgisayar anahtarı değişti. Yalnızca bu sunucuya güveniyorsanız devam edin.';
   }
 
@@ -1431,12 +1509,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu uygulamanın kabul ettiği host anahtarları';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return '$serverName üzerinden yeni bir SSH ana bilgisayar anahtarı alındı. Güvenmeden önce parmak izini kontrol edin.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return 'Kaydedilen parmak izi: $fingerprint';
   }
 
@@ -1455,7 +1533,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'macOS izinleri nedeniyle SSH yapılandırma dosyasına erişilemiyor.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount sunucu içe aktarılacak';
   }
 
@@ -1475,7 +1553,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Askıya alma işlevi, root izni ve systemd desteği gerektirir.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return '$val\'a geç';
   }
 
@@ -1633,7 +1711,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get portForward_remotePort => 'Uzak port';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return '$name silinsin mi?';
   }
 
@@ -1897,7 +1975,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return 'çıkış durumu $code';
   }
 
@@ -2049,12 +2127,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get geoDataRemoveFailed => 'Veriler silinemedi.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '$month zaten yüklü.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**İndirme: $download · Cihazdaki depolama alanı: $disk.** Veri kümesinin tamamı bu cihazda saklanır ve sonraki tüm konum sorguları yerel olarak gerçekleştirilir. Sunucu adresleri ve sorgu etkinliği indirme hizmetine gönderilmez.\n\nHer ay güncellenir. Yeni sürüm yüklü verilerin yerini alır ve ek bir kopya tutmaz. İstediğiniz zaman silebilirsiniz.';
   }
 
@@ -2131,7 +2209,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Disk testinin hangi dosya sistemini ölçeceğini belirler. Boş bırakılırsa oturum açılan hesabın ana dizini kullanılır.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return 'Yaklaşık $minutes dk.';
   }
 
@@ -2333,7 +2411,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Mevcut parolayı korumak için alanı boş bırakın.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func, bu sunucunun bağlantısında kullanılamıyor.';
   }
 
@@ -2372,12 +2450,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get beyondRetention => 'bu agent\'ın sakladığından daha geriye';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'Agent $kept saklıyor';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return 'en eski ölçüm $time';
   }
 
@@ -2399,7 +2477,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get waitingFirstSample => 'İlk ölçüm bekleniyor';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return 'saat $time';
   }
 
@@ -2407,47 +2485,47 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stored => 'saklanan';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return 'son ölçüm $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return 'Aşağıdakilerin tamamı $time değerleri, $ago.';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return '$time öncesine ait veri yok';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return '$range yükleniyor…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return '$metric için saklanan geçmiş yok';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count aygıt';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count aygıt · en yoğunu $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$total aygıttan $plotted tanesi';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count sensör · en sıcak $name';
   }
 
@@ -2455,12 +2533,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get oneDeviceAtLeast => 'Grafikte en az bir aygıt kalır.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$total $what içinden $shown';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count $what';
   }
 
@@ -2519,12 +2597,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diskAllPassed => 'tümü PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '$count uyarı';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total aygıttan $wrong';
   }
 
@@ -2532,17 +2610,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diskSmartSortedTip => 'En kötüden sıralı';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return '$ago okundu';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count süreç';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count arızalı';
   }
 
@@ -2556,7 +2634,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get window => 'pencere';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return '/ $total';
   }
 
@@ -2571,7 +2649,32 @@ class AppLocalizationsTr extends AppLocalizations {
       'İkisi aynı anda açık olabilir. Sıra, denendikleri sıradır.';
 
   @override
+  String transportOrderFmt(String first, String second) {
+    return 'Sırayı değiştirmek için sürükleyin. Önce $first denenir; yanıt vermezse oturumu tek başına $second taşır.';
+  }
+
+  @override
+  String transportOnlyFmt(String name) {
+    return 'Yalnızca $name açık, dolayısıyla geri dönülecek bir şey yok.';
+  }
+
+  @override
   String get transportNoneOn => 'İkisi de kapalı — bu sunucuya bağlanılamaz.';
+
+  @override
+  String get transportOffKept => 'kapalı — ayarlar saklanıyor, hiç denenmiyor';
+
+  @override
+  String get transportDialledFirst => 'önce denenir';
+
+  @override
+  String get transportFallback => 'yedek';
+
+  @override
+  String get transportOnlyMethod => 'tek yöntem';
+
+  @override
+  String get transportOff => 'kapalı';
 
   @override
   String get thisDevice => 'Bu cihaz';
@@ -2621,6 +2724,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get optional => 'İsteğe bağlı';
 
   @override
+  String get optionalTip =>
+      'Buradaki hiçbir şey bağlanmak için gerekli değil. Birini açın, alanları formun yerini alsın.';
+
+  @override
   String get sshAdvanced => 'SSH gelişmiş';
 
   @override
@@ -2657,7 +2764,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tagNewHint => 'Yeni etiket';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return '#$tag oluştur';
   }
 
@@ -2665,12 +2772,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tagOnThisServer => 'bu sunucuda';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count sunucu';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return 'bu sunucuda $count';
   }
 
@@ -2708,7 +2815,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2719,7 +2826,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total görev · $enabled etkin';
   }
 
@@ -2740,7 +2847,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Kapalı olduğunda satır yorum satırı olarak yazılır.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return '$user için zamanlanmış görev yok. Buraya eklenenler bu hesabın crontab dosyasına yazılır.';
   }
 
@@ -2783,42 +2890,42 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return 'Her $minutes dakikada bir';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return 'Her saat :$minute geçe';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return 'Her $hours saatte bir';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return 'Her $hours saatte bir, :$minute geçe';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return 'Her gün $time saatinde';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return 'Hafta içi $time saatinde';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return 'Her $day, $time saatinde';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return 'Her ayın $day. günü $time saatinde';
   }
 
@@ -3182,5 +3289,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String remoteDesktopCertificateValidity(String start, String end) {
     return 'Geçerlilik: $start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
   }
 }

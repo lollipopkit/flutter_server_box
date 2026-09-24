@@ -1,5 +1,28 @@
 {
   "@@locale": "nl",
+  "appearanceSettings": "Uiterlijk",
+  "appearancePreset": "Thema-instelling",
+  "appearanceThemeSchemaRange": "Ondersteund themaschema",
+  "appearanceThemeInstall": "Thema installeren",
+  "appearanceThemeStore": "Themawinkel",
+  "appearanceInvalidTheme": "Ongeldig themapakket of ongeldige catalogus",
+  "themeStoreRefreshFailed": "De themacatalogus kon niet worden gelezen.",
+  "themeStoreDeleteTheme": "“{name}” verwijderen? De bestanden worden van dit apparaat verwijderd. Als dit het gebruikte thema is, keert de app terug naar het standaardthema.",
+  "themeStoreUpdatedFmt": "bijgewerkt {ago}",
+  "themeStoreUpdatedJustNow": "zojuist bijgewerkt",
+  "themeStoreSortInUse": "In gebruik eerst",
+  "themeStoreMakeOwnFmt": "Wil je je eigen thema maken? Zie [hoe je er een maakt]({doc}) — bedankt voor je bijdrage!",
+  "appearanceThemeNeedsNewerApp": "Een nieuwere app is vereist: {version}",
+  "appearanceFontFamilies": "Lettertypefamilies voor de interface",
+  "appearanceFontFamiliesTip": "Eén naam per regel; lettertypen worden op volgorde geprobeerd.",
+  "appearanceFontImport": "Lettertypebestand voor de interface importeren",
+  "appearanceGradient": "Kleurverloop",
+  "appearanceNoBackground": "Geen achtergrond",
+  "appearanceIcons": "Pictogrammen in de app",
+  "appearanceCorners": "Hoeken",
+  "appearanceCardCorners": "Kaarthoeken",
+  "appearanceTileCorners": "Tegelhoeken",
+  "appearanceButtonCorners": "Knophoeken",
   "crashCollect": "Diagnostische gegevens",
   "crashCollectIntro": "ServerBox legt vast wat er tijdens het gebruik gebeurt, zodat problemen kunnen worden opgelost. Kies hoeveel informatie er wordt verstuurd.",
   "crashCollectNone": "Niets",
@@ -169,7 +192,9 @@
   "mismatchSystem": "Niet-overeenkomend systeem: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Mirror",
@@ -231,10 +256,18 @@
   "rootfsUpdateTip": "{distro} {installed} is geïnstalleerd, {latest} is beschikbaar. Bijwerken vervangt de hele container: {pm}-gegevens gaan verloren",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Sluit de terminals op {name} voordat je het verwijdert",
@@ -549,14 +582,20 @@
   "geoDataCurrent": "{month} is al geïnstalleerd.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Download: {download} · Opslag op het apparaat: {disk}.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Benchmark",
@@ -745,7 +784,14 @@
   "vendor": "Fabrikant",
   "connection": "Verbinding",
   "connectionTip": "Beide kunnen tegelijk aan staan. De volgorde is de volgorde waarin ze worden gebeld.",
+  "transportOrderFmt": "Sleep om de volgorde te wijzigen. {first} wordt eerst gebeld; antwoordt die niet, dan draagt {second} de sessie alleen.",
+  "transportOnlyFmt": "Alleen {name} staat aan, dus er is niets om op terug te vallen.",
   "transportNoneOn": "Beide staan uit — deze server kan niet worden verbonden.",
+  "transportOffKept": "uit — instellingen blijven bewaard, wordt nooit gebeld",
+  "transportDialledFirst": "eerst gebeld",
+  "transportFallback": "terugval",
+  "transportOnlyMethod": "enige methode",
+  "transportOff": "uit",
   "thisDevice": "Dit apparaat",
   "localServerTip": "Leest dit apparaat rechtstreeks uit door het statusscript hier uit te voeren. SSH en Monitor HTTP worden niet gebruikt; hun instellingen blijven bewaard.",
   "localServerUnsupported": "Dit platform kan dit apparaat niet als server uitlezen. Linux, Windows en de macOS-DMG-versie kunnen dat wel.",
@@ -759,6 +805,7 @@
   "plainHttpEditTip": "Inloggegevens en metingen gaan onversleuteld over het netwerk. Houd het bij een LAN of een Tailscale-adres, of zet de agent achter TLS.",
   "behaviour": "Gedrag",
   "optional": "Optioneel",
+  "optionalTip": "Niets hiervan is nodig om te verbinden. Open er een en de velden ervan nemen het formulier over.",
   "sshAdvanced": "SSH geavanceerd",
   "sshAdvancedTip": "Uitwijkbestemming, ProxyCommand, springserver, bestandstransport, extern pad",
   "appearanceAndPlace": "Weergave en locatie",
@@ -918,5 +965,62 @@
   "remoteDesktopPreviousCertificate": "Eerder vertrouwd\n{fingerprint}",
   "remoteDesktopCertificateSubject": "Onderwerp: {subject}",
   "remoteDesktopCertificateIssuer": "Uitgever: {issuer}",
-  "remoteDesktopCertificateValidity": "Geldig: {start} – {end}"
+  "remoteDesktopCertificateValidity": "Geldig: {start} – {end}",
+  "appearanceThemeModeLocked": "Dit thema ondersteunt alleen {mode}. Kies een ander thema om de modus te wijzigen.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@diskWarningFmt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@scheduledTaskSummaryFmt": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

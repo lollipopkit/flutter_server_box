@@ -1,5 +1,28 @@
 {
   "@@locale": "it",
+  "appearanceSettings": "Aspetto",
+  "appearancePreset": "Tema predefinito",
+  "appearanceThemeSchemaRange": "Schema del tema supportato",
+  "appearanceThemeInstall": "Installa tema",
+  "appearanceThemeStore": "Negozio temi",
+  "appearanceInvalidTheme": "Pacchetto tema o catalogo non valido",
+  "themeStoreRefreshFailed": "Impossibile leggere il catalogo dei temi.",
+  "themeStoreDeleteTheme": "Eliminare «{name}»? I suoi file vengono rimossi da questo dispositivo. Se è il tema in uso, l'app torna al tema predefinito.",
+  "themeStoreUpdatedFmt": "aggiornato {ago}",
+  "themeStoreUpdatedJustNow": "aggiornato adesso",
+  "themeStoreSortInUse": "In uso per primi",
+  "themeStoreMakeOwnFmt": "Vuoi creare il tuo tema? Vedi [come crearne uno]({doc}) — grazie per il tuo contributo!",
+  "appearanceThemeNeedsNewerApp": "È necessaria una versione più recente dell’app: {version}",
+  "appearanceFontFamilies": "Famiglie di caratteri dell’interfaccia",
+  "appearanceFontFamiliesTip": "Un nome per riga; i caratteri vengono provati in ordine.",
+  "appearanceFontImport": "Importa file di caratteri per l’interfaccia",
+  "appearanceGradient": "Sfumatura",
+  "appearanceNoBackground": "Nessuno sfondo",
+  "appearanceIcons": "Icone nell’app",
+  "appearanceCorners": "Angoli",
+  "appearanceCardCorners": "Angoli delle schede",
+  "appearanceTileCorners": "Angoli degli elementi",
+  "appearanceButtonCorners": "Angoli dei pulsanti",
   "crashCollect": "Dati diagnostici",
   "crashCollectIntro": "ServerBox registra ciò che accade durante l'esecuzione per poter risolvere i problemi. Scegli quanti dati inviare.",
   "crashCollectNone": "Niente",
@@ -170,7 +193,9 @@
   "mismatchSystem": "Sistema non corrispondente: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Mirror",
@@ -232,10 +257,18 @@
   "rootfsUpdateTip": "{distro} {installed} è installato, {latest} è disponibile. L’aggiornamento sostituisce l’intero container: i dati {pm} vanno persi",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Chiudi i terminali su {name} prima di eliminarlo",
@@ -552,14 +585,20 @@
   "geoDataCurrent": "{month} è già installato.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Download: {download} · Spazio sul dispositivo: {disk}.** Il set di dati completo viene archiviato su questo dispositivo e tutte le successive ricerche geografiche avvengono in locale. Al servizio di download non vengono inviati né gli indirizzi dei server né l’attività di ricerca.\n\nAggiornato ogni mese. Una versione più recente sostituisce i dati installati senza conservare una copia aggiuntiva. Puoi eliminarli in qualsiasi momento.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Benchmark",
@@ -748,7 +787,14 @@
   "vendor": "Produttore",
   "connection": "Connessione",
   "connectionTip": "Possono essere attivi entrambi. L'ordine è l'ordine in cui vengono contattati.",
+  "transportOrderFmt": "Trascina per cambiare l'ordine. {first} viene contattato per primo; se non risponde, {second} porta avanti la sessione da solo.",
+  "transportOnlyFmt": "È attivo solo {name}, quindi non c'è nulla su cui ripiegare.",
   "transportNoneOn": "Sono entrambi disattivati: questo server non può essere connesso.",
+  "transportOffKept": "disattivato — impostazioni conservate, mai contattato",
+  "transportDialledFirst": "contattato per primo",
+  "transportFallback": "ripiego",
+  "transportOnlyMethod": "unico metodo",
+  "transportOff": "disattivato",
   "thisDevice": "Questo dispositivo",
   "localServerTip": "Legge direttamente questo dispositivo eseguendo qui lo script di stato. SSH e Monitor HTTP non vengono usati e le loro impostazioni vengono conservate.",
   "localServerUnsupported": "Questa piattaforma non può leggere questo dispositivo come server. Linux, Windows e la versione DMG di macOS possono farlo.",
@@ -762,6 +808,7 @@
   "plainHttpEditTip": "Credenziali e metriche attraversano la rete non cifrate. Tienilo su una LAN o su un indirizzo Tailscale, oppure metti l'agente dietro TLS.",
   "behaviour": "Comportamento",
   "optional": "Facoltativo",
+  "optionalTip": "Nulla qui serve per connettersi. Aprine uno e i suoi campi prendono il posto del modulo.",
   "sshAdvanced": "SSH avanzate",
   "sshAdvancedTip": "Destinazione di riserva, ProxyCommand, server di salto, trasporto file, percorso remoto",
   "appearanceAndPlace": "Aspetto e luogo",
@@ -921,5 +968,62 @@
   "remoteDesktopPreviousCertificate": "Considerato attendibile in precedenza\n{fingerprint}",
   "remoteDesktopCertificateSubject": "Soggetto: {subject}",
   "remoteDesktopCertificateIssuer": "Emittente: {issuer}",
-  "remoteDesktopCertificateValidity": "Valido: {start} – {end}"
+  "remoteDesktopCertificateValidity": "Valido: {start} – {end}",
+  "appearanceThemeModeLocked": "Questo tema supporta solo {mode}. Seleziona un altro tema per cambiare modalità.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@diskWarningFmt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@scheduledTaskSummaryFmt": {
+    "placeholders": {
+      "enabled": {
+        "type": "int"
+      }
+    }
+  }
 }

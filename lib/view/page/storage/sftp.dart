@@ -655,7 +655,11 @@ extension _Edit on _SftpPageState {
     if (size == null || !mounted) return;
     if (size > Miscs.editorMaxSize) {
       Toast.show(
-        l10n.fileTooLarge(entry.name, size, Miscs.editorMaxSize),
+        l10n.fileTooLarge(
+          entry.name,
+          size.bytes2Str,
+          Miscs.editorMaxSize.bytes2Str,
+        ),
       );
       return;
     }

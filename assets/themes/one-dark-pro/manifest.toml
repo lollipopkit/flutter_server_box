@@ -1,0 +1,36 @@
+id = "one-dark-pro"
+name = "One Dark Pro"
+modes = ["dark"]
+
+[schema]
+min = 1
+max = 1
+
+[colors]
+mode = 2
+seed = 0xFF61AFEF
+
+[colors.palette.dark]
+primary = 0xFF61AFEF
+onPrimary = 0xFF21252B
+primaryContainer = 0xFF324456
+onPrimaryContainer = 0xFFABB2BF
+secondary = 0xFF98C379
+onSecondary = 0xFF21252B
+secondaryContainer = 0xFF324456
+onSecondaryContainer = 0xFFABB2BF
+surface = 0xFF21252B
+surfaceDim = 0xFF21252B
+surfaceBright = 0xFF383C45
+surfaceContainerLowest = 0xFF1A1E22
+surfaceContainerLow = 0xFF282C34
+surfaceContainer = 0xFF282C34
+surfaceContainerHigh = 0xFF2D313A
+surfaceContainerHighest = 0xFF32373F
+onSurface = 0xFFABB2BF
+onSurfaceVariant = 0xFF9DA5B4
+outline = 0xFF9DA5B4
+outlineVariant = 0xFF3D414A
+surfaceTint = 0x00000000
+error = 0xFFE06C75
+onError = 0xFF21252B
