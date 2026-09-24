@@ -322,7 +322,11 @@
       <div class="py-12 flex flex-col items-center gap-4 text-center">
         <Server class="w-10 h-10 text-faint-fg" />
         <p class="text-sm text-muted-fg">{$LL.noServersTip()}</p>
-        <Button onclick={() => (layout.addServerOpen = true)}>{$LL.addServer()}</Button>
+        <!-- Which is the only state this button is for: the panel an agent
+             serves has a server and takes no second one. -->
+        {#if !servers.servedByAgent}
+          <Button onclick={() => (layout.addServerOpen = true)}>{$LL.addServer()}</Button>
+        {/if}
       </div>
     {:else if !servers.authenticated}
       <div class="py-12">

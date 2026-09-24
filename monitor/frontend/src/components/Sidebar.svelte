@@ -130,9 +130,13 @@
       <p class={cn('text-xs font-medium text-faint-fg uppercase tracking-wide', labelCls)}>
         {$LL.servers()}
       </p>
-      <IconButton class={cn('-mr-1', labelCls)} label={$LL.addServer()} onclick={openAdd}>
-        <Plus class="w-4 h-4" />
-      </IconButton>
+      {#if !servers.servedByAgent}
+        <!-- Absent on the panel an agent serves, which holds the one server it
+             is served by; there is no second one to add there. -->
+        <IconButton class={cn('-mr-1', labelCls)} label={$LL.addServer()} onclick={openAdd}>
+          <Plus class="w-4 h-4" />
+        </IconButton>
+      {/if}
     </div>
     {#each servers.list as s (s.id)}
       {@const active = s.id === servers.currentId}

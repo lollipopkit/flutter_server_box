@@ -594,11 +594,26 @@ void main() {
     );
 
     /// A rail beside an empty tab, on a page whose scaffold is [scaffold], with
-    /// the theme's own rail colour [rail] where one is given.
-    Widget railOn(Color? scaffold, {Color? rail}) => MaterialApp(
+    /// the theme's own rail colour [rail] and elevation where either is given.
+    ///
+    /// [shadow] is the scheme's shadow colour, and only a test that asks for
+    /// one moves it off the default — an opaque black.
+    Widget railOn(
+      Color? scaffold, {
+      Color? rail,
+      double? elevation,
+      Color? shadow,
+    }) =>
+        MaterialApp(
       theme: ThemeData(
+        colorScheme: shadow == null
+            ? null
+            : ThemeData().colorScheme.copyWith(shadow: shadow),
         scaffoldBackgroundColor: scaffold,
-        navigationRailTheme: NavigationRailThemeData(backgroundColor: rail),
+        navigationRailTheme: NavigationRailThemeData(
+          backgroundColor: rail,
+          elevation: elevation,
+        ),
       ),
       home: Scaffold(
         body: Row(
@@ -621,13 +636,23 @@ void main() {
     );
 
     /// Puts the pointer on the rail, if [hover], and lets it arrive.
+    ///
+    /// That is, [settle] holds the 400ms that leaves the opening over and done
+    /// with, which is what a test reading a settled rail wants. A test reading
+    /// the movement has to turn it off: the frames after it are frames of a
+    /// rail that has already arrived, whatever they are named.
     Future<void> pointerOnRail(
       WidgetTester tester, {
       required bool hover,
       required Color? scaffold,
       Color? rail,
+      double? elevation,
+      Color? shadow,
+      bool settle = true,
     }) async {
-      await tester.pumpWidget(railOn(scaffold, rail: rail));
+      await tester.pumpWidget(
+        railOn(scaffold, rail: rail, elevation: elevation, shadow: shadow),
+      );
       await tester.pump();
       if (!hover) return;
 
@@ -636,7 +661,7 @@ void main() {
         pointer.hover(tester.getCenter(find.byType(AppNavRail))),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+      if (settle) await tester.pump(const Duration(milliseconds: 400));
     }
 
     /// The colour the rail's own `Material` is painted with.
@@ -710,30 +735,131 @@ void main() {
       );
     });
 
-    testWidgets('casts no shadow once it has faded', (tester) async {
-      // A shadow is cast by the shape, whether or not the colour on it is
-      // opaque. Held at three points of elevation while the colour crossed to
-      // nothing, it left a dark rectangle of the panel's own size on the tab
-      // for the last of the closing — a panel that is half there — and then
-      // went with the final frame, which is the jolt. So the shadow is read
-      // off the same value the colour is, and the two leave together.
-      await pointerOnRail(tester, hover: true, scaffold: Colors.transparent);
-      expect(railOf(tester).color!.a, 1);
-      expect(railOf(tester).elevation, 3);
+    /// How strong the shadow under the rail is asked to be: what the rail named
+    /// for it, and otherwise `Material`'s own default — an opaque shadow, which
+    /// is what it is over a fill that faded to nothing.
+    Color shadowOf(WidgetTester tester) =>
+        railOf(tester).shadowColor ?? ThemeData().colorScheme.shadow;
 
-      final pointer = TestPointer(1, PointerDeviceKind.mouse);
-      await tester.sendEventToBinding(pointer.hover(const Offset(700, 400)));
-      for (var i = 0; i < 30; i++) {
-        await tester.pump(const Duration(milliseconds: 8));
-        final rail = railOf(tester);
-        expect(
-          rail.elevation,
-          lessThanOrEqualTo(3 * rail.color!.a + 0.001),
-          reason: 'the shadow outlived the panel, at frame $i',
+    testWidgets('casts no shadow once it has faded', (tester) async {
+      // A shadow is cast by the shape, and how much of it is *seen* is not the
+      // shape's decision alone: through a translucent colour the shadow is
+      // drawn over rather than cut out from under, so a panel that had faded
+      // to nothing still showed a dark rectangle of its own size — and then,
+      // with the elevation at zero, nothing at all. Measured on Impeller over
+      // a wallpaper, where it is a quarter dark on the last frame of the
+      // closing; Skia cuts it out either way, so no test of the pixels here
+      // would have found it. So the shadow's opacity is read off the same
+      // value the colour is, and the two leave together — whatever elevation
+      // the theme asks for, since a constant one keeps the shape a shape but
+      // cannot keep a panel that is gone.
+      for (final elevation in [null, 3.0]) {
+        await pointerOnRail(
+          tester,
+          hover: true,
+          scaffold: Colors.transparent,
+          elevation: elevation,
         );
+        expect(railOf(tester).color!.a, 1);
+        expect(shadowOf(tester).a, 1);
+        // The colour itself is the theme's, faded — not a shadow of our own.
+        expect(
+          shadowOf(tester).withValues(alpha: 1),
+          ThemeData().colorScheme.shadow,
+        );
+
+        final pointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(pointer.hover(const Offset(700, 400)));
+        for (var i = 0; i < 30; i++) {
+          await tester.pump(const Duration(milliseconds: 8));
+          final rail = railOf(tester);
+          expect(
+            shadowOf(tester).a,
+            lessThanOrEqualTo(rail.color!.a + 0.001),
+            reason: 'the shadow outlived the panel, at frame $i',
+          );
+        }
+        expect(railOf(tester).color!.a, 0);
+        expect(shadowOf(tester).a, 0);
       }
-      expect(railOf(tester).elevation, 0);
-      expect(railOf(tester).color!.a, 0);
+    });
+
+    testWidgets('fades a shadow the theme set translucent', (tester) async {
+      // The value above is the rail's, and it multiplies rather than replaces:
+      // a shadow the theme asked for at a quarter strength was painted whole
+      // once the rail was open, and `Colors.transparent` — which is a theme
+      // saying it wants none — was drawn from nothing.
+      for (final asked in [const Color(0x40000000), Colors.transparent]) {
+        await pointerOnRail(
+          tester,
+          hover: true,
+          scaffold: Colors.transparent,
+          shadow: asked,
+        );
+
+        expect(shadowOf(tester).a, moreOrLessEquals(asked.a, epsilon: 0.001));
+        expect(shadowOf(tester).withValues(alpha: 1), asked.withValues(alpha: 1));
+      }
+    });
+
+    /// Asserts that what the rail's `Material` is painted with is what it was
+    /// asked for, where [where] says which frame that failed.
+    void expectPaintedMatchesAsked(WidgetTester tester, String where) {
+      final asked = railOf(tester);
+      final painted = tester.widget<PhysicalModel>(
+        find
+            .descendant(
+              // Scoped to the rail's own `Material`: it is the `PhysicalModel`
+              // under that one which carries what the rail asked for.
+              of: find
+                  .descendant(
+                    of: find.byType(AppNavRail),
+                    matching: find.byType(Material),
+                  )
+                  .first,
+              matching: find.byType(PhysicalModel),
+            )
+            .first,
+      );
+      expect(painted.elevation, asked.elevation, reason: where);
+      expect(painted.color, asked.color, reason: where);
+      expect(painted.shadowColor, asked.shadowColor, reason: where);
+    }
+
+    testWidgets('paints what it asked for, at every frame of the movement', (
+      tester,
+    ) async {
+      // `Material` hands this colour and this elevation to a `PhysicalModel`
+      // inside it, which animates both over its own 200ms — longer than the
+      // movement they are read off. Measured with that default: fully collapsed,
+      // and the shadow was still at 0.699 on its way down from 0.795, a dark
+      // band over a rail that had already gone, and it took another 200ms to
+      // leave — which is the state that does not follow the pointer, and the
+      // switch at the end of it. Nothing here is animated but by the value the
+      // rail is read off, so what it asks for is what has to be painted.
+      //
+      // Read from the frame the pointer arrives rather than from a rail that
+      // has finished opening: what trails is the movement, and a settled rail
+      // would answer the same whether either half of this were animated.
+      for (final scaffold in [const Color(0xFF123456), Colors.transparent]) {
+        await pointerOnRail(
+          tester,
+          hover: true,
+          scaffold: scaffold,
+          settle: false,
+        );
+        for (var i = 0; i < 40; i++) {
+          expectPaintedMatchesAsked(tester, '$scaffold, open, frame $i');
+          await tester.pump(const Duration(milliseconds: 8));
+        }
+
+        final pointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(pointer.hover(const Offset(700, 400)));
+        for (var i = 0; i < 60; i++) {
+          await tester.pump(const Duration(milliseconds: 8));
+          expectPaintedMatchesAsked(tester, '$scaffold, closing, frame $i');
+        }
+      }
     });
 
     testWidgets('names an item with a tooltip while it is shut', (
