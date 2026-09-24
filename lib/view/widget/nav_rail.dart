@@ -156,6 +156,23 @@ class _AppNavRailState extends State<AppNavRail>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final railTheme = NavigationRailTheme.of(context);
+
+    // What the rail is painted with.
+    //
+    // Shut it stands in room the `Row` beside it holds open, so the colour
+    // behind it is the page's — and with a background image that is
+    // [Colors.transparent] on purpose, which is the wallpaper being seen
+    // around the icons. Open it is a panel standing *over* the tab, and there
+    // that same colour let the tab's own rows read through it: two sets of
+    // names, one on top of the other.
+    //
+    // So it takes a colour of its own as it opens, crossed over with the same
+    // value the width is read off — the two are one movement, and a colour
+    // that switched at the end of it would be a panel changing its mind about
+    // what it is after it has finished arriving.
+    final surface = theme.colorScheme.surface;
+    final chrome = railTheme.backgroundColor ?? theme.scaffoldBackgroundColor;
 
     return MouseRegion(
       onEnter: (_) => _ctrl.forward(),
@@ -174,19 +191,14 @@ class _AppNavRailState extends State<AppNavRail>
                 open,
               ),
               child: Material(
-                // Opaque whatever it is doing: open, it is painted over the tab
-                // beside it, and the shadow is what says so. Shut, the colour is
-                // the one already behind it and the shadow is nothing.
-                color:
-                    NavigationRailTheme.of(context).backgroundColor ??
-                    theme.scaffoldBackgroundColor,
+                color: chrome.a == 1
+                    ? chrome
+                    : Color.lerp(surface.withValues(alpha: 0), surface, open)!,
                 surfaceTintColor: Colors.transparent,
                 // On or off rather than eased in: a shadow is recomputed
                 // wherever its elevation lands, and 200ms of that buys a
                 // gradient nobody watches under a panel that is still moving.
-                elevation:
-                    NavigationRailTheme.of(context).elevation ??
-                    (open == 0 ? 0 : 3),
+                elevation: railTheme.elevation ?? (open == 0 ? 0 : 3),
                 child: Column(
                   children: [
                     Expanded(

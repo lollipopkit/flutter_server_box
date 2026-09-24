@@ -581,6 +581,100 @@ void main() {
       }
     });
 
+    /// The colour the rail's own `Material` is painted with.
+    Future<Color?> colorAt(
+      WidgetTester tester, {
+      required bool hover,
+      required Color? scaffold,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(scaffoldBackgroundColor: scaffold),
+          home: Scaffold(
+            body: Row(
+              children: [
+                AppNavRail(
+                  selectedIndex: 0,
+                  onSelected: (_) {},
+                  items: const [
+                    NavRailItem(
+                      icon: Icon(Icons.circle),
+                      selectedIcon: Icon(Icons.circle),
+                      label: 'one',
+                    ),
+                  ],
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      if (hover) {
+        final pointer = TestPointer(1, PointerDeviceKind.mouse);
+        await tester.sendEventToBinding(
+          pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+
+      return tester
+          .widget<Material>(
+            find
+                .descendant(
+                  of: find.byType(AppNavRail),
+                  matching: find.byType(Material),
+                )
+                .first,
+          )
+          .color;
+    }
+
+    testWidgets('takes a colour of its own once it is over a tab', (
+      tester,
+    ) async {
+      // A background image makes the scaffold transparent on purpose, so every
+      // page shows the wallpaper. The shut rail is nothing over nothing and
+      // keeps that — but open it stands over the tab, and a transparent panel
+      // there put two sets of names on the same pixels.
+      final scheme = ThemeData().colorScheme;
+
+      final shut = await colorAt(
+        tester,
+        hover: false,
+        scaffold: Colors.transparent,
+      );
+      expect(shut!.a, 0);
+
+      final open = await colorAt(
+        tester,
+        hover: true,
+        scaffold: Colors.transparent,
+      );
+      expect(open!.a, 1);
+      expect(open, scheme.surface);
+    });
+
+    testWidgets('and keeps the page\'s own while the page has one', (
+      tester,
+    ) async {
+      // No background, so the scaffold's colour is a real one and there is
+      // nothing to fix: opening the rail changes its width and nothing else.
+      const page = Color(0xFF123456);
+
+      expect(
+        await colorAt(tester, hover: false, scaffold: page),
+        page,
+      );
+      expect(
+        await colorAt(tester, hover: true, scaffold: page),
+        page,
+      );
+    });
+
     testWidgets('names an item with a tooltip while it is shut', (
       tester,
     ) async {
