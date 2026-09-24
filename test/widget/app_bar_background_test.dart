@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -8,6 +9,7 @@ import 'package:server_box/app.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/view/widget/app_background.dart';
 
 /// A 1x1 PNG, so that `Image.file` has something it can actually decode.
 const _png = <int>[
@@ -43,6 +45,60 @@ void main() {
     return (app.theme!, app.darkTheme!);
   }
 
+  /// The background the page holding [label] is carrying.
+  AppBackground backgroundOf(WidgetTester tester, String label) =>
+      tester.widget<AppBackground>(
+        find
+            .ancestor(
+              of: find.text(label),
+              matching: find.byType(AppBackground),
+            )
+            .first,
+      );
+
+  testWidgets('a page holds the background while it moves, and only while', (
+    tester,
+  ) async {
+    final file = File('${Directory.systemTemp.path}/sbm_page_backdrop.png')
+      ..writeAsBytesSync(_png);
+    addTearDown(() => file.deleteSync());
+    setting.appBackgroundStyle.put(BackgroundStyle.image);
+    setting.appBackgroundPath.put(file.path);
+
+    final navigator = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigator,
+        theme: ThemeData(pageTransitionsTheme: AppPageTransitions.backgrounded),
+        home: const Scaffold(body: Text('first')),
+      ),
+    );
+
+    unawaited(
+      navigator.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('second')),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Both pages are transparent, so the one arriving is only a surface of its
+    // own if it is carrying the background; the one below hands it back, and
+    // is what is seen where the arriving page has not covered it yet.
+    expect(backgroundOf(tester, 'second').visible, isTrue);
+    expect(backgroundOf(tester, 'first').visible, isFalse);
+
+    await tester.pumpAndSettle();
+    // And at rest the one behind the whole app is what is being looked at, so
+    // a page carrying a copy of it would be a second layer drawing the same
+    // picture in its own box.
+    expect(backgroundOf(tester, 'second').visible, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('the bar goes with a background image', (tester) async {
     final file = File(
       '${Directory.systemTemp.path}/sbm_appbar_background_test.png',
@@ -65,6 +121,7 @@ void main() {
         reason: 'the bar is not see-through over the wallpaper',
       );
       expect(theme.scaffoldBackgroundColor, Colors.transparent);
+      expect(theme.pageTransitionsTheme, same(AppPageTransitions.backgrounded));
     }
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -82,6 +139,10 @@ void main() {
       // Material's default and stays reachable through the theme.
       expect(theme.appBarTheme.backgroundColor, isNull);
       expect(theme.scaffoldBackgroundColor, isNot(Colors.transparent));
+      expect(
+        theme.pageTransitionsTheme,
+        isNot(same(AppPageTransitions.backgrounded)),
+      );
     }
 
     await tester.pumpWidget(const SizedBox.shrink());

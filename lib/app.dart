@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -25,6 +24,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/widget/app_background.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
 import 'package:server_box/view/widget/theme_splash.dart';
 
@@ -98,6 +98,13 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
         ? fontFamilies.skip(1).toList()
         : null,
     scaffoldBackgroundColor: hasBackground ? Colors.transparent : null,
+    // The page over a background is transparent, so two of them over each
+    // other during a transition are two sets of rows on the same pixels. The
+    // background's own transitions give each moving page the background, which
+    // is what makes the arriving one cover the one below — see
+    // [AppPageTransitions]. Null without a background: an opaque page needs no
+    // help, and the platform's own transition is the right one.
+    pageTransitionsTheme: hasBackground ? AppPageTransitions.backgrounded : null,
     cardTheme: CardThemeData(shape: cardShape, elevation: 0),
     elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
     filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
@@ -350,74 +357,10 @@ class _MyAppState extends State<MyApp> {
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
         final content = ToastHost(child: ResponsivePoints.builder(ctx, child));
-        final backgroundStyle =
-            ThemePackages.preview.value?.backgroundStyle ??
-            Stores.setting.appBackgroundStyle.fetch();
-        final backgroundPath = (ThemePackages.preview.value != null
-            ? ThemePackages.preview.value!.backgroundPath ?? ''
-            : Stores.setting.appBackgroundPath.fetch());
-        if (backgroundStyle == BackgroundStyle.none ||
-            (backgroundStyle == BackgroundStyle.image &&
-                backgroundPath.isEmpty)) {
-          return ThemeSplashGate(child: content);
-        }
-        final surface = Theme.of(ctx).colorScheme.surface;
-        final accent = Theme.of(ctx).colorScheme.primary;
-        final image = backgroundStyle == BackgroundStyle.image
-            ? Image.file(
-                File(backgroundPath),
-                fit: BoxFit.cover,
-                cacheWidth: 4096,
-                cacheHeight: 4096,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
-              )
-            : const SizedBox.shrink();
-        final blur =
-            (ThemePackages.preview.value?.blur ??
-                    Stores.setting.appBackgroundBlur.fetch())
-                .clamp(0.0, 30.0);
-        return ThemeSplashGate(
-          child: Stack(
-            children: [
-            Positioned.fill(
-              child: backgroundStyle == BackgroundStyle.gradient
-                  ? DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color.lerp(surface, accent, 0.22)!,
-                            surface,
-                            Color.lerp(surface, accent, 0.12)!,
-                          ],
-                        ),
-                      ),
-                    )
-                  : ColoredBox(
-                      color: surface,
-                      child: Opacity(
-                        opacity:
-                            (ThemePackages.preview.value?.opacity ??
-                                    Stores.setting.appBackgroundOpacity.fetch())
-                                .clamp(0.0, 0.6),
-                        child: blur == 0
-                            ? image
-                            : ImageFiltered(
-                                imageFilter: ui.ImageFilter.blur(
-                                  sigmaX: blur,
-                                  sigmaY: blur,
-                                  tileMode: ui.TileMode.clamp,
-                                ),
-                                child: image,
-                              ),
-                      ),
-                    ),
-            ),
-            Positioned.fill(child: content),
-            ],
-          ),
-        );
+        // The one background the whole app stands on. A page takes a copy of
+        // it while it moves, so that it covers the page below — see
+        // [AppPageTransitions].
+        return ThemeSplashGate(child: AppBackground(child: content));
       },
       locale: locale,
       localizationsDelegates: const [
