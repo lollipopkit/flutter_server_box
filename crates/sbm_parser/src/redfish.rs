@@ -175,7 +175,13 @@ pub enum PowerState {
 }
 
 impl PowerState {
-    /// The wire spelling, which is also what a client draws beside the machine.
+    /// Redfish's own spelling, which is what this is read *from* and what a
+    /// log line should say.
+    ///
+    /// Not what a client receives: the enum's serde form is this module's
+    /// camelCase convention (`on`, `poweringOn`), shared with `PowerIntent` and
+    /// `RedfishFailure`, so a client has one casing to read rather than a
+    /// different one per enum. `parse` accepts what the service sent.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::On => "On",
@@ -771,6 +777,29 @@ pub fn fingerprint_matches(pinned: Option<&str>, actual: &str) -> bool {
         diff |= a ^ b;
     }
     diff == 0
+}
+
+// --- Authenticating ---
+
+/// The header a created session's token is answered in and sent back in.
+///
+/// The specification's spelling. A service that answers only a `Set-Cookie` is
+/// not one a caller can use, and this is the one place that says so.
+pub const TOKEN_HEADER: &str = "x-auth-token";
+
+/// The header a service that offers no session endpoint is presented instead.
+///
+/// Written as a function rather than left to the caller for `pve::token_header`'s
+/// reason: it is the protocol's own spelling of a credential, and two callers
+/// composing it would be two places to get the encoding wrong. The encoding is
+/// `base64(user:password)`, fixed by RFC 7617 — no charset is appended, since
+/// services differ on whether they accept one and the basic form is what they
+/// all read.
+pub fn basic_header(username: &str, password: &str) -> String {
+    use base64::Engine as _;
+    let raw = format!("{}:{password}", username.trim());
+    let encoded = base64::engine::general_purpose::STANDARD.encode(raw.as_bytes());
+    format!("Basic {encoded}")
 }
 
 // --- Failures ---
@@ -1447,6 +1476,31 @@ mod tests {
             )
         );
         assert_eq!(pretty_fingerprint("abcd"), None);
+    }
+
+    /// The basic credential's encoding, which is RFC 7617's and nothing this
+    /// crate chose: a service that offers no session endpoint is presented with
+    /// `base64(user:password)`, and every implementation agrees on it.
+    #[test]
+    fn the_basic_credential_is_the_encoding_the_rfc_fixes() {
+        assert_eq!(basic_header("root", "calvin"), "Basic cm9vdDpjYWx2aW4=");
+        // The padding cases, since the alphabet and the `=` are all this has to
+        // get right: one byte over, two bytes over, and exactly on a boundary.
+        assert_eq!(basic_header("a", "b"), "Basic YTpi");
+        assert_eq!(basic_header("ab", "cd"), "Basic YWI6Y2Q=");
+        assert_eq!(basic_header("abc", "def"), "Basic YWJjOmRlZg==");
+        // A password containing the separator is not escaped, escaped or split:
+        // the first colon is the separator and the rest is the password.
+        assert_eq!(
+            base64::Engine::decode(
+                &base64::engine::general_purpose::STANDARD,
+                basic_header("admin", "a:b:c").trim_start_matches("Basic ")
+            )
+            .expect("decode"),
+            b"admin:a:b:c"
+        );
+        // Trimmed, because a form field arrives with whatever was pasted.
+        assert_eq!(basic_header("  root ", "x"), basic_header("root", "x"));
     }
 
     #[test]

@@ -126,6 +126,16 @@ pub enum Kind {
     /// agent dials with, the account it dials as and PVE's own error text are
     /// never in it.
     Pve,
+    /// A BMC configured through `api::bmc`, or a power request sent to one.
+    ///
+    /// Its own kind for `Pve`'s reason, and a second one of its own: what a row
+    /// records here is a *physical machine's* power, which is not the machine
+    /// this agent runs on either. Reading the readings is not recorded at all,
+    /// so a row is always a change — a save or a reset. The password, the
+    /// account and the service's own error text are never in it, and the
+    /// certificate fingerprint is not either: it is public, and a row is not
+    /// the place a reviewer looks for it.
+    Bmc,
 }
 
 impl Kind {
@@ -150,6 +160,7 @@ impl Kind {
             Kind::Ai => "ai",
             Kind::Snippet => "snippet",
             Kind::Pve => "pve",
+            Kind::Bmc => "bmc",
         }
     }
 }

@@ -1,6 +1,7 @@
 pub mod ai;
 pub mod benchmark;
 pub mod containers;
+pub mod bmc;
 pub mod cron;
 pub mod custom_cmds;
 pub mod desktop;

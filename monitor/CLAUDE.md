@@ -639,6 +639,108 @@ the panel password can't switch it on); shared admission checks live in
     inside the same dialog rather than stacking a second one. Nothing is read
     from PVE's task id: the listing is read again, because the guest's state is
     what the page draws and the UPID is not.
+- **`GET /api/v1/bmc`**, **`GET/PUT /api/v1/bmc/settings`**,
+  **`POST /api/v1/bmc/probe`** and **`POST /api/v1/bmc/control`** — the
+  baseboard management controller this agent proxies for the panel, over Redfish.
+  The app reaches a BMC directly (`packages/redfish`), which it can do because it
+  is holding the credential itself; a browser cannot — Redfish is not a CORS API
+  — and a monitor-only server has no sshd to forward a socket through either, so
+  the agent dials and the panel asks it.
+  - **The password lives here and is write-only.** `[bmc]` in `config.toml`,
+    written through `PUT /bmc/settings`, answered back by nothing: the GET
+    reports `secret` as `null` with `secret_set` beside it, a save sending that
+    `null` back keeps what is on disk, and `""` clears it — the same convention
+    as `/push`, `/ai/settings` and `/pve`. There is no `from_index` counterpart
+    and none is needed: this is one section, not a list, so the sentinel is the
+    field value itself.
+  - **The certificate is pinned, and that is the whole of the TLS trust.** A BMC
+    answers on its own certificate, self-signed unless the operator replaced it,
+    so the choice would otherwise be between refusing everything and accepting
+    anything — and accepting anything hands the password to whatever answered.
+    What is stored is the SHA-256 of one certificate's DER,
+    `sbm_parser::redfish`'s fingerprint. **No chain is walked either**: a
+    certificate a public CA signed is refused as well, because a BMC presenting
+    one is not the BMC this agent was told to talk to, and no validity window is
+    read — BMCs ship expired certificates and refusing on the clock would leave
+    the operator with no way in that does not involve reissuing it.
+    `PveConfig::ignore_cert` is the weaker half of the same decision and is
+    deliberately not copied.
+  - **`POST /bmc/probe` is how a certificate is reviewed, and it is the only
+    request made to a machine nothing is pinned for.** It performs the TLS
+    handshake, records the leaf and then refuses it, so the connection fails
+    before any request — and therefore any credential — is sent; the answer is
+    the fingerprint in both the raw and the colon-separated form a BMC's own
+    interface prints, which is what the operator compares against. A save with an
+    address and no readable fingerprint is refused (`missingFingerprint`), so the
+    order cannot be got wrong: there is no way to store a password for an address
+    whose certificate nobody looked at.
+  - **A refused certificate and an unreachable address are told apart.** reqwest
+    reports both as a connect error (`is_connect` is true for either), so the
+    verifier records that it refused and the client consults it — one is
+    "look at the certificate" (`certificateRejected`) and the other is "look at
+    the address" (`unreachable`, a 502).
+  - **One login per endpoint request, and the session is deleted again.** A BMC
+    keeps a handful of concurrent sessions and the operator's own browser usually
+    holds one, so a leaked session is the operator locked out of their own
+    machine. The token is read from the `x-auth-token` **response header** — it is
+    never in the document — and sent on every read that follows; the session is
+    `DELETE`d from the login's `Location` (or the body's `@odata.id`) when the
+    request is done, best effort and never a failure. A service that names no
+    session endpoint is presented with `Basic`, which is what an absent
+    `sessions` in the service root means.
+  - **Saving the settings and resetting the machine are `full_access`, and
+    reading is not.** Saving is gated for `/pve`'s reason — a `secret: null` PUT
+    keeps the stored password while `url` changes, so a caller with less could
+    point this agent at their own service and read the password out of the login
+    that followed. Reading the machine, its readings and the settings needs only
+    the panel login. `remote_access.bmc` is therefore **served, not grantable**,
+    and each response carries its own `editable`.
+  - **No upstream status is ever answered as itself.** A BMC answering 401 is a
+    400 `unauthorized`, because `frontend/src/lib/api.ts` logs the operator out on
+    a 401 and what failed is the *agent's* credential to a machine the operator is
+    not signed in to. 403 is `forbidden` (licensing gates parts of some services),
+    412/428 are `preconditionRequired`, anything else is 502 `invalidResponse`.
+    The service's own error document is not carried at all: none of these need it
+    to be phrased, and the login body is a document about a credential.
+  - **The model is `sbm_parser::redfish`**, shared with the app, which reads the
+    same service over the network. Nothing about the resource layout is assumed:
+    ids differ per vendor (`1`, `System.Embedded.1`, `system`), the sensor model
+    differs by firmware generation, and every path comes from what the service
+    said rather than from a template — which is also why the client refuses to
+    send a path that is not rooted and traversal-free, since the request carries
+    the BMC's own credential. A reset goes to the `target` the action named, with
+    the `ResetType` resolved from what the service advertises: `restart` prefers
+    `GracefulRestart` and falls back to `ForceRestart`, and a graceful shutdown
+    has **no** fallback, because `ForceOff` is not a shutdown.
+  - **An intent with nothing behind it is not offered and not substituted.** The
+    reading carries `intents` and the `ResetType` each would send, so a page draws
+    only buttons that do something and says what pressing one does; a caller that
+    asks anyway gets 400 `unsupportedIntent`.
+  - **A control answers immediately and does not wait.** The reset is sent, and
+    the answer is the `ResetType` that went and the power state it is moving
+    *from*; the page re-reads until that changes. Holding the request open for the
+    two minutes a shutdown takes is longer than any bound this agent sets, and
+    `/exec`'s own rule is that work outliving a request is started and then polled
+    in short ones.
+  - **A chassis that cannot be read loses only the sensors.** The power state and
+    the machine's identity come from the system, and a service may deny the
+    chassis on its own permissions; the answer says `sensors_read: false` with an
+    empty reading, because an empty reading alone reads as a machine with no fans.
+    A member count over `MAX_SENSOR_MEMBERS` sets `sensors_truncated` for the same
+    reason.
+  - The audit row is `kind = 'bmc'` and is always a change (reading the readings
+    is not recorded): `settings` for a save, the intent's own name for a control,
+    with the `ResetType` in the detail. The password, the account, the fingerprint
+    and the service's error text are never in it.
+  - `tests/bmc_api.rs` runs the whole thing against a fake service on loopback
+    that records what it was asked for — the path a reset went to, the JSON a
+    login was sent as, the header each read carries, the `DELETE` that ends the
+    session — and asserts the pinning pair and the probe sending nothing, the
+    write-only password, the 401-not-401 rule, the Basic fallback, and that the
+    grant is what decides a save and a reset. TODO(migration): the vendor
+    documents under test in `crates/sbm_parser/src/redfish.rs` are transcribed
+    from `packages/redfish`'s suite rather than read from a fixture both sides
+    share; they move to `test/fixtures/bmc/` when that package's model is deleted.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

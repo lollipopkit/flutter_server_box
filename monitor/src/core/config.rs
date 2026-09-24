@@ -35,6 +35,12 @@ pub struct Config {
     /// [`PveConfig`] for why the secret is only ever read here.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pve: Option<PveConfig>,
+    /// The baseboard management controller this agent proxies for the panel.
+    /// Absent in every config written before the feature existed, hence
+    /// `Option`; see [`BmcConfig`] for why the password is only ever read here
+    /// and why the certificate is pinned rather than ignored.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub bmc: Option<BmcConfig>,
     /// WebSocket access to the local sshd — off unless present and enabled.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
@@ -514,6 +520,75 @@ impl PveConfig {
     }
 }
 
+/// The baseboard management controller this agent proxies for the panel.
+///
+/// A BMC is reachable from the machine the agent runs on and from nowhere else
+/// the operator's browser is. The app dials one directly
+/// (`packages/redfish`) and can only do so because it is holding the
+/// credential itself; a panel in a browser cannot, since Redfish is not a CORS
+/// API — so the agent dials and the panel asks it. `api::bmc` is that proxy
+/// and this is the credential it dials with.
+///
+/// **The password is stored here and answered back by nothing.** `api::bmc`
+/// reads it and reports only whether one is set, which is `AiConfig` and
+/// `PveConfig`'s convention.
+///
+/// **The certificate is pinned rather than ignored.** A BMC answers on its own
+/// certificate, self-signed unless the operator replaced it, so the choice is
+/// between refusing everything and accepting anything — and accepting anything
+/// hands the password to whatever answered. A pin is the third option: the
+/// operator reviews the certificate once (`POST /api/v1/bmc/probe`, which
+/// sends no credential) and what is stored is the one certificate this agent
+/// will speak to. `PveConfig::ignore_cert` is the weaker half of the same
+/// decision and is not copied here.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct BmcConfig {
+    /// The BMC's address: scheme, host, port. Validated on save, because a
+    /// mistyped scheme is a page that fails on every refresh rather than at
+    /// the save.
+    ///
+    /// A path is accepted and dropped. Redfish addresses every resource from
+    /// a service root the specification fixes at `/redfish/v1/`, and an
+    /// operator pasting the URL out of a BMC's own web interface arrives with
+    /// `/redfish/v1/` on the end often enough that refusing it would be
+    /// refusing a correct address.
+    #[serde(default)]
+    pub url: String,
+    #[serde(default)]
+    pub username: String,
+    /// The account's password. Write-only through the API: `None` is what an
+    /// absent one is here, and the wire rule is `api::bmc::ReplaceRequest`'s.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secret: Option<String>,
+    /// The SHA-256 of the certificate's DER, lowercase hex, as
+    /// `sbm_parser::redfish` stores and compares it.
+    ///
+    /// Empty means nothing has been reviewed, and nothing reviewed means
+    /// nothing accepted — see [`is_pinned`](sbm_parser::redfish::is_pinned).
+    /// Not part of [`Self::is_configured`]: a BMC with no pin yet is
+    /// configured and cannot be read, which is `certificateRejected` rather
+    /// than "not set up", and the page says which of those it is.
+    #[serde(default)]
+    pub fingerprint: String,
+}
+
+impl BmcConfig {
+    /// Whether a request could be attempted: somewhere to send it and an
+    /// account to send it as.
+    ///
+    /// The secret is deliberately not part of this — nothing reads it back, so
+    /// a page cannot tell whether one is stored, and `api::bmc` reports that as
+    /// its own `secret_set`.
+    pub fn is_configured(&self) -> bool {
+        !self.url.trim().is_empty() && !self.username.trim().is_empty()
+    }
+
+    /// The pin as the crate normalizes it, or `None` when nothing was reviewed.
+    pub fn pin(&self) -> Option<String> {
+        sbm_parser::redfish::normalize_fingerprint(&self.fingerprint)
+    }
+}
+
 /// Desktops this agent can reach, as saved routes rather than live sessions.
 ///
 /// A route is a destination the agent's own account can dial — which is the
@@ -954,6 +1029,11 @@ impl Config {
         self.pve.clone().unwrap_or_default()
     }
 
+    /// The BMC section as written, or its empty default.
+    pub fn get_bmc(&self) -> BmcConfig {
+        self.bmc.clone().unwrap_or_default()
+    }
+
     /// The raw section as written (or its all-off defaults when absent).
     /// Call `.resolve(..)` on it to fill in the memory-derived capacities.
     pub fn get_remote_access(&self) -> RemoteAccessConfig {
@@ -1262,6 +1342,9 @@ impl Default for Config {
             // where one is configured and starts unconfigured rather than
             // pointing at an address the operator never typed.
             pve: Some(PveConfig::default()),
+            // Same, for the BMC: the section is written out so it can be found
+            // and so nothing it holds has to be guessed at.
+            bmc: Some(BmcConfig::default()),
         }
     }
 }

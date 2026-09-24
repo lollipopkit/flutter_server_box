@@ -335,6 +335,38 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::pve::control)),
             )
             .service(
+                // An address, an account, a password and a fingerprint: four
+                // small fields, so the default 32 KiB applies. Its own resource
+                // for `/pve/settings`'s reason: the password in it is
+                // write-only, and one save must not be a read-modify-write of
+                // everything the settings page happens to have open.
+                web::resource("/bmc/settings")
+                    .route(web::get().to(crate::api::bmc::get_settings))
+                    .route(web::put().to(crate::api::bmc::replace_settings)),
+            )
+            .service(
+                // An address, or nothing at all: the default 32 KiB applies.
+                // Its own resource rather than a query on `/bmc` because it is
+                // the one request made to a machine whose certificate has not
+                // been reviewed — it sends a TLS hello and no credential.
+                web::resource("/bmc/probe")
+                    .route(web::post().to(crate::api::bmc::probe)),
+            )
+            .service(
+                // A read with no body, which is small: the default 32 KiB
+                // applies. Reading a BMC is one request to the agent and a
+                // dozen to the machine behind it, which is what makes it a
+                // proxy rather than a relayed socket.
+                web::resource("/bmc").route(web::get().to(crate::api::bmc::state)),
+            )
+            .service(
+                // One intent: one small field, so the default 32 KiB applies.
+                // Its own resource rather than a second verb on `/bmc` because
+                // what it addresses is the machine's power rather than the page.
+                web::resource("/bmc/control")
+                    .route(web::post().to(crate::api::bmc::control)),
+            )
+            .service(
                 // A read with no body, and one action — a verb, a container id
                 // and a flag — so the default 32 KiB applies to both. The part
                 // is a query parameter rather than a path segment: the three
@@ -1051,6 +1083,14 @@ struct RemoteAccessView {
     /// each response rather than by withholding the route — the settings page
     /// has to open read-only rather than fail on the first save.
     pve: bool,
+    /// Whether this agent serves the BMC endpoint at all.
+    ///
+    /// Served, not grantable, for [`Self::pve`]'s reason: reading the machine
+    /// and its readings needs only the panel login, and a caller who may not
+    /// change its power state can still read it and be told why. Resetting the
+    /// machine and saving the controller's credential are `full_access`, said
+    /// as `editable` in each response rather than by withholding the route.
+    bmc: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -1110,6 +1150,9 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             // Served, not grantable, for `benchmark`'s reason. See
             // `RemoteAccessView::pve`.
             pve: true,
+            // Served, not grantable, for `pve`'s reason. See
+            // `RemoteAccessView::bmc`.
+            bmc: true,
         },
     }))
 }

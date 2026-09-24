@@ -213,6 +213,32 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
                 "enabled": true,
             })),
         ),
+        (Method::GET, "/api/v1/bmc", None),
+        (Method::GET, "/api/v1/bmc/settings", None),
+        // An address nothing can be dialed from, which validation refuses before
+        // the file is written — and it is the refusal, not an empty address,
+        // that has to be sent here: an empty one means "clear the section" and
+        // is accepted, which would rewrite the `config.toml` this suite runs
+        // beside.
+        (
+            Method::PUT,
+            "/api/v1/bmc/settings",
+            Some(json!({ "url": "not-an-address", "username": "scope", "fingerprint": "" })),
+        ),
+        // An intent no service implements, refused before the machine is
+        // dialed — which is also why it cannot touch anything.
+        (
+            Method::POST,
+            "/api/v1/bmc/control",
+            Some(json!({ "intent": "nope" })),
+        ),
+        // A port nothing is listening on. The probe sends no credential and
+        // reads no document, so the only thing it can do is fail.
+        (
+            Method::POST,
+            "/api/v1/bmc/probe",
+            Some(json!({ "url": "http://127.0.0.1:1" })),
+        ),
         (Method::GET, "/api/v1/containers?part=containers", None),
         // A container's own output is reachable from the panel login, and a
         // watch token reaches `/metrics` and nothing else.
