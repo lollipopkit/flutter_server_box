@@ -206,6 +206,110 @@ export interface RemoteAccess {
   /// `full_access`, said as `editable` in each response rather than by
   /// withholding the tab. Absent on agents predating the endpoint.
   pve?: boolean
+  /// Whether `/api/v1/bmc` answers this agent at all — `pve`'s field for `pve`'s
+  /// reason. Reading the machine and its readings needs only the panel login;
+  /// resetting it and saving the controller's password are `full_access`, said
+  /// as `editable` in each response rather than by withholding the tab. Absent
+  /// on agents predating the endpoint.
+  bmc?: boolean
+}
+
+/// An address, an account and a certificate fingerprint, as the agent holds
+/// them. The password is never in one: `secret` is always `null` and
+/// `secret_set` says whether one is stored.
+export interface BmcSettingsView {
+  configured: boolean
+  url: string
+  username: string
+  secret: null
+  secret_set: boolean
+  /// As stored and normalized: lowercase hex, no separators.
+  fingerprint: string
+  /// The same, in the form a BMC's own interface prints it — what an operator
+  /// compares against the page they are looking at.
+  fingerprint_pretty: string | null
+  fingerprint_set: boolean
+  editable: boolean
+}
+
+/// A save. The whole section is replaced, so every field is sent; `secret`
+/// follows the push convention — `null` keeps what is stored, `""` clears it,
+/// anything else replaces it.
+export interface BmcSettingsPayload {
+  url: string
+  username: string
+  secret: string | null
+  fingerprint: string
+}
+
+/// What the certificate at an address is, fetched without sending anything to
+/// it. The fingerprint is the thing that gets pinned; the pretty form is for
+/// the operator to read.
+export interface BmcProbeResult {
+  fingerprint: string
+  fingerprint_pretty: string | null
+}
+
+export interface BmcReading {
+  name: string
+  value: number
+  /// As the service labelled it. Passed through rather than normalised: a fan
+  /// reported in `Percent` and one in `RPM` are different numbers.
+  unit: string | null
+}
+
+export interface BmcSensors {
+  temperatures: BmcReading[]
+  fans: BmcReading[]
+  watts: number | null
+}
+
+/// What a power request means, as opposed to what Redfish calls it.
+export type BmcIntent = 'on' | 'gracefulShutdown' | 'forceOff' | 'restart' | 'powerCycle'
+
+export interface BmcSystem {
+  power_state: 'on' | 'off' | 'poweringOn' | 'poweringOff' | 'paused' | 'unknown'
+  model: string | null
+  manufacturer: string | null
+  serial: string | null
+  bios_version: string | null
+  health: string | null
+}
+
+/// One intent the machine can be asked for and the `ResetType` behind it, so a
+/// page can say what pressing a button does.
+export interface BmcIntentTarget {
+  intent: BmcIntent
+  reset_type: string
+}
+
+export interface BmcState {
+  version: string | null
+  product: string | null
+  vendor: string | null
+  system: BmcSystem
+  /// Absent when the service denied the chassis, which is not a failed page:
+  /// the power state and the machine's identity came from the system.
+  chassis?: { name: string | null } | null
+  sensors: BmcSensors
+  /// Whether the readings were read at all. `false` with an empty `sensors` is
+  /// the honest pair: an empty reading alone reads as a machine with no fans.
+  sensors_read: boolean
+  sensors_truncated: boolean
+  /// Which intents this machine can actually be asked for, in the order a form
+  /// offers them.
+  intents: BmcIntent[]
+  reset_types: BmcIntentTarget[]
+  editable: boolean
+}
+
+export interface BmcControlResult {
+  /// The `ResetType` that was sent — `restart` falling back to `ForceRestart`
+  /// is a different operation, and the page says which.
+  reset_type: string
+  /// The state it is moving *from*. The machine takes tens of seconds to move,
+  /// so the page re-reads until this changes.
+  power_state: BmcSystem['power_state']
 }
 
 /// One job in the account's crontab, with its schedule already expanded.

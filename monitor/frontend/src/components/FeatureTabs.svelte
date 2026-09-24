@@ -3,6 +3,7 @@
     Activity,
     Boxes,
     CalendarClock,
+    CircuitBoard,
     Container,
     Gauge,
     MonitorPlay,
@@ -46,6 +47,7 @@
     ai: { label: () => $LL.ai(), icon: Sparkles },
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },
     pve: { label: () => $LL.pve(), icon: Boxes },
+    bmc: { label: () => $LL.bmc(), icon: CircuitBoard },
   }
 
   // Read here rather than passed in: the bar is in three callers' headers and a

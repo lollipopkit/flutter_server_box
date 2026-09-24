@@ -2327,6 +2327,252 @@ type RootTranslation = {
 	 */
 	aiStopDeclined: string
 	/**
+	 * B​M​C
+	 */
+	bmc: string
+	/**
+	 * C​o​n​t​r​o​l​l​e​r​ ​s​e​t​t​i​n​g​s
+	 */
+	bmcSettings: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​c​o​n​t​r​o​l​l​e​r​ ​c​o​n​f​i​g​u​r​e​d​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​r​e​a​d​ ​h​e​r​e​.​ ​G​i​v​e​ ​i​t​ ​a​n​ ​a​d​d​r​e​s​s​,​ ​a​n​ ​a​c​c​o​u​n​t​ ​a​n​d​ ​t​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​ ​t​o​ ​p​i​n​.
+	 */
+	bmcUnset: string
+	/**
+	 * S​e​t​ ​o​n​e​ ​u​p
+	 */
+	bmcSetUp: string
+	/**
+	 * T​h​i​s​ ​c​o​n​t​r​o​l​l​e​r​ ​c​a​n​ ​b​e​ ​r​e​a​d​ ​h​e​r​e​ ​b​u​t​ ​n​o​t​ ​c​h​a​n​g​e​d​.​ ​R​e​s​e​t​t​i​n​g​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​a​n​d​ ​s​a​v​i​n​g​ ​i​t​s​ ​p​a​s​s​w​o​r​d​ ​a​r​e​ ​a​r​r​a​n​g​e​m​e​n​t​s​ ​f​o​r​ ​t​h​i​s​ ​a​g​e​n​t​ ​t​o​ ​a​c​t​ ​a​s​ ​i​t​s​ ​o​w​n​ ​u​s​e​r​ ​o​n​ ​h​a​r​d​w​a​r​e​ ​b​e​y​o​n​d​ ​i​t​,​ ​w​h​i​c​h​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​g​r​a​n​t​ ​a​s​ ​t​h​e​ ​s​h​e​l​l​.
+	 */
+	bmcReadOnly: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	bmcUrl: string
+	/**
+	 * T​h​e​ ​c​o​n​t​r​o​l​l​e​r​’​s​ ​o​w​n​ ​a​d​d​r​e​s​s​,​ ​e​.​g​.​ ​h​t​t​p​s​:​/​/​1​0​.​0​.​0​.​5​.​ ​A​ ​p​a​t​h​ ​i​s​ ​k​e​p​t​,​ ​s​o​ ​a​ ​c​o​n​t​r​o​l​l​e​r​ ​b​e​h​i​n​d​ ​a​ ​p​r​o​x​y​ ​w​o​r​k​s​;​ ​a​ ​t​r​a​i​l​i​n​g​ ​/​r​e​d​f​i​s​h​/​v​1​ ​i​s​ ​d​r​o​p​p​e​d​.
+	 */
+	bmcUrlHint: string
+	/**
+	 * A​c​c​o​u​n​t
+	 */
+	bmcUsername: string
+	/**
+	 * P​a​s​s​w​o​r​d
+	 */
+	bmcPassword: string
+	/**
+	 * A​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​t​o​r​e​d​.​ ​L​e​a​v​e​ ​t​h​i​s​ ​b​l​a​n​k​ ​t​o​ ​k​e​e​p​ ​i​t​.
+	 */
+	bmcSecretKeepHint: string
+	/**
+	 * N​o​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​t​o​r​e​d​.​ ​O​n​e​ ​i​s​ ​n​e​e​d​e​d​ ​b​e​f​o​r​e​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​c​a​n​ ​b​e​ ​r​e​a​d​.
+	 */
+	bmcSecretNone: string
+	/**
+	 * C​l​e​a​r​ ​t​h​e​ ​s​t​o​r​e​d​ ​p​a​s​s​w​o​r​d
+	 */
+	bmcSecretClear: string
+	/**
+	 * C​e​r​t​i​f​i​c​a​t​e​ ​f​i​n​g​e​r​p​r​i​n​t
+	 */
+	bmcFingerprint: string
+	/**
+	 * T​h​e​ ​S​H​A​-​2​5​6​ ​o​f​ ​t​h​e​ ​c​o​n​t​r​o​l​l​e​r​’​s​ ​c​e​r​t​i​f​i​c​a​t​e​.​ ​R​e​a​d​ ​i​t​ ​w​i​t​h​ ​t​h​e​ ​b​u​t​t​o​n​ ​b​e​s​i​d​e​ ​t​h​i​s​ ​f​i​e​l​d​ ​a​n​d​ ​c​o​m​p​a​r​e​ ​i​t​ ​a​g​a​i​n​s​t​ ​w​h​a​t​ ​t​h​e​ ​c​o​n​t​r​o​l​l​e​r​’​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​ ​s​h​o​w​s​ ​—​ ​t​h​a​t​ ​c​o​m​p​a​r​i​s​o​n​ ​i​s​ ​t​h​e​ ​w​h​o​l​e​ ​o​f​ ​t​h​e​ ​t​r​u​s​t​,​ ​a​n​d​ ​n​o​t​h​i​n​g​ ​c​a​n​ ​b​e​ ​r​e​a​d​ ​o​r​ ​s​a​v​e​d​ ​w​i​t​h​o​u​t​ ​i​t​.
+	 */
+	bmcFingerprintHint: string
+	/**
+	 * R​e​a​d​ ​c​e​r​t​i​f​i​c​a​t​e
+	 */
+	bmcProbe: string
+	/**
+	 * R​e​a​d​i​n​g​.​.​.
+	 */
+	bmcProbing: string
+	/**
+	 * M​a​c​h​i​n​e
+	 */
+	bmcMachine: string
+	/**
+	 * M​a​n​u​f​a​c​t​u​r​e​r
+	 */
+	bmcManufacturer: string
+	/**
+	 * M​o​d​e​l
+	 */
+	bmcModel: string
+	/**
+	 * S​e​r​i​a​l
+	 */
+	bmcSerial: string
+	/**
+	 * B​I​O​S
+	 */
+	bmcBios: string
+	/**
+	 * H​e​a​l​t​h
+	 */
+	bmcHealth: string
+	/**
+	 * R​e​a​d​i​n​g​s
+	 */
+	bmcSensors: string
+	/**
+	 * T​e​m​p​e​r​a​t​u​r​e​s
+	 */
+	bmcTemperatures: string
+	/**
+	 * F​a​n​s
+	 */
+	bmcFans: string
+	/**
+	 * {​w​a​t​t​s​}​ ​W
+	 * @param {unknown} watts
+	 */
+	bmcPowerDraw: RequiredParams<'watts'>
+	/**
+	 * T​h​i​s​ ​c​o​n​t​r​o​l​l​e​r​ ​w​o​u​l​d​ ​n​o​t​ ​g​i​v​e​ ​i​t​s​ ​r​e​a​d​i​n​g​s​.​ ​T​h​e​ ​m​a​c​h​i​n​e​’​s​ ​o​w​n​ ​s​t​a​t​e​ ​a​b​o​v​e​ ​i​s​ ​u​n​a​f​f​e​c​t​e​d​.
+	 */
+	bmcSensorsUnread: string
+	/**
+	 * T​h​i​s​ ​c​o​n​t​r​o​l​l​e​r​ ​r​e​p​o​r​t​s​ ​n​o​ ​t​e​m​p​e​r​a​t​u​r​e​ ​o​r​ ​f​a​n​ ​r​e​a​d​i​n​g​s​.
+	 */
+	bmcSensorsNone: string
+	/**
+	 * M​o​r​e​ ​r​e​a​d​i​n​g​s​ ​a​r​e​ ​p​u​b​l​i​s​h​e​d​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​,​ ​s​o​ ​t​h​i​s​ ​l​i​s​t​ ​i​s​ ​s​h​o​r​t​.
+	 */
+	bmcSensorsTruncated: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​’​s​ ​c​o​n​t​r​o​l​l​e​r​ ​i​m​p​l​e​m​e​n​t​s​ ​n​o​n​e​ ​o​f​ ​t​h​e​ ​p​o​w​e​r​ ​o​p​e​r​a​t​i​o​n​s​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​t​h​i​n​g​ ​t​o​ ​p​r​e​s​s​ ​h​e​r​e​.
+	 */
+	bmcNoIntents: string
+	/**
+	 * N​o​t​ ​i​m​p​l​e​m​e​n​t​e​d​ ​b​y​ ​t​h​i​s​ ​c​o​n​t​r​o​l​l​e​r​,​ ​a​n​d​ ​s​o​ ​n​o​t​ ​o​f​f​e​r​e​d​:​ ​{​i​n​t​e​n​t​s​}​.
+	 * @param {unknown} intents
+	 */
+	bmcUnavailableIntents: RequiredParams<'intents'>
+	/**
+	 * S​e​n​d​ ​{​a​c​t​i​o​n​}​ ​t​o​ ​t​h​i​s​ ​m​a​c​h​i​n​e​?​ ​I​t​ ​c​a​n​n​o​t​ ​b​e​ ​t​a​k​e​n​ ​b​a​c​k​ ​f​r​o​m​ ​h​e​r​e​,​ ​a​n​d​ ​a​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​o​n​ ​i​t​ ​e​n​d​s​.
+	 * @param {unknown} action
+	 */
+	bmcConfirm: RequiredParams<'action'>
+	/**
+	 * S​e​n​t​:​ ​{​a​c​t​i​o​n​}​,​ ​a​s​ ​{​r​e​s​e​t​T​y​p​e​}​.​ ​I​f​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​i​s​ ​g​o​i​n​g​ ​d​o​w​n​,​ ​t​h​i​s​ ​p​a​g​e​ ​l​o​s​e​s​ ​i​t​ ​u​n​t​i​l​ ​i​t​ ​i​s​ ​b​a​c​k​.
+	 * @param {unknown} action
+	 * @param {unknown} resetType
+	 */
+	bmcActionSent: RequiredParams<'action' | 'resetType'>
+	/**
+	 * {​a​c​t​i​o​n​}​ ​f​i​n​i​s​h​e​d​:​ ​t​h​e​ ​m​a​c​h​i​n​e​ ​r​e​p​o​r​t​s​ ​t​h​e​ ​s​t​a​t​e​ ​t​h​a​t​ ​w​a​s​ ​a​s​k​e​d​ ​f​o​r​.
+	 * @param {unknown} action
+	 */
+	bmcActionDone: RequiredParams<'action'>
+	/**
+	 * O​n
+	 */
+	bmcStateOn: string
+	/**
+	 * O​f​f
+	 */
+	bmcStateOff: string
+	/**
+	 * P​o​w​e​r​i​n​g​ ​o​n
+	 */
+	bmcStatePoweringOn: string
+	/**
+	 * P​o​w​e​r​i​n​g​ ​o​f​f
+	 */
+	bmcStatePoweringOff: string
+	/**
+	 * P​a​u​s​e​d
+	 */
+	bmcStatePaused: string
+	/**
+	 * U​n​k​n​o​w​n
+	 */
+	bmcStateUnknown: string
+	/**
+	 * P​o​w​e​r​ ​o​n
+	 */
+	bmcIntentOn: string
+	/**
+	 * S​h​u​t​ ​d​o​w​n
+	 */
+	bmcIntentGracefulShutdown: string
+	/**
+	 * F​o​r​c​e​ ​o​f​f
+	 */
+	bmcIntentForceOff: string
+	/**
+	 * R​e​s​t​a​r​t
+	 */
+	bmcIntentRestart: string
+	/**
+	 * P​o​w​e​r​ ​c​y​c​l​e
+	 */
+	bmcIntentPowerCycle: string
+	/**
+	 * N​o​ ​c​o​n​t​r​o​l​l​e​r​ ​i​s​ ​c​o​n​f​i​g​u​r​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 */
+	bmcNotConfigured: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​n​ ​a​d​d​r​e​s​s​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​d​i​a​l​.
+	 */
+	bmcInvalidUrl: string
+	/**
+	 * A​n​ ​a​c​c​o​u​n​t​ ​i​s​ ​n​e​e​d​e​d​.
+	 */
+	bmcMissingUsername: string
+	/**
+	 * A​ ​c​e​r​t​i​f​i​c​a​t​e​ ​h​a​s​ ​t​o​ ​b​e​ ​r​e​a​d​ ​a​n​d​ ​s​t​o​r​e​d​ ​b​e​f​o​r​e​ ​a​ ​p​a​s​s​w​o​r​d​ ​c​a​n​ ​b​e​ ​s​a​v​e​d​ ​f​o​r​ ​i​t​.
+	 */
+	bmcMissingFingerprint: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​p​o​w​e​r​ ​o​p​e​r​a​t​i​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​k​n​o​w​s​.
+	 */
+	bmcInvalidIntent: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​a​n​s​w​e​r​e​d​,​ ​b​u​t​ ​n​o​t​ ​w​i​t​h​ ​a​ ​R​e​d​f​i​s​h​ ​s​e​r​v​i​c​e​.
+	 */
+	bmcNotAService: string
+	/**
+	 * T​h​e​ ​s​e​r​v​i​c​e​ ​h​a​s​ ​n​o​ ​s​y​s​t​e​m​ ​i​n​ ​i​t​.​ ​A​ ​c​o​n​t​r​o​l​l​e​r​ ​w​i​t​h​ ​e​v​e​r​y​ ​n​o​d​e​ ​p​o​w​e​r​e​d​ ​o​u​t​ ​i​s​ ​o​n​e​ ​o​f​ ​t​h​e​s​e​.
+	 */
+	bmcNoSystem: string
+	/**
+	 * T​h​e​ ​c​e​r​t​i​f​i​c​a​t​e​ ​i​s​ ​n​o​t​ ​t​h​e​ ​o​n​e​ ​t​h​a​t​ ​w​a​s​ ​r​e​v​i​e​w​e​d​.​ ​R​e​a​d​ ​i​t​ ​a​g​a​i​n​ ​a​n​d​ ​c​o​m​p​a​r​e​ ​i​t​ ​a​g​a​i​n​s​t​ ​t​h​e​ ​c​o​n​t​r​o​l​l​e​r​’​s​ ​o​w​n​ ​i​n​t​e​r​f​a​c​e​ ​b​e​f​o​r​e​ ​s​t​o​r​i​n​g​ ​i​t​.
+	 */
+	bmcCertificateRejected: string
+	/**
+	 * T​h​e​ ​c​o​n​t​r​o​l​l​e​r​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​s​t​o​r​e​d​ ​a​c​c​o​u​n​t​ ​o​r​ ​p​a​s​s​w​o​r​d​.
+	 */
+	bmcUnauthorized: string
+	/**
+	 * N​o​ ​p​a​s​s​w​o​r​d​ ​i​s​ ​s​t​o​r​e​d​ ​f​o​r​ ​t​h​i​s​ ​c​o​n​t​r​o​l​l​e​r​.
+	 */
+	bmcNoCredential: string
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	bmcForbidden: string
+	/**
+	 * T​h​e​ ​c​o​n​t​r​o​l​l​e​r​ ​w​a​n​t​s​ ​t​h​e​ ​r​e​s​o​u​r​c​e​ ​r​e​a​d​ ​a​g​a​i​n​ ​b​e​f​o​r​e​ ​i​t​ ​w​i​l​l​ ​c​h​a​n​g​e​ ​i​t​.
+	 */
+	bmcPreconditionRequired: string
+	/**
+	 * T​h​i​s​ ​c​o​n​t​r​o​l​l​e​r​ ​i​m​p​l​e​m​e​n​t​s​ ​n​o​t​h​i​n​g​ ​t​h​a​t​ ​s​a​t​i​s​f​i​e​s​ ​t​h​a​t​ ​o​p​e​r​a​t​i​o​n​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​w​a​s​ ​s​e​n​t​.
+	 */
+	bmcUnsupportedIntent: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​a​n​s​w​e​r​e​d​,​ ​b​u​t​ ​n​o​t​ ​w​i​t​h​ ​s​o​m​e​t​h​i​n​g​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​r​e​a​d​.
+	 */
+	bmcInvalidResponse: string
+	/**
+	 * T​h​e​ ​c​o​n​t​r​o​l​l​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​c​h​e​d​.
+	 */
+	bmcUnreachable: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -4917,6 +5163,246 @@ export type TranslationFunctions = {
 	 * Every call was declined.
 	 */
 	aiStopDeclined: () => LocalizedString
+	/**
+	 * BMC
+	 */
+	bmc: () => LocalizedString
+	/**
+	 * Controller settings
+	 */
+	bmcSettings: () => LocalizedString
+	/**
+	 * This agent has no controller configured, so there is nothing to read here. Give it an address, an account and the certificate to pin.
+	 */
+	bmcUnset: () => LocalizedString
+	/**
+	 * Set one up
+	 */
+	bmcSetUp: () => LocalizedString
+	/**
+	 * This controller can be read here but not changed. Resetting the machine and saving its password are arrangements for this agent to act as its own user on hardware beyond it, which is the same grant as the shell.
+	 */
+	bmcReadOnly: () => LocalizedString
+	/**
+	 * Address
+	 */
+	bmcUrl: () => LocalizedString
+	/**
+	 * The controller’s own address, e.g. https://10.0.0.5. A path is kept, so a controller behind a proxy works; a trailing /redfish/v1 is dropped.
+	 */
+	bmcUrlHint: () => LocalizedString
+	/**
+	 * Account
+	 */
+	bmcUsername: () => LocalizedString
+	/**
+	 * Password
+	 */
+	bmcPassword: () => LocalizedString
+	/**
+	 * A password is stored. Leave this blank to keep it.
+	 */
+	bmcSecretKeepHint: () => LocalizedString
+	/**
+	 * No password is stored. One is needed before the machine can be read.
+	 */
+	bmcSecretNone: () => LocalizedString
+	/**
+	 * Clear the stored password
+	 */
+	bmcSecretClear: () => LocalizedString
+	/**
+	 * Certificate fingerprint
+	 */
+	bmcFingerprint: () => LocalizedString
+	/**
+	 * The SHA-256 of the controller’s certificate. Read it with the button beside this field and compare it against what the controller’s own interface shows — that comparison is the whole of the trust, and nothing can be read or saved without it.
+	 */
+	bmcFingerprintHint: () => LocalizedString
+	/**
+	 * Read certificate
+	 */
+	bmcProbe: () => LocalizedString
+	/**
+	 * Reading...
+	 */
+	bmcProbing: () => LocalizedString
+	/**
+	 * Machine
+	 */
+	bmcMachine: () => LocalizedString
+	/**
+	 * Manufacturer
+	 */
+	bmcManufacturer: () => LocalizedString
+	/**
+	 * Model
+	 */
+	bmcModel: () => LocalizedString
+	/**
+	 * Serial
+	 */
+	bmcSerial: () => LocalizedString
+	/**
+	 * BIOS
+	 */
+	bmcBios: () => LocalizedString
+	/**
+	 * Health
+	 */
+	bmcHealth: () => LocalizedString
+	/**
+	 * Readings
+	 */
+	bmcSensors: () => LocalizedString
+	/**
+	 * Temperatures
+	 */
+	bmcTemperatures: () => LocalizedString
+	/**
+	 * Fans
+	 */
+	bmcFans: () => LocalizedString
+	/**
+	 * {watts} W
+	 */
+	bmcPowerDraw: (arg: { watts: unknown }) => LocalizedString
+	/**
+	 * This controller would not give its readings. The machine’s own state above is unaffected.
+	 */
+	bmcSensorsUnread: () => LocalizedString
+	/**
+	 * This controller reports no temperature or fan readings.
+	 */
+	bmcSensorsNone: () => LocalizedString
+	/**
+	 * More readings are published than this agent reads, so this list is short.
+	 */
+	bmcSensorsTruncated: () => LocalizedString
+	/**
+	 * This machine’s controller implements none of the power operations, so there is nothing to press here.
+	 */
+	bmcNoIntents: () => LocalizedString
+	/**
+	 * Not implemented by this controller, and so not offered: {intents}.
+	 */
+	bmcUnavailableIntents: (arg: { intents: unknown }) => LocalizedString
+	/**
+	 * Send {action} to this machine? It cannot be taken back from here, and anything running on it ends.
+	 */
+	bmcConfirm: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * Sent: {action}, as {resetType}. If the machine is going down, this page loses it until it is back.
+	 */
+	bmcActionSent: (arg: { action: unknown, resetType: unknown }) => LocalizedString
+	/**
+	 * {action} finished: the machine reports the state that was asked for.
+	 */
+	bmcActionDone: (arg: { action: unknown }) => LocalizedString
+	/**
+	 * On
+	 */
+	bmcStateOn: () => LocalizedString
+	/**
+	 * Off
+	 */
+	bmcStateOff: () => LocalizedString
+	/**
+	 * Powering on
+	 */
+	bmcStatePoweringOn: () => LocalizedString
+	/**
+	 * Powering off
+	 */
+	bmcStatePoweringOff: () => LocalizedString
+	/**
+	 * Paused
+	 */
+	bmcStatePaused: () => LocalizedString
+	/**
+	 * Unknown
+	 */
+	bmcStateUnknown: () => LocalizedString
+	/**
+	 * Power on
+	 */
+	bmcIntentOn: () => LocalizedString
+	/**
+	 * Shut down
+	 */
+	bmcIntentGracefulShutdown: () => LocalizedString
+	/**
+	 * Force off
+	 */
+	bmcIntentForceOff: () => LocalizedString
+	/**
+	 * Restart
+	 */
+	bmcIntentRestart: () => LocalizedString
+	/**
+	 * Power cycle
+	 */
+	bmcIntentPowerCycle: () => LocalizedString
+	/**
+	 * No controller is configured on this agent.
+	 */
+	bmcNotConfigured: () => LocalizedString
+	/**
+	 * That is not an address this agent can dial.
+	 */
+	bmcInvalidUrl: () => LocalizedString
+	/**
+	 * An account is needed.
+	 */
+	bmcMissingUsername: () => LocalizedString
+	/**
+	 * A certificate has to be read and stored before a password can be saved for it.
+	 */
+	bmcMissingFingerprint: () => LocalizedString
+	/**
+	 * That is not a power operation this agent knows.
+	 */
+	bmcInvalidIntent: () => LocalizedString
+	/**
+	 * The address answered, but not with a Redfish service.
+	 */
+	bmcNotAService: () => LocalizedString
+	/**
+	 * The service has no system in it. A controller with every node powered out is one of these.
+	 */
+	bmcNoSystem: () => LocalizedString
+	/**
+	 * The certificate is not the one that was reviewed. Read it again and compare it against the controller’s own interface before storing it.
+	 */
+	bmcCertificateRejected: () => LocalizedString
+	/**
+	 * The controller rejected the stored account or password.
+	 */
+	bmcUnauthorized: () => LocalizedString
+	/**
+	 * No password is stored for this controller.
+	 */
+	bmcNoCredential: () => LocalizedString
+	/**
+	 * The account may not do that.
+	 */
+	bmcForbidden: () => LocalizedString
+	/**
+	 * The controller wants the resource read again before it will change it.
+	 */
+	bmcPreconditionRequired: () => LocalizedString
+	/**
+	 * This controller implements nothing that satisfies that operation, so nothing was sent.
+	 */
+	bmcUnsupportedIntent: () => LocalizedString
+	/**
+	 * The address answered, but not with something this agent can read.
+	 */
+	bmcInvalidResponse: () => LocalizedString
+	/**
+	 * The controller could not be reached.
+	 */
+	bmcUnreachable: () => LocalizedString
 	/**
 	 * Close
 	 */

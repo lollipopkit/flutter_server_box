@@ -12,6 +12,7 @@
   import Desktop from './pages/Desktop.svelte'
   import Snippets from './pages/Snippets.svelte'
   import Benchmark from './pages/Benchmark.svelte'
+  import Bmc from './pages/Bmc.svelte'
   import Pve from './pages/Pve.svelte'
   import Ai from './pages/Ai.svelte'
   import Files from './pages/Files.svelte'
@@ -63,6 +64,8 @@
             <Ai onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'pve'}
             <Pve onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'bmc'}
+            <Bmc onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}

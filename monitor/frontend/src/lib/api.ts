@@ -10,6 +10,12 @@ import type {
   BenchOptions,
   BenchRun,
   BenchView,
+  BmcControlResult,
+  BmcIntent,
+  BmcProbeResult,
+  BmcSettingsPayload,
+  BmcSettingsView,
+  BmcState,
   CardOrderPayload,
   Capabilities,
   ContainerAction,
@@ -614,6 +620,62 @@ export const api = {
       '/pve/control',
       { method: 'POST', body: JSON.stringify(request_) },
       'Failed to act on the guest',
+    ),
+  /// The machine behind this agent's baseboard management controller: its power
+  /// state, what it is, and the readings from its chassis.
+  ///
+  /// Reading needs only the panel login. A refusal arrives as a stable code,
+  /// two vocabularies in one: `notConfigured`, `invalidUrl`, `missingUsername`,
+  /// `missingFingerprint` and `invalidIntent` are this agent's, and everything
+  /// else is `sbm_parser::redfish`'s — `notAService`, `noSystem`,
+  /// `certificateRejected`, `unauthorized`, `forbidden`, `preconditionRequired`,
+  /// `unsupportedIntent`, `invalidResponse`, `unreachable`. A BMC answering 401
+  /// is `unauthorized` rather than 401, because this client logs the operator
+  /// out on a 401 of its own and what failed is the *agent's* credential.
+  getBmc: () => request<BmcState>('/bmc', {}, 'Failed to reach the controller'),
+  /// The stored configuration. `secret` is always `null` and `secret_set` says
+  /// whether a password is held.
+  getBmcSettings: () =>
+    request<BmcSettingsView>('/bmc/settings', {}, 'Failed to read the controller settings'),
+  /// The whole section: a `PUT` replaces what it names, so an empty address is
+  /// how it is cleared. `secret: null` keeps what is stored and `""` clears it.
+  ///
+  /// Saving is `full_access`, on the agent's argument that a save keeping the
+  /// stored password while changing the address would hand that password to a
+  /// host the caller names. An address with no fingerprint is refused
+  /// (`missingFingerprint`), so a password cannot be stored for a certificate
+  /// nobody has reviewed.
+  updateBmcSettings: (section: BmcSettingsPayload) =>
+    request<BmcSettingsView>(
+      '/bmc/settings',
+      { method: 'PUT', body: JSON.stringify(section) },
+      'Failed to save the controller settings',
+    ),
+  /// What the certificate at an address is, fetched without sending anything to
+  /// it — the handshake is meant to fail, and no credential is on the wire.
+  ///
+  /// An empty `url` uses the stored address, so the page's first step needs no
+  /// save first. Not gated on `full_access`: it reaches an address the operator
+  /// already stored, and it discloses only a fingerprint the service publishes
+  /// to anyone who connects.
+  probeBmc: (url: string) =>
+    request<BmcProbeResult>(
+      '/bmc/probe',
+      { method: 'POST', body: JSON.stringify({ url }) },
+      'Failed to read the certificate',
+    ),
+  /// Asks the machine for one power state.
+  ///
+  /// The answer is the `ResetType` that was sent and the state it is moving
+  /// *from*: a shutdown takes tens of seconds, so the page re-reads `getBmc`
+  /// until the state changes rather than holding one request open. An intent the
+  /// service has nothing behind is refused as `unsupportedIntent` and is not
+  /// substituted — `forceOff` is not a shutdown.
+  controlBmc: (intent: BmcIntent) =>
+    request<BmcControlResult>(
+      '/bmc/control',
+      { method: 'POST', body: JSON.stringify({ intent }) },
+      'Failed to reach the machine',
     ),
   /// The benchmark runs this agent has started, and the live state of whichever
   /// is going.
