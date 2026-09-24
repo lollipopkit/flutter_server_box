@@ -338,6 +338,16 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::desktop::replace)),
             )
             .service(
+                // A set of flags in and a row out, all small: the default
+                // 32 KiB applies. Three verbs because the resource has three
+                // operations — a run is started, stopped and forgotten, and
+                // the read carries the live state of whichever is going.
+                web::resource("/benchmark")
+                    .route(web::get().to(crate::api::benchmark::get))
+                    .route(web::post().to(crate::api::benchmark::act))
+                    .route(web::delete().to(crate::api::benchmark::remove)),
+            )
+            .service(
                 // A streamed body, so ntex's payload limit must not
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
@@ -916,6 +926,23 @@ struct RemoteAccessView {
     /// byte relay that understands nothing. An agent may answer one and not the
     /// other. VNC needs only `stream`.
     rdp: bool,
+    /// Whether `POST /api/v1/benchmark` will start a run for this caller.
+    ///
+    /// Its own field for [`Self::stream`]'s reason: an agent older than the
+    /// endpoint answers `full_access` and would 404 the request. Starting is the
+    /// same grant as `stream` — a benchmark is 10–20 minutes of fio, iperf3 and
+    /// a downloaded Geekbench, run as the agent's account — and it is reported
+    /// the same way, as *will answer* rather than as *is served*, because a
+    /// client gates a button on it.
+    ///
+    /// `false` on a platform yabs does not run on, whatever the grant:
+    /// `sbm_parser::bench` is the command layer for `/etc/os-release`, procfs
+    /// and `lsblk`, so a Run button there would offer only a refusal.
+    ///
+    /// Reading the history is [`Self::cron`]'s case — served, and gated on
+    /// nothing but the panel login — so this field says nothing about
+    /// `GET /api/v1/benchmark`.
+    benchmark: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -962,6 +989,8 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             users: true,
             desktop: true,
             rdp: app_state.full_access_allowed(secure),
+            benchmark: app_state.full_access_allowed(secure)
+                && crate::api::benchmark::supports_benchmark(),
         },
     }))
 }

@@ -1,3 +1,4 @@
+pub mod benchmark;
 pub mod containers;
 pub mod cron;
 pub mod custom_cmds;

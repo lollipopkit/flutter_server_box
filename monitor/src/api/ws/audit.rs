@@ -89,6 +89,13 @@ pub enum Kind {
     /// the more privileged one. A VNC session is a `Stream`, since that is all
     /// it needs.
     Rdp,
+    /// A benchmark started, stopped or removed through `api::benchmark`.
+    ///
+    /// Its own kind for `Power`'s reason: the subject is a run id rather than a
+    /// command, and a run outlives the request that started it — the row that
+    /// records its end is written minutes later, by the poller. Reading the
+    /// history is not recorded at all, so a row here is always a change.
+    Benchmark,
 }
 
 impl Kind {
@@ -109,6 +116,7 @@ impl Kind {
             Kind::User => "user",
             Kind::Desktop => "desktop",
             Kind::Rdp => "rdp",
+            Kind::Benchmark => "benchmark",
         }
     }
 }

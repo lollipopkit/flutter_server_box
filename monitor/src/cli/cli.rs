@@ -153,6 +153,11 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         tracing::error!("Failed to start cleanup scheduler: {}", e);
     }
 
+    // Unconditional, and cheap while nothing is running: a benchmark outlives
+    // the request that started it, so the party that carries it to a terminal
+    // state has to be resident. See `api::benchmark::start_poller`.
+    crate::api::benchmark::start_poller(app_state.clone());
+
     tokio::select! {
         result = crate::api::server::start_server(app_state) => {
             if let Err(e) = result {

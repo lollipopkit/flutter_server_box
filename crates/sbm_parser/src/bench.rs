@@ -8,13 +8,14 @@
 //! raw.githubusercontent.com, which is the same set of hosts people most want
 //! to benchmark.
 //!
-//! The bytes are *not* here. The script is an asset
-//! (`assets/yabs.b64`, base64, for the reason `YabsScript` in the app gives),
-//! and whoever ships it decodes it; this module is the command layer and the
-//! parser over what those commands print, which is the half both callers share.
-//! [`UPSTREAM_VERSION`] is part of that: it is also the remote filename, so a
-//! caller that writes the script and a caller that asks about it cannot name
-//! two different files.
+//! The bytes are *not* here. The script is an asset (`assets/yabs.b64`,
+//! base64, for the reason `YabsScript` in the app gives) and whoever ships it
+//! loads it: the app through `rootBundle`, the agent through `include_str!`.
+//! This module is the command layer, and [`decode_asset`] the one decoder each
+//! caller hands those bytes to, so the two cannot disagree about which file
+//! they are describing. [`UPSTREAM_VERSION`] is part of that: it is also the
+//! remote filename, so a caller that writes the script and a caller that asks
+//! about it cannot name two different files.
 //!
 //! The run itself is detached (`setsid`) and everything it reports is written
 //! into its run directory, which is what makes closing the page, losing the
@@ -45,6 +46,24 @@ pub const SHA256_HEX: &str = "c42397c6a97c32d1b0f75bbee7ab4cca0c9b6c8871c9334d51
 
 /// Upstream, for the attribution a configuration sheet shows. WTFPL.
 pub const UPSTREAM_URL: &str = "https://github.com/masonr/yet-another-bench-script";
+
+/// Decodes the vendored asset — the program a machine is sent.
+///
+/// [`SHA256_HEX`] is taken over what this returns rather than over the file, so
+/// the digest means the same thing on both sides. The encoder wraps at 64
+/// columns to keep the asset diffable, and no base64 decoder accepts the line
+/// breaks unasked, so they are stripped here rather than at every call site.
+///
+/// `None` for text that is not base64, or whose bytes are not UTF-8. A caller
+/// reports that rather than running it: an asset that will not decode is a
+/// packaging mistake, and what it would otherwise cause is a machine asked to
+/// run a shell script of replacement characters.
+pub fn decode_asset(encoded: &str) -> Option<String> {
+    use base64::Engine;
+    let stripped: String = encoded.chars().filter(|c| !c.is_whitespace()).collect();
+    let bytes = base64::engine::general_purpose::STANDARD.decode(stripped).ok()?;
+    String::from_utf8(bytes).ok()
+}
 
 /// Where the script lives on a machine.
 ///
@@ -632,7 +651,7 @@ pub fn posix(script: &str) -> String {
 /// Deliberately rounded and deliberately labelled "about". A precise-looking
 /// figure derived from a link speed nobody has measured would be a worse answer
 /// than an approximate one that is honest about being approximate.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct BenchEstimate {
     /// Whole minutes, rounded up.
     pub minutes: u32,
@@ -887,6 +906,37 @@ mod tests {
                 "the quoted argument ends before the script does: {command}"
             );
         }
+    }
+
+    #[test]
+    fn the_asset_decoder_takes_the_wrapping_the_encoder_writes() {
+        use base64::Engine;
+
+        // What the asset actually looks like: one line per 64 columns, with a
+        // trailing newline. `STANDARD.decode` refuses all of it unasked, which
+        // is the whole reason this function exists.
+        let body = "#!/bin/sh\nYABS_VERSION=\"v2026-07-24\"\n";
+        let wrapped = base64::engine::general_purpose::STANDARD
+            .encode(body)
+            .as_bytes()
+            .chunks(64)
+            .map(|line| String::from_utf8_lossy(line).into_owned())
+            .collect::<Vec<_>>()
+            .join("\n")
+            + "\n";
+        assert!(wrapped.contains('\n'));
+        assert_eq!(decode_asset(&wrapped).as_deref(), Some(body));
+
+        // Unwrapped is the same program, so a caller that stripped it first is
+        // not describing a different file.
+        let bare = base64::engine::general_purpose::STANDARD.encode(body);
+        assert_eq!(decode_asset(&bare).as_deref(), Some(body));
+
+        // Reported rather than run: what an undecodable asset would otherwise
+        // become is a machine asked to execute replacement characters.
+        assert!(decode_asset("not base64!").is_none());
+        // Valid base64 that is not UTF-8.
+        assert!(decode_asset("/w==").is_none());
     }
 
     #[test]

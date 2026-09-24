@@ -387,6 +387,52 @@ the panel password can't switch it on); shared admission checks live in
   needs `openat`+`O_NOFOLLOW` per component, which is not portable across the
   platforms monitor runs on — the roots are the real boundary.
   `tests/fs_roots.rs` locks every escape route.
+- **`GET/POST/DELETE /api/v1/benchmark`** — the yabs benchmark runs this agent
+  has started: the history, one run's result and log, and the start, stop and
+  forget. **The agent owns the run, not the browser**: a yabs run is ten to
+  twenty minutes, so the row is written *before* the launcher starts and a
+  resident poller (2 s) carries it to a terminal state whether or not anyone is
+  looking. A `running` row left forever would make
+  `CREATE UNIQUE INDEX ... WHERE status = 'running'` — which is how one run at a
+  time is enforced, rather than by a check two concurrent starts would both pass
+  — refuse every future start with nothing to explain it.
+  - The command layer is `sbm_parser::bench`, the same strings the app sends
+    over SSH: `start_entry` writes a launcher that records **its own `$$`** (the
+    process group every child inherits, and the only thing that stops fio, iperf3
+    and Geekbench) and `poll_command` reads a directory. So the agent runs no
+    part of a benchmark itself and knows nothing about yabs beyond where the
+    files are.
+  - **`BenchPollState.answered` is load-bearing.** An agent that hit its own
+    timeout answers with an empty body, and reading that as "the run directory is
+    gone" fails a run that is going fine. Not answered means ask again;
+    `dirExists` only means anything once `answered`.
+  - `result_json` travels as a **string**, never parsed here: yabs assembles its
+    JSON with `+=` on a shell string, so a field it could not collect arrives as
+    an empty slot and a distro name containing a quote produces a document no
+    parser accepts. The client is the one that knows which fields it can live
+    without. The log is bounded in three places — 512 KiB stored keeping **both
+    ends** (the head says why a phase was skipped, the tail what was measured),
+    64 KiB in a poll response, an 8 MiB read cap whose overflow answers
+    `answered: false`.
+  - The script is `assets/yabs.b64`, embedded with `include_str!` and decoded by
+    `bench::decode_asset` — one asset and two loaders, the app's being
+    `rootBundle`. Base64 because a bundled asset that reads as executable code
+    fails App Store validation (v1574), and `bench::SHA256_HEX` is the contract
+    that the two copies are the same program. `tests/benchmark_asset.rs` holds
+    it, mirroring the app's own "the vendored asset" group.
+  - **Reading needs only the panel login** and starting, stopping and removing
+    are `full_access`, the same grant as the shell and `/exec` — a benchmark
+    writes gigabytes to a disk and saturates a link, and anyone who can open a
+    shell can run one anyway. The pre-flight estimate is a
+    `POST {"action":"estimate"}` answered *before* that gate, so the panel never
+    re-implements `bench::estimate`'s formula.
+  - Linux only; on another platform the list answers `supported: false` and
+    `remote_access.benchmark` is false. `DELETE` refuses a run that is going
+    (400 `run_in_progress`) and cleans up after a terminal one, best-effort and
+    after the row is written — a directory this endpoint could not remove is not
+    a reason to lose the result in it.
+  - `tests/benchmark_asset.rs`; the poll-state and log-trimming units are in
+    `src/api/benchmark.rs`.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no
