@@ -29,6 +29,11 @@ import type {
   LoginResponse,
   PowerAction,
   PowerResult,
+  PveControlRequest,
+  PveControlResult,
+  PveResourcesView,
+  PveSettingsPayload,
+  PveSettingsView,
   ProcessSignalRequest,
   ProcessSignalResult,
   ProcessSortMode,
@@ -566,6 +571,49 @@ export const api = {
       '/desktop',
       { method: 'PUT', body: JSON.stringify({ targets }) },
       'Failed to save the desktops',
+    ),
+  /// The Proxmox cluster this agent proxies, as its resources are right now.
+  ///
+  /// Reading needs only the panel login; whether this caller may act on a guest
+  /// is `editable` in the body, so a page the caller may not write to draws
+  /// itself read-only rather than failing on the first click.
+  ///
+  /// A refusal carries a stable code (`notConfigured`, `unreachable`,
+  /// `loginFailed`, `needTfa`, `forbidden`, `invalidResponse`, `upstream`), the
+  /// agent's own rather than the cluster's status: PVE answering 401 is that
+  /// the *agent's* credential failed, and this client logs the operator out on
+  /// a 401 of its own.
+  getPveResources: () => request<PveResourcesView>('/pve/resources', {}, 'Failed to read the cluster'),
+  /// The cluster's stored configuration. `secret` is always `null` and
+  /// `secret_set` says whether one is held — the agent answers a write-only
+  /// credential the way the notification channels do.
+  getPveSettings: () => request<PveSettingsView>('/pve/settings', {}, 'Failed to read the cluster settings'),
+  /// The whole section, like the desktop routes: a `PUT` replaces what it
+  /// names, so a body that omits the account clears it. `secret: null` keeps
+  /// what is stored and `""` clears it.
+  ///
+  /// Saving is `full_access` on the agent, because a save that keeps the stored
+  /// secret while changing the address would hand that credential to a host the
+  /// caller names. A refusal arrives as a stable code (`invalidUrl`,
+  /// `missingUsername`, `missingRealm`, `missingTokenId`, `invalidAuth`).
+  updatePveSettings: (section: PveSettingsPayload) =>
+    request<PveSettingsView>(
+      '/pve/settings',
+      { method: 'PUT', body: JSON.stringify(section) },
+      'Failed to save the cluster settings',
+    ),
+  /// Starts, stops, shuts down or reboots one guest. Answers PVE's task id,
+  /// which nothing depends on: the change is the guest's, and the listing is
+  /// read again to draw it.
+  ///
+  /// The node and the vmid are validated on the agent before it dials the
+  /// cluster, so a malformed address costs no login (`invalidNode`,
+  /// `invalidVmid`, `invalidKind`, `invalidAction`).
+  controlPveGuest: (request_: PveControlRequest) =>
+    request<PveControlResult>(
+      '/pve/control',
+      { method: 'POST', body: JSON.stringify(request_) },
+      'Failed to act on the guest',
     ),
   /// The benchmark runs this agent has started, and the live state of whichever
   /// is going.

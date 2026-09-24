@@ -12,6 +12,7 @@
   import Desktop from './pages/Desktop.svelte'
   import Snippets from './pages/Snippets.svelte'
   import Benchmark from './pages/Benchmark.svelte'
+  import Pve from './pages/Pve.svelte'
   import Ai from './pages/Ai.svelte'
   import Files from './pages/Files.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
@@ -60,6 +61,8 @@
             <Benchmark onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'ai'}
             <Ai onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'pve'}
+            <Pve onback={() => layout.back('dashboard')} />
           {:else}
             <Dashboard />
           {/if}

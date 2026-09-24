@@ -2453,6 +2453,219 @@ type RootTranslation = {
 	 * @param {unknown} key
 	 */
 	snippetUnanswerable: RequiredParams<'key'>
+	/**
+	 * P​r​o​x​m​o​x
+	 */
+	pve: string
+	/**
+	 * {​c​o​u​n​t​}​ ​r​e​s​o​u​r​c​e​s
+	 * @param {unknown} count
+	 */
+	pveSubtitle: RequiredParams<'count'>
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​P​r​o​x​m​o​x​ ​c​l​u​s​t​e​r​ ​c​o​n​f​i​g​u​r​e​d​.​ ​S​a​v​e​ ​a​n​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​a​n​ ​a​c​c​o​u​n​t​ ​t​o​ ​r​e​a​d​ ​o​n​e​.
+	 */
+	pveNotConfigured: string
+	/**
+	 * T​h​e​ ​c​l​u​s​t​e​r​ ​a​n​s​w​e​r​e​d​ ​w​i​t​h​ ​n​o​ ​r​e​s​o​u​r​c​e​s​.
+	 */
+	pveEmpty: string
+	/**
+	 * R​e​a​d​i​n​g​ ​t​h​e​ ​c​l​u​s​t​e​r​ ​w​o​r​k​s​ ​f​r​o​m​ ​h​e​r​e​,​ ​b​u​t​ ​t​h​e​ ​a​c​t​i​o​n​s​ ​a​n​d​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​n​e​e​d​ ​a​c​c​e​s​s​ ​w​i​t​h​o​u​t​ ​a​ ​s​e​c​o​n​d​ ​s​i​g​n​a​t​u​r​e​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​s​w​i​t​c​h​e​d​ ​o​f​f​.
+	 */
+	pveReadOnly: string
+	/**
+	 * N​o​d​e​s
+	 */
+	pveNodes: string
+	/**
+	 * G​u​e​s​t​s
+	 */
+	pveGuests: string
+	/**
+	 * S​t​o​r​a​g​e
+	 */
+	pveStorage: string
+	/**
+	 * S​D​N
+	 */
+	pveSdn: string
+	/**
+	 * C​P​U
+	 */
+	pveCpu: string
+	/**
+	 * M​e​m​o​r​y
+	 */
+	pveMemory: string
+	/**
+	 * D​i​s​k
+	 */
+	pveDisk: string
+	/**
+	 * U​p​t​i​m​e
+	 */
+	pveUptime: string
+	/**
+	 * T​h​i​s​ ​g​u​e​s​t​ ​i​s​ ​i​n​ ​a​ ​s​t​a​t​e​ ​n​o​ ​a​c​t​i​o​n​ ​h​e​r​e​ ​a​p​p​l​i​e​s​ ​t​o​.
+	 */
+	pveNoAction: string
+	/**
+	 * S​t​a​r​t
+	 */
+	pveStart: string
+	/**
+	 * S​t​o​p
+	 */
+	pveStop: string
+	/**
+	 * S​t​o​p​ ​{​n​a​m​e​}​ ​b​y​ ​c​u​t​t​i​n​g​ ​i​t​s​ ​p​o​w​e​r​?​ ​T​h​e​ ​g​u​e​s​t​'​s​ ​o​w​n​ ​O​S​ ​i​s​ ​n​o​t​ ​a​s​k​e​d​,​ ​a​n​d​ ​a​n​y​t​h​i​n​g​ ​n​o​t​ ​w​r​i​t​t​e​n​ ​i​s​ ​l​o​s​t​.
+	 * @param {unknown} name
+	 */
+	pveStopConfirm: RequiredParams<'name'>
+	/**
+	 * R​e​b​o​o​t​ ​{​n​a​m​e​}​?​ ​A​n​y​t​h​i​n​g​ ​r​u​n​n​i​n​g​ ​o​n​ ​i​t​ ​e​n​d​s​.
+	 * @param {unknown} name
+	 */
+	pveRebootConfirm: RequiredParams<'name'>
+	/**
+	 * S​e​n​t​:​ ​{​a​c​t​i​o​n​}​ ​-​>​ ​{​n​a​m​e​}​.​ ​T​h​e​ ​c​l​u​s​t​e​r​ ​i​s​ ​r​e​a​d​ ​a​g​a​i​n​ ​t​o​ ​s​h​o​w​ ​w​h​a​t​ ​i​t​ ​d​i​d​.
+	 * @param {unknown} action
+	 * @param {unknown} name
+	 */
+	pveActionSent: RequiredParams<'action' | 'name'>
+	/**
+	 * C​l​u​s​t​e​r​ ​s​e​t​t​i​n​g​s
+	 */
+	pveSettings: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​s​i​g​n​s​ ​i​n​ ​t​o​ ​t​h​e​ ​c​l​u​s​t​e​r​ ​w​i​t​h​ ​t​h​i​s​ ​a​c​c​o​u​n​t​ ​o​n​ ​e​v​e​r​y​ ​r​e​q​u​e​s​t​ ​a​n​d​ ​c​a​c​h​e​s​ ​n​o​t​h​i​n​g​.​ ​T​h​e​ ​s​e​c​r​e​t​ ​i​s​ ​n​e​v​e​r​ ​s​e​n​t​ ​b​a​c​k​ ​t​o​ ​t​h​i​s​ ​p​a​n​e​l​.
+	 */
+	pveSettingsNote: string
+	/**
+	 * A​d​d​r​e​s​s
+	 */
+	pveUrl: string
+	/**
+	 * T​h​e​ ​n​o​d​e​'​s​ ​A​P​I​ ​a​d​d​r​e​s​s​,​ ​e​.​g​.​ ​h​t​t​p​s​:​/​/​1​0​.​0​.​0​.​7​:​8​0​0​6
+	 */
+	pveUrlHint: string
+	/**
+	 * C​r​e​d​e​n​t​i​a​l
+	 */
+	pveAuth: string
+	/**
+	 * A​c​c​o​u​n​t​ ​p​a​s​s​w​o​r​d
+	 */
+	pveAuthPassword: string
+	/**
+	 * A​P​I​ ​t​o​k​e​n
+	 */
+	pveAuthToken: string
+	/**
+	 * U​s​e​r
+	 */
+	pveUsername: string
+	/**
+	 * R​e​a​l​m
+	 */
+	pveRealm: string
+	/**
+	 * T​o​k​e​n​ ​I​D
+	 */
+	pveTokenId: string
+	/**
+	 * S​e​c​r​e​t
+	 */
+	pveSecret: string
+	/**
+	 * N​o​ ​c​r​e​d​e​n​t​i​a​l​ ​i​s​ ​s​t​o​r​e​d​ ​y​e​t​.
+	 */
+	pveSecretNone: string
+	/**
+	 * A​ ​c​r​e​d​e​n​t​i​a​l​ ​i​s​ ​s​t​o​r​e​d​.​ ​L​e​a​v​e​ ​t​h​i​s​ ​b​l​a​n​k​ ​t​o​ ​k​e​e​p​ ​i​t​.
+	 */
+	pveSecretKeepHint: string
+	/**
+	 * C​l​e​a​r​ ​t​h​e​ ​s​t​o​r​e​d​ ​c​r​e​d​e​n​t​i​a​l
+	 */
+	pveSecretClear: string
+	/**
+	 * A​n​ ​a​c​c​o​u​n​t​ ​t​h​a​t​ ​o​w​e​s​ ​a​ ​s​e​c​o​n​d​ ​f​a​c​t​o​r​ ​c​a​n​n​o​t​ ​s​i​g​n​ ​i​n​ ​f​r​o​m​ ​h​e​r​e​.​ ​U​s​e​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​f​o​r​ ​o​n​e​.
+	 */
+	pvePasswordNote: string
+	/**
+	 * T​h​e​ ​t​o​k​e​n​ ​i​s​ ​p​r​e​s​e​n​t​e​d​ ​a​s​ ​P​V​E​A​P​I​T​o​k​e​n​=​<​u​s​e​r​>​@​<​r​e​a​l​m​>​!​<​i​d​>​=​<​s​e​c​r​e​t​>​.
+	 */
+	pveTokenNote: string
+	/**
+	 * A​c​c​e​p​t​ ​t​h​e​ ​n​o​d​e​'​s​ ​c​e​r​t​i​f​i​c​a​t​e​ ​w​i​t​h​o​u​t​ ​v​e​r​i​f​y​i​n​g​ ​i​t
+	 */
+	pveIgnoreCert: string
+	/**
+	 * A​ ​P​r​o​x​m​o​x​ ​i​n​s​t​a​l​l​ ​a​n​s​w​e​r​s​ ​o​n​ ​i​t​s​ ​o​w​n​ ​c​e​r​t​i​f​i​c​a​t​e​ ​u​n​l​e​s​s​ ​P​K​I​ ​w​a​s​ ​s​e​t​ ​u​p​ ​f​o​r​ ​t​h​e​ ​n​a​m​e​ ​i​t​ ​i​s​ ​r​e​a​c​h​e​d​ ​b​y​.
+	 */
+	pveIgnoreCertHint: string
+	/**
+	 * T​h​a​t​ ​a​d​d​r​e​s​s​ ​i​s​ ​n​o​t​ ​o​n​e​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​ ​u​s​e​.
+	 */
+	pveInvalidUrl: string
+	/**
+	 * A​ ​u​s​e​r​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+	 */
+	pveMissingUsername: string
+	/**
+	 * A​ ​r​e​a​l​m​ ​i​s​ ​r​e​q​u​i​r​e​d​ ​-​ ​p​a​m​ ​f​o​r​ ​a​ ​s​y​s​t​e​m​ ​a​c​c​o​u​n​t​,​ ​p​v​e​ ​f​o​r​ ​o​n​e​ ​t​h​a​t​ ​e​x​i​s​t​s​ ​o​n​l​y​ ​i​n​ ​P​r​o​x​m​o​x​.
+	 */
+	pveMissingRealm: string
+	/**
+	 * A​n​ ​A​P​I​ ​t​o​k​e​n​ ​n​e​e​d​s​ ​i​t​s​ ​t​o​k​e​n​ ​I​D​:​ ​t​h​e​ ​p​a​r​t​ ​a​f​t​e​r​ ​t​h​e​ ​!​ ​i​n​ ​r​o​o​t​@​p​a​m​!​a​u​t​o​m​a​t​i​o​n​.
+	 */
+	pveMissingTokenId: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​c​r​e​d​e​n​t​i​a​l​ ​t​h​i​s​ ​a​g​e​n​t​ ​k​n​o​w​s​.
+	 */
+	pveInvalidAuth: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​g​u​e​s​t​ ​k​i​n​d​ ​t​h​i​s​ ​b​u​i​l​d​ ​a​c​t​s​ ​o​n​.
+	 */
+	pveInvalidKind: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​n​ ​a​c​t​i​o​n​ ​t​h​i​s​ ​b​u​i​l​d​ ​h​a​s​.
+	 */
+	pveInvalidAction: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​n​o​d​e​ ​n​a​m​e​ ​t​h​i​s​ ​a​g​e​n​t​ ​w​i​l​l​ ​p​u​t​ ​i​n​ ​a​ ​r​e​q​u​e​s​t​.
+	 */
+	pveInvalidNode: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​ ​g​u​e​s​t​ ​i​d​ ​P​r​o​x​m​o​x​ ​c​o​u​l​d​ ​h​a​v​e​.
+	 */
+	pveInvalidVmid: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​c​l​u​s​t​e​r​.
+	 */
+	pveUnreachable: string
+	/**
+	 * T​h​e​ ​c​l​u​s​t​e​r​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​s​t​o​r​e​d​ ​c​r​e​d​e​n​t​i​a​l​.
+	 */
+	pveLoginFailed: string
+	/**
+	 * T​h​i​s​ ​a​c​c​o​u​n​t​ ​o​w​e​s​ ​a​ ​s​e​c​o​n​d​ ​f​a​c​t​o​r​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​a​n​s​w​e​r​.​ ​U​s​e​ ​a​n​ ​A​P​I​ ​t​o​k​e​n​ ​i​n​s​t​e​a​d​.
+	 */
+	pveNeedTfa: string
+	/**
+	 * T​h​e​ ​a​c​c​o​u​n​t​ ​m​a​y​ ​n​o​t​ ​d​o​ ​t​h​a​t​.
+	 */
+	pveForbidden: string
+	/**
+	 * T​h​e​ ​a​d​d​r​e​s​s​ ​a​n​s​w​e​r​e​d​,​ ​b​u​t​ ​n​o​t​ ​w​i​t​h​ ​a​ ​P​r​o​x​m​o​x​ ​A​P​I​.
+	 */
+	pveInvalidResponse: string
+	/**
+	 * T​h​e​ ​c​l​u​s​t​e​r​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​r​e​q​u​e​s​t​.
+	 */
+	pveUpstream: string
 }
 
 export type TranslationFunctions = {
@@ -4824,6 +5037,214 @@ export type TranslationFunctions = {
 	 * This script asks for {key}, which this panel has no value for. The server macros belong to the app, which knows the server it is connected to.
 	 */
 	snippetUnanswerable: (arg: { key: unknown }) => LocalizedString
+	/**
+	 * Proxmox
+	 */
+	pve: () => LocalizedString
+	/**
+	 * {count} resources
+	 */
+	pveSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * This agent has no Proxmox cluster configured. Save an address and an account to read one.
+	 */
+	pveNotConfigured: () => LocalizedString
+	/**
+	 * The cluster answered with no resources.
+	 */
+	pveEmpty: () => LocalizedString
+	/**
+	 * Reading the cluster works from here, but the actions and the settings need access without a second signature, which this agent has switched off.
+	 */
+	pveReadOnly: () => LocalizedString
+	/**
+	 * Nodes
+	 */
+	pveNodes: () => LocalizedString
+	/**
+	 * Guests
+	 */
+	pveGuests: () => LocalizedString
+	/**
+	 * Storage
+	 */
+	pveStorage: () => LocalizedString
+	/**
+	 * SDN
+	 */
+	pveSdn: () => LocalizedString
+	/**
+	 * CPU
+	 */
+	pveCpu: () => LocalizedString
+	/**
+	 * Memory
+	 */
+	pveMemory: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	pveDisk: () => LocalizedString
+	/**
+	 * Uptime
+	 */
+	pveUptime: () => LocalizedString
+	/**
+	 * This guest is in a state no action here applies to.
+	 */
+	pveNoAction: () => LocalizedString
+	/**
+	 * Start
+	 */
+	pveStart: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	pveStop: () => LocalizedString
+	/**
+	 * Stop {name} by cutting its power? The guest's own OS is not asked, and anything not written is lost.
+	 */
+	pveStopConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Reboot {name}? Anything running on it ends.
+	 */
+	pveRebootConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Sent: {action} -> {name}. The cluster is read again to show what it did.
+	 */
+	pveActionSent: (arg: { action: unknown, name: unknown }) => LocalizedString
+	/**
+	 * Cluster settings
+	 */
+	pveSettings: () => LocalizedString
+	/**
+	 * The agent signs in to the cluster with this account on every request and caches nothing. The secret is never sent back to this panel.
+	 */
+	pveSettingsNote: () => LocalizedString
+	/**
+	 * Address
+	 */
+	pveUrl: () => LocalizedString
+	/**
+	 * The node's API address, e.g. https://10.0.0.7:8006
+	 */
+	pveUrlHint: () => LocalizedString
+	/**
+	 * Credential
+	 */
+	pveAuth: () => LocalizedString
+	/**
+	 * Account password
+	 */
+	pveAuthPassword: () => LocalizedString
+	/**
+	 * API token
+	 */
+	pveAuthToken: () => LocalizedString
+	/**
+	 * User
+	 */
+	pveUsername: () => LocalizedString
+	/**
+	 * Realm
+	 */
+	pveRealm: () => LocalizedString
+	/**
+	 * Token ID
+	 */
+	pveTokenId: () => LocalizedString
+	/**
+	 * Secret
+	 */
+	pveSecret: () => LocalizedString
+	/**
+	 * No credential is stored yet.
+	 */
+	pveSecretNone: () => LocalizedString
+	/**
+	 * A credential is stored. Leave this blank to keep it.
+	 */
+	pveSecretKeepHint: () => LocalizedString
+	/**
+	 * Clear the stored credential
+	 */
+	pveSecretClear: () => LocalizedString
+	/**
+	 * An account that owes a second factor cannot sign in from here. Use an API token for one.
+	 */
+	pvePasswordNote: () => LocalizedString
+	/**
+	 * The token is presented as PVEAPIToken=<user>@<realm>!<id>=<secret>.
+	 */
+	pveTokenNote: () => LocalizedString
+	/**
+	 * Accept the node's certificate without verifying it
+	 */
+	pveIgnoreCert: () => LocalizedString
+	/**
+	 * A Proxmox install answers on its own certificate unless PKI was set up for the name it is reached by.
+	 */
+	pveIgnoreCertHint: () => LocalizedString
+	/**
+	 * That address is not one this agent can use.
+	 */
+	pveInvalidUrl: () => LocalizedString
+	/**
+	 * A user is required.
+	 */
+	pveMissingUsername: () => LocalizedString
+	/**
+	 * A realm is required - pam for a system account, pve for one that exists only in Proxmox.
+	 */
+	pveMissingRealm: () => LocalizedString
+	/**
+	 * An API token needs its token ID: the part after the ! in root@pam!automation.
+	 */
+	pveMissingTokenId: () => LocalizedString
+	/**
+	 * That is not a credential this agent knows.
+	 */
+	pveInvalidAuth: () => LocalizedString
+	/**
+	 * That is not a guest kind this build acts on.
+	 */
+	pveInvalidKind: () => LocalizedString
+	/**
+	 * That is not an action this build has.
+	 */
+	pveInvalidAction: () => LocalizedString
+	/**
+	 * That is not a node name this agent will put in a request.
+	 */
+	pveInvalidNode: () => LocalizedString
+	/**
+	 * That is not a guest id Proxmox could have.
+	 */
+	pveInvalidVmid: () => LocalizedString
+	/**
+	 * The agent could not reach the cluster.
+	 */
+	pveUnreachable: () => LocalizedString
+	/**
+	 * The cluster rejected the stored credential.
+	 */
+	pveLoginFailed: () => LocalizedString
+	/**
+	 * This account owes a second factor, which this agent cannot answer. Use an API token instead.
+	 */
+	pveNeedTfa: () => LocalizedString
+	/**
+	 * The account may not do that.
+	 */
+	pveForbidden: () => LocalizedString
+	/**
+	 * The address answered, but not with a Proxmox API.
+	 */
+	pveInvalidResponse: () => LocalizedString
+	/**
+	 * The cluster refused the request.
+	 */
+	pveUpstream: () => LocalizedString
 }
 
 export type Formatters = {}

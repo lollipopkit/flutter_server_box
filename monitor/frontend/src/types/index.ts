@@ -198,6 +198,14 @@ export interface RemoteAccess {
   /// and a snippet becomes usable only through a terminal, which is a session
   /// with credentials of its own. Absent on agents predating the endpoint.
   snippets?: boolean
+  /// Whether `/api/v1/pve` answers this agent at all.
+  ///
+  /// Served, not grantable: the cluster's resource listing needs only the panel
+  /// login, and a caller who may not act on a guest can still read the list and
+  /// be told why. Saving the cluster's credential and acting on a guest are
+  /// `full_access`, said as `editable` in each response rather than by
+  /// withholding the tab. Absent on agents predating the endpoint.
+  pve?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -1614,3 +1622,156 @@ export type SnippetRefusalCode =
   | 'duplicateName'
   | 'invalidTag'
   | 'duplicateTag'
+
+/// One resource in a Proxmox cluster, as `sbm_parser::pve` parsed it.
+///
+/// PVE's own names and its own units, passed through unchanged: `mem`,
+/// `maxmem`, `disk` and `maxdisk` are bytes, and `cpu` is a 0.0–1.0 fraction
+/// (of the node for a node, of one core for a guest) — a page that showed
+/// `0.054` as a percentage would be off by a hundred. Which fields are present
+/// follows `type`, so this is one interface with the optional ones named rather
+/// than a union the page has to narrow at every read.
+export interface PveResource {
+  /// PVE's own discriminator, and what the row is drawn as.
+  type: PveKind
+  /// PVE's identity for the resource, e.g. `qemu/101` or `storage/pve/local`.
+  id: string
+  /// The node the resource belongs to. A guest runs on it; a storage is
+  /// mounted on it.
+  node: string
+  /// PVE's own word: `online`/`offline` for a node, `running`/`stopped` for a
+  /// guest, `available` for a storage, `ok` for an SDN zone.
+  status: string
+  uptime?: number
+  mem?: number
+  maxmem?: number
+  cpu?: number
+  maxcpu?: number
+  disk?: number
+  maxdisk?: number
+  /// A guest's id. Absent on everything that is not a guest.
+  vmid?: number
+  /// A guest's name, empty for one that was never named — the page falls back
+  /// to the vmid, which is the other thing an operator knows it by.
+  name?: string
+  /// A storage's name, which is also part of its `id`.
+  storage?: string
+  /// A storage's plugin, e.g. `dir` or `zfspool`.
+  plugintype?: string
+  /// A storage's content types, comma-separated and sorted by the agent.
+  content?: string
+  /// A storage's `shared` flag, as PVE's own 0/1.
+  shared?: number
+  /// An SDN zone's name.
+  sdn?: string
+}
+
+export type PveKind = 'node' | 'qemu' | 'lxc' | 'storage' | 'sdn'
+
+/// The two kinds of guest PVE manages, and the only two `/pve/control` acts on.
+export type PveGuestKind = 'qemu' | 'lxc'
+
+/// What may be asked of a guest. `shutdown` asks the guest's own OS to stop,
+/// `stop` pulls the plug, `reboot` restarts and `start` boots.
+export type PveAction = 'start' | 'stop' | 'shutdown' | 'reboot'
+
+/// The cluster's resources, and whether this caller may act on them.
+export interface PveResourcesView {
+  /// PVE's own release string, when it gave one. Absent rather than an error:
+  /// a label is not worth failing a listing over.
+  release?: string
+  /// Sorted by the agent, so two refreshes of one page show the same rows in
+  /// the same places whatever order the cluster answered in.
+  resources: PveResource[]
+  editable: boolean
+}
+
+/// Which credential the agent dials the cluster with.
+///
+/// `password` is a ticket from `/access/ticket`, which is what PVE's own web UI
+/// does and what an account with two-factor authentication cannot use from
+/// here. `token` is `PVEAPIToken=…`, PVE's documented credential for
+/// automation, and the way through an account that owes a second factor.
+export type PveAuthKind = 'password' | 'token'
+
+/// The cluster's stored configuration, as the agent reports it.
+export interface PveSettingsView {
+  /// Somewhere to send a request and an account to send it as. What the page
+  /// checks before offering the listing.
+  configured: boolean
+  url: string
+  auth: PveAuthKind
+  /// The account, without the realm: `root` for `root@pam`.
+  username: string
+  /// The realm, e.g. `pam` or `pve`.
+  realm: string
+  /// The API token's id — the `automation` in `root@pam!automation`. Not a
+  /// secret, and the part of a token credential a page has to show.
+  token_id: string
+  /// Always `null`. The credential is write-only: this field exists so that a
+  /// page round-tripping this view hands back a `null` that means "keep what is
+  /// stored" rather than omitting a field it never saw.
+  secret: string | null
+  /// Whether one is held. The one bit that separates "leave this blank to keep
+  /// it" from "there is none".
+  secret_set: boolean
+  /// Accept a certificate this agent cannot verify. A PVE install answers on
+  /// its own certificate unless the operator has done PKI for a machine they
+  /// already trust, so this is on for most installs.
+  ignore_cert: boolean
+  /// Whether this caller may save.
+  editable: boolean
+}
+
+/// The whole section, as a save sends it. A `PUT` replaces what it names, so
+/// every field is here; `secret` is the exception the convention allows.
+export interface PveSettingsPayload {
+  url: string
+  auth: PveAuthKind
+  username: string
+  realm: string
+  token_id: string
+  /// `null` keeps what is stored, `""` clears it, anything else replaces it —
+  /// the same one-field rule the notification channels use.
+  secret: string | null
+  ignore_cert: boolean
+}
+
+/// One action on one guest.
+export interface PveControlRequest {
+  node: string
+  kind: PveGuestKind
+  vmid: number
+  action: PveAction
+}
+
+export interface PveControlResult {
+  /// PVE's task id for the change, when it gave one. A page may show it and
+  /// nothing depends on it.
+  upid?: string
+}
+
+/// Why a PVE request was refused, as a stable code this page phrases.
+///
+/// The first group is about the request or the stored configuration — the
+/// caller can act on all of them. The second is what the cluster answered; they
+/// are the agent's codes rather than its status, since a page's client logs the
+/// operator out on a 401 and PVE answering one is the *agent's* credential
+/// failing, not this session.
+export type PveRefusalCode =
+  | 'notConfigured'
+  | 'invalidUrl'
+  | 'missingUsername'
+  | 'missingRealm'
+  | 'missingTokenId'
+  | 'invalidAuth'
+  | 'invalidKind'
+  | 'invalidAction'
+  | 'invalidNode'
+  | 'invalidVmid'
+  | 'unreachable'
+  | 'loginFailed'
+  | 'needTfa'
+  | 'forbidden'
+  | 'invalidResponse'
+  | 'upstream'

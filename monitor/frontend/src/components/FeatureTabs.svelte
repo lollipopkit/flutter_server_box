@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     Activity,
+    Boxes,
     CalendarClock,
     Container,
     Gauge,
@@ -44,6 +45,7 @@
     // names the same tab `Agent` in every language.
     ai: { label: () => $LL.ai(), icon: Sparkles },
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },
+    pve: { label: () => $LL.pve(), icon: Boxes },
   }
 
   // Read here rather than passed in: the bar is in three callers' headers and a

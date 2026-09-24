@@ -620,6 +620,25 @@ the panel password can't switch it on); shared admission checks live in
     own, against the captured listing at `test/fixtures/pve/` that the app's Dart
     suite reads too. TODO(migration): that fixture moves into the crate when the
     Dart half is deleted, and `lib/data/provider/pve.dart` goes with it.
+  - The panel side is `pages/Pve.svelte` plus `components/PveSettingsForm.svelte`,
+    on the tab bar like every other feature. Two things are worth naming. **The
+    listing is the page and the settings are a dialog**, reached from the bar:
+    what the page is *for* is the cluster, and the credential is a thing done to
+    the agent, not a second list beside the first. And **the secret field has
+    three states, so it is two controls**: `pushSecretKeep`'s placeholder on a
+    blank field means *keep*, and an explicit "clear the stored credential"
+    checkbox is the only way to reach `""` — without it a stored credential
+    could never be removed from this panel, since an empty `url` keeps it.
+    `pveSettingsPayload` decides between them in one place, and
+    `test/unit`'s `src/tests/pve.test.ts` asserts all three, along with every
+    refusal code being phrased and an unknown one passing through as sent.
+  - A guest is the only row that opens, and which actions it offers follows its
+    own `status`: start when stopped, stop/shutdown/reboot when running. Stop and
+    reboot are asked twice — shutdown is the guest's own OS stopping, which is
+    what an operator usually means — and the confirmation replaces the detail
+    inside the same dialog rather than stacking a second one. Nothing is read
+    from PVE's task id: the listing is read again, because the guest's state is
+    what the page draws and the UPID is not.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

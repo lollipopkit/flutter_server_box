@@ -10,8 +10,9 @@
 /// running machine first (containers, processes, services), then the machine's
 /// own configuration (users, schedule, desktops), then the operator's own
 /// scripts to type into a shell (snippets), then the agent that operates it,
-/// then a measurement of it (benchmark). TODO: PVE, BMC and sync join this
-/// list as they land; the bar scrolls rather than wrapping.
+/// then a measurement of it (benchmark), then the clusters and machines beyond
+/// it (pve). TODO: BMC and sync join this list as they land; the bar scrolls
+/// rather than wrapping.
 ///
 /// How each one is *drawn* (its label and its icon) is deliberately not here:
 /// a label is `$LL` and an icon is a component, and this module is imported by
@@ -32,6 +33,7 @@ export type FeatureId =
   | 'snippets'
   | 'ai'
   | 'benchmark'
+  | 'pve'
 
 export interface FeatureSpec {
   /// The `View` this feature renders as, and how `layout.navigate` names it.
@@ -54,6 +56,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'snippets', capability: 'snippets' },
   { id: 'ai', capability: 'ai' },
   { id: 'benchmark', capability: 'benchmark' },
+  { id: 'pve', capability: 'pve' },
 ]
 
 /// The features this agent serves.

@@ -35,6 +35,19 @@ function fmtIntegerBytes(value: bigint): string {
   return `${tenths / 10n}.${tenths % 10n} ${UNITS[unit]}`
 }
 
+/// A duration in seconds, at one unit — the unit an operator reads it as.
+///
+/// Proxmox reports a node's and a guest's uptime in seconds; nobody reads
+/// 2678400. Rounded down rather than to the nearer unit, so a node that came up
+/// 23 hours ago is not said to have been up for a day. Units are the same in
+/// every language this panel speaks.
+export function fmtUptime(seconds: number): string {
+  if (seconds >= 86400) return `${Math.floor(seconds / 86400)}d`
+  if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h`
+  if (seconds >= 60) return `${Math.floor(seconds / 60)}m`
+  return `${Math.max(Math.floor(seconds), 0)}s`
+}
+
 export function fmtBytesPerSec(v: number): string {
   return `${fmtBytes(v)}/s`
 }
