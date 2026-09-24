@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod benchmark;
 pub mod containers;
 pub mod cron;

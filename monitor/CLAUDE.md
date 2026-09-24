@@ -444,6 +444,78 @@ the panel password can't switch it on); shared admission checks live in
     two are one convention: a client in a language the agent does not write.
   - `tests/benchmark_asset.rs`; the poll-state and log-trimming units are in
     `src/api/benchmark.rs`.
+- **`GET/POST/DELETE /api/v1/ai/*`** — the Agent: a conversation with a model
+  that can run things on this machine. `api/ai/openai.rs` is the client,
+  `tools.rs` the three tools, `turn.rs` the loop, `mod.rs` the endpoints.
+  - **The loop runs here, not in the browser.** A tool call is a command run as
+    the agent's account and the model's key is the agent's, so a browser driving
+    the loop would hold the key in page memory for the length of a conversation
+    and compose every command itself. Here the panel sends a sentence: it never
+    composes a command, never sees the tool schema, and cannot ask for a call the
+    classifier did not classify.
+  - **Reading needs only the panel login; sending, approving, declining,
+    renaming, removing and saving the settings need `full_access`** — the same
+    grant as the shell, `/exec` and `/power`, since an approved call runs a
+    command and a `shell` call is a shell. **`stop` is answered before that
+    gate**: it starts nothing and ends something, and the case it must survive is
+    an operator revoking the grant while a turn is running.
+  - **The API key is write-only and one field wide** — the `/push` convention
+    exactly: `GET /ai/settings` answers `api_key: null` with `api_key_set` beside
+    it, a PUT sending that `null` back keeps what is on disk, and `""` clears it.
+    Written through `config_file` under `AppState.config_write`, like the other
+    `config.toml` editors.
+  - **Awaiting review is derived, never stored.** A `function_call` item with no
+    `function_output` answering its `call_id` **is** the state. `turn::waiting`
+    asks that of the database (what the follow stream can afford) and
+    `turn::unanswered` asks it of a list in memory (what the actions hold); two
+    expressions of one rule is the shape that drifts, so
+    `waiting_agrees_with_unanswered` in `tests/ai_api.rs` asserts they answer the
+    same question over the same items. Nothing records that a turn is parked, so
+    a restart cannot leave a conversation claiming to be mid-turn — what a turn
+    is *doing* is a task, not a row, and lives in `AiTurns` (migration 011), the
+    opposite of migration 010's rule for benchmark runs, which are `setsid`
+    processes that outlive the agent.
+  - **A turn parks when a call may not run unreviewed**: it stores the calls and
+    ends. The model is handed a turn again only once *every* call of the batch
+    has an answer — a request carrying a call with no result is one the model API
+    refuses, which is the app's rule and the reason this one exists — and
+    declining answers the whole batch, since it is one proposal made in several
+    parts. **The auto-run rule is a deliberate reversal of the app's**:
+    `auto_run_safe_commands && risk == ReadOnly`, at most `MAX_AUTO_RUNS` (3) per
+    turn, with the model's own `safe_to_run` recorded and not consulted
+    (`destructive: true` floors the verdict instead). The classifier is
+    `sbm_parser::ai_risk`, and anything it does not recognise is Unknown, so it
+    is asked about. Every command a turn runs by itself is in the access log
+    under `kind = 'ai'` with `unreviewed=yes`; a row under that kind never
+    carries the model key or a conversation's text.
+  - **The wire.** `GET /ai/conversations` reads the list or, with
+    `?conversation=`, one conversation with its items; `POST` is one tagged
+    action (`chat`, `approve`, `decline`, `stop`, `rename`); `DELETE` removes
+    one, cascading its items. `GET /ai/follow` is NDJSON, one frame per line:
+    `item` for what was stored after the caller's `?after=`, `delta` for text
+    that is not an item yet — its `step` is the ordinal that item will get, which
+    is what lets a client drop its provisional text exactly when the item
+    supersedes it — `state` when `running`/`phase`/`error`/`waiting` changes and
+    once at the start, and `ping` every 15 s so a proxy does not close an idle
+    stream. A follower therefore sees a turn happen without polling.
+  - **A refusal the caller could have avoided is 400 with a stable code**
+    (`invalid_base_url`, `empty_message`, `message_too_long`, `invalid_title`,
+    `not_configured`, `busy`, `nothing_to_decline`), phrased by the panel in the
+    viewer's language; a state of the machine is 404
+    (`no_such_conversation`, `no_such_call`). A failure *inside* a turn is a
+    `notice` item carrying a code from one vocabulary — `turn.rs`'s
+    `interrupted`/`declined`, `storage`, `not_configured`, or an
+    `openai::UpstreamError` name (`unreachable`, `auth`, `not_found`,
+    `rejected`, `rate_limited`, `unavailable`, `shape`) — because the client
+    that reads it is in a language this process does not write. A model's own
+    in-band `error` frame becomes one of those rather than reaching the client.
+  - **`ai_message` is not a sync root** (the `conn_stat` reason: what the agent
+    did is a record, not an edit to replicate); the model and the token counts
+    live on the conversation. The raw prompt, the key and the model's own words
+    are never in the access log. `tests/ai_api.rs` runs a whole turn against a
+    scripted model endpoint on loopback — the request, the stream, the items
+    stored, the call parked, the approval running a real command, the turn
+    resumed, and the audit rows — and reaches no real endpoint and no real key.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

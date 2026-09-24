@@ -113,6 +113,25 @@ pub struct AppState {
     /// is a difference against the previous reading and there has to be one
     /// somewhere — see `api::process`.
     pub process_sample: Arc<Mutex<Option<crate::api::process::ProcessSample>>>,
+    /// The Agent's live turns, one per conversation — see `api::ai::turn`.
+    ///
+    /// In memory rather than a column, which is the one place this differs from
+    /// how every other part of this agent guards its long-running work: a turn
+    /// is a task in this process, so it cannot outlive a restart, while a
+    /// benchmark run is an `setsid` process that can and therefore has a
+    /// constraint in the database.
+    pub ai_turns: Arc<crate::api::ai::turn::AiTurns>,
+    /// Serialises the Agent's own changes: a message sent, a call approved or
+    /// declined, a conversation removed.
+    ///
+    /// One lock for every conversation rather than one each, because the
+    /// sequence it protects is a read-modify-write of a conversation's items
+    /// and the panel has one operator: two simultaneous actions are a double
+    /// click, and what that must not become is a command run twice or a message
+    /// appended with no turn to answer it. Held across a tool call, so a second
+    /// action waits rather than racing — `stop` does not take it, since ending a
+    /// turn is the one thing that has to stay responsive while one is running.
+    pub ai_actions: Arc<Mutex<()>>,
 }
 
 impl AppState {
@@ -144,6 +163,8 @@ impl AppState {
             last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
             config_write: Arc::new(Mutex::new(())),
             process_sample: Arc::new(Mutex::new(None)),
+            ai_turns: Arc::new(crate::api::ai::turn::AiTurns::default()),
+            ai_actions: Arc::new(Mutex::new(())),
         })
     }
 
@@ -352,6 +373,32 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                 // apply: the point of this endpoint is the file that
                 // `/exec` could not carry.
                 web::resource("/fs/write").route(web::put().to(crate::api::fs::write)),
+            )
+            .service(
+                // One section in and one section out, so the default 32 KiB
+                // applies. Its own resource rather than fields of `/settings`
+                // for `/push`'s reason: the key in it is write-only, and one
+                // save must not be a read-modify-write of everything the
+                // settings page happens to have open.
+                web::resource("/ai/settings")
+                    .route(web::get().to(crate::api::ai::get_settings))
+                    .route(web::put().to(crate::api::ai::replace_settings)),
+            )
+            .service(
+                // A message or a call id in, and never a command: the panel
+                // sends a sentence and the agent composes the command. Three
+                // verbs because the resource has three operations — one is
+                // read, one is written to, one is removed.
+                web::resource("/ai/conversations")
+                    .route(web::get().to(crate::api::ai::get_conversations))
+                    .route(web::post().to(crate::api::ai::act))
+                    .route(web::delete().to(crate::api::ai::remove)),
+            )
+            .service(
+                // A stream with no end of its own: it stays open while the
+                // conversation is on screen and carries items, streaming text
+                // and a heartbeat. Nothing about it is a body ntex could size.
+                web::resource("/ai/follow").route(web::get().to(crate::api::ai::follow)),
             )
             .route("/fs/roots", web::get().to(crate::api::fs::roots))
             .route("/fs/list", web::get().to(crate::api::fs::list))
@@ -934,6 +981,15 @@ struct RemoteAccessView {
     /// the response rather than here — `supported` (this machine's platform runs
     /// yabs) and `editable` (this caller may start, stop and remove).
     benchmark: bool,
+    /// Whether this agent serves the Agent endpoint at all.
+    ///
+    /// Served, not grantable, for [`Self::benchmark`]'s reason, plus one of its
+    /// own: the conversation is a record of what this agent was asked and what
+    /// it answered, and reading one needs only the panel login. Asking it for
+    /// something is `full_access` — every tool call runs as the agent's account,
+    /// and the endpoint says so as `editable` rather than by withholding the
+    /// route, so a page opens read-only instead of failing on the first message.
+    ai: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -985,6 +1041,9 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             // login. The platform and the write grant are the response's own
             // `supported` and `editable`. See `RemoteAccessView::benchmark`.
             benchmark: true,
+            // Served, not grantable, for `benchmark`'s reason. See
+            // `RemoteAccessView::ai`.
+            ai: true,
         },
     }))
 }

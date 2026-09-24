@@ -25,6 +25,11 @@ pub struct Config {
     /// that may not be read back.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub desktop: Option<DesktopConfig>,
+    /// The OpenAI-compatible endpoint the panel's Agent talks to. Absent in
+    /// every config written before the feature existed, hence `Option`; see
+    /// [`AiConfig`] for why the key is only ever read here.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ai: Option<AiConfig>,
     /// WebSocket access to the local sshd — off unless present and enabled.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
@@ -313,6 +318,78 @@ pub struct PushConfig {
     pub push_type: String,
     #[serde(flatten)]
     pub config: toml::Table,
+}
+
+/// The model the panel's Agent talks to, and the credential it authenticates
+/// with.
+///
+/// **The key is stored here and answered back by nothing.** `api::ai` reads it,
+/// writes it, and reports only whether one is set; a GET never carries it. That
+/// is `PushConfig`'s convention with one field instead of a free-form table, and
+/// it is what makes the browser unable to hold the credential — the reason the
+/// conversation loop runs on this side in the first place.
+///
+/// There is no `enabled` switch: whether a caller may *use* this is
+/// `remote_access`'s `full_access`, which every tool call already needs, and an
+/// unconfigured section answers `configured: false` rather than being refused
+/// as a feature that is off.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AiConfig {
+    /// What the request is sent to, without the final path — the client appends
+    /// `chat/completions`, the same way the app composes its endpoint. A
+    /// version segment is the operator's to write, as it is there.
+    #[serde(default = "default_ai_base_url")]
+    pub base_url: String,
+    /// Empty until an operator writes one, which is one of the two things
+    /// `configured` asks about.
+    #[serde(default)]
+    pub model: String,
+    /// Sent as `Authorization: Bearer`. Write-only through the API, and `None`
+    /// is what an absent one is here — the stored shape says nothing about
+    /// whether a caller ever reads it back, since nothing does.
+    ///
+    /// The wire rule is `api::ai::ReplaceRequest`'s: a PUT sending `null`
+    /// (or omitting the field) keeps whatever is stored, an empty string clears
+    /// it, anything else replaces it. Push's convention, one field wide.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_key: Option<String>,
+    /// Run a tool call the agent classified as read-only without asking the
+    /// panel first. Off by default, and the classification is the agent's own
+    /// (`sbm_parser::ai_risk`) — a model that says `safe_to_run: true` about
+    /// `rm -rf /` does not get to run it.
+    #[serde(default)]
+    pub auto_run_safe_commands: bool,
+}
+
+fn default_ai_base_url() -> String {
+    "https://api.openai.com/v1".to_string()
+}
+
+impl Default for AiConfig {
+    fn default() -> Self {
+        Self {
+            base_url: default_ai_base_url(),
+            model: String::new(),
+            api_key: None,
+            auto_run_safe_commands: false,
+        }
+    }
+}
+
+impl AiConfig {
+    /// Whether a request could be sent at all: an endpoint and a model. A key
+    /// is deliberately not required — a loopback endpoint or a gateway with its
+    /// own auth needs none.
+    pub fn is_configured(&self) -> bool {
+        !self.base_url.trim().is_empty() && !self.model.trim().is_empty()
+    }
+
+    /// The URL one request goes to. No `v1` is inserted: the base URL is what
+    /// the operator wrote, and inserting a version would break an endpoint that
+    /// already carries one.
+    pub fn endpoint(&self) -> String {
+        format!("{}/chat/completions", self.base_url.trim_end_matches('/'))
+    }
 }
 
 /// Desktops this agent can reach, as saved routes rather than live sessions.
@@ -743,6 +820,12 @@ impl Config {
         self.desktop.clone().unwrap_or_default()
     }
 
+    /// The model configuration, or the defaults when the section is absent:
+    /// the stock endpoint with no model, which answers `configured: false`.
+    pub fn get_ai(&self) -> AiConfig {
+        self.ai.clone().unwrap_or_default()
+    }
+
     /// The raw section as written (or its all-off defaults when absent).
     /// Call `.resolve(..)` on it to fill in the memory-derived capacities.
     pub fn get_remote_access(&self) -> RemoteAccessConfig {
@@ -1043,6 +1126,10 @@ impl Default for Config {
             // configure, and an absent table would read as "not a thing this
             // agent does".
             desktop: Some(DesktopConfig::default()),
+            // Written out with the stock endpoint and no model, so a generated
+            // config.toml shows where a model is configured and starts
+            // unconfigured rather than pointing at a vendor by default.
+            ai: Some(AiConfig::default()),
         }
     }
 }

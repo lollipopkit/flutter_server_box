@@ -348,19 +348,32 @@ pub async fn write(
         let _ = tokio::fs::remove_file(&staging).await;
         return Ok(res);
     }
-    // The staged file was created with the process umask, and the rename
-    // carries that mode onto the destination — so overwriting a 0600 file
-    // would quietly leave it 0644. Whatever was there keeps its permissions.
-    if let Ok(existing) = tokio::fs::metadata(&path).await
-        && let Err(e) = tokio::fs::set_permissions(&staging, existing.permissions()).await
-    {
-        tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
-    }
-    if let Err(e) = tokio::fs::rename(&staging, &path).await {
-        let _ = tokio::fs::remove_file(&staging).await;
+    if let Err(e) = commit_staging(&staging, &path).await {
         return Ok(failed(e));
     }
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "bytes": written })))
+}
+
+/// Puts staged bytes under their real name.
+///
+/// The mode-carry is the part that is easy to lose: the staged file was
+/// created with the process umask and the rename carries that mode onto the
+/// destination, so overwriting a 0600 file would quietly leave it 0644.
+/// `api::ai::tools` writes files too, and two implementations of this sequence
+/// is how one of them comes to skip it.
+pub(crate) async fn commit_staging(staging: &Path, path: &Path) -> std::io::Result<()> {
+    // Best effort and logged, never fatal: the bytes are already across, and
+    // failing the write over a permission it could not carry would lose them.
+    if let Ok(existing) = tokio::fs::metadata(path).await
+        && let Err(e) = tokio::fs::set_permissions(staging, existing.permissions()).await
+    {
+        tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
+    }
+    if let Err(e) = tokio::fs::rename(staging, path).await {
+        let _ = tokio::fs::remove_file(staging).await;
+        return Err(e);
+    }
+    Ok(())
 }
 
 pub async fn mkdir(
@@ -590,7 +603,7 @@ fn mode_of(_meta: &std::fs::Metadata) -> Option<u32> {
 ///
 /// The process id and a counter, so two writes to one path from two requests
 /// cannot stage onto each other.
-fn staging_path(path: &Path) -> PathBuf {
+pub(crate) fn staging_path(path: &Path) -> PathBuf {
     use std::sync::atomic::{AtomicU64, Ordering};
     static SEQ: AtomicU64 = AtomicU64::new(0);
     let n = SEQ.fetch_add(1, Ordering::Relaxed);

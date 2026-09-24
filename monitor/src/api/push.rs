@@ -49,7 +49,7 @@ use serde_json::{Map as JsonMap, Value as JsonValue};
 use super::server::AppState;
 use super::server::verify_auth;
 use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
-use crate::core::config::{PushConfig, validate_push_rate};
+use crate::core::config::{Config, PushConfig, validate_push_rate};
 use crate::core::config_file;
 use crate::monitoring::push::{PushRateLimiter, send_notification};
 
@@ -112,6 +112,58 @@ fn secrets(push_type: &str) -> &'static [Secret] {
         Some("ios") => &[Secret::Key("token")],
         _ => &[],
     }
+}
+
+/// Every secret value this agent stores, so `api::ai::tools` can take them
+/// back out of what a tool call is about to tell a model.
+///
+/// The Agent runs read-only commands without asking when
+/// `auto_run_safe_commands` is on, and `cat config.toml` is read-only: its
+/// output carries this agent's `jwt_secret`, its model provider's API key and
+/// every push credential. None of those were given to whoever runs the model
+/// endpoint, so the literal values are removed from every string a tool call
+/// produces.
+///
+/// **This is literal-value redaction and it is stated as such.** A read that
+/// re-encodes what it printed — base64, a split string, a fragment the shell
+/// reassembles — gets past it. It closes the case that happens by accident,
+/// which is the one that happens.
+pub(crate) fn credential_values(config: &Config) -> Vec<String> {
+    let mut values = Vec::new();
+    if let Some(secret) = &config.jwt_secret {
+        values.push(secret.clone());
+    }
+    if let Some(key) = config.ai.as_ref().and_then(|ai| ai.api_key.clone()) {
+        values.push(key);
+    }
+    for push in config.push.iter().flatten() {
+        for secret in secrets(&push.push_type) {
+            match secret {
+                Secret::Key(key) => {
+                    if let Some(value) = push.config.get(*key).and_then(|v| v.as_str()) {
+                        values.push(value.to_string());
+                    }
+                }
+                Secret::TableValues(table) => {
+                    if let Some(toml::Value::Table(entries)) = push.config.get(*table) {
+                        for value in entries.values() {
+                            if let Some(text) = value.as_str() {
+                                values.push(text.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // A one-character credential would redact every occurrence of that
+    // character. Nothing here is ever that short, and a value that short is a
+    // configuration mistake rather than something worth mangling every tool
+    // result over.
+    values.retain(|value| value.len() >= 8);
+    values.sort();
+    values.dedup();
+    values
 }
 
 /// The key that decides *where* a channel's credential is sent, for the types
@@ -713,6 +765,72 @@ mod tests {
             push_type: push_type.to_string(),
             config,
             from_index,
+        }
+    }
+
+    /// Every credential this agent holds, so the Agent's tool results can have
+    /// them taken back out.
+    #[test]
+    fn every_stored_credential_is_named_and_no_other_value_is() {
+        let config = Config {
+            jwt_secret: Some("the-jwt-secret-value".to_string()),
+            ai: Some(crate::core::config::AiConfig {
+                api_key: Some("the-provider-key-value".to_string()),
+                ..Default::default()
+            }),
+            push: Some(vec![
+                stored(
+                    "bark",
+                    "bark",
+                    r#"key = "the-bark-key-value"
+                       server = "https://api.day.app""#,
+                ),
+                stored(
+                    "hook",
+                    "webhook",
+                    r#"url = "https://example.com/hook"
+                       [headers]
+                       Authorization = "the-header-value"
+                       Content-Type = "application/json""#,
+                ),
+                // A type this build cannot send through: its credential keys
+                // are unknown, so nothing here can name them.
+                stored("mystery", "some_future_channel", r#"token = "the-unknown-value""#),
+                // A value too short to be a credential. Removing it would
+                // replace every occurrence of that text in every tool result.
+                stored("short", "bark", r#"key = "abc""#),
+            ]),
+            ..Config::default()
+        };
+
+        let values = credential_values(&config);
+        for expected in [
+            "the-jwt-secret-value",
+            "the-provider-key-value",
+            "the-bark-key-value",
+            "the-header-value",
+            // Every value of a `headers` table, not only the one that is a
+            // credential. The same rule `view` masks by, and the same reason:
+            // it is right without having to know which header names are secret.
+            // A config dump is therefore missing its `Content-Type` too.
+            "application/json",
+        ] {
+            assert!(values.iter().any(|v| v == expected), "{expected} was not named");
+        }
+        for absent in [
+            // A type this build cannot deliver through: `secrets` names
+            // nothing, so its credential keys are unknown here.
+            "the-unknown-value",
+            // Too short to be a credential.
+            "abc",
+            // Not a credential — a destination, and the endpoint stays legible
+            // in the editor, exactly as `view` leaves it.
+            "https://api.day.app",
+        ] {
+            assert!(
+                !values.iter().any(|v| v == absent),
+                "{absent} was named as a credential"
+            );
         }
     }
 

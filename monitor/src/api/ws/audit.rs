@@ -96,6 +96,17 @@ pub enum Kind {
     /// records its end is written minutes later, by the poller. Reading the
     /// history is not recorded at all, so a row here is always a change.
     Benchmark,
+    /// A tool call the Agent made through `api::ai`, and whether anyone was
+    /// asked about it.
+    ///
+    /// Its own kind for `Exec`'s reason and one of its own: the subject is the
+    /// same command text an `Exec` row carries, and `detail` says whether the
+    /// classifier let it run unreviewed. That last part is the thing this kind
+    /// exists for — an access log that could not say which commands the agent
+    /// ran *by itself* would be quiet about exactly the mode people are wary of
+    /// turning on. The conversation is not named: it is a row in a table this
+    /// endpoint also serves, and a subject is not the place to join to it.
+    Ai,
 }
 
 impl Kind {
@@ -117,6 +128,7 @@ impl Kind {
             Kind::Desktop => "desktop",
             Kind::Rdp => "rdp",
             Kind::Benchmark => "benchmark",
+            Kind::Ai => "ai",
         }
     }
 }

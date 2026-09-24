@@ -60,20 +60,24 @@ pub struct ExecRequest {
     env: Option<HashMap<String, String>>,
 }
 
+/// `pub(crate)` for `api::ai::tools`, which runs a command through [`run`]
+/// rather than through this request: the Agent decides a call may run before
+/// it has a request to run it in, and re-implementing the capped, timed,
+/// killed-on-drop execution there is how the two would come to differ.
 #[derive(Serialize)]
-struct ExecResponse {
+pub(crate) struct ExecResponse {
     /// Null when the process was killed rather than exiting.
-    exit_code: Option<i32>,
-    stdout: String,
-    stderr: String,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) stdout: String,
+    pub(crate) stderr: String,
     /// Whether either stream hit the configured output cap, so a caller knows
     /// the output it is parsing is a prefix.
-    truncated: bool,
+    pub(crate) truncated: bool,
     /// Whether the configured timeout elapsed. The process is killed and both streams
     /// come back empty: they are read as one future together with the wait, so
     /// abandoning it abandons what was buffered too. A caller gets the fact
     /// that it timed out rather than a partial answer it might parse.
-    timed_out: bool,
+    pub(crate) timed_out: bool,
 }
 
 pub async fn exec(
@@ -137,7 +141,7 @@ pub async fn exec(
 ///
 /// Reads the command rather than the input it was given, so nothing a caller
 /// sends as a credential is ever quoted here.
-fn first_line(cmd: &str) -> String {
+pub(crate) fn first_line(cmd: &str) -> String {
     let line = cmd.lines().next().unwrap_or("").trim();
     if line.len() <= 200 {
         return line.to_string();
@@ -149,7 +153,7 @@ fn first_line(cmd: &str) -> String {
     format!("{}…", &line[..end])
 }
 
-async fn run(
+pub(crate) async fn run(
     cmd: &str,
     stdin: Option<&str>,
     env: Option<&HashMap<String, String>>,
