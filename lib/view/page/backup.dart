@@ -28,22 +28,6 @@ import 'package:webdav_client_plus/webdav_client_plus.dart';
 /// own.
 enum BackupSection { sync, import }
 
-/// What a document out of an import dialog turned out to be.
-enum _ImportKind {
-  /// A full backup, encrypted or not. It has been restored by now.
-  backup,
-
-  /// A bare list, which the tile that asked for it owns.
-  list,
-
-  /// It could not be read, and the failure has been reported already.
-  failed,
-
-  /// The page was gone before this could be decided, so there is nothing left
-  /// to hand the document to. Every caller's next step opens a dialog.
-  dismissed,
-}
-
 class BackupPage extends ConsumerStatefulWidget {
   /// Null shows both, side by side, under one heading each.
   ///
@@ -606,7 +590,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           return;
         }
         final text = str.trim();
-        if (await _importKindOf(context, text) != _ImportKind.list) return;
+        if (!await _routeImport(context, text)) return;
         final (list, _) = await context.showLoadingDialog(
           fn: () => Computer.shared.start((s) {
             return json.decode(s) as List;
@@ -662,18 +646,24 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 }
 
 extension on _BackupPageState {
-  /// Routes an imported document by what it is, and says which reader owns it.
+  /// Hands an imported document to whichever reader owns it, and answers
+  /// whether that is the calling tile.
   ///
   /// Every import tile here takes the same dialog and the same document, so a
   /// backup can arrive at any of them. Restoring it is what keeps that from
   /// being an error, since the tile's own reader would answer with a cast
   /// failure — which says what went wrong and not what to do instead.
-  Future<_ImportKind> _importKindOf(BuildContext context, String text) async {
+  ///
+  /// A document this answers false for is not the caller's to read: it was a
+  /// backup and has been restored, it could not be read and the failure is on
+  /// screen, or the page was gone before that could be decided. Every caller's
+  /// next step opens another dialog, which is why none of the three continues.
+  Future<bool> _routeImport(BuildContext context, String text) async {
     // An encrypted envelope is not JSON, so it is recognised before anything
     // tries to parse it.
     if (Cryptor.isEncrypted(text)) {
       await BackupService.restoreFromText(context, text);
-      return _ImportKind.backup;
+      return false;
     }
     final (isBackup, err) = await context.showLoadingDialog(
       fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
@@ -681,13 +671,13 @@ extension on _BackupPageState {
     // A context that has been deactivated cannot open the dialog every caller
     // leads with, and `showLoadingDialog` closes the one it was reading behind
     // on its own, so this is reachable.
-    if (!context.mounted) return _ImportKind.dismissed;
+    if (!context.mounted) return false;
     // Reported by `showLoadingDialog` in a dialog of its own already; throwing
     // it raised a second one for the same failure.
-    if (err != null) return _ImportKind.failed;
-    if (isBackup != true) return _ImportKind.list;
+    if (err != null) return false;
+    if (isBackup != true) return true;
     await BackupService.restoreFromText(context, text);
-    return _ImportKind.backup;
+    return false;
   }
 
   Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
@@ -939,7 +929,7 @@ extension on _BackupPageState {
 
     try {
       text = text.trim();
-      if (await _importKindOf(context, text) != _ImportKind.list) return;
+      if (!await _routeImport(context, text)) return;
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
