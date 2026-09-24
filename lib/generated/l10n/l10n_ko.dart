@@ -419,6 +419,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remoteBackupPasswordRequired => '원격 백업에는 비어 있지 않은 백업 비밀번호가 필요합니다';
 
   @override
+  String get monitorSyncServerTip =>
+      '백업은 이 서버의 monitor 에이전트에 저장되며 백업 비밀번호로 암호화됩니다. 에이전트의 패널은 파일을 보관하고 돌려줄 수 있지만 내용을 읽을 수는 없습니다.';
+
+  @override
+  String get monitorSyncNeedsServer => '백업이 저장될 monitor 에이전트가 있는 서버를 선택하세요.';
+
+  @override
   String get monitorHttpsRequired =>
       '원격 monitor 에이전트에는 HTTPS가 필요합니다. HTTP를 허용한 경우는 예외입니다.';
 

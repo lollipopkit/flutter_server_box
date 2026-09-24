@@ -413,6 +413,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
 
   @override
+  String get monitorSyncServerTip =>
+      '备份存放在此服务器的监控代理上，并使用备份密码加密。它的面板可以保存文件并原样交回，但无法读取内容。';
+
+  @override
+  String get monitorSyncNeedsServer => '请选择备份要存放到的服务器，即监控代理所在的那一台。';
+
+  @override
   String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS，除非该连接已允许 HTTP。';
 
   @override
@@ -3292,6 +3299,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
+
+  @override
+  String get monitorSyncServerTip =>
+      '備份存放在此伺服器的監控代理上，並以備份密碼加密。它的面板可以保存檔案並原樣交還，但無法讀取內容。';
+
+  @override
+  String get monitorSyncNeedsServer => '請選擇備份要存放到的伺服器，即監控代理所在的那一台。';
 
   @override
   String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS，除非該連線已允許 HTTP。';

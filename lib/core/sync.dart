@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/monitor_backup_storage.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/schema.dart';
@@ -273,6 +275,70 @@ final class BakSyncer extends SyncIface {
     final gistEnabled = PrefProps.gistSync.get();
     if (gistEnabled) return GistRs.shared;
 
+    if (monitorSync.get()) return monitorStorage;
+
     return null;
+  }
+
+  /// Whether this device's backup goes to one of its own monitor agents, and
+  /// which one.
+  ///
+  /// Its own prefs rather than members of fl_lib's `PrefProps`, which is where
+  /// the other three switches live: those name a *kind* of backend whose
+  /// credentials are prefs of their own, and this one names one of this app's
+  /// server records — a type fl_lib does not know about. Being `PrefProp`s also
+  /// keeps both out of the backup, which is what the other three do and what
+  /// [localVersionTag] relies on.
+  static const monitorSync = PrefPropDefault(
+    'monitor_sync',
+    false,
+    updateLastUpdateTsOnSetProp: false,
+  );
+  static const monitorSyncServer = PrefProp<String>('monitor_sync_server');
+
+  /// The store, kept while the chosen server does not change.
+  ///
+  /// It owns an HTTP client with a connection pool and the interface has no
+  /// `dispose`, so building one per [remoteStorage] access would leak one per
+  /// launch. Rebuilt, and the old one closed, only when [monitorSyncServer]
+  /// names a different record.
+  MonitorBackupStorage? _monitorStorage;
+
+  /// The agent-hosted store, or null when none is chosen or the record cannot
+  /// be dialed.
+  ///
+  /// [Spi.monitorOn] and not [Spi.monitor]: that getter is "as configured,
+  /// switch or no switch", and dialing a transport the operator turned off is
+  /// exactly what this app does not do anywhere else. The settings page refuses
+  /// to switch this on for a server whose agent is off, so the state this reads
+  /// as null is one that cannot be saved into.
+  ///
+  /// Null is also what an unresolvable id answers — a server deleted while the
+  /// switch stayed on. `SyncIface` logs and returns, which is the honest
+  /// outcome: there is nothing to sync to.
+  MonitorBackupStorage? get monitorStorage {
+    final id = monitorSyncServer.get();
+    if (id == null || id.isEmpty) return null;
+    final cached = _monitorStorage;
+    if (cached != null && cached.serverId == id) return cached;
+
+    cached?.close();
+    _monitorStorage = null;
+
+    final spi = Stores.server.fetchOneRaw(id);
+    final monitor = spi?.monitorOn;
+    if (spi == null || monitor == null) return null;
+    return _monitorStorage = MonitorBackupStorage(spi.id, monitor);
+  }
+
+  /// Forgets the chosen agent, closing the client it was holding.
+  ///
+  /// Called when the *remote* is reconfigured, beside [forgetCheckpoint]: a
+  /// checkpoint carries the backend's runtime type, which does not change when
+  /// the sync is pointed at a different agent — and pointing it somewhere new
+  /// is when the shortcut would skip the sync that had everything to do.
+  static void forgetMonitorStorage() {
+    bakSync._monitorStorage?.close();
+    bakSync._monitorStorage = null;
   }
 }

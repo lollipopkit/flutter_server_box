@@ -127,6 +127,8 @@
   "navTabMenuTip": "長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。",
   "nTags": "{count} 個標籤",
   "remoteBackupPasswordRequired": "遠端備份需要非空的備份密碼",
+  "monitorSyncServerTip": "備份存放在此伺服器的監控代理上，並以備份密碼加密。它的面板可以保存檔案並原樣交還，但無法讀取內容。",
+  "monitorSyncNeedsServer": "請選擇備份要存放到的伺服器，即監控代理所在的那一台。",
   "monitorHttpsRequired": "遠端監控代理必須使用 HTTPS，除非該連線已允許 HTTP。",
   "monitorAllowInsecureHttp": "允許 HTTP",
   "monitorAllowInsecureHttpTip": "僅應在 HTTP 之外具備傳輸加密的可信私有網路中開啟，例如 Tailscale",

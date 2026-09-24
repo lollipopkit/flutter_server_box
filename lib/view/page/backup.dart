@@ -47,6 +47,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
+  final monitorLoading = false.vn;
   late Future<_ICloudBackupStatus?> _icloudStatusFuture;
 
   @override
@@ -62,6 +63,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
   void dispose() {
     webdavLoading.dispose();
     gistLoading.dispose();
+    monitorLoading.dispose();
     super.dispose();
   }
 
@@ -90,6 +92,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     if (isICloudSupported) _buildIcloud,
     _buildWebdav,
     _buildGist,
+    _buildMonitor,
     _buildFile,
     _buildClipboard,
   ];
@@ -162,10 +165,53 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     );
   }
 
-  bool get _hasEnabledRemoteSync =>
-      (isICloudSupported && PrefProps.icloudSync.get()) ||
-      PrefProps.webdavSync.get() ||
-      PrefProps.gistSync.get();
+  bool get _hasEnabledRemoteSync => _remoteSyncOn();
+
+  /// Whether a destination is switched on, optionally ignoring [but].
+  ///
+  /// One rule in one place. Each backend used to spell out which of the others
+  /// conflict with it, which was the same condition written three times — and a
+  /// fourth written the same way would have been the copy that forgot one.
+  /// iCloud counts only where the platform has it.
+  bool _remoteSyncOn({PrefPropDefault<bool>? but}) {
+    final props = <PrefPropDefault<bool>>[
+      if (isICloudSupported) PrefProps.icloudSync,
+      PrefProps.webdavSync,
+      PrefProps.gistSync,
+      BakSyncer.monitorSync,
+    ];
+    for (final prop in props) {
+      if (prop != but && prop.get()) return true;
+    }
+    return false;
+  }
+
+  /// Which server's agent the backup goes to.
+  ///
+  /// A picker rather than a text field: the credential and the address are the
+  /// record's, and the list is the servers that actually have an agent
+  /// configured. Picking a different one forgets where this device's last sync
+  /// was — a checkpoint carries the backend's runtime type, which does not
+  /// change when the destination does.
+  Future<void> _onTapMonitorServer(
+    BuildContext context,
+    List<Spi> candidates,
+    Spi? current,
+  ) async {
+    final picked = await context.showPickSingleDialog<Spi>(
+      title: l10n.monitorAgent,
+      items: candidates,
+      display: (e) => e.name,
+      initial: current,
+    );
+    if (picked == null || picked.id == current?.id) return;
+
+    await BakSyncer.monitorSyncServer.set(picked.id);
+    BakSyncer.forgetMonitorStorage();
+    await BakSyncer.forgetCheckpoint();
+    setState(() {});
+  }
+
 
   Future<bool> _onTapSetBakPwd(
     BuildContext context, {
@@ -267,8 +313,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             trailing: StoreSwitch(
               prop: PrefProps.icloudSync,
               validator: (p0) async {
-                if (p0 &&
-                    (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
+                if (p0 && _remoteSyncOn(but: PrefProps.icloudSync)) {
                   Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
@@ -307,7 +352,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             trailing: StoreSwitch(
               prop: PrefProps.webdavSync,
               validator: (p0) async {
-                if (p0 && isICloudSupported && PrefProps.icloudSync.get()) {
+                if (p0 && _remoteSyncOn(but: PrefProps.webdavSync)) {
                   Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
@@ -384,9 +429,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             trailing: StoreSwitch(
               prop: PrefProps.gistSync,
               validator: (p0) async {
-                if (p0 &&
-                    ((isICloudSupported && PrefProps.icloudSync.get()) ||
-                        PrefProps.webdavSync.get())) {
+                if (p0 && _remoteSyncOn(but: PrefProps.gistSync)) {
                   Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
@@ -425,6 +468,99 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   UIs.width7,
                   TextButton(
                     onPressed: () async => _onTapGistUp(context),
+                    child: Text(libL10n.backup),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The agent-hosted store.
+  ///
+  /// **The server is chosen, not typed.** The credential is one of this app's
+  /// own server records, so asking for an address and a password again would be
+  /// storing a second copy of something the app already holds — and the second
+  /// copy is the one that goes stale.
+  ///
+  /// What the agent holds is the encrypted backup, which is what makes this
+  /// destination acceptable at all: it stores bytes it cannot read.
+  Widget get _buildMonitor {
+    final candidates = Stores.server.fetch().where((e) => e.monitorOn != null).toList();
+    final chosenId = BakSyncer.monitorSyncServer.get();
+    Spi? chosen;
+    for (final e in candidates) {
+      if (e.id == chosenId) {
+        chosen = e;
+        break;
+      }
+    }
+    final picked = chosen;
+
+    return CardX(
+      child: ExpandTile(
+        leading: const Icon(Icons.dns),
+        title: Text(l10n.monitorAgent),
+        initiallyExpanded: false,
+        children: [
+          _buildSyncSettingsTile(),
+          ListTile(
+            title: Text(libL10n.server),
+            // The empty state is the one that already exists for this fact,
+            // because the watch has the same problem: nothing to pick.
+            subtitle: Text(picked?.name ?? l10n.watchNoMonitorServer),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: candidates.isEmpty
+                ? null
+                : () => _onTapMonitorServer(context, candidates, picked),
+          ),
+          ListTile(
+            title: Text(libL10n.auto),
+            trailing: StoreSwitch(
+              prop: BakSyncer.monitorSync,
+              validator: (p0) async {
+                if (p0 && _remoteSyncOn(but: BakSyncer.monitorSync)) {
+                  Toast.show(l10n.autoBackupConflict);
+                  return false;
+                }
+                if (p0) {
+                  if (picked == null) {
+                    Toast.show(l10n.monitorSyncNeedsServer);
+                    return false;
+                  }
+                  final ok = await _ensureBakPwd(context);
+                  if (!ok) return false;
+                }
+                if (p0) {
+                  monitorLoading.value = true;
+                  // `rs:` explicitly, the same as the other three: the switch's
+                  // prop is set *after* this returns, so `remoteStorage` would
+                  // still answer null on the first enable.
+                  await bakSync.sync(rs: bakSync.monitorStorage);
+                  monitorLoading.value = false;
+                }
+                return true;
+              },
+            ),
+          ),
+          ListTile(
+            title: Text(libL10n.manual),
+            trailing: monitorLoading.listenVal((loading) {
+              if (loading) return SizedLoading.small;
+
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () async => _onTapMonitorDl(context),
+                    child: Text(libL10n.restore),
+                  ),
+                  UIs.width7,
+                  TextButton(
+                    onPressed: () async => _onTapMonitorUp(context),
                     child: Text(libL10n.backup),
                   ),
                 ],
@@ -746,6 +882,56 @@ extension on _BackupPageState {
       Loggers.app.warning('Upload gist backup failed', e, s);
     } finally {
       gistLoading.value = false;
+    }
+  }
+
+  Future<void> _onTapMonitorDl(BuildContext context) async {
+    monitorLoading.value = true;
+    final storage = bakSync.monitorStorage;
+    try {
+      if (storage == null) return Toast.show(l10n.monitorSyncNeedsServer);
+
+      final files = await storage.list();
+      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
+
+      final fileName = await context.showPickSingleDialog(
+        title: libL10n.restore,
+        items: files,
+      );
+      if (fileName == null) return;
+
+      await storage.download(relativePath: fileName);
+      final dlFile = await File('${Paths.doc}/$fileName').readAsString();
+      await BackupService.restoreFromText(context, dlFile);
+    } catch (e, s) {
+      context.showErrDialog(e, s, libL10n.restore);
+      Loggers.app.warning('Download monitor backup failed', e, s);
+    } finally {
+      monitorLoading.value = false;
+    }
+  }
+
+  Future<void> _onTapMonitorUp(BuildContext context) async {
+    monitorLoading.value = true;
+    final date = DateTime.now().ymdhms(ymdSep: '-', hmsSep: '-', sep: '-');
+    final bakName = '$date-${Miscs.bakFileName}';
+    try {
+      final storage = bakSync.monitorStorage;
+      if (storage == null) return Toast.show(l10n.monitorSyncNeedsServer);
+
+      final ok = await _ensureBakPwd(context);
+      if (!ok) return;
+      // A dated name, like the other two backends' manual upload: it is a copy
+      // taken now, and the automatic sync is what writes the fixed name the app
+      // reads back.
+      await bakSync.writeEncryptedBackup(name: bakName);
+      await storage.upload(relativePath: bakName);
+      Loggers.app.info('Upload monitor backup success');
+    } catch (e, s) {
+      context.showErrDialog(e, s, libL10n.upload);
+      Loggers.app.warning('Upload monitor backup failed', e, s);
+    } finally {
+      monitorLoading.value = false;
     }
   }
 

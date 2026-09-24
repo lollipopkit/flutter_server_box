@@ -448,6 +448,14 @@ class AppLocalizationsIt extends AppLocalizations {
       'I backup remoti richiedono una password di backup non vuota';
 
   @override
+  String get monitorSyncServerTip =>
+      'Il backup è archiviato sull’agente monitor di questo server, crittografato con la password di backup. Il suo pannello può conservare il file e restituirlo senza poterlo leggere.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Scegli il server al cui agente monitor va il backup.';
+
+  @override
   String get monitorHttpsRequired =>
       'Un agente monitor remoto richiede HTTPS, salvo che HTTP sia consentito.';
 

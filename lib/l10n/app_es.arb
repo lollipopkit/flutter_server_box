@@ -54,6 +54,8 @@
   "navTabMenuTip": "Mantén pulsada una pestaña, o haz clic derecho en ella, para conectar o desconectar de una vez todo lo que contiene.",
   "nTags": "{count} etiquetas",
   "remoteBackupPasswordRequired": "Las copias de seguridad remotas requieren una contraseña de copia no vacía",
+  "monitorSyncServerTip": "La copia de seguridad se guarda en el agente monitor de este servidor, encriptada con la contraseña de respaldo. Su panel puede guardar el archivo y devolverlo sin poder leerlo.",
+  "monitorSyncNeedsServer": "Elige el servidor a cuyo agente monitor va la copia de seguridad.",
   "monitorHttpsRequired": "Un agente de monitor remoto necesita HTTPS, salvo que se permita HTTP.",
   "backupTip": "Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.",
   "bgRun": "Ejecución en segundo plano",

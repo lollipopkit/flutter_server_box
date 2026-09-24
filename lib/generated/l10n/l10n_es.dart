@@ -450,6 +450,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Las copias de seguridad remotas requieren una contraseña de copia no vacía';
 
   @override
+  String get monitorSyncServerTip =>
+      'La copia de seguridad se guarda en el agente monitor de este servidor, encriptada con la contraseña de respaldo. Su panel puede guardar el archivo y devolverlo sin poder leerlo.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Elige el servidor a cuyo agente monitor va la copia de seguridad.';
+
+  @override
   String get monitorHttpsRequired =>
       'Un agente de monitor remoto necesita HTTPS, salvo que se permita HTTP.';
 

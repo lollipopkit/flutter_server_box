@@ -445,6 +445,14 @@ class AppLocalizationsTr extends AppLocalizations {
       'Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir';
 
   @override
+  String get monitorSyncServerTip =>
+      'Yedekleme, bu sunucunun monitor ajanında saklanır ve yedekleme parolasıyla şifrelenir. Ajanın paneli dosyayı tutabilir ve içeriğini okuyamadan geri verebilir.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Yedeklemenin gideceği monitor ajanına sahip sunucuyu seçin.';
+
+  @override
   String get monitorHttpsRequired =>
       'Uzak monitor ajanı HTTPS ister, HTTP’ye izin verilmediyse.';
 

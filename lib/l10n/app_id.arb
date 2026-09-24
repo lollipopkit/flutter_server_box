@@ -54,6 +54,8 @@
   "navTabMenuTip": "Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.",
   "nTags": "{count} tag",
   "remoteBackupPasswordRequired": "Cadangan jarak jauh memerlukan kata sandi cadangan yang tidak kosong",
+  "monitorSyncServerTip": "Cadangan disimpan di agen monitor server ini, dienkripsi dengan kata sandi cadangan. Panelnya dapat menyimpan file dan mengembalikannya tanpa bisa membacanya.",
+  "monitorSyncNeedsServer": "Pilih server yang agen monitornya menjadi tujuan cadangan.",
   "monitorHttpsRequired": "Agen monitor jarak jauh butuh HTTPS, kecuali HTTP diizinkan untuknya.",
   "backupTip": "Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.",
   "bgRun": "Jalankan di Backgroud",

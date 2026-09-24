@@ -416,6 +416,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remoteBackupPasswordRequired => 'リモートバックアップには空でないバックアップパスワードが必要です';
 
   @override
+  String get monitorSyncServerTip =>
+      'バックアップはこのサーバーの monitor エージェントに保存され、バックアップパスワードで暗号化されます。エージェントのパネルはファイルを保持して返せますが、内容を読むことはできません。';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'バックアップの保存先となる monitor エージェントを持つサーバーを選択してください。';
+
+  @override
   String get monitorHttpsRequired =>
       'リモートの monitor エージェントには HTTPS が必要です（HTTP を許可した場合を除く）。';
 

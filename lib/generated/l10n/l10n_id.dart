@@ -444,6 +444,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Cadangan jarak jauh memerlukan kata sandi cadangan yang tidak kosong';
 
   @override
+  String get monitorSyncServerTip =>
+      'Cadangan disimpan di agen monitor server ini, dienkripsi dengan kata sandi cadangan. Panelnya dapat menyimpan file dan mengembalikannya tanpa bisa membacanya.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Pilih server yang agen monitornya menjadi tujuan cadangan.';
+
+  @override
   String get monitorHttpsRequired =>
       'Agen monitor jarak jauh butuh HTTPS, kecuali HTTP diizinkan untuknya.';
 

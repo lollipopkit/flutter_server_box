@@ -54,6 +54,8 @@
   "navTabMenuTip": "タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。",
   "nTags": "{count} 個のタグ",
   "remoteBackupPasswordRequired": "リモートバックアップには空でないバックアップパスワードが必要です",
+  "monitorSyncServerTip": "バックアップはこのサーバーの monitor エージェントに保存され、バックアップパスワードで暗号化されます。エージェントのパネルはファイルを保持して返せますが、内容を読むことはできません。",
+  "monitorSyncNeedsServer": "バックアップの保存先となる monitor エージェントを持つサーバーを選択してください。",
   "monitorHttpsRequired": "リモートの monitor エージェントには HTTPS が必要です（HTTP を許可した場合を除く）。",
   "backupTip": "エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。",
   "bgRun": "バックグラウンド実行",

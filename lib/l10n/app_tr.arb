@@ -54,6 +54,8 @@
   "navTabMenuTip": "İçindeki her şeyi tek seferde bağlamak veya bağlantısını kesmek için bir sekmeye uzun basın ya da sağ tıklayın.",
   "nTags": "{count} etiket",
   "remoteBackupPasswordRequired": "Uzak yedeklemeler için boş olmayan bir yedekleme parolası gerekir",
+  "monitorSyncServerTip": "Yedekleme, bu sunucunun monitor ajanında saklanır ve yedekleme parolasıyla şifrelenir. Ajanın paneli dosyayı tutabilir ve içeriğini okuyamadan geri verebilir.",
+  "monitorSyncNeedsServer": "Yedeklemenin gideceği monitor ajanına sahip sunucuyu seçin.",
   "monitorHttpsRequired": "Uzak monitor ajanı HTTPS ister, HTTP’ye izin verilmediyse.",
   "backupTip": "Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.",
   "bgRun": "Arka planda çalıştır",

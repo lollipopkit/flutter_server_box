@@ -54,6 +54,8 @@
   "navTabMenuTip": "Tippe lange auf einen Tab – oder klicke ihn mit der rechten Maustaste an –, um alles darin auf einmal zu verbinden oder zu trennen.",
   "nTags": "{count} Tags",
   "remoteBackupPasswordRequired": "Für entfernte Backups ist ein nicht leeres Backup-Passwort erforderlich",
+  "monitorSyncServerTip": "Das Backup liegt auf dem Monitor-Agent dieses Servers und ist mit dem Backup-Passwort verschlüsselt. Sein Panel kann die Datei aufbewahren und wieder herausgeben, ohne sie lesen zu können.",
+  "monitorSyncNeedsServer": "Wähle den Server, an dessen Monitor-Agent das Backup geht.",
   "monitorHttpsRequired": "Ein entfernter Monitor-Agent braucht HTTPS, sofern HTTP dafür nicht erlaubt ist.",
   "backupTip": "Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.",
   "bgRun": "Hintergrundaktualisierung",

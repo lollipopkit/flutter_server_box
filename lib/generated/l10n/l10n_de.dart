@@ -447,6 +447,14 @@ class AppLocalizationsDe extends AppLocalizations {
       'Für entfernte Backups ist ein nicht leeres Backup-Passwort erforderlich';
 
   @override
+  String get monitorSyncServerTip =>
+      'Das Backup liegt auf dem Monitor-Agent dieses Servers und ist mit dem Backup-Passwort verschlüsselt. Sein Panel kann die Datei aufbewahren und wieder herausgeben, ohne sie lesen zu können.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Wähle den Server, an dessen Monitor-Agent das Backup geht.';
+
+  @override
   String get monitorHttpsRequired =>
       'Ein entfernter Monitor-Agent braucht HTTPS, sofern HTTP dafür nicht erlaubt ist.';
 

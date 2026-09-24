@@ -451,6 +451,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les sauvegardes distantes nécessitent un mot de passe de sauvegarde non vide';
 
   @override
+  String get monitorSyncServerTip =>
+      'La sauvegarde est stockée sur l’agent monitor de ce serveur, chiffrée avec le mot de passe de sauvegarde. Son panneau peut conserver le fichier et le restituer sans pouvoir le lire.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Choisissez le serveur dont l’agent monitor reçoit la sauvegarde.';
+
+  @override
   String get monitorHttpsRequired =>
       'Un agent monitor distant exige HTTPS, sauf si HTTP est autorisé.';
 

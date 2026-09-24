@@ -54,6 +54,8 @@
   "navTabMenuTip": "Tieni premuta una scheda — o fai clic destro — per connettere o disconnettere in una volta tutto ciò che contiene.",
   "nTags": "{count} tag",
   "remoteBackupPasswordRequired": "I backup remoti richiedono una password di backup non vuota",
+  "monitorSyncServerTip": "Il backup è archiviato sull’agente monitor di questo server, crittografato con la password di backup. Il suo pannello può conservare il file e restituirlo senza poterlo leggere.",
+  "monitorSyncNeedsServer": "Scegli il server al cui agente monitor va il backup.",
   "monitorHttpsRequired": "Un agente monitor remoto richiede HTTPS, salvo che HTTP sia consentito.",
   "backupTip": "I dati esportati possono essere crittografati con password.\nConservali al sicuro.",
   "bgRun": "Esegui in background",

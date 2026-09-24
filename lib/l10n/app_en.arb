@@ -128,6 +128,8 @@
   "navTabMenuTip": "Long press a tab — or right-click it — to connect or disconnect everything on it at once.",
   "nTags": "{count} Tags",
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorSyncServerTip": "The backup is stored on this server's monitor agent, encrypted with the backup password. Its panel can hold the file and hand it back without being able to read it.",
+  "monitorSyncNeedsServer": "Pick the server whose monitor agent the backup goes to.",
   "monitorHttpsRequired": "A remote monitor agent needs HTTPS, unless HTTP is allowed for it.",
   "monitorAllowInsecureHttp": "Allow HTTP",
   "plainHttpTitle": "This agent is served over plain HTTP",

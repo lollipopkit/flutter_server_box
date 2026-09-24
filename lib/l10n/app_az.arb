@@ -116,6 +116,8 @@
   "navTabMenuTip": "Vərəqdəki hər şeylə birdəfəyə əlaqə qurmaq və ya əlaqəni kəsmək üçün vərəqi basıb saxla və ya sağ kliklə.",
   "nTags": "{count} etiket",
   "remoteBackupPasswordRequired": "Uzaq ehtiyat nüsxələr üçün boş olmayan ehtiyat nüsxə parolu tələb olunur",
+  "monitorSyncServerTip": "Ehtiyat nüsxə bu serverin monitor agentində saxlanılır və ehtiyat nüsxə parolu ilə şifrələnir. Onun paneli faylı saxlaya və oxuya bilmədən geri qaytara bilər.",
+  "monitorSyncNeedsServer": "Ehtiyat nüsxənin monitor agentinə göndəriləcəyi serveri seçin.",
   "monitorHttpsRequired": "HTTP istifadəsinə icazə verilməyibsə, uzaq monitorinq agenti üçün HTTPS tələb olunur.",
   "monitorAllowInsecureHttp": "HTTP istifadəsinə icazə ver",
   "monitorAllowInsecureHttpTip": "Yalnız Tailscale kimi ötürülməni özü şifrələyən etibarlı özəl şəbəkədə",

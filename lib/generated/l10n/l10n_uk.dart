@@ -445,6 +445,14 @@ class AppLocalizationsUk extends AppLocalizations {
       'Для віддалених резервних копій потрібен непорожній пароль резервного копіювання';
 
   @override
+  String get monitorSyncServerTip =>
+      'Резервна копія зберігається на агенті monitor цього сервера і зашифрована паролем резервного копіювання. Його панель може зберігати файл і повертати його, не маючи змоги прочитати.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Виберіть сервер, на агент monitor якого піде резервна копія.';
+
+  @override
   String get monitorHttpsRequired =>
       'Віддаленому агенту monitor потрібен HTTPS, якщо для нього не дозволено HTTP.';
 

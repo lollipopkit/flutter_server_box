@@ -447,6 +447,14 @@ class AppLocalizationsAz extends AppLocalizations {
       'Uzaq ehtiyat nüsxələr üçün boş olmayan ehtiyat nüsxə parolu tələb olunur';
 
   @override
+  String get monitorSyncServerTip =>
+      'Ehtiyat nüsxə bu serverin monitor agentində saxlanılır və ehtiyat nüsxə parolu ilə şifrələnir. Onun paneli faylı saxlaya və oxuya bilmədən geri qaytara bilər.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Ehtiyat nüsxənin monitor agentinə göndəriləcəyi serveri seçin.';
+
+  @override
   String get monitorHttpsRequired =>
       'HTTP istifadəsinə icazə verilməyibsə, uzaq monitorinq agenti üçün HTTPS tələb olunur.';
 

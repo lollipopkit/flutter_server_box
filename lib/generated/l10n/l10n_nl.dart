@@ -445,6 +445,14 @@ class AppLocalizationsNl extends AppLocalizations {
       'Externe back-ups vereisen een niet-leeg back-upwachtwoord';
 
   @override
+  String get monitorSyncServerTip =>
+      'De back-up staat op de monitor-agent van deze server en is versleuteld met het back-upwachtwoord. Zijn paneel kan het bestand bewaren en teruggeven zonder het te kunnen lezen.';
+
+  @override
+  String get monitorSyncNeedsServer =>
+      'Kies de server naar wiens monitor-agent de back-up gaat.';
+
+  @override
   String get monitorHttpsRequired =>
       'Een externe monitor-agent vereist HTTPS, tenzij HTTP is toegestaan.';
 

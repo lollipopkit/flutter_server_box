@@ -893,6 +893,18 @@ abstract class AppLocalizations {
   /// **'Remote backups require a non-empty backup password'**
   String get remoteBackupPasswordRequired;
 
+  /// No description provided for @monitorSyncServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup is stored on this server\'s monitor agent, encrypted with the backup password. Its panel can hold the file and hand it back without being able to read it.'**
+  String get monitorSyncServerTip;
+
+  /// No description provided for @monitorSyncNeedsServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the server whose monitor agent the backup goes to.'**
+  String get monitorSyncNeedsServer;
+
   /// No description provided for @monitorHttpsRequired.
   ///
   /// In en, this message translates to:

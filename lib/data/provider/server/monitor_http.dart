@@ -7,6 +7,7 @@ import 'package:meta/meta.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_backup.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
@@ -473,6 +474,105 @@ class MonitorHttpClient {
       await _session().request<dynamic>(
         '/api/v1/fs/remove',
         data: {'path': path, 'recursive': recursive},
+        options: Options(method: 'DELETE'),
+      );
+    });
+  }
+
+  // ------------------------------------------------------------- backup
+  //
+  // The blobs this agent hosts for this app: the encrypted backup, stored as
+  // opaque bytes under a name. The agent cannot read one, which is why leaving
+  // it on a server is acceptable at all — the password never leaves this
+  // device. `core/utils/monitor_backup_storage.dart` is the `RemoteStorage`
+  // these four methods drive.
+
+  /// What the store holds, by name. Never the contents.
+  Future<List<MonitorBackupBlob>> fetchBackups() {
+    return _authed(() async {
+      final body = await _object('/api/v1/backup');
+      final raw = body['blobs'];
+      if (raw is! List) return const <MonitorBackupBlob>[];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(MonitorBackupBlob.fromJson)
+          .toList();
+    });
+  }
+
+  /// One blob's bytes, streamed rather than held: a backup is larger than the
+  /// app's own footprint on the small devices this runs on.
+  Future<Stream<List<int>>> backupRead(String name) {
+    return _authed(() async {
+      final resp = await _session().get<ResponseBody>(
+        '/api/v1/backup/blob',
+        queryParameters: {'name': name},
+        options: Options(responseType: ResponseType.stream),
+      );
+      final body = resp.data;
+      if (body == null) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: 'Empty /api/v1/backup/blob response',
+        );
+      }
+      return body.stream.map((chunk) => chunk.toList());
+    });
+  }
+
+  /// Stores one, replacing a blob of the same name.
+  ///
+  /// The name is this app's own file name, not a new one: the agent stores what
+  /// it is told and is what reads it back afterwards.
+  Future<void> backupWrite(
+    String name,
+    Stream<List<int>> data, {
+    int? size,
+    Stream<List<int>> Function()? replayData,
+  }) async {
+    // Same reason as [fsWrite]: a `File.openRead()` body has already been
+    // consumed by the first attempt, so the token is refreshed with a
+    // replayable request rather than by retrying the PUT itself.
+    await fetchBackups();
+
+    Future<void> put(Stream<List<int>> body) async {
+      await _session().put<dynamic>(
+        '/api/v1/backup/blob',
+        queryParameters: {'name': name},
+        data: body,
+        options: Options(
+          headers: {
+            'content-type': 'application/octet-stream',
+            // Dio sets none for a stream, and the agent caps what it reads —
+            // sending it chunked works either way.
+            'content-length': ?size,
+          },
+        ),
+      );
+    }
+
+    try {
+      await put(data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401 && replayData != null) {
+        _token = null;
+        await _login();
+        try {
+          await put(replayData());
+          return;
+        } on DioException catch (retryError) {
+          throw _toMonitorHttpErr(retryError);
+        }
+      }
+      throw _toMonitorHttpErr(e);
+    }
+  }
+
+  Future<void> backupRemove(String name) {
+    return _authed(() async {
+      await _session().request<dynamic>(
+        '/api/v1/backup/blob',
+        queryParameters: {'name': name},
         options: Options(method: 'DELETE'),
       );
     });
