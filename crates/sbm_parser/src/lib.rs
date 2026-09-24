@@ -11,6 +11,7 @@
 //!   (the delta helpers in `types::`) — no mutable state is held
 //! - Units follow the data source: memory/disk in KiB (meminfo/df -k), network in bytes
 
+pub mod ai_risk;
 pub mod bench;
 pub mod bsd;
 pub mod capabilities;
