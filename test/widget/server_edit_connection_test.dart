@@ -91,9 +91,9 @@ void main() {
     expect(find.text('Monitor HTTP'), findsOneWidget);
     expect(find.text('SSH'), findsWidgets);
     expect(find.text(app_locale.l10n.connection.toUpperCase()), findsOneWidget);
-    // The agent leads on this server, so it is the one that says so.
-    expect(find.text(app_locale.l10n.transportDialledFirst), findsOneWidget);
-    expect(find.text(app_locale.l10n.transportFallback), findsOneWidget);
+    // Order and addresses remain visible without redundant role labels.
+    expect(find.text(app_locale.l10n.transportDialledFirst), findsNothing);
+    expect(find.text(app_locale.l10n.transportFallback), findsNothing);
   });
 
   testWidgets('switching a method off keeps its configuration', (tester) async {
@@ -110,7 +110,7 @@ void main() {
     await settle(tester);
 
     expect(find.text(app_locale.l10n.transportSectionOff), findsOneWidget);
-    expect(find.text(app_locale.l10n.transportOffKept), findsOneWidget);
+    expect(find.text(app_locale.l10n.transportOffKept), findsNothing);
 
     await tester.tap(find.widgetWithText(FilledButton, libL10n.save));
     await settle(tester);
@@ -189,7 +189,9 @@ final class _PersistingServersNotifier extends ServersNotifier {
 
   @override
   ServersState build() => ServersState(
-    servers: {for (final s in [initialServer, ...others]) s.id: s},
+    servers: {
+      for (final s in [initialServer, ...others]) s.id: s,
+    },
     serverOrder: [initialServer.id, for (final s in others) s.id],
   );
 
