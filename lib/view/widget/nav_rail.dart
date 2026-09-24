@@ -185,6 +185,11 @@ class _AppNavRailState extends State<AppNavRail>
     // set at 54% failed the opaque test below as though it were no colour at
     // all, and was drawn with the surface's instead.
     final panel = railTheme.backgroundColor ?? (page.a == 0 ? surface : page);
+    // What a shadow under it is cast in. `Material`'s own default written out,
+    // so that naming it here changes its opacity and nothing else.
+    final shadow = theme.useMaterial3
+        ? theme.colorScheme.shadow
+        : theme.shadowColor;
 
     return MouseRegion(
       onEnter: (_) => _ctrl.forward(),
@@ -203,20 +208,17 @@ class _AppNavRailState extends State<AppNavRail>
                 open,
               ),
               child: Material(
-                // TODO(fade): on a device the closing rail is seen to stay
-                // semi-transparent once it is shut, and the semi-transparency
-                // then goes. Reported, not reproduced here.
-                //
-                // Lead, read out of the SDK and not confirmed as the cause:
-                // this `Material` is `MaterialType.canvas` with no `shape`, so
-                // `Material.build` takes its fast path and hands the colour and
-                // the elevation below to an `AnimatedPhysicalModel` whose
-                // `animationDuration` is `kThemeChangeDuration` (200ms) with
-                // `animateColor: true`. Both values are then re-interpolated by
-                // that model, and it is still crossing towards what the last
-                // frame asked for after the rail's own animation has stopped.
-                // `animationDuration: Duration.zero` here was tried for it and
-                // reported not to help.
+                animationDuration: Duration.zero,
+                // Both of the values below are handed to a `PhysicalModel`
+                // inside this one — `MaterialType.canvas` with no `shape` is
+                // `Material.build`'s fast path — and that model animates what it
+                // is given over `animationDuration`, 200ms by default, which is
+                // longer than either of the movements they are read off. With
+                // the default, measured: the rail is fully collapsed and this
+                // elevation is still 0.699, on its way down from 0.795 — a
+                // shadow saying a panel is there, over a panel that has gone —
+                // and it takes a further 200ms to leave. At zero, what is
+                // painted is what was asked for, on every frame.
                 // Which of the two is asked of the *page*, not of the colour
                 // being painted: a page with no colour is what the fade is
                 // for, whatever the panel turns out to be. Asked of the panel,
@@ -229,14 +231,31 @@ class _AppNavRailState extends State<AppNavRail>
                         panel,
                         open,
                       )!,
+                // How strong the shadow is, which is the half of it that no
+                // renderer settles on its own.
+                //
+                // A shape's shadow is cut out from under it only where its
+                // colour is opaque — `PhysicalModel` paints it as
+                // `drawShadow(..., color.alpha != 0xFF)` — so through a
+                // translucent panel the shadow is drawn *over*: a dark shape
+                // the size of the panel, under a panel that is mostly gone.
+                // Measured on Impeller over a wallpaper, with the shadow left
+                // opaque: at the last frame of the closing the panel was still
+                // a quarter dark (0x845430 where the wallpaper is 0xb07040)
+                // and the frame after, with the elevation at zero, it was the
+                // wallpaper exactly. That is the jolt — not a fade that ends,
+                // but a panel that is there and then is not. Skia cuts the
+                // shadow out either way, so only a device showed it, and the
+                // opaque page hid it behind an opaque colour. Faded by the
+                // value everything else about the panel is, what is painted
+                // leaves with what is there.
+                shadowColor: shadow.withValues(alpha: open),
                 surfaceTintColor: Colors.transparent,
-                // With the colour rather than on or off: a shadow is cast by
-                // the shape whether or not the colour on it is opaque, so a
-                // panel fixed at three points of elevation held a full-strength
-                // shadow under it for the last of the closing — a dark shape
-                // with nothing on it, which then went with the last frame.
-                // Read off the same value the colour is, so the two leave
-                // together.
+                // Whether the shadow is drawn at all, and how far it is cast.
+                // Read off the same value as the two above, so that nothing
+                // outlives the panel: at zero `PhysicalModel` skips the shadow
+                // outright, where a panel left at three points of elevation
+                // held one for the last of the closing.
                 elevation: railTheme.elevation ?? (3 * open),
                 child: Column(
                   children: [
