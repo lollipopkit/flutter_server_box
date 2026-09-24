@@ -3,6 +3,7 @@
     Activity,
     Boxes,
     CalendarClock,
+    DatabaseBackup,
     CircuitBoard,
     Container,
     Gauge,
@@ -48,6 +49,7 @@
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },
     pve: { label: () => $LL.pve(), icon: Boxes },
     bmc: { label: () => $LL.bmc(), icon: CircuitBoard },
+    backup: { label: () => $LL.backup(), icon: DatabaseBackup },
   }
 
   // Read here rather than passed in: the bar is in three callers' headers and a

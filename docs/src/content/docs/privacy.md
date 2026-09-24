@@ -41,8 +41,13 @@ included.
 A local backup may be unencrypted when no backup password is set. When you set a
 backup password, the backup is encrypted before it is written or uploaded.
 Automatic remote backup requires a non-empty backup password. After a backup is
-sent to iCloud, WebDAV or GitHub Gist, that provider's storage, access and
-retention rules also apply.
+sent to iCloud, WebDAV, GitHub Gist or a ServerBox Monitor agent, that provider's
+storage, access and retention rules also apply.
+
+A Monitor agent stores the backup as it receives it, which is encrypted: the
+password is held in this device's secure storage and the agent never sees it, so
+what it holds is bytes it cannot read. The agent's own configuration file can be
+exported and imported from its panel, which needs the shell grant there.
 
 ## Automatic diagnostic data
 
@@ -246,7 +251,7 @@ automatic diagnostic payload described above.
 | Request | Destination | When and what it carries |
 |---|---|---|
 | AI request | The endpoint configured by you | When you send an Agent message; see [AI requests](#ai-requests) |
-| Backup or sync | iCloud, your WebDAV server, or GitHub Gist | When you upload, download or sync a backup; the selected backup file, which may be encrypted |
+| Backup or sync | iCloud, your WebDAV server, GitHub Gist, or a ServerBox Monitor agent you added | When you upload, download or sync a backup; the selected backup file, which may be encrypted. An agent stores it as received — encrypted, when a backup password is set — and cannot read it |
 | Update check | `api.github.com` | On launch when automatic update checks are enabled |
 | Linux userland manifest | `github.com` | When the app checks for a newer local Linux release; it contains release metadata and signatures |
 | Linux userland image | The distribution mirror or source URL selected by the verified manifest | When you install or update a local Linux environment; the image is checked against the manifest's digest |

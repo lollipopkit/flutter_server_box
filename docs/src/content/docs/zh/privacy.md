@@ -26,7 +26,9 @@ Agent 对话不会加入备份，也不会通过设备同步发送。在你从�
 
 备份只在你主动请求时创建。根据选项和格式，备份可能包含服务器设置和凭据、私钥、代码片段、端口映射、容器设置、连接历史及 App 设置。如果包含 App 设置，配置的 AI endpoint、model 和 API key 也会进入备份。Agent 对话和设备本地状态不会包含在内。
 
-未设置备份密码时，本地备份可能不加密。设置备份密码后，备份会在写入或上传前加密。自动远程备份要求设置非空的备份密码。备份发送到 iCloud、WebDAV 或 GitHub Gist 后，还会受到对应 provider 的存储、访问和保留规则约束。
+未设置备份密码时，本地备份可能不加密。设置备份密码后，备份会在写入或上传前加密。自动远程备份要求设置非空的备份密码。备份发送到 iCloud、WebDAV、GitHub Gist 或你添加的 ServerBox Monitor agent 后，还会受到对应 provider 的存储、访问和保留规则约束。
+
+Monitor agent 按收到的原样保存备份,也就是加密后的字节：密码保存在本机的安全存储里,agent 看不到,因此它持有的是自己读不了的内容。agent 自己的配置文件可以在它的 panel 里导出与导入,那需要那台机器上的 shell 授权。
 
 ## 自动诊断数据
 
@@ -126,7 +128,7 @@ App 只保存服务器最近上报的公网网卡地址结果，包括“未上�
 | 请求 | 目标 | 时机和内容 |
 |---|---|---|
 | AI 请求 | 你配置的 endpoint | 发送 Agent 消息时；详见 [AI 请求](#ai-请求) |
-| 备份或同步 | iCloud、你的 WebDAV server 或 GitHub Gist | 上传、下载或同步备份时；携带选定的备份文件，文件可能已加密 |
+| 备份或同步 | iCloud、你的 WebDAV server、GitHub Gist,或你添加的 ServerBox Monitor agent | 上传、下载或同步备份时；携带选定的备份文件,文件可能已加密。agent 按收到的原样保存(设置了备份密码时即为加密内容),它读不了 |
 | 检查更新 | `api.github.com` | 开启自动检查更新后，在启动时发起 |
 | Linux userland manifest | `github.com` | App 检查本机 Linux 环境是否有更新时发起；携带版本元数据和签名 |
 | Linux userland 镜像 | 经验证的 manifest 指定的 distribution mirror 或 source URL | 安装或更新本机 Linux 环境时发起；下载的镜像会按 manifest 中的 digest 校验 |

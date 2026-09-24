@@ -11,9 +11,9 @@
 /// own configuration (users, schedule, desktops), then the operator's own
 /// scripts to type into a shell (snippets), then the agent that operates it,
 /// then a measurement of it (benchmark), then the clusters and machines beyond
-/// it (pve), then the controllers of the machines themselves (bmc). TODO: sync
-/// joins this list as it lands; the bar scrolls
-/// rather than wrapping.
+/// it (pve), then the controllers of the machines themselves (bmc), then the
+/// data that outlives all of them (backup). The bar scrolls rather than
+/// wrapping.
 ///
 /// How each one is *drawn* (its label and its icon) is deliberately not here:
 /// a label is `$LL` and an icon is a component, and this module is imported by
@@ -36,6 +36,7 @@ export type FeatureId =
   | 'benchmark'
   | 'pve'
   | 'bmc'
+  | 'backup'
 
 export interface FeatureSpec {
   /// The `View` this feature renders as, and how `layout.navigate` names it.
@@ -60,6 +61,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'benchmark', capability: 'benchmark' },
   { id: 'pve', capability: 'pve' },
   { id: 'bmc', capability: 'bmc' },
+  { id: 'backup', capability: 'backup' },
 ]
 
 /// The features this agent serves.

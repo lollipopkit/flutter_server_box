@@ -2327,6 +2327,81 @@ type RootTranslation = {
 	 */
 	aiStopDeclined: string
 	/**
+	 * B​a​c​k​u​p
+	 */
+	backup: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​t​o​r​e​d​ ​·​ ​u​p​ ​t​o​ ​{​m​a​x​}​ ​e​a​c​h
+	 * @param {unknown} count
+	 * @param {unknown} max
+	 */
+	backupSubtitle: RequiredParams<'count' | 'max'>
+	/**
+	 * A​ ​p​l​a​c​e​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​f​o​r​ ​e​n​c​r​y​p​t​e​d​ ​b​a​c​k​u​p​s​.​ ​W​h​a​t​ ​i​s​ ​s​t​o​r​e​d​ ​h​e​r​e​ ​i​s​ ​e​n​c​r​y​p​t​e​d​ ​b​e​f​o​r​e​ ​i​t​ ​i​s​ ​u​p​l​o​a​d​e​d​,​ ​w​i​t​h​ ​a​ ​p​a​s​s​w​o​r​d​ ​t​h​i​s​ ​a​g​e​n​t​ ​n​e​v​e​r​ ​s​e​e​s​ ​—​ ​s​o​ ​i​t​ ​h​o​l​d​s​ ​b​y​t​e​s​ ​i​t​ ​c​a​n​n​o​t​ ​r​e​a​d​,​ ​a​n​d​ ​n​e​i​t​h​e​r​ ​c​a​n​ ​t​h​i​s​ ​p​a​n​e​l​.​ ​S​t​o​r​i​n​g​ ​o​n​e​ ​a​n​d​ ​t​a​k​i​n​g​ ​i​t​ ​a​w​a​y​ ​a​r​e​ ​f​i​l​e​ ​o​p​e​r​a​t​i​o​n​s​;​ ​t​h​e​ ​b​a​c​k​u​p​s​ ​t​h​e​m​s​e​l​v​e​s​ ​b​e​l​o​n​g​ ​t​o​ ​t​h​e​ ​a​p​p​.
+	 */
+	backupWhatItIs: string
+	/**
+	 * Y​o​u​ ​c​a​n​ ​s​e​e​ ​w​h​a​t​ ​i​s​ ​s​t​o​r​e​d​ ​h​e​r​e​ ​b​u​t​ ​n​o​t​ ​c​h​a​n​g​e​ ​i​t​.​ ​S​t​o​r​i​n​g​ ​a​ ​b​a​c​k​u​p​ ​o​r​ ​r​e​p​l​a​c​i​n​g​ ​t​h​i​s​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​i​s​ ​t​h​e​ ​s​a​m​e​ ​g​r​a​n​t​ ​a​s​ ​t​h​e​ ​s​h​e​l​l​.
+	 */
+	backupReadOnly: string
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​s​t​o​r​e​d​ ​h​e​r​e​ ​y​e​t​.​ ​U​p​l​o​a​d​ ​t​h​e​ ​f​i​l​e​ ​t​h​e​ ​a​p​p​ ​e​x​p​o​r​t​e​d​,​ ​o​r​ ​l​e​t​ ​t​h​e​ ​a​p​p​ ​s​y​n​c​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 */
+	backupEmpty: string
+	/**
+	 * S​t​o​r​e​ ​a​ ​b​a​c​k​u​p
+	 */
+	backupStore: string
+	/**
+	 * T​h​a​t​ ​f​i​l​e​ ​i​s​ ​{​s​i​z​e​}​,​ ​a​n​d​ ​t​h​i​s​ ​a​g​e​n​t​ ​t​a​k​e​s​ ​u​p​ ​t​o​ ​{​m​a​x​}​.
+	 * @param {unknown} max
+	 * @param {unknown} size
+	 */
+	backupTooLarge: RequiredParams<'max' | 'size'>
+	/**
+	 * S​t​o​r​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	backupStored: RequiredParams<'name'>
+	/**
+	 * R​e​m​o​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	backupRemoved: RequiredParams<'name'>
+	/**
+	 * A​p​p​ ​b​a​c​k​u​p
+	 */
+	backupAppFile: string
+	/**
+	 * R​e​m​o​v​e​ ​{​n​a​m​e​}​ ​f​r​o​m​ ​t​h​i​s​ ​a​g​e​n​t​?​ ​I​t​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​ ​f​r​o​m​ ​h​e​r​e​ ​—​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​k​e​y​ ​f​o​r​ ​w​h​a​t​ ​i​s​ ​i​n​ ​i​t​,​ ​a​n​d​ ​t​h​e​ ​c​o​p​y​ ​o​n​ ​t​h​e​ ​a​g​e​n​t​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​o​n​e​ ​i​t​ ​h​o​l​d​s​.
+	 * @param {unknown} name
+	 */
+	backupConfirmRemove: RequiredParams<'name'>
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​’​s​ ​c​o​n​f​i​g​u​r​a​t​i​o​n
+	 */
+	backupAgentConfig: string
+	/**
+	 * c​o​n​f​i​g​.​t​o​m​l​ ​a​s​ ​i​t​ ​i​s​ ​o​n​ ​d​i​s​k​,​ ​c​o​m​m​e​n​t​s​ ​a​n​d​ ​a​l​l​.​ ​I​m​p​o​r​t​i​n​g​ ​w​r​i​t​e​s​ ​t​h​e​ ​f​i​l​e​ ​b​a​c​k​ ​e​x​a​c​t​l​y​ ​a​s​ ​s​e​n​t​,​ ​a​f​t​e​r​ ​t​a​k​i​n​g​ ​a​ ​b​a​c​k​u​p​ ​o​f​ ​t​h​e​ ​o​n​e​ ​i​t​ ​r​e​p​l​a​c​e​s​ ​—​ ​b​u​t​ ​t​h​e​ ​t​w​o​ ​k​e​y​s​ ​t​h​a​t​ ​d​e​c​i​d​e​ ​w​h​o​ ​c​a​n​ ​s​i​g​n​ ​i​n​ ​a​n​d​ ​w​h​e​r​e​ ​t​h​e​ ​r​e​c​o​r​d​s​ ​a​r​e​ ​c​a​n​n​o​t​ ​b​e​ ​c​h​a​n​g​e​d​ ​b​y​ ​a​n​ ​i​m​p​o​r​t​,​ ​a​n​d​ ​a​ ​f​i​l​e​ ​t​h​a​t​ ​n​a​m​e​s​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​v​a​l​u​e​ ​f​o​r​ ​e​i​t​h​e​r​ ​i​s​ ​r​e​f​u​s​e​d​ ​b​y​ ​n​a​m​e​.
+	 */
+	backupAgentConfigNote: string
+	/**
+	 * R​e​a​d​i​n​g​ ​a​n​d​ ​w​r​i​t​i​n​g​ ​t​h​i​s​ ​f​i​l​e​ ​b​o​t​h​ ​n​e​e​d​ ​t​h​e​ ​s​h​e​l​l​ ​g​r​a​n​t​:​ ​i​t​ ​h​o​l​d​s​ ​t​h​e​ ​c​r​e​d​e​n​t​i​a​l​s​ ​o​f​ ​t​h​e​ ​n​o​t​i​f​i​c​a​t​i​o​n​ ​c​h​a​n​n​e​l​s​,​ ​t​h​e​ ​A​I​ ​e​n​d​p​o​i​n​t​,​ ​P​V​E​ ​a​n​d​ ​t​h​e​ ​B​M​C​,​ ​w​h​i​c​h​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​p​a​g​e​ ​d​e​l​i​b​e​r​a​t​e​l​y​ ​n​e​v​e​r​ ​a​n​s​w​e​r​s​ ​b​a​c​k​.
+	 */
+	backupAgentConfigNeedsGrant: string
+	/**
+	 * E​x​p​o​r​t
+	 */
+	backupExport: string
+	/**
+	 * I​m​p​o​r​t
+	 */
+	backupImport: string
+	/**
+	 * I​m​p​o​r​t​e​d​.​ ​R​e​s​t​a​r​t​ ​t​h​e​ ​a​g​e​n​t​ ​t​o​ ​a​p​p​l​y​ ​i​t​ ​—​ ​i​t​ ​i​s​ ​r​u​n​n​i​n​g​ ​t​h​e​ ​c​o​n​f​i​g​u​r​a​t​i​o​n​ ​i​t​ ​r​e​a​d​ ​a​t​ ​s​t​a​r​t​u​p​.
+	 */
+	backupImported: string
+	/**
 	 * B​M​C
 	 */
 	bmc: string
@@ -5163,6 +5238,74 @@ export type TranslationFunctions = {
 	 * Every call was declined.
 	 */
 	aiStopDeclined: () => LocalizedString
+	/**
+	 * Backup
+	 */
+	backup: () => LocalizedString
+	/**
+	 * {count} stored · up to {max} each
+	 */
+	backupSubtitle: (arg: { count: unknown, max: unknown }) => LocalizedString
+	/**
+	 * A place on this agent for encrypted backups. What is stored here is encrypted before it is uploaded, with a password this agent never sees — so it holds bytes it cannot read, and neither can this panel. Storing one and taking it away are file operations; the backups themselves belong to the app.
+	 */
+	backupWhatItIs: () => LocalizedString
+	/**
+	 * You can see what is stored here but not change it. Storing a backup or replacing this agent’s configuration is the same grant as the shell.
+	 */
+	backupReadOnly: () => LocalizedString
+	/**
+	 * Nothing is stored here yet. Upload the file the app exported, or let the app sync to this agent.
+	 */
+	backupEmpty: () => LocalizedString
+	/**
+	 * Store a backup
+	 */
+	backupStore: () => LocalizedString
+	/**
+	 * That file is {size}, and this agent takes up to {max}.
+	 */
+	backupTooLarge: (arg: { max: unknown, size: unknown }) => LocalizedString
+	/**
+	 * Stored {name}.
+	 */
+	backupStored: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Removed {name}.
+	 */
+	backupRemoved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * App backup
+	 */
+	backupAppFile: () => LocalizedString
+	/**
+	 * Remove {name} from this agent? It cannot be undone from here — this panel has no key for what is in it, and the copy on the agent is the only one it holds.
+	 */
+	backupConfirmRemove: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * This agent’s configuration
+	 */
+	backupAgentConfig: () => LocalizedString
+	/**
+	 * config.toml as it is on disk, comments and all. Importing writes the file back exactly as sent, after taking a backup of the one it replaces — but the two keys that decide who can sign in and where the records are cannot be changed by an import, and a file that names a different value for either is refused by name.
+	 */
+	backupAgentConfigNote: () => LocalizedString
+	/**
+	 * Reading and writing this file both need the shell grant: it holds the credentials of the notification channels, the AI endpoint, PVE and the BMC, which the settings page deliberately never answers back.
+	 */
+	backupAgentConfigNeedsGrant: () => LocalizedString
+	/**
+	 * Export
+	 */
+	backupExport: () => LocalizedString
+	/**
+	 * Import
+	 */
+	backupImport: () => LocalizedString
+	/**
+	 * Imported. Restart the agent to apply it — it is running the configuration it read at startup.
+	 */
+	backupImported: () => LocalizedString
 	/**
 	 * BMC
 	 */

@@ -9,6 +9,8 @@ import type {
   BenchEstimate,
   BenchOptions,
   BenchRun,
+  BackupBlob,
+  BackupListView,
   BenchView,
   BmcControlResult,
   BmcIntent,
@@ -621,6 +623,72 @@ export const api = {
       { method: 'POST', body: JSON.stringify(request_) },
       'Failed to act on the guest',
     ),
+  /// The blobs this agent hosts, as a name, a size and a timestamp each.
+  ///
+  /// Never their contents: what is in one is ciphertext the app wrote, and this
+  /// panel has no key for it. Reading the listing needs only the panel login;
+  /// `editable` says whether this caller may store or remove one.
+  getBackups: () =>
+    request<BackupListView>('/backup', {}, 'Failed to read the backup store'),
+  /// One blob, byte for byte, as a blob the browser can be handed.
+  ///
+  /// There is no `<a download>` shortcut: the endpoint wants a bearer token and
+  /// a URL cannot carry one without putting it in the agent's access log.
+  downloadBackup: async (name: string, signal?: AbortSignal): Promise<Blob> => {
+    const res = await bytesRequest(
+      `/backup/blob?name=${encodeURIComponent(name)}`,
+      {},
+      'Failed to read the backup',
+      signal,
+    )
+    return res.blob()
+  },
+  /// Stores one, replacing a blob of the same name.
+  ///
+  /// The name is the client's own and is the app's: the file it syncs is
+  /// `srvbox_bak_v3.json`, and a name that would address another file is
+  /// refused by the agent rather than rewritten. Storing is `full_access`.
+  uploadBackup: async (name: string, body: Blob, signal?: AbortSignal): Promise<BackupBlob> =>
+    bytesRequest(
+      `/backup/blob?name=${encodeURIComponent(name)}`,
+      { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
+      'Failed to store the backup',
+      signal,
+    ).then((res) => res.json() as Promise<BackupBlob>),
+  deleteBackup: (name: string) =>
+    request<unknown>(
+      `/backup/blob?name=${encodeURIComponent(name)}`,
+      { method: 'DELETE' },
+      'Failed to remove the backup',
+    ),
+  /// This agent's own `config.toml`, as text.
+  ///
+  /// `full_access` in both directions, unlike every other read here: that file
+  /// holds the write-only credentials of `[pve]`, `[bmc]`, `[ai]` and `[push]`,
+  /// which `GET /settings` exists to keep off the wire. What comes back is the
+  /// file as written, comments and all.
+  exportAgentConfig: async (): Promise<Blob> => {
+    const res = await bytesRequest(
+      '/backup/config',
+      {},
+      'Failed to read the configuration',
+    )
+    return res.blob()
+  },
+  /// Applies an uploaded `config.toml`.
+  ///
+  /// Written verbatim once it parses, so the operator's comments survive. The
+  /// two keys it may not change — `jwt_secret` and `database_url` — are refused
+  /// by name (`jwtSecretDiffers`, `databaseUrlDiffers`), and a file that is not
+  /// a config is `invalidConfig`. The agent answers `restart_required`, which
+  /// is always true: its running configuration is a startup snapshot.
+  importAgentConfig: async (text: Blob): Promise<void> => {
+    await bytesRequest(
+      '/backup/config',
+      { method: 'PUT', body: text, headers: { 'Content-Type': 'text/plain' } },
+      'Failed to import the configuration',
+    )
+  },
   /// The machine behind this agent's baseboard management controller: its power
   /// state, what it is, and the readings from its chassis.
   ///

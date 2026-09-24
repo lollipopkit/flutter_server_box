@@ -212,6 +212,29 @@ export interface RemoteAccess {
   /// as `editable` in each response rather than by withholding the tab. Absent
   /// on agents predating the endpoint.
   bmc?: boolean
+  /// Whether `/api/v1/backup` answers this agent at all — the same field for
+  /// the same reason. Listing the blobs needs only the panel login; storing,
+  /// removing and both directions of the configuration are `full_access` — and
+  /// the configuration pair does not offer *reading* without it either, because
+  /// that file holds every write-only credential the agent has.
+  backup?: boolean
+}
+
+/// One blob as the store lists it. Never its contents: what is in one is
+/// ciphertext the app wrote, and the panel has no key for it.
+export interface BackupBlob {
+  name: string
+  size: number
+  /// RFC 3339, from the file's own timestamp on the agent.
+  updated_at: string
+}
+
+export interface BackupListView {
+  blobs: BackupBlob[]
+  /// The most one upload may be, so the page can say it before a file is
+  /// chosen rather than after it is refused.
+  max_bytes: number
+  editable: boolean
 }
 
 /// An address, an account and a certificate fingerprint, as the agent holds
