@@ -85,6 +85,8 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
   final hasBackground =
       backgroundStyle == 'gradient' ||
       (backgroundStyle == 'image' && backgroundPath.isNotEmpty);
+  // Resolve fonts before deriving component styles so titles and tiles keep
+  // the same fallback fonts as ordinary text.
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
@@ -123,7 +125,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     switchTheme: const SwitchThemeData(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     ),
-  );
+  ).fixWindowsFont;
   // Copied onto the resolved one rather than passed to the constructor: an
   // `IconThemeData` carrying only a size has a null colour, and `Icon` answers
   // a null colour with `IconThemeData.fallback()` — black, in both themes.
@@ -415,8 +417,8 @@ class _MyAppState extends State<MyApp> {
       navigatorObservers: [AppRouteObserver.instance],
       title: BuildData.name,
       themeMode: themeMode,
-      theme: light.fixWindowsFont,
-      darkTheme: dark.fixWindowsFont,
+      theme: light,
+      darkTheme: dark,
       home: FutureBuilder<List<IntroPageBuilder>>(
         future: _introFuture,
         builder: (context, snapshot) {

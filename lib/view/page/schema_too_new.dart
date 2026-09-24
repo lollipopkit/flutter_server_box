@@ -418,12 +418,12 @@ class SchemaTooNewApp extends StatelessWidget {
       // The system's, since the stored preference is in the database this
       // cannot read.
       themeMode: ThemeMode.system,
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue).fixWindowsFont,
       darkTheme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
         brightness: Brightness.dark,
-      ),
+      ).fixWindowsFont,
       // The other half of it: `libL10n` is a global that only this call
       // replaces, and `MyApp` makes it from its own home builder.
       home: Builder(

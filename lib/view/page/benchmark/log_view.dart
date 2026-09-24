@@ -86,7 +86,7 @@ class _BenchmarkLogViewState extends State<BenchmarkLogView> {
           _terminal,
           controller: _controller,
           theme: TerminalLook.themeOf(context),
-          textStyle: TerminalLook.style,
+          textStyle: TerminalLook.styleOf(context),
           padding: const EdgeInsets.all(8),
           // Nothing here types: this is a transcript of a run happening on
           // another machine, and there is no channel to send a keystroke down.

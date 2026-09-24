@@ -311,7 +311,7 @@ class _SnippetRunViewState extends State<_SnippetRunView> {
               _sess.terminal,
               controller: _controller,
               focusNode: _focusNode,
-              textStyle: TerminalLook.style,
+              textStyle: TerminalLook.styleOf(context),
               theme: theme,
               backgroundOpacity: 0,
               keyboardType: TextInputType.text,

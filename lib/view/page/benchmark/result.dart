@@ -233,7 +233,7 @@ extension _Sections on _BenchmarkResultPageState {
                 touchTooltipData: BarTouchTooltipData(
                   getTooltipItem: (group, _, rod, _) => BarTooltipItem(
                     '${rows[group.x].bs}\n${_rate(rod.toY)}',
-                    UIs.text12,
+                    Theme.of(context).textTheme.bodyMedium!.merge(UIs.text12),
                   ),
                 ),
               ),

@@ -120,12 +120,17 @@ extension TerminalThemeX on TerminalTheme {
 /// Shared rather than read where it is needed, so the terminal in a dialog and
 /// the terminal in a tab cannot end up on different fonts or a different theme.
 abstract final class TerminalLook {
-  static TerminalStyle get style {
+  static TerminalStyle styleOf(BuildContext context) {
     final family = Stores.setting.fontPath.fetch().getFileName();
     final size = Stores.setting.termFontSize.fetch();
-    return TerminalStyle.fromTextStyle(
+    final style = TerminalStyle.fromTextStyle(
       TextStyle(fontFamily: family, fontSize: size),
     );
+    // Keep the terminal's monospace and custom fonts ahead of UI fallbacks.
+    return style.copyWith(fontFamilyFallback: [
+      ...style.fontFamilyFallback,
+      ...?Theme.of(context).textTheme.bodyMedium?.fontFamilyFallback,
+    ]);
   }
 
   /// The terminal's own theme setting, falling back to the app's and then to
