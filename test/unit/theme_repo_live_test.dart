@@ -49,9 +49,11 @@ void main() {
       for (final release in item.listing.releases) {
         versions++;
         final address = release.url;
+        // A cache rebuilt from disk carries no repository files, but this store
+        // is one just read, so every item still has its index.
         final bytes = address != null
             ? await ThemePackages.download(address)
-            : item.index.packages[release.path];
+            : item.index?.packages[release.path];
         expect(
           bytes,
           isNotNull,

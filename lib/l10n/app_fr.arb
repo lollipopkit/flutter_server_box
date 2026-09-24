@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Boutique de thèmes",
   "appearanceThemeStoreUrl": "URL du catalogue de thèmes",
   "appearanceInvalidTheme": "Pack de thème ou catalogue invalide",
+  "themeStoreRefreshFailed": "Impossible de lire le catalogue de thèmes.",
+  "themeStoreDeleteTheme": "Supprimer « {name} » ? Ses fichiers sont supprimés de cet appareil. S'il s'agit du thème utilisé, l'application revient au thème par défaut.",
   "appearanceThemeNeedsNewerApp": "Une version plus récente de l’application est requise : {version}",
   "appearanceFontFamilies": "Familles de polices de l’interface",
   "appearanceFontFamiliesTip": "Un nom par ligne ; les polices sont essayées dans l’ordre.",

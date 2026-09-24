@@ -30,6 +30,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appearanceInvalidTheme => '主题包或目录无效';
 
   @override
+  String get themeStoreRefreshFailed => '无法读取主题目录。';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '删除“$name”？其文件将从本机移除。如果它正在使用中，应用将返回默认主题。';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '需要更新版本的 App：$version';
   }
@@ -3083,6 +3091,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get appearanceInvalidTheme => '主題套件或目錄無效';
+
+  @override
+  String get themeStoreRefreshFailed => '無法讀取主題目錄。';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '刪除「$name」？其檔案將從本機移除。如果它正在使用中，應用程式將回到預設主題。';
+  }
 
   @override
   String appearanceThemeNeedsNewerApp(String version) {

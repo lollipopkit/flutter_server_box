@@ -30,6 +30,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appearanceInvalidTheme => '유효하지 않은 테마 패키지 또는 카탈로그';
 
   @override
+  String get themeStoreRefreshFailed => '테마 카탈로그를 읽을 수 없습니다.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name”을(를) 삭제할까요? 파일이 이 기기에서 제거됩니다. 사용 중인 테마라면 앱이 기본 테마로 돌아갑니다.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '최신 버전의 앱이 필요합니다: $version';
   }

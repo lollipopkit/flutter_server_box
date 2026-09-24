@@ -874,6 +874,37 @@ abstract final class ThemePackages {
       'package:${theme.installationId}': theme.name,
   };
 
+  /// Deletes one installed theme, answering whether it was there.
+  ///
+  /// **Safe to call on the theme in use**, which is the only thing that makes a
+  /// remove button worth having: deleting it would otherwise leave the app on a
+  /// preset whose assets are gone, and [activeTheme] answering null is not a
+  /// state anything else in the app draws. The selection is reconciled here
+  /// rather than at the next launch, so what a caller can observe afterwards is
+  /// a theme that exists.
+  ///
+  /// Nothing is refused for being in use — a user who wants it gone wants it
+  /// gone, and the answer is the default theme, not a dialog that will not
+  /// close.
+  static Future<bool> remove(
+    String installationId, {
+    String? rootDirectory,
+  }) async {
+    if (!_digestPattern.hasMatch(installationId)) return false;
+    final directory = Directory(
+      (rootDirectory ?? root).joinPath(installationId),
+    );
+    if (!await directory.exists()) return false;
+    await directory.delete(recursive: true);
+
+    if (_activeId == installationId) {
+      _activeId = null;
+      _active = null;
+    }
+    reconcileSelection();
+    return true;
+  }
+
   static String? activeIconPath(String key) {
     if (!iconKeys.contains(key)) return null;
     return activeTheme?.iconPath(key);
@@ -928,6 +959,40 @@ abstract final class ThemePackages {
     settings.appTileRadius.put(theme.tileRadius);
     settings.appButtonRadius.put(theme.buttonRadius);
     settings.appThemePreset.put(preset);
+  }
+
+  /// Selects a package, keeping the custom theme it is about to replace.
+  ///
+  /// The one entry point for "the app switches to this theme", so that every
+  /// way in — the preset sheet, the store, an import — leaves the same state
+  /// behind. [select] alone overwrites every setting a custom theme is made of,
+  /// so the snapshot has to come first.
+  static void apply(ThemePackage theme, {String? preset}) {
+    if (Stores.setting.appThemePreset.fetch() == 'custom') saveCustomTheme();
+    select(theme, preset: preset ?? 'package:${theme.installationId}');
+  }
+
+  /// Writes the settings a custom theme is made of.
+  ///
+  /// Read back by the settings page's own reader, which rebuilds the package
+  /// from exactly these keys, so the two are one shape in two places and have
+  /// to be changed together.
+  static void saveCustomTheme() {
+    final settings = Stores.setting;
+    settings.appCustomBackgroundPath.put(settings.appBackgroundPath.fetch());
+    settings.appCustomTheme.put(
+      jsonEncode({
+        'mode': settings.themeMode.fetch(),
+        'seed': settings.colorSeed.fetch(),
+        'systemColor': settings.useSystemPrimaryColor.fetch(),
+        'icons': settings.appIconStyle.fetch(),
+        'opacity': settings.appBackgroundOpacity.fetch(),
+        'blur': settings.appBackgroundBlur.fetch(),
+        'card': settings.appCardRadius.fetch(),
+        'tile': settings.appTileRadius.fetch(),
+        'button': settings.appButtonRadius.fetch(),
+      }),
+    );
   }
 
   static void reconcileSelection() {

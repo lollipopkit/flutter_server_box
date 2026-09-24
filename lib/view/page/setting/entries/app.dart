@@ -55,22 +55,7 @@ extension _App on _AppSettingsPageState {
     ]),
   ];
 
-  void _saveCustomTheme() {
-    _setting.appCustomBackgroundPath.put(_setting.appBackgroundPath.fetch());
-    _setting.appCustomTheme.put(
-      jsonEncode({
-        'mode': _setting.themeMode.fetch(),
-        'seed': _setting.colorSeed.fetch(),
-        'systemColor': _setting.useSystemPrimaryColor.fetch(),
-        'icons': _setting.appIconStyle.fetch(),
-        'opacity': _setting.appBackgroundOpacity.fetch(),
-        'blur': _setting.appBackgroundBlur.fetch(),
-        'card': _setting.appCardRadius.fetch(),
-        'tile': _setting.appTileRadius.fetch(),
-        'button': _setting.appButtonRadius.fetch(),
-      }),
-    );
-  }
+  void _saveCustomTheme() => ThemePackages.saveCustomTheme();
 
   void _markCustomTheme() {
     if (_setting.appThemePreset.fetch() != 'custom' ||
@@ -181,11 +166,7 @@ extension _App on _AppSettingsPageState {
   }
 
   void _applyTheme(ThemePackage package, {String? preset}) {
-    if (_setting.appThemePreset.fetch() == 'custom') _saveCustomTheme();
-    ThemePackages.select(
-      package,
-      preset: preset ?? 'package:${package.installationId}',
-    );
+    ThemePackages.apply(package, preset: preset);
     setStateSafe(() {});
     RNodes.app.notify();
   }
@@ -254,40 +235,15 @@ extension _App on _AppSettingsPageState {
         leading: const Icon(Icons.storefront_outlined),
         title: Text(label),
         trailing: const Icon(Icons.keyboard_arrow_right),
-        onTap: () async {
-          final url = _setting.themeStoreUrl.fetch().trim();
-          if (url.isEmpty) {
+        onTap: () {
+          // A catalog the user cannot reach is the page's own problem, but it
+          // is also the row's: the address it is read from is set two rows
+          // down, and this says which one to look at.
+          if (_setting.themeStoreUrl.fetch().trim().isEmpty) {
             Toast.show(l10n.appearanceThemeStoreUrl);
             return;
           }
-          final (store, error) = await context.showLoadingDialog<ThemeStore>(
-            fn: () => ThemeRepos.store(url),
-          );
-          if (!mounted) return;
-          if (error != null || store == null) {
-            Loggers.app.warning('Reading the theme store failed: $error');
-            Toast.error(l10n.appearanceInvalidTheme);
-            return;
-          }
-          if (store.items.isEmpty) {
-            Toast.show(libL10n.empty);
-            return;
-          }
-          final selected = await context.showPickSingleDialog<ThemeStoreItem>(
-            title: label,
-            items: store.items,
-            display: (item) => '${item.label} · ${item.repo}',
-          );
-          if (selected == null || !mounted) return;
-          // A version this build cannot read is listed rather than hidden, so
-          // the answer is "there is one" instead of silence.
-          if (!selected.installable) {
-            Toast.error(
-              l10n.appearanceThemeNeedsNewerApp(selected.newestVersion ?? ''),
-            );
-            return;
-          }
-          await _completeThemeInstall(() => ThemeRepos.install(selected));
+          ThemeStorePage.route.go(context);
         },
       ),
       keywords: 'theme catalog store repository',

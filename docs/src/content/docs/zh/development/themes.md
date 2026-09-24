@@ -62,6 +62,13 @@ repository 地址是 HTTPS，解析到一个 tarball。git 仓库按
 repository 失败，于是一棵树可以同时带 `themes/` 和 `plugins/`，服务本应用和插件
 两项功能。
 
+商店页面在 `lib/view/page/theme_store/`。列表在两次启动之间保留于
+`SettingStore.themeStoreCache`，以 `ThemeStore.toJson()` 写入，`updateLastModified:
+false`，并列入 `SettingStore.deviceLocalKeys` —— 一份 catalog 曾提供什么的缓存，既
+不是要同步的编辑，也不是要还原到另一台设备的东西。缓存中的条目不带 repository 文件
+（`ThemeStoreItem.index` 为 null），所以树内的版本会重新向它的 repository 取 tarball；
+两种情况的 digest 校验相同。
+
 ## 官方主题
 
 `lollipopkit/serverbox-plugins` 用 `themes/` 存放官方主题，一个主题一个源目录加一个

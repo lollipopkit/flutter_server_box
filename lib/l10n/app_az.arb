@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Mövzu mağazası",
   "appearanceThemeStoreUrl": "Mövzu kataloqu URL-si",
   "appearanceInvalidTheme": "Mövzu paketi və ya kataloq etibarsızdır",
+  "themeStoreRefreshFailed": "Tema kataloqu oxuna bilmədi.",
+  "themeStoreDeleteTheme": "“{name}” silinsin? Faylları bu cihazdan silinir. İstifadə olunan temadırsa, tətbiq standart temaya qayıdır.",
   "appearanceThemeNeedsNewerApp": "Daha yeni tətbiq tələb olunur: {version}",
   "appearanceFontFamilies": "İnterfeys şrift ailələri",
   "appearanceFontFamiliesTip": "Hər sətirə bir ad yazın; şriftlər ardıcıllıqla yoxlanır.",

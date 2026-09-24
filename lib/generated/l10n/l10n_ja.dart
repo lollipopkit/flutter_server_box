@@ -30,6 +30,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appearanceInvalidTheme => 'テーマパッケージまたはカタログが無効です';
 
   @override
+  String get themeStoreRefreshFailed => 'テーマカタログを読み取れませんでした。';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '「$name」を削除しますか？ファイルはこの端末から削除されます。使用中のテーマの場合、アプリは既定のテーマに戻ります。';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '新しいバージョンのアプリが必要です: $version';
   }

@@ -167,6 +167,18 @@ abstract class AppLocalizations {
   /// **'Invalid theme package or catalog'**
   String get appearanceInvalidTheme;
 
+  /// Shown when a manual refresh of the theme store could not read the catalog or any of its repositories.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the theme catalog.'**
+  String get themeStoreRefreshFailed;
+
+  /// Confirm dialog for deleting one installed theme. It also names what happens when that theme is the one in use.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}”? Its files are removed from this device. If it is the theme in use, the app returns to the default theme.'**
+  String themeStoreDeleteTheme(String name);
+
   /// Shown when a selected theme requires a newer app version. {version} is the required version.
   ///
   /// In en, this message translates to:

@@ -74,6 +74,14 @@ section the build does not know is skipped rather than failing the repository,
 which is how one tree carries `themes/` and `plugins/` and serves both this app
 and the plugin feature.
 
+The store page is `lib/view/page/theme_store/`. Its listing is kept between runs
+in `SettingStore.themeStoreCache`, written as `ThemeStore.toJson()` with
+`updateLastModified: false` and listed in `SettingStore.deviceLocalKeys` — a
+cache of what a catalog offered is neither an edit to sync nor a thing to
+restore onto another device. A cached item carries no repository files
+(`ThemeStoreItem.index` is null), so an in-tree version asks its repository for
+its tarball again; the digest check is the same either way.
+
 ## Official themes
 
 `lollipopkit/serverbox-plugins` holds the official themes in `themes/`, one

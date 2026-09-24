@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Toko tema",
   "appearanceThemeStoreUrl": "URL katalog tema",
   "appearanceInvalidTheme": "Paket tema atau katalog tidak valid",
+  "themeStoreRefreshFailed": "Tidak dapat membaca katalog tema.",
+  "themeStoreDeleteTheme": "Hapus “{name}”? Berkasnya dihapus dari perangkat ini. Jika ini tema yang sedang dipakai, aplikasi kembali ke tema bawaan.",
   "appearanceThemeNeedsNewerApp": "Memerlukan aplikasi versi lebih baru: {version}",
   "appearanceFontFamilies": "Daftar keluarga font antarmuka",
   "appearanceFontFamiliesTip": "Satu nama per baris; font dicoba sesuai urutan.",

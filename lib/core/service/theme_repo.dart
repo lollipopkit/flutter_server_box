@@ -261,6 +261,53 @@ final class ThemeRelease {
       notes: raw['notes'] is String ? raw['notes'] as String : null,
     );
   }
+
+  /// This release as the store cache writes it.
+  Map<String, dynamic> toJson() => {
+    'version': version,
+    'schemaMin': schemaMin,
+    'schemaMax': schemaMax,
+    if (url != null) 'url': url,
+    if (path != null) 'path': path,
+    if (sha256 != null) 'sha256': sha256,
+    if (size != null) 'size': size,
+    if (notes != null) 'notes': notes,
+  };
+
+  /// Reads one cached release, or null when it is not usable.
+  ///
+  /// The rules [fromToml] enforces are enforced here too: the cache is a file
+  /// this app wrote, but a version that names both a url and a path, or
+  /// neither, is one an install cannot decide between — and the field it is
+  /// missing is the field the row was written from.
+  static ThemeRelease? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final version = raw['version'];
+    final min = raw['schemaMin'];
+    final max = raw['schemaMax'];
+    if (version is! String || version.isEmpty) return null;
+    if (min is! int || max is! int || min > max) return null;
+
+    final url = raw['url'];
+    final path = raw['path'];
+    final hasUrl = url is String && url.isNotEmpty;
+    final hasPath = path is String && path.isNotEmpty;
+    if (hasUrl == hasPath) return null;
+
+    final digest = raw['sha256'];
+    return ThemeRelease(
+      version: version,
+      schemaMin: min,
+      schemaMax: max,
+      url: hasUrl ? url : null,
+      path: hasPath ? path : null,
+      sha256: digest is String && digest.isNotEmpty
+          ? digest.toLowerCase()
+          : null,
+      size: raw['size'] is int ? raw['size'] as int : null,
+      notes: raw['notes'] is String ? raw['notes'] as String : null,
+    );
+  }
 }
 
 /// One theme in a repository, with every version it offers.
@@ -333,6 +380,45 @@ final class ThemeListing {
     if (releases.isEmpty) {
       throw ThemeRepoError('$path offers no readable version');
     }
+
+    return ThemeListing(
+      id: id,
+      name: raw['name'] is String ? raw['name'] as String : id,
+      description: raw['description'] is String
+          ? raw['description'] as String
+          : '',
+      homepage: raw['homepage'] is String ? raw['homepage'] as String : null,
+      license: raw['license'] is String ? raw['license'] as String : null,
+      releases: releases,
+    );
+  }
+
+  /// This listing as the store cache writes it.
+  ///
+  /// Every release is written, not only the installable one: which version a
+  /// later build may install is a question about that build, and a cache that
+  /// answered it would go stale in the one direction a refresh cannot fix.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    if (homepage != null) 'homepage': homepage,
+    if (license != null) 'license': license,
+    'releases': [for (final r in releases) r.toJson()],
+  };
+
+  /// Reads one cached listing, or null when it offers nothing.
+  static ThemeListing? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final id = raw['id'];
+    if (id is! String || id.isEmpty) return null;
+    final releases = <ThemeRelease>[
+      for (final r in (raw['releases'] as List? ?? const []))
+        ?ThemeRelease.fromJson(r),
+    ];
+    // The same rule the file is held to: a listing with nothing installable is
+    // not a listing.
+    if (releases.isEmpty) return null;
 
     return ThemeListing(
       id: id,
@@ -423,7 +509,8 @@ final class ThemeRepoIndex {
 final class ThemeStoreItem {
   const ThemeStoreItem({
     required this.repo,
-    required this.index,
+    this.repoUrl,
+    this.index,
     required this.listing,
     this.release,
   });
@@ -432,7 +519,18 @@ final class ThemeStoreItem {
   /// official list and a third party's repository are not the same offer.
   final String repo;
 
-  final ThemeRepoIndex index;
+  /// The repository's own address, kept so a version it carries in its tree can
+  /// be fetched again once that tree is gone.
+  final String? repoUrl;
+
+  /// The tree this item was read from, for as long as it is in memory.
+  ///
+  /// Null for an item a cache rebuilt: the `.fsbt` files the tree carried are
+  /// the reason it is held at all, and the reason it is not written to disk. A
+  /// cached in-tree version therefore asks its repository once more — see
+  /// [ThemeRepos.install].
+  final ThemeRepoIndex? index;
+
   final ThemeListing listing;
 
   /// The version to install. Null means this app cannot read any of the ones on
@@ -450,17 +548,121 @@ final class ThemeStoreItem {
       : listing.releases
             .map((r) => r.version)
             .reduce((a, b) => ThemeVersion.compare(a, b) >= 0 ? a : b);
+
+  /// This item as the cache writes it.
+  ///
+  /// The version to install is written by number rather than as a copy of the
+  /// release, so a cache that was edited cannot describe a version the listing
+  /// does not offer.
+  Map<String, dynamic> toJson() => {
+    'repo': repo,
+    if (repoUrl != null) 'repoUrl': repoUrl,
+    'listing': listing.toJson(),
+    if (release != null) 'release': release!.version,
+  };
+
+  /// Reads one cached item, or null when it no longer stands on its own.
+  static ThemeStoreItem? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final repo = raw['repo'];
+    if (repo is! String) return null;
+    final listing = ThemeListing.fromJson(raw['listing']);
+    if (listing == null) return null;
+
+    final version = raw['release'];
+    ThemeRelease? release;
+    if (version is String) {
+      for (final r in listing.releases) {
+        if (r.version == version) {
+          release = r;
+          break;
+        }
+      }
+      // A version the listing does not hold is a cache disagreeing with itself,
+      // and the row it would draw claims an install it cannot do.
+      if (release == null) return null;
+    }
+
+    return ThemeStoreItem(
+      repo: repo,
+      repoUrl: raw['repoUrl'] is String ? raw['repoUrl'] as String : null,
+      listing: listing,
+      release: release,
+    );
+  }
 }
 
-/// What the catalog and its repositories answered.
+/// What the catalog and its repositories answered, and where and when.
+///
+/// [catalogUrl] and [fetchedAt] are what make this cacheable: a listing from
+/// another catalog is a different set of themes, and a page that showed one
+/// without saying when it was read would be showing what a repository used to
+/// offer as what it offers.
 final class ThemeStore {
-  const ThemeStore({this.items = const [], this.repos = const []});
+  const ThemeStore({
+    this.items = const [],
+    this.repos = const [],
+    this.catalogUrl = '',
+    this.fetchedAt,
+  });
 
   final List<ThemeStoreItem> items;
 
   /// Every repository that answered, by label, whether or not it offered a
   /// theme this app can read.
   final List<String> repos;
+
+  /// The catalog this was read from.
+  final String catalogUrl;
+
+  /// When it was read. Null for the empty store, which was never read.
+  final DateTime? fetchedAt;
+
+  /// Whether anything has been read yet, which is what tells a page opening on
+  /// this apart from one opening on a cache.
+  bool get neverFetched => fetchedAt == null;
+
+  /// This store as the cache writes it.
+  Map<String, dynamic> toJson() => {
+    'catalogUrl': catalogUrl,
+    if (fetchedAt != null) 'fetchedAt': fetchedAt!.toIso8601String(),
+    'repos': repos,
+    'items': [for (final item in items) item.toJson()],
+  };
+
+  /// Reads a cached store, or null when there is nothing readable in it.
+  ///
+  /// Null rather than a partial result: an item that cannot be rebuilt is a
+  /// theme the page would list with nothing behind it.
+  static ThemeStore? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final fetchedAt = DateTime.tryParse(
+      raw['fetchedAt'] is String ? raw['fetchedAt'] as String : '',
+    );
+    final catalogUrl = raw['catalogUrl'];
+    // Without these two there is nothing to show a user: the themes and no way
+    // to say whether they are still what the catalog offers.
+    if (fetchedAt == null || catalogUrl is! String || catalogUrl.isEmpty) {
+      return null;
+    }
+
+    final items = <ThemeStoreItem>[];
+    for (final item in (raw['items'] as List? ?? const [])) {
+      final read = ThemeStoreItem.fromJson(item);
+      if (read == null) return null;
+      items.add(read);
+    }
+
+    return ThemeStore(
+      items: items,
+      repos: [
+        for (final label in (raw['repos'] as List? ?? const []))
+          if (label is String) label,
+      ],
+      catalogUrl: catalogUrl,
+      fetchedAt: fetchedAt,
+    );
+  }
 }
 
 /// Fetching the catalog and its repositories, and installing from one.
@@ -596,6 +798,7 @@ abstract final class ThemeRepos {
         items.add(
           ThemeStoreItem(
             repo: label,
+            repoUrl: ref.url.toString(),
             index: index,
             listing: listing,
             release: listing.bestFor(
@@ -606,7 +809,12 @@ abstract final class ThemeRepos {
         );
       }
     }
-    return ThemeStore(items: items, repos: repos);
+    return ThemeStore(
+      items: items,
+      repos: repos,
+      catalogUrl: catalogUrl,
+      fetchedAt: DateTime.now(),
+    );
   }
 
   /// Installs one store item's version.
@@ -637,12 +845,10 @@ abstract final class ThemeRepos {
     final Uint8List bytes;
     if (release.url case final url?) {
       bytes = await ThemePackages.download(url);
+    } else if (release.path case final path?) {
+      bytes = await _carried(item, path);
     } else {
-      final carried = item.index.packages[release.path];
-      if (carried == null) {
-        throw ThemeRepoError('the repository does not carry ${release.path}');
-      }
-      bytes = carried;
+      throw const ThemeRepoError('that version names no source');
     }
 
     if (sha256.convert(bytes).toString() != digest) {
@@ -652,6 +858,32 @@ abstract final class ThemeRepos {
       throw const ThemeRepoError('Theme checksum mismatch');
     }
     return ThemePackages.install(bytes, rootDirectory: rootDirectory);
+  }
+
+  /// The bytes a version carries inside its repository's tree.
+  ///
+  /// An item read from a cache has no tree, because the `.fsbt` files the tree
+  /// carried are the reason it is held in memory and the reason it is not
+  /// written to disk. So this fetches the repository once more, and the digest
+  /// check the caller does next is what makes that safe: what comes back has to
+  /// be the bytes the listing named, whichever way they arrived.
+  static Future<Uint8List> _carried(ThemeStoreItem item, String path) async {
+    final inTree = item.index?.packages[path];
+    if (inTree != null) return inTree;
+
+    final url = item.repoUrl;
+    final ThemeRepoError missing = ThemeRepoError(
+      'the repository does not carry $path',
+    );
+    if (url == null) throw missing;
+
+    final archive = await ThemePackages.download(
+      archiveUrlOf(url),
+      maxBytes: maxArchiveBytes,
+    );
+    final carried = readArchive(archive)[path];
+    if (carried != null) return carried;
+    throw missing;
   }
 
   /// The path a name is read as, or null when it escapes the tree or is not a

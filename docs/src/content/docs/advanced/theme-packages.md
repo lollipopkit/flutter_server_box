@@ -303,6 +303,19 @@ The store reads two levels. The first is a **catalog**: a TOML file listing
 repositories, one entry each, naming no theme and no version. The second is a
 **repository**: a git repository of TOML files, one per theme.
 
+**Settings → Appearance → Theme store** opens the store as a page of its own:
+what the catalog and its repositories offer, listed above what this device
+already has. A theme in the lower list is installed and applied by tapping it; a
+theme in the upper list is applied by tapping it and removed from this device by
+the button beside it. Removing the theme in use returns the app to the default
+theme, rather than leaving it on one whose files are gone.
+
+The listing is kept between runs, so the page opens on the themes it showed last
+time and the line under its bar says which repositories they came from and how
+long ago they were read. Reading the catalog again is the refresh button beside
+that line. A version this build cannot read is listed saying so instead of being
+hidden, since the question it answers is whether the theme exists.
+
 The address the app reads a catalog from is **Settings → Appearance → Theme
 store URL**. It is editable, because a client that cannot be pointed at another
 catalog serves one publisher. What that address defaults to, and what the app

@@ -31,6 +31,14 @@ class AppLocalizationsAz extends AppLocalizations {
       'Mövzu paketi və ya kataloq etibarsızdır';
 
   @override
+  String get themeStoreRefreshFailed => 'Tema kataloqu oxuna bilmədi.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name” silinsin? Faylları bu cihazdan silinir. İstifadə olunan temadırsa, tətbiq standart temaya qayıdır.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Daha yeni tətbiq tələb olunur: $version';
   }

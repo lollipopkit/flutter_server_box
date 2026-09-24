@@ -264,6 +264,15 @@ brightness。
 商店分两层读取。第一层是 **catalog**：一个 TOML 文件，逐条列出 repository，不涉及
 具体主题和版本。第二层是 **repository**：一个 git 仓库，一个主题一个 TOML 文件。
 
+**Settings → Appearance → Theme store** 打开商店本身的页面：上半部分是 catalog
+及其 repository 提供的主题，下半部分是本机已有的主题。下方列表中的主题点按即安装并
+应用；上方列表中的主题点按即应用，旁边的按钮将其从本机移除。移除正在使用的主题会让
+应用回到默认主题，而不是停留在文件已被删除的主题上。
+
+列表在两次启动之间保留，所以页面打开时就有上次的主题，标题栏下方一行说明这些主题来自
+哪些 repository、读取于多久之前。重新读取 catalog 就是这一行旁边的刷新按钮。本版本
+读不了的版本会列出来并注明，而不是隐藏：它回答的是这个主题是否存在。
+
 应用读取 catalog 的地址是 **Settings → Appearance → Theme store URL**。该地址可
 编辑，因为一个不能改指其他 catalog 的客户端只服务于一个发布方。这个地址的默认值，
 以及地址不响应时应用改用什么，见[主题](/docs/zh/development/themes/#主题商店)。

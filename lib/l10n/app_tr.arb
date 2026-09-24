@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Tema mağazası",
   "appearanceThemeStoreUrl": "Tema kataloğu URL’si",
   "appearanceInvalidTheme": "Geçersiz tema paketi veya katalog",
+  "themeStoreRefreshFailed": "Tema kataloğu okunamadı.",
+  "themeStoreDeleteTheme": "“{name}” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.",
   "appearanceThemeNeedsNewerApp": "Daha yeni bir uygulama sürümü gerekiyor: {version}",
   "appearanceFontFamilies": "Arayüz yazı tipi aileleri",
   "appearanceFontFamiliesTip": "Her satıra bir ad yazın; yazı tipleri sırayla denenir.",

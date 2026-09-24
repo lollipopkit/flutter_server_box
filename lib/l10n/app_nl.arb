@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Themawinkel",
   "appearanceThemeStoreUrl": "URL van themacatalogus",
   "appearanceInvalidTheme": "Ongeldig themapakket of ongeldige catalogus",
+  "themeStoreRefreshFailed": "De themacatalogus kon niet worden gelezen.",
+  "themeStoreDeleteTheme": "“{name}” verwijderen? De bestanden worden van dit apparaat verwijderd. Is het het thema in gebruik, dan keert de app terug naar het standaardthema.",
   "appearanceThemeNeedsNewerApp": "Een nieuwere app is vereist: {version}",
   "appearanceFontFamilies": "Lettertypefamilies voor de interface",
   "appearanceFontFamiliesTip": "Eén naam per regel; lettertypen worden op volgorde geprobeerd.",

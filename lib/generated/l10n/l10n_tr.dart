@@ -30,6 +30,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get appearanceInvalidTheme => 'Geçersiz tema paketi veya katalog';
 
   @override
+  String get themeStoreRefreshFailed => 'Tema kataloğu okunamadı.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Daha yeni bir uygulama sürümü gerekiyor: $version';
   }

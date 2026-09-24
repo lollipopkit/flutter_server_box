@@ -30,6 +30,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get appearanceInvalidTheme => 'Paket tema atau katalog tidak valid';
 
   @override
+  String get themeStoreRefreshFailed => 'Tidak dapat membaca katalog tema.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return 'Hapus “$name”? Berkasnya dihapus dari perangkat ini. Jika ini tema yang sedang dipakai, aplikasi kembali ke tema bawaan.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Memerlukan aplikasi versi lebih baru: $version';
   }

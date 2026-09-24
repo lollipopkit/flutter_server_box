@@ -31,6 +31,15 @@ class AppLocalizationsNl extends AppLocalizations {
       'Ongeldig themapakket of ongeldige catalogus';
 
   @override
+  String get themeStoreRefreshFailed =>
+      'De themacatalogus kon niet worden gelezen.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name” verwijderen? De bestanden worden van dit apparaat verwijderd. Is het het thema in gebruik, dan keert de app terug naar het standaardthema.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Een nieuwere app is vereist: $version';
   }

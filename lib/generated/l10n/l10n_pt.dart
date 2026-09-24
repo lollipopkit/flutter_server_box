@@ -30,6 +30,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get appearanceInvalidTheme => 'Pacote de tema ou catálogo inválido';
 
   @override
+  String get themeStoreRefreshFailed =>
+      'Não foi possível ler o catálogo de temas.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return 'Excluir «$name»? Seus arquivos são removidos deste dispositivo. Se for o tema em uso, o app volta ao tema padrão.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'É necessário usar uma versão mais recente do app: $version';
   }

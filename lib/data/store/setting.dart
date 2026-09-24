@@ -73,6 +73,29 @@ class SettingStore extends SqliteStore {
   /// at another one is a client for one publisher.
   late final themeStoreUrl = propertyDefault('themeStoreUrl', Urls.themeCatalog);
 
+  /// The theme store's last answer, as the JSON it was read from.
+  ///
+  /// Held so a page can open on the themes it showed last time instead of on a
+  /// spinner. A map rather than a decoded model, because the shape is the theme
+  /// service's business and this directory does not import it: the service
+  /// writes [ThemeStore.toJson] and reads it back with [ThemeStore.fromJson],
+  /// and the store only owns the key.
+  ///
+  /// A map rather than a string holding one, which is what a second `jsonEncode`
+  /// on the way in would make it — see `setting_value_shape_test.dart`.
+  ///
+  /// Not a user edit, so it does not stamp the store's last-modified time — a
+  /// refresh is the app re-reading a catalog, and a sync that took it for a
+  /// change would push one device's cache at every other device. It is also
+  /// device-local, so a backup does not carry it: a list of what a catalog
+  /// offered when one phone last looked is not something to restore onto
+  /// another, which would show it as what the catalog offers now.
+  late final themeStoreCache = propertyDefault<Map<String, dynamic>>(
+    'themeStoreCache',
+    const {},
+    updateLastModified: false,
+  );
+
   /// App-wide icon family. The launcher icon is selected by the platform.
   late final appIconStyle = propertyDefault('appIconStyle', 'classic');
 
@@ -624,6 +647,7 @@ class SettingStore extends SqliteStore {
     // TODO(appearance): include installed theme/font assets in backup packages.
     'appThemePackage',
     'appImportedFontPath',
+    'themeStoreCache',
   };
 
   /// The floating Agent's placement and size, as one row.

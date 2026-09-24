@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Design-Store",
   "appearanceThemeStoreUrl": "URL des Designkatalogs",
   "appearanceInvalidTheme": "Ungültiges Designpaket oder ungültiger Katalog",
+  "themeStoreRefreshFailed": "Der Themenkatalog konnte nicht gelesen werden.",
+  "themeStoreDeleteTheme": "„{name}“ löschen? Die Dateien werden von diesem Gerät entfernt. Ist es das verwendete Theme, kehrt die App zum Standard-Theme zurück.",
   "appearanceThemeNeedsNewerApp": "Neuere App erforderlich: {version}",
   "appearanceFontFamilies": "Schriftfamilien der Oberfläche",
   "appearanceFontFamiliesTip": "Ein Name pro Zeile; Schriften werden der Reihe nach versucht.",

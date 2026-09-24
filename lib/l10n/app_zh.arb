@@ -7,6 +7,8 @@
   "appearanceThemeStore": "主题商店",
   "appearanceThemeStoreUrl": "主题目录 URL",
   "appearanceInvalidTheme": "主题包或目录无效",
+  "themeStoreRefreshFailed": "无法读取主题目录。",
+  "themeStoreDeleteTheme": "删除“{name}”？其文件将从本机移除。如果它正在使用中，应用将返回默认主题。",
   "appearanceThemeNeedsNewerApp": "需要更新版本的 App：{version}",
   "appearanceFontFamilies": "界面字体列表",
   "appearanceFontFamiliesTip": "每行一个字体名称，按顺序 fallback。",

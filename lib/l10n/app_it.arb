@@ -7,6 +7,8 @@
   "appearanceThemeStore": "Negozio temi",
   "appearanceThemeStoreUrl": "URL del catalogo temi",
   "appearanceInvalidTheme": "Pacchetto tema o catalogo non valido",
+  "themeStoreRefreshFailed": "Impossibile leggere il catalogo dei temi.",
+  "themeStoreDeleteTheme": "Eliminare «{name}»? I suoi file vengono rimossi da questo dispositivo. Se è il tema in uso, l'app torna al tema predefinito.",
   "appearanceThemeNeedsNewerApp": "È necessaria una versione più recente dell’app: {version}",
   "appearanceFontFamilies": "Famiglie di caratteri dell’interfaccia",
   "appearanceFontFamiliesTip": "Un nome per riga; i caratteri vengono provati in ordine.",

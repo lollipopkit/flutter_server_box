@@ -30,6 +30,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get appearanceInvalidTheme => 'Недійсний пакет теми або каталог';
 
   @override
+  String get themeStoreRefreshFailed => 'Не вдалося прочитати каталог тем.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return 'Видалити «$name»? Його файли буде видалено з цього пристрою. Якщо це тема, що використовується, застосунок повернеться до типової теми.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Потрібна новіша версія застосунку: $version';
   }

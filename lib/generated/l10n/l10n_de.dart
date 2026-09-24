@@ -31,6 +31,15 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ungültiges Designpaket oder ungültiger Katalog';
 
   @override
+  String get themeStoreRefreshFailed =>
+      'Der Themenkatalog konnte nicht gelesen werden.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '„$name“ löschen? Die Dateien werden von diesem Gerät entfernt. Ist es das verwendete Theme, kehrt die App zum Standard-Theme zurück.';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Neuere App erforderlich: $version';
   }
