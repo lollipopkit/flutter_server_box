@@ -175,6 +175,17 @@ async fn read_config() -> Result<Config, HttpResponse> {
     })
 }
 
+/// A counter that makes each staging name unique within this process.
+///
+/// With the pid, so two agents — or the same agent across a restart, where the
+/// pid may repeat — cannot pick the same one.
+fn staging_seq() -> String {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static SEQ: AtomicU64 = AtomicU64::new(0);
+    let n = SEQ.fetch_add(1, Ordering::Relaxed);
+    format!("{}-{n}", std::process::id())
+}
+
 /// Every blob in the store, oldest name first.
 fn list(dir: &Path) -> Result<Vec<BlobView>, String> {
     let mut found = Vec::new();
@@ -377,7 +388,16 @@ pub async fn upload(
     };
 
     let path = dir.join(&query.name);
-    let staging = dir.join(format!(".{}.upload", query.name));
+    // Unique per attempt, and that is not tidiness: two uploads of one name —
+    // the app's sync and an operator's upload from the panel, say — would
+    // otherwise open one file, interleave their chunks into it, and each
+    // rename the result over the blob. The rename is atomic, so what lands is
+    // a byte-interleaved file under a name something will later read as a
+    // backup. `/fs`'s `staging_path` is the same rule for the same reason.
+    //
+    // Leading dot as well, so a file left behind by a crash is one `valid_name`
+    // refuses and the listing therefore never shows as a blob.
+    let staging = dir.join(format!(".{}.upload-{}", query.name, staging_seq()));
     let mut file = match tokio::fs::OpenOptions::new()
         .write(true)
         .create(true)
@@ -575,19 +595,30 @@ pub async fn import_config(
     // Read with a cap before anything is parsed. A config file is kilobytes, so
     // this is a bound on what a mistyped request can make the agent buffer
     // rather than a limit anyone's file reaches.
-    let mut text = String::new();
+    //
+    // Collected as bytes and decoded **once**, at the end. Decoding each chunk
+    // on its own is what a multi-byte character straddling two of them turns
+    // into two replacement characters — and since what is written is this very
+    // text, the operator's comment or a value in it would come back corrupted.
+    let mut bytes = Vec::new();
     while let Some(chunk) = body.next().await {
         let chunk = match chunk {
             Ok(chunk) => chunk,
             Err(_) => return Ok(HttpResponse::BadRequest().finish()),
         };
-        if text.len() + chunk.len() > MAX_CONFIG_BYTES {
+        if bytes.len() + chunk.len() > MAX_CONFIG_BYTES {
             return Ok(HttpResponse::PayloadTooLarge().json(&ErrorResponse {
                 error: "tooLarge",
             }));
         }
-        text.push_str(&String::from_utf8_lossy(&chunk));
+        bytes.extend_from_slice(&chunk);
     }
+    let text = match String::from_utf8(bytes) {
+        Ok(text) => text,
+        // A config nobody can read as text is not one: TOML is text, and
+        // repairing it here would write a file the operator did not send.
+        Err(_) => return Ok(bad_request("invalidConfig")),
+    };
 
     // Read as this agent's own configuration, which is what makes the two
     // protected keys comparable and what refuses a file that is not one.

@@ -79,6 +79,15 @@ const TIMEOUT_MS = 10_000
 /// bound is 30s for each, so this waits past it.
 const BENCHMARK_WRITE_TIMEOUT_MS = 60_000
 
+/// How long one backup transfer may take.
+///
+/// Generous on purpose: the agent's own cap is 128 MiB, and a backup moving
+/// over a metered or distant link is slow rather than stalled. This bound is
+/// only here to turn "the agent stopped answering" into a failure instead of a
+/// spinner that never clears — ten minutes is about 1.7 Mbit/s sustained, well
+/// under what anything that finishes at all will need.
+const BACKUP_TRANSFER_TIMEOUT_MS = 10 * 60_000
+
 export class ApiError extends Error {
   /// HTTP status, when the request got far enough to have one. Absent for a
   /// failure to reach the agent at all — a distinction callers that retry
@@ -173,15 +182,28 @@ async function bytesRequest(
   init: RequestInit,
   fallback: string,
   signal?: AbortSignal,
+  /// A bound on the whole transfer, or none.
+  ///
+  /// None is right for the file API, where a big file may legitimately take as
+  /// long as it takes and the page has a cancel button. A caller that *does*
+  /// pass one is saying its transfer has a size it can put a number on — see
+  /// the backup endpoints, where an agent that stops answering mid-transfer
+  /// would otherwise hold the request, and the page's spinner, for ever.
+  timeoutMs?: number,
 ): Promise<Response> {
   const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
   const headers: Record<string, string> = { ...(init.headers as Record<string, string> | undefined) }
   if (server?.token) headers.Authorization = `Bearer ${server.token}`
+  const bound = timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
 
   let res: Response
   try {
-    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, { ...init, headers, signal })
+    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
+      ...init,
+      headers,
+      signal: signal && bound ? AbortSignal.any([signal, bound]) : (signal ?? bound),
+    })
   } catch {
     throw new ApiError(fallback)
   }
@@ -640,6 +662,7 @@ export const api = {
       {},
       'Failed to read the backup',
       signal,
+      BACKUP_TRANSFER_TIMEOUT_MS,
     )
     return res.blob()
   },
@@ -654,6 +677,7 @@ export const api = {
       { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
       'Failed to store the backup',
       signal,
+      BACKUP_TRANSFER_TIMEOUT_MS,
     ).then((res) => res.json() as Promise<BackupBlob>),
   deleteBackup: (name: string) =>
     request<unknown>(
@@ -672,6 +696,8 @@ export const api = {
       '/backup/config',
       {},
       'Failed to read the configuration',
+      undefined,
+      BACKUP_TRANSFER_TIMEOUT_MS,
     )
     return res.blob()
   },
@@ -687,6 +713,8 @@ export const api = {
       '/backup/config',
       { method: 'PUT', body: text, headers: { 'Content-Type': 'text/plain' } },
       'Failed to import the configuration',
+      undefined,
+      BACKUP_TRANSFER_TIMEOUT_MS,
     )
   },
   /// The machine behind this agent's baseboard management controller: its power
@@ -723,9 +751,11 @@ export const api = {
   /// it — the handshake is meant to fail, and no credential is on the wire.
   ///
   /// An empty `url` uses the stored address, so the page's first step needs no
-  /// save first. Not gated on `full_access`: it reaches an address the operator
-  /// already stored, and it discloses only a fingerprint the service publishes
-  /// to anyone who connects.
+  /// save first. **`full_access`**, like saving one: the address comes from the
+  /// request and the agent dials it, so without the grant this would be a way
+  /// to handshake every address and port on the agent's network and read the
+  /// answer back. The page only offers the button to a caller who may save
+  /// anyway, which is who probing exists for.
   probeBmc: (url: string) =>
     request<BmcProbeResult>(
       '/bmc/probe',

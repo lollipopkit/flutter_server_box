@@ -29,8 +29,10 @@
 //!
 //! Reading the machine and its readings needs only the panel login, and the
 //! answer says `editable` so a page that may not act goes read-only rather than
-//! failing on the first press. Controlling the power state and saving the
-//! credential are `full_access`, re-checked per request.
+//! failing on the first press. Controlling the power state, saving the
+//! credential **and probing a certificate** are `full_access`, re-checked per
+//! request — the probe because it dials an address the caller names, which
+//! without the grant is a way to map a network the caller is not on.
 //!
 //! # Refusals
 //!
@@ -280,9 +282,15 @@ struct ProbeResponse {
 /// reviewed — and the only one that is, since every other endpoint requires a
 /// pin before it will speak.
 ///
-/// Not gated on `full_access`: it reaches an address the operator already
-/// stored (saving one is gated), and it discloses nothing but a fingerprint the
-/// service publishes to anyone who connects.
+/// **`full_access`, and not for the usual reason.** Nothing is read and nothing
+/// is changed, but the address comes from the *body* and the agent dials it:
+/// without the grant, a panel login could make this agent handshake every
+/// address and port on its private network and read the answer back — the leaf
+/// fingerprint, and a refusal told apart from an unreachable one — which is a
+/// scanner and a certificate oracle on a network the caller is not on. It costs
+/// the feature nothing to gate, because saving an address is `full_access` too:
+/// probing exists to serve that save, and whoever may not save has nothing to
+/// probe for.
 pub async fn probe(
     req: HttpRequest,
     body: web::types::Json<ProbeRequest>,
@@ -290,6 +298,16 @@ pub async fn probe(
 ) -> Result<HttpResponse, web::Error> {
     if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
         return Ok(HttpResponse::Unauthorized().finish());
+    }
+    let remote_ip = peer_ip(&req);
+    let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    if !app_state.full_access_allowed(secure) {
+        Event::new(Kind::Bmc, Action::Denied, Outcome::Denied)
+            .remote_ip(remote_ip)
+            .detail("full access disabled")
+            .record(&app_state.db)
+            .await;
+        return Ok(HttpResponse::Forbidden().finish());
     }
     let request = body.into_inner();
     let url = if request.url.trim().is_empty() {

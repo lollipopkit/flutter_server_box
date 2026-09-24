@@ -536,11 +536,20 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 }
                 if (p0) {
                   monitorLoading.value = true;
-                  // `rs:` explicitly, the same as the other three: the switch's
-                  // prop is set *after* this returns, so `remoteStorage` would
-                  // still answer null on the first enable.
-                  await bakSync.sync(rs: bakSync.monitorStorage);
-                  monitorLoading.value = false;
+                  try {
+                    // `rs:` explicitly, the same as the other three: the
+                    // switch's prop is set *after* this returns, so
+                    // `remoteStorage` would still answer null on the first
+                    // enable.
+                    await bakSync.sync(rs: bakSync.monitorStorage);
+                  } finally {
+                    // `StoreSwitch` does not catch what a validator throws, so
+                    // a sync that fails — an agent that is down, a server with
+                    // no backup on it — would otherwise leave this spinner and
+                    // the switch's own one turning with nothing left to reset
+                    // them.
+                    monitorLoading.value = false;
+                  }
                 }
                 return true;
               },

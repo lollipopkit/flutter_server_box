@@ -99,9 +99,20 @@
     setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 
+  /// Clears what the last action said, before this one says anything.
+  ///
+  /// Both cards render from the same block, and each action used to clear only
+  /// the error — so a refused upload showed its own failure underneath the
+  /// success line about the upload before it, and nothing said which belonged
+  /// to what.
+  function said() {
+    error = ''
+    notice = ''
+  }
+
   async function download(entry: BackupBlob) {
     busy = entry.name
-    error = ''
+    said()
     try {
       save(await api.downloadBackup(entry.name), entry.name)
     } catch (e) {
@@ -125,7 +136,7 @@
     }
     const name = storedName(file.name)
     busy = name
-    error = ''
+    said()
     try {
       await api.uploadBackup(name, file)
       notice = $LL.backupStored({ name })
@@ -139,7 +150,7 @@
 
   async function remove(entry: BackupBlob) {
     busy = entry.name
-    error = ''
+    said()
     try {
       await api.deleteBackup(entry.name)
       removing = null
@@ -154,7 +165,7 @@
 
   async function exportConfig() {
     configBusy = 'export'
-    error = ''
+    said()
     try {
       save(await api.exportAgentConfig(), 'config.toml')
     } catch (e) {
@@ -171,7 +182,7 @@
     if (!file) return
 
     configBusy = 'import'
-    error = ''
+    said()
     try {
       await api.importAgentConfig(file)
       // The agent answers `restart_required`, and it always is: its running

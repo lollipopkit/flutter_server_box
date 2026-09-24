@@ -518,6 +518,56 @@ async fn an_import_that_would_change_who_can_log_in_is_refused() {
     );
 }
 
+/// The imported text is the text that lands, byte for byte.
+///
+/// The body is sent split *inside* a multi-byte character, which is what a real
+/// transfer does whenever a chunk boundary happens to fall there — and the
+/// handler writes this very text to disk, so decoding each chunk on its own
+/// would put replacement characters into the file the operator asked for.
+#[ntex::test]
+async fn an_imported_config_keeps_a_character_that_straddles_a_chunk() {
+    let dir = workspace().await;
+    write_config(&dir, "split", 4096);
+    let (state, _db) = app_state(true).await;
+    let srv = test_server(state).await;
+    let before = std::fs::read_to_string("config.toml").unwrap();
+
+    // One comment with a two-byte and a three-byte character in it, plus the
+    // config itself so the file is one this agent would accept.
+    let comment = "# 中 · ça va — ok\n";
+    let text = format!("{comment}{before}");
+    let bytes = text.as_bytes().to_vec();
+
+    // One byte per chunk through the comment, so every character in it lands
+    // across a boundary; the rest in the sizes a real transfer uses, since a
+    // handler that only survived the pathological case would be one that
+    // mishandled an ordinary one.
+    let mut chunks: Vec<Vec<u8>> = comment.as_bytes().iter().map(|b| vec![*b]).collect();
+    for chunk in bytes[comment.len()..].chunks(32) {
+        chunks.push(chunk.to_vec());
+    }
+
+    let stream = futures::stream::iter(
+        chunks
+            .into_iter()
+            .map(|chunk| Ok::<_, std::io::Error>(ntex::util::Bytes::from(chunk))),
+    );
+    let resp = srv
+        .put("/api/v1/backup/config")
+        .header("Authorization", format!("Bearer {}", jwt()))
+        .send_stream(stream)
+        .await
+        .unwrap();
+    assert_eq!(resp.status().as_u16(), 200);
+
+    let written = std::fs::read_to_string("config.toml").unwrap();
+    assert!(
+        written.contains(comment),
+        "the comment did not survive the round trip: {written:?}",
+    );
+    assert!(!written.contains('\u{fffd}'), "a replacement character was written");
+}
+
 #[ntex::test]
 async fn an_import_that_is_not_a_config_is_refused() {
     let dir = workspace().await;
