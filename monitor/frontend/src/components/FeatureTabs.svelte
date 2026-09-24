@@ -6,6 +6,7 @@
     Gauge,
     MonitorPlay,
     ServerCog,
+    Sparkles,
     Users,
     type LucideIcon,
   } from '@lucide/svelte'
@@ -37,6 +38,9 @@
     users: { label: () => $LL.users(), icon: Users },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
     desktop: { label: () => $LL.desktop(), icon: MonitorPlay },
+    // The product's own word for this feature, not a translated one: the app
+    // names the same tab `Agent` in every language.
+    ai: { label: () => $LL.ai(), icon: Sparkles },
     benchmark: { label: () => $LL.benchmark(), icon: Gauge },
   }
 

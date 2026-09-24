@@ -2076,6 +2076,257 @@ type RootTranslation = {
 	 */
 	benchmarkRunInProgress: string
 	/**
+	 * A​g​e​n​t
+	 */
+	ai: string
+	/**
+	 * A​n​ ​a​s​s​i​s​t​a​n​t​ ​t​h​a​t​ ​r​u​n​s​ ​c​o​m​m​a​n​d​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	aiSubtitle: string
+	/**
+	 * N​o​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​y​e​t​.​ ​A​s​k​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​s​o​m​e​t​h​i​n​g​ ​b​e​l​o​w​.
+	 */
+	aiEmpty: string
+	/**
+	 * A​s​k​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​s​o​m​e​t​h​i​n​g
+	 */
+	aiPlaceholder: string
+	/**
+	 * N​e​w​ ​c​h​a​t
+	 */
+	aiNewChat: string
+	/**
+	 * S​e​n​d
+	 */
+	aiSend: string
+	/**
+	 * S​t​o​p
+	 */
+	aiStop: string
+	/**
+	 * A​p​p​r​o​v​e
+	 */
+	aiApprove: string
+	/**
+	 * D​e​c​l​i​n​e​ ​a​l​l
+	 */
+	aiDeclineAll: string
+	/**
+	 * W​a​i​t​i​n​g​ ​f​o​r​ ​y​o​u​r​ ​a​p​p​r​o​v​a​l
+	 */
+	aiAwaiting: string
+	/**
+	 * N​o​t​h​i​n​g​ ​h​e​r​e​ ​h​a​s​ ​r​u​n​ ​y​e​t​.​ ​E​v​e​r​y​ ​c​a​l​l​ ​b​e​l​o​w​ ​r​u​n​s​ ​a​s​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​a​c​c​o​u​n​t​.
+	 */
+	aiAwaitingHint: string
+	/**
+	 * R​e​a​d​ ​o​n​l​y
+	 */
+	aiRiskReadOnly: string
+	/**
+	 * U​n​c​l​a​s​s​i​f​i​e​d
+	 */
+	aiRiskUnknown: string
+	/**
+	 * N​e​e​d​s​ ​c​a​r​e
+	 */
+	aiRiskCaution: string
+	/**
+	 * D​e​s​t​r​u​c​t​i​v​e
+	 */
+	aiRiskDestructive: string
+	/**
+	 * O​u​t​p​u​t
+	 */
+	aiOutput: string
+	/**
+	 * S​h​o​w​ ​o​u​t​p​u​t
+	 */
+	aiOutputShow: string
+	/**
+	 * H​i​d​e​ ​o​u​t​p​u​t
+	 */
+	aiOutputHide: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​r​e​f​u​s​e​d​ ​t​h​i​s​ ​c​a​l​l​.
+	 */
+	aiCallRefused: string
+	/**
+	 * T​h​i​s​ ​c​a​l​l​ ​w​a​s​ ​s​t​o​p​p​e​d​.
+	 */
+	aiCallStopped: string
+	/**
+	 * T​h​e​ ​o​u​t​p​u​t​ ​w​a​s​ ​c​u​t​ ​s​h​o​r​t​.
+	 */
+	aiCallTruncated: string
+	/**
+	 * Y​o​u​ ​d​e​c​l​i​n​e​d​ ​t​h​i​s​ ​c​a​l​l​.
+	 */
+	aiCallDeclined: string
+	/**
+	 * e​x​i​t​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	aiExitCode: RequiredParams<'code'>
+	/**
+	 * T​h​i​n​k​i​n​g
+	 */
+	aiThinking: string
+	/**
+	 * p​r​o​m​p​t​ ​{​p​r​o​m​p​t​}​ ​·​ ​c​o​m​p​l​e​t​i​o​n​ ​{​c​o​m​p​l​e​t​i​o​n​}
+	 * @param {unknown} completion
+	 * @param {unknown} prompt
+	 */
+	aiTokens: RequiredParams<'completion' | 'prompt'>
+	/**
+	 * T​h​e​ ​c​o​n​n​e​c​t​i​o​n​ ​t​o​ ​t​h​i​s​ ​a​g​e​n​t​ ​d​r​o​p​p​e​d​.​ ​R​e​c​o​n​n​e​c​t​i​n​g​…
+	 */
+	aiReconnecting: string
+	/**
+	 * N​o​ ​e​n​d​p​o​i​n​t​ ​a​n​d​ ​m​o​d​e​l​ ​a​r​e​ ​s​e​t​ ​f​o​r​ ​t​h​i​s​ ​a​g​e​n​t​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​c​a​n​ ​b​e​ ​s​e​n​t​.
+	 */
+	aiNotConfigured: string
+	/**
+	 * S​e​n​d​i​n​g​ ​a​ ​m​e​s​s​a​g​e​,​ ​a​p​p​r​o​v​i​n​g​ ​a​ ​c​a​l​l​ ​a​n​d​ ​e​d​i​t​i​n​g​ ​t​h​e​ ​s​e​t​t​i​n​g​s​ ​a​l​l​ ​n​e​e​d​ ​a​c​c​e​s​s​ ​w​i​t​h​o​u​t​ ​S​S​H​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​s​w​i​t​c​h​e​d​ ​o​f​f​.​ ​T​h​e​ ​c​o​n​v​e​r​s​a​t​i​o​n​s​ ​c​a​n​ ​s​t​i​l​l​ ​b​e​ ​r​e​a​d​.
+	 */
+	aiNoGrant: string
+	/**
+	 * S​e​t​t​i​n​g​s
+	 */
+	aiSettings: string
+	/**
+	 * E​n​d​p​o​i​n​t
+	 */
+	aiEndpoint: string
+	/**
+	 * T​h​e​ ​C​h​a​t​ ​C​o​m​p​l​e​t​i​o​n​s​ ​b​a​s​e​ ​U​R​L​,​ ​f​o​r​ ​e​x​a​m​p​l​e​ ​h​t​t​p​s​:​/​/​a​p​i​.​o​p​e​n​a​i​.​c​o​m​/​v​1​.
+	 */
+	aiEndpointHint: string
+	/**
+	 * M​o​d​e​l
+	 */
+	aiModel: string
+	/**
+	 * A​P​I​ ​k​e​y
+	 */
+	aiApiKey: string
+	/**
+	 * A​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​.​ ​L​e​a​v​e​ ​t​h​i​s​ ​b​l​a​n​k​ ​t​o​ ​k​e​e​p​ ​i​t​.
+	 */
+	aiApiKeySet: string
+	/**
+	 * N​o​ ​k​e​y​ ​i​s​ ​s​t​o​r​e​d​.
+	 */
+	aiApiKeyUnset: string
+	/**
+	 * C​l​e​a​r​ ​t​h​e​ ​s​t​o​r​e​d​ ​k​e​y
+	 */
+	aiApiKeyClear: string
+	/**
+	 * R​u​n​ ​r​e​a​d​-​o​n​l​y​ ​c​o​m​m​a​n​d​s​ ​w​i​t​h​o​u​t​ ​a​s​k​i​n​g
+	 */
+	aiAutoRun: string
+	/**
+	 * O​n​l​y​ ​c​a​l​l​s​ ​t​h​e​ ​c​l​a​s​s​i​f​i​e​r​ ​i​s​ ​s​u​r​e​ ​a​b​o​u​t​,​ ​a​n​d​ ​a​t​ ​m​o​s​t​ ​t​h​r​e​e​ ​p​e​r​ ​t​u​r​n​.​ ​E​v​e​r​y​t​h​i​n​g​ ​e​l​s​e​ ​w​a​i​t​s​ ​f​o​r​ ​y​o​u​.
+	 */
+	aiAutoRunHint: string
+	/**
+	 * R​e​m​o​v​e
+	 */
+	aiRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​a​n​d​ ​e​v​e​r​y​t​h​i​n​g​ ​i​n​ ​i​t​?
+	 */
+	aiRemoveConfirm: string
+	/**
+	 * R​e​n​a​m​e
+	 */
+	aiRename: string
+	/**
+	 * T​i​t​l​e
+	 */
+	aiRenameTitle: string
+	/**
+	 * T​h​a​t​ ​i​s​ ​n​o​t​ ​a​n​ ​h​t​t​p​ ​o​r​ ​h​t​t​p​s​ ​U​R​L​.
+	 */
+	aiRefusalInvalidBaseUrl: string
+	/**
+	 * T​h​e​ ​m​e​s​s​a​g​e​ ​i​s​ ​e​m​p​t​y​.
+	 */
+	aiRefusalEmptyMessage: string
+	/**
+	 * T​h​e​ ​m​e​s​s​a​g​e​ ​i​s​ ​t​o​o​ ​l​o​n​g​.
+	 */
+	aiRefusalMessageTooLong: string
+	/**
+	 * A​ ​t​i​t​l​e​ ​m​a​y​ ​n​o​t​ ​b​e​ ​e​m​p​t​y​ ​o​r​ ​h​o​l​d​ ​a​ ​l​i​n​e​ ​b​r​e​a​k​.
+	 */
+	aiRefusalInvalidTitle: string
+	/**
+	 * N​o​ ​e​n​d​p​o​i​n​t​ ​a​n​d​ ​m​o​d​e​l​ ​a​r​e​ ​s​e​t​.
+	 */
+	aiRefusalNotConfigured: string
+	/**
+	 * T​h​i​s​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​i​s​ ​a​l​r​e​a​d​y​ ​a​n​s​w​e​r​i​n​g​.​ ​W​a​i​t​ ​f​o​r​ ​i​t​ ​o​r​ ​s​t​o​p​ ​i​t​.
+	 */
+	aiRefusalBusy: string
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​w​a​i​t​i​n​g​ ​f​o​r​ ​a​n​ ​a​n​s​w​e​r​.
+	 */
+	aiRefusalNothingToDecline: string
+	/**
+	 * T​h​a​t​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​h​e​r​e​.
+	 */
+	aiRefusalNoSuchConversation: string
+	/**
+	 * T​h​a​t​ ​c​a​l​l​ ​i​s​ ​n​o​t​ ​w​a​i​t​i​n​g​ ​a​n​y​ ​m​o​r​e​.
+	 */
+	aiRefusalNoSuchCall: string
+	/**
+	 * T​h​e​ ​t​u​r​n​ ​w​a​s​ ​s​t​o​p​p​e​d​.
+	 */
+	aiStopInterrupted: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​w​r​i​t​e​ ​t​h​e​ ​c​o​n​v​e​r​s​a​t​i​o​n​ ​d​o​w​n​.
+	 */
+	aiStopStorage: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​w​a​s​ ​r​e​m​o​v​e​d​ ​w​h​i​l​e​ ​t​h​e​ ​t​u​r​n​ ​w​a​s​ ​r​u​n​n​i​n​g​.
+	 */
+	aiStopNotConfigured: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​r​e​a​c​h​e​d​.
+	 */
+	aiStopUnreachable: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​A​P​I​ ​k​e​y​.
+	 */
+	aiStopAuth: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​s​a​y​s​ ​t​h​e​ ​m​o​d​e​l​ ​d​o​e​s​ ​n​o​t​ ​e​x​i​s​t​.
+	 */
+	aiStopNotFound: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​r​e​q​u​e​s​t​.
+	 */
+	aiStopRejected: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​i​s​ ​r​a​t​e​ ​l​i​m​i​t​i​n​g​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 */
+	aiStopRateLimited: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​i​s​ ​u​n​a​v​a​i​l​a​b​l​e​.
+	 */
+	aiStopUnavailable: string
+	/**
+	 * T​h​e​ ​e​n​d​p​o​i​n​t​ ​a​n​s​w​e​r​e​d​ ​i​n​ ​a​ ​s​h​a​p​e​ ​t​h​i​s​ ​a​g​e​n​t​ ​c​a​n​n​o​t​ ​r​e​a​d​.
+	 */
+	aiStopShape: string
+	/**
+	 * E​v​e​r​y​ ​c​a​l​l​ ​w​a​s​ ​d​e​c​l​i​n​e​d​.
+	 */
+	aiStopDeclined: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -4082,6 +4333,254 @@ export type TranslationFunctions = {
 	 * This run is still going. Stop it before removing it.
 	 */
 	benchmarkRunInProgress: () => LocalizedString
+	/**
+	 * Agent
+	 */
+	ai: () => LocalizedString
+	/**
+	 * An assistant that runs commands on this machine
+	 */
+	aiSubtitle: () => LocalizedString
+	/**
+	 * No conversation yet. Ask this machine something below.
+	 */
+	aiEmpty: () => LocalizedString
+	/**
+	 * Ask this machine something
+	 */
+	aiPlaceholder: () => LocalizedString
+	/**
+	 * New chat
+	 */
+	aiNewChat: () => LocalizedString
+	/**
+	 * Send
+	 */
+	aiSend: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	aiStop: () => LocalizedString
+	/**
+	 * Approve
+	 */
+	aiApprove: () => LocalizedString
+	/**
+	 * Decline all
+	 */
+	aiDeclineAll: () => LocalizedString
+	/**
+	 * Waiting for your approval
+	 */
+	aiAwaiting: () => LocalizedString
+	/**
+	 * Nothing here has run yet. Every call below runs as this agent's account.
+	 */
+	aiAwaitingHint: () => LocalizedString
+	/**
+	 * Read only
+	 */
+	aiRiskReadOnly: () => LocalizedString
+	/**
+	 * Unclassified
+	 */
+	aiRiskUnknown: () => LocalizedString
+	/**
+	 * Needs care
+	 */
+	aiRiskCaution: () => LocalizedString
+	/**
+	 * Destructive
+	 */
+	aiRiskDestructive: () => LocalizedString
+	/**
+	 * Output
+	 */
+	aiOutput: () => LocalizedString
+	/**
+	 * Show output
+	 */
+	aiOutputShow: () => LocalizedString
+	/**
+	 * Hide output
+	 */
+	aiOutputHide: () => LocalizedString
+	/**
+	 * The agent refused this call.
+	 */
+	aiCallRefused: () => LocalizedString
+	/**
+	 * This call was stopped.
+	 */
+	aiCallStopped: () => LocalizedString
+	/**
+	 * The output was cut short.
+	 */
+	aiCallTruncated: () => LocalizedString
+	/**
+	 * You declined this call.
+	 */
+	aiCallDeclined: () => LocalizedString
+	/**
+	 * exit {code}
+	 */
+	aiExitCode: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Thinking
+	 */
+	aiThinking: () => LocalizedString
+	/**
+	 * prompt {prompt} · completion {completion}
+	 */
+	aiTokens: (arg: { completion: unknown, prompt: unknown }) => LocalizedString
+	/**
+	 * The connection to this agent dropped. Reconnecting…
+	 */
+	aiReconnecting: () => LocalizedString
+	/**
+	 * No endpoint and model are set for this agent, so nothing can be sent.
+	 */
+	aiNotConfigured: () => LocalizedString
+	/**
+	 * Sending a message, approving a call and editing the settings all need access without SSH, which this agent has switched off. The conversations can still be read.
+	 */
+	aiNoGrant: () => LocalizedString
+	/**
+	 * Settings
+	 */
+	aiSettings: () => LocalizedString
+	/**
+	 * Endpoint
+	 */
+	aiEndpoint: () => LocalizedString
+	/**
+	 * The Chat Completions base URL, for example https://api.openai.com/v1.
+	 */
+	aiEndpointHint: () => LocalizedString
+	/**
+	 * Model
+	 */
+	aiModel: () => LocalizedString
+	/**
+	 * API key
+	 */
+	aiApiKey: () => LocalizedString
+	/**
+	 * A key is stored. Leave this blank to keep it.
+	 */
+	aiApiKeySet: () => LocalizedString
+	/**
+	 * No key is stored.
+	 */
+	aiApiKeyUnset: () => LocalizedString
+	/**
+	 * Clear the stored key
+	 */
+	aiApiKeyClear: () => LocalizedString
+	/**
+	 * Run read-only commands without asking
+	 */
+	aiAutoRun: () => LocalizedString
+	/**
+	 * Only calls the classifier is sure about, and at most three per turn. Everything else waits for you.
+	 */
+	aiAutoRunHint: () => LocalizedString
+	/**
+	 * Remove
+	 */
+	aiRemove: () => LocalizedString
+	/**
+	 * Remove this conversation and everything in it?
+	 */
+	aiRemoveConfirm: () => LocalizedString
+	/**
+	 * Rename
+	 */
+	aiRename: () => LocalizedString
+	/**
+	 * Title
+	 */
+	aiRenameTitle: () => LocalizedString
+	/**
+	 * That is not an http or https URL.
+	 */
+	aiRefusalInvalidBaseUrl: () => LocalizedString
+	/**
+	 * The message is empty.
+	 */
+	aiRefusalEmptyMessage: () => LocalizedString
+	/**
+	 * The message is too long.
+	 */
+	aiRefusalMessageTooLong: () => LocalizedString
+	/**
+	 * A title may not be empty or hold a line break.
+	 */
+	aiRefusalInvalidTitle: () => LocalizedString
+	/**
+	 * No endpoint and model are set.
+	 */
+	aiRefusalNotConfigured: () => LocalizedString
+	/**
+	 * This conversation is already answering. Wait for it or stop it.
+	 */
+	aiRefusalBusy: () => LocalizedString
+	/**
+	 * Nothing is waiting for an answer.
+	 */
+	aiRefusalNothingToDecline: () => LocalizedString
+	/**
+	 * That conversation is no longer here.
+	 */
+	aiRefusalNoSuchConversation: () => LocalizedString
+	/**
+	 * That call is not waiting any more.
+	 */
+	aiRefusalNoSuchCall: () => LocalizedString
+	/**
+	 * The turn was stopped.
+	 */
+	aiStopInterrupted: () => LocalizedString
+	/**
+	 * This agent could not write the conversation down.
+	 */
+	aiStopStorage: () => LocalizedString
+	/**
+	 * The endpoint was removed while the turn was running.
+	 */
+	aiStopNotConfigured: () => LocalizedString
+	/**
+	 * The endpoint could not be reached.
+	 */
+	aiStopUnreachable: () => LocalizedString
+	/**
+	 * The endpoint rejected the API key.
+	 */
+	aiStopAuth: () => LocalizedString
+	/**
+	 * The endpoint says the model does not exist.
+	 */
+	aiStopNotFound: () => LocalizedString
+	/**
+	 * The endpoint refused the request.
+	 */
+	aiStopRejected: () => LocalizedString
+	/**
+	 * The endpoint is rate limiting this agent.
+	 */
+	aiStopRateLimited: () => LocalizedString
+	/**
+	 * The endpoint is unavailable.
+	 */
+	aiStopUnavailable: () => LocalizedString
+	/**
+	 * The endpoint answered in a shape this agent cannot read.
+	 */
+	aiStopShape: () => LocalizedString
+	/**
+	 * Every call was declined.
+	 */
+	aiStopDeclined: () => LocalizedString
 	/**
 	 * Close
 	 */

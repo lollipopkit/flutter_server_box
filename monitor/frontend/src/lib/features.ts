@@ -8,9 +8,9 @@
 ///
 /// Ordering is by what the thing is rather than by when it was built — the
 /// running machine first (containers, processes, services), then the machine's
-/// own configuration (users, schedule, desktops), then a measurement of it
-/// (benchmark). TODO: AI, snippets, PVE, BMC and sync join this list as they
-/// land; the bar scrolls rather than wrapping.
+/// own configuration (users, schedule, desktops), then the agent that operates
+/// it, then a measurement of it (benchmark). TODO: snippets, PVE, BMC and sync
+/// join this list as they land; the bar scrolls rather than wrapping.
 ///
 /// How each one is *drawn* (its label and its icon) is deliberately not here:
 /// a label is `$LL` and an icon is a component, and this module is imported by
@@ -28,6 +28,7 @@ export type FeatureId =
   | 'users'
   | 'cron'
   | 'desktop'
+  | 'ai'
   | 'benchmark'
 
 export interface FeatureSpec {
@@ -48,6 +49,7 @@ export const FEATURES: FeatureSpec[] = [
   { id: 'users', capability: 'users' },
   { id: 'cron', capability: 'cron' },
   { id: 'desktop', capability: 'desktop' },
+  { id: 'ai', capability: 'ai' },
   { id: 'benchmark', capability: 'benchmark' },
 ]
 

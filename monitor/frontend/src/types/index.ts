@@ -181,6 +181,15 @@ export interface RemoteAccess {
   /// table. Whether a run can happen on this machine, and whether this caller
   /// may start one, are the listing's own `supported` and `editable`.
   benchmark?: boolean
+  /// Whether `/api/v1/ai` answers this agent at all.
+  ///
+  /// Its own field for `stream`'s reason — an agent older than the endpoint
+  /// answers `full_access` and would 404 the request — and reported the way
+  /// `benchmark` is, as served rather than as granted. A conversation is a
+  /// record of what this agent was asked and what it answered, so reading one
+  /// needs only the panel login; asking it for something is `full_access`, and
+  /// the listing says so as `editable` rather than withholding the tab.
+  ai?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -1333,3 +1342,205 @@ export type BenchRefusalCode =
 /// that is in the history rather than a request this page just made, and every
 /// one of them is drawn beside a row rather than as an error over the page.
 export type BenchRunErrorCode = 'launcher_failed' | 'nonzero_exit' | 'no_exit_code'
+
+// ------------------------------------------------------------------- the Agent
+
+/// What an item of a conversation is.
+///
+/// The wire spells these, and `turn::Item`'s builders are the only writers: a
+/// message is what the user typed or the model answered, a `function_call` is a
+/// proposal, a `function_output` is what came of one — the tool's envelope, or
+/// this agent saying a person declined it — and a `notice` is the agent saying
+/// why a turn stopped, which the model never sees.
+export type AiItemKind = 'message' | 'function_call' | 'function_output' | 'notice'
+
+/// What the classifier could establish about a command, from its text alone.
+///
+/// `sbm_parser::ai_risk::CommandRisk`'s own spellings. `unknown` is the
+/// default: anything the classifier does not recognise is asked about.
+export type AiRisk = 'read_only' | 'unknown' | 'caution' | 'destructive'
+
+/// The phase a running turn is in. `idle` covers both "parked" and "over",
+/// which are told apart by the items rather than here.
+export type AiPhase = 'idle' | 'streaming' | 'executing'
+
+/// One item of a conversation, in order.
+export interface AiItemView {
+  ordinal: number
+  created_at: string
+  kind: AiItemKind
+  /// `user` or `assistant` for a message, empty for every other kind.
+  role: string
+  content: string
+  /// The model's own thinking, when the endpoint reported any. Kept beside the
+  /// answer rather than mixed into it.
+  reasoning: string
+  /// The call an item is about: the proposal on a `function_call`, the answer
+  /// on a `function_output`. `null` on a message and a notice.
+  call_id: string | null
+  tool: string | null
+  /// The model's JSON **as the text it produced**, never a re-serialisation of
+  /// the fields parsed out of it: the same bytes the tool was handed and the
+  /// same bytes a reviewer reads. A page that draws one field parses for
+  /// display; nothing it sends back is built from the parse.
+  arguments: string | null
+  /// What the classifier decided when the call was created — what the reviewer
+  /// was shown, and what decided whether it ran unreviewed.
+  risk: AiRisk | null
+}
+
+/// A conversation as the list draws it.
+export interface AiConversationView {
+  id: string
+  title: string
+  model: string
+  created_at: string
+  updated_at: string
+  prompt_tokens: number
+  completion_tokens: number
+  /// A call nobody has answered yet — what the row shows instead of a status.
+  awaiting_review: boolean
+  /// A turn is running in this conversation right now.
+  running: boolean
+}
+
+export interface AiListView {
+  conversations: AiConversationView[]
+  /// Whether this caller may send, approve, decline, rename, remove and save
+  /// the settings. A hint: every action re-checks the grant at the moment of
+  /// use, and `stop` is answered without it.
+  editable: boolean
+}
+
+/// The text a running step has produced so far, which is not an item yet.
+export interface AiLiveView {
+  /// The ordinal this text will become an item with, so a page drops its
+  /// provisional text exactly when the item supersedes it. `null` once the step
+  /// has been stored — the text is an item now.
+  step: number | null
+  content: string
+  reasoning: string
+  phase: AiPhase
+  /// Why the last turn ended badly, as a stable code this page phrases.
+  error: AiStopCode | null
+}
+
+export interface AiDetailView {
+  conversation: AiConversationView
+  items: AiItemView[]
+  /// What is streaming right now, if anything.
+  live: AiLiveView | null
+  /// The calls this conversation is waiting on. The same list the follow
+  /// stream's `state` frame carries.
+  waiting: string[]
+  editable: boolean
+}
+
+/// One frame of the follow stream, as NDJSON.
+///
+/// `item` is what was stored after the caller's `?after=`; `delta` is text that
+/// is not an item yet; `state` arrives when any of `running`/`phase`/`error`/
+/// `waiting` changes, and once at the start; `ping` keeps a proxy from closing
+/// an idle stream and carries nothing.
+export type AiFollowFrame =
+  | { type: 'item'; item: AiItemView }
+  | { type: 'delta'; step: number; content: string; reasoning: string }
+  | {
+      type: 'state'
+      running: boolean
+      phase: AiPhase
+      error: AiStopCode | null
+      waiting: string[]
+    }
+  | { type: 'ping' }
+
+/// The endpoint's own settings, which the page edits.
+export interface AiSettingsView {
+  /// An endpoint and a model — what a page checks before offering to send.
+  configured: boolean
+  base_url: string
+  model: string
+  /// Always `null`. The key is write-only: this field exists so a page
+  /// round-tripping this view hands back a `null` that means "keep what is
+  /// stored" rather than omitting a field it never saw.
+  api_key: null
+  /// Whether one is stored — the one bit that separates "leave this blank to
+  /// keep it" from "there is none".
+  api_key_set: boolean
+  auto_run_safe_commands: boolean
+  editable: boolean
+}
+
+/// The whole payload of a settings save. A replace: a field left out is
+/// cleared, so the page always sends every one it drew.
+export interface AiSettingsPayload {
+  base_url: string
+  model: string
+  /// `null` keeps the stored key, `''` clears it, anything else replaces it.
+  api_key: string | null
+  auto_run_safe_commands: boolean
+}
+
+/// One action on the Agent endpoint, as the tagged object the route takes.
+///
+/// A tagged object rather than five routes, so an action this build does not
+/// know is refused while it is being read rather than reaching a handler.
+export type AiActionRequest =
+  | { action: 'chat'; conversation?: string; message: string }
+  | { action: 'approve'; conversation: string; call_id: string }
+  | { action: 'decline'; conversation: string }
+  | { action: 'stop'; conversation: string }
+  | { action: 'rename'; conversation: string; title: string }
+
+/// What an action did, from `POST /api/v1/ai/conversations`.
+export interface AiActResponse {
+  /// The conversation the action applied to. For a message that started one,
+  /// the id it was created with.
+  conversation: string
+  /// Whether a turn is running now: a `stop` that found nothing, and an
+  /// approval that answered the last call of a batch and resumed, both answer
+  /// here.
+  running: boolean
+  /// What an approval ran, for a page that would rather say so than wait for
+  /// the model to answer.
+  result?: { ok: boolean; summary: string }
+}
+
+/// Why a request was refused, as a stable code this page phrases.
+///
+/// Every one of them is something the caller could have avoided, which is why
+/// they are 400s; `no_such_conversation` and `no_such_call` are a state of the
+/// agent rather than a mistake, and arrive 404.
+export type AiRefusalCode =
+  | 'invalid_base_url'
+  | 'empty_message'
+  | 'message_too_long'
+  | 'invalid_title'
+  | 'not_configured'
+  | 'busy'
+  | 'nothing_to_decline'
+  | 'no_such_conversation'
+  | 'no_such_call'
+
+/// Why a turn stopped, as a code this page phrases in the viewer's language.
+///
+/// Two vocabularies in one, because both are drawn in the same place: `turn.rs`'s
+/// own — `interrupted` for a stopped turn, `storage` for a write that failed,
+/// `not_configured` for an endpoint removed under a running turn, `declined`
+/// for one nobody would approve — and `openai::UpstreamError`'s names, which say
+/// what the model's endpoint did.
+///
+/// `declined` and `interrupted` arrive as a notice item rather than as a live
+/// error: the turn they end is over, and a notice is what a page draws for that.
+export type AiStopCode =
+  | 'interrupted'
+  | 'storage'
+  | 'not_configured'
+  | 'unreachable'
+  | 'auth'
+  | 'not_found'
+  | 'rejected'
+  | 'rate_limited'
+  | 'unavailable'
+  | 'shape'
+  | 'declined'

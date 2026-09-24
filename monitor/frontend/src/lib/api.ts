@@ -1,4 +1,10 @@
 import type {
+  AiActResponse,
+  AiActionRequest,
+  AiDetailView,
+  AiListView,
+  AiSettingsPayload,
+  AiSettingsView,
   BenchDetail,
   BenchEstimate,
   BenchOptions,
@@ -126,14 +132,17 @@ async function request<T>(
   return res.json() as Promise<T>
 }
 
-/// A request that carries bytes rather than JSON.
+/// A request whose body is bytes rather than JSON, in either direction.
 ///
 /// Separate from `request` for two reasons: the body is a stream in one
 /// direction or the other and never `res.json()`, and `TIMEOUT_MS` is wrong
 /// for it — ten seconds is generous for a status poll and nothing at all for a
-/// file. Bounded by the caller's own `signal` instead, which is also what a
-/// cancel button pulls.
-async function fsBytes(
+/// file, and a follow stream has no end at all. Bounded by the caller's own
+/// `signal` instead, which is also what a cancel button pulls.
+///
+/// The failure handling is `request`'s, including the 401 that drops the
+/// session: these callers are the ones where finding out late is expensive.
+async function bytesRequest(
   path: string,
   init: RequestInit,
   fallback: string,
@@ -303,7 +312,7 @@ export const api = {
   /// shortcut here: the endpoint wants a bearer token, and a URL cannot carry
   /// one without putting it in the agent's access log.
   fsRead: async (path: string, signal?: AbortSignal): Promise<Blob> => {
-    const res = await fsBytes(
+    const res = await bytesRequest(
       `/fs/read?path=${encodeURIComponent(path)}`,
       {},
       'Failed to read the file',
@@ -312,7 +321,7 @@ export const api = {
     return res.blob()
   },
   fsWrite: async (path: string, body: Blob, signal?: AbortSignal): Promise<void> => {
-    await fsBytes(
+    await bytesRequest(
       `/fs/write?path=${encodeURIComponent(path)}`,
       { method: 'PUT', body, headers: { 'Content-Type': 'application/octet-stream' } },
       'Failed to write the file',
@@ -605,6 +614,72 @@ export const api = {
       `/benchmark?run=${encodeURIComponent(id)}`,
       { method: 'DELETE' },
       'Failed to remove the run',
+    ),
+  /// The Agent's endpoint settings.
+  ///
+  /// The API key is write-only: this answers `api_key: null` with
+  /// `api_key_set` beside it, and a save sending that `null` back keeps what
+  /// the agent has stored. Reading needs only the panel login.
+  getAiSettings: () => request<AiSettingsView>('/ai/settings', {}, 'Failed to fetch the settings'),
+  /// Saves them. `api_key: null` keeps the stored key, `''` clears it — the
+  /// push channel's rule, one field wide.
+  ///
+  /// Writing is `full_access`, the same grant as the shell: everything an
+  /// endpoint is used for here runs commands as the agent's account. A base URL
+  /// that is not a URL is refused before it is stored, as an `ApiError` holding
+  /// `invalid_base_url`.
+  updateAiSettings: (payload: AiSettingsPayload) =>
+    request<AiSettingsView>(
+      '/ai/settings',
+      { method: 'PUT', body: JSON.stringify(payload) },
+      'Failed to save the settings',
+    ),
+  /// The conversations of this agent, newest first, or one of them in full.
+  ///
+  /// Reading needs only the panel login: a conversation is a record of what
+  /// this agent was asked and what it answered, like a benchmark's history.
+  /// The response says `editable` for the actions below.
+  getAiConversations: (conversation?: string, signal?: AbortSignal) =>
+    request<AiListView | AiDetailView>(
+      conversation
+        ? `/ai/conversations?conversation=${encodeURIComponent(conversation)}`
+        : '/ai/conversations',
+      {},
+      'Failed to fetch the conversations',
+      signal,
+    ),
+  /// One action: a message, an approval, a decline, a rename or a stop.
+  ///
+  /// Everything but `stop` is `full_access` — an approved call runs a command
+  /// as the agent's account — and `stop` is answered without it, since the case
+  /// it has to survive is the grant being revoked mid-turn. A refusal arrives
+  /// as an `ApiError` holding a stable code this page phrases.
+  actAi: (action: AiActionRequest) =>
+    request<AiActResponse>(
+      '/ai/conversations',
+      { method: 'POST', body: JSON.stringify(action) },
+      'Failed to reach the agent',
+    ),
+  /// Removes a conversation and the items in it. A turn that is running in one
+  /// is refused (`busy`): the items are the only record of it.
+  removeAiConversation: (id: string) =>
+    request<unknown>(
+      `/ai/conversations?conversation=${encodeURIComponent(id)}`,
+      { method: 'DELETE' },
+      'Failed to remove the conversation',
+    ),
+  /// The NDJSON follow stream: what was stored after `after`, the text
+  /// streaming right now, and the state to draw them in.
+  ///
+  /// The response, not a parsed body: the stream has no end until the caller
+  /// leaves, so it is read frame by frame by `lib/aiFollow.ts`. `signal` is the
+  /// only bound, and closing the page is what pulls it.
+  followAi: (conversation: string, after: number, signal?: AbortSignal) =>
+    bytesRequest(
+      `/ai/follow?conversation=${encodeURIComponent(conversation)}&after=${after}`,
+      {},
+      'Failed to follow the conversation',
+      signal,
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>
