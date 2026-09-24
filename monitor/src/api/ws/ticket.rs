@@ -45,6 +45,10 @@ pub enum Purpose {
     Terminal,
     /// A raw TCP connection, for the app's port forwarding and remote desktop.
     Stream,
+    /// An RDP session through the RDCleanPath proxy, which is its own endpoint
+    /// rather than [`Self::Stream`]: it does not relay bytes immediately but
+    /// speaks a handshake first, so a stream ticket is not one it can use.
+    Rdp,
 }
 
 struct Entry {

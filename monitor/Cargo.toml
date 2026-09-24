@@ -84,6 +84,19 @@ zeroize = "1"
 # SSH path needs none of this.
 portable-pty = "0.9"
 
+# The RDCleanPath PDU the RDP proxy endpoint reads and answers with
+# (`api::ws::rdcleanpath`). Pure Rust and one dependency of its own (`der`),
+# so it adds no crypto implementation — the TLS session this proxy opens to
+# the RDP server is rustls, below. Pinned rather than floating: master has
+# moved to `der` 0.8 and MSRV 1.94, and this repo builds on 1.89.
+ironrdp-rdcleanpath = "=0.2.2"
+# TLS *client* for that proxy. The client in the browser does not do TLS — the
+# relay terminates it and hands the operator a plaintext RDP stream — so this
+# is where the server's certificate chain is observed and sent on.
+# `ring` for the reason everything else here uses it: no cmake, so the static
+# musl builds work.
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "logging", "tls12"] }
+
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }
 
@@ -118,3 +131,8 @@ libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3.27.0"
+# Self-signed certificates for the fake RDP server in `tests/rdp_ws.rs`, which
+# is what the proxy's TLS handshake is asserted to carry back. `ring` rather
+# than the default `aws_lc_rs`: dev-only, but a second crypto implementation in
+# the tree is a second thing to build.
+rcgen = { version = "0.14", default-features = false, features = ["ring", "pem"] }

@@ -313,6 +313,9 @@ the panel password can't switch it on); shared admission checks live in
     somebody's network. `tests/desktop_api.rs` asserts that, the round trip, the
     nine refusals, and that a route list is editable with `full_access` off
     while the relay stays shut.
+  - Two ways to open a session, one per protocol, and the route's own `protocol`
+    decides which the panel uses: VNC goes through `/api/v1/stream/ws` (a byte
+    relay, which is all VNC needs), RDP through `/api/v1/rdp/ws`.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",
@@ -361,13 +364,75 @@ the panel password can't switch it on); shared admission checks live in
   resumed byte stream would be a corrupted one rather than a shorter one. The
   address travels in the frame, not the URL, so it stays out of access logs.
   `tests/stream_ws.rs`.
+- **`/api/v1/rdp/ws`** — an RDP session, with the agent as the RDCleanPath
+  proxy (`api/ws/rdcleanpath.rs`). Separate from the relay because RDP cannot
+  use it: the client that runs a session in a browser (`ironrdp-web`) opens its
+  socket with an RDCleanPath request and refuses anything but an RDCleanPath
+  response in reply. The protocol exists because a page cannot do the TLS
+  handshake RDP wants — it needs the server's certificate to bind the session's
+  credentials to it, and an RDP server's is self-signed as a rule. Gate is
+  `full_access`, and `remote_access.rdp` reports that the endpoint is *served*
+  (VNC needs only the relay, so the two flags are separate).
+  - **The agent terminates TLS and the operator's stream is plaintext in this
+    process.** That is the protocol, not a shortcut: the client marks itself
+    upgraded without doing TLS, so what crosses the socket is the RDP stream
+    after decryption. Anything that can read the agent's memory can read the
+    session, including an NLA credential.
+  - **The RDP server's certificate is captured, not verified.** The agent has
+    no anchor to check it against, and the party that ends up judging it is the
+    client, by binding the credentials to the public key out of the chain it is
+    handed. The module says so plainly: the leg between the agent and the RDP
+    server is *not authenticated*. The app's own remote desktop over SSH does
+    verify and is the choice for a link that is not trusted.
+  - **The ticket travels in the request PDU's `proxy_auth`, not in a
+    subprotocol.** The wasm client opens its socket with no subprotocols, so the
+    `sbm-ticket.` convention the other two endpoints use is not available to it.
+    The upgrade therefore cannot check it, which is why the endpoint checks
+    `full_access` there, refuses when the request PDU arrives, and puts a
+    **deadline on that arrival** (`REQUEST_TIMEOUT`) — otherwise a socket could
+    be opened and held open for free.
+  - **Three things about the framing are load-bearing.** The socket is a *byte
+    stream*, not one message per PDU, so the request is accumulated until
+    `RDCleanPathPdu::detect` says it is complete; bytes arriving after the PDU
+    are the head of the RDP stream and are forwarded rather than dropped (RDP
+    does not tolerate reordering); and **the response must be the first frame
+    the client reads**, so the relay task sends it before starting its read loop
+    rather than the caller sending it and racing the task.
+  - **Every refusal is a DER error PDU, never a text frame** — the client is
+    reading through `detect`, which fails on anything that is not a PDU, so a
+    sentence would be shown as a decode failure instead of the reason. A
+    negotiation the client cannot use goes back as `new_negotiation_error` with
+    the server's own bytes, because "CredSSP (NLA) is required" is in them.
+  - **A `preconnection_blob` is refused rather than ignored.** It is a PCB for
+    the RDP server and what a client puts in the string is a convention its
+    author picked, so the wrong reading routes the session to a different RDP
+    source with nothing to show for it. Nothing this app sends carries one, so
+    refusing costs nothing and cannot be silently wrong. **TODO**: nothing
+    forwards a PCB, so a client that needs one cannot use this endpoint.
+  - The X.224 negotiation blob is parsed by hand (eleven bytes of TPKT, `LI`,
+    TPDU code and references, then type / length / a little-endian value)
+    rather than by pulling in `ironrdp-pdu` for four fixed fields.
+    `PROTOCOL_RDP` — no security at all — is refused, since the client has
+    already marked itself upgraded. `tests/rdp_ws.rs` runs the whole exchange
+    against a fake RDP server this test owns: a `TcpListener` that answers the
+    negotiated Connection Confirm and terminates TLS with a certificate
+    `rcgen` generated.
 
 Things that are easy to get wrong here, and are locked by tests:
 
 - **Auth for the upgrade is a single-use ticket** (`api/ws/ticket.rs`), not the
   JWT: browsers can't set headers on a WebSocket handshake, and a token in the
   query string lands in ntex's access log. Purpose-bound, ~30s, burned even on
-  a wrong secret.
+  a wrong secret. A ticket carries *which* endpoint, so one minted for the
+  terminal is refused at the relay and one minted for the relay is refused at
+  the RDP proxy — a client cannot trade one grant for another by changing the
+  URL it upgrades against. `rdcleanpath` is the one endpoint whose ticket
+  arrives inside the first frame instead of a subprotocol, for the reason its
+  own section gives.
+- **`awaiting_revocation` (`api/ws/mod.rs`) is shared by both long-lived
+  endpoints**, not owned by either: it is the same promise in both — the grant
+  is consulted when something is *started*, and a connection already carrying
+  bytes would otherwise outlive the switch that revoked it.
 - **`is_secure_transport` treats loopback as secure** even without TLS. That is
   the same-host reverse proxy / `cloudflared` case, which really is encrypted;
   refusing it would push people to `terminal.allow_insecure` and switch the check off for

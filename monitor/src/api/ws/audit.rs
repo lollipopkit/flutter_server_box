@@ -78,9 +78,17 @@ pub enum Kind {
     /// A change to the desktops this agent can reach through `api::desktop`.
     /// Its own kind for `Push`'s reason — the subject is the route names, and
     /// the row is about the agent's own configuration rather than about the
-    /// machine. The session itself is recorded as `Stream`, which is what
-    /// opening one is.
+    /// machine.
     Desktop,
+    /// An RDP session opened through `api::ws::rdcleanpath`.
+    ///
+    /// Its own kind, not `Stream`: both connect the operator to a machine, but
+    /// this one *terminates the TLS session* and relays plaintext, so the
+    /// agent's process sees the RDP stream itself — which `Stream` does not.
+    /// An access trail that could not tell the two apart would be quieter about
+    /// the more privileged one. A VNC session is a `Stream`, since that is all
+    /// it needs.
+    Rdp,
 }
 
 impl Kind {
@@ -100,6 +108,7 @@ impl Kind {
             Kind::Service => "service",
             Kind::User => "user",
             Kind::Desktop => "desktop",
+            Kind::Rdp => "rdp",
         }
     }
 }

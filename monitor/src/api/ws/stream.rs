@@ -41,7 +41,7 @@ use ntex::ws::Item;
 use serde::{Deserialize, Serialize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::mpsc;
 
 use super::audit::{self, Action, Event, Kind, Outcome};
 use super::ticket::Purpose;
@@ -358,7 +358,7 @@ async fn open(
         tokio::select! {
             _ = writing => {}
             _ = reading => {}
-            _ = awaiting_revocation(revoked) => {
+            _ = super::awaiting_revocation(revoked) => {
                 // Said before closing, so the app reports why rather than
                 // reconnecting into a refusal it cannot see.
                 let _ = revocation_sink
@@ -380,22 +380,6 @@ async fn open(
     // relay that answers `error` must not be raced by bytes the client already
     // wrote into it.
     Some(ServerMsg::Ready.frame())
-}
-
-/// Resolves when the panel turns full access off, or never.
-///
-/// A `broadcast` receiver answers `Err` once the sender is gone, and a `select!`
-/// arm backed by a future that completes immediately would spin. Neither can
-/// happen while the agent is running — the sender lives in `AppState` — but a
-/// closed channel is treated as "no signal" rather than as a revocation, since
-/// guessing here would close every relay the moment a state was dropped.
-async fn awaiting_revocation(mut revoked: broadcast::Receiver<()>) {
-    loop {
-        match revoked.recv().await {
-            Ok(()) | Err(broadcast::error::RecvError::Lagged(_)) => return,
-            Err(broadcast::error::RecvError::Closed) => std::future::pending().await,
-        }
-    }
 }
 
 async fn audit_connect(ctx: &Rc<ConnCtx>, host: &str, port: u16, outcome: Outcome) {

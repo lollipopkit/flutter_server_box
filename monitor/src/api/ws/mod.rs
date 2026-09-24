@@ -4,6 +4,7 @@
 //! on which endpoint is being opened.
 
 pub mod audit;
+pub mod rdcleanpath;
 pub mod session;
 pub mod stream;
 pub mod terminal;
@@ -13,6 +14,28 @@ use std::net::IpAddr;
 
 use ntex::http::header;
 use ntex::web::HttpRequest;
+use tokio::sync::broadcast;
+
+/// Resolves when the panel turns full access off, or never.
+///
+/// Shared by the endpoints that hold a connection open — [`stream::stream_ws`]
+/// and [`rdcleanpath::rdp_ws`] — because both are the same promise: the grant is
+/// consulted when something is started, and a connection already running would
+/// otherwise outlive the switch that revoked it.
+///
+/// A `broadcast` receiver answers `Err` once the sender is gone, and a `select!`
+/// arm backed by a future that completes immediately would spin. Neither can
+/// happen while the agent is running — the sender lives in `AppState` — but a
+/// closed channel is treated as "no signal" rather than as a revocation, since
+/// guessing here would close every connection the moment a state was dropped.
+pub async fn awaiting_revocation(mut revoked: broadcast::Receiver<()>) {
+    loop {
+        match revoked.recv().await {
+            Ok(()) | Err(broadcast::error::RecvError::Lagged(_)) => return,
+            Err(broadcast::error::RecvError::Closed) => std::future::pending().await,
+        }
+    }
+}
 
 /// Whether this request reached us over a link that can't be passively read.
 ///

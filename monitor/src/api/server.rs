@@ -259,6 +259,10 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
             .route("/ws-ticket", web::post().to(issue_ws_ticket))
             .route("/terminal/ws", web::get().to(terminal_ws))
             .route("/stream/ws", web::get().to(crate::api::ws::stream::stream_ws))
+            .route(
+                "/rdp/ws",
+                web::get().to(crate::api::ws::rdcleanpath::rdp_ws),
+            )
             .service(
                 // Its own payload limit: ntex allows 32 KiB by
                 // default, and this endpoint's `stdin` carries the
@@ -896,6 +900,22 @@ struct RemoteAccessView {
     /// when the socket opens — a route list is a list, and what a route is
     /// worth is decided by the relay.
     desktop: bool,
+    /// Whether `/api/v1/rdp/ws` answers this agent at all, which is what an RDP
+    /// session needs.
+    ///
+    /// Its own field for [`Self::stream`]'s reason: an agent older than the
+    /// endpoint answers `full_access` and would 404 the upgrade.
+    ///
+    /// Separate from [`Self::stream`] because the two are different endpoints
+    /// with different capabilities: this one terminates the TLS session to the
+    /// RDP server and hands the operator a plaintext stream, while `stream` is a
+    /// byte relay that understands nothing. An agent may answer one and not the
+    /// other. VNC needs only `stream`.
+    ///
+    /// `true` for [`Self::cron`]'s reason: this says the endpoint is served, not
+    /// that the caller qualifies. The grant is `full_access`, checked again when
+    /// the request PDU arrives.
+    rdp: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -941,6 +961,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             services: true,
             users: true,
             desktop: true,
+            rdp: true,
         },
     }))
 }
@@ -973,6 +994,14 @@ async fn issue_ws_ticket(
             app_state.full_access_allowed(secure),
             "full access not available",
         ),
+        // The RDP proxy dials as the agent's account and terminates the TLS
+        // session to the RDP server, so it is the same grant as the shell — the
+        // same reasoning as `Purpose::Stream`, which it does not share an
+        // endpoint with.
+        Purpose::Rdp => (
+            app_state.full_access_allowed(secure),
+            "full access not available",
+        ),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
@@ -994,6 +1023,7 @@ async fn issue_ws_ticket(
                 .detail(match purpose {
                     Purpose::Terminal => "terminal",
                     Purpose::Stream => "stream",
+                    Purpose::Rdp => "rdp",
                 })
                 .record(&app_state.db)
                 .await;
