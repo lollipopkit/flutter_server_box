@@ -26,6 +26,29 @@ class SSHErr extends Err<SSHErrType> {
   };
 }
 
+enum LocalServerErrType {
+  /// This build cannot run processes on this device — see
+  /// `LocalServer.isSupported`. What a synced or restored local server reads
+  /// as on a phone.
+  unsupported,
+  writeScript,
+  getStatus,
+}
+
+/// Reading this device as a server failed. Its own type rather than an
+/// [SSHErr], because the advice SSH errors carry — keys, passwords, sshd — is
+/// about a connection this server does not make.
+class LocalServerErr extends Err<LocalServerErrType> {
+  const LocalServerErr({required super.type, super.message});
+
+  @override
+  String? get solution => switch (type) {
+    LocalServerErrType.unsupported => l10n.localServerUnsupported,
+    LocalServerErrType.writeScript => l10n.writeScriptFailTip,
+    LocalServerErrType.getStatus => null,
+  };
+}
+
 enum ContainerErrType {
   unknown,
   noClient,

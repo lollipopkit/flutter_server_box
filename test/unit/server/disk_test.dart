@@ -84,6 +84,54 @@ void main() {
   });
 
   group('DiskUsage', () {
+    Disk apfs(String path, String mount, int used, {String? fs = 'apfs'}) =>
+        Disk(
+      path: path,
+      fsTyp: fs,
+      mount: mount,
+      usedPercent: 0,
+      used: BigInt.from(used),
+      size: BigInt.from(1000),
+      avail: BigInt.from(50),
+    );
+
+    test('the volumes of one APFS container count once', () {
+      // Each reports the container's size and free space. Summed, the total
+      // was a multiple of the disk and the share used a fraction of the truth.
+      final usage = DiskUsage.parse([
+        apfs('/dev/disk3s1s1', '/', 15),
+        apfs('/dev/disk3s5', '/System/Volumes/Data', 900),
+      ]);
+      expect(usage.size, BigInt.from(1000));
+      expect(usage.used, BigInt.from(950));
+    });
+
+    test('equal partitions that are not APFS stay two filesystems', () {
+      // Matching size and free space is not a shared container.
+      for (final fs in ['exfat', 'hfs', null]) {
+        final usage = DiskUsage.parse([
+          apfs('/dev/disk4s1', '/Volumes/A', 15, fs: fs),
+          apfs('/dev/disk4s2', '/Volumes/B', 15, fs: fs),
+        ]);
+        expect(usage.size, BigInt.from(2000), reason: '$fs');
+        expect(usage.used, BigInt.from(30), reason: '$fs');
+      }
+    });
+
+    test('macOS system volumes and images are not storage', () {
+      for (final mount in [
+        '/System/Volumes/VM',
+        '/System/Volumes/Preboot',
+        '/Volumes/Recovery',
+        '/private/var/run/com.apple.security.cryptexd/mnt/x',
+        '/private/var/folders/xx/yy/X/APPID',
+      ]) {
+        expect(apfs('/dev/disk3s2', mount, 1).isStorage, isFalse, reason: mount);
+      }
+      expect(apfs('/dev/disk3s5', '/System/Volumes/Data', 1).isStorage, isTrue);
+      expect(apfs('/dev/disk3s1s1', '/', 1).isStorage, isTrue);
+    });
+
     test('DiskUsage does not double-count parent and child filesystems', () {
       final usage = DiskUsage.parse([
         Disk(

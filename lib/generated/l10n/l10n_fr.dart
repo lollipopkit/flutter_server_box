@@ -156,7 +156,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get askAiNoResponse => 'Aucune réponse';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Bureau à distance';
 
   @override
   String get askAiAgentWelcome => 'Que faisons-nous sur ce serveur ?';
@@ -2693,6 +2693,36 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get transportOff => 'désactivé';
+
+  @override
+  String get thisDevice => 'Cet appareil';
+
+  @override
+  String get localServerTip =>
+      'Lit cet appareil directement en exécutant le script d’état ici. SSH et Monitor HTTP ne sont pas utilisés, et leurs réglages sont conservés.';
+
+  @override
+  String get localServerUnsupported =>
+      'Cette plateforme ne peut pas lire cet appareil comme serveur. Linux, Windows et la version DMG de macOS le peuvent.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Ouvre le bureau RDP ou VNC d’un serveur dans l’app. La connexion passe par la connexion SSH du serveur ou par son agent Monitor : le port du bureau n’a pas besoin d’être accessible depuis le réseau.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Enregistrez un profil par bureau depuis le bouton Bureau à distance d’un serveur ou depuis l’onglet Bureau à distance.';
+
+  @override
+  String get localServerIntro =>
+      'Ajoute l’appareil qui exécute ServerBox comme serveur. L’état, les processus, les services, les conteneurs, le terminal et les fichiers fonctionnent sans SSH ni agent Monitor.';
+
+  @override
+  String get localServerAdd => 'Ajouter cet appareil';
+
+  @override
+  String get localServerIntroFooter =>
+      'Cela peut aussi être activé plus tard, dans la page de modification d’un serveur, sous Connexion.';
 
   @override
   String get transportSectionOff =>

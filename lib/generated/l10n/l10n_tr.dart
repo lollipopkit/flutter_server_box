@@ -155,7 +155,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiNoResponse => 'Yanıt yok';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Uzak masaüstü';
 
   @override
   String get askAiAgentWelcome => 'Bu sunucuda ne yapalım?';
@@ -2649,6 +2649,36 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get transportOff => 'kapalı';
+
+  @override
+  String get thisDevice => 'Bu cihaz';
+
+  @override
+  String get localServerTip =>
+      'Durum betiğini burada çalıştırarak bu cihazı doğrudan okur. SSH ve Monitor HTTP kullanılmaz; ayarları korunur.';
+
+  @override
+  String get localServerUnsupported =>
+      'Bu platform bu cihazı sunucu olarak okuyamaz. Linux, Windows ve macOS DMG sürümü destekler.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Bir sunucunun RDP veya VNC masaüstünü uygulama içinde açar. Bağlantı sunucunun SSH bağlantısı veya Monitor ajanı üzerinden geçer; bu yüzden masaüstü bağlantı noktasının ağdan erişilebilir olması gerekmez.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Her masaüstü için bir profili, sunucudaki Uzak masaüstü düğmesinden veya Uzak masaüstü sekmesinden kaydedin.';
+
+  @override
+  String get localServerIntro =>
+      'ServerBox\'ı çalıştıran cihazı sunucu olarak ekler. Durum, işlemler, hizmetler, konteynerler, terminal ve dosyalar SSH veya Monitor ajanı olmadan çalışır.';
+
+  @override
+  String get localServerAdd => 'Bu cihazı ekle';
+
+  @override
+  String get localServerIntroFooter =>
+      'Bu, daha sonra bir sunucunun düzenleme sayfasında Bağlantı altında da açılabilir.';
 
   @override
   String get transportSectionOff =>

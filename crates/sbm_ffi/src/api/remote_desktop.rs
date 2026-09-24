@@ -35,6 +35,11 @@ const MAX_FRAME_BYTES: usize = 64 * 1024 * 1024;
 const FRAME_INTERVAL: Duration = Duration::from_millis(33);
 const CHANNEL_CAPACITY: usize = 64;
 
+/// How far past [CHANNEL_CAPACITY] commands that cannot be folded may queue
+/// before the queue refuses them. Reached only when the session has stopped
+/// draining — a stalled connection — and it bounds the memory that costs.
+const COMMAND_QUEUE_LIMIT: usize = CHANNEL_CAPACITY * 16;
+
 #[derive(Clone, Debug)]
 pub struct RdpSessionParams {
     /// Loopback address of the SSH local tunnel.
@@ -129,7 +134,7 @@ pub enum RemoteDesktopEvent {
     },
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum SessionCommand {
     Close,
     SetVisible(bool),
@@ -167,6 +172,74 @@ struct CommandQueue {
     closed: Mutex<bool>,
 }
 
+/// Folds [command] into the last queued command of its kind, when doing so
+/// keeps everything [command] would have said. See [CommandQueue::send].
+fn fold_into(queue: &mut VecDeque<SessionCommand>, command: &SessionCommand) -> bool {
+    match command {
+        SessionCommand::Pointer {
+            x: new_x,
+            y: new_y,
+            buttons: new_buttons,
+        } => {
+            // Only into the newest command, and only when that is a move: a
+            // pointer whose buttons are the same as the pointer before it.
+            // Folding into a press or a release would move where the button
+            // changed — a drag would start where it was meant to end — and
+            // folding past a key would move the pointer before a key that was
+            // pressed first.
+            let before = queue.iter().rev().skip(1).find_map(|item| match item {
+                SessionCommand::Pointer { buttons, .. } => Some(*buttons),
+                _ => None,
+            });
+            let Some(SessionCommand::Pointer { x, y, buttons }) = queue.back_mut() else {
+                return false;
+            };
+            if before != Some(*buttons) || *buttons != *new_buttons {
+                return false;
+            }
+            *x = *new_x;
+            *y = *new_y;
+            true
+        }
+        SessionCommand::Wheel {
+            x: new_x,
+            y: new_y,
+            delta_x: new_dx,
+            delta_y: new_dy,
+        } => {
+            // Only into the newest command. Scrolling summed past a key would
+            // happen before it: Ctrl held, then scrolled, is a zoom.
+            let Some(SessionCommand::Wheel {
+                x,
+                y,
+                delta_x,
+                delta_y,
+            }) = queue.back_mut()
+            else {
+                return false;
+            };
+            *x = *new_x;
+            *y = *new_y;
+            *delta_x = delta_x.saturating_add(*new_dx);
+            *delta_y = delta_y.saturating_add(*new_dy);
+            true
+        }
+        SessionCommand::Resize { .. } | SessionCommand::SetVisible(_) => {
+            let kind = std::mem::discriminant(command);
+            let Some(last) = queue
+                .iter_mut()
+                .rev()
+                .find(|item| std::mem::discriminant(*item) == kind)
+            else {
+                return false;
+            };
+            *last = command.clone();
+            true
+        }
+        _ => false,
+    }
+}
+
 impl CommandQueue {
     fn new() -> Arc<Self> {
         Arc::new(Self {
@@ -176,28 +249,33 @@ impl CommandQueue {
         })
     }
 
+    /// Queues [command], folding it into one already waiting when that loses
+    /// nothing.
+    ///
+    /// Past [CHANNEL_CAPACITY] only commands that say the same thing twice are
+    /// folded: a move with the same buttons held, scrolling (summed), and a
+    /// resize or visibility change (the latest wins). A button going down or
+    /// up, a key, text and clipboard are never dropped or replaced, and may
+    /// take the queue past its capacity — up to [COMMAND_QUEUE_LIMIT], past
+    /// which a session that has stopped draining refuses more.
+    ///
+    /// It used to replace the newest pointer-ish command with whatever came
+    /// next, whatever its kind, and drop the oldest to make room for a key. On
+    /// a slow link a fast drag filled the queue, and then a release could be
+    /// replaced by a scroll or dropped for a keystroke — leaving the remote
+    /// button held, so every later touch dragged.
     fn send(&self, command: SessionCommand) -> Result<(), ()> {
         let mut queue = self.queue.lock().map_err(|_| ())?;
         if *self.closed.lock().map_err(|_| ())? {
             return Err(());
         }
         if queue.len() >= CHANNEL_CAPACITY {
-            if let Some(existing) = queue.iter_mut().rev().find(|item| {
-                matches!(item, SessionCommand::Pointer { .. } | SessionCommand::Wheel { .. } | SessionCommand::Resize { .. } | SessionCommand::SetVisible(_))
-            }) {
-                if matches!(&command, SessionCommand::Pointer { .. } | SessionCommand::Wheel { .. } | SessionCommand::Resize { .. } | SessionCommand::SetVisible(_)) {
-                    *existing = command;
-                    self.notify.notify_one();
-                    return Ok(());
-                }
-            }
-            if let Some(index) = queue.iter().position(|item| {
-                matches!(item, SessionCommand::Pointer { .. } | SessionCommand::Wheel { .. } | SessionCommand::Resize { .. } | SessionCommand::SetVisible(_))
-            }) {
-                queue.remove(index);
-            } else if matches!(&command, SessionCommand::Close) {
+            if matches!(&command, SessionCommand::Close) {
                 queue.clear();
-            } else {
+            } else if fold_into(&mut queue, &command) {
+                self.notify.notify_one();
+                return Ok(());
+            } else if queue.len() >= COMMAND_QUEUE_LIMIT {
                 return Err(());
             }
         }
@@ -1507,6 +1585,140 @@ mod tests {
 
     fn rect(x: u16, y: u16, width: u16, height: u16) -> Rect {
         Rect { x, y, width, height }
+    }
+
+    fn pointer(x: u16, buttons: u8) -> SessionCommand {
+        SessionCommand::Pointer { x, y: 0, buttons }
+    }
+
+    /// The queue's contents, as the pointer and wheel commands in it.
+    fn drain(queue: &CommandQueue) -> Vec<String> {
+        let mut out = Vec::new();
+        while let Some(command) = queue.try_recv() {
+            out.push(match command {
+                SessionCommand::Pointer { x, buttons, .. } => format!("p{x}:{buttons}"),
+                SessionCommand::Wheel { delta_y, .. } => format!("w{delta_y}"),
+                SessionCommand::Key { code, .. } => format!("k{code}"),
+                other => format!("{other:?}"),
+            });
+        }
+        out
+    }
+
+    /// A queue at capacity with plain moves, no button held.
+    fn full_of_moves() -> Arc<CommandQueue> {
+        let queue = CommandQueue::new();
+        for x in 0..CHANNEL_CAPACITY as u16 {
+            queue.send(pointer(x, 0)).unwrap();
+        }
+        queue
+    }
+
+    #[test]
+    fn a_full_queue_folds_moves_into_the_last_move() {
+        let queue = full_of_moves();
+        queue.send(pointer(500, 0)).unwrap();
+        let out = drain(&queue);
+        assert_eq!(out.len(), CHANNEL_CAPACITY);
+        assert_eq!(out.last().unwrap(), "p500:0");
+    }
+
+    // A release replaced or dropped leaves the remote button held, and every
+    // later touch drags.
+    #[test]
+    fn a_full_queue_keeps_every_press_and_release() {
+        let queue = full_of_moves();
+        queue.send(pointer(100, 1)).unwrap();
+        queue.send(pointer(110, 1)).unwrap();
+        queue.send(pointer(120, 1)).unwrap();
+        queue.send(pointer(120, 0)).unwrap();
+        queue
+            .send(SessionCommand::Wheel {
+                x: 0,
+                y: 0,
+                delta_x: 0,
+                delta_y: 3,
+            })
+            .unwrap();
+        queue
+            .send(SessionCommand::Key {
+                code: 30,
+                down: true,
+                extended: false,
+            })
+            .unwrap();
+        let out = drain(&queue);
+        let tail: Vec<_> = out[CHANNEL_CAPACITY..].iter().map(String::as_str).collect();
+        // The press stays where it was made; the drag's moves fold together.
+        assert_eq!(tail, ["p100:1", "p120:1", "p120:0", "w3", "k30"]);
+    }
+
+    #[test]
+    fn a_full_queue_sums_scrolling() {
+        let queue = full_of_moves();
+        for _ in 0..3 {
+            queue
+                .send(SessionCommand::Wheel {
+                    x: 0,
+                    y: 0,
+                    delta_x: 0,
+                    delta_y: 2,
+                })
+                .unwrap();
+        }
+        let out = drain(&queue);
+        assert_eq!(out.len(), CHANNEL_CAPACITY + 1);
+        assert_eq!(out.last().unwrap(), "w6");
+    }
+
+    fn wheel(delta_y: i16) -> SessionCommand {
+        SessionCommand::Wheel {
+            x: 0,
+            y: 0,
+            delta_x: 0,
+            delta_y,
+        }
+    }
+
+    // Summed into the first, the second scroll would happen before the key.
+    #[test]
+    fn a_full_queue_does_not_fold_past_a_key() {
+        let queue = full_of_moves();
+        queue.send(wheel(2)).unwrap();
+        queue
+            .send(SessionCommand::Key {
+                code: 29,
+                down: true,
+                extended: false,
+            })
+            .unwrap();
+        queue.send(wheel(3)).unwrap();
+        queue.send(pointer(700, 0)).unwrap();
+        let out = drain(&queue);
+        let tail: Vec<_> = out[CHANNEL_CAPACITY..].iter().map(String::as_str).collect();
+        assert_eq!(tail, ["w2", "k29", "w3", "p700:0"]);
+    }
+
+    #[test]
+    fn a_stalled_queue_stops_growing() {
+        let queue = full_of_moves();
+        let key = |code| SessionCommand::Key {
+            code,
+            down: true,
+            extended: false,
+        };
+        for code in 0..(COMMAND_QUEUE_LIMIT - CHANNEL_CAPACITY) as u32 {
+            queue.send(key(code)).unwrap();
+        }
+        assert!(queue.send(key(0)).is_err());
+        assert_eq!(drain(&queue).len(), COMMAND_QUEUE_LIMIT);
+    }
+
+    #[test]
+    fn close_on_a_full_queue_clears_it() {
+        let queue = full_of_moves();
+        queue.send(SessionCommand::Close).unwrap();
+        assert_eq!(drain(&queue), ["Close"]);
     }
 
     #[test]

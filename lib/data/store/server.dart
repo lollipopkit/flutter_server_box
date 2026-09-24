@@ -180,6 +180,7 @@ class ServerStore extends EntityStore<Spi> {
       // servers were doing: dialling whatever they had configured.
       sshEnabled: (row['ssh_enabled'] as int? ?? 1) == 1,
       monitorEnabled: (row['monitor_enabled'] as int? ?? 1) == 1,
+      local: (row['is_local'] as int? ?? 0) == 1,
       monitorHttp: monitorAddr == null
           ? null
           : MonitorHttpCredential(
@@ -314,6 +315,7 @@ class ServerStore extends EntityStore<Spi> {
       'preferred_transport',
       'ssh_enabled',
       'monitor_enabled',
+      'is_local',
       'monitor_addr',
       'monitor_user',
       'monitor_pwd',
@@ -364,6 +366,7 @@ class ServerStore extends EntityStore<Spi> {
           : null,
       item.sshEnabled ? 1 : 0,
       item.monitorEnabled ? 1 : 0,
+      item.local ? 1 : 0,
       monitor?.addr,
       monitor?.user,
       monitor?.pwd,

@@ -1015,6 +1015,21 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     ),
     defaultValue: const Constant(true),
   );
+  static const VerificationMeta _isLocalMeta = const VerificationMeta(
+    'isLocal',
+  );
+  @override
+  late final GeneratedColumn<bool> isLocal = GeneratedColumn<bool>(
+    'is_local',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_local" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _monitorAddrMeta = const VerificationMeta(
     'monitorAddr',
   );
@@ -1269,6 +1284,7 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
     preferredTransport,
     sshEnabled,
     monitorEnabled,
+    isLocal,
     monitorAddr,
     monitorUser,
     monitorPwd,
@@ -1440,6 +1456,12 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
           data['monitor_enabled']!,
           _monitorEnabledMeta,
         ),
+      );
+    }
+    if (data.containsKey('is_local')) {
+      context.handle(
+        _isLocalMeta,
+        isLocal.isAcceptableOrUnknown(data['is_local']!, _isLocalMeta),
       );
     }
     if (data.containsKey('monitor_addr')) {
@@ -1677,6 +1699,10 @@ class $ServersTable extends Servers with TableInfo<$ServersTable, ServerRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}monitor_enabled'],
       )!,
+      isLocal: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_local'],
+      )!,
       monitorAddr: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}monitor_addr'],
@@ -1821,6 +1847,11 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
   /// servers were doing.
   final bool sshEnabled;
   final bool monitorEnabled;
+
+  /// Whether this server is the device reading the row — `Spi.local`. The
+  /// third way a row satisfies the CHECK below, and the one that needs no
+  /// address. False for every row written before it.
+  final bool isLocal;
   final String? monitorAddr;
   final String? monitorUser;
   final String? monitorPwd;
@@ -1885,6 +1916,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     this.preferredTransport,
     required this.sshEnabled,
     required this.monitorEnabled,
+    required this.isLocal,
     this.monitorAddr,
     this.monitorUser,
     this.monitorPwd,
@@ -1953,6 +1985,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     }
     map['ssh_enabled'] = Variable<bool>(sshEnabled);
     map['monitor_enabled'] = Variable<bool>(monitorEnabled);
+    map['is_local'] = Variable<bool>(isLocal);
     if (!nullToAbsent || monitorAddr != null) {
       map['monitor_addr'] = Variable<String>(monitorAddr);
     }
@@ -2058,6 +2091,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           : Value(preferredTransport),
       sshEnabled: Value(sshEnabled),
       monitorEnabled: Value(monitorEnabled),
+      isLocal: Value(isLocal),
       monitorAddr: monitorAddr == null && nullToAbsent
           ? const Value.absent()
           : Value(monitorAddr),
@@ -2149,6 +2183,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       ),
       sshEnabled: serializer.fromJson<bool>(json['sshEnabled']),
       monitorEnabled: serializer.fromJson<bool>(json['monitorEnabled']),
+      isLocal: serializer.fromJson<bool>(json['isLocal']),
       monitorAddr: serializer.fromJson<String?>(json['monitorAddr']),
       monitorUser: serializer.fromJson<String?>(json['monitorUser']),
       monitorPwd: serializer.fromJson<String?>(json['monitorPwd']),
@@ -2199,6 +2234,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       'preferredTransport': serializer.toJson<String?>(preferredTransport),
       'sshEnabled': serializer.toJson<bool>(sshEnabled),
       'monitorEnabled': serializer.toJson<bool>(monitorEnabled),
+      'isLocal': serializer.toJson<bool>(isLocal),
       'monitorAddr': serializer.toJson<String?>(monitorAddr),
       'monitorUser': serializer.toJson<String?>(monitorUser),
       'monitorPwd': serializer.toJson<String?>(monitorPwd),
@@ -2243,6 +2279,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     Value<String?> preferredTransport = const Value.absent(),
     bool? sshEnabled,
     bool? monitorEnabled,
+    bool? isLocal,
     Value<String?> monitorAddr = const Value.absent(),
     Value<String?> monitorUser = const Value.absent(),
     Value<String?> monitorPwd = const Value.absent(),
@@ -2291,6 +2328,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
         : this.preferredTransport,
     sshEnabled: sshEnabled ?? this.sshEnabled,
     monitorEnabled: monitorEnabled ?? this.monitorEnabled,
+    isLocal: isLocal ?? this.isLocal,
     monitorAddr: monitorAddr.present ? monitorAddr.value : this.monitorAddr,
     monitorUser: monitorUser.present ? monitorUser.value : this.monitorUser,
     monitorPwd: monitorPwd.present ? monitorPwd.value : this.monitorPwd,
@@ -2362,6 +2400,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
       monitorEnabled: data.monitorEnabled.present
           ? data.monitorEnabled.value
           : this.monitorEnabled,
+      isLocal: data.isLocal.present ? data.isLocal.value : this.isLocal,
       monitorAddr: data.monitorAddr.present
           ? data.monitorAddr.value
           : this.monitorAddr,
@@ -2426,6 +2465,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           ..write('preferredTransport: $preferredTransport, ')
           ..write('sshEnabled: $sshEnabled, ')
           ..write('monitorEnabled: $monitorEnabled, ')
+          ..write('isLocal: $isLocal, ')
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
@@ -2472,6 +2512,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
     preferredTransport,
     sshEnabled,
     monitorEnabled,
+    isLocal,
     monitorAddr,
     monitorUser,
     monitorPwd,
@@ -2517,6 +2558,7 @@ class ServerRow extends DataClass implements Insertable<ServerRow> {
           other.preferredTransport == this.preferredTransport &&
           other.sshEnabled == this.sshEnabled &&
           other.monitorEnabled == this.monitorEnabled &&
+          other.isLocal == this.isLocal &&
           other.monitorAddr == this.monitorAddr &&
           other.monitorUser == this.monitorUser &&
           other.monitorPwd == this.monitorPwd &&
@@ -2560,6 +2602,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
   final Value<String?> preferredTransport;
   final Value<bool> sshEnabled;
   final Value<bool> monitorEnabled;
+  final Value<bool> isLocal;
   final Value<String?> monitorAddr;
   final Value<String?> monitorUser;
   final Value<String?> monitorPwd;
@@ -2601,6 +2644,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.preferredTransport = const Value.absent(),
     this.sshEnabled = const Value.absent(),
     this.monitorEnabled = const Value.absent(),
+    this.isLocal = const Value.absent(),
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
@@ -2643,6 +2687,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     this.preferredTransport = const Value.absent(),
     this.sshEnabled = const Value.absent(),
     this.monitorEnabled = const Value.absent(),
+    this.isLocal = const Value.absent(),
     this.monitorAddr = const Value.absent(),
     this.monitorUser = const Value.absent(),
     this.monitorPwd = const Value.absent(),
@@ -2686,6 +2731,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Expression<String>? preferredTransport,
     Expression<bool>? sshEnabled,
     Expression<bool>? monitorEnabled,
+    Expression<bool>? isLocal,
     Expression<String>? monitorAddr,
     Expression<String>? monitorUser,
     Expression<String>? monitorPwd,
@@ -2729,6 +2775,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       if (preferredTransport != null) 'preferred_transport': preferredTransport,
       if (sshEnabled != null) 'ssh_enabled': sshEnabled,
       if (monitorEnabled != null) 'monitor_enabled': monitorEnabled,
+      if (isLocal != null) 'is_local': isLocal,
       if (monitorAddr != null) 'monitor_addr': monitorAddr,
       if (monitorUser != null) 'monitor_user': monitorUser,
       if (monitorPwd != null) 'monitor_pwd': monitorPwd,
@@ -2774,6 +2821,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     Value<String?>? preferredTransport,
     Value<bool>? sshEnabled,
     Value<bool>? monitorEnabled,
+    Value<bool>? isLocal,
     Value<String?>? monitorAddr,
     Value<String?>? monitorUser,
     Value<String?>? monitorPwd,
@@ -2817,6 +2865,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
       preferredTransport: preferredTransport ?? this.preferredTransport,
       sshEnabled: sshEnabled ?? this.sshEnabled,
       monitorEnabled: monitorEnabled ?? this.monitorEnabled,
+      isLocal: isLocal ?? this.isLocal,
       monitorAddr: monitorAddr ?? this.monitorAddr,
       monitorUser: monitorUser ?? this.monitorUser,
       monitorPwd: monitorPwd ?? this.monitorPwd,
@@ -2902,6 +2951,9 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
     }
     if (monitorEnabled.present) {
       map['monitor_enabled'] = Variable<bool>(monitorEnabled.value);
+    }
+    if (isLocal.present) {
+      map['is_local'] = Variable<bool>(isLocal.value);
     }
     if (monitorAddr.present) {
       map['monitor_addr'] = Variable<String>(monitorAddr.value);
@@ -2993,6 +3045,7 @@ class ServersCompanion extends UpdateCompanion<ServerRow> {
           ..write('preferredTransport: $preferredTransport, ')
           ..write('sshEnabled: $sshEnabled, ')
           ..write('monitorEnabled: $monitorEnabled, ')
+          ..write('isLocal: $isLocal, ')
           ..write('monitorAddr: $monitorAddr, ')
           ..write('monitorUser: $monitorUser, ')
           ..write('monitorPwd: $monitorPwd, ')
@@ -10380,6 +10433,7 @@ typedef $$ServersTableCreateCompanionBuilder =
       Value<String?> preferredTransport,
       Value<bool> sshEnabled,
       Value<bool> monitorEnabled,
+      Value<bool> isLocal,
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
@@ -10423,6 +10477,7 @@ typedef $$ServersTableUpdateCompanionBuilder =
       Value<String?> preferredTransport,
       Value<bool> sshEnabled,
       Value<bool> monitorEnabled,
+      Value<bool> isLocal,
       Value<String?> monitorAddr,
       Value<String?> monitorUser,
       Value<String?> monitorPwd,
@@ -10831,6 +10886,11 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
 
   ColumnFilters<bool> get monitorEnabled => $composableBuilder(
     column: $table.monitorEnabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLocal => $composableBuilder(
+    column: $table.isLocal,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11405,6 +11465,11 @@ class $$ServersTableOrderingComposer extends Composer<_$AppDb, $ServersTable> {
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isLocal => $composableBuilder(
+    column: $table.isLocal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get monitorAddr => $composableBuilder(
     column: $table.monitorAddr,
     builder: (column) => ColumnOrderings(column),
@@ -11634,6 +11699,9 @@ class $$ServersTableAnnotationComposer
     column: $table.monitorEnabled,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isLocal =>
+      $composableBuilder(column: $table.isLocal, builder: (column) => column);
 
   GeneratedColumn<String> get monitorAddr => $composableBuilder(
     column: $table.monitorAddr,
@@ -12151,6 +12219,7 @@ class $$ServersTableTableManager
                 Value<String?> preferredTransport = const Value.absent(),
                 Value<bool> sshEnabled = const Value.absent(),
                 Value<bool> monitorEnabled = const Value.absent(),
+                Value<bool> isLocal = const Value.absent(),
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
@@ -12192,6 +12261,7 @@ class $$ServersTableTableManager
                 preferredTransport: preferredTransport,
                 sshEnabled: sshEnabled,
                 monitorEnabled: monitorEnabled,
+                isLocal: isLocal,
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,
@@ -12235,6 +12305,7 @@ class $$ServersTableTableManager
                 Value<String?> preferredTransport = const Value.absent(),
                 Value<bool> sshEnabled = const Value.absent(),
                 Value<bool> monitorEnabled = const Value.absent(),
+                Value<bool> isLocal = const Value.absent(),
                 Value<String?> monitorAddr = const Value.absent(),
                 Value<String?> monitorUser = const Value.absent(),
                 Value<String?> monitorPwd = const Value.absent(),
@@ -12276,6 +12347,7 @@ class $$ServersTableTableManager
                 preferredTransport: preferredTransport,
                 sshEnabled: sshEnabled,
                 monitorEnabled: monitorEnabled,
+                isLocal: isLocal,
                 monitorAddr: monitorAddr,
                 monitorUser: monitorUser,
                 monitorPwd: monitorPwd,

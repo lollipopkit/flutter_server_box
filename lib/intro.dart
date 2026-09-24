@@ -8,6 +8,11 @@ part of 'app.dart';
 /// it belonged to.
 typedef _IntroStep = ({Future<bool> Function() applies, IntroPageBuilder build});
 
+/// The latest revision of the feature pages — see
+/// [SettingStore.featureIntroVer]. A page added later names the next number,
+/// and this moves to it.
+const _kFeatureIntroVer = 1;
+
 final class _IntroPage extends StatelessWidget {
   const _IntroPage(this.pages);
 
@@ -30,6 +35,12 @@ final class _IntroPage extends StatelessWidget {
     (applies: _isFirstLaunch, build: _buildAppSettings),
     (applies: _needsBackupPassword, build: _buildBackupPasswordMigration),
     (applies: _needsDiagnosticsConsent, build: _buildDiagnostics),
+    // After the questions: these only say what the app can do.
+    (applies: () async => _featureUnseen(1), build: _buildRemoteDesktop),
+    (
+      applies: () async => LocalServer.isSupported && _featureUnseen(1),
+      build: _buildLocalServer,
+    ),
   ];
 
   /// The steps this launch should show.
@@ -73,6 +84,12 @@ final class _IntroPage extends StatelessWidget {
     return _setting.diagnosticsConsentVer.fetch() < kDiagnosticsConsentVer;
   }
 
+  /// A feature page introduced in revision [since] that this install has not
+  /// been shown. Fresh installs included: the pages describe features, not
+  /// changes, and a first launch knows neither.
+  static bool _featureUnseen(int since) =>
+      _setting.featureIntroVer.fetch() < since;
+
   // — Widget build ——————————————————————————————————————————————————
 
   @override
@@ -103,6 +120,7 @@ final class _IntroPage extends StatelessWidget {
       // Written here rather than on the page itself, so that leaving the intro
       // without reaching the end counts as unanswered and asks again.
       _setting.diagnosticsConsentVer.putSync(kDiagnosticsConsentVer);
+      _setting.featureIntroVer.putSync(_kFeatureIntroVer);
     });
     // Applies whatever was chosen a moment ago. Nothing has been uploaded
     // before this point — `DiagnosticsUpload.sync` refuses to start until the
@@ -268,8 +286,99 @@ final class _IntroPage extends StatelessWidget {
     );
   }
 
+  /// What remote desktop is and how it reaches a machine.
+  ///
+  /// The two things worth knowing before the first try: that nothing has to
+  /// be opened to the network, and where the button is. How the touch
+  /// controls work is the viewer's own guide, reused here.
+  static Widget _buildRemoteDesktop(BuildContext ctx, double padTop) {
+    final l10n = ctx.l10n;
+
+    return _introList(
+      children: [
+        ..._head(l10n.remoteDesktop, padTop),
+        _prose(l10n.remoteDesktopIntro),
+        ListTile(
+          leading: const Icon(Icons.desktop_windows_outlined, size: _kIconSize),
+          title: const Text('RDP · VNC'),
+          subtitle: Text(l10n.remoteDesktopIntroProfiles, style: UIs.textGrey),
+        ).cardx,
+        ListTile(
+          leading: const Icon(Icons.touch_app_outlined, size: _kIconSize),
+          title: Text(l10n.remoteDesktopGuideTouch),
+          subtitle: Text(l10n.remoteDesktopGuideTouchTip, style: UIs.textGrey),
+        ).cardx,
+        ListTile(
+          leading: const Icon(Icons.visibility_outlined, size: _kIconSize),
+          title: Text(l10n.remoteDesktopViewOnly),
+          subtitle: Text(
+            l10n.remoteDesktopGuideViewOnlyTip,
+            style: UIs.textGrey,
+          ),
+        ).cardx,
+        UIs.height77,
+      ],
+    );
+  }
+
+  /// The device running the app, as a server — see `Spi.local`.
+  ///
+  /// Offers to add it here, since that is one tap and needs nothing typed.
+  /// Only where [LocalServer.isSupported]: a page about a feature this build
+  /// cannot use would be an advertisement.
+  static Widget _buildLocalServer(BuildContext ctx, double padTop) {
+    final l10n = ctx.l10n;
+    // Not read from the servers here: building a page should not depend on
+    // them being loaded. The tap finds out, and one already there counts.
+    final added = ValueNotifier(false);
+
+    return DisposeWith(
+      notifiers: [added],
+      child: _introList(
+        children: [
+          ..._head(l10n.thisDevice, padTop),
+          _prose(l10n.localServerIntro),
+          added.listenVal(
+            (done) => ListTile(
+              leading: const Icon(Icons.computer, size: _kIconSize),
+              title: Text(l10n.localServerAdd),
+              subtitle: Text(Platform.localHostname, style: UIs.textGrey),
+              trailing: Icon(done ? Icons.check : Icons.add),
+              onTap: done
+                  ? null
+                  : () async {
+                      if (await _addLocalServer(ctx)) added.value = true;
+                    },
+            ).cardx,
+          ),
+          _prose(l10n.localServerIntroFooter),
+          UIs.height77,
+        ],
+      ),
+    );
+  }
+
   // — Actions ———————————————————————————————————————————————————————
 
+
+  /// Adds this device as a server, unless one already is. False, after
+  /// saying why, when that failed.
+  static Future<bool> _addLocalServer(BuildContext ctx) async {
+    final container = ProviderScope.containerOf(ctx, listen: false);
+    final servers = container.read(serversProvider).servers.values;
+    if (servers.any((e) => e.local)) return true;
+    final notifier = container.read(serversProvider.notifier);
+    try {
+      await notifier.addServer(
+        Spi(name: Platform.localHostname, id: ShortId.generate(), local: true),
+      );
+      return true;
+    } catch (e, s) {
+      Loggers.app.warning('Add this device from the intro', e, s);
+      Toast.error(libL10n.fail, body: e.toString());
+      return false;
+    }
+  }
 
   static Future<void> _selectLocale(BuildContext ctx) async {
     final selected = await ctx.showPickSingleDialog(

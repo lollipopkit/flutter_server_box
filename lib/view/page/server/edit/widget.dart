@@ -81,14 +81,40 @@ extension _Widgets on _ServerEditPageState {
   /// refused. What it produces is a server with no way in, which the save
   /// refuses through `Spix.validate` — a switch that will not move leaves the
   /// user guessing which of the two the app objected to.
-  Widget _buildConnectionGroup() {
+  /// [otherIsLocal] is whether another server already is this device.
+  Widget _buildConnectionGroup({required bool otherIsLocal}) {
     return ListenableBuilder(
       listenable: Listenable.merge([
         _useSsh,
         _useMonitorHttp,
         _preferMonitorHttp,
+        _local,
       ]),
       builder: (_, _) {
+        // Offered where this build can read this device and no other server
+        // already is it — two would be one machine polled twice under two
+        // names. Kept on screen wherever this record already says it is one:
+        // a server synced from a desktop has to be switchable back on a phone.
+        final localRow =
+            (LocalServer.isSupported && !otherIsLocal) || _local.value
+            ? _buildLocalRow()
+            : null;
+        if (_local.value) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildGroupTitle(l10n.connection, right: l10n.thisDevice),
+              ?localRow,
+              _buildGroupNote(
+                LocalServer.isSupported
+                    ? l10n.localServerTip
+                    : l10n.localServerUnsupported,
+              ),
+            ],
+          );
+        }
+
         final order = _methodOrder;
         final live = order.where(_methodOn).toList();
         final note = switch (live.length) {
@@ -110,6 +136,7 @@ extension _Widgets on _ServerEditPageState {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildGroupTitle(l10n.connection, right: right),
+            ?localRow,
             _buildGroupNote(l10n.connectionTip),
             ReorderableListView(
               shrinkWrap: true,
@@ -130,6 +157,28 @@ extension _Widgets on _ServerEditPageState {
         );
       },
     );
+  }
+
+  /// The switch that makes this server the device the app runs on.
+  ///
+  /// Above the two methods rather than a third row among them: those are
+  /// ordered and this is not, and while it is on they are not dialled at all.
+  Widget _buildLocalRow() {
+    return ListTile(
+      leading: const Icon(Icons.computer),
+      title: Text(l10n.thisDevice),
+      subtitle: Text(
+        Platform.localHostname,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: UIs.text12Grey,
+      ),
+      trailing: SwitchX(
+        value: _local.value,
+        onChanged: (v) => _local.value = v,
+      ),
+      onTap: () => _local.value = !_local.value,
+    ).cardx;
   }
 
   Widget _buildMethodRow(

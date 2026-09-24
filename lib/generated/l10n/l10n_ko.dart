@@ -151,7 +151,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiNoResponse => '응답 없음';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => '원격 데스크톱';
 
   @override
   String get askAiAgentWelcome => '이 서버에서 무엇을 할까요?';
@@ -2517,6 +2517,35 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get transportOff => '꺼짐';
+
+  @override
+  String get thisDevice => '이 기기';
+
+  @override
+  String get localServerTip =>
+      '상태 스크립트를 이 기기에서 실행해 직접 읽습니다. SSH와 Monitor HTTP는 사용하지 않으며 해당 설정은 유지됩니다.';
+
+  @override
+  String get localServerUnsupported =>
+      '이 플랫폼에서는 이 기기를 서버로 읽을 수 없습니다. Linux, Windows, macOS DMG 버전에서 지원됩니다.';
+
+  @override
+  String get remoteDesktopIntro =>
+      '서버의 RDP 또는 VNC 데스크톱을 앱 안에서 엽니다. 연결은 서버의 SSH 연결이나 Monitor 에이전트를 거치므로 데스크톱 포트를 네트워크에 열어 둘 필요가 없습니다.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      '서버의 원격 데스크톱 버튼이나 원격 데스크톱 탭에서 데스크톱마다 프로필을 저장합니다.';
+
+  @override
+  String get localServerIntro =>
+      'ServerBox를 실행 중인 기기를 서버로 추가합니다. 상태, 프로세스, 서비스, 컨테이너, 터미널, 파일을 SSH나 Monitor 에이전트 없이 사용할 수 있습니다.';
+
+  @override
+  String get localServerAdd => '이 기기 추가';
+
+  @override
+  String get localServerIntroFooter => '나중에 서버 편집 페이지의 연결에서도 켤 수 있습니다.';
 
   @override
   String get transportSectionOff => '꺼져 있습니다. 다시 켤 때를 위해 아래 항목은 그대로 보관됩니다.';

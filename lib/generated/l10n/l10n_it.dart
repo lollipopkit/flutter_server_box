@@ -2687,6 +2687,36 @@ class AppLocalizationsIt extends AppLocalizations {
   String get transportOff => 'disattivato';
 
   @override
+  String get thisDevice => 'Questo dispositivo';
+
+  @override
+  String get localServerTip =>
+      'Legge direttamente questo dispositivo eseguendo qui lo script di stato. SSH e Monitor HTTP non vengono usati e le loro impostazioni vengono conservate.';
+
+  @override
+  String get localServerUnsupported =>
+      'Questa piattaforma non può leggere questo dispositivo come server. Linux, Windows e la versione DMG di macOS possono farlo.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Apre il desktop RDP o VNC di un server nell’app. La connessione passa per la connessione SSH del server o per il suo agente Monitor, quindi la porta del desktop non deve essere raggiungibile dalla rete.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Salva un profilo per ogni desktop dal pulsante Desktop remoto di un server o dalla scheda Desktop remoto.';
+
+  @override
+  String get localServerIntro =>
+      'Aggiunge come server il dispositivo su cui gira ServerBox. Stato, processi, servizi, container, terminale e file funzionano senza SSH né agente Monitor.';
+
+  @override
+  String get localServerAdd => 'Aggiungi questo dispositivo';
+
+  @override
+  String get localServerIntroFooter =>
+      'Si può attivare anche in seguito, nella pagina di modifica di un server, sotto Connessione.';
+
+  @override
   String get transportSectionOff =>
       'Disattivato. I campi qui sotto restano per quando lo riattiverai.';
 

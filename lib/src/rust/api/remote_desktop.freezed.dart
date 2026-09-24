@@ -230,7 +230,7 @@ return ended(_that.reason,_that.message);case _:
 
 class RemoteDesktopEvent_ConnectionState extends RemoteDesktopEvent {
   const RemoteDesktopEvent_ConnectionState({required this.state, required this.attempt}): super._();
-
+  
 
  final  RemoteDesktopConnectionState state;
  final  int attempt;
@@ -298,7 +298,7 @@ as int,
 
 class RemoteDesktopEvent_Frame extends RemoteDesktopEvent {
   const RemoteDesktopEvent_Frame({required this.bgra, required this.width, required this.height, required this.sequence}): super._();
-
+  
 
  final  Uint8List bgra;
  final  int width;
@@ -370,7 +370,7 @@ as BigInt,
 
 class RemoteDesktopEvent_Resolution extends RemoteDesktopEvent {
   const RemoteDesktopEvent_Resolution({required this.width, required this.height}): super._();
-
+  
 
  final  int width;
  final  int height;
@@ -438,7 +438,7 @@ as int,
 
 class RemoteDesktopEvent_CursorDefault extends RemoteDesktopEvent {
   const RemoteDesktopEvent_CursorDefault(): super._();
-
+  
 
 
 
@@ -470,7 +470,7 @@ String toString() {
 
 class RemoteDesktopEvent_CursorHidden extends RemoteDesktopEvent {
   const RemoteDesktopEvent_CursorHidden(): super._();
-
+  
 
 
 
@@ -502,7 +502,7 @@ String toString() {
 
 class RemoteDesktopEvent_CursorPosition extends RemoteDesktopEvent {
   const RemoteDesktopEvent_CursorPosition({required this.x, required this.y}): super._();
-
+  
 
  final  int x;
  final  int y;
@@ -570,7 +570,7 @@ as int,
 
 class RemoteDesktopEvent_CursorBitmap extends RemoteDesktopEvent {
   const RemoteDesktopEvent_CursorBitmap({required this.rgba, required this.width, required this.height, required this.hotspotX, required this.hotspotY}): super._();
-
+  
 
  final  Uint8List rgba;
  final  int width;
@@ -644,7 +644,7 @@ as int,
 
 class RemoteDesktopEvent_ClipboardText extends RemoteDesktopEvent {
   const RemoteDesktopEvent_ClipboardText({required this.text}): super._();
-
+  
 
  final  String text;
 
@@ -710,7 +710,7 @@ as String,
 
 class RemoteDesktopEvent_CertificateRequest extends RemoteDesktopEvent {
   const RemoteDesktopEvent_CertificateRequest({required this.sha256, required this.subject, required this.issuer, required this.validFrom, required this.validTo, this.previousSha256}): super._();
-
+  
 
  final  String sha256;
  final  String subject;
@@ -786,7 +786,7 @@ as String?,
 
 class RemoteDesktopEvent_Error extends RemoteDesktopEvent {
   const RemoteDesktopEvent_Error({required this.message, required this.retryable}): super._();
-
+  
 
  final  String message;
  final  bool retryable;
@@ -854,7 +854,7 @@ as bool,
 
 class RemoteDesktopEvent_Ended extends RemoteDesktopEvent {
   const RemoteDesktopEvent_Ended({required this.reason, this.message}): super._();
-
+  
 
  final  RemoteDesktopEndReason reason;
  final  String? message;

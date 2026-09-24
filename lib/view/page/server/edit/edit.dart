@@ -11,6 +11,7 @@ import 'package:server_box/core/diag.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
+import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
@@ -141,6 +142,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// Which one is tried first. Only shown, and only stored, when both are on.
   final _preferMonitorHttp = ValueNotifier(false);
 
+  /// Whether this server is the device the app runs on — see `Spi.local`.
+  ///
+  /// Beside the two switches rather than replacing them: turning it on hides
+  /// both methods and keeps what they hold, so turning it back off is not a
+  /// retyping exercise either.
+  final _local = ValueNotifier(false);
+
   /// Which protocol this server's files move over — see [SshFileTransport].
   ///
   /// A field of the SSH credential rather than a preference, so it lives here
@@ -236,6 +244,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _useSsh.dispose();
     _useMonitorHttp.dispose();
     _preferMonitorHttp.dispose();
+    _local.dispose();
     _fileTransport.dispose();
     _allowLegacyAlgorithms.dispose();
     _tempIsCelsius.dispose();
@@ -294,11 +303,16 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     // Read here rather than inside the group below: that one is rebuilt by a
     // notifier as well as by this method, and a `ref.watch` reached on the
     // notifier's path is one made outside a build.
+    final servers = ref.watch(serversProvider);
     final tagTile = TagTile(
       tags: _tags,
-      allTags: ref.watch(serversProvider).tags,
+      allTags: servers.tags,
       onEdit: _onEditTags,
     ).cardx;
+    // Here for the same reason as the tags: the group is rebuilt by notifiers.
+    final otherIsLocal = servers.servers.values.any(
+      (e) => e.local && e.id != _serverId,
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(13, 7, 13, 34),
@@ -322,25 +336,33 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
                 suggestion: true,
               ),
               tagTile,
-              _buildConnectionGroup(),
+              _buildConnectionGroup(otherIsLocal: otherIsLocal),
               // In the order they are dialled, which is the order the list
               // above is in: a section that stayed put while its row moved
               // would make the drag look like it had done nothing.
-              _preferMonitorHttp.listenVal(
-                (_) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final method in _methodOrder)
-                      _buildMethodSection(method, switch (method) {
-                        _Method.monitorHttp => _buildMonitorHttpFields(),
-                        _Method.ssh => Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [_buildSshConnFields(), _buildAuth()],
-                        ),
-                      }),
-                  ],
-                ),
+              //
+              // None of them for this device: nothing is dialled.
+              ListenableBuilder(
+                listenable: Listenable.merge([_preferMonitorHttp, _local]),
+                builder: (_, _) => _local.value
+                    ? UIs.placeholder
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final method in _methodOrder)
+                            _buildMethodSection(method, switch (method) {
+                              _Method.monitorHttp => _buildMonitorHttpFields(),
+                              _Method.ssh => Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildSshConnFields(),
+                                  _buildAuth(),
+                                ],
+                              ),
+                            }),
+                        ],
+                      ),
               ),
               _buildBehaviourGroup(),
               _buildOptionalGroup(),

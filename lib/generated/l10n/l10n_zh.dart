@@ -2461,6 +2461,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transportOff => '已关闭';
 
   @override
+  String get thisDevice => '本机';
+
+  @override
+  String get localServerTip =>
+      '直接在本机运行状态脚本读取本机信息，不使用 SSH 和 Monitor HTTP，二者的设置会保留。';
+
+  @override
+  String get localServerUnsupported =>
+      '当前平台无法将本机作为服务器读取。Linux、Windows 和 macOS DMG 版本支持。';
+
+  @override
+  String get remoteDesktopIntro =>
+      '在应用内打开服务器的 RDP 或 VNC 桌面。连接经由服务器的 SSH 连接或其 Monitor agent 转发，桌面端口无需对网络开放。';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      '在服务器的「远程桌面」按钮或「远程桌面」标签页中，为每个桌面保存一个配置。';
+
+  @override
+  String get localServerIntro =>
+      '将运行 ServerBox 的设备添加为服务器。状态、进程、服务、容器、终端和文件都无需 SSH 或 Monitor agent。';
+
+  @override
+  String get localServerAdd => '添加本机';
+
+  @override
+  String get localServerIntroFooter => '之后也可以在服务器编辑页的「连接方式」中开启。';
+
+  @override
   String get transportSectionOff => '已关闭。下面的字段会保留，供你再次开启时使用。';
 
   @override
@@ -5365,6 +5394,35 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get transportOff => '已關閉';
+
+  @override
+  String get thisDevice => '本機';
+
+  @override
+  String get localServerTip =>
+      '直接在本機執行狀態腳本讀取本機資訊，不使用 SSH 和 Monitor HTTP，兩者的設定會保留。';
+
+  @override
+  String get localServerUnsupported =>
+      '目前平台無法將本機作為伺服器讀取。Linux、Windows 和 macOS DMG 版本支援。';
+
+  @override
+  String get remoteDesktopIntro =>
+      '在應用程式內開啟伺服器的 RDP 或 VNC 桌面。連線經由伺服器的 SSH 連線或其 Monitor agent 轉送，桌面連接埠無需對網路開放。';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      '在伺服器的「遠端桌面」按鈕或「遠端桌面」分頁中，為每個桌面儲存一個設定檔。';
+
+  @override
+  String get localServerIntro =>
+      '將執行 ServerBox 的裝置新增為伺服器。狀態、程序、服務、容器、終端機和檔案都無需 SSH 或 Monitor agent。';
+
+  @override
+  String get localServerAdd => '新增本機';
+
+  @override
+  String get localServerIntroFooter => '之後也可以在伺服器編輯頁的「連線方式」中開啟。';
 
   @override
   String get transportSectionOff => '已關閉。下面的欄位會保留，供你再次開啟時使用。';

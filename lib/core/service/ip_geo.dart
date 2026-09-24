@@ -165,6 +165,9 @@ final class IpGeo {
   /// where the app would reach it. Null when neither is usable, which for a
   /// monitor address means one that is not a URL.
   String? geoHostOf(Spi spi) {
+    // This device has no address to place it by, and the one parked in its
+    // SSH settings is a different machine.
+    if (spi.local) return null;
     final hosts = spi.transport == ServerTransport.monitorHttp
         ? [_monitorHost(spi), spi.ssh?.ip]
         : [spi.ssh?.ip, _monitorHost(spi)];

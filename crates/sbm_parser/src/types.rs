@@ -148,7 +148,11 @@ pub fn disk_should_calc(source: &str, mount: &str) -> bool {
     // block device cannot bring these back: a host that exposes many device
     // nodes publishes one devtmpfs row per node, two dozen lines all claiming
     // 0 B used of the same size.
-    if is_kernel_mount(mount) || is_read_only_image_mount(mount) || is_swap_mount(mount) {
+    if is_kernel_mount(mount)
+        || is_read_only_image_mount(mount)
+        || is_swap_mount(mount)
+        || is_macos_system_volume(mount)
+    {
         return false;
     }
     if source.starts_with("/dev") || source.starts_with("//") || mount.starts_with("/mnt") {
@@ -206,8 +210,36 @@ fn is_read_only_image_type(fs_type: &str) -> bool {
     )
 }
 
+/// The mount points such images live at. On macOS: the cryptexes the OS
+/// mounts for simulator runtimes and toolchains, and the wrapper an iOS app
+/// installed on a Mac runs from, each full or nearly so by construction.
 fn is_read_only_image_mount(mount: &str) -> bool {
-    mount.starts_with("/snap/") || mount.starts_with("/var/lib/snapd/snap/")
+    [
+        "/snap/",
+        "/var/lib/snapd/snap/",
+        "/private/var/run/com.apple.security.cryptexd/",
+        "/private/var/folders/",
+    ]
+    .iter()
+    .any(|p| mount.starts_with(p))
+}
+
+/// A volume macOS creates and manages for itself: `Preboot`, `VM`, `Update`,
+/// `Hardware` and the rest under `/System/Volumes`, and the recovery volume.
+/// Each sits in the same APFS container as the user's data and reports that
+/// container's size, so listed they are a column of near-empty rows the user
+/// has no say over.
+///
+/// `/System/Volumes/Data` is the exception, and the one that matters: it is
+/// where everything the user writes is, so it is the row that fills up.
+fn is_macos_system_volume(mount: &str) -> bool {
+    if mount == "/Volumes/Recovery" {
+        return true;
+    }
+    let Some(rest) = mount.strip_prefix("/System/Volumes/") else {
+        return false;
+    };
+    rest != "Data" && !rest.starts_with("Data/")
 }
 
 /// A swap area, which `lsblk` lists beside filesystems. It has no mount point
@@ -439,11 +471,51 @@ pub struct SmartAttributeFlags {
     pub auto_keep: bool,
 }
 
+/// The APFS container a volume is in, with the size and free space every
+/// volume in it reports — see [`disk_usage`].
+///
+/// `/dev/disk3s5` and `/dev/disk3s1s1` (a snapshot of `disk3s1`) are both in
+/// `disk3`. Only for a filesystem known to be APFS: partitions of another
+/// kind on one disk are separate filesystems, and two of them can report the
+/// same size and free space without sharing anything. Keyed on the numbers as
+/// well, since the name alone does not say which container a volume shares.
+fn apfs_container(disk: &Disk) -> Option<(String, u64, u64)> {
+    if disk.fs_type.as_deref() != Some("apfs") {
+        return None;
+    }
+    let rest = disk.path.strip_prefix("/dev/disk")?;
+    let digits = rest.find(|c: char| !c.is_ascii_digit())?;
+    if digits == 0 || !rest[digits..].starts_with('s') {
+        return None;
+    }
+    Some((rest[..digits].to_string(), disk.size, disk.avail))
+}
+
 /// Disk usage aggregation (Dart `DiskUsage.parse`): dedupe by path:kname,
-/// nodes carrying their own data are not descended into
+/// nodes carrying their own data are not descended into.
+///
+/// The volumes of one APFS container count once. Each reports the whole
+/// container as its size and the container's free space as its own, so
+/// summed, a Mac with a 1 TB disk had a total of seven and read as a quarter
+/// full while its data volume was at 95%. A container's used space is its size
+/// less its free space, which is what every volume in it is sharing.
 pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
-    fn visit(disk: &Disk, seen: &mut Vec<String>, used: &mut u64, size: &mut u64) {
+    fn visit(
+        disk: &Disk,
+        seen: &mut Vec<String>,
+        containers: &mut Vec<(String, u64, u64)>,
+        used: &mut u64,
+        size: &mut u64,
+    ) {
         if !disk.is_storage() {
+            return;
+        }
+        if let Some(container) = apfs_container(disk) {
+            if !containers.contains(&container) {
+                *used += container.1.saturating_sub(container.2);
+                *size += container.1;
+                containers.push(container);
+            }
             return;
         }
         let unique = format!("{}:{}", disk.path, disk.kname.as_deref().unwrap_or("unknown"));
@@ -456,12 +528,12 @@ pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
             return;
         }
         for child in &disk.children {
-            visit(child, seen, used, size);
+            visit(child, seen, containers, used, size);
         }
     }
-    let (mut seen, mut used, mut size) = (Vec::new(), 0, 0);
+    let (mut seen, mut containers, mut used, mut size) = (Vec::new(), Vec::new(), 0, 0);
     for disk in disks {
-        visit(disk, &mut seen, &mut used, &mut size);
+        visit(disk, &mut seen, &mut containers, &mut used, &mut size);
     }
     (used, size)
 }

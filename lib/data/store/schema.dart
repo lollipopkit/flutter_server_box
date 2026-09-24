@@ -92,7 +92,8 @@ abstract final class SchemaVersion {
   /// v26: `server.ssh_enabled` and `monitor_enabled`
   /// v27: `server.ssh_allow_legacy_algorithms`
   /// v28: the retired SSH recent-server history removed from `kv`
-  static const current = 28;
+  /// v29: `server.is_local`, and the "reached somehow" CHECK relaxed for it
+  static const current = 29;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

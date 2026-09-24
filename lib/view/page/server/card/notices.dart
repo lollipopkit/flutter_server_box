@@ -84,7 +84,11 @@ class ServerNotice {
     // Asked before the error is read: a connection this app has not been
     // allowed to make has not been tried, so whatever else is on `err` is
     // about an earlier address or an earlier setting.
-    final monitor = srv.spi.monitorHttp;
+    //
+    // The agent that is going to be dialled, not the one on file: with the
+    // agent switched off, or the server being this device, nothing is sent to
+    // that address and there is nothing to allow.
+    final monitor = srv.spi.monitorOn;
     if (monitor != null && monitor.needsInsecureOptIn) {
       return ServerNotice(
         kind: ServerNoticeKind.plainHttp,

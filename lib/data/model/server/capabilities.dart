@@ -1,3 +1,4 @@
+import 'package:server_box/core/utils/local_server.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -80,6 +81,9 @@ abstract interface class ServerCapabilities {
       ServerConnectCredentialSsh() => const SshCapabilities(),
       ServerConnectCredentialMonitorHttp() => MonitorHttpCapabilities(
         granted ?? MonitorRemoteAccess.none,
+      ),
+      ServerConnectCredentialLocal() => LocalCapabilities(
+        supported: LocalServer.isSupported,
       ),
     };
   }
@@ -267,4 +271,51 @@ class MonitorHttpCapabilities implements ServerCapabilities {
 
   @override
   int get hashCode => Object.hash(MonitorHttpCapabilities, granted);
+}
+
+/// This device, which the app reaches without a connection.
+///
+/// A process, a pty and `dart:io` stand in for the shell, the terminal and the
+/// file browser. What it cannot do is carry a stream to an address: SFTP and
+/// port forwarding are SSH channels, and there is no SSH here — a forward from
+/// this device to itself is a connection the user can already make.
+class LocalCapabilities implements ServerCapabilities {
+  const LocalCapabilities({required this.supported});
+
+  /// Whether this build can start processes here at all — see
+  /// `LocalServer.isSupported`. False is a local server synced to a phone,
+  /// which then offers nothing rather than a row of buttons that fail.
+  final bool supported;
+
+  /// See [SshCapabilities.==].
+  @override
+  bool operator ==(Object other) =>
+      other is LocalCapabilities && other.supported == supported;
+
+  @override
+  int get hashCode => Object.hash(LocalCapabilities, supported);
+
+  @override
+  bool get shell => supported;
+
+  @override
+  bool get terminal => supported;
+
+  @override
+  bool get byteStream => false;
+
+  @override
+  bool get tcpRelay => false;
+
+  @override
+  bool get files => supported;
+
+  /// The app samples this device the way it samples a server over SSH, so the
+  /// buffer holds only what was watched.
+  @override
+  bool get storedHistory => false;
+
+  /// Nothing to connect, so nothing to wait for before a command runs.
+  @override
+  bool get persistentSession => false;
 }

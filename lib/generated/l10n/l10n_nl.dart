@@ -156,7 +156,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiNoResponse => 'Geen reactie';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Extern bureaublad';
 
   @override
   String get askAiAgentWelcome => 'Wat gaan we op deze server doen?';
@@ -2677,6 +2677,36 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get transportOff => 'uit';
+
+  @override
+  String get thisDevice => 'Dit apparaat';
+
+  @override
+  String get localServerTip =>
+      'Leest dit apparaat rechtstreeks uit door het statusscript hier uit te voeren. SSH en Monitor HTTP worden niet gebruikt; hun instellingen blijven bewaard.';
+
+  @override
+  String get localServerUnsupported =>
+      'Dit platform kan dit apparaat niet als server uitlezen. Linux, Windows en de macOS-DMG-versie kunnen dat wel.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Opent het RDP- of VNC-bureaublad van een server in de app. De verbinding loopt via de SSH-verbinding van de server of via zijn Monitor-agent, dus de bureaubladpoort hoeft niet bereikbaar te zijn vanaf het netwerk.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Sla per bureaublad een profiel op via de knop Extern bureaublad van een server of via het tabblad Extern bureaublad.';
+
+  @override
+  String get localServerIntro =>
+      'Voegt het apparaat waarop ServerBox draait toe als server. Status, processen, services, containers, de terminal en bestanden werken zonder SSH of Monitor-agent.';
+
+  @override
+  String get localServerAdd => 'Dit apparaat toevoegen';
+
+  @override
+  String get localServerIntroFooter =>
+      'Dit kan ook later worden ingeschakeld, op de bewerkpagina van een server onder Verbinding.';
 
   @override
   String get transportSectionOff =>

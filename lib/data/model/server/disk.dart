@@ -213,14 +213,30 @@ class DiskUsage {
     return used / size * 100;
   }
 
-  /// Find all devs, add their used and size
+  /// Find all devs, add their used and size.
+  ///
+  /// The volumes of one APFS container count once — see [_apfsContainer].
+  /// Mirrors `disk_usage` in `crates/sbm_parser/src/types.rs`.
   static DiskUsage parse(List<Disk> disks) {
     final devs = <String>{};
+    final containers = <(String, BigInt, BigInt)>{};
     var used = BigInt.zero;
     var size = BigInt.zero;
 
     void visit(Disk disk) {
       if (!disk.isStorage) return;
+      // Each volume reports the whole container as its size and the
+      // container's free space as its own, so summed, a Mac with a 1 TB disk
+      // had a total of seven and read as a quarter full while its data volume
+      // was at 95%. What a container has used is its size less its free space.
+      final container = _apfsContainer(disk);
+      if (container != null) {
+        if (containers.add(container)) {
+          used += container.$2 - container.$3;
+          size += container.$2;
+        }
+        return;
+      }
       // Use a combination of path and kernel name to uniquely identify disks
       // This helps distinguish between multiple physical disks in BTRFS RAID setups
       final uniqueId = '${disk.path}:${disk.kname ?? "unknown"}';
@@ -240,6 +256,24 @@ class DiskUsage {
     }
     return DiskUsage(used: used, size: size);
   }
+
+  static final _apfsVolume = RegExp(r'^/dev/disk(\d+)s\d');
+
+  /// The APFS container [disk] is a volume of, with the size and free space
+  /// every volume in it reports, or null for anything else.
+  ///
+  /// `/dev/disk3s5` and `/dev/disk3s1s1` (a snapshot of `disk3s1`) are both in
+  /// `disk3`. Only for a filesystem known to be APFS: partitions of another
+  /// kind on one disk are separate filesystems, and two of them can report the
+  /// same size and free space without sharing anything. Keyed on the numbers
+  /// as well, since the name alone does not say which container a volume
+  /// shares.
+  static (String, BigInt, BigInt)? _apfsContainer(Disk disk) {
+    if (disk.fsTyp != 'apfs') return null;
+    final m = _apfsVolume.firstMatch(disk.path);
+    if (m == null) return null;
+    return (m.group(1)!, disk.size, disk.avail);
+  }
 }
 
 bool _shouldCalcSource(String source, String mount) {
@@ -249,6 +283,7 @@ bool _shouldCalcSource(String source, String mount) {
   // of the same size.
   if (_isKernelMount(mount)) return false;
   if (_isReadOnlyImageMount(mount)) return false;
+  if (_isMacosSystemVolume(mount)) return false;
   if (_isSwapMount(mount)) return false;
 
   if (source.startsWith('/dev')) return true;
@@ -311,8 +346,30 @@ bool _isReadOnlyImageType(String fsType) => const {
   'fuse.snapfuse',
 }.contains(fsType);
 
-bool _isReadOnlyImageMount(String mount) =>
-    mount.startsWith('/snap/') || mount.startsWith('/var/lib/snapd/snap/');
+/// The mount points such images live at. On macOS: the cryptexes the OS
+/// mounts for simulator runtimes and toolchains, and the wrapper an iOS app
+/// installed on a Mac runs from, each full or nearly so by construction.
+///
+/// Mirrors `is_read_only_image_mount` in `crates/sbm_parser/src/types.rs`.
+bool _isReadOnlyImageMount(String mount) => const [
+  '/snap/',
+  '/var/lib/snapd/snap/',
+  '/private/var/run/com.apple.security.cryptexd/',
+  '/private/var/folders/',
+].any(mount.startsWith);
+
+/// A volume macOS creates and manages for itself: `Preboot`, `VM`, `Update`,
+/// `Hardware` and the rest under `/System/Volumes`, and the recovery volume.
+/// `/System/Volumes/Data` is kept: it is where everything the user writes is.
+///
+/// Mirrors `is_macos_system_volume` in `crates/sbm_parser/src/types.rs`.
+bool _isMacosSystemVolume(String mount) {
+  if (mount == '/Volumes/Recovery') return true;
+  const prefix = '/System/Volumes/';
+  if (!mount.startsWith(prefix)) return false;
+  final rest = mount.substring(prefix.length);
+  return rest != 'Data' && !rest.startsWith('Data/');
+}
 
 /// A swap area, which `lsblk` lists beside filesystems. It has no mount point
 /// and no `FSSIZE`, so the row reads `0 B / 0 B`, and swap is reported on its

@@ -155,7 +155,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiNoResponse => 'Нет ответа';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Удалённый рабочий стол';
 
   @override
   String get askAiAgentWelcome => 'Что сделаем на этом сервере?';
@@ -2676,6 +2676,36 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get transportOff => 'выключено';
+
+  @override
+  String get thisDevice => 'Это устройство';
+
+  @override
+  String get localServerTip =>
+      'Считывает данные этого устройства напрямую, запуская здесь скрипт состояния. SSH и Monitor HTTP не используются, их настройки сохраняются.';
+
+  @override
+  String get localServerUnsupported =>
+      'На этой платформе нельзя читать это устройство как сервер. Поддерживаются Linux, Windows и DMG-сборка для macOS.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Открывает рабочий стол RDP или VNC сервера прямо в приложении. Подключение идёт через SSH-соединение сервера или его агент Monitor, поэтому порт рабочего стола не нужно открывать в сеть.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Сохраняйте профиль для каждого рабочего стола через кнопку «Удалённый рабочий стол» на сервере или на вкладке «Удалённый рабочий стол».';
+
+  @override
+  String get localServerIntro =>
+      'Добавляет устройство, на котором работает ServerBox, как сервер. Состояние, процессы, службы, контейнеры, терминал и файлы работают без SSH и агента Monitor.';
+
+  @override
+  String get localServerAdd => 'Добавить это устройство';
+
+  @override
+  String get localServerIntroFooter =>
+      'Это можно включить и позже на странице редактирования сервера, в разделе «Подключение».';
 
   @override
   String get transportSectionOff =>

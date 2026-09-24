@@ -149,7 +149,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiNoResponse => '応答なし';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'リモートデスクトップ';
 
   @override
   String get askAiAgentWelcome => 'このサーバーで何をしますか？';
@@ -2508,6 +2508,35 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get transportOff => '無効';
+
+  @override
+  String get thisDevice => 'このデバイス';
+
+  @override
+  String get localServerTip =>
+      'ステータススクリプトをこのデバイス上で実行して直接読み取ります。SSH と Monitor HTTP は使用せず、その設定は保持されます。';
+
+  @override
+  String get localServerUnsupported =>
+      'このプラットフォームでは、このデバイスをサーバーとして読み取れません。Linux、Windows、macOS の DMG 版が対応しています。';
+
+  @override
+  String get remoteDesktopIntro =>
+      'サーバーの RDP または VNC デスクトップをアプリ内で開きます。接続はサーバーの SSH 接続または Monitor エージェントを経由するため、デスクトップのポートをネットワークに公開する必要はありません。';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'サーバーの「リモートデスクトップ」ボタン、または「リモートデスクトップ」タブから、デスクトップごとにプロファイルを保存します。';
+
+  @override
+  String get localServerIntro =>
+      'ServerBox を実行しているデバイスをサーバーとして追加します。ステータス、プロセス、サービス、コンテナ、ターミナル、ファイルは SSH や Monitor エージェントなしで使えます。';
+
+  @override
+  String get localServerAdd => 'このデバイスを追加';
+
+  @override
+  String get localServerIntroFooter => '後からサーバーの編集ページの「接続」でも有効にできます。';
 
   @override
   String get transportSectionOff => '無効です。再び有効にするときのために、以下の項目はそのまま保持されます。';

@@ -92,6 +92,15 @@ void main() {
         throwsA(isA<SqliteException>()),
       );
     });
+
+    test('this device needs neither', () {
+      expect(
+        () => db.execute(
+          "INSERT INTO server (id, name, is_local) VALUES ('me', 'me', 1);",
+        ),
+        returnsNormally,
+      );
+    });
   });
 
   test('deleting a server takes everything hanging off it', () {

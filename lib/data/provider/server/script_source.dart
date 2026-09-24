@@ -6,16 +6,16 @@ import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 /// Reads status from the `SrvBoxSep`-delimited output of the generated status
-/// script, run over SSH.
+/// script, wherever it ran — over SSH, or as a process on this device.
 ///
-/// Only the *reading* half lives here. Establishing the SSH connection stays
-/// with `ServerNotifier`, because the same client also backs the terminal,
+/// Only the *reading* half lives here. Running the script stays with
+/// `ServerNotifier`, because over SSH the same client also backs the terminal,
 /// SFTP and port forwarding — capabilities this interface deliberately does
 /// not describe. [runScript] is that boundary: the notifier supplies a way to
 /// execute the status script, this class owns turning its output into a
 /// [ServerStatus].
-class SshDataSource implements ServerDataSource {
-  SshDataSource({required this.spi, required this.runScript});
+class ScriptDataSource implements ServerDataSource {
+  ScriptDataSource({required this.spi, required this.runScript});
 
   final Spi spi;
 
@@ -47,7 +47,7 @@ class SshDataSource implements ServerDataSource {
     return status;
   }
 
-  /// SSH exposes no stored history — the app's own buffer is the only place
+  /// A script keeps no stored history — the app's own buffer is the only place
   /// these samples ever exist
   @override
   Future<List<StatusHistorySample>> fetchHistory({
@@ -57,7 +57,7 @@ class SshDataSource implements ServerDataSource {
     DateTime? to,
   }) async => const [];
 
-  /// The SSH client is owned by `ServerNotifier`, which closes it
+  /// Whatever ran the script is owned by `ServerNotifier`, which closes it
   @override
   void close() {}
 }

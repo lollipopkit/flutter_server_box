@@ -154,7 +154,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiNoResponse => 'Відповідь відсутня';
 
   @override
-  String get remoteDesktop => 'Remote desktop';
+  String get remoteDesktop => 'Віддалений робочий стіл';
 
   @override
   String get askAiAgentWelcome => 'Що зробимо на цьому сервері?';
@@ -2671,6 +2671,36 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get transportOff => 'вимкнено';
+
+  @override
+  String get thisDevice => 'Цей пристрій';
+
+  @override
+  String get localServerTip =>
+      'Зчитує цей пристрій напряму, запускаючи тут скрипт стану. SSH і Monitor HTTP не використовуються, їхні налаштування зберігаються.';
+
+  @override
+  String get localServerUnsupported =>
+      'На цій платформі не можна читати цей пристрій як сервер. Підтримуються Linux, Windows і DMG-збірка для macOS.';
+
+  @override
+  String get remoteDesktopIntro =>
+      'Відкриває робочий стіл RDP або VNC сервера просто в застосунку. З\'єднання йде через SSH-з\'єднання сервера або його агент Monitor, тому порт робочого столу не потрібно відкривати в мережу.';
+
+  @override
+  String get remoteDesktopIntroProfiles =>
+      'Зберігайте профіль для кожного робочого столу через кнопку «Віддалений робочий стіл» на сервері або на вкладці «Віддалений робочий стіл».';
+
+  @override
+  String get localServerIntro =>
+      'Додає пристрій, на якому працює ServerBox, як сервер. Стан, процеси, служби, контейнери, термінал і файли працюють без SSH і агента Monitor.';
+
+  @override
+  String get localServerAdd => 'Додати цей пристрій';
+
+  @override
+  String get localServerIntroFooter =>
+      'Це можна ввімкнути й пізніше на сторінці редагування сервера, у розділі «З\'єднання».';
 
   @override
   String get transportSectionOff =>

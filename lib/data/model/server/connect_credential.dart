@@ -40,6 +40,8 @@ sealed class ServerConnectCredential {
         return monitor == null
             ? null
             : ServerConnectCredentialMonitorHttp(spi: spi, monitor: monitor);
+      case ServerTransport.local:
+        return spi.local ? ServerConnectCredentialLocal(spi: spi) : null;
     }
   }
 }
@@ -59,4 +61,12 @@ final class ServerConnectCredentialMonitorHttp extends ServerConnectCredential {
     required this.spi,
     required this.monitor,
   });
+}
+
+/// This device — see `Spi.local`. Nothing to dial and nothing to log in with,
+/// which is why it carries the [Spi] and nothing else.
+final class ServerConnectCredentialLocal extends ServerConnectCredential {
+  final Spi spi;
+
+  const ServerConnectCredentialLocal({required this.spi});
 }
