@@ -1,4 +1,7 @@
-# ServerBox theme packages
+---
+title: Theme Packages
+description: Author, install and publish a theme package
+---
 
 `.fsbt` is a ZIP archive. Its root contains `manifest.toml` (UTF-8 TOML),
 optional `background.png` / `background.jpg` / `background.jpeg`, optional
@@ -7,7 +10,8 @@ Format version 1 contains UI colors, in-app icons, a background, component
 radii, and a splash screen. Launcher icons and fonts are managed separately and
 are not accepted in a theme package.
 
-An editable example is available at [Aurora](examples/aurora/manifest.toml).
+An editable example is available at
+[Aurora](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/examples/aurora/manifest.toml).
 On desktop, select **Install theme → Folder** to import its directory during development.
 This copies the validated files into the app; select the folder again after
 editing it. For distribution, ZIP the directory contents so `manifest.toml`
@@ -123,7 +127,7 @@ https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schem
 
 A TOML editor that reads the Taplo schema directive — Taplo, Even Better TOML
 for VS Code, Tombi — attaches it from the first line of the file, which is what
-[the example](examples/aurora/manifest.toml) does:
+[the example](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/examples/aurora/manifest.toml) does:
 
 ```toml
 #:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json

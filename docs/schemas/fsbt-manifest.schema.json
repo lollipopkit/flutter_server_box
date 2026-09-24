@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json",
   "title": "ServerBox theme package manifest",
-  "description": "manifest.toml at the root of a .fsbt archive. The installer refuses an unknown table, an unknown field, and a value out of range rather than replacing it with a default, so this schema is as strict as the installer: it is meant to name a mistake while you type instead of after an install. See docs/theme-packages.md.\n\nOne rule cannot be written here: a color under icons.colors whose key has no entry under icons.images is refused, because a cross-table check is not something a JSON Schema expresses. Every table is optional; the four required keys are the ones no default exists for.",
+  "description": "manifest.toml at the root of a .fsbt archive. The installer refuses an unknown table, an unknown field, and a value out of range rather than replacing it with a default, so this schema is as strict as the installer: it is meant to name a mistake while you type instead of after an install. See https://serverbox.lollipopkit.com/docs/advanced/theme-packages/\n\nOne rule cannot be written here: a color under icons.colors whose key has no entry under icons.images is refused, because a cross-table check is not something a JSON Schema expresses. Every table is optional; the four required keys are the ones no default exists for.",
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "name", "modes", "schema"],
@@ -32,7 +32,7 @@
       "items": { "enum": ["light", "dark"] }
     },
     "schema": {
-      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused. See \"Schema versions\" in docs/theme-packages.md.",
+      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused. See \"Schema versions\" in https://serverbox.lollipopkit.com/docs/advanced/theme-packages/",
       "type": "object",
       "additionalProperties": false,
       "required": ["min", "max"],
