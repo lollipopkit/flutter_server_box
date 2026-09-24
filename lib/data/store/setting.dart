@@ -11,6 +11,7 @@ import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
+import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/data/res/url.dart';
@@ -167,12 +168,20 @@ class SettingStore extends SqliteStore {
   /// drawn in, and a row has only so much width.
   late final trayMetrics = listProperty<String>(
     'trayMetrics',
-    defaultValue: const ['cpu', 'mem'],
+    defaultValue: [TrayMetric.cpu.name, TrayMetric.mem.name],
   );
 
-  /// Which series the row's chart draws, by [TrayMetric.name]. Empty draws
-  /// none.
-  late final trayChart = propertyDefault('trayChart', 'cpu');
+  /// Which series the row's chart draws, by [TrayMetric.name]. The empty name
+  /// draws none.
+  ///
+  /// Stored as a name rather than as the enum, and this is the one setting here
+  /// that is: the value it holds has one more member than [TrayMetric] does.
+  /// `propertyDefault` takes a non-nullable element type, so "draws nothing"
+  /// has nowhere to live in one and is spelled as the absent name.
+  /// [TrayMetric.byName] reads the setting back, answering null for that name
+  /// and for one this build does not know alike — both draw nothing, which is
+  /// the same answer either way.
+  late final trayChart = propertyDefault('trayChart', TrayMetric.cpu.name);
 
   /// One line per server instead of two, and no chart.
   ///
