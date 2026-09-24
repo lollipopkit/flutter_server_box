@@ -2338,7 +2338,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return '아래 값은 모두 $time 기준입니다($ago).';
   }
 
@@ -2450,7 +2450,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total개 중 $wrong개';
   }
 
@@ -2667,7 +2667,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '작업 $total개 · $enabled개 활성화';
   }
 

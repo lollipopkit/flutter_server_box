@@ -2280,7 +2280,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return '以下全部是 $time 的数据，$ago。';
   }
 
@@ -2392,7 +2392,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total 个设备中的 $wrong 个';
   }
 
@@ -2608,7 +2608,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskCommentedOut => '已注释';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total 个任务 · $enabled 个已启用';
   }
 
@@ -5333,7 +5333,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return '以下全部是 $time 的資料，$ago。';
   }
 
@@ -5445,7 +5445,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total 個裝置中的 $wrong 個';
   }
 
@@ -5661,7 +5661,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskCommentedOut => '已註解';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total 個工作 · 已啟用 $enabled 個';
   }
 

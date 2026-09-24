@@ -2488,7 +2488,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return 'Усе нижче — станом на $time ($ago).';
   }
 
@@ -2601,7 +2601,7 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$wrong із $total пристроїв';
   }
 
@@ -2829,7 +2829,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return 'Усього: $total · увімкнено: $enabled';
   }
 

@@ -2471,7 +2471,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return 'Semua di bawah ini berasal dari $time, $ago.';
   }
 
@@ -2584,7 +2584,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$wrong dari $total perangkat';
   }
 
@@ -2811,7 +2811,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total tugas · $enabled aktif';
   }
 

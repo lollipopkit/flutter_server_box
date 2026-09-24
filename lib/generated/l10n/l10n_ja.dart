@@ -2329,7 +2329,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return '以下はすべて $time 時点（$ago）の値です。';
   }
 
@@ -2441,7 +2441,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total 台中 $wrong 台';
   }
 
@@ -2658,7 +2658,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'コメントアウト済み';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total 件のタスク · $enabled 件が有効';
   }
 

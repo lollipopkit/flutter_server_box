@@ -2504,7 +2504,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String staleSinceFmt(String time, String ago) {
+  String staleSinceFmt(String ago, String time) {
     return 'Tout ce qui suit date de $time, $ago.';
   }
 
@@ -2623,7 +2623,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(int wrong, int total) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$wrong périphériques sur $total';
   }
 
@@ -2851,7 +2851,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(int total, int enabled) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     String _temp0 = intl.Intl.pluralLogic(
       total,
       locale: localeName,

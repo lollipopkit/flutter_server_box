@@ -3162,10 +3162,10 @@
   "@staleSinceFmt": {
     "description": "Formatted user-facing message for stale since; runtime values are supplied by placeholders.",
     "placeholders": {
-      "time": {
+      "ago": {
         "type": "String"
       },
-      "ago": {
+      "time": {
         "type": "String"
       }
     }
@@ -3358,10 +3358,10 @@
   "@diskWrongOfFmt": {
     "description": "Formatted user-facing message for disk wrong of; runtime values are supplied by placeholders.",
     "placeholders": {
-      "wrong": {
+      "total": {
         "type": "int"
       },
-      "total": {
+      "wrong": {
         "type": "int"
       }
     }
@@ -3667,10 +3667,10 @@
   "@scheduledTaskSummaryFmt": {
     "description": "Formatted user-facing message for scheduled task summary; runtime values are supplied by placeholders.",
     "placeholders": {
-      "total": {
+      "enabled": {
         "type": "int"
       },
-      "enabled": {
+      "total": {
         "type": "int"
       }
     }

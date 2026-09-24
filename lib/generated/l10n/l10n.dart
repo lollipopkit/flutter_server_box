@@ -4298,7 +4298,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Everything below is from {time}, {ago}.'**
-  String staleSinceFmt(String time, String ago);
+  String staleSinceFmt(String ago, String time);
 
   /// Formatted user-facing message for no data before; runtime values are supplied by placeholders.
   ///
@@ -4478,7 +4478,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{wrong} of {total} devices'**
-  String diskWrongOfFmt(int wrong, int total);
+  String diskWrongOfFmt(int total, int wrong);
 
   /// Help text for the disk smart sorted setting or action.
   ///
@@ -4850,7 +4850,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{total} tasks · {enabled} enabled'**
-  String scheduledTaskSummaryFmt(int total, int enabled);
+  String scheduledTaskSummaryFmt(int enabled, int total);
 
   /// Hint shown in the scheduled task filter field or section.
   ///
