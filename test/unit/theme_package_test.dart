@@ -95,6 +95,58 @@ void main() {
     }
   });
 
+  test('a theme is found by its installation id, not by the id it declares',
+      () async {
+    final root = await Directory.systemTemp.createTemp('fsbt-id-');
+    try {
+      final installed = await ThemePackages.install(
+        bundle(package()),
+        rootDirectory: root.path,
+      );
+      expect(installed.id, 'example.amethyst');
+
+      // Two names for two things: the declared id identifies the theme across
+      // versions and releases, the digest identifies these bytes. Handing the
+      // first to a lookup that takes the second answers null without saying so,
+      // which reads as "not installed" — a preset row showing invalid, or a
+      // selection reset to the default.
+      expect(installed.installationId, isNot(installed.id));
+      expect(
+        ThemePackages.installed(
+          installed.id,
+          rootDirectory: root.path,
+        ),
+        isNull,
+        reason: 'the declared id is not a digest',
+      );
+      expect(
+        ThemePackages.installed(
+          installed.installationId,
+          rootDirectory: root.path,
+        )?.name,
+        'Amethyst',
+      );
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
+  test('a preset and an installation id are one conversion in one place', () {
+    const installationId =
+        'a3f1c07d5b2e8469a1c3f07d5b2e8469a1c3f07d5b2e8469a1c3f07d5b2e8469';
+
+    expect(ThemePackages.presetOf(installationId), 'package:$installationId');
+    expect(
+      ThemePackages.installationIdOf(ThemePackages.presetOf(installationId)),
+      installationId,
+    );
+
+    // Everything else a preset can be: a builtin, the custom one, or nothing.
+    expect(ThemePackages.installationIdOf('default'), isNull);
+    expect(ThemePackages.installationIdOf('custom'), isNull);
+    expect(ThemePackages.installationIdOf(''), isNull);
+  });
+
   test(
     'TOML themes need only identity, modes and schema; overrides preserve defaults',
     () async {

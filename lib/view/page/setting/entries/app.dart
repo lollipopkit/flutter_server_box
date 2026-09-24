@@ -77,9 +77,9 @@ extension _App on _AppSettingsPageState {
         trailing: _setting.appThemePreset.listenable().listenVal(
           (preset) => Text(
             BuiltinTheme.fromId(preset)?.label ??
-                switch (preset) {
-                  final String value when value.startsWith('package:') =>
-                    ThemePackages.installed(value.substring(8))?.name ??
+                switch (ThemePackages.installationIdOf(preset)) {
+                  final installationId? =>
+                    ThemePackages.installed(installationId)?.name ??
                         libL10n.invalid,
                   _ => libL10n.custom,
                 },
@@ -97,11 +97,14 @@ extension _App on _AppSettingsPageState {
                   ? null
                   : value == 'custom'
                   ? _readCustomTheme()
-                  : value.startsWith('package:')
-                  ? ThemePackages.installed(value.substring(8))
-                  : await ThemePackages.loadBuiltin(
-                      BuiltinTheme.fromId(value)!,
-                    );
+                  : switch (ThemePackages.installationIdOf(value)) {
+                      final installationId? => ThemePackages.installed(
+                        installationId,
+                      ),
+                      _ => await ThemePackages.loadBuiltin(
+                        BuiltinTheme.fromId(value)!,
+                      ),
+                    };
               if (open && current == request) {
                 ThemePackages.preview.value = theme;
               }
@@ -148,8 +151,9 @@ extension _App on _AppSettingsPageState {
             }
             return;
           }
-          if (preset.startsWith('package:')) {
-            final package = ThemePackages.installed(preset.substring(8));
+          if (ThemePackages.installationIdOf(preset)
+              case final installationId?) {
+            final package = ThemePackages.installed(installationId);
             if (package == null) {
               Toast.error(l10n.appearanceInvalidTheme);
               return;

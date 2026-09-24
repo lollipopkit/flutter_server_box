@@ -760,9 +760,34 @@ abstract final class ThemePackages {
     }
   }
 
-  static ThemePackage? installed(String id, {String? rootDirectory}) {
-    if (!_digestPattern.hasMatch(id)) return null;
-    final directory = (rootDirectory ?? root).joinPath(id);
+  /// The preset value that selects one installed theme.
+  static String presetOf(String installationId) =>
+      '$_packagePrefix$installationId';
+
+  /// The installation id a preset names, or null when it names something else —
+  /// a builtin theme, or the custom one.
+  ///
+  /// The one place the prefix is known. Written out at each call site instead,
+  /// a length that stops matching the prefix turns into a preset that names no
+  /// install, which reads as "not installed": the user's theme is reset rather
+  /// than reported.
+  static String? installationIdOf(String preset) =>
+      preset.startsWith(_packagePrefix)
+      ? preset.substring(_packagePrefix.length)
+      : null;
+
+  static const _packagePrefix = 'package:';
+
+  /// One installed theme by **installation id** — the digest of the package
+  /// bytes, which is also its directory name.
+  ///
+  /// Not the `id` its manifest declares: that names the theme across versions
+  /// and releases, and it is not the digest this looks up, so passing one here
+  /// answers null without saying why. [ThemePackage.installationId] is the one
+  /// to hand over; see [ThemePackage.id] for the other.
+  static ThemePackage? installed(String installationId, {String? rootDirectory}) {
+    if (!_digestPattern.hasMatch(installationId)) return null;
+    final directory = (rootDirectory ?? root).joinPath(installationId);
     try {
       final file = File(directory.joinPath('manifest.toml'));
       if (!file.existsSync() || file.lengthSync() > _maxManifestBytes) {
@@ -818,7 +843,7 @@ abstract final class ThemePackages {
         splash: splash,
       );
       final package = ThemePackage(
-        installationId: id,
+        installationId: installationId,
         id: themeId,
         name: _label(data['name'], 'name'),
         schemaMin: schemaMin,
@@ -861,8 +886,10 @@ abstract final class ThemePackages {
     final themes = <ThemePackage>[];
     for (final entry in directory.listSync(followLinks: false)) {
       if (entry is! Directory) continue;
-      final id = entry.uri.pathSegments.where((part) => part.isNotEmpty).last;
-      final theme = installed(id, rootDirectory: directory.path);
+      final installationId = entry.uri.pathSegments
+          .where((part) => part.isNotEmpty)
+          .last;
+      final theme = installed(installationId, rootDirectory: directory.path);
       if (theme != null) themes.add(theme);
     }
     themes.sort((a, b) => a.name.compareTo(b.name));
@@ -871,7 +898,7 @@ abstract final class ThemePackages {
 
   static Map<String, String> installedPresetNames({String? rootDirectory}) => {
     for (final theme in listInstalled(rootDirectory: rootDirectory))
-      'package:${theme.installationId}': theme.name,
+      presetOf(theme.installationId): theme.name,
   };
 
   /// Deletes one installed theme, answering whether it was there.
@@ -918,10 +945,10 @@ abstract final class ThemePackages {
     if (preview.value case final theme?) return theme;
     final preset = BuiltinTheme.fromId(Stores.setting.appThemePreset.fetch());
     if (preset != null) return _builtinLoader.loaded(preset);
-    final id = Stores.setting.appThemePackage.fetch();
-    if (_activeId != id) {
-      _activeId = id;
-      _active = installed(id);
+    final installationId = Stores.setting.appThemePackage.fetch();
+    if (_activeId != installationId) {
+      _activeId = installationId;
+      _active = installed(installationId);
     }
     return _active;
   }
@@ -947,9 +974,7 @@ abstract final class ThemePackages {
     settings.colorSeed.put(theme.seed);
     settings.useSystemPrimaryColor.put(theme.systemColor);
     settings.appIconStyle.put(theme.iconStyle);
-    settings.appThemePackage.put(
-      preset.startsWith('package:') ? theme.installationId : '',
-    );
+    settings.appThemePackage.put(installationIdOf(preset) ?? '');
     settings.appThemePaletteEnabled.put(true);
     settings.appBackgroundStyle.put(theme.backgroundStyle);
     settings.appBackgroundPath.put(theme.backgroundPath ?? '');
@@ -969,7 +994,7 @@ abstract final class ThemePackages {
   /// so the snapshot has to come first.
   static void apply(ThemePackage theme, {String? preset}) {
     if (Stores.setting.appThemePreset.fetch() == 'custom') saveCustomTheme();
-    select(theme, preset: preset ?? 'package:${theme.installationId}');
+    select(theme, preset: preset ?? presetOf(theme.installationId));
   }
 
   /// Writes the settings a custom theme is made of.
@@ -997,8 +1022,8 @@ abstract final class ThemePackages {
 
   static void reconcileSelection() {
     final preset = Stores.setting.appThemePreset.fetch();
-    if (preset.startsWith('package:') &&
-        installed(preset.substring(8)) == null) {
+    if (installationIdOf(preset) case final installationId?
+        when installed(installationId) == null) {
       // TODO(appearance): package assets can be restored with backups later.
       _selectDefaultFallback();
     }
