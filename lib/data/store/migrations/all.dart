@@ -23,6 +23,7 @@ import 'package:server_box/data/store/migrations/m025_transport_switches.dart';
 import 'package:server_box/data/store/migrations/m026_ssh_legacy_algorithms.dart';
 import 'package:server_box/data/store/migrations/m027_drop_ssh_server_history.dart';
 import 'package:server_box/data/store/migrations/m028_local_server.dart';
+import 'package:server_box/data/store/migrations/m029_drop_theme_store_url.dart';
 import 'package:server_box/data/store/schema.dart';
 
 /// Every migration, ordered, in the one place that names them.
@@ -68,4 +69,5 @@ const kSchemaMigrations = <SchemaMigration>[
   SshLegacyAlgorithmsMigration(),
   DropSshServerHistoryMigration(),
   LocalServerMigration(),
+  DropThemeStoreUrlMigration(),
 ];

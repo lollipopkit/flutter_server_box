@@ -8,6 +8,7 @@
   "appearanceInvalidTheme": "Недійсний пакет теми або каталог",
   "themeStoreRefreshFailed": "Не вдалося прочитати каталог тем.",
   "themeStoreDeleteTheme": "Видалити «{name}»? Його файли буде видалено з цього пристрою. Якщо це тема, що використовується, застосунок повернеться до типової теми.",
+  "themeStoreUpdatedFmt": "оновлено {ago}",
   "appearanceThemeNeedsNewerApp": "Потрібна новіша версія застосунку: {version}",
   "appearanceFontFamilies": "Сімейства шрифтів інтерфейсу",
   "appearanceFontFamiliesTip": "Одна назва в рядку; шрифти застосовуються за порядком.",

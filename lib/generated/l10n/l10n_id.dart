@@ -35,6 +35,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String themeStoreUpdatedFmt(String ago) {
+    return 'diperbarui $ago';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Memerlukan aplikasi versi lebih baru: $version';
   }

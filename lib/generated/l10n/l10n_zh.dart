@@ -35,6 +35,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago更新于';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '需要更新版本的 App：$version';
   }
@@ -3092,6 +3097,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String themeStoreDeleteTheme(String name) {
     return '刪除「$name」？其檔案將從本機移除。如果它正在使用中，應用程式將回到預設主題。';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago更新於';
   }
 
   @override

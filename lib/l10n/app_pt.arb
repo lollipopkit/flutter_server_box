@@ -8,6 +8,7 @@
   "appearanceInvalidTheme": "Pacote de tema ou catálogo inválido",
   "themeStoreRefreshFailed": "Não foi possível ler o catálogo de temas.",
   "themeStoreDeleteTheme": "Excluir «{name}»? Seus arquivos são removidos deste dispositivo. Se for o tema em uso, o app volta ao tema padrão.",
+  "themeStoreUpdatedFmt": "atualizado {ago}",
   "appearanceThemeNeedsNewerApp": "É necessário usar uma versão mais recente do app: {version}",
   "appearanceFontFamilies": "Famílias de fontes da interface",
   "appearanceFontFamiliesTip": "Um nome por linha; as fontes são testadas pela ordem.",

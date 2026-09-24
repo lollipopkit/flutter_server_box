@@ -37,6 +37,15 @@
       }
     }
   },
+  "themeStoreUpdatedFmt": "updated {ago}",
+  "@themeStoreUpdatedFmt": {
+    "description": "How long ago the catalog on screen was read, under the repository names. {ago} is a phrase such as \"5 minutes ago\".",
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
   "appearanceThemeNeedsNewerApp": "Needs a newer app: {version}",
   "@appearanceThemeNeedsNewerApp": {
     "description": "Shown when a selected theme requires a newer app version. {version} is the required version.",

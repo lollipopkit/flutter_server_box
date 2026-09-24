@@ -35,6 +35,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago 업데이트';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '최신 버전의 앱이 필요합니다: $version';
   }

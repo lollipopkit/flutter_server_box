@@ -69,12 +69,6 @@ class SettingStore extends SqliteStore {
     true,
   );
 
-  // TODO(migration): drop the stored `themeStoreUrl` row. The catalog is
-  // `Urls.themeCatalog` and is not editable, so an install that repointed it
-  // holds a value nothing reads and no row can change.
-
-
-
   /// The theme store's last answer, as the JSON it was read from.
   ///
   /// Held so a page can open on the themes it showed last time instead of on a

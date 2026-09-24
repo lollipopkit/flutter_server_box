@@ -173,6 +173,12 @@ abstract class AppLocalizations {
   /// **'Delete “{name}”? Its files are removed from this device. If it is the theme in use, the app returns to the default theme.'**
   String themeStoreDeleteTheme(String name);
 
+  /// How long ago the catalog on screen was read, under the repository names. {ago} is a phrase such as "5 minutes ago".
+  ///
+  /// In en, this message translates to:
+  /// **'updated {ago}'**
+  String themeStoreUpdatedFmt(String ago);
+
   /// Shown when a selected theme requires a newer app version. {version} is the required version.
   ///
   /// In en, this message translates to:

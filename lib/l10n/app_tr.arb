@@ -8,6 +8,7 @@
   "appearanceInvalidTheme": "Geçersiz tema paketi veya katalog",
   "themeStoreRefreshFailed": "Tema kataloğu okunamadı.",
   "themeStoreDeleteTheme": "“{name}” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.",
+  "themeStoreUpdatedFmt": "{ago} güncellendi",
   "appearanceThemeNeedsNewerApp": "Daha yeni bir uygulama sürümü gerekiyor: {version}",
   "appearanceFontFamilies": "Arayüz yazı tipi aileleri",
   "appearanceFontFamiliesTip": "Her satıra bir ad yazın; yazı tipleri sırayla denenir.",

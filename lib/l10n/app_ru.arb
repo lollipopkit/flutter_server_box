@@ -8,6 +8,7 @@
   "appearanceInvalidTheme": "Недопустимый пакет темы или каталог",
   "themeStoreRefreshFailed": "Не удалось прочитать каталог тем.",
   "themeStoreDeleteTheme": "Удалить «{name}»? Его файлы будут удалены с этого устройства. Если это используемая тема, приложение вернётся к теме по умолчанию.",
+  "themeStoreUpdatedFmt": "обновлено {ago}",
   "appearanceThemeNeedsNewerApp": "Требуется более новая версия приложения: {version}",
   "appearanceFontFamilies": "Семейства шрифтов интерфейса",
   "appearanceFontFamiliesTip": "Одно название в строке; шрифты применяются по порядку.",

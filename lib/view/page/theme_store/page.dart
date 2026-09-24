@@ -209,7 +209,7 @@ extension on _ThemeStorePageState {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  _failure ?? l10n.readAgoFmt(fetchedAt.toAgoStr()),
+                  _failure ?? l10n.themeStoreUpdatedFmt(fetchedAt.toAgoStr()),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,

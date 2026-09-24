@@ -8,6 +8,7 @@
   "appearanceInvalidTheme": "主題套件或目錄無效",
   "themeStoreRefreshFailed": "無法讀取主題目錄。",
   "themeStoreDeleteTheme": "刪除「{name}」？其檔案將從本機移除。如果它正在使用中，應用程式將回到預設主題。",
+  "themeStoreUpdatedFmt": "{ago}更新於",
   "appearanceThemeNeedsNewerApp": "需要較新版本的 App：{version}",
   "appearanceFontFamilies": "介面字型列表",
   "appearanceFontFamiliesTip": "每行一個字型名稱，依序 fallback。",

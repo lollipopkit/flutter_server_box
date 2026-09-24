@@ -35,6 +35,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$agoに更新';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '新しいバージョンのアプリが必要です: $version';
   }

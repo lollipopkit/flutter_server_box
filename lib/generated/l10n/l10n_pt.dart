@@ -36,6 +36,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String themeStoreUpdatedFmt(String ago) {
+    return 'atualizado $ago';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'É necessário usar uma versão mais recente do app: $version';
   }
