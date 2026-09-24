@@ -636,6 +636,11 @@ void main() {
     );
 
     /// Puts the pointer on the rail, if [hover], and lets it arrive.
+    ///
+    /// That is, [settle] holds the 400ms that leaves the opening over and done
+    /// with, which is what a test reading a settled rail wants. A test reading
+    /// the movement has to turn it off: the frames after it are frames of a
+    /// rail that has already arrived, whatever they are named.
     Future<void> pointerOnRail(
       WidgetTester tester, {
       required bool hover,
@@ -643,6 +648,7 @@ void main() {
       Color? rail,
       double? elevation,
       Color? shadow,
+      bool settle = true,
     }) async {
       await tester.pumpWidget(
         railOn(scaffold, rail: rail, elevation: elevation, shadow: shadow),
@@ -655,7 +661,7 @@ void main() {
         pointer.hover(tester.getCenter(find.byType(AppNavRail))),
       );
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
+      if (settle) await tester.pump(const Duration(milliseconds: 400));
     }
 
     /// The colour the rail's own `Material` is painted with.
@@ -831,8 +837,17 @@ void main() {
       // leave — which is the state that does not follow the pointer, and the
       // switch at the end of it. Nothing here is animated but by the value the
       // rail is read off, so what it asks for is what has to be painted.
+      //
+      // Read from the frame the pointer arrives rather than from a rail that
+      // has finished opening: what trails is the movement, and a settled rail
+      // would answer the same whether either half of this were animated.
       for (final scaffold in [const Color(0xFF123456), Colors.transparent]) {
-        await pointerOnRail(tester, hover: true, scaffold: scaffold);
+        await pointerOnRail(
+          tester,
+          hover: true,
+          scaffold: scaffold,
+          settle: false,
+        );
         for (var i = 0; i < 40; i++) {
           expectPaintedMatchesAsked(tester, '$scaffold, open, frame $i');
           await tester.pump(const Duration(milliseconds: 8));
