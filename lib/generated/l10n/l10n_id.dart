@@ -3152,7 +3152,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'Clipboard VNC hanya mendukung teks Latin-1.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Tema ini hanya mendukung $mode. Pilih tema lain untuk mengubah mode.';
   }
 }

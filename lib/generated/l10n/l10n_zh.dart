@@ -2936,7 +2936,8 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪贴板仅支持 Latin-1 文本。';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return '此主题仅支持$mode。如需切换模式，请选择其他主题。';
   }
 }
@@ -5871,7 +5872,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪貼簿僅支援 Latin-1 文字。';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return '此主題僅支援$mode。如需切換模式，請選擇其他主題。';
   }
 }

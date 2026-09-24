@@ -3183,7 +3183,8 @@ class AppLocalizationsPt extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'A área de transferência VNC só aceita texto Latin-1.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Este tema só suporta $mode. Selecione outro tema para alterar o modo.';
   }
 }

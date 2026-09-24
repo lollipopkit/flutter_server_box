@@ -3191,7 +3191,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'Die VNC-Zwischenablage unterstützt nur Latin-1-Text.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Dieses Theme unterstützt nur $mode. Wähle ein anderes Theme, um den Modus zu ändern.';
   }
 }

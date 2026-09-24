@@ -3211,7 +3211,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'Le presse-papiers VNC ne prend en charge que le texte Latin-1.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Ce thème prend uniquement en charge le mode $mode. Choisissez un autre thème pour changer de mode.';
   }
 }

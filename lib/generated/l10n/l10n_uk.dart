@@ -3174,7 +3174,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Ця тема підтримує лише режим «$mode». Щоб змінити режим, виберіть іншу тему.';
   }
 }

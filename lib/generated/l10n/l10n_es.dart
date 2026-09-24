@@ -3204,7 +3204,8 @@ class AppLocalizationsEs extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'El portapapeles VNC solo admite texto Latin-1.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Este tema solo admite $mode. Selecciona otro tema para cambiar de modo.';
   }
 }

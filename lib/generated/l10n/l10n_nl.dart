@@ -3182,7 +3182,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'Het VNC-klembord ondersteunt alleen Latin-1-tekst.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Dit thema ondersteunt alleen $mode. Kies een ander thema om de modus te wijzigen.';
   }
 }

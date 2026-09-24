@@ -3149,7 +3149,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC panosu yalnızca Latin-1 metnini destekler.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
   }
 }

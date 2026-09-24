@@ -5458,7 +5458,7 @@ abstract class AppLocalizations {
   /// **'VNC clipboard supports Latin-1 text only.'**
   String get remoteDesktopVncClipboardLatin1Only;
 
-/// No description provided for @appearanceThemeModeLocked.
+  /// No description provided for @appearanceThemeModeLocked.
   ///
   /// In en, this message translates to:
   /// **'This theme only supports {mode}. Select another theme to change the mode.'**

@@ -3168,7 +3168,8 @@ class AppLocalizationsAz extends AppLocalizations {
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC mübadilə buferi yalnız Latin-1 mətnini dəstəkləyir.';
 
-String appearanceThemeModeLocked(String mode) {
+  @override
+  String appearanceThemeModeLocked(String mode) {
     return 'Bu mövzu yalnız $mode rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin.';
   }
 }
