@@ -6,6 +6,7 @@
     Gauge,
     MonitorPlay,
     ServerCog,
+    SquareTerminal,
     Sparkles,
     Users,
     type LucideIcon,
@@ -38,6 +39,7 @@
     users: { label: () => $LL.users(), icon: Users },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
     desktop: { label: () => $LL.desktop(), icon: MonitorPlay },
+    snippets: { label: () => $LL.snippets(), icon: SquareTerminal },
     // The product's own word for this feature, not a translated one: the app
     // names the same tab `Agent` in every language.
     ai: { label: () => $LL.ai(), icon: Sparkles },

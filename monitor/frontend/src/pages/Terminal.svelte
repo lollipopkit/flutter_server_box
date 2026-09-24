@@ -8,7 +8,7 @@
   /// xterm.js is loaded on demand — it is by far the heaviest thing the panel
   /// could ship, and most visits never open a terminal.
 
-  import { onDestroy } from 'svelte'
+  import { onDestroy, untrack } from 'svelte'
   import { Unplug } from '@lucide/svelte'
   import { Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
   import PageHeader from '../components/PageHeader.svelte'
@@ -17,6 +17,8 @@
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { layout } from '../lib/layout.svelte'
   import { servers } from '../lib/servers.svelte'
+  import { snippetRun } from '../lib/snippetRun.svelte'
+  import { runSteps } from '../lib/snippetSteps'
   import { theme } from '../lib/theme.svelte'
   import { TerminalSession, type Credential, type Renderer } from '../lib/terminal.svelte'
 
@@ -214,6 +216,9 @@
 
   onDestroy(() => {
     resizeObserver?.disconnect()
+    // Leaving the terminal abandons a snippet that has not been typed: the Run
+    // press opened this screen for it, so closing the screen is the answer.
+    snippetRun.clear()
     session.dispose()
     term?.dispose()
   })
@@ -275,6 +280,62 @@
     const renderer = await ensureTerminal()
     await session.start(renderer, '', { kind: 'local' })
   }
+
+  /// The snippet the library handed over, and whether the operator has stopped
+  /// it. One object rather than two states: a stop belongs to the run in
+  /// flight, and a separate flag would have to be cleared when the next one
+  /// starts.
+  let typing = $state<{ name: string; stopped: boolean } | null>(null)
+
+  /// What is queued and not yet taken, which is a snippet whose Run press
+  /// landed here before there was a shell to type it into.
+  const queuedName = $derived(snippetRun.waiting?.name ?? '')
+
+  $effect(() => {
+    // `waiting` is read as the trigger, so a Run pressed while a shell is
+    // already up is typed at once rather than at the next phase change.
+    const queued = snippetRun.waiting
+    if (session.phase !== 'running' || !queued || typing) return
+    untrack(() => void typeQueued())
+  })
+
+  /// Types what the library queued.
+  ///
+  /// Taken rather than read, so nothing types it twice: the slot is empty the
+  /// moment this starts, and what a second pass would repeat is a script whose
+  /// commands have already run.
+  ///
+  /// The steps are the agent's — `/snippets/plan` expanded the script, so this
+  /// sends bytes and decides nothing about what they mean.
+  async function typeQueued() {
+    const taken = snippetRun.take()
+    if (!taken) return
+    typing = { name: taken.name, stopped: false }
+    const run = typing
+    try {
+      await runSteps(
+        taken.steps,
+        (text) => session.input(text),
+        undefined,
+        // Both halves of "keep going": the shell this started on is still the
+        // one on screen, and the operator has not stopped it.
+        () => !run.stopped && session.phase === 'running',
+      )
+    } finally {
+      typing = null
+    }
+  }
+
+  /// Drops a queued snippet, or stops the one being typed.
+  ///
+  /// Stopping is between steps, so the keystroke in flight lands and the next
+  /// one does not: a command half typed is a line at the shell's prompt, which
+  /// the next Enter or Ctrl-C clears, while a command cut in the middle of its
+  /// text is one nobody wrote.
+  function stopTyping() {
+    if (typing) typing.stopped = true
+    else snippetRun.clear()
+  }
 </script>
 
 <PageHeader
@@ -301,6 +362,25 @@
 <main
   class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 flex flex-col min-h-[calc(100vh-4rem)]"
 >
+  <!-- What the library queued, and the only thing on this screen that is not
+       the terminal's own: a Run pressed on the snippets page is handed to this
+       page, and without saying so the first keystrokes to arrive unasked would
+       be indistinguishable from a fault. -->
+  {#if typing || queuedName}
+    <Card class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm text-fg">
+        {#if typing}
+          {$LL.snippetTyping({ name: typing.name })}
+        {:else}
+          {$LL.snippetWaiting({ name: queuedName })}
+        {/if}
+      </p>
+      <Button variant="secondary" onclick={stopTyping}>
+        {typing ? $LL.snippetStop() : $LL.snippetDiscard()}
+      </Button>
+    </Card>
+  {/if}
+
   {#if !available}
     <Card>
       <p class="text-sm text-muted-fg">{$LL.terminalUnavailable()}</p>

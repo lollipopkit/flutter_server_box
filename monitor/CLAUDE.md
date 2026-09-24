@@ -358,6 +358,42 @@ the panel password can't switch it on); shared admission checks live in
       is refused beside its own button rather than by a page-wide note. An RDP
       route also needs a user name, which is a property of the route and not of
       the agent.
+- **`GET/PUT /api/v1/snippets`** and **`POST /api/v1/snippets/plan`** — the
+  snippet library saved on this agent: a script the operator wrote once to run
+  again, with `${…}` macros filled in when it runs. It lives here rather than in
+  the panel's `localStorage` because it is a record of what to run *on this
+  machine* — a library in the browser is lost with the browser profile and
+  invisible from a second one. The app keeps its own set over SSH; what the two
+  agree on is `sbm_parser::snippet`, which is also what expands a script, so
+  `${ctrl+c}` means one thing in both clients.
+  - **The library is not the implementation.** `/plan` returns the keystrokes a
+    terminal should be *typed* and types none of them: it takes the script's
+    text rather than a stored id, so an editor can preview a snippet it has not
+    saved, and `context` is what the caller can answer. An omitted key is a
+    value the caller does not have, which is not the same as an empty one — a
+    script asking for it is refused `unanswerable` with the key beside the code
+    rather than run with a hole in it. The panel answers none of them and has
+    nothing to answer with: `${host}` and its five siblings come from a *server*,
+    and the terminal this feeds is a shell on the machine the agent runs on.
+  - **Both the read and the write need only the panel login**, for `desktop`'s
+    reason: a snippet is not a grant. It executes nothing, and it becomes usable
+    only through a terminal, which is a session with credentials of its own. So
+    the response claims no `editable` it would have to keep true. TODO: a
+    "run this on a schedule" would change that answer, the way it would for a
+    desktop route — a schedule runs with nobody watching.
+  - A `PUT` replaces the whole set, because the order is part of what is stored
+    and there is no smaller expression for a move. **A refusal the caller could
+    have avoided is made before anything is stored**, answered 400 with a stable
+    code and the index of the row it is about (`invalidId`, `duplicateId`,
+    `invalidName`, `duplicateName`, `invalidTag`, `duplicateTag`), phrased by the
+    panel in the viewer's language (`lib/snippetRefusal.ts`). The audit row
+    names the snippets and **never a script** (`"Restart nginx, Disk usage"`),
+    since a script is what the user wrote and may hold anything.
+  - `tests/snippet_api.rs`; the expansion's own units are in
+    `sbm_parser::snippet`. The panel runs the steps it answers with
+    (`lib/snippetSteps.ts`, driving `TerminalSession.input`) and hands them to
+    the terminal through `lib/snippetRun.svelte.ts`, because the terminal is
+    per-visit state the library page cannot reach.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",

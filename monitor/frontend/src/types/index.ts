@@ -190,6 +190,14 @@ export interface RemoteAccess {
   /// needs only the panel login; asking it for something is `full_access`, and
   /// the listing says so as `editable` rather than withholding the tab.
   ai?: boolean
+  /// Whether `/api/v1/snippets` answers this agent at all — the library is
+  /// saved here, and both reading it and saving it need only the panel login.
+  ///
+  /// Served, not grantable: a snippet executes nothing. `/snippets/plan`
+  /// returns a description of what a client should type and types none of it,
+  /// and a snippet becomes usable only through a terminal, which is a session
+  /// with credentials of its own. Absent on agents predating the endpoint.
+  snippets?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -1544,3 +1552,65 @@ export type AiStopCode =
   | 'unavailable'
   | 'shape'
   | 'declined'
+
+/// A script the operator saved to run again, with `${…}` macros filled in at
+/// the moment it runs.
+///
+/// The library lives on the agent rather than in this browser: a snippet is a
+/// record of what to run on *that* machine, and `localStorage` is lost with the
+/// browser profile and invisible from a second one.
+export interface Snippet {
+  /// Minted by this client. The agent stores what it is sent and refuses a set
+  /// with a missing or repeated id rather than inventing one — a rename must
+  /// not be how a snippet changes identity.
+  id: string
+  name: string
+  /// As written, `${…}` included. Expanded when it runs, never on save.
+  script: string
+  note: string
+  tags: string[]
+}
+
+export interface SnippetsView {
+  snippets: Snippet[]
+}
+
+/// One thing a terminal must be fed, in order.
+///
+/// The shape is `sbm_parser::snippet::Step`'s own, and it is the whole reason
+/// the expansion lives on the agent: what `${ctrl+c}` means is one definition
+/// in Rust, and both clients run the steps it returns rather than reading the
+/// script themselves.
+export type SnippetStep =
+  /// Type this, exactly.
+  | { type: 'text'; text: string }
+  /// The first character with the modifier held, then `rest`.
+  | { type: 'combo'; ctrl: boolean; alt: boolean; key: string; rest: string }
+  | { type: 'sleep'; seconds: number }
+  /// Press Enter this many times. Never 0.
+  | { type: 'enter'; times: number }
+
+export interface SnippetPlan {
+  steps: SnippetStep[]
+}
+
+/// Why a script could not be expanded, as a stable code this page phrases.
+///
+/// `key` is the placeholder the caller could not answer — the code alone would
+/// not say which, and the fix is to answer that one.
+export interface SnippetPlanRefusal {
+  error: 'unanswerable'
+  key: string
+}
+
+/// Why a library could not be stored, as a stable code this page phrases.
+///
+/// `index` is a position in the set that was *sent*, which is the list the page
+/// still has on screen.
+export type SnippetRefusalCode =
+  | 'invalidId'
+  | 'duplicateId'
+  | 'invalidName'
+  | 'duplicateName'
+  | 'invalidTag'
+  | 'duplicateTag'

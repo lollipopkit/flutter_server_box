@@ -2330,6 +2330,129 @@ type RootTranslation = {
 	 * C​l​o​s​e
 	 */
 	close: string
+	/**
+	 * S​n​i​p​p​e​t​s
+	 */
+	snippets: string
+	/**
+	 * {​c​o​u​n​t​}​ ​s​a​v​e​d​ ​s​c​r​i​p​t​s
+	 * @param {unknown} count
+	 */
+	snippetSubtitle: RequiredParams<'count'>
+	/**
+	 * N​o​ ​s​n​i​p​p​e​t​s​ ​s​a​v​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​y​e​t​.
+	 */
+	snippetEmpty: string
+	/**
+	 * N​e​w​ ​s​n​i​p​p​e​t
+	 */
+	snippetAdd: string
+	/**
+	 * E​d​i​t​ ​s​n​i​p​p​e​t
+	 */
+	snippetEdit: string
+	/**
+	 * D​e​l​e​t​e​ ​s​n​i​p​p​e​t
+	 */
+	snippetDelete: string
+	/**
+	 * D​e​l​e​t​e​ ​{​n​a​m​e​}​?​ ​I​t​ ​i​s​ ​f​o​r​g​o​t​t​e​n​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​o​n​l​y​.
+	 * @param {unknown} name
+	 */
+	snippetDeleteConfirm: RequiredParams<'name'>
+	/**
+	 * N​a​m​e
+	 */
+	snippetName: string
+	/**
+	 * S​c​r​i​p​t
+	 */
+	snippetScript: string
+	/**
+	 * W​r​i​t​t​e​n​ ​a​s​ ​i​t​ ​w​o​u​l​d​ ​b​e​ ​t​y​p​e​d​.​ ​T​h​e​ ​a​g​e​n​t​ ​f​i​l​l​s​ ​i​n​ ​t​h​e​ ​m​a​c​r​o​s​ ​i​t​ ​c​a​n​ ​a​n​s​w​e​r​ ​w​h​e​n​ ​t​h​e​ ​s​c​r​i​p​t​ ​r​u​n​s​,​ ​a​n​d​ ​r​e​f​u​s​e​s​ ​a​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​a​s​k​s​ ​f​o​r​ ​o​n​e​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​v​a​l​u​e​ ​f​o​r​ ​r​a​t​h​e​r​ ​t​h​a​n​ ​r​u​n​n​i​n​g​ ​i​t​ ​w​i​t​h​ ​a​ ​h​o​l​e​ ​i​n​ ​i​t​.
+	 */
+	snippetScriptHint: string
+	/**
+	 * N​o​t​e
+	 */
+	snippetNote: string
+	/**
+	 * T​a​g​s
+	 */
+	snippetTags: string
+	/**
+	 * S​e​p​a​r​a​t​e​d​ ​b​y​ ​c​o​m​m​a​s​.
+	 */
+	snippetTagsHint: string
+	/**
+	 * R​u​n
+	 */
+	snippetRun: string
+	/**
+	 * A​ ​s​n​i​p​p​e​t​ ​i​s​ ​n​o​t​ ​e​x​e​c​u​t​e​d​ ​h​e​r​e​.​ ​R​u​n​n​i​n​g​ ​i​t​ ​o​p​e​n​s​ ​t​h​e​ ​t​e​r​m​i​n​a​l​ ​a​n​d​ ​t​y​p​e​s​ ​i​t​ ​i​n​t​o​ ​t​h​e​ ​s​h​e​l​l​ ​t​h​a​t​ ​i​s​ ​o​p​e​n​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​h​a​p​p​e​n​s​ ​u​n​t​i​l​ ​a​ ​s​e​s​s​i​o​n​ ​i​s​ ​u​p​.
+	 */
+	snippetRunNote: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​s​e​r​v​e​ ​a​ ​s​n​i​p​p​e​t​ ​l​i​b​r​a​r​y​.​ ​T​h​e​ ​e​n​d​p​o​i​n​t​ ​w​a​s​ ​a​d​d​e​d​ ​a​f​t​e​r​ ​t​h​i​s​ ​b​u​i​l​d​.
+	 */
+	snippetUnavailable: string
+	/**
+	 * T​y​p​i​n​g​ ​{​n​a​m​e​}
+	 * @param {unknown} name
+	 */
+	snippetTyping: RequiredParams<'name'>
+	/**
+	 * {​n​a​m​e​}​ ​i​s​ ​w​a​i​t​i​n​g​ ​f​o​r​ ​a​ ​s​h​e​l​l​.
+	 * @param {unknown} name
+	 */
+	snippetWaiting: RequiredParams<'name'>
+	/**
+	 * S​t​o​p
+	 */
+	snippetStop: string
+	/**
+	 * D​i​s​c​a​r​d
+	 */
+	snippetDiscard: string
+	/**
+	 * S​a​v​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	snippetDoneSaved: RequiredParams<'name'>
+	/**
+	 * D​e​l​e​t​e​d​ ​{​n​a​m​e​}​.
+	 * @param {unknown} name
+	 */
+	snippetDoneDeleted: RequiredParams<'name'>
+	/**
+	 * A​ ​s​n​i​p​p​e​t​ ​i​s​ ​m​i​s​s​i​n​g​ ​i​t​s​ ​i​d​.
+	 */
+	snippetInvalidId: string
+	/**
+	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​s​h​a​r​e​ ​a​n​ ​i​d​.
+	 */
+	snippetDuplicateId: string
+	/**
+	 * A​ ​n​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d​ ​a​n​d​ ​m​a​y​ ​n​o​t​ ​b​e​ ​e​m​p​t​y​.
+	 */
+	snippetInvalidName: string
+	/**
+	 * T​w​o​ ​s​n​i​p​p​e​t​s​ ​c​a​n​n​o​t​ ​a​n​s​w​e​r​ ​t​o​ ​t​h​e​ ​s​a​m​e​ ​n​a​m​e​.
+	 */
+	snippetDuplicateName: string
+	/**
+	 * A​ ​t​a​g​ ​m​a​y​ ​n​o​t​ ​b​e​ ​e​m​p​t​y​.
+	 */
+	snippetInvalidTag: string
+	/**
+	 * A​ ​s​n​i​p​p​e​t​ ​c​a​n​n​o​t​ ​c​a​r​r​y​ ​t​h​e​ ​s​a​m​e​ ​t​a​g​ ​t​w​i​c​e​.
+	 */
+	snippetDuplicateTag: string
+	/**
+	 * T​h​i​s​ ​s​c​r​i​p​t​ ​a​s​k​s​ ​f​o​r​ ​{​k​e​y​}​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​p​a​n​e​l​ ​h​a​s​ ​n​o​ ​v​a​l​u​e​ ​f​o​r​.​ ​T​h​e​ ​s​e​r​v​e​r​ ​m​a​c​r​o​s​ ​b​e​l​o​n​g​ ​t​o​ ​t​h​e​ ​a​p​p​,​ ​w​h​i​c​h​ ​k​n​o​w​s​ ​t​h​e​ ​s​e​r​v​e​r​ ​i​t​ ​i​s​ ​c​o​n​n​e​c​t​e​d​ ​t​o​.
+	 * @param {unknown} key
+	 */
+	snippetUnanswerable: RequiredParams<'key'>
 }
 
 export type TranslationFunctions = {
@@ -4585,6 +4708,122 @@ export type TranslationFunctions = {
 	 * Close
 	 */
 	close: () => LocalizedString
+	/**
+	 * Snippets
+	 */
+	snippets: () => LocalizedString
+	/**
+	 * {count} saved scripts
+	 */
+	snippetSubtitle: (arg: { count: unknown }) => LocalizedString
+	/**
+	 * No snippets saved on this agent yet.
+	 */
+	snippetEmpty: () => LocalizedString
+	/**
+	 * New snippet
+	 */
+	snippetAdd: () => LocalizedString
+	/**
+	 * Edit snippet
+	 */
+	snippetEdit: () => LocalizedString
+	/**
+	 * Delete snippet
+	 */
+	snippetDelete: () => LocalizedString
+	/**
+	 * Delete {name}? It is forgotten on this agent only.
+	 */
+	snippetDeleteConfirm: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Name
+	 */
+	snippetName: () => LocalizedString
+	/**
+	 * Script
+	 */
+	snippetScript: () => LocalizedString
+	/**
+	 * Written as it would be typed. The agent fills in the macros it can answer when the script runs, and refuses a script that asks for one this panel has no value for rather than running it with a hole in it.
+	 */
+	snippetScriptHint: () => LocalizedString
+	/**
+	 * Note
+	 */
+	snippetNote: () => LocalizedString
+	/**
+	 * Tags
+	 */
+	snippetTags: () => LocalizedString
+	/**
+	 * Separated by commas.
+	 */
+	snippetTagsHint: () => LocalizedString
+	/**
+	 * Run
+	 */
+	snippetRun: () => LocalizedString
+	/**
+	 * A snippet is not executed here. Running it opens the terminal and types it into the shell that is open, so nothing happens until a session is up.
+	 */
+	snippetRunNote: () => LocalizedString
+	/**
+	 * This agent does not serve a snippet library. The endpoint was added after this build.
+	 */
+	snippetUnavailable: () => LocalizedString
+	/**
+	 * Typing {name}
+	 */
+	snippetTyping: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * {name} is waiting for a shell.
+	 */
+	snippetWaiting: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Stop
+	 */
+	snippetStop: () => LocalizedString
+	/**
+	 * Discard
+	 */
+	snippetDiscard: () => LocalizedString
+	/**
+	 * Saved {name}.
+	 */
+	snippetDoneSaved: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * Deleted {name}.
+	 */
+	snippetDoneDeleted: (arg: { name: unknown }) => LocalizedString
+	/**
+	 * A snippet is missing its id.
+	 */
+	snippetInvalidId: () => LocalizedString
+	/**
+	 * Two snippets share an id.
+	 */
+	snippetDuplicateId: () => LocalizedString
+	/**
+	 * A name is required and may not be empty.
+	 */
+	snippetInvalidName: () => LocalizedString
+	/**
+	 * Two snippets cannot answer to the same name.
+	 */
+	snippetDuplicateName: () => LocalizedString
+	/**
+	 * A tag may not be empty.
+	 */
+	snippetInvalidTag: () => LocalizedString
+	/**
+	 * A snippet cannot carry the same tag twice.
+	 */
+	snippetDuplicateTag: () => LocalizedString
+	/**
+	 * This script asks for {key}, which this panel has no value for. The server macros belong to the app, which knows the server it is connected to.
+	 */
+	snippetUnanswerable: (arg: { key: unknown }) => LocalizedString
 }
 
 export type Formatters = {}

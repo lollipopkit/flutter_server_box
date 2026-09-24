@@ -43,6 +43,9 @@ import type {
   ServiceView,
   SettingsPayload,
   SettingsView,
+  Snippet,
+  SnippetPlan,
+  SnippetsView,
   StatusResponse,
   SystemMetrics,
   UserActRequest,
@@ -69,9 +72,17 @@ export class ApiError extends Error {
   /// need, since "refused" and "unreachable" deserve opposite responses.
   readonly status?: number
 
-  constructor(message: string, status?: number) {
+  /// The refusal body as the agent sent it, when it sent one. Read by `request`
+  /// for the `error` code the message is built from, and kept because not every
+  /// refusal is one field: `/snippets/plan` puts the placeholder it could not
+  /// answer beside the code, and a caller holding only the message would have
+  /// to phrase a sentence about a value it can no longer see.
+  readonly body?: unknown
+
+  constructor(message: string, status?: number, body?: unknown) {
     super(message)
     this.status = status
+    this.body = body
   }
 }
 
@@ -121,13 +132,15 @@ async function request<T>(
   }
   if (!res.ok) {
     let message = fallback
+    let body: unknown
     try {
-      const body = (await res.json()) as { error?: string }
-      if (body.error) message = body.error
+      body = await res.json()
+      const code = (body as { error?: string }).error
+      if (code) message = code
     } catch {
       // Non-JSON error body: keep the fallback message
     }
-    throw new ApiError(message, res.status)
+    throw new ApiError(message, res.status, body)
   }
   return res.json() as Promise<T>
 }
@@ -165,13 +178,15 @@ async function bytesRequest(
   }
   if (!res.ok) {
     let message = fallback
+    let body: unknown
     try {
-      const body = (await res.json()) as { error?: string }
-      if (body.error) message = body.error
+      body = await res.json()
+      const code = (body as { error?: string }).error
+      if (code) message = code
     } catch {
       // Non-JSON error body: keep the fallback message
     }
-    throw new ApiError(message, res.status)
+    throw new ApiError(message, res.status, body)
   }
   return res
 }
@@ -681,7 +696,48 @@ export const api = {
       'Failed to follow the conversation',
       signal,
     ),
+  /// The snippet library saved on this agent.
+  ///
+  /// Reading needs only the panel login, and so does writing: a snippet
+  /// executes nothing — `/snippets/plan` describes keystrokes and types none of
+  /// them — and it becomes usable only through a terminal, which is a session
+  /// with credentials of its own.
+  getSnippets: () => request<SnippetsView>('/snippets', {}, 'Failed to fetch the snippets'),
+  /// The whole library, in order, like the custom commands and the desktops:
+  /// the order is what is stored, so a move has no smaller expression than the
+  /// new list, and a rename is then an ordinary edit rather than a second verb.
+  ///
+  /// A set that cannot be stored is refused before anything is written, as an
+  /// `ApiError` holding a stable code (`invalidId`, `duplicateId`,
+  /// `invalidName`, `duplicateName`, `invalidTag`, `duplicateTag`).
+  updateSnippets: (snippets: Snippet[]) =>
+    request<SnippetsView>(
+      '/snippets',
+      { method: 'PUT', body: JSON.stringify({ snippets }) },
+      'Failed to save the snippets',
+    ),
+  /// Expands one script into the keystrokes a terminal is fed, with the macros
+  /// already resolved.
+  ///
+  /// Neither cookie nor cache: the agent reads nothing for this and writes
+  /// nothing, so a script is expanded the same way whether it was saved a year
+  /// ago or is being previewed unsaved.
+  ///
+  /// No context travels with it, and that is a limitation rather than an
+  /// omission: `${host}` and its five siblings are answered from a *server*,
+  /// and this panel has none — the terminal it feeds is a shell on the machine
+  /// the agent runs on. The app's own terminal, on a device with no server
+  /// selected, answers the same way: a script that asks for one is refused
+  /// (`unanswerable`) rather than run with a hole in it.
+  planSnippet: (script: string) =>
+    request<SnippetPlan>(
+      '/snippets/plan',
+      { method: 'POST', body: JSON.stringify({ script }) },
+      'Failed to expand the snippet',
+    ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
+  /// The order the Dashboard's cards are drawn in, as the whole list: it is the
+  /// order that is stored, so a move has no smaller expression.
   updateCardOrder: (card_order: string[]) =>
     request<{ status: string }>(
       '/card-order',

@@ -10,6 +10,7 @@
   import Users from './pages/Users.svelte'
   import Cron from './pages/Cron.svelte'
   import Desktop from './pages/Desktop.svelte'
+  import Snippets from './pages/Snippets.svelte'
   import Benchmark from './pages/Benchmark.svelte'
   import Ai from './pages/Ai.svelte'
   import Files from './pages/Files.svelte'
@@ -53,6 +54,8 @@
             <Cron onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'desktop'}
             <Desktop onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'snippets'}
+            <Snippets onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'benchmark'}
             <Benchmark onback={() => layout.back('dashboard')} />
           {:else if layout.view === 'ai'}
