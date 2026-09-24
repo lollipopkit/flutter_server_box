@@ -282,7 +282,7 @@
         </p>
       </Card>
     {:else}
-      <Card class="divide-y divide-border p-0">
+      <Card class="divide-y divide-line p-0">
         {#each visible as unit (unit.key)}
           {@const state = STATES[unit.state]}
           <button

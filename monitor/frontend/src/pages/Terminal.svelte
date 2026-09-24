@@ -379,7 +379,7 @@
             bind:value={pem}
             rows="6"
             spellcheck="false"
-            class="w-full rounded-md border border-border bg-bg px-3 py-2 font-mono text-xs"
+            class="w-full rounded-md border border-line bg-bg px-3 py-2 font-mono text-xs"
             placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"
           ></textarea>
         </label>

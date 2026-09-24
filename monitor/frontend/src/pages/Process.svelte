@@ -316,7 +316,7 @@
           <button
             class="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition-colors {chosen
               ? 'border-primary text-fg-strong'
-              : 'border-border text-muted-fg hover:text-fg'}"
+              : 'border-line text-muted-fg hover:text-fg'}"
             aria-current={chosen ? 'true' : undefined}
             onclick={() => order(mode)}
           >
@@ -352,7 +352,7 @@
         </p>
       </Card>
     {:else}
-      <Card class="divide-y divide-border p-0">
+      <Card class="divide-y divide-line p-0">
         {#each visible as row (row.pid)}
           <div class="px-4 py-3 space-y-1">
             <div class="flex items-center gap-3">

@@ -80,7 +80,7 @@
       <button
         class="inline-flex items-center gap-1 rounded border px-2 py-1 text-xs transition-colors {current
           ? 'border-primary text-fg-strong'
-          : 'border-border text-muted-fg hover:text-fg'}"
+          : 'border-line text-muted-fg hover:text-fg'}"
         aria-current={current ? 'page' : undefined}
         onclick={() => (part = tab)}
       >
@@ -105,7 +105,7 @@
     {#if part === 'logs'}
       {#if view.log && view.log.lines.length > 0}
         <Card class="max-h-72 overflow-auto p-0">
-          <div class="divide-y divide-border">
+          <div class="divide-y divide-line">
             {#each view.log.lines as line, index (index)}
               <p class="px-3 py-1.5 text-xs font-mono break-all">
                 {#if line.time}

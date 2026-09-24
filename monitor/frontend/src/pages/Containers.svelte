@@ -317,7 +317,7 @@
       </Card>
     {/if}
 
-    <div class="flex gap-1 border-b border-border">
+    <div class="flex gap-1 border-b border-line">
       {#each TABS as name (name)}
         <button
           class="border-b-2 px-3 py-1.5 text-sm transition-colors {tab === name
@@ -337,7 +337,7 @@
           <p class="text-sm text-muted-fg">{$LL.containerEmpty()}</p>
         </Card>
       {:else}
-        <Card class="divide-y divide-border p-0">
+        <Card class="divide-y divide-line p-0">
           {#each rows as row (row.id ?? row.name)}
             <div class="px-4 py-3 space-y-1">
               <div class="flex items-center gap-3">
@@ -397,7 +397,7 @@
         <p class="text-sm text-muted-fg">{$LL.containerNoImages()}</p>
       </Card>
     {:else}
-      <Card class="divide-y divide-border p-0">
+      <Card class="divide-y divide-line p-0">
         {#each images as image (image.id ?? image.repository)}
           <div class="px-4 py-3 space-y-1">
             <p class="text-sm text-fg-strong truncate">
@@ -485,7 +485,7 @@
         <pre class="text-xs font-mono text-danger whitespace-pre-wrap break-all">{logsError}</pre>
       {:else if logs}
         <pre
-          class="max-h-96 overflow-auto rounded border border-border bg-surface p-3 text-xs font-mono text-fg whitespace-pre-wrap break-all">{logs}</pre>
+          class="max-h-96 overflow-auto rounded border border-line bg-surface p-3 text-xs font-mono text-fg whitespace-pre-wrap break-all">{logs}</pre>
       {:else}
         <p class="text-sm text-muted-fg">{$LL.containerLogsEmpty()}</p>
       {/if}

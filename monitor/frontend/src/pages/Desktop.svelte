@@ -334,7 +334,7 @@
           <p class="text-sm text-muted-fg">{$LL.desktopEmpty()}</p>
         </Card>
       {:else}
-        <Card class="divide-y divide-border p-0">
+        <Card class="divide-y divide-line p-0">
           {#each routes as route (route.name)}
             <button
               class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-soft/40"

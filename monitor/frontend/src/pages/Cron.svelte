@@ -236,7 +236,7 @@
         <p class="text-sm text-muted-fg">{$LL.cronEmpty()}</p>
       </Card>
     {:else}
-      <Card class="divide-y divide-border p-0">
+      <Card class="divide-y divide-line p-0">
         {#each jobs as job (job.line_index)}
           <div class="flex items-start gap-3 px-4 py-3">
             <span class="text-sm font-mono shrink-0 pt-0.5 {job.enabled ? 'text-fg-strong' : 'text-faint-fg'}">

@@ -255,7 +255,7 @@
     {:else if cwd && entries.length === 0}
       <Card><p class="text-sm text-muted-fg">{$LL.filesEmpty()}</p></Card>
     {:else if cwd}
-      <Card class="divide-y divide-border p-0">
+      <Card class="divide-y divide-line p-0">
         {#each entries as entry (entry.name)}
           {@const Icon = iconOf(entry)}
           <div class="flex items-center gap-3 px-4 py-2">
