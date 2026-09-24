@@ -581,56 +581,67 @@ void main() {
       }
     });
 
+    /// The rail's own `Material`, which is what carries its colour and its
+    /// shadow. The first one under [AppNavRail] is that one — the items put
+    /// their ink responses under it, not over.
+    Material railOf(WidgetTester tester) => tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(AppNavRail),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+
+    /// A rail beside an empty tab, on a page whose scaffold is [scaffold].
+    Widget railOn(Color? scaffold) => MaterialApp(
+      theme: ThemeData(scaffoldBackgroundColor: scaffold),
+      home: Scaffold(
+        body: Row(
+          children: [
+            AppNavRail(
+              selectedIndex: 0,
+              onSelected: (_) {},
+              items: const [
+                NavRailItem(
+                  icon: Icon(Icons.circle),
+                  selectedIcon: Icon(Icons.circle),
+                  label: 'one',
+                ),
+              ],
+            ),
+            const Expanded(child: SizedBox()),
+          ],
+        ),
+      ),
+    );
+
+    /// Puts the pointer on the rail, if [hover], and lets it arrive.
+    Future<void> pointerOnRail(
+      WidgetTester tester, {
+      required bool hover,
+      required Color? scaffold,
+    }) async {
+      await tester.pumpWidget(railOn(scaffold));
+      await tester.pump();
+      if (!hover) return;
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
     /// The colour the rail's own `Material` is painted with.
     Future<Color?> colorAt(
       WidgetTester tester, {
       required bool hover,
       required Color? scaffold,
     }) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData(scaffoldBackgroundColor: scaffold),
-          home: Scaffold(
-            body: Row(
-              children: [
-                AppNavRail(
-                  selectedIndex: 0,
-                  onSelected: (_) {},
-                  items: const [
-                    NavRailItem(
-                      icon: Icon(Icons.circle),
-                      selectedIcon: Icon(Icons.circle),
-                      label: 'one',
-                    ),
-                  ],
-                ),
-                const Expanded(child: SizedBox()),
-              ],
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-
-      if (hover) {
-        final pointer = TestPointer(1, PointerDeviceKind.mouse);
-        await tester.sendEventToBinding(
-          pointer.hover(tester.getCenter(find.byType(AppNavRail))),
-        );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 400));
-      }
-
-      return tester
-          .widget<Material>(
-            find
-                .descendant(
-                  of: find.byType(AppNavRail),
-                  matching: find.byType(Material),
-                )
-                .first,
-          )
-          .color;
+      await pointerOnRail(tester, hover: hover, scaffold: scaffold);
+      return railOf(tester).color;
     }
 
     testWidgets('takes a colour of its own once it is over a tab', (
@@ -673,6 +684,32 @@ void main() {
         await colorAt(tester, hover: true, scaffold: page),
         page,
       );
+    });
+
+    testWidgets('casts no shadow once it has faded', (tester) async {
+      // A shadow is cast by the shape, whether or not the colour on it is
+      // opaque. Held at three points of elevation while the colour crossed to
+      // nothing, it left a dark rectangle of the panel's own size on the tab
+      // for the last of the closing — a panel that is half there — and then
+      // went with the final frame, which is the jolt. So the shadow is read
+      // off the same value the colour is, and the two leave together.
+      await pointerOnRail(tester, hover: true, scaffold: Colors.transparent);
+      expect(railOf(tester).color!.a, 1);
+      expect(railOf(tester).elevation, 3);
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.hover(const Offset(700, 400)));
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        final rail = railOf(tester);
+        expect(
+          rail.elevation,
+          lessThanOrEqualTo(3 * rail.color!.a + 0.001),
+          reason: 'the shadow outlived the panel, at frame $i',
+        );
+      }
+      expect(railOf(tester).elevation, 0);
+      expect(railOf(tester).color!.a, 0);
     });
 
     testWidgets('names an item with a tooltip while it is shut', (

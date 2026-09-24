@@ -195,10 +195,14 @@ class _AppNavRailState extends State<AppNavRail>
                     ? chrome
                     : Color.lerp(surface.withValues(alpha: 0), surface, open)!,
                 surfaceTintColor: Colors.transparent,
-                // On or off rather than eased in: a shadow is recomputed
-                // wherever its elevation lands, and 200ms of that buys a
-                // gradient nobody watches under a panel that is still moving.
-                elevation: railTheme.elevation ?? (open == 0 ? 0 : 3),
+                // With the colour rather than on or off: a shadow is cast by
+                // the shape whether or not the colour on it is opaque, so a
+                // panel fixed at three points of elevation held a full-strength
+                // shadow under it for the last of the closing — a dark shape
+                // with nothing on it, which then went with the last frame.
+                // Read off the same value the colour is, so the two leave
+                // together.
+                elevation: railTheme.elevation ?? (3 * open),
                 child: Column(
                   children: [
                     Expanded(
