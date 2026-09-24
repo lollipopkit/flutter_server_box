@@ -24,6 +24,7 @@ pub mod linux;
 pub mod output;
 pub mod proc;
 pub mod pve;
+pub mod redfish;
 pub mod script;
 pub mod service;
 pub mod smart;
