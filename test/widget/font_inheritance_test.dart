@@ -69,6 +69,11 @@ void main() {
     expect(tooltip.textStyle.fontFamilyFallback, _fallback);
     expect(tooltip.textStyle.fontSize, 11);
     expect(tooltip.textStyle.color, Colors.white);
+    // The families come from the theme and the metrics do not: `bodyMedium`'s
+    // line height (1.43) and tracking (0.25) are a 14pt body's, and a tooltip
+    // is 11.
+    expect(tooltip.textStyle.height, isNull);
+    expect(tooltip.textStyle.letterSpacing, isNull);
   });
 
   testWidgets('Markdown prose and code retain the shared font fallback', (tester) async {

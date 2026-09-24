@@ -11,6 +11,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
@@ -715,6 +716,44 @@ void main() {
 
     expect(find.text('Test CPU'), findsOneWidget);
     expect(find.text(l10n.benchmarkRunning), findsNothing);
+    await close(tester);
+  });
+
+  testWidgets('the disk tooltip takes the theme families, not its metrics', (
+    tester,
+  ) async {
+    final run = seedRunning();
+    await pump(tester, BenchmarkResultPage(args: run));
+
+    BenchmarkStore.instance.put(
+      run.copyWith(
+        status: BenchmarkStatus.completed,
+        exitCode: 0,
+        resultJson: json.encode({
+          'version': 'v1',
+          'fio': [
+            {'bs': '4k', 'speed_r': 100, 'speed_w': 50},
+          ],
+        }),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    final chart = tester.widget<BarChart>(find.byType(BarChart));
+    final tooltip = chart.data.barTouchData.touchTooltipData.getTooltipItem(
+      BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 1)]),
+      0,
+      BarChartRodData(toY: 1),
+      0,
+    )!;
+    expect(tooltip.text, contains('4k'));
+    expect(tooltip.textStyle.fontSize, 12);
+    // The label is drawn against the chart's own white, and the theme's body
+    // metrics are a 14pt body's: `bodyMedium` carries a line height of 1.43
+    // and a tracking of 0.25, which spread the two rows of the label apart.
+    expect(tooltip.textStyle.height, isNull);
+    expect(tooltip.textStyle.letterSpacing, isNull);
     await close(tester);
   });
 }
