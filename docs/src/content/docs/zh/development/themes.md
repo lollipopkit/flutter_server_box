@@ -5,7 +5,7 @@ description: 内置主题如何打包、加载与分发
 
 本页介绍主题在本仓库中的实现与分发方式。编写主题、安装主题，以及发布你自己的
 repository 见[主题包](/docs/zh/advanced/theme-packages/)；内置主题改编自哪些上游
-调色板见[主题来源](/docs/zh/advanced/theme-sources/)。
+调色板见[主题来源](/docs/zh/advanced/theme-packages/#主题来源)。
 
 ## 内置主题
 

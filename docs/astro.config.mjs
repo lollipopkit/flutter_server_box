@@ -66,7 +66,6 @@ export default defineConfig({
 						{ label: 'Custom Commands', translations: { zh: '自定义命令' }, slug: 'advanced/custom-commands' },
 						{ label: 'Custom Logo', translations: { zh: '自定义 Logo' }, slug: 'advanced/custom-logo' },
 						{ label: 'Theme Packages', translations: { zh: '主题包' }, slug: 'advanced/theme-packages' },
-						{ label: 'Theme Sources', translations: { zh: '主题来源' }, slug: 'advanced/theme-sources' },
 						{ label: 'JSON Settings', translations: { zh: 'JSON 设置' }, slug: 'advanced/json-settings' },
 						{ label: 'Common Issues', translations: { zh: '常见问题' }, slug: 'advanced/troubleshooting' },
 					],

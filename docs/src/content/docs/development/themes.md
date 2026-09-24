@@ -6,7 +6,8 @@ description: How the built-in themes are packaged, loaded and distributed
 This page covers how themes are implemented and distributed in this repository.
 Authoring a theme, installing one, and publishing a repository of your own are
 in [Theme Packages](/docs/advanced/theme-packages/); which upstream palettes the
-built-in ones adapt is in [Theme Sources](/docs/advanced/theme-sources/).
+built-in ones adapt, and the attribution each one carries, is in
+[Theme sources](/docs/advanced/theme-packages/#theme-sources).
 
 ## Built-in themes
 

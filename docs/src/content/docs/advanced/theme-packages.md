@@ -377,11 +377,110 @@ Publishing is a release per theme per version, tagged `<id>-<version>` with the
 `.fsbt` as its asset. Adding a repository to the app's catalog is a pull request
 against this repository that adds one `[[repo]]` entry.
 
-A repository may carry a `plugins/` section beside `themes/`, so one tree can
-offer both. A section this build does not know is skipped rather than failing
-the repository.
+A repository may carry a `plugins/` section beside `themes/`. This build
+offers themes only, so that section is read as nothing: skipped, rather than
+failing the repository it is in.
 
 Direct URL installation accepts HTTPS `.fsbt` links without a store. The
 installer follows at most three HTTPS redirects and does not send credentials.
 The size limits a catalog and a repository tree are held to are in
 [Themes](/docs/development/themes/#theme-store).
+
+## Theme sources
+
+ServerBox adapts the UI palettes of these VS Code themes to Material surfaces,
+selection states, cards and buttons. These are independent adaptations, not
+VS Code extension bundles. Fonts and terminal/editor color settings remain
+separate. Midnight and AMOLED are original ServerBox palettes. AMOLED uses black
+surfaces in dark mode and generated colors in light mode, allowing System
+appearance.
+
+The selection uses Marketplace install counts for standalone color themes,
+excluding icon themes and themes distributed with language tooling. GitHub
+Theme, One Dark Pro and Dracula were the three leading entries in that
+comparison. GitHub Dark uses the GitHub Theme dark palette. Muted text colors
+are adjusted where needed to keep normal text at a contrast ratio of at least
+4.5:1.
+
+<details>
+<summary>Upstream attribution</summary>
+
+**One Dark Pro**
+
+Source: [One Dark Pro](https://github.com/Binaryify/OneDark-Pro)
+
+The MIT License (MIT)
+
+Copyright (c) 2013-2022 Binaryify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**GitHub Theme**
+
+Source: [GitHub Theme](https://github.com/primer/github-vscode-theme)
+
+MIT License
+
+Copyright (c) 2020 Primer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+**Dracula**
+
+Source: [Dracula](https://github.com/dracula/visual-studio-code)
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Dracula Theme
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+</details>

@@ -330,9 +330,104 @@ sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
 发布是每个主题每个版本一个 release，tag 为 `<id>-<version>`，附带 `.fsbt`。往应用
 catalog 里加一个 repository，是向本仓库提一个新增 `[[repo]]` 条目的 pull request。
 
-repository 可以在 `themes/` 旁边带一个 `plugins/` 部分，于是一棵树可以同时提供
-两者。本构建不认识的 section 会被跳过，而不是让整个 repository 失败。
+repository 可以在 `themes/` 旁边带一个 `plugins/` 部分。本构建只提供主题，
+所以这部分会被当作不存在：跳过它，而不是让整个 repository 失败。
 
 直接 URL 安装接受 HTTPS 的 `.fsbt` 链接，无需商店。安装器最多跟随三次 HTTPS
 重定向，不发送凭据。catalog 和 repository 树各自的大小上限见
 [主题](/docs/zh/development/themes/#主题商店)。
+
+## 主题来源
+
+ServerBox 把下面这些 VS Code 主题的 UI 调色板改编到 Material 的表面、选中态、卡片
+和按钮上。这些改编与 VS Code 扩展包无关。字体和终端/编辑器配色仍是单独的设置。
+Midnight 和 AMOLED 是 ServerBox 原创的调色板。AMOLED 在 dark 下使用纯黑表面、在
+light 下使用生成色，因此支持 System 外观。
+
+入选依据是 Marketplace 上独立配色主题的安装量，已排除 icon 主题和随语言工具分发的
+主题。GitHub Theme、One Dark Pro 和 Dracula 是这次比较中排名最前的三个。GitHub
+Dark 使用 GitHub Theme 的 dark 调色板。必要时会调整次要文字颜色，使正常文字的对比度
+不低于 4.5:1。
+
+<details>
+<summary>上游署名</summary>
+
+**One Dark Pro**
+
+Source: [One Dark Pro](https://github.com/Binaryify/OneDark-Pro)
+
+The MIT License (MIT)
+
+Copyright (c) 2013-2022 Binaryify
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**GitHub Theme**
+
+Source: [GitHub Theme](https://github.com/primer/github-vscode-theme)
+
+MIT License
+
+Copyright (c) 2020 Primer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+**Dracula**
+
+Source: [Dracula](https://github.com/dracula/visual-studio-code)
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Dracula Theme
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+</details>
