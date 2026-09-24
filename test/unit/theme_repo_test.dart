@@ -190,6 +190,46 @@ void main() {
       expect(index.themes.single.id, 'aurora');
     });
 
+    test('a plugins section yields nothing that can be installed', () {
+      // This build ships themes only — the plugin system is not in `main` yet —
+      // so a plugin reaching the store would be offered on a page with nothing
+      // to install it with. Two things keep it out, and neither is a filter in
+      // the UI: `ThemeRepoLayout` reads `themes/` and nothing else, and a
+      // plugin manifest carries `abi` where a theme carries `schema_min`, so it
+      // is not a listing even when it is filed under the wrong directory.
+      final plugin =
+          'id = "app.serverbox.diskusage"\n'
+          'name = "Disk usage"\n'
+          'description = "Where the space went."\n'
+          '[[version]]\n'
+          'version = "1.0.1"\n'
+          'abi = 2\n'
+          'url = "https://example.org/app.serverbox.diskusage-1.0.1.sbp"\n'
+          'sha256 = "${List.filled(64, 'b').join()}"\n'
+          'size = 17643\n';
+      final index = ThemeRepoIndex.fromFiles(
+        files(
+          extra: {
+            'plugins/app/serverbox/diskusage.toml': plugin,
+            'plugins/app/serverbox/ports.toml': plugin,
+            'packages/app.serverbox.diskusage-1.0.1.sbp': 'bytes',
+            // The same manifest where a theme lives. Its id is a legal file
+            // name, so the path check lets it through and the version is what
+            // refuses it.
+            'themes/app.serverbox.diskusage.toml': plugin,
+            'README.md': '# A repository',
+          },
+        ),
+      );
+      expect(index.themes.map((t) => t.id), ['aurora']);
+      // The one thing offered is the theme file's own release, so nothing in
+      // the store's list resolves to a plugin archive.
+      expect(
+        index.themes.single.releases.single.url,
+        'https://example.org/aurora-1.0.0.fsbt',
+      );
+    });
+
     test('one unreadable theme file costs that theme only', () {
       final index = ThemeRepoIndex.fromFiles(
         files(

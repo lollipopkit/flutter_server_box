@@ -217,7 +217,8 @@ abstract final class ThemePackages {
   /// rather than ignored, because an ignored one is a theme that silently does
   /// not do what its author wrote — a mistyped `[splas]` costs nothing to
   /// report and is invisible otherwise.
-  static const _sections = {
+  @visibleForTesting
+  static const sections = {
     'format',
     'schema',
     'id',
@@ -230,9 +231,39 @@ abstract final class ThemePackages {
     'components',
     'splash',
   };
-  static const _iconFields = {'style', 'images', 'colors'};
-  static const _splashFields = {'color', 'logo', 'duration'};
-  static const _splashLogos = {
+  /// The fields `[icons]` and `[splash]` may carry, held against the schema's
+  /// properties by the same test that holds the enums above.
+  static const iconFields = {'style', 'images', 'colors'};
+  static const splashFields = {'color', 'logo', 'duration'};
+
+  /// What the format allows where a value is one of a few, which
+  /// `docs/schemas/fsbt-manifest.schema.json` enumerates for editors as well:
+  /// `test/unit/theme_schema_test.dart` holds the two lists equal, so a value
+  /// added here and not there is an author writing what the schema offers and
+  /// this build refusing it.
+  static const modes = {'light', 'dark'};
+  static const iconStyles = {'classic', 'mingcute'};
+  static const backgroundStyles = {'none', 'gradient', 'image'};
+
+  /// The one file name a background image may have, at the archive root.
+  static const backgroundImages = {
+    'background.png',
+    'background.jpg',
+    'background.jpeg',
+  };
+
+  /// The longest `name` a package may carry.
+  static const maxNameLength = 80;
+
+  /// The largest image opacity and blur radius. Stated in the schema too, and
+  /// held equal by the same test. The splash's own range is on [ThemeSplash].
+  static const maxBackgroundOpacity = 0.6;
+  static const maxBackgroundBlur = 30.0;
+
+  /// The one logo a splash may name, kept here so the test that holds this
+  /// list and the schema's together can read it.
+  @visibleForTesting
+  static const splashLogos = {
     'splash_logo.png',
     'splash_logo.jpg',
     'splash_logo.jpeg',
@@ -302,7 +333,10 @@ abstract final class ThemePackages {
     }
   }
 
-  static final _iconKeys = <String>{
+  /// The icon keys a package may carry an image or a color for, and what the
+  /// schema's `icons.images` and `icons.colors` offer as keys.
+  @visibleForTesting
+  static final iconKeys = <String>{
     for (final tab in [
       'server',
       'ssh',
@@ -477,14 +511,12 @@ abstract final class ThemePackages {
             throw const FormatException('Too many theme assets');
           }
         }
-      } else if (name == 'background.png' ||
-          name == 'background.jpg' ||
-          name == 'background.jpeg') {
+      } else if (backgroundImages.contains(name)) {
         if (entry is! File) {
           throw const FormatException('Invalid theme background');
         }
         await readFile(entry, name, _maxBackgroundBytes);
-      } else if (_splashLogos.contains(name)) {
+      } else if (splashLogos.contains(name)) {
         if (entry is! File) {
           throw const FormatException('Invalid splash logo');
         }
@@ -538,7 +570,7 @@ abstract final class ThemePackages {
         data.containsKey('font')) {
       throw const FormatException('Unsupported theme package');
     }
-    if (!data.keys.every(_sections.contains)) {
+    if (!data.keys.every(sections.contains)) {
       throw const FormatException('Unknown theme section');
     }
     final (schemaMin, schemaMax) = _schemaRange(data['schema']);
@@ -563,18 +595,18 @@ abstract final class ThemePackages {
     final paletteDark = _palette(palette['dark']);
     final components = ThemeComponents.parse(data['components']);
     final icons = _map(data['icons'], 'icons');
-    if (!icons.keys.every(_iconFields.contains)) {
+    if (!icons.keys.every(iconFields.contains)) {
       throw const FormatException('Unknown icon field');
     }
     final style = icons['style'];
-    if (style != 'classic' && style != 'mingcute') {
+    if (!iconStyles.contains(style)) {
       throw const FormatException('Invalid icon style');
     }
     final imageMap = icons['images'] == null
         ? <String, dynamic>{}
         : _map(icons['images'], 'icon images');
     if (imageMap.length > _maxIcons ||
-        !imageMap.keys.every(_iconKeys.contains)) {
+        !imageMap.keys.every(iconKeys.contains)) {
       throw const FormatException('Invalid icon keys');
     }
     final iconColors = _iconColors(
@@ -586,23 +618,21 @@ abstract final class ThemePackages {
     final splash = _splash(data['splash']);
     final background = _map(data['background'], 'background');
     final backgroundStyle = background['type'];
-    if (!['none', 'gradient', 'image'].contains(backgroundStyle)) {
+    if (!backgroundStyles.contains(backgroundStyle)) {
       throw const FormatException('Invalid background type');
     }
-    final opacity = _fraction(background['opacity'], 0.6);
-    final blur = _fraction(background['blur'], 30);
+    final opacity = _fraction(background['opacity'], maxBackgroundOpacity);
+    final blur = _fraction(background['blur'], maxBackgroundBlur);
     final shapes = _map(data['shapes'], 'shapes');
-    final card = _fraction(shapes['card'], 40);
-    final tile = _fraction(shapes['tile'], 40);
-    final button = _fraction(shapes['button'], 40);
+    final card = _fraction(shapes['card'], ThemeComponents.maxRadius);
+    final tile = _fraction(shapes['tile'], ThemeComponents.maxRadius);
+    final button = _fraction(shapes['button'], ThemeComponents.maxRadius);
 
     final usedAssets = <String>{'manifest.toml'};
     Uint8List? backgroundBytes;
     if (backgroundStyle == 'image') {
       final path = background['image'];
-      if (path != 'background.png' &&
-          path != 'background.jpg' &&
-          path != 'background.jpeg') {
+      if (!backgroundImages.contains(path)) {
         throw const FormatException('Invalid background path');
       }
       usedAssets.add(path as String);
@@ -750,12 +780,11 @@ abstract final class ThemePackages {
       final icons = _map(data['icons'], 'icons');
       final background = _map(data['background'], 'background');
       final shapes = _map(data['shapes'], 'shapes');
-      final iconKeys = (icons['images'] as List).cast<String>();
-      if (!iconKeys.every(_iconKeys.contains)) return null;
+      final carried = (icons['images'] as List).cast<String>();
+      if (!carried.every(iconKeys.contains)) return null;
       final style = icons['style'] as String;
       final bgStyle = background['type'] as String;
-      if (!['classic', 'mingcute'].contains(style) ||
-          !['none', 'gradient', 'image'].contains(bgStyle)) {
+      if (!iconStyles.contains(style) || !backgroundStyles.contains(bgStyle)) {
         return null;
       }
       // The manifest names keys and not files, so which format each icon is in
@@ -763,7 +792,7 @@ abstract final class ThemePackages {
       // package would have been written either way.
       final iconDir = directory.joinPath('icons');
       final iconFiles = <String, String>{};
-      for (final key in iconKeys) {
+      for (final key in carried) {
         final stem = key.replaceAll('.', '_');
         final svg = '$stem.svg';
         final png = '$stem.png';
@@ -805,11 +834,11 @@ abstract final class ThemePackages {
         iconFiles: iconFiles,
         iconColors: iconColors,
         backgroundStyle: bgStyle,
-        opacity: _fraction(background['opacity'], 0.6),
-        blur: _fraction(background['blur'], 30),
-        cardRadius: _fraction(shapes['card'], 40),
-        tileRadius: _fraction(shapes['tile'], 40),
-        buttonRadius: _fraction(shapes['button'], 40),
+        opacity: _fraction(background['opacity'], maxBackgroundOpacity),
+        blur: _fraction(background['blur'], maxBackgroundBlur),
+        cardRadius: _fraction(shapes['card'], ThemeComponents.maxRadius),
+        tileRadius: _fraction(shapes['tile'], ThemeComponents.maxRadius),
+        buttonRadius: _fraction(shapes['button'], ThemeComponents.maxRadius),
         directory: directory,
         splash: splash,
       );
@@ -846,13 +875,13 @@ abstract final class ThemePackages {
   };
 
   static String? activeIconPath(String key) {
-    if (!_iconKeys.contains(key)) return null;
+    if (!iconKeys.contains(key)) return null;
     return activeTheme?.iconPath(key);
   }
 
   /// The color a package gives this icon, or `null` to follow the ambient one.
   static Color? activeIconColor(String key, ColorScheme scheme) =>
-      _iconKeys.contains(key) ? activeTheme?.iconColor(key, scheme) : null;
+      iconKeys.contains(key) ? activeTheme?.iconColor(key, scheme) : null;
 
   static ThemePackage? get activeTheme {
     if (preview.value case final theme?) return theme;
@@ -955,7 +984,7 @@ abstract final class ThemePackages {
   static String _label(Object? value, String field) {
     if (value is! String ||
         value.trim().isEmpty ||
-        value.length > 80 ||
+        value.length > maxNameLength ||
         value.contains(RegExp(r'[\x00-\x1f]'))) {
       throw FormatException('Invalid $field');
     }
@@ -1047,11 +1076,11 @@ abstract final class ThemePackages {
   static ThemeSplash? _splash(Object? raw) {
     if (raw == null) return null;
     final table = _map(raw, 'splash');
-    if (!table.keys.every(_splashFields.contains)) {
+    if (!table.keys.every(splashFields.contains)) {
       throw const FormatException('Unknown splash field');
     }
     final logo = table['logo'];
-    if (logo != null && !_splashLogos.contains(logo)) {
+    if (logo != null && !splashLogos.contains(logo)) {
       throw const FormatException('Invalid splash logo path');
     }
     final duration = table.containsKey('duration')

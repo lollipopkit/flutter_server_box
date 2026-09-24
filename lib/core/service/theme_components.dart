@@ -67,6 +67,18 @@ final class ThemeComponents {
     'selected',
   ];
 
+  /// The largest value each numeric field may hold, which
+  /// `docs/schemas/fsbt-manifest.schema.json` states for editors as well:
+  /// `test/unit/theme_schema_test.dart` holds the two equal, so a bound raised
+  /// here and not there is a failure rather than a manifest the schema accepts
+  /// and this refuses.
+  static const maxRadius = 40.0;
+  static const maxBorderWidth = 8;
+  static const maxElevation = 24;
+
+  /// Each of the four numbers in `padding`, `margin` and `insetPadding`.
+  static const maxInset = 64;
+
   static ThemeComponents parse(Object? raw) {
     if (raw == null) return const ThemeComponents.empty();
     Map<String, dynamic> table(Object? value) {
@@ -108,16 +120,18 @@ final class ThemeComponents {
             key == 'insetPadding') {
           if (value is! List ||
               value.length != 4 ||
-              value.any((v) => v is! num || !v.isFinite || v < 0 || v > 64)) {
+              value.any(
+                (v) => v is! num || !v.isFinite || v < 0 || v > maxInset,
+              )) {
             throw FormatException('Invalid $name.$key insets');
           }
           result[key] = List<num>.unmodifiable(value.cast<num>());
           continue;
         } else {
           final max = switch (key) {
-            'borderWidth' => 8,
-            'elevation' => 24,
-            _ => 40,
+            'borderWidth' => maxBorderWidth,
+            'elevation' => maxElevation,
+            _ => maxRadius,
           };
           if (value is! num || !value.isFinite || value < 0 || value > max) {
             throw FormatException('Invalid $name.$key number');
