@@ -350,8 +350,8 @@ async fn a_save_is_recorded_by_name_and_never_by_address() {
 
 /// The split this endpoint is most likely to be misread on. A route list is
 /// answered to anyone who has authenticated to the panel — it executes
-/// nothing — and a *session* is the relay, which is `full_access` and checks
-/// the grant again when the socket opens.
+/// nothing — and a *session* is the relay or the RDP endpoint, both of which
+/// are `full_access` and check the grant again when the socket opens.
 #[ntex::test]
 async fn routes_are_editable_without_the_shell_grant() {
     let _dir = workspace().await;
@@ -373,10 +373,14 @@ async fn routes_are_editable_without_the_shell_grant() {
     assert!(resp.status().is_success(), "capabilities answered {}", resp.status());
     let body: Value = resp.json().await.unwrap();
 
-    // Two fields, and the panel reads the second before it opens a session:
-    // `desktop` says the endpoint answers, which is not a claim about a grant.
+    // Three fields, and the panel reads the last two before it offers to open a
+    // session: `desktop` says the route list exists, which is not a claim about
+    // a grant. `rdp` is reported the way `stream` is, as *will answer* — a
+    // client gates a button on it, and a `true` that the endpoint then refuses
+    // would be that button opening nothing.
     assert_eq!(body["remote_access"]["desktop"], true);
     assert_eq!(body["remote_access"]["stream"], false);
+    assert_eq!(body["remote_access"]["rdp"], false);
     assert_eq!(body["remote_access"]["full_access"], false);
 }
 

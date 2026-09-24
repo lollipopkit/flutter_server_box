@@ -900,21 +900,21 @@ struct RemoteAccessView {
     /// when the socket opens — a route list is a list, and what a route is
     /// worth is decided by the relay.
     desktop: bool,
-    /// Whether `/api/v1/rdp/ws` answers this agent at all, which is what an RDP
-    /// session needs.
+    /// Whether `/api/v1/rdp/ws` will carry an RDP session for this caller.
     ///
     /// Its own field for [`Self::stream`]'s reason: an agent older than the
-    /// endpoint answers `full_access` and would 404 the upgrade.
+    /// endpoint answers `full_access` and would 404 the upgrade. It is the same
+    /// grant as `stream` — this endpoint dials as the agent's account, so anyone
+    /// who could open a shell could tunnel RDP from it — and it is reported the
+    /// same way, as *will answer* rather than as *is served*, because a client
+    /// gates a button on it. [`Self::desktop`] is the one that says the route
+    /// list exists.
     ///
     /// Separate from [`Self::stream`] because the two are different endpoints
     /// with different capabilities: this one terminates the TLS session to the
     /// RDP server and hands the operator a plaintext stream, while `stream` is a
     /// byte relay that understands nothing. An agent may answer one and not the
     /// other. VNC needs only `stream`.
-    ///
-    /// `true` for [`Self::cron`]'s reason: this says the endpoint is served, not
-    /// that the caller qualifies. The grant is `full_access`, checked again when
-    /// the request PDU arrives.
     rdp: bool,
 }
 
@@ -961,7 +961,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             services: true,
             users: true,
             desktop: true,
-            rdp: true,
+            rdp: app_state.full_access_allowed(secure),
         },
     }))
 }

@@ -16,6 +16,8 @@
     "typesafe-i18n": "typesafe-i18n --no-watch"
   },
   "dependencies": {
+    "@devolutions/iron-remote-desktop": "^0.11.0",
+    "@devolutions/iron-remote-desktop-rdp": "^0.7.0",
     "@lucide/svelte": "^1.45.0",
     "@novnc/novnc": "^1.7.0",
     "@serverbox/webui": "file:../../packages/webui",

@@ -1764,13 +1764,42 @@ type RootTranslation = {
 	 */
 	desktopUnreachable: string
 	/**
-	 * T​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​r​e​l​a​y​ ​c​o​n​n​e​c​t​i​o​n​s​,​ ​s​o​ ​a​ ​s​e​s​s​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​r​o​u​t​e​s​ ​c​a​n​ ​s​t​i​l​l​ ​b​e​ ​e​d​i​t​e​d​.
+	 * T​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​r​e​l​a​y​ ​c​o​n​n​e​c​t​i​o​n​s​,​ ​s​o​ ​n​o​ ​s​e​s​s​i​o​n​ ​c​a​n​ ​b​e​ ​o​p​e​n​e​d​ ​f​r​o​m​ ​h​e​r​e​.​ ​T​h​e​ ​r​o​u​t​e​s​ ​c​a​n​ ​s​t​i​l​l​ ​b​e​ ​e​d​i​t​e​d​.
 	 */
-	desktopNoStream: string
+	desktopNoRelay: string
 	/**
-	 * R​D​P​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​ ​f​r​o​m​ ​t​h​i​s​ ​p​a​n​e​l​ ​y​e​t​.​ ​T​h​e​ ​r​o​u​t​e​ ​i​s​ ​s​a​v​e​d​,​ ​a​n​d​ ​t​h​e​ ​a​p​p​ ​c​a​n​ ​o​p​e​n​ ​i​t​.
+	 * T​h​i​s​ ​a​g​e​n​t​ ​d​o​e​s​ ​n​o​t​ ​s​e​r​v​e​ ​{​p​r​o​t​o​c​o​l​}​ ​s​e​s​s​i​o​n​s​,​ ​s​o​ ​t​h​i​s​ ​r​o​u​t​e​ ​c​a​n​n​o​t​ ​b​e​ ​o​p​e​n​e​d​ ​f​r​o​m​ ​h​e​r​e​.
+	 * @param {unknown} protocol
 	 */
-	desktopRdpUnsupported: string
+	desktopNoRelayProtocol: RequiredParams<'protocol'>
+	/**
+	 * A​n​ ​R​D​P​ ​s​e​s​s​i​o​n​ ​s​i​g​n​s​ ​i​n​,​ ​s​o​ ​t​h​i​s​ ​r​o​u​t​e​ ​n​e​e​d​s​ ​a​ ​u​s​e​r​ ​n​a​m​e​ ​b​e​f​o​r​e​ ​i​t​ ​c​a​n​ ​b​e​ ​o​p​e​n​e​d​.
+	 */
+	desktopRdpUsername: string
+	/**
+	 * T​h​e​ ​b​r​o​w​s​e​r​ ​c​o​u​l​d​ ​n​o​t​ ​o​p​e​n​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​R​D​P​ ​e​n​d​p​o​i​n​t​.​ ​C​h​e​c​k​ ​t​h​a​t​ ​t​h​e​ ​a​g​e​n​t​ ​i​s​ ​r​e​a​c​h​a​b​l​e​ ​f​r​o​m​ ​h​e​r​e​ ​a​n​d​ ​t​h​a​t​ ​i​t​ ​a​l​l​o​w​s​ ​t​h​i​s​ ​p​a​n​e​l​'​s​ ​o​r​i​g​i​n​.
+	 */
+	desktopRdpProxy: string
+	/**
+	 * T​h​e​ ​d​e​s​k​t​o​p​ ​w​o​u​l​d​ ​n​o​t​ ​a​c​c​e​p​t​ ​t​h​e​ ​s​e​c​u​r​i​t​y​ ​o​f​ ​t​h​e​ ​s​e​s​s​i​o​n​.
+	 */
+	desktopRdpNegotiation: string
+	/**
+	 * T​h​e​ ​d​e​s​k​t​o​p​ ​r​e​j​e​c​t​e​d​ ​t​h​e​ ​c​r​e​d​e​n​t​i​a​l​s​.
+	 */
+	desktopRdpCredentials: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​r​e​f​u​s​e​d​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​r​e​q​u​e​s​t​.
+	 */
+	desktopRdpRefused: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​c​h​ ​t​h​e​ ​d​e​s​k​t​o​p​,​ ​o​r​ ​c​o​u​l​d​ ​n​o​t​ ​s​e​c​u​r​e​ ​t​h​e​ ​c​o​n​n​e​c​t​i​o​n​ ​t​o​ ​i​t​.
+	 */
+	desktopRdpUnreachable: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​t​e​r​m​i​n​a​t​e​s​ ​T​L​S​ ​a​n​d​ ​r​e​l​a​y​s​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​i​n​ ​t​h​e​ ​c​l​e​a​r​,​ ​s​o​ ​i​t​ ​h​o​l​d​s​ ​t​h​e​ ​c​r​e​d​e​n​t​i​a​l​s​ ​y​o​u​ ​t​y​p​e​ ​f​o​r​ ​a​s​ ​l​o​n​g​ ​a​s​ ​t​h​e​ ​s​e​s​s​i​o​n​ ​l​a​s​t​s​.
+	 */
+	desktopRdpPlaintext: string
 	/**
 	 * S​a​v​e​d​ ​{​n​a​m​e​}​.
 	 * @param {unknown} name
@@ -3509,13 +3538,41 @@ export type TranslationFunctions = {
 	 */
 	desktopUnreachable: () => LocalizedString
 	/**
-	 * This agent does not relay connections, so a session cannot be opened from here. The routes can still be edited.
+	 * This agent does not relay connections, so no session can be opened from here. The routes can still be edited.
 	 */
-	desktopNoStream: () => LocalizedString
+	desktopNoRelay: () => LocalizedString
 	/**
-	 * RDP cannot be opened from this panel yet. The route is saved, and the app can open it.
+	 * This agent does not serve {protocol} sessions, so this route cannot be opened from here.
 	 */
-	desktopRdpUnsupported: () => LocalizedString
+	desktopNoRelayProtocol: (arg: { protocol: unknown }) => LocalizedString
+	/**
+	 * An RDP session signs in, so this route needs a user name before it can be opened.
+	 */
+	desktopRdpUsername: () => LocalizedString
+	/**
+	 * The browser could not open this agent's RDP endpoint. Check that the agent is reachable from here and that it allows this panel's origin.
+	 */
+	desktopRdpProxy: () => LocalizedString
+	/**
+	 * The desktop would not accept the security of the session.
+	 */
+	desktopRdpNegotiation: () => LocalizedString
+	/**
+	 * The desktop rejected the credentials.
+	 */
+	desktopRdpCredentials: () => LocalizedString
+	/**
+	 * This agent refused the session request.
+	 */
+	desktopRdpRefused: () => LocalizedString
+	/**
+	 * This agent could not reach the desktop, or could not secure the connection to it.
+	 */
+	desktopRdpUnreachable: () => LocalizedString
+	/**
+	 * The agent terminates TLS and relays the session in the clear, so it holds the credentials you type for as long as the session lasts.
+	 */
+	desktopRdpPlaintext: () => LocalizedString
 	/**
 	 * Saved {name}.
 	 */

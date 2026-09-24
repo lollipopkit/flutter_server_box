@@ -88,6 +88,15 @@ const route: DesktopTarget = {
   shared: true,
 }
 
+/// The same desktop over the other protocol: RDP signs in, so a route of this
+/// one carries a user name.
+const rdpRoute: DesktopTarget = {
+  ...route,
+  protocol: 'rdp',
+  port: 3389,
+  username: 'administrator',
+}
+
 describe('agentWsUrl', () => {
   it('upgrades the scheme and keeps the host', () => {
     expect(agentWsUrl('https://agent.example.com:3770', '/api/v1/stream/ws')).toBe(
@@ -178,7 +187,7 @@ describe('DesktopSession', () => {
     expect(socket.url).toContain('/api/v1/stream/ws')
     expect(socket.protocols).toEqual(['sbm-ticket.id.secret'])
     expect(JSON.parse(socket.sent[0])).toEqual({ type: 'open', host: '10.0.0.7', port: 5900 })
-    expect(channel).toBe(socket)
+    expect(channel).toEqual({ protocol: 'vnc', socket })
   })
 
   it('answers only once the relay says the connection is up', async () => {
@@ -192,7 +201,7 @@ describe('DesktopSession', () => {
     expect(session.phase).toBe<DesktopPhase>('connecting')
 
     socket.control({ type: 'ready' })
-    expect(await connecting).toBe(socket)
+    expect(await connecting).toEqual({ protocol: 'vnc', socket })
     expect(session.phase).toBe('connected')
   })
 
@@ -256,5 +265,60 @@ describe('DesktopSession', () => {
     expect(socket.onmessage).toBeNull()
     expect(socket.onclose).toBeNull()
     expect(socket.closed).toBe(true)
+  })
+
+  it('opens no socket for RDP and hands over where the client must point itself', async () => {
+    const session = new DesktopSession()
+    const channel = await session.connect(rdpRoute)
+
+    // The only socket an RDP session has is the one its own client opens: the
+    // ticket travels inside the first PDU it writes, so a connection this store
+    // opened first would carry no proof of anything.
+    expect(FakeSocket.instances.length).toBe(0)
+    expect(channel?.protocol).toBe('rdp')
+    const endpoint = channel?.protocol === 'rdp' ? channel.endpoint : null
+    // The whole address, path included, because the client opens its socket
+    // with this string as it is given.
+    expect(endpoint?.proxyUrl).toBe(agentWsUrl('', '/api/v1/rdp/ws'))
+    expect(endpoint?.proxyUrl).toContain('/api/v1/rdp/ws')
+  })
+
+  it('mints the RDP ticket when the client asks for it, not when the route is opened', async () => {
+    const session = new DesktopSession()
+    const channel = await session.connect(rdpRoute)
+    const endpoint = channel?.protocol === 'rdp' ? channel.endpoint : null
+
+    // The reason it is a call and not a value: between opening the route and
+    // the first PDU the client writes there are megabytes of wasm to fetch, and
+    // a ticket minted on the near side of that is spent before its socket
+    // exists. Nothing has been asked for yet at this point.
+    expect(ticketMock).not.toHaveBeenCalled()
+    expect(FakeSocket.instances.length).toBe(0)
+
+    expect(await endpoint?.ticket()).toBe('id.secret')
+    expect(ticketMock).toHaveBeenCalledWith('rdp')
+  })
+
+  it('stays connecting until the RDP client says the session is up', async () => {
+    const session = new DesktopSession()
+    await session.connect(rdpRoute)
+
+    // Handing the endpoint over is not the session coming up — the client has
+    // everything left to do at that point, and reporting `connected` here would
+    // put the page's spinner behind the session instead of in front of it.
+    expect(session.phase).toBe<DesktopPhase>('connecting')
+    session.markConnected()
+    expect(session.phase).toBe('connected')
+  })
+
+  it('does not move a session that has already ended back to connected', async () => {
+    const session = new DesktopSession()
+    await session.connect(rdpRoute)
+    session.close()
+
+    // The viewer's teardown and a client's own shutdown can both land after the
+    // page has ended the session, and neither is news.
+    session.markConnected()
+    expect(session.phase).toBe('idle')
   })
 })

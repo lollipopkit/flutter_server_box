@@ -7,10 +7,11 @@
   } from '../components/DesktopForm.svelte'
   import FeatureTabs from '../components/FeatureTabs.svelte'
   import PageHeader from '../components/PageHeader.svelte'
+  import RdpViewer from '../components/RdpViewer.svelte'
   import VncViewer from '../components/VncViewer.svelte'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
-  import { DesktopSession } from '../lib/desktop.svelte'
+  import { DesktopSession, type DesktopChannel } from '../lib/desktop.svelte'
   import { desktopRefusalText } from '../lib/desktopRefusal'
   import { servers } from '../lib/servers.svelte'
   import { untrack } from 'svelte'
@@ -41,10 +42,11 @@
   let formState = $state<DesktopFormState>(desktopFormState())
   let removing = $state(false)
   /// The route a session is being opened on, the password typed for it, and the
-  /// socket once the relay has accepted the connection.
+  /// channel once the agent has answered for it — a socket for VNC, an address
+  /// for RDP.
   let pending = $state<DesktopTarget | null>(null)
   let password = $state('')
-  let socket = $state<WebSocket | null>(null)
+  let channel = $state<DesktopChannel | null>(null)
   /// The route the live session is on, and the password typed for it. Both
   /// exist only while a session does: the route because the viewer needs what
   /// it was opened with, the password because noVNC is handed it once at
@@ -153,17 +155,20 @@
     pending = null
     busy = true
     actionError = ''
-    const channel = await session.connect(route)
+    const answered = await session.connect(route)
     busy = false
-    if (!channel) {
+    if (!answered) {
       // The store holds what the agent said, which is the only thing that
-      // distinguishes "the relay is off" from "the desktop refused".
+      // distinguishes "the relay is off" from "the desktop refused". Only a VNC
+      // session can fail here: it is the one whose socket this store opens, and
+      // an RDP session dials itself, so everything it can fail on — the ticket
+      // included — is reported by its viewer instead.
       actionError = session.error ?? $LL.desktopUnreachable()
       password = ''
       return
     }
     opened = null
-    socket = channel
+    channel = answered
     sessionRoute = route
     sessionPassword = password
     password = ''
@@ -176,7 +181,7 @@
   /// attempt, and re-picking it from the list is a step that decides nothing.
   /// Ending it deliberately clears it, because there is nothing left to retry.
   function endSession(message: string | null, leave = false) {
-    socket = null
+    channel = null
     sessionPassword = ''
     session.close()
     if (leave) {
@@ -189,19 +194,37 @@
   }
 
   const routes = $derived(view?.targets ?? [])
-  /// Whether a session may be opened at all. `remote_access.desktop` says this
-  /// agent serves a route list, which is a different question from whether it
-  /// will relay a connection — the route list is editable either way.
-  const canRelay = $derived(
-    capabilitiesStore.byServer[servers.currentId]?.remote_access?.stream === true,
-  )
+  /// What this agent will open a session on. `remote_access.desktop` says it
+  /// serves a route list, which is a different question from whether it will
+  /// relay a connection — the route list is editable either way. Two flags
+  /// rather than one because the two endpoints are separate: the relay carries
+  /// VNC and understands nothing, while the RDP endpoint terminates the session
+  /// with the desktop itself, and an agent may serve one and not the other.
+  const caps = $derived(capabilitiesStore.byServer[servers.currentId]?.remote_access)
+  /// Whether either is open, which is what the page's own note is about. A
+  /// single route is a narrower question and is answered beside its button.
+  const canRelay = $derived(caps?.stream === true || caps?.rdp === true)
+
+  /// Why this route cannot be opened from here, or `null` when it can. A
+  /// protocol the agent does not serve is the agent's answer; a missing user
+  /// name is the route's own, since an RDP session signs in and this panel has
+  /// nothing to sign in with.
+  function blockOf(route: DesktopTarget): string | null {
+    if (route.protocol === 'rdp') {
+      if (caps?.rdp !== true) return $LL.desktopNoRelayProtocol({ protocol: 'RDP' })
+      if (!route.username) return $LL.desktopRdpUsername()
+      return null
+    }
+    if (caps?.stream !== true) return $LL.desktopNoRelayProtocol({ protocol: 'VNC' })
+    return null
+  }
 
   function subtitle(): string | undefined {
     return $LL.desktopSubtitle({ count: routes.length })
   }
 </script>
 
-{#if socket && sessionRoute}
+{#if channel && sessionRoute}
   <!-- The session owns the screen while it is up: a desktop drawn beside a list
        of routes is a desktop drawn in the space left over. Leaving by the back
        chevron closes it the same way the button does — a socket left open is a
@@ -224,13 +247,27 @@
         <p class="text-sm text-danger">{actionError}</p>
       </Card>
     {/if}
-    <VncViewer
-      {socket}
-      password={sessionPassword}
-      viewOnly={sessionRoute.view_only}
-      shared={sessionRoute.shared}
-      onend={endSession}
-    />
+    <!-- One client or the other, never both: which the agent answered with is
+         the protocol the route speaks. The two are not interchangeable in
+         shape either — the VNC client is handed a socket this page already
+         accepted, and the RDP client is handed an address to dial. -->
+    {#if channel.protocol === 'vnc'}
+      <VncViewer
+        socket={channel.socket}
+        password={sessionPassword}
+        viewOnly={sessionRoute.view_only}
+        shared={sessionRoute.shared}
+        onend={endSession}
+      />
+    {:else}
+      <RdpViewer
+        endpoint={channel.endpoint}
+        target={sessionRoute}
+        password={sessionPassword}
+        onconnect={() => session.markConnected()}
+        onend={endSession}
+      />
+    {/if}
   </main>
 {:else}
   <PageHeader
@@ -288,7 +325,7 @@
         <!-- The routes are this agent's and are editable without the relay; what
              is missing is the connection, which is a wider grant. -->
         <Card>
-          <p class="text-sm text-muted-fg">{$LL.desktopNoStream()}</p>
+          <p class="text-sm text-muted-fg">{$LL.desktopNoRelay()}</p>
         </Card>
       {/if}
 
@@ -335,7 +372,7 @@
 <!-- One route: what the agent has saved, and the three things that may be done
      with it. Its own dialog rather than buttons on the row, so a write is always
      taken with the route on screen. -->
-{#if opened && editing === undefined && !socket}
+{#if opened && editing === undefined && !channel}
   <Modal open title={opened.name} onclose={() => (opened = null)}>
     <div class="space-y-4">
       <div class="flex flex-wrap items-center gap-2">
@@ -372,15 +409,14 @@
         </Card>
       {:else}
         <div class="flex flex-wrap items-center gap-2">
-          <!-- Only a route this build has a client for. RDP is one the agent
-               relays and this panel cannot draw, and saying so here is better
-               than a button that opens nothing. -->
-          {#if opened.protocol === 'vnc'}
-            <Button disabled={!canRelay || busy} onclick={() => (pending = opened!)}>
-              <MonitorPlay class="w-4 h-4" />
-              {$LL.desktopConnect()}
-            </Button>
-          {/if}
+          <!-- Disabled where the agent will not carry this protocol or the
+               route cannot sign in, with the reason drawn under the buttons:
+               a control that opens nothing and says nothing is worse than one
+               that says why. -->
+          <Button disabled={blockOf(opened) !== null || busy} onclick={() => (pending = opened!)}>
+            <MonitorPlay class="w-4 h-4" />
+            {$LL.desktopConnect()}
+          </Button>
           <Button variant="secondary" onclick={() => openForm(opened!)}>
             <Pencil class="w-4 h-4" />
             {$LL.desktopEdit()}
@@ -390,8 +426,8 @@
             {$LL.desktopDelete()}
           </Button>
         </div>
-        {#if opened.protocol === 'rdp'}
-          <p class="text-xs text-muted-fg">{$LL.desktopRdpUnsupported()}</p>
+        {#if blockOf(opened)}
+          <p class="text-xs text-muted-fg">{blockOf(opened)}</p>
         {/if}
       {/if}
     </div>

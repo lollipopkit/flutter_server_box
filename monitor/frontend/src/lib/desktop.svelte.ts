@@ -1,27 +1,37 @@
-/// One remote desktop session: the relay connection the panel opens onto a
-/// saved route, and what it is doing.
+/// One remote desktop session: the part of it the agent answers for, and what
+/// it is doing.
 ///
 /// This is the counterpart of `terminal.svelte.ts`, and deliberately much
 /// smaller. The terminal *is* the client — the agent gives it a PTY and the
 /// panel renders the bytes — so its store owns a protocol, a renderer and a
 /// reconnect policy. A desktop is not: VNC and RDP are protocols with clients
-/// of their own, and the agent understands neither. So what is owned here is
-/// only the part that is the agent's: minting the ticket, opening
-/// `/api/v1/stream/ws`, asking it to dial the route and waiting for it to say
-/// the connection is up. The socket is then handed to the protocol client,
-/// which takes over its handlers and speaks for itself from that point on.
+/// of their own, and the agent understands neither. What is owned here is only
+/// the ticket and the endpoint, and then the two protocols part company,
+/// because the two agent endpoints are not the same shape:
 ///
-/// The order matters and is the whole reason this is a module rather than four
-/// lines in the page: the relay accepts binary bytes only once it has answered
-/// `ready`, and refuses them with `No connection is open` before that — while a
-/// VNC client writes its version string the instant it is attached. So the
-/// socket is opened here, the request sent, `ready` awaited, and only then is
-/// the socket given out.
+/// - **VNC** goes through `/api/v1/stream/ws`, which is one relay for any
+///   protocol and authenticates on the upgrade. The order matters and is the
+///   whole reason this is a module rather than four lines in the page: the
+///   relay accepts binary bytes only once it has answered `ready`, and refuses
+///   them with `No connection is open` before that — while a VNC client writes
+///   its version string the instant it is attached. So the socket is opened
+///   here, the request sent, `ready` awaited, and only then is the socket given
+///   out, already accepted, for the client to attach to.
+/// - **RDP** goes through `/api/v1/rdp/ws`, which is an RDCleanPath proxy and
+///   authenticates inside the first PDU its client writes. So there is nothing
+///   here to open or to accept: what this store produces is where the client
+///   must point itself and how to get the ticket it must carry, and the client
+///   dials itself. `markConnected` is then how it says the session is up, which
+///   an endpoint that hands over no socket has no other way of reporting.
 
 import { servers } from './servers.svelte'
 import { agentWsUrl, wsTicketProtocol } from './agentWs'
 import { api } from './api'
-import type { DesktopTarget } from '../types'
+import type { DesktopTarget, WsTicketPurpose } from '../types'
+
+/// The agent's RDCleanPath endpoint. Reached over a WebSocket, but not as a
+/// relay: an RDP client speaks its own protocol on it.
+const RDP_PATH = '/api/v1/rdp/ws'
 
 /// Where a session is in its life. `failed` is a state with an `error` beside
 /// it rather than a thrown exception: the page draws it, and the operator's
@@ -50,6 +60,33 @@ export function relayOpenMessage(host: string, port: number): string {
   return JSON.stringify({ type: 'open', host, port })
 }
 
+/// Where an RDP client must point itself, and how to get what it must carry
+/// there.
+export interface RdpEndpoint {
+  /// The agent's RDCleanPath endpoint, as a WebSocket URL — the whole address,
+  /// path included, because the client opens the socket with it as given.
+  proxyUrl: string
+  /// Mints the ticket to carry there, called when the client is ready to dial.
+  ///
+  /// A function rather than a value because a ticket is single-use and good for
+  /// about thirty seconds, and an RDP client has several megabytes of wasm to
+  /// fetch and initialize before it can write anything. Minting at the moment
+  /// the route is opened spends that window on the download, and a session on a
+  /// slow link is then refused for a ticket that was never used. The ticket is
+  /// the one thing this store's two protocols do not share: an RDP client sends
+  /// it inside its first PDU (`proxy_auth`) rather than offering it as a
+  /// subprotocol, which is why it cannot be a bearer on the upgrade and why the
+  /// endpoint gives a socket with no ticket a deadline instead of keeping it.
+  ticket: () => Promise<string>
+}
+
+/// What `connect` answers with: the agent's half of a session, in whichever
+/// shape the protocol that route speaks needs. `vnc` hands over a socket and
+/// `rdp` hands over an address, and the page draws a different client for each.
+export type DesktopChannel =
+  | { protocol: 'vnc'; socket: WebSocket }
+  | { protocol: 'rdp'; endpoint: RdpEndpoint }
+
 export class DesktopSession {
   phase = $state<DesktopPhase>('idle')
   /// What went wrong, in the operator's words. The agent's own message where it
@@ -63,16 +100,16 @@ export class DesktopSession {
   private socket: WebSocket | null = null
   private generation = 0
   /// Answers the `connect` still waiting, if there is one.
-  private settle: ((value: WebSocket | null) => void) | null = null
+  private settle: ((value: DesktopChannel | null) => void) | null = null
 
-  /// Opens a relay connection to `route` and answers with a socket that the
-  /// relay has accepted, or `null` with `phase = 'failed'` and `error` set.
+  /// Prepares a session on `route` and answers with what the protocol client
+  /// needs, or `null` with `phase = 'failed'` and `error` set.
   ///
-  /// The caller hands the socket to a protocol client and listens to *that* for
-  /// the session ending: from the moment it is attached, the socket's handlers
-  /// are the client's, and a second listener here would be a second opinion
-  /// about the same connection.
-  async connect(route: DesktopTarget): Promise<WebSocket | null> {
+  /// The caller hands the result to a protocol client and listens to *that* for
+  /// the session ending: a VNC client takes the socket's handlers from the
+  /// moment it is attached and noVNC ends the session on its own, and an RDP
+  /// client owns the connection it dialled.
+  async connect(route: DesktopTarget): Promise<DesktopChannel | null> {
     this.close()
     const entry = servers.current
     if (!entry) {
@@ -88,16 +125,28 @@ export class DesktopSession {
     // page may end the session while the ticket is being minted or the socket
     // is being dialled, and a promise nothing settles is a caller that never
     // returns — with its busy flag still set and nothing on screen to say why.
-    const answered = new Promise<WebSocket | null>((resolve) => (this.settle = resolve))
+    const answered = new Promise<DesktopChannel | null>((resolve) => (this.settle = resolve))
+
+    if (route.protocol === 'rdp') {
+      // Nothing is dialled here and no ticket is minted here. The ticket travels
+      // in the first PDU the client writes, so the socket it opens carries no
+      // proof of anything until that PDU arrives, and a socket this store opened
+      // and held would be a connection it could do nothing with. The client
+      // opens its own — and it mints its own, because between here and that PDU
+      // it has megabytes of wasm to fetch.
+      this.answer({
+        protocol: 'rdp',
+        endpoint: {
+          proxyUrl: agentWsUrl(entry.url, RDP_PATH),
+          ticket: () => this.mint('rdp'),
+        },
+      })
+      return answered
+    }
 
     let ticket: string
     try {
-      // Minted per session, not per route: it is single-use and good for about
-      // thirty seconds, and the agent refuses to mint one at all when the relay
-      // is off — which is why a failure here is the panel's answer for "this
-      // agent will not relay", and is reported as such rather than as a
-      // connect failure.
-      ticket = (await api.issueWsTicket('stream')).ticket
+      ticket = await this.mint('stream')
     } catch (e) {
       this.fail(messageOf(e))
       return answered
@@ -124,7 +173,7 @@ export class DesktopSession {
         // replaces these handlers with its own, which is why they are not
         // cleared — there is nothing of this store's left for them to reach.
         this.phase = 'connected'
-        this.answer(socket)
+        this.answer({ protocol: 'vnc', socket })
       } else if (control?.type === 'error') {
         this.fail(control.message || control.code)
       }
@@ -159,6 +208,29 @@ export class DesktopSession {
     this.answer(null)
   }
 
+  /// Asks the agent for a ticket to one of its session endpoints.
+  ///
+  /// Per session, never stored: it is single-use, good for about thirty seconds,
+  /// and the agent refuses to mint one at all when the grant behind the endpoint
+  /// is off — which is why a caller reports a failure here as the panel's answer
+  /// for "this agent will not relay it", rather than as a connect failure. The
+  /// purpose is what pins it to an endpoint: a stream ticket is refused by the
+  /// RDP endpoint and the other way round.
+  private async mint(purpose: WsTicketPurpose): Promise<string> {
+    return (await api.issueWsTicket(purpose)).ticket
+  }
+
+  /// Records that the protocol client has the session up.
+  ///
+  /// Called by the viewer, and only for a protocol whose client is the one that
+  /// dialled: an RDP client opens its own socket, so this store has no moment
+  /// of its own at which it could know, and the alternative — reporting
+  /// `connected` as the endpoint is handed over — would put the page's
+  /// connecting spinner behind the session instead of in front of it.
+  markConnected() {
+    if (this.phase === 'connecting') this.phase = 'connected'
+  }
+
   private fail(message: string) {
     const socket = this.socket
     this.socket = null
@@ -177,7 +249,7 @@ export class DesktopSession {
   /// Settles the `connect` that is waiting, once. A later answer is ignored
   /// rather than reported: the first one is the outcome of the attempt, and a
   /// second is the same attempt being torn down.
-  private answer(value: WebSocket | null) {
+  private answer(value: DesktopChannel | null) {
     const settle = this.settle
     this.settle = null
     settle?.(value)

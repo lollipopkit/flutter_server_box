@@ -158,6 +158,15 @@ export interface RemoteAccess {
   /// field, because an agent older than the relay answers `full_access` and
   /// would still refuse the upgrade. Absent means no.
   stream?: boolean
+  /// Whether `/api/v1/rdp/ws` answers this agent at all, which is what opening
+  /// an RDP route needs.
+  ///
+  /// Its own field on the agent's side for the same reason as `stream`, and
+  /// separate from it because the two endpoints are separate: `stream` relays
+  /// bytes and understands nothing, while the RDP endpoint terminates the TLS
+  /// session with the RDP server and hands the operator a plaintext stream. An
+  /// agent may serve one and not the other. VNC needs `stream` alone.
+  rdp?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -257,7 +266,7 @@ export interface PowerResult {
 /// What a single-use ticket authorises. One purpose per endpoint it can be
 /// spent on, and the agent refuses a ticket at the wrong one — a ticket is
 /// minted only when the endpoint it names is available to this caller.
-export type WsTicketPurpose = 'terminal' | 'stream'
+export type WsTicketPurpose = 'terminal' | 'stream' | 'rdp'
 
 export interface WsTicketResponse {
   ticket: string

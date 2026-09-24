@@ -296,7 +296,8 @@ the panel password can't switch it on); shared admission checks live in
     differs from `/push`, whose credentials are write-only. The listing is
     therefore readable by any panel login, and `remote_access.desktop` reports
     that this endpoint is *served*; opening a session is `remote_access.stream`
-    (the `/api/v1/stream/ws` relay) and is checked again at the socket.
+    (the `/api/v1/stream/ws` relay) or `remote_access.rdp`, one per protocol,
+    each checked again at the socket.
   - A `PUT` replaces the whole set, because the order is part of what is stored
     and there is no smaller expression for a move. The protocols and their
     default ports come *from the agent* in the response, so a protocol a later
@@ -315,7 +316,47 @@ the panel password can't switch it on); shared admission checks live in
     while the relay stays shut.
   - Two ways to open a session, one per protocol, and the route's own `protocol`
     decides which the panel uses: VNC goes through `/api/v1/stream/ws` (a byte
-    relay, which is all VNC needs), RDP through `/api/v1/rdp/ws`.
+    relay, which is all VNC needs), RDP through `/api/v1/rdp/ws`. The panel's
+    two clients are separate components, because the two agent endpoints are not
+    the same shape: `VncViewer` is handed a socket the app has already opened
+    and seen accepted, while `RdpViewer` is handed an address — an RDP client
+    opens its own socket, since its ticket travels inside the first PDU it
+    writes, and a socket the app held open would carry no proof of anything.
+    `DesktopChannel` is that pair.
+    - `lib/desktop.svelte.ts` mints the ticket for whichever endpoint the route
+      needs. The two purposes are separately revocable and each endpoint refuses
+      the other's, so the purpose follows the protocol rather than the page.
+      **For RDP the ticket is a call (`RdpEndpoint.ticket()`) rather than a
+      value, and the viewer makes it when it is ready to dial** — a ticket is
+      single-use and good for about thirty seconds (`api/ws/ticket.rs`), and
+      between opening the route and the first PDU the client writes there is a
+      multi-megabyte wasm bundle to fetch, which on a slow link is longer than
+      that. Minted at the route, a session would be refused for a ticket nothing
+      ever used. So `connect()` for an RDP route answers without a network call,
+      and everything the session can be refused for — the ticket included —
+      reaches the page through the viewer's `onend`, in the agent's own words.
+      `markConnected()` exists for RDP alone: the endpoint being handed over is
+      not the session coming up, and only the client knows when it is.
+    - The RDP client is two packages, and the backend module has to be on the
+      element **before** it is attached — the compiled component reads that
+      property once, as it initializes. `types/ironrdp.d.ts` declares the
+      element, which neither package does. Both are loaded by dynamic
+      `import()`, so the ~6 MB wasm bundle is fetched by whoever opens an RDP
+      route and by nobody else.
+    - `IronErrorKind` is declared as an exported enum in the client's `.d.ts`
+      and absent from its bundle, so an import type-checks and throws at
+      runtime. `lib/rdpFailure.ts` restates the numbering, and
+      `tests/rdpFailure.test.ts` reads it back off the installed files — an
+      upstream renumbering fails the suite instead of phrasing every failure as
+      the one before it. The client's own error chain is appended under the
+      localized sentence, since it names what the kind cannot: which security
+      the desktop refused.
+    - Capability is asked **per route**, not once for the page:
+      `remote_access.stream` and `remote_access.rdp` are separate, an agent may
+      serve one and not the other, and a route whose protocol has no transport
+      is refused beside its own button rather than by a page-wide note. An RDP
+      route also needs a user name, which is a property of the route and not of
+      the agent.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",
@@ -371,8 +412,13 @@ the panel password can't switch it on); shared admission checks live in
   response in reply. The protocol exists because a page cannot do the TLS
   handshake RDP wants — it needs the server's certificate to bind the session's
   credentials to it, and an RDP server's is self-signed as a rule. Gate is
-  `full_access`, and `remote_access.rdp` reports that the endpoint is *served*
-  (VNC needs only the relay, so the two flags are separate).
+  `full_access`, and `remote_access.rdp` reports that the endpoint *will answer
+  this caller* — the same grant, reported the same way as `remote_access.stream`
+  and for the same reason, since a client gates a button on it. It is separate
+  from `stream` because the two endpoints can come apart (VNC needs only the
+  relay); it is not separate from `full_access` the way `desktop` is, because
+  `desktop` is about a route list existing and this is about a session being
+  possible.
   - **The agent terminates TLS and the operator's stream is plaintext in this
     process.** That is the protocol, not a shortcut: the client marks itself
     upgraded without doing TLS, so what crosses the socket is the RDP stream
