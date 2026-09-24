@@ -595,9 +595,20 @@ void main() {
 
     /// A rail beside an empty tab, on a page whose scaffold is [scaffold], with
     /// the theme's own rail colour [rail] and elevation where either is given.
-    Widget railOn(Color? scaffold, {Color? rail, double? elevation}) =>
+    ///
+    /// [shadow] is the scheme's shadow colour, and only a test that asks for
+    /// one moves it off the default — an opaque black.
+    Widget railOn(
+      Color? scaffold, {
+      Color? rail,
+      double? elevation,
+      Color? shadow,
+    }) =>
         MaterialApp(
       theme: ThemeData(
+        colorScheme: shadow == null
+            ? null
+            : ThemeData().colorScheme.copyWith(shadow: shadow),
         scaffoldBackgroundColor: scaffold,
         navigationRailTheme: NavigationRailThemeData(
           backgroundColor: rail,
@@ -631,9 +642,10 @@ void main() {
       required Color? scaffold,
       Color? rail,
       double? elevation,
+      Color? shadow,
     }) async {
       await tester.pumpWidget(
-        railOn(scaffold, rail: rail, elevation: elevation),
+        railOn(scaffold, rail: rail, elevation: elevation, shadow: shadow),
       );
       await tester.pump();
       if (!hover) return;
@@ -763,6 +775,24 @@ void main() {
         }
         expect(railOf(tester).color!.a, 0);
         expect(shadowOf(tester).a, 0);
+      }
+    });
+
+    testWidgets('fades a shadow the theme set translucent', (tester) async {
+      // The value above is the rail's, and it multiplies rather than replaces:
+      // a shadow the theme asked for at a quarter strength was painted whole
+      // once the rail was open, and `Colors.transparent` — which is a theme
+      // saying it wants none — was drawn from nothing.
+      for (final asked in [const Color(0x40000000), Colors.transparent]) {
+        await pointerOnRail(
+          tester,
+          hover: true,
+          scaffold: Colors.transparent,
+          shadow: asked,
+        );
+
+        expect(shadowOf(tester).a, moreOrLessEquals(asked.a, epsilon: 0.001));
+        expect(shadowOf(tester).withValues(alpha: 1), asked.withValues(alpha: 1));
       }
     });
 

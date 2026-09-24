@@ -249,7 +249,13 @@ class _AppNavRailState extends State<AppNavRail>
                 // opaque page hid it behind an opaque colour. Faded by the
                 // value everything else about the panel is, what is painted
                 // leaves with what is there.
-                shadowColor: shadow.withValues(alpha: open),
+                //
+                // Multiplied by the shadow's own alpha rather than set to the
+                // rail's: one the theme asked for at a quarter of the way up
+                // would have been painted whole by the time the rail was open,
+                // and one it asked not to have at all would have been drawn
+                // from nothing.
+                shadowColor: shadow.withValues(alpha: shadow.a * open),
                 surfaceTintColor: Colors.transparent,
                 // Whether the shadow is drawn at all, and how far it is cast.
                 // Read off the same value as the two above, so that nothing
