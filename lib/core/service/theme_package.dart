@@ -14,6 +14,7 @@ import 'package:flutter/services.dart'
 import 'package:server_box/core/service/theme_components.dart';
 import 'package:server_box/core/service/theme_palette.dart';
 import 'package:server_box/data/model/app/builtin_theme.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:toml/toml.dart';
@@ -45,6 +46,12 @@ final class ThemeSplash {
   Color resolve(ColorScheme scheme) =>
       ThemePalette.spec(color, scheme) ?? scheme.surface;
 }
+
+/// Where a package's icon files live: the directory once installed, and the
+/// prefix of their path inside an archive. One spelling for both, since a path
+/// in the archive is read back as a path on disk. The manifest table of the
+/// same name is a schema key and stays spelled out with the rest of them.
+const _iconsDir = 'icons';
 
 /// A versioned .fsbt resource bundle. Fonts and launcher icons are separate.
 final class ThemePackage {
@@ -129,7 +136,7 @@ final class ThemePackage {
   };
 
   String? iconPath(String key) => switch (iconFiles[key]) {
-    final String file => directory.joinPath('icons').joinPath(file),
+    final String file => directory.joinPath(_iconsDir).joinPath(file),
     _ => null,
   };
 
@@ -351,37 +358,18 @@ abstract final class ThemePackages {
 
   /// The icon keys a package may carry an image or a color for, and what the
   /// schema's `icons.images` and `icons.colors` offer as keys.
+  ///
+  /// Both halves come from their type: a tab's from [AppTab], a shared symbol's
+  /// from [ThemeNavIcon]. Written out as names, a tab added to the bar or a
+  /// symbol added to the themed icon set would be a key this refuses, which
+  /// reads as a package documenting something the app does not draw.
   @visibleForTesting
   static final iconKeys = <String>{
-    for (final tab in [
-      'server',
-      'ssh',
-      'file',
-      'snippet',
-      'agent',
-      'benchmark',
-      'remoteDesktop',
-    ]) ...['tab.$tab', 'tab.$tab.selected'],
-    for (final item in [
-      'more',
-      'settings',
-      'tune',
-      'privacy',
-      'agent',
-      'tabs',
-      'server',
-      'sort',
-      'terminal',
-      'folder',
-      'cloud',
-      'snippet',
-      'inbox',
-      'key',
-      'info',
-      'download',
-      'desktop',
-    ])
-      'nav.$item',
+    for (final tab in AppTab.values) ...[
+      tabIconKey(tab, selected: false),
+      tabIconKey(tab, selected: true),
+    ],
+    for (final icon in ThemeNavIcon.values) icon.iconKey,
   };
 
   static String get root => Paths.doc.joinPath('themes');
@@ -508,7 +496,7 @@ abstract final class ThemePackages {
     await for (final entry in folder.list(followLinks: false)) {
       final name = entry.uri.pathSegments.where((part) => part.isNotEmpty).last;
       if (name == 'manifest.toml') continue;
-      if (name == 'icons') {
+      if (name == _iconsDir) {
         if (entry is! Directory) {
           throw const FormatException('Invalid icons directory');
         }
@@ -522,7 +510,7 @@ abstract final class ThemePackages {
           if (icon is! File) {
             throw const FormatException('Invalid theme icon');
           }
-          await readFile(icon, 'icons/$iconName', _maxIconBytes);
+          await readFile(icon, '$_iconsDir/$iconName', _maxIconBytes);
           if (assets.length > _maxIcons + 2) {
             throw const FormatException('Too many theme assets');
           }
@@ -663,7 +651,7 @@ abstract final class ThemePackages {
     final iconBytes = <String, Uint8List>{};
     for (final entry in imageMap.entries) {
       final path = _iconAssetPath(entry.key, entry.value);
-      final name = path.substring('icons/'.length);
+      final name = path.substring('$_iconsDir/'.length);
       usedAssets.add(path);
       iconBytes[name] = path.endsWith('.svg')
           ? _svgAsset(assets, path, _maxIconBytes)
@@ -685,7 +673,7 @@ abstract final class ThemePackages {
       }
     }
     if (assets.keys.any(
-      (path) => path != 'icons/' && !usedAssets.contains(path),
+      (path) => path != '$_iconsDir/' && !usedAssets.contains(path),
     )) {
       throw const FormatException('Unexpected theme asset');
     }
@@ -712,7 +700,7 @@ abstract final class ThemePackages {
         ).writeAsBytes(backgroundBytes, flush: true);
       }
       if (iconBytes.isNotEmpty) {
-        final iconDir = Directory(staging.path.joinPath('icons'));
+        final iconDir = Directory(staging.path.joinPath(_iconsDir));
         await iconDir.create();
         for (final entry in iconBytes.entries) {
           await File(
@@ -795,6 +783,16 @@ abstract final class ThemePackages {
 
   static const _packagePrefix = 'package:';
 
+  /// The preset naming the theme this app's own appearance settings make up.
+  ///
+  /// It is not a package, so it has no installation id and no directory, and it
+  /// is the value `appThemePreset` held before packages existed — which is why
+  /// the spelling is this one. Every comparison against it goes through the
+  /// constant: a literal that stops matching the written value reads as "not
+  /// the custom theme", and the settings a user arranged would be replaced
+  /// without anything reporting it.
+  static const customPreset = 'custom';
+
   /// One installed theme by **installation id** — the digest of the package
   /// bytes, which is also its directory name.
   ///
@@ -830,7 +828,7 @@ abstract final class ThemePackages {
       // The manifest names keys and not files, so which format each icon is in
       // is a question for the directory. Both are asked for, in the order a
       // package would have been written either way.
-      final iconDir = directory.joinPath('icons');
+      final iconDir = directory.joinPath(_iconsDir);
       final iconFiles = <String, String>{};
       for (final key in carried) {
         final stem = key.replaceAll('.', '_');
@@ -1008,7 +1006,9 @@ abstract final class ThemePackages {
   /// behind. [select] alone overwrites every setting a custom theme is made of,
   /// so the snapshot has to come first.
   static void apply(ThemePackage theme, {String? preset}) {
-    if (Stores.setting.appThemePreset.fetch() == 'custom') saveCustomTheme();
+    if (Stores.setting.appThemePreset.fetch() == customPreset) {
+      saveCustomTheme();
+    }
     select(theme, preset: preset ?? presetOf(theme.installationId));
   }
 
@@ -1043,12 +1043,12 @@ abstract final class ThemePackages {
       _selectDefaultFallback();
     }
     final background = Stores.setting.appBackgroundPath.fetch();
-    if (preset == 'custom' &&
+    if (preset == customPreset &&
         (Stores.setting.appBackgroundStyle.fetch() != BackgroundStyle.image ||
             background.isEmpty ||
             !File(background).existsSync())) {
       _selectDefaultFallback();
-    } else if (preset == 'custom') {
+    } else if (preset == customPreset) {
       Stores.setting.appThemePackage.put('');
       Stores.setting.appThemePaletteEnabled.put(false);
     }
@@ -1242,7 +1242,7 @@ abstract final class ThemePackages {
   /// key, so the manifest cannot point at a file that is some other icon.
   static String _iconAssetPath(String key, Object? value) {
     final stem = key.replaceAll('.', '_');
-    if (value != 'icons/$stem.png' && value != 'icons/$stem.svg') {
+    if (value != '$_iconsDir/$stem.png' && value != '$_iconsDir/$stem.svg') {
       throw const FormatException('Invalid icon path');
     }
     return value as String;
@@ -1324,7 +1324,7 @@ abstract final class ThemePackages {
       for (final header in zip.fileHeaders) {
         final path = header.filename;
         final file = header.file;
-        if (path == 'icons/' &&
+        if (path == '$_iconsDir/' &&
             !assets.containsKey(path) &&
             header.uncompressedSize == 0 &&
             header.compressedSize == 0 &&
@@ -1340,7 +1340,7 @@ abstract final class ThemePackages {
         }
         final max = path == 'manifest.toml'
             ? _maxManifestBytes
-            : path.startsWith('icons/')
+            : path.startsWith('$_iconsDir/')
             ? _maxIconBytes
             : path.startsWith('splash_logo.')
             ? _maxSplashLogoBytes

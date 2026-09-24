@@ -1,5 +1,11 @@
 part of '../entry.dart';
 
+/// Where an install takes its package from.
+///
+/// A folder is a directory on this device, which only a desktop can pick, so it
+/// is offered behind a platform test rather than refused afterwards.
+enum _ThemeInstallSource { file, folder, url }
+
 extension _App on _AppSettingsPageState {
   void _showInvalidDialog() {
     context.showRoundDialog(title: libL10n.fail, child: Text(libL10n.invalid));
@@ -38,7 +44,7 @@ extension _App on _AppSettingsPageState {
       // No longer debug-only: it has a default now, and a catalog a user
       // cannot repoint is one for a single publisher.
       _buildThemeStoreUrl(),
-      if (_setting.appThemePreset.fetch() == 'custom') ...[
+      if (_setting.appThemePreset.fetch() == ThemePackages.customPreset) ...[
         _buildAppIcons(),
         _buildCorners(),
         _buildAppBackground(),
@@ -58,12 +64,12 @@ extension _App on _AppSettingsPageState {
   void _saveCustomTheme() => ThemePackages.saveCustomTheme();
 
   void _markCustomTheme() {
-    if (_setting.appThemePreset.fetch() != 'custom' ||
+    if (_setting.appThemePreset.fetch() != ThemePackages.customPreset ||
         _setting.appBackgroundStyle.fetch() != BackgroundStyle.image ||
         _setting.appBackgroundPath.fetch().isEmpty) {
       return;
     }
-    _setting.appThemePreset.put('custom');
+    _setting.appThemePreset.put(ThemePackages.customPreset);
     _saveCustomTheme();
   }
 
@@ -95,7 +101,7 @@ extension _App on _AppSettingsPageState {
             try {
               final theme = value == original
                   ? null
-                  : value == 'custom'
+                  : value == ThemePackages.customPreset
                   ? _readCustomTheme()
                   : switch (ThemePackages.installationIdOf(value)) {
                       final installationId? => ThemePackages.installed(
@@ -122,13 +128,13 @@ extension _App on _AppSettingsPageState {
               rows: (ctx) => [
                 for (final value in [
                   ...BuiltinTheme.values.map((theme) => theme.id),
-                  'custom',
+                  ThemePackages.customPreset,
                   ...names.keys,
                 ])
                   SheetChoiceTile(
                     title:
                         BuiltinTheme.fromId(value)?.label ??
-                        (value == 'custom'
+                        (value == ThemePackages.customPreset
                             ? libL10n.custom
                             : names[value] ?? libL10n.invalid),
                     selected: value == original,
@@ -145,8 +151,8 @@ extension _App on _AppSettingsPageState {
             ThemePackages.preview.value = null;
           }
           if (!mounted || preset == null) return;
-          if (preset == 'custom') {
-            if (_setting.appThemePreset.fetch() != 'custom') {
+          if (preset == ThemePackages.customPreset) {
+            if (_setting.appThemePreset.fetch() != ThemePackages.customPreset) {
               await _restoreCustomTheme();
             }
             return;
@@ -187,43 +193,50 @@ extension _App on _AppSettingsPageState {
         ),
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () async {
-          final source = await context.showPickSingleDialog<String>(
+          final source = await context
+              .showPickSingleDialog<_ThemeInstallSource>(
             title: label,
-            items: ['file', if (isDesktop) 'folder', 'url'],
-            display: (value) => switch (value) {
-              'file' => libL10n.file,
-              'folder' => libL10n.folder,
-              _ => 'URL',
+            items: [
+              _ThemeInstallSource.file,
+              if (isDesktop) _ThemeInstallSource.folder,
+              _ThemeInstallSource.url,
+            ],
+            display: (source) => switch (source) {
+              _ThemeInstallSource.file => libL10n.file,
+              _ThemeInstallSource.folder => libL10n.folder,
+              _ThemeInstallSource.url => 'URL',
             },
           );
-          if (source == 'file') {
-            final picked = await FilePicker.pickFile(
-              type: FileType.custom,
-              allowedExtensions: ['fsbt'],
-            );
-            if (picked == null || !mounted) return;
-            if (await picked.length() > ThemePackages.maxPackageBytes) {
-              Toast.error(l10n.appearanceInvalidTheme);
-              return;
-            }
-            await _completeThemeInstall(
-              () async => ThemePackages.install(await picked.readAsBytes()),
-            );
-          } else if (source == 'folder') {
-            final folder = await FilePicker.getDirectoryPath(
-              dialogTitle: label,
-            );
-            if (folder == null || !mounted) return;
-            await _completeThemeInstall(
-              () => ThemePackages.installFolder(folder),
-            );
-          } else if (source == 'url') {
-            final url = await _promptAppText(
-              label,
-              hint: 'https://…/theme.fsbt',
-            );
-            if (url == null || url.isEmpty || !mounted) return;
-            await _completeThemeInstall(() => ThemePackages.installUrl(url));
+          if (source == null || !mounted) return;
+          switch (source) {
+            case _ThemeInstallSource.file:
+              final picked = await FilePicker.pickFile(
+                type: FileType.custom,
+                allowedExtensions: ['fsbt'],
+              );
+              if (picked == null || !mounted) return;
+              if (await picked.length() > ThemePackages.maxPackageBytes) {
+                Toast.error(l10n.appearanceInvalidTheme);
+                return;
+              }
+              await _completeThemeInstall(
+                () async => ThemePackages.install(await picked.readAsBytes()),
+              );
+            case _ThemeInstallSource.folder:
+              final folder = await FilePicker.getDirectoryPath(
+                dialogTitle: label,
+              );
+              if (folder == null || !mounted) return;
+              await _completeThemeInstall(
+                () => ThemePackages.installFolder(folder),
+              );
+            case _ThemeInstallSource.url:
+              final url = await _promptAppText(
+                label,
+                hint: 'https://…/theme.fsbt',
+              );
+              if (url == null || url.isEmpty || !mounted) return;
+              await _completeThemeInstall(() => ThemePackages.installUrl(url));
           }
         },
       ),
@@ -366,7 +379,9 @@ extension _App on _AppSettingsPageState {
     }
     return ThemePackage(
       installationId: '',
-      id: 'custom',
+      // The theme this app makes up is the one the preset names, so the two
+      // spellings are one value.
+      id: ThemePackages.customPreset,
       name: libL10n.custom,
       schemaMin: 1,
       schemaMax: 1,
@@ -394,7 +409,7 @@ extension _App on _AppSettingsPageState {
   Future<void> _restoreCustomTheme() async {
     try {
       final theme = _readCustomTheme();
-      _applyTheme(theme, preset: 'custom');
+      _applyTheme(theme, preset: ThemePackages.customPreset);
       _setting.appThemePaletteEnabled.put(false);
     } catch (_) {
       await _pickAppBackground();
@@ -713,7 +728,7 @@ extension _App on _AppSettingsPageState {
       _setting.appThemePaletteEnabled.put(false);
       _setting.appBackgroundPath.put(dest.path);
       _setting.appBackgroundStyle.put(BackgroundStyle.image);
-      _setting.appThemePreset.put('custom');
+      _setting.appThemePreset.put(ThemePackages.customPreset);
       _markCustomTheme();
       setStateSafe(() {});
       RNodes.app.notify();
@@ -952,7 +967,8 @@ extension _App on _AppSettingsPageState {
                         prop: _setting.useSystemPrimaryColor,
                         callback: (_) {
                           _setting.appThemePaletteEnabled.put(false);
-                          if (_setting.appThemePreset.fetch() == 'custom') {
+                          if (_setting.appThemePreset.fetch() ==
+                              ThemePackages.customPreset) {
                             _saveCustomTheme();
                           }
                           RNodes.app.notify();
@@ -993,7 +1009,9 @@ extension _App on _AppSettingsPageState {
     // Save the color seed to settings
     _setting.colorSeed.put(color.value255);
     _setting.appThemePaletteEnabled.put(false);
-    if (_setting.appThemePreset.fetch() == 'custom') _saveCustomTheme();
+    if (_setting.appThemePreset.fetch() == ThemePackages.customPreset) {
+      _saveCustomTheme();
+    }
 
     // Only update UIs colors if we're not in system mode
     if (!_setting.useSystemPrimaryColor.fetch()) {
@@ -1063,7 +1081,8 @@ extension _App on _AppSettingsPageState {
                 );
                 if (selected != null) {
                   _setting.themeMode.put(selected);
-                  if (_setting.appThemePreset.fetch() == 'custom') {
+                  if (_setting.appThemePreset.fetch() ==
+                      ThemePackages.customPreset) {
                     _saveCustomTheme();
                   }
                   RNodes.app.notify();

@@ -166,7 +166,7 @@ class _AppTabIcon extends StatelessWidget {
                       : Icons.desktop_windows_outlined,
               };
         return ThemeIconAsset(
-          keyName: 'tab.${tab.name}${selected ? '.selected' : ''}',
+          keyName: tabIconKey(tab, selected: selected),
           fallback: Icon(icon),
         );
       },

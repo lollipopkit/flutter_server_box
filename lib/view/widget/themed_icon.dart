@@ -73,25 +73,25 @@ class ThemedIcon extends StatelessWidget {
     Icons.desktop_windows_outlined: MingCute.computer_line,
   };
 
-  static final _keys = <IconData, String>{
-    Icons.more_horiz: 'nav.more',
-    Icons.settings_outlined: 'nav.settings',
-    Icons.settings: 'nav.settings',
-    Icons.tune: 'nav.tune',
-    Icons.privacy_tip_outlined: 'nav.privacy',
-    Icons.auto_awesome_outlined: 'nav.agent',
-    Icons.tab_outlined: 'nav.tabs',
-    Icons.dns_outlined: 'nav.server',
-    Icons.sort: 'nav.sort',
-    Icons.terminal: 'nav.terminal',
-    Icons.folder_outlined: 'nav.folder',
-    Icons.cloud_outlined: 'nav.cloud',
-    Icons.edit_note: 'nav.snippet',
-    Icons.inbox_outlined: 'nav.inbox',
-    Icons.key_outlined: 'nav.key',
-    Icons.info_outline: 'nav.info',
-    Icons.file_download_outlined: 'nav.download',
-    Icons.desktop_windows_outlined: 'nav.desktop',
+  static final _keys = <IconData, ThemeNavIcon>{
+    Icons.more_horiz: ThemeNavIcon.more,
+    Icons.settings_outlined: ThemeNavIcon.settings,
+    Icons.settings: ThemeNavIcon.settings,
+    Icons.tune: ThemeNavIcon.tune,
+    Icons.privacy_tip_outlined: ThemeNavIcon.privacy,
+    Icons.auto_awesome_outlined: ThemeNavIcon.agent,
+    Icons.tab_outlined: ThemeNavIcon.tabs,
+    Icons.dns_outlined: ThemeNavIcon.server,
+    Icons.sort: ThemeNavIcon.sort,
+    Icons.terminal: ThemeNavIcon.terminal,
+    Icons.folder_outlined: ThemeNavIcon.folder,
+    Icons.cloud_outlined: ThemeNavIcon.cloud,
+    Icons.edit_note: ThemeNavIcon.snippet,
+    Icons.inbox_outlined: ThemeNavIcon.inbox,
+    Icons.key_outlined: ThemeNavIcon.key,
+    Icons.info_outline: ThemeNavIcon.info,
+    Icons.file_download_outlined: ThemeNavIcon.download,
+    Icons.desktop_windows_outlined: ThemeNavIcon.desktop,
   };
 
   @override
@@ -109,7 +109,7 @@ class ThemedIcon extends StatelessWidget {
             ? (_mingcute[icon] ?? icon)
             : icon;
         final fallback = Icon(selected, size: size, color: color);
-        final key = _keys[icon];
+        final key = _keys[icon]?.iconKey;
         if (key == null) return fallback;
         return IconTheme.merge(
           data: IconThemeData(size: size, color: color),
