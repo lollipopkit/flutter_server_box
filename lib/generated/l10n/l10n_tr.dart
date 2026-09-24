@@ -24,9 +24,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get appearanceThemeStore => 'Tema mağazası';
 
   @override
-  String get appearanceThemeStoreUrl => 'Tema kataloğu URL’si';
-
-  @override
   String get appearanceInvalidTheme => 'Geçersiz tema paketi veya katalog';
 
   @override

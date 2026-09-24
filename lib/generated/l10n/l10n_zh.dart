@@ -24,9 +24,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appearanceThemeStore => '主题商店';
 
   @override
-  String get appearanceThemeStoreUrl => '主题目录 URL';
-
-  @override
   String get appearanceInvalidTheme => '主题包或目录无效';
 
   @override
@@ -3085,9 +3082,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get appearanceThemeStore => '主題商店';
-
-  @override
-  String get appearanceThemeStoreUrl => '主題目錄 URL';
 
   @override
   String get appearanceInvalidTheme => '主題套件或目錄無效';

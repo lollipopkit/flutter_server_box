@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "支援的主題 schema",
   "appearanceThemeInstall": "安裝主題",
   "appearanceThemeStore": "主題商店",
-  "appearanceThemeStoreUrl": "主題目錄 URL",
   "appearanceInvalidTheme": "主題套件或目錄無效",
   "themeStoreRefreshFailed": "無法讀取主題目錄。",
   "themeStoreDeleteTheme": "刪除「{name}」？其檔案將從本機移除。如果它正在使用中，應用程式將回到預設主題。",

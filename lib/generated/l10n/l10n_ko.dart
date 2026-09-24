@@ -24,9 +24,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get appearanceThemeStore => '테마 스토어';
 
   @override
-  String get appearanceThemeStoreUrl => '테마 카탈로그 URL';
-
-  @override
   String get appearanceInvalidTheme => '유효하지 않은 테마 패키지 또는 카탈로그';
 
   @override

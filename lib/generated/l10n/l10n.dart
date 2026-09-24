@@ -155,12 +155,6 @@ abstract class AppLocalizations {
   /// **'Theme store'**
   String get appearanceThemeStore;
 
-  /// User-facing label or message for appearance theme store URL.
-  ///
-  /// In en, this message translates to:
-  /// **'Theme catalog URL'**
-  String get appearanceThemeStoreUrl;
-
   /// User-facing label or message for appearance invalid theme.
   ///
   /// In en, this message translates to:

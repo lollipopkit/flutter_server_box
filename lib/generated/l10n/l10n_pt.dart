@@ -24,9 +24,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get appearanceThemeStore => 'Loja de temas';
 
   @override
-  String get appearanceThemeStoreUrl => 'URL do catálogo de temas';
-
-  @override
   String get appearanceInvalidTheme => 'Pacote de tema ou catálogo inválido';
 
   @override

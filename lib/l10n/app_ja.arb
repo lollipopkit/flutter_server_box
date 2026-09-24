@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "対応テーマ schema",
   "appearanceThemeInstall": "テーマをインストール",
   "appearanceThemeStore": "テーマストア",
-  "appearanceThemeStoreUrl": "テーマカタログの URL",
   "appearanceInvalidTheme": "テーマパッケージまたはカタログが無効です",
   "themeStoreRefreshFailed": "テーマカタログを読み取れませんでした。",
   "themeStoreDeleteTheme": "「{name}」を削除しますか？ファイルはこの端末から削除されます。使用中のテーマの場合、アプリは既定のテーマに戻ります。",

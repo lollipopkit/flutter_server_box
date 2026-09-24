@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Ondersteund themaschema",
   "appearanceThemeInstall": "Thema installeren",
   "appearanceThemeStore": "Themawinkel",
-  "appearanceThemeStoreUrl": "URL van themacatalogus",
   "appearanceInvalidTheme": "Ongeldig themapakket of ongeldige catalogus",
   "themeStoreRefreshFailed": "De themacatalogus kon niet worden gelezen.",
   "themeStoreDeleteTheme": "“{name}” verwijderen? De bestanden worden van dit apparaat verwijderd. Is het het thema in gebruik, dan keert de app terug naar het standaardthema.",

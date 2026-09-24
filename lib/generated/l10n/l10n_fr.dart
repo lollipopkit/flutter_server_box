@@ -24,9 +24,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appearanceThemeStore => 'Boutique de thèmes';
 
   @override
-  String get appearanceThemeStoreUrl => 'URL du catalogue de thèmes';
-
-  @override
   String get appearanceInvalidTheme => 'Pack de thème ou catalogue invalide';
 
   @override

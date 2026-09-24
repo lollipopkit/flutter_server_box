@@ -24,9 +24,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get appearanceThemeStore => 'Toko tema';
 
   @override
-  String get appearanceThemeStoreUrl => 'URL katalog tema';
-
-  @override
   String get appearanceInvalidTheme => 'Paket tema atau katalog tidak valid';
 
   @override

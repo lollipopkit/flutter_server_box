@@ -4,6 +4,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/service/theme_repo.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
 
 const _kPad = 13.0;
 
@@ -83,14 +84,9 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
   }
 
   Future<void> _refresh() async {
-    final url = _setting.themeStoreUrl.fetch().trim();
-    if (url.isEmpty) {
-      Toast.show(l10n.appearanceThemeStoreUrl);
-      return;
-    }
     setState(() => _busy = true);
     try {
-      final store = await ThemeRepos.store(url);
+      final store = await ThemeRepos.store(Urls.themeCatalog);
       if (!mounted) return;
       // A read that comes back with no repository is not an answer: every way
       // the catalog can fail reports itself by leaving the list empty, and

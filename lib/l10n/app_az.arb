@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Dəstəklənən mövzu schema-sı",
   "appearanceThemeInstall": "Mövzu quraşdır",
   "appearanceThemeStore": "Mövzu mağazası",
-  "appearanceThemeStoreUrl": "Mövzu kataloqu URL-si",
   "appearanceInvalidTheme": "Mövzu paketi və ya kataloq etibarsızdır",
   "themeStoreRefreshFailed": "Tema kataloqu oxuna bilmədi.",
   "themeStoreDeleteTheme": "“{name}” silinsin? Faylları bu cihazdan silinir. İstifadə olunan temadırsa, tətbiq standart temaya qayıdır.",

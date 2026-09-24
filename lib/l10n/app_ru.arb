@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Поддерживаемая схема темы",
   "appearanceThemeInstall": "Установить тему",
   "appearanceThemeStore": "Магазин тем",
-  "appearanceThemeStoreUrl": "URL каталога тем",
   "appearanceInvalidTheme": "Недопустимый пакет темы или каталог",
   "themeStoreRefreshFailed": "Не удалось прочитать каталог тем.",
   "themeStoreDeleteTheme": "Удалить «{name}»? Его файлы будут удалены с этого устройства. Если это используемая тема, приложение вернётся к теме по умолчанию.",

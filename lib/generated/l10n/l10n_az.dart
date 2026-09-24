@@ -24,9 +24,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get appearanceThemeStore => 'Mövzu mağazası';
 
   @override
-  String get appearanceThemeStoreUrl => 'Mövzu kataloqu URL-si';
-
-  @override
   String get appearanceInvalidTheme =>
       'Mövzu paketi və ya kataloq etibarsızdır';
 

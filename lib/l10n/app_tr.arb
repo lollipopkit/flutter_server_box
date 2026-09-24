@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Desteklenen tema schema sürümü",
   "appearanceThemeInstall": "Tema yükle",
   "appearanceThemeStore": "Tema mağazası",
-  "appearanceThemeStoreUrl": "Tema kataloğu URL’si",
   "appearanceInvalidTheme": "Geçersiz tema paketi veya katalog",
   "themeStoreRefreshFailed": "Tema kataloğu okunamadı.",
   "themeStoreDeleteTheme": "“{name}” silinsin mi? Dosyaları bu cihazdan kaldırılır. Kullanımdaki tema ise uygulama varsayılan temaya döner.",

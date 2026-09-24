@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "지원하는 테마 schema",
   "appearanceThemeInstall": "테마 설치",
   "appearanceThemeStore": "테마 스토어",
-  "appearanceThemeStoreUrl": "테마 카탈로그 URL",
   "appearanceInvalidTheme": "유효하지 않은 테마 패키지 또는 카탈로그",
   "themeStoreRefreshFailed": "테마 카탈로그를 읽을 수 없습니다.",
   "themeStoreDeleteTheme": "“{name}”을(를) 삭제할까요? 파일이 이 기기에서 제거됩니다. 사용 중인 테마라면 앱이 기본 테마로 돌아갑니다.",

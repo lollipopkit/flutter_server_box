@@ -14,7 +14,6 @@ import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/app/tray.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
-import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
@@ -70,10 +69,11 @@ class SettingStore extends SqliteStore {
     true,
   );
 
-  /// The HTTPS catalog the theme store reads, which is this app's own
-  /// repository by default. Editable, because a client that cannot be pointed
-  /// at another one is a client for one publisher.
-  late final themeStoreUrl = propertyDefault('themeStoreUrl', Urls.themeCatalog);
+  // TODO(migration): drop the stored `themeStoreUrl` row. The catalog is
+  // `Urls.themeCatalog` and is not editable, so an install that repointed it
+  // holds a value nothing reads and no row can change.
+
+
 
   /// The theme store's last answer, as the JSON it was read from.
   ///

@@ -20,10 +20,6 @@
   "@appearanceThemeStore": {
     "description": "User-facing label or message for appearance theme store."
   },
-  "appearanceThemeStoreUrl": "Theme catalog URL",
-  "@appearanceThemeStoreUrl": {
-    "description": "User-facing label or message for appearance theme store URL."
-  },
   "appearanceInvalidTheme": "Invalid theme package or catalog",
   "@appearanceInvalidTheme": {
     "description": "User-facing label or message for appearance invalid theme."

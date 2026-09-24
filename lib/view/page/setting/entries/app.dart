@@ -41,9 +41,6 @@ extension _App on _AppSettingsPageState {
       _buildThemePreset(),
       _buildThemeInstall(),
       _buildThemeStore(),
-      // No longer debug-only: it has a default now, and a catalog a user
-      // cannot repoint is one for a single publisher.
-      _buildThemeStoreUrl(),
       if (_setting.appThemePreset.fetch() == ThemePackages.customPreset) ...[
         _buildAppIcons(),
         _buildCorners(),
@@ -199,17 +196,7 @@ extension _App on _AppSettingsPageState {
 
   /// Opens the store, which is reached from its own row and from the preset
   /// sheet above the presets.
-  ///
-  /// A catalog the user cannot reach is the page's own problem, but it is also
-  /// the row's: the address it is read from is set two rows down, and this says
-  /// which one to look at.
-  void _openThemeStore() {
-    if (_setting.themeStoreUrl.fetch().trim().isEmpty) {
-      Toast.show(l10n.appearanceThemeStoreUrl);
-      return;
-    }
-    ThemeStorePage.route.go(context);
-  }
+  void _openThemeStore() => ThemeStorePage.route.go(context);
 
   void _applyTheme(ThemePackage package, {String? preset}) {
     ThemePackages.apply(package, preset: preset);
@@ -291,45 +278,6 @@ extension _App on _AppSettingsPageState {
         onTap: _openThemeStore,
       ),
       keywords: 'theme catalog store repository',
-    );
-  }
-
-  SettingsRow _buildThemeStoreUrl() {
-    final label = l10n.appearanceThemeStoreUrl;
-    return SettingsRow(
-      label,
-      () => ListTile(
-        leading: const Icon(Icons.link_outlined),
-        title: Text(label),
-        trailing: _setting.themeStoreUrl.listenable().listenVal(
-          (url) => ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Text(
-              url.isEmpty ? '—' : url,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-        onTap: () async {
-          final url = await _promptAppText(
-            label,
-            initial: _setting.themeStoreUrl.fetch(),
-            hint: 'https://…/repos.toml',
-          );
-          if (url == null || !mounted) return;
-          if (url.isNotEmpty) {
-            try {
-              ThemePackages.httpsUri(url);
-            } on FormatException {
-              Toast.error(libL10n.invalidUrl);
-              return;
-            }
-          }
-          _setting.themeStoreUrl.put(url);
-        },
-      ),
-      keywords: 'theme catalog HTTPS URL',
     );
   }
 

@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Skema tema yang didukung",
   "appearanceThemeInstall": "Pasang tema",
   "appearanceThemeStore": "Toko tema",
-  "appearanceThemeStoreUrl": "URL katalog tema",
   "appearanceInvalidTheme": "Paket tema atau katalog tidak valid",
   "themeStoreRefreshFailed": "Tidak dapat membaca katalog tema.",
   "themeStoreDeleteTheme": "Hapus “{name}”? Berkasnya dihapus dari perangkat ini. Jika ini tema yang sedang dipakai, aplikasi kembali ke tema bawaan.",

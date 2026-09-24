@@ -24,9 +24,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appearanceThemeStore => 'Магазин тем';
 
   @override
-  String get appearanceThemeStoreUrl => 'URL каталога тем';
-
-  @override
   String get appearanceInvalidTheme => 'Недопустимый пакет темы или каталог';
 
   @override

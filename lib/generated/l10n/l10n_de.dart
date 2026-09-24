@@ -24,9 +24,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get appearanceThemeStore => 'Design-Store';
 
   @override
-  String get appearanceThemeStoreUrl => 'URL des Designkatalogs';
-
-  @override
   String get appearanceInvalidTheme =>
       'Ungültiges Designpaket oder ungültiger Katalog';
 

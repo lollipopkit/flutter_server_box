@@ -24,9 +24,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appearanceThemeStore => 'テーマストア';
 
   @override
-  String get appearanceThemeStoreUrl => 'テーマカタログの URL';
-
-  @override
   String get appearanceInvalidTheme => 'テーマパッケージまたはカタログが無効です';
 
   @override

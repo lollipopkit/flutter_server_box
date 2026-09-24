@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Schema de tema compatível",
   "appearanceThemeInstall": "Instalar tema",
   "appearanceThemeStore": "Loja de temas",
-  "appearanceThemeStoreUrl": "URL do catálogo de temas",
   "appearanceInvalidTheme": "Pacote de tema ou catálogo inválido",
   "themeStoreRefreshFailed": "Não foi possível ler o catálogo de temas.",
   "themeStoreDeleteTheme": "Excluir «{name}»? Seus arquivos são removidos deste dispositivo. Se for o tema em uso, o app volta ao tema padrão.",

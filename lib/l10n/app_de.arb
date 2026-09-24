@@ -5,7 +5,6 @@
   "appearanceThemeSchemaRange": "Unterstütztes Theme-Schema",
   "appearanceThemeInstall": "Design installieren",
   "appearanceThemeStore": "Design-Store",
-  "appearanceThemeStoreUrl": "URL des Designkatalogs",
   "appearanceInvalidTheme": "Ungültiges Designpaket oder ungültiger Katalog",
   "themeStoreRefreshFailed": "Der Themenkatalog konnte nicht gelesen werden.",
   "themeStoreDeleteTheme": "„{name}“ löschen? Die Dateien werden von diesem Gerät entfernt. Ist es das verwendete Theme, kehrt die App zum Standard-Theme zurück.",

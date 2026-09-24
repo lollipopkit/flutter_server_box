@@ -24,9 +24,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get appearanceThemeStore => 'Themawinkel';
 
   @override
-  String get appearanceThemeStoreUrl => 'URL van themacatalogus';
-
-  @override
   String get appearanceInvalidTheme =>
       'Ongeldig themapakket of ongeldige catalogus';
 

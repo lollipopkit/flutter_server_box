@@ -286,10 +286,6 @@ void main() {
         findsNothing,
       );
     }
-    expect(
-      find.widgetWithText(ListTile, appearance.appearanceThemeStoreUrl),
-      findsOneWidget,
-    );
     final installTile = find.widgetWithText(
       ListTile,
       appearance.appearanceThemeInstall,
