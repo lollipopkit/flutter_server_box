@@ -11,6 +11,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
+import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -891,6 +892,11 @@ extension on _BackupPageState {
     }
 
     try {
+      text = text.trim();
+      if (MergeableUtils.isBackup(text)) {
+        if (context.mounted) await BackupService.restoreFromText(context, text);
+        return;
+      }
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
