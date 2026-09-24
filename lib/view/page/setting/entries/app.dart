@@ -92,9 +92,6 @@ extension _App on _AppSettingsPageState {
           final names = ThemePackages.installedPresetNames();
           final original = _setting.appThemePreset.fetch();
           var open = true;
-          // The sheet closes before the store opens, so which row was taken is
-          // carried past the await rather than acted on inside it.
-          var openStore = false;
           var request = 0;
           Future<void> preview(String value) async {
             final current = ++request;
@@ -125,21 +122,12 @@ extension _App on _AppSettingsPageState {
           try {
             preset = await showRowsSheet<String>(
               context,
+              // The choices and nothing above them. The catalog used to be a
+              // row at the top of this sheet as well, which is a way in that
+              // leaves the sheet for a page and then comes back to a preset
+              // list that no longer matches what was installed there — the
+              // store is a row of its own in the appearance page instead.
               rows: (ctx) => [
-                // Above the choices, and the one row here that is not one: it
-                // leads out of the sheet, to the catalog the themes that are
-                // not installed yet come from. What is installed is what the
-                // list under it holds, so the two are read in that order.
-                ListTile(
-                  leading: const Icon(Icons.storefront_outlined),
-                  title: Text(l10n.appearanceThemeStore),
-                  trailing: const Icon(Icons.keyboard_arrow_right),
-                  onTap: () {
-                    openStore = true;
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-                const Divider(height: 1),
                 for (final value in [
                   ...BuiltinTheme.values.map((theme) => theme.id),
                   ThemePackages.customPreset,
@@ -165,10 +153,6 @@ extension _App on _AppSettingsPageState {
             ThemePackages.preview.value = null;
           }
           if (!mounted) return;
-          if (openStore) {
-            _openThemeStore();
-            return;
-          }
           if (preset == null) return;
           if (preset == ThemePackages.customPreset) {
             if (_setting.appThemePreset.fetch() != ThemePackages.customPreset) {
@@ -194,8 +178,8 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  /// Opens the store, which is reached from its own row and from the preset
-  /// sheet above the presets.
+  /// Opens the catalog, which is reached from its own row in the appearance
+  /// page and from nowhere else.
   void _openThemeStore() => ThemeStorePage.route.go(context);
 
   void _applyTheme(ThemePackage package, {String? preset}) {
