@@ -285,18 +285,18 @@ async fn a_set_that_cannot_be_stored_is_refused_by_code() {
     blank_tag["tags"] = json!([" "]);
 
     let cases: Vec<(Value, Value)> = vec![
-        (json!([snippet("", "one", "ls")]), json!({"error": "invalid_id", "index": 0})),
+        (json!([snippet("", "one", "ls")]), json!({"error": "invalidId", "index": 0})),
         (
             json!([snippet("a", "one", "ls"), snippet("a", "two", "ls")]),
-            json!({"error": "duplicate_id", "index": 1}),
+            json!({"error": "duplicateId", "index": 1}),
         ),
-        (json!([snippet("a", "  ", "ls")]), json!({"error": "invalid_name", "index": 0})),
+        (json!([snippet("a", "  ", "ls")]), json!({"error": "invalidName", "index": 0})),
         (
             json!([snippet("a", "one", "ls"), snippet("b", "one", "ls")]),
-            json!({"error": "duplicate_name", "index": 1}),
+            json!({"error": "duplicateName", "index": 1}),
         ),
-        (json!([blank_tag]), json!({"error": "invalid_tag", "index": 0})),
-        (json!([two_tags]), json!({"error": "duplicate_tag", "index": 0})),
+        (json!([blank_tag]), json!({"error": "invalidTag", "index": 0})),
+        (json!([two_tags]), json!({"error": "duplicateTag", "index": 0})),
     ];
 
     for (sent, expected) in cases {
@@ -371,7 +371,7 @@ async fn plan_answers_the_tagged_steps_and_refuses_what_it_cannot_answer() {
     // different command.
     let (status, body) = plan(&srv, "cd ${pwd}", json!({})).await;
     assert_eq!(status, 400);
-    assert_eq!(body, json!({"code": "unanswerable", "key": "pwd"}));
+    assert_eq!(body, json!({"error": "unanswerable", "key": "pwd"}));
 
     // A script with no macros in it is one piece of text, which is the case
     // both clients send most often.

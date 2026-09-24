@@ -132,9 +132,16 @@ pub enum Step {
 /// Why a script cannot be turned into steps.
 ///
 /// A stable code rather than a sentence, for the panel to phrase in the
-/// viewer's language: `{"code":"unanswerable","key":"host"}`.
+/// viewer's language: `{"error":"unanswerable","key":"host"}`.
+///
+/// The tag is `error` rather than `code` because this is the one shape a
+/// panel's request helper reads a refusal out of — `lib/api.ts` takes an
+/// `ApiError`'s message from the body's `error` field, so a code under any
+/// other name arrives as the caller's generic fallback sentence. The `key`
+/// rides beside it, as the row index does in `api::snippets`' own refusals,
+/// because the code alone would not say which placeholder was unanswered.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "code", rename_all = "snake_case")]
+#[serde(tag = "error", rename_all = "snake_case")]
 pub enum PlanError {
     /// The script asks for `${key}` and the caller supplied no value for it.
     Unanswerable { key: String },
@@ -599,7 +606,7 @@ mod tests {
 
         assert_eq!(
             serde_json::to_value(plan("${user}", &sent).unwrap_err()).unwrap(),
-            serde_json::json!({"code": "unanswerable", "key": "user"})
+            serde_json::json!({"error": "unanswerable", "key": "user"})
         );
     }
 }

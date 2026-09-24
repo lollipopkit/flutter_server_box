@@ -83,9 +83,12 @@ pub struct ReplaceRequest {
 /// list the caller still has on screen.
 ///
 /// A code rather than a sentence, so the panel phrases it in the viewer's
-/// language — the same convention as `/desktop`'s refusals.
+/// language — the same convention as `/desktop`'s refusals, camelCase included:
+/// `sbm_parser`'s enums derive snake_case and their endpoints re-spell the code
+/// through an `as_str` on the way out (`users::UserError`'s). This one has no
+/// other consumer to keep a second spelling for, so the derive does it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(tag = "error", rename_all = "snake_case")]
+#[serde(tag = "error", rename_all = "camelCase")]
 pub enum Refusal {
     /// An entry with no id. Nothing can be stored under it and nothing can be
     /// looked up by it.
@@ -188,9 +191,8 @@ pub async fn replace(
 ///
 /// Reads nothing and writes nothing, and the grant it needs is the one the read
 /// needs. The refusal is [`sbm_parser::snippet::PlanError`]'s own shape
-/// (`{code, key}`) rather than this module's `{error, index}`: what was refused
-/// is the script, not a row of a set, and the two cannot be confused for one
-/// another.
+/// (`{error, key}`) rather than this module's `{error, index}`: what was refused
+/// is the script, not a row of a set, and the extra field is what says which.
 pub async fn plan(
     req: HttpRequest,
     body: web::types::Json<PlanRequest>,
@@ -389,7 +391,7 @@ mod tests {
     /// The code the log gets is the code the caller got, without the position.
     #[test]
     fn the_logged_detail_is_the_code_alone() {
-        assert_eq!(refusal_code(&Refusal::DuplicateName { index: 3 }), "duplicate_name");
-        assert_eq!(refusal_code(&Refusal::InvalidTag { index: 0 }), "invalid_tag");
+        assert_eq!(refusal_code(&Refusal::DuplicateName { index: 3 }), "duplicateName");
+        assert_eq!(refusal_code(&Refusal::InvalidTag { index: 0 }), "invalidTag");
     }
 }
