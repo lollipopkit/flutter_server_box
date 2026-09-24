@@ -11,6 +11,7 @@ pub mod privileged;
 pub mod process;
 pub mod push;
 pub mod service;
+pub mod snippets;
 pub mod users;
 pub mod cors;
 pub mod auth;

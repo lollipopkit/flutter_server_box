@@ -107,6 +107,16 @@ pub enum Kind {
     /// turning on. The conversation is not named: it is a row in a table this
     /// endpoint also serves, and a subject is not the place to join to it.
     Ai,
+    /// The snippet library replaced through `api::snippets`.
+    ///
+    /// Its own kind for `CustomCmd`'s reason in part — the subject is names
+    /// rather than a command, because a script is what the user wrote and may
+    /// hold anything — and one of its own: a snippet is stored *to be* run
+    /// later, so a row here is a change to what the operator will be offered
+    /// to type, which is not the same claim as `Exec`'s record of a command
+    /// that ran. Expanding one through `/snippets/plan` is not recorded: it
+    /// runs nothing, types nothing and reads nothing but the text it was sent.
+    Snippet,
 }
 
 impl Kind {
@@ -129,6 +139,7 @@ impl Kind {
             Kind::Rdp => "rdp",
             Kind::Benchmark => "benchmark",
             Kind::Ai => "ai",
+            Kind::Snippet => "snippet",
         }
     }
 }

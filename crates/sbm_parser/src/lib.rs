@@ -26,6 +26,7 @@ pub mod proc;
 pub mod script;
 pub mod service;
 pub mod smart;
+pub mod snippet;
 pub mod types;
 pub mod users;
 pub mod windows;

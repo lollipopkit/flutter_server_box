@@ -426,6 +426,23 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::custom_cmds::replace)),
             )
             .service(
+                // Its own payload limit, like `/custom-cmds`: the body is the
+                // whole library at once, and a snippet is a script.
+                web::resource("/snippets")
+                    .state(
+                        web::types::JsonConfig::default()
+                            .limit(crate::api::snippets::MAX_REQUEST),
+                    )
+                    .route(web::get().to(crate::api::snippets::list))
+                    .route(web::put().to(crate::api::snippets::replace)),
+            )
+            .route(
+                // Not under the same resource: it takes a script and a context
+                // rather than the library, and it is not part of a replace.
+                "/snippets/plan",
+                web::post().to(crate::api::snippets::plan),
+            )
+            .service(
                 // Its own payload limit, like `/custom-cmds`: the body is
                 // every notification channel at once, and a webhook's
                 // `body_template` is a document the user pastes in.
@@ -990,6 +1007,15 @@ struct RemoteAccessView {
     /// and the endpoint says so as `editable` rather than by withholding the
     /// route, so a page opens read-only instead of failing on the first message.
     ai: bool,
+    /// Whether this agent serves the snippet library at all.
+    ///
+    /// Served, not grantable, for [`Self::desktop`]'s reason: a snippet
+    /// executes nothing — `/snippets/plan` returns a description of what a
+    /// client should type and types none of it — and it becomes usable only
+    /// through a terminal, which is a session with its own credentials. Both
+    /// the read and the write need only the panel login, so there is no third
+    /// state for this to report.
+    snippets: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -1044,6 +1070,8 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             // Served, not grantable, for `benchmark`'s reason. See
             // `RemoteAccessView::ai`.
             ai: true,
+            // Served, not grantable. See `RemoteAccessView::snippets`.
+            snippets: true,
         },
     }))
 }
