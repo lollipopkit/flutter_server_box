@@ -221,7 +221,7 @@ void main() {
     expect(fillOf(libL10n.general), Colors.transparent);
   });
 
-  testWidgets('appearance and theme share a page with separate groups', (
+  testWidgets('one appearance page holds the theme and the font', (
     tester,
   ) async {
     await pump(tester, width: 1200);
@@ -231,26 +231,38 @@ void main() {
     final appearance = AppLocalizations.of(
       tester.element(find.byKey(settingsHeaderKey)),
     )!;
-    expect(headerTab(appearance.appearanceSettings), findsNothing);
-    expect(headerTab(libL10n.theme), findsOneWidget);
-    expect(headerTab(libL10n.font), findsOneWidget);
+    // One leaf rather than two: as two pages each held a group the other's
+    // name would have covered — "Appearance" over the theme's own rows, and a
+    // page called Font with one group called Font inside it.
+    expect(headerTab(appearance.appearanceSettings), findsOneWidget);
+    expect(headerTab(libL10n.theme), findsNothing);
+    expect(headerTab(libL10n.font), findsNothing);
 
-    await tester.tap(headerTab(libL10n.theme));
+    await tester.tap(headerTab(appearance.appearanceSettings));
     await settle(tester);
     final content = find.byType(AppSettingsPage);
-    expect(
-      find.descendant(
-        of: content,
-        matching: find.text(appearance.appearanceSettings.toUpperCase()),
-      ),
-      findsOneWidget,
-    );
+    // Both groups on the one page, each heading drawn once — and the page's
+    // own name is not one of them, since the tab above already says it.
     expect(
       find.descendant(
         of: content,
         matching: find.text(libL10n.theme.toUpperCase()),
       ),
       findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: content,
+        matching: find.text(libL10n.font.toUpperCase()),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: content,
+        matching: find.text(appearance.appearanceSettings.toUpperCase()),
+      ),
+      findsNothing,
     );
     expect(find.widgetWithText(ListTile, libL10n.themeMode), findsOneWidget);
     expect(
@@ -261,9 +273,16 @@ void main() {
       find.widgetWithText(ListTile, appearance.appearancePreset),
       findsOneWidget,
     );
+    // The font is on the page the theme is on rather than one tap away, which
+    // is what the merge is for.
+    expect(
+      find.widgetWithText(ListTile, appearance.appearanceFontFamilies),
+      findsOneWidget,
+    );
     for (final label in [
       appearance.appearanceThemeInstall,
       appearance.appearanceThemeStore,
+      appearance.appearanceFontImport,
     ]) {
       expect(
         find.descendant(
@@ -313,9 +332,12 @@ void main() {
     Stores.setting.appThemePreset.put('custom');
     Stores.setting.appBackgroundStyle.put(BackgroundStyle.image);
     Stores.setting.appBackgroundPath.put(image.path);
-    await tester.tap(headerTab(libL10n.font));
+    // The rows a custom theme adds are read off the store while the page is
+    // built, and nothing here went through the sheet that would rebuild it —
+    // so the page is left and come back to, which is what a rebuild is.
+    await tester.tap(headerTab(libL10n.general));
     await settle(tester);
-    await tester.tap(headerTab(libL10n.theme));
+    await tester.tap(headerTab(appearance.appearanceSettings));
     await settle(tester);
     expect(
       find.widgetWithText(ExpansionTile, appearance.appearanceCorners),
@@ -346,8 +368,7 @@ void main() {
     );
     expect(find.widgetWithText(ListTile, libL10n.opacity), findsOneWidget);
 
-    await tester.tap(headerTab(libL10n.font));
-    await settle(tester);
+    // Still the same page: the font rows were under all of it.
     expect(
       find.widgetWithText(ListTile, appearance.appearanceFontImport),
       findsOneWidget,
@@ -411,11 +432,11 @@ void main() {
       await pump(tester, width: 1200);
       await tester.tap(menuRow(libL10n.app));
       await settle(tester);
-      await tester.tap(headerTab(libL10n.theme));
-      await settle(tester);
       final appearance = AppLocalizations.of(
         tester.element(find.byKey(settingsHeaderKey)),
       )!;
+      await tester.tap(headerTab(appearance.appearanceSettings));
+      await settle(tester);
       final row = find.widgetWithText(ListTile, appearance.appearancePreset);
       await tester.tap(row);
       await settle(tester);
@@ -450,11 +471,11 @@ void main() {
     await pump(tester, width: 1200);
     await tester.tap(menuRow(libL10n.app));
     await settle(tester);
-    await tester.tap(headerTab(libL10n.theme));
-    await settle(tester);
     final appearance = AppLocalizations.of(
       tester.element(find.byKey(settingsHeaderKey)),
     )!;
+    await tester.tap(headerTab(appearance.appearanceSettings));
+    await settle(tester);
     for (final builtin in BuiltinTheme.values.reversed) {
       await tester.tap(
         find.widgetWithText(ListTile, appearance.appearancePreset),

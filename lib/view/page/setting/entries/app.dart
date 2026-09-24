@@ -32,12 +32,17 @@ extension _App on _AppSettingsPageState {
     ];
   }
 
-  List<SettingsGroup> _buildTheme() => [
-    SettingsGroup(l10n.appearanceSettings, [
+  /// What the app looks like, in two groups.
+  ///
+  /// Theme and font were two pages, each holding a group the other's name
+  /// would have covered: the theme page opened on a group called "Appearance"
+  /// and the font page was one group called "Font". The page is the appearance
+  /// and the groups are the two halves of it — which is also what puts the
+  /// font beside the theme it is part of, rather than a tap away.
+  List<SettingsGroup> _buildAppearance() => [
+    SettingsGroup(libL10n.theme, [
       _buildThemeMode(),
       _buildAppColor(),
-    ]),
-    SettingsGroup(libL10n.theme, [
       _buildThemePreset(),
       _buildThemeInstall(),
       _buildThemeStore(),
@@ -49,9 +54,6 @@ extension _App on _AppSettingsPageState {
         _buildAppBackgroundBlur(),
       ],
     ]),
-  ];
-
-  List<SettingsGroup> _buildAppFont() => [
     SettingsGroup(libL10n.font, [
       _buildAppFontFamilies(),
       _buildAppFontImport(),
