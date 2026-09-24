@@ -437,8 +437,8 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
     final replacing = certificate.replacesExisting;
     final accepted = await context.showRoundDialog<bool>(
       title: replacing
-          ? 'Remote desktop certificate changed'
-          : 'Trust certificate?',
+          ? l10n.remoteDesktopCertificateChanged
+          : l10n.remoteDesktopTrustCertificate,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,20 +446,27 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
           children: [
             Text(
               replacing
-                  ? 'The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.'
-                  : 'The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.',
+                  ? l10n.remoteDesktopCertificateChangedTip
+                  : l10n.remoteDesktopCertificateUnverifiedTip,
             ),
             const SizedBox(height: 12),
             SelectableText('SHA-256\n${certificate.sha256}'),
             if (certificate.previousSha256 case final previous?) ...[
               const SizedBox(height: 8),
-              SelectableText('Previously trusted\n$previous'),
+              SelectableText(l10n.remoteDesktopPreviousCertificate(previous)),
             ],
             const SizedBox(height: 8),
-            SelectableText('Subject: ${certificate.subject}'),
-            SelectableText('Issuer: ${certificate.issuer}'),
             SelectableText(
-              'Valid: ${certificate.validFrom} – ${certificate.validTo}',
+              l10n.remoteDesktopCertificateSubject(certificate.subject),
+            ),
+            SelectableText(
+              l10n.remoteDesktopCertificateIssuer(certificate.issuer),
+            ),
+            SelectableText(
+              l10n.remoteDesktopCertificateValidity(
+                certificate.validFrom,
+                certificate.validTo,
+              ),
             ),
           ],
         ),
@@ -468,7 +475,11 @@ class _RemoteDesktopTabPageState extends ConsumerState<RemoteDesktopTabPage> {
         Btn.cancel(),
         TextButton(
           onPressed: () => context.popDialog(true),
-          child: Text(replacing ? 'Replace trust' : 'Trust and reconnect'),
+          child: Text(
+            replacing
+                ? l10n.remoteDesktopReplaceTrust
+                : l10n.remoteDesktopTrustReconnect,
+          ),
         ),
       ],
     );

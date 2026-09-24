@@ -3155,6 +3155,122 @@ class AppLocalizationsTr extends AppLocalizations {
       'VNC panosu yalnızca Latin-1 metnini destekler.';
 
   @override
+  String get remoteDesktopAddProfile => 'Profil ekle';
+
+  @override
+  String get remoteDesktopNoProfiles => 'Uzak masaüstü profili yok';
+
+  @override
+  String get remoteDesktopAdd => 'Uzak masaüstü ekle';
+
+  @override
+  String get remoteDesktopEdit => 'Uzak masaüstünü düzenle';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      'Hedef, SSH sunucusu veya Monitor ajanı tarafından çözümlenir. localhost o makineyi belirtir.';
+
+  @override
+  String get remoteDesktopDomain => 'Etki alanı (isteğe bağlı)';
+
+  @override
+  String get remoteDesktopPassword => 'Parola (isteğe bağlı)';
+
+  @override
+  String get remoteDesktopSavePassword => 'Parolayı kaydet';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      'Şifrelenmiş veritabanında saklanır. Yedekler kaydedilmiş parolaları içerir ve yalnızca bir yedek parolası ayarlandığında şifrelenir.';
+
+  @override
+  String get remoteDesktopShareSession => 'Oturumu paylaş';
+
+  @override
+  String get remoteDesktopProtocol => 'Protokol';
+
+  @override
+  String get remoteDesktopUniqueName =>
+      'Profil adları bu sunucuda benzersiz olmalıdır.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      'Klasik VNC parolaları 8 ASCII baytla sınırlıdır.';
+
+  @override
+  String get remoteDesktopNameRequired => 'Bir profil adı girin.';
+
+  @override
+  String get remoteDesktopHostRequired => 'Bir hedef sunucu girin.';
+
+  @override
+  String get remoteDesktopPortRequired => 'Geçerli bir bağlantı noktası girin.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'RDP kullanıcı adını girin.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      'Klasik VNC parolaları yalnızca ASCII karakter içerebilir.';
+
+  @override
+  String get remoteDesktopCertificateRequired => 'Sertifika onayı gerekli';
+
+  @override
+  String get remoteDesktopWaiting => 'Masaüstü bekleniyor…';
+
+  @override
+  String get remoteDesktopCertificateChanged =>
+      'Uzak masaüstü sertifikası değişti';
+
+  @override
+  String get remoteDesktopTrustCertificate => 'Sertifikaya güvenilsin mi?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      'Sertifikanın parmak izi artık kaydedilen değerle eşleşmiyor. Güveni değiştirmeden önce yeni parmak izini doğrulayın.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'Sistem bu sertifikayı doğrulayamadı. Devam etmeden önce SHA-256 parmak izini doğrulayın.';
+
+  @override
+  String get remoteDesktopReplaceTrust => 'Güveni değiştir';
+
+  @override
+  String get remoteDesktopTrustReconnect => 'Güven ve yeniden bağlan';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '“$name” uzak masaüstü profili silinsin mi?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return 'Yeniden bağlanılıyor ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return 'Daha önce güvenilen\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'Konu: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return 'Veren: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return 'Geçerlilik: $start – $end';
+  }
+
+  @override
   String appearanceThemeModeLocked(String mode) {
     return 'Bu tema yalnızca $mode modunu destekler. Modu değiştirmek için başka bir tema seçin.';
   }

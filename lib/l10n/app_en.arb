@@ -4137,6 +4137,83 @@
   "@remoteDesktopVncClipboardLatin1Only": {
     "description": "User-facing label or message for remote desktop VNC clipboard latin 1 only."
   },
+  "remoteDesktopAddProfile": "Add profile",
+  "remoteDesktopNoProfiles": "No remote desktop profiles",
+  "remoteDesktopAdd": "Add remote desktop",
+  "remoteDesktopEdit": "Edit remote desktop",
+  "remoteDesktopTargetTip": "The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.",
+  "remoteDesktopDomain": "Domain (optional)",
+  "remoteDesktopPassword": "Password (optional)",
+  "remoteDesktopSavePassword": "Save password",
+  "remoteDesktopSavePasswordTip": "Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.",
+  "remoteDesktopShareSession": "Share session",
+  "remoteDesktopProtocol": "Protocol",
+  "remoteDesktopUniqueName": "Profile names must be unique for this server.",
+  "remoteDesktopVncPasswordLength": "Classic VNC passwords are limited to 8 ASCII bytes.",
+  "remoteDesktopNameRequired": "Enter a profile name.",
+  "remoteDesktopHostRequired": "Enter a target host.",
+  "remoteDesktopPortRequired": "Enter a valid port.",
+  "remoteDesktopUsernameRequired": "Enter the RDP username.",
+  "remoteDesktopVncPasswordAscii": "Classic VNC passwords must contain ASCII characters only.",
+  "remoteDesktopCertificateRequired": "Certificate confirmation required",
+  "remoteDesktopWaiting": "Waiting for desktop…",
+  "remoteDesktopCertificateChanged": "Remote desktop certificate changed",
+  "remoteDesktopTrustCertificate": "Trust certificate?",
+  "remoteDesktopCertificateChangedTip": "The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.",
+  "remoteDesktopCertificateUnverifiedTip": "The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.",
+  "remoteDesktopReplaceTrust": "Replace trust",
+  "remoteDesktopTrustReconnect": "Trust and reconnect",
+  "remoteDesktopDeleteProfile": "Delete remote desktop profile “{name}”?",
+  "@remoteDesktopDeleteProfile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteDesktopReconnectAttempt": "Reconnecting ({attempt}/3)…",
+  "@remoteDesktopReconnectAttempt": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  },
+  "remoteDesktopPreviousCertificate": "Previously trusted\n{fingerprint}",
+  "@remoteDesktopPreviousCertificate": {
+    "placeholders": {
+      "fingerprint": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteDesktopCertificateSubject": "Subject: {subject}",
+  "@remoteDesktopCertificateSubject": {
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteDesktopCertificateIssuer": "Issuer: {issuer}",
+  "@remoteDesktopCertificateIssuer": {
+    "placeholders": {
+      "issuer": {
+        "type": "String"
+      }
+    }
+  },
+  "remoteDesktopCertificateValidity": "Valid: {start} – {end}",
+  "@remoteDesktopCertificateValidity": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "appearanceThemeModeLocked": "This theme only supports {mode}. Select another theme to change the mode.",
   "@appearanceThemeModeLocked": {
     "description": "User-facing label or message for appearance theme mode locked.",

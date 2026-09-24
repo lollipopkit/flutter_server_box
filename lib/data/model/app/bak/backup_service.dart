@@ -74,12 +74,9 @@ class BackupService {
         final (backup, err) = await context.showLoadingDialog(
           fn: () => _decodeOnIsolate(text, null),
         );
-        if (err != null) {
-          if (context.mounted) {
-            context.showErrDialog(err, null, libL10n.restore);
-          }
-          return;
-        }
+        // [err] has been reported by `showLoadingDialog` already; a dialog
+        // here was a second one for the same failure.
+        if (err != null) return;
         if (backup == null) {
           if (context.mounted) {
             context.showErrDialog(

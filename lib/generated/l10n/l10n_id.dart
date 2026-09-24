@@ -3158,6 +3158,123 @@ class AppLocalizationsId extends AppLocalizations {
       'Clipboard VNC hanya mendukung teks Latin-1.';
 
   @override
+  String get remoteDesktopAddProfile => 'Tambah profil';
+
+  @override
+  String get remoteDesktopNoProfiles => 'Tidak ada profil desktop jarak jauh';
+
+  @override
+  String get remoteDesktopAdd => 'Tambah desktop jarak jauh';
+
+  @override
+  String get remoteDesktopEdit => 'Edit desktop jarak jauh';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      'Target diresolusikan dari server SSH atau agen Monitor. localhost mengacu pada mesin itu.';
+
+  @override
+  String get remoteDesktopDomain => 'Domain (opsional)';
+
+  @override
+  String get remoteDesktopPassword => 'Kata sandi (opsional)';
+
+  @override
+  String get remoteDesktopSavePassword => 'Simpan kata sandi';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      'Disimpan di basis data terenkripsi. Cadangan menyertakan kata sandi tersimpan, dan hanya dienkripsi bila kata sandi cadangan ditetapkan.';
+
+  @override
+  String get remoteDesktopShareSession => 'Bagikan sesi';
+
+  @override
+  String get remoteDesktopProtocol => 'Protokol';
+
+  @override
+  String get remoteDesktopUniqueName =>
+      'Nama profil harus unik untuk server ini.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      'Kata sandi VNC klasik dibatasi 8 byte ASCII.';
+
+  @override
+  String get remoteDesktopNameRequired => 'Masukkan nama profil.';
+
+  @override
+  String get remoteDesktopHostRequired => 'Masukkan host target.';
+
+  @override
+  String get remoteDesktopPortRequired => 'Masukkan port yang valid.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'Masukkan nama pengguna RDP.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      'Kata sandi VNC klasik hanya boleh berisi karakter ASCII.';
+
+  @override
+  String get remoteDesktopCertificateRequired =>
+      'Konfirmasi sertifikat diperlukan';
+
+  @override
+  String get remoteDesktopWaiting => 'Menunggu desktop…';
+
+  @override
+  String get remoteDesktopCertificateChanged =>
+      'Sertifikat desktop jarak jauh berubah';
+
+  @override
+  String get remoteDesktopTrustCertificate => 'Percayai sertifikat?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      'Sidik jari sertifikat tidak lagi cocok dengan nilai tersimpan. Verifikasi sidik jari baru sebelum mengganti kepercayaan.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'Sistem tidak dapat memverifikasi sertifikat ini. Verifikasi sidik jari SHA-256-nya sebelum melanjutkan.';
+
+  @override
+  String get remoteDesktopReplaceTrust => 'Ganti kepercayaan';
+
+  @override
+  String get remoteDesktopTrustReconnect => 'Percayai dan sambungkan ulang';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return 'Hapus profil desktop jarak jauh “$name”?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return 'Menghubungkan kembali ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return 'Sebelumnya dipercaya\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'Subjek: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return 'Penerbit: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return 'Berlaku: $start – $end';
+  }
+
+  @override
   String appearanceThemeModeLocked(String mode) {
     return 'Tema ini hanya mendukung $mode. Pilih tema lain untuk mengubah mode.';
   }

@@ -667,18 +667,26 @@ class _RemoteDesktopViewerState extends ConsumerState<RemoteDesktopViewer> {
 
   Widget _status(RemoteDesktopSessionView session) {
     final text = session.certificate != null
-        ? 'Certificate confirmation required'
-        : session.error ?? switch (session.connectionState) {
-            ffi.RemoteDesktopConnectionState.connecting => 'Connecting…',
-            ffi.RemoteDesktopConnectionState.reconnecting =>
-              'Reconnecting (${session.reconnectAttempt}/3)…',
-            ffi.RemoteDesktopConnectionState.connected => 'Waiting for desktop…',
-            ffi.RemoteDesktopConnectionState.disconnected => 'Disconnected',
-          };
+        ? l10n.remoteDesktopCertificateRequired
+        : session.error ??
+              switch (session.connectionState) {
+                ffi.RemoteDesktopConnectionState.connecting =>
+                  l10n.remoteDesktopConnecting,
+                ffi.RemoteDesktopConnectionState.reconnecting =>
+                  l10n.remoteDesktopReconnectAttempt(session.reconnectAttempt),
+                ffi.RemoteDesktopConnectionState.connected =>
+                  l10n.remoteDesktopWaiting,
+                ffi.RemoteDesktopConnectionState.disconnected =>
+                  l10n.remoteDesktopDisconnected,
+              };
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Text(text, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white70),
+        ),
       ),
     );
   }

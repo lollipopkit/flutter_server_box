@@ -3183,6 +3183,124 @@ class AppLocalizationsRu extends AppLocalizations {
       'Буфер обмена VNC поддерживает только текст в кодировке Latin-1.';
 
   @override
+  String get remoteDesktopAddProfile => 'Добавить профиль';
+
+  @override
+  String get remoteDesktopNoProfiles =>
+      'Нет профилей удалённого рабочего стола';
+
+  @override
+  String get remoteDesktopAdd => 'Добавить удалённый рабочий стол';
+
+  @override
+  String get remoteDesktopEdit => 'Изменить удалённый рабочий стол';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      'Адрес определяется через SSH-сервер или агент Monitor. localhost указывает на эту машину.';
+
+  @override
+  String get remoteDesktopDomain => 'Домен (необязательно)';
+
+  @override
+  String get remoteDesktopPassword => 'Пароль (необязательно)';
+
+  @override
+  String get remoteDesktopSavePassword => 'Сохранить пароль';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      'Хранится в зашифрованной базе данных. Резервные копии включают сохранённые пароли и шифруются только при заданном пароле резервной копии.';
+
+  @override
+  String get remoteDesktopShareSession => 'Поделиться сеансом';
+
+  @override
+  String get remoteDesktopProtocol => 'Протокол';
+
+  @override
+  String get remoteDesktopUniqueName =>
+      'Имена профилей должны быть уникальными для этого сервера.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      'Классические пароли VNC ограничены 8 байтами ASCII.';
+
+  @override
+  String get remoteDesktopNameRequired => 'Введите имя профиля.';
+
+  @override
+  String get remoteDesktopHostRequired => 'Введите целевой хост.';
+
+  @override
+  String get remoteDesktopPortRequired => 'Введите допустимый порт.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'Введите имя пользователя RDP.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      'Классические пароли VNC могут содержать только символы ASCII.';
+
+  @override
+  String get remoteDesktopCertificateRequired =>
+      'Требуется подтверждение сертификата';
+
+  @override
+  String get remoteDesktopWaiting => 'Ожидание рабочего стола…';
+
+  @override
+  String get remoteDesktopCertificateChanged =>
+      'Сертификат удалённого рабочего стола изменился';
+
+  @override
+  String get remoteDesktopTrustCertificate => 'Доверять сертификату?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      'Отпечаток сертификата больше не совпадает с сохранённым значением. Проверьте новый отпечаток, прежде чем заменять доверие.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'Системе не удалось проверить этот сертификат. Проверьте его отпечаток SHA-256, прежде чем продолжить.';
+
+  @override
+  String get remoteDesktopReplaceTrust => 'Заменить доверие';
+
+  @override
+  String get remoteDesktopTrustReconnect => 'Доверять и подключиться снова';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return 'Удалить профиль удалённого рабочего стола «$name»?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return 'Повторное подключение ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return 'Ранее доверенный отпечаток\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'Субъект: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return 'Издатель: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return 'Действителен: $start – $end';
+  }
+
+  @override
   String appearanceThemeModeLocked(String mode) {
     return 'Эта тема поддерживает только режим «$mode». Для смены режима выберите другую тему.';
   }

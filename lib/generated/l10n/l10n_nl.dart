@@ -3188,6 +3188,123 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het VNC-klembord ondersteunt alleen Latin-1-tekst.';
 
   @override
+  String get remoteDesktopAddProfile => 'Profiel toevoegen';
+
+  @override
+  String get remoteDesktopNoProfiles => 'Geen profielen voor extern bureaublad';
+
+  @override
+  String get remoteDesktopAdd => 'Extern bureaublad toevoegen';
+
+  @override
+  String get remoteDesktopEdit => 'Extern bureaublad bewerken';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      'Het doel wordt opgelost via de SSH-server of de Monitor-agent. localhost verwijst naar die machine.';
+
+  @override
+  String get remoteDesktopDomain => 'Domein (optioneel)';
+
+  @override
+  String get remoteDesktopPassword => 'Wachtwoord (optioneel)';
+
+  @override
+  String get remoteDesktopSavePassword => 'Wachtwoord opslaan';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      'Opgeslagen in de versleutelde database. Back-ups bevatten opgeslagen wachtwoorden en worden alleen versleuteld als er een back-upwachtwoord is ingesteld.';
+
+  @override
+  String get remoteDesktopShareSession => 'Sessie delen';
+
+  @override
+  String get remoteDesktopProtocol => 'Protocol';
+
+  @override
+  String get remoteDesktopUniqueName =>
+      'Profielnamen moeten uniek zijn voor deze server.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      'Klassieke VNC-wachtwoorden zijn beperkt tot 8 ASCII-bytes.';
+
+  @override
+  String get remoteDesktopNameRequired => 'Voer een profielnaam in.';
+
+  @override
+  String get remoteDesktopHostRequired => 'Voer een doelhost in.';
+
+  @override
+  String get remoteDesktopPortRequired => 'Voer een geldige poort in.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'Voer de RDP-gebruikersnaam in.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      'Klassieke VNC-wachtwoorden mogen alleen ASCII-tekens bevatten.';
+
+  @override
+  String get remoteDesktopCertificateRequired =>
+      'Bevestiging van certificaat vereist';
+
+  @override
+  String get remoteDesktopWaiting => 'Wachten op bureaublad…';
+
+  @override
+  String get remoteDesktopCertificateChanged =>
+      'Certificaat van extern bureaublad is gewijzigd';
+
+  @override
+  String get remoteDesktopTrustCertificate => 'Certificaat vertrouwen?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      'De vingerafdruk van het certificaat komt niet meer overeen met de opgeslagen waarde. Controleer de nieuwe vingerafdruk voordat u het vertrouwen vervangt.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'Het systeem kon dit certificaat niet verifiëren. Controleer de SHA-256-vingerafdruk voordat u doorgaat.';
+
+  @override
+  String get remoteDesktopReplaceTrust => 'Vertrouwen vervangen';
+
+  @override
+  String get remoteDesktopTrustReconnect => 'Vertrouwen en opnieuw verbinden';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return 'Profiel “$name” voor extern bureaublad verwijderen?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return 'Opnieuw verbinden ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return 'Eerder vertrouwd\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'Onderwerp: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return 'Uitgever: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return 'Geldig: $start – $end';
+  }
+
+  @override
   String appearanceThemeModeLocked(String mode) {
     return 'Dit thema ondersteunt alleen $mode. Kies een ander thema om de modus te wijzigen.';
   }
