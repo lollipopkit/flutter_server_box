@@ -900,9 +900,10 @@ extension on _BackupPageState {
       final (isBackup, classificationError) = await context.showLoadingDialog(
         fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
       );
+      if (!context.mounted) return;
       if (classificationError != null) throw classificationError;
       if (isBackup == true) {
-        if (context.mounted) await BackupService.restoreFromText(context, text);
+        await BackupService.restoreFromText(context, text);
         return;
       }
       final (spis, err) = await context.showLoadingDialog(
@@ -938,7 +939,7 @@ extension on _BackupPageState {
         Toast.success(libL10n.success);
       }
     } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.import);
+      if (context.mounted) context.showErrDialog(e, s, libL10n.import);
       Loggers.app.warning('Import servers failed', e, s);
     }
   }
