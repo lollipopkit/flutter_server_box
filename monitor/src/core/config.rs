@@ -30,6 +30,11 @@ pub struct Config {
     /// [`AiConfig`] for why the key is only ever read here.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ai: Option<AiConfig>,
+    /// The Proxmox cluster this agent proxies for the panel. Absent in every
+    /// config written before the feature existed, hence `Option`; see
+    /// [`PveConfig`] for why the secret is only ever read here.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pve: Option<PveConfig>,
     /// WebSocket access to the local sshd — off unless present and enabled.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
@@ -389,6 +394,123 @@ impl AiConfig {
     /// already carries one.
     pub fn endpoint(&self) -> String {
         format!("{}/chat/completions", self.base_url.trim_end_matches('/'))
+    }
+}
+
+/// The Proxmox VE cluster this agent proxies for the panel.
+///
+/// The app reaches a PVE node by forwarding a socket through SSH
+/// (`lib/data/provider/pve.dart`), which a monitor-only server cannot do: there
+/// is no sshd behind it. So the agent dials the cluster itself and the panel
+/// asks it — `api::pve` is that proxy, and this is the credential it uses.
+///
+/// **The secret is stored here and answered back by nothing.** `api::pve` reads
+/// it and reports only whether one is set; a GET never carries it. That is
+/// `AiConfig`'s convention, and it holds for both credential kinds: a password
+/// and an API token are both write-only, and the token's *id* — which is not a
+/// secret and is printed in PVE's own token list — is read back so a page can
+/// show which token is in use.
+///
+/// One cluster, not a list. A PVE cluster is addressed by any of its nodes and
+/// answers about all of them, so a set of these would be a set of routes to the
+/// same place; an agent that must reach two clusters runs two agents.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PveConfig {
+    /// The cluster's API endpoint, e.g. `https://pve.example.com:8006` — the
+    /// scheme, host and port, with no path. Validated on save, because a
+    /// mistyped scheme is a page that fails on every refresh a minute later
+    /// rather than at the save.
+    #[serde(default)]
+    pub url: String,
+    #[serde(default)]
+    pub auth: PveAuthKind,
+    /// The account, without the realm: `root` for `root@pam`.
+    #[serde(default)]
+    pub username: String,
+    /// The realm, e.g. `pam` or `pve`.
+    #[serde(default)]
+    pub realm: String,
+    /// The API token's id — the `automation` in `root@pam!automation`. Read
+    /// back, since it is not a secret and a page has to name it; empty when the
+    /// credential is a password.
+    #[serde(default)]
+    pub token_id: String,
+    /// The account's password, or the token's secret. Write-only through the
+    /// API: `None` is what an absent one is here, and the wire rule is
+    /// `api::pve::ReplaceRequest`'s.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub secret: Option<String>,
+    /// Accept a certificate this agent cannot verify.
+    ///
+    /// A PVE install answers on its own certificate, self-signed unless the
+    /// operator replaced it, so the alternative is a feature that works only
+    /// after the operator has done PKI for a machine they already trust. Per
+    /// cluster, and the same switch the app has for the same reason.
+    #[serde(default)]
+    pub ignore_cert: bool,
+}
+
+/// Which credential is presented to PVE.
+///
+/// Serialized by name, never by index — a stored `config.toml` outlives the
+/// build that wrote it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum PveAuthKind {
+    /// A ticket from `/access/ticket`, which is what PVE's own web UI does.
+    /// Refused with `needTfa` for an account whose two-factor authentication is
+    /// on, which is why [`Self::Token`] exists.
+    #[default]
+    Password,
+    /// `PVEAPIToken=…`, PVE's documented credential for automation. It
+    /// authenticates without a ticket, so it is the way through an account that
+    /// has two-factor authentication enabled.
+    Token,
+}
+
+impl PveAuthKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Password => "password",
+            Self::Token => "token",
+        }
+    }
+
+    /// Read by name, answering nothing for anything else: the caller phrases
+    /// the refusal, which a defaulted case could not — a misspelt `token` would
+    /// otherwise be stored as a password.
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "password" => Some(Self::Password),
+            "token" => Some(Self::Token),
+            _ => None,
+        }
+    }
+}
+
+impl PveConfig {
+    /// Whether a request could be sent at all: somewhere to send it and an
+    /// account to send it as. The secret is deliberately not part of this —
+    /// nothing reads it back, so a page cannot tell whether one is stored, and
+    /// `api::pve` reports that as its own `secret_set`.
+    pub fn is_configured(&self) -> bool {
+        if self.url.trim().is_empty()
+            || self.username.trim().is_empty()
+            // The realm is half of the account name for both kinds — the token
+            // header is `<user>@<realm>!<id>=<secret>`.
+            || self.realm.trim().is_empty()
+        {
+            return false;
+        }
+        match self.auth {
+            PveAuthKind::Password => true,
+            PveAuthKind::Token => !self.token_id.trim().is_empty(),
+        }
+    }
+
+    /// The account as PVE spells it, `root@pam`.
+    pub fn account(&self) -> String {
+        format!("{}@{}", self.username.trim(), self.realm.trim())
     }
 }
 
@@ -826,6 +948,12 @@ impl Config {
         self.ai.clone().unwrap_or_default()
     }
 
+    /// The saved cluster, default (and therefore unconfigured) when the section
+    /// is absent.
+    pub fn get_pve(&self) -> PveConfig {
+        self.pve.clone().unwrap_or_default()
+    }
+
     /// The raw section as written (or its all-off defaults when absent).
     /// Call `.resolve(..)` on it to fill in the memory-derived capacities.
     pub fn get_remote_access(&self) -> RemoteAccessConfig {
@@ -1130,6 +1258,10 @@ impl Default for Config {
             // config.toml shows where a model is configured and starts
             // unconfigured rather than pointing at a vendor by default.
             ai: Some(AiConfig::default()),
+            // Written out with no cluster, so a generated config.toml shows
+            // where one is configured and starts unconfigured rather than
+            // pointing at an address the operator never typed.
+            pve: Some(PveConfig::default()),
         }
     }
 }

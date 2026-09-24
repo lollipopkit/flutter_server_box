@@ -10,6 +10,7 @@ pub mod power;
 pub mod privileged;
 pub mod process;
 pub mod push;
+pub mod pve;
 pub mod service;
 pub mod snippets;
 pub mod users;

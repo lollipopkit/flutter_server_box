@@ -552,6 +552,74 @@ the panel password can't switch it on); shared admission checks live in
     scripted model endpoint on loopback — the request, the stream, the items
     stored, the call parked, the approval running a real command, the turn
     resumed, and the audit rows — and reaches no real endpoint and no real key.
+- **`GET/PUT /api/v1/pve/settings`**, **`GET /api/v1/pve/resources`** and
+  **`POST /api/v1/pve/control`** — the Proxmox VE cluster this agent proxies for
+  the panel. The app reaches a PVE node by forwarding a local socket through SSH
+  and doing the TLS handshake itself (`lib/data/provider/pve.dart`), which a
+  monitor-only server has no sshd for and a browser cannot take either (PVE is
+  not a CORS API, and its credential would have to be handed to the page). Here
+  the agent dials the cluster with the account it was given, and the panel sends
+  a node name and an action.
+  - **The credential lives here and is write-only.** `[pve]` in `config.toml`,
+    written through `PUT /pve/settings`, answered back by nothing: the GET
+    reports `secret` as `null` with `secret_set` beside it, a save sending that
+    `null` back keeps what is on disk, and `""` clears it — `/push`'s and
+    `/ai/settings`' convention. Both kinds are write-only: a password and an API
+    token alike. `token_id` is read back, since it is not a secret and a page has
+    to name it.
+  - **Saving the settings is `full_access`, and reading is not.** Saving is gated
+    the same way `/power` and a control are, for a reason that is easy to miss: a
+    `secret: null` PUT keeps the stored secret while `url` changes, so a caller
+    with less could point this agent at a cluster of their own and read the
+    credential out of the login it then makes. The listing needs only the panel
+    login, like a crontab or the benchmark history — a caller who may not act on
+    a guest can still read the cluster and be told why. `remote_access.pve` is
+    therefore **served, not grantable**, and each response carries its own
+    `editable`.
+  - **The model is `sbm_parser::pve`**, shared with the app, which reads the same
+    cluster over SSH. It owns the path a control is addressed at
+    (`control_path`, which validates the node name and the vmid), the sort order
+    of a listing, and the tolerance for an entry of a kind this build does not
+    know — so the panel composes no path and no panel-side rule decides which
+    rows come first. **The listing is sorted here rather than kept in the order
+    PVE answered**, so two refreshes of one page show the same rows in the same
+    places with no client state. Units are PVE's and passed through unchanged:
+    memory in bytes and `cpu` as a 0.0–1.0 fraction.
+  - **One login per endpoint request, and nothing cached.** A page refresh is one
+    ticket and two upstream reads; a control press is one ticket and one. What
+    invalidates a ticket is not observable from here (a password change, a revoke
+    in PVE's own UI, an ACL edit, a restart of `pveproxy`), so a cached one fails
+    at an arbitrary later moment, in a request the caller did not connect to the
+    login. TFA is **not** implemented agent-side: an account that owes a second
+    factor answers `needTfa`, and PVE's documented API token is the way through.
+  - **No upstream status is ever answered as itself.** `frontend/src/lib/api.ts`
+    logs the operator out on a 401, and PVE answering 401 is the *agent's*
+    credential failing against a machine the operator is not signed in to — so it
+    is 400 `loginFailed`. 403 is its own code, because a ticket carries the whole
+    account's rights while a token has an ACL of its own, and the two are
+    different things to fix. A transport failure is 502: `unreachable`,
+    `invalidResponse` (a 200 that is not the documented envelope, bounded at
+    4 MiB) and `upstream`. PVE's own words travel in `detail`, capped, and its
+    body never does — the login body is a document about a credential.
+  - A refusal the caller could have avoided is 400 with a stable code, phrased by
+    the panel in the viewer's language (`lib/pveRefusal.ts`): `notConfigured`,
+    `invalidUrl`, `missingUsername`, `missingRealm`, `missingTokenId`,
+    `invalidAuth`, `invalidKind`, `invalidAction`, plus `invalidNode` and
+    `invalidVmid` from the parser — and the last two are checked **before the
+    cluster is dialed**, so a malformed address costs no login.
+  - The audit row is `kind = 'pve'` and is always a change (reading the listing
+    is not recorded): `settings` for a save, `"{action} {kind}/{vmid}"` for a
+    control, with the node in the detail. The credential, the account and PVE's
+    own error text are never in it.
+  - `tests/pve_api.rs` runs the whole thing against a fake cluster on loopback
+    that records what it was asked for — the path a control went to, the form a
+    login was sent as, the cookie and CSRF header a write carries — and asserts
+    the 401-not-401 rule, the four transport refusals, the write-only secret, the
+    `ignore_cert` pair behind a self-signed certificate, and that the grant is
+    what decides a save. `crates/sbm_parser/tests/pve_compat.rs` is the model's
+    own, against the captured listing at `test/fixtures/pve/` that the app's Dart
+    suite reads too. TODO(migration): that fixture moves into the crate when the
+    Dart half is deleted, and `lib/data/provider/pve.dart` goes with it.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

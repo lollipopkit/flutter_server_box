@@ -309,6 +309,32 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::put().to(crate::api::cron::edit)),
             )
             .service(
+                // One section in and one section out, which is small; the
+                // default 32 KiB applies. Its own resource rather than fields
+                // of `/settings` for `/ai/settings`'s reason: the secret in it
+                // is write-only, and one save must not be a read-modify-write
+                // of everything the settings page happens to have open.
+                web::resource("/pve/settings")
+                    .route(web::get().to(crate::api::pve::get_settings))
+                    .route(web::put().to(crate::api::pve::replace_settings)),
+            )
+            .service(
+                // A read with no body, which is small: the default 32 KiB
+                // applies. Its own resource rather than a query on `/pve`
+                // because the two are one endpoint's read and write of one
+                // machine — the same shape `/users` and `/services` have.
+                web::resource("/pve/resources")
+                    .route(web::get().to(crate::api::pve::resources)),
+            )
+            .service(
+                // A node, a guest kind, an id and an action: four small fields,
+                // so the default 32 KiB applies. Its own resource rather than a
+                // second verb on `/pve/resources` because what it addresses is
+                // a guest rather than the listing.
+                web::resource("/pve/control")
+                    .route(web::post().to(crate::api::pve::control)),
+            )
+            .service(
                 // A read with no body, and one action — a verb, a container id
                 // and a flag — so the default 32 KiB applies to both. The part
                 // is a query parameter rather than a path segment: the three
@@ -1016,6 +1042,15 @@ struct RemoteAccessView {
     /// the read and the write need only the panel login, so there is no third
     /// state for this to report.
     snippets: bool,
+    /// Whether this agent serves the Proxmox endpoint at all.
+    ///
+    /// Served, not grantable, for [`Self::benchmark`]'s reason: the resource
+    /// listing needs only the panel login, and a caller who may not act on a
+    /// guest can still read the cluster and be told why. Acting on a guest and
+    /// saving the cluster's credential are `full_access`, said as `editable` in
+    /// each response rather than by withholding the route — the settings page
+    /// has to open read-only rather than fail on the first save.
+    pve: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -1072,6 +1107,9 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             ai: true,
             // Served, not grantable. See `RemoteAccessView::snippets`.
             snippets: true,
+            // Served, not grantable, for `benchmark`'s reason. See
+            // `RemoteAccessView::pve`.
+            pve: true,
         },
     }))
 }

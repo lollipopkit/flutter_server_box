@@ -117,6 +117,15 @@ pub enum Kind {
     /// that ran. Expanding one through `/snippets/plan` is not recorded: it
     /// runs nothing, types nothing and reads nothing but the text it was sent.
     Snippet,
+    /// A cluster configured through `api::pve`, or a guest acted on through it.
+    ///
+    /// Its own kind for `Container`'s reason in part — reading the resources is
+    /// not recorded at all, so a row here is always a change — and one of its
+    /// own: the machine this acts on is not this one. A row's subject is the
+    /// action and the guest and its detail names the node; the credential the
+    /// agent dials with, the account it dials as and PVE's own error text are
+    /// never in it.
+    Pve,
 }
 
 impl Kind {
@@ -140,6 +149,7 @@ impl Kind {
             Kind::Benchmark => "benchmark",
             Kind::Ai => "ai",
             Kind::Snippet => "snippet",
+            Kind::Pve => "pve",
         }
     }
 }
