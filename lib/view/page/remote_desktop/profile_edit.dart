@@ -121,8 +121,8 @@ class _RemoteDesktopProfileEditPageState
               ),
         title: Text(
           widget.args.profile == null
-              ? 'Add remote desktop'
-              : 'Edit remote desktop',
+              ? l10n.remoteDesktopAdd
+              : l10n.remoteDesktopEdit,
         ),
         actions: _buildActions(),
       ),
@@ -177,51 +177,47 @@ extension _Widgets on _RemoteDesktopProfileEditPageState {
                   ),
                 ],
               ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(3, 0, 3, 7),
-                child: Text(
-                  'The target is resolved from the SSH server or monitor agent. '
-                  'Localhost refers to that machine.',
-                  style: UIs.text12Grey,
-                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(3, 0, 3, 7),
+                child: Text(l10n.remoteDesktopTargetTip, style: UIs.text12Grey),
               ),
               GroupTitle(context.l10n.authShort),
               if (_protocol == RemoteDesktopProtocol.rdp) ...[
                 Input(
                   controller: _username,
-                  label: 'Username',
+                  label: libL10n.user,
                   icon: Icons.person_outline,
                 ),
                 Input(
                   controller: _domain,
-                  label: 'Domain (optional)',
+                  label: l10n.remoteDesktopDomain,
                   icon: Icons.domain_outlined,
                 ),
               ],
               Input(
                 controller: _password,
-                label: 'Password (optional)',
+                label: l10n.remoteDesktopPassword,
                 icon: Icons.password,
                 obscureText: true,
                 suggestion: false,
               ),
               _buildSwitch(
-                title: 'Save password',
-                subtitle: 'Stored in the encrypted database and backups.',
+                title: l10n.remoteDesktopSavePassword,
+                subtitle: l10n.remoteDesktopSavePasswordTip,
                 icon: Icons.save_outlined,
                 value: _savePassword,
                 onChanged: (value) => setState(() => _savePassword = value),
               ),
               GroupTitle(context.l10n.behaviour),
               _buildSwitch(
-                title: 'View only',
+                title: l10n.remoteDesktopViewOnly,
                 icon: Icons.visibility_outlined,
                 value: _viewOnly,
                 onChanged: (value) => setState(() => _viewOnly = value),
               ),
               if (_protocol == RemoteDesktopProtocol.vnc)
                 _buildSwitch(
-                  title: 'Share session',
+                  title: l10n.remoteDesktopShareSession,
                   icon: Icons.people_outline,
                   value: _shared,
                   onChanged: (value) => setState(() => _shared = value),
@@ -254,11 +250,11 @@ extension _Widgets on _RemoteDesktopProfileEditPageState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.desktop_windows_outlined),
-                SizedBox(width: 13),
-                Text('Protocol'),
+                const Icon(Icons.desktop_windows_outlined),
+                const SizedBox(width: 13),
+                Text(l10n.remoteDesktopProtocol),
               ],
             ),
             const SizedBox(height: 8),
@@ -295,7 +291,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
       TextButton(
         onPressed: _connect,
         style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-        child: const Text('Test'),
+        child: Text(libL10n.test),
       ),
       if (existing != null)
         IconButton(
@@ -334,7 +330,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
       // The name is unique in the schema rather than in whichever dialog last
       // remembered to check, so this is where a collision is found. The page
       // stays open on the name that has to change.
-      Toast.show('Profile names must be unique for this server.');
+      Toast.show(l10n.remoteDesktopUniqueName);
       return;
     } catch (error, stackTrace) {
       if (mounted) context.showErrDialog(error, stackTrace);
@@ -347,7 +343,7 @@ extension _Actions on _RemoteDesktopProfileEditPageState {
   Future<void> _delete(RemoteDesktopProfile profile) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('Delete remote desktop profile “${profile.name}”?'),
+      child: Text(l10n.remoteDesktopDeleteProfile(profile.name)),
       actions: Btnx.cancelOk,
     );
     if (confirmed != true || !mounted) return;
@@ -506,7 +502,7 @@ Future<String?> _askPassword(
 ) {
   final controller = TextEditingController();
   return context.showRoundDialog<String>(
-    title: '${profile.protocol.name.toUpperCase()} password',
+    title: '${profile.protocol.name.toUpperCase()} ${libL10n.pwd}',
     childBuilder: (dialogContext) => DisposeWith(
       notifiers: [controller],
       child: Column(
@@ -519,7 +515,7 @@ Future<String?> _askPassword(
           ],
           Input(
             controller: controller,
-            hint: 'Password',
+            hint: libL10n.pwd,
             obscureText: true,
             autoFocus: true,
             onSubmitted: (value) =>
@@ -535,7 +531,7 @@ Future<String?> _askPassword(
             _answerPassword(dialogContext, profile, controller.text),
         child: Text(
           profile.protocol == RemoteDesktopProtocol.vnc
-              ? 'Connect'
+              ? l10n.remoteDesktopConnect
               : libL10n.ok,
         ),
       ),
@@ -555,7 +551,7 @@ void _answerPassword(
   if (profile.protocol == RemoteDesktopProtocol.vnc &&
       (password.codeUnits.length > 8 ||
           password.codeUnits.any((unit) => unit > 0x7f))) {
-    Toast.show('Classic VNC passwords are limited to 8 ASCII bytes.');
+    Toast.show(l10n.remoteDesktopVncPasswordLength);
     return;
   }
   dialogContext.popDialog(password);
@@ -575,18 +571,20 @@ String? validateRemoteDesktopProfileInput({
   required String username,
   required String password,
 }) {
-  if (name.trim().isEmpty) return 'Enter a profile name.';
-  if (host.trim().isEmpty) return 'Enter a target host.';
-  if (port == null || port < 1 || port > 65535) return 'Enter a valid port.';
+  if (name.trim().isEmpty) return l10n.remoteDesktopNameRequired;
+  if (host.trim().isEmpty) return l10n.remoteDesktopHostRequired;
+  if (port == null || port < 1 || port > 65535) {
+    return l10n.remoteDesktopPortRequired;
+  }
   if (protocol == RemoteDesktopProtocol.rdp && username.trim().isEmpty) {
-    return 'Enter the RDP username.';
+    return l10n.remoteDesktopUsernameRequired;
   }
   if (protocol == RemoteDesktopProtocol.vnc && password.codeUnits.length > 8) {
-    return 'Classic VNC passwords are limited to 8 ASCII bytes.';
+    return l10n.remoteDesktopVncPasswordLength;
   }
   if (protocol == RemoteDesktopProtocol.vnc &&
       password.codeUnits.any((unit) => unit > 0x7f)) {
-    return 'Classic VNC passwords must contain ASCII characters only.';
+    return l10n.remoteDesktopVncPasswordAscii;
   }
   return null;
 }

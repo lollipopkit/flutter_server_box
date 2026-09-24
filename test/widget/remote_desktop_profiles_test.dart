@@ -18,6 +18,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/remote_desktop.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
@@ -27,6 +28,7 @@ import 'package:server_box/data/store/remote_desktop.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/generated/l10n/l10n_zh.dart';
 import 'package:server_box/view/page/remote_desktop/profile_edit.dart';
 import 'package:server_box/view/page/remote_desktop/profiles.dart';
 import 'package:server_box/view/page/remote_desktop/tab.dart';
@@ -115,6 +117,7 @@ void main() {
     WidgetTester tester, {
     required double width,
     Widget? home,
+    Locale locale = const Locale('en'),
     RemoteDesktopSessionsState? sessions,
   }) async {
     // The view, not `setSurfaceSize` — that changes layout without changing
@@ -132,6 +135,7 @@ void main() {
             ),
         ],
         child: MaterialApp(
+          locale: locale,
           localizationsDelegates: const [
             LibLocalizations.delegate,
             ...AppLocalizations.localizationsDelegates,
@@ -150,6 +154,25 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
+
+  testWidgets('empty profiles and the editor use Chinese translations', (
+    tester,
+  ) async {
+    final previous = app_locale.l10n;
+    app_locale.l10n = AppLocalizationsZh();
+    addTearDown(() => app_locale.l10n = previous);
+    for (final profile in Stores.remoteDesktop.fetchForServer(sid)) {
+      Stores.remoteDesktop.delete(profile);
+    }
+    await pumpPage(tester, width: 620, locale: const Locale('zh'));
+    expect(find.text('暂无远程桌面配置'), findsOneWidget);
+    await tester.tap(find.text('添加配置'));
+    await tester.pumpAndSettle();
+    expect(find.text('添加远程桌面'), findsOneWidget);
+    expect(find.text('保存密码'), findsOneWidget);
+    expect(find.text('域（可选）'), findsOneWidget);
+    expect(find.text('Save password'), findsNothing);
+  });
 
   testWidgets(
     'the remote desktop rail opens server profiles without a session',
@@ -420,7 +443,7 @@ void main() {
 
     await tester.tap(find.widgetWithText(TextButton, 'Connect'));
     await tester.pumpAndSettle();
-    expect(find.text('RDP password'), findsOneWidget);
+    expect(find.text('RDP ${libL10n.pwd}'), findsOneWidget);
     expect(find.byType(RemoteDesktopProfileEditPage), findsNothing);
   });
 

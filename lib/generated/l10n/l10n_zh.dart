@@ -2884,6 +2884,120 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪贴板仅支持 Latin-1 文本。';
+
+  @override
+  String get remoteDesktopConnect => '连接';
+
+  @override
+  String get remoteDesktopAddProfile => '添加配置';
+
+  @override
+  String get remoteDesktopNoProfiles => '暂无远程桌面配置';
+
+  @override
+  String get remoteDesktopAdd => '添加远程桌面';
+
+  @override
+  String get remoteDesktopEdit => '编辑远程桌面';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      '目标地址由 SSH 服务器或 Monitor Agent 解析，localhost 指向该服务器。';
+
+  @override
+  String get remoteDesktopDomain => '域（可选）';
+
+  @override
+  String get remoteDesktopPassword => '密码（可选）';
+
+  @override
+  String get remoteDesktopSavePassword => '保存密码';
+
+  @override
+  String get remoteDesktopSavePasswordTip => '保存在加密数据库和备份中。';
+
+  @override
+  String get remoteDesktopShareSession => '共享会话';
+
+  @override
+  String get remoteDesktopProtocol => '协议';
+
+  @override
+  String get remoteDesktopUniqueName => '此服务器的配置名称不能重复。';
+
+  @override
+  String get remoteDesktopVncPasswordLength => '传统 VNC 密码最多为 8 个 ASCII 字节。';
+
+  @override
+  String get remoteDesktopNameRequired => '请输入配置名称。';
+
+  @override
+  String get remoteDesktopHostRequired => '请输入目标主机。';
+
+  @override
+  String get remoteDesktopPortRequired => '请输入有效的端口。';
+
+  @override
+  String get remoteDesktopUsernameRequired => '请输入 RDP 用户名。';
+
+  @override
+  String get remoteDesktopVncPasswordAscii => '传统 VNC 密码只能包含 ASCII 字符。';
+
+  @override
+  String get remoteDesktopCertificateRequired => '需要确认证书';
+
+  @override
+  String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
+
+  @override
+  String get remoteDesktopTrustCertificate => '是否信任此证书？';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      '证书指纹与保存的值不一致。替换信任前，请核实新的指纹。';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      '系统无法验证此证书。继续前，请核实其 SHA-256 指纹。';
+
+  @override
+  String get remoteDesktopReplaceTrust => '替换信任';
+
+  @override
+  String get remoteDesktopTrustReconnect => '信任并重新连接';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '是否删除远程桌面配置“$name”？';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return '正在重新连接（$attempt/3）…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return '此前信任的指纹\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return '主题：$subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return '颁发者：$issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return '有效期：$start – $end';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
