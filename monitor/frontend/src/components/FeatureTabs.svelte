@@ -3,6 +3,7 @@
     Activity,
     CalendarClock,
     Container,
+    Gauge,
     MonitorPlay,
     ServerCog,
     Users,
@@ -36,6 +37,7 @@
     users: { label: () => $LL.users(), icon: Users },
     cron: { label: () => $LL.cron(), icon: CalendarClock },
     desktop: { label: () => $LL.desktop(), icon: MonitorPlay },
+    benchmark: { label: () => $LL.benchmark(), icon: Gauge },
   }
 
   // Read here rather than passed in: the bar is in three callers' headers and a

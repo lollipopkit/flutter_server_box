@@ -1835,6 +1835,247 @@ type RootTranslation = {
 	 */
 	desktopInvalidDomain: string
 	/**
+	 * B​e​n​c​h​m​a​r​k
+	 */
+	benchmark: string
+	/**
+	 * y​a​b​s​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e
+	 */
+	benchmarkSubtitle: string
+	/**
+	 * N​o​ ​b​e​n​c​h​m​a​r​k​ ​h​a​s​ ​b​e​e​n​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​ ​y​e​t​.
+	 */
+	benchmarkEmpty: string
+	/**
+	 * y​a​b​s​ ​i​s​ ​a​ ​L​i​n​u​x​ ​s​c​r​i​p​t​ ​t​h​a​t​ ​r​e​a​d​s​ ​p​r​o​c​f​s​,​ ​s​o​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​c​a​n​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​T​h​e​ ​h​i​s​t​o​r​y​ ​i​s​ ​s​t​i​l​l​ ​h​e​r​e​.
+	 */
+	benchmarkUnsupported: string
+	/**
+	 * S​t​a​r​t​i​n​g​,​ ​s​t​o​p​p​i​n​g​ ​a​n​d​ ​r​e​m​o​v​i​n​g​ ​a​ ​r​u​n​ ​n​e​e​d​ ​a​c​c​e​s​s​ ​w​i​t​h​o​u​t​ ​S​S​H​,​ ​w​h​i​c​h​ ​t​h​i​s​ ​a​g​e​n​t​ ​h​a​s​ ​s​w​i​t​c​h​e​d​ ​o​f​f​.​ ​T​h​e​ ​h​i​s​t​o​r​y​ ​c​a​n​ ​s​t​i​l​l​ ​b​e​ ​r​e​a​d​.
+	 */
+	benchmarkReadOnly: string
+	/**
+	 * R​u​n
+	 */
+	benchmarkRun: string
+	/**
+	 * E​l​a​p​s​e​d
+	 */
+	benchmarkProgress: string
+	/**
+	 * O​u​t​p​u​t
+	 */
+	benchmarkLog: string
+	/**
+	 * N​o​t​h​i​n​g​ ​p​r​i​n​t​e​d​ ​y​e​t​.
+	 */
+	benchmarkLogEmpty: string
+	/**
+	 * T​h​e​ ​o​u​t​p​u​t​ ​i​s​ ​l​o​n​g​e​r​ ​t​h​a​n​ ​t​h​i​s​ ​a​g​e​n​t​ ​r​e​a​d​s​ ​i​n​ ​o​n​e​ ​p​i​e​c​e​,​ ​s​o​ ​t​h​i​s​ ​i​s​ ​n​o​t​ ​a​l​l​ ​o​f​ ​i​t​.
+	 */
+	benchmarkLogTruncated: string
+	/**
+	 * T​h​i​s​ ​m​a​c​h​i​n​e​ ​d​i​d​ ​n​o​t​ ​a​n​s​w​e​r​ ​i​n​ ​t​i​m​e​.​ ​T​h​e​ ​r​u​n​ ​i​s​ ​s​t​i​l​l​ ​g​o​i​n​g​;​ ​t​h​i​s​ ​p​a​g​e​ ​w​i​l​l​ ​t​r​y​ ​a​g​a​i​n​.
+	 */
+	benchmarkNoAnswer: string
+	/**
+	 * W​o​r​k​i​n​g​ ​p​r​o​c​e​s​s​e​s
+	 */
+	benchmarkProcesses: string
+	/**
+	 * S​t​o​p
+	 */
+	benchmarkCancel: string
+	/**
+	 * S​t​o​p​ ​t​h​e​ ​r​u​n​?​ ​K​i​l​l​i​n​g​ ​t​h​e​ ​p​r​o​c​e​s​s​ ​g​r​o​u​p​ ​i​s​ ​t​h​e​ ​o​n​l​y​ ​t​h​i​n​g​ ​t​h​a​t​ ​e​n​d​s​ ​a​ ​b​e​n​c​h​m​a​r​k​ ​—​ ​f​i​o​,​ ​i​p​e​r​f​3​ ​a​n​d​ ​G​e​e​k​b​e​n​c​h​ ​a​r​e​ ​s​e​p​a​r​a​t​e​ ​p​r​o​c​e​s​s​e​s​.
+	 */
+	benchmarkCancelConfirm: string
+	/**
+	 * D​i​s​k
+	 */
+	benchmarkDisk: string
+	/**
+	 * f​i​o​ ​a​t​ ​f​o​u​r​ ​b​l​o​c​k​ ​s​i​z​e​s​,​ ​~​3​0​ ​s​e​c​o​n​d​s​ ​e​a​c​h​.​ ​W​r​i​t​e​s​ ​a​ ​2​ ​G​B​ ​t​e​s​t​ ​f​i​l​e​ ​i​n​t​o​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​a​n​d​ ​n​e​e​d​s​ ​t​h​a​t​ ​m​u​c​h​ ​f​r​e​e​,​ ​o​r​ ​y​a​b​s​ ​s​k​i​p​s​ ​i​t​ ​a​n​d​ ​s​a​y​s​ ​s​o​ ​i​n​ ​t​h​e​ ​o​u​t​p​u​t​.
+	 */
+	benchmarkDiskHint: string
+	/**
+	 * N​e​t​w​o​r​k
+	 */
+	benchmarkNetwork: string
+	/**
+	 * i​p​e​r​f​3​ ​a​g​a​i​n​s​t​ ​p​u​b​l​i​c​ ​s​e​r​v​e​r​s​,​ ​b​o​t​h​ ​w​a​y​s​.
+	 */
+	benchmarkNetworkHint: string
+	/**
+	 * F​e​w​e​r​ ​i​p​e​r​f​ ​l​o​c​a​t​i​o​n​s
+	 */
+	benchmarkReducedNetwork: string
+	/**
+	 * T​h​r​e​e​ ​l​o​c​a​t​i​o​n​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​s​e​v​e​n​.​ ​O​n​ ​b​y​ ​d​e​f​a​u​l​t​:​ ​a​ ​f​u​l​l​ ​r​u​n​ ​i​s​ ​t​e​n​s​ ​o​f​ ​g​i​g​a​b​y​t​e​s​ ​o​f​ ​t​r​a​f​f​i​c​.
+	 */
+	benchmarkReducedNetworkHint: string
+	/**
+	 * G​e​e​k​b​e​n​c​h
+	 */
+	benchmarkCpu: string
+	/**
+	 * D​o​w​n​l​o​a​d​s​ ​a​ ​p​r​o​p​r​i​e​t​a​r​y​ ​b​i​n​a​r​y​ ​a​n​d​ ​p​u​b​l​i​s​h​e​s​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​s​p​e​c​i​f​i​c​a​t​i​o​n​s​ ​t​o​ ​a​ ​p​u​b​l​i​c​ ​b​r​o​w​s​e​r​.​g​e​e​k​b​e​n​c​h​.​c​o​m​ ​p​a​g​e​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​ ​f​o​r​ ​t​h​a​t​ ​r​e​a​s​o​n​.
+	 */
+	benchmarkCpuHint: string
+	/**
+	 * G​e​e​k​b​e​n​c​h​ ​v​e​r​s​i​o​n
+	 */
+	benchmarkGeekbenchVersion: string
+	/**
+	 * L​o​o​k​ ​u​p​ ​t​h​e​ ​p​u​b​l​i​c​ ​a​d​d​r​e​s​s
+	 */
+	benchmarkIpInfo: string
+	/**
+	 * P​l​a​i​n​t​e​x​t​ ​H​T​T​P​ ​t​o​ ​i​p​-​a​p​i​.​c​o​m​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
+	 */
+	benchmarkIpInfoHint: string
+	/**
+	 * D​o​w​n​l​o​a​d​ ​f​i​o​ ​a​n​d​ ​i​p​e​r​f​3
+	 */
+	benchmarkPreferBinaries: string
+	/**
+	 * U​s​e​ ​t​h​e​ ​b​i​n​a​r​i​e​s​ ​y​a​b​s​ ​s​h​i​p​s​ ​i​n​s​t​e​a​d​ ​o​f​ ​t​h​e​ ​m​a​c​h​i​n​e​'​s​ ​o​w​n​,​ ​w​h​i​c​h​ ​m​e​a​n​s​ ​f​e​t​c​h​i​n​g​ ​t​h​e​m​ ​f​r​o​m​ ​r​a​w​.​g​i​t​h​u​b​u​s​e​r​c​o​n​t​e​n​t​.​c​o​m​ ​—​ ​u​n​r​e​a​c​h​a​b​l​e​ ​f​r​o​m​ ​s​o​m​e​ ​h​o​s​t​s​.​ ​O​f​f​ ​b​y​ ​d​e​f​a​u​l​t​.
+	 */
+	benchmarkPreferBinariesHint: string
+	/**
+	 * W​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y
+	 */
+	benchmarkWorkDir: string
+	/**
+	 * W​h​e​r​e​ ​t​h​e​ ​r​u​n​ ​h​a​p​p​e​n​s​,​ ​a​n​d​ ​t​h​e​r​e​f​o​r​e​ ​w​h​i​c​h​ ​f​i​l​e​s​y​s​t​e​m​ ​t​h​e​ ​d​i​s​k​ ​t​e​s​t​ ​m​e​a​s​u​r​e​s​.​ ​E​m​p​t​y​ ​m​e​a​n​s​ ​t​h​e​ ​a​g​e​n​t​ ​a​c​c​o​u​n​t​'​s​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​.
+	 */
+	benchmarkWorkDirHint: string
+	/**
+	 * A​b​o​u​t​ ​{​m​i​n​u​t​e​s​}​ ​m​i​n​ ​·​ ​{​t​r​a​f​f​i​c​}​ ​o​f​ ​t​r​a​f​f​i​c
+	 * @param {unknown} minutes
+	 * @param {unknown} traffic
+	 */
+	benchmarkEstimate: RequiredParams<'minutes' | 'traffic'>
+	/**
+	 * N​e​e​d​s​ ​{​f​r​e​e​}​ ​f​r​e​e​ ​i​n​ ​t​h​e​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​.
+	 * @param {unknown} free
+	 */
+	benchmarkEstimateDisk: RequiredParams<'free'>
+	/**
+	 * N​o​t​h​i​n​g​ ​i​s​ ​s​w​i​t​c​h​e​d​ ​o​n​,​ ​s​o​ ​o​n​l​y​ ​t​h​e​ ​s​y​s​t​e​m​ ​i​n​f​o​r​m​a​t​i​o​n​ ​h​e​a​d​e​r​ ​i​s​ ​c​o​l​l​e​c​t​e​d​ ​—​ ​a​ ​f​e​w​ ​s​e​c​o​n​d​s​.
+	 */
+	benchmarkEstimateSystemInfo: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​e​s​t​i​m​a​t​e​ ​t​h​i​s​ ​r​u​n​;​ ​t​h​e​ ​f​o​r​m​ ​i​s​ ​s​t​i​l​l​ ​u​s​a​b​l​e​.
+	 */
+	benchmarkEstimateFailed: string
+	/**
+	 * S​t​a​r​t​e​d​ ​{​i​d​}​.
+	 * @param {unknown} id
+	 */
+	benchmarkStarted: RequiredParams<'id'>
+	/**
+	 * R​u​n​n​i​n​g
+	 */
+	benchmarkStatusRunning: string
+	/**
+	 * C​o​m​p​l​e​t​e​d
+	 */
+	benchmarkStatusCompleted: string
+	/**
+	 * F​a​i​l​e​d
+	 */
+	benchmarkStatusFailed: string
+	/**
+	 * S​t​o​p​p​e​d
+	 */
+	benchmarkStatusCancelled: string
+	/**
+	 * T​h​e​ ​l​a​u​n​c​h​e​r​ ​d​i​d​ ​n​o​t​ ​s​t​a​r​t​,​ ​s​o​ ​n​o​t​h​i​n​g​ ​w​a​s​ ​r​u​n​.
+	 */
+	benchmarkRunErrorLauncherFailed: string
+	/**
+	 * T​h​e​ ​r​u​n​ ​e​x​i​t​e​d​ ​n​o​n​-​z​e​r​o​.
+	 */
+	benchmarkRunErrorNonzeroExit: string
+	/**
+	 * T​h​e​ ​r​u​n​'​s​ ​p​r​o​c​e​s​s​ ​i​s​ ​g​o​n​e​ ​a​n​d​ ​n​o​ ​e​x​i​t​ ​c​o​d​e​ ​w​a​s​ ​w​r​i​t​t​e​n​,​ ​w​h​i​c​h​ ​i​s​ ​w​h​a​t​ ​a​n​ ​o​u​t​-​o​f​-​m​e​m​o​r​y​ ​k​i​l​l​ ​l​o​o​k​s​ ​l​i​k​e​ ​f​r​o​m​ ​h​e​r​e​.
+	 */
+	benchmarkRunErrorNoExitCode: string
+	/**
+	 * e​x​i​t​ ​{​c​o​d​e​}
+	 * @param {unknown} code
+	 */
+	benchmarkExitCode: RequiredParams<'code'>
+	/**
+	 * R​e​m​o​v​e
+	 */
+	benchmarkRemove: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​r​u​n​ ​a​n​d​ ​i​t​s​ ​f​i​l​e​s​ ​f​r​o​m​ ​t​h​e​ ​m​a​c​h​i​n​e​?
+	 */
+	benchmarkRemoveConfirm: string
+	/**
+	 * R​e​s​u​l​t
+	 */
+	benchmarkResult: string
+	/**
+	 * y​a​b​s​'​ ​r​e​s​u​l​t​ ​i​s​ ​n​o​t​ ​v​a​l​i​d​ ​J​S​O​N​,​ ​w​h​i​c​h​ ​h​a​p​p​e​n​s​ ​w​h​e​n​ ​a​ ​v​a​l​u​e​ ​i​t​ ​c​o​l​l​e​c​t​e​d​ ​c​o​n​t​a​i​n​s​ ​a​ ​q​u​o​t​e​.​ ​I​t​ ​i​s​ ​s​h​o​w​n​ ​a​s​ ​t​h​e​ ​t​e​x​t​ ​i​t​ ​i​s​.
+	 */
+	benchmarkResultUnparsable: string
+	/**
+	 * T​h​i​s​ ​r​u​n​ ​s​t​o​r​e​d​ ​n​o​ ​r​e​s​u​l​t​.
+	 */
+	benchmarkResultEmpty: string
+	/**
+	 * T​h​e​ ​r​e​s​u​l​t​ ​i​s​ ​w​r​i​t​t​e​n​ ​w​h​e​n​ ​t​h​e​ ​r​u​n​ ​e​n​d​s​.
+	 */
+	benchmarkNoResultYet: string
+	/**
+	 * A​ ​b​e​n​c​h​m​a​r​k​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​u​n​n​i​n​g​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.​ ​S​t​o​p​ ​i​t​ ​f​i​r​s​t​.
+	 */
+	benchmarkAlreadyRunning: string
+	/**
+	 * y​a​b​s​ ​d​o​e​s​ ​n​o​t​ ​r​u​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​'​s​ ​p​l​a​t​f​o​r​m​.
+	 */
+	benchmarkUnsupportedPlatform: string
+	/**
+	 * T​h​a​t​ ​w​o​r​k​i​n​g​ ​d​i​r​e​c​t​o​r​y​ ​i​s​ ​t​o​o​ ​l​o​n​g​ ​t​o​ ​b​e​ ​a​ ​p​a​t​h​.
+	 */
+	benchmarkWorkDirTooLong: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​h​a​s​ ​n​o​ ​h​o​m​e​ ​d​i​r​e​c​t​o​r​y​,​ ​s​o​ ​t​h​e​r​e​ ​i​s​ ​n​o​w​h​e​r​e​ ​t​o​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​s​c​r​i​p​t​.
+	 */
+	benchmarkNoHome: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​'​s​ ​c​o​p​y​ ​o​f​ ​t​h​e​ ​y​a​b​s​ ​s​c​r​i​p​t​ ​i​s​ ​u​n​r​e​a​d​a​b​l​e​.​ ​I​t​ ​i​s​ ​a​ ​p​a​c​k​a​g​i​n​g​ ​f​a​u​l​t​ ​r​a​t​h​e​r​ ​t​h​a​n​ ​a​n​y​t​h​i​n​g​ ​a​b​o​u​t​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	benchmarkAssetUnreadable: string
+	/**
+	 * T​h​e​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​g​e​n​e​r​a​t​e​ ​a​ ​r​u​n​ ​i​d​.
+	 */
+	benchmarkNoEntropy: string
+	/**
+	 * T​h​e​ ​y​a​b​s​ ​s​c​r​i​p​t​ ​c​o​u​l​d​ ​n​o​t​ ​b​e​ ​w​r​i​t​t​e​n​ ​o​n​ ​t​h​i​s​ ​m​a​c​h​i​n​e​.
+	 */
+	benchmarkScriptNotWritable: string
+	/**
+	 * T​h​e​ ​l​a​u​n​c​h​e​r​ ​d​i​d​ ​n​o​t​ ​s​t​a​r​t​.
+	 */
+	benchmarkStartFailed: string
+	/**
+	 * T​h​i​s​ ​a​g​e​n​t​ ​c​o​u​l​d​ ​n​o​t​ ​r​e​a​d​ ​i​t​s​ ​b​e​n​c​h​m​a​r​k​ ​h​i​s​t​o​r​y​.
+	 */
+	benchmarkHistoryUnavailable: string
+	/**
+	 * T​h​a​t​ ​r​u​n​ ​i​s​ ​n​o​ ​l​o​n​g​e​r​ ​i​n​ ​t​h​i​s​ ​a​g​e​n​t​'​s​ ​h​i​s​t​o​r​y​.
+	 */
+	benchmarkNoSuchRun: string
+	/**
+	 * T​h​i​s​ ​r​u​n​ ​i​s​ ​s​t​i​l​l​ ​g​o​i​n​g​.​ ​S​t​o​p​ ​i​t​ ​b​e​f​o​r​e​ ​r​e​m​o​v​i​n​g​ ​i​t​.
+	 */
+	benchmarkRunInProgress: string
+	/**
 	 * C​l​o​s​e
 	 */
 	close: string
@@ -3605,6 +3846,242 @@ export type TranslationFunctions = {
 	 * The domain may not hold a space or a line break.
 	 */
 	desktopInvalidDomain: () => LocalizedString
+	/**
+	 * Benchmark
+	 */
+	benchmark: () => LocalizedString
+	/**
+	 * yabs on this machine
+	 */
+	benchmarkSubtitle: () => LocalizedString
+	/**
+	 * No benchmark has been run on this machine yet.
+	 */
+	benchmarkEmpty: () => LocalizedString
+	/**
+	 * yabs is a Linux script that reads procfs, so a benchmark cannot run on this machine. The history is still here.
+	 */
+	benchmarkUnsupported: () => LocalizedString
+	/**
+	 * Starting, stopping and removing a run need access without SSH, which this agent has switched off. The history can still be read.
+	 */
+	benchmarkReadOnly: () => LocalizedString
+	/**
+	 * Run
+	 */
+	benchmarkRun: () => LocalizedString
+	/**
+	 * Elapsed
+	 */
+	benchmarkProgress: () => LocalizedString
+	/**
+	 * Output
+	 */
+	benchmarkLog: () => LocalizedString
+	/**
+	 * Nothing printed yet.
+	 */
+	benchmarkLogEmpty: () => LocalizedString
+	/**
+	 * The output is longer than this agent reads in one piece, so this is not all of it.
+	 */
+	benchmarkLogTruncated: () => LocalizedString
+	/**
+	 * This machine did not answer in time. The run is still going; this page will try again.
+	 */
+	benchmarkNoAnswer: () => LocalizedString
+	/**
+	 * Working processes
+	 */
+	benchmarkProcesses: () => LocalizedString
+	/**
+	 * Stop
+	 */
+	benchmarkCancel: () => LocalizedString
+	/**
+	 * Stop the run? Killing the process group is the only thing that ends a benchmark — fio, iperf3 and Geekbench are separate processes.
+	 */
+	benchmarkCancelConfirm: () => LocalizedString
+	/**
+	 * Disk
+	 */
+	benchmarkDisk: () => LocalizedString
+	/**
+	 * fio at four block sizes, ~30 seconds each. Writes a 2 GB test file into the working directory and needs that much free, or yabs skips it and says so in the output.
+	 */
+	benchmarkDiskHint: () => LocalizedString
+	/**
+	 * Network
+	 */
+	benchmarkNetwork: () => LocalizedString
+	/**
+	 * iperf3 against public servers, both ways.
+	 */
+	benchmarkNetworkHint: () => LocalizedString
+	/**
+	 * Fewer iperf locations
+	 */
+	benchmarkReducedNetwork: () => LocalizedString
+	/**
+	 * Three locations instead of seven. On by default: a full run is tens of gigabytes of traffic.
+	 */
+	benchmarkReducedNetworkHint: () => LocalizedString
+	/**
+	 * Geekbench
+	 */
+	benchmarkCpu: () => LocalizedString
+	/**
+	 * Downloads a proprietary binary and publishes this machine's specifications to a public browser.geekbench.com page. Off by default for that reason.
+	 */
+	benchmarkCpuHint: () => LocalizedString
+	/**
+	 * Geekbench version
+	 */
+	benchmarkGeekbenchVersion: () => LocalizedString
+	/**
+	 * Look up the public address
+	 */
+	benchmarkIpInfo: () => LocalizedString
+	/**
+	 * Plaintext HTTP to ip-api.com. Off by default.
+	 */
+	benchmarkIpInfoHint: () => LocalizedString
+	/**
+	 * Download fio and iperf3
+	 */
+	benchmarkPreferBinaries: () => LocalizedString
+	/**
+	 * Use the binaries yabs ships instead of the machine's own, which means fetching them from raw.githubusercontent.com — unreachable from some hosts. Off by default.
+	 */
+	benchmarkPreferBinariesHint: () => LocalizedString
+	/**
+	 * Working directory
+	 */
+	benchmarkWorkDir: () => LocalizedString
+	/**
+	 * Where the run happens, and therefore which filesystem the disk test measures. Empty means the agent account's home directory.
+	 */
+	benchmarkWorkDirHint: () => LocalizedString
+	/**
+	 * About {minutes} min · {traffic} of traffic
+	 */
+	benchmarkEstimate: (arg: { minutes: unknown, traffic: unknown }) => LocalizedString
+	/**
+	 * Needs {free} free in the working directory.
+	 */
+	benchmarkEstimateDisk: (arg: { free: unknown }) => LocalizedString
+	/**
+	 * Nothing is switched on, so only the system information header is collected — a few seconds.
+	 */
+	benchmarkEstimateSystemInfo: () => LocalizedString
+	/**
+	 * The agent could not estimate this run; the form is still usable.
+	 */
+	benchmarkEstimateFailed: () => LocalizedString
+	/**
+	 * Started {id}.
+	 */
+	benchmarkStarted: (arg: { id: unknown }) => LocalizedString
+	/**
+	 * Running
+	 */
+	benchmarkStatusRunning: () => LocalizedString
+	/**
+	 * Completed
+	 */
+	benchmarkStatusCompleted: () => LocalizedString
+	/**
+	 * Failed
+	 */
+	benchmarkStatusFailed: () => LocalizedString
+	/**
+	 * Stopped
+	 */
+	benchmarkStatusCancelled: () => LocalizedString
+	/**
+	 * The launcher did not start, so nothing was run.
+	 */
+	benchmarkRunErrorLauncherFailed: () => LocalizedString
+	/**
+	 * The run exited non-zero.
+	 */
+	benchmarkRunErrorNonzeroExit: () => LocalizedString
+	/**
+	 * The run's process is gone and no exit code was written, which is what an out-of-memory kill looks like from here.
+	 */
+	benchmarkRunErrorNoExitCode: () => LocalizedString
+	/**
+	 * exit {code}
+	 */
+	benchmarkExitCode: (arg: { code: unknown }) => LocalizedString
+	/**
+	 * Remove
+	 */
+	benchmarkRemove: () => LocalizedString
+	/**
+	 * Remove this run and its files from the machine?
+	 */
+	benchmarkRemoveConfirm: () => LocalizedString
+	/**
+	 * Result
+	 */
+	benchmarkResult: () => LocalizedString
+	/**
+	 * yabs' result is not valid JSON, which happens when a value it collected contains a quote. It is shown as the text it is.
+	 */
+	benchmarkResultUnparsable: () => LocalizedString
+	/**
+	 * This run stored no result.
+	 */
+	benchmarkResultEmpty: () => LocalizedString
+	/**
+	 * The result is written when the run ends.
+	 */
+	benchmarkNoResultYet: () => LocalizedString
+	/**
+	 * A benchmark is already running on this machine. Stop it first.
+	 */
+	benchmarkAlreadyRunning: () => LocalizedString
+	/**
+	 * yabs does not run on this machine's platform.
+	 */
+	benchmarkUnsupportedPlatform: () => LocalizedString
+	/**
+	 * That working directory is too long to be a path.
+	 */
+	benchmarkWorkDirTooLong: () => LocalizedString
+	/**
+	 * The agent has no home directory, so there is nowhere to install the script.
+	 */
+	benchmarkNoHome: () => LocalizedString
+	/**
+	 * This agent's copy of the yabs script is unreadable. It is a packaging fault rather than anything about this machine.
+	 */
+	benchmarkAssetUnreadable: () => LocalizedString
+	/**
+	 * The agent could not generate a run id.
+	 */
+	benchmarkNoEntropy: () => LocalizedString
+	/**
+	 * The yabs script could not be written on this machine.
+	 */
+	benchmarkScriptNotWritable: () => LocalizedString
+	/**
+	 * The launcher did not start.
+	 */
+	benchmarkStartFailed: () => LocalizedString
+	/**
+	 * This agent could not read its benchmark history.
+	 */
+	benchmarkHistoryUnavailable: () => LocalizedString
+	/**
+	 * That run is no longer in this agent's history.
+	 */
+	benchmarkNoSuchRun: () => LocalizedString
+	/**
+	 * This run is still going. Stop it before removing it.
+	 */
+	benchmarkRunInProgress: () => LocalizedString
 	/**
 	 * Close
 	 */

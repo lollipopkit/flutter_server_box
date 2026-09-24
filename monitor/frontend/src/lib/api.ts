@@ -1,4 +1,9 @@
 import type {
+  BenchDetail,
+  BenchEstimate,
+  BenchOptions,
+  BenchRun,
+  BenchView,
   CardOrderPayload,
   Capabilities,
   ContainerAction,
@@ -46,6 +51,12 @@ import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
 
+/// Starting or stopping a benchmark is not one round trip's worth of work: the
+/// agent writes a script, records the row and waits for the launcher to confirm
+/// it started, and a stop sleeps between the TERM and the KILL. The agent's own
+/// bound is 30s for each, so this waits past it.
+const BENCHMARK_WRITE_TIMEOUT_MS = 60_000
+
 export class ApiError extends Error {
   /// HTTP status, when the request got far enough to have one. Absent for a
   /// failure to reach the agent at all — a distinction callers that retry
@@ -58,8 +69,8 @@ export class ApiError extends Error {
   }
 }
 
-function requestSignal(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(TIMEOUT_MS)
+function requestSignal(signal?: AbortSignal, timeoutMs = TIMEOUT_MS): AbortSignal {
+  const timeout = AbortSignal.timeout(timeoutMs)
   return signal ? AbortSignal.any([signal, timeout]) : timeout
 }
 
@@ -74,6 +85,12 @@ async function request<T>(
   init: RequestInit = {},
   fallback = 'Request failed',
   signal?: AbortSignal,
+  /// Ten seconds is generous for a status poll and nothing at all for a request
+  /// that writes a script and spawns a detached process, which is what a few
+  /// callers do. The agent's own bound is separate and always shorter than
+  /// this, so a caller that raises it is waiting on the agent rather than on
+  /// an unbounded request.
+  timeoutMs = TIMEOUT_MS,
 ): Promise<T> {
   const server = servers.current ? { ...servers.current } : undefined
   requireSecureUrl(server?.url ?? '')
@@ -85,7 +102,7 @@ async function request<T>(
     res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
       ...init,
       headers,
-      signal: requestSignal(signal),
+      signal: requestSignal(signal, timeoutMs),
     })
   } catch {
     throw new ApiError(fallback)
@@ -525,6 +542,69 @@ export const api = {
       '/desktop',
       { method: 'PUT', body: JSON.stringify({ targets }) },
       'Failed to save the desktops',
+    ),
+  /// The benchmark runs this agent has started, and the live state of whichever
+  /// is going.
+  ///
+  /// Reading needs only the panel login: a run is a record of what this machine
+  /// measured about itself, and the response says `editable` for the writes.
+  ///
+  /// The `live` state is polled by the agent for this request, so a run that has
+  /// just ended is reported as ended here rather than up to a poll interval
+  /// later. `live.answered === false` means the machine did not answer in time —
+  /// ask again, and do not read `dir_exists` as anything until it is true.
+  getBenchmark: (signal?: AbortSignal) =>
+    request<BenchView>('/benchmark', {}, 'Failed to fetch the benchmark runs', signal),
+  /// One run in full, including yabs' `result_json` and the stored log.
+  getBenchmarkRun: (id: string, signal?: AbortSignal) =>
+    request<BenchDetail>(
+      `/benchmark?run=${encodeURIComponent(id)}`,
+      {},
+      'Failed to fetch the run',
+      signal,
+    ),
+  /// What a set of options would cost, asked of the agent so this page never
+  /// re-derives the formula.
+  ///
+  /// An action of the same endpoint the start uses, and answered without the
+  /// shell grant: it changes nothing.
+  estimateBenchmark: (options: BenchOptions) =>
+    request<BenchEstimate>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'estimate', options }) },
+      'Failed to estimate the run',
+    ),
+  /// Starts a run, stops the one that is going, or forgets a finished one.
+  ///
+  /// Starting is `full_access` — a benchmark writes gigabytes to a disk and
+  /// saturates a link, and anyone who can open a shell could run one anyway. The
+  /// timeout is raised because the agent writes the script, records the row and
+  /// waits for a launcher to confirm it started before it answers.
+  startBenchmark: (options: BenchOptions) =>
+    request<{ run: BenchRun }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'start', options }) },
+      'Failed to start the run',
+      undefined,
+      BENCHMARK_WRITE_TIMEOUT_MS,
+    ),
+  cancelBenchmark: () =>
+    request<{ cancelled: boolean }>(
+      '/benchmark',
+      { method: 'POST', body: JSON.stringify({ action: 'cancel' }) },
+      'Failed to stop the run',
+      undefined,
+      BENCHMARK_WRITE_TIMEOUT_MS,
+    ),
+  /// Forgets one finished run and cleans up after it on the machine.
+  ///
+  /// A run that is still going is refused (`run_in_progress`): removing the
+  /// record would lose the only handle on a live process.
+  removeBenchmark: (id: string) =>
+    request<unknown>(
+      `/benchmark?run=${encodeURIComponent(id)}`,
+      { method: 'DELETE' },
+      'Failed to remove the run',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

@@ -926,22 +926,13 @@ struct RemoteAccessView {
     /// byte relay that understands nothing. An agent may answer one and not the
     /// other. VNC needs only `stream`.
     rdp: bool,
-    /// Whether `POST /api/v1/benchmark` will start a run for this caller.
+    /// Whether this agent serves the benchmark endpoint at all.
     ///
-    /// Its own field for [`Self::stream`]'s reason: an agent older than the
-    /// endpoint answers `full_access` and would 404 the request. Starting is the
-    /// same grant as `stream` — a benchmark is 10–20 minutes of fio, iperf3 and
-    /// a downloaded Geekbench, run as the agent's account — and it is reported
-    /// the same way, as *will answer* rather than as *is served*, because a
-    /// client gates a button on it.
-    ///
-    /// `false` on a platform yabs does not run on, whatever the grant:
-    /// `sbm_parser::bench` is the command layer for `/etc/os-release`, procfs
-    /// and `lsblk`, so a Run button there would offer only a refusal.
-    ///
-    /// Reading the history is [`Self::cron`]'s case — served, and gated on
-    /// nothing but the panel login — so this field says nothing about
-    /// `GET /api/v1/benchmark`.
+    /// Served, not grantable, for [`Self::cron`]'s reason: the listing needs
+    /// only the panel login, and a caller who may not start a run can still read
+    /// the history and be told why. Two questions the page asks instead, both in
+    /// the response rather than here — `supported` (this machine's platform runs
+    /// yabs) and `editable` (this caller may start, stop and remove).
     benchmark: bool,
 }
 
@@ -989,8 +980,11 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             users: true,
             desktop: true,
             rdp: app_state.full_access_allowed(secure),
-            benchmark: app_state.full_access_allowed(secure)
-                && crate::api::benchmark::supports_benchmark(),
+            // Served, not grantable — the endpoint is in the route table for
+            // any build that answers this, and the read needs only the panel
+            // login. The platform and the write grant are the response's own
+            // `supported` and `editable`. See `RemoteAccessView::benchmark`.
+            benchmark: true,
         },
     }))
 }

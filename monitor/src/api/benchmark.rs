@@ -146,6 +146,9 @@ struct RunRow {
     result_json: Option<String>,
     log: String,
     exit_code: Option<i32>,
+    /// Why a run that ended badly ended badly, as a stable code this agent's
+    /// clients phrase in their own language — the same convention as a request
+    /// refusal. `launcher_failed`, `nonzero_exit`, `no_exit_code`, or empty.
     error: String,
 }
 
@@ -553,7 +556,7 @@ async fn start(
              WHERE id = ? AND status = 'running'",
         )
         .bind(chrono::Utc::now())
-        .bind("the launcher did not start")
+        .bind(RunError::LauncherFailed.as_str())
         .bind(&run_id)
         .execute(&app_state.db)
         .await;
@@ -786,7 +789,7 @@ async fn poll_and_finalize(app_state: &AppState, row: &RunRow) -> Polled {
     .bind(polled.state.exit_code)
     .bind(polled.state.result_json.as_deref())
     .bind(stored_log(&polled.state.log))
-    .bind(ended.error)
+    .bind(ended.error.map(RunError::as_str))
     .bind(&row.id)
     .execute(&app_state.db)
     .await;
@@ -809,7 +812,34 @@ async fn poll_and_finalize(app_state: &AppState, row: &RunRow) -> Polled {
 /// How a run that has ended is recorded, or `None` while it is still going.
 struct Ended {
     status: &'static str,
-    error: Option<&'static str>,
+    error: Option<RunError>,
+}
+
+/// Why a run ended badly, as the code its client phrases in its own language.
+///
+/// A closed set rather than a sentence this agent writes: the row is drawn in a
+/// fifteen-language panel, and the same treatment as a request refusal is what
+/// keeps English out of it. The exit code itself is in its own column; this
+/// says only what the code alone cannot.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum RunError {
+    /// The start command ran, and the launcher it wrote did not.
+    LauncherFailed,
+    /// Exited with a code that is neither zero nor the cancellation code.
+    NonzeroExit,
+    /// The process went away and wrote no exit code, which is what the OOM
+    /// killer looks like from here.
+    NoExitCode,
+}
+
+impl RunError {
+    const fn as_str(self) -> &'static str {
+        match self {
+            RunError::LauncherFailed => "launcher_failed",
+            RunError::NonzeroExit => "nonzero_exit",
+            RunError::NoExitCode => "no_exit_code",
+        }
+    }
 }
 
 fn terminal_of(state: &BenchPollState) -> Option<Ended> {
@@ -833,7 +863,7 @@ fn terminal_of(state: &BenchPollState) -> Option<Ended> {
             // badly, which is what a list row has room for.
             _ => Ended {
                 status: "failed",
-                error: Some("the run exited non-zero"),
+                error: Some(RunError::NonzeroExit),
             },
         });
     }
@@ -843,7 +873,7 @@ fn terminal_of(state: &BenchPollState) -> Option<Ended> {
             // What an out-of-memory kill looks like from here, and the OOM
             // killer is the ordinary way a benchmark on a small VPS ends this
             // way — Geekbench is the usual cause.
-            error: Some("the process is gone and no exit code was written"),
+            error: Some(RunError::NoExitCode),
         });
     }
     None
@@ -922,7 +952,11 @@ async fn row_by_id(pool: &SqlitePool, id: &str) -> Option<RunRow> {
 /// Debian packages; the Windows and BSD paths this crate carries for status
 /// collection have nothing to do with it, and a client told `true` would offer
 /// a Run button whose only outcome is a confusing refusal.
-pub fn supports_benchmark() -> bool {
+///
+/// Answered to the client as the listing's `supported`, not as
+/// `remote_access.benchmark`: the endpoint is served on every platform, and it
+/// is the page that says why a run cannot happen here.
+fn supports_benchmark() -> bool {
     matches!(crate::monitoring::system_type(), sbm_parser::SystemType::Linux)
 }
 
@@ -1016,7 +1050,18 @@ mod tests {
         let failed = terminal_of(&ended(Some(1), false, true, true)).unwrap();
         assert_eq!(failed.status, "failed");
         // The code itself lives in its own column.
-        assert!(failed.error.is_some());
+        assert_eq!(failed.error, Some(RunError::NonzeroExit));
+    }
+
+    /// The three codes are a contract with a client in another language — the
+    /// panel spells each of them into a sentence. A rename here is a row that
+    /// client can only show as the code itself, so it is pinned rather than
+    /// left to the enum's shape.
+    #[test]
+    fn a_run_that_ended_badly_records_a_phraseable_code() {
+        assert_eq!(RunError::LauncherFailed.as_str(), "launcher_failed");
+        assert_eq!(RunError::NonzeroExit.as_str(), "nonzero_exit");
+        assert_eq!(RunError::NoExitCode.as_str(), "no_exit_code");
     }
 
     #[test]

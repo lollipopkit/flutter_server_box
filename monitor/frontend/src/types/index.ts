@@ -167,6 +167,20 @@ export interface RemoteAccess {
   /// session with the RDP server and hands the operator a plaintext stream. An
   /// agent may serve one and not the other. VNC needs `stream` alone.
   rdp?: boolean
+  /// Whether `/api/v1/benchmark` will start a run for this caller.
+  ///
+  /// Its own field for `stream`'s reason, and reported the same way: a
+  /// benchmark is 10–20 minutes of fio, iperf3 and a downloaded Geekbench, and
+  /// an agent older than the endpoint answers `full_access` and would 404 the
+  /// request.
+  ///
+  /// `false` on a platform yabs does not run on, whatever the grant. Reading
+  /// the history is not covered by this field — it needs only the panel login,
+  /// like `cron` — so the page says which of the two it is drawing.
+  /// Served, not grantable: the benchmark endpoint is in this agent's route
+  /// table. Whether a run can happen on this machine, and whether this caller
+  /// may start one, are the listing's own `supported` and `editable`.
+  benchmark?: boolean
 }
 
 /// One job in the account's crontab, with its schedule already expanded.
@@ -1180,3 +1194,142 @@ export type DesktopRefusalCode =
   | 'invalidPort'
   | 'invalidUsername'
   | 'invalidDomain'
+
+/// One yabs run's options.
+///
+/// Every phase is a choice, and the defaults here are the agent's — which are
+/// not yabs' own: Geekbench is off because it downloads a proprietary binary and
+/// **publishes the machine's specs** to a public `browser.geekbench.com` page,
+/// reduced iperf is on because seven locations both ways is tens of gigabytes of
+/// egress, and the IP lookup is off because it is plaintext HTTP to a third
+/// party. See `BenchOptions` in `sbm_parser::bench`.
+export interface BenchOptions {
+  /// fio: four block sizes, ~30s each. Writes a 2 GB test file (512 MB on ARM)
+  /// into the working directory, and needs that much free or yabs skips it.
+  disk: boolean
+  network: boolean
+  /// Three iperf locations instead of seven.
+  reduced_network: boolean
+  /// Geekbench. Off by default — see this type's note.
+  cpu: boolean
+  /// `'v4' | 'v5' | 'v6' | 'v7'` — the digit is yabs' flag.
+  geekbench_version: string
+  ip_info: boolean
+  /// Use the binaries yabs ships rather than the host's own fio and iperf3,
+  /// which means fetching them from raw.githubusercontent.com.
+  prefer_precompiled_binaries: boolean
+  /// Empty means the invoking account's home directory.
+  work_dir: string
+}
+
+/// What a set of options is going to cost, as the agent computes it.
+///
+/// Shown before the run starts because all three are invisible at the moment the
+/// decision is made: a disk test that takes three minutes is a surprise on a
+/// page with a spinner, and an iperf run is tens of gigabytes on a plan paid for
+/// by the gigabyte.
+export interface BenchEstimate {
+  /// Whole minutes, rounded up, and deliberately labelled "about".
+  minutes: number
+  traffic_bytes: number
+  /// Free space the disk phase needs, or `null` when it is not running.
+  required_free_bytes: number | null
+  /// Whether the options ask for anything at all — everything off still
+  /// collects the system information header.
+  system_info_only: boolean
+}
+
+/// One run in the history.
+export interface BenchRun {
+  id: string
+  started_at: string
+  finished_at: string | null
+  /// `'running' | 'completed' | 'failed' | 'cancelled'`.
+  status: string
+  /// What produced this result, as the options were recorded.
+  options: Partial<BenchOptions>
+  /// Where the run happens on the machine, stored rather than re-derived.
+  run_dir: string
+  exit_code: number | null
+  /// Why a run that ended badly ended badly, as a stable code this page
+  /// phrases. Empty when the run is going, and for every run that ended well.
+  error: BenchRunErrorCode | ''
+  /// Whether a result and a log are stored on this row, so opening it is worth
+  /// a second request.
+  has_result: boolean
+}
+
+/// The live state of the run that is going, as of the request that carried it.
+///
+/// Polled rather than pushed: the agent's own resident poller is what carries a
+/// run to a terminal state, and this is the same state read for a page.
+export interface BenchLive {
+  id: string
+  /// Whether this is an answer at all. **False means ask again** — an agent that
+  /// hit its own timeout answers an empty body, and reading that as "the run is
+  /// gone" fails a benchmark that is running perfectly well.
+  answered: boolean
+  /// The answer was too large to read in one piece, so the log below is not the
+  /// whole of it.
+  truncated: boolean
+  /// Whether the launcher's process is still there. Needed beside `exit_code`:
+  /// a run killed by the OOM killer leaves neither an exit file nor a process,
+  /// and only the pair tells that apart from a run in its first second.
+  alive: boolean
+  dir_exists: boolean
+  exit_code: number | null
+  /// The end of the log — what the run has printed, which on a page is progress.
+  log: string
+  /// The run's process group, one process per line. Empty when the machine has
+  /// no `ps` that took the flags.
+  processes: string
+  result_json: string | null
+}
+
+export interface BenchView {
+  runs: BenchRun[]
+  /// The run that is going, or absent when there is none.
+  live?: BenchLive
+  /// Whether this caller may start, stop or remove a run. A hint: every write
+  /// re-checks the grant at the moment of use.
+  editable: boolean
+  /// Whether a benchmark can run on this machine at all.
+  supported: boolean
+}
+
+/// One run in full: the row, plus the two large columns.
+export interface BenchDetail extends BenchRun {
+  /// yabs' `-w` output, verbatim **as a string**.
+  ///
+  /// Not parsed here on purpose: yabs assembles it with `+=` on a shell string,
+  /// so a field it could not collect arrives as an empty slot and a distro name
+  /// containing a quote produces a document no parser accepts. A result that
+  /// will not parse is drawn as the text it is rather than as nothing.
+  result_json: string | null
+  log: string
+}
+
+/// Why a benchmark request was refused, as a stable code the page phrases.
+///
+/// One list, all of them about the request or about this machine rather than
+/// about the run: a platform yabs does not run on, a working directory too long
+/// to be a path, a run already going.
+export type BenchRefusalCode =
+  | 'already_running'
+  | 'unsupported_platform'
+  | 'work_dir_too_long'
+  | 'no_home_directory'
+  | 'asset_unreadable'
+  | 'no_entropy'
+  | 'script_not_writable'
+  | 'start_failed'
+  | 'history_unavailable'
+  | 'no_such_run'
+  | 'run_in_progress'
+
+/// Why a run that ended badly ended badly, as a stable code the page phrases.
+///
+/// A second list rather than more [`BenchRefusalCode`]s: these describe a run
+/// that is in the history rather than a request this page just made, and every
+/// one of them is drawn beside a row rather than as an error over the page.
+export type BenchRunErrorCode = 'launcher_failed' | 'nonzero_exit' | 'no_exit_code'

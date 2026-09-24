@@ -105,6 +105,7 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 - **`components/`**: Spinner, StatCard, ThemeToggle
 - **`pages/Terminal.svelte`** + **`lib/terminal.svelte.ts`**: the in-browser terminal. The store owns the protocol and reconnect policy and knows nothing about xterm.js, which keeps the part worth testing free of a DOM; xterm is loaded by dynamic `import()` so it stays out of the main bundle
 - **`lib/`**: fetch-based API client, module-level rune stores (auth/theme), Poller
+- **A tabbed feature is `pages/<Feature>.svelte`, and its tabs come from one list**: `lib/features.ts`'s `FEATURES` names each feature's own `remote_access` field, `enabledFeatures` keeps the ones this agent answers `=== true` for, and `components/FeatureTabs.svelte` draws them. So a page added below the last one joins the bar without touching the pages written before it. What a request was refused for arrives as a stable code and is phrased in the viewer's language by `lib/<feature>Refusal.ts` — a sentence the agent wrote is English in fifteen locales.
 - **`types/`**: TypeScript type definitions
 - Tests: vitest + @testing-library/svelte; type gate via svelte-check (part of `npm run build`)
 - Multi-server: the panel keeps a server list (per-server URL + session) in localStorage; it can be served by an agent itself (same-origin) or hosted statically (e.g. Cloudflare Pages) talking to several agents
@@ -406,6 +407,11 @@ the panel password can't switch it on); shared admission checks live in
     timeout answers with an empty body, and reading that as "the run directory is
     gone" fails a run that is going fine. Not answered means ask again;
     `dirExists` only means anything once `answered`.
+    - The listing reads the history **first** and folds the poll in after, so on
+      the one reply where a run has just ended the row still says `running`
+      while `live.exit_code` is set. Both writers record the end and one of them
+      wins, so a second request reports it; the panel asks again in 300 ms
+      rather than carry a state for the window.
   - `result_json` travels as a **string**, never parsed here: yabs assembles its
     JSON with `+=` on a shell string, so a field it could not collect arrives as
     an empty slot and a distro name containing a quote produces a document no
@@ -426,11 +432,16 @@ the panel password can't switch it on); shared admission checks live in
     shell can run one anyway. The pre-flight estimate is a
     `POST {"action":"estimate"}` answered *before* that gate, so the panel never
     re-implements `bench::estimate`'s formula.
-  - Linux only; on another platform the list answers `supported: false` and
-    `remote_access.benchmark` is false. `DELETE` refuses a run that is going
+  - Linux only, and the listing says so with `supported: false` rather than by
+    withholding the route: `remote_access.benchmark` is served like `cron`, so a
+    caller who may not start a run still reads the history and is told why, and
+    the page goes read-only off `editable`. `DELETE` refuses a run that is going
     (400 `run_in_progress`) and cleans up after a terminal one, best-effort and
     after the row is written — a directory this endpoint could not remove is not
     a reason to lose the result in it.
+  - A run that ended badly records a **code** in `error` (`launcher_failed`,
+    `nonzero_exit`, `no_exit_code`), phrased by the panel like a refusal. The
+    two are one convention: a client in a language the agent does not write.
   - `tests/benchmark_asset.rs`; the poll-state and log-trimming units are in
     `src/api/benchmark.rs`.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
