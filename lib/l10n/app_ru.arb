@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "обновлено {ago}",
   "themeStoreUpdatedJustNow": "обновлено только что",
   "themeStoreSortInUse": "Сначала используемая",
+  "themeStoreMakeOwnFmt": "Хотите сделать свою тему? Смотрите [как её создать]({doc}) — спасибо за ваш вклад!",
   "appearanceThemeNeedsNewerApp": "Требуется более новая версия приложения: {version}",
   "appearanceFontFamilies": "Семейства шрифтов интерфейса",
   "appearanceFontFamiliesTip": "Одно название в строке; шрифты применяются по порядку.",

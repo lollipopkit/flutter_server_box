@@ -46,6 +46,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeStoreSortInUse => '在用优先';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '如果你想制作自己的主题，欢迎查看[主题制作指南]($doc)，感谢你的贡献！';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '需要更新版本的 App：$version';
   }
@@ -3115,6 +3120,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get themeStoreSortInUse => '在用優先';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '如果你想製作自己的主題，歡迎查看[主題製作指南]($doc)，感謝你的貢獻！';
+  }
 
   @override
   String appearanceThemeNeedsNewerApp(String version) {

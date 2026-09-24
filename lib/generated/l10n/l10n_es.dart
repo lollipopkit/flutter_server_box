@@ -46,6 +46,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get themeStoreSortInUse => 'En uso primero';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '¿Quieres crear tu propio tema? Consulta [cómo crear uno]($doc). ¡Gracias por tu contribución!';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Se necesita una versión más reciente de la app: $version';
   }

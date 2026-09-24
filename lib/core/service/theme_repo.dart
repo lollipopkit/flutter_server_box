@@ -622,6 +622,18 @@ final class ThemeStore {
   /// this apart from one opening on a cache.
   bool get neverFetched => fetchedAt == null;
 
+  /// Whether this is old enough to be read again, as of [now].
+  ///
+  /// The page asks this instead of fetching whenever it opens: reading the
+  /// catalog is one request per repository on it, and the page is reached from
+  /// more than one place. Nothing read yet is always old enough — an empty
+  /// page is waiting for an answer, not showing one.
+  bool staleAsOf(DateTime now, Duration maxAge) {
+    final at = fetchedAt;
+    if (at == null) return true;
+    return now.difference(at) >= maxAge;
+  }
+
   /// This store as the cache writes it.
   Map<String, dynamic> toJson() => {
     'catalogUrl': catalogUrl,

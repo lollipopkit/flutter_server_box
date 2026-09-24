@@ -20,6 +20,17 @@ import 'package:server_box/view/page/theme_store/rows.dart';
 /// than a spinner, and refreshing is something the user asks for instead of
 /// something the page needs before it is usable. What is on screen when nothing
 /// has been read yet is what this device has.
+/// How old the cached catalog has to be before opening the page reads it
+/// again.
+///
+/// The page is opened over and over — it is a row in settings and a row in the
+/// preset sheet — and reading the catalog is one request per repository on it.
+/// The catalog changes when somebody publishes a theme, which is not a thing
+/// that happens twice in five minutes, so a second visit in that window is
+/// meant to show what the first one already read. Refreshing by hand is always
+/// available, from the bar and by pulling the list.
+const _autoRefreshAfter = Duration(minutes: 5);
+
 final class ThemeStorePage extends StatefulWidget {
   const ThemeStorePage({super.key});
 
@@ -67,8 +78,11 @@ final class _ThemeStorePageState extends State<ThemeStorePage> {
     _installed = ThemePackages.listInstalled();
     _store = _readCache();
     // The cache is on screen from the first frame; this only brings it up to
-    // date, so a launch with no network still shows the themes there were.
-    Future.microtask(_refresh);
+    // date, so a launch with no network still shows the themes there were, and
+    // a visit a moment after the last one does not read the catalog again.
+    if (_store.staleAsOf(DateTime.now(), _autoRefreshAfter)) {
+      Future.microtask(_refresh);
+    }
   }
 
   @override
@@ -221,7 +235,12 @@ extension on _ThemeStorePageState {
           padding: const EdgeInsets.only(left: 7, right: 7, top: 7, bottom: 27),
           children: [
             _buildCaption(),
-            if (rows.isEmpty) _buildEmpty() else for (final row in rows) _row(row),
+            if (rows.isEmpty)
+              _buildEmpty()
+            else ...[
+              for (final row in rows) _row(row),
+              _buildFooter(),
+            ],
           ],
         ),
       ),
@@ -262,6 +281,24 @@ extension on _ThemeStorePageState {
       return l10n.themeStoreUpdatedJustNow;
     }
     return l10n.themeStoreUpdatedFmt(fetchedAt.toAgoStr());
+  }
+
+  /// What the end of the list says.
+  ///
+  /// Every theme the catalog carries is in the list by the time this is at the
+  /// bottom of it, so what is left to say is that the list is not the only way
+  /// these are made. A link rather than an address: the document is long and
+  /// the reason to open it is to read it.
+  ///
+  /// The celebration is drawn here rather than carried by the string, so that
+  /// the translations say what the sentence says and nothing else.
+  Widget _buildFooter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(3, 21, 3, 9),
+      child: SimpleMarkdown(
+        data: '🎉 ${l10n.themeStoreMakeOwnFmt(Urls.themePackageDoc)}',
+      ),
+    );
   }
 
   Widget _buildEmpty() {

@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "aggiornato {ago}",
   "themeStoreUpdatedJustNow": "aggiornato adesso",
   "themeStoreSortInUse": "In uso per primi",
+  "themeStoreMakeOwnFmt": "Vuoi creare il tuo tema? Vedi [come crearne uno]({doc}) — grazie per il tuo contributo!",
   "appearanceThemeNeedsNewerApp": "È necessaria una versione più recente dell’app: {version}",
   "appearanceFontFamilies": "Famiglie di caratteri dell’interfaccia",
   "appearanceFontFamiliesTip": "Un nome per riga; i caratteri vengono provati in ordine.",

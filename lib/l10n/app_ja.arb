@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "{ago}に更新",
   "themeStoreUpdatedJustNow": "たった今更新",
   "themeStoreSortInUse": "使用中を先頭",
+  "themeStoreMakeOwnFmt": "自分のテーマを作りたい方は[テーマ作成ガイド]({doc})をご覧ください。ご協力ありがとうございます！",
   "appearanceThemeNeedsNewerApp": "新しいバージョンのアプリが必要です: {version}",
   "appearanceFontFamilies": "UI フォントファミリー",
   "appearanceFontFamiliesTip": "1 行に 1 つの名前を入力してください。上から順に使用します。",

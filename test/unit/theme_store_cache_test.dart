@@ -217,6 +217,43 @@ void main() {
     });
   });
 
+  group('the age of what is on screen', () {
+    const max = Duration(minutes: 5);
+    final read = DateTime.utc(2026, 9, 24, 12);
+
+    /// The store `_store` builds, read at [at].
+    ThemeStore storeAt(DateTime at) => ThemeStore(
+      items: [_item()],
+      repos: const ['lollipopkit/aurora'],
+      catalogUrl: 'https://example.org/repos.toml',
+      fetchedAt: at,
+    );
+
+    test('is what tells the page whether to read the catalog again', () {
+      expect(storeAt(read).staleAsOf(read.add(const Duration(minutes: 4)), max), isFalse);
+      expect(storeAt(read).staleAsOf(read.add(max), max), isTrue);
+      expect(storeAt(read).staleAsOf(read.add(const Duration(hours: 3)), max), isTrue);
+    });
+
+    test('is nothing when there is nothing to be old', () {
+      // A store that was never read is always read now, whatever the clock
+      // says: an empty page is waiting for an answer rather than showing one.
+      expect(
+        const ThemeStore().staleAsOf(read, max),
+        isTrue,
+      );
+    });
+
+    test('survives the cache, so a second launch does not read again', () {
+      final readBack = ThemeStore.fromJson(
+        jsonDecode(jsonEncode(storeAt(read).toJson())),
+      )!;
+
+      expect(readBack.fetchedAt, read);
+      expect(readBack.staleAsOf(read.add(const Duration(minutes: 1)), max), isFalse);
+    });
+  });
+
   group('this device', () {
     test('keeps the catalog as one object, not as a string holding one', () async {
       await setting.themeStoreCache.set(_store(item: _item()).toJson());

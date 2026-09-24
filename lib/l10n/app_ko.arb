@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "{ago} 업데이트",
   "themeStoreUpdatedJustNow": "방금 업데이트",
   "themeStoreSortInUse": "사용 중 우선",
+  "themeStoreMakeOwnFmt": "직접 테마를 만들고 싶다면 [테마 제작 안내]({doc})를 확인해 보세요. 기여해 주셔서 감사합니다!",
   "appearanceThemeNeedsNewerApp": "최신 버전의 앱이 필요합니다: {version}",
   "appearanceFontFamilies": "UI 글꼴 목록",
   "appearanceFontFamiliesTip": "한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.",

@@ -46,6 +46,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeStoreSortInUse => '使用中を先頭';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '自分のテーマを作りたい方は[テーマ作成ガイド]($doc)をご覧ください。ご協力ありがとうございます！';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '新しいバージョンのアプリが必要です: $version';
   }

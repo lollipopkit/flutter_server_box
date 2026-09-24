@@ -46,6 +46,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get themeStoreSortInUse => '사용 중 우선';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '직접 테마를 만들고 싶다면 [테마 제작 안내]($doc)를 확인해 보세요. 기여해 주셔서 감사합니다!';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return '최신 버전의 앱이 필요합니다: $version';
   }

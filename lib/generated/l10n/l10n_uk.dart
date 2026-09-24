@@ -46,6 +46,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get themeStoreSortInUse => 'Спочатку використовувана';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Хочете створити власну тему? Дивіться [як її створити]($doc) — дякуємо за ваш внесок!';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Потрібна новіша версія застосунку: $version';
   }

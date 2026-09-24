@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "atualizado {ago}",
   "themeStoreUpdatedJustNow": "atualizado agora mesmo",
   "themeStoreSortInUse": "Em uso primeiro",
+  "themeStoreMakeOwnFmt": "Quer criar seu próprio tema? Veja [como criar um]({doc}) — obrigado pela sua contribuição!",
   "appearanceThemeNeedsNewerApp": "É necessário usar uma versão mais recente do app: {version}",
   "appearanceFontFamilies": "Famílias de fontes da interface",
   "appearanceFontFamiliesTip": "Um nome por linha; as fontes são testadas pela ordem.",

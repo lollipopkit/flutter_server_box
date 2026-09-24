@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "{ago}更新",
   "themeStoreUpdatedJustNow": "剛剛更新",
   "themeStoreSortInUse": "在用優先",
+  "themeStoreMakeOwnFmt": "如果你想製作自己的主題，歡迎查看[主題製作指南]({doc})，感謝你的貢獻！",
   "appearanceThemeNeedsNewerApp": "需要較新版本的 App：{version}",
   "appearanceFontFamilies": "介面字型列表",
   "appearanceFontFamiliesTip": "每行一個字型名稱，依序 fallback。",

@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "{ago} güncellendi",
   "themeStoreUpdatedJustNow": "az önce güncellendi",
   "themeStoreSortInUse": "Kullanımda olan önce",
+  "themeStoreMakeOwnFmt": "Kendi temanızı mı yapmak istiyorsunuz? [Nasıl yapılacağına]({doc}) bakın — katkınız için teşekkürler!",
   "appearanceThemeNeedsNewerApp": "Daha yeni bir uygulama sürümü gerekiyor: {version}",
   "appearanceFontFamilies": "Arayüz yazı tipi aileleri",
   "appearanceFontFamiliesTip": "Her satıra bir ad yazın; yazı tipleri sırayla denenir.",

@@ -47,6 +47,11 @@ class AppLocalizationsAz extends AppLocalizations {
   String get themeStoreSortInUse => 'İstifadədə olan əvvəl';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Öz temanızı yaratmaq istəyirsiniz? [Necə yaradılır]($doc) baxın — töhfəniz üçün təşəkkürlər!';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Daha yeni tətbiq tələb olunur: $version';
   }

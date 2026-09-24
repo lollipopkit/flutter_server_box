@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "diperbarui {ago}",
   "themeStoreUpdatedJustNow": "baru saja diperbarui",
   "themeStoreSortInUse": "Yang digunakan dulu",
+  "themeStoreMakeOwnFmt": "Ingin membuat tema sendiri? Lihat [cara membuatnya]({doc}) — terima kasih atas kontribusimu!",
   "appearanceThemeNeedsNewerApp": "Memerlukan aplikasi versi lebih baru: {version}",
   "appearanceFontFamilies": "Daftar keluarga font antarmuka",
   "appearanceFontFamiliesTip": "Satu nama per baris; font dicoba sesuai urutan.",

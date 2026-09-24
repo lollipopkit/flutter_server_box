@@ -46,6 +46,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get themeStoreSortInUse => 'Yang digunakan dulu';
 
   @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Ingin membuat tema sendiri? Lihat [cara membuatnya]($doc) — terima kasih atas kontribusimu!';
+  }
+
+  @override
   String appearanceThemeNeedsNewerApp(String version) {
     return 'Memerlukan aplikasi versi lebih baru: $version';
   }

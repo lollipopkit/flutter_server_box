@@ -191,6 +191,12 @@ abstract class AppLocalizations {
   /// **'In use first'**
   String get themeStoreSortInUse;
 
+  /// At the end of the theme store's list, under the last theme. Markdown: the document is a link rather than an address the reader has to copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to make your own theme? [How to author one]({doc}) — thank you for contributing!'**
+  String themeStoreMakeOwnFmt(String doc);
+
   /// Shown when a selected theme requires a newer app version. {version} is the required version.
   ///
   /// In en, this message translates to:

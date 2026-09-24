@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "{ago} yeniləndi",
   "themeStoreUpdatedJustNow": "indi yeniləndi",
   "themeStoreSortInUse": "İstifadədə olan əvvəl",
+  "themeStoreMakeOwnFmt": "Öz temanızı yaratmaq istəyirsiniz? [Necə yaradılır]({doc}) baxın — töhfəniz üçün təşəkkürlər!",
   "appearanceThemeNeedsNewerApp": "Daha yeni tətbiq tələb olunur: {version}",
   "appearanceFontFamilies": "İnterfeys şrift ailələri",
   "appearanceFontFamiliesTip": "Hər sətirə bir ad yazın; şriftlər ardıcıllıqla yoxlanır.",

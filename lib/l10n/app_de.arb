@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "aktualisiert {ago}",
   "themeStoreUpdatedJustNow": "gerade aktualisiert",
   "themeStoreSortInUse": "Zuerst verwendete",
+  "themeStoreMakeOwnFmt": "Möchtest du dein eigenes Theme erstellen? [Anleitung zum Erstellen]({doc}) — danke für deinen Beitrag!",
   "appearanceThemeNeedsNewerApp": "Neuere App erforderlich: {version}",
   "appearanceFontFamilies": "Schriftfamilien der Oberfläche",
   "appearanceFontFamiliesTip": "Ein Name pro Zeile; Schriften werden der Reihe nach versucht.",

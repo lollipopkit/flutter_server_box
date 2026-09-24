@@ -11,6 +11,7 @@
   "themeStoreUpdatedFmt": "bijgewerkt {ago}",
   "themeStoreUpdatedJustNow": "zojuist bijgewerkt",
   "themeStoreSortInUse": "In gebruik eerst",
+  "themeStoreMakeOwnFmt": "Wil je je eigen thema maken? Zie [hoe je er een maakt]({doc}) — bedankt voor je bijdrage!",
   "appearanceThemeNeedsNewerApp": "Een nieuwere app is vereist: {version}",
   "appearanceFontFamilies": "Lettertypefamilies voor de interface",
   "appearanceFontFamiliesTip": "Eén naam per regel; lettertypen worden op volgorde geprobeerd.",
