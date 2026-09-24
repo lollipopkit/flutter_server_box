@@ -88,7 +88,7 @@ extension _SSH on _AppSettingsPageState {
 
     if (!summary.hasItemsToImport) {
       if (!mounted) return;
-      Toast.show(l10n.sshConfigAllExist('${summary.duplicates}'));
+      Toast.show(l10n.sshConfigAllExist(summary.duplicates));
       return;
     }
 
@@ -99,17 +99,15 @@ extension _SSH on _AppSettingsPageState {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.sshConfigFoundServers('${summary.total}')),
+            Text(l10n.sshConfigFoundServers(summary.total)),
             if (summary.hasDuplicates)
               Text(
-                l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'),
+                l10n.sshConfigDuplicatesSkipped(summary.duplicates),
                 style: UIs.textGrey,
               ),
-            Text(l10n.sshConfigServersToImport('${summary.toImport}')),
+            Text(l10n.sshConfigServersToImport(summary.toImport)),
             const SizedBox(height: 16),
-            ...resolved.map(
-              (s) => Text('• ${s.name} (${s.displayAddr})'),
-            ),
+            ...resolved.map((s) => Text('• ${s.name} (${s.displayAddr})')),
           ],
         ),
       ),
@@ -308,37 +306,37 @@ extension _SSH on _AppSettingsPageState {
       label,
       () => _setting.desktopTerminal.listenable().listenVal((val) {
         return ListTile(
-        leading: const Icon(Icons.terminal),
-        title: TipText(label, l10n.desktopTerminalTip),
-        trailing: Text(
-          val,
-          style: UIs.text15,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        onTap: () {
-          withTextFieldController((ctrl) async {
-            ctrl.text = val;
-            void onSave() {
-              _setting.desktopTerminal.put(ctrl.text.trim());
-              context.popDialog();
-            }
+          leading: const Icon(Icons.terminal),
+          title: TipText(label, l10n.desktopTerminalTip),
+          trailing: Text(
+            val,
+            style: UIs.text15,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () {
+            withTextFieldController((ctrl) async {
+              ctrl.text = val;
+              void onSave() {
+                _setting.desktopTerminal.put(ctrl.text.trim());
+                context.popDialog();
+              }
 
-            await context.showRoundDialog<bool>(
-              title: libL10n.select,
-              child: Input(
-                controller: ctrl,
-                autoFocus: true,
-                label: label,
-                hint: 'x-terminal-emulator / gnome-terminal',
-                icon: Icons.edit,
-                suggestion: false,
-                onSubmitted: (_) => onSave(),
-              ),
-              actions: Btn.ok(onTap: onSave).toList,
-            );
-          });
-        },
+              await context.showRoundDialog<bool>(
+                title: libL10n.select,
+                child: Input(
+                  controller: ctrl,
+                  autoFocus: true,
+                  label: label,
+                  hint: 'x-terminal-emulator / gnome-terminal',
+                  icon: Icons.edit,
+                  suggestion: false,
+                  onSubmitted: (_) => onSave(),
+                ),
+                actions: Btn.ok(onTap: onSave).toList,
+              );
+            });
+          },
         );
       }),
       keywords: l10n.desktopTerminalTip,
