@@ -33,6 +33,27 @@ void main() {
   }
 
   test('every version the catalog serves is the one its file claims', () async {
+    // Two things the binding does by default, and neither is what this wants.
+    // It is needed because a catalog that cannot be fetched is answered with
+    // the one bundled in the app, which is an asset — without it, an address
+    // that answered nothing failed here on the fallback rather than on the
+    // reason it took it. It also answers every request with a 400, and the
+    // network is the whole point, so the override it installs goes.
+    TestWidgetsFlutterBinding.ensureInitialized();
+    HttpOverrides.global = null;
+
+    // Read here what `store` would only read if it could: that fallback lists
+    // the same repository, so a store that came back from it would report an
+    // address that answered nothing as the source of everything below.
+    expect(
+      await ThemePackages.download(
+        catalogUrl,
+        maxBytes: ThemeRepos.maxCatalogBytes,
+      ),
+      isNotEmpty,
+      reason: '$catalogUrl served no catalog',
+    );
+
     final store = await ThemeRepos.store(catalogUrl);
     expect(
       store.repos,
