@@ -12,14 +12,9 @@ light 下使用生成色，因此支持 System 外观。
 主题。GitHub Theme、One Dark Pro 和 Dracula 是这次比较中排名最前的三个。GitHub
 Dark 使用 GitHub Theme 的 dark 调色板。
 
-Default 是 Dart const 默认值，不需要任何 asset 或文件系统访问。
-其他主题定义放在 `assets/themes/<id>/manifest.toml`，与导入的文件夹和 `.fsbt`
-压缩包使用同一套 schema 和安装器。Flutter 直接打包这些源目录；Git 里不提交任何
-压缩包或二进制 asset。新目录需要在 `pubspec.yaml` 注册，其选择器标签在
-`ThemePackages.builtinNames`。打开选择器不加载任何主题文件；一个文件夹只在被选中
-时加载，或在启动时已是保存的选择时加载。加载成功的结果会被缓存，并发请求共用一次
-加载；加载失败可以重试。内置 asset 使用单独的运行时缓存，不出现在用户安装的主题
-列表中。必要时会调整次要文字颜色，使正常文字的对比度不低于 4.5:1。
+这些定义放在哪里、一个目录如何被解析和加载、以及这些主题如何发布，见
+[主题](/docs/zh/development/themes/)。必要时会调整次要文字颜色，使正常文字的对比度
+不低于 4.5:1。
 
 ## 上游署名
 

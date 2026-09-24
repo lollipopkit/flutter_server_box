@@ -16,8 +16,6 @@ On desktop, select **Install theme → Folder** to import its directory during d
 This copies the validated files into the app; select the folder again after
 editing it. For distribution, ZIP the directory contents so `manifest.toml`
 is at the archive root, then rename the archive to `.fsbt`.
-Keep built-in themes as editable source directories in Git rather than
-committing generated `.fsbt` archives.
 Installed packages appear in **Theme preset**. In its sheet, Up/Down previews
 the focused theme without saving settings. Enter (or clicking an item) applies
 it; Escape, tapping outside, or dismissing the sheet restores the original
@@ -25,6 +23,9 @@ appearance. Preset values are read-only;
 select **Custom** to choose a local background image and edit in-app icons,
 corners, opacity, and blur. The previous Custom image and settings are restored
 when available.
+
+How the themes bundled with the app are packaged, loaded and distributed is in
+[Themes](/docs/development/themes/).
 
 ```toml
 id = "example.amethyst"
@@ -140,7 +141,9 @@ The schema is as strict as the installer, with one exception it cannot express:
 it cannot tell that a color under `icons.colors` needs a matching entry under
 `icons.images`, which is a check across two tables. Everything else it reports
 is also what an install would have refused. It tracks the newest schema version;
-a package that declares `min = 1` still validates.
+a package that declares `min = 1` still validates. What the schema is written
+from, and where it is validated, is in
+[Themes](/docs/development/themes/#the-parser-and-the-editor-schema).
 
 ## Schema versions
 
@@ -300,12 +303,11 @@ The store reads two levels. The first is a **catalog**: a TOML file listing
 repositories, one entry each, naming no theme and no version. The second is a
 **repository**: a git repository of TOML files, one per theme.
 
-The app's own catalog is `assets/catalog/repos.toml`, and its address is the
-default in **Settings → Appearance → Theme store URL**. That address is editable,
-because a client that cannot be pointed at another catalog serves one publisher.
-A copy of the catalog is compiled into the app and used when its address does
-not answer, so a first run with no network still offers the official
-repositories.
+The address the app reads a catalog from is **Settings → Appearance → Theme
+store URL**. It is editable, because a client that cannot be pointed at another
+catalog serves one publisher. What that address defaults to, and what the app
+falls back to when it does not answer, is in
+[Themes](/docs/development/themes/#theme-store).
 
 ```toml
 schema = 1
@@ -315,10 +317,10 @@ name = "ServerBox themes"
 url = "https://github.com/lollipopkit/serverbox-plugins"
 ```
 
-Up to 100 repositories. A repository address is HTTPS, and either a git
-repository — fetched as `<address>/archive/HEAD.tar.gz` — or a tarball address
-directly. `HEAD` rather than a branch name, because which branch a repository
-calls default is not the app's to guess.
+A repository address is HTTPS, and either a git repository — fetched as
+`<address>/archive/HEAD.tar.gz` — or a tarball address directly. `HEAD` rather
+than a branch name, because which branch a repository calls default is not the
+app's to guess.
 
 The one it ships with is
 [`lollipopkit/serverbox-plugins`](https://github.com/lollipopkit/serverbox-plugins),
@@ -375,11 +377,11 @@ Publishing is a release per theme per version, tagged `<id>-<version>` with the
 `.fsbt` as its asset. Adding a repository to the app's catalog is a pull request
 against this repository that adds one `[[repo]]` entry.
 
-A repository may carry a `plugins/` section beside `themes/`. This build reads
-`themes/` and skips sections it does not know rather than refusing the
-repository, so one repository can serve both.
+A repository may carry a `plugins/` section beside `themes/`, so one tree can
+offer both. A section this build does not know is skipped rather than failing
+the repository.
 
 Direct URL installation accepts HTTPS `.fsbt` links without a store. The
 installer follows at most three HTTPS redirects and does not send credentials.
-The catalog is limited to 1 MiB; a repository tree to 16 MiB compressed, 64 MiB
-unpacked, and 8 MiB per entry.
+The size limits a catalog and a repository tree are held to are in
+[Themes](/docs/development/themes/#theme-store).

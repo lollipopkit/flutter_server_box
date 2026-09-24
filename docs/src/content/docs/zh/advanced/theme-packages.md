@@ -13,12 +13,13 @@ description: 编写、安装与发布主题包
 [Aurora](https://github.com/lollipopkit/flutter_server_box/blob/main/docs/examples/aurora/manifest.toml)。
 桌面端选择 **Install theme → Folder** 可以在开发过程中导入该目录：应用会校验文件
 并复制进来，改动后重新选一次目录即可。要分发时，把目录内容打成 ZIP，使
-`manifest.toml` 位于压缩包根目录，然后把扩展名改成 `.fsbt`。内置主题请以可编辑的
-源目录形式放在 Git 里，不要提交生成出来的 `.fsbt`。
+`manifest.toml` 位于压缩包根目录，然后把扩展名改成 `.fsbt`。
 安装后的包会出现在 **Theme preset** 里。在该面板中，上/下键预览焦点主题但不保存
 设置；回车（或点击条目）应用；Esc、点击外部或关闭面板都会恢复原样。预设项的值
 只读；选择 **Custom** 可以挑选本地背景图，并编辑应用内 icon、圆角、不透明度和模糊。
 之前的 Custom 图片和设置会在可用时恢复。
+
+随应用内置的主题如何打包、加载与分发，见[主题](/docs/zh/development/themes/)。
 
 ```toml
 id = "example.amethyst"
@@ -123,7 +124,8 @@ Tombi —— 从文件第一行挂上它，[示例](https://github.com/lollipopk
 
 schema 的严格程度与安装器一致，只有一条它表达不了：`icons.colors` 里的颜色需要在
 `icons.images` 里有对应条目，这是跨两张表的检查。它报出的其他问题也都是安装会拒绝
-的。schema 跟随最新的 schema 版本；声明 `min = 1` 的包照样能通过校验。
+的。schema 跟随最新的 schema 版本；声明 `min = 1` 的包照样能通过校验。schema 是照
+什么写的、在哪里校验，见[主题](/docs/zh/development/themes/#解析器与编辑器-schema)。
 
 ## Schema 版本
 
@@ -262,10 +264,9 @@ brightness。
 商店分两层读取。第一层是 **catalog**：一个 TOML 文件，逐条列出 repository，不涉及
 具体主题和版本。第二层是 **repository**：一个 git 仓库，一个主题一个 TOML 文件。
 
-应用自带的 catalog 是 `assets/catalog/repos.toml`，它的地址是
-**Settings → Appearance → Theme store URL** 的默认值。该地址可编辑，因为一个不能
-改指其他 catalog 的客户端只服务于一个发布方。catalog 有一份编译进应用，地址不响应
-时使用，所以首次运行且无网络时也能列出官方 repository。
+应用读取 catalog 的地址是 **Settings → Appearance → Theme store URL**。该地址可
+编辑，因为一个不能改指其他 catalog 的客户端只服务于一个发布方。这个地址的默认值，
+以及地址不响应时应用改用什么，见[主题](/docs/zh/development/themes/#主题商店)。
 
 ```toml
 schema = 1
@@ -275,7 +276,7 @@ name = "ServerBox themes"
 url = "https://github.com/lollipopkit/serverbox-plugins"
 ```
 
-最多 100 个 repository。repository 地址是 HTTPS，可以是 git 仓库 —— 按
+repository 地址是 HTTPS，可以是 git 仓库 —— 按
 `<address>/archive/HEAD.tar.gz` 拉取 —— 或直接是 tarball 地址。用 `HEAD` 而不是
 分支名，因为仓库把哪个分支当作默认分支不该由应用来猜。
 
@@ -329,9 +330,9 @@ sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
 发布是每个主题每个版本一个 release，tag 为 `<id>-<version>`，附带 `.fsbt`。往应用
 catalog 里加一个 repository，是向本仓库提一个新增 `[[repo]]` 条目的 pull request。
 
-repository 可以在 `themes/` 旁边带一个 `plugins/` 部分。本构建读取 `themes/`，
-不认识的部分跳过而不拒绝整个 repository，所以一个 repository 可以同时提供两者。
+repository 可以在 `themes/` 旁边带一个 `plugins/` 部分，于是一棵树可以同时提供
+两者。本构建不认识的 section 会被跳过，而不是让整个 repository 失败。
 
 直接 URL 安装接受 HTTPS 的 `.fsbt` 链接，无需商店。安装器最多跟随三次 HTTPS
-重定向，不发送凭据。catalog 限制 1 MiB；repository 树限制 16 MiB 压缩、64 MiB
-解压、单个条目 8 MiB。
+重定向，不发送凭据。catalog 和 repository 树各自的大小上限见
+[主题](/docs/zh/development/themes/#主题商店)。

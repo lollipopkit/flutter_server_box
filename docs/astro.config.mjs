@@ -98,6 +98,7 @@ export default defineConfig({
 						{ label: 'Code Generation', translations: { zh: '代码生成' }, slug: 'development/codegen' },
 						{ label: 'Building', translations: { zh: '构建' }, slug: 'development/building' },
 						{ label: 'Testing', translations: { zh: '测试' }, slug: 'development/testing' },
+						{ label: 'Themes', translations: { zh: '主题' }, slug: 'development/themes' },
 					],
 				},
 				// Its own entry rather than a line in a group: the app links

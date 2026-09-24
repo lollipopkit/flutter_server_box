@@ -14,17 +14,10 @@ excluding icon themes and themes distributed with language tooling.
 GitHub Theme, One Dark Pro and Dracula were the three leading entries in that
 comparison. GitHub Dark uses the GitHub Theme dark palette.
 
-Default is a Dart const default and needs no asset or filesystem access.
-Other theme definitions are kept in `assets/themes/<id>/manifest.toml`, using the same
-schema and installer as imported folders and `.fsbt` archives. Flutter bundles
-the source folders directly; no archive or binary assets are checked into Git.
-Register new folders in `pubspec.yaml` and their picker labels in
-`ThemePackages.builtinNames`. Opening the picker loads no theme files. A folder
-is loaded only when selected, or at startup if it is the saved selection.
-Successful loads are cached and concurrent requests share one load; failed loads
-can be retried. Built-in assets use a separate runtime cache
-and do not appear among user-installed themes. Muted text colors are adjusted where
-needed to keep normal text at a contrast ratio of at least 4.5:1.
+Where the definitions live, how a folder is parsed and loaded, and how these
+themes are published is in [Themes](/docs/development/themes/). Muted text
+colors are adjusted where needed to keep normal text at a contrast ratio of at
+least 4.5:1.
 
 ## Upstream attribution
 
