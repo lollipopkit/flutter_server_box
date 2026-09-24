@@ -229,10 +229,7 @@ extension _Widgets on _BenchmarkConfigState {
         spacing: 13,
         runSpacing: 4,
         children: [
-          _chip(
-            Icons.schedule,
-            l10n.benchmarkEstimatedTime('${estimate.minutes}'),
-          ),
+          _chip(Icons.schedule, l10n.benchmarkEstimatedTime(estimate.minutes)),
           if (estimate.trafficBytes > 0)
             _chip(
               Icons.swap_vert,

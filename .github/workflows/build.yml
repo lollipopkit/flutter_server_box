@@ -66,6 +66,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
@@ -274,6 +275,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 1
@@ -494,6 +496,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
       - name: Install musl toolchain
@@ -560,6 +563,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
@@ -690,6 +694,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
@@ -779,6 +784,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
@@ -842,6 +848,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0

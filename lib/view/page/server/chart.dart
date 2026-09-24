@@ -187,6 +187,7 @@ class MetricChart extends StatelessWidget {
               bars,
               series: spec.series,
               format: spec.format,
+              tooltipFont: Theme.of(context).textTheme.bodyMedium!,
               binaryScale: spec.binaryScale,
               window: spec.window,
               bands: spec.bands,
@@ -409,6 +410,9 @@ Widget buildHistoryLineChart(
   List<LineChartBarData> bars, {
   required List<HistorySeries> series,
   required String Function(double) format,
+  /// The theme's body text, whose families the tooltip takes. Only the
+  /// families: a tooltip has no body's metrics to inherit.
+  required TextStyle tooltipFont,
   bool binaryScale = false,
   ({int from, int to})? window,
   List<ChartBand> bands = const [],
@@ -498,7 +502,13 @@ Widget buildHistoryLineChart(
               // series repeated what the legend already encodes, and on the
               // tooltip's own background the lighter series read as washed
               // out next to the darker ones.
-              const TextStyle(
+              //
+              // A fresh style rather than `copyWith` on the theme's: what is
+              // wanted from it is the family, and the rest of `bodyMedium` —
+              // its line height (1.43) and tracking (0.25) — is a 14pt body's.
+              TextStyle(
+                fontFamily: tooltipFont.fontFamily,
+                fontFamilyFallback: tooltipFont.fontFamilyFallback,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,

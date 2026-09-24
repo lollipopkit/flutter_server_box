@@ -1,5 +1,28 @@
 {
   "@@locale": "uk",
+  "appearanceSettings": "Вигляд",
+  "appearancePreset": "Готова тема",
+  "appearanceThemeSchemaRange": "Підтримувана схема теми",
+  "appearanceThemeInstall": "Установити тему",
+  "appearanceThemeStore": "Магазин тем",
+  "appearanceInvalidTheme": "Недійсний пакет теми або каталог",
+  "themeStoreRefreshFailed": "Не вдалося прочитати каталог тем.",
+  "themeStoreDeleteTheme": "Видалити «{name}»? Його файли буде видалено з цього пристрою. Якщо це тема, що використовується, застосунок повернеться до типової теми.",
+  "themeStoreUpdatedFmt": "оновлено {ago}",
+  "themeStoreUpdatedJustNow": "щойно оновлено",
+  "themeStoreSortInUse": "Спочатку використовувана",
+  "themeStoreMakeOwnFmt": "Хочете створити власну тему? Дивіться [як її створити]({doc}) — дякуємо за ваш внесок!",
+  "appearanceThemeNeedsNewerApp": "Потрібна новіша версія застосунку: {version}",
+  "appearanceFontFamilies": "Сімейства шрифтів інтерфейсу",
+  "appearanceFontFamiliesTip": "Одна назва в рядку; шрифти застосовуються за порядком.",
+  "appearanceFontImport": "Імпортувати файл шрифту інтерфейсу",
+  "appearanceGradient": "Градієнт",
+  "appearanceNoBackground": "Без тла",
+  "appearanceIcons": "Піктограми в застосунку",
+  "appearanceCorners": "Кути",
+  "appearanceCardCorners": "Кути карток",
+  "appearanceTileCorners": "Кути плиток",
+  "appearanceButtonCorners": "Кути кнопок",
   "crashCollect": "Діагностичні дані",
   "crashCollectIntro": "ServerBox записує те, що відбувається під час роботи, щоб можна було виправляти проблеми. Виберіть, скільки даних надсилати.",
   "crashCollectNone": "Нічого",
@@ -172,7 +195,9 @@
   "mismatchSystem": "Невідповідна система: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Дзеркало",
@@ -234,10 +259,18 @@
   "rootfsUpdateTip": "Встановлено {distro} {installed}, доступний {latest}. Оновлення замінить весь контейнер: дані {pm} буде втрачено",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Закрийте термінали на {name}, перш ніж видаляти",
@@ -551,14 +584,20 @@
   "geoDataCurrent": "{month} вже встановлено.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Розмір завантаження: {download} · Місце на пристрої: {disk}.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Тест продуктивності",
@@ -896,5 +935,80 @@
   "remoteDesktopGuideViewOnlyTip": "Припиняє надсилання вказівника й клавіш, щоб дивитися без випадкових кліків.",
   "remoteDesktopGuideMoreTip": "Тут є Ctrl+Alt+Delete, повторне підключення та повноекранний режим.",
   "remoteDesktopGuidePointerTip": "А також прямий вказівник: палець клікає там, де торкається.",
-  "remoteDesktopVncClipboardLatin1Only": "Буфер обміну VNC підтримує лише текст у кодуванні Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.",
+  "remoteDesktopAddProfile": "Додати профіль",
+  "remoteDesktopNoProfiles": "Немає профілів віддаленого робочого стола",
+  "remoteDesktopAdd": "Додати віддалений робочий стіл",
+  "remoteDesktopEdit": "Редагувати віддалений робочий стіл",
+  "remoteDesktopTargetTip": "Адресу визначає SSH-сервер або агент Monitor. localhost указує на цю машину.",
+  "remoteDesktopDomain": "Домен (необов'язково)",
+  "remoteDesktopPassword": "Пароль (необов'язково)",
+  "remoteDesktopSavePassword": "Зберегти пароль",
+  "remoteDesktopSavePasswordTip": "Зберігається в зашифрованій базі даних. Резервні копії містять збережені паролі й шифруються лише за наявності пароля резервної копії.",
+  "remoteDesktopShareSession": "Поділитися сеансом",
+  "remoteDesktopProtocol": "Протокол",
+  "remoteDesktopUniqueName": "Імена профілів мають бути унікальними для цього сервера.",
+  "remoteDesktopVncPasswordLength": "Класичні паролі VNC обмежені 8 байтами ASCII.",
+  "remoteDesktopNameRequired": "Введіть ім'я профілю.",
+  "remoteDesktopHostRequired": "Введіть цільовий хост.",
+  "remoteDesktopPortRequired": "Введіть дійсний порт.",
+  "remoteDesktopUsernameRequired": "Введіть ім'я користувача RDP.",
+  "remoteDesktopVncPasswordAscii": "Класичні паролі VNC можуть містити лише символи ASCII.",
+  "remoteDesktopCertificateRequired": "Потрібне підтвердження сертифіката",
+  "remoteDesktopWaiting": "Очікування робочого стола…",
+  "remoteDesktopCertificateChanged": "Сертифікат віддаленого робочого стола змінився",
+  "remoteDesktopTrustCertificate": "Довіряти сертифікату?",
+  "remoteDesktopCertificateChangedTip": "Відбиток сертифіката більше не збігається зі збереженим значенням. Перевірте новий відбиток, перш ніж замінювати довіру.",
+  "remoteDesktopCertificateUnverifiedTip": "Система не змогла перевірити цей сертифікат. Перевірте його відбиток SHA-256, перш ніж продовжити.",
+  "remoteDesktopReplaceTrust": "Замінити довіру",
+  "remoteDesktopTrustReconnect": "Довіряти й підключитися знову",
+  "remoteDesktopDeleteProfile": "Видалити профіль віддаленого робочого стола «{name}»?",
+  "remoteDesktopReconnectAttempt": "Повторне підключення ({attempt}/3)…",
+  "remoteDesktopPreviousCertificate": "Раніше довірений відбиток\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "Суб'єкт: {subject}",
+  "remoteDesktopCertificateIssuer": "Видавець: {issuer}",
+  "remoteDesktopCertificateValidity": "Дійсний: {start} – {end}",
+  "appearanceThemeModeLocked": "Ця тема підтримує лише режим «{mode}». Щоб змінити режим, виберіть іншу тему.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

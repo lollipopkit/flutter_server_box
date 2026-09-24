@@ -1,5 +1,28 @@
 {
   "@@locale": "zh",
+  "appearanceSettings": "外观",
+  "appearancePreset": "主题方案",
+  "appearanceThemeSchemaRange": "支持的主题 schema",
+  "appearanceThemeInstall": "安装主题",
+  "appearanceThemeStore": "主题商店",
+  "appearanceInvalidTheme": "主题包或目录无效",
+  "themeStoreRefreshFailed": "无法读取主题目录。",
+  "themeStoreDeleteTheme": "删除“{name}”？其文件将从本机移除。如果它正在使用中，应用将返回默认主题。",
+  "themeStoreUpdatedFmt": "{ago}更新",
+  "themeStoreUpdatedJustNow": "刚刚更新",
+  "themeStoreSortInUse": "在用优先",
+  "themeStoreMakeOwnFmt": "如果你想制作自己的主题，欢迎查看[主题制作指南]({doc})，感谢你的贡献！",
+  "appearanceThemeNeedsNewerApp": "需要更新版本的 App：{version}",
+  "appearanceFontFamilies": "界面字体列表",
+  "appearanceFontFamiliesTip": "每行一个字体名称，按顺序 fallback。",
+  "appearanceFontImport": "导入界面字体文件",
+  "appearanceGradient": "渐变",
+  "appearanceNoBackground": "无背景",
+  "appearanceIcons": "App 内图标",
+  "appearanceCorners": "圆角",
+  "appearanceCardCorners": "卡片圆角",
+  "appearanceTileCorners": "Tile 圆角",
+  "appearanceButtonCorners": "按钮圆角",
   "crashCollect": "诊断信息",
   "crashCollectIntro": "ServerBox 会记录运行过程中发生的情况，以便修复问题。你可以选择要发送多少信息。",
   "crashCollectNone": "不发送",
@@ -263,7 +286,9 @@
   "mismatchSystem": "系统不匹配：{system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "镜像",
@@ -343,10 +368,18 @@
   "rootfsUpdateTip": "已安装 {distro} {installed}，新版本为 {latest}。更新会重新下载并替换整个容器，{pm} 中的数据将丢失。",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "请先关闭 {name} 上的终端，再删除",
@@ -354,9 +387,15 @@
   "rootfsInstallTip": "下载 {distro} {version}(约 {size} MB)并解压到本机。",
   "@rootfsInstallTip": {
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "nameAlreadyExistsFmt": "「{name}」已存在",
@@ -589,14 +628,20 @@
   "geoDataCurrent": "已经是 {month} 的数据。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**下载大小：{download} · 本机占用：{disk}。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "性能测试",
@@ -903,5 +948,38 @@
   "remoteDesktopGuideViewOnlyTip": "停止发送指针和按键，只查看画面，不会误点。",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、重新连接和全屏都在这里。",
   "remoteDesktopGuidePointerTip": "这里也可以切换为直接指针：手指点到哪里就点击哪里。",
-  "remoteDesktopVncClipboardLatin1Only": "VNC 剪贴板仅支持 Latin-1 文本。"
+  "remoteDesktopVncClipboardLatin1Only": "VNC 剪贴板仅支持 Latin-1 文本。",
+  "remoteDesktopAddProfile": "添加配置",
+  "remoteDesktopNoProfiles": "暂无远程桌面配置",
+  "remoteDesktopAdd": "添加远程桌面",
+  "remoteDesktopEdit": "编辑远程桌面",
+  "remoteDesktopTargetTip": "目标地址由 SSH 服务器或 Monitor Agent 解析，localhost 指向该服务器。",
+  "remoteDesktopDomain": "域（可选）",
+  "remoteDesktopPassword": "密码（可选）",
+  "remoteDesktopSavePassword": "保存密码",
+  "remoteDesktopSavePasswordTip": "保存在加密数据库中。备份会包含已保存的密码，只有设置备份密码时才会加密。",
+  "remoteDesktopShareSession": "共享会话",
+  "remoteDesktopProtocol": "协议",
+  "remoteDesktopUniqueName": "此服务器的配置名称不能重复。",
+  "remoteDesktopVncPasswordLength": "传统 VNC 密码最多为 8 个 ASCII 字节。",
+  "remoteDesktopNameRequired": "请输入配置名称。",
+  "remoteDesktopHostRequired": "请输入目标主机。",
+  "remoteDesktopPortRequired": "请输入有效的端口。",
+  "remoteDesktopUsernameRequired": "请输入 RDP 用户名。",
+  "remoteDesktopVncPasswordAscii": "传统 VNC 密码只能包含 ASCII 字符。",
+  "remoteDesktopCertificateRequired": "需要确认证书",
+  "remoteDesktopWaiting": "正在等待桌面…",
+  "remoteDesktopCertificateChanged": "远程桌面证书已更改",
+  "remoteDesktopTrustCertificate": "是否信任此证书？",
+  "remoteDesktopCertificateChangedTip": "证书指纹与保存的值不一致。替换信任前，请核实新的指纹。",
+  "remoteDesktopCertificateUnverifiedTip": "系统无法验证此证书。继续前，请核实其 SHA-256 指纹。",
+  "remoteDesktopReplaceTrust": "替换信任",
+  "remoteDesktopTrustReconnect": "信任并重新连接",
+  "remoteDesktopDeleteProfile": "是否删除远程桌面配置“{name}”？",
+  "remoteDesktopReconnectAttempt": "正在重新连接（{attempt}/3）…",
+  "remoteDesktopPreviousCertificate": "此前信任的指纹\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "主题：{subject}",
+  "remoteDesktopCertificateIssuer": "颁发者：{issuer}",
+  "remoteDesktopCertificateValidity": "有效期：{start} – {end}",
+  "appearanceThemeModeLocked": "此主题仅支持{mode}。如需切换模式，请选择其他主题。"
 }

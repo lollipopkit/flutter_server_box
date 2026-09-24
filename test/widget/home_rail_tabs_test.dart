@@ -581,6 +581,161 @@ void main() {
       }
     });
 
+    /// The rail's own `Material`, which is what carries its colour and its
+    /// shadow. The first one under [AppNavRail] is that one — the items put
+    /// their ink responses under it, not over.
+    Material railOf(WidgetTester tester) => tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(AppNavRail),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+
+    /// A rail beside an empty tab, on a page whose scaffold is [scaffold], with
+    /// the theme's own rail colour [rail] where one is given.
+    Widget railOn(Color? scaffold, {Color? rail}) => MaterialApp(
+      theme: ThemeData(
+        scaffoldBackgroundColor: scaffold,
+        navigationRailTheme: NavigationRailThemeData(backgroundColor: rail),
+      ),
+      home: Scaffold(
+        body: Row(
+          children: [
+            AppNavRail(
+              selectedIndex: 0,
+              onSelected: (_) {},
+              items: const [
+                NavRailItem(
+                  icon: Icon(Icons.circle),
+                  selectedIcon: Icon(Icons.circle),
+                  label: 'one',
+                ),
+              ],
+            ),
+            const Expanded(child: SizedBox()),
+          ],
+        ),
+      ),
+    );
+
+    /// Puts the pointer on the rail, if [hover], and lets it arrive.
+    Future<void> pointerOnRail(
+      WidgetTester tester, {
+      required bool hover,
+      required Color? scaffold,
+      Color? rail,
+    }) async {
+      await tester.pumpWidget(railOn(scaffold, rail: rail));
+      await tester.pump();
+      if (!hover) return;
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.hover(tester.getCenter(find.byType(AppNavRail))),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    /// The colour the rail's own `Material` is painted with.
+    Future<Color?> colorAt(
+      WidgetTester tester, {
+      required bool hover,
+      required Color? scaffold,
+      Color? rail,
+    }) async {
+      await pointerOnRail(tester, hover: hover, scaffold: scaffold, rail: rail);
+      return railOf(tester).color;
+    }
+
+    testWidgets('takes a colour of its own once it is over a tab', (
+      tester,
+    ) async {
+      // A background image makes the scaffold transparent on purpose, so every
+      // page shows the wallpaper. The shut rail is nothing over nothing and
+      // keeps that — but open it stands over the tab, and a transparent panel
+      // there put two sets of names on the same pixels.
+      final scheme = ThemeData().colorScheme;
+
+      final shut = await colorAt(
+        tester,
+        hover: false,
+        scaffold: Colors.transparent,
+      );
+      expect(shut!.a, 0);
+
+      final open = await colorAt(
+        tester,
+        hover: true,
+        scaffold: Colors.transparent,
+      );
+      expect(open!.a, 1);
+      expect(open, scheme.surface);
+    });
+
+    testWidgets('and keeps the page\'s own while the page has one', (
+      tester,
+    ) async {
+      // No background, so the scaffold's colour is a real one and there is
+      // nothing to fix: opening the rail changes its width and nothing else.
+      const page = Color(0xFF123456);
+
+      expect(
+        await colorAt(tester, hover: false, scaffold: page),
+        page,
+      );
+      expect(
+        await colorAt(tester, hover: true, scaffold: page),
+        page,
+      );
+    });
+
+    testWidgets('and takes one the theme set, alpha and all', (tester) async {
+      // A colour carrying alpha failed the opaque test as though it were no
+      // colour at all, so a theme asking for a rail at 54% was answered with the
+      // surface's — in both shapes, since the colour is the panel and the two
+      // ends of the fade are the same colour.
+      const asked = Color(0x8A000000);
+      const page = Color(0xFF123456);
+
+      expect(
+        await colorAt(tester, hover: false, scaffold: page, rail: asked),
+        asked,
+      );
+      expect(
+        await colorAt(tester, hover: true, scaffold: page, rail: asked),
+        asked,
+      );
+    });
+
+    testWidgets('casts no shadow once it has faded', (tester) async {
+      // A shadow is cast by the shape, whether or not the colour on it is
+      // opaque. Held at three points of elevation while the colour crossed to
+      // nothing, it left a dark rectangle of the panel's own size on the tab
+      // for the last of the closing — a panel that is half there — and then
+      // went with the final frame, which is the jolt. So the shadow is read
+      // off the same value the colour is, and the two leave together.
+      await pointerOnRail(tester, hover: true, scaffold: Colors.transparent);
+      expect(railOf(tester).color!.a, 1);
+      expect(railOf(tester).elevation, 3);
+
+      final pointer = TestPointer(1, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.hover(const Offset(700, 400)));
+      for (var i = 0; i < 30; i++) {
+        await tester.pump(const Duration(milliseconds: 8));
+        final rail = railOf(tester);
+        expect(
+          rail.elevation,
+          lessThanOrEqualTo(3 * rail.color!.a + 0.001),
+          reason: 'the shadow outlived the panel, at frame $i',
+        );
+      }
+      expect(railOf(tester).elevation, 0);
+      expect(railOf(tester).color!.a, 0);
+    });
+
     testWidgets('names an item with a tooltip while it is shut', (
       tester,
     ) async {

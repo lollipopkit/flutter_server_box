@@ -105,7 +105,7 @@ class _FloatTerminalState extends ConsumerState<_FloatTerminal> {
                 key: _termKey,
                 controller: _controller,
                 focusNode: _focusNode,
-                textStyle: TerminalLook.style,
+                textStyle: TerminalLook.styleOf(context),
                 theme: theme,
                 backgroundOpacity: 0,
                 keyboardType: TextInputType.text,

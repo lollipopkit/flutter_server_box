@@ -36,9 +36,13 @@ The App remembers the window size and position and restores them on the next lau
 
 - Light
 - Dark
-- AMOLED (pure black background)
-- Auto AMOLED (use a pure black background when the system theme is dark)
 - Follow system
+
+AMOLED is a built-in theme with a pure black background in dark mode and standard
+light colors in light mode. Previous AMOLED settings migrate to Dark + AMOLED;
+Auto AMOLED migrates to System + AMOLED.
+Themes declare support for light and/or dark mode. A theme supporting only one
+mode locks this setting and displays an explanation.
 
 ### Compared with mobile
 

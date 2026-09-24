@@ -1,5 +1,28 @@
 {
   "@@locale": "ja",
+  "appearanceSettings": "外観",
+  "appearancePreset": "テーマプリセット",
+  "appearanceThemeSchemaRange": "対応テーマ schema",
+  "appearanceThemeInstall": "テーマをインストール",
+  "appearanceThemeStore": "テーマストア",
+  "appearanceInvalidTheme": "テーマパッケージまたはカタログが無効です",
+  "themeStoreRefreshFailed": "テーマカタログを読み取れませんでした。",
+  "themeStoreDeleteTheme": "「{name}」を削除しますか？ファイルはこの端末から削除されます。使用中のテーマの場合、アプリは既定のテーマに戻ります。",
+  "themeStoreUpdatedFmt": "{ago}に更新",
+  "themeStoreUpdatedJustNow": "たった今更新",
+  "themeStoreSortInUse": "使用中を先頭",
+  "themeStoreMakeOwnFmt": "自分のテーマを作りたい方は[テーマ作成ガイド]({doc})をご覧ください。ご協力ありがとうございます！",
+  "appearanceThemeNeedsNewerApp": "新しいバージョンのアプリが必要です: {version}",
+  "appearanceFontFamilies": "UI フォントファミリー",
+  "appearanceFontFamiliesTip": "1 行に 1 つの名前を入力してください。上から順に使用します。",
+  "appearanceFontImport": "UI フォントファイルをインポート",
+  "appearanceGradient": "グラデーション",
+  "appearanceNoBackground": "背景なし",
+  "appearanceIcons": "アプリ内アイコン",
+  "appearanceCorners": "角丸",
+  "appearanceCardCorners": "カードの角丸",
+  "appearanceTileCorners": "タイルの角丸",
+  "appearanceButtonCorners": "ボタンの角丸",
   "crashCollect": "診断データ",
   "crashCollectIntro": "ServerBox は問題を修正できるよう、実行中に起きたことを記録します。送信する情報量を選べます。",
   "crashCollectNone": "送信しない",
@@ -171,7 +194,9 @@
   "mismatchSystem": "システムが一致しません: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "ミラー",
@@ -233,10 +258,18 @@
   "rootfsUpdateTip": "{distro} {installed} が入っていて、{latest} があります。更新はコンテナ全体を置き換えます：{pm} のデータは失われます",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name} のターミナルを閉じてから削除してください",
@@ -551,14 +584,20 @@
   "geoDataCurrent": "すでに {month} のデータです。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**ダウンロード：{download} · 端末上の使用容量：{disk}。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "ベンチマーク",
@@ -896,5 +935,52 @@
   "remoteDesktopGuideViewOnlyTip": "ポインターとキー入力の送信を止め、誤ってクリックせずに画面を確認できます。",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、再接続、全画面表示はここにあります。",
   "remoteDesktopGuidePointerTip": "指で触れた場所をクリックするダイレクトポインターにもここで切り替えられます。",
-  "remoteDesktopVncClipboardLatin1Only": "VNC のクリップボードは Latin-1 テキストのみ対応しています。"
+  "remoteDesktopVncClipboardLatin1Only": "VNC のクリップボードは Latin-1 テキストのみ対応しています。",
+  "remoteDesktopAddProfile": "プロファイルを追加",
+  "remoteDesktopNoProfiles": "リモートデスクトップのプロファイルがありません",
+  "remoteDesktopAdd": "リモートデスクトップを追加",
+  "remoteDesktopEdit": "リモートデスクトップを編集",
+  "remoteDesktopTargetTip": "接続先は SSH サーバーまたは Monitor エージェントから解決されます。localhost はそのマシンを指します。",
+  "remoteDesktopDomain": "ドメイン（任意）",
+  "remoteDesktopPassword": "パスワード（任意）",
+  "remoteDesktopSavePassword": "パスワードを保存",
+  "remoteDesktopSavePasswordTip": "暗号化データベースに保存されます。バックアップには保存済みのパスワードが含まれ、バックアップパスワードを設定した場合にのみ暗号化されます。",
+  "remoteDesktopShareSession": "セッションを共有",
+  "remoteDesktopProtocol": "プロトコル",
+  "remoteDesktopUniqueName": "このサーバーではプロファイル名を重複させられません。",
+  "remoteDesktopVncPasswordLength": "従来の VNC パスワードは 8 ASCII バイトまでです。",
+  "remoteDesktopNameRequired": "プロファイル名を入力してください。",
+  "remoteDesktopHostRequired": "接続先ホストを入力してください。",
+  "remoteDesktopPortRequired": "有効なポートを入力してください。",
+  "remoteDesktopUsernameRequired": "RDP のユーザー名を入力してください。",
+  "remoteDesktopVncPasswordAscii": "従来の VNC パスワードは ASCII 文字のみ使用できます。",
+  "remoteDesktopCertificateRequired": "証明書の確認が必要です",
+  "remoteDesktopWaiting": "デスクトップを待機しています…",
+  "remoteDesktopCertificateChanged": "リモートデスクトップの証明書が変更されました",
+  "remoteDesktopTrustCertificate": "証明書を信頼しますか？",
+  "remoteDesktopCertificateChangedTip": "証明書のフィンガープリントが保存された値と一致しません。信頼を置き換える前に新しいフィンガープリントを確認してください。",
+  "remoteDesktopCertificateUnverifiedTip": "システムはこの証明書を検証できませんでした。続行する前に SHA-256 フィンガープリントを確認してください。",
+  "remoteDesktopReplaceTrust": "信頼を置き換える",
+  "remoteDesktopTrustReconnect": "信頼して再接続",
+  "remoteDesktopDeleteProfile": "リモートデスクトップのプロファイル「{name}」を削除しますか？",
+  "remoteDesktopReconnectAttempt": "再接続中（{attempt}/3）…",
+  "remoteDesktopPreviousCertificate": "以前に信頼したフィンガープリント\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "サブジェクト：{subject}",
+  "remoteDesktopCertificateIssuer": "発行者：{issuer}",
+  "remoteDesktopCertificateValidity": "有効期間：{start} – {end}",
+  "appearanceThemeModeLocked": "このテーマは{mode}のみ対応しています。モードを変更するには、別のテーマを選択してください。",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

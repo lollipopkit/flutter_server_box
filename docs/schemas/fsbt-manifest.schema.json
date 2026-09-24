@@ -1,0 +1,531 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json",
+  "title": "ServerBox theme package manifest",
+  "description": "manifest.toml at the root of a .fsbt archive. The installer refuses an unknown table, an unknown field, and a value out of range rather than replacing it with a default, so this schema is as strict as the installer: it is meant to name a mistake while you type instead of after an install. See https://serverbox.lollipopkit.com/docs/advanced/theme-packages/\n\nOne rule cannot be written here: a color under icons.colors whose key has no entry under icons.images is refused, because a cross-table check is not something a JSON Schema expresses. Every table is optional; the four required keys are the ones no default exists for.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "modes", "schema"],
+  "properties": {
+    "format": {
+      "description": "Archive manifest structure version. Only 1 exists.",
+      "const": 1
+    },
+    "id": {
+      "description": "Stable identifier. A theme repository names the file for a theme after this.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "name": {
+      "description": "Display name in Theme preset.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[^\\u0000-\\u001f]+$"
+    },
+    "modes": {
+      "description": "Supported theme modes. One mode locks ThemeMode; both allow System, Light and Dark. Duplicates and unknown values are refused.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "enum": ["light", "dark"] }
+    },
+    "schema": {
+      "description": "Inclusive range of theme schema versions this package is readable at, not the theme's own version. min is what a reader has to understand: a package that uses a schema 2 feature and says min = 1 is refused. See \"Schema versions\" in https://serverbox.lollipopkit.com/docs/advanced/theme-packages/",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min", "max"],
+      "properties": {
+        "min": { "$ref": "#/definitions/schemaVersion" },
+        "max": { "$ref": "#/definitions/schemaVersion" }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "description": "Initial brightness preference: 0 system, 1 light, 2 dark. A single supported mode overrides it.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "seed": {
+          "description": "ARGB seed for roles the palettes do not set. Defaults to 0xFF880E4F.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "systemColor": {
+          "description": "Use the system accent when the platform provides one. Defaults to false.",
+          "type": "boolean"
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "light": { "$ref": "#/definitions/palette" },
+            "dark": { "$ref": "#/definitions/palette" }
+          }
+        }
+      }
+    },
+    "icons": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "style": {
+          "description": "Built-in icon family, used for every key this package carries no image for.",
+          "enum": ["classic", "mingcute"]
+        },
+        "images": {
+          "description": "Icon key to the file that carries it, inside icons/. The file name must be the key with dots replaced by underscores, and either extension; nothing else can be named. A PNG is at most 512x512 and 256 KiB, an SVG at most 256 KiB and is checked as a document. Both are tinted with one color, so a drawing should use currentColor.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tab.server": { "enum": ["icons/tab_server.png", "icons/tab_server.svg"] },
+            "tab.server.selected": { "enum": ["icons/tab_server_selected.png", "icons/tab_server_selected.svg"] },
+            "tab.ssh": { "enum": ["icons/tab_ssh.png", "icons/tab_ssh.svg"] },
+            "tab.ssh.selected": { "enum": ["icons/tab_ssh_selected.png", "icons/tab_ssh_selected.svg"] },
+            "tab.file": { "enum": ["icons/tab_file.png", "icons/tab_file.svg"] },
+            "tab.file.selected": { "enum": ["icons/tab_file_selected.png", "icons/tab_file_selected.svg"] },
+            "tab.snippet": { "enum": ["icons/tab_snippet.png", "icons/tab_snippet.svg"] },
+            "tab.snippet.selected": { "enum": ["icons/tab_snippet_selected.png", "icons/tab_snippet_selected.svg"] },
+            "tab.agent": { "enum": ["icons/tab_agent.png", "icons/tab_agent.svg"] },
+            "tab.agent.selected": { "enum": ["icons/tab_agent_selected.png", "icons/tab_agent_selected.svg"] },
+            "tab.benchmark": { "enum": ["icons/tab_benchmark.png", "icons/tab_benchmark.svg"] },
+            "tab.benchmark.selected": { "enum": ["icons/tab_benchmark_selected.png", "icons/tab_benchmark_selected.svg"] },
+            "tab.remoteDesktop": { "enum": ["icons/tab_remoteDesktop.png", "icons/tab_remoteDesktop.svg"] },
+            "tab.remoteDesktop.selected": { "enum": ["icons/tab_remoteDesktop_selected.png", "icons/tab_remoteDesktop_selected.svg"] },
+            "nav.more": { "enum": ["icons/nav_more.png", "icons/nav_more.svg"] },
+            "nav.settings": { "enum": ["icons/nav_settings.png", "icons/nav_settings.svg"] },
+            "nav.tune": { "enum": ["icons/nav_tune.png", "icons/nav_tune.svg"] },
+            "nav.privacy": { "enum": ["icons/nav_privacy.png", "icons/nav_privacy.svg"] },
+            "nav.agent": { "enum": ["icons/nav_agent.png", "icons/nav_agent.svg"] },
+            "nav.tabs": { "enum": ["icons/nav_tabs.png", "icons/nav_tabs.svg"] },
+            "nav.server": { "enum": ["icons/nav_server.png", "icons/nav_server.svg"] },
+            "nav.sort": { "enum": ["icons/nav_sort.png", "icons/nav_sort.svg"] },
+            "nav.terminal": { "enum": ["icons/nav_terminal.png", "icons/nav_terminal.svg"] },
+            "nav.folder": { "enum": ["icons/nav_folder.png", "icons/nav_folder.svg"] },
+            "nav.cloud": { "enum": ["icons/nav_cloud.png", "icons/nav_cloud.svg"] },
+            "nav.snippet": { "enum": ["icons/nav_snippet.png", "icons/nav_snippet.svg"] },
+            "nav.inbox": { "enum": ["icons/nav_inbox.png", "icons/nav_inbox.svg"] },
+            "nav.key": { "enum": ["icons/nav_key.png", "icons/nav_key.svg"] },
+            "nav.info": { "enum": ["icons/nav_info.png", "icons/nav_info.svg"] },
+            "nav.download": { "enum": ["icons/nav_download.png", "icons/nav_download.svg"] },
+            "nav.desktop": { "enum": ["icons/nav_desktop.png", "icons/nav_desktop.svg"] }
+          }
+        },
+        "colors": {
+          "description": "Per-icon color. A key must name an icon icons.images carries; a color for a key with no image is refused, since it would be a typo that shows up as nothing at all. Without an entry the icon follows the ambient icon color.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tab.server": { "$ref": "#/definitions/color" },
+            "tab.server.selected": { "$ref": "#/definitions/color" },
+            "tab.ssh": { "$ref": "#/definitions/color" },
+            "tab.ssh.selected": { "$ref": "#/definitions/color" },
+            "tab.file": { "$ref": "#/definitions/color" },
+            "tab.file.selected": { "$ref": "#/definitions/color" },
+            "tab.snippet": { "$ref": "#/definitions/color" },
+            "tab.snippet.selected": { "$ref": "#/definitions/color" },
+            "tab.agent": { "$ref": "#/definitions/color" },
+            "tab.agent.selected": { "$ref": "#/definitions/color" },
+            "tab.benchmark": { "$ref": "#/definitions/color" },
+            "tab.benchmark.selected": { "$ref": "#/definitions/color" },
+            "tab.remoteDesktop": { "$ref": "#/definitions/color" },
+            "tab.remoteDesktop.selected": { "$ref": "#/definitions/color" },
+            "nav.more": { "$ref": "#/definitions/color" },
+            "nav.settings": { "$ref": "#/definitions/color" },
+            "nav.tune": { "$ref": "#/definitions/color" },
+            "nav.privacy": { "$ref": "#/definitions/color" },
+            "nav.agent": { "$ref": "#/definitions/color" },
+            "nav.tabs": { "$ref": "#/definitions/color" },
+            "nav.server": { "$ref": "#/definitions/color" },
+            "nav.sort": { "$ref": "#/definitions/color" },
+            "nav.terminal": { "$ref": "#/definitions/color" },
+            "nav.folder": { "$ref": "#/definitions/color" },
+            "nav.cloud": { "$ref": "#/definitions/color" },
+            "nav.snippet": { "$ref": "#/definitions/color" },
+            "nav.inbox": { "$ref": "#/definitions/color" },
+            "nav.key": { "$ref": "#/definitions/color" },
+            "nav.info": { "$ref": "#/definitions/color" },
+            "nav.download": { "$ref": "#/definitions/color" },
+            "nav.desktop": { "$ref": "#/definitions/color" }
+          }
+        }
+      }
+    },
+    "background": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "description": "\"gradient\" is generated from the palette; \"image\" needs the file beside the manifest.",
+          "enum": ["none", "gradient", "image"]
+        },
+        "image": {
+          "description": "Only valid when type is \"image\".",
+          "enum": ["background.png", "background.jpg", "background.jpeg"]
+        },
+        "opacity": {
+          "description": "Image opacity. Does not affect the generated gradient. Defaults to 0.18.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.6
+        },
+        "blur": {
+          "description": "Image blur radius. Does not affect the generated gradient. Defaults to 0.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        }
+      }
+    },
+    "shapes": {
+      "description": "Corner radii in logical pixels. A component override takes precedence over these. Omitted values default to 12, 8 and 10.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "card": { "$ref": "#/definitions/ratio" },
+        "tile": { "$ref": "#/definitions/ratio" },
+        "button": { "$ref": "#/definitions/ratio" }
+      }
+    },
+    "splash": {
+      "description": "Drawn over the app's first frames, then faded out. It is read once, at launch: choosing another theme later does not play a splash again, and a package selected during a launch does not play its own. Omit the table for no splash.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "description": "Background color. Defaults to \"surface\".",
+          "$ref": "#/definitions/color"
+        },
+        "logo": {
+          "description": "One fixed name at the archive root, not a path. A PNG or JPEG is at most 2048x2048 and 512 KiB, an SVG 512 KiB and the same document checks as an icon. Drawn at 96 logical pixels, centered, and tinted like an icon only when it is an SVG: a raster logo keeps its own colors.",
+          "enum": ["splash_logo.png", "splash_logo.jpg", "splash_logo.jpeg", "splash_logo.svg"]
+        },
+        "duration": {
+          "description": "Milliseconds the splash stays up before fading out. Defaults to 600.",
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 3000
+        }
+      }
+    },
+    "components": {
+      "description": "Component overrides. Every table and field is optional; a missing field keeps the app's style, and an explicit zero or false is retained. Unknown component names, fields, states and role names are refused. Colors accept an ARGB integer or a ColorScheme role name, resolved against the final palette.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "card": { "$ref": "#/definitions/card" },
+        "tile": { "$ref": "#/definitions/tile" },
+        "button": { "$ref": "#/definitions/button" },
+        "input": { "$ref": "#/definitions/input" },
+        "navigation": { "$ref": "#/definitions/navigation" },
+        "dialog": { "$ref": "#/definitions/dialog" },
+        "sheet": { "$ref": "#/definitions/sheet" },
+        "light": { "$ref": "#/definitions/brightnessGroup" },
+        "dark": { "$ref": "#/definitions/brightnessGroup" }
+      }
+    }
+  },
+  "definitions": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "ratio": {
+      "description": "Logical pixels, 0-40.",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 40
+    },
+    "borderWidth": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 8
+    },
+    "elevation": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 24
+    },
+    "inset": {
+      "description": "[left, top, right, bottom], each 0-64 logical pixels.",
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 64
+      }
+    },
+    "color": {
+      "description": "An ARGB integer (0xAARRGGBB) or the name of a ColorScheme role.",
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        {
+          "enum": [
+            "primary",
+            "onPrimary",
+            "primaryContainer",
+            "onPrimaryContainer",
+            "primaryFixed",
+            "primaryFixedDim",
+            "onPrimaryFixed",
+            "onPrimaryFixedVariant",
+            "secondary",
+            "onSecondary",
+            "secondaryContainer",
+            "onSecondaryContainer",
+            "secondaryFixed",
+            "secondaryFixedDim",
+            "onSecondaryFixed",
+            "onSecondaryFixedVariant",
+            "tertiary",
+            "onTertiary",
+            "tertiaryContainer",
+            "onTertiaryContainer",
+            "tertiaryFixed",
+            "tertiaryFixedDim",
+            "onTertiaryFixed",
+            "onTertiaryFixedVariant",
+            "error",
+            "onError",
+            "errorContainer",
+            "onErrorContainer",
+            "surface",
+            "onSurface",
+            "surfaceDim",
+            "surfaceBright",
+            "surfaceContainerLowest",
+            "surfaceContainerLow",
+            "surfaceContainer",
+            "surfaceContainerHigh",
+            "surfaceContainerHighest",
+            "onSurfaceVariant",
+            "outline",
+            "outlineVariant",
+            "shadow",
+            "scrim",
+            "inverseSurface",
+            "onInverseSurface",
+            "inversePrimary",
+            "surfaceTint"
+          ]
+        }
+      ]
+    },
+    "rgba": {
+      "description": "ARGB integer. Palette values are integers rather than role names.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "palette": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/definitions/roleName" },
+      "additionalProperties": { "$ref": "#/definitions/rgba" }
+    },
+    "roleName": {
+      "enum": [
+        "primary",
+        "onPrimary",
+        "primaryContainer",
+        "onPrimaryContainer",
+        "primaryFixed",
+        "primaryFixedDim",
+        "onPrimaryFixed",
+        "onPrimaryFixedVariant",
+        "secondary",
+        "onSecondary",
+        "secondaryContainer",
+        "onSecondaryContainer",
+        "secondaryFixed",
+        "secondaryFixedDim",
+        "onSecondaryFixed",
+        "onSecondaryFixedVariant",
+        "tertiary",
+        "onTertiary",
+        "tertiaryContainer",
+        "onTertiaryContainer",
+        "tertiaryFixed",
+        "tertiaryFixedDim",
+        "onTertiaryFixed",
+        "onTertiaryFixedVariant",
+        "error",
+        "onError",
+        "errorContainer",
+        "onErrorContainer",
+        "surface",
+        "onSurface",
+        "surfaceDim",
+        "surfaceBright",
+        "surfaceContainerLowest",
+        "surfaceContainerLow",
+        "surfaceContainer",
+        "surfaceContainerHigh",
+        "surfaceContainerHighest",
+        "onSurfaceVariant",
+        "outline",
+        "outlineVariant",
+        "shadow",
+        "scrim",
+        "inverseSurface",
+        "onInverseSurface",
+        "inversePrimary",
+        "surfaceTint"
+      ]
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "margin": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "tile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "selectedTileColor": { "$ref": "#/definitions/color" },
+        "textColor": { "$ref": "#/definitions/color" },
+        "iconColor": { "$ref": "#/definitions/color" },
+        "selectedColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "button": {
+      "description": "Applies to Material elevated, filled, outlined and text buttons, and to Btn.elevated. The state tables merge with these values; per property the priority is disabled > pressed > hovered > focused > selected > base.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" },
+        "disabled": { "$ref": "#/definitions/buttonState" },
+        "pressed": { "$ref": "#/definitions/buttonState" },
+        "hovered": { "$ref": "#/definitions/buttonState" },
+        "focused": { "$ref": "#/definitions/buttonState" },
+        "selected": { "$ref": "#/definitions/buttonState" }
+      }
+    },
+    "buttonState": {
+      "description": "One button state. Supports the same fields as components.button, without further nesting.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "foregroundColor": { "$ref": "#/definitions/color" },
+        "overlayColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "filled": { "type": "boolean" },
+        "fillColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "focusedBorderColor": { "$ref": "#/definitions/color" },
+        "errorBorderColor": { "$ref": "#/definitions/color" },
+        "disabledBorderColor": { "$ref": "#/definitions/color" },
+        "padding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "navigation": {
+      "description": "Applies to the bottom NavigationBar and the desktop NavigationRail.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "indicatorColor": { "$ref": "#/definitions/color" },
+        "indicatorRadius": { "$ref": "#/definitions/ratio" },
+        "selectedIconColor": { "$ref": "#/definitions/color" },
+        "unselectedIconColor": { "$ref": "#/definitions/color" },
+        "selectedLabelColor": { "$ref": "#/definitions/color" },
+        "unselectedLabelColor": { "$ref": "#/definitions/color" },
+        "elevation": { "$ref": "#/definitions/elevation" }
+      }
+    },
+    "dialog": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "barrierColor": { "$ref": "#/definitions/color" },
+        "insetPadding": { "$ref": "#/definitions/inset" }
+      }
+    },
+    "sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backgroundColor": { "$ref": "#/definitions/color" },
+        "radius": { "$ref": "#/definitions/ratio" },
+        "borderColor": { "$ref": "#/definitions/color" },
+        "borderWidth": { "$ref": "#/definitions/borderWidth" },
+        "elevation": { "$ref": "#/definitions/elevation" },
+        "shadowColor": { "$ref": "#/definitions/color" },
+        "surfaceTintColor": { "$ref": "#/definitions/color" },
+        "barrierColor": { "$ref": "#/definitions/color" },
+        "dragHandleColor": { "$ref": "#/definitions/color" }
+      }
+    },
+    "brightnessGroup": {
+      "description": "Brightness-specific tables. Only supplied fields override their common values, and button states merge too.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "card": { "$ref": "#/definitions/card" },
+        "tile": { "$ref": "#/definitions/tile" },
+        "button": { "$ref": "#/definitions/button" },
+        "input": { "$ref": "#/definitions/input" },
+        "navigation": { "$ref": "#/definitions/navigation" },
+        "dialog": { "$ref": "#/definitions/dialog" },
+        "sheet": { "$ref": "#/definitions/sheet" }
+      }
+    }
+  }
+}

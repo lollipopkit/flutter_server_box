@@ -9,6 +9,83 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get appearanceSettings => '外观';
+
+  @override
+  String get appearancePreset => '主题方案';
+
+  @override
+  String get appearanceThemeSchemaRange => '支持的主题 schema';
+
+  @override
+  String get appearanceThemeInstall => '安装主题';
+
+  @override
+  String get appearanceThemeStore => '主题商店';
+
+  @override
+  String get appearanceInvalidTheme => '主题包或目录无效';
+
+  @override
+  String get themeStoreRefreshFailed => '无法读取主题目录。';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '删除“$name”？其文件将从本机移除。如果它正在使用中，应用将返回默认主题。';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago更新';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => '刚刚更新';
+
+  @override
+  String get themeStoreSortInUse => '在用优先';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '如果你想制作自己的主题，欢迎查看[主题制作指南]($doc)，感谢你的贡献！';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return '需要更新版本的 App：$version';
+  }
+
+  @override
+  String get appearanceFontFamilies => '界面字体列表';
+
+  @override
+  String get appearanceFontFamiliesTip => '每行一个字体名称，按顺序 fallback。';
+
+  @override
+  String get appearanceFontImport => '导入界面字体文件';
+
+  @override
+  String get appearanceGradient => '渐变';
+
+  @override
+  String get appearanceNoBackground => '无背景';
+
+  @override
+  String get appearanceIcons => 'App 内图标';
+
+  @override
+  String get appearanceCorners => '圆角';
+
+  @override
+  String get appearanceCardCorners => '卡片圆角';
+
+  @override
+  String get appearanceTileCorners => 'Tile 圆角';
+
+  @override
+  String get appearanceButtonCorners => '按钮圆角';
+
+  @override
   String get crashCollect => '诊断信息';
 
   @override
@@ -84,7 +161,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiCommandInserted => '命令已插入终端';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return '请前往设置配置 $fields';
   }
 
@@ -286,7 +363,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolFailed => '工具执行失败。';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count 次工具调用';
   }
 
@@ -405,7 +482,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navTabMenuTip => '长按标签栏图标（鼠标右键点击）可一次性连接或断开其中的全部内容。';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count 个标签';
   }
 
@@ -474,7 +551,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get icloudBackupStateWaiting => '等待 iCloud 同步';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return '最后备份：$lastModified\n状态：$remoteState';
   }
 
@@ -518,12 +595,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearAllStatsTitle => '清空所有统计';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return '确定要清空服务器 \"$serverName\" 的连接统计数据吗？此操作无法撤销。';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return '清空 $serverName 统计';
   }
 
@@ -595,7 +672,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get displayCpuIndex => '显示 CPU 索引';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return '下载 $fileName 到本地？';
   }
 
@@ -643,7 +720,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fdroidReleaseTip => '如果你是从 F-Droid 下载的本应用，推荐关闭此选项';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return '文件 \'$file\' 过大 \'$size\'，超过了 $sizeMax';
   }
 
@@ -803,12 +880,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jumpServer => '跳板服务器';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return '未找到 $serverName 配置的跳板服务器：$jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '「$name」已存在';
   }
 
@@ -859,7 +936,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get linuxNetTip => 'DNS 服务器。留空恢复默认值';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return '用❤️制作 by $myGithub';
   }
 
@@ -870,7 +947,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get maxRetryCount => '服务器尝试重连次数';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return '系统不匹配：$system';
   }
 
@@ -917,7 +994,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privateKey => '私钥';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return '未找到私钥 [$keyId]。';
   }
 
@@ -1114,16 +1191,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '已安装 $distro $installed，新版本为 $latest。更新会重新下载并替换整个容器，$pm 中的数据将丢失。';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return '请先关闭 $name 上的终端，再删除';
   }
 
@@ -1131,7 +1208,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rootfsSubtitle => '本机上的 Linux 用户空间';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return '下载 $distro $version(约 $size MB)并解压到本机。';
   }
 
@@ -1155,7 +1232,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeDir => '主目录';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '已选 $count 项';
   }
 
@@ -1273,12 +1350,12 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return '耗时：$time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return '所有服务器已存在（发现 $duplicateCount 个重复项）';
   }
 
@@ -1292,7 +1369,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConnectionModeUseSystem => '使用系统 SSH';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount 个重复项将被跳过';
   }
 
@@ -1300,7 +1377,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConfigFound => '我们在您的系统中发现了 SSH 配置。';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return '发现 $totalCount 个服务器';
   }
 
@@ -1314,12 +1391,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConfigImportTip => '首次创建服务器时提示读取 ~/.ssh/config';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return '从 SSH 配置导入了 $count 个服务器';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return '服务器 $serverName 的 SSH 主机密钥已更改，仅在信任该服务器时继续。';
   }
 
@@ -1333,12 +1410,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshKnownHostKeysTip => '本 app 已接受的主机密钥';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return '收到来自 $serverName 的新 SSH 主机密钥，在信任前请检查指纹。';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return '已存储的指纹：$fingerprint';
   }
 
@@ -1355,7 +1432,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConfigPermissionDenied => '由于 macOS 权限限制，无法访问 SSH 配置文件。';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount 个服务器将被导入';
   }
 
@@ -1373,7 +1450,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return '切换到 $val';
   }
 
@@ -1515,7 +1592,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portForward_remotePort => '远端端口';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return '删除 $name？';
   }
 
@@ -1746,7 +1823,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return '退出状态 $code';
   }
 
@@ -1886,12 +1963,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get geoDataRemoveFailed => '无法删除数据。';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '已经是 $month 的数据。';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**下载大小：$download · 本机占用：$disk。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。';
   }
 
@@ -1963,7 +2040,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get benchmarkWorkDirTip => '决定磁盘测试测的是哪个文件系统。留空表示登录账户的家目录。';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return '约 $minutes 分钟';
   }
 
@@ -2155,7 +2232,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get userPasswordEditTip => '密码留空将保留现有密码。';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '此服务器的连接方式不提供$func。';
   }
 
@@ -2193,12 +2270,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beyondRetention => '超出这个 agent 保留的范围';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'agent 保留 $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return '最早的采样在 $time';
   }
 
@@ -2218,7 +2295,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get waitingFirstSample => '等待第一次采样';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return '$time 时';
   }
 
@@ -2226,47 +2303,47 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stored => '已存储';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return '最近采样于$ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return '以下全部是 $time 的数据，$ago。';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return '$time 之前没有数据';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return '正在加载 $range…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return '没有 $metric 的存储历史';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count 个设备';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count 个设备 · 最忙 $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$total 个设备中的 $plotted 个';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count 个传感器 · 最热 $name';
   }
 
@@ -2274,12 +2351,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get oneDeviceAtLeast => '图表至少保留一个设备。';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$total 个$what中的 $shown 个';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count 个$what';
   }
 
@@ -2338,12 +2415,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskAllPassed => '全部 PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '$count 个警告';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total 个设备中的 $wrong 个';
   }
 
@@ -2351,17 +2428,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskSmartSortedTip => '最差的排在最前';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return '$ago读取';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count 个进程';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count 个异常';
   }
 
@@ -2375,7 +2452,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get window => '窗口';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return '共 $total';
   }
 
@@ -2389,12 +2466,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectionTip => '两个可以同时开启。顺序就是拨号的顺序。';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return '拖动可调整顺序。先拨 $first；它不应答时，$second 独自承担会话。';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return '只开启了 $name，没有可回落的对象。';
   }
 
@@ -2499,7 +2576,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tagNewHint => '新标签';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return '新建 #$tag';
   }
 
@@ -2507,12 +2584,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tagOnThisServer => '在这台上';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count 台服务器';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '这台上有 $count 个';
   }
 
@@ -2548,7 +2625,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskNextRun => '下次运行';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return '$time后';
   }
 
@@ -2559,7 +2636,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskCommentedOut => '已注释';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total 个任务 · $enabled 个已启用';
   }
 
@@ -2579,7 +2656,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get scheduledTaskEnableNowTip => '关闭时该行以注释写入。';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return '$user 没有计划任务。在此添加的内容会写入该账户的 crontab。';
   }
 
@@ -2620,42 +2697,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cronEveryMin => '每分钟';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return '每 $minutes 分钟';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return '每小时的 :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return '每 $hours 小时';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return '每 $hours 小时的 :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return '每天 $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return '工作日 $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return '每$day $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return '每月 $day 日 $time';
   }
 
@@ -2891,11 +2968,205 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪贴板仅支持 Latin-1 文本。';
+
+  @override
+  String get remoteDesktopAddProfile => '添加配置';
+
+  @override
+  String get remoteDesktopNoProfiles => '暂无远程桌面配置';
+
+  @override
+  String get remoteDesktopAdd => '添加远程桌面';
+
+  @override
+  String get remoteDesktopEdit => '编辑远程桌面';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      '目标地址由 SSH 服务器或 Monitor Agent 解析，localhost 指向该服务器。';
+
+  @override
+  String get remoteDesktopDomain => '域（可选）';
+
+  @override
+  String get remoteDesktopPassword => '密码（可选）';
+
+  @override
+  String get remoteDesktopSavePassword => '保存密码';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      '保存在加密数据库中。备份会包含已保存的密码，只有设置备份密码时才会加密。';
+
+  @override
+  String get remoteDesktopShareSession => '共享会话';
+
+  @override
+  String get remoteDesktopProtocol => '协议';
+
+  @override
+  String get remoteDesktopUniqueName => '此服务器的配置名称不能重复。';
+
+  @override
+  String get remoteDesktopVncPasswordLength => '传统 VNC 密码最多为 8 个 ASCII 字节。';
+
+  @override
+  String get remoteDesktopNameRequired => '请输入配置名称。';
+
+  @override
+  String get remoteDesktopHostRequired => '请输入目标主机。';
+
+  @override
+  String get remoteDesktopPortRequired => '请输入有效的端口。';
+
+  @override
+  String get remoteDesktopUsernameRequired => '请输入 RDP 用户名。';
+
+  @override
+  String get remoteDesktopVncPasswordAscii => '传统 VNC 密码只能包含 ASCII 字符。';
+
+  @override
+  String get remoteDesktopCertificateRequired => '需要确认证书';
+
+  @override
+  String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopCertificateChanged => '远程桌面证书已更改';
+
+  @override
+  String get remoteDesktopTrustCertificate => '是否信任此证书？';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      '证书指纹与保存的值不一致。替换信任前，请核实新的指纹。';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      '系统无法验证此证书。继续前，请核实其 SHA-256 指纹。';
+
+  @override
+  String get remoteDesktopReplaceTrust => '替换信任';
+
+  @override
+  String get remoteDesktopTrustReconnect => '信任并重新连接';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '是否删除远程桌面配置“$name”？';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return '正在重新连接（$attempt/3）…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return '此前信任的指纹\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return '主题：$subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return '颁发者：$issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return '有效期：$start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return '此主题仅支持$mode。如需切换模式，请选择其他主题。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
+
+  @override
+  String get appearanceSettings => '外觀';
+
+  @override
+  String get appearancePreset => '主題方案';
+
+  @override
+  String get appearanceThemeSchemaRange => '支援的主題 schema';
+
+  @override
+  String get appearanceThemeInstall => '安裝主題';
+
+  @override
+  String get appearanceThemeStore => '主題商店';
+
+  @override
+  String get appearanceInvalidTheme => '主題套件或目錄無效';
+
+  @override
+  String get themeStoreRefreshFailed => '無法讀取主題目錄。';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '刪除「$name」？其檔案將從本機移除。如果它正在使用中，應用程式將回到預設主題。';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago更新';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => '剛剛更新';
+
+  @override
+  String get themeStoreSortInUse => '在用優先';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '如果你想製作自己的主題，歡迎查看[主題製作指南]($doc)，感謝你的貢獻！';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return '需要較新版本的 App：$version';
+  }
+
+  @override
+  String get appearanceFontFamilies => '介面字型列表';
+
+  @override
+  String get appearanceFontFamiliesTip => '每行一個字型名稱，依序 fallback。';
+
+  @override
+  String get appearanceFontImport => '匯入介面字型檔案';
+
+  @override
+  String get appearanceGradient => '漸層';
+
+  @override
+  String get appearanceNoBackground => '無背景';
+
+  @override
+  String get appearanceIcons => 'App 內圖示';
+
+  @override
+  String get appearanceCorners => '圓角';
+
+  @override
+  String get appearanceCardCorners => '卡片圓角';
+
+  @override
+  String get appearanceTileCorners => 'Tile 圓角';
+
+  @override
+  String get appearanceButtonCorners => '按鈕圓角';
 
   @override
   String get crashCollect => '診斷資料';
@@ -2972,7 +3243,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiCommandInserted => '指令已插入終端機';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return '請前往設定配置 $fields';
   }
 
@@ -3174,7 +3445,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get agentToolFailed => '工具執行失敗。';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count 次工具呼叫';
   }
 
@@ -3293,7 +3564,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get navTabMenuTip => '長按標籤列圖示（滑鼠右鍵點選）可一次連線或斷開其中的全部項目。';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count 個標籤';
   }
 
@@ -3362,7 +3633,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get icloudBackupStateWaiting => '等待 iCloud 同步';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return '最後備份：$lastModified\n狀態：$remoteState';
   }
 
@@ -3406,12 +3677,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get clearAllStatsTitle => '清空所有統計';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return '確定要清空伺服器 \"$serverName\" 的連線統計資料嗎？此操作無法撤銷。';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return '清空 $serverName 統計';
   }
 
@@ -3483,7 +3754,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get displayCpuIndex => '顯示 CPU 索引';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return '下載 $fileName 到本地？';
   }
 
@@ -3531,7 +3802,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本App，推薦關閉此選項';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return '檔案 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
   }
 
@@ -3691,12 +3962,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get jumpServer => '跳板伺服器';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return '未找到 $serverName 配置的跳板伺服器：$jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '「$name」已存在';
   }
 
@@ -3747,7 +4018,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get linuxNetTip => 'DNS 伺服器。留空恢復預設值';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return '用❤️製作 by $myGithub';
   }
 
@@ -3758,7 +4029,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get maxRetryCount => '伺服器嘗試重連次數';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return '系統不匹配：$system';
   }
 
@@ -3805,7 +4076,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get privateKey => '私鑰';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return '未找到私鑰 [$keyId]。';
   }
 
@@ -4002,16 +4273,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '已安裝 $distro $installed，現有 $latest。更新會重新下載並替換整個容器：$pm 資料會遺失';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return '請先關閉 $name 上的終端，再刪除';
   }
 
@@ -4019,7 +4290,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get rootfsSubtitle => '本機上的 Linux 使用者空間';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return '下載 $distro $version（約 $size MB）並解壓到本機。';
   }
 
@@ -4043,7 +4314,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeDir => '主目錄';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '已選 $count 項';
   }
 
@@ -4161,12 +4432,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return '耗時：$time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return '所有伺服器均已存在（發現$duplicateCount個重複項）';
   }
 
@@ -4180,7 +4451,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshConnectionModeUseSystem => '使用系統 SSH';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '將跳過$duplicateCount個重複項';
   }
 
@@ -4188,7 +4459,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshConfigFound => '我們在您的系統中發現了SSH設定';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return '發現$totalCount個伺服器';
   }
 
@@ -4202,12 +4473,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshConfigImportTip => '在建立第一個伺服器時提示讀取 ~/.ssh/config';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return '已從SSH設定匯入$count個伺服器';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return '伺服器 $serverName 的 SSH 主機金鑰已變更，僅在信任該伺服器時繼續。';
   }
 
@@ -4221,12 +4492,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return '收到來自 $serverName 的新 SSH 主機金鑰，信任前請先檢查指紋。';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return '已儲存的指紋：$fingerprint';
   }
 
@@ -4243,7 +4514,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshConfigPermissionDenied => '由於 macOS 權限限制，無法存取 SSH 設定檔案。';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '將匯入$importCount個伺服器';
   }
 
@@ -4261,7 +4532,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支援。';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return '切換到 $val';
   }
 
@@ -4403,7 +4674,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get portForward_remotePort => '遠端連接埠';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return '刪除 $name？';
   }
 
@@ -4634,7 +4905,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return '結束狀態 $code';
   }
 
@@ -4774,12 +5045,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get geoDataRemoveFailed => '無法刪除資料。';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '已經是 $month 的資料。';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**下載大小：$download · 本機空間：$disk。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。';
   }
 
@@ -4850,7 +5121,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get benchmarkWorkDirTip => '決定磁碟測試要測量哪個檔案系統。留空表示使用登入帳號的家目錄。';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return '約 $minutes 分鐘';
   }
 
@@ -5042,7 +5313,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get userPasswordEditTip => '密碼留空將保留現有密碼。';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '此伺服器的連線方式不提供$func。';
   }
 
@@ -5080,12 +5351,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get beyondRetention => '超出這個 agent 保留的範圍';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'agent 保留 $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return '最早的取樣在 $time';
   }
 
@@ -5105,7 +5376,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get waitingFirstSample => '等待第一次取樣';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return '$time 時';
   }
 
@@ -5113,47 +5384,47 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get stored => '已儲存';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return '最近取樣於$ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return '以下全部是 $time 的資料，$ago。';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return '$time 之前沒有資料';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return '正在載入 $range…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return '沒有 $metric 的儲存歷史';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count 個裝置';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count 個裝置 · 最忙 $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$total 個裝置中的 $plotted 個';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count 個感測器 · 最熱 $name';
   }
 
@@ -5161,12 +5432,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get oneDeviceAtLeast => '圖表至少保留一個裝置。';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$total 個$what中的 $shown 個';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count 個$what';
   }
 
@@ -5225,12 +5496,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get diskAllPassed => '全部 PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '$count 個警告';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total 個裝置中的 $wrong 個';
   }
 
@@ -5238,17 +5509,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get diskSmartSortedTip => '最差的排在最前';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return '$ago讀取';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count 個處理程序';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count 個異常';
   }
 
@@ -5262,7 +5533,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get window => '視窗';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return '共 $total';
   }
 
@@ -5276,12 +5547,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get connectionTip => '兩個可以同時開啟。順序就是撥接的順序。';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return '拖曳可調整順序。先撥 $first；它不回應時，$second 獨自承擔工作階段。';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return '只開啟了 $name，沒有可回落的對象。';
   }
 
@@ -5386,7 +5657,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tagNewHint => '新標籤';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return '新增 #$tag';
   }
 
@@ -5394,12 +5665,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tagOnThisServer => '在這台上';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count 台伺服器';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '這台上有 $count 個';
   }
 
@@ -5435,7 +5706,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskNextRun => '下次執行';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return '$time 後';
   }
 
@@ -5446,7 +5717,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskCommentedOut => '已註解';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total 個工作 · 已啟用 $enabled 個';
   }
 
@@ -5466,7 +5737,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get scheduledTaskEnableNowTip => '關閉後，這一行會以註解寫入。';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return '$user 沒有排程工作。在此新增的內容會寫入該帳號的 crontab。';
   }
 
@@ -5507,42 +5778,42 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cronEveryMin => '每分鐘';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return '每 $minutes 分鐘';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return '每小時的 :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return '每 $hours 小時';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return '每 $hours 小時的 :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return '每天 $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return '週一至週五 $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return '每週$day $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return '每月 $day 日的 $time';
   }
 
@@ -5778,4 +6049,121 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remoteDesktopVncClipboardLatin1Only => 'VNC 剪貼簿僅支援 Latin-1 文字。';
+
+  @override
+  String get remoteDesktopAddProfile => '新增設定檔';
+
+  @override
+  String get remoteDesktopNoProfiles => '尚無遠端桌面設定檔';
+
+  @override
+  String get remoteDesktopAdd => '新增遠端桌面';
+
+  @override
+  String get remoteDesktopEdit => '編輯遠端桌面';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      '目標由 SSH 伺服器或 Monitor Agent 解析，localhost 指向該伺服器。';
+
+  @override
+  String get remoteDesktopDomain => '網域（選填）';
+
+  @override
+  String get remoteDesktopPassword => '密碼（選填）';
+
+  @override
+  String get remoteDesktopSavePassword => '儲存密碼';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      '儲存於加密資料庫。備份會包含已儲存的密碼，只有在設定備份密碼時才會加密。';
+
+  @override
+  String get remoteDesktopShareSession => '共用工作階段';
+
+  @override
+  String get remoteDesktopProtocol => '通訊協定';
+
+  @override
+  String get remoteDesktopUniqueName => '此伺服器的設定檔名稱不可重複。';
+
+  @override
+  String get remoteDesktopVncPasswordLength => '傳統 VNC 密碼最多為 8 個 ASCII 位元組。';
+
+  @override
+  String get remoteDesktopNameRequired => '請輸入設定檔名稱。';
+
+  @override
+  String get remoteDesktopHostRequired => '請輸入目標主機。';
+
+  @override
+  String get remoteDesktopPortRequired => '請輸入有效的連接埠。';
+
+  @override
+  String get remoteDesktopUsernameRequired => '請輸入 RDP 使用者名稱。';
+
+  @override
+  String get remoteDesktopVncPasswordAscii => '傳統 VNC 密碼只能包含 ASCII 字元。';
+
+  @override
+  String get remoteDesktopCertificateRequired => '需要確認憑證';
+
+  @override
+  String get remoteDesktopWaiting => '正在等待桌面…';
+
+  @override
+  String get remoteDesktopCertificateChanged => '遠端桌面憑證已變更';
+
+  @override
+  String get remoteDesktopTrustCertificate => '是否信任此憑證？';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      '憑證指紋與儲存的值不一致。替換信任前，請先核實新的指紋。';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      '系統無法驗證此憑證。繼續前，請先核實其 SHA-256 指紋。';
+
+  @override
+  String get remoteDesktopReplaceTrust => '替換信任';
+
+  @override
+  String get remoteDesktopTrustReconnect => '信任並重新連線';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '是否刪除遠端桌面設定檔「$name」？';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return '正在重新連線（$attempt/3）…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return '先前信任的指紋\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return '主體：$subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return '簽發者：$issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return '有效期：$start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return '此主題僅支援$mode。如需切換模式，請選擇其他主題。';
+  }
 }

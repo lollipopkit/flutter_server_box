@@ -2,6 +2,20 @@ abstract final class Urls {
   static const myGithub = 'https://github.com/lollipopkit';
   static const githubApi = 'https://api.github.com/repos/lollipopkit';
   static const thisRepo = '$myGithub/flutter_server_box';
+
+  /// One file out of this repository's default branch.
+  ///
+  /// `raw.githubusercontent.com`, not the API: the catalog is a file in a
+  /// public repository and the API would spend a rate limit on reading it.
+  static const rawRepo =
+      'https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main';
+
+  /// The theme catalog this build ships a copy of.
+  ///
+  /// Read rather than compiled in, because it lists other people's
+  /// repositories and a new one should not need an app release. The copy in
+  /// `assets/catalog/repos.toml` is what a first run with no network uses.
+  static const themeCatalog = '$rawRepo/assets/catalog/repos.toml';
   static const githubReleasesApi = '$githubApi/flutter_server_box/releases';
   static const appStore = 'https://apps.apple.com/app/id1586449703';
   static const appHelp = '$thisRepo#-help';
@@ -20,6 +34,14 @@ abstract final class Urls {
   /// What `{DIST}` and `{BRIGHT}` mean, and what a usable image URL looks
   /// like.
   static const customLogoDoc = '$docs/advanced/custom-logo/';
+
+  /// How a `.fsbt` is authored and published, down to what the manifest's own
+  /// keys mean.
+  ///
+  /// Linked from the end of the theme store's list rather than restated: the
+  /// store is the one place somebody who wants a theme of their own is already
+  /// looking, and what they need next is the format, which is a document.
+  static const themePackageDoc = '$docs/advanced/theme-packages/';
 
   /// What a `monitor` agent is, and how to get one onto a server.
   ///

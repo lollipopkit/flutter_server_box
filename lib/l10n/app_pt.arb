@@ -1,5 +1,28 @@
 {
   "@@locale": "pt",
+  "appearanceSettings": "Aparência",
+  "appearancePreset": "Tema predefinido",
+  "appearanceThemeSchemaRange": "Schema de tema compatível",
+  "appearanceThemeInstall": "Instalar tema",
+  "appearanceThemeStore": "Loja de temas",
+  "appearanceInvalidTheme": "Pacote de tema ou catálogo inválido",
+  "themeStoreRefreshFailed": "Não foi possível ler o catálogo de temas.",
+  "themeStoreDeleteTheme": "Excluir «{name}»? Seus arquivos são removidos deste dispositivo. Se for o tema em uso, o app volta ao tema padrão.",
+  "themeStoreUpdatedFmt": "atualizado {ago}",
+  "themeStoreUpdatedJustNow": "atualizado agora mesmo",
+  "themeStoreSortInUse": "Em uso primeiro",
+  "themeStoreMakeOwnFmt": "Quer criar seu próprio tema? Veja [como criar um]({doc}) — obrigado pela sua contribuição!",
+  "appearanceThemeNeedsNewerApp": "É necessário usar uma versão mais recente do app: {version}",
+  "appearanceFontFamilies": "Famílias de fontes da interface",
+  "appearanceFontFamiliesTip": "Um nome por linha; as fontes são testadas pela ordem.",
+  "appearanceFontImport": "Importar arquivo de fonte da interface",
+  "appearanceGradient": "Gradiente",
+  "appearanceNoBackground": "Sem plano de fundo",
+  "appearanceIcons": "Ícones no app",
+  "appearanceCorners": "Cantos",
+  "appearanceCardCorners": "Cantos dos cartões",
+  "appearanceTileCorners": "Cantos dos itens",
+  "appearanceButtonCorners": "Cantos dos botões",
   "crashCollect": "Dados de diagnóstico",
   "crashCollectIntro": "O ServerBox registra o que acontece durante a execução para que os problemas possam ser corrigidos. Escolha quanta informação enviar.",
   "crashCollectNone": "Nada",
@@ -171,7 +194,9 @@
   "mismatchSystem": "Sistema incompatível: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Espelho",
@@ -233,10 +258,18 @@
   "rootfsUpdateTip": "{distro} {installed} está instalado; há {latest}. Atualizar substitui todo o contentor: os dados do {pm} perdem-se",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Feche os terminais em {name} antes de o eliminar",
@@ -551,14 +584,20 @@
   "geoDataCurrent": "{month} já está instalado.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Download: {download} · Armazenamento no dispositivo: {disk}.** O conjunto de dados completo fica armazenado neste dispositivo e todas as consultas de localização posteriores são feitas localmente. Nenhum endereço de servidor ou atividade de consulta é enviado ao serviço de download.\n\nAtualizado mensalmente. Uma versão mais recente substitui os dados instalados sem manter uma cópia adicional. Você pode excluí-los a qualquer momento.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Teste de desempenho",
@@ -896,5 +935,97 @@
   "remoteDesktopGuideViewOnlyTip": "Para de enviar o ponteiro e as teclas, para você olhar sem clicar por engano.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Del, reconectar e tela cheia ficam aqui.",
   "remoteDesktopGuidePointerTip": "Assim como o ponteiro direto, em que o dedo clica onde toca.",
-  "remoteDesktopVncClipboardLatin1Only": "A área de transferência VNC só aceita texto Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "A área de transferência VNC só aceita texto Latin-1.",
+  "remoteDesktopAddProfile": "Adicionar perfil",
+  "remoteDesktopNoProfiles": "Nenhum perfil de área de trabalho remota",
+  "remoteDesktopAdd": "Adicionar área de trabalho remota",
+  "remoteDesktopEdit": "Editar área de trabalho remota",
+  "remoteDesktopTargetTip": "O destino é resolvido pelo servidor SSH ou pelo agente Monitor. localhost refere-se a essa máquina.",
+  "remoteDesktopDomain": "Domínio (opcional)",
+  "remoteDesktopPassword": "Senha (opcional)",
+  "remoteDesktopSavePassword": "Salvar senha",
+  "remoteDesktopSavePasswordTip": "Armazenada no banco de dados criptografado. Os backups incluem senhas salvas e só são criptografados quando uma senha de backup é definida.",
+  "remoteDesktopShareSession": "Compartilhar sessão",
+  "remoteDesktopProtocol": "Protocolo",
+  "remoteDesktopUniqueName": "Os nomes de perfil devem ser únicos para este servidor.",
+  "remoteDesktopVncPasswordLength": "As senhas VNC clássicas são limitadas a 8 bytes ASCII.",
+  "remoteDesktopNameRequired": "Informe um nome de perfil.",
+  "remoteDesktopHostRequired": "Informe um host de destino.",
+  "remoteDesktopPortRequired": "Informe uma porta válida.",
+  "remoteDesktopUsernameRequired": "Informe o nome de usuário do RDP.",
+  "remoteDesktopVncPasswordAscii": "As senhas VNC clássicas podem conter apenas caracteres ASCII.",
+  "remoteDesktopCertificateRequired": "Confirmação do certificado necessária",
+  "remoteDesktopWaiting": "Aguardando a área de trabalho…",
+  "remoteDesktopCertificateChanged": "O certificado da área de trabalho remota mudou",
+  "remoteDesktopTrustCertificate": "Confiar no certificado?",
+  "remoteDesktopCertificateChangedTip": "A impressão digital do certificado não corresponde mais ao valor salvo. Verifique a nova impressão digital antes de substituir a confiança.",
+  "remoteDesktopCertificateUnverifiedTip": "O sistema não conseguiu verificar este certificado. Verifique a impressão digital SHA-256 antes de continuar.",
+  "remoteDesktopReplaceTrust": "Substituir confiança",
+  "remoteDesktopTrustReconnect": "Confiar e reconectar",
+  "remoteDesktopDeleteProfile": "Excluir o perfil de área de trabalho remota “{name}”?",
+  "remoteDesktopReconnectAttempt": "Reconectando ({attempt}/3)…",
+  "remoteDesktopPreviousCertificate": "Confiança anterior\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "Assunto: {subject}",
+  "remoteDesktopCertificateIssuer": "Emissor: {issuer}",
+  "remoteDesktopCertificateValidity": "Válido: {start} – {end}",
+  "appearanceThemeModeLocked": "Este tema só suporta {mode}. Selecione outro tema para alterar o modo.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@diskWarningFmt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@scheduledTaskSummaryFmt": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "enabled": {
+        "type": "int"
+      }
+    }
+  }
 }

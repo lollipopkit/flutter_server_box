@@ -37,7 +37,7 @@ extension _Tags on _ServerEditPageState {
       hint: l10n.tagNewHint,
       listTitle: l10n.tagAllTags,
       matchingTitle: l10n.tagMatching,
-      countLabel: (n) => l10n.tagOnThisServerFmt('$n'),
+      countLabel: l10n.tagOnThisServerFmt,
       // "Create" only when there is something to create. Typing the name of a
       // tag that already exists is how someone reaches a row far down the
       // list, and offering to create it again would be offering a duplicate
@@ -47,7 +47,7 @@ extension _Tags on _ServerEditPageState {
       noteOf: (tag, selected, matching) => [
         if (selected) l10n.tagOnThisServer,
         if (matching && !selected) l10n.tagMatchesTyped,
-        l10n.tagServersFmt('${counts[tag] ?? 0}'),
+        l10n.tagServersFmt(counts[tag] ?? 0),
       ].join(' · '),
       onRename: _onRenameTag,
       note: l10n.tagEditorTip,
@@ -737,7 +737,10 @@ extension _Actions on _ServerEditPageState {
     // is on this same page under More, so saying so beats leaving them to find
     // out from the detail page's error.
     if (monitorHttp?.needsInsecureOptIn == true) {
-      Toast.warn(l10n.monitorHttpsRequired, body: l10n.monitorAllowInsecureHttpTip);
+      Toast.warn(
+        l10n.monitorHttpsRequired,
+        body: l10n.monitorAllowInsecureHttpTip,
+      );
     }
     context.pop();
   }
@@ -900,8 +903,7 @@ extension _Utils on _ServerEditPageState {
     _local.value = spi.local;
     _useSsh.value = dialled.sshOn != null;
     _useMonitorHttp.value = dialled.monitorOn != null;
-    _preferMonitorHttp.value =
-        dialled.transport == ServerTransport.monitorHttp;
+    _preferMonitorHttp.value = dialled.transport == ServerTransport.monitorHttp;
     if (monitorHttp != null) {
       _monitorAddrCtrl.text = monitorHttp.addr;
       _monitorUserCtrl.text = monitorHttp.user ?? '';

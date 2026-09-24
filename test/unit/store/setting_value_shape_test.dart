@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/store/setting.dart';
 
 import '../../helpers/test_db.dart';
@@ -99,6 +100,38 @@ void main() {
     test('an unreadable value is null rather than a crash', () async {
       store.set('windowState', 42);
       expect(store.windowState.get(), isNull);
+    });
+  });
+
+  group('the appearance styles', () {
+    // Both were plain strings before they were enums. A property that read the
+    // old row as unreadable would answer its default, which resets an
+    // install's icon set and background on upgrade with nothing failing — an
+    // enum is stored by name for the same reason.
+    test('read a row written as a bare name', () async {
+      store.set('appIconStyle', 'mingcute');
+      store.set('appBackgroundStyle', 'gradient');
+
+      expect(_rawValue('setting_test', 'appIconStyle'), '"mingcute"');
+      expect(store.appIconStyle.fetch(), IconStyle.mingcute);
+      expect(store.appBackgroundStyle.fetch(), BackgroundStyle.gradient);
+    });
+
+    test('are written back as that name', () async {
+      await store.appIconStyle.set(IconStyle.classic);
+      await store.appBackgroundStyle.set(BackgroundStyle.image);
+
+      expect(jsonDecode(_rawValue('setting_test', 'appIconStyle')!), 'classic');
+      expect(
+        jsonDecode(_rawValue('setting_test', 'appBackgroundStyle')!),
+        'image',
+      );
+    });
+
+    test('read a name this build does not know as the default', () async {
+      store.set('appIconStyle', 'wired');
+
+      expect(store.appIconStyle.fetch(), IconStyle.classic);
     });
   });
 

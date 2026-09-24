@@ -177,15 +177,15 @@ final class CronSchedule {
       if (minutes.length == 60 && hours.length == 24) return l10n.cronEveryMin;
       if (hours.length == 24) {
         final step = _stepOf(minutes, 0, 59);
-        if (step != null) return l10n.cronEveryMinsFmt('$step');
+        if (step != null) return l10n.cronEveryMinsFmt(step);
         if (minute != null) return l10n.cronHourlyAtFmt(_two(minute));
       }
       if (minute != null) {
         final step = _stepOf(hours, 0, 23);
         if (step != null) {
           return minute == 0
-              ? l10n.cronEveryHoursFmt('$step')
-              : l10n.cronEveryHoursAtFmt('$step', _two(minute));
+              ? l10n.cronEveryHoursFmt(step)
+              : l10n.cronEveryHoursAtFmt(step, _two(minute));
         }
       }
     }
@@ -204,7 +204,7 @@ final class CronSchedule {
     }
     if (dayOfMonthRestricted) {
       if (daysOfMonth.length == 1) {
-        return l10n.cronMonthlyAtFmt('${daysOfMonth.first}', at);
+        return l10n.cronMonthlyAtFmt(daysOfMonth.first, at);
       }
       return null;
     }

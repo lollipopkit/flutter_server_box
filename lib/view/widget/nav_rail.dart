@@ -156,6 +156,35 @@ class _AppNavRailState extends State<AppNavRail>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final railTheme = NavigationRailTheme.of(context);
+
+    // What the rail is painted with.
+    //
+    // Shut it stands in room the `Row` beside it holds open, so the colour
+    // behind it is the page's — and with a background image that is
+    // [Colors.transparent] on purpose, which is the wallpaper being seen
+    // around the icons. Open it is a panel standing *over* the tab, and there
+    // that same colour let the tab's own rows read through it: two sets of
+    // names, one on top of the other.
+    //
+    // So it takes a colour of its own as it opens, crossed over with the same
+    // value the width is read off — the two are one movement, and a colour
+    // that switched at the end of it would be a panel changing its mind about
+    // what it is after it has finished arriving.
+    final surface = theme.colorScheme.surface;
+    // What the page under the rail is painted with. Which of the two shapes
+    // above is which, read off the one thing that tells them apart: a page with
+    // no colour of its own is the wallpaper, and there the shut rail is part of
+    // the page rather than a panel waiting to open.
+    final page = theme.scaffoldBackgroundColor;
+    // What the panel opens to. A rail colour of the theme's own, and otherwise
+    // the page's — except where the page has none to give, which is the case
+    // just above.
+    //
+    // A colour the theme asked for is the panel's whatever its alpha: a rail
+    // set at 54% failed the opaque test below as though it were no colour at
+    // all, and was drawn with the surface's instead.
+    final panel = railTheme.backgroundColor ?? (page.a == 0 ? surface : page);
 
     return MouseRegion(
       onEnter: (_) => _ctrl.forward(),
@@ -164,61 +193,87 @@ class _AppNavRailState extends State<AppNavRail>
       // is painted over is a whole tab.
       child: RepaintBoundary(
         child: AnimatedBuilder(
-        animation: _open,
-        builder: (context, _) {
-          final open = _open.value;
-          return SizedBox(
-            width: lerpDouble(
-              NavRailMetrics.width,
-              NavRailMetrics.expandedWidth,
-              open,
-            ),
-            child: Material(
-              // Opaque whatever it is doing: open, it is painted over the tab
-              // beside it, and the shadow is what says so. Shut, the colour is
-              // the one already behind it and the shadow is nothing.
-              color: theme.scaffoldBackgroundColor,
-              surfaceTintColor: Colors.transparent,
-              // On or off rather than eased in: a shadow is recomputed
-              // wherever its elevation lands, and 200ms of that buys a
-              // gradient nobody watches under a panel that is still moving.
-              elevation: open == 0 ? 0 : 3,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.only(
-                        top: NavRailMetrics.padding,
-                      ),
-                      child: Column(
-                        children: [
-                          for (final (at, item) in widget.items.indexed)
-                            _NavRailTile(
-                              item: item,
-                              selected: at == widget.selectedIndex,
-                              open: open,
-                              onTap: () => widget.onSelected(at),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (widget.footer case final footer?)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        bottom: NavRailMetrics.padding,
-                      ),
-                      child: _NavRailTile(
-                        item: footer,
-                        selected: widget.footerSelected,
-                        open: open,
-                        onTap: widget.onFooterTap ?? () {},
-                      ),
-                    ),
-                ],
+          animation: _open,
+          builder: (context, _) {
+            final open = _open.value;
+            return SizedBox(
+              width: lerpDouble(
+                NavRailMetrics.width,
+                NavRailMetrics.expandedWidth,
+                open,
               ),
-            ),
-          );
+              child: Material(
+                // TODO(fade): on a device the closing rail is seen to stay
+                // semi-transparent once it is shut, and the semi-transparency
+                // then goes. Reported, not reproduced here.
+                //
+                // Lead, read out of the SDK and not confirmed as the cause:
+                // this `Material` is `MaterialType.canvas` with no `shape`, so
+                // `Material.build` takes its fast path and hands the colour and
+                // the elevation below to an `AnimatedPhysicalModel` whose
+                // `animationDuration` is `kThemeChangeDuration` (200ms) with
+                // `animateColor: true`. Both values are then re-interpolated by
+                // that model, and it is still crossing towards what the last
+                // frame asked for after the rail's own animation has stopped.
+                // `animationDuration: Duration.zero` here was tried for it and
+                // reported not to help.
+                // Which of the two is asked of the *page*, not of the colour
+                // being painted: a page with no colour is what the fade is
+                // for, whatever the panel turns out to be. Asked of the panel,
+                // an opaque one over a wallpaper would hold a slab of the
+                // scheme's surface across the shut rail.
+                color: page.a == 1
+                    ? panel
+                    : Color.lerp(
+                        panel.withValues(alpha: 0),
+                        panel,
+                        open,
+                      )!,
+                surfaceTintColor: Colors.transparent,
+                // With the colour rather than on or off: a shadow is cast by
+                // the shape whether or not the colour on it is opaque, so a
+                // panel fixed at three points of elevation held a full-strength
+                // shadow under it for the last of the closing — a dark shape
+                // with nothing on it, which then went with the last frame.
+                // Read off the same value the colour is, so the two leave
+                // together.
+                elevation: railTheme.elevation ?? (3 * open),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(
+                          top: NavRailMetrics.padding,
+                        ),
+                        child: Column(
+                          children: [
+                            for (final (at, item) in widget.items.indexed)
+                              _NavRailTile(
+                                item: item,
+                                selected: at == widget.selectedIndex,
+                                open: open,
+                                onTap: () => widget.onSelected(at),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (widget.footer case final footer?)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: NavRailMetrics.padding,
+                        ),
+                        child: _NavRailTile(
+                          item: footer,
+                          selected: widget.footerSelected,
+                          open: open,
+                          onTap: widget.onFooterTap ?? () {},
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
           },
         ),
       ),
@@ -264,7 +319,12 @@ class _NavRailTile extends StatelessWidget {
 
   Widget _build(BuildContext context, double on) {
     final scheme = Theme.of(context).colorScheme;
-    final fg = Color.lerp(scheme.outline, scheme.onSecondaryContainer, on);
+    final railTheme = NavigationRailTheme.of(context);
+    final fg = Color.lerp(
+      railTheme.unselectedIconTheme?.color ?? scheme.outline,
+      railTheme.selectedIconTheme?.color ?? scheme.onSecondaryContainer,
+      on,
+    );
 
     // Halfway, which is where the name has room to be read and the badge has
     // room to sit after it. Below it the badge is on the indicator's corner;
@@ -285,8 +345,12 @@ class _NavRailTile extends StatelessWidget {
       height: NavRailMetrics.indicatorHeight,
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          shape: const StadiumBorder(),
-          color: Color.lerp(Colors.transparent, scheme.secondaryContainer, on),
+          shape: railTheme.indicatorShape ?? const StadiumBorder(),
+          color: Color.lerp(
+            Colors.transparent,
+            railTheme.indicatorColor ?? scheme.secondaryContainer,
+            on,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -308,13 +372,13 @@ class _NavRailTile extends StatelessWidget {
                       size: NavRailMetrics.iconSize,
                       color: fg,
                     ),
-                // Round the glyph and nothing else.
-                //
-                // A `Tooltip` builds two different trees — with an
-                // `OverlayPortal` and without — depending on whether it is
-                // allowed to show anything, so turning it off halfway through
-                // the opening re-parents everything under it. Under it here is
-                // one `Icon`, which has nothing to lose by that.
+                    // Round the glyph and nothing else.
+                    //
+                    // A `Tooltip` builds two different trees — with an
+                    // `OverlayPortal` and without — depending on whether it is
+                    // allowed to show anything, so turning it off halfway through
+                    // the opening re-parents everything under it. Under it here is
+                    // one `Icon`, which has nothing to lose by that.
                     child: TooltipVisibility(
                       // Only while the name is not on the row already.
                       visible: !named,
@@ -354,8 +418,10 @@ class _NavRailTile extends StatelessWidget {
                       // The colour, not an `Opacity` around it — see
                       // [NavRailBadge.opacity].
                       color: Color.lerp(
-                        Colors.grey,
-                        scheme.onSecondaryContainer,
+                        railTheme.unselectedLabelTextStyle?.color ??
+                            Colors.grey,
+                        railTheme.selectedLabelTextStyle?.color ??
+                            scheme.onSecondaryContainer,
                         on,
                       )?.withValues(alpha: open),
                     ),
@@ -387,7 +453,7 @@ class _NavRailTile extends StatelessWidget {
         onTap: onTap,
         // The pill's own shape. A rectangle under a stadium reads as a second
         // control behind the first.
-        customBorder: const StadiumBorder(),
+        customBorder: railTheme.indicatorShape ?? const StadiumBorder(),
         // The hover and nothing else: the rail opens under the pointer and the
         // pill moves to what was tapped, so a ripple on top of those two is a
         // third thing answering one movement of the mouse.

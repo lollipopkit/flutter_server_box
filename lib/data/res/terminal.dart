@@ -120,28 +120,35 @@ extension TerminalThemeX on TerminalTheme {
 /// Shared rather than read where it is needed, so the terminal in a dialog and
 /// the terminal in a tab cannot end up on different fonts or a different theme.
 abstract final class TerminalLook {
-  static TerminalStyle get style {
+  static TerminalStyle styleOf(BuildContext context) {
     final family = Stores.setting.fontPath.fetch().getFileName();
     final size = Stores.setting.termFontSize.fetch();
-    return TerminalStyle.fromTextStyle(
+    final style = TerminalStyle.fromTextStyle(
       TextStyle(fontFamily: family, fontSize: size),
+    );
+    // Keep the terminal's monospace and custom fonts ahead of UI fallbacks,
+    // and a family already on the terminal's list is not added again:
+    // `sans-serif` is on both, and the UI list is appended on every theme
+    // change.
+    final own = style.fontFamilyFallback;
+    final uiFallbacks =
+        Theme.of(context).textTheme.bodyMedium?.fontFamilyFallback ?? const [];
+    return style.copyWith(
+      fontFamilyFallback: [
+        ...own,
+        ...uiFallbacks.where((f) => !own.contains(f)),
+      ],
     );
   }
 
   /// The terminal's own theme setting, falling back to the app's and then to
   /// what the system asked for.
-  static bool isDark(BuildContext context) => switch (Stores
-      .setting
-      .termTheme
-      .fetch()) {
-    1 => false,
-    2 => true,
-    _ => switch (Stores.setting.themeMode.fetch()) {
-      1 => false,
-      2 || 3 => true,
-      _ => context.isDark,
-    },
-  };
+  static bool isDark(BuildContext context) =>
+      switch (Stores.setting.termTheme.fetch()) {
+        1 => false,
+        2 => true,
+        _ => context.isDark,
+      };
 
   static TerminalTheme themeOf(BuildContext context) {
     final theme = isDark(context) ? TerminalThemes.dark : TerminalThemes.light;

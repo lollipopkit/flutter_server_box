@@ -1,5 +1,28 @@
 {
   "@@locale": "ru",
+  "appearanceSettings": "Внешний вид",
+  "appearancePreset": "Готовая тема",
+  "appearanceThemeSchemaRange": "Поддерживаемая схема темы",
+  "appearanceThemeInstall": "Установить тему",
+  "appearanceThemeStore": "Магазин тем",
+  "appearanceInvalidTheme": "Недопустимый пакет темы или каталог",
+  "themeStoreRefreshFailed": "Не удалось прочитать каталог тем.",
+  "themeStoreDeleteTheme": "Удалить «{name}»? Его файлы будут удалены с этого устройства. Если это используемая тема, приложение вернётся к теме по умолчанию.",
+  "themeStoreUpdatedFmt": "обновлено {ago}",
+  "themeStoreUpdatedJustNow": "обновлено только что",
+  "themeStoreSortInUse": "Сначала используемая",
+  "themeStoreMakeOwnFmt": "Хотите сделать свою тему? Смотрите [как её создать]({doc}) — спасибо за ваш вклад!",
+  "appearanceThemeNeedsNewerApp": "Требуется более новая версия приложения: {version}",
+  "appearanceFontFamilies": "Семейства шрифтов интерфейса",
+  "appearanceFontFamiliesTip": "Одно название в строке; шрифты применяются по порядку.",
+  "appearanceFontImport": "Импортировать файл шрифта интерфейса",
+  "appearanceGradient": "Градиент",
+  "appearanceNoBackground": "Без фона",
+  "appearanceIcons": "Значки в приложении",
+  "appearanceCorners": "Углы",
+  "appearanceCardCorners": "Углы карточек",
+  "appearanceTileCorners": "Углы элементов",
+  "appearanceButtonCorners": "Углы кнопок",
   "crashCollect": "Диагностические данные",
   "crashCollectIntro": "ServerBox записывает происходящее во время работы, чтобы можно было исправлять проблемы. Выберите, сколько данных отправлять.",
   "crashCollectNone": "Ничего",
@@ -171,7 +194,9 @@
   "mismatchSystem": "Несоответствующая система: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Зеркало",
@@ -233,10 +258,18 @@
   "rootfsUpdateTip": "Установлен {distro} {installed}, доступен {latest}. Обновление заменит весь контейнер: данные {pm} будут потеряны",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Закройте терминалы на {name}, прежде чем удалять",
@@ -551,14 +584,20 @@
   "geoDataCurrent": "{month} уже установлен.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Размер загрузки: {download} · Место на устройстве: {disk}.** Полный набор данных хранится на этом устройстве, а все последующие геолокационные запросы выполняются локально. Адреса серверов и сведения о запросах не передаются сервису загрузки.\n\nОбновляется ежемесячно. Новая версия заменяет установленные данные, не сохраняя дополнительную копию. Данные можно удалить в любой момент.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Тест производительности",
@@ -896,5 +935,80 @@
   "remoteDesktopGuideViewOnlyTip": "Прекращает отправку указателя и клавиш, чтобы смотреть без случайных щелчков.",
   "remoteDesktopGuideMoreTip": "Здесь находятся Ctrl+Alt+Delete, переподключение и полноэкранный режим.",
   "remoteDesktopGuidePointerTip": "А также прямой указатель: палец щёлкает там, где касается.",
-  "remoteDesktopVncClipboardLatin1Only": "Буфер обмена VNC поддерживает только текст в кодировке Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Буфер обмена VNC поддерживает только текст в кодировке Latin-1.",
+  "remoteDesktopAddProfile": "Добавить профиль",
+  "remoteDesktopNoProfiles": "Нет профилей удалённого рабочего стола",
+  "remoteDesktopAdd": "Добавить удалённый рабочий стол",
+  "remoteDesktopEdit": "Изменить удалённый рабочий стол",
+  "remoteDesktopTargetTip": "Адрес определяется через SSH-сервер или агент Monitor. localhost указывает на эту машину.",
+  "remoteDesktopDomain": "Домен (необязательно)",
+  "remoteDesktopPassword": "Пароль (необязательно)",
+  "remoteDesktopSavePassword": "Сохранить пароль",
+  "remoteDesktopSavePasswordTip": "Хранится в зашифрованной базе данных. Резервные копии включают сохранённые пароли и шифруются только при заданном пароле резервной копии.",
+  "remoteDesktopShareSession": "Поделиться сеансом",
+  "remoteDesktopProtocol": "Протокол",
+  "remoteDesktopUniqueName": "Имена профилей должны быть уникальными для этого сервера.",
+  "remoteDesktopVncPasswordLength": "Классические пароли VNC ограничены 8 байтами ASCII.",
+  "remoteDesktopNameRequired": "Введите имя профиля.",
+  "remoteDesktopHostRequired": "Введите целевой хост.",
+  "remoteDesktopPortRequired": "Введите допустимый порт.",
+  "remoteDesktopUsernameRequired": "Введите имя пользователя RDP.",
+  "remoteDesktopVncPasswordAscii": "Классические пароли VNC могут содержать только символы ASCII.",
+  "remoteDesktopCertificateRequired": "Требуется подтверждение сертификата",
+  "remoteDesktopWaiting": "Ожидание рабочего стола…",
+  "remoteDesktopCertificateChanged": "Сертификат удалённого рабочего стола изменился",
+  "remoteDesktopTrustCertificate": "Доверять сертификату?",
+  "remoteDesktopCertificateChangedTip": "Отпечаток сертификата больше не совпадает с сохранённым значением. Проверьте новый отпечаток, прежде чем заменять доверие.",
+  "remoteDesktopCertificateUnverifiedTip": "Системе не удалось проверить этот сертификат. Проверьте его отпечаток SHA-256, прежде чем продолжить.",
+  "remoteDesktopReplaceTrust": "Заменить доверие",
+  "remoteDesktopTrustReconnect": "Доверять и подключиться снова",
+  "remoteDesktopDeleteProfile": "Удалить профиль удалённого рабочего стола «{name}»?",
+  "remoteDesktopReconnectAttempt": "Повторное подключение ({attempt}/3)…",
+  "remoteDesktopPreviousCertificate": "Ранее доверенный отпечаток\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "Субъект: {subject}",
+  "remoteDesktopCertificateIssuer": "Издатель: {issuer}",
+  "remoteDesktopCertificateValidity": "Действителен: {start} – {end}",
+  "appearanceThemeModeLocked": "Эта тема поддерживает только режим «{mode}». Для смены режима выберите другую тему.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

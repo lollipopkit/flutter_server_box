@@ -699,7 +699,7 @@ void _gotoSSH(Spi spi, BuildContext context, WidgetRef ref) async {
         }
         break;
       default:
-        Toast.show(l10n.mismatchSystem(system));
+        Toast.show(l10n.mismatchSystem(system.toString()));
     }
   } finally {
     final file = tempKeyFile;

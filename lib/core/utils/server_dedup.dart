@@ -70,7 +70,10 @@ class ServerDeduplication {
   /// -- the server here and its private key in `ServerShareInstaller` -- and
   /// the two loops had picked different starting numbers. One collision came
   /// out as a server named `web (1)` beside a key named `laptop (2)`.
-  static String uniqueName(String name, {required bool Function(String) taken}) {
+  static String uniqueName(
+    String name, {
+    required bool Function(String) taken,
+  }) {
     if (!taken(name)) return name;
     for (var n = 1; ; n++) {
       final candidate = '$name ($n)';
@@ -102,8 +105,8 @@ class ServerDeduplication {
     required BuildContext context,
     List<Spi>? resolvedServers,
     int? originalCount,
-    required String Function(String) allExistMessage,
-    required String Function(String) importedMessage,
+    required String Function(int) allExistMessage,
+    required String Function(int) importedMessage,
   }) async {
     assert(
       servers != null || resolvedServers != null,
@@ -114,14 +117,14 @@ class ServerDeduplication {
     final resolved = resolvedServers ?? _resolveServers(servers!);
 
     if (resolved.isEmpty) {
-      Toast.show(allExistMessage('$count'));
+      Toast.show(allExistMessage(count));
       return 0;
     }
 
     for (final server in resolved) {
       await ref.read(serversProvider.notifier).addServer(server);
     }
-    Toast.show(importedMessage('${resolved.length}'));
+    Toast.show(importedMessage(resolved.length));
     return resolved.length;
   }
 

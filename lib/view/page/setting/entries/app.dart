@@ -1,5 +1,11 @@
 part of '../entry.dart';
 
+/// Where an install takes its package from.
+///
+/// A folder is a directory on this device, which only a desktop can pick, so it
+/// is offered behind a platform test rather than refused afterwards.
+enum _ThemeInstallSource { file, folder, url }
+
 extension _App on _AppSettingsPageState {
   void _showInvalidDialog() {
     context.showRoundDialog(title: libL10n.fail, child: Text(libL10n.invalid));
@@ -7,12 +13,7 @@ extension _App on _AppSettingsPageState {
 
   List<SettingsGroup> _buildApp() {
     return [
-      SettingsGroup(libL10n.general, [
-        _buildLocale(),
-        _buildThemeMode(),
-        _buildAppColor(),
-        _buildCollapseUI(),
-      ]),
+      SettingsGroup(libL10n.general, [_buildLocale(), _buildCollapseUI()]),
       SettingsGroup(libL10n.update, [_buildCheckUpdate(), _buildBeta()]),
       // Everything about the machine the app happens to be on, which is why
       // every row in it is behind a platform test. It is also where the rows
@@ -29,6 +30,351 @@ extension _App on _AppSettingsPageState {
         if (kDebugMode) _buildEditRawSettings(),
       ]),
     ];
+  }
+
+  /// What the app looks like, in two groups.
+  ///
+  /// Theme and font were two pages, each holding a group the other's name
+  /// would have covered: the theme page opened on a group called "Appearance"
+  /// and the font page was one group called "Font". The page is the appearance
+  /// and the groups are the two halves of it — which is also what puts the
+  /// font beside the theme it is part of, rather than a tap away.
+  List<SettingsGroup> _buildAppearance() => [
+    SettingsGroup(libL10n.theme, [
+      _buildThemeMode(),
+      _buildAppColor(),
+      _buildThemePreset(),
+      _buildThemeInstall(),
+      _buildThemeStore(),
+      if (_setting.appThemePreset.fetch() == ThemePackages.customPreset) ...[
+        _buildAppIcons(),
+        _buildCorners(),
+        _buildAppBackground(),
+        _buildAppBackgroundOpacity(),
+        _buildAppBackgroundBlur(),
+      ],
+    ]),
+    SettingsGroup(libL10n.font, [
+      _buildAppFontFamilies(),
+      _buildAppFontImport(),
+    ]),
+  ];
+
+  void _saveCustomTheme() => ThemePackages.saveCustomTheme();
+
+  void _markCustomTheme() {
+    if (_setting.appThemePreset.fetch() != ThemePackages.customPreset ||
+        _setting.appBackgroundStyle.fetch() != BackgroundStyle.image ||
+        _setting.appBackgroundPath.fetch().isEmpty) {
+      return;
+    }
+    _setting.appThemePreset.put(ThemePackages.customPreset);
+    _saveCustomTheme();
+  }
+
+  SettingsRow _buildThemePreset() {
+    final label = l10n.appearancePreset;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.palette_outlined),
+        title: Text(label),
+        trailing: _setting.appThemePreset.listenable().listenVal(
+          (preset) => Text(
+            BuiltinTheme.fromId(preset)?.label ??
+                switch (ThemePackages.installationIdOf(preset)) {
+                  final installationId? =>
+                    ThemePackages.installed(installationId)?.name ??
+                        libL10n.invalid,
+                  _ => libL10n.custom,
+                },
+          ),
+        ),
+        onTap: () async {
+          final names = ThemePackages.installedPresetNames();
+          final original = _setting.appThemePreset.fetch();
+          var open = true;
+          var request = 0;
+          Future<void> preview(String value) async {
+            final current = ++request;
+            try {
+              final theme = value == original
+                  ? null
+                  : value == ThemePackages.customPreset
+                  ? _readCustomTheme()
+                  : switch (ThemePackages.installationIdOf(value)) {
+                      final installationId? => ThemePackages.installed(
+                        installationId,
+                      ),
+                      _ => await ThemePackages.loadBuiltin(
+                        BuiltinTheme.fromId(value)!,
+                      ),
+                    };
+              if (open && current == request) {
+                ThemePackages.preview.value = theme;
+              }
+            } catch (_) {
+              if (open && current == request) {
+                ThemePackages.preview.value = null;
+              }
+            }
+          }
+
+          String? preset;
+          try {
+            preset = await showRowsSheet<String>(
+              context,
+              // The choices and nothing above them. The catalog used to be a
+              // row at the top of this sheet as well, which is a way in that
+              // leaves the sheet for a page and then comes back to a preset
+              // list that no longer matches what was installed there — the
+              // store is a row of its own in the appearance page instead.
+              rows: (ctx) => [
+                for (final value in [
+                  ...BuiltinTheme.values.map((theme) => theme.id),
+                  ThemePackages.customPreset,
+                  ...names.keys,
+                ])
+                  SheetChoiceTile(
+                    title:
+                        BuiltinTheme.fromId(value)?.label ??
+                        (value == ThemePackages.customPreset
+                            ? libL10n.custom
+                            : names[value] ?? libL10n.invalid),
+                    selected: value == original,
+                    autofocus: value == original,
+                    onFocusChange: (focused) {
+                      if (focused) unawaited(preview(value));
+                    },
+                    onTap: () => Navigator.of(ctx).pop(value),
+                  ),
+              ],
+            );
+          } finally {
+            open = false;
+            ThemePackages.preview.value = null;
+          }
+          if (!mounted) return;
+          if (preset == null) return;
+          if (preset == ThemePackages.customPreset) {
+            if (_setting.appThemePreset.fetch() != ThemePackages.customPreset) {
+              await _restoreCustomTheme();
+            }
+            return;
+          }
+          if (ThemePackages.installationIdOf(preset)
+              case final installationId?) {
+            final package = ThemePackages.installed(installationId);
+            if (package == null) {
+              Toast.error(l10n.appearanceInvalidTheme);
+              return;
+            }
+            _applyTheme(package);
+            return;
+          }
+          await _applyThemePreset(BuiltinTheme.fromId(preset)!);
+        },
+      ),
+      keywords:
+          '${BuiltinTheme.values.map((theme) => theme.label).join(' ')} custom theme',
+    );
+  }
+
+  /// Opens the catalog, which is reached from its own row in the appearance
+  /// page and from nowhere else.
+  void _openThemeStore() => ThemeStorePage.route.go(context);
+
+  void _applyTheme(ThemePackage package, {String? preset}) {
+    ThemePackages.apply(package, preset: preset);
+    setStateSafe(() {});
+    RNodes.app.notify();
+  }
+
+  SettingsRow _buildThemeInstall() {
+    final label = l10n.appearanceThemeInstall;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.install_desktop_outlined),
+        title: TipText(
+          label,
+          '${l10n.appearanceThemeSchemaRange}: ${ThemePackages.supportedSchemaRange}',
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () async {
+          final source = await context
+              .showPickSingleDialog<_ThemeInstallSource>(
+            title: label,
+            items: [
+              _ThemeInstallSource.file,
+              if (isDesktop) _ThemeInstallSource.folder,
+              _ThemeInstallSource.url,
+            ],
+            display: (source) => switch (source) {
+              _ThemeInstallSource.file => libL10n.file,
+              _ThemeInstallSource.folder => libL10n.folder,
+              _ThemeInstallSource.url => 'URL',
+            },
+          );
+          if (source == null || !mounted) return;
+          switch (source) {
+            case _ThemeInstallSource.file:
+              final picked = await FilePicker.pickFile(
+                type: FileType.custom,
+                allowedExtensions: ['fsbt'],
+              );
+              if (picked == null || !mounted) return;
+              if (await picked.length() > ThemePackages.maxPackageBytes) {
+                Toast.error(l10n.appearanceInvalidTheme);
+                return;
+              }
+              await _completeThemeInstall(
+                () async => ThemePackages.install(await picked.readAsBytes()),
+              );
+            case _ThemeInstallSource.folder:
+              final folder = await FilePicker.getDirectoryPath(
+                dialogTitle: label,
+              );
+              if (folder == null || !mounted) return;
+              await _completeThemeInstall(
+                () => ThemePackages.installFolder(folder),
+              );
+            case _ThemeInstallSource.url:
+              final url = await _promptAppText(
+                label,
+                hint: 'https://…/theme.fsbt',
+              );
+              if (url == null || url.isEmpty || !mounted) return;
+              await _completeThemeInstall(() => ThemePackages.installUrl(url));
+          }
+        },
+      ),
+      keywords: 'fsbt theme folder URL import schema version',
+    );
+  }
+
+  SettingsRow _buildThemeStore() {
+    final label = l10n.appearanceThemeStore;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.storefront_outlined),
+        title: Text(label),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _openThemeStore,
+      ),
+      keywords: 'theme catalog store repository',
+    );
+  }
+
+  Future<void> _completeThemeInstall(
+    Future<ThemePackage> Function() install,
+  ) async {
+    final (package, error) = await context.showLoadingDialog<ThemePackage>(
+      fn: install,
+    );
+    if (!mounted) return;
+    if (error != null || package == null) {
+      Loggers.app.warning('Theme installation failed: ${error.runtimeType}');
+      Toast.error(l10n.appearanceInvalidTheme);
+      return;
+    }
+    _applyTheme(package);
+    Toast.show(libL10n.success);
+  }
+
+  Future<String?> _promptAppText(
+    String title, {
+    String initial = '',
+    String? hint,
+  }) async {
+    final controller = TextEditingController(text: initial);
+    try {
+      return (await context.showRoundDialog<String>(
+        title: title,
+        child: Input(
+          controller: controller,
+          autoFocus: true,
+          hint: hint,
+          onSubmitted: (_) => context.popDialog(controller.text.trim()),
+        ),
+        actions: [
+          Btn.cancel(),
+          Btn.ok(onTap: () => context.popDialog(controller.text.trim())),
+        ],
+      ))?.trim();
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _applyThemePreset(BuiltinTheme preset) async {
+    try {
+      final theme = await ThemePackages.loadBuiltin(preset);
+      if (!mounted) return;
+      _applyTheme(theme, preset: preset.id);
+    } catch (error, stack) {
+      Loggers.app.warning('Could not load built-in theme', error, stack);
+      if (mounted) Toast.error(l10n.appearanceInvalidTheme);
+    }
+  }
+
+  ThemePackage _readCustomTheme() {
+    final path = _setting.appCustomBackgroundPath.fetch();
+    if (!_isOwnedAppBackground(path) || !File(path).existsSync()) {
+      throw const FormatException('Custom background is unavailable');
+    }
+    final data =
+        jsonDecode(_setting.appCustomTheme.fetch()) as Map<String, dynamic>;
+    final mode = (data['mode'] as num).toInt();
+    final seed = (data['seed'] as num).toInt();
+    final systemColor = data['systemColor'] as bool;
+    final icons = IconStyle.parse(data['icons']);
+    final opacity = (data['opacity'] as num).toDouble();
+    final blur = (data['blur'] as num).toDouble();
+    final card = (data['card'] as num).toDouble();
+    final tile = (data['tile'] as num).toDouble();
+    final button = (data['button'] as num).toDouble();
+    if (mode < 0 || mode > 2 || seed < 0 || seed > 0xffffffff || icons == null) {
+      throw const FormatException('Invalid custom theme');
+    }
+    return ThemePackage(
+      installationId: '',
+      // The theme this app makes up is the one the preset names, so the two
+      // spellings are one value.
+      id: ThemePackages.customPreset,
+      name: libL10n.custom,
+      schemaMin: 1,
+      schemaMax: 1,
+      mode: mode,
+      modes: const {ThemeMode.light, ThemeMode.dark},
+      seed: seed,
+      systemColor: systemColor,
+      paletteLight: const {},
+      paletteDark: const {},
+      iconStyle: icons,
+      // A custom theme is the user's own background and radii, so it carries no
+      // package images and no splash: both of those are a package's.
+      iconFiles: const {},
+      backgroundStyle: BackgroundStyle.image,
+      backgroundFile: path,
+      directory: '',
+      opacity: opacity.clamp(0.0, 0.6),
+      blur: blur.clamp(0.0, 30.0),
+      cardRadius: card.clamp(0.0, 40.0),
+      tileRadius: tile.clamp(0.0, 40.0),
+      buttonRadius: button.clamp(0.0, 40.0),
+    );
+  }
+
+  Future<void> _restoreCustomTheme() async {
+    try {
+      final theme = _readCustomTheme();
+      _applyTheme(theme, preset: ThemePackages.customPreset);
+      _setting.appThemePaletteEnabled.put(false);
+    } catch (_) {
+      await _pickAppBackground();
+    }
   }
 
   SettingsRow _buildBioAuth() {
@@ -190,6 +536,371 @@ extension _App on _AppSettingsPageState {
     );
   }
 
+  /// What each icon family is called. Neither is translated: one is the app's
+  /// own set and the other is the one it borrows.
+  String _iconStyleLabel(IconStyle style) => switch (style) {
+    IconStyle.classic => 'Classic',
+    IconStyle.mingcute => 'MingCute',
+  };
+
+  SettingsRow _buildAppIcons() {
+    final label = l10n.appearanceIcons;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.widgets_outlined),
+        title: Text(label),
+        trailing: _setting.appIconStyle.listenable().listenVal(
+          (style) => Text(_iconStyleLabel(style)),
+        ),
+        onTap: () async {
+          final style = await context.showPickSingleDialog<IconStyle>(
+            title: label,
+            items: IconStyle.values,
+            initial: _setting.appIconStyle.fetch(),
+            display: _iconStyleLabel,
+          );
+          if (style == null) return;
+          _setting.appIconStyle.put(style);
+          _setting.appThemePackage.put('');
+          _markCustomTheme();
+          RNodes.app.notify();
+        },
+      ),
+      keywords: 'icons MingCute Classic',
+    );
+  }
+
+  SettingsRow _buildCorners() {
+    final label = l10n.appearanceCorners;
+    return SettingsRow(
+      label,
+      () => ExpansionTile(
+        key: const PageStorageKey('theme-corners'),
+        leading: const Icon(Icons.crop_square),
+        title: Text(label),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        children: [
+          _buildCornerRow(
+            l10n.appearanceCardCorners,
+            Icons.crop_square,
+            _setting.appCardRadius,
+          ).build(),
+          _buildCornerRow(
+            l10n.appearanceTileCorners,
+            Icons.view_list_outlined,
+            _setting.appTileRadius,
+          ).build(),
+          _buildCornerRow(
+            l10n.appearanceButtonCorners,
+            Icons.smart_button_outlined,
+            _setting.appButtonRadius,
+          ).build(),
+        ],
+      ),
+      keywords:
+          '${l10n.appearanceCardCorners} ${l10n.appearanceTileCorners} '
+          '${l10n.appearanceButtonCorners} card tile button radius',
+    );
+  }
+
+  SettingsRow _buildCornerRow(
+    String label,
+    IconData icon,
+    SqlitePropDefault<double> property,
+  ) {
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: Icon(icon),
+        title: Text(label),
+        trailing: property.listenable().listenVal(
+          (radius) => Text('${radius.round()}'),
+        ),
+        onTap: () async {
+          final radius = await context.showPickSingleDialog<double>(
+            title: label,
+            items: [0.0, 6.0, 9.0, 13.0, 20.0, 30.0, 40.0],
+            initial: property.fetch(),
+            display: (value) => '${value.round()}',
+          );
+          if (radius == null) return;
+          property.put(radius);
+          _markCustomTheme();
+          RNodes.app.notify();
+        },
+      ),
+      keywords: 'card tile button radius',
+    );
+  }
+
+  SettingsRow _buildAppBackground() {
+    final label = libL10n.background;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.wallpaper_outlined),
+        title: Text(label),
+        trailing: Text(libL10n.image),
+        onTap: _pickAppBackground,
+      ),
+    );
+  }
+
+  Future<void> _pickAppBackground() async {
+    final path = await Pfs.pickFilePath();
+    if (path == null) return;
+    var stage = 'read';
+    try {
+      final source = File(path);
+      if (await source.length() > 8 * 1024 * 1024) {
+        throw const FormatException('Image exceeds 8 MB');
+      }
+      stage = 'decode';
+      final buffer = await ui.ImmutableBuffer.fromFilePath(path);
+      try {
+        final descriptor = await ui.ImageDescriptor.encoded(buffer);
+        try {
+          if (descriptor.width > 8192 ||
+              descriptor.height > 8192 ||
+              descriptor.width * descriptor.height > 64 * 1024 * 1024) {
+            throw const FormatException('Image resolution exceeds limit');
+          }
+        } finally {
+          descriptor.dispose();
+        }
+      } finally {
+        buffer.dispose();
+      }
+      stage = 'copy';
+      final dest = File(
+        Paths.img.joinPath(
+          'app_bg_${DateTime.now().microsecondsSinceEpoch}.img',
+        ),
+      );
+      await source.copy(dest.path);
+      if (!mounted) {
+        await dest.delete();
+        return;
+      }
+      final oldPath = _setting.appBackgroundPath.fetch();
+      _setting.appThemePackage.put('');
+      _setting.appThemePaletteEnabled.put(false);
+      _setting.appBackgroundPath.put(dest.path);
+      _setting.appBackgroundStyle.put(BackgroundStyle.image);
+      _setting.appThemePreset.put(ThemePackages.customPreset);
+      _markCustomTheme();
+      setStateSafe(() {});
+      RNodes.app.notify();
+      unawaited(_deleteOwnedAppBackground(oldPath));
+    } catch (error, stack) {
+      Loggers.app.warning('Import background failed at $stage', error, stack);
+      if (mounted) Toast.error(libL10n.invalid);
+    }
+  }
+
+  Future<void> _deleteOwnedAppBackground(String path) async {
+    if (!_isOwnedAppBackground(path)) return;
+    try {
+      await File(path).delete();
+    } on FileSystemException {
+      // The selected image may already have been removed outside the app.
+    }
+  }
+
+  bool _isOwnedAppBackground(String path) =>
+      path.isNotEmpty &&
+      File(path).parent.path == Paths.img &&
+      File(path).uri.pathSegments.last.startsWith('app_bg_');
+
+  SettingsRow _buildAppBackgroundOpacity() {
+    final label = libL10n.opacity;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.opacity),
+        title: Text(label),
+        trailing: _setting.appBackgroundOpacity.listenable().listenVal(
+          (opacity) => Text('${(opacity * 100).round()}%'),
+        ),
+        onTap: () async {
+          final opacity = await context.showPickSingleDialog<double>(
+            title: label,
+            items: [0, 0.1, 0.18, 0.3, 0.45, 0.6],
+            initial: _setting.appBackgroundOpacity.fetch(),
+            display: (value) => '${(value * 100).round()}%',
+          );
+          if (opacity == null) return;
+          _setting.appBackgroundOpacity.put(opacity);
+          _markCustomTheme();
+          RNodes.app.notify();
+        },
+      ),
+    );
+  }
+
+  SettingsRow _buildAppBackgroundBlur() {
+    final label = libL10n.blurRadius;
+    return SettingsRow(
+      label,
+      () => _setting.appBackgroundStyle.listenable().listenVal(
+        (style) => ListTile(
+          leading: const Icon(Icons.blur_on),
+          title: Text(label),
+          enabled:
+              style == BackgroundStyle.image &&
+              _setting.appBackgroundPath.fetch().isNotEmpty,
+          trailing: _setting.appBackgroundBlur.listenable().listenVal(
+            (radius) => Text('${radius.round()}'),
+          ),
+          onTap: () async {
+            var radius = _setting.appBackgroundBlur.fetch().clamp(0.0, 30.0);
+            final selected = await context.showRoundDialog<double>(
+              title: label,
+              child: StatefulBuilder(
+                builder: (context, setState) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${radius.round()}'),
+                    Slider(
+                      value: radius,
+                      min: 0,
+                      max: 30,
+                      divisions: 30,
+                      label: '${radius.round()}',
+                      onChanged: (value) => setState(() => radius = value),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                Btn.cancel(),
+                Btn.ok(onTap: () => context.popDialog(radius)),
+              ],
+            );
+            if (selected == null) return;
+            _setting.appBackgroundBlur.put(selected);
+            _markCustomTheme();
+            RNodes.app.notify();
+          },
+        ),
+      ),
+      keywords: 'background blur radius',
+    );
+  }
+
+  SettingsRow _buildAppFontFamilies() {
+    final label = l10n.appearanceFontFamilies;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.font_download_outlined),
+        title: TipText(label, l10n.appearanceFontFamiliesTip),
+        trailing: _setting.appFontFamilies.listenable().listenVal(
+          (_) => ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 180),
+            child: Text(
+              AppFont.families.isEmpty
+                  ? libL10n.system
+                  : AppFont.families.join(' → '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        onTap: () async {
+          final controller = TextEditingController(
+            text: AppFont.families.join('\n'),
+          );
+          try {
+            final value = await context.showRoundDialog<String>(
+              title: label,
+              child: TextField(
+                controller: controller,
+                autofocus: true,
+                minLines: 4,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  labelText: label,
+                  hintText: 'Inter\nNoto Sans\nArial',
+                  helperText: l10n.appearanceFontFamiliesTip,
+                ),
+              ),
+              actions: [
+                Btn.cancel(),
+                Btn.ok(onTap: () => context.popDialog(controller.text)),
+              ],
+            );
+            if (value == null || !mounted) return;
+            AppFont.saveFamilies(value.split(RegExp(r'[\r\n]+')));
+            RNodes.app.notify();
+          } finally {
+            controller.dispose();
+          }
+        },
+      ),
+      keywords: 'global font fallback families',
+    );
+  }
+
+  SettingsRow _buildAppFontImport() {
+    final label = l10n.appearanceFontImport;
+    return SettingsRow(
+      label,
+      () => ListTile(
+        leading: const Icon(Icons.file_download_outlined),
+        title: Text(label),
+        trailing: _setting.appImportedFontName.listenable().listenVal(
+          (name) => name.isEmpty
+              ? const Icon(Icons.keyboard_arrow_right)
+              : IconButton(
+                  tooltip: libL10n.delete,
+                  icon: const Icon(Icons.close),
+                  onPressed: () async {
+                    await AppFont.removeImported();
+                    RNodes.app.notify();
+                  },
+                ),
+        ),
+        onTap: () async {
+          final picked = await FilePicker.pickFile(
+            type: FileType.custom,
+            allowedExtensions: ['ttf', 'otf'],
+          );
+          if (picked == null || !mounted) return;
+          final path = picked.path;
+          if (path == null || await picked.length() > AppFont.maxBytes) {
+            Toast.error(libL10n.invalid);
+            return;
+          }
+          final suggested = picked.name.replaceFirst(
+            RegExp(r'\.(ttf|otf)$', caseSensitive: false),
+            '',
+          );
+          final name = await _promptAppText(
+            label,
+            initial: suggested,
+            hint: suggested,
+          );
+          if (name == null || name.isEmpty || !mounted) return;
+          final (_, error) = await context.showLoadingDialog<void>(
+            fn: () => AppFont.importFile(path, name),
+          );
+          if (!mounted) return;
+          if (error != null) {
+            Loggers.app.warning('Import app font failed: ${error.runtimeType}');
+            Toast.error(libL10n.invalid);
+            return;
+          }
+          RNodes.app.notify();
+          Toast.show(libL10n.success);
+        },
+      ),
+      keywords: 'TTF OTF font file import',
+    );
+  }
+
   void _onTapAppColor() {
     withTextFieldController((ctrl) async {
       ctrl.text = Color(_setting.colorSeed.fetch()).toHex;
@@ -215,7 +926,15 @@ extension _App on _AppSettingsPageState {
                       title: Text(libL10n.followSystem),
                       trailing: StoreSwitch(
                         prop: _setting.useSystemPrimaryColor,
-                        callback: (_) => setState(() {}),
+                        callback: (_) {
+                          _setting.appThemePaletteEnabled.put(false);
+                          if (_setting.appThemePreset.fetch() ==
+                              ThemePackages.customPreset) {
+                            _saveCustomTheme();
+                          }
+                          RNodes.app.notify();
+                          setState(() {});
+                        },
                       ),
                     );
                   },
@@ -232,7 +951,10 @@ extension _App on _AppSettingsPageState {
             return Column(mainAxisSize: MainAxisSize.min, children: children);
           },
         ),
-        actions: [Btn.cancel(), Btn.ok(onTap: () => _onSaveColor(ctrl.text))],
+        actions: [
+          Btn.cancel(),
+          Btn.ok(onTap: () => _onSaveColor(ctrl.text)),
+        ],
       );
     });
   }
@@ -247,6 +969,10 @@ extension _App on _AppSettingsPageState {
 
     // Save the color seed to settings
     _setting.colorSeed.put(color.value255);
+    _setting.appThemePaletteEnabled.put(false);
+    if (_setting.appThemePreset.fetch() == ThemePackages.customPreset) {
+      _saveCustomTheme();
+    }
 
     // Only update UIs colors if we're not in system mode
     if (!_setting.useSystemPrimaryColor.fetch()) {
@@ -288,31 +1014,48 @@ extension _App on _AppSettingsPageState {
 
   SettingsRow _buildThemeMode() {
     final label = libL10n.themeMode;
-    // Issue #57
-    final len = ThemeMode.values.length;
+    final locked = ThemePackages.activeTheme?.lockedMode;
     return SettingsRow(
       label,
       () => ListTile(
         leading: const Icon(MingCute.moon_stars_fill),
         title: Text(label),
-        onTap: () async {
-          final selected = await context.showPickSingleDialog(
-            title: label,
-            items: List.generate(len + 2, (index) => index),
-            display: (p0) => _buildThemeModeStr(p0),
-            initial: _setting.themeMode.fetch(),
-          );
-          if (selected != null) {
-            _setting.themeMode.put(selected);
-            RNodes.app.notify();
-          }
-        },
+        subtitle: locked == null
+            ? null
+            : Text(
+                l10n.appearanceThemeModeLocked(
+                  _buildThemeModeStr(locked.index),
+                ),
+              ),
+        enabled: locked == null,
+        onTap: locked != null
+            ? null
+            : () async {
+                final selected = await context.showPickSingleDialog(
+                  title: label,
+                  items: List.generate(
+                    ThemeMode.values.length,
+                    (index) => index,
+                  ),
+                  display: (p0) => _buildThemeModeStr(p0),
+                  initial: _setting.themeMode.fetch(),
+                );
+                if (selected != null) {
+                  _setting.themeMode.put(selected);
+                  if (_setting.appThemePreset.fetch() ==
+                      ThemePackages.customPreset) {
+                    _saveCustomTheme();
+                  }
+                  RNodes.app.notify();
+                }
+              },
         trailing: ValBuilder(
           listenable: _setting.themeMode.listenable(),
-          builder: (val) => Text(_buildThemeModeStr(val), style: UIs.text15),
+          builder: (val) =>
+              Text(_buildThemeModeStr(locked?.index ?? val), style: UIs.text15),
         ),
       ),
-      keywords: 'AMOLED ${libL10n.dark} ${libL10n.bright}',
+      keywords: '${libL10n.dark} ${libL10n.bright}',
     );
   }
 
@@ -322,10 +1065,6 @@ extension _App on _AppSettingsPageState {
         return libL10n.bright;
       case 2:
         return libL10n.dark;
-      case 3:
-        return 'AMOLED';
-      case 4:
-        return '${libL10n.auto} AMOLED';
       default:
         return libL10n.auto;
     }
@@ -376,11 +1115,9 @@ extension _App on _AppSettingsPageState {
       //
       // Uncarded: the picker is a list of cards already.
       if (DiagnosticsUpload.availableInBuild)
-        SettingsGroup(
-          l10n.crashCollect,
-          [_buildDiagnosticsUpload()],
-          carded: false,
-        ),
+        SettingsGroup(l10n.crashCollect, [
+          _buildDiagnosticsUpload(),
+        ], carded: false),
       // Not behind `availableInBuild` — a build with no upload endpoint is
       // exactly the one where handing the log over by hand is the only way a
       // crash gets reported at all. Absent when nothing crashed: a row reading
@@ -633,33 +1370,36 @@ extension _App on _AppSettingsPageState {
           // One transaction, as `Backup.merge` does: this rewrites the whole
           // settings store, and half of an edit is not a state to leave behind.
           SqliteStore.transact(() {
-          for (final entry in newSettings.entries) {
-            final value = entry.value;
-            // A key set to null means "clear this". Skipping it instead left
-            // the previous value in place, and the key being present kept it
-            // out of `removedKeys` below too — so the edit reported success and
-            // changed nothing.
-            if (value == null) {
-              Stores.setting.remove(entry.key, updateLastUpdateTsOnRemove: false);
-              continue;
+            for (final entry in newSettings.entries) {
+              final value = entry.value;
+              // A key set to null means "clear this". Skipping it instead left
+              // the previous value in place, and the key being present kept it
+              // out of `removedKeys` below too — so the edit reported success and
+              // changed nothing.
+              if (value == null) {
+                Stores.setting.remove(
+                  entry.key,
+                  updateLastUpdateTsOnRemove: false,
+                );
+                continue;
+              }
+              Stores.setting.set(
+                entry.key,
+                value as Object,
+                updateLastUpdateTsOnSet: false,
+              );
             }
-            Stores.setting.set(
-              entry.key,
-              value as Object,
-              updateLastUpdateTsOnSet: false,
+            final newKeys = newSettings.keys.toSet();
+            // Internal keys are shown by the editor (it reads with
+            // `includeInternalKeys: true`) but are not the user's to delete: one
+            // of them records that the Hive import already ran, and dropping it
+            // makes the next launch copy the retained boxes back over everything.
+            final removedKeys = initialKeys.where(
+              (e) => !newKeys.contains(e) && !Stores.setting.isInternalKey(e),
             );
-          }
-          final newKeys = newSettings.keys.toSet();
-          // Internal keys are shown by the editor (it reads with
-          // `includeInternalKeys: true`) but are not the user's to delete: one
-          // of them records that the Hive import already ran, and dropping it
-          // makes the next launch copy the retained boxes back over everything.
-          final removedKeys = initialKeys.where(
-            (e) => !newKeys.contains(e) && !Stores.setting.isInternalKey(e),
-          );
-          for (final key in removedKeys) {
-            Stores.setting.remove(key, updateLastUpdateTsOnRemove: false);
-          }
+            for (final key in removedKeys) {
+              Stores.setting.remove(key, updateLastUpdateTsOnRemove: false);
+            }
           });
         }
       } catch (e, trace) {

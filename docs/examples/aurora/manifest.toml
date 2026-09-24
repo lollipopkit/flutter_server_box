@@ -1,0 +1,357 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+# Import this folder with Install theme > Folder. Reimport after editing.
+# To distribute it, ZIP the folder contents and rename the archive to .fsbt.
+# See https://serverbox.lollipopkit.com/docs/advanced/theme-packages/ for the
+# supported fields and asset limits.
+# Only id, name, modes, and schema are required; optional fields inherit defaults.
+# This reference lists every supported field, including optional defaults.
+# Optional asset entries are commented out until their files are supplied.
+# Fonts and launcher icons are configured separately in the app.
+
+# Package format version; defaults to 1. Currently only 1 is supported.
+format = 1
+# Stable identifier: lowercase letters, digits, dots, underscores, and hyphens.
+id = "serverbox.aurora"
+# Display name in Theme preset.
+name = "Aurora"
+# Required supported modes: ["light"], ["dark"], or both.
+# A single mode locks ThemeMode; both allow System, Light, and Dark.
+modes = ["light", "dark"]
+
+# Inclusive range of supported theme schema versions, not the theme's own version.
+# min is the oldest app that may read this package: an SVG icon, a per-icon color
+# and a splash are schema 2 features, so a package using one declares min = 2.
+[schema]
+min = 2
+max = 2
+
+[colors]
+# Initial preference: 0 = system (default), 1 = light, 2 = dark.
+# A single supported mode takes precedence over this preference.
+mode = 0
+# ARGB seed (0xAARRGGBB) for unspecified colors; defaults to 0xFF880E4F.
+seed = 0xFF504ADF
+# Use the system accent when available; defaults to false.
+systemColor = false
+
+# Optional Material color overrides, applied separately for each brightness.
+# Check text contrast when changing colors; foreground roles include onPrimary
+# and onSurface. Omit these tables to use the generated palette throughout.
+[colors.palette.light]
+# Main accent and its foreground, followed by the softer container pair.
+primary = 0xFF4A341F
+onPrimary = 0xFFFFFFFF
+primaryContainer = 0xFFEDDCCD
+onPrimaryContainer = 0xFF281709
+# Secondary accent and foreground/container pairs.
+secondary = 0xFF8725B2
+onSecondary = 0xFFFFFFFF
+secondaryContainer = 0xFFF3DAFA
+onSecondaryContainer = 0xFF310042
+# Base surfaces and foreground text/icons.
+surface = 0xFFFFFAF5
+surfaceDim = 0xFFE5DAD2
+surfaceBright = 0xFFFFFAF5
+onSurface = 0xFF29211B
+# Surface containers, from lowest to highest visual emphasis.
+surfaceContainerLowest = 0xFFFFFFFF
+surfaceContainerLow = 0xFFFCF4ED
+surfaceContainer = 0xFFF8F0E8
+surfaceContainerHigh = 0xFFF0E7DF
+surfaceContainerHighest = 0xFFE9DFD7
+# Elevation tint; transparent disables the tint.
+surfaceTint = 0x00000000
+# Secondary text/icons, strong outlines, and subtle dividers.
+onSurfaceVariant = 0xFF65584F
+outline = 0xFF837469
+outlineVariant = 0xFFD3C4B8
+# Error background/accent and its foreground.
+error = 0xFFB3261E
+onError = 0xFFFFFFFF
+
+# Same roles as the light palette, used for dark brightness.
+
+# Additional accent, fixed, inverse, error-container, shadow and scrim roles.
+# Fixed roles intentionally use the same values in both palettes.
+primaryFixed = 0xFFFAE0FF
+primaryFixedDim = 0xFFD8A3E8
+onPrimaryFixed = 0xFF33113D
+onPrimaryFixedVariant = 0xFF4F2B5E
+secondaryFixed = 0xFFFAE0FF
+secondaryFixedDim = 0xFFD8A3E8
+onSecondaryFixed = 0xFF33113D
+onSecondaryFixedVariant = 0xFF4F2B5E
+tertiary = 0xFF756234
+onTertiary = 0xFFFFFFFF
+tertiaryContainer = 0xFFF8E1A6
+onTertiaryContainer = 0xFF251A00
+tertiaryFixed = 0xFFFAE0FF
+tertiaryFixedDim = 0xFFD8A3E8
+onTertiaryFixed = 0xFF33113D
+onTertiaryFixedVariant = 0xFF4F2B5E
+errorContainer = 0xFFF9DEDC
+onErrorContainer = 0xFF410E0B
+shadow = 0xFF000000
+scrim = 0xFF000000
+inverseSurface = 0xFF332D37
+onInverseSurface = 0xFFF7EEF9
+inversePrimary = 0xFFD8A3E8
+
+[colors.palette.dark]
+primary = 0xFFB758F5
+onPrimary = 0xFF1F072F
+primaryContainer = 0xFF4A255D
+onPrimaryContainer = 0xFFF5DDFF
+secondary = 0xFFCB76F0
+onSecondary = 0xFF290735
+secondaryContainer = 0xFF492052
+onSecondaryContainer = 0xFFFCD6FF
+surface = 0xFF17131E
+surfaceDim = 0xFF17131E
+surfaceBright = 0xFF3D3545
+onSurface = 0xFFEEE6F4
+surfaceContainerLowest = 0xFF100C15
+surfaceContainerLow = 0xFF211B2A
+surfaceContainer = 0xFF251F2E
+surfaceContainerHigh = 0xFF302837
+surfaceContainerHighest = 0xFF3B3243
+surfaceTint = 0x00000000
+onSurfaceVariant = 0xFFC5BACD
+outline = 0xFF998BA3
+outlineVariant = 0xFF4C4055
+error = 0xFFFFB4AB
+onError = 0xFF690005
+
+
+# Additional accent, fixed, inverse, error-container, shadow and scrim roles.
+# Fixed roles intentionally use the same values in both palettes.
+primaryFixed = 0xFFFAE0FF
+primaryFixedDim = 0xFFD8A3E8
+onPrimaryFixed = 0xFF33113D
+onPrimaryFixedVariant = 0xFF4F2B5E
+secondaryFixed = 0xFFFAE0FF
+secondaryFixedDim = 0xFFD8A3E8
+onSecondaryFixed = 0xFF33113D
+onSecondaryFixedVariant = 0xFF4F2B5E
+tertiary = 0xFFDCC68D
+onTertiary = 0xFF3B2F08
+tertiaryContainer = 0xFF53451D
+onTertiaryContainer = 0xFFF8E1A6
+tertiaryFixed = 0xFFFAE0FF
+tertiaryFixedDim = 0xFFD8A3E8
+onTertiaryFixed = 0xFF33113D
+onTertiaryFixedVariant = 0xFF4F2B5E
+errorContainer = 0xFF8C1D18
+onErrorContainer = 0xFFF9DEDC
+shadow = 0xFF000000
+scrim = 0xFF000000
+inverseSurface = 0xFFE9DFEB
+onInverseSurface = 0xFF332D37
+inversePrimary = 0xFF784287
+
+[icons]
+# Built-in icon family: "classic" (default) or "mingcute".
+style = "mingcute"
+
+# Optional PNG or SVG overrides; omitted entries use the selected icon family.
+# All supported keys are listed below. Keep dotted keys quoted.
+# Each path must match the key with dots replaced by underscores.
+# Add the matching file before uncommenting an entry (256 KiB maximum; a PNG is
+# also limited to 512x512, an SVG is checked as a document instead).
+# Images are tinted with the app's icon foreground color, so an SVG should use
+# currentColor for the parts that follow it.
+[icons.images]
+# Tab icons, with separate overrides for selected tabs.
+# This one ships with the example, as an SVG; the same key takes a PNG under
+# the same name. The rest are commented out until their files are supplied.
+"tab.server" = "icons/tab_server.svg"
+# "tab.server.selected" = "icons/tab_server_selected.png"
+# "tab.ssh" = "icons/tab_ssh.png"
+# "tab.ssh.selected" = "icons/tab_ssh_selected.png"
+# "tab.file" = "icons/tab_file.png"
+# "tab.file.selected" = "icons/tab_file_selected.png"
+# "tab.snippet" = "icons/tab_snippet.png"
+# "tab.snippet.selected" = "icons/tab_snippet_selected.png"
+# "tab.agent" = "icons/tab_agent.png"
+# "tab.agent.selected" = "icons/tab_agent_selected.png"
+# "tab.benchmark" = "icons/tab_benchmark.png"
+# "tab.benchmark.selected" = "icons/tab_benchmark_selected.png"
+# "tab.remoteDesktop" = "icons/tab_remoteDesktop.png"
+# "tab.remoteDesktop.selected" = "icons/tab_remoteDesktop_selected.png"
+# Navigation and settings icons.
+# "nav.more" = "icons/nav_more.png"
+# "nav.settings" = "icons/nav_settings.png"
+# "nav.tune" = "icons/nav_tune.png"
+# "nav.privacy" = "icons/nav_privacy.png"
+# "nav.agent" = "icons/nav_agent.png"
+# "nav.tabs" = "icons/nav_tabs.png"
+# "nav.server" = "icons/nav_server.png"
+# "nav.sort" = "icons/nav_sort.png"
+# "nav.terminal" = "icons/nav_terminal.png"
+# "nav.folder" = "icons/nav_folder.png"
+# "nav.cloud" = "icons/nav_cloud.png"
+# "nav.snippet" = "icons/nav_snippet.png"
+# "nav.inbox" = "icons/nav_inbox.png"
+# "nav.key" = "icons/nav_key.png"
+# "nav.info" = "icons/nav_info.png"
+# "nav.download" = "icons/nav_download.png"
+# "nav.desktop" = "icons/nav_desktop.png"
+
+# Per-icon colors. A key must name an icon [icons.images] carries; without an
+# entry here the icon follows the app's ambient icon color.
+# Values are an ARGB integer or the name of any ColorScheme role above.
+[icons.colors]
+"tab.server" = "primary"
+
+[background]
+# "none" (default), "gradient" (generated from the palette), or "image".
+type = "gradient"
+# Only valid and required when type = "image". Supply the file before enabling.
+# Allowed paths: background.png, background.jpg, background.jpeg.
+# Maximum: 8 MiB, 8192 pixels per dimension, 64 * 1024 * 1024 total pixels.
+# image = "background.png"
+# Image opacity (0–0.6, default 0.18); does not affect the generated gradient.
+opacity = 0.18
+# Image blur radius (0–30, default 0); does not affect the generated gradient.
+blur = 0
+
+# The splash shown while the app takes its first frames. Omit the whole table
+# for no splash. It is read once, at launch, so it does not replay when this
+# theme is selected later.
+[splash]
+# Background color: an ARGB integer or the name of any ColorScheme role above.
+color = "surface"
+# Optional logo, one fixed name beside the manifest: splash_logo.png, .jpg,
+# .jpeg, or .svg. Supply the file before enabling it.
+# Allowed paths: those four names (512 KiB; 2048x2048 for the raster ones).
+# logo = "splash_logo.svg"
+# Milliseconds the splash stays up before fading out (100–3000, defaults to 600).
+duration = 800
+
+# Corner radii in logical pixels (0–40). Omitted values default to 12, 8, and 10.
+[shapes]
+card = 20
+tile = 13
+button = 24
+
+# COMPONENT OVERRIDES
+# Every table is optional. Missing fields retain the app's existing style.
+# Colors accept ARGB integers or the name of any ColorScheme role above.
+# Insets are [left, top, right, bottom], each 0–64 logical pixels.
+# Radius: 0–40; borderWidth: 0–8; elevation: 0–24. Explicit zero is preserved.
+# Component radius overrides the corresponding [shapes] value.
+
+[components.card]
+backgroundColor = "surfaceContainerLow"
+radius = 20
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 0
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+margin = [4, 4, 4, 4]
+
+[components.tile]
+backgroundColor = "surfaceContainerLow"
+selectedTileColor = "secondaryContainer"
+textColor = "onSurface"
+iconColor = "onSurfaceVariant"
+selectedColor = "onSecondaryContainer"
+radius = 13
+borderColor = "outlineVariant"
+borderWidth = 0
+padding = [13, 9, 13, 9]
+
+# Applies to Material elevated, filled, outlined and text buttons.
+# Btn.elevated also uses these fields; compact Btn rows use the themed radius.
+[components.button]
+backgroundColor = "primary"
+foregroundColor = "onPrimary"
+overlayColor = 0x14000000
+radius = 24
+borderColor = "primary"
+borderWidth = 0
+elevation = 0
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+padding = [20, 13, 20, 13]
+
+# Each state supports the same fields as [components.button].
+# Highest priority per field: disabled > pressed > hovered > focused > selected.
+[components.button.hovered]
+backgroundColor = "primaryContainer"
+foregroundColor = "onPrimaryContainer"
+elevation = 2
+
+[components.button.pressed]
+overlayColor = 0x29000000
+radius = 18
+
+[components.button.focused]
+borderColor = "secondary"
+borderWidth = 2
+
+[components.button.selected]
+backgroundColor = "secondaryContainer"
+foregroundColor = "onSecondaryContainer"
+
+[components.button.disabled]
+backgroundColor = "surfaceContainerHighest"
+foregroundColor = "onSurfaceVariant"
+elevation = 0
+
+[components.input]
+filled = true
+fillColor = "surfaceContainerHighest"
+radius = 10
+borderColor = "outlineVariant"
+borderWidth = 1
+focusedBorderColor = "primary"
+errorBorderColor = "error"
+disabledBorderColor = "outlineVariant"
+padding = [12, 10, 12, 10]
+
+# Applies to the bottom NavigationBar and the custom desktop NavigationRail.
+[components.navigation]
+backgroundColor = "surface"
+indicatorColor = "secondaryContainer"
+indicatorRadius = 20
+selectedIconColor = "onSecondaryContainer"
+unselectedIconColor = "onSurfaceVariant"
+selectedLabelColor = "onSecondaryContainer"
+unselectedLabelColor = "onSurfaceVariant"
+elevation = 0
+
+[components.dialog]
+backgroundColor = "surfaceContainerHigh"
+radius = 24
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 6
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+barrierColor = 0x80000000
+insetPadding = [24, 24, 24, 24]
+
+[components.sheet]
+backgroundColor = "surfaceContainerLow"
+radius = 24
+borderColor = "outlineVariant"
+borderWidth = 1
+elevation = 4
+shadowColor = "shadow"
+surfaceTintColor = 0x00000000
+barrierColor = 0x66000000
+dragHandleColor = "outline"
+
+# Brightness-specific tables accept every component and field shown above.
+# Only supplied fields override their common values; button states merge too.
+[components.light.card]
+backgroundColor = "surfaceContainerLowest"
+
+[components.dark.card]
+backgroundColor = "surfaceContainer"
+
+[components.dark.button.hovered]
+backgroundColor = "tertiaryContainer"
+foregroundColor = "onTertiaryContainer"

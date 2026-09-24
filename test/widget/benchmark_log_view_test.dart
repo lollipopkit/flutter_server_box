@@ -6,6 +6,7 @@
 /// nothing throws, the widget builds, and the output is simply wrong.
 library;
 
+import 'package:fl_lib/fl_lib.dart' show Pfs;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/res/store.dart';
@@ -40,6 +41,45 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: child)));
     await tester.pump();
   }
+
+  testWidgets('keeps custom fonts and adds current UI fallbacks', (tester) async {
+    Stores.setting.fontPath.put('fonts${Pfs.seperator}Chosen.ttf');
+    Stores.setting.termFontSize.put(18);
+    const log = BenchmarkLogView(log: '中文 output');
+
+    Future<void> pumpFonts(List<String> fallback) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: ThemeData(fontFamilyFallback: fallback),
+        home: const Scaffold(body: log),
+      ));
+      await tester.pumpAndSettle();
+      final style = tester.widget<TerminalView>(find.byType(TerminalView)).textStyle;
+      expect(style.fontFamily, 'Chosen.ttf');
+      expect(style.fontSize, 18);
+      expect(style.fontFamilyFallback, [
+        ...const TerminalStyle().fontFamilyFallback,
+        ...fallback,
+      ]);
+    }
+
+    await pumpFonts(['Test CJK']);
+    await pumpFonts(['Other CJK']);
+
+    // A UI family the terminal already carries is not added twice. The UI list
+    // is appended on every theme change, so a duplicate here is one that
+    // accumulates rather than one that is merely drawn once.
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(fontFamilyFallback: const ['sans-serif']),
+      home: const Scaffold(body: log),
+    ));
+    await tester.pumpAndSettle();
+    final fallback = tester
+        .widget<TerminalView>(find.byType(TerminalView))
+        .textStyle
+        .fontFamilyFallback;
+    expect(fallback.where((f) => f == 'sans-serif'), hasLength(1));
+    expect(fallback, const TerminalStyle().fontFamilyFallback);
+  });
 
   testWidgets('a progress line is overwritten, not run together', (
     tester,

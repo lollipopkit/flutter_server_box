@@ -9,6 +9,84 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get appearanceSettings => '모양';
+
+  @override
+  String get appearancePreset => '테마 프리셋';
+
+  @override
+  String get appearanceThemeSchemaRange => '지원하는 테마 schema';
+
+  @override
+  String get appearanceThemeInstall => '테마 설치';
+
+  @override
+  String get appearanceThemeStore => '테마 스토어';
+
+  @override
+  String get appearanceInvalidTheme => '유효하지 않은 테마 패키지 또는 카탈로그';
+
+  @override
+  String get themeStoreRefreshFailed => '테마 카탈로그를 읽을 수 없습니다.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return '“$name”을(를) 삭제할까요? 파일이 이 기기에서 제거됩니다. 사용 중인 테마라면 앱이 기본 테마로 돌아갑니다.';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return '$ago 업데이트';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => '방금 업데이트';
+
+  @override
+  String get themeStoreSortInUse => '사용 중 우선';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return '직접 테마를 만들고 싶다면 [테마 제작 안내]($doc)를 확인해 보세요. 기여해 주셔서 감사합니다!';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return '최신 버전의 앱이 필요합니다: $version';
+  }
+
+  @override
+  String get appearanceFontFamilies => 'UI 글꼴 목록';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      '한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.';
+
+  @override
+  String get appearanceFontImport => 'UI 글꼴 파일 가져오기';
+
+  @override
+  String get appearanceGradient => '그라데이션';
+
+  @override
+  String get appearanceNoBackground => '배경 없음';
+
+  @override
+  String get appearanceIcons => '앱 내 아이콘';
+
+  @override
+  String get appearanceCorners => '모서리';
+
+  @override
+  String get appearanceCardCorners => '카드 모서리';
+
+  @override
+  String get appearanceTileCorners => '타일 모서리';
+
+  @override
+  String get appearanceButtonCorners => '버튼 모서리';
+
+  @override
   String get crashCollect => '진단 데이터';
 
   @override
@@ -85,7 +163,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiCommandInserted => '명령어가 터미널에 삽입되었습니다';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return '설정에서 $fields을(를) 구성해 주세요.';
   }
 
@@ -289,7 +367,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolFailed => '도구 실행에 실패했습니다.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '도구 호출 $count회';
   }
 
@@ -411,7 +489,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '탭을 길게 누르거나 마우스 오른쪽 버튼으로 누르면 그 안의 모든 항목을 한 번에 연결하거나 끊을 수 있습니다.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '태그 $count개';
   }
 
@@ -482,7 +560,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get icloudBackupStateWaiting => 'iCloud 대기 중';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return '마지막 백업: $lastModified\n상태: $remoteState';
   }
 
@@ -527,12 +605,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get clearAllStatsTitle => '모든 통계 삭제';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return '서버 \"$serverName\"의 연결 통계를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return '$serverName 통계 삭제';
   }
 
@@ -606,7 +684,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get displayCpuIndex => 'CPU 인덱스 표시';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return '$fileName을(를) 로컬에 다운로드하시겠습니까?';
   }
 
@@ -655,7 +733,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fdroidReleaseTip => 'F-Droid에서 이 앱을 다운로드한 경우, 이 옵션을 끄는 것을 권장합니다.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return '파일 \'$file\'이(가) 너무 큽니다. 크기 $size, 최대 $sizeMax';
   }
 
@@ -817,12 +895,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get jumpServer => '점프 서버';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return '$serverName에 대한 점프 서버를 찾을 수 없습니다: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '\'$name\'은(는) 이미 존재합니다';
   }
 
@@ -875,7 +953,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get linuxNetTip => 'DNS 서버. 비우면 기본값으로 돌아갑니다';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return '$myGithub이(가) ❤️로 만들었습니다';
   }
 
@@ -886,7 +964,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get maxRetryCount => '서버 재연결 횟수';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return '시스템이 일치하지 않습니다: $system';
   }
 
@@ -933,7 +1011,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get privateKey => '개인 키';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return '개인 키 [$keyId]을(를) 찾을 수 없습니다.';
   }
 
@@ -1136,16 +1214,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed이(가) 설치되어 있고 $latest가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: $pm 데이터가 사라집니다';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return '$name의 터미널을 닫은 뒤 삭제하세요';
   }
 
@@ -1153,7 +1231,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return '$distro $version(약 $size MB)을 내려받아 이 기기에 풉니다.';
   }
 
@@ -1177,7 +1255,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeDir => '홈';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count개 선택됨';
   }
 
@@ -1297,12 +1375,12 @@ class AppLocalizationsKo extends AppLocalizations {
       '활성화하면 온도 값이 밀리섭씨가 아닌 섭씨로 처리됩니다. 온도가 잘못 표시될 때만 켜세요 (예: 58°C 대신 0.1°C로 표시되는 경우).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return '소요 시간: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return '모든 서버가 이미 존재합니다 (중복 $duplicateCount개 발견)';
   }
 
@@ -1317,7 +1395,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshConnectionModeUseSystem => '시스템 SSH 사용';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '중복 $duplicateCount개가 건너뛰어집니다';
   }
 
@@ -1325,7 +1403,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshConfigFound => '시스템에서 SSH 설정을 발견했습니다.';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return '서버 $totalCount개를 발견했습니다';
   }
 
@@ -1340,12 +1418,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshConfigImportTip => '첫 서버 생성 시 ~/.ssh/config 읽기 안내';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'SSH 설정에서 서버 $count개를 가져왔습니다';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return '$serverName의 SSH 호스트 키가 변경되었습니다. 이 서버를 신뢰하는 경우에만 계속 진행하세요.';
   }
 
@@ -1359,12 +1437,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return '$serverName에서 새 SSH 호스트 키를 수신했습니다. 신뢰하기 전에 지문을 확인해 주세요.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return '저장된 지문: $fingerprint';
   }
 
@@ -1382,7 +1460,7 @@ class AppLocalizationsKo extends AppLocalizations {
       'macOS 권한으로 인해 SSH 설정 파일에 접근할 수 없습니다.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '서버 $importCount개가 가져오기됩니다';
   }
 
@@ -1400,7 +1478,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get suspendTip => '일시 중지 기능은 root 권한과 systemd 지원이 필요합니다.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return '$val(으)로 전환';
   }
 
@@ -1550,7 +1628,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get portForward_remotePort => '원격 포트';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return '$name을(를) 삭제하시겠습니까?';
   }
 
@@ -1795,7 +1873,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return '종료 상태 $code';
   }
 
@@ -1937,12 +2015,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get geoDataRemoveFailed => '데이터를 삭제하지 못했습니다.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '이미 $month 데이터입니다.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**다운로드: $download · 기기 저장 공간: $disk.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.';
   }
 
@@ -2017,7 +2095,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '디스크 테스트에서 측정할 파일 시스템을 결정합니다. 비워 두면 로그인 계정의 홈 디렉터리를 사용합니다.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return '약 $minutes분';
   }
 
@@ -2210,7 +2288,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get userPasswordEditTip => '기존 비밀번호를 유지하려면 비워 두세요.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func은(는) 이 서버의 연결 방식에서 사용할 수 없습니다.';
   }
 
@@ -2249,12 +2327,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get beyondRetention => '이 agent가 보관한 범위 밖';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'agent 보관 기간 $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return '가장 오래된 샘플 $time';
   }
 
@@ -2275,7 +2353,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get waitingFirstSample => '첫 샘플을 기다리는 중';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return '$time 기준';
   }
 
@@ -2283,47 +2361,47 @@ class AppLocalizationsKo extends AppLocalizations {
   String get stored => '저장됨';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return '마지막 샘플 $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return '아래 값은 모두 $time 기준입니다($ago).';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return '$time 이전 데이터 없음';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return '$range 불러오는 중…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return '$metric의 저장된 기록이 없습니다';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '장치 $count개';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '장치 $count개 · 가장 바쁜 것은 $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$total개 중 $plotted개 장치';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '센서 $count개 · 최고 $name';
   }
 
@@ -2331,12 +2409,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get oneDeviceAtLeast => '차트에는 장치를 최소 하나 남깁니다.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$what $total개 중 $shown개';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$what $count개';
   }
 
@@ -2395,12 +2473,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get diskAllPassed => '모두 PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '경고 $count개';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$total개 중 $wrong개';
   }
 
@@ -2408,17 +2486,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get diskSmartSortedTip => '나쁜 순';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return '$ago 읽음';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '프로세스 $count개';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count개 불량';
   }
 
@@ -2432,7 +2510,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get window => '기간';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return '$total 중';
   }
 
@@ -2446,12 +2524,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get connectionTip => '둘 다 동시에 켤 수 있습니다. 순서가 곧 연결을 시도하는 순서입니다.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return '끌어서 순서를 바꿉니다. $first을(를) 먼저 시도하고, 응답이 없으면 $second이(가) 세션을 단독으로 맡습니다.';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return '$name만 켜져 있어 대체할 것이 없습니다.';
   }
 
@@ -2556,7 +2634,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tagNewHint => '새 태그';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return '#$tag 만들기';
   }
 
@@ -2564,12 +2642,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tagOnThisServer => '이 서버';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '서버 $count대';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '이 서버에 $count개';
   }
 
@@ -2606,7 +2684,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2617,7 +2695,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '작업 $total개 · $enabled개 활성화';
   }
 
@@ -2637,7 +2715,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get scheduledTaskEnableNowTip => '끄면 해당 행을 주석 처리해 저장합니다.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return '$user의 예약 작업이 없습니다. 여기서 추가한 내용은 해당 계정의 crontab에 쓰입니다.';
   }
 
@@ -2678,42 +2756,42 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return '$minutes분마다';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return '매시 :$minute분';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return '$hours시간마다';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return '$hours시간마다 :$minute분';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return '매일 $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return '평일 $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return '매주 $day $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return '매월 $day일 $time';
   }
 
@@ -2955,4 +3033,123 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC 클립보드는 Latin-1 텍스트만 지원합니다.';
+
+  @override
+  String get remoteDesktopAddProfile => '프로필 추가';
+
+  @override
+  String get remoteDesktopNoProfiles => '원격 데스크톱 프로필이 없습니다';
+
+  @override
+  String get remoteDesktopAdd => '원격 데스크톱 추가';
+
+  @override
+  String get remoteDesktopEdit => '원격 데스크톱 편집';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      '대상은 SSH 서버 또는 Monitor 에이전트에서 확인됩니다. localhost는 해당 머신을 가리킵니다.';
+
+  @override
+  String get remoteDesktopDomain => '도메인(선택)';
+
+  @override
+  String get remoteDesktopPassword => '비밀번호(선택)';
+
+  @override
+  String get remoteDesktopSavePassword => '비밀번호 저장';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      '암호화된 데이터베이스에 저장됩니다. 백업에는 저장된 비밀번호가 포함되며, 백업 비밀번호를 설정한 경우에만 암호화됩니다.';
+
+  @override
+  String get remoteDesktopShareSession => '세션 공유';
+
+  @override
+  String get remoteDesktopProtocol => '프로토콜';
+
+  @override
+  String get remoteDesktopUniqueName => '이 서버에서는 프로필 이름이 중복될 수 없습니다.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      '클래식 VNC 비밀번호는 8 ASCII 바이트로 제한됩니다.';
+
+  @override
+  String get remoteDesktopNameRequired => '프로필 이름을 입력하세요.';
+
+  @override
+  String get remoteDesktopHostRequired => '대상 호스트를 입력하세요.';
+
+  @override
+  String get remoteDesktopPortRequired => '올바른 포트를 입력하세요.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'RDP 사용자 이름을 입력하세요.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      '클래식 VNC 비밀번호는 ASCII 문자만 포함할 수 있습니다.';
+
+  @override
+  String get remoteDesktopCertificateRequired => '인증서 확인이 필요합니다';
+
+  @override
+  String get remoteDesktopWaiting => '데스크톱을 기다리는 중…';
+
+  @override
+  String get remoteDesktopCertificateChanged => '원격 데스크톱 인증서가 변경되었습니다';
+
+  @override
+  String get remoteDesktopTrustCertificate => '인증서를 신뢰할까요?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      '인증서 지문이 저장된 값과 더 이상 일치하지 않습니다. 신뢰를 교체하기 전에 새 지문을 확인하세요.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      '시스템이 이 인증서를 확인할 수 없습니다. 계속하기 전에 SHA-256 지문을 확인하세요.';
+
+  @override
+  String get remoteDesktopReplaceTrust => '신뢰 교체';
+
+  @override
+  String get remoteDesktopTrustReconnect => '신뢰하고 다시 연결';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '원격 데스크톱 프로필 “$name”을(를) 삭제할까요?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return '다시 연결하는 중 ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return '이전에 신뢰한 지문\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return '주체: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return '발급자: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return '유효 기간: $start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return '이 테마는 $mode만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.';
+  }
 }

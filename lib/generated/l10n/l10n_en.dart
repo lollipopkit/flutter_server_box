@@ -9,6 +9,84 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get appearanceSettings => 'Appearance';
+
+  @override
+  String get appearancePreset => 'Theme preset';
+
+  @override
+  String get appearanceThemeSchemaRange => 'Supported theme schema';
+
+  @override
+  String get appearanceThemeInstall => 'Install theme';
+
+  @override
+  String get appearanceThemeStore => 'Theme store';
+
+  @override
+  String get appearanceInvalidTheme => 'Invalid theme package or catalog';
+
+  @override
+  String get themeStoreRefreshFailed => 'Could not read the theme catalog.';
+
+  @override
+  String themeStoreDeleteTheme(String name) {
+    return 'Delete “$name”? Its files are removed from this device. If it is the theme in use, the app returns to the default theme.';
+  }
+
+  @override
+  String themeStoreUpdatedFmt(String ago) {
+    return 'updated $ago';
+  }
+
+  @override
+  String get themeStoreUpdatedJustNow => 'updated just now';
+
+  @override
+  String get themeStoreSortInUse => 'In use first';
+
+  @override
+  String themeStoreMakeOwnFmt(String doc) {
+    return 'Want to make your own theme? [How to author one]($doc) — thank you for contributing!';
+  }
+
+  @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return 'Needs a newer app: $version';
+  }
+
+  @override
+  String get appearanceFontFamilies => 'UI font families';
+
+  @override
+  String get appearanceFontFamiliesTip =>
+      'One name per line; fonts are tried in order.';
+
+  @override
+  String get appearanceFontImport => 'Import UI font file';
+
+  @override
+  String get appearanceGradient => 'Gradient';
+
+  @override
+  String get appearanceNoBackground => 'No background';
+
+  @override
+  String get appearanceIcons => 'In-app icons';
+
+  @override
+  String get appearanceCorners => 'Corners';
+
+  @override
+  String get appearanceCardCorners => 'Card corners';
+
+  @override
+  String get appearanceTileCorners => 'Tile corners';
+
+  @override
+  String get appearanceButtonCorners => 'Button corners';
+
+  @override
   String get crashCollect => 'Diagnostic data';
 
   @override
@@ -87,7 +165,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiCommandInserted => 'Command inserted into terminal';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return 'Please configure $fields in Settings.';
   }
 
@@ -306,7 +384,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentToolFailed => 'Tool execution failed.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count tool calls';
   }
 
@@ -433,7 +511,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Long press a tab — or right-click it — to connect or disconnect everything on it at once.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count Tags';
   }
 
@@ -507,7 +585,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get icloudBackupStateWaiting => 'Waiting for iCloud';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return 'Last backup: $lastModified\nStatus: $remoteState';
   }
 
@@ -553,12 +631,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearAllStatsTitle => 'Clear All Statistics';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return 'Are you sure you want to clear connection statistics for server \"$serverName\"? This action cannot be undone.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return 'Clear $serverName Statistics';
   }
 
@@ -636,7 +714,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displayCpuIndex => 'Display CPU index';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return 'Download $fileName to local?';
   }
 
@@ -687,7 +765,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'If you downloaded this app from F-Droid, it is recommended to turn off this option.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return 'File \'$file\' too large $size, max $sizeMax';
   }
 
@@ -857,12 +935,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jumpServer => 'Jump server';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return 'Jump servers not found for $serverName: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '\"$name\" already exists';
   }
 
@@ -917,7 +995,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get linuxNetTip => 'DNS servers. Empty restores the defaults';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return 'Made with ❤️ by $myGithub';
   }
 
@@ -928,7 +1006,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maxRetryCount => 'Number of server reconnections';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'Mismatch system: $system';
   }
 
@@ -978,7 +1056,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privateKey => 'Private Key';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return 'Private key [$keyId] not found.';
   }
 
@@ -1195,16 +1273,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed is installed; $latest is available. Updating replaces the whole container: $pm data is lost';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return 'Close the terminals on $name before deleting it';
   }
 
@@ -1212,7 +1290,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rootfsSubtitle => 'A Linux userland on this device';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return 'Downloads $distro $version (about $size MB) and unpacks it on this device.';
   }
 
@@ -1236,7 +1314,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeDir => 'Home';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count selected';
   }
 
@@ -1363,12 +1441,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return 'Spent time: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'All servers already exist ($duplicateCount duplicates found)';
   }
 
@@ -1383,7 +1461,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'Use system SSH';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount duplicates will be skipped';
   }
 
@@ -1391,7 +1469,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshConfigFound => 'We found SSH configuration on your system.';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return 'Found $totalCount servers';
   }
 
@@ -1407,12 +1485,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Prompt to read ~/.ssh/config on first server creation';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'Imported $count servers from SSH config';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return 'The SSH host key changed for $serverName. Only continue if you trust this server.';
   }
 
@@ -1426,12 +1504,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshKnownHostKeysTip => 'The host keys this app has accepted';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return 'A new SSH host key was received from $serverName. Review the fingerprint before trusting.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return 'Stored fingerprint: $fingerprint';
   }
 
@@ -1450,7 +1528,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cannot access SSH config file due to macOS permissions.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount servers will be imported';
   }
 
@@ -1470,7 +1548,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The suspend function requires root permission and systemd support.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return 'Switch to $val';
   }
 
@@ -1628,7 +1706,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portForward_remotePort => 'Remote Port';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return 'Delete $name?';
   }
 
@@ -1901,7 +1979,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return 'exit status $code';
   }
 
@@ -2053,12 +2131,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get geoDataRemoveFailed => 'Could not delete the data.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '$month is already installed.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**Download: $download · On-device storage: $disk.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.';
   }
 
@@ -2135,7 +2213,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Decides which filesystem the disk test measures. Empty means the login account\'s home directory.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return 'About $minutes min';
   }
 
@@ -2338,7 +2416,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Leave the password empty to keep the existing password.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func is not available over this server\'s connection.';
   }
 
@@ -2377,12 +2455,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beyondRetention => 'beyond what this agent kept';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'Agent keeps $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return 'oldest sample $time';
   }
 
@@ -2404,7 +2482,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get waitingFirstSample => 'Waiting for the first sample';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return 'at $time';
   }
 
@@ -2412,47 +2490,47 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stored => 'stored';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return 'last sample $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String ago, String time) {
     return 'Everything below is from $time, $ago.';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return 'no data before $time';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return 'Loading $range…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return 'No stored history for $metric';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count devices';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count devices · $name busiest';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$plotted of $total devices';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count sensors · $name hottest';
   }
 
@@ -2460,12 +2538,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oneDeviceAtLeast => 'At least one device stays on the chart.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$shown of $total $what';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count $what';
   }
 
@@ -2524,7 +2602,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diskAllPassed => 'all PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -2535,7 +2613,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int total, int wrong) {
     return '$wrong of $total devices';
   }
 
@@ -2543,17 +2621,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get diskSmartSortedTip => 'Sorted worst first';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return 'read $ago';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count processes';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count failing';
   }
 
@@ -2567,7 +2645,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get window => 'window';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return 'of $total';
   }
 
@@ -2582,12 +2660,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Both can be on at once. The order is the order they are dialled.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return 'Drag to change the order. $first is dialled first; if it does not answer, $second carries the session on its own.';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return 'Only $name is on, so there is nothing to fall back to.';
   }
 
@@ -2698,7 +2776,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagNewHint => 'New tag';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return 'Create #$tag';
   }
 
@@ -2706,12 +2784,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagOnThisServer => 'on this server';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count servers';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '$count on this server';
   }
 
@@ -2750,7 +2828,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2761,7 +2839,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int enabled, int total) {
     return '$total tasks · $enabled enabled';
   }
 
@@ -2781,7 +2859,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledTaskEnableNowTip => 'Off writes the line commented out.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return 'No scheduled tasks for $user. What is added here is written into that account\'s crontab.';
   }
 
@@ -2823,42 +2901,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return 'Every $minutes minutes';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return 'Every hour at :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return 'Every $hours hours';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return 'Every $hours hours at :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return 'Every day at $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return 'On weekdays at $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return 'Every $day at $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return 'Day $day of every month at $time';
   }
 
@@ -3104,4 +3182,126 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC clipboard supports Latin-1 text only.';
+
+  @override
+  String get remoteDesktopAddProfile => 'Add profile';
+
+  @override
+  String get remoteDesktopNoProfiles => 'No remote desktop profiles';
+
+  @override
+  String get remoteDesktopAdd => 'Add remote desktop';
+
+  @override
+  String get remoteDesktopEdit => 'Edit remote desktop';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.';
+
+  @override
+  String get remoteDesktopDomain => 'Domain (optional)';
+
+  @override
+  String get remoteDesktopPassword => 'Password (optional)';
+
+  @override
+  String get remoteDesktopSavePassword => 'Save password';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.';
+
+  @override
+  String get remoteDesktopShareSession => 'Share session';
+
+  @override
+  String get remoteDesktopProtocol => 'Protocol';
+
+  @override
+  String get remoteDesktopUniqueName =>
+      'Profile names must be unique for this server.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      'Classic VNC passwords are limited to 8 ASCII bytes.';
+
+  @override
+  String get remoteDesktopNameRequired => 'Enter a profile name.';
+
+  @override
+  String get remoteDesktopHostRequired => 'Enter a target host.';
+
+  @override
+  String get remoteDesktopPortRequired => 'Enter a valid port.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'Enter the RDP username.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      'Classic VNC passwords must contain ASCII characters only.';
+
+  @override
+  String get remoteDesktopCertificateRequired =>
+      'Certificate confirmation required';
+
+  @override
+  String get remoteDesktopWaiting => 'Waiting for desktop…';
+
+  @override
+  String get remoteDesktopCertificateChanged =>
+      'Remote desktop certificate changed';
+
+  @override
+  String get remoteDesktopTrustCertificate => 'Trust certificate?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      'The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.';
+
+  @override
+  String get remoteDesktopReplaceTrust => 'Replace trust';
+
+  @override
+  String get remoteDesktopTrustReconnect => 'Trust and reconnect';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return 'Delete remote desktop profile “$name”?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return 'Reconnecting ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return 'Previously trusted\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'Subject: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return 'Issuer: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return 'Valid: $start – $end';
+  }
+
+  @override
+  String appearanceThemeModeLocked(String mode) {
+    return 'This theme only supports $mode. Select another theme to change the mode.';
+  }
 }

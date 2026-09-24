@@ -1,0 +1,21 @@
+id = "amoled"
+name = "AMOLED"
+modes = ["light", "dark"]
+
+[schema]
+min = 1
+max = 1
+
+[colors]
+mode = 2
+
+[colors.palette.dark]
+surface = 0xFF000000
+surfaceDim = 0xFF000000
+surfaceBright = 0xFF202020
+surfaceContainerLowest = 0xFF000000
+surfaceContainerLow = 0xFF080808
+surfaceContainer = 0xFF101010
+surfaceContainerHigh = 0xFF181818
+surfaceContainerHighest = 0xFF202020
+surfaceTint = 0x00000000

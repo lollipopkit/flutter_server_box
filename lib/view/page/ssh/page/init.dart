@@ -126,7 +126,7 @@ extension _Init on SSHPageState {
   }
 
   void _initStoredCfg() {
-    _terminalStyle = TerminalLook.style;
+    _terminalStyle = TerminalLook.styleOf(context);
   }
 
   Future<void> _showHelp() async {

@@ -20,6 +20,16 @@ List<SettingsNode> _buildNodes() {
           icon: Icons.settings_outlined,
           page: () => const AppSettingsPage(section: SettingsSection.app),
         ),
+        // Theme and font are one page: both say what the app looks like, and
+        // which font it draws in is as much a part of that as which colour. As
+        // two leaves they were two pages that each held a group the other's
+        // name would have covered.
+        SettingsNode.leaf(
+          id: 'app.appearance',
+          title: l10n.appearanceSettings,
+          icon: Icons.style_outlined,
+          page: () => const AppSettingsPage(section: SettingsSection.appearance),
+        ),
         SettingsNode.leaf(
           id: 'app.privacy',
           title: l10n.privacy,

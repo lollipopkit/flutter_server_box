@@ -11,6 +11,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/bak/backup_service.dart';
 import 'package:server_box/data/model/app/bak/backup_source.dart';
+import 'package:server_box/data/model/app/bak/utils.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -733,10 +734,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           context.showErrDialog(e, s, libL10n.error);
           return;
         }
+        final text = str.trim();
+        if (!await _routeImport(context, text)) return;
         final (list, _) = await context.showLoadingDialog(
           fn: () => Computer.shared.start((s) {
             return json.decode(s) as List;
-          }, str),
+          }, text),
         );
         if (list == null || list.isEmpty) return;
         final snippets = <Snippet>[];
@@ -788,6 +791,40 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 }
 
 extension on _BackupPageState {
+  /// Hands an imported document to whichever reader owns it, and answers
+  /// whether that is the calling tile.
+  ///
+  /// Every import tile here takes the same dialog and the same document, so a
+  /// backup can arrive at any of them. Restoring it is what keeps that from
+  /// being an error, since the tile's own reader would answer with a cast
+  /// failure — which says what went wrong and not what to do instead.
+  ///
+  /// A document this answers false for is not the caller's to read: it was a
+  /// backup and has been restored, it could not be read and the failure is on
+  /// screen, or the page was gone before that could be decided. Every caller's
+  /// next step opens another dialog, which is why none of the three continues.
+  Future<bool> _routeImport(BuildContext context, String text) async {
+    // An encrypted envelope is not JSON, so it is recognised before anything
+    // tries to parse it.
+    if (Cryptor.isEncrypted(text)) {
+      await BackupService.restoreFromText(context, text);
+      return false;
+    }
+    final (isBackup, err) = await context.showLoadingDialog(
+      fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
+    );
+    // A context that has been deactivated cannot open the dialog every caller
+    // leads with, and `showLoadingDialog` closes the one it was reading behind
+    // on its own, so this is reachable.
+    if (!context.mounted) return false;
+    // Reported by `showLoadingDialog` in a dialog of its own already; throwing
+    // it raised a second one for the same failure.
+    if (err != null) return false;
+    if (isBackup != true) return true;
+    await BackupService.restoreFromText(context, text);
+    return false;
+  }
+
   Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
     if (!isICloudSupported) return null;
 
@@ -1086,11 +1123,13 @@ extension on _BackupPageState {
     }
 
     try {
+      text = text.trim();
+      if (!await _routeImport(context, text)) return;
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
           return list.map((e) => Spi.fromJson(e)).toList();
-        }, text.trim()),
+        }, text),
       );
       if (err != null || spis == null) return;
       final sure = await context.showRoundDialog<bool>(
@@ -1119,7 +1158,7 @@ extension on _BackupPageState {
         Toast.success(libL10n.success);
       }
     } catch (e, s) {
-      context.showErrDialog(e, s, libL10n.import);
+      if (context.mounted) context.showErrDialog(e, s, libL10n.import);
       Loggers.app.warning('Import servers failed', e, s);
     }
   }

@@ -11,8 +11,11 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/app_font.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
+import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/core/utils/local_server.dart';
+import 'package:server_box/data/model/app/theme_style.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -21,7 +24,9 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/widget/app_background.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
+import 'package:server_box/view/widget/theme_splash.dart';
 
 part 'intro.dart';
 
@@ -35,17 +40,92 @@ Widget _buildHomeWithWindowFrame() {
 /// system, each in both brightnesses — and anything not passed here is a
 /// property three of them silently do not have.
 ThemeData _theme({Color? seed, Brightness? brightness}) {
+  final cardRadius =
+      (ThemePackages.preview.value?.cardRadius ??
+              Stores.setting.appCardRadius.fetch())
+          .clamp(0.0, 40.0);
+  final tileRadius =
+      (ThemePackages.preview.value?.tileRadius ??
+              Stores.setting.appTileRadius.fetch())
+          .clamp(0.0, 40.0);
+  final buttonRadius =
+      (ThemePackages.preview.value?.buttonRadius ??
+              Stores.setting.appButtonRadius.fetch())
+          .clamp(0.0, 40.0);
+  var colorScheme = ColorScheme.fromSeed(
+    seedColor:
+        seed ??
+        Color(
+          ThemePackages.preview.value?.seed ?? Stores.setting.colorSeed.fetch(),
+        ),
+    brightness: brightness ?? Brightness.light,
+  );
+  if (ThemePackages.preview.value != null ||
+      Stores.setting.appThemePaletteEnabled.fetch()) {
+    colorScheme = ThemePackages.applyPalette(
+      colorScheme,
+      ThemePackages.activePalette(dark: brightness == Brightness.dark),
+    );
+  }
+  final cardShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(cardRadius),
+  );
+  final tileShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(tileRadius),
+  );
+  final buttonShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(buttonRadius),
+  );
+  final buttonStyle = ButtonStyle(shape: WidgetStatePropertyAll(buttonShape));
+  final fontFamilies = AppFont.families;
+  final backgroundStyle =
+      ThemePackages.preview.value?.backgroundStyle ??
+      Stores.setting.appBackgroundStyle.fetch();
+  final backgroundPath = (ThemePackages.preview.value != null
+      ? ThemePackages.preview.value!.backgroundPath ?? ''
+      : Stores.setting.appBackgroundPath.fetch());
+  final hasBackground =
+      backgroundStyle == BackgroundStyle.gradient ||
+      (backgroundStyle == BackgroundStyle.image && backgroundPath.isNotEmpty);
+  // Resolve fonts before deriving component styles so titles and tiles keep
+  // the same fallback fonts as ordinary text.
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
-    colorSchemeSeed: seed,
+    colorScheme: colorScheme,
+    fontFamily: fontFamilies.firstOrNull,
+    fontFamilyFallback: fontFamilies.length > 1
+        ? fontFamilies.skip(1).toList()
+        : null,
+    scaffoldBackgroundColor: hasBackground ? Colors.transparent : null,
+    // The page over a background is transparent, so two of them over each
+    // other during a transition are two sets of rows on the same pixels. The
+    // background's own transitions give each moving page the background, which
+    // is what makes the arriving one cover the one below — see
+    // [AppPageTransitions]. Null without a background: an opaque page needs no
+    // help, and the platform's own transition is the right one.
+    pageTransitionsTheme: hasBackground ? AppPageTransitions.backgrounded : null,
+    cardTheme: CardThemeData(shape: cardShape, elevation: 0),
+    elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
+    filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
+    outlinedButtonTheme: OutlinedButtonThemeData(style: buttonStyle),
+    textButtonTheme: TextButtonThemeData(style: buttonStyle),
+    navigationBarTheme: NavigationBarThemeData(indicatorShape: buttonShape),
+    dialogTheme: DialogThemeData(shape: cardShape),
     // `centerTitle` for the bars that are a plain `AppBar` rather than a
     // `CustomAppBar`, which now defaults to the same thing itself.
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       scrolledUnderElevation: 0,
       centerTitle: false,
+      // A bar over a background image or a gradient is the background's as
+      // well. The page under it is transparent on purpose, and a bar resolving
+      // the scheme's `surface` — which is what Material's own default is —
+      // drew a strip of a colour the wallpaper does not have across the top of
+      // it. Null where the page has no background, so the scheme's surface is
+      // still what a bar is.
+      backgroundColor: hasBackground ? Colors.transparent : null,
     ),
-    listTileTheme: _listTileTheme,
+    listTileTheme: _listTileTheme.copyWith(shape: tileShape),
     // Material's back button is an arrow with a shaft on Android and a bare
     // `arrow_back_ios_new` on Apple — two glyphs for one control, decided by
     // the platform rather than by this app. A chevron is the one every pane,
@@ -61,7 +141,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     switchTheme: const SwitchThemeData(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     ),
-  );
+  ).fixWindowsFont;
   // Copied onto the resolved one rather than passed to the constructor: an
   // `IconThemeData` carrying only a size has a null colour, and `Icon` answers
   // a null colour with `IconThemeData.fallback()` — black, in both themes.
@@ -73,7 +153,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
   //
   // Only reaches a bare `Icon`. `AppBar`, `IconButton`, `NavigationBar` and
   // the rail each resolve a size from their own defaults and are unaffected.
-  return base.copyWith(
+  final styled = base.copyWith(
     iconTheme: base.iconTheme.copyWith(size: 19),
     // Material's bar title is `titleLarge` at 22, drawn for a page that is one
     // thing. Every bar in this app sits over a form or a list whose own rows
@@ -108,6 +188,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     // `copyWith(fontSize: 13)` applied *after* this one, so the two cannot be
     // combined — dense simply wins.
     listTileTheme: _listTileTheme.copyWith(
+      shape: tileShape,
       titleTextStyle: base.textTheme.bodyLarge?.copyWith(
         inherit: false,
         fontSize: 14,
@@ -120,6 +201,7 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
       ),
     ),
   );
+  return ThemePackages.activeTheme?.components.apply(styled) ?? styled;
 }
 
 /// A top-level function so that [ActionIconThemeData] can be `const` — a
@@ -156,10 +238,6 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
-  late final Listenable _appListenable = Listenable.merge([
-    RNodes.app,
-    Stores.setting.locale.listenable(),
-  ]);
   bool _transparentNavBarConfigured = false;
 
   @override
@@ -176,9 +254,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _appListenable,
+      listenable: Listenable.merge([
+        RNodes.app,
+        ThemePackages.preview,
+        Stores.setting.locale.listenable(),
+      ]),
       builder: (context, _) {
-        if (!Stores.setting.useSystemPrimaryColor.fetch()) {
+        if (!(ThemePackages.preview.value?.systemColor ??
+            Stores.setting.useSystemPrimaryColor.fetch())) {
           return _build(context);
         }
 
@@ -188,7 +271,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget _build(BuildContext context) {
-    final colorSeed = Color(Stores.setting.colorSeed.fetch());
+    final colorSeed = Color(
+      ThemePackages.preview.value?.seed ?? Stores.setting.colorSeed.fetch(),
+    );
 
     UIs.colorSeed = colorSeed;
     UIs.primaryColor = colorSeed;
@@ -216,7 +301,10 @@ class _MyAppState extends State<MyApp> {
           UIs.primaryColor = light.primary;
           UIs.colorSeed = light.primary;
         } else {
-          final fallbackColor = Color(Stores.setting.colorSeed.fetch());
+          final fallbackColor = Color(
+            ThemePackages.preview.value?.seed ??
+                Stores.setting.colorSeed.fetch(),
+          );
           UIs.primaryColor = fallbackColor;
           UIs.colorSeed = fallbackColor;
         }
@@ -244,13 +332,7 @@ class _MyAppState extends State<MyApp> {
     required ThemeData light,
     required ThemeData dark,
   }) {
-    final tMode = Stores.setting.themeMode.fetch();
-    // Issue #57
-    final themeMode = switch (tMode) {
-      1 || 2 => ThemeMode.values[tMode],
-      3 => ThemeMode.dark,
-      _ => ThemeMode.system,
-    };
+    final themeMode = ThemePackages.effectiveMode;
     final locale = Stores.setting.locale.fetch().toLocale;
 
     return MaterialApp(
@@ -274,7 +356,11 @@ class _MyAppState extends State<MyApp> {
         // that was picked, which the two builders above keep current whether
         // it came from the setting or from the system.
         ChartPalette.resolve(UIs.colorSeed, dark: ctx.isDark);
-        return ToastHost(child: ResponsivePoints.builder(ctx, child));
+        final content = ToastHost(child: ResponsivePoints.builder(ctx, child));
+        // The one background the whole app stands on. A page takes a copy of
+        // it while it moves, so that it covers the page below — see
+        // [AppPageTransitions].
+        return ThemeSplashGate(child: AppBackground(child: content));
       },
       locale: locale,
       localizationsDelegates: const [
@@ -286,8 +372,8 @@ class _MyAppState extends State<MyApp> {
       navigatorObservers: [AppRouteObserver.instance],
       title: BuildData.name,
       themeMode: themeMode,
-      theme: light.fixWindowsFont,
-      darkTheme: (tMode < 3 ? dark : dark.toAmoled).fixWindowsFont,
+      theme: light,
+      darkTheme: dark,
       home: FutureBuilder<List<IntroPageBuilder>>(
         future: _introFuture,
         builder: (context, snapshot) {

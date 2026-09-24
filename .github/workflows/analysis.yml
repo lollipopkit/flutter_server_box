@@ -133,9 +133,15 @@ jobs:
           # and then relies on it. Without this, a change to an entitlements
           # file ran the 45-minute build and skipped the one test guarding what
           # it changed.
-          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
+          #
+          # `docs/schemas/` because `test/unit/theme_schema_test.dart` reads the
+          # manifest schema and holds it against the parser; a schema-only
+          # change is exactly what that test is for.
+          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^macos/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$|^docs/schemas/"
           emit frontend "$shared|^monitor/frontend/|^packages/webui/"
-          emit docs "$shared|^docs/"
+          # `assets/` for the theme manifests the docs job validates against
+          # that same schema; nothing else in either job reads them.
+          emit docs "$shared|^docs/|^assets/(themes|catalog)/"
           emit website "$shared|^website/|^packages/webui/"
 
   reproducibilityCheck:
@@ -147,6 +153,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
@@ -187,6 +194,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
@@ -208,6 +216,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           persist-credentials: false
           submodules: recursive
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -256,6 +265,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -272,6 +282,18 @@ jobs:
         run: |
           npm ci
           npm run build
+      # Held against the schema that is meant to describe them. Nothing loads
+      # that file at runtime — it exists for editors — so a field renamed in the
+      # parser and not in the schema would otherwise be found by an author, in
+      # an editor, and not by anything here. The one rule the schema cannot
+      # state (a color whose key has no image) is a Dart test's, on the other
+      # side of this same file.
+      - name: Check the theme manifests against the schema
+        run: |
+          pipx run --spec check-jsonschema==0.38.2 check-jsonschema \
+            --schemafile docs/schemas/fsbt-manifest.schema.json \
+            docs/examples/aurora/manifest.toml \
+            assets/themes/*/manifest.toml
 
   website:
     name: Project website
@@ -281,6 +303,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           persist-credentials: false
           submodules: recursive
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -313,6 +336,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
@@ -381,6 +405,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
@@ -440,6 +465,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false
@@ -463,6 +489,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          lfs: true
           fetch-depth: 1
           submodules: recursive
           persist-credentials: false

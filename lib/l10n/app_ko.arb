@@ -1,5 +1,28 @@
 {
   "@@locale": "ko",
+  "appearanceSettings": "모양",
+  "appearancePreset": "테마 프리셋",
+  "appearanceThemeSchemaRange": "지원하는 테마 schema",
+  "appearanceThemeInstall": "테마 설치",
+  "appearanceThemeStore": "테마 스토어",
+  "appearanceInvalidTheme": "유효하지 않은 테마 패키지 또는 카탈로그",
+  "themeStoreRefreshFailed": "테마 카탈로그를 읽을 수 없습니다.",
+  "themeStoreDeleteTheme": "“{name}”을(를) 삭제할까요? 파일이 이 기기에서 제거됩니다. 사용 중인 테마라면 앱이 기본 테마로 돌아갑니다.",
+  "themeStoreUpdatedFmt": "{ago} 업데이트",
+  "themeStoreUpdatedJustNow": "방금 업데이트",
+  "themeStoreSortInUse": "사용 중 우선",
+  "themeStoreMakeOwnFmt": "직접 테마를 만들고 싶다면 [테마 제작 안내]({doc})를 확인해 보세요. 기여해 주셔서 감사합니다!",
+  "appearanceThemeNeedsNewerApp": "최신 버전의 앱이 필요합니다: {version}",
+  "appearanceFontFamilies": "UI 글꼴 목록",
+  "appearanceFontFamiliesTip": "한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.",
+  "appearanceFontImport": "UI 글꼴 파일 가져오기",
+  "appearanceGradient": "그라데이션",
+  "appearanceNoBackground": "배경 없음",
+  "appearanceIcons": "앱 내 아이콘",
+  "appearanceCorners": "모서리",
+  "appearanceCardCorners": "카드 모서리",
+  "appearanceTileCorners": "타일 모서리",
+  "appearanceButtonCorners": "버튼 모서리",
   "crashCollect": "진단 데이터",
   "crashCollectIntro": "ServerBox는 문제를 해결할 수 있도록 실행 중 발생한 일을 기록합니다. 전송할 정보의 양을 선택할 수 있습니다.",
   "crashCollectNone": "전송 안 함",
@@ -172,8 +195,12 @@
   "jumpServersNotFoundFmt": "{serverName}에 대한 점프 서버를 찾을 수 없습니다: {jumpIds}",
   "@jumpServersNotFoundFmt": {
     "placeholders": {
-      "serverName": {},
-      "jumpIds": {}
+      "serverName": {
+        "type": "String"
+      },
+      "jumpIds": {
+        "type": "String"
+      }
     }
   },
   "noJumpServerAvailable": "사용 가능한 점프 서버가 없습니다.",
@@ -197,7 +224,9 @@
   "mismatchSystem": "시스템이 일치하지 않습니다: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "미러",
@@ -278,10 +307,18 @@
   "rootfsUpdateTip": "{distro} {installed}이(가) 설치되어 있고 {latest}가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: {pm} 데이터가 사라집니다",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name}의 터미널을 닫은 뒤 삭제하세요",
@@ -560,14 +597,20 @@
   "geoDataCurrent": "이미 {month} 데이터입니다.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**다운로드: {download} · 기기 저장 공간: {disk}.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "벤치마크",
@@ -905,5 +948,52 @@
   "remoteDesktopGuideViewOnlyTip": "포인터와 키 입력 전송을 멈춰 실수로 클릭하지 않고 화면을 볼 수 있습니다.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, 다시 연결, 전체 화면은 여기에 있습니다.",
   "remoteDesktopGuidePointerTip": "손가락이 닿은 곳을 클릭하는 직접 포인터로도 여기서 전환할 수 있습니다.",
-  "remoteDesktopVncClipboardLatin1Only": "VNC 클립보드는 Latin-1 텍스트만 지원합니다."
+  "remoteDesktopVncClipboardLatin1Only": "VNC 클립보드는 Latin-1 텍스트만 지원합니다.",
+  "remoteDesktopAddProfile": "프로필 추가",
+  "remoteDesktopNoProfiles": "원격 데스크톱 프로필이 없습니다",
+  "remoteDesktopAdd": "원격 데스크톱 추가",
+  "remoteDesktopEdit": "원격 데스크톱 편집",
+  "remoteDesktopTargetTip": "대상은 SSH 서버 또는 Monitor 에이전트에서 확인됩니다. localhost는 해당 머신을 가리킵니다.",
+  "remoteDesktopDomain": "도메인(선택)",
+  "remoteDesktopPassword": "비밀번호(선택)",
+  "remoteDesktopSavePassword": "비밀번호 저장",
+  "remoteDesktopSavePasswordTip": "암호화된 데이터베이스에 저장됩니다. 백업에는 저장된 비밀번호가 포함되며, 백업 비밀번호를 설정한 경우에만 암호화됩니다.",
+  "remoteDesktopShareSession": "세션 공유",
+  "remoteDesktopProtocol": "프로토콜",
+  "remoteDesktopUniqueName": "이 서버에서는 프로필 이름이 중복될 수 없습니다.",
+  "remoteDesktopVncPasswordLength": "클래식 VNC 비밀번호는 8 ASCII 바이트로 제한됩니다.",
+  "remoteDesktopNameRequired": "프로필 이름을 입력하세요.",
+  "remoteDesktopHostRequired": "대상 호스트를 입력하세요.",
+  "remoteDesktopPortRequired": "올바른 포트를 입력하세요.",
+  "remoteDesktopUsernameRequired": "RDP 사용자 이름을 입력하세요.",
+  "remoteDesktopVncPasswordAscii": "클래식 VNC 비밀번호는 ASCII 문자만 포함할 수 있습니다.",
+  "remoteDesktopCertificateRequired": "인증서 확인이 필요합니다",
+  "remoteDesktopWaiting": "데스크톱을 기다리는 중…",
+  "remoteDesktopCertificateChanged": "원격 데스크톱 인증서가 변경되었습니다",
+  "remoteDesktopTrustCertificate": "인증서를 신뢰할까요?",
+  "remoteDesktopCertificateChangedTip": "인증서 지문이 저장된 값과 더 이상 일치하지 않습니다. 신뢰를 교체하기 전에 새 지문을 확인하세요.",
+  "remoteDesktopCertificateUnverifiedTip": "시스템이 이 인증서를 확인할 수 없습니다. 계속하기 전에 SHA-256 지문을 확인하세요.",
+  "remoteDesktopReplaceTrust": "신뢰 교체",
+  "remoteDesktopTrustReconnect": "신뢰하고 다시 연결",
+  "remoteDesktopDeleteProfile": "원격 데스크톱 프로필 “{name}”을(를) 삭제할까요?",
+  "remoteDesktopReconnectAttempt": "다시 연결하는 중 ({attempt}/3)…",
+  "remoteDesktopPreviousCertificate": "이전에 신뢰한 지문\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "주체: {subject}",
+  "remoteDesktopCertificateIssuer": "발급자: {issuer}",
+  "remoteDesktopCertificateValidity": "유효 기간: {start} – {end}",
+  "appearanceThemeModeLocked": "이 테마는 {mode}만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -1,5 +1,28 @@
 {
   "@@locale": "fr",
+  "appearanceSettings": "Apparence",
+  "appearancePreset": "Thème prédéfini",
+  "appearanceThemeSchemaRange": "Schéma de thème pris en charge",
+  "appearanceThemeInstall": "Installer un thème",
+  "appearanceThemeStore": "Boutique de thèmes",
+  "appearanceInvalidTheme": "Pack de thème ou catalogue invalide",
+  "themeStoreRefreshFailed": "Impossible de lire le catalogue de thèmes.",
+  "themeStoreDeleteTheme": "Supprimer « {name} » ? Ses fichiers sont supprimés de cet appareil. S'il s'agit du thème utilisé, l'application revient au thème par défaut.",
+  "themeStoreUpdatedFmt": "mis à jour {ago}",
+  "themeStoreUpdatedJustNow": "mis à jour à l'instant",
+  "themeStoreSortInUse": "Utilisés d'abord",
+  "themeStoreMakeOwnFmt": "Vous voulez créer votre propre thème ? Voir [comment en créer un]({doc}) — merci pour votre contribution !",
+  "appearanceThemeNeedsNewerApp": "Une version plus récente de l’application est requise : {version}",
+  "appearanceFontFamilies": "Familles de polices de l’interface",
+  "appearanceFontFamiliesTip": "Un nom par ligne ; les polices sont essayées dans l’ordre.",
+  "appearanceFontImport": "Importer un fichier de police pour l’interface",
+  "appearanceGradient": "Dégradé",
+  "appearanceNoBackground": "Sans arrière-plan",
+  "appearanceIcons": "Icônes dans l’application",
+  "appearanceCorners": "Coins",
+  "appearanceCardCorners": "Coins des cartes",
+  "appearanceTileCorners": "Coins des éléments",
+  "appearanceButtonCorners": "Coins des boutons",
   "crashCollect": "Données de diagnostic",
   "crashCollectIntro": "ServerBox enregistre ce qui se passe pendant son fonctionnement afin de pouvoir corriger les problèmes. Choisissez la quantité d'informations envoyée.",
   "crashCollectNone": "Rien",
@@ -171,7 +194,9 @@
   "mismatchSystem": "Système non correspondant : {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Miroir",
@@ -233,10 +258,18 @@
   "rootfsUpdateTip": "{distro} {installed} est installé, {latest} est disponible. La mise à jour remplace tout le conteneur : les données {pm} sont perdues",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Ferme les terminaux de {name} avant de le supprimer",
@@ -551,14 +584,20 @@
   "geoDataCurrent": "{month} est déjà installé.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Téléchargement : {download} · Stockage sur l’appareil : {disk}.** Le jeu de données complet est stocké sur cet appareil et toutes les recherches de localisation ultérieures s’effectuent localement. Aucune adresse de serveur ni activité de recherche n’est transmise au service de téléchargement.\n\nMis à jour chaque mois. Une version plus récente remplace les données installées sans conserver de copie supplémentaire. Vous pouvez les supprimer à tout moment.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Test de performances",
@@ -896,5 +935,97 @@
   "remoteDesktopGuideViewOnlyTip": "Arrête d'envoyer le pointeur et les touches, pour regarder sans cliquer par erreur.",
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Suppr, la reconnexion et le plein écran sont ici.",
   "remoteDesktopGuidePointerTip": "Tout comme le pointeur direct, où un doigt clique là où il touche.",
-  "remoteDesktopVncClipboardLatin1Only": "Le presse-papiers VNC ne prend en charge que le texte Latin-1."
+  "remoteDesktopVncClipboardLatin1Only": "Le presse-papiers VNC ne prend en charge que le texte Latin-1.",
+  "remoteDesktopAddProfile": "Ajouter un profil",
+  "remoteDesktopNoProfiles": "Aucun profil de bureau à distance",
+  "remoteDesktopAdd": "Ajouter un bureau à distance",
+  "remoteDesktopEdit": "Modifier le bureau à distance",
+  "remoteDesktopTargetTip": "La cible est résolue depuis le serveur SSH ou l'agent Monitor. localhost désigne cette machine.",
+  "remoteDesktopDomain": "Domaine (facultatif)",
+  "remoteDesktopPassword": "Mot de passe (facultatif)",
+  "remoteDesktopSavePassword": "Enregistrer le mot de passe",
+  "remoteDesktopSavePasswordTip": "Stocké dans la base chiffrée. Les sauvegardes incluent les mots de passe enregistrés et ne sont chiffrées que si un mot de passe de sauvegarde est défini.",
+  "remoteDesktopShareSession": "Partager la session",
+  "remoteDesktopProtocol": "Protocole",
+  "remoteDesktopUniqueName": "Les noms de profil doivent être uniques pour ce serveur.",
+  "remoteDesktopVncPasswordLength": "Les mots de passe VNC classiques sont limités à 8 octets ASCII.",
+  "remoteDesktopNameRequired": "Saisissez un nom de profil.",
+  "remoteDesktopHostRequired": "Saisissez un hôte cible.",
+  "remoteDesktopPortRequired": "Saisissez un port valide.",
+  "remoteDesktopUsernameRequired": "Saisissez le nom d'utilisateur RDP.",
+  "remoteDesktopVncPasswordAscii": "Les mots de passe VNC classiques ne peuvent contenir que des caractères ASCII.",
+  "remoteDesktopCertificateRequired": "Confirmation du certificat requise",
+  "remoteDesktopWaiting": "En attente du bureau…",
+  "remoteDesktopCertificateChanged": "Le certificat du bureau à distance a changé",
+  "remoteDesktopTrustCertificate": "Faire confiance au certificat ?",
+  "remoteDesktopCertificateChangedTip": "L'empreinte du certificat ne correspond plus à la valeur enregistrée. Vérifiez la nouvelle empreinte avant de remplacer la confiance.",
+  "remoteDesktopCertificateUnverifiedTip": "Le système n'a pas pu vérifier ce certificat. Vérifiez son empreinte SHA-256 avant de continuer.",
+  "remoteDesktopReplaceTrust": "Remplacer la confiance",
+  "remoteDesktopTrustReconnect": "Faire confiance et reconnecter",
+  "remoteDesktopDeleteProfile": "Supprimer le profil de bureau à distance « {name} » ?",
+  "remoteDesktopReconnectAttempt": "Reconnexion ({attempt}/3)…",
+  "remoteDesktopPreviousCertificate": "Approuvé précédemment\n{fingerprint}",
+  "remoteDesktopCertificateSubject": "Sujet : {subject}",
+  "remoteDesktopCertificateIssuer": "Émetteur : {issuer}",
+  "remoteDesktopCertificateValidity": "Valide : {start} – {end}",
+  "appearanceThemeModeLocked": "Ce thème prend uniquement en charge le mode {mode}. Choisissez un autre thème pour changer de mode.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@diskWarningFmt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@scheduledTaskSummaryFmt": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "enabled": {
+        "type": "int"
+      }
+    }
+  }
 }
