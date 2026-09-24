@@ -23,6 +23,7 @@ pub mod gpu;
 pub mod linux;
 pub mod output;
 pub mod proc;
+pub mod pve;
 pub mod script;
 pub mod service;
 pub mod smart;
