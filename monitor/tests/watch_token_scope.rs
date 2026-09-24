@@ -21,8 +21,40 @@
 //! file API on with a real root, the terminal on — so that a refusal cannot
 //! come from a grant being switched off. With every door unlocked, 401 is the
 //! only thing left that can be doing the refusing.
+//!
+//! # Three things this file has to be careful about
+//!
+//! **It runs on a real machine, and some of these routes write.** Every entry
+//! sends a body the handler *refuses*, so the panel-login half proves the gate
+//! without changing anything; where no such body exists the route is left out
+//! and the pair below is what covers it. Two entries in the list do write —
+//! `PUT /card-order` and `DELETE /remote-access/full-access`, neither of which
+//! has any refusal between the auth check and the file — and `workspace` chdirs
+//! so that what they write is a temp directory rather than the operator's
+//! `config.toml`. One endpoint writes somewhere the chdir cannot reach,
+//! `~/.config/server_box/custom_cmds`, which is why its entry must never send
+//! the empty list that would clear it.
+//!
+//! **A missing entry is a route nothing guards.** The list has to be kept in
+//! step with `configure_api_inner` by hand, and it fell a long way behind: the
+//! containers, PVE, benchmark, snippets, AI, desktop, users, services and
+//! process endpoints all arrived without one. Nobody failing anything is what
+//! that looks like.
+//!
+//! **Two routes answer a watch token and are not the file's subject.**
+//! `POST /login` reads no bearer token at all — it is how one is obtained — and
+//! `GET /health` takes no request and checks nothing. Neither can be in the
+//! list: `/login`'s refusal is a 401, the same number the gate answers with, and
+//! `/health` answers everyone. What the file is about is therefore the three
+//! *read* endpoints of a paired device rather than "exactly three routes".
+//!
+//! **One route cannot be in the list at all.** `POST /power` validates nothing
+//! after the auth check and every body it accepts runs a command, so
+//! [`the_power_endpoint_is_refused_on_both_sides_of_its_gate`] covers it from
+//! the other side of the grant instead — where the command is never reached.
 
-use std::sync::{Arc, Once};
+use std::path::PathBuf;
+use std::sync::{Arc, Once, OnceLock};
 
 use ntex::http::Method;
 use ntex::web::test::{self as web_test, TestServer};
@@ -44,12 +76,50 @@ fn ensure_crypto_provider() {
     });
 }
 
+/// Moves the process into a directory of its own, once.
+///
+/// `config_file::CONFIG_PATH` is relative to the working directory, and cargo
+/// runs an integration test with it set to the crate root — so without this,
+/// the panel-login half of these tests really does rewrite
+/// `monitor/config.toml`: `/settings`, `/card-order` and
+/// `DELETE /remote-access/full-access` all pass validation and write. The last
+/// of those persists `full_access = false` into the operator's file, and no
+/// later run notices, because the state they assert against is built in memory.
+///
+/// Everything these endpoints write is then confined to a temp directory that
+/// is thrown away. `~/.config/server_box/custom_cmds` is *not* — it is rooted at
+/// `$HOME` — which is why the custom-command entry below sends a body the
+/// handler refuses rather than an empty list, which it accepts by clearing the
+/// directory.
+///
+/// No lock is taken: nothing here writes a file another test of this file reads
+/// back, so ordering does not matter.
+fn workspace() {
+    static DIR: OnceLock<PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let dir = std::env::temp_dir().join(format!("sbm-watch-scope-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::env::set_current_dir(&dir).unwrap();
+        dir
+    });
+}
+
 /// Every grant this agent has, switched on.
 ///
 /// Deliberately the opposite of what the other API tests do. They check that a
 /// switched-off grant refuses; this one needs every grant *on*, so that a 401
 /// cannot be a 403 wearing a different number.
 async fn permissive_state() -> Arc<AppState> {
+    state_with(true).await
+}
+
+/// The same agent with the shell grant switched off, which is the only thing
+/// that tells a 403 apart from a 401 on a route that acts on the machine.
+async fn restrictive_state() -> Arc<AppState> {
+    state_with(false).await
+}
+
+async fn state_with(full_access: bool) -> Arc<AppState> {
     ensure_crypto_provider();
     let mut config = Config {
         jwt_secret: Some(SECRET.to_string()),
@@ -57,7 +127,7 @@ async fn permissive_state() -> Arc<AppState> {
     };
     let mut remote = config.get_remote_access();
     remote.terminal.enabled = true;
-    remote.full_access = Some(true);
+    remote.full_access = Some(full_access);
     remote.fs.enabled = true;
     remote.fs.roots = vec![
         std::fs::canonicalize(std::env::current_dir().unwrap())
@@ -159,10 +229,13 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             "/api/v1/ws-ticket",
             Some(json!({ "purpose": "stream" })),
         ),
+        // An empty command, which is refused after the auth check. A body that
+        // ran would be a real `sh -c` on the machine running the suite, and
+        // proving the gate does not need one.
         (
             Method::POST,
             "/api/v1/exec",
-            Some(json!({ "cmd": "echo scoped" })),
+            Some(json!({ "cmd": "" })),
         ),
         (Method::GET, "/api/v1/capabilities", None),
         (Method::GET, "/api/v1/fs/roots", None),
@@ -192,10 +265,15 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         ),
         (Method::DELETE, "/api/v1/remote-access/full-access", None),
         (Method::GET, "/api/v1/custom-cmds", None),
+        // A command with no name, refused before any file is touched. An empty
+        // *list* is accepted — it clears the directory — and that directory is
+        // `~/.config/server_box/custom_cmds`, which is the operator's own and is
+        // executed on every extended cycle. The chdir above does not reach it,
+        // so this entry must never send one.
         (
             Method::PUT,
             "/api/v1/custom-cmds",
-            Some(json!({ "commands": [] })),
+            Some(json!({ "commands": [{ "name": "", "cmd": "scope" }] })),
         ),
         (Method::GET, "/api/v1/cron", None),
         // An empty schedule, for the reason the two push bodies below are
@@ -278,17 +356,25 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             })),
         ),
         (Method::GET, "/api/v1/settings", None),
+        // An interval of zero, which validation refuses before the write — so
+        // the panel-login half reaches the handler without rewriting
+        // `config.toml`. The workspace chdir above is the second belt: these
+        // endpoints write at all, and what they write when a body *is* accepted
+        // must not be the operator's file.
         (
             Method::PUT,
             "/api/v1/settings",
             Some(json!({
-                "interval_seconds": 60,
+                "interval_seconds": 0,
                 "idle_pause_enabled": false,
                 "rules": [],
                 "cors_allowed_origins": [],
             })),
         ),
         (Method::GET, "/api/v1/card-order", None),
+        // Accepted, and it writes: there is no refusal between the auth check
+        // and the file. What it writes lands in the temp directory the helper
+        // above chdirs into, which is the only reason this entry can be here.
         (
             Method::PUT,
             "/api/v1/card-order",
@@ -296,11 +382,122 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
         ),
         (Method::GET, "/api/v1/velocity", None),
         (Method::GET, "/api/v1/velocity/history", None),
+        // ---- Every endpoint added after this file was written had been
+        // ---- missing from it, which is the one failure mode it exists to
+        // ---- prevent: a route nothing asserts about is a route a watch token
+        // ---- may reach. Each body below is one the *handler* refuses, so the
+        // ---- panel-login half reaches it without changing anything.
+        (Method::GET, "/api/v1/pve/settings", None),
+        (
+            Method::PUT,
+            "/api/v1/pve/settings",
+            Some(json!({ "auth": "password", "url": "http://10.0.0.1" })),
+        ),
+        (Method::GET, "/api/v1/pve/resources", None),
+        (
+            Method::POST,
+            "/api/v1/pve/control",
+            Some(json!({
+                "node": "sbm-scope-test",
+                "kind": "scope-test",
+                "vmid": 1,
+                "action": "start",
+            })),
+        ),
+        (Method::GET, "/api/v1/process", None),
+        // No `start_id`, which is what stopping a process checks the pid
+        // against — without it no command is composed at all.
+        (
+            Method::POST,
+            "/api/v1/process",
+            Some(json!({ "pid": 999999999, "signal": "term" })),
+        ),
+        (Method::GET, "/api/v1/services", None),
+        // A unit that does not exist: the listing is re-read, nothing matches,
+        // and nothing is run.
+        (
+            Method::POST,
+            "/api/v1/services",
+            Some(json!({ "key": "sbm-scope-test-nonexistent", "action": "restart" })),
+        ),
+        (Method::GET, "/api/v1/users", None),
+        (
+            Method::POST,
+            "/api/v1/users",
+            Some(json!({ "action": "delete", "name": "sbm-scope-test-nonexistent" })),
+        ),
+        (Method::GET, "/api/v1/desktop", None),
+        // An empty host, refused before the lock — so the routes this agent
+        // has stored are untouched.
+        (
+            Method::PUT,
+            "/api/v1/desktop",
+            Some(json!({
+                "targets": [{ "name": "scope-test", "protocol": "vnc", "host": "", "port": 5900 }],
+            })),
+        ),
+        (Method::GET, "/api/v1/benchmark", None),
+        // An estimate, which is pure arithmetic and is answered before the
+        // grant: it starts no run and writes no row.
+        (
+            Method::POST,
+            "/api/v1/benchmark",
+            Some(json!({ "action": "estimate" })),
+        ),
+        // `run` is a required query field, so it has to be here or the
+        // extractor answers 400 before the handler sees the token.
+        (
+            Method::DELETE,
+            "/api/v1/benchmark?run=sbm-scope-test-nonexistent",
+            None,
+        ),
+        (Method::GET, "/api/v1/ai/settings", None),
+        // Both fields are required, and the address is refused before the lock.
+        (
+            Method::PUT,
+            "/api/v1/ai/settings",
+            Some(json!({ "base_url": "not-an-url", "model": "scope" })),
+        ),
+        (Method::GET, "/api/v1/ai/conversations", None),
+        // Stopping a turn is looked up in memory and answered before the grant:
+        // nothing is sent, stored or run.
+        (
+            Method::POST,
+            "/api/v1/ai/conversations",
+            Some(json!({ "action": "stop", "conversation": "sbm-scope-test-nonexistent" })),
+        ),
+        // Required query fields, for the reason `/benchmark`'s is.
+        (
+            Method::DELETE,
+            "/api/v1/ai/conversations?conversation=sbm-scope-test-nonexistent",
+            None,
+        ),
+        (
+            Method::GET,
+            "/api/v1/ai/follow?conversation=sbm-scope-test-nonexistent",
+            None,
+        ),
+        (Method::GET, "/api/v1/snippets", None),
+        // An id of the wrong shape, refused before the table is written.
+        (
+            Method::PUT,
+            "/api/v1/snippets",
+            Some(json!({ "snippets": [{ "id": "", "name": "scope", "script": "" }] })),
+        ),
+        // Planning a script returns keystrokes. Nothing in this endpoint runs
+        // anything, so an empty script is as far as a caller can get.
+        (
+            Method::POST,
+            "/api/v1/snippets/plan",
+            Some(json!({ "script": "" })),
+        ),
     ]
 }
 
+
 #[ntex::test]
 async fn a_watch_token_reads_metrics_and_nothing_else() {
+    workspace();
     let srv = test_server(permissive_state().await).await;
     let token = issue_watch_token(&srv).await;
 
@@ -329,6 +526,7 @@ async fn a_watch_token_reads_metrics_and_nothing_else() {
 
 #[ntex::test]
 async fn the_same_routes_are_reachable_with_the_panel_login() {
+    workspace();
     // Without this the test above could pass because the routes are broken
     // rather than because they are guarded — a typo in a path answers 404 to
     // every caller, and 404 is not 401, so it would have been caught; but a
@@ -348,6 +546,7 @@ async fn the_same_routes_are_reachable_with_the_panel_login() {
 
 #[ntex::test]
 async fn a_revoked_token_stops_reading() {
+    workspace();
     let srv = test_server(permissive_state().await).await;
     let token = issue_watch_token(&srv).await;
 
@@ -368,5 +567,34 @@ async fn a_revoked_token_stops_reading() {
         status_with(&srv, &token, Method::GET, "/api/v1/metrics", None).await,
         401,
         "a revoked watch token kept working",
+    );
+}
+
+/// The one route that cannot be in the list above, and why.
+///
+/// `POST /power` validates nothing after the auth check: every body it accepts
+/// is one of shutdown, reboot or suspend, and the handler runs the command. A
+/// body that fails to deserialize is a 400 for both callers, so it cannot stand
+/// in for the proof either. What can prove it is the other side of its gate:
+/// with the shell grant off, the panel login is refused *before* the command is
+/// reached — and the watch token is refused before that.
+///
+/// The same shape covers every write endpoint where no refusal exists between
+/// the auth check and the effect. Only the ones with such a refusal are in the
+/// list above, which is why the list is worth reading as a pair with this.
+#[ntex::test]
+async fn the_power_endpoint_is_refused_on_both_sides_of_its_gate() {
+    workspace();
+    let srv = test_server(restrictive_state().await).await;
+    let token = issue_watch_token(&srv).await;
+    let body = Some(json!({ "action": "shutdown", "password": null }));
+
+    let status = status_with(&srv, &token, Method::POST, "/api/v1/power", body.clone()).await;
+    assert_eq!(status, 401, "a watch token reached the power endpoint");
+
+    let status = status_with(&srv, &jwt(), Method::POST, "/api/v1/power", body).await;
+    assert_eq!(
+        status, 403,
+        "the grant refused it, so the machine was never asked to go down",
     );
 }
