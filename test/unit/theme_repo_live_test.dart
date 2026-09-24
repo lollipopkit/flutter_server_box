@@ -15,9 +15,14 @@ import 'package:server_box/core/service/theme_repo.dart';
 /// the one an app of this build would pick.
 ///
 /// ```sh
-/// SBM_E2E_THEME_CATALOG=https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/assets/catalog/repos.toml \
+/// SBM_E2E_THEME_CATALOG=https://raw.githubusercontent.com/lollipopkit/flutter_server_box/feat/theme-packages/assets/catalog/repos.toml \
 /// flutter test test/unit/theme_repo_live_test.dart
 /// ```
+///
+/// The ref is the branch the catalog is on: `main` does not serve it yet, and an
+/// address that answers 404 is what the check below is meant to catch rather
+/// than to be run against. TODO: point this at `main` once the catalog is
+/// merged.
 ///
 /// Silently skipped when unset, since it needs the network.
 void main() {
@@ -42,23 +47,28 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
     HttpOverrides.global = null;
 
-    // Read here what `store` would only read if it could: that fallback lists
-    // the same repository, so a store that came back from it would report an
-    // address that answered nothing as the source of everything below.
-    expect(
+    // Read here what `store` would only read if it could: an address that
+    // answered nothing is answered with the catalog compiled into the app — the
+    // same repositories, behind it — so a store that came back from the
+    // fallback would report the one that failed as the source of everything
+    // below, and a non-empty list of repositories cannot tell the two apart.
+    final catalog = ThemeRepoCatalog.parse(
       await ThemePackages.download(
         catalogUrl,
         maxBytes: ThemeRepos.maxCatalogBytes,
       ),
-      isNotEmpty,
-      reason: '$catalogUrl served no catalog',
+      base: ThemePackages.httpsUri(catalogUrl),
     );
 
     final store = await ThemeRepos.store(catalogUrl);
+    // One entry per repository that answered, whatever it held, so the count is
+    // what says the store read this catalog and every repository in it.
     expect(
-      store.repos,
-      isNotEmpty,
-      reason: 'no repository answered, so nothing below was checked',
+      store.repos.length,
+      catalog.repos.length,
+      reason:
+          'the store read ${store.repos.length} of the '
+          '${catalog.repos.length} repositories $catalogUrl lists',
     );
 
     final root = await Directory.systemTemp.createTemp('fsbt-live-');
