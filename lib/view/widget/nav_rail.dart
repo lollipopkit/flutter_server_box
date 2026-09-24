@@ -203,6 +203,20 @@ class _AppNavRailState extends State<AppNavRail>
                 open,
               ),
               child: Material(
+                // TODO(fade): on a device the closing rail is seen to stay
+                // semi-transparent once it is shut, and the semi-transparency
+                // then goes. Reported, not reproduced here.
+                //
+                // Lead, read out of the SDK and not confirmed as the cause:
+                // this `Material` is `MaterialType.canvas` with no `shape`, so
+                // `Material.build` takes its fast path and hands the colour and
+                // the elevation below to an `AnimatedPhysicalModel` whose
+                // `animationDuration` is `kThemeChangeDuration` (200ms) with
+                // `animateColor: true`. Both values are then re-interpolated by
+                // that model, and it is still crossing towards what the last
+                // frame asked for after the rail's own animation has stopped.
+                // `animationDuration: Duration.zero` here was tried for it and
+                // reported not to help.
                 // Which of the two is asked of the *page*, not of the colour
                 // being painted: a page with no colour is what the fade is
                 // for, whatever the panel turns out to be. Asked of the panel,
