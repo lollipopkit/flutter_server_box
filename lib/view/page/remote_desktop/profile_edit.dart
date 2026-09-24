@@ -548,11 +548,17 @@ void _answerPassword(
   RemoteDesktopProfile profile,
   String password,
 ) {
-  if (profile.protocol == RemoteDesktopProtocol.vnc &&
-      (password.codeUnits.length > 8 ||
-          password.codeUnits.any((unit) => unit > 0x7f))) {
-    Toast.show(l10n.remoteDesktopVncPasswordLength);
-    return;
+  if (profile.protocol == RemoteDesktopProtocol.vnc) {
+    // Two limits, two answers, in the order the form checks them: a password
+    // that is both too long and non-ASCII is reported as the former.
+    if (password.codeUnits.length > 8) {
+      Toast.show(l10n.remoteDesktopVncPasswordLength);
+      return;
+    }
+    if (password.codeUnits.any((unit) => unit > 0x7f)) {
+      Toast.show(l10n.remoteDesktopVncPasswordAscii);
+      return;
+    }
   }
   dialogContext.popDialog(password);
 }

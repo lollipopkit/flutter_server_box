@@ -28,6 +28,18 @@ import 'package:webdav_client_plus/webdav_client_plus.dart';
 /// own.
 enum BackupSection { sync, import }
 
+/// What a document out of an import dialog turned out to be.
+enum _ImportKind {
+  /// A full backup, encrypted or not. It has been restored by now.
+  backup,
+
+  /// A bare list, which the tile that asked for it owns.
+  list,
+
+  /// It could not be read, and the failure has been reported already.
+  failed,
+}
+
 class BackupPage extends ConsumerStatefulWidget {
   /// Null shows both, side by side, under one heading each.
   ///
@@ -589,10 +601,12 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           context.showErrDialog(e, s, libL10n.error);
           return;
         }
+        final text = str.trim();
+        if (await _importKindOf(context, text) != _ImportKind.list) return;
         final (list, _) = await context.showLoadingDialog(
           fn: () => Computer.shared.start((s) {
             return json.decode(s) as List;
-          }, str),
+          }, text),
         );
         if (list == null || list.isEmpty) return;
         final snippets = <Snippet>[];
@@ -644,6 +658,30 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 }
 
 extension on _BackupPageState {
+  /// Routes an imported document by what it is, and says which reader owns it.
+  ///
+  /// Every import tile here takes the same dialog and the same document, so a
+  /// backup can arrive at any of them. Restoring it is what keeps that from
+  /// being an error, since the tile's own reader would answer with a cast
+  /// failure — which says what went wrong and not what to do instead.
+  Future<_ImportKind> _importKindOf(BuildContext context, String text) async {
+    // An encrypted envelope is not JSON, so it is recognised before anything
+    // tries to parse it.
+    if (Cryptor.isEncrypted(text)) {
+      await BackupService.restoreFromText(context, text);
+      return _ImportKind.backup;
+    }
+    final (isBackup, err) = await context.showLoadingDialog(
+      fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
+    );
+    // Reported by `showLoadingDialog` in a dialog of its own already; throwing
+    // it raised a second one for the same failure.
+    if (err != null) return _ImportKind.failed;
+    if (isBackup != true) return _ImportKind.list;
+    if (context.mounted) await BackupService.restoreFromText(context, text);
+    return _ImportKind.backup;
+  }
+
   Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
     if (!isICloudSupported) return null;
 
@@ -893,24 +931,12 @@ extension on _BackupPageState {
 
     try {
       text = text.trim();
-      if (Cryptor.isEncrypted(text)) {
-        if (context.mounted) await BackupService.restoreFromText(context, text);
-        return;
-      }
-      final (isBackup, classificationError) = await context.showLoadingDialog(
-        fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
-      );
-      if (!context.mounted) return;
-      if (classificationError != null) throw classificationError;
-      if (isBackup == true) {
-        await BackupService.restoreFromText(context, text);
-        return;
-      }
+      if (await _importKindOf(context, text) != _ImportKind.list) return;
       final (spis, err) = await context.showLoadingDialog(
         fn: () => Computer.shared.start((val) {
           final list = json.decode(val) as List;
           return list.map((e) => Spi.fromJson(e)).toList();
-        }, text.trim()),
+        }, text),
       );
       if (err != null || spis == null) return;
       final sure = await context.showRoundDialog<bool>(
