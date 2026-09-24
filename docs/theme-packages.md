@@ -111,6 +111,33 @@ archive entries, duplicate paths, symlinks, encrypted files, and path traversal.
 A top-level table it does not know is refused rather than ignored, so a
 misspelled section is a failure instead of a setting that silently does nothing.
 
+## Manifest schema for editors
+
+The manifest is validated against a JSON Schema, so an editor reports an
+unknown table, an unknown field, a value out of range, an icon key with no such
+key, and an icon file whose name does not match its key while it is typed:
+
+```text
+https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+```
+
+A TOML editor that reads the Taplo schema directive — Taplo, Even Better TOML
+for VS Code, Tombi — attaches it from the first line of the file, which is what
+[the example](examples/aurora/manifest.toml) does:
+
+```toml
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
+```
+
+Editors that associate a schema by file name instead take the same URL in their
+own configuration. Only the directive is universal.
+
+The schema is as strict as the installer, with one exception it cannot express:
+it cannot tell that a color under `icons.colors` needs a matching entry under
+`icons.images`, which is a check across two tables. Everything else it reports
+is also what an install would have refused. It tracks the newest schema version;
+a package that declares `min = 1` still validates.
+
 ## Schema versions
 
 `schema.min` is the oldest app that may read the package, and it is what a

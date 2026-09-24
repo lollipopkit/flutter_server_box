@@ -1,3 +1,4 @@
+#:schema https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main/docs/schemas/fsbt-manifest.schema.json
 # Import this folder with Install theme > Folder. Reimport after editing.
 # To distribute it, ZIP the folder contents and rename the archive to .fsbt.
 # See ../../theme-packages.md for supported fields and asset limits.
