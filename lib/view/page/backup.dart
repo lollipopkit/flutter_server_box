@@ -38,6 +38,10 @@ enum _ImportKind {
 
   /// It could not be read, and the failure has been reported already.
   failed,
+
+  /// The page was gone before this could be decided, so there is nothing left
+  /// to hand the document to. Every caller's next step opens a dialog.
+  dismissed,
 }
 
 class BackupPage extends ConsumerStatefulWidget {
@@ -674,11 +678,15 @@ extension on _BackupPageState {
     final (isBackup, err) = await context.showLoadingDialog(
       fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
     );
+    // A context that has been deactivated cannot open the dialog every caller
+    // leads with, and `showLoadingDialog` closes the one it was reading behind
+    // on its own, so this is reachable.
+    if (!context.mounted) return _ImportKind.dismissed;
     // Reported by `showLoadingDialog` in a dialog of its own already; throwing
     // it raised a second one for the same failure.
     if (err != null) return _ImportKind.failed;
     if (isBackup != true) return _ImportKind.list;
-    if (context.mounted) await BackupService.restoreFromText(context, text);
+    await BackupService.restoreFromText(context, text);
     return _ImportKind.backup;
   }
 
