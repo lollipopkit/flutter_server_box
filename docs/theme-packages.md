@@ -168,24 +168,89 @@ The compressed archive and total extracted content are each limited to 16 MiB.
 8192 pixels on either side, and 64 megapixels. The installer decodes and checks
 images before writing an isolated, content-addressed installation directory.
 
-## Theme store catalog
+## Theme store
 
-The app accepts a user-configured HTTPS URL for a catalog with this shape:
+The store reads two levels. The first is a **catalog**: a TOML file listing
+repositories, one entry each, naming no theme and no version. The second is a
+**repository**: a git repository of TOML files, one per theme.
 
-```json
-{
-  "format": 1,
-  "themes": [
-    {
-      "name": "Amethyst",
-      "url": "https://example.org/themes/amethyst.fsbt",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
-    }
-  ]
-}
+The app's own catalog is `assets/catalog/repos.toml`, and its address is the
+default in **Settings → Appearance → Theme store URL**. That address is editable,
+because a client that cannot be pointed at another catalog serves one publisher.
+A copy of the catalog is compiled into the app and used when its address does
+not answer, so a first run with no network still offers the official
+repositories.
+
+```toml
+schema = 1
+name = "ServerBox themes"
+
+[[repo]]
+url = "https://github.com/lollipopkit/serverbox-plugins"
 ```
 
-The catalog can contain up to 100 entries and is limited to 1 MiB. Each entry
-requires a SHA-256 digest; the app verifies it before installing the package.
-Direct URL installation accepts HTTPS `.fsbt` links without a catalog. The
+Up to 100 repositories. A repository address is HTTPS, and either a git
+repository — fetched as `<address>/archive/HEAD.tar.gz` — or a tarball address
+directly. `HEAD` rather than a branch name, because which branch a repository
+calls default is not the app's to guess.
+
+The one it ships with is
+[`lollipopkit/serverbox-plugins`](https://github.com/lollipopkit/serverbox-plugins),
+which holds the official themes and the official plugins in one tree.
+
+### A theme repository
+
+`repo.toml` names the repository and its schema; one file per theme sits under
+`themes/`, named after the theme's `id`, and a file whose path and id disagree
+is refused.
+
+```toml
+schema = 1
+name = "Somebody's themes"
+```
+
+```toml
+# themes/amethyst.toml
+id = "amethyst"
+name = "Amethyst"
+description = "A purple palette"
+homepage = "https://example.org/amethyst"
+license = "MIT"
+
+[[version]]
+version = "1.2.0"
+schema_min = 1
+schema_max = 1
+url = "https://github.com/example/themes/releases/download/amethyst-1.2.0/amethyst.fsbt"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+size = 40960
+
+[[version]]
+version = "1.1.0"
+schema_min = 1
+schema_max = 1
+path = "packages/amethyst-1.1.0.fsbt"
+sha256 = "1111111111111111111111111111111111111111111111111111111111111111"
+```
+
+A version names either `url` — its own release — or `path`, a `.fsbt` carried in
+the repository's tree. `sha256` is required for the store to install it, and
+`size` is for showing what an install will cost before it starts.
+
+`schema_min` and `schema_max` are the manifest schema range the package
+declares, which is how one repository serves apps of different ages at once:
+**the app installs the newest version it can read**, not the newest version
+listed. A theme whose only versions are too new is still listed, saying so.
+
+Publishing is a release per theme per version, tagged `<id>-<version>` with the
+`.fsbt` as its asset. Adding a repository to the app's catalog is a pull request
+against this repository that adds one `[[repo]]` entry.
+
+A repository may carry a `plugins/` section beside `themes/`. This build reads
+`themes/` and skips sections it does not know rather than refusing the
+repository, so one repository can serve both.
+
+Direct URL installation accepts HTTPS `.fsbt` links without a store. The
 installer follows at most three HTTPS redirects and does not send credentials.
+The catalog is limited to 1 MiB; a repository tree to 16 MiB compressed, 64 MiB
+unpacked, and 8 MiB per entry.

@@ -2,6 +2,20 @@ abstract final class Urls {
   static const myGithub = 'https://github.com/lollipopkit';
   static const githubApi = 'https://api.github.com/repos/lollipopkit';
   static const thisRepo = '$myGithub/flutter_server_box';
+
+  /// One file out of this repository's default branch.
+  ///
+  /// `raw.githubusercontent.com`, not the API: the catalog is a file in a
+  /// public repository and the API would spend a rate limit on reading it.
+  static const rawRepo =
+      'https://raw.githubusercontent.com/lollipopkit/flutter_server_box/main';
+
+  /// The theme catalog this build ships a copy of.
+  ///
+  /// Read rather than compiled in, because it lists other people's
+  /// repositories and a new one should not need an app release. The copy in
+  /// `assets/catalog/repos.toml` is what a first run with no network uses.
+  static const themeCatalog = '$rawRepo/assets/catalog/repos.toml';
   static const githubReleasesApi = '$githubApi/flutter_server_box/releases';
   static const appStore = 'https://apps.apple.com/app/id1586449703';
   static const appHelp = '$thisRepo#-help';

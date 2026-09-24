@@ -7,6 +7,7 @@
   "appearanceThemeStore": "主題商店",
   "appearanceThemeStoreUrl": "主題目錄 URL",
   "appearanceInvalidTheme": "主題套件或目錄無效",
+  "appearanceThemeNeedsNewerApp": "需要較新版本的 App：{version}",
   "appearanceFontFamilies": "介面字型列表",
   "appearanceFontFamiliesTip": "每行一個字型名稱，依序 fallback。",
   "appearanceFontImport": "匯入介面字型檔案",
@@ -277,7 +278,9 @@
   "mismatchSystem": "系統不匹配：{system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "鏡像",
@@ -357,10 +360,18 @@
   "rootfsUpdateTip": "已安裝 {distro} {installed}，現有 {latest}。更新會重新下載並替換整個容器：{pm} 資料會遺失",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "請先關閉 {name} 上的終端，再刪除",
@@ -368,9 +379,15 @@
   "rootfsInstallTip": "下載 {distro} {version}（約 {size} MB）並解壓到本機。",
   "@rootfsInstallTip": {
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "nameAlreadyExistsFmt": "「{name}」已存在",
@@ -584,14 +601,20 @@
   "geoDataCurrent": "已經是 {month} 的資料。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**下載大小：{download} · 本機空間：{disk}。** 完整資料集儲存在本機，後續所有地理位置查詢都在本機完成，不會向下載服務傳送伺服器位址或查詢活動。\n\n資料每月更新。新版本會取代已安裝的資料，不保留額外副本；你可以隨時刪除。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "效能測試",
@@ -919,5 +942,5 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、重新連線和全螢幕都在這裡。",
   "remoteDesktopGuidePointerTip": "這裡也可以切換為直接指標：手指點到哪裡就點擊哪裡。",
   "remoteDesktopVncClipboardLatin1Only": "VNC 剪貼簿僅支援 Latin-1 文字。",
-"appearanceThemeModeLocked": "此主題僅支援{mode}。如需切換模式，請選擇其他主題。"
+  "appearanceThemeModeLocked": "此主題僅支援{mode}。如需切換模式，請選擇其他主題。"
 }

@@ -30,6 +30,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get appearanceInvalidTheme => 'Pacote de tema ou catálogo inválido';
 
   @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return 'É necessário usar uma versão mais recente do app: $version';
+  }
+
+  @override
   String get appearanceFontFamilies => 'Famílias de fontes da interface';
 
   @override
@@ -140,7 +145,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get askAiCommandInserted => 'Comando inserido no terminal';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return 'Configure $fields nas configurações.';
   }
 
@@ -360,7 +365,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get agentToolFailed => 'Falha ao executar a ferramenta.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count chamadas de ferramenta';
   }
 
@@ -488,7 +493,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Toque e segure uma aba — ou clique com o botão direito — para conectar ou desconectar tudo nela de uma vez.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count tags';
   }
 
@@ -558,7 +563,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get icloudBackupStateWaiting => 'Aguardando o iCloud';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return 'Último backup: $lastModified\nEstado: $remoteState';
   }
 
@@ -604,12 +609,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get clearAllStatsTitle => 'Limpar todas as estatísticas';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return 'Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"$serverName\"? Esta ação não pode ser desfeita.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return 'Limpar estatísticas de $serverName';
   }
 
@@ -686,7 +691,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get displayCpuIndex => 'Exiba o índice de CPU';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return 'Baixar $fileName para o local?';
   }
 
@@ -738,7 +743,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Se você baixou este aplicativo do F-Droid, é recomendado desativar esta opção.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return 'Arquivo \'$file\' muito grande \'$size\', excedendo $sizeMax';
   }
 
@@ -909,12 +914,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get jumpServer => 'Servidor de salto';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return 'Servidores de salto não encontrados para $serverName: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '\"$name\" já existe';
   }
 
@@ -969,7 +974,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Servidores DNS. Vazio repõe os valores por omissão';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return 'Feito com ❤️ por $myGithub';
   }
 
@@ -981,7 +986,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Número de tentativas de reconexão com o servidor';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'Sistema incompatível: $system';
   }
 
@@ -1031,7 +1036,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get privateKey => 'Chave privada';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return 'Chave privada [$keyId] não encontrada.';
   }
 
@@ -1247,16 +1252,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed está instalado; há $latest. Atualizar substitui todo o contentor: os dados do $pm perdem-se';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return 'Feche os terminais em $name antes de o eliminar';
   }
 
@@ -1264,7 +1269,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get rootfsSubtitle => 'Um espaço de usuário Linux neste dispositivo';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return 'Descarrega $distro $version (cerca de $size MB) e extrai neste dispositivo.';
   }
 
@@ -1288,7 +1293,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get homeDir => 'Pasta pessoal';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count selecionados';
   }
 
@@ -1417,12 +1422,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Quando ativado, o valor de temperatura é tratado como Celsius em vez de milicelsius. Ative apenas se a temperatura aparecer errada (por exemplo, 0,1 °C em vez de 58 °C).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return 'Tempo gasto: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'Todos os servidores já existem (encontradas $duplicateCount duplicatas)';
   }
 
@@ -1437,7 +1442,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'Usar o SSH do sistema';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount duplicatas serão ignoradas';
   }
 
@@ -1445,7 +1450,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sshConfigFound => 'Encontramos configuração SSH no seu sistema';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return 'Encontrados $totalCount servidores';
   }
 
@@ -1461,12 +1466,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Sugestão para ler ~/.ssh/config na criação do primeiro servidor';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'Importados $count servidores da configuração SSH';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return 'A chave de host SSH de $serverName foi alterada. Continue apenas se confiar neste servidor.';
   }
 
@@ -1480,12 +1485,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sshKnownHostKeysTip => 'As chaves de host que esta app aceitou';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return 'Uma nova chave de host SSH foi recebida de $serverName. Verifique a impressão digital antes de confiar.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return 'Impressão digital armazenada: $fingerprint';
   }
 
@@ -1505,7 +1510,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não é possível acessar o arquivo de configuração SSH devido às permissões do macOS.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount servidores serão importados';
   }
 
@@ -1525,7 +1530,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'A função de suspensão requer permissões de root e suporte do systemd.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return 'Mudar para $val';
   }
 
@@ -1684,7 +1689,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get portForward_remotePort => 'Porta remota';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return 'Excluir $name?';
   }
 
@@ -1958,7 +1963,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return 'status de saída $code';
   }
 
@@ -2111,12 +2116,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get geoDataRemoveFailed => 'Não foi possível excluir os dados.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '$month já está instalado.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**Download: $download · Armazenamento no dispositivo: $disk.** O conjunto de dados completo fica armazenado neste dispositivo e todas as consultas de localização posteriores são feitas localmente. Nenhum endereço de servidor ou atividade de consulta é enviado ao serviço de download.\n\nAtualizado mensalmente. Uma versão mais recente substitui os dados instalados sem manter uma cópia adicional. Você pode excluí-los a qualquer momento.';
   }
 
@@ -2194,7 +2199,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Determina qual sistema de arquivos será medido pelo teste de disco. Se ficar vazio, usa o diretório inicial da conta de login.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return 'Cerca de $minutes min';
   }
 
@@ -2397,7 +2402,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Deixe a senha vazia para manter a senha atual.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func não está disponível pela conexão deste servidor.';
   }
 
@@ -2436,12 +2441,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get beyondRetention => 'além do que este agente guardou';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'O agente guarda $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return 'amostra mais antiga $time';
   }
 
@@ -2463,7 +2468,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get waitingFirstSample => 'Aguardando a primeira amostra';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return 'às $time';
   }
 
@@ -2471,47 +2476,47 @@ class AppLocalizationsPt extends AppLocalizations {
   String get stored => 'armazenado';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return 'última amostra $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String time, String ago) {
     return 'Tudo abaixo é de $time, $ago.';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return 'sem dados antes de $time';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return 'Carregando $range…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return 'Sem histórico armazenado de $metric';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count dispositivos';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count dispositivos · $name o mais ocupado';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$plotted de $total dispositivos';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count sensores · $name o mais quente';
   }
 
@@ -2520,12 +2525,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Pelo menos um dispositivo permanece no gráfico.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$shown de $total $what';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count $what';
   }
 
@@ -2584,7 +2589,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get diskAllPassed => 'todos PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -2595,7 +2600,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int wrong, int total) {
     return '$wrong de $total dispositivos';
   }
 
@@ -2603,17 +2608,17 @@ class AppLocalizationsPt extends AppLocalizations {
   String get diskSmartSortedTip => 'Piores primeiro';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return 'lido $ago';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count processos';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count com falha';
   }
 
@@ -2627,7 +2632,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get window => 'janela';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return 'de $total';
   }
 
@@ -2642,12 +2647,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Os dois podem estar ligados ao mesmo tempo. A ordem é a ordem em que são chamados.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return 'Arraste para mudar a ordem. $first é chamado primeiro; se não responder, $second sustenta a sessão sozinho.';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return 'Apenas $name está ligado, então não há para onde recorrer.';
   }
 
@@ -2759,7 +2764,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tagNewHint => 'Nova tag';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return 'Criar #$tag';
   }
 
@@ -2767,12 +2772,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tagOnThisServer => 'neste servidor';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count servidores';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '$count neste servidor';
   }
 
@@ -2811,7 +2816,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2822,7 +2827,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int total, int enabled) {
     String _temp0 = intl.Intl.pluralLogic(
       total,
       locale: localeName,
@@ -2857,7 +2862,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Quando desativada, a linha é gravada como comentário.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return 'Não há tarefas agendadas para $user. O que for adicionado aqui será gravado no crontab dessa conta.';
   }
 
@@ -2900,42 +2905,42 @@ class AppLocalizationsPt extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return 'A cada $minutes minutos';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return 'A cada hora, no minuto :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return 'A cada $hours horas';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return 'A cada $hours horas, no minuto :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return 'Todos os dias às $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return 'Nos dias úteis às $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return 'Toda $day às $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return 'Todo dia $day de cada mês às $time';
   }
 

@@ -7,6 +7,7 @@
   "appearanceThemeStore": "테마 스토어",
   "appearanceThemeStoreUrl": "테마 카탈로그 URL",
   "appearanceInvalidTheme": "유효하지 않은 테마 패키지 또는 카탈로그",
+  "appearanceThemeNeedsNewerApp": "최신 버전의 앱이 필요합니다: {version}",
   "appearanceFontFamilies": "UI 글꼴 목록",
   "appearanceFontFamiliesTip": "한 줄에 글꼴 이름 하나씩 입력하세요. 위에서부터 순서대로 적용합니다.",
   "appearanceFontImport": "UI 글꼴 파일 가져오기",
@@ -187,8 +188,12 @@
   "jumpServersNotFoundFmt": "{serverName}에 대한 점프 서버를 찾을 수 없습니다: {jumpIds}",
   "@jumpServersNotFoundFmt": {
     "placeholders": {
-      "serverName": {},
-      "jumpIds": {}
+      "serverName": {
+        "type": "String"
+      },
+      "jumpIds": {
+        "type": "String"
+      }
     }
   },
   "noJumpServerAvailable": "사용 가능한 점프 서버가 없습니다.",
@@ -212,7 +217,9 @@
   "mismatchSystem": "시스템이 일치하지 않습니다: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "미러",
@@ -293,10 +300,18 @@
   "rootfsUpdateTip": "{distro} {installed}이(가) 설치되어 있고 {latest}가 있습니다. 업데이트는 컨테이너 전체를 교체합니다: {pm} 데이터가 사라집니다",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name}의 터미널을 닫은 뒤 삭제하세요",
@@ -575,14 +590,20 @@
   "geoDataCurrent": "이미 {month} 데이터입니다.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**다운로드: {download} · 기기 저장 공간: {disk}.** 전체 데이터 세트가 이 기기에 저장되며, 이후의 모든 위치 조회는 로컬에서 처리됩니다. 서버 주소나 조회 활동은 다운로드 서비스로 전송되지 않습니다.\n\n매월 업데이트됩니다. 새 버전은 설치된 데이터를 대체하며 추가 사본을 남기지 않습니다. 언제든지 삭제할 수 있습니다.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "벤치마크",
@@ -921,5 +942,19 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, 다시 연결, 전체 화면은 여기에 있습니다.",
   "remoteDesktopGuidePointerTip": "손가락이 닿은 곳을 클릭하는 직접 포인터로도 여기서 전환할 수 있습니다.",
   "remoteDesktopVncClipboardLatin1Only": "VNC 클립보드는 Latin-1 텍스트만 지원합니다.",
-"appearanceThemeModeLocked": "이 테마는 {mode}만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요."
+  "appearanceThemeModeLocked": "이 테마는 {mode}만 지원합니다. 모드를 변경하려면 다른 테마를 선택하세요.",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

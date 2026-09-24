@@ -30,6 +30,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appearanceInvalidTheme => 'テーマパッケージまたはカタログが無効です';
 
   @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return '新しいバージョンのアプリが必要です: $version';
+  }
+
+  @override
   String get appearanceFontFamilies => 'UI フォントファミリー';
 
   @override
@@ -135,7 +140,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiCommandInserted => 'コマンドをターミナルに挿入しました';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return '設定で $fields を構成してください。';
   }
 
@@ -339,7 +344,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentToolFailed => 'ツールの実行に失敗しました。';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return 'ツール呼び出し $count 件';
   }
 
@@ -459,7 +464,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navTabMenuTip => 'タブを長押し（マウスは右クリック）すると、その中のすべてをまとめて接続・切断できます。';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count 個のタグ';
   }
 
@@ -522,7 +527,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get icloudBackupStateWaiting => 'iCloud を待機中';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return '最終バックアップ: $lastModified\n状態: $remoteState';
   }
 
@@ -567,12 +572,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clearAllStatsTitle => 'すべての統計をクリア';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return 'サーバー\"$serverName\"の接続統計を削除してもよろしいですか？この操作は元に戻せません。';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return '$serverNameの統計をクリア';
   }
 
@@ -646,7 +651,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get displayCpuIndex => 'CPUインデックスを表示する';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return '$fileNameをローカルにダウンロードしますか？';
   }
 
@@ -697,7 +702,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return 'ファイル \'$file\' は大きすぎます \'$size\'、$sizeMax を超えています';
   }
 
@@ -860,12 +865,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get jumpServer => 'ジャンプサーバー';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return '$serverName の踏み台サーバーが見つかりません: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '「$name」は既に存在します';
   }
 
@@ -917,7 +922,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get linuxNetTip => 'DNS サーバー。空にすると既定値に戻ります';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return '$myGithubによって❤️で作成済み';
   }
 
@@ -928,7 +933,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get maxRetryCount => 'サーバーの再接続試行回数';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'システムが一致しません: $system';
   }
 
@@ -975,7 +980,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get privateKey => '秘密鍵';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return '秘密鍵 [$keyId] が見つかりません。';
   }
 
@@ -1176,16 +1181,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed が入っていて、$latest があります。更新はコンテナ全体を置き換えます：$pm のデータは失われます';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return '$name のターミナルを閉じてから削除してください';
   }
 
@@ -1193,7 +1198,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get rootfsSubtitle => 'この端末上の Linux ユーザーランド';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return '$distro $version（約 $size MB）をダウンロードして端末に展開します。';
   }
 
@@ -1217,7 +1222,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeDir => 'ホーム';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count 件選択';
   }
 
@@ -1337,12 +1342,12 @@ class AppLocalizationsJa extends AppLocalizations {
       '有効にすると、温度の値をミリ摂氏ではなく摂氏として扱います。温度が正しく表示されない場合（58 °C ではなく 0.1 °C と表示されるなど）にのみ有効にしてください。';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return '費した時間: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
   }
 
@@ -1357,7 +1362,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'システムの SSH を使う';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount個の重複がスキップされます';
   }
 
@@ -1365,7 +1370,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshConfigFound => 'システムにSSH設定が見つかりました。';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return '$totalCount個のサーバーが見つかりました';
   }
 
@@ -1380,12 +1385,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshConfigImportTip => '初回サーバー作成時に~/.ssh/configの読み取りを促す';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'SSH設定から$count個のサーバーをインポートしました';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return '$serverName の SSH ホスト鍵が変更されました。このサーバーを信頼できる場合のみ続行してください。';
   }
 
@@ -1399,12 +1404,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshKnownHostKeysTip => 'このアプリが受け入れたホスト鍵';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return '$serverName から新しい SSH ホスト鍵を受信しました。信頼する前にフィンガープリントを確認してください。';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return '保存済みフィンガープリント: $fingerprint';
   }
 
@@ -1421,7 +1426,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshConfigPermissionDenied => 'macOSの権限により、SSH設定ファイルにアクセスできません。';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount個のサーバーがインポートされます';
   }
 
@@ -1439,7 +1444,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get suspendTip => 'suspend機能はroot権限とsystemdのサポートが必要です。';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return '$valに切り替える';
   }
 
@@ -1587,7 +1592,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get portForward_remotePort => 'リモートポート';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return '$name を削除しますか？';
   }
 
@@ -1831,7 +1836,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return '終了ステータス $code';
   }
 
@@ -1973,12 +1978,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get geoDataRemoveFailed => 'データを削除できませんでした。';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return 'すでに $month のデータです。';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**ダウンロード：$download · 端末上の使用容量：$disk。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。';
   }
 
@@ -2053,7 +2058,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'ディスクテストで測定するファイルシステムを決定します。空欄の場合はログインアカウントのホームディレクトリを使用します。';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return '約 $minutes 分';
   }
 
@@ -2246,7 +2251,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get userPasswordEditTip => '現在のパスワードを保持する場合は空のままにします。';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func はこのサーバーの接続方法では利用できません。';
   }
 
@@ -2285,12 +2290,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get beyondRetention => 'この agent の保持期間より前';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'agent の保持期間は $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return '最も古い取得は $time';
   }
 
@@ -2311,7 +2316,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get waitingFirstSample => '最初の取得を待っています';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return '$time 時点';
   }
 
@@ -2319,47 +2324,47 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stored => '保存済み';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return '最新の取得は$ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String time, String ago) {
     return '以下はすべて $time 時点（$ago）の値です。';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return '$time より前のデータはありません';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return '$range を読み込み中…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return '$metric の保存された履歴はありません';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count 台のデバイス';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count 台のデバイス · 最も負荷が高いのは $name';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$total 台中 $plotted 台';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return 'センサー $count 個 · 最高は $name';
   }
 
@@ -2367,12 +2372,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get oneDeviceAtLeast => 'グラフには少なくとも 1 台を残します。';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$what $total 件中 $shown 件';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$what $count 件';
   }
 
@@ -2431,12 +2436,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diskAllPassed => 'すべて PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '警告 $count 件';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int wrong, int total) {
     return '$total 台中 $wrong 台';
   }
 
@@ -2444,17 +2449,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diskSmartSortedTip => '悪い順';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return '$agoに取得';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count 個のプロセス';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count 台が異常';
   }
 
@@ -2468,7 +2473,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get window => '期間';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return '$total 中';
   }
 
@@ -2482,12 +2487,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connectionTip => '両方を同時に有効にできます。並び順が接続を試す順序です。';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return 'ドラッグで順序を変更できます。最初に $first を試し、応答がなければ $second がセッションを引き受けます。';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return '$name だけが有効なので、切り替え先はありません。';
   }
 
@@ -2592,7 +2597,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tagNewHint => '新しいタグ';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return '#$tag を作成';
   }
 
@@ -2600,12 +2605,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tagOnThisServer => 'このサーバー';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count 台のサーバー';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return 'このサーバーに $count 個';
   }
 
@@ -2642,7 +2647,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scheduledTaskNextRun => '次回の実行';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return '$time 後';
   }
 
@@ -2653,7 +2658,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'コメントアウト済み';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int total, int enabled) {
     return '$total 件のタスク · $enabled 件が有効';
   }
 
@@ -2673,7 +2678,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get scheduledTaskEnableNowTip => 'オフにすると、この行はコメントアウトして書き込まれます。';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return '$user にスケジュールタスクはありません。ここで追加した内容は、そのアカウントの crontab に書き込まれます。';
   }
 
@@ -2715,42 +2720,42 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cronEveryMin => '毎分';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return '$minutes 分ごと';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return '毎時 :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return '$hours 時間ごと';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return '$hours 時間ごとの :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return '毎日 $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return '平日 $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return '毎週$day曜日 $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return '毎月 $day 日 $time';
   }
 

@@ -7,6 +7,7 @@
   "appearanceThemeStore": "テーマストア",
   "appearanceThemeStoreUrl": "テーマカタログの URL",
   "appearanceInvalidTheme": "テーマパッケージまたはカタログが無効です",
+  "appearanceThemeNeedsNewerApp": "新しいバージョンのアプリが必要です: {version}",
   "appearanceFontFamilies": "UI フォントファミリー",
   "appearanceFontFamiliesTip": "1 行に 1 つの名前を入力してください。上から順に使用します。",
   "appearanceFontImport": "UI フォントファイルをインポート",
@@ -186,7 +187,9 @@
   "mismatchSystem": "システムが一致しません: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "ミラー",
@@ -248,10 +251,18 @@
   "rootfsUpdateTip": "{distro} {installed} が入っていて、{latest} があります。更新はコンテナ全体を置き換えます：{pm} のデータは失われます",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name} のターミナルを閉じてから削除してください",
@@ -566,14 +577,20 @@
   "geoDataCurrent": "すでに {month} のデータです。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**ダウンロード：{download} · 端末上の使用容量：{disk}。** 完全なデータセットはこの端末に保存され、以後の位置情報検索はすべてローカルで行われます。サーバーのアドレスや検索状況がダウンロードサービスに送信されることはありません。\n\n毎月更新されます。新しいバージョンはインストール済みのデータを置き換え、追加のコピーは保持しません。データはいつでも削除できます。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "ベンチマーク",
@@ -912,5 +929,19 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、再接続、全画面表示はここにあります。",
   "remoteDesktopGuidePointerTip": "指で触れた場所をクリックするダイレクトポインターにもここで切り替えられます。",
   "remoteDesktopVncClipboardLatin1Only": "VNC のクリップボードは Latin-1 テキストのみ対応しています。",
-"appearanceThemeModeLocked": "このテーマは{mode}のみ対応しています。モードを変更するには、別のテーマを選択してください。"
+  "appearanceThemeModeLocked": "このテーマは{mode}のみ対応しています。モードを変更するには、別のテーマを選択してください。",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

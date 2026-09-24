@@ -7,6 +7,7 @@
   "appearanceThemeStore": "Loja de temas",
   "appearanceThemeStoreUrl": "URL do catálogo de temas",
   "appearanceInvalidTheme": "Pacote de tema ou catálogo inválido",
+  "appearanceThemeNeedsNewerApp": "É necessário usar uma versão mais recente do app: {version}",
   "appearanceFontFamilies": "Famílias de fontes da interface",
   "appearanceFontFamiliesTip": "Um nome por linha; as fontes são testadas pela ordem.",
   "appearanceFontImport": "Importar arquivo de fonte da interface",
@@ -186,7 +187,9 @@
   "mismatchSystem": "Sistema incompatível: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Espelho",
@@ -248,10 +251,18 @@
   "rootfsUpdateTip": "{distro} {installed} está instalado; há {latest}. Atualizar substitui todo o contentor: os dados do {pm} perdem-se",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Feche os terminais em {name} antes de o eliminar",
@@ -566,14 +577,20 @@
   "geoDataCurrent": "{month} já está instalado.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Download: {download} · Armazenamento no dispositivo: {disk}.** O conjunto de dados completo fica armazenado neste dispositivo e todas as consultas de localização posteriores são feitas localmente. Nenhum endereço de servidor ou atividade de consulta é enviado ao serviço de download.\n\nAtualizado mensalmente. Uma versão mais recente substitui os dados instalados sem manter uma cópia adicional. Você pode excluí-los a qualquer momento.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Teste de desempenho",
@@ -912,5 +929,64 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Del, reconectar e tela cheia ficam aqui.",
   "remoteDesktopGuidePointerTip": "Assim como o ponteiro direto, em que o dedo clica onde toca.",
   "remoteDesktopVncClipboardLatin1Only": "A área de transferência VNC só aceita texto Latin-1.",
-"appearanceThemeModeLocked": "Este tema só suporta {mode}. Selecione outro tema para alterar o modo."
+  "appearanceThemeModeLocked": "Este tema só suporta {mode}. Selecione outro tema para alterar o modo.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@diskWarningFmt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@scheduledTaskSummaryFmt": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "enabled": {
+        "type": "int"
+      }
+    }
+  }
 }

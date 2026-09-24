@@ -35,7 +35,9 @@ extension _App on _AppSettingsPageState {
       _buildThemePreset(),
       _buildThemeInstall(),
       _buildThemeStore(),
-      if (kDebugMode) _buildThemeStoreUrl(),
+      // No longer debug-only: it has a default now, and a catalog a user
+      // cannot repoint is one for a single publisher.
+      _buildThemeStoreUrl(),
       if (_setting.appThemePreset.fetch() == 'custom') ...[
         _buildAppIcons(),
         _buildCorners(),
@@ -253,39 +255,42 @@ extension _App on _AppSettingsPageState {
         title: Text(label),
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () async {
-          final url = _setting.themeStoreUrl.fetch();
+          final url = _setting.themeStoreUrl.fetch().trim();
           if (url.isEmpty) {
             Toast.show(l10n.appearanceThemeStoreUrl);
             return;
           }
-          final (entries, error) = await context
-              .showLoadingDialog<List<ThemeStoreEntry>>(
-                fn: () => ThemePackages.catalog(url),
-              );
+          final (store, error) = await context.showLoadingDialog<ThemeStore>(
+            fn: () => ThemeRepos.store(url),
+          );
           if (!mounted) return;
-          if (error != null || entries == null) {
+          if (error != null || store == null) {
+            Loggers.app.warning('Reading the theme store failed: $error');
             Toast.error(l10n.appearanceInvalidTheme);
             return;
           }
-          if (entries.isEmpty) {
+          if (store.items.isEmpty) {
             Toast.show(libL10n.empty);
             return;
           }
-          final selected = await context.showPickSingleDialog<ThemeStoreEntry>(
+          final selected = await context.showPickSingleDialog<ThemeStoreItem>(
             title: label,
-            items: entries,
-            display: (entry) => entry.name,
+            items: store.items,
+            display: (item) => '${item.label} · ${item.repo}',
           );
           if (selected == null || !mounted) return;
-          await _completeThemeInstall(
-            () => ThemePackages.installUrl(
-              selected.url.toString(),
-              expectedSha256: selected.sha256,
-            ),
-          );
+          // A version this build cannot read is listed rather than hidden, so
+          // the answer is "there is one" instead of silence.
+          if (!selected.installable) {
+            Toast.error(
+              l10n.appearanceThemeNeedsNewerApp(selected.newestVersion ?? ''),
+            );
+            return;
+          }
+          await _completeThemeInstall(() => ThemeRepos.install(selected));
         },
       ),
-      keywords: 'theme catalog store',
+      keywords: 'theme catalog store repository',
     );
   }
 
@@ -310,7 +315,7 @@ extension _App on _AppSettingsPageState {
           final url = await _promptAppText(
             label,
             initial: _setting.themeStoreUrl.fetch(),
-            hint: 'https://…/catalog.json',
+            hint: 'https://…/repos.toml',
           );
           if (url == null || !mounted) return;
           if (url.isNotEmpty) {

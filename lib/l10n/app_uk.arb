@@ -7,6 +7,7 @@
   "appearanceThemeStore": "Магазин тем",
   "appearanceThemeStoreUrl": "URL каталогу тем",
   "appearanceInvalidTheme": "Недійсний пакет теми або каталог",
+  "appearanceThemeNeedsNewerApp": "Потрібна новіша версія застосунку: {version}",
   "appearanceFontFamilies": "Сімейства шрифтів інтерфейсу",
   "appearanceFontFamiliesTip": "Одна назва в рядку; шрифти застосовуються за порядком.",
   "appearanceFontImport": "Імпортувати файл шрифту інтерфейсу",
@@ -187,7 +188,9 @@
   "mismatchSystem": "Невідповідна система: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Дзеркало",
@@ -249,10 +252,18 @@
   "rootfsUpdateTip": "Встановлено {distro} {installed}, доступний {latest}. Оновлення замінить весь контейнер: дані {pm} буде втрачено",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Закрийте термінали на {name}, перш ніж видаляти",
@@ -566,14 +577,20 @@
   "geoDataCurrent": "{month} вже встановлено.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Розмір завантаження: {download} · Місце на пристрої: {disk}.** Повний набір даних зберігається на цьому пристрої, а всі подальші геолокаційні запити виконуються локально. Адреси серверів і відомості про запити не передаються сервісу завантаження.\n\nОновлюється щомісяця. Нова версія замінює встановлені дані, не зберігаючи додаткову копію. Дані можна видалити будь-коли.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Тест продуктивності",
@@ -912,5 +929,47 @@
   "remoteDesktopGuideMoreTip": "Тут є Ctrl+Alt+Delete, повторне підключення та повноекранний режим.",
   "remoteDesktopGuidePointerTip": "А також прямий вказівник: палець клікає там, де торкається.",
   "remoteDesktopVncClipboardLatin1Only": "Буфер обміну VNC підтримує лише текст у кодуванні Latin-1.",
-"appearanceThemeModeLocked": "Ця тема підтримує лише режим «{mode}». Щоб змінити режим, виберіть іншу тему."
+  "appearanceThemeModeLocked": "Ця тема підтримує лише режим «{mode}». Щоб змінити режим, виберіть іншу тему.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

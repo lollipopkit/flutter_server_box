@@ -22,6 +22,7 @@ import 'package:server_box/core/service/crash_report.dart';
 import 'package:server_box/core/service/diagnostics_upload.dart';
 import 'package:server_box/core/service/geo_data.dart';
 import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/core/service/theme_repo.dart';
 import 'package:server_box/core/utils/linux_seed.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/logo_url.dart';

@@ -30,6 +30,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get appearanceInvalidTheme => 'Paket tema atau katalog tidak valid';
 
   @override
+  String appearanceThemeNeedsNewerApp(String version) {
+    return 'Memerlukan aplikasi versi lebih baru: $version';
+  }
+
+  @override
   String get appearanceFontFamilies => 'Daftar keluarga font antarmuka';
 
   @override
@@ -140,7 +145,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiCommandInserted => 'Perintah dimasukkan ke terminal';
 
   @override
-  String askAiConfigMissing(Object fields) {
+  String askAiConfigMissing(String fields) {
     return 'Harap konfigurasikan $fields di Pengaturan.';
   }
 
@@ -360,7 +365,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentToolFailed => 'Eksekusi alat gagal.';
 
   @override
-  String agentToolCallsFmt(Object count) {
+  String agentToolCallsFmt(int count) {
     return '$count panggilan alat';
   }
 
@@ -487,7 +492,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Tekan lama sebuah tab — atau klik kanan — untuk menghubungkan atau memutuskan semuanya sekaligus.';
 
   @override
-  String nTags(Object count) {
+  String nTags(int count) {
     return '$count tag';
   }
 
@@ -555,7 +560,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get icloudBackupStateWaiting => 'Menunggu iCloud';
 
   @override
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+  String icloudBackupStatusSummary(String lastModified, String remoteState) {
     return 'Cadangan terakhir: $lastModified\nStatus: $remoteState';
   }
 
@@ -601,12 +606,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get clearAllStatsTitle => 'Hapus Semua Statistik';
 
   @override
-  String clearServerStatsContent(Object serverName) {
+  String clearServerStatsContent(String serverName) {
     return 'Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"$serverName\"? Tindakan ini tidak dapat dibatalkan.';
   }
 
   @override
-  String clearServerStatsTitle(Object serverName) {
+  String clearServerStatsTitle(String serverName) {
     return 'Hapus Statistik $serverName';
   }
 
@@ -684,7 +689,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get displayCpuIndex => 'Tampilkan indeks CPU';
 
   @override
-  String dl2Local(Object fileName) {
+  String dl2Local(String fileName) {
     return 'Unduh $fileName ke lokal?';
   }
 
@@ -737,7 +742,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.';
 
   @override
-  String fileTooLarge(Object file, Object size, Object sizeMax) {
+  String fileTooLarge(String file, String size, String sizeMax) {
     return 'File \'$file\' terlalu besar $size, max $sizeMax';
   }
 
@@ -907,12 +912,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get jumpServer => 'Lompat server';
 
   @override
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+  String jumpServersNotFoundFmt(String serverName, String jumpIds) {
     return 'Jump server tidak ditemukan untuk $serverName: $jumpIds';
   }
 
   @override
-  String nameAlreadyExistsFmt(Object name) {
+  String nameAlreadyExistsFmt(String name) {
     return '\"$name\" sudah ada';
   }
 
@@ -967,7 +972,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get linuxNetTip => 'Server DNS. Kosong mengembalikan bawaan';
 
   @override
-  String madeWithLove(Object myGithub) {
+  String madeWithLove(String myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }
 
@@ -978,7 +983,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get maxRetryCount => 'Jumlah penyambungan kembali server';
 
   @override
-  String mismatchSystem(Object system) {
+  String mismatchSystem(String system) {
     return 'Sistem tidak cocok: $system';
   }
 
@@ -1028,7 +1033,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get privateKey => 'Kunci Pribadi';
 
   @override
-  String privateKeyNotFoundFmt(Object keyId) {
+  String privateKeyNotFoundFmt(String keyId) {
     return 'Kunci privat [$keyId] tidak ditemukan.';
   }
 
@@ -1246,16 +1251,16 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   ) {
     return '$distro $installed terpasang, ada $latest. Pembaruan mengganti seluruh kontainer: data $pm hilang';
   }
 
   @override
-  String linuxSystemInUse(Object name) {
+  String linuxSystemInUse(String name) {
     return 'Tutup terminal di $name sebelum menghapusnya';
   }
 
@@ -1263,7 +1268,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get rootfsSubtitle => 'Lingkungan pengguna Linux di perangkat ini';
 
   @override
-  String rootfsInstallTip(Object distro, Object version, Object size) {
+  String rootfsInstallTip(String distro, String version, int size) {
     return 'Mengunduh $distro $version (sekitar $size MB) dan mengekstraknya di perangkat ini.';
   }
 
@@ -1287,7 +1292,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get homeDir => 'Beranda';
 
   @override
-  String selected(Object count) {
+  String selected(int count) {
     return '$count dipilih';
   }
 
@@ -1417,12 +1422,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Jika aktif, nilai suhu diperlakukan sebagai Celsius, bukan milicelsius. Aktifkan hanya bila suhu tampil keliru (misalnya 0,1 °C, bukan 58 °C).';
 
   @override
-  String spentTime(Object time) {
+  String spentTime(String time) {
     return 'Menghabiskan waktu: $time';
   }
 
   @override
-  String sshConfigAllExist(Object duplicateCount) {
+  String sshConfigAllExist(int duplicateCount) {
     return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
   }
 
@@ -1437,7 +1442,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshConnectionModeUseSystem => 'Pakai SSH sistem';
 
   @override
-  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+  String sshConfigDuplicatesSkipped(int duplicateCount) {
     return '$duplicateCount duplikat akan dilewati';
   }
 
@@ -1445,7 +1450,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshConfigFound => 'Kami menemukan konfigurasi SSH di sistem Anda';
 
   @override
-  String sshConfigFoundServers(Object totalCount) {
+  String sshConfigFoundServers(int totalCount) {
     return 'Ditemukan $totalCount server';
   }
 
@@ -1461,12 +1466,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Prompt untuk membaca ~/.ssh/config saat pembuatan server pertama';
 
   @override
-  String sshConfigImported(Object count) {
+  String sshConfigImported(int count) {
     return 'Berhasil mengimpor $count server dari konfigurasi SSH';
   }
 
   @override
-  String sshHostKeyChangedDesc(Object serverName) {
+  String sshHostKeyChangedDesc(String serverName) {
     return 'Kunci host SSH untuk $serverName telah berubah. Lanjutkan hanya jika Anda mempercayai server ini.';
   }
 
@@ -1481,12 +1486,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Kunci host yang sudah diterima aplikasi ini';
 
   @override
-  String sshHostKeyNewDesc(Object serverName) {
+  String sshHostKeyNewDesc(String serverName) {
     return 'Kunci host SSH baru diterima dari $serverName. Periksa sidik jarinya sebelum mempercayai.';
   }
 
   @override
-  String sshHostKeyStoredFingerprint(Object fingerprint) {
+  String sshHostKeyStoredFingerprint(String fingerprint) {
     return 'Sidik jari tersimpan: $fingerprint';
   }
 
@@ -1506,7 +1511,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak dapat mengakses file konfigurasi SSH karena izin macOS.';
 
   @override
-  String sshConfigServersToImport(Object importCount) {
+  String sshConfigServersToImport(int importCount) {
     return '$importCount server akan diimpor';
   }
 
@@ -1525,7 +1530,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Fungsi penangguhan memerlukan hak akses root dan dukungan systemd.';
 
   @override
-  String switchTo(Object val) {
+  String switchTo(String val) {
     return 'Beralih ke $val';
   }
 
@@ -1683,7 +1688,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get portForward_remotePort => 'Porta jarak jauh';
 
   @override
-  String portForward_deleteConfirmFmt(Object name) {
+  String portForward_deleteConfirmFmt(String name) {
     return 'Hapus $name?';
   }
 
@@ -1949,7 +1954,7 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String serviceExitStatus(String code) {
+  String serviceExitStatus(int code) {
     return 'status keluar $code';
   }
 
@@ -2103,12 +2108,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get geoDataRemoveFailed => 'Tidak dapat menghapus data.';
 
   @override
-  String geoDataCurrent(Object month) {
+  String geoDataCurrent(String month) {
     return '$month sudah terpasang.';
   }
 
   @override
-  String geoDataConsent(Object download, Object disk) {
+  String geoDataConsent(String download, String disk) {
     return '**Unduhan: $download · Penyimpanan di perangkat: $disk.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.';
   }
 
@@ -2185,7 +2190,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Menentukan sistem file yang diukur oleh pengujian disk. Jika kosong, direktori home akun masuk akan digunakan.';
 
   @override
-  String benchmarkEstimatedTime(String minutes) {
+  String benchmarkEstimatedTime(int minutes) {
     return 'Sekitar $minutes menit';
   }
 
@@ -2388,7 +2393,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Kosongkan kata sandi untuk mempertahankan kata sandi yang ada.';
 
   @override
-  String funcUnavailableFmt(Object func) {
+  String funcUnavailableFmt(String func) {
     return '$func tidak tersedia melalui koneksi server ini.';
   }
 
@@ -2427,12 +2432,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get beyondRetention => 'lebih lama dari yang disimpan agen ini';
 
   @override
-  String agentRetentionFmt(Object kept) {
+  String agentRetentionFmt(String kept) {
     return 'Agen menyimpan $kept';
   }
 
   @override
-  String oldestSampleFmt(Object time) {
+  String oldestSampleFmt(String time) {
     return 'sampel terlama $time';
   }
 
@@ -2453,7 +2458,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get waitingFirstSample => 'Menunggu sampel pertama';
 
   @override
-  String atTimeFmt(Object time) {
+  String atTimeFmt(String time) {
     return 'pukul $time';
   }
 
@@ -2461,47 +2466,47 @@ class AppLocalizationsId extends AppLocalizations {
   String get stored => 'tersimpan';
 
   @override
-  String lastSampleFmt(Object ago) {
+  String lastSampleFmt(String ago) {
     return 'sampel terakhir $ago';
   }
 
   @override
-  String staleSinceFmt(Object ago, Object time) {
+  String staleSinceFmt(String time, String ago) {
     return 'Semua di bawah ini berasal dari $time, $ago.';
   }
 
   @override
-  String noDataBeforeFmt(Object time) {
+  String noDataBeforeFmt(String time) {
     return 'tidak ada data sebelum $time';
   }
 
   @override
-  String loadingRangeFmt(Object range) {
+  String loadingRangeFmt(String range) {
     return 'Memuat $range…';
   }
 
   @override
-  String noStoredHistoryFor(Object metric) {
+  String noStoredHistoryFor(String metric) {
     return 'Tidak ada riwayat tersimpan untuk $metric';
   }
 
   @override
-  String devicesFmt(Object count) {
+  String devicesFmt(int count) {
     return '$count perangkat';
   }
 
   @override
-  String devicesBusiestFmt(Object count, Object name) {
+  String devicesBusiestFmt(int count, String name) {
     return '$count perangkat · $name tersibuk';
   }
 
   @override
-  String devicesPlottedFmt(Object plotted, Object total) {
+  String devicesPlottedFmt(int plotted, int total) {
     return '$plotted dari $total perangkat';
   }
 
   @override
-  String sensorsHottestFmt(Object count, Object name) {
+  String sensorsHottestFmt(int count, String name) {
     return '$count sensor · $name paling panas';
   }
 
@@ -2510,12 +2515,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Setidaknya satu perangkat tetap ada di grafik.';
 
   @override
-  String shownOfFmt(Object shown, Object total, Object what) {
+  String shownOfFmt(int shown, int total, String what) {
     return '$shown dari $total $what';
   }
 
   @override
-  String countOfFmt(Object count, Object what) {
+  String countOfFmt(int count, String what) {
     return '$count $what';
   }
 
@@ -2574,12 +2579,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskAllPassed => 'semua PASSED';
 
   @override
-  String diskWarningFmt(num count) {
+  String diskWarningFmt(int count) {
     return '$count peringatan';
   }
 
   @override
-  String diskWrongOfFmt(Object total, Object wrong) {
+  String diskWrongOfFmt(int wrong, int total) {
     return '$wrong dari $total perangkat';
   }
 
@@ -2587,17 +2592,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskSmartSortedTip => 'Terburuk lebih dulu';
 
   @override
-  String readAgoFmt(Object ago) {
+  String readAgoFmt(String ago) {
     return 'dibaca $ago';
   }
 
   @override
-  String processesFmt(Object count) {
+  String processesFmt(int count) {
     return '$count proses';
   }
 
   @override
-  String diskFailingFmt(Object count) {
+  String diskFailingFmt(int count) {
     return '$count bermasalah';
   }
 
@@ -2611,7 +2616,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get window => 'jendela';
 
   @override
-  String ofFmt(Object total) {
+  String ofFmt(String total) {
     return 'dari $total';
   }
 
@@ -2626,12 +2631,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Keduanya bisa aktif bersamaan. Urutannya adalah urutan pemanggilan.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
+  String transportOrderFmt(String first, String second) {
     return 'Seret untuk mengubah urutan. $first dipanggil lebih dulu; jika tidak menjawab, $second menanggung sesi sendirian.';
   }
 
   @override
-  String transportOnlyFmt(Object name) {
+  String transportOnlyFmt(String name) {
     return 'Hanya $name yang aktif, jadi tidak ada cadangan.';
   }
 
@@ -2743,7 +2748,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get tagNewHint => 'Tag baru';
 
   @override
-  String tagCreateFmt(Object tag) {
+  String tagCreateFmt(String tag) {
     return 'Buat #$tag';
   }
 
@@ -2751,12 +2756,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get tagOnThisServer => 'di server ini';
 
   @override
-  String tagServersFmt(Object count) {
+  String tagServersFmt(int count) {
     return '$count server';
   }
 
   @override
-  String tagOnThisServerFmt(Object count) {
+  String tagOnThisServerFmt(int count) {
     return '$count di server ini';
   }
 
@@ -2795,7 +2800,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get scheduledTaskNextRun => 'Next run';
 
   @override
-  String scheduledTaskNextInFmt(Object time) {
+  String scheduledTaskNextInFmt(String time) {
     return 'in $time';
   }
 
@@ -2806,7 +2811,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get scheduledTaskCommentedOut => 'Commented out';
 
   @override
-  String scheduledTaskSummaryFmt(num enabled, num total) {
+  String scheduledTaskSummaryFmt(int total, int enabled) {
     return '$total tugas · $enabled aktif';
   }
 
@@ -2827,7 +2832,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Jika dimatikan, baris akan ditulis sebagai komentar.';
 
   @override
-  String scheduledTaskEmptyFmt(Object user) {
+  String scheduledTaskEmptyFmt(String user) {
     return 'Tidak ada tugas terjadwal untuk $user. Yang ditambahkan di sini akan ditulis ke crontab akun tersebut.';
   }
 
@@ -2870,42 +2875,42 @@ class AppLocalizationsId extends AppLocalizations {
   String get cronEveryMin => 'Every minute';
 
   @override
-  String cronEveryMinsFmt(Object minutes) {
+  String cronEveryMinsFmt(int minutes) {
     return 'Setiap $minutes menit';
   }
 
   @override
-  String cronHourlyAtFmt(Object minute) {
+  String cronHourlyAtFmt(String minute) {
     return 'Setiap jam pada menit :$minute';
   }
 
   @override
-  String cronEveryHoursFmt(Object hours) {
+  String cronEveryHoursFmt(int hours) {
     return 'Setiap $hours jam';
   }
 
   @override
-  String cronEveryHoursAtFmt(Object hours, Object minute) {
+  String cronEveryHoursAtFmt(int hours, String minute) {
     return 'Setiap $hours jam pada menit :$minute';
   }
 
   @override
-  String cronDailyAtFmt(Object time) {
+  String cronDailyAtFmt(String time) {
     return 'Setiap hari pukul $time';
   }
 
   @override
-  String cronWeekdaysAtFmt(Object time) {
+  String cronWeekdaysAtFmt(String time) {
     return 'Pada hari kerja pukul $time';
   }
 
   @override
-  String cronWeekdayAtFmt(Object day, Object time) {
+  String cronWeekdayAtFmt(String day, String time) {
     return 'Setiap $day pukul $time';
   }
 
   @override
-  String cronMonthlyAtFmt(Object day, Object time) {
+  String cronMonthlyAtFmt(int day, String time) {
     return 'Tanggal $day setiap bulan pukul $time';
   }
 

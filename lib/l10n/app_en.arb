@@ -1,159 +1,640 @@
 {
   "@@locale": "en",
   "appearanceSettings": "Appearance",
+  "@appearanceSettings": {
+    "description": "User-facing label or message for appearance settings."
+  },
   "appearancePreset": "Theme preset",
+  "@appearancePreset": {
+    "description": "User-facing label or message for appearance preset."
+  },
   "appearanceThemeSchemaRange": "Supported theme schema",
+  "@appearanceThemeSchemaRange": {
+    "description": "User-facing label or message for appearance theme schema range."
+  },
   "appearanceThemeInstall": "Install theme",
+  "@appearanceThemeInstall": {
+    "description": "User-facing label or message for appearance theme install."
+  },
   "appearanceThemeStore": "Theme store",
+  "@appearanceThemeStore": {
+    "description": "User-facing label or message for appearance theme store."
+  },
   "appearanceThemeStoreUrl": "Theme catalog URL",
+  "@appearanceThemeStoreUrl": {
+    "description": "User-facing label or message for appearance theme store URL."
+  },
   "appearanceInvalidTheme": "Invalid theme package or catalog",
+  "@appearanceInvalidTheme": {
+    "description": "User-facing label or message for appearance invalid theme."
+  },
+  "appearanceThemeNeedsNewerApp": "Needs a newer app: {version}",
+  "@appearanceThemeNeedsNewerApp": {
+    "description": "Shown when a selected theme requires a newer app version. {version} is the required version.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "appearanceFontFamilies": "UI font families",
+  "@appearanceFontFamilies": {
+    "description": "User-facing label or message for appearance font families."
+  },
   "appearanceFontFamiliesTip": "One name per line; fonts are tried in order.",
+  "@appearanceFontFamiliesTip": {
+    "description": "Help text for the appearance font families setting or action."
+  },
   "appearanceFontImport": "Import UI font file",
+  "@appearanceFontImport": {
+    "description": "User-facing label or message for appearance font import."
+  },
   "appearanceGradient": "Gradient",
+  "@appearanceGradient": {
+    "description": "User-facing label or message for appearance gradient."
+  },
   "appearanceNoBackground": "No background",
+  "@appearanceNoBackground": {
+    "description": "User-facing label or message for appearance no background."
+  },
   "appearanceIcons": "In-app icons",
+  "@appearanceIcons": {
+    "description": "User-facing label or message for appearance icons."
+  },
   "appearanceCorners": "Corners",
+  "@appearanceCorners": {
+    "description": "User-facing label or message for appearance corners."
+  },
   "appearanceCardCorners": "Card corners",
+  "@appearanceCardCorners": {
+    "description": "User-facing label or message for appearance card corners."
+  },
   "appearanceTileCorners": "Tile corners",
+  "@appearanceTileCorners": {
+    "description": "User-facing label or message for appearance tile corners."
+  },
   "appearanceButtonCorners": "Button corners",
+  "@appearanceButtonCorners": {
+    "description": "User-facing label or message for appearance button corners."
+  },
   "crashCollect": "Diagnostic data",
+  "@crashCollect": {
+    "description": "User-facing label or message for crash collect."
+  },
   "crashCollectIntro": "ServerBox records what happens while it runs so problems can be fixed. Choose how much information to send.",
+  "@crashCollectIntro": {
+    "description": "Introductory text for the crash collect screen or section."
+  },
   "crashCollectNone": "Nothing",
+  "@crashCollectNone": {
+    "description": "Empty-state message for crash collect none."
+  },
   "crashCollectNoneTip": "Reports remain on this device; after a crash, you can send one manually.",
+  "@crashCollectNoneTip": {
+    "description": "Help text for the crash collect none setting or action."
+  },
   "crashCollectBasic": "Basic information",
+  "@crashCollectBasic": {
+    "description": "User-facing label or message for crash collect basic."
+  },
   "crashCollectBasicTip": "Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**",
+  "@crashCollectBasicTip": {
+    "description": "Help text for the crash collect basic setting or action."
+  },
   "crashCollectFull": "Full information",
+  "@crashCollectFull": {
+    "description": "User-facing label or message for crash collect full."
+  },
   "crashCollectFullTip": "Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**",
+  "@crashCollectFullTip": {
+    "description": "Help text for the crash collect full setting or action."
+  },
   "crashCollectFooter": "At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.",
+  "@crashCollectFooter": {
+    "description": "User-facing label or message for crash collect footer."
+  },
   "privacy": "Privacy",
+  "@privacy": {
+    "description": "User-facing label or message for privacy."
+  },
   "privacyPolicy": "Privacy policy",
+  "@privacyPolicy": {
+    "description": "User-facing label or message for privacy policy."
+  },
   "crashLastRunFailed": "ServerBox exited unexpectedly during its last run.",
+  "@crashLastRunFailed": {
+    "description": "Error message shown when crash last run failed."
+  },
   "crashReportTitle": "Crash report",
+  "@crashReportTitle": {
+    "description": "Title shown for the crash report dialog or section."
+  },
   "crashReportHint": "This is the log from the previous run. Known server names and addresses have been replaced with placeholders, but other details may remain. Please read it carefully before submitting.",
+  "@crashReportHint": {
+    "description": "Hint shown in the crash report field or section."
+  },
   "crashReportSubmit": "Copy & report",
+  "@crashReportSubmit": {
+    "description": "User-facing label or message for crash report submit."
+  },
   "preReleaseUpdates": "Receive pre-release updates",
+  "@preReleaseUpdates": {
+    "description": "User-facing label or message for pre release updates."
+  },
   "addSystemPrivateKeyTip": "Currently private keys don't exist, do you want to add the one that comes with the system (~/.ssh/id_rsa)?",
+  "@addSystemPrivateKeyTip": {
+    "description": "Help text for the add system private key setting or action."
+  },
   "added2List": "Added to task list",
+  "@added2List": {
+    "description": "Action label for added 2 list."
+  },
   "askAi": "Ask AI",
+  "@askAi": {
+    "description": "User-facing label or message for ask AI."
+  },
   "askAiAwaitingResponse": "Waiting for AI response...",
+  "@askAiAwaitingResponse": {
+    "description": "User-facing label or message for ask AI awaiting response."
+  },
   "askAiEndpointTip": "Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.",
+  "@askAiEndpointTip": {
+    "description": "Help text for the ask AI endpoint setting or action."
+  },
   "askAiProtocolTip": "Auto tries Responses, then Chat Completions.",
+  "@askAiProtocolTip": {
+    "description": "Help text for the ask AI protocol setting or action."
+  },
   "askAiCommandInserted": "Command inserted into terminal",
+  "@askAiCommandInserted": {
+    "description": "User-facing label or message for ask AI command inserted."
+  },
   "askAiConfigMissing": "Please configure {fields} in Settings.",
+  "@askAiConfigMissing": {
+    "description": "User-facing label or message for ask AI config missing.",
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
   "askAiDisclaimer": "AI may be incorrect. Review carefully before applying.",
+  "@askAiDisclaimer": {
+    "description": "User-facing label or message for ask AI disclaimer."
+  },
   "askAiInsertTerminal": "Insert into terminal",
+  "@askAiInsertTerminal": {
+    "description": "User-facing label or message for ask AI insert terminal."
+  },
   "askAiNoResponse": "No response",
+  "@askAiNoResponse": {
+    "description": "User-facing label or message for ask AI no response."
+  },
   "remoteDesktop": "Remote desktop",
+  "@remoteDesktop": {
+    "description": "User-facing label or message for remote desktop."
+  },
   "askAiAgentWelcome": "What should we do on this server?",
+  "@askAiAgentWelcome": {
+    "description": "User-facing label or message for ask AI agent welcome."
+  },
   "askAiAgentPromptHint": "Ask the Agent to inspect or fix something...",
+  "@askAiAgentPromptHint": {
+    "description": "Hint shown in the ask AI agent prompt field or section."
+  },
   "askAiAnalyzeSelectionPrompt": "Analyse the selected terminal output and explain what happened",
+  "@askAiAnalyzeSelectionPrompt": {
+    "description": "User-facing label or message for ask AI analyze selection prompt."
+  },
   "askAiTerminalContext": "Terminal context",
+  "@askAiTerminalContext": {
+    "description": "User-facing label or message for ask AI terminal context."
+  },
   "askAiReviewNeeded": "Review",
+  "@askAiReviewNeeded": {
+    "description": "User-facing label or message for ask AI review needed."
+  },
   "askAiReviewAction": "Review proposed command",
+  "@askAiReviewAction": {
+    "description": "User-facing label or message for ask AI review action."
+  },
   "askAiReviewBeforeContinuing": "Review or decline the current suggestion first",
+  "@askAiReviewBeforeContinuing": {
+    "description": "User-facing label or message for ask AI review before continuing."
+  },
   "askAiApproveRun": "Approve & run",
+  "@askAiApproveRun": {
+    "description": "User-facing label or message for ask AI approve run."
+  },
   "askAiDecline": "Decline",
+  "@askAiDecline": {
+    "description": "User-facing label or message for ask AI decline."
+  },
   "askAiActionDeclined": "The proposed command was declined.",
+  "@askAiActionDeclined": {
+    "description": "User-facing label or message for ask AI action declined."
+  },
   "askAiInterrupted": "Agent response was interrupted.",
+  "@askAiInterrupted": {
+    "description": "User-facing label or message for ask AI interrupted."
+  },
   "askAiResend": "Resend",
+  "@askAiResend": {
+    "description": "User-facing label or message for ask AI resend."
+  },
   "askAiResendTip": "Everything after this message is discarded — the replies, the commands and their results.",
+  "@askAiResendTip": {
+    "description": "Help text for the ask AI resend setting or action."
+  },
   "askAiDeleteTip": "This message and everything after it are removed — the replies, the commands and their results.",
+  "@askAiDeleteTip": {
+    "description": "Help text for the ask AI delete setting or action."
+  },
   "askAiModelTable": "Model table",
+  "@askAiModelTable": {
+    "description": "User-facing label or message for ask AI model table."
+  },
   "askAiModelTableTip": "Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.",
+  "@askAiModelTableTip": {
+    "description": "Help text for the ask AI model table setting or action."
+  },
   "askAiContextFallback": "not in the table",
+  "@askAiContextFallback": {
+    "description": "User-facing label or message for ask AI context fallback."
+  },
   "askAiCompactAt": "Summarise at",
+  "@askAiCompactAt": {
+    "description": "User-facing label or message for ask AI compact at."
+  },
   "askAiCompactAtTip": "How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.",
+  "@askAiCompactAtTip": {
+    "description": "Help text for the ask AI compact at setting or action."
+  },
   "askAiContextTokens": "Context size",
+  "@askAiContextTokens": {
+    "description": "User-facing label or message for ask AI context tokens."
+  },
   "askAiContextTokensTip": "How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.",
+  "@askAiContextTokensTip": {
+    "description": "Help text for the ask AI context tokens setting or action."
+  },
   "askAiConversationCompacted": "Earlier messages were summarised to keep the conversation going.",
+  "@askAiConversationCompacted": {
+    "description": "User-facing label or message for ask AI conversation compacted."
+  },
   "askAiRiskReadOnly": "Read-only",
+  "@askAiRiskReadOnly": {
+    "description": "User-facing label or message for ask AI risk read only."
+  },
   "askAiRiskCaution": "Changes system",
+  "@askAiRiskCaution": {
+    "description": "User-facing label or message for ask AI risk caution."
+  },
   "askAiRiskUnvetted": "Unvetted host",
+  "@askAiRiskUnvetted": {
+    "description": "User-facing label or message for ask AI risk unvetted."
+  },
   "askAiRiskDestructive": "High risk",
+  "@askAiRiskDestructive": {
+    "description": "User-facing label or message for ask AI risk destructive."
+  },
   "askAiHighRiskConfirmTitle": "Run high-risk command?",
+  "@askAiHighRiskConfirmTitle": {
+    "description": "Title shown for the ask AI high risk confirm dialog or section."
+  },
   "askAiHighRiskConfirmBody": "This command may make changes that are hard to undo. Check it carefully.",
+  "@askAiHighRiskConfirmBody": {
+    "description": "Explanatory message shown in the ask AI high risk confirm dialog or notice."
+  },
   "askAiNoCommandOutput": "Command completed without output.",
+  "@askAiNoCommandOutput": {
+    "description": "User-facing label or message for ask AI no command output."
+  },
   "askAiOutputTruncated": "Long output was truncated before it was sent back to the Agent.",
+  "@askAiOutputTruncated": {
+    "description": "User-facing label or message for ask AI output truncated."
+  },
   "askAiAutoApproved": "Auto-approved",
+  "@askAiAutoApproved": {
+    "description": "User-facing label or message for ask AI auto approved."
+  },
   "askAiAutoRunSafeCommands": "Auto-run read-only commands",
+  "@askAiAutoRunSafeCommands": {
+    "description": "User-facing label or message for ask AI auto run safe commands."
+  },
   "askAiAutoRunSafeCommandsTip": "Runs only when both the model and the local check call it read-only",
+  "@askAiAutoRunSafeCommandsTip": {
+    "description": "Help text for the ask AI auto run safe commands setting or action."
+  },
   "askAiSendOnEnter": "Enter sends",
+  "@askAiSendOnEnter": {
+    "description": "User-facing label or message for ask AI send on enter."
+  },
   "askAiSendOnEnterTip": "Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.",
+  "@askAiSendOnEnterTip": {
+    "description": "Help text for the ask AI send on enter setting or action."
+  },
   "askAiApiKeyOptional": "Leave empty for local or unauthenticated",
+  "@askAiApiKeyOptional": {
+    "description": "User-facing label or message for ask AI API key optional."
+  },
   "askAiAllowInsecure": "Allow plain HTTP",
+  "@askAiAllowInsecure": {
+    "description": "User-facing label or message for ask AI allow insecure."
+  },
   "askAiAllowInsecureTip": "Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.",
+  "@askAiAllowInsecureTip": {
+    "description": "Help text for the ask AI allow insecure setting or action."
+  },
   "askAiInsecureEndpoint": "This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.",
+  "@askAiInsecureEndpoint": {
+    "description": "User-facing label or message for ask AI insecure endpoint."
+  },
   "askAiHistory": "Conversation history",
+  "@askAiHistory": {
+    "description": "User-facing label or message for ask AI history."
+  },
   "askAiNewConversation": "New conversation",
+  "@askAiNewConversation": {
+    "description": "User-facing label or message for ask AI new conversation."
+  },
   "askAiNoHistory": "No saved conversations yet",
+  "@askAiNoHistory": {
+    "description": "User-facing label or message for ask AI no history."
+  },
   "askAiNoHistoryMessages": "No messages yet",
+  "@askAiNoHistoryMessages": {
+    "description": "User-facing label or message for ask AI no history messages."
+  },
   "askAiUntitledConversation": "Untitled",
+  "@askAiUntitledConversation": {
+    "description": "User-facing label or message for ask AI untitled conversation."
+  },
   "askAiRenameConversation": "Rename conversation",
+  "@askAiRenameConversation": {
+    "description": "User-facing label or message for ask AI rename conversation."
+  },
   "askAiDeleteConversationTitle": "Delete this conversation?",
+  "@askAiDeleteConversationTitle": {
+    "description": "Title shown for the ask AI delete conversation dialog or section."
+  },
   "askAiDeleteConversationTip": "Deletes it from this device. Cannot be undone.",
+  "@askAiDeleteConversationTip": {
+    "description": "Help text for the ask AI delete conversation setting or action."
+  },
   "askAiClearHistoryTitle": "Clear this server's Agent history?",
+  "@askAiClearHistoryTitle": {
+    "description": "Title shown for the ask AI clear history dialog or section."
+  },
   "askAiClearHistoryTip": "Every saved Agent conversation for this server will be deleted.",
+  "@askAiClearHistoryTip": {
+    "description": "Help text for the ask AI clear history setting or action."
+  },
   "askAiRestoredReview": "This command came from history. Review it again",
+  "@askAiRestoredReview": {
+    "description": "User-facing label or message for ask AI restored review."
+  },
   "agentWelcome": "What should we do across your servers?",
+  "@agentWelcome": {
+    "description": "User-facing label or message for agent welcome."
+  },
   "agentWelcomeTip": "Have the Agent diagnose a problem or carry out a task",
+  "@agentWelcomeTip": {
+    "description": "Help text for the agent welcome setting or action."
+  },
   "agentPromptHint": "Ask the Agent to inspect or operate your servers...",
+  "@agentPromptHint": {
+    "description": "Hint shown in the agent prompt field or section."
+  },
   "agentNoHistory": "No saved global Agent conversations",
+  "@agentNoHistory": {
+    "description": "User-facing label or message for agent no history."
+  },
   "agentClearHistoryTitle": "Clear global Agent history?",
+  "@agentClearHistoryTitle": {
+    "description": "Title shown for the agent clear history dialog or section."
+  },
   "agentClearHistoryTip": "All global Agent conversations will be removed from this device.",
+  "@agentClearHistoryTip": {
+    "description": "Help text for the agent clear history setting or action."
+  },
   "agentToolShell": "Shell",
+  "@agentToolShell": {
+    "description": "User-facing label or message for agent tool shell."
+  },
   "agentToolReadFile": "Read file",
+  "@agentToolReadFile": {
+    "description": "User-facing label or message for agent tool read file."
+  },
   "agentToolWriteFile": "Write file",
+  "@agentToolWriteFile": {
+    "description": "User-facing label or message for agent tool write file."
+  },
   "agentToolFailed": "Tool execution failed.",
+  "@agentToolFailed": {
+    "description": "Error message shown when agent tool failed."
+  },
   "agentToolCallsFmt": "{count} tool calls",
+  "@agentToolCallsFmt": {
+    "description": "Formatted user-facing message for agent tool calls; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "floatOverTabs": "Float over other tabs",
+  "@floatOverTabs": {
+    "description": "User-facing label or message for float over tabs."
+  },
   "agentToolSshConnect": "SSH connect",
+  "@agentToolSshConnect": {
+    "description": "User-facing label or message for agent tool SSH connect."
+  },
   "agentToolSshDisconnect": "Disconnect SSH",
+  "@agentToolSshDisconnect": {
+    "description": "User-facing label or message for agent tool SSH disconnect."
+  },
   "agentSshConnectTitle": "Connect to a new host",
+  "@agentSshConnectTitle": {
+    "description": "Title shown for the agent SSH connect dialog or section."
+  },
   "agentAuthMethod": "Authentication",
+  "@agentAuthMethod": {
+    "description": "User-facing label or message for agent auth method."
+  },
   "agentSshConnectTip": "The Agent wants an SSH connection. Enter the password here",
+  "@agentSshConnectTip": {
+    "description": "Help text for the agent SSH connect setting or action."
+  },
   "agentAdHocSessions": "Temporary connections",
+  "@agentAdHocSessions": {
+    "description": "User-facing label or message for agent ad hoc sessions."
+  },
   "agentSaveServerTitle": "Save as a server",
+  "@agentSaveServerTitle": {
+    "description": "Title shown for the agent save server dialog or section."
+  },
   "agentSaveServerTip": "This host and the password you enter are saved on this device",
+  "@agentSaveServerTip": {
+    "description": "Help text for the agent save server setting or action."
+  },
   "agentMonitorOptional": "Monitor agent (optional)",
+  "@agentMonitorOptional": {
+    "description": "User-facing label or message for agent monitor optional."
+  },
   "authFailTip": "Authentication failed. Check the details",
+  "@authFailTip": {
+    "description": "Help text for the auth fail setting or action."
+  },
   "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",
+  "@autoBackupConflict": {
+    "description": "User-facing label or message for auto backup conflict."
+  },
   "autoConnect": "Auto connect",
+  "@autoConnect": {
+    "description": "User-facing label or message for auto connect."
+  },
   "autoRun": "Auto run",
+  "@autoRun": {
+    "description": "User-facing label or message for auto run."
+  },
   "autoUpdateHomeWidget": "Automatic home widget update",
+  "@autoUpdateHomeWidget": {
+    "description": "User-facing label or message for auto update home widget."
+  },
   "availableTabs": "Available Tabs",
+  "@availableTabs": {
+    "description": "User-facing label or message for available tabs."
+  },
   "backupEncrypted": "Backup is encrypted",
+  "@backupEncrypted": {
+    "description": "User-facing label or message for backup encrypted."
+  },
   "backupNotEncrypted": "Backup is not encrypted",
+  "@backupNotEncrypted": {
+    "description": "User-facing label or message for backup not encrypted."
+  },
   "backupPassword": "Backup password",
+  "@backupPassword": {
+    "description": "User-facing label or message for backup password."
+  },
   "backupPasswordRemoved": "Backup password removed",
+  "@backupPasswordRemoved": {
+    "description": "User-facing label or message for backup password removed."
+  },
   "backupPasswordSet": "Backup password set",
+  "@backupPasswordSet": {
+    "description": "User-facing label or message for backup password set."
+  },
   "backupPasswordTip": "Set a password to encrypt backup files. Leave empty to disable encryption.",
+  "@backupPasswordTip": {
+    "description": "Help text for the backup password setting or action."
+  },
   "backupPasswordWrong": "Incorrect backup password",
+  "@backupPasswordWrong": {
+    "description": "User-facing label or message for backup password wrong."
+  },
   "connectAll": "Connect all",
+  "@connectAll": {
+    "description": "Action label for connect all."
+  },
   "disconnectAll": "Disconnect all",
+  "@disconnectAll": {
+    "description": "Action label for disconnect all."
+  },
   "distIcon": "Distribution marks",
+  "@distIcon": {
+    "description": "User-facing label or message for dist icon."
+  },
   "distIconIntroLegal": "A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.",
+  "@distIconIntroLegal": {
+    "description": "User-facing label or message for dist icon intro legal."
+  },
   "distIconTip": "Show a small mark beside each server for the system it appears to be running.",
+  "@distIconTip": {
+    "description": "Help text for the dist icon setting or action."
+  },
   "distNameMap": "Name overrides",
+  "@distNameMap": {
+    "description": "User-facing label or message for dist name map."
+  },
   "distNameMapTip": "Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.",
+  "@distNameMapTip": {
+    "description": "Help text for the dist name map setting or action."
+  },
   "logoUrl": "Logo URL",
+  "@logoUrl": {
+    "description": "User-facing label or message for logo URL."
+  },
   "logoUrlTip": "The large image at the top of a server's own page, drawn in its own colours.",
+  "@logoUrlTip": {
+    "description": "Help text for the logo URL setting or action."
+  },
   "globe": "Globe",
+  "@globe": {
+    "description": "User-facing label or message for globe."
+  },
   "locationTip": "Where this server is drawn on the globe. Latitude then longitude, in degrees — for example 39.9042, 116.4074.",
+  "@locationTip": {
+    "description": "Help text for the location setting or action."
+  },
   "markUrl": "Mark URL",
+  "@markUrl": {
+    "description": "User-facing label or message for mark URL."
+  },
   "markUrlTip": "The small mark beside a server's name in lists. Empty means none is drawn.\n\nNot the same picture as the logo",
+  "@markUrlTip": {
+    "description": "Help text for the mark URL setting or action."
+  },
   "navTabMenuTip": "Long press a tab — or right-click it — to connect or disconnect everything on it at once.",
+  "@navTabMenuTip": {
+    "description": "Help text for the nav tab menu setting or action."
+  },
   "nTags": "{count} Tags",
+  "@nTags": {
+    "description": "User-facing label or message for n tags.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "@remoteBackupPasswordRequired": {
+    "description": "User-facing label or message for remote backup password required."
+  },
   "monitorHttpsRequired": "A remote monitor agent needs HTTPS, unless HTTP is allowed for it.",
+  "@monitorHttpsRequired": {
+    "description": "User-facing label or message for monitor HTTPS required."
+  },
   "monitorAllowInsecureHttp": "Allow HTTP",
+  "@monitorAllowInsecureHttp": {
+    "description": "User-facing label or message for monitor allow insecure HTTP."
+  },
   "plainHttpTitle": "This agent is served over plain HTTP",
+  "@plainHttpTitle": {
+    "description": "Title shown for the plain HTTP dialog or section."
+  },
   "plainHttpTip": "The password and everything this app asks for would travel unencrypted. Nothing has been sent yet.",
+  "@plainHttpTip": {
+    "description": "Help text for the plain HTTP setting or action."
+  },
   "allowForThisServer": "Allow for this server",
+  "@allowForThisServer": {
+    "description": "User-facing label or message for allow for this server."
+  },
   "viewError": "View error",
+  "@viewError": {
+    "description": "Error message shown when view error."
+  },
   "monitorAllowInsecureHttpTip": "Only on a trusted private network that encrypts the transport itself, such as Tailscale",
+  "@monitorAllowInsecureHttpTip": {
+    "description": "Help text for the monitor allow insecure HTTP setting or action."
+  },
   "monitorHttpTip": "Read this server's status from a **monitor** agent's HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})",
   "@monitorHttpTip": {
+    "description": "Help text for the monitor HTTP setting or action.",
     "placeholders": {
       "url": {
         "type": "String"
@@ -161,97 +642,390 @@
     }
   },
   "backupTip": "The exported data can be encrypted with password. \nPlease keep it safe.",
+  "@backupTip": {
+    "description": "Help text for the backup setting or action."
+  },
   "icloudBackupStatusTitle": "Backup status",
+  "@icloudBackupStatusTitle": {
+    "description": "Title shown for the iCloud backup status dialog or section."
+  },
   "icloudBackupStatusLoading": "Loading iCloud backup status...",
+  "@icloudBackupStatusLoading": {
+    "description": "Status message shown while iCloud backup status loading."
+  },
   "icloudBackupStatusError": "Unable to read iCloud backup metadata",
+  "@icloudBackupStatusError": {
+    "description": "Error message shown when iCloud backup status error."
+  },
   "icloudBackupStatusEmpty": "No iCloud backup file found yet",
+  "@icloudBackupStatusEmpty": {
+    "description": "Empty-state message for iCloud backup status empty."
+  },
   "icloudBackupStateUploading": "Uploading",
+  "@icloudBackupStateUploading": {
+    "description": "User-facing label or message for iCloud backup state uploading."
+  },
   "icloudBackupStateConflict": "Conflict detected",
+  "@icloudBackupStateConflict": {
+    "description": "User-facing label or message for iCloud backup state conflict."
+  },
   "icloudBackupStateUploaded": "Uploaded",
+  "@icloudBackupStateUploaded": {
+    "description": "User-facing label or message for iCloud backup state uploaded."
+  },
   "icloudBackupStateWaiting": "Waiting for iCloud",
+  "@icloudBackupStateWaiting": {
+    "description": "User-facing label or message for iCloud backup state waiting."
+  },
   "icloudBackupStatusSummary": "Last backup: {lastModified}\nStatus: {remoteState}",
+  "@icloudBackupStatusSummary": {
+    "description": "User-facing label or message for iCloud backup status summary.",
+    "placeholders": {
+      "lastModified": {
+        "type": "String"
+      },
+      "remoteState": {
+        "type": "String"
+      }
+    }
+  },
   "bgRun": "Run in background",
+  "@bgRun": {
+    "description": "User-facing label or message for bg run."
+  },
   "bgRunTip": "This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".",
+  "@bgRunTip": {
+    "description": "Help text for the bg run setting or action."
+  },
   "trayReadings": "Readings",
+  "@trayReadings": {
+    "description": "User-facing label or message for tray readings."
+  },
   "trayChart": "Chart",
+  "@trayChart": {
+    "description": "User-facing label or message for tray chart."
+  },
   "trayChartNone": "None",
+  "@trayChartNone": {
+    "description": "Empty-state message for tray chart none."
+  },
   "trayCompact": "Compact rows",
+  "@trayCompact": {
+    "description": "User-facing label or message for tray compact."
+  },
   "trayCompactTip": "One line per server, without the chart. Linux always uses a single-line layout because its panel menu is sent over D-Bus, which carries a label rather than a custom layout; it may still include the selected chart as an image.",
+  "@trayCompactTip": {
+    "description": "Help text for the tray compact setting or action."
+  },
   "trayKeepRunning": "Keep running in the tray",
+  "@trayKeepRunning": {
+    "description": "Status message shown while tray keep running."
+  },
   "trayKeepRunningTip": "Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.",
+  "@trayKeepRunningTip": {
+    "description": "Help text for the tray keep running setting or action."
+  },
   "bgRunNeedsNotification": "Running in the background needs an ongoing notification, and this app has no notification permission. Tap to allow notifications.",
+  "@bgRunNeedsNotification": {
+    "description": "User-facing label or message for bg run needs notification."
+  },
   "clearAllStatsContent": "Are you sure you want to clear all server connection statistics? This action cannot be undone.",
+  "@clearAllStatsContent": {
+    "description": "Action label for clear all stats content."
+  },
   "clearAllStatsTitle": "Clear All Statistics",
+  "@clearAllStatsTitle": {
+    "description": "Title shown for the clear all stats dialog or section."
+  },
   "clearServerStatsContent": "Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.",
+  "@clearServerStatsContent": {
+    "description": "Action label for clear server stats content.",
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
   "clearServerStatsTitle": "Clear {serverName} Statistics",
+  "@clearServerStatsTitle": {
+    "description": "Title shown for the clear server stats dialog or section.",
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
   "clearThisServerStats": "Clear This Server Statistics",
+  "@clearThisServerStats": {
+    "description": "Action label for clear this server stats."
+  },
   "closeAfterSave": "Save and close",
+  "@closeAfterSave": {
+    "description": "Action label for close after save."
+  },
   "collapseUITip": "Whether to collapse long lists present in the UI by default",
+  "@collapseUITip": {
+    "description": "Help text for the collapse UI setting or action."
+  },
   "connectionDetails": "Connection Details",
+  "@connectionDetails": {
+    "description": "Action label for connection details."
+  },
   "connectionStats": "Connection Statistics",
+  "@connectionStats": {
+    "description": "Action label for connection stats."
+  },
   "connectionStatsDesc": "View server connection success rate and history",
+  "@connectionStatsDesc": {
+    "description": "Description of the connection stats desc feature or option."
+  },
   "containerTrySudoTip": "For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.",
+  "@containerTrySudoTip": {
+    "description": "Help text for the container try sudo setting or action."
+  },
   "containerSudoPasswordRequired": "Sudo password is required to access Docker. Please enter your password.",
+  "@containerSudoPasswordRequired": {
+    "description": "User-facing label or message for container sudo password required."
+  },
   "containerSudoPasswordIncorrect": "Sudo password is incorrect or not allowed. Please try again.",
+  "@containerSudoPasswordIncorrect": {
+    "description": "User-facing label or message for container sudo password incorrect."
+  },
   "copyPath": "Copy path",
+  "@copyPath": {
+    "description": "Action label for copy path."
+  },
   "cpuViewAsProgressTip": "Display the usage of each CPU in a progress bar style (old style)",
+  "@cpuViewAsProgressTip": {
+    "description": "Help text for the CPU view as progress setting or action."
+  },
   "customCmd": "Custom commands",
+  "@customCmd": {
+    "description": "User-facing label or message for custom cmd."
+  },
   "deleteServers": "Batch delete servers",
+  "@deleteServers": {
+    "description": "Action label for delete servers."
+  },
   "deleteDirRecursive": "Delete the folder and everything in it",
+  "@deleteDirRecursive": {
+    "description": "Action label for delete dir recursive."
+  },
   "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions.",
+  "@desktopTerminalTip": {
+    "description": "Help text for the desktop terminal setting or action."
+  },
   "dirEmpty": "Make sure the folder is empty.",
+  "@dirEmpty": {
+    "description": "Empty-state message for dir empty."
+  },
   "discoverSshServers": "Discover SSH Servers",
+  "@discoverSshServers": {
+    "description": "User-facing label or message for discover SSH servers."
+  },
   "discoveryFailed": "Discovery failed",
+  "@discoveryFailed": {
+    "description": "Error message shown when discovery failed."
+  },
   "discoverySettings": "Discovery Settings",
+  "@discoverySettings": {
+    "description": "User-facing label or message for discovery settings."
+  },
   "distro": "Distribution",
+  "@distro": {
+    "description": "User-facing label or message for distro."
+  },
   "diskHealth": "Disk Health",
+  "@diskHealth": {
+    "description": "User-facing label or message for disk health."
+  },
   "displayCpuIndex": "Display CPU index",
+  "@displayCpuIndex": {
+    "description": "User-facing label or message for display CPU index."
+  },
   "dl2Local": "Download {fileName} to local?",
+  "@dl2Local": {
+    "description": "User-facing label or message for dl 2 local.",
+    "placeholders": {
+      "fileName": {
+        "type": "String"
+      }
+    }
+  },
   "dockerEmptyRunningItems": "There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo $DOCKER_HOST` in the terminal.",
+  "@dockerEmptyRunningItems": {
+    "description": "User-facing label or message for docker empty running items."
+  },
   "dockerProjectOther": "Other",
+  "@dockerProjectOther": {
+    "description": "User-facing label or message for docker project other."
+  },
   "dockerPruneTip": "Remove unused data to free up disk space",
+  "@dockerPruneTip": {
+    "description": "Help text for the docker prune setting or action."
+  },
   "dockerStatistics": "Docker Statistics",
+  "@dockerStatistics": {
+    "description": "User-facing label or message for docker statistics."
+  },
   "doubleColumnMode": "Double column mode",
+  "@doubleColumnMode": {
+    "description": "User-facing label or message for double column mode."
+  },
   "doubleColumnTip": "This option only enables the feature, whether it can actually be enabled depends on the width of the device",
+  "@doubleColumnTip": {
+    "description": "Help text for the double column setting or action."
+  },
   "editVirtKeys": "Virtual keys",
+  "@editVirtKeys": {
+    "description": "Action label for edit virt keys."
+  },
   "editorHighlightTip": "The current code highlighting performance is not ideal and can be optionally turned off to improve.",
+  "@editorHighlightTip": {
+    "description": "Help text for the editor highlight setting or action."
+  },
   "enableMdns": "Enable mDNS",
+  "@enableMdns": {
+    "description": "Action label for enable mDNS."
+  },
   "enableMdnsDesc": "Use mDNS/Bonjour to discover SSH services",
+  "@enableMdnsDesc": {
+    "description": "Description of the enable mDNS desc feature or option."
+  },
   "envVars": "Environment variable",
+  "@envVars": {
+    "description": "User-facing label or message for env vars."
+  },
   "extraArgs": "Extra arguments",
+  "@extraArgs": {
+    "description": "User-facing label or message for extra args."
+  },
   "fallbackSshDest": "Fallback SSH destination",
+  "@fallbackSshDest": {
+    "description": "User-facing label or message for fallback SSH dest."
+  },
   "fdroidReleaseTip": "If you downloaded this app from F-Droid, it is recommended to turn off this option.",
+  "@fdroidReleaseTip": {
+    "description": "Help text for the F-Droid release setting or action."
+  },
   "fileTooLarge": "File '{file}' too large {size}, max {sizeMax}",
+  "@fileTooLarge": {
+    "description": "User-facing label or message for file too large.",
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      },
+      "sizeMax": {
+        "type": "String"
+      }
+    }
+  },
   "fileDirGone": "This folder is no longer here",
+  "@fileDirGone": {
+    "description": "User-facing label or message for file dir gone."
+  },
   "fileDirGoneTip": "It was deleted or renamed",
+  "@fileDirGoneTip": {
+    "description": "Help text for the file dir gone setting or action."
+  },
   "fullScreen": "Full screen",
+  "@fullScreen": {
+    "description": "User-facing label or message for full screen."
+  },
   "fullScreenJitter": "Full screen jitter",
+  "@fullScreenJitter": {
+    "description": "User-facing label or message for full screen jitter."
+  },
   "fullScreenJitterHelp": "To avoid screen burn-in",
+  "@fullScreenJitterHelp": {
+    "description": "User-facing label or message for full screen jitter help."
+  },
   "fullScreenTip": "Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.",
+  "@fullScreenTip": {
+    "description": "Help text for the full screen setting or action."
+  },
   "githubGistIdOptional": "Gist ID (optional)",
+  "@githubGistIdOptional": {
+    "description": "User-facing label or message for github gist id optional."
+  },
   "githubGistToken": "GitHub Gist token",
+  "@githubGistToken": {
+    "description": "User-facing label or message for github gist token."
+  },
   "githubGistTokenEmpty": "Token is empty",
+  "@githubGistTokenEmpty": {
+    "description": "Empty-state message for github gist token empty."
+  },
   "goto": "Go to",
+  "@goto": {
+    "description": "User-facing label or message for goto."
+  },
   "homeTabs": "Home Tabs",
+  "@homeTabs": {
+    "description": "User-facing label or message for home tabs."
+  },
   "homeTabsCustomizeDesc": "Customize which tabs appear on the home page and their order",
+  "@homeTabsCustomizeDesc": {
+    "description": "Description of the home tabs customize desc feature or option."
+  },
   "ignoreCert": "Ignore certificate",
+  "@ignoreCert": {
+    "description": "User-facing label or message for ignore cert."
+  },
   "image": "Image",
   "@image": {
     "description": "A container image, as in Docker. NOT a picture — do not replace this with libL10n.image, whose German is \"Bild\" and Japanese \"画像\"."
   },
   "macDmgBody": "The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.",
+  "@macDmgBody": {
+    "description": "Explanatory message shown in the mac DMG dialog or notice."
+  },
   "macDmgImportDenied": "macOS would not let this read the previous build’s data",
+  "@macDmgImportDenied": {
+    "description": "User-facing label or message for mac DMG import denied."
+  },
   "macDmgImported": "Imported the previous build’s data",
+  "@macDmgImported": {
+    "description": "User-facing label or message for mac DMG imported."
+  },
   "macDmgImportFailed": "Could not read the previous build’s data",
+  "@macDmgImportFailed": {
+    "description": "Error message shown when mac DMG import failed."
+  },
   "macDmgTip": "Local terminal and running snippets locally (DMG build)",
+  "@macDmgTip": {
+    "description": "Help text for the mac DMG setting or action."
+  },
   "macDmgTitle": "DMG build",
+  "@macDmgTitle": {
+    "description": "Title shown for the mac DMG dialog or section."
+  },
   "showHiddenFiles": "Show hidden files",
+  "@showHiddenFiles": {
+    "description": "User-facing label or message for show hidden files."
+  },
   "sshKeyAlgorithm": "Algorithm",
+  "@sshKeyAlgorithm": {
+    "description": "User-facing label or message for SSH key algorithm."
+  },
   "sshKeyComment": "Comment",
+  "@sshKeyComment": {
+    "description": "User-facing label or message for SSH key comment."
+  },
   "sshKeyGenerate": "Generate key pair",
+  "@sshKeyGenerate": {
+    "description": "User-facing label or message for SSH key generate."
+  },
   "sshKeyGenerating": "Generating…",
+  "@sshKeyGenerating": {
+    "description": "User-facing label or message for SSH key generating."
+  },
   "sshKeyLockedFmt": "The private key [{name}] was not unlocked.",
   "@sshKeyLockedFmt": {
+    "description": "Formatted user-facing message for SSH key locked; runtime values are supplied by placeholders.",
     "placeholders": {
       "name": {
         "type": "String"
@@ -259,12 +1033,28 @@
     }
   },
   "sshKeyPassphraseTip": "Optional. A key with a passphrase is stored encrypted, and you are asked for it the first time a connection uses the key.",
+  "@sshKeyPassphraseTip": {
+    "description": "Help text for the SSH key passphrase setting or action."
+  },
   "sshKeyPassphraseWrong": "Wrong passphrase.",
+  "@sshKeyPassphraseWrong": {
+    "description": "User-facing label or message for SSH key passphrase wrong."
+  },
   "sshKeyPublicKey": "Public key",
+  "@sshKeyPublicKey": {
+    "description": "User-facing label or message for SSH key public key."
+  },
   "sshKeyPublicKeyTip": "Append this line to ~/.ssh/authorized_keys on the server.",
+  "@sshKeyPublicKeyTip": {
+    "description": "Help text for the SSH key public key setting or action."
+  },
   "sshKeyRecommended": "Recommended",
+  "@sshKeyRecommended": {
+    "description": "User-facing label or message for SSH key recommended."
+  },
   "sshKeyUnlockTip": "Enter the passphrase for the private key [{name}].",
   "@sshKeyUnlockTip": {
+    "description": "Help text for the SSH key unlock setting or action.",
     "placeholders": {
       "name": {
         "type": "String"
@@ -272,82 +1062,272 @@
     }
   },
   "ungrouped": "Ungrouped",
+  "@ungrouped": {
+    "description": "User-facing label or message for ungrouped."
+  },
   "containerReclaimable": "Reclaimable",
+  "@containerReclaimable": {
+    "description": "User-facing label or message for container reclaimable."
+  },
   "unused": "Unused",
+  "@unused": {
+    "description": "User-facing label or message for unused."
+  },
   "dangling": "Dangling",
+  "@dangling": {
+    "description": "User-facing label or message for dangling."
+  },
   "pruneUnusedImages": "Prune unused images",
+  "@pruneUnusedImages": {
+    "description": "User-facing label or message for prune unused images."
+  },
   "pruneDanglingImages": "Prune dangling images",
+  "@pruneDanglingImages": {
+    "description": "User-facing label or message for prune dangling images."
+  },
   "pruneImages": "Prune images",
+  "@pruneImages": {
+    "description": "User-facing label or message for prune images."
+  },
   "unusedTaggedImages": "Unused tagged",
+  "@unusedTaggedImages": {
+    "description": "User-facing label or message for unused tagged images."
+  },
   "pruneDanglingImagesTip": "Removes dangling images only.",
+  "@pruneDanglingImagesTip": {
+    "description": "Help text for the prune dangling images setting or action."
+  },
   "pruneUnusedImagesTip": "Also remove tagged images not used by any container.",
+  "@pruneUnusedImagesTip": {
+    "description": "Help text for the prune unused images setting or action."
+  },
   "includeUnusedVolumesTip": "Also remove volumes not used by any container.",
+  "@includeUnusedVolumesTip": {
+    "description": "Help text for the include unused volumes setting or action."
+  },
   "pruneCommandPreview": "Command preview",
+  "@pruneCommandPreview": {
+    "description": "User-facing label or message for prune command preview."
+  },
   "pruneForceSshTip": "-f skips the interactive prompt and is always enabled for SSH execution.",
+  "@pruneForceSshTip": {
+    "description": "Help text for the prune force SSH setting or action."
+  },
   "pruneVolumes": "Prune volumes",
+  "@pruneVolumes": {
+    "description": "User-facing label or message for prune volumes."
+  },
   "pruneUnusedData": "Prune unused data",
+  "@pruneUnusedData": {
+    "description": "User-facing label or message for prune unused data."
+  },
   "pull": "Pull",
+  "@pull": {
+    "description": "User-facing label or message for pull."
+  },
   "invalidHostFormat": "Invalid host format. Only IPv4, IPv6, and domain characters are allowed.",
+  "@invalidHostFormat": {
+    "description": "User-facing label or message for invalid host format."
+  },
   "jumpServer": "Jump server",
+  "@jumpServer": {
+    "description": "User-facing label or message for jump server."
+  },
   "jumpServersNotFoundFmt": "Jump servers not found for {serverName}: {jumpIds}",
   "@jumpServersNotFoundFmt": {
+    "description": "Formatted user-facing message for jump servers not found; runtime values are supplied by placeholders.",
     "placeholders": {
-      "serverName": {},
-      "jumpIds": {}
+      "serverName": {
+        "type": "String"
+      },
+      "jumpIds": {
+        "type": "String"
+      }
     }
   },
   "nameAlreadyExistsFmt": "\"{name}\" already exists",
   "@nameAlreadyExistsFmt": {
+    "description": "Formatted user-facing message for name already exists; runtime values are supplied by placeholders.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "type": "String"
+      }
     }
   },
   "noJumpServerAvailable": "No jump server available.",
+  "@noJumpServerAvailable": {
+    "description": "User-facing label or message for no jump server available."
+  },
   "jumpServerAndProxyCommandCannotBeUsedTogether": "Jump server and ProxyCommand cannot be used together.",
+  "@jumpServerAndProxyCommandCannotBeUsedTogether": {
+    "description": "User-facing label or message for jump server and proxy command cannot be used together."
+  },
   "noConnectionMethod": "Configure SSH, a monitor agent, or both",
+  "@noConnectionMethod": {
+    "description": "User-facing label or message for no connection method."
+  },
   "preferredTransport": "Try first",
+  "@preferredTransport": {
+    "description": "User-facing label or message for preferred transport."
+  },
   "preferredTransportTip": "Where status is read from, and which connection a command opens first. The other stays available.",
+  "@preferredTransportTip": {
+    "description": "Help text for the preferred transport setting or action."
+  },
   "keepForeground": "Keep app foreground!",
+  "@keepForeground": {
+    "description": "User-facing label or message for keep foreground."
+  },
   "keepStatusWhenErr": "Preserve the last server state",
+  "@keepStatusWhenErr": {
+    "description": "User-facing label or message for keep status when err."
+  },
   "keepStatusWhenErrTip": "Only in the event of an error during script execution",
+  "@keepStatusWhenErrTip": {
+    "description": "Help text for the keep status when err setting or action."
+  },
   "keyAuth": "Key Auth",
+  "@keyAuth": {
+    "description": "User-facing label or message for key auth."
+  },
   "lastFailure": "Last Failure",
+  "@lastFailure": {
+    "description": "Error message shown when last failure."
+  },
   "lastSuccess": "Last Success",
+  "@lastSuccess": {
+    "description": "User-facing label or message for last success."
+  },
   "letterCache": "Normal keyboard input",
+  "@letterCache": {
+    "description": "User-facing label or message for letter cache."
+  },
   "letterCacheTip": "When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.",
+  "@letterCacheTip": {
+    "description": "Help text for the letter cache setting or action."
+  },
   "linuxShellTip": "Which shell a terminal starts. Empty restores /bin/sh.",
+  "@linuxShellTip": {
+    "description": "Help text for the linux shell setting or action."
+  },
   "linuxNetTip": "DNS servers. Empty restores the defaults",
+  "@linuxNetTip": {
+    "description": "Help text for the linux net setting or action."
+  },
   "madeWithLove": "Made with ❤️ by {myGithub}",
+  "@madeWithLove": {
+    "description": "User-facing label or message for made with love.",
+    "placeholders": {
+      "myGithub": {
+        "type": "String"
+      }
+    }
+  },
   "maxConcurrency": "Max Concurrency",
+  "@maxConcurrency": {
+    "description": "User-facing label or message for max concurrency."
+  },
   "maxRetryCount": "Number of server reconnections",
+  "@maxRetryCount": {
+    "description": "User-facing label or message for max retry count."
+  },
   "mismatchSystem": "Mismatch system: {system}",
   "@mismatchSystem": {
+    "description": "User-facing label or message for mismatch system.",
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Mirror",
+  "@mirror": {
+    "description": "User-facing label or message for mirror."
+  },
   "needRestart": "App needs to be restarted",
+  "@needRestart": {
+    "description": "User-facing label or message for need restart."
+  },
   "netViewType": "Network view type",
+  "@netViewType": {
+    "description": "User-facing label or message for net view type."
+  },
   "newContainer": "New container",
+  "@newContainer": {
+    "description": "User-facing label or message for new container."
+  },
   "noConnectionStatsData": "No connection statistics data",
+  "@noConnectionStatsData": {
+    "description": "User-facing label or message for no connection stats data."
+  },
   "noLineChart": "Do not use line charts",
+  "@noLineChart": {
+    "description": "User-facing label or message for no line chart."
+  },
   "noPrivateKeyTip": "The private key does not exist, it may have been deleted or there is a configuration error.",
+  "@noPrivateKeyTip": {
+    "description": "Help text for the no private key setting or action."
+  },
   "noPromptAgain": "Do not prompt again",
+  "@noPromptAgain": {
+    "description": "User-facing label or message for no prompt again."
+  },
   "openLastPath": "Open the last path",
+  "@openLastPath": {
+    "description": "Action label for open last path."
+  },
   "openLastPathTip": "Different servers will have different logs, and the log is the path to the exit",
+  "@openLastPathTip": {
+    "description": "Help text for the open last path setting or action."
+  },
   "parseContainerStatsTip": "Parsing the occupancy status of Docker is relatively slow.",
+  "@parseContainerStatsTip": {
+    "description": "Help text for the parse container stats setting or action."
+  },
   "plugInType": "Insertion Type",
+  "@plugInType": {
+    "description": "User-facing label or message for plug in type."
+  },
   "preferDiskAmount": "Prioritize displaying disk capacity",
+  "@preferDiskAmount": {
+    "description": "User-facing label or message for prefer disk amount."
+  },
   "privateKey": "Private Key",
+  "@privateKey": {
+    "description": "User-facing label or message for private key."
+  },
   "privateKeyNotFoundFmt": "Private key [{keyId}] not found.",
+  "@privateKeyNotFoundFmt": {
+    "description": "Formatted user-facing message for private key not found; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "keyId": {
+        "type": "String"
+      }
+    }
+  },
   "bmcPowerOnAction": "Power on",
+  "@bmcPowerOnAction": {
+    "description": "User-facing label or message for BMC power on action."
+  },
   "bmcShutdown": "Shut down",
+  "@bmcShutdown": {
+    "description": "User-facing label or message for BMC shutdown."
+  },
   "bmcForceOff": "Force off",
+  "@bmcForceOff": {
+    "description": "User-facing label or message for BMC force off."
+  },
   "restart": "Restart",
+  "@restart": {
+    "description": "Action label for restart."
+  },
   "bmcPowerCycle": "Power cycle",
+  "@bmcPowerCycle": {
+    "description": "User-facing label or message for BMC power cycle."
+  },
   "bmcPowerConfirm": "Send this to {server}? The service will be asked for \"{resetType}\"",
   "@bmcPowerConfirm": {
+    "description": "Confirmation prompt for BMC power confirm.",
     "placeholders": {
       "server": {
         "type": "String"
@@ -358,26 +1338,84 @@
     }
   },
   "bmcPowerDone": "The power state changed",
+  "@bmcPowerDone": {
+    "description": "User-facing label or message for BMC power done."
+  },
   "bmcPowerAccepted": "Accepted, but the power state has not changed. A graceful operation depends on the OS",
+  "@bmcPowerAccepted": {
+    "description": "User-facing label or message for BMC power accepted."
+  },
   "bmcPowerUnsupported": "This service allows nothing for that action",
+  "@bmcPowerUnsupported": {
+    "description": "User-facing label or message for BMC power unsupported."
+  },
   "bmcUnauthorized": "The BMC refused the account",
+  "@bmcUnauthorized": {
+    "description": "User-facing label or message for BMC unauthorized."
+  },
   "bmcAccountMissing": "No account is set for this BMC",
+  "@bmcAccountMissing": {
+    "description": "User-facing label or message for BMC account missing."
+  },
   "bmcPowerOn": "Powered on",
+  "@bmcPowerOn": {
+    "description": "User-facing label or message for BMC power on."
+  },
   "bmcPowerOff": "Powered off",
+  "@bmcPowerOff": {
+    "description": "User-facing label or message for BMC power off."
+  },
   "bmcCertRejected": "Certificate refused — review it in the server settings",
+  "@bmcCertRejected": {
+    "description": "User-facing label or message for BMC cert rejected."
+  },
   "bmcNotAService": "No Redfish service at this address",
+  "@bmcNotAService": {
+    "description": "User-facing label or message for BMC not a service."
+  },
   "bmcNoSystem": "The service reports no system",
+  "@bmcNoSystem": {
+    "description": "User-facing label or message for BMC no system."
+  },
   "bmcSensorsTruncated": "Only the first sensors are shown",
+  "@bmcSensorsTruncated": {
+    "description": "User-facing label or message for BMC sensors truncated."
+  },
   "bmcMultipleSystems": "Only the first system is shown",
+  "@bmcMultipleSystems": {
+    "description": "User-facing label or message for BMC multiple systems."
+  },
   "bmcTip": "The BMC is a separate computer on the motherboard, reachable when the host OS is not. Configured here, it can report power state and hardware sensors while the server is off or hung. Needs Redfish, which most enterprise hardware from about 2016 on has.",
+  "@bmcTip": {
+    "description": "Help text for the BMC setting or action."
+  },
   "bmcCert": "Certificate",
+  "@bmcCert": {
+    "description": "User-facing label or message for BMC cert."
+  },
   "bmcCertPinned": "Reviewed and pinned",
+  "@bmcCertPinned": {
+    "description": "User-facing label or message for BMC cert pinned."
+  },
   "bmcCertUnreviewed": "Not reviewed yet — tap to see the certificate",
+  "@bmcCertUnreviewed": {
+    "description": "User-facing label or message for BMC cert unreviewed."
+  },
   "bmcCertReview": "A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.",
+  "@bmcCertReview": {
+    "description": "User-facing label or message for BMC cert review."
+  },
   "bmcCertChanged": "The certificate does not match. Check it.",
+  "@bmcCertChanged": {
+    "description": "User-facing label or message for BMC cert changed."
+  },
   "bmcCertExpired": "Expired.",
+  "@bmcCertExpired": {
+    "description": "User-facing label or message for BMC cert expired."
+  },
   "bmcCertWas": "Previously accepted: {fingerprint}",
   "@bmcCertWas": {
+    "description": "User-facing label or message for BMC cert was.",
     "placeholders": {
       "fingerprint": {
         "type": "String"
@@ -385,9 +1423,16 @@
     }
   },
   "bmcAddrInvalid": "The BMC address must be a URL, e.g. https://10.0.0.9",
+  "@bmcAddrInvalid": {
+    "description": "User-facing label or message for BMC addr invalid."
+  },
   "proxyCommandSandboxed": "This build is sandboxed: the command gets an empty home, not yours, so anything reading ~/.ssh fails. The DMG build is not.",
+  "@proxyCommandSandboxed": {
+    "description": "User-facing label or message for proxy command sandboxed."
+  },
   "privateKeyFileUnreadable": "Cannot read the private key file {path}: {reason}",
   "@privateKeyFileUnreadable": {
+    "description": "User-facing label or message for private key file unreadable.",
     "placeholders": {
       "path": {
         "type": "String"
@@ -399,6 +1444,7 @@
   },
   "privateKeyFileSandboxed": "This build cannot read files outside its own container, so the key at {path} is unreachable. Import the key in Settings, or use the DMG build.",
   "@privateKeyFileSandboxed": {
+    "description": "User-facing label or message for private key file sandboxed.",
     "placeholders": {
       "path": {
         "type": "String"
@@ -406,86 +1452,279 @@
     }
   },
   "pushToken": "Push token",
+  "@pushToken": {
+    "description": "User-facing label or message for push token."
+  },
   "liveActivity": "Live Activity",
+  "@liveActivity": {
+    "description": "User-facing label or message for live activity."
+  },
   "liveActivityTip": "Show terminal sessions on the Lock Screen and Dynamic Island. Without unlocking, the server name and connection state are visible there.",
+  "@liveActivityTip": {
+    "description": "Help text for the live activity setting or action."
+  },
   "liveActivitySystemDisabled": "iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.",
+  "@liveActivitySystemDisabled": {
+    "description": "User-facing label or message for live activity system disabled."
+  },
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand is only supported on desktop platforms.",
+  "@proxyCommandOnlySupportedOnDesktop": {
+    "description": "User-facing label or message for proxy command only supported on desktop."
+  },
   "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",
+  "@pveIgnoreCertTip": {
+    "description": "Help text for the pve ignore cert setting or action."
+  },
   "pveServerClientMissing": "The SSH client for this server is not available.",
+  "@pveServerClientMissing": {
+    "description": "User-facing label or message for pve server client missing."
+  },
   "pveAddressMissing": "The PVE address is missing. Please configure it in server settings.",
+  "@pveAddressMissing": {
+    "description": "User-facing label or message for pve address missing."
+  },
   "pvePasswordRequired": "PVE password is required. Please set it in server settings.",
+  "@pvePasswordRequired": {
+    "description": "User-facing label or message for pve password required."
+  },
   "pveOtpRequired": "Two-factor authentication is enabled on this PVE server. Please enter the OTP code.",
+  "@pveOtpRequired": {
+    "description": "User-facing label or message for pve otp required."
+  },
   "pveOtpChallengeExpired": "The OTP challenge has expired. Please refresh and try again.",
+  "@pveOtpChallengeExpired": {
+    "description": "User-facing label or message for pve otp challenge expired."
+  },
   "pveOtpCodeRequired": "OTP code is required.",
+  "@pveOtpCodeRequired": {
+    "description": "User-facing label or message for pve otp code required."
+  },
   "pveOtpVerificationFailed": "OTP verification failed. Please try again with a fresh code.",
+  "@pveOtpVerificationFailed": {
+    "description": "Error message shown when pve otp verification failed."
+  },
   "pveOtpTitle": "OTP Verification",
+  "@pveOtpTitle": {
+    "description": "Title shown for the pve otp dialog or section."
+  },
   "pveOtpLabel": "OTP Code",
+  "@pveOtpLabel": {
+    "description": "User-facing label or message for pve otp label."
+  },
   "pveInvalidResponseBody": "PVE login returned an invalid response body.",
+  "@pveInvalidResponseBody": {
+    "description": "Explanatory message shown in the pve invalid response dialog or notice."
+  },
   "pveInvalidResponseData": "PVE login response did not contain a valid data payload.",
+  "@pveInvalidResponseData": {
+    "description": "User-facing label or message for pve invalid response data."
+  },
   "pveMissingAuthTicket": "PVE login succeeded but no authentication ticket was returned.",
+  "@pveMissingAuthTicket": {
+    "description": "User-facing label or message for pve missing auth ticket."
+  },
   "pveVersionLow": "This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.",
+  "@pveVersionLow": {
+    "description": "User-facing label or message for pve version low."
+  },
   "pveLoadingForwarding": "Establishing SSH tunnel...",
+  "@pveLoadingForwarding": {
+    "description": "User-facing label or message for pve loading forwarding."
+  },
   "pveLoadingLogin": "Authenticating with PVE...",
+  "@pveLoadingLogin": {
+    "description": "User-facing label or message for pve loading login."
+  },
   "pveLoadingData": "Fetching cluster data...",
+  "@pveLoadingData": {
+    "description": "User-facing label or message for pve loading data."
+  },
   "pveLoadingConnect": "Connecting...",
+  "@pveLoadingConnect": {
+    "description": "User-facing label or message for pve loading connect."
+  },
   "pvePassword": "PVE Password",
+  "@pvePassword": {
+    "description": "User-facing label or message for pve password."
+  },
   "pvePasswordHint": "Required when using key-based SSH authentication",
+  "@pvePasswordHint": {
+    "description": "Hint shown in the pve password field or section."
+  },
   "read": "Read",
+  "@read": {
+    "description": "User-facing label or message for read."
+  },
   "recentConnections": "Recent Connections",
+  "@recentConnections": {
+    "description": "User-facing label or message for recent connections."
+  },
   "rememberPwdInMem": "Remember password in memory",
+  "@rememberPwdInMem": {
+    "description": "User-facing label or message for remember pwd in mem."
+  },
   "rememberPwdInMemTip": "Used for containers, suspending, etc.",
+  "@rememberPwdInMemTip": {
+    "description": "Help text for the remember pwd in mem setting or action."
+  },
   "remotePath": "Remote path",
+  "@remotePath": {
+    "description": "User-facing label or message for remote path."
+  },
   "rootfsUpdateTip": "{distro} {installed} is installed; {latest} is available. Updating replaces the whole container: {pm} data is lost",
   "@rootfsUpdateTip": {
+    "description": "Help text for the rootfs update setting or action.",
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Close the terminals on {name} before deleting it",
   "@linuxSystemInUse": {
+    "description": "User-facing label or message for linux system in use.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "type": "String"
+      }
     }
   },
   "rootfsSubtitle": "A Linux userland on this device",
+  "@rootfsSubtitle": {
+    "description": "User-facing label or message for rootfs subtitle."
+  },
   "rootfsInstallTip": "Downloads {distro} {version} (about {size} MB) and unpacks it on this device.",
   "@rootfsInstallTip": {
+    "description": "Help text for the rootfs install setting or action.",
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "sameIdServerExist": "A server with the same ID already exists",
+  "@sameIdServerExist": {
+    "description": "User-facing label or message for same id server exist."
+  },
   "second": "s",
+  "@second": {
+    "description": "User-facing label or message for second."
+  },
   "serverFilesUnavailableTip": "Needs SSH to this server, or server_box_monitor installed with its file API on.",
+  "@serverFilesUnavailableTip": {
+    "description": "Help text for the server files unavailable setting or action."
+  },
   "back": "Back",
+  "@back": {
+    "description": "User-facing label or message for back."
+  },
   "history": "History",
+  "@history": {
+    "description": "User-facing label or message for history."
+  },
   "homeDir": "Home",
+  "@homeDir": {
+    "description": "User-facing label or message for home dir."
+  },
   "selected": "{count} selected",
+  "@selected": {
+    "description": "User-facing label or message for selected.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "sendTo": "Send to…",
+  "@sendTo": {
+    "description": "Action label for send to."
+  },
   "serverFuncBtns": "Server function buttons",
+  "@serverFuncBtns": {
+    "description": "User-facing label or message for server func btns."
+  },
   "serverOrder": "Server order",
+  "@serverOrder": {
+    "description": "User-facing label or message for server order."
+  },
   "serverTabEmpty": "No servers yet",
+  "@serverTabEmpty": {
+    "description": "Empty-state message for server tab empty."
+  },
   "serverTabRequired": "Server tab cannot be removed",
+  "@serverTabRequired": {
+    "description": "User-facing label or message for server tab required."
+  },
   "shareCodeHint": "Tell the recipient these digits separately. They are not included in the QR code.",
+  "@shareCodeHint": {
+    "description": "Hint shown in the share code field or section."
+  },
   "shareCodePrompt": "6-digit code",
+  "@shareCodePrompt": {
+    "description": "User-facing label or message for share code prompt."
+  },
   "shareCodeTitle": "One-time code",
+  "@shareCodeTitle": {
+    "description": "Title shown for the share code dialog or section."
+  },
   "shareExpired": "This share has expired. Ask for a new one.",
+  "@shareExpired": {
+    "description": "User-facing label or message for share expired."
+  },
   "shareImportFile": "From a shared file",
+  "@shareImportFile": {
+    "description": "User-facing label or message for share import file."
+  },
   "shareImportTitle": "Import shared server",
+  "@shareImportTitle": {
+    "description": "Title shown for the share import dialog or section."
+  },
   "shareIncludesKey": "The share includes the private key.",
+  "@shareIncludesKey": {
+    "description": "User-facing label or message for share includes key."
+  },
   "shareOmittedBmc": "BMC credentials. The address is included, but the credentials are not.",
+  "@shareOmittedBmc": {
+    "description": "User-facing label or message for share omitted BMC."
+  },
   "shareOmittedJump": "The jump server, because it is stored as a separate server on this device.",
+  "@shareOmittedJump": {
+    "description": "User-facing label or message for share omitted jump."
+  },
   "shareOmittedKeyPath": "The key file, because its path is only valid on this device.",
+  "@shareOmittedKeyPath": {
+    "description": "User-facing label or message for share omitted key path."
+  },
   "shareOmittedMissingKey": "The private key, because it is not in this device’s key store.",
+  "@shareOmittedMissingKey": {
+    "description": "User-facing label or message for share omitted missing key."
+  },
   "shareOmittedTip": "Not included; the recipient must configure:",
+  "@shareOmittedTip": {
+    "description": "Help text for the share omitted setting or action."
+  },
   "sharePassphraseTip": "This passphrase encrypts the file. The recipient needs it to import the server, and it cannot be recovered.",
+  "@sharePassphraseTip": {
+    "description": "Help text for the share passphrase setting or action."
+  },
   "shareQrTip": "The connection details in this QR code are encrypted. The share expires in {minutes} minutes.",
   "@shareQrTip": {
+    "description": "Help text for the share qr setting or action.",
     "placeholders": {
       "minutes": {
         "type": "int"
@@ -493,8 +1732,12 @@
     }
   },
   "shareScanQr": "Scan a QR code",
+  "@shareScanQr": {
+    "description": "User-facing label or message for share scan qr."
+  },
   "shareServerExists": "“{name}” on this device already uses this address. Import anyway?",
   "@shareServerExists": {
+    "description": "User-facing label or message for share server exists.",
     "placeholders": {
       "name": {
         "type": "String"
@@ -502,116 +1745,475 @@
     }
   },
   "shareTooBigForQr": "Too large for a QR code. Share it as a file instead.",
+  "@shareTooBigForQr": {
+    "description": "User-facing label or message for share too big for qr."
+  },
   "shareTooNew": "This share was created with a newer version of ServerBox. Update the app to open it.",
+  "@shareTooNew": {
+    "description": "User-facing label or message for share too new."
+  },
   "shareUnreadable": "This is not a valid ServerBox share.",
+  "@shareUnreadable": {
+    "description": "User-facing label or message for share unreadable."
+  },
   "shareVia": "Share via",
+  "@shareVia": {
+    "description": "User-facing label or message for share via."
+  },
   "sftpDlPrepare": "Preparing to connect...",
+  "@sftpDlPrepare": {
+    "description": "User-facing label or message for sftp dl prepare."
+  },
   "sftpEditorTip": "Empty uses the built-in editor. For example `vim` (reading `EDITOR` is suggested).",
+  "@sftpEditorTip": {
+    "description": "Help text for the sftp editor setting or action."
+  },
   "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",
+  "@sftpRmrDirSummary": {
+    "description": "User-facing label or message for sftp rmr dir summary."
+  },
   "sftpSSHConnected": "SFTP Connected",
+  "@sftpSSHConnected": {
+    "description": "User-facing label or message for sftp SSH connected."
+  },
   "sftpShowFoldersFirst": "Display folders first",
+  "@sftpShowFoldersFirst": {
+    "description": "User-facing label or message for sftp show folders first."
+  },
   "sftpUnavailableUseScp": "If this host has no SFTP subsystem, as many embedded devices do not, set its file transfer to SCP in the server settings.",
+  "@sftpUnavailableUseScp": {
+    "description": "User-facing label or message for sftp unavailable use scp."
+  },
   "sshFileTransportTip": "SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs the `scp` command and a shell that also has the usual file utilities (`find`, `stat`, `mv`, `chmod`).",
+  "@sshFileTransportTip": {
+    "description": "Help text for the SSH file transport setting or action."
+  },
   "specifyDev": "Specify device",
+  "@specifyDev": {
+    "description": "User-facing label or message for specify dev."
+  },
   "specifyDevTip": "Network traffic counts every device by default; name one here instead",
+  "@specifyDevTip": {
+    "description": "Help text for the specify dev setting or action."
+  },
   "tempIsCelsiusTip": "When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).",
+  "@tempIsCelsiusTip": {
+    "description": "Help text for the temp is celsius setting or action."
+  },
   "spentTime": "Spent time: {time}",
+  "@spentTime": {
+    "description": "User-facing label or message for spent time.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "sshConfigAllExist": "All servers already exist ({duplicateCount} duplicates found)",
+  "@sshConfigAllExist": {
+    "description": "User-facing label or message for SSH config all exist.",
+    "placeholders": {
+      "duplicateCount": {
+        "type": "int"
+      }
+    }
+  },
   "sshConnectionModeTip": "Built-in: use the app's terminal. System SSH: launch the system ssh command in an external terminal.",
+  "@sshConnectionModeTip": {
+    "description": "Help text for the SSH connection mode setting or action."
+  },
   "sshConnectionModeUseBuiltin": "Use built-in terminal",
+  "@sshConnectionModeUseBuiltin": {
+    "description": "User-facing label or message for SSH connection mode use builtin."
+  },
   "sshConnectionModeUseSystem": "Use system SSH",
+  "@sshConnectionModeUseSystem": {
+    "description": "User-facing label or message for SSH connection mode use system."
+  },
   "sshConfigDuplicatesSkipped": "{duplicateCount} duplicates will be skipped",
+  "@sshConfigDuplicatesSkipped": {
+    "description": "User-facing label or message for SSH config duplicates skipped.",
+    "placeholders": {
+      "duplicateCount": {
+        "type": "int"
+      }
+    }
+  },
   "sshConfigFound": "We found SSH configuration on your system.",
+  "@sshConfigFound": {
+    "description": "User-facing label or message for SSH config found."
+  },
   "sshConfigFoundServers": "Found {totalCount} servers",
+  "@sshConfigFoundServers": {
+    "description": "User-facing label or message for SSH config found servers.",
+    "placeholders": {
+      "totalCount": {
+        "type": "int"
+      }
+    }
+  },
   "sshConfigImport": "SSH Config Import",
+  "@sshConfigImport": {
+    "description": "User-facing label or message for SSH config import."
+  },
   "sshConfigImportPermission": "Would you like to give permission to read ~/.ssh/config and automatically import server settings?",
+  "@sshConfigImportPermission": {
+    "description": "User-facing label or message for SSH config import permission."
+  },
   "sshConfigImportTip": "Prompt to read ~/.ssh/config on first server creation",
+  "@sshConfigImportTip": {
+    "description": "Help text for the SSH config import setting or action."
+  },
   "sshConfigImported": "Imported {count} servers from SSH config",
+  "@sshConfigImported": {
+    "description": "User-facing label or message for SSH config imported.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "sshHostKeyChangedDesc": "The SSH host key changed for {serverName}. Only continue if you trust this server.",
+  "@sshHostKeyChangedDesc": {
+    "description": "Description of the SSH host key changed desc feature or option.",
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
   "sshHostKeyType": "SSH host key type",
   "sshKnownHostKeys": "Known hosts",
+  "@sshKnownHostKeys": {
+    "description": "User-facing label or message for SSH known host keys."
+  },
   "sshKnownHostKeysTip": "The host keys this app has accepted",
+  "@sshKnownHostKeysTip": {
+    "description": "Help text for the SSH known host keys setting or action."
+  },
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."
   },
   "sshHostKeyNewDesc": "A new SSH host key was received from {serverName}. Review the fingerprint before trusting.",
+  "@sshHostKeyNewDesc": {
+    "description": "Description of the SSH host key new desc feature or option.",
+    "placeholders": {
+      "serverName": {
+        "type": "String"
+      }
+    }
+  },
   "sshHostKeyStoredFingerprint": "Stored fingerprint: {fingerprint}",
+  "@sshHostKeyStoredFingerprint": {
+    "description": "User-facing label or message for SSH host key stored fingerprint.",
+    "placeholders": {
+      "fingerprint": {
+        "type": "String"
+      }
+    }
+  },
   "sshVerificationCode": "Verification code",
   "@sshVerificationCode": {
     "description": "Label for a one-time verification code requested during SSH keyboard-interactive authentication."
   },
   "sshConfigManualSelect": "Would you like to select the SSH config file manually?",
+  "@sshConfigManualSelect": {
+    "description": "User-facing label or message for SSH config manual select."
+  },
   "sshConfigNoServers": "No servers found in SSH config",
+  "@sshConfigNoServers": {
+    "description": "User-facing label or message for SSH config no servers."
+  },
   "sshConfigPermissionDenied": "Cannot access SSH config file due to macOS permissions.",
+  "@sshConfigPermissionDenied": {
+    "description": "User-facing label or message for SSH config permission denied."
+  },
   "sshConfigServersToImport": "{importCount} servers will be imported",
+  "@sshConfigServersToImport": {
+    "description": "User-facing label or message for SSH config servers to import.",
+    "placeholders": {
+      "importCount": {
+        "type": "int"
+      }
+    }
+  },
   "sshTermHelp": "When the terminal is scrollable, dragging horizontally can select text. Clicking the keyboard button turns the keyboard on/off. The file icon opens the current path SFTP. The clipboard button copies the content when text is selected, and pastes content from the clipboard into the terminal when no text is selected and there is content on the clipboard. The code icon pastes code snippets into the terminal and executes them.",
+  "@sshTermHelp": {
+    "description": "User-facing label or message for SSH term help."
+  },
   "sshVirtualKeyAutoOff": "Auto switching of virtual keys",
+  "@sshVirtualKeyAutoOff": {
+    "description": "User-facing label or message for SSH virtual key auto off."
+  },
   "supportFmtArgs": "The following formatting parameters are supported:",
+  "@supportFmtArgs": {
+    "description": "User-facing label or message for support fmt args."
+  },
   "suspendTip": "The suspend function requires root permission and systemd support.",
+  "@suspendTip": {
+    "description": "Help text for the suspend setting or action."
+  },
   "switchTo": "Switch to {val}",
+  "@switchTo": {
+    "description": "User-facing label or message for switch to.",
+    "placeholders": {
+      "val": {
+        "type": "String"
+      }
+    }
+  },
   "syncAppSettings": "Sync app settings",
+  "@syncAppSettings": {
+    "description": "User-facing label or message for sync app settings."
+  },
   "syncAppSettingsTip": "Include theme, layout, editor, terminal and other device preferences in automatic sync.",
+  "@syncAppSettingsTip": {
+    "description": "Help text for the sync app settings setting or action."
+  },
   "termFontSizeTip": "This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.",
+  "@termFontSizeTip": {
+    "description": "Help text for the term font size setting or action."
+  },
   "textScalerTip": "1.0 => 100% (original size), only works on server page part of the font, not recommended to change.",
+  "@textScalerTip": {
+    "description": "Help text for the text scaler setting or action."
+  },
   "times": "Times",
+  "@times": {
+    "description": "User-facing label or message for times."
+  },
   "trySudo": "Try using sudo",
+  "@trySudo": {
+    "description": "User-facing label or message for try sudo."
+  },
   "sudoPromptNotFound": "No sudo password prompt is active.",
+  "@sudoPromptNotFound": {
+    "description": "User-facing label or message for sudo prompt not found."
+  },
   "updateServerStatusInterval": "Server status update interval",
+  "@updateServerStatusInterval": {
+    "description": "Action label for update server status interval."
+  },
   "useNoPwd": "No password will be used",
+  "@useNoPwd": {
+    "description": "User-facing label or message for use no pwd."
+  },
   "usePodmanByDefault": "Use Podman by default",
+  "@usePodmanByDefault": {
+    "description": "User-facing label or message for use podman by default."
+  },
   "used": "Used",
+  "@used": {
+    "description": "User-facing label or message for used."
+  },
   "view": "View",
+  "@view": {
+    "description": "User-facing label or message for view."
+  },
   "viewDetails": "View Details",
+  "@viewDetails": {
+    "description": "User-facing label or message for view details."
+  },
   "virtKeyHelpClipboard": "Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.",
+  "@virtKeyHelpClipboard": {
+    "description": "User-facing label or message for virt key help clipboard."
+  },
   "virtKeyHelpIME": "Turn on/off the keyboard",
+  "@virtKeyHelpIME": {
+    "description": "User-facing label or message for virt key help ime."
+  },
   "virtKeyHelpSFTP": "Open current directory in SFTP.",
+  "@virtKeyHelpSFTP": {
+    "description": "User-facing label or message for virt key help sftp."
+  },
   "virtKeyHelpSnippet": "Pick a snippet and run it in this terminal.",
+  "@virtKeyHelpSnippet": {
+    "description": "User-facing label or message for virt key help snippet."
+  },
   "virtKeyHelpTmux": "Switch between tmux sessions and windows.",
+  "@virtKeyHelpTmux": {
+    "description": "User-facing label or message for virt key help tmux."
+  },
   "virtKeyIntroActions": "Shortcuts",
+  "@virtKeyIntroActions": {
+    "description": "User-facing label or message for virt key intro actions."
+  },
   "virtKeyIntroActionsTip": "These open something instead of typing. Hold one to read what it does.",
+  "@virtKeyIntroActionsTip": {
+    "description": "Help text for the virt key intro actions setting or action."
+  },
   "virtKeyIntroCustomizeTip": "Reorder these keys, or hide the ones you never reach for, in the terminal settings.",
+  "@virtKeyIntroCustomizeTip": {
+    "description": "Help text for the virt key intro customize setting or action."
+  },
   "virtKeyIntroModifiers": "Modifiers",
+  "@virtKeyIntroModifiers": {
+    "description": "User-facing label or message for virt key intro modifiers."
+  },
   "virtKeyIntroModifiersTip": "Tap one to arm it, then tap a letter on the keyboard. It stays on for that one key.",
+  "@virtKeyIntroModifiersTip": {
+    "description": "Help text for the virt key intro modifiers setting or action."
+  },
   "virtKeyIntroNav": "Navigation",
+  "@virtKeyIntroNav": {
+    "description": "User-facing label or message for virt key intro nav."
+  },
   "virtKeyIntroNavTip": "These move the cursor. Hold an arrow to repeat it.",
+  "@virtKeyIntroNavTip": {
+    "description": "Help text for the virt key intro nav setting or action."
+  },
   "virtKeyIntroSelect": "Drag sideways over the terminal to select text, whenever it has something to scroll.",
+  "@virtKeyIntroSelect": {
+    "description": "User-facing label or message for virt key intro select."
+  },
   "virtKeyRows": "Rows shown at once",
+  "@virtKeyRows": {
+    "description": "User-facing label or message for virt key rows."
+  },
   "virtKeyRowsTip": "The rest go on a page of their own, swiped sideways.",
+  "@virtKeyRowsTip": {
+    "description": "Help text for the virt key rows setting or action."
+  },
   "waitConnection": "Please wait for the connection to be established.",
+  "@waitConnection": {
+    "description": "User-facing label or message for wait connection."
+  },
   "wakeLock": "Keep awake",
+  "@wakeLock": {
+    "description": "User-facing label or message for wake lock."
+  },
   "watchNotPaired": "No paired Apple Watch",
+  "@watchNotPaired": {
+    "description": "User-facing label or message for watch not paired."
+  },
   "webdavSettingEmpty": "WebDav setting is empty",
+  "@webdavSettingEmpty": {
+    "description": "Empty-state message for webdav setting empty."
+  },
   "whenOpenApp": "When opening the app",
+  "@whenOpenApp": {
+    "description": "User-facing label or message for when open app."
+  },
   "wolTip": "After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.",
+  "@wolTip": {
+    "description": "Help text for the wol setting or action."
+  },
   "write": "Write",
+  "@write": {
+    "description": "User-facing label or message for write."
+  },
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
+  "@writeScriptFailTip": {
+    "description": "Help text for the write script fail setting or action."
+  },
   "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
+  "@writeScriptTip": {
+    "description": "Help text for the write script setting or action."
+  },
   "menuGitHubRepository": "GitHub Repository",
+  "@menuGitHubRepository": {
+    "description": "User-facing label or message for menu git hub repository."
+  },
   "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings.",
+  "@podmanDockerEmulationDetected": {
+    "description": "User-facing label or message for podman docker emulation detected."
+  },
   "betaTip": "This feature is still in beta testing. Functionality is not guaranteed.",
+  "@betaTip": {
+    "description": "Help text for the beta setting or action."
+  },
   "portForward_startPrompt": "Add a port forward rule to get started",
+  "@portForward_startPrompt": {
+    "description": "User-facing label or message for port forward start prompt."
+  },
   "portForward_localHost": "Local Host",
+  "@portForward_localHost": {
+    "description": "User-facing label or message for port forward local host."
+  },
   "portForward_localPort": "Local Port",
+  "@portForward_localPort": {
+    "description": "User-facing label or message for port forward local port."
+  },
   "portForward_remoteHost": "Remote Host",
+  "@portForward_remoteHost": {
+    "description": "User-facing label or message for port forward remote host."
+  },
   "portForward_remotePort": "Remote Port",
+  "@portForward_remotePort": {
+    "description": "User-facing label or message for port forward remote port."
+  },
   "portForward_deleteConfirmFmt": "Delete {name}?",
+  "@portForward_deleteConfirmFmt": {
+    "description": "Formatted user-facing message for port forward delete confirm; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "sponsor": "Sponsor",
+  "@sponsor": {
+    "description": "User-facing label or message for sponsor."
+  },
   "sortByJoinTime": "By join time",
+  "@sortByJoinTime": {
+    "description": "User-facing label or message for sort by join time."
+  },
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "@portForwardBetaTitle": {
+    "description": "Title shown for the port forward beta dialog or section."
+  },
   "tmuxAutoAttach": "tmux auto-attach",
+  "@tmuxAutoAttach": {
+    "description": "User-facing label or message for tmux auto attach."
+  },
   "tmuxAuto": "Auto tmux",
+  "@tmuxAuto": {
+    "description": "User-facing label or message for tmux auto."
+  },
   "tmuxAutoTip": "Automatically start or attach tmux when connecting over SSH",
+  "@tmuxAutoTip": {
+    "description": "Help text for the tmux auto setting or action."
+  },
   "tmuxSessionSelector": "Session selector",
+  "@tmuxSessionSelector": {
+    "description": "User-facing label or message for tmux session selector."
+  },
   "tmuxSessionSelectorTip": "Show the session picker when connecting",
+  "@tmuxSessionSelectorTip": {
+    "description": "Help text for the tmux session selector setting or action."
+  },
   "tmuxDefaultSessionName": "Default session name",
+  "@tmuxDefaultSessionName": {
+    "description": "User-facing label or message for tmux default session name."
+  },
   "tmuxSessionName": "Session name",
+  "@tmuxSessionName": {
+    "description": "User-facing label or message for tmux session name."
+  },
   "tmuxExistingSessions": "Existing sessions",
+  "@tmuxExistingSessions": {
+    "description": "User-facing label or message for tmux existing sessions."
+  },
   "tmuxNewSession": "New session",
+  "@tmuxNewSession": {
+    "description": "User-facing label or message for tmux new session."
+  },
   "tmuxWindows": "Windows",
+  "@tmuxWindows": {
+    "description": "User-facing label or message for tmux windows."
+  },
   "tmuxNewWindow": "New window",
+  "@tmuxNewWindow": {
+    "description": "User-facing label or message for tmux new window."
+  },
   "tmuxNoWindowsFound": "No windows found",
+  "@tmuxNoWindowsFound": {
+    "description": "User-facing label or message for tmux no windows found."
+  },
   "tmuxWindowCount": "{count, plural, one{1 window} other{{count} windows}}",
   "@tmuxWindowCount": {
+    "description": "User-facing label or message for tmux window count.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -620,6 +2222,7 @@
   },
   "tmuxPaneCount": "{count, plural, one{1 pane} other{{count} panes}}",
   "@tmuxPaneCount": {
+    "description": "User-facing label or message for tmux pane count.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -627,9 +2230,16 @@
     }
   },
   "tmuxAttached": "Attached",
+  "@tmuxAttached": {
+    "description": "User-facing label or message for tmux attached."
+  },
   "tmuxActive": "Active",
+  "@tmuxActive": {
+    "description": "User-facing label or message for tmux active."
+  },
   "tmuxActiveAt": "active: {time}",
   "@tmuxActiveAt": {
+    "description": "User-facing label or message for tmux active at.",
     "placeholders": {
       "time": {
         "type": "String"
@@ -638,6 +2248,7 @@
   },
   "tmuxAttachedAt": "attached: {time}",
   "@tmuxAttachedAt": {
+    "description": "User-facing label or message for tmux attached at.",
     "placeholders": {
       "time": {
         "type": "String"
@@ -645,9 +2256,16 @@
     }
   },
   "tmuxSkip": "Skip",
+  "@tmuxSkip": {
+    "description": "User-facing label or message for tmux skip."
+  },
   "tmuxNotAvailable": "tmux is not available",
+  "@tmuxNotAvailable": {
+    "description": "User-facing label or message for tmux not available."
+  },
   "containerSegmentsMismatch": "Unexpected container response segment count: {count}",
   "@containerSegmentsMismatch": {
+    "description": "User-facing label or message for container segments mismatch.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -655,8 +2273,12 @@
     }
   },
   "containerOperationInProgress": "Another container operation is already in progress",
+  "@containerOperationInProgress": {
+    "description": "User-facing label or message for container operation in progress."
+  },
   "processCount": "{count, plural, one{1 process} other{{count} processes}}",
   "@processCount": {
+    "description": "User-facing label or message for process count.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -664,13 +2286,32 @@
     }
   },
   "processParseUnsupportedOutput": "The process list format is not supported.",
+  "@processParseUnsupportedOutput": {
+    "description": "User-facing label or message for process parse unsupported output."
+  },
   "processParseInvalidRows": "Some process entries could not be read.",
+  "@processParseInvalidRows": {
+    "description": "User-facing label or message for process parse invalid rows."
+  },
   "processParseInvalidWindowsJson": "The Windows process response could not be read.",
+  "@processParseInvalidWindowsJson": {
+    "description": "User-facing label or message for process parse invalid windows json."
+  },
   "processParseInvalidWindowsRows": "Some Windows process entries could not be read.",
+  "@processParseInvalidWindowsRows": {
+    "description": "User-facing label or message for process parse invalid windows rows."
+  },
   "processKillTargetChanged": "The process changed or exited. Refresh and try again.",
+  "@processKillTargetChanged": {
+    "description": "User-facing label or message for process kill target changed."
+  },
   "processSearchHint": "Name, user or PID",
+  "@processSearchHint": {
+    "description": "Hint shown in the process search field or section."
+  },
   "processShowKernelThreads": "{count, plural, one{Show 1 kernel thread} other{Show {count} kernel threads}}",
   "@processShowKernelThreads": {
+    "description": "User-facing label or message for process show kernel threads.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -678,23 +2319,72 @@
     }
   },
   "processForceKill": "Force kill",
+  "@processForceKill": {
+    "description": "User-facing label or message for process force kill."
+  },
   "processStarted": "Started",
+  "@processStarted": {
+    "description": "User-facing label or message for process started."
+  },
   "processThreads": "Threads",
+  "@processThreads": {
+    "description": "User-facing label or message for process threads."
+  },
   "watchServers": "Servers on the watch",
+  "@watchServers": {
+    "description": "User-facing label or message for watch servers."
+  },
   "watchServersTip": "The watch fetches from the monitor on its own, so only servers with one can be picked.",
+  "@watchServersTip": {
+    "description": "Help text for the watch servers setting or action."
+  },
   "watchNoMonitorServer": "No server has a monitor agent configured",
+  "@watchNoMonitorServer": {
+    "description": "User-facing label or message for watch no monitor server."
+  },
   "legacyStatusGoneTitle": "Status URLs no longer work",
+  "@legacyStatusGoneTitle": {
+    "description": "Title shown for the legacy status gone dialog or section."
+  },
   "legacyStatusGoneBody": "The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent's authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.",
+  "@legacyStatusGoneBody": {
+    "description": "Explanatory message shown in the legacy status gone dialog or notice."
+  },
   "services": "Services",
+  "@services": {
+    "description": "User-facing label or message for services."
+  },
   "status": "Status",
+  "@status": {
+    "description": "User-facing label or message for status."
+  },
   "enable": "Enable",
+  "@enable": {
+    "description": "Action label for enable."
+  },
   "disable": "Disable",
+  "@disable": {
+    "description": "User-facing label or message for disable."
+  },
   "starting": "Starting",
+  "@starting": {
+    "description": "Action label for starting."
+  },
   "stopping": "Stopping",
+  "@stopping": {
+    "description": "Action label for stopping."
+  },
   "serviceManagerUnsupported": "Unsupported service manager",
+  "@serviceManagerUnsupported": {
+    "description": "User-facing label or message for service manager unsupported."
+  },
   "serviceManagerUnsupportedTip": "This server uses a service manager that ServerBox does not support yet. Supported managers: systemd, procd, and OpenRC.",
+  "@serviceManagerUnsupportedTip": {
+    "description": "Help text for the service manager unsupported setting or action."
+  },
   "serviceManagerFmt": "Managed by {manager}",
   "@serviceManagerFmt": {
+    "description": "Formatted user-facing message for service manager; runtime values are supplied by placeholders.",
     "placeholders": {
       "manager": {
         "type": "String"
@@ -702,14 +2392,36 @@
     }
   },
   "serviceListFailed": "Could not list services",
+  "@serviceListFailed": {
+    "description": "Error message shown when service list failed."
+  },
   "serviceDetailsUnavailable": "Some service details are unavailable",
+  "@serviceDetailsUnavailable": {
+    "description": "User-facing label or message for service details unavailable."
+  },
   "serviceDetailsUnavailableTip": "The service list is usable, but the manager did not return all status or startup information.",
+  "@serviceDetailsUnavailableTip": {
+    "description": "Help text for the service details unavailable setting or action."
+  },
   "systemdUserScopeMissing": "User units are not listed",
+  "@systemdUserScopeMissing": {
+    "description": "User-facing label or message for systemd user scope missing."
+  },
   "systemdUserScopeMissingTip": "This account has no user session bus on the server, so only system units are shown.",
+  "@systemdUserScopeMissingTip": {
+    "description": "Help text for the systemd user scope missing setting or action."
+  },
   "serviceSearchHint": "Unit name",
+  "@serviceSearchHint": {
+    "description": "Hint shown in the service search field or section."
+  },
   "serviceNeedsAttention": "Needs attention",
+  "@serviceNeedsAttention": {
+    "description": "User-facing label or message for service needs attention."
+  },
   "serviceOtherUnits": "{count, plural, one{1 other unit} other{{count} other units}}",
   "@serviceOtherUnits": {
+    "description": "User-facing label or message for service other units.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -717,11 +2429,24 @@
     }
   },
   "serviceUnit": "Unit",
+  "@serviceUnit": {
+    "description": "User-facing label or message for service unit."
+  },
   "serviceUnitType": "Type",
+  "@serviceUnitType": {
+    "description": "User-facing label or message for service unit type."
+  },
   "serviceScope": "Scope",
+  "@serviceScope": {
+    "description": "User-facing label or message for service scope."
+  },
   "serviceStartup": "Startup",
+  "@serviceStartup": {
+    "description": "User-facing label or message for service startup."
+  },
   "serviceUpFor": "up {duration}",
   "@serviceUpFor": {
+    "description": "User-facing label or message for service up for.",
     "placeholders": {
       "duration": {
         "type": "String"
@@ -730,6 +2455,7 @@
   },
   "serviceDownFor": "down {duration}",
   "@serviceDownFor": {
+    "description": "User-facing label or message for service down for.",
     "placeholders": {
       "duration": {
         "type": "String"
@@ -738,6 +2464,7 @@
   },
   "serviceNextIn": "next {duration}",
   "@serviceNextIn": {
+    "description": "User-facing label or message for service next in.",
     "placeholders": {
       "duration": {
         "type": "String"
@@ -746,6 +2473,7 @@
   },
   "serviceStoppedAgo": "Stopped {duration} ago",
   "@serviceStoppedAgo": {
+    "description": "User-facing label or message for service stopped ago.",
     "placeholders": {
       "duration": {
         "type": "String"
@@ -754,16 +2482,24 @@
   },
   "serviceExitStatus": "exit status {code}",
   "@serviceExitStatus": {
+    "description": "User-facing label or message for service exit status.",
     "placeholders": {
       "code": {
-        "type": "String"
+        "type": "int"
       }
     }
   },
   "serviceFullJournal": "Full journal",
+  "@serviceFullJournal": {
+    "description": "User-facing label or message for service full journal."
+  },
   "serviceUnitFile": "Unit file",
+  "@serviceUnitFile": {
+    "description": "User-facing label or message for service unit file."
+  },
   "serviceJournalRecent": "{count, plural, one{Last line} other{Last {count} lines}}",
   "@serviceJournalRecent": {
+    "description": "User-facing label or message for service journal recent.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -771,21 +2507,64 @@
     }
   },
   "serviceJournalUnreadable": "This account cannot read the journal",
+  "@serviceJournalUnreadable": {
+    "description": "User-facing label or message for service journal unreadable."
+  },
   "serverUnreachable": "Could not run a command on this server",
+  "@serverUnreachable": {
+    "description": "User-facing label or message for server unreachable."
+  },
   "containerNoRuntime": "No container runtime here",
+  "@containerNoRuntime": {
+    "description": "User-facing label or message for container no runtime."
+  },
   "containerNoRuntimeTip": "Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.",
+  "@containerNoRuntimeTip": {
+    "description": "Help text for the container no runtime setting or action."
+  },
   "containerUnreadable": "The container runtime answered in an unexpected form",
+  "@containerUnreadable": {
+    "description": "User-facing label or message for container unreadable."
+  },
   "power": "Power",
+  "@power": {
+    "description": "User-facing label or message for power."
+  },
   "fan": "Fan",
+  "@fan": {
+    "description": "User-facing label or message for fan."
+  },
   "clockSpeed": "Clock",
+  "@clockSpeed": {
+    "description": "User-facing label or message for clock speed."
+  },
   "vendor": "Vendor",
+  "@vendor": {
+    "description": "User-facing label or message for vendor."
+  },
   "continueInTerminal": "Continue in terminal",
+  "@continueInTerminal": {
+    "description": "User-facing label or message for continue in terminal."
+  },
   "askAiRiskUnknown": "Unclassified",
+  "@askAiRiskUnknown": {
+    "description": "User-facing label or message for ask AI risk unknown."
+  },
   "agentLocalExec": "Run commands on this device",
+  "@agentLocalExec": {
+    "description": "User-facing label or message for agent local exec."
+  },
   "agentLocalExecTip": "Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed",
+  "@agentLocalExecTip": {
+    "description": "Help text for the agent local exec setting or action."
+  },
   "agentLocalExecRootfsTip": "Lets the Agent work locally, confined to the Linux container ServerBox installed",
+  "@agentLocalExecRootfsTip": {
+    "description": "Help text for the agent local exec rootfs setting or action."
+  },
   "macDmgImportedPartly": "Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.",
   "@macDmgImportedPartly": {
+    "description": "User-facing label or message for mac DMG imported partly.",
     "placeholders": {
       "path": {
         "type": "String"
@@ -793,9 +2572,16 @@
     }
   },
   "bmcAccount": "Account",
+  "@bmcAccount": {
+    "description": "User-facing label or message for BMC account."
+  },
   "bmcAccountUnset": "None picked - tap to choose or create one",
+  "@bmcAccountUnset": {
+    "description": "User-facing label or message for BMC account unset."
+  },
   "bmcAccountShared": "Used by {count} servers",
   "@bmcAccountShared": {
+    "description": "User-facing label or message for BMC account shared.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -803,9 +2589,16 @@
     }
   },
   "bmcAccounts": "BMC accounts",
+  "@bmcAccounts": {
+    "description": "User-facing label or message for BMC accounts."
+  },
   "bmcAccountSharedTip": "Editing this changes what all of them use.",
+  "@bmcAccountSharedTip": {
+    "description": "Help text for the BMC account shared setting or action."
+  },
   "bmcAccountInUse": "{count} servers use it. They keep their address and lose the account.",
   "@bmcAccountInUse": {
+    "description": "User-facing label or message for BMC account in use.",
     "placeholders": {
       "count": {
         "type": "int"
@@ -813,48 +2606,141 @@
     }
   },
   "bmcStaleWrite": "The BMC changed while this was being written. Try again.",
+  "@bmcStaleWrite": {
+    "description": "User-facing label or message for BMC stale write."
+  },
   "send": "Send",
+  "@send": {
+    "description": "Action label for send."
+  },
   "privacyBlur": "Background privacy",
+  "@privacyBlur": {
+    "description": "User-facing label or message for privacy blur."
+  },
   "privacyBlurTip": "Hide app content in the app switcher",
+  "@privacyBlurTip": {
+    "description": "Help text for the privacy blur setting or action."
+  },
   "floatReturnToTab": "Return to tab",
+  "@floatReturnToTab": {
+    "description": "User-facing label or message for float return to tab."
+  },
   "termInFloatWindow": "This terminal is in the floating window",
+  "@termInFloatWindow": {
+    "description": "User-facing label or message for term in float window."
+  },
   "globeEnabledTip": "Draw servers on a globe, at where their addresses are. Off removes the button from the server tab and stops every lookup.",
+  "@globeEnabledTip": {
+    "description": "Help text for the globe enabled setting or action."
+  },
   "geoShardsConsentAttribution": "IP geolocation by [DB-IP](https://db-ip.com), CC BY 4.0.",
+  "@geoShardsConsentAttribution": {
+    "description": "User-facing label or message for geo shards consent attribution."
+  },
   "geoMissPrivate": "Private address",
+  "@geoMissPrivate": {
+    "description": "User-facing label or message for geo miss private."
+  },
   "geoMissNoData": "No location data",
+  "@geoMissNoData": {
+    "description": "Empty-state message for geo miss no data."
+  },
   "globeGuide": "Tap here to see your servers on a globe, at where their addresses are.",
+  "@globeGuide": {
+    "description": "User-facing label or message for globe guide."
+  },
   "publicIp": "Public IP",
+  "@publicIp": {
+    "description": "User-facing label or message for public IP."
+  },
   "geoData": "City-level data",
+  "@geoData": {
+    "description": "User-facing label or message for geo data."
+  },
   "geoDataTip": "After download, every geolocation lookup uses data stored on this device. Server addresses and lookup activity are not sent to the download service.",
+  "@geoDataTip": {
+    "description": "Help text for the geo data setting or action."
+  },
   "geoDataMissing": "Not downloaded",
+  "@geoDataMissing": {
+    "description": "User-facing label or message for geo data missing."
+  },
   "geoDataUnreachable": "Could not fetch the data.",
+  "@geoDataUnreachable": {
+    "description": "User-facing label or message for geo data unreachable."
+  },
   "geoDataRemoveFailed": "Could not delete the data.",
+  "@geoDataRemoveFailed": {
+    "description": "Error message shown when geo data remove failed."
+  },
   "geoDataCurrent": "{month} is already installed.",
   "@geoDataCurrent": {
+    "description": "User-facing label or message for geo data current.",
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Download: {download} · On-device storage: {disk}.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.",
   "@geoDataConsent": {
+    "description": "User-facing label or message for geo data consent.",
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Benchmark",
+  "@benchmark": {
+    "description": "User-facing label or message for benchmark."
+  },
   "benchmarkIntro": "Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.",
+  "@benchmarkIntro": {
+    "description": "Introductory text for the benchmark screen or section."
+  },
   "benchmarkNoRuns": "No benchmarks yet.",
+  "@benchmarkNoRuns": {
+    "description": "User-facing label or message for benchmark no runs."
+  },
   "benchmarkRunning": "Benchmark running",
+  "@benchmarkRunning": {
+    "description": "Status message shown while benchmark running."
+  },
   "benchmarkStartFailed": "Could not start the benchmark",
+  "@benchmarkStartFailed": {
+    "description": "Error message shown when benchmark start failed."
+  },
   "benchmarkCancelConfirm": "Stop this benchmark? What it has measured so far is lost.",
+  "@benchmarkCancelConfirm": {
+    "description": "Confirmation prompt for benchmark cancel confirm."
+  },
   "benchmarkDeleteConfirm": "Delete this benchmark result?",
+  "@benchmarkDeleteConfirm": {
+    "description": "Confirmation prompt for benchmark delete confirm."
+  },
   "benchmarkNothingSelected": "Every phase is off. The run will collect system information only, and take a few seconds.",
+  "@benchmarkNothingSelected": {
+    "description": "User-facing label or message for benchmark nothing selected."
+  },
   "benchmarkDiskTip": "fio at four block sizes, about 3 minutes. Writes a 2 GB test file into the working directory and needs that much free.",
+  "@benchmarkDiskTip": {
+    "description": "Help text for the benchmark disk setting or action."
+  },
   "benchmarkNetworkTip": "iperf3 against public servers, about 4 minutes.",
+  "@benchmarkNetworkTip": {
+    "description": "Help text for the benchmark network setting or action."
+  },
   "benchmarkReducedNetwork": "Fewer locations",
+  "@benchmarkReducedNetwork": {
+    "description": "User-facing label or message for benchmark reduced network."
+  },
   "benchmarkReducedNetworkTip": "Three locations instead of seven. Roughly {full} of traffic becomes {reduced}.",
   "@benchmarkReducedNetworkTip": {
+    "description": "Help text for the benchmark reduced network setting or action.",
     "placeholders": {
       "full": {
         "type": "String"
@@ -865,23 +2751,49 @@
     }
   },
   "benchmarkCpuTip": "Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.",
+  "@benchmarkCpuTip": {
+    "description": "Help text for the benchmark CPU setting or action."
+  },
   "benchmarkSensitiveOptions": "The options below download and run third-party software on this server or send server information to third parties. They are off by default.",
+  "@benchmarkSensitiveOptions": {
+    "description": "User-facing label or message for benchmark sensitive options."
+  },
   "benchmarkIpInfoTip": "Sends this server's public address to ip-api.com over plain HTTP.",
+  "@benchmarkIpInfoTip": {
+    "description": "Help text for the benchmark IP info setting or action."
+  },
   "benchmarkIpInfo": "Look up IP owner",
+  "@benchmarkIpInfo": {
+    "description": "User-facing label or message for benchmark IP info."
+  },
   "benchmarkPreferBin": "Download fio and iperf3",
+  "@benchmarkPreferBin": {
+    "description": "User-facing label or message for benchmark prefer bin."
+  },
   "benchmarkPreferBinTip": "Downloads them from GitHub instead of using the host's packages. Turn on only if the host has neither installed.",
+  "@benchmarkPreferBinTip": {
+    "description": "Help text for the benchmark prefer bin setting or action."
+  },
   "benchmarkWorkDir": "Working directory",
+  "@benchmarkWorkDir": {
+    "description": "User-facing label or message for benchmark work dir."
+  },
   "benchmarkWorkDirTip": "Decides which filesystem the disk test measures. Empty means the login account's home directory.",
+  "@benchmarkWorkDirTip": {
+    "description": "Help text for the benchmark work dir setting or action."
+  },
   "benchmarkEstimatedTime": "About {minutes} min",
   "@benchmarkEstimatedTime": {
+    "description": "User-facing label or message for benchmark estimated time.",
     "placeholders": {
       "minutes": {
-        "type": "String"
+        "type": "int"
       }
     }
   },
   "benchmarkEstimatedTraffic": "About {size} of traffic",
   "@benchmarkEstimatedTraffic": {
+    "description": "User-facing label or message for benchmark estimated traffic.",
     "placeholders": {
       "size": {
         "type": "String"
@@ -889,23 +2801,72 @@
     }
   },
   "benchmarkPhaseSystem": "Reading system information",
+  "@benchmarkPhaseSystem": {
+    "description": "User-facing label or message for benchmark phase system."
+  },
   "benchmarkPhaseDisk": "Testing disk",
+  "@benchmarkPhaseDisk": {
+    "description": "User-facing label or message for benchmark phase disk."
+  },
   "benchmarkPhaseNetwork": "Testing network",
+  "@benchmarkPhaseNetwork": {
+    "description": "User-facing label or message for benchmark phase network."
+  },
   "benchmarkPhaseCpu": "Testing CPU",
+  "@benchmarkPhaseCpu": {
+    "description": "User-facing label or message for benchmark phase CPU."
+  },
   "benchmarkPhaseDone": "Finishing",
+  "@benchmarkPhaseDone": {
+    "description": "User-facing label or message for benchmark phase done."
+  },
   "benchmarkResultUnreadable": "This result could not be read as JSON. The raw text is below.",
+  "@benchmarkResultUnreadable": {
+    "description": "User-facing label or message for benchmark result unreadable."
+  },
   "benchmarkViewOnGeekbench": "View on Geekbench",
+  "@benchmarkViewOnGeekbench": {
+    "description": "User-facing label or message for benchmark view on geekbench."
+  },
   "benchmarkGeekbenchPublic": "This result is published publicly at the link above.",
+  "@benchmarkGeekbenchPublic": {
+    "description": "User-facing label or message for benchmark geekbench public."
+  },
   "benchmarkSingleCore": "Single core",
+  "@benchmarkSingleCore": {
+    "description": "User-facing label or message for benchmark single core."
+  },
   "benchmarkMultiCore": "Multi core",
+  "@benchmarkMultiCore": {
+    "description": "User-facing label or message for benchmark multi core."
+  },
   "benchmarkIops": "IOPS",
+  "@benchmarkIops": {
+    "description": "User-facing label or message for benchmark IOPS."
+  },
   "benchmarkSend": "Up",
+  "@benchmarkSend": {
+    "description": "User-facing label or message for benchmark send."
+  },
   "benchmarkRecv": "Down",
+  "@benchmarkRecv": {
+    "description": "User-facing label or message for benchmark recv."
+  },
   "benchmarkLatency": "Latency",
+  "@benchmarkLatency": {
+    "description": "User-facing label or message for benchmark latency."
+  },
   "benchmarkVirt": "Virtualization",
+  "@benchmarkVirt": {
+    "description": "User-facing label or message for benchmark virt."
+  },
   "benchmarkRawLog": "Run log",
+  "@benchmarkRawLog": {
+    "description": "User-facing label or message for benchmark raw log."
+  },
   "benchmarkUpstream": "Powered by Yet Another Bench Script ({version})",
   "@benchmarkUpstream": {
+    "description": "User-facing label or message for benchmark upstream.",
     "placeholders": {
       "version": {
         "type": "String"
@@ -913,18 +2874,52 @@
     }
   },
   "benchmarkPhaseStarting": "Starting",
+  "@benchmarkPhaseStarting": {
+    "description": "User-facing label or message for benchmark phase starting."
+  },
   "benchmarkNoOutputYet": "No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.",
+  "@benchmarkNoOutputYet": {
+    "description": "User-facing label or message for benchmark no output yet."
+  },
   "tagsEmptyTip": "No tags yet. Add one while editing a server and it will appear here.",
+  "@tagsEmptyTip": {
+    "description": "Help text for the tags empty setting or action."
+  },
   "benchmarkNoServers": "Add a server first, then return here to benchmark it.",
+  "@benchmarkNoServers": {
+    "description": "User-facing label or message for benchmark no servers."
+  },
   "schemaTooNewTitle": "This data is newer than the app",
+  "@schemaTooNewTitle": {
+    "description": "Title shown for the schema too new dialog or section."
+  },
   "schemaTooNewBody": "It was written by a newer version of ServerBox (storage v{stored}). This version reads up to v{supported}; nothing has been changed.",
   "schemaTooNewReinstall": "Reinstall the newer version to open all your data again.",
+  "@schemaTooNewReinstall": {
+    "description": "User-facing label or message for schema too new reinstall."
+  },
   "schemaTooNewExportPlain": "Export without a password",
+  "@schemaTooNewExportPlain": {
+    "description": "User-facing label or message for schema too new export plain."
+  },
   "schemaTooNewPlainWarn": "The file will contain every SSH private key, server password and API key in plain text. Anyone who gets the file can access them all.",
+  "@schemaTooNewPlainWarn": {
+    "description": "User-facing label or message for schema too new plain warn."
+  },
   "schemaTooNewWipe": "Delete all data",
+  "@schemaTooNewWipe": {
+    "description": "User-facing label or message for schema too new wipe."
+  },
   "schemaTooNewWipeConfirm": "All servers, keys, snippets and settings on this device will be deleted. This cannot be undone. A backup exported here would be the only copy left.",
+  "@schemaTooNewWipeConfirm": {
+    "description": "Confirmation prompt for schema too new wipe confirm."
+  },
   "schemaTooNewWipeDone": "Data deleted. Open the app again to start fresh.",
+  "@schemaTooNewWipeDone": {
+    "description": "User-facing label or message for schema too new wipe done."
+  },
   "@schemaTooNewBody": {
+    "description": "Explanatory message shown in the schema too new dialog or notice.",
     "placeholders": {
       "stored": {
         "type": "int"
@@ -935,251 +2930,1220 @@
     }
   },
   "schemaTooNewWipeFailed": "Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.",
+  "@schemaTooNewWipeFailed": {
+    "description": "Error message shown when schema too new wipe failed."
+  },
   "systemUsers": "Users",
+  "@systemUsers": {
+    "description": "User-facing label or message for system users."
+  },
   "userManagerLinuxOnly": "System user management currently supports Linux servers.",
+  "@userManagerLinuxOnly": {
+    "description": "User-facing label or message for user manager linux only."
+  },
   "userRegularAccount": "Regular",
+  "@userRegularAccount": {
+    "description": "User-facing label or message for user regular account."
+  },
   "userCurrentAccount": "Current account",
+  "@userCurrentAccount": {
+    "description": "User-facing label or message for user current account."
+  },
   "userSystemAccount": "System account",
+  "@userSystemAccount": {
+    "description": "User-facing label or message for user system account."
+  },
   "userUid": "UID",
+  "@userUid": {
+    "description": "User-facing label or message for user UID."
+  },
   "userLoginStatus": "Status",
+  "@userLoginStatus": {
+    "description": "User-facing label or message for user login status."
+  },
   "userLoginEnabled": "Login enabled",
+  "@userLoginEnabled": {
+    "description": "User-facing label or message for user login enabled."
+  },
   "userDetailAccount": "Account",
+  "@userDetailAccount": {
+    "description": "User-facing label or message for user detail account."
+  },
   "userDetailSecurity": "Security",
+  "@userDetailSecurity": {
+    "description": "User-facing label or message for user detail security."
+  },
   "userSshKeys": "SSH keys",
+  "@userSshKeys": {
+    "description": "User-facing label or message for user SSH keys."
+  },
   "userExpires": "Expires",
+  "@userExpires": {
+    "description": "User-facing label or message for user expires."
+  },
   "userNever": "Never",
+  "@userNever": {
+    "description": "User-facing label or message for user never."
+  },
   "userPasswordSet": "Set",
+  "@userPasswordSet": {
+    "description": "User-facing label or message for user password set."
+  },
   "userPasswordLocked": "Locked",
+  "@userPasswordLocked": {
+    "description": "User-facing label or message for user password locked."
+  },
   "userPasswordNone": "None",
+  "@userPasswordNone": {
+    "description": "Empty-state message for user password none."
+  },
   "userSuperuser": "Superuser",
+  "@userSuperuser": {
+    "description": "User-facing label or message for user superuser."
+  },
   "userOpenShell": "Open shell",
+  "@userOpenShell": {
+    "description": "User-facing label or message for user open shell."
+  },
   "userRootChangesWarning": "Changes to root take effect in every session at once.",
+  "@userRootChangesWarning": {
+    "description": "User-facing label or message for user root changes warning."
+  },
   "userComment": "Comment",
+  "@userComment": {
+    "description": "User-facing label or message for user comment."
+  },
   "userPrimaryGroup": "Primary group",
+  "@userPrimaryGroup": {
+    "description": "User-facing label or message for user primary group."
+  },
   "userSupplementaryGroups": "Supplementary groups",
+  "@userSupplementaryGroups": {
+    "description": "User-facing label or message for user supplementary groups."
+  },
   "userLoginShell": "Login shell",
+  "@userLoginShell": {
+    "description": "User-facing label or message for user login shell."
+  },
   "userCreateHome": "Create home directory",
+  "@userCreateHome": {
+    "description": "User-facing label or message for user create home."
+  },
   "userMoveHome": "Move the existing home directory when the path changes",
+  "@userMoveHome": {
+    "description": "User-facing label or message for user move home."
+  },
   "userRemoveHome": "Remove the home directory",
+  "@userRemoveHome": {
+    "description": "User-facing label or message for user remove home."
+  },
   "userPasswordCreateTip": "Leave the password empty to create a password-locked account.",
+  "@userPasswordCreateTip": {
+    "description": "Help text for the user password create setting or action."
+  },
   "userPasswordEditTip": "Leave the password empty to keep the existing password.",
+  "@userPasswordEditTip": {
+    "description": "Help text for the user password edit setting or action."
+  },
   "funcUnavailableFmt": "{func} is not available over this server's connection.",
+  "@funcUnavailableFmt": {
+    "description": "Formatted user-facing message for func unavailable; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "func": {
+        "type": "String"
+      }
+    }
+  },
   "rangeLive": "Live",
+  "@rangeLive": {
+    "description": "User-facing label or message for range live."
+  },
   "diskIo": "Disk I/O",
+  "@diskIo": {
+    "description": "User-facing label or message for disk io."
+  },
   "peak": "peak",
+  "@peak": {
+    "description": "User-facing label or message for peak."
+  },
   "hardware": "Hardware",
+  "@hardware": {
+    "description": "User-facing label or message for hardware."
+  },
   "cores": "Cores",
+  "@cores": {
+    "description": "User-facing label or message for cores."
+  },
   "historyNoStored": "Only a monitor agent stores history. This connection keeps what this app has seen since it connected.",
+  "@historyNoStored": {
+    "description": "User-facing label or message for history no stored."
+  },
   "noHistoryYet": "Nothing measured yet",
+  "@noHistoryYet": {
+    "description": "User-facing label or message for no history yet."
+  },
   "noData": "no data",
+  "@noData": {
+    "description": "User-facing label or message for no data."
+  },
   "from": "From",
+  "@from": {
+    "description": "User-facing label or message for from."
+  },
   "to": "To",
+  "@to": {
+    "description": "User-facing label or message for to."
+  },
   "beyondRetention": "beyond what this agent kept",
+  "@beyondRetention": {
+    "description": "User-facing label or message for beyond retention."
+  },
   "agentRetentionFmt": "Agent keeps {kept}",
+  "@agentRetentionFmt": {
+    "description": "Formatted user-facing message for agent retention; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "kept": {
+        "type": "String"
+      }
+    }
+  },
   "oldestSampleFmt": "oldest sample {time}",
+  "@oldestSampleFmt": {
+    "description": "Formatted user-facing message for oldest sample; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "rangeEndsBeforeItStarts": "The end of the range has to be after its start.",
+  "@rangeEndsBeforeItStarts": {
+    "description": "User-facing label or message for range ends before it starts."
+  },
   "samples": "samples",
+  "@samples": {
+    "description": "User-facing label or message for samples."
+  },
   "unavailable": "unavailable",
+  "@unavailable": {
+    "description": "User-facing label or message for unavailable."
+  },
   "metricUnavailableTip": "The rest of this page is unaffected. Check the command this reading comes from on the host.",
+  "@metricUnavailableTip": {
+    "description": "Help text for the metric unavailable setting or action."
+  },
   "waitingFirstSample": "Waiting for the first sample",
+  "@waitingFirstSample": {
+    "description": "User-facing label or message for waiting first sample."
+  },
   "atTimeFmt": "at {time}",
+  "@atTimeFmt": {
+    "description": "Formatted user-facing message for at time; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "stored": "stored",
+  "@stored": {
+    "description": "User-facing label or message for stored."
+  },
   "lastSampleFmt": "last sample {ago}",
+  "@lastSampleFmt": {
+    "description": "Formatted user-facing message for last sample; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
   "staleSinceFmt": "Everything below is from {time}, {ago}.",
+  "@staleSinceFmt": {
+    "description": "Formatted user-facing message for stale since; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
   "noDataBeforeFmt": "no data before {time}",
+  "@noDataBeforeFmt": {
+    "description": "Formatted user-facing message for no data before; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "loadingRangeFmt": "Loading {range}…",
+  "@loadingRangeFmt": {
+    "description": "Formatted user-facing message for loading range; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "noStoredHistoryFor": "No stored history for {metric}",
+  "@noStoredHistoryFor": {
+    "description": "User-facing label or message for no stored history for.",
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
   "devicesFmt": "{count} devices",
+  "@devicesFmt": {
+    "description": "Formatted user-facing message for devices; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "devicesBusiestFmt": "{count} devices · {name} busiest",
+  "@devicesBusiestFmt": {
+    "description": "Formatted user-facing message for devices busiest; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "devicesPlottedFmt": "{plotted} of {total} devices",
+  "@devicesPlottedFmt": {
+    "description": "Formatted user-facing message for devices plotted; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "plotted": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "sensorsHottestFmt": "{count} sensors · {name} hottest",
+  "@sensorsHottestFmt": {
+    "description": "Formatted user-facing message for sensors hottest; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "oneDeviceAtLeast": "At least one device stays on the chart.",
+  "@oneDeviceAtLeast": {
+    "description": "User-facing label or message for one device at least."
+  },
   "shownOfFmt": "{shown} of {total} {what}",
+  "@shownOfFmt": {
+    "description": "Formatted user-facing message for shown of; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
   "countOfFmt": "{count} {what}",
+  "@countOfFmt": {
+    "description": "Formatted user-facing message for count of; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
   "unitDevices": "devices",
+  "@unitDevices": {
+    "description": "User-facing label or message for unit devices."
+  },
   "unitSensors": "sensors",
+  "@unitSensors": {
+    "description": "User-facing label or message for unit sensors."
+  },
   "unitBatteries": "batteries",
+  "@unitBatteries": {
+    "description": "User-facing label or message for unit batteries."
+  },
   "unitCommands": "commands",
+  "@unitCommands": {
+    "description": "User-facing label or message for unit commands."
+  },
   "unitReadings": "readings",
+  "@unitReadings": {
+    "description": "User-facing label or message for unit readings."
+  },
   "unitGpus": "GPUs",
+  "@unitGpus": {
+    "description": "User-facing label or message for unit gpus."
+  },
   "hottest": "hottest",
+  "@hottest": {
+    "description": "User-facing label or message for hottest."
+  },
   "oldest": "oldest",
+  "@oldest": {
+    "description": "User-facing label or message for oldest."
+  },
   "notApplicable": "not applicable",
+  "@notApplicable": {
+    "description": "User-facing label or message for not applicable."
+  },
   "attributes": "attributes",
+  "@attributes": {
+    "description": "User-facing label or message for attributes."
+  },
   "powerOnHours": "Power-on hours",
+  "@powerOnHours": {
+    "description": "User-facing label or message for power on hours."
+  },
   "powerCycles": "Power cycles",
+  "@powerCycles": {
+    "description": "User-facing label or message for power cycles."
+  },
   "lifeLeft": "Life left",
+  "@lifeLeft": {
+    "description": "User-facing label or message for life left."
+  },
   "lifetimeWrite": "Lifetime write",
+  "@lifetimeWrite": {
+    "description": "User-facing label or message for lifetime write."
+  },
   "lifetimeRead": "Lifetime read",
+  "@lifetimeRead": {
+    "description": "User-facing label or message for lifetime read."
+  },
   "averageErase": "Average erase",
+  "@averageErase": {
+    "description": "User-facing label or message for average erase."
+  },
   "unsafeShutdowns": "Unsafe shutdowns",
+  "@unsafeShutdowns": {
+    "description": "User-facing label or message for unsafe shutdowns."
+  },
   "diskAllPassed": "all PASSED",
+  "@diskAllPassed": {
+    "description": "User-facing label or message for disk all passed."
+  },
   "diskWarningFmt": "{count, plural, =1{1 warning} other{{count} warnings}}",
+  "@diskWarningFmt": {
+    "description": "Formatted user-facing message for disk warning; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "diskWrongOfFmt": "{wrong} of {total} devices",
+  "@diskWrongOfFmt": {
+    "description": "Formatted user-facing message for disk wrong of; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "wrong": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "diskSmartSortedTip": "Sorted worst first",
+  "@diskSmartSortedTip": {
+    "description": "Help text for the disk smart sorted setting or action."
+  },
   "readAgoFmt": "read {ago}",
+  "@readAgoFmt": {
+    "description": "Formatted user-facing message for read ago; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
   "processesFmt": "{count} processes",
+  "@processesFmt": {
+    "description": "Formatted user-facing message for processes; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "diskFailingFmt": "{count} failing",
+  "@diskFailingFmt": {
+    "description": "Formatted user-facing message for disk failing; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "diskSmartOpenTip": "Open one for its attributes",
+  "@diskSmartOpenTip": {
+    "description": "Help text for the disk smart open setting or action."
+  },
   "cycle": "Cycle",
+  "@cycle": {
+    "description": "User-facing label or message for cycle."
+  },
   "window": "window",
+  "@window": {
+    "description": "User-facing label or message for window."
+  },
   "ofFmt": "of {total}",
+  "@ofFmt": {
+    "description": "Formatted user-facing message for of; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "serverDetailCards": "Detail page cards",
+  "@serverDetailCards": {
+    "description": "User-facing label or message for server detail cards."
+  },
   "connection": "Connection",
+  "@connection": {
+    "description": "Action label for connection."
+  },
   "connectionTip": "Both can be on at once. The order is the order they are dialled.",
+  "@connectionTip": {
+    "description": "Help text for the connection setting or action."
+  },
   "transportOrderFmt": "Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.",
+  "@transportOrderFmt": {
+    "description": "Formatted user-facing message for transport order; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
   "transportOnlyFmt": "Only {name} is on, so there is nothing to fall back to.",
+  "@transportOnlyFmt": {
+    "description": "Formatted user-facing message for transport only; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "transportNoneOn": "Both are off — this server cannot be connected.",
+  "@transportNoneOn": {
+    "description": "User-facing label or message for transport none on."
+  },
   "transportOffKept": "off — settings kept, never dialled",
+  "@transportOffKept": {
+    "description": "User-facing label or message for transport off kept."
+  },
   "transportDialledFirst": "dialled first",
+  "@transportDialledFirst": {
+    "description": "User-facing label or message for transport dialled first."
+  },
   "transportFallback": "fallback",
+  "@transportFallback": {
+    "description": "User-facing label or message for transport fallback."
+  },
   "transportOnlyMethod": "only method",
+  "@transportOnlyMethod": {
+    "description": "User-facing label or message for transport only method."
+  },
   "transportOff": "off",
+  "@transportOff": {
+    "description": "User-facing label or message for transport off."
+  },
   "thisDevice": "This device",
+  "@thisDevice": {
+    "description": "User-facing label or message for this device."
+  },
   "localServerTip": "Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.",
+  "@localServerTip": {
+    "description": "Help text for the local server setting or action."
+  },
   "localServerUnsupported": "This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.",
+  "@localServerUnsupported": {
+    "description": "User-facing label or message for local server unsupported."
+  },
   "remoteDesktopIntro": "Open a server's RDP or VNC desktop inside the app. The connection goes through the server's SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.",
+  "@remoteDesktopIntro": {
+    "description": "Introductory text for the remote desktop screen or section."
+  },
   "remoteDesktopIntroProfiles": "Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.",
+  "@remoteDesktopIntroProfiles": {
+    "description": "User-facing label or message for remote desktop intro profiles."
+  },
   "localServerIntro": "Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.",
+  "@localServerIntro": {
+    "description": "Introductory text for the local server screen or section."
+  },
   "localServerAdd": "Add this device",
+  "@localServerAdd": {
+    "description": "User-facing label or message for local server add."
+  },
   "localServerIntroFooter": "It can also be turned on later, in a server's edit page under Connection.",
+  "@localServerIntroFooter": {
+    "description": "User-facing label or message for local server intro footer."
+  },
   "transportSectionOff": "Off. The fields below are kept for when you turn it back on.",
+  "@transportSectionOff": {
+    "description": "User-facing label or message for transport section off."
+  },
   "monitorAgent": "Monitor agent",
+  "@monitorAgent": {
+    "description": "User-facing label or message for monitor agent."
+  },
   "plainHttpEditTip": "Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.",
+  "@plainHttpEditTip": {
+    "description": "Help text for the plain HTTP edit setting or action."
+  },
   "behaviour": "Behaviour",
+  "@behaviour": {
+    "description": "User-facing label or message for behaviour."
+  },
   "optional": "Optional",
+  "@optional": {
+    "description": "User-facing label or message for optional."
+  },
   "optionalTip": "Nothing here is needed to connect. Open one and its fields take over the form.",
+  "@optionalTip": {
+    "description": "Help text for the optional setting or action."
+  },
   "sshAdvanced": "SSH advanced",
+  "@sshAdvanced": {
+    "description": "User-facing label or message for SSH advanced."
+  },
   "sshAdvancedTip": "Fallback destination, ProxyCommand, jump server, file transport, remote path",
+  "@sshAdvancedTip": {
+    "description": "Help text for the SSH advanced setting or action."
+  },
   "sshLegacyAlgorithms": "Legacy algorithms",
+  "@sshLegacyAlgorithms": {
+    "description": "User-facing label or message for SSH legacy algorithms."
+  },
   "sshLegacyAlgorithmsTip": "For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.",
+  "@sshLegacyAlgorithmsTip": {
+    "description": "Help text for the SSH legacy algorithms setting or action."
+  },
   "appearanceAndPlace": "Appearance & location",
+  "@appearanceAndPlace": {
+    "description": "User-facing label or message for appearance and place."
+  },
   "appearanceAndPlaceTip": "Logo, coordinates",
+  "@appearanceAndPlaceTip": {
+    "description": "Help text for the appearance and place setting or action."
+  },
   "statusCollection": "Status collection",
+  "@statusCollection": {
+    "description": "User-facing label or message for status collection."
+  },
   "statusCollectionTip": "Which commands run, custom commands, which device to read",
+  "@statusCollectionTip": {
+    "description": "Help text for the status collection setting or action."
+  },
   "tagAllTags": "All tags",
+  "@tagAllTags": {
+    "description": "User-facing label or message for tag all tags."
+  },
   "tagMatching": "Matching",
+  "@tagMatching": {
+    "description": "User-facing label or message for tag matching."
+  },
   "tagNewHint": "New tag",
+  "@tagNewHint": {
+    "description": "Hint shown in the tag new field or section."
+  },
   "tagCreateFmt": "Create #{tag}",
+  "@tagCreateFmt": {
+    "description": "Formatted user-facing message for tag create; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
   "tagOnThisServer": "on this server",
+  "@tagOnThisServer": {
+    "description": "User-facing label or message for tag on this server."
+  },
   "tagServersFmt": "{count} servers",
+  "@tagServersFmt": {
+    "description": "Formatted user-facing message for tag servers; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "tagOnThisServerFmt": "{count} on this server",
+  "@tagOnThisServerFmt": {
+    "description": "Formatted user-facing message for tag on this server; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "tagMatchesTyped": "matches what you typed",
+  "@tagMatchesTyped": {
+    "description": "User-facing label or message for tag matches typed."
+  },
   "tagEditorTip": "Typing filters the list; the button creates the tag and puts it on this server in one step. Renaming from the pencil renames it on every server that carries it. A tag no server carries disappears on save.",
+  "@tagEditorTip": {
+    "description": "Help text for the tag editor setting or action."
+  },
   "tagRenamesOnSave": "Renames apply on save",
+  "@tagRenamesOnSave": {
+    "description": "User-facing label or message for tag renames on save."
+  },
   "scheduledTasks": "Scheduled tasks",
+  "@scheduledTasks": {
+    "description": "User-facing label or message for scheduled tasks."
+  },
   "scheduledTaskLinuxOnly": "Scheduled task management currently supports Linux servers.",
+  "@scheduledTaskLinuxOnly": {
+    "description": "User-facing label or message for scheduled task linux only."
+  },
   "scheduledTaskUnavailable": "crontab is not available on this server.",
+  "@scheduledTaskUnavailable": {
+    "description": "User-facing label or message for scheduled task unavailable."
+  },
   "scheduledTaskPreserveTip": "Comments, environment variables, and unrecognized lines in this crontab are preserved.",
+  "@scheduledTaskPreserveTip": {
+    "description": "Help text for the scheduled task preserve setting or action."
+  },
   "scheduledTaskSchedule": "Schedule",
+  "@scheduledTaskSchedule": {
+    "description": "User-facing label or message for scheduled task schedule."
+  },
   "scheduledTaskAdd": "Add task",
+  "@scheduledTaskAdd": {
+    "description": "User-facing label or message for scheduled task add."
+  },
   "scheduledTaskNextRun": "Next run",
+  "@scheduledTaskNextRun": {
+    "description": "User-facing label or message for scheduled task next run."
+  },
   "scheduledTaskNextInFmt": "in {time}",
+  "@scheduledTaskNextInFmt": {
+    "description": "Formatted user-facing message for scheduled task next in; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "scheduledTaskEnabled": "Enabled",
+  "@scheduledTaskEnabled": {
+    "description": "User-facing label or message for scheduled task enabled."
+  },
   "scheduledTaskCommentedOut": "Commented out",
+  "@scheduledTaskCommentedOut": {
+    "description": "User-facing label or message for scheduled task commented out."
+  },
   "scheduledTaskSummaryFmt": "{total} tasks · {enabled} enabled",
+  "@scheduledTaskSummaryFmt": {
+    "description": "Formatted user-facing message for scheduled task summary; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "enabled": {
+        "type": "int"
+      }
+    }
+  },
   "scheduledTaskFilterHint": "Filter tasks",
+  "@scheduledTaskFilterHint": {
+    "description": "Hint shown in the scheduled task filter field or section."
+  },
   "scheduledTaskPreserved": "Preserved lines",
+  "@scheduledTaskPreserved": {
+    "description": "User-facing label or message for scheduled task preserved."
+  },
   "scheduledTaskRaw": "Raw crontab",
+  "@scheduledTaskRaw": {
+    "description": "User-facing label or message for scheduled task raw."
+  },
   "scheduledTaskEnableNow": "Enable now",
+  "@scheduledTaskEnableNow": {
+    "description": "User-facing label or message for scheduled task enable now."
+  },
   "scheduledTaskEnableNowTip": "Off writes the line commented out.",
+  "@scheduledTaskEnableNowTip": {
+    "description": "Help text for the scheduled task enable now setting or action."
+  },
   "scheduledTaskEmptyFmt": "No scheduled tasks for {user}. What is added here is written into that account's crontab.",
+  "@scheduledTaskEmptyFmt": {
+    "description": "Formatted user-facing message for scheduled task empty; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
   "scheduledTaskFieldMinute": "Minute",
+  "@scheduledTaskFieldMinute": {
+    "description": "User-facing label or message for scheduled task field minute."
+  },
   "scheduledTaskFieldHour": "Hour",
+  "@scheduledTaskFieldHour": {
+    "description": "User-facing label or message for scheduled task field hour."
+  },
   "scheduledTaskFieldDayOfMonth": "Day of month",
+  "@scheduledTaskFieldDayOfMonth": {
+    "description": "User-facing label or message for scheduled task field day of month."
+  },
   "scheduledTaskFieldMonth": "Month",
+  "@scheduledTaskFieldMonth": {
+    "description": "User-facing label or message for scheduled task field month."
+  },
   "scheduledTaskFieldDayOfWeek": "Day of week",
+  "@scheduledTaskFieldDayOfWeek": {
+    "description": "User-facing label or message for scheduled task field day of week."
+  },
   "cronErrScheduleEmpty": "A schedule is required.",
+  "@cronErrScheduleEmpty": {
+    "description": "Empty-state message for cron err schedule empty."
+  },
   "cronErrCommandEmpty": "A command is required.",
+  "@cronErrCommandEmpty": {
+    "description": "Empty-state message for cron err command empty."
+  },
   "cronErrLineBreak": "A crontab line cannot contain line breaks.",
+  "@cronErrLineBreak": {
+    "description": "User-facing label or message for cron err line break."
+  },
   "cronErrMacro": "A macro is one word, such as @reboot.",
+  "@cronErrMacro": {
+    "description": "User-facing label or message for cron err macro."
+  },
   "cronErrFieldCount": "A cron schedule has five fields, or a macro such as @reboot.",
+  "@cronErrFieldCount": {
+    "description": "User-facing label or message for cron err field count."
+  },
   "cronAtBoot": "At boot",
+  "@cronAtBoot": {
+    "description": "User-facing label or message for cron at boot."
+  },
   "cronEveryMin": "Every minute",
+  "@cronEveryMin": {
+    "description": "User-facing label or message for cron every min."
+  },
   "cronEveryMinsFmt": "Every {minutes} minutes",
+  "@cronEveryMinsFmt": {
+    "description": "Formatted user-facing message for cron every mins; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "cronHourlyAtFmt": "Every hour at :{minute}",
+  "@cronHourlyAtFmt": {
+    "description": "Formatted user-facing message for cron hourly at; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "minute": {
+        "type": "String"
+      }
+    }
+  },
   "cronEveryHoursFmt": "Every {hours} hours",
+  "@cronEveryHoursFmt": {
+    "description": "Formatted user-facing message for cron every hours; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "cronEveryHoursAtFmt": "Every {hours} hours at :{minute}",
+  "@cronEveryHoursAtFmt": {
+    "description": "Formatted user-facing message for cron every hours at; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minute": {
+        "type": "String"
+      }
+    }
+  },
   "cronDailyAtFmt": "Every day at {time}",
+  "@cronDailyAtFmt": {
+    "description": "Formatted user-facing message for cron daily at; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "cronWeekdaysAtFmt": "On weekdays at {time}",
+  "@cronWeekdaysAtFmt": {
+    "description": "Formatted user-facing message for cron weekdays at; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "cronWeekdayAtFmt": "Every {day} at {time}",
+  "@cronWeekdayAtFmt": {
+    "description": "Formatted user-facing message for cron weekday at; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "cronMonthlyAtFmt": "Day {day} of every month at {time}",
+  "@cronMonthlyAtFmt": {
+    "description": "Formatted user-facing message for cron monthly at; runtime values are supplied by placeholders.",
+    "placeholders": {
+      "day": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "monitorSettings": "Monitor settings",
+  "@monitorSettings": {
+    "description": "User-facing label or message for monitor settings."
+  },
   "monitorAgentDefault": "Agent default",
+  "@monitorAgentDefault": {
+    "description": "User-facing label or message for monitor agent default."
+  },
   "monitorNeedsRestart": "Takes effect after the agent restarts",
+  "@monitorNeedsRestart": {
+    "description": "User-facing label or message for monitor needs restart."
+  },
   "monitorCollection": "Collection",
+  "@monitorCollection": {
+    "description": "User-facing label or message for monitor collection."
+  },
   "extendedInterval": "Extended cycle interval",
+  "@extendedInterval": {
+    "description": "User-facing label or message for extended interval."
+  },
   "idlePause": "Pause when nothing is watching",
+  "@idlePause": {
+    "description": "User-facing label or message for idle pause."
+  },
   "idlePauseTip": "The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.",
+  "@idlePauseTip": {
+    "description": "Help text for the idle pause setting or action."
+  },
   "idlePauseThreshold": "Idle after",
+  "@idlePauseThreshold": {
+    "description": "User-facing label or message for idle pause threshold."
+  },
   "monitorAlerts": "Alerts",
+  "@monitorAlerts": {
+    "description": "User-facing label or message for monitor alerts."
+  },
   "monitoringRules": "Alert rules",
+  "@monitoringRules": {
+    "description": "User-facing label or message for monitoring rules."
+  },
   "ruleMonitorType": "Metric",
+  "@ruleMonitorType": {
+    "description": "User-facing label or message for rule monitor type."
+  },
   "ruleThreshold": "Threshold",
+  "@ruleThreshold": {
+    "description": "User-facing label or message for rule threshold."
+  },
   "ruleMatcher": "Matcher",
+  "@ruleMatcher": {
+    "description": "User-facing label or message for rule matcher."
+  },
   "ruleTip": "Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.",
+  "@ruleTip": {
+    "description": "Help text for the rule setting or action."
+  },
   "pushChannels": "Notification channels",
+  "@pushChannels": {
+    "description": "User-facing label or message for push channels."
+  },
   "pushType": "Type",
+  "@pushType": {
+    "description": "User-facing label or message for push type."
+  },
   "pushRate": "Rate limit",
+  "@pushRate": {
+    "description": "User-facing label or message for push rate."
+  },
   "pushHeaders": "Headers",
+  "@pushHeaders": {
+    "description": "User-facing label or message for push headers."
+  },
   "pushSecretSet": "Set on the agent, not shown",
+  "@pushSecretSet": {
+    "description": "User-facing label or message for push secret set."
+  },
   "pushSecretKeep": "Leave blank to keep",
+  "@pushSecretKeep": {
+    "description": "User-facing label or message for push secret keep."
+  },
   "pushTestTip": "Sends one notification through this channel as it stands here, saved or not.",
+  "@pushTestTip": {
+    "description": "Help text for the push test setting or action."
+  },
   "pushTestSent": "The channel accepted it",
+  "@pushTestSent": {
+    "description": "User-facing label or message for push test sent."
+  },
   "pushTestFailed": "The channel refused it",
+  "@pushTestFailed": {
+    "description": "Error message shown when push test failed."
+  },
   "pushTestMessage": "Test notification from ServerBox Monitor",
+  "@pushTestMessage": {
+    "description": "User-facing label or message for push test message."
+  },
   "pushUnknownType": "This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent's config.toml.",
+  "@pushUnknownType": {
+    "description": "User-facing label or message for push unknown type."
+  },
   "pushJsonInvalid": "is not valid JSON",
+  "@pushJsonInvalid": {
+    "description": "User-facing label or message for push json invalid."
+  },
   "dataRetention": "Data retention",
+  "@dataRetention": {
+    "description": "User-facing label or message for data retention."
+  },
   "dataRetentionTip": "Off means the agent never deletes anything and its database grows without limit.",
+  "@dataRetentionTip": {
+    "description": "Help text for the data retention setting or action."
+  },
   "retentionMetrics": "Keep metrics",
+  "@retentionMetrics": {
+    "description": "User-facing label or message for retention metrics."
+  },
   "retentionAlerts": "Keep alerts",
+  "@retentionAlerts": {
+    "description": "User-facing label or message for retention alerts."
+  },
   "retentionCleanup": "Run cleanup every",
+  "@retentionCleanup": {
+    "description": "User-facing label or message for retention cleanup."
+  },
   "retentionMaxDbSize": "Database size cap",
+  "@retentionMaxDbSize": {
+    "description": "User-facing label or message for retention max db size."
+  },
   "corsOrigins": "CORS allowed origins",
+  "@corsOrigins": {
+    "description": "User-facing label or message for cors origins."
+  },
   "corsOriginsTip": "Origins a browser panel may call this agent from. Empty means same-origin only.",
+  "@corsOriginsTip": {
+    "description": "Help text for the cors origins setting or action."
+  },
   "monitorNoRemoteAccess": "This agent is set up for monitoring only. You can't open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent's config.toml.",
+  "@monitorNoRemoteAccess": {
+    "description": "User-facing label or message for monitor no remote access."
+  },
   "alerts": "Alerts",
+  "@alerts": {
+    "description": "User-facing label or message for alerts."
+  },
   "online": "online",
+  "@online": {
+    "description": "User-facing label or message for online."
+  },
   "densityCards": "Cards",
+  "@densityCards": {
+    "description": "User-facing label or message for density cards."
+  },
   "densityRows": "Rows",
+  "@densityRows": {
+    "description": "User-facing label or message for density rows."
+  },
   "densityGrid": "Grid",
+  "@densityGrid": {
+    "description": "User-facing label or message for density grid."
+  },
   "connect": "Connect",
+  "@connect": {
+    "description": "Action label for connect."
+  },
   "disconnect": "Disconnect",
+  "@disconnect": {
+    "description": "Action label for disconnect."
+  },
   "searchServerTip": "Searches names and addresses — the two the editor asks for first.",
+  "@searchServerTip": {
+    "description": "Help text for the search server setting or action."
+  },
   "addServerTip": "Fill one in, scan a QR code, or import a file somebody shared.",
+  "@addServerTip": {
+    "description": "Help text for the add server setting or action."
+  },
   "move": "Move",
+  "@move": {
+    "description": "User-facing label or message for move."
+  },
   "moveToTop": "Move to top",
+  "@moveToTop": {
+    "description": "User-facing label or message for move to top."
+  },
   "moveToBottom": "Move to bottom",
+  "@moveToBottom": {
+    "description": "User-facing label or message for move to bottom."
+  },
   "groupByTag": "Group by tag",
+  "@groupByTag": {
+    "description": "User-facing label or message for group by tag."
+  },
   "groupByTagTip": "Tags are set in a server’s own editor.",
+  "@groupByTagTip": {
+    "description": "Help text for the group by tag setting or action."
+  },
   "connecting": "Connecting…",
+  "@connecting": {
+    "description": "Action label for connecting."
+  },
   "authShort": "Auth",
+  "@authShort": {
+    "description": "User-facing label or message for auth short."
+  },
   "remoteDesktopFitToWindow": "Fit to window",
+  "@remoteDesktopFitToWindow": {
+    "description": "User-facing label or message for remote desktop fit to window."
+  },
   "remoteDesktopActualSize": "Actual size",
+  "@remoteDesktopActualSize": {
+    "description": "User-facing label or message for remote desktop actual size."
+  },
   "remoteDesktopZoom": "Zoom",
+  "@remoteDesktopZoom": {
+    "description": "User-facing label or message for remote desktop zoom."
+  },
   "remoteDesktopViewOnly": "View only",
+  "@remoteDesktopViewOnly": {
+    "description": "User-facing label or message for remote desktop view only."
+  },
   "remoteDesktopDisableViewOnly": "Disable view only",
+  "@remoteDesktopDisableViewOnly": {
+    "description": "User-facing label or message for remote desktop disable view only."
+  },
   "remoteDesktopSendClipboardText": "Send clipboard text",
+  "@remoteDesktopSendClipboardText": {
+    "description": "User-facing label or message for remote desktop send clipboard text."
+  },
   "remoteDesktopShowKeyboard": "Show keyboard",
+  "@remoteDesktopShowKeyboard": {
+    "description": "User-facing label or message for remote desktop show keyboard."
+  },
   "remoteDesktopMoreControls": "More controls",
+  "@remoteDesktopMoreControls": {
+    "description": "User-facing label or message for remote desktop more controls."
+  },
   "remoteDesktopUseDirectPointer": "Use direct pointer",
+  "@remoteDesktopUseDirectPointer": {
+    "description": "User-facing label or message for remote desktop use direct pointer."
+  },
   "remoteDesktopUseTouchpadPointer": "Use touchpad pointer",
+  "@remoteDesktopUseTouchpadPointer": {
+    "description": "User-facing label or message for remote desktop use touchpad pointer."
+  },
   "remoteDesktopSendCtrlAltDelete": "Send Ctrl+Alt+Delete",
+  "@remoteDesktopSendCtrlAltDelete": {
+    "description": "User-facing label or message for remote desktop send ctrl alt delete."
+  },
   "remoteDesktopReconnect": "Reconnect",
+  "@remoteDesktopReconnect": {
+    "description": "User-facing label or message for remote desktop reconnect."
+  },
   "remoteDesktopFullScreen": "Full screen",
+  "@remoteDesktopFullScreen": {
+    "description": "User-facing label or message for remote desktop full screen."
+  },
   "remoteDesktopCloseSession": "Close session",
+  "@remoteDesktopCloseSession": {
+    "description": "User-facing label or message for remote desktop close session."
+  },
   "remoteDesktopConnected": "Connected",
+  "@remoteDesktopConnected": {
+    "description": "User-facing label or message for remote desktop connected."
+  },
   "remoteDesktopConnecting": "Connecting",
+  "@remoteDesktopConnecting": {
+    "description": "Status message shown while remote desktop connecting."
+  },
   "remoteDesktopReconnecting": "Reconnecting",
+  "@remoteDesktopReconnecting": {
+    "description": "User-facing label or message for remote desktop reconnecting."
+  },
   "remoteDesktopDisconnected": "Disconnected",
+  "@remoteDesktopDisconnected": {
+    "description": "User-facing label or message for remote desktop disconnected."
+  },
   "remoteDesktopGuideTouch": "Touchpad",
+  "@remoteDesktopGuideTouch": {
+    "description": "User-facing label or message for remote desktop guide touch."
+  },
   "remoteDesktopGuideTouchTip": "One finger moves the pointer like a touchpad, and a tap clicks. Tap with two fingers to right-click, drag with two to scroll, and pinch to zoom. Tap twice and keep the finger down to drag.",
+  "@remoteDesktopGuideTouchTip": {
+    "description": "Help text for the remote desktop guide touch setting or action."
+  },
   "remoteDesktopGuideKeyboardTip": "Opens the on-screen keyboard. What you type is sent to the remote desktop.",
+  "@remoteDesktopGuideKeyboardTip": {
+    "description": "Help text for the remote desktop guide keyboard setting or action."
+  },
   "remoteDesktopGuideViewOnlyTip": "Stops sending the pointer and keys, so you can look without clicking anything by accident.",
+  "@remoteDesktopGuideViewOnlyTip": {
+    "description": "Help text for the remote desktop guide view only setting or action."
+  },
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, reconnecting and full screen are in here.",
+  "@remoteDesktopGuideMoreTip": {
+    "description": "Help text for the remote desktop guide more setting or action."
+  },
   "remoteDesktopGuidePointerTip": "So is a direct pointer, where a finger clicks what it touches.",
+  "@remoteDesktopGuidePointerTip": {
+    "description": "Help text for the remote desktop guide pointer setting or action."
+  },
   "remoteDesktopVncClipboardLatin1Only": "VNC clipboard supports Latin-1 text only.",
-"appearanceThemeModeLocked": "This theme only supports {mode}. Select another theme to change the mode.",
-  "@appearanceThemeModeLocked": {"placeholders": {"mode": {"type": "String"}}}
+  "@remoteDesktopVncClipboardLatin1Only": {
+    "description": "User-facing label or message for remote desktop VNC clipboard latin 1 only."
+  },
+  "appearanceThemeModeLocked": "This theme only supports {mode}. Select another theme to change the mode.",
+  "@appearanceThemeModeLocked": {
+    "description": "User-facing label or message for appearance theme mode locked.",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  }
 }

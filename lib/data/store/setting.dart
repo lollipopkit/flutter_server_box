@@ -12,6 +12,7 @@ import 'package:server_box/data/model/app/server_sort.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
+import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/field_prop.dart';
 import 'package:server_box/data/store/migrations/m008_settings_fixups.dart';
 import 'package:server_box/data/store/migrations/m011_virt_key_rows.dart';
@@ -67,8 +68,10 @@ class SettingStore extends SqliteStore {
     true,
   );
 
-  /// Optional HTTPS catalog endpoint for the theme store.
-  late final themeStoreUrl = propertyDefault('themeStoreUrl', '');
+  /// The HTTPS catalog the theme store reads, which is this app's own
+  /// repository by default. Editable, because a client that cannot be pointed
+  /// at another one is a client for one publisher.
+  late final themeStoreUrl = propertyDefault('themeStoreUrl', Urls.themeCatalog);
 
   /// App-wide icon family. The launcher icon is selected by the platform.
   late final appIconStyle = propertyDefault('appIconStyle', 'classic');

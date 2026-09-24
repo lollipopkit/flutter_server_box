@@ -125,1369 +125,1375 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
-  /// No description provided for @appearanceSettings.
+  /// User-facing label or message for appearance settings.
   ///
   /// In en, this message translates to:
   /// **'Appearance'**
   String get appearanceSettings;
 
-  /// No description provided for @appearancePreset.
+  /// User-facing label or message for appearance preset.
   ///
   /// In en, this message translates to:
   /// **'Theme preset'**
   String get appearancePreset;
 
-  /// No description provided for @appearanceThemeSchemaRange.
+  /// User-facing label or message for appearance theme schema range.
   ///
   /// In en, this message translates to:
   /// **'Supported theme schema'**
   String get appearanceThemeSchemaRange;
 
-  /// No description provided for @appearanceThemeInstall.
+  /// User-facing label or message for appearance theme install.
   ///
   /// In en, this message translates to:
   /// **'Install theme'**
   String get appearanceThemeInstall;
 
-  /// No description provided for @appearanceThemeStore.
+  /// User-facing label or message for appearance theme store.
   ///
   /// In en, this message translates to:
   /// **'Theme store'**
   String get appearanceThemeStore;
 
-  /// No description provided for @appearanceThemeStoreUrl.
+  /// User-facing label or message for appearance theme store URL.
   ///
   /// In en, this message translates to:
   /// **'Theme catalog URL'**
   String get appearanceThemeStoreUrl;
 
-  /// No description provided for @appearanceInvalidTheme.
+  /// User-facing label or message for appearance invalid theme.
   ///
   /// In en, this message translates to:
   /// **'Invalid theme package or catalog'**
   String get appearanceInvalidTheme;
 
-  /// No description provided for @appearanceFontFamilies.
+  /// Shown when a selected theme requires a newer app version. {version} is the required version.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a newer app: {version}'**
+  String appearanceThemeNeedsNewerApp(String version);
+
+  /// User-facing label or message for appearance font families.
   ///
   /// In en, this message translates to:
   /// **'UI font families'**
   String get appearanceFontFamilies;
 
-  /// No description provided for @appearanceFontFamiliesTip.
+  /// Help text for the appearance font families setting or action.
   ///
   /// In en, this message translates to:
   /// **'One name per line; fonts are tried in order.'**
   String get appearanceFontFamiliesTip;
 
-  /// No description provided for @appearanceFontImport.
+  /// User-facing label or message for appearance font import.
   ///
   /// In en, this message translates to:
   /// **'Import UI font file'**
   String get appearanceFontImport;
 
-  /// No description provided for @appearanceGradient.
+  /// User-facing label or message for appearance gradient.
   ///
   /// In en, this message translates to:
   /// **'Gradient'**
   String get appearanceGradient;
 
-  /// No description provided for @appearanceNoBackground.
+  /// User-facing label or message for appearance no background.
   ///
   /// In en, this message translates to:
   /// **'No background'**
   String get appearanceNoBackground;
 
-  /// No description provided for @appearanceIcons.
+  /// User-facing label or message for appearance icons.
   ///
   /// In en, this message translates to:
   /// **'In-app icons'**
   String get appearanceIcons;
 
-  /// No description provided for @appearanceCorners.
+  /// User-facing label or message for appearance corners.
   ///
   /// In en, this message translates to:
   /// **'Corners'**
   String get appearanceCorners;
 
-  /// No description provided for @appearanceCardCorners.
+  /// User-facing label or message for appearance card corners.
   ///
   /// In en, this message translates to:
   /// **'Card corners'**
   String get appearanceCardCorners;
 
-  /// No description provided for @appearanceTileCorners.
+  /// User-facing label or message for appearance tile corners.
   ///
   /// In en, this message translates to:
   /// **'Tile corners'**
   String get appearanceTileCorners;
 
-  /// No description provided for @appearanceButtonCorners.
+  /// User-facing label or message for appearance button corners.
   ///
   /// In en, this message translates to:
   /// **'Button corners'**
   String get appearanceButtonCorners;
 
-  /// No description provided for @crashCollect.
+  /// User-facing label or message for crash collect.
   ///
   /// In en, this message translates to:
   /// **'Diagnostic data'**
   String get crashCollect;
 
-  /// No description provided for @crashCollectIntro.
+  /// Introductory text for the crash collect screen or section.
   ///
   /// In en, this message translates to:
   /// **'ServerBox records what happens while it runs so problems can be fixed. Choose how much information to send.'**
   String get crashCollectIntro;
 
-  /// No description provided for @crashCollectNone.
+  /// Empty-state message for crash collect none.
   ///
   /// In en, this message translates to:
   /// **'Nothing'**
   String get crashCollectNone;
 
-  /// No description provided for @crashCollectNoneTip.
+  /// Help text for the crash collect none setting or action.
   ///
   /// In en, this message translates to:
   /// **'Reports remain on this device; after a crash, you can send one manually.'**
   String get crashCollectNoneTip;
 
-  /// No description provided for @crashCollectBasic.
+  /// User-facing label or message for crash collect basic.
   ///
   /// In en, this message translates to:
   /// **'Basic information'**
   String get crashCollectBasic;
 
-  /// No description provided for @crashCollectBasicTip.
+  /// Help text for the crash collect basic setting or action.
   ///
   /// In en, this message translates to:
   /// **'Only crash information is included; logs and performance data are not. **This helps us improve the app and fix bugs.**'**
   String get crashCollectBasicTip;
 
-  /// No description provided for @crashCollectFull.
+  /// User-facing label or message for crash collect full.
   ///
   /// In en, this message translates to:
   /// **'Full information'**
   String get crashCollectFull;
 
-  /// No description provided for @crashCollectFullTip.
+  /// Help text for the crash collect full setting or action.
   ///
   /// In en, this message translates to:
   /// **'Along with the crash log, performance data and which features are used are included: **they show what is slow, and which features are worth keeping.**'**
   String get crashCollectFullTip;
 
-  /// No description provided for @crashCollectFooter.
+  /// User-facing label or message for crash collect footer.
   ///
   /// In en, this message translates to:
   /// **'At every level, known server names, addresses and usernames are replaced with placeholders when recorded. You can change the collection level later in Settings.'**
   String get crashCollectFooter;
 
-  /// No description provided for @privacy.
+  /// User-facing label or message for privacy.
   ///
   /// In en, this message translates to:
   /// **'Privacy'**
   String get privacy;
 
-  /// No description provided for @privacyPolicy.
+  /// User-facing label or message for privacy policy.
   ///
   /// In en, this message translates to:
   /// **'Privacy policy'**
   String get privacyPolicy;
 
-  /// No description provided for @crashLastRunFailed.
+  /// Error message shown when crash last run failed.
   ///
   /// In en, this message translates to:
   /// **'ServerBox exited unexpectedly during its last run.'**
   String get crashLastRunFailed;
 
-  /// No description provided for @crashReportTitle.
+  /// Title shown for the crash report dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Crash report'**
   String get crashReportTitle;
 
-  /// No description provided for @crashReportHint.
+  /// Hint shown in the crash report field or section.
   ///
   /// In en, this message translates to:
   /// **'This is the log from the previous run. Known server names and addresses have been replaced with placeholders, but other details may remain. Please read it carefully before submitting.'**
   String get crashReportHint;
 
-  /// No description provided for @crashReportSubmit.
+  /// User-facing label or message for crash report submit.
   ///
   /// In en, this message translates to:
   /// **'Copy & report'**
   String get crashReportSubmit;
 
-  /// No description provided for @preReleaseUpdates.
+  /// User-facing label or message for pre release updates.
   ///
   /// In en, this message translates to:
   /// **'Receive pre-release updates'**
   String get preReleaseUpdates;
 
-  /// No description provided for @addSystemPrivateKeyTip.
+  /// Help text for the add system private key setting or action.
   ///
   /// In en, this message translates to:
   /// **'Currently private keys don\'t exist, do you want to add the one that comes with the system (~/.ssh/id_rsa)?'**
   String get addSystemPrivateKeyTip;
 
-  /// No description provided for @added2List.
+  /// Action label for added 2 list.
   ///
   /// In en, this message translates to:
   /// **'Added to task list'**
   String get added2List;
 
-  /// No description provided for @askAi.
+  /// User-facing label or message for ask AI.
   ///
   /// In en, this message translates to:
   /// **'Ask AI'**
   String get askAi;
 
-  /// No description provided for @askAiAwaitingResponse.
+  /// User-facing label or message for ask AI awaiting response.
   ///
   /// In en, this message translates to:
   /// **'Waiting for AI response...'**
   String get askAiAwaitingResponse;
 
-  /// No description provided for @askAiEndpointTip.
+  /// Help text for the ask AI endpoint setting or action.
   ///
   /// In en, this message translates to:
   /// **'Include the API version, such as /v1 — Zhipu uses /api/paas/v4. Only /chat/completions or /responses is added, from the protocol you pick.'**
   String get askAiEndpointTip;
 
-  /// No description provided for @askAiProtocolTip.
+  /// Help text for the ask AI protocol setting or action.
   ///
   /// In en, this message translates to:
   /// **'Auto tries Responses, then Chat Completions.'**
   String get askAiProtocolTip;
 
-  /// No description provided for @askAiCommandInserted.
+  /// User-facing label or message for ask AI command inserted.
   ///
   /// In en, this message translates to:
   /// **'Command inserted into terminal'**
   String get askAiCommandInserted;
 
-  /// No description provided for @askAiConfigMissing.
+  /// User-facing label or message for ask AI config missing.
   ///
   /// In en, this message translates to:
   /// **'Please configure {fields} in Settings.'**
-  String askAiConfigMissing(Object fields);
+  String askAiConfigMissing(String fields);
 
-  /// No description provided for @askAiDisclaimer.
+  /// User-facing label or message for ask AI disclaimer.
   ///
   /// In en, this message translates to:
   /// **'AI may be incorrect. Review carefully before applying.'**
   String get askAiDisclaimer;
 
-  /// No description provided for @askAiInsertTerminal.
+  /// User-facing label or message for ask AI insert terminal.
   ///
   /// In en, this message translates to:
   /// **'Insert into terminal'**
   String get askAiInsertTerminal;
 
-  /// No description provided for @askAiNoResponse.
+  /// User-facing label or message for ask AI no response.
   ///
   /// In en, this message translates to:
   /// **'No response'**
   String get askAiNoResponse;
 
-  /// No description provided for @remoteDesktop.
+  /// User-facing label or message for remote desktop.
   ///
   /// In en, this message translates to:
   /// **'Remote desktop'**
   String get remoteDesktop;
 
-  /// No description provided for @askAiAgentWelcome.
+  /// User-facing label or message for ask AI agent welcome.
   ///
   /// In en, this message translates to:
   /// **'What should we do on this server?'**
   String get askAiAgentWelcome;
 
-  /// No description provided for @askAiAgentPromptHint.
+  /// Hint shown in the ask AI agent prompt field or section.
   ///
   /// In en, this message translates to:
   /// **'Ask the Agent to inspect or fix something...'**
   String get askAiAgentPromptHint;
 
-  /// No description provided for @askAiAnalyzeSelectionPrompt.
+  /// User-facing label or message for ask AI analyze selection prompt.
   ///
   /// In en, this message translates to:
   /// **'Analyse the selected terminal output and explain what happened'**
   String get askAiAnalyzeSelectionPrompt;
 
-  /// No description provided for @askAiTerminalContext.
+  /// User-facing label or message for ask AI terminal context.
   ///
   /// In en, this message translates to:
   /// **'Terminal context'**
   String get askAiTerminalContext;
 
-  /// No description provided for @askAiReviewNeeded.
+  /// User-facing label or message for ask AI review needed.
   ///
   /// In en, this message translates to:
   /// **'Review'**
   String get askAiReviewNeeded;
 
-  /// No description provided for @askAiReviewAction.
+  /// User-facing label or message for ask AI review action.
   ///
   /// In en, this message translates to:
   /// **'Review proposed command'**
   String get askAiReviewAction;
 
-  /// No description provided for @askAiReviewBeforeContinuing.
+  /// User-facing label or message for ask AI review before continuing.
   ///
   /// In en, this message translates to:
   /// **'Review or decline the current suggestion first'**
   String get askAiReviewBeforeContinuing;
 
-  /// No description provided for @askAiApproveRun.
+  /// User-facing label or message for ask AI approve run.
   ///
   /// In en, this message translates to:
   /// **'Approve & run'**
   String get askAiApproveRun;
 
-  /// No description provided for @askAiDecline.
+  /// User-facing label or message for ask AI decline.
   ///
   /// In en, this message translates to:
   /// **'Decline'**
   String get askAiDecline;
 
-  /// No description provided for @askAiActionDeclined.
+  /// User-facing label or message for ask AI action declined.
   ///
   /// In en, this message translates to:
   /// **'The proposed command was declined.'**
   String get askAiActionDeclined;
 
-  /// No description provided for @askAiInterrupted.
+  /// User-facing label or message for ask AI interrupted.
   ///
   /// In en, this message translates to:
   /// **'Agent response was interrupted.'**
   String get askAiInterrupted;
 
-  /// No description provided for @askAiResend.
+  /// User-facing label or message for ask AI resend.
   ///
   /// In en, this message translates to:
   /// **'Resend'**
   String get askAiResend;
 
-  /// No description provided for @askAiResendTip.
+  /// Help text for the ask AI resend setting or action.
   ///
   /// In en, this message translates to:
   /// **'Everything after this message is discarded — the replies, the commands and their results.'**
   String get askAiResendTip;
 
-  /// No description provided for @askAiDeleteTip.
+  /// Help text for the ask AI delete setting or action.
   ///
   /// In en, this message translates to:
   /// **'This message and everything after it are removed — the replies, the commands and their results.'**
   String get askAiDeleteTip;
 
-  /// No description provided for @askAiModelTable.
+  /// User-facing label or message for ask AI model table.
   ///
   /// In en, this message translates to:
   /// **'Model table'**
   String get askAiModelTable;
 
-  /// No description provided for @askAiModelTableTip.
+  /// Help text for the ask AI model table setting or action.
   ///
   /// In en, this message translates to:
   /// **'Context sizes by model name, from models.dev. One ships with the app; tap to fetch a newer one.'**
   String get askAiModelTableTip;
 
-  /// No description provided for @askAiContextFallback.
+  /// User-facing label or message for ask AI context fallback.
   ///
   /// In en, this message translates to:
   /// **'not in the table'**
   String get askAiContextFallback;
 
-  /// No description provided for @askAiCompactAt.
+  /// User-facing label or message for ask AI compact at.
   ///
   /// In en, this message translates to:
   /// **'Summarise at'**
   String get askAiCompactAt;
 
-  /// No description provided for @askAiCompactAtTip.
+  /// Help text for the ask AI compact at setting or action.
   ///
   /// In en, this message translates to:
   /// **'How full the model’s context gets before earlier turns are summarised. Earlier loses detail sooner; later risks a request the model refuses.'**
   String get askAiCompactAtTip;
 
-  /// No description provided for @askAiContextTokens.
+  /// User-facing label or message for ask AI context tokens.
   ///
   /// In en, this message translates to:
   /// **'Context size'**
   String get askAiContextTokens;
 
-  /// No description provided for @askAiContextTokensTip.
+  /// Help text for the ask AI context tokens setting or action.
   ///
   /// In en, this message translates to:
   /// **'How many tokens this model holds. Automatic looks it up by name; set a number when your provider serves a shorter window than the model has.'**
   String get askAiContextTokensTip;
 
-  /// No description provided for @askAiConversationCompacted.
+  /// User-facing label or message for ask AI conversation compacted.
   ///
   /// In en, this message translates to:
   /// **'Earlier messages were summarised to keep the conversation going.'**
   String get askAiConversationCompacted;
 
-  /// No description provided for @askAiRiskReadOnly.
+  /// User-facing label or message for ask AI risk read only.
   ///
   /// In en, this message translates to:
   /// **'Read-only'**
   String get askAiRiskReadOnly;
 
-  /// No description provided for @askAiRiskCaution.
+  /// User-facing label or message for ask AI risk caution.
   ///
   /// In en, this message translates to:
   /// **'Changes system'**
   String get askAiRiskCaution;
 
-  /// No description provided for @askAiRiskUnvetted.
+  /// User-facing label or message for ask AI risk unvetted.
   ///
   /// In en, this message translates to:
   /// **'Unvetted host'**
   String get askAiRiskUnvetted;
 
-  /// No description provided for @askAiRiskDestructive.
+  /// User-facing label or message for ask AI risk destructive.
   ///
   /// In en, this message translates to:
   /// **'High risk'**
   String get askAiRiskDestructive;
 
-  /// No description provided for @askAiHighRiskConfirmTitle.
+  /// Title shown for the ask AI high risk confirm dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Run high-risk command?'**
   String get askAiHighRiskConfirmTitle;
 
-  /// No description provided for @askAiHighRiskConfirmBody.
+  /// Explanatory message shown in the ask AI high risk confirm dialog or notice.
   ///
   /// In en, this message translates to:
   /// **'This command may make changes that are hard to undo. Check it carefully.'**
   String get askAiHighRiskConfirmBody;
 
-  /// No description provided for @askAiNoCommandOutput.
+  /// User-facing label or message for ask AI no command output.
   ///
   /// In en, this message translates to:
   /// **'Command completed without output.'**
   String get askAiNoCommandOutput;
 
-  /// No description provided for @askAiOutputTruncated.
+  /// User-facing label or message for ask AI output truncated.
   ///
   /// In en, this message translates to:
   /// **'Long output was truncated before it was sent back to the Agent.'**
   String get askAiOutputTruncated;
 
-  /// No description provided for @askAiAutoApproved.
+  /// User-facing label or message for ask AI auto approved.
   ///
   /// In en, this message translates to:
   /// **'Auto-approved'**
   String get askAiAutoApproved;
 
-  /// No description provided for @askAiAutoRunSafeCommands.
+  /// User-facing label or message for ask AI auto run safe commands.
   ///
   /// In en, this message translates to:
   /// **'Auto-run read-only commands'**
   String get askAiAutoRunSafeCommands;
 
-  /// No description provided for @askAiAutoRunSafeCommandsTip.
+  /// Help text for the ask AI auto run safe commands setting or action.
   ///
   /// In en, this message translates to:
   /// **'Runs only when both the model and the local check call it read-only'**
   String get askAiAutoRunSafeCommandsTip;
 
-  /// No description provided for @askAiSendOnEnter.
+  /// User-facing label or message for ask AI send on enter.
   ///
   /// In en, this message translates to:
   /// **'Enter sends'**
   String get askAiSendOnEnter;
 
-  /// No description provided for @askAiSendOnEnterTip.
+  /// Help text for the ask AI send on enter setting or action.
   ///
   /// In en, this message translates to:
   /// **'Enter sends, Shift+Enter for a new line. Off: Enter for a new line, Cmd/Ctrl+Enter sends.'**
   String get askAiSendOnEnterTip;
 
-  /// No description provided for @askAiApiKeyOptional.
+  /// User-facing label or message for ask AI API key optional.
   ///
   /// In en, this message translates to:
   /// **'Leave empty for local or unauthenticated'**
   String get askAiApiKeyOptional;
 
-  /// No description provided for @askAiAllowInsecure.
+  /// User-facing label or message for ask AI allow insecure.
   ///
   /// In en, this message translates to:
   /// **'Allow plain HTTP'**
   String get askAiAllowInsecure;
 
-  /// No description provided for @askAiAllowInsecureTip.
+  /// Help text for the ask AI allow insecure setting or action.
   ///
   /// In en, this message translates to:
   /// **'Allows http:// connections to self-hosted models at non-localhost addresses. The API key and any terminal context are sent unencrypted; localhost is unaffected.'**
   String get askAiAllowInsecureTip;
 
-  /// No description provided for @askAiInsecureEndpoint.
+  /// User-facing label or message for ask AI insecure endpoint.
   ///
   /// In en, this message translates to:
   /// **'This endpoint uses http://. Turn on “Allow plain HTTP” in AI settings to use it.'**
   String get askAiInsecureEndpoint;
 
-  /// No description provided for @askAiHistory.
+  /// User-facing label or message for ask AI history.
   ///
   /// In en, this message translates to:
   /// **'Conversation history'**
   String get askAiHistory;
 
-  /// No description provided for @askAiNewConversation.
+  /// User-facing label or message for ask AI new conversation.
   ///
   /// In en, this message translates to:
   /// **'New conversation'**
   String get askAiNewConversation;
 
-  /// No description provided for @askAiNoHistory.
+  /// User-facing label or message for ask AI no history.
   ///
   /// In en, this message translates to:
   /// **'No saved conversations yet'**
   String get askAiNoHistory;
 
-  /// No description provided for @askAiNoHistoryMessages.
+  /// User-facing label or message for ask AI no history messages.
   ///
   /// In en, this message translates to:
   /// **'No messages yet'**
   String get askAiNoHistoryMessages;
 
-  /// No description provided for @askAiUntitledConversation.
+  /// User-facing label or message for ask AI untitled conversation.
   ///
   /// In en, this message translates to:
   /// **'Untitled'**
   String get askAiUntitledConversation;
 
-  /// No description provided for @askAiRenameConversation.
+  /// User-facing label or message for ask AI rename conversation.
   ///
   /// In en, this message translates to:
   /// **'Rename conversation'**
   String get askAiRenameConversation;
 
-  /// No description provided for @askAiDeleteConversationTitle.
+  /// Title shown for the ask AI delete conversation dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Delete this conversation?'**
   String get askAiDeleteConversationTitle;
 
-  /// No description provided for @askAiDeleteConversationTip.
+  /// Help text for the ask AI delete conversation setting or action.
   ///
   /// In en, this message translates to:
   /// **'Deletes it from this device. Cannot be undone.'**
   String get askAiDeleteConversationTip;
 
-  /// No description provided for @askAiClearHistoryTitle.
+  /// Title shown for the ask AI clear history dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Clear this server\'s Agent history?'**
   String get askAiClearHistoryTitle;
 
-  /// No description provided for @askAiClearHistoryTip.
+  /// Help text for the ask AI clear history setting or action.
   ///
   /// In en, this message translates to:
   /// **'Every saved Agent conversation for this server will be deleted.'**
   String get askAiClearHistoryTip;
 
-  /// No description provided for @askAiRestoredReview.
+  /// User-facing label or message for ask AI restored review.
   ///
   /// In en, this message translates to:
   /// **'This command came from history. Review it again'**
   String get askAiRestoredReview;
 
-  /// No description provided for @agentWelcome.
+  /// User-facing label or message for agent welcome.
   ///
   /// In en, this message translates to:
   /// **'What should we do across your servers?'**
   String get agentWelcome;
 
-  /// No description provided for @agentWelcomeTip.
+  /// Help text for the agent welcome setting or action.
   ///
   /// In en, this message translates to:
   /// **'Have the Agent diagnose a problem or carry out a task'**
   String get agentWelcomeTip;
 
-  /// No description provided for @agentPromptHint.
+  /// Hint shown in the agent prompt field or section.
   ///
   /// In en, this message translates to:
   /// **'Ask the Agent to inspect or operate your servers...'**
   String get agentPromptHint;
 
-  /// No description provided for @agentNoHistory.
+  /// User-facing label or message for agent no history.
   ///
   /// In en, this message translates to:
   /// **'No saved global Agent conversations'**
   String get agentNoHistory;
 
-  /// No description provided for @agentClearHistoryTitle.
+  /// Title shown for the agent clear history dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Clear global Agent history?'**
   String get agentClearHistoryTitle;
 
-  /// No description provided for @agentClearHistoryTip.
+  /// Help text for the agent clear history setting or action.
   ///
   /// In en, this message translates to:
   /// **'All global Agent conversations will be removed from this device.'**
   String get agentClearHistoryTip;
 
-  /// No description provided for @agentToolShell.
+  /// User-facing label or message for agent tool shell.
   ///
   /// In en, this message translates to:
   /// **'Shell'**
   String get agentToolShell;
 
-  /// No description provided for @agentToolReadFile.
+  /// User-facing label or message for agent tool read file.
   ///
   /// In en, this message translates to:
   /// **'Read file'**
   String get agentToolReadFile;
 
-  /// No description provided for @agentToolWriteFile.
+  /// User-facing label or message for agent tool write file.
   ///
   /// In en, this message translates to:
   /// **'Write file'**
   String get agentToolWriteFile;
 
-  /// No description provided for @agentToolFailed.
+  /// Error message shown when agent tool failed.
   ///
   /// In en, this message translates to:
   /// **'Tool execution failed.'**
   String get agentToolFailed;
 
-  /// No description provided for @agentToolCallsFmt.
+  /// Formatted user-facing message for agent tool calls; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} tool calls'**
-  String agentToolCallsFmt(Object count);
+  String agentToolCallsFmt(int count);
 
-  /// No description provided for @floatOverTabs.
+  /// User-facing label or message for float over tabs.
   ///
   /// In en, this message translates to:
   /// **'Float over other tabs'**
   String get floatOverTabs;
 
-  /// No description provided for @agentToolSshConnect.
+  /// User-facing label or message for agent tool SSH connect.
   ///
   /// In en, this message translates to:
   /// **'SSH connect'**
   String get agentToolSshConnect;
 
-  /// No description provided for @agentToolSshDisconnect.
+  /// User-facing label or message for agent tool SSH disconnect.
   ///
   /// In en, this message translates to:
   /// **'Disconnect SSH'**
   String get agentToolSshDisconnect;
 
-  /// No description provided for @agentSshConnectTitle.
+  /// Title shown for the agent SSH connect dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Connect to a new host'**
   String get agentSshConnectTitle;
 
-  /// No description provided for @agentAuthMethod.
+  /// User-facing label or message for agent auth method.
   ///
   /// In en, this message translates to:
   /// **'Authentication'**
   String get agentAuthMethod;
 
-  /// No description provided for @agentSshConnectTip.
+  /// Help text for the agent SSH connect setting or action.
   ///
   /// In en, this message translates to:
   /// **'The Agent wants an SSH connection. Enter the password here'**
   String get agentSshConnectTip;
 
-  /// No description provided for @agentAdHocSessions.
+  /// User-facing label or message for agent ad hoc sessions.
   ///
   /// In en, this message translates to:
   /// **'Temporary connections'**
   String get agentAdHocSessions;
 
-  /// No description provided for @agentSaveServerTitle.
+  /// Title shown for the agent save server dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Save as a server'**
   String get agentSaveServerTitle;
 
-  /// No description provided for @agentSaveServerTip.
+  /// Help text for the agent save server setting or action.
   ///
   /// In en, this message translates to:
   /// **'This host and the password you enter are saved on this device'**
   String get agentSaveServerTip;
 
-  /// No description provided for @agentMonitorOptional.
+  /// User-facing label or message for agent monitor optional.
   ///
   /// In en, this message translates to:
   /// **'Monitor agent (optional)'**
   String get agentMonitorOptional;
 
-  /// No description provided for @authFailTip.
+  /// Help text for the auth fail setting or action.
   ///
   /// In en, this message translates to:
   /// **'Authentication failed. Check the details'**
   String get authFailTip;
 
-  /// No description provided for @autoBackupConflict.
+  /// User-facing label or message for auto backup conflict.
   ///
   /// In en, this message translates to:
   /// **'Only one automatic backup can be turned on at the same time.'**
   String get autoBackupConflict;
 
-  /// No description provided for @autoConnect.
+  /// User-facing label or message for auto connect.
   ///
   /// In en, this message translates to:
   /// **'Auto connect'**
   String get autoConnect;
 
-  /// No description provided for @autoRun.
+  /// User-facing label or message for auto run.
   ///
   /// In en, this message translates to:
   /// **'Auto run'**
   String get autoRun;
 
-  /// No description provided for @autoUpdateHomeWidget.
+  /// User-facing label or message for auto update home widget.
   ///
   /// In en, this message translates to:
   /// **'Automatic home widget update'**
   String get autoUpdateHomeWidget;
 
-  /// No description provided for @availableTabs.
+  /// User-facing label or message for available tabs.
   ///
   /// In en, this message translates to:
   /// **'Available Tabs'**
   String get availableTabs;
 
-  /// No description provided for @backupEncrypted.
+  /// User-facing label or message for backup encrypted.
   ///
   /// In en, this message translates to:
   /// **'Backup is encrypted'**
   String get backupEncrypted;
 
-  /// No description provided for @backupNotEncrypted.
+  /// User-facing label or message for backup not encrypted.
   ///
   /// In en, this message translates to:
   /// **'Backup is not encrypted'**
   String get backupNotEncrypted;
 
-  /// No description provided for @backupPassword.
+  /// User-facing label or message for backup password.
   ///
   /// In en, this message translates to:
   /// **'Backup password'**
   String get backupPassword;
 
-  /// No description provided for @backupPasswordRemoved.
+  /// User-facing label or message for backup password removed.
   ///
   /// In en, this message translates to:
   /// **'Backup password removed'**
   String get backupPasswordRemoved;
 
-  /// No description provided for @backupPasswordSet.
+  /// User-facing label or message for backup password set.
   ///
   /// In en, this message translates to:
   /// **'Backup password set'**
   String get backupPasswordSet;
 
-  /// No description provided for @backupPasswordTip.
+  /// Help text for the backup password setting or action.
   ///
   /// In en, this message translates to:
   /// **'Set a password to encrypt backup files. Leave empty to disable encryption.'**
   String get backupPasswordTip;
 
-  /// No description provided for @backupPasswordWrong.
+  /// User-facing label or message for backup password wrong.
   ///
   /// In en, this message translates to:
   /// **'Incorrect backup password'**
   String get backupPasswordWrong;
 
-  /// No description provided for @connectAll.
+  /// Action label for connect all.
   ///
   /// In en, this message translates to:
   /// **'Connect all'**
   String get connectAll;
 
-  /// No description provided for @disconnectAll.
+  /// Action label for disconnect all.
   ///
   /// In en, this message translates to:
   /// **'Disconnect all'**
   String get disconnectAll;
 
-  /// No description provided for @distIcon.
+  /// User-facing label or message for dist icon.
   ///
   /// In en, this message translates to:
   /// **'Distribution marks'**
   String get distIcon;
 
-  /// No description provided for @distIconIntroLegal.
+  /// User-facing label or message for dist icon intro legal.
   ///
   /// In en, this message translates to:
   /// **'A mark says only what this device read from the remote system, which can be wrong or out of date, and identifies neither a derivative, a rebuild, nor any particular version. Where it cannot be identified, a plain icon is drawn.\n\nEach mark is a trademark of its respective owner and is used only to refer to the system it identifies.'**
   String get distIconIntroLegal;
 
-  /// No description provided for @distIconTip.
+  /// Help text for the dist icon setting or action.
   ///
   /// In en, this message translates to:
   /// **'Show a small mark beside each server for the system it appears to be running.'**
   String get distIconTip;
 
-  /// No description provided for @distNameMap.
+  /// User-facing label or message for dist name map.
   ///
   /// In en, this message translates to:
   /// **'Name overrides'**
   String get distNameMap;
 
-  /// No description provided for @distNameMapTip.
+  /// Help text for the dist name map setting or action.
   ///
   /// In en, this message translates to:
   /// **'Only for a distribution whose file is named something else where you host the marks. The key is the name this app uses; the value is the name to fetch. Leave it empty unless a mark is missing.'**
   String get distNameMapTip;
 
-  /// No description provided for @logoUrl.
+  /// User-facing label or message for logo URL.
   ///
   /// In en, this message translates to:
   /// **'Logo URL'**
   String get logoUrl;
 
-  /// No description provided for @logoUrlTip.
+  /// Help text for the logo URL setting or action.
   ///
   /// In en, this message translates to:
   /// **'The large image at the top of a server\'s own page, drawn in its own colours.'**
   String get logoUrlTip;
 
-  /// No description provided for @globe.
+  /// User-facing label or message for globe.
   ///
   /// In en, this message translates to:
   /// **'Globe'**
   String get globe;
 
-  /// No description provided for @locationTip.
+  /// Help text for the location setting or action.
   ///
   /// In en, this message translates to:
   /// **'Where this server is drawn on the globe. Latitude then longitude, in degrees — for example 39.9042, 116.4074.'**
   String get locationTip;
 
-  /// No description provided for @markUrl.
+  /// User-facing label or message for mark URL.
   ///
   /// In en, this message translates to:
   /// **'Mark URL'**
   String get markUrl;
 
-  /// No description provided for @markUrlTip.
+  /// Help text for the mark URL setting or action.
   ///
   /// In en, this message translates to:
   /// **'The small mark beside a server\'s name in lists. Empty means none is drawn.\n\nNot the same picture as the logo'**
   String get markUrlTip;
 
-  /// No description provided for @navTabMenuTip.
+  /// Help text for the nav tab menu setting or action.
   ///
   /// In en, this message translates to:
   /// **'Long press a tab — or right-click it — to connect or disconnect everything on it at once.'**
   String get navTabMenuTip;
 
-  /// No description provided for @nTags.
+  /// User-facing label or message for n tags.
   ///
   /// In en, this message translates to:
   /// **'{count} Tags'**
-  String nTags(Object count);
+  String nTags(int count);
 
-  /// No description provided for @remoteBackupPasswordRequired.
+  /// User-facing label or message for remote backup password required.
   ///
   /// In en, this message translates to:
   /// **'Remote backups require a non-empty backup password'**
   String get remoteBackupPasswordRequired;
 
-  /// No description provided for @monitorHttpsRequired.
+  /// User-facing label or message for monitor HTTPS required.
   ///
   /// In en, this message translates to:
   /// **'A remote monitor agent needs HTTPS, unless HTTP is allowed for it.'**
   String get monitorHttpsRequired;
 
-  /// No description provided for @monitorAllowInsecureHttp.
+  /// User-facing label or message for monitor allow insecure HTTP.
   ///
   /// In en, this message translates to:
   /// **'Allow HTTP'**
   String get monitorAllowInsecureHttp;
 
-  /// No description provided for @plainHttpTitle.
+  /// Title shown for the plain HTTP dialog or section.
   ///
   /// In en, this message translates to:
   /// **'This agent is served over plain HTTP'**
   String get plainHttpTitle;
 
-  /// No description provided for @plainHttpTip.
+  /// Help text for the plain HTTP setting or action.
   ///
   /// In en, this message translates to:
   /// **'The password and everything this app asks for would travel unencrypted. Nothing has been sent yet.'**
   String get plainHttpTip;
 
-  /// No description provided for @allowForThisServer.
+  /// User-facing label or message for allow for this server.
   ///
   /// In en, this message translates to:
   /// **'Allow for this server'**
   String get allowForThisServer;
 
-  /// No description provided for @viewError.
+  /// Error message shown when view error.
   ///
   /// In en, this message translates to:
   /// **'View error'**
   String get viewError;
 
-  /// No description provided for @monitorAllowInsecureHttpTip.
+  /// Help text for the monitor allow insecure HTTP setting or action.
   ///
   /// In en, this message translates to:
   /// **'Only on a trusted private network that encrypts the transport itself, such as Tailscale'**
   String get monitorAllowInsecureHttpTip;
 
-  /// No description provided for @monitorHttpTip.
+  /// Help text for the monitor HTTP setting or action.
   ///
   /// In en, this message translates to:
   /// **'Read this server\'s status from a **monitor** agent\'s HTTP API instead of running commands over SSH.\n\nThe agent has to be installed on the server first, and it is what makes trends, the watch app and the home-screen widgets possible.\n\n[Setting up a monitor agent]({url})'**
   String monitorHttpTip(String url);
 
-  /// No description provided for @backupTip.
+  /// Help text for the backup setting or action.
   ///
   /// In en, this message translates to:
   /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
   String get backupTip;
 
-  /// No description provided for @icloudBackupStatusTitle.
+  /// Title shown for the iCloud backup status dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Backup status'**
   String get icloudBackupStatusTitle;
 
-  /// No description provided for @icloudBackupStatusLoading.
+  /// Status message shown while iCloud backup status loading.
   ///
   /// In en, this message translates to:
   /// **'Loading iCloud backup status...'**
   String get icloudBackupStatusLoading;
 
-  /// No description provided for @icloudBackupStatusError.
+  /// Error message shown when iCloud backup status error.
   ///
   /// In en, this message translates to:
   /// **'Unable to read iCloud backup metadata'**
   String get icloudBackupStatusError;
 
-  /// No description provided for @icloudBackupStatusEmpty.
+  /// Empty-state message for iCloud backup status empty.
   ///
   /// In en, this message translates to:
   /// **'No iCloud backup file found yet'**
   String get icloudBackupStatusEmpty;
 
-  /// No description provided for @icloudBackupStateUploading.
+  /// User-facing label or message for iCloud backup state uploading.
   ///
   /// In en, this message translates to:
   /// **'Uploading'**
   String get icloudBackupStateUploading;
 
-  /// No description provided for @icloudBackupStateConflict.
+  /// User-facing label or message for iCloud backup state conflict.
   ///
   /// In en, this message translates to:
   /// **'Conflict detected'**
   String get icloudBackupStateConflict;
 
-  /// No description provided for @icloudBackupStateUploaded.
+  /// User-facing label or message for iCloud backup state uploaded.
   ///
   /// In en, this message translates to:
   /// **'Uploaded'**
   String get icloudBackupStateUploaded;
 
-  /// No description provided for @icloudBackupStateWaiting.
+  /// User-facing label or message for iCloud backup state waiting.
   ///
   /// In en, this message translates to:
   /// **'Waiting for iCloud'**
   String get icloudBackupStateWaiting;
 
-  /// No description provided for @icloudBackupStatusSummary.
+  /// User-facing label or message for iCloud backup status summary.
   ///
   /// In en, this message translates to:
   /// **'Last backup: {lastModified}\nStatus: {remoteState}'**
-  String icloudBackupStatusSummary(Object lastModified, Object remoteState);
+  String icloudBackupStatusSummary(String lastModified, String remoteState);
 
-  /// No description provided for @bgRun.
+  /// User-facing label or message for bg run.
   ///
   /// In en, this message translates to:
   /// **'Run in background'**
   String get bgRun;
 
-  /// No description provided for @bgRunTip.
+  /// Help text for the bg run setting or action.
   ///
   /// In en, this message translates to:
   /// **'This switch only means the program will try to run in the background. Whether it can run in the background depends on whether the permission is enabled or not. For AOSP-based Android ROMs, please disable \"Battery Optimization\" in this app. For MIUI / HyperOS, please change the power saving policy to \"Unlimited\".'**
   String get bgRunTip;
 
-  /// No description provided for @trayReadings.
+  /// User-facing label or message for tray readings.
   ///
   /// In en, this message translates to:
   /// **'Readings'**
   String get trayReadings;
 
-  /// No description provided for @trayChart.
+  /// User-facing label or message for tray chart.
   ///
   /// In en, this message translates to:
   /// **'Chart'**
   String get trayChart;
 
-  /// No description provided for @trayChartNone.
+  /// Empty-state message for tray chart none.
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get trayChartNone;
 
-  /// No description provided for @trayCompact.
+  /// User-facing label or message for tray compact.
   ///
   /// In en, this message translates to:
   /// **'Compact rows'**
   String get trayCompact;
 
-  /// No description provided for @trayCompactTip.
+  /// Help text for the tray compact setting or action.
   ///
   /// In en, this message translates to:
   /// **'One line per server, without the chart. Linux always uses a single-line layout because its panel menu is sent over D-Bus, which carries a label rather than a custom layout; it may still include the selected chart as an image.'**
   String get trayCompactTip;
 
-  /// No description provided for @trayKeepRunning.
+  /// Status message shown while tray keep running.
   ///
   /// In en, this message translates to:
   /// **'Keep running in the tray'**
   String get trayKeepRunning;
 
-  /// No description provided for @trayKeepRunningTip.
+  /// Help text for the tray keep running setting or action.
   ///
   /// In en, this message translates to:
   /// **'Closing the window leaves the app in the menu bar or notification area, still watching your servers. Turn this off to have the close button end the app.'**
   String get trayKeepRunningTip;
 
-  /// No description provided for @bgRunNeedsNotification.
+  /// User-facing label or message for bg run needs notification.
   ///
   /// In en, this message translates to:
   /// **'Running in the background needs an ongoing notification, and this app has no notification permission. Tap to allow notifications.'**
   String get bgRunNeedsNotification;
 
-  /// No description provided for @clearAllStatsContent.
+  /// Action label for clear all stats content.
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to clear all server connection statistics? This action cannot be undone.'**
   String get clearAllStatsContent;
 
-  /// No description provided for @clearAllStatsTitle.
+  /// Title shown for the clear all stats dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Clear All Statistics'**
   String get clearAllStatsTitle;
 
-  /// No description provided for @clearServerStatsContent.
+  /// Action label for clear server stats content.
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to clear connection statistics for server \"{serverName}\"? This action cannot be undone.'**
-  String clearServerStatsContent(Object serverName);
+  String clearServerStatsContent(String serverName);
 
-  /// No description provided for @clearServerStatsTitle.
+  /// Title shown for the clear server stats dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Clear {serverName} Statistics'**
-  String clearServerStatsTitle(Object serverName);
+  String clearServerStatsTitle(String serverName);
 
-  /// No description provided for @clearThisServerStats.
+  /// Action label for clear this server stats.
   ///
   /// In en, this message translates to:
   /// **'Clear This Server Statistics'**
   String get clearThisServerStats;
 
-  /// No description provided for @closeAfterSave.
+  /// Action label for close after save.
   ///
   /// In en, this message translates to:
   /// **'Save and close'**
   String get closeAfterSave;
 
-  /// No description provided for @collapseUITip.
+  /// Help text for the collapse UI setting or action.
   ///
   /// In en, this message translates to:
   /// **'Whether to collapse long lists present in the UI by default'**
   String get collapseUITip;
 
-  /// No description provided for @connectionDetails.
+  /// Action label for connection details.
   ///
   /// In en, this message translates to:
   /// **'Connection Details'**
   String get connectionDetails;
 
-  /// No description provided for @connectionStats.
+  /// Action label for connection stats.
   ///
   /// In en, this message translates to:
   /// **'Connection Statistics'**
   String get connectionStats;
 
-  /// No description provided for @connectionStatsDesc.
+  /// Description of the connection stats desc feature or option.
   ///
   /// In en, this message translates to:
   /// **'View server connection success rate and history'**
   String get connectionStatsDesc;
 
-  /// No description provided for @containerTrySudoTip.
+  /// Help text for the container try sudo setting or action.
   ///
   /// In en, this message translates to:
   /// **'For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.'**
   String get containerTrySudoTip;
 
-  /// No description provided for @containerSudoPasswordRequired.
+  /// User-facing label or message for container sudo password required.
   ///
   /// In en, this message translates to:
   /// **'Sudo password is required to access Docker. Please enter your password.'**
   String get containerSudoPasswordRequired;
 
-  /// No description provided for @containerSudoPasswordIncorrect.
+  /// User-facing label or message for container sudo password incorrect.
   ///
   /// In en, this message translates to:
   /// **'Sudo password is incorrect or not allowed. Please try again.'**
   String get containerSudoPasswordIncorrect;
 
-  /// No description provided for @copyPath.
+  /// Action label for copy path.
   ///
   /// In en, this message translates to:
   /// **'Copy path'**
   String get copyPath;
 
-  /// No description provided for @cpuViewAsProgressTip.
+  /// Help text for the CPU view as progress setting or action.
   ///
   /// In en, this message translates to:
   /// **'Display the usage of each CPU in a progress bar style (old style)'**
   String get cpuViewAsProgressTip;
 
-  /// No description provided for @customCmd.
+  /// User-facing label or message for custom cmd.
   ///
   /// In en, this message translates to:
   /// **'Custom commands'**
   String get customCmd;
 
-  /// No description provided for @deleteServers.
+  /// Action label for delete servers.
   ///
   /// In en, this message translates to:
   /// **'Batch delete servers'**
   String get deleteServers;
 
-  /// No description provided for @deleteDirRecursive.
+  /// Action label for delete dir recursive.
   ///
   /// In en, this message translates to:
   /// **'Delete the folder and everything in it'**
   String get deleteDirRecursive;
 
-  /// No description provided for @desktopTerminalTip.
+  /// Help text for the desktop terminal setting or action.
   ///
   /// In en, this message translates to:
   /// **'Command used to open the terminal emulator when launching SSH sessions.'**
   String get desktopTerminalTip;
 
-  /// No description provided for @dirEmpty.
+  /// Empty-state message for dir empty.
   ///
   /// In en, this message translates to:
   /// **'Make sure the folder is empty.'**
   String get dirEmpty;
 
-  /// No description provided for @discoverSshServers.
+  /// User-facing label or message for discover SSH servers.
   ///
   /// In en, this message translates to:
   /// **'Discover SSH Servers'**
   String get discoverSshServers;
 
-  /// No description provided for @discoveryFailed.
+  /// Error message shown when discovery failed.
   ///
   /// In en, this message translates to:
   /// **'Discovery failed'**
   String get discoveryFailed;
 
-  /// No description provided for @discoverySettings.
+  /// User-facing label or message for discovery settings.
   ///
   /// In en, this message translates to:
   /// **'Discovery Settings'**
   String get discoverySettings;
 
-  /// No description provided for @distro.
+  /// User-facing label or message for distro.
   ///
   /// In en, this message translates to:
   /// **'Distribution'**
   String get distro;
 
-  /// No description provided for @diskHealth.
+  /// User-facing label or message for disk health.
   ///
   /// In en, this message translates to:
   /// **'Disk Health'**
   String get diskHealth;
 
-  /// No description provided for @displayCpuIndex.
+  /// User-facing label or message for display CPU index.
   ///
   /// In en, this message translates to:
   /// **'Display CPU index'**
   String get displayCpuIndex;
 
-  /// No description provided for @dl2Local.
+  /// User-facing label or message for dl 2 local.
   ///
   /// In en, this message translates to:
   /// **'Download {fileName} to local?'**
-  String dl2Local(Object fileName);
+  String dl2Local(String fileName);
 
-  /// No description provided for @dockerEmptyRunningItems.
+  /// User-facing label or message for docker empty running items.
   ///
   /// In en, this message translates to:
   /// **'There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo \$DOCKER_HOST` in the terminal.'**
   String get dockerEmptyRunningItems;
 
-  /// No description provided for @dockerProjectOther.
+  /// User-facing label or message for docker project other.
   ///
   /// In en, this message translates to:
   /// **'Other'**
   String get dockerProjectOther;
 
-  /// No description provided for @dockerPruneTip.
+  /// Help text for the docker prune setting or action.
   ///
   /// In en, this message translates to:
   /// **'Remove unused data to free up disk space'**
   String get dockerPruneTip;
 
-  /// No description provided for @dockerStatistics.
+  /// User-facing label or message for docker statistics.
   ///
   /// In en, this message translates to:
   /// **'Docker Statistics'**
   String get dockerStatistics;
 
-  /// No description provided for @doubleColumnMode.
+  /// User-facing label or message for double column mode.
   ///
   /// In en, this message translates to:
   /// **'Double column mode'**
   String get doubleColumnMode;
 
-  /// No description provided for @doubleColumnTip.
+  /// Help text for the double column setting or action.
   ///
   /// In en, this message translates to:
   /// **'This option only enables the feature, whether it can actually be enabled depends on the width of the device'**
   String get doubleColumnTip;
 
-  /// No description provided for @editVirtKeys.
+  /// Action label for edit virt keys.
   ///
   /// In en, this message translates to:
   /// **'Virtual keys'**
   String get editVirtKeys;
 
-  /// No description provided for @editorHighlightTip.
+  /// Help text for the editor highlight setting or action.
   ///
   /// In en, this message translates to:
   /// **'The current code highlighting performance is not ideal and can be optionally turned off to improve.'**
   String get editorHighlightTip;
 
-  /// No description provided for @enableMdns.
+  /// Action label for enable mDNS.
   ///
   /// In en, this message translates to:
   /// **'Enable mDNS'**
   String get enableMdns;
 
-  /// No description provided for @enableMdnsDesc.
+  /// Description of the enable mDNS desc feature or option.
   ///
   /// In en, this message translates to:
   /// **'Use mDNS/Bonjour to discover SSH services'**
   String get enableMdnsDesc;
 
-  /// No description provided for @envVars.
+  /// User-facing label or message for env vars.
   ///
   /// In en, this message translates to:
   /// **'Environment variable'**
   String get envVars;
 
-  /// No description provided for @extraArgs.
+  /// User-facing label or message for extra args.
   ///
   /// In en, this message translates to:
   /// **'Extra arguments'**
   String get extraArgs;
 
-  /// No description provided for @fallbackSshDest.
+  /// User-facing label or message for fallback SSH dest.
   ///
   /// In en, this message translates to:
   /// **'Fallback SSH destination'**
   String get fallbackSshDest;
 
-  /// No description provided for @fdroidReleaseTip.
+  /// Help text for the F-Droid release setting or action.
   ///
   /// In en, this message translates to:
   /// **'If you downloaded this app from F-Droid, it is recommended to turn off this option.'**
   String get fdroidReleaseTip;
 
-  /// No description provided for @fileTooLarge.
+  /// User-facing label or message for file too large.
   ///
   /// In en, this message translates to:
   /// **'File \'{file}\' too large {size}, max {sizeMax}'**
-  String fileTooLarge(Object file, Object size, Object sizeMax);
+  String fileTooLarge(String file, String size, String sizeMax);
 
-  /// No description provided for @fileDirGone.
+  /// User-facing label or message for file dir gone.
   ///
   /// In en, this message translates to:
   /// **'This folder is no longer here'**
   String get fileDirGone;
 
-  /// No description provided for @fileDirGoneTip.
+  /// Help text for the file dir gone setting or action.
   ///
   /// In en, this message translates to:
   /// **'It was deleted or renamed'**
   String get fileDirGoneTip;
 
-  /// No description provided for @fullScreen.
+  /// User-facing label or message for full screen.
   ///
   /// In en, this message translates to:
   /// **'Full screen'**
   String get fullScreen;
 
-  /// No description provided for @fullScreenJitter.
+  /// User-facing label or message for full screen jitter.
   ///
   /// In en, this message translates to:
   /// **'Full screen jitter'**
   String get fullScreenJitter;
 
-  /// No description provided for @fullScreenJitterHelp.
+  /// User-facing label or message for full screen jitter help.
   ///
   /// In en, this message translates to:
   /// **'To avoid screen burn-in'**
   String get fullScreenJitterHelp;
 
-  /// No description provided for @fullScreenTip.
+  /// Help text for the full screen setting or action.
   ///
   /// In en, this message translates to:
   /// **'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.'**
   String get fullScreenTip;
 
-  /// No description provided for @githubGistIdOptional.
+  /// User-facing label or message for github gist id optional.
   ///
   /// In en, this message translates to:
   /// **'Gist ID (optional)'**
   String get githubGistIdOptional;
 
-  /// No description provided for @githubGistToken.
+  /// User-facing label or message for github gist token.
   ///
   /// In en, this message translates to:
   /// **'GitHub Gist token'**
   String get githubGistToken;
 
-  /// No description provided for @githubGistTokenEmpty.
+  /// Empty-state message for github gist token empty.
   ///
   /// In en, this message translates to:
   /// **'Token is empty'**
   String get githubGistTokenEmpty;
 
-  /// No description provided for @goto.
+  /// User-facing label or message for goto.
   ///
   /// In en, this message translates to:
   /// **'Go to'**
   String get goto;
 
-  /// No description provided for @homeTabs.
+  /// User-facing label or message for home tabs.
   ///
   /// In en, this message translates to:
   /// **'Home Tabs'**
   String get homeTabs;
 
-  /// No description provided for @homeTabsCustomizeDesc.
+  /// Description of the home tabs customize desc feature or option.
   ///
   /// In en, this message translates to:
   /// **'Customize which tabs appear on the home page and their order'**
   String get homeTabsCustomizeDesc;
 
-  /// No description provided for @ignoreCert.
+  /// User-facing label or message for ignore cert.
   ///
   /// In en, this message translates to:
   /// **'Ignore certificate'**
@@ -1499,1156 +1505,1156 @@ abstract class AppLocalizations {
   /// **'Image'**
   String get image;
 
-  /// No description provided for @macDmgBody.
+  /// Explanatory message shown in the mac DMG dialog or notice.
   ///
   /// In en, this message translates to:
   /// **'The App Store requires this app to be sandboxed, and a sandbox cannot open a terminal. The DMG build can.\n\nThe App Store build may stop being updated.'**
   String get macDmgBody;
 
-  /// No description provided for @macDmgImportDenied.
+  /// User-facing label or message for mac DMG import denied.
   ///
   /// In en, this message translates to:
   /// **'macOS would not let this read the previous build’s data'**
   String get macDmgImportDenied;
 
-  /// No description provided for @macDmgImported.
+  /// User-facing label or message for mac DMG imported.
   ///
   /// In en, this message translates to:
   /// **'Imported the previous build’s data'**
   String get macDmgImported;
 
-  /// No description provided for @macDmgImportFailed.
+  /// Error message shown when mac DMG import failed.
   ///
   /// In en, this message translates to:
   /// **'Could not read the previous build’s data'**
   String get macDmgImportFailed;
 
-  /// No description provided for @macDmgTip.
+  /// Help text for the mac DMG setting or action.
   ///
   /// In en, this message translates to:
   /// **'Local terminal and running snippets locally (DMG build)'**
   String get macDmgTip;
 
-  /// No description provided for @macDmgTitle.
+  /// Title shown for the mac DMG dialog or section.
   ///
   /// In en, this message translates to:
   /// **'DMG build'**
   String get macDmgTitle;
 
-  /// No description provided for @showHiddenFiles.
+  /// User-facing label or message for show hidden files.
   ///
   /// In en, this message translates to:
   /// **'Show hidden files'**
   String get showHiddenFiles;
 
-  /// No description provided for @sshKeyAlgorithm.
+  /// User-facing label or message for SSH key algorithm.
   ///
   /// In en, this message translates to:
   /// **'Algorithm'**
   String get sshKeyAlgorithm;
 
-  /// No description provided for @sshKeyComment.
+  /// User-facing label or message for SSH key comment.
   ///
   /// In en, this message translates to:
   /// **'Comment'**
   String get sshKeyComment;
 
-  /// No description provided for @sshKeyGenerate.
+  /// User-facing label or message for SSH key generate.
   ///
   /// In en, this message translates to:
   /// **'Generate key pair'**
   String get sshKeyGenerate;
 
-  /// No description provided for @sshKeyGenerating.
+  /// User-facing label or message for SSH key generating.
   ///
   /// In en, this message translates to:
   /// **'Generating…'**
   String get sshKeyGenerating;
 
-  /// No description provided for @sshKeyLockedFmt.
+  /// Formatted user-facing message for SSH key locked; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'The private key [{name}] was not unlocked.'**
   String sshKeyLockedFmt(String name);
 
-  /// No description provided for @sshKeyPassphraseTip.
+  /// Help text for the SSH key passphrase setting or action.
   ///
   /// In en, this message translates to:
   /// **'Optional. A key with a passphrase is stored encrypted, and you are asked for it the first time a connection uses the key.'**
   String get sshKeyPassphraseTip;
 
-  /// No description provided for @sshKeyPassphraseWrong.
+  /// User-facing label or message for SSH key passphrase wrong.
   ///
   /// In en, this message translates to:
   /// **'Wrong passphrase.'**
   String get sshKeyPassphraseWrong;
 
-  /// No description provided for @sshKeyPublicKey.
+  /// User-facing label or message for SSH key public key.
   ///
   /// In en, this message translates to:
   /// **'Public key'**
   String get sshKeyPublicKey;
 
-  /// No description provided for @sshKeyPublicKeyTip.
+  /// Help text for the SSH key public key setting or action.
   ///
   /// In en, this message translates to:
   /// **'Append this line to ~/.ssh/authorized_keys on the server.'**
   String get sshKeyPublicKeyTip;
 
-  /// No description provided for @sshKeyRecommended.
+  /// User-facing label or message for SSH key recommended.
   ///
   /// In en, this message translates to:
   /// **'Recommended'**
   String get sshKeyRecommended;
 
-  /// No description provided for @sshKeyUnlockTip.
+  /// Help text for the SSH key unlock setting or action.
   ///
   /// In en, this message translates to:
   /// **'Enter the passphrase for the private key [{name}].'**
   String sshKeyUnlockTip(String name);
 
-  /// No description provided for @ungrouped.
+  /// User-facing label or message for ungrouped.
   ///
   /// In en, this message translates to:
   /// **'Ungrouped'**
   String get ungrouped;
 
-  /// No description provided for @containerReclaimable.
+  /// User-facing label or message for container reclaimable.
   ///
   /// In en, this message translates to:
   /// **'Reclaimable'**
   String get containerReclaimable;
 
-  /// No description provided for @unused.
+  /// User-facing label or message for unused.
   ///
   /// In en, this message translates to:
   /// **'Unused'**
   String get unused;
 
-  /// No description provided for @dangling.
+  /// User-facing label or message for dangling.
   ///
   /// In en, this message translates to:
   /// **'Dangling'**
   String get dangling;
 
-  /// No description provided for @pruneUnusedImages.
+  /// User-facing label or message for prune unused images.
   ///
   /// In en, this message translates to:
   /// **'Prune unused images'**
   String get pruneUnusedImages;
 
-  /// No description provided for @pruneDanglingImages.
+  /// User-facing label or message for prune dangling images.
   ///
   /// In en, this message translates to:
   /// **'Prune dangling images'**
   String get pruneDanglingImages;
 
-  /// No description provided for @pruneImages.
+  /// User-facing label or message for prune images.
   ///
   /// In en, this message translates to:
   /// **'Prune images'**
   String get pruneImages;
 
-  /// No description provided for @unusedTaggedImages.
+  /// User-facing label or message for unused tagged images.
   ///
   /// In en, this message translates to:
   /// **'Unused tagged'**
   String get unusedTaggedImages;
 
-  /// No description provided for @pruneDanglingImagesTip.
+  /// Help text for the prune dangling images setting or action.
   ///
   /// In en, this message translates to:
   /// **'Removes dangling images only.'**
   String get pruneDanglingImagesTip;
 
-  /// No description provided for @pruneUnusedImagesTip.
+  /// Help text for the prune unused images setting or action.
   ///
   /// In en, this message translates to:
   /// **'Also remove tagged images not used by any container.'**
   String get pruneUnusedImagesTip;
 
-  /// No description provided for @includeUnusedVolumesTip.
+  /// Help text for the include unused volumes setting or action.
   ///
   /// In en, this message translates to:
   /// **'Also remove volumes not used by any container.'**
   String get includeUnusedVolumesTip;
 
-  /// No description provided for @pruneCommandPreview.
+  /// User-facing label or message for prune command preview.
   ///
   /// In en, this message translates to:
   /// **'Command preview'**
   String get pruneCommandPreview;
 
-  /// No description provided for @pruneForceSshTip.
+  /// Help text for the prune force SSH setting or action.
   ///
   /// In en, this message translates to:
   /// **'-f skips the interactive prompt and is always enabled for SSH execution.'**
   String get pruneForceSshTip;
 
-  /// No description provided for @pruneVolumes.
+  /// User-facing label or message for prune volumes.
   ///
   /// In en, this message translates to:
   /// **'Prune volumes'**
   String get pruneVolumes;
 
-  /// No description provided for @pruneUnusedData.
+  /// User-facing label or message for prune unused data.
   ///
   /// In en, this message translates to:
   /// **'Prune unused data'**
   String get pruneUnusedData;
 
-  /// No description provided for @pull.
+  /// User-facing label or message for pull.
   ///
   /// In en, this message translates to:
   /// **'Pull'**
   String get pull;
 
-  /// No description provided for @invalidHostFormat.
+  /// User-facing label or message for invalid host format.
   ///
   /// In en, this message translates to:
   /// **'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.'**
   String get invalidHostFormat;
 
-  /// No description provided for @jumpServer.
+  /// User-facing label or message for jump server.
   ///
   /// In en, this message translates to:
   /// **'Jump server'**
   String get jumpServer;
 
-  /// No description provided for @jumpServersNotFoundFmt.
+  /// Formatted user-facing message for jump servers not found; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Jump servers not found for {serverName}: {jumpIds}'**
-  String jumpServersNotFoundFmt(Object serverName, Object jumpIds);
+  String jumpServersNotFoundFmt(String serverName, String jumpIds);
 
-  /// No description provided for @nameAlreadyExistsFmt.
+  /// Formatted user-facing message for name already exists; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'\"{name}\" already exists'**
-  String nameAlreadyExistsFmt(Object name);
+  String nameAlreadyExistsFmt(String name);
 
-  /// No description provided for @noJumpServerAvailable.
+  /// User-facing label or message for no jump server available.
   ///
   /// In en, this message translates to:
   /// **'No jump server available.'**
   String get noJumpServerAvailable;
 
-  /// No description provided for @jumpServerAndProxyCommandCannotBeUsedTogether.
+  /// User-facing label or message for jump server and proxy command cannot be used together.
   ///
   /// In en, this message translates to:
   /// **'Jump server and ProxyCommand cannot be used together.'**
   String get jumpServerAndProxyCommandCannotBeUsedTogether;
 
-  /// No description provided for @noConnectionMethod.
+  /// User-facing label or message for no connection method.
   ///
   /// In en, this message translates to:
   /// **'Configure SSH, a monitor agent, or both'**
   String get noConnectionMethod;
 
-  /// No description provided for @preferredTransport.
+  /// User-facing label or message for preferred transport.
   ///
   /// In en, this message translates to:
   /// **'Try first'**
   String get preferredTransport;
 
-  /// No description provided for @preferredTransportTip.
+  /// Help text for the preferred transport setting or action.
   ///
   /// In en, this message translates to:
   /// **'Where status is read from, and which connection a command opens first. The other stays available.'**
   String get preferredTransportTip;
 
-  /// No description provided for @keepForeground.
+  /// User-facing label or message for keep foreground.
   ///
   /// In en, this message translates to:
   /// **'Keep app foreground!'**
   String get keepForeground;
 
-  /// No description provided for @keepStatusWhenErr.
+  /// User-facing label or message for keep status when err.
   ///
   /// In en, this message translates to:
   /// **'Preserve the last server state'**
   String get keepStatusWhenErr;
 
-  /// No description provided for @keepStatusWhenErrTip.
+  /// Help text for the keep status when err setting or action.
   ///
   /// In en, this message translates to:
   /// **'Only in the event of an error during script execution'**
   String get keepStatusWhenErrTip;
 
-  /// No description provided for @keyAuth.
+  /// User-facing label or message for key auth.
   ///
   /// In en, this message translates to:
   /// **'Key Auth'**
   String get keyAuth;
 
-  /// No description provided for @lastFailure.
+  /// Error message shown when last failure.
   ///
   /// In en, this message translates to:
   /// **'Last Failure'**
   String get lastFailure;
 
-  /// No description provided for @lastSuccess.
+  /// User-facing label or message for last success.
   ///
   /// In en, this message translates to:
   /// **'Last Success'**
   String get lastSuccess;
 
-  /// No description provided for @letterCache.
+  /// User-facing label or message for letter cache.
   ///
   /// In en, this message translates to:
   /// **'Normal keyboard input'**
   String get letterCache;
 
-  /// No description provided for @letterCacheTip.
+  /// Help text for the letter cache setting or action.
   ///
   /// In en, this message translates to:
   /// **'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.'**
   String get letterCacheTip;
 
-  /// No description provided for @linuxShellTip.
+  /// Help text for the linux shell setting or action.
   ///
   /// In en, this message translates to:
   /// **'Which shell a terminal starts. Empty restores /bin/sh.'**
   String get linuxShellTip;
 
-  /// No description provided for @linuxNetTip.
+  /// Help text for the linux net setting or action.
   ///
   /// In en, this message translates to:
   /// **'DNS servers. Empty restores the defaults'**
   String get linuxNetTip;
 
-  /// No description provided for @madeWithLove.
+  /// User-facing label or message for made with love.
   ///
   /// In en, this message translates to:
   /// **'Made with ❤️ by {myGithub}'**
-  String madeWithLove(Object myGithub);
+  String madeWithLove(String myGithub);
 
-  /// No description provided for @maxConcurrency.
+  /// User-facing label or message for max concurrency.
   ///
   /// In en, this message translates to:
   /// **'Max Concurrency'**
   String get maxConcurrency;
 
-  /// No description provided for @maxRetryCount.
+  /// User-facing label or message for max retry count.
   ///
   /// In en, this message translates to:
   /// **'Number of server reconnections'**
   String get maxRetryCount;
 
-  /// No description provided for @mismatchSystem.
+  /// User-facing label or message for mismatch system.
   ///
   /// In en, this message translates to:
   /// **'Mismatch system: {system}'**
-  String mismatchSystem(Object system);
+  String mismatchSystem(String system);
 
-  /// No description provided for @mirror.
+  /// User-facing label or message for mirror.
   ///
   /// In en, this message translates to:
   /// **'Mirror'**
   String get mirror;
 
-  /// No description provided for @needRestart.
+  /// User-facing label or message for need restart.
   ///
   /// In en, this message translates to:
   /// **'App needs to be restarted'**
   String get needRestart;
 
-  /// No description provided for @netViewType.
+  /// User-facing label or message for net view type.
   ///
   /// In en, this message translates to:
   /// **'Network view type'**
   String get netViewType;
 
-  /// No description provided for @newContainer.
+  /// User-facing label or message for new container.
   ///
   /// In en, this message translates to:
   /// **'New container'**
   String get newContainer;
 
-  /// No description provided for @noConnectionStatsData.
+  /// User-facing label or message for no connection stats data.
   ///
   /// In en, this message translates to:
   /// **'No connection statistics data'**
   String get noConnectionStatsData;
 
-  /// No description provided for @noLineChart.
+  /// User-facing label or message for no line chart.
   ///
   /// In en, this message translates to:
   /// **'Do not use line charts'**
   String get noLineChart;
 
-  /// No description provided for @noPrivateKeyTip.
+  /// Help text for the no private key setting or action.
   ///
   /// In en, this message translates to:
   /// **'The private key does not exist, it may have been deleted or there is a configuration error.'**
   String get noPrivateKeyTip;
 
-  /// No description provided for @noPromptAgain.
+  /// User-facing label or message for no prompt again.
   ///
   /// In en, this message translates to:
   /// **'Do not prompt again'**
   String get noPromptAgain;
 
-  /// No description provided for @openLastPath.
+  /// Action label for open last path.
   ///
   /// In en, this message translates to:
   /// **'Open the last path'**
   String get openLastPath;
 
-  /// No description provided for @openLastPathTip.
+  /// Help text for the open last path setting or action.
   ///
   /// In en, this message translates to:
   /// **'Different servers will have different logs, and the log is the path to the exit'**
   String get openLastPathTip;
 
-  /// No description provided for @parseContainerStatsTip.
+  /// Help text for the parse container stats setting or action.
   ///
   /// In en, this message translates to:
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// No description provided for @plugInType.
+  /// User-facing label or message for plug in type.
   ///
   /// In en, this message translates to:
   /// **'Insertion Type'**
   String get plugInType;
 
-  /// No description provided for @preferDiskAmount.
+  /// User-facing label or message for prefer disk amount.
   ///
   /// In en, this message translates to:
   /// **'Prioritize displaying disk capacity'**
   String get preferDiskAmount;
 
-  /// No description provided for @privateKey.
+  /// User-facing label or message for private key.
   ///
   /// In en, this message translates to:
   /// **'Private Key'**
   String get privateKey;
 
-  /// No description provided for @privateKeyNotFoundFmt.
+  /// Formatted user-facing message for private key not found; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Private key [{keyId}] not found.'**
-  String privateKeyNotFoundFmt(Object keyId);
+  String privateKeyNotFoundFmt(String keyId);
 
-  /// No description provided for @bmcPowerOnAction.
+  /// User-facing label or message for BMC power on action.
   ///
   /// In en, this message translates to:
   /// **'Power on'**
   String get bmcPowerOnAction;
 
-  /// No description provided for @bmcShutdown.
+  /// User-facing label or message for BMC shutdown.
   ///
   /// In en, this message translates to:
   /// **'Shut down'**
   String get bmcShutdown;
 
-  /// No description provided for @bmcForceOff.
+  /// User-facing label or message for BMC force off.
   ///
   /// In en, this message translates to:
   /// **'Force off'**
   String get bmcForceOff;
 
-  /// No description provided for @restart.
+  /// Action label for restart.
   ///
   /// In en, this message translates to:
   /// **'Restart'**
   String get restart;
 
-  /// No description provided for @bmcPowerCycle.
+  /// User-facing label or message for BMC power cycle.
   ///
   /// In en, this message translates to:
   /// **'Power cycle'**
   String get bmcPowerCycle;
 
-  /// No description provided for @bmcPowerConfirm.
+  /// Confirmation prompt for BMC power confirm.
   ///
   /// In en, this message translates to:
   /// **'Send this to {server}? The service will be asked for \"{resetType}\"'**
   String bmcPowerConfirm(String server, String resetType);
 
-  /// No description provided for @bmcPowerDone.
+  /// User-facing label or message for BMC power done.
   ///
   /// In en, this message translates to:
   /// **'The power state changed'**
   String get bmcPowerDone;
 
-  /// No description provided for @bmcPowerAccepted.
+  /// User-facing label or message for BMC power accepted.
   ///
   /// In en, this message translates to:
   /// **'Accepted, but the power state has not changed. A graceful operation depends on the OS'**
   String get bmcPowerAccepted;
 
-  /// No description provided for @bmcPowerUnsupported.
+  /// User-facing label or message for BMC power unsupported.
   ///
   /// In en, this message translates to:
   /// **'This service allows nothing for that action'**
   String get bmcPowerUnsupported;
 
-  /// No description provided for @bmcUnauthorized.
+  /// User-facing label or message for BMC unauthorized.
   ///
   /// In en, this message translates to:
   /// **'The BMC refused the account'**
   String get bmcUnauthorized;
 
-  /// No description provided for @bmcAccountMissing.
+  /// User-facing label or message for BMC account missing.
   ///
   /// In en, this message translates to:
   /// **'No account is set for this BMC'**
   String get bmcAccountMissing;
 
-  /// No description provided for @bmcPowerOn.
+  /// User-facing label or message for BMC power on.
   ///
   /// In en, this message translates to:
   /// **'Powered on'**
   String get bmcPowerOn;
 
-  /// No description provided for @bmcPowerOff.
+  /// User-facing label or message for BMC power off.
   ///
   /// In en, this message translates to:
   /// **'Powered off'**
   String get bmcPowerOff;
 
-  /// No description provided for @bmcCertRejected.
+  /// User-facing label or message for BMC cert rejected.
   ///
   /// In en, this message translates to:
   /// **'Certificate refused — review it in the server settings'**
   String get bmcCertRejected;
 
-  /// No description provided for @bmcNotAService.
+  /// User-facing label or message for BMC not a service.
   ///
   /// In en, this message translates to:
   /// **'No Redfish service at this address'**
   String get bmcNotAService;
 
-  /// No description provided for @bmcNoSystem.
+  /// User-facing label or message for BMC no system.
   ///
   /// In en, this message translates to:
   /// **'The service reports no system'**
   String get bmcNoSystem;
 
-  /// No description provided for @bmcSensorsTruncated.
+  /// User-facing label or message for BMC sensors truncated.
   ///
   /// In en, this message translates to:
   /// **'Only the first sensors are shown'**
   String get bmcSensorsTruncated;
 
-  /// No description provided for @bmcMultipleSystems.
+  /// User-facing label or message for BMC multiple systems.
   ///
   /// In en, this message translates to:
   /// **'Only the first system is shown'**
   String get bmcMultipleSystems;
 
-  /// No description provided for @bmcTip.
+  /// Help text for the BMC setting or action.
   ///
   /// In en, this message translates to:
   /// **'The BMC is a separate computer on the motherboard, reachable when the host OS is not. Configured here, it can report power state and hardware sensors while the server is off or hung. Needs Redfish, which most enterprise hardware from about 2016 on has.'**
   String get bmcTip;
 
-  /// No description provided for @bmcCert.
+  /// User-facing label or message for BMC cert.
   ///
   /// In en, this message translates to:
   /// **'Certificate'**
   String get bmcCert;
 
-  /// No description provided for @bmcCertPinned.
+  /// User-facing label or message for BMC cert pinned.
   ///
   /// In en, this message translates to:
   /// **'Reviewed and pinned'**
   String get bmcCertPinned;
 
-  /// No description provided for @bmcCertUnreviewed.
+  /// User-facing label or message for BMC cert unreviewed.
   ///
   /// In en, this message translates to:
   /// **'Not reviewed yet — tap to see the certificate'**
   String get bmcCertUnreviewed;
 
-  /// No description provided for @bmcCertReview.
+  /// User-facing label or message for BMC cert review.
   ///
   /// In en, this message translates to:
   /// **'A self-signed certificate. Compare it before accepting. Only this exact one is trusted afterwards.'**
   String get bmcCertReview;
 
-  /// No description provided for @bmcCertChanged.
+  /// User-facing label or message for BMC cert changed.
   ///
   /// In en, this message translates to:
   /// **'The certificate does not match. Check it.'**
   String get bmcCertChanged;
 
-  /// No description provided for @bmcCertExpired.
+  /// User-facing label or message for BMC cert expired.
   ///
   /// In en, this message translates to:
   /// **'Expired.'**
   String get bmcCertExpired;
 
-  /// No description provided for @bmcCertWas.
+  /// User-facing label or message for BMC cert was.
   ///
   /// In en, this message translates to:
   /// **'Previously accepted: {fingerprint}'**
   String bmcCertWas(String fingerprint);
 
-  /// No description provided for @bmcAddrInvalid.
+  /// User-facing label or message for BMC addr invalid.
   ///
   /// In en, this message translates to:
   /// **'The BMC address must be a URL, e.g. https://10.0.0.9'**
   String get bmcAddrInvalid;
 
-  /// No description provided for @proxyCommandSandboxed.
+  /// User-facing label or message for proxy command sandboxed.
   ///
   /// In en, this message translates to:
   /// **'This build is sandboxed: the command gets an empty home, not yours, so anything reading ~/.ssh fails. The DMG build is not.'**
   String get proxyCommandSandboxed;
 
-  /// No description provided for @privateKeyFileUnreadable.
+  /// User-facing label or message for private key file unreadable.
   ///
   /// In en, this message translates to:
   /// **'Cannot read the private key file {path}: {reason}'**
   String privateKeyFileUnreadable(String path, String reason);
 
-  /// No description provided for @privateKeyFileSandboxed.
+  /// User-facing label or message for private key file sandboxed.
   ///
   /// In en, this message translates to:
   /// **'This build cannot read files outside its own container, so the key at {path} is unreachable. Import the key in Settings, or use the DMG build.'**
   String privateKeyFileSandboxed(String path);
 
-  /// No description provided for @pushToken.
+  /// User-facing label or message for push token.
   ///
   /// In en, this message translates to:
   /// **'Push token'**
   String get pushToken;
 
-  /// No description provided for @liveActivity.
+  /// User-facing label or message for live activity.
   ///
   /// In en, this message translates to:
   /// **'Live Activity'**
   String get liveActivity;
 
-  /// No description provided for @liveActivityTip.
+  /// Help text for the live activity setting or action.
   ///
   /// In en, this message translates to:
   /// **'Show terminal sessions on the Lock Screen and Dynamic Island. Without unlocking, the server name and connection state are visible there.'**
   String get liveActivityTip;
 
-  /// No description provided for @liveActivitySystemDisabled.
+  /// User-facing label or message for live activity system disabled.
   ///
   /// In en, this message translates to:
   /// **'iOS is not allowing one. The switches are at Settings › ServerBox › Live Activities and Settings › Face ID & Passcode › Live Activities.'**
   String get liveActivitySystemDisabled;
 
-  /// No description provided for @proxyCommandOnlySupportedOnDesktop.
+  /// User-facing label or message for proxy command only supported on desktop.
   ///
   /// In en, this message translates to:
   /// **'ProxyCommand is only supported on desktop platforms.'**
   String get proxyCommandOnlySupportedOnDesktop;
 
-  /// No description provided for @pveIgnoreCertTip.
+  /// Help text for the pve ignore cert setting or action.
   ///
   /// In en, this message translates to:
   /// **'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.'**
   String get pveIgnoreCertTip;
 
-  /// No description provided for @pveServerClientMissing.
+  /// User-facing label or message for pve server client missing.
   ///
   /// In en, this message translates to:
   /// **'The SSH client for this server is not available.'**
   String get pveServerClientMissing;
 
-  /// No description provided for @pveAddressMissing.
+  /// User-facing label or message for pve address missing.
   ///
   /// In en, this message translates to:
   /// **'The PVE address is missing. Please configure it in server settings.'**
   String get pveAddressMissing;
 
-  /// No description provided for @pvePasswordRequired.
+  /// User-facing label or message for pve password required.
   ///
   /// In en, this message translates to:
   /// **'PVE password is required. Please set it in server settings.'**
   String get pvePasswordRequired;
 
-  /// No description provided for @pveOtpRequired.
+  /// User-facing label or message for pve otp required.
   ///
   /// In en, this message translates to:
   /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
   String get pveOtpRequired;
 
-  /// No description provided for @pveOtpChallengeExpired.
+  /// User-facing label or message for pve otp challenge expired.
   ///
   /// In en, this message translates to:
   /// **'The OTP challenge has expired. Please refresh and try again.'**
   String get pveOtpChallengeExpired;
 
-  /// No description provided for @pveOtpCodeRequired.
+  /// User-facing label or message for pve otp code required.
   ///
   /// In en, this message translates to:
   /// **'OTP code is required.'**
   String get pveOtpCodeRequired;
 
-  /// No description provided for @pveOtpVerificationFailed.
+  /// Error message shown when pve otp verification failed.
   ///
   /// In en, this message translates to:
   /// **'OTP verification failed. Please try again with a fresh code.'**
   String get pveOtpVerificationFailed;
 
-  /// No description provided for @pveOtpTitle.
+  /// Title shown for the pve otp dialog or section.
   ///
   /// In en, this message translates to:
   /// **'OTP Verification'**
   String get pveOtpTitle;
 
-  /// No description provided for @pveOtpLabel.
+  /// User-facing label or message for pve otp label.
   ///
   /// In en, this message translates to:
   /// **'OTP Code'**
   String get pveOtpLabel;
 
-  /// No description provided for @pveInvalidResponseBody.
+  /// Explanatory message shown in the pve invalid response dialog or notice.
   ///
   /// In en, this message translates to:
   /// **'PVE login returned an invalid response body.'**
   String get pveInvalidResponseBody;
 
-  /// No description provided for @pveInvalidResponseData.
+  /// User-facing label or message for pve invalid response data.
   ///
   /// In en, this message translates to:
   /// **'PVE login response did not contain a valid data payload.'**
   String get pveInvalidResponseData;
 
-  /// No description provided for @pveMissingAuthTicket.
+  /// User-facing label or message for pve missing auth ticket.
   ///
   /// In en, this message translates to:
   /// **'PVE login succeeded but no authentication ticket was returned.'**
   String get pveMissingAuthTicket;
 
-  /// No description provided for @pveVersionLow.
+  /// User-facing label or message for pve version low.
   ///
   /// In en, this message translates to:
   /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
   String get pveVersionLow;
 
-  /// No description provided for @pveLoadingForwarding.
+  /// User-facing label or message for pve loading forwarding.
   ///
   /// In en, this message translates to:
   /// **'Establishing SSH tunnel...'**
   String get pveLoadingForwarding;
 
-  /// No description provided for @pveLoadingLogin.
+  /// User-facing label or message for pve loading login.
   ///
   /// In en, this message translates to:
   /// **'Authenticating with PVE...'**
   String get pveLoadingLogin;
 
-  /// No description provided for @pveLoadingData.
+  /// User-facing label or message for pve loading data.
   ///
   /// In en, this message translates to:
   /// **'Fetching cluster data...'**
   String get pveLoadingData;
 
-  /// No description provided for @pveLoadingConnect.
+  /// User-facing label or message for pve loading connect.
   ///
   /// In en, this message translates to:
   /// **'Connecting...'**
   String get pveLoadingConnect;
 
-  /// No description provided for @pvePassword.
+  /// User-facing label or message for pve password.
   ///
   /// In en, this message translates to:
   /// **'PVE Password'**
   String get pvePassword;
 
-  /// No description provided for @pvePasswordHint.
+  /// Hint shown in the pve password field or section.
   ///
   /// In en, this message translates to:
   /// **'Required when using key-based SSH authentication'**
   String get pvePasswordHint;
 
-  /// No description provided for @read.
+  /// User-facing label or message for read.
   ///
   /// In en, this message translates to:
   /// **'Read'**
   String get read;
 
-  /// No description provided for @recentConnections.
+  /// User-facing label or message for recent connections.
   ///
   /// In en, this message translates to:
   /// **'Recent Connections'**
   String get recentConnections;
 
-  /// No description provided for @rememberPwdInMem.
+  /// User-facing label or message for remember pwd in mem.
   ///
   /// In en, this message translates to:
   /// **'Remember password in memory'**
   String get rememberPwdInMem;
 
-  /// No description provided for @rememberPwdInMemTip.
+  /// Help text for the remember pwd in mem setting or action.
   ///
   /// In en, this message translates to:
   /// **'Used for containers, suspending, etc.'**
   String get rememberPwdInMemTip;
 
-  /// No description provided for @remotePath.
+  /// User-facing label or message for remote path.
   ///
   /// In en, this message translates to:
   /// **'Remote path'**
   String get remotePath;
 
-  /// No description provided for @rootfsUpdateTip.
+  /// Help text for the rootfs update setting or action.
   ///
   /// In en, this message translates to:
   /// **'{distro} {installed} is installed; {latest} is available. Updating replaces the whole container: {pm} data is lost'**
   String rootfsUpdateTip(
-    Object distro,
-    Object installed,
-    Object latest,
-    Object pm,
+    String distro,
+    String installed,
+    String latest,
+    String pm,
   );
 
-  /// No description provided for @linuxSystemInUse.
+  /// User-facing label or message for linux system in use.
   ///
   /// In en, this message translates to:
   /// **'Close the terminals on {name} before deleting it'**
-  String linuxSystemInUse(Object name);
+  String linuxSystemInUse(String name);
 
-  /// No description provided for @rootfsSubtitle.
+  /// User-facing label or message for rootfs subtitle.
   ///
   /// In en, this message translates to:
   /// **'A Linux userland on this device'**
   String get rootfsSubtitle;
 
-  /// No description provided for @rootfsInstallTip.
+  /// Help text for the rootfs install setting or action.
   ///
   /// In en, this message translates to:
   /// **'Downloads {distro} {version} (about {size} MB) and unpacks it on this device.'**
-  String rootfsInstallTip(Object distro, Object version, Object size);
+  String rootfsInstallTip(String distro, String version, int size);
 
-  /// No description provided for @sameIdServerExist.
+  /// User-facing label or message for same id server exist.
   ///
   /// In en, this message translates to:
   /// **'A server with the same ID already exists'**
   String get sameIdServerExist;
 
-  /// No description provided for @second.
+  /// User-facing label or message for second.
   ///
   /// In en, this message translates to:
   /// **'s'**
   String get second;
 
-  /// No description provided for @serverFilesUnavailableTip.
+  /// Help text for the server files unavailable setting or action.
   ///
   /// In en, this message translates to:
   /// **'Needs SSH to this server, or server_box_monitor installed with its file API on.'**
   String get serverFilesUnavailableTip;
 
-  /// No description provided for @back.
+  /// User-facing label or message for back.
   ///
   /// In en, this message translates to:
   /// **'Back'**
   String get back;
 
-  /// No description provided for @history.
+  /// User-facing label or message for history.
   ///
   /// In en, this message translates to:
   /// **'History'**
   String get history;
 
-  /// No description provided for @homeDir.
+  /// User-facing label or message for home dir.
   ///
   /// In en, this message translates to:
   /// **'Home'**
   String get homeDir;
 
-  /// No description provided for @selected.
+  /// User-facing label or message for selected.
   ///
   /// In en, this message translates to:
   /// **'{count} selected'**
-  String selected(Object count);
+  String selected(int count);
 
-  /// No description provided for @sendTo.
+  /// Action label for send to.
   ///
   /// In en, this message translates to:
   /// **'Send to…'**
   String get sendTo;
 
-  /// No description provided for @serverFuncBtns.
+  /// User-facing label or message for server func btns.
   ///
   /// In en, this message translates to:
   /// **'Server function buttons'**
   String get serverFuncBtns;
 
-  /// No description provided for @serverOrder.
+  /// User-facing label or message for server order.
   ///
   /// In en, this message translates to:
   /// **'Server order'**
   String get serverOrder;
 
-  /// No description provided for @serverTabEmpty.
+  /// Empty-state message for server tab empty.
   ///
   /// In en, this message translates to:
   /// **'No servers yet'**
   String get serverTabEmpty;
 
-  /// No description provided for @serverTabRequired.
+  /// User-facing label or message for server tab required.
   ///
   /// In en, this message translates to:
   /// **'Server tab cannot be removed'**
   String get serverTabRequired;
 
-  /// No description provided for @shareCodeHint.
+  /// Hint shown in the share code field or section.
   ///
   /// In en, this message translates to:
   /// **'Tell the recipient these digits separately. They are not included in the QR code.'**
   String get shareCodeHint;
 
-  /// No description provided for @shareCodePrompt.
+  /// User-facing label or message for share code prompt.
   ///
   /// In en, this message translates to:
   /// **'6-digit code'**
   String get shareCodePrompt;
 
-  /// No description provided for @shareCodeTitle.
+  /// Title shown for the share code dialog or section.
   ///
   /// In en, this message translates to:
   /// **'One-time code'**
   String get shareCodeTitle;
 
-  /// No description provided for @shareExpired.
+  /// User-facing label or message for share expired.
   ///
   /// In en, this message translates to:
   /// **'This share has expired. Ask for a new one.'**
   String get shareExpired;
 
-  /// No description provided for @shareImportFile.
+  /// User-facing label or message for share import file.
   ///
   /// In en, this message translates to:
   /// **'From a shared file'**
   String get shareImportFile;
 
-  /// No description provided for @shareImportTitle.
+  /// Title shown for the share import dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Import shared server'**
   String get shareImportTitle;
 
-  /// No description provided for @shareIncludesKey.
+  /// User-facing label or message for share includes key.
   ///
   /// In en, this message translates to:
   /// **'The share includes the private key.'**
   String get shareIncludesKey;
 
-  /// No description provided for @shareOmittedBmc.
+  /// User-facing label or message for share omitted BMC.
   ///
   /// In en, this message translates to:
   /// **'BMC credentials. The address is included, but the credentials are not.'**
   String get shareOmittedBmc;
 
-  /// No description provided for @shareOmittedJump.
+  /// User-facing label or message for share omitted jump.
   ///
   /// In en, this message translates to:
   /// **'The jump server, because it is stored as a separate server on this device.'**
   String get shareOmittedJump;
 
-  /// No description provided for @shareOmittedKeyPath.
+  /// User-facing label or message for share omitted key path.
   ///
   /// In en, this message translates to:
   /// **'The key file, because its path is only valid on this device.'**
   String get shareOmittedKeyPath;
 
-  /// No description provided for @shareOmittedMissingKey.
+  /// User-facing label or message for share omitted missing key.
   ///
   /// In en, this message translates to:
   /// **'The private key, because it is not in this device’s key store.'**
   String get shareOmittedMissingKey;
 
-  /// No description provided for @shareOmittedTip.
+  /// Help text for the share omitted setting or action.
   ///
   /// In en, this message translates to:
   /// **'Not included; the recipient must configure:'**
   String get shareOmittedTip;
 
-  /// No description provided for @sharePassphraseTip.
+  /// Help text for the share passphrase setting or action.
   ///
   /// In en, this message translates to:
   /// **'This passphrase encrypts the file. The recipient needs it to import the server, and it cannot be recovered.'**
   String get sharePassphraseTip;
 
-  /// No description provided for @shareQrTip.
+  /// Help text for the share qr setting or action.
   ///
   /// In en, this message translates to:
   /// **'The connection details in this QR code are encrypted. The share expires in {minutes} minutes.'**
   String shareQrTip(int minutes);
 
-  /// No description provided for @shareScanQr.
+  /// User-facing label or message for share scan qr.
   ///
   /// In en, this message translates to:
   /// **'Scan a QR code'**
   String get shareScanQr;
 
-  /// No description provided for @shareServerExists.
+  /// User-facing label or message for share server exists.
   ///
   /// In en, this message translates to:
   /// **'“{name}” on this device already uses this address. Import anyway?'**
   String shareServerExists(String name);
 
-  /// No description provided for @shareTooBigForQr.
+  /// User-facing label or message for share too big for qr.
   ///
   /// In en, this message translates to:
   /// **'Too large for a QR code. Share it as a file instead.'**
   String get shareTooBigForQr;
 
-  /// No description provided for @shareTooNew.
+  /// User-facing label or message for share too new.
   ///
   /// In en, this message translates to:
   /// **'This share was created with a newer version of ServerBox. Update the app to open it.'**
   String get shareTooNew;
 
-  /// No description provided for @shareUnreadable.
+  /// User-facing label or message for share unreadable.
   ///
   /// In en, this message translates to:
   /// **'This is not a valid ServerBox share.'**
   String get shareUnreadable;
 
-  /// No description provided for @shareVia.
+  /// User-facing label or message for share via.
   ///
   /// In en, this message translates to:
   /// **'Share via'**
   String get shareVia;
 
-  /// No description provided for @sftpDlPrepare.
+  /// User-facing label or message for sftp dl prepare.
   ///
   /// In en, this message translates to:
   /// **'Preparing to connect...'**
   String get sftpDlPrepare;
 
-  /// No description provided for @sftpEditorTip.
+  /// Help text for the sftp editor setting or action.
   ///
   /// In en, this message translates to:
   /// **'Empty uses the built-in editor. For example `vim` (reading `EDITOR` is suggested).'**
   String get sftpEditorTip;
 
-  /// No description provided for @sftpRmrDirSummary.
+  /// User-facing label or message for sftp rmr dir summary.
   ///
   /// In en, this message translates to:
   /// **'Use `rm -r` to delete a folder in SFTP.'**
   String get sftpRmrDirSummary;
 
-  /// No description provided for @sftpSSHConnected.
+  /// User-facing label or message for sftp SSH connected.
   ///
   /// In en, this message translates to:
   /// **'SFTP Connected'**
   String get sftpSSHConnected;
 
-  /// No description provided for @sftpShowFoldersFirst.
+  /// User-facing label or message for sftp show folders first.
   ///
   /// In en, this message translates to:
   /// **'Display folders first'**
   String get sftpShowFoldersFirst;
 
-  /// No description provided for @sftpUnavailableUseScp.
+  /// User-facing label or message for sftp unavailable use scp.
   ///
   /// In en, this message translates to:
   /// **'If this host has no SFTP subsystem, as many embedded devices do not, set its file transfer to SCP in the server settings.'**
   String get sftpUnavailableUseScp;
 
-  /// No description provided for @sshFileTransportTip.
+  /// Help text for the SSH file transport setting or action.
   ///
   /// In en, this message translates to:
   /// **'SFTP suits anything current. Choose SCP for an old or embedded host whose SSH server has no SFTP subsystem: it needs the `scp` command and a shell that also has the usual file utilities (`find`, `stat`, `mv`, `chmod`).'**
   String get sshFileTransportTip;
 
-  /// No description provided for @specifyDev.
+  /// User-facing label or message for specify dev.
   ///
   /// In en, this message translates to:
   /// **'Specify device'**
   String get specifyDev;
 
-  /// No description provided for @specifyDevTip.
+  /// Help text for the specify dev setting or action.
   ///
   /// In en, this message translates to:
   /// **'Network traffic counts every device by default; name one here instead'**
   String get specifyDevTip;
 
-  /// No description provided for @tempIsCelsiusTip.
+  /// Help text for the temp is celsius setting or action.
   ///
   /// In en, this message translates to:
   /// **'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).'**
   String get tempIsCelsiusTip;
 
-  /// No description provided for @spentTime.
+  /// User-facing label or message for spent time.
   ///
   /// In en, this message translates to:
   /// **'Spent time: {time}'**
-  String spentTime(Object time);
+  String spentTime(String time);
 
-  /// No description provided for @sshConfigAllExist.
+  /// User-facing label or message for SSH config all exist.
   ///
   /// In en, this message translates to:
   /// **'All servers already exist ({duplicateCount} duplicates found)'**
-  String sshConfigAllExist(Object duplicateCount);
+  String sshConfigAllExist(int duplicateCount);
 
-  /// No description provided for @sshConnectionModeTip.
+  /// Help text for the SSH connection mode setting or action.
   ///
   /// In en, this message translates to:
   /// **'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.'**
   String get sshConnectionModeTip;
 
-  /// No description provided for @sshConnectionModeUseBuiltin.
+  /// User-facing label or message for SSH connection mode use builtin.
   ///
   /// In en, this message translates to:
   /// **'Use built-in terminal'**
   String get sshConnectionModeUseBuiltin;
 
-  /// No description provided for @sshConnectionModeUseSystem.
+  /// User-facing label or message for SSH connection mode use system.
   ///
   /// In en, this message translates to:
   /// **'Use system SSH'**
   String get sshConnectionModeUseSystem;
 
-  /// No description provided for @sshConfigDuplicatesSkipped.
+  /// User-facing label or message for SSH config duplicates skipped.
   ///
   /// In en, this message translates to:
   /// **'{duplicateCount} duplicates will be skipped'**
-  String sshConfigDuplicatesSkipped(Object duplicateCount);
+  String sshConfigDuplicatesSkipped(int duplicateCount);
 
-  /// No description provided for @sshConfigFound.
+  /// User-facing label or message for SSH config found.
   ///
   /// In en, this message translates to:
   /// **'We found SSH configuration on your system.'**
   String get sshConfigFound;
 
-  /// No description provided for @sshConfigFoundServers.
+  /// User-facing label or message for SSH config found servers.
   ///
   /// In en, this message translates to:
   /// **'Found {totalCount} servers'**
-  String sshConfigFoundServers(Object totalCount);
+  String sshConfigFoundServers(int totalCount);
 
-  /// No description provided for @sshConfigImport.
+  /// User-facing label or message for SSH config import.
   ///
   /// In en, this message translates to:
   /// **'SSH Config Import'**
   String get sshConfigImport;
 
-  /// No description provided for @sshConfigImportPermission.
+  /// User-facing label or message for SSH config import permission.
   ///
   /// In en, this message translates to:
   /// **'Would you like to give permission to read ~/.ssh/config and automatically import server settings?'**
   String get sshConfigImportPermission;
 
-  /// No description provided for @sshConfigImportTip.
+  /// Help text for the SSH config import setting or action.
   ///
   /// In en, this message translates to:
   /// **'Prompt to read ~/.ssh/config on first server creation'**
   String get sshConfigImportTip;
 
-  /// No description provided for @sshConfigImported.
+  /// User-facing label or message for SSH config imported.
   ///
   /// In en, this message translates to:
   /// **'Imported {count} servers from SSH config'**
-  String sshConfigImported(Object count);
+  String sshConfigImported(int count);
 
-  /// No description provided for @sshHostKeyChangedDesc.
+  /// Description of the SSH host key changed desc feature or option.
   ///
   /// In en, this message translates to:
   /// **'The SSH host key changed for {serverName}. Only continue if you trust this server.'**
-  String sshHostKeyChangedDesc(Object serverName);
+  String sshHostKeyChangedDesc(String serverName);
 
   /// Label for the SSH host key type displayed in the host key verification dialog.
   ///
@@ -2656,29 +2662,29 @@ abstract class AppLocalizations {
   /// **'SSH host key type'**
   String get sshHostKeyType;
 
-  /// No description provided for @sshKnownHostKeys.
+  /// User-facing label or message for SSH known host keys.
   ///
   /// In en, this message translates to:
   /// **'Known hosts'**
   String get sshKnownHostKeys;
 
-  /// No description provided for @sshKnownHostKeysTip.
+  /// Help text for the SSH known host keys setting or action.
   ///
   /// In en, this message translates to:
   /// **'The host keys this app has accepted'**
   String get sshKnownHostKeysTip;
 
-  /// No description provided for @sshHostKeyNewDesc.
+  /// Description of the SSH host key new desc feature or option.
   ///
   /// In en, this message translates to:
   /// **'A new SSH host key was received from {serverName}. Review the fingerprint before trusting.'**
-  String sshHostKeyNewDesc(Object serverName);
+  String sshHostKeyNewDesc(String serverName);
 
-  /// No description provided for @sshHostKeyStoredFingerprint.
+  /// User-facing label or message for SSH host key stored fingerprint.
   ///
   /// In en, this message translates to:
   /// **'Stored fingerprint: {fingerprint}'**
-  String sshHostKeyStoredFingerprint(Object fingerprint);
+  String sshHostKeyStoredFingerprint(String fingerprint);
 
   /// Label for a one-time verification code requested during SSH keyboard-interactive authentication.
   ///
@@ -2686,2779 +2692,2779 @@ abstract class AppLocalizations {
   /// **'Verification code'**
   String get sshVerificationCode;
 
-  /// No description provided for @sshConfigManualSelect.
+  /// User-facing label or message for SSH config manual select.
   ///
   /// In en, this message translates to:
   /// **'Would you like to select the SSH config file manually?'**
   String get sshConfigManualSelect;
 
-  /// No description provided for @sshConfigNoServers.
+  /// User-facing label or message for SSH config no servers.
   ///
   /// In en, this message translates to:
   /// **'No servers found in SSH config'**
   String get sshConfigNoServers;
 
-  /// No description provided for @sshConfigPermissionDenied.
+  /// User-facing label or message for SSH config permission denied.
   ///
   /// In en, this message translates to:
   /// **'Cannot access SSH config file due to macOS permissions.'**
   String get sshConfigPermissionDenied;
 
-  /// No description provided for @sshConfigServersToImport.
+  /// User-facing label or message for SSH config servers to import.
   ///
   /// In en, this message translates to:
   /// **'{importCount} servers will be imported'**
-  String sshConfigServersToImport(Object importCount);
+  String sshConfigServersToImport(int importCount);
 
-  /// No description provided for @sshTermHelp.
+  /// User-facing label or message for SSH term help.
   ///
   /// In en, this message translates to:
   /// **'When the terminal is scrollable, dragging horizontally can select text. Clicking the keyboard button turns the keyboard on/off. The file icon opens the current path SFTP. The clipboard button copies the content when text is selected, and pastes content from the clipboard into the terminal when no text is selected and there is content on the clipboard. The code icon pastes code snippets into the terminal and executes them.'**
   String get sshTermHelp;
 
-  /// No description provided for @sshVirtualKeyAutoOff.
+  /// User-facing label or message for SSH virtual key auto off.
   ///
   /// In en, this message translates to:
   /// **'Auto switching of virtual keys'**
   String get sshVirtualKeyAutoOff;
 
-  /// No description provided for @supportFmtArgs.
+  /// User-facing label or message for support fmt args.
   ///
   /// In en, this message translates to:
   /// **'The following formatting parameters are supported:'**
   String get supportFmtArgs;
 
-  /// No description provided for @suspendTip.
+  /// Help text for the suspend setting or action.
   ///
   /// In en, this message translates to:
   /// **'The suspend function requires root permission and systemd support.'**
   String get suspendTip;
 
-  /// No description provided for @switchTo.
+  /// User-facing label or message for switch to.
   ///
   /// In en, this message translates to:
   /// **'Switch to {val}'**
-  String switchTo(Object val);
+  String switchTo(String val);
 
-  /// No description provided for @syncAppSettings.
+  /// User-facing label or message for sync app settings.
   ///
   /// In en, this message translates to:
   /// **'Sync app settings'**
   String get syncAppSettings;
 
-  /// No description provided for @syncAppSettingsTip.
+  /// Help text for the sync app settings setting or action.
   ///
   /// In en, this message translates to:
   /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
   String get syncAppSettingsTip;
 
-  /// No description provided for @termFontSizeTip.
+  /// Help text for the term font size setting or action.
   ///
   /// In en, this message translates to:
   /// **'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.'**
   String get termFontSizeTip;
 
-  /// No description provided for @textScalerTip.
+  /// Help text for the text scaler setting or action.
   ///
   /// In en, this message translates to:
   /// **'1.0 => 100% (original size), only works on server page part of the font, not recommended to change.'**
   String get textScalerTip;
 
-  /// No description provided for @times.
+  /// User-facing label or message for times.
   ///
   /// In en, this message translates to:
   /// **'Times'**
   String get times;
 
-  /// No description provided for @trySudo.
+  /// User-facing label or message for try sudo.
   ///
   /// In en, this message translates to:
   /// **'Try using sudo'**
   String get trySudo;
 
-  /// No description provided for @sudoPromptNotFound.
+  /// User-facing label or message for sudo prompt not found.
   ///
   /// In en, this message translates to:
   /// **'No sudo password prompt is active.'**
   String get sudoPromptNotFound;
 
-  /// No description provided for @updateServerStatusInterval.
+  /// Action label for update server status interval.
   ///
   /// In en, this message translates to:
   /// **'Server status update interval'**
   String get updateServerStatusInterval;
 
-  /// No description provided for @useNoPwd.
+  /// User-facing label or message for use no pwd.
   ///
   /// In en, this message translates to:
   /// **'No password will be used'**
   String get useNoPwd;
 
-  /// No description provided for @usePodmanByDefault.
+  /// User-facing label or message for use podman by default.
   ///
   /// In en, this message translates to:
   /// **'Use Podman by default'**
   String get usePodmanByDefault;
 
-  /// No description provided for @used.
+  /// User-facing label or message for used.
   ///
   /// In en, this message translates to:
   /// **'Used'**
   String get used;
 
-  /// No description provided for @view.
+  /// User-facing label or message for view.
   ///
   /// In en, this message translates to:
   /// **'View'**
   String get view;
 
-  /// No description provided for @viewDetails.
+  /// User-facing label or message for view details.
   ///
   /// In en, this message translates to:
   /// **'View Details'**
   String get viewDetails;
 
-  /// No description provided for @virtKeyHelpClipboard.
+  /// User-facing label or message for virt key help clipboard.
   ///
   /// In en, this message translates to:
   /// **'Copy to the clipboard if the selected terminal is not empty, otherwise paste the content of the clipboard to the terminal.'**
   String get virtKeyHelpClipboard;
 
-  /// No description provided for @virtKeyHelpIME.
+  /// User-facing label or message for virt key help ime.
   ///
   /// In en, this message translates to:
   /// **'Turn on/off the keyboard'**
   String get virtKeyHelpIME;
 
-  /// No description provided for @virtKeyHelpSFTP.
+  /// User-facing label or message for virt key help sftp.
   ///
   /// In en, this message translates to:
   /// **'Open current directory in SFTP.'**
   String get virtKeyHelpSFTP;
 
-  /// No description provided for @virtKeyHelpSnippet.
+  /// User-facing label or message for virt key help snippet.
   ///
   /// In en, this message translates to:
   /// **'Pick a snippet and run it in this terminal.'**
   String get virtKeyHelpSnippet;
 
-  /// No description provided for @virtKeyHelpTmux.
+  /// User-facing label or message for virt key help tmux.
   ///
   /// In en, this message translates to:
   /// **'Switch between tmux sessions and windows.'**
   String get virtKeyHelpTmux;
 
-  /// No description provided for @virtKeyIntroActions.
+  /// User-facing label or message for virt key intro actions.
   ///
   /// In en, this message translates to:
   /// **'Shortcuts'**
   String get virtKeyIntroActions;
 
-  /// No description provided for @virtKeyIntroActionsTip.
+  /// Help text for the virt key intro actions setting or action.
   ///
   /// In en, this message translates to:
   /// **'These open something instead of typing. Hold one to read what it does.'**
   String get virtKeyIntroActionsTip;
 
-  /// No description provided for @virtKeyIntroCustomizeTip.
+  /// Help text for the virt key intro customize setting or action.
   ///
   /// In en, this message translates to:
   /// **'Reorder these keys, or hide the ones you never reach for, in the terminal settings.'**
   String get virtKeyIntroCustomizeTip;
 
-  /// No description provided for @virtKeyIntroModifiers.
+  /// User-facing label or message for virt key intro modifiers.
   ///
   /// In en, this message translates to:
   /// **'Modifiers'**
   String get virtKeyIntroModifiers;
 
-  /// No description provided for @virtKeyIntroModifiersTip.
+  /// Help text for the virt key intro modifiers setting or action.
   ///
   /// In en, this message translates to:
   /// **'Tap one to arm it, then tap a letter on the keyboard. It stays on for that one key.'**
   String get virtKeyIntroModifiersTip;
 
-  /// No description provided for @virtKeyIntroNav.
+  /// User-facing label or message for virt key intro nav.
   ///
   /// In en, this message translates to:
   /// **'Navigation'**
   String get virtKeyIntroNav;
 
-  /// No description provided for @virtKeyIntroNavTip.
+  /// Help text for the virt key intro nav setting or action.
   ///
   /// In en, this message translates to:
   /// **'These move the cursor. Hold an arrow to repeat it.'**
   String get virtKeyIntroNavTip;
 
-  /// No description provided for @virtKeyIntroSelect.
+  /// User-facing label or message for virt key intro select.
   ///
   /// In en, this message translates to:
   /// **'Drag sideways over the terminal to select text, whenever it has something to scroll.'**
   String get virtKeyIntroSelect;
 
-  /// No description provided for @virtKeyRows.
+  /// User-facing label or message for virt key rows.
   ///
   /// In en, this message translates to:
   /// **'Rows shown at once'**
   String get virtKeyRows;
 
-  /// No description provided for @virtKeyRowsTip.
+  /// Help text for the virt key rows setting or action.
   ///
   /// In en, this message translates to:
   /// **'The rest go on a page of their own, swiped sideways.'**
   String get virtKeyRowsTip;
 
-  /// No description provided for @waitConnection.
+  /// User-facing label or message for wait connection.
   ///
   /// In en, this message translates to:
   /// **'Please wait for the connection to be established.'**
   String get waitConnection;
 
-  /// No description provided for @wakeLock.
+  /// User-facing label or message for wake lock.
   ///
   /// In en, this message translates to:
   /// **'Keep awake'**
   String get wakeLock;
 
-  /// No description provided for @watchNotPaired.
+  /// User-facing label or message for watch not paired.
   ///
   /// In en, this message translates to:
   /// **'No paired Apple Watch'**
   String get watchNotPaired;
 
-  /// No description provided for @webdavSettingEmpty.
+  /// Empty-state message for webdav setting empty.
   ///
   /// In en, this message translates to:
   /// **'WebDav setting is empty'**
   String get webdavSettingEmpty;
 
-  /// No description provided for @whenOpenApp.
+  /// User-facing label or message for when open app.
   ///
   /// In en, this message translates to:
   /// **'When opening the app'**
   String get whenOpenApp;
 
-  /// No description provided for @wolTip.
+  /// Help text for the wol setting or action.
   ///
   /// In en, this message translates to:
   /// **'After configuring WOL (Wake-on-LAN), a WOL request is sent each time the server is connected.'**
   String get wolTip;
 
-  /// No description provided for @write.
+  /// User-facing label or message for write.
   ///
   /// In en, this message translates to:
   /// **'Write'**
   String get write;
 
-  /// No description provided for @writeScriptFailTip.
+  /// Help text for the write script fail setting or action.
   ///
   /// In en, this message translates to:
   /// **'Writing to the script failed, possibly due to lack of permissions or the directory does not exist.'**
   String get writeScriptFailTip;
 
-  /// No description provided for @writeScriptTip.
+  /// Help text for the write script setting or action.
   ///
   /// In en, this message translates to:
   /// **'After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.'**
   String get writeScriptTip;
 
-  /// No description provided for @menuGitHubRepository.
+  /// User-facing label or message for menu git hub repository.
   ///
   /// In en, this message translates to:
   /// **'GitHub Repository'**
   String get menuGitHubRepository;
 
-  /// No description provided for @podmanDockerEmulationDetected.
+  /// User-facing label or message for podman docker emulation detected.
   ///
   /// In en, this message translates to:
   /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
   String get podmanDockerEmulationDetected;
 
-  /// No description provided for @betaTip.
+  /// Help text for the beta setting or action.
   ///
   /// In en, this message translates to:
   /// **'This feature is still in beta testing. Functionality is not guaranteed.'**
   String get betaTip;
 
-  /// No description provided for @portForward_startPrompt.
+  /// User-facing label or message for port forward start prompt.
   ///
   /// In en, this message translates to:
   /// **'Add a port forward rule to get started'**
   String get portForward_startPrompt;
 
-  /// No description provided for @portForward_localHost.
+  /// User-facing label or message for port forward local host.
   ///
   /// In en, this message translates to:
   /// **'Local Host'**
   String get portForward_localHost;
 
-  /// No description provided for @portForward_localPort.
+  /// User-facing label or message for port forward local port.
   ///
   /// In en, this message translates to:
   /// **'Local Port'**
   String get portForward_localPort;
 
-  /// No description provided for @portForward_remoteHost.
+  /// User-facing label or message for port forward remote host.
   ///
   /// In en, this message translates to:
   /// **'Remote Host'**
   String get portForward_remoteHost;
 
-  /// No description provided for @portForward_remotePort.
+  /// User-facing label or message for port forward remote port.
   ///
   /// In en, this message translates to:
   /// **'Remote Port'**
   String get portForward_remotePort;
 
-  /// No description provided for @portForward_deleteConfirmFmt.
+  /// Formatted user-facing message for port forward delete confirm; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Delete {name}?'**
-  String portForward_deleteConfirmFmt(Object name);
+  String portForward_deleteConfirmFmt(String name);
 
-  /// No description provided for @sponsor.
+  /// User-facing label or message for sponsor.
   ///
   /// In en, this message translates to:
   /// **'Sponsor'**
   String get sponsor;
 
-  /// No description provided for @sortByJoinTime.
+  /// User-facing label or message for sort by join time.
   ///
   /// In en, this message translates to:
   /// **'By join time'**
   String get sortByJoinTime;
 
-  /// No description provided for @portForwardBetaTitle.
+  /// Title shown for the port forward beta dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Port Forward (Beta)'**
   String get portForwardBetaTitle;
 
-  /// No description provided for @tmuxAutoAttach.
+  /// User-facing label or message for tmux auto attach.
   ///
   /// In en, this message translates to:
   /// **'tmux auto-attach'**
   String get tmuxAutoAttach;
 
-  /// No description provided for @tmuxAuto.
+  /// User-facing label or message for tmux auto.
   ///
   /// In en, this message translates to:
   /// **'Auto tmux'**
   String get tmuxAuto;
 
-  /// No description provided for @tmuxAutoTip.
+  /// Help text for the tmux auto setting or action.
   ///
   /// In en, this message translates to:
   /// **'Automatically start or attach tmux when connecting over SSH'**
   String get tmuxAutoTip;
 
-  /// No description provided for @tmuxSessionSelector.
+  /// User-facing label or message for tmux session selector.
   ///
   /// In en, this message translates to:
   /// **'Session selector'**
   String get tmuxSessionSelector;
 
-  /// No description provided for @tmuxSessionSelectorTip.
+  /// Help text for the tmux session selector setting or action.
   ///
   /// In en, this message translates to:
   /// **'Show the session picker when connecting'**
   String get tmuxSessionSelectorTip;
 
-  /// No description provided for @tmuxDefaultSessionName.
+  /// User-facing label or message for tmux default session name.
   ///
   /// In en, this message translates to:
   /// **'Default session name'**
   String get tmuxDefaultSessionName;
 
-  /// No description provided for @tmuxSessionName.
+  /// User-facing label or message for tmux session name.
   ///
   /// In en, this message translates to:
   /// **'Session name'**
   String get tmuxSessionName;
 
-  /// No description provided for @tmuxExistingSessions.
+  /// User-facing label or message for tmux existing sessions.
   ///
   /// In en, this message translates to:
   /// **'Existing sessions'**
   String get tmuxExistingSessions;
 
-  /// No description provided for @tmuxNewSession.
+  /// User-facing label or message for tmux new session.
   ///
   /// In en, this message translates to:
   /// **'New session'**
   String get tmuxNewSession;
 
-  /// No description provided for @tmuxWindows.
+  /// User-facing label or message for tmux windows.
   ///
   /// In en, this message translates to:
   /// **'Windows'**
   String get tmuxWindows;
 
-  /// No description provided for @tmuxNewWindow.
+  /// User-facing label or message for tmux new window.
   ///
   /// In en, this message translates to:
   /// **'New window'**
   String get tmuxNewWindow;
 
-  /// No description provided for @tmuxNoWindowsFound.
+  /// User-facing label or message for tmux no windows found.
   ///
   /// In en, this message translates to:
   /// **'No windows found'**
   String get tmuxNoWindowsFound;
 
-  /// No description provided for @tmuxWindowCount.
+  /// User-facing label or message for tmux window count.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, one{1 window} other{{count} windows}}'**
   String tmuxWindowCount(int count);
 
-  /// No description provided for @tmuxPaneCount.
+  /// User-facing label or message for tmux pane count.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, one{1 pane} other{{count} panes}}'**
   String tmuxPaneCount(int count);
 
-  /// No description provided for @tmuxAttached.
+  /// User-facing label or message for tmux attached.
   ///
   /// In en, this message translates to:
   /// **'Attached'**
   String get tmuxAttached;
 
-  /// No description provided for @tmuxActive.
+  /// User-facing label or message for tmux active.
   ///
   /// In en, this message translates to:
   /// **'Active'**
   String get tmuxActive;
 
-  /// No description provided for @tmuxActiveAt.
+  /// User-facing label or message for tmux active at.
   ///
   /// In en, this message translates to:
   /// **'active: {time}'**
   String tmuxActiveAt(String time);
 
-  /// No description provided for @tmuxAttachedAt.
+  /// User-facing label or message for tmux attached at.
   ///
   /// In en, this message translates to:
   /// **'attached: {time}'**
   String tmuxAttachedAt(String time);
 
-  /// No description provided for @tmuxSkip.
+  /// User-facing label or message for tmux skip.
   ///
   /// In en, this message translates to:
   /// **'Skip'**
   String get tmuxSkip;
 
-  /// No description provided for @tmuxNotAvailable.
+  /// User-facing label or message for tmux not available.
   ///
   /// In en, this message translates to:
   /// **'tmux is not available'**
   String get tmuxNotAvailable;
 
-  /// No description provided for @containerSegmentsMismatch.
+  /// User-facing label or message for container segments mismatch.
   ///
   /// In en, this message translates to:
   /// **'Unexpected container response segment count: {count}'**
   String containerSegmentsMismatch(int count);
 
-  /// No description provided for @containerOperationInProgress.
+  /// User-facing label or message for container operation in progress.
   ///
   /// In en, this message translates to:
   /// **'Another container operation is already in progress'**
   String get containerOperationInProgress;
 
-  /// No description provided for @processCount.
+  /// User-facing label or message for process count.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, one{1 process} other{{count} processes}}'**
   String processCount(int count);
 
-  /// No description provided for @processParseUnsupportedOutput.
+  /// User-facing label or message for process parse unsupported output.
   ///
   /// In en, this message translates to:
   /// **'The process list format is not supported.'**
   String get processParseUnsupportedOutput;
 
-  /// No description provided for @processParseInvalidRows.
+  /// User-facing label or message for process parse invalid rows.
   ///
   /// In en, this message translates to:
   /// **'Some process entries could not be read.'**
   String get processParseInvalidRows;
 
-  /// No description provided for @processParseInvalidWindowsJson.
+  /// User-facing label or message for process parse invalid windows json.
   ///
   /// In en, this message translates to:
   /// **'The Windows process response could not be read.'**
   String get processParseInvalidWindowsJson;
 
-  /// No description provided for @processParseInvalidWindowsRows.
+  /// User-facing label or message for process parse invalid windows rows.
   ///
   /// In en, this message translates to:
   /// **'Some Windows process entries could not be read.'**
   String get processParseInvalidWindowsRows;
 
-  /// No description provided for @processKillTargetChanged.
+  /// User-facing label or message for process kill target changed.
   ///
   /// In en, this message translates to:
   /// **'The process changed or exited. Refresh and try again.'**
   String get processKillTargetChanged;
 
-  /// No description provided for @processSearchHint.
+  /// Hint shown in the process search field or section.
   ///
   /// In en, this message translates to:
   /// **'Name, user or PID'**
   String get processSearchHint;
 
-  /// No description provided for @processShowKernelThreads.
+  /// User-facing label or message for process show kernel threads.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, one{Show 1 kernel thread} other{Show {count} kernel threads}}'**
   String processShowKernelThreads(int count);
 
-  /// No description provided for @processForceKill.
+  /// User-facing label or message for process force kill.
   ///
   /// In en, this message translates to:
   /// **'Force kill'**
   String get processForceKill;
 
-  /// No description provided for @processStarted.
+  /// User-facing label or message for process started.
   ///
   /// In en, this message translates to:
   /// **'Started'**
   String get processStarted;
 
-  /// No description provided for @processThreads.
+  /// User-facing label or message for process threads.
   ///
   /// In en, this message translates to:
   /// **'Threads'**
   String get processThreads;
 
-  /// No description provided for @watchServers.
+  /// User-facing label or message for watch servers.
   ///
   /// In en, this message translates to:
   /// **'Servers on the watch'**
   String get watchServers;
 
-  /// No description provided for @watchServersTip.
+  /// Help text for the watch servers setting or action.
   ///
   /// In en, this message translates to:
   /// **'The watch fetches from the monitor on its own, so only servers with one can be picked.'**
   String get watchServersTip;
 
-  /// No description provided for @watchNoMonitorServer.
+  /// User-facing label or message for watch no monitor server.
   ///
   /// In en, this message translates to:
   /// **'No server has a monitor agent configured'**
   String get watchNoMonitorServer;
 
-  /// No description provided for @legacyStatusGoneTitle.
+  /// Title shown for the legacy status gone dialog or section.
   ///
   /// In en, this message translates to:
   /// **'Status URLs no longer work'**
   String get legacyStatusGoneTitle;
 
-  /// No description provided for @legacyStatusGoneBody.
+  /// Explanatory message shown in the legacy status gone dialog or notice.
   ///
   /// In en, this message translates to:
   /// **'The watch app and home widgets used to read a `/status` address typed by hand. That endpoint is gone: it could only report current values as text, which is why they could never show a chart.\n\nThey now read the monitor agent\'s authenticated API, so they draw trends and stay in step with the app on their own. Configure the server in the app once, and every watch and widget picks it up.'**
   String get legacyStatusGoneBody;
 
-  /// No description provided for @services.
+  /// User-facing label or message for services.
   ///
   /// In en, this message translates to:
   /// **'Services'**
   String get services;
 
-  /// No description provided for @status.
+  /// User-facing label or message for status.
   ///
   /// In en, this message translates to:
   /// **'Status'**
   String get status;
 
-  /// No description provided for @enable.
+  /// Action label for enable.
   ///
   /// In en, this message translates to:
   /// **'Enable'**
   String get enable;
 
-  /// No description provided for @disable.
+  /// User-facing label or message for disable.
   ///
   /// In en, this message translates to:
   /// **'Disable'**
   String get disable;
 
-  /// No description provided for @starting.
+  /// Action label for starting.
   ///
   /// In en, this message translates to:
   /// **'Starting'**
   String get starting;
 
-  /// No description provided for @stopping.
+  /// Action label for stopping.
   ///
   /// In en, this message translates to:
   /// **'Stopping'**
   String get stopping;
 
-  /// No description provided for @serviceManagerUnsupported.
+  /// User-facing label or message for service manager unsupported.
   ///
   /// In en, this message translates to:
   /// **'Unsupported service manager'**
   String get serviceManagerUnsupported;
 
-  /// No description provided for @serviceManagerUnsupportedTip.
+  /// Help text for the service manager unsupported setting or action.
   ///
   /// In en, this message translates to:
   /// **'This server uses a service manager that ServerBox does not support yet. Supported managers: systemd, procd, and OpenRC.'**
   String get serviceManagerUnsupportedTip;
 
-  /// No description provided for @serviceManagerFmt.
+  /// Formatted user-facing message for service manager; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Managed by {manager}'**
   String serviceManagerFmt(String manager);
 
-  /// No description provided for @serviceListFailed.
+  /// Error message shown when service list failed.
   ///
   /// In en, this message translates to:
   /// **'Could not list services'**
   String get serviceListFailed;
 
-  /// No description provided for @serviceDetailsUnavailable.
+  /// User-facing label or message for service details unavailable.
   ///
   /// In en, this message translates to:
   /// **'Some service details are unavailable'**
   String get serviceDetailsUnavailable;
 
-  /// No description provided for @serviceDetailsUnavailableTip.
+  /// Help text for the service details unavailable setting or action.
   ///
   /// In en, this message translates to:
   /// **'The service list is usable, but the manager did not return all status or startup information.'**
   String get serviceDetailsUnavailableTip;
 
-  /// No description provided for @systemdUserScopeMissing.
+  /// User-facing label or message for systemd user scope missing.
   ///
   /// In en, this message translates to:
   /// **'User units are not listed'**
   String get systemdUserScopeMissing;
 
-  /// No description provided for @systemdUserScopeMissingTip.
+  /// Help text for the systemd user scope missing setting or action.
   ///
   /// In en, this message translates to:
   /// **'This account has no user session bus on the server, so only system units are shown.'**
   String get systemdUserScopeMissingTip;
 
-  /// No description provided for @serviceSearchHint.
+  /// Hint shown in the service search field or section.
   ///
   /// In en, this message translates to:
   /// **'Unit name'**
   String get serviceSearchHint;
 
-  /// No description provided for @serviceNeedsAttention.
+  /// User-facing label or message for service needs attention.
   ///
   /// In en, this message translates to:
   /// **'Needs attention'**
   String get serviceNeedsAttention;
 
-  /// No description provided for @serviceOtherUnits.
+  /// User-facing label or message for service other units.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, one{1 other unit} other{{count} other units}}'**
   String serviceOtherUnits(int count);
 
-  /// No description provided for @serviceUnit.
+  /// User-facing label or message for service unit.
   ///
   /// In en, this message translates to:
   /// **'Unit'**
   String get serviceUnit;
 
-  /// No description provided for @serviceUnitType.
+  /// User-facing label or message for service unit type.
   ///
   /// In en, this message translates to:
   /// **'Type'**
   String get serviceUnitType;
 
-  /// No description provided for @serviceScope.
+  /// User-facing label or message for service scope.
   ///
   /// In en, this message translates to:
   /// **'Scope'**
   String get serviceScope;
 
-  /// No description provided for @serviceStartup.
+  /// User-facing label or message for service startup.
   ///
   /// In en, this message translates to:
   /// **'Startup'**
   String get serviceStartup;
 
-  /// No description provided for @serviceUpFor.
+  /// User-facing label or message for service up for.
   ///
   /// In en, this message translates to:
   /// **'up {duration}'**
   String serviceUpFor(String duration);
 
-  /// No description provided for @serviceDownFor.
+  /// User-facing label or message for service down for.
   ///
   /// In en, this message translates to:
   /// **'down {duration}'**
   String serviceDownFor(String duration);
 
-  /// No description provided for @serviceNextIn.
+  /// User-facing label or message for service next in.
   ///
   /// In en, this message translates to:
   /// **'next {duration}'**
   String serviceNextIn(String duration);
 
-  /// No description provided for @serviceStoppedAgo.
+  /// User-facing label or message for service stopped ago.
   ///
   /// In en, this message translates to:
   /// **'Stopped {duration} ago'**
   String serviceStoppedAgo(String duration);
 
-  /// No description provided for @serviceExitStatus.
+  /// User-facing label or message for service exit status.
   ///
   /// In en, this message translates to:
   /// **'exit status {code}'**
-  String serviceExitStatus(String code);
+  String serviceExitStatus(int code);
 
-  /// No description provided for @serviceFullJournal.
+  /// User-facing label or message for service full journal.
   ///
   /// In en, this message translates to:
   /// **'Full journal'**
   String get serviceFullJournal;
 
-  /// No description provided for @serviceUnitFile.
+  /// User-facing label or message for service unit file.
   ///
   /// In en, this message translates to:
   /// **'Unit file'**
   String get serviceUnitFile;
 
-  /// No description provided for @serviceJournalRecent.
+  /// User-facing label or message for service journal recent.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, one{Last line} other{Last {count} lines}}'**
   String serviceJournalRecent(int count);
 
-  /// No description provided for @serviceJournalUnreadable.
+  /// User-facing label or message for service journal unreadable.
   ///
   /// In en, this message translates to:
   /// **'This account cannot read the journal'**
   String get serviceJournalUnreadable;
 
-  /// No description provided for @serverUnreachable.
+  /// User-facing label or message for server unreachable.
   ///
   /// In en, this message translates to:
   /// **'Could not run a command on this server'**
   String get serverUnreachable;
 
-  /// No description provided for @containerNoRuntime.
+  /// User-facing label or message for container no runtime.
   ///
   /// In en, this message translates to:
   /// **'No container runtime here'**
   String get containerNoRuntime;
 
-  /// No description provided for @containerNoRuntimeTip.
+  /// Help text for the container no runtime setting or action.
   ///
   /// In en, this message translates to:
   /// **'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.'**
   String get containerNoRuntimeTip;
 
-  /// No description provided for @containerUnreadable.
+  /// User-facing label or message for container unreadable.
   ///
   /// In en, this message translates to:
   /// **'The container runtime answered in an unexpected form'**
   String get containerUnreadable;
 
-  /// No description provided for @power.
+  /// User-facing label or message for power.
   ///
   /// In en, this message translates to:
   /// **'Power'**
   String get power;
 
-  /// No description provided for @fan.
+  /// User-facing label or message for fan.
   ///
   /// In en, this message translates to:
   /// **'Fan'**
   String get fan;
 
-  /// No description provided for @clockSpeed.
+  /// User-facing label or message for clock speed.
   ///
   /// In en, this message translates to:
   /// **'Clock'**
   String get clockSpeed;
 
-  /// No description provided for @vendor.
+  /// User-facing label or message for vendor.
   ///
   /// In en, this message translates to:
   /// **'Vendor'**
   String get vendor;
 
-  /// No description provided for @continueInTerminal.
+  /// User-facing label or message for continue in terminal.
   ///
   /// In en, this message translates to:
   /// **'Continue in terminal'**
   String get continueInTerminal;
 
-  /// No description provided for @askAiRiskUnknown.
+  /// User-facing label or message for ask AI risk unknown.
   ///
   /// In en, this message translates to:
   /// **'Unclassified'**
   String get askAiRiskUnknown;
 
-  /// No description provided for @agentLocalExec.
+  /// User-facing label or message for agent local exec.
   ///
   /// In en, this message translates to:
   /// **'Run commands on this device'**
   String get agentLocalExec;
 
-  /// No description provided for @agentLocalExecTip.
+  /// Help text for the agent local exec setting or action.
   ///
   /// In en, this message translates to:
   /// **'Lets the Agent work on the machine running ServerBox. Even read-only commands are reviewed'**
   String get agentLocalExecTip;
 
-  /// No description provided for @agentLocalExecRootfsTip.
+  /// Help text for the agent local exec rootfs setting or action.
   ///
   /// In en, this message translates to:
   /// **'Lets the Agent work locally, confined to the Linux container ServerBox installed'**
   String get agentLocalExecRootfsTip;
 
-  /// No description provided for @macDmgImportedPartly.
+  /// User-facing label or message for mac DMG imported partly.
   ///
   /// In en, this message translates to:
   /// **'Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.'**
   String macDmgImportedPartly(String path);
 
-  /// No description provided for @bmcAccount.
+  /// User-facing label or message for BMC account.
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get bmcAccount;
 
-  /// No description provided for @bmcAccountUnset.
+  /// User-facing label or message for BMC account unset.
   ///
   /// In en, this message translates to:
   /// **'None picked - tap to choose or create one'**
   String get bmcAccountUnset;
 
-  /// No description provided for @bmcAccountShared.
+  /// User-facing label or message for BMC account shared.
   ///
   /// In en, this message translates to:
   /// **'Used by {count} servers'**
   String bmcAccountShared(int count);
 
-  /// No description provided for @bmcAccounts.
+  /// User-facing label or message for BMC accounts.
   ///
   /// In en, this message translates to:
   /// **'BMC accounts'**
   String get bmcAccounts;
 
-  /// No description provided for @bmcAccountSharedTip.
+  /// Help text for the BMC account shared setting or action.
   ///
   /// In en, this message translates to:
   /// **'Editing this changes what all of them use.'**
   String get bmcAccountSharedTip;
 
-  /// No description provided for @bmcAccountInUse.
+  /// User-facing label or message for BMC account in use.
   ///
   /// In en, this message translates to:
   /// **'{count} servers use it. They keep their address and lose the account.'**
   String bmcAccountInUse(int count);
 
-  /// No description provided for @bmcStaleWrite.
+  /// User-facing label or message for BMC stale write.
   ///
   /// In en, this message translates to:
   /// **'The BMC changed while this was being written. Try again.'**
   String get bmcStaleWrite;
 
-  /// No description provided for @send.
+  /// Action label for send.
   ///
   /// In en, this message translates to:
   /// **'Send'**
   String get send;
 
-  /// No description provided for @privacyBlur.
+  /// User-facing label or message for privacy blur.
   ///
   /// In en, this message translates to:
   /// **'Background privacy'**
   String get privacyBlur;
 
-  /// No description provided for @privacyBlurTip.
+  /// Help text for the privacy blur setting or action.
   ///
   /// In en, this message translates to:
   /// **'Hide app content in the app switcher'**
   String get privacyBlurTip;
 
-  /// No description provided for @floatReturnToTab.
+  /// User-facing label or message for float return to tab.
   ///
   /// In en, this message translates to:
   /// **'Return to tab'**
   String get floatReturnToTab;
 
-  /// No description provided for @termInFloatWindow.
+  /// User-facing label or message for term in float window.
   ///
   /// In en, this message translates to:
   /// **'This terminal is in the floating window'**
   String get termInFloatWindow;
 
-  /// No description provided for @globeEnabledTip.
+  /// Help text for the globe enabled setting or action.
   ///
   /// In en, this message translates to:
   /// **'Draw servers on a globe, at where their addresses are. Off removes the button from the server tab and stops every lookup.'**
   String get globeEnabledTip;
 
-  /// No description provided for @geoShardsConsentAttribution.
+  /// User-facing label or message for geo shards consent attribution.
   ///
   /// In en, this message translates to:
   /// **'IP geolocation by [DB-IP](https://db-ip.com), CC BY 4.0.'**
   String get geoShardsConsentAttribution;
 
-  /// No description provided for @geoMissPrivate.
+  /// User-facing label or message for geo miss private.
   ///
   /// In en, this message translates to:
   /// **'Private address'**
   String get geoMissPrivate;
 
-  /// No description provided for @geoMissNoData.
+  /// Empty-state message for geo miss no data.
   ///
   /// In en, this message translates to:
   /// **'No location data'**
   String get geoMissNoData;
 
-  /// No description provided for @globeGuide.
+  /// User-facing label or message for globe guide.
   ///
   /// In en, this message translates to:
   /// **'Tap here to see your servers on a globe, at where their addresses are.'**
   String get globeGuide;
 
-  /// No description provided for @publicIp.
+  /// User-facing label or message for public IP.
   ///
   /// In en, this message translates to:
   /// **'Public IP'**
   String get publicIp;
 
-  /// No description provided for @geoData.
+  /// User-facing label or message for geo data.
   ///
   /// In en, this message translates to:
   /// **'City-level data'**
   String get geoData;
 
-  /// No description provided for @geoDataTip.
+  /// Help text for the geo data setting or action.
   ///
   /// In en, this message translates to:
   /// **'After download, every geolocation lookup uses data stored on this device. Server addresses and lookup activity are not sent to the download service.'**
   String get geoDataTip;
 
-  /// No description provided for @geoDataMissing.
+  /// User-facing label or message for geo data missing.
   ///
   /// In en, this message translates to:
   /// **'Not downloaded'**
   String get geoDataMissing;
 
-  /// No description provided for @geoDataUnreachable.
+  /// User-facing label or message for geo data unreachable.
   ///
   /// In en, this message translates to:
   /// **'Could not fetch the data.'**
   String get geoDataUnreachable;
 
-  /// No description provided for @geoDataRemoveFailed.
+  /// Error message shown when geo data remove failed.
   ///
   /// In en, this message translates to:
   /// **'Could not delete the data.'**
   String get geoDataRemoveFailed;
 
-  /// No description provided for @geoDataCurrent.
+  /// User-facing label or message for geo data current.
   ///
   /// In en, this message translates to:
   /// **'{month} is already installed.'**
-  String geoDataCurrent(Object month);
+  String geoDataCurrent(String month);
 
-  /// No description provided for @geoDataConsent.
+  /// User-facing label or message for geo data consent.
   ///
   /// In en, this message translates to:
   /// **'**Download: {download} · On-device storage: {disk}.** The complete dataset is stored on this device, and every later geolocation lookup is performed locally. Server addresses and lookup activity are not sent to the download service.\n\nUpdated monthly. A newer version replaces the installed data without keeping an extra copy. You can delete it at any time.'**
-  String geoDataConsent(Object download, Object disk);
+  String geoDataConsent(String download, String disk);
 
-  /// No description provided for @benchmark.
+  /// User-facing label or message for benchmark.
   ///
   /// In en, this message translates to:
   /// **'Benchmark'**
   String get benchmark;
 
-  /// No description provided for @benchmarkIntro.
+  /// Introductory text for the benchmark screen or section.
   ///
   /// In en, this message translates to:
   /// **'Runs Yet Another Bench Script on this server: disk, network and CPU. A full run takes 10–20 minutes and keeps going if you leave this page or close the app.'**
   String get benchmarkIntro;
 
-  /// No description provided for @benchmarkNoRuns.
+  /// User-facing label or message for benchmark no runs.
   ///
   /// In en, this message translates to:
   /// **'No benchmarks yet.'**
   String get benchmarkNoRuns;
 
-  /// No description provided for @benchmarkRunning.
+  /// Status message shown while benchmark running.
   ///
   /// In en, this message translates to:
   /// **'Benchmark running'**
   String get benchmarkRunning;
 
-  /// No description provided for @benchmarkStartFailed.
+  /// Error message shown when benchmark start failed.
   ///
   /// In en, this message translates to:
   /// **'Could not start the benchmark'**
   String get benchmarkStartFailed;
 
-  /// No description provided for @benchmarkCancelConfirm.
+  /// Confirmation prompt for benchmark cancel confirm.
   ///
   /// In en, this message translates to:
   /// **'Stop this benchmark? What it has measured so far is lost.'**
   String get benchmarkCancelConfirm;
 
-  /// No description provided for @benchmarkDeleteConfirm.
+  /// Confirmation prompt for benchmark delete confirm.
   ///
   /// In en, this message translates to:
   /// **'Delete this benchmark result?'**
   String get benchmarkDeleteConfirm;
 
-  /// No description provided for @benchmarkNothingSelected.
+  /// User-facing label or message for benchmark nothing selected.
   ///
   /// In en, this message translates to:
   /// **'Every phase is off. The run will collect system information only, and take a few seconds.'**
   String get benchmarkNothingSelected;
 
-  /// No description provided for @benchmarkDiskTip.
+  /// Help text for the benchmark disk setting or action.
   ///
   /// In en, this message translates to:
   /// **'fio at four block sizes, about 3 minutes. Writes a 2 GB test file into the working directory and needs that much free.'**
   String get benchmarkDiskTip;
 
-  /// No description provided for @benchmarkNetworkTip.
+  /// Help text for the benchmark network setting or action.
   ///
   /// In en, this message translates to:
   /// **'iperf3 against public servers, about 4 minutes.'**
   String get benchmarkNetworkTip;
 
-  /// No description provided for @benchmarkReducedNetwork.
+  /// User-facing label or message for benchmark reduced network.
   ///
   /// In en, this message translates to:
   /// **'Fewer locations'**
   String get benchmarkReducedNetwork;
 
-  /// No description provided for @benchmarkReducedNetworkTip.
+  /// Help text for the benchmark reduced network setting or action.
   ///
   /// In en, this message translates to:
   /// **'Three locations instead of seven. Roughly {full} of traffic becomes {reduced}.'**
   String benchmarkReducedNetworkTip(String full, String reduced);
 
-  /// No description provided for @benchmarkCpuTip.
+  /// Help text for the benchmark CPU setting or action.
   ///
   /// In en, this message translates to:
   /// **'Downloads Geekbench, a proprietary program, and **publishes the result to a public page on geekbench.com** — CPU model, core count and memory included.'**
   String get benchmarkCpuTip;
 
-  /// No description provided for @benchmarkSensitiveOptions.
+  /// User-facing label or message for benchmark sensitive options.
   ///
   /// In en, this message translates to:
   /// **'The options below download and run third-party software on this server or send server information to third parties. They are off by default.'**
   String get benchmarkSensitiveOptions;
 
-  /// No description provided for @benchmarkIpInfoTip.
+  /// Help text for the benchmark IP info setting or action.
   ///
   /// In en, this message translates to:
   /// **'Sends this server\'s public address to ip-api.com over plain HTTP.'**
   String get benchmarkIpInfoTip;
 
-  /// No description provided for @benchmarkIpInfo.
+  /// User-facing label or message for benchmark IP info.
   ///
   /// In en, this message translates to:
   /// **'Look up IP owner'**
   String get benchmarkIpInfo;
 
-  /// No description provided for @benchmarkPreferBin.
+  /// User-facing label or message for benchmark prefer bin.
   ///
   /// In en, this message translates to:
   /// **'Download fio and iperf3'**
   String get benchmarkPreferBin;
 
-  /// No description provided for @benchmarkPreferBinTip.
+  /// Help text for the benchmark prefer bin setting or action.
   ///
   /// In en, this message translates to:
   /// **'Downloads them from GitHub instead of using the host\'s packages. Turn on only if the host has neither installed.'**
   String get benchmarkPreferBinTip;
 
-  /// No description provided for @benchmarkWorkDir.
+  /// User-facing label or message for benchmark work dir.
   ///
   /// In en, this message translates to:
   /// **'Working directory'**
   String get benchmarkWorkDir;
 
-  /// No description provided for @benchmarkWorkDirTip.
+  /// Help text for the benchmark work dir setting or action.
   ///
   /// In en, this message translates to:
   /// **'Decides which filesystem the disk test measures. Empty means the login account\'s home directory.'**
   String get benchmarkWorkDirTip;
 
-  /// No description provided for @benchmarkEstimatedTime.
+  /// User-facing label or message for benchmark estimated time.
   ///
   /// In en, this message translates to:
   /// **'About {minutes} min'**
-  String benchmarkEstimatedTime(String minutes);
+  String benchmarkEstimatedTime(int minutes);
 
-  /// No description provided for @benchmarkEstimatedTraffic.
+  /// User-facing label or message for benchmark estimated traffic.
   ///
   /// In en, this message translates to:
   /// **'About {size} of traffic'**
   String benchmarkEstimatedTraffic(String size);
 
-  /// No description provided for @benchmarkPhaseSystem.
+  /// User-facing label or message for benchmark phase system.
   ///
   /// In en, this message translates to:
   /// **'Reading system information'**
   String get benchmarkPhaseSystem;
 
-  /// No description provided for @benchmarkPhaseDisk.
+  /// User-facing label or message for benchmark phase disk.
   ///
   /// In en, this message translates to:
   /// **'Testing disk'**
   String get benchmarkPhaseDisk;
 
-  /// No description provided for @benchmarkPhaseNetwork.
+  /// User-facing label or message for benchmark phase network.
   ///
   /// In en, this message translates to:
   /// **'Testing network'**
   String get benchmarkPhaseNetwork;
 
-  /// No description provided for @benchmarkPhaseCpu.
+  /// User-facing label or message for benchmark phase CPU.
   ///
   /// In en, this message translates to:
   /// **'Testing CPU'**
   String get benchmarkPhaseCpu;
 
-  /// No description provided for @benchmarkPhaseDone.
+  /// User-facing label or message for benchmark phase done.
   ///
   /// In en, this message translates to:
   /// **'Finishing'**
   String get benchmarkPhaseDone;
 
-  /// No description provided for @benchmarkResultUnreadable.
+  /// User-facing label or message for benchmark result unreadable.
   ///
   /// In en, this message translates to:
   /// **'This result could not be read as JSON. The raw text is below.'**
   String get benchmarkResultUnreadable;
 
-  /// No description provided for @benchmarkViewOnGeekbench.
+  /// User-facing label or message for benchmark view on geekbench.
   ///
   /// In en, this message translates to:
   /// **'View on Geekbench'**
   String get benchmarkViewOnGeekbench;
 
-  /// No description provided for @benchmarkGeekbenchPublic.
+  /// User-facing label or message for benchmark geekbench public.
   ///
   /// In en, this message translates to:
   /// **'This result is published publicly at the link above.'**
   String get benchmarkGeekbenchPublic;
 
-  /// No description provided for @benchmarkSingleCore.
+  /// User-facing label or message for benchmark single core.
   ///
   /// In en, this message translates to:
   /// **'Single core'**
   String get benchmarkSingleCore;
 
-  /// No description provided for @benchmarkMultiCore.
+  /// User-facing label or message for benchmark multi core.
   ///
   /// In en, this message translates to:
   /// **'Multi core'**
   String get benchmarkMultiCore;
 
-  /// No description provided for @benchmarkIops.
+  /// User-facing label or message for benchmark IOPS.
   ///
   /// In en, this message translates to:
   /// **'IOPS'**
   String get benchmarkIops;
 
-  /// No description provided for @benchmarkSend.
+  /// User-facing label or message for benchmark send.
   ///
   /// In en, this message translates to:
   /// **'Up'**
   String get benchmarkSend;
 
-  /// No description provided for @benchmarkRecv.
+  /// User-facing label or message for benchmark recv.
   ///
   /// In en, this message translates to:
   /// **'Down'**
   String get benchmarkRecv;
 
-  /// No description provided for @benchmarkLatency.
+  /// User-facing label or message for benchmark latency.
   ///
   /// In en, this message translates to:
   /// **'Latency'**
   String get benchmarkLatency;
 
-  /// No description provided for @benchmarkVirt.
+  /// User-facing label or message for benchmark virt.
   ///
   /// In en, this message translates to:
   /// **'Virtualization'**
   String get benchmarkVirt;
 
-  /// No description provided for @benchmarkRawLog.
+  /// User-facing label or message for benchmark raw log.
   ///
   /// In en, this message translates to:
   /// **'Run log'**
   String get benchmarkRawLog;
 
-  /// No description provided for @benchmarkUpstream.
+  /// User-facing label or message for benchmark upstream.
   ///
   /// In en, this message translates to:
   /// **'Powered by Yet Another Bench Script ({version})'**
   String benchmarkUpstream(String version);
 
-  /// No description provided for @benchmarkPhaseStarting.
+  /// User-facing label or message for benchmark phase starting.
   ///
   /// In en, this message translates to:
   /// **'Starting'**
   String get benchmarkPhaseStarting;
 
-  /// No description provided for @benchmarkNoOutputYet.
+  /// User-facing label or message for benchmark no output yet.
   ///
   /// In en, this message translates to:
   /// **'No output yet. Before printing its first line, YABS checks whether google.com and icanhazip.com are reachable. On networks that block either site, this can take several minutes.'**
   String get benchmarkNoOutputYet;
 
-  /// No description provided for @tagsEmptyTip.
+  /// Help text for the tags empty setting or action.
   ///
   /// In en, this message translates to:
   /// **'No tags yet. Add one while editing a server and it will appear here.'**
   String get tagsEmptyTip;
 
-  /// No description provided for @benchmarkNoServers.
+  /// User-facing label or message for benchmark no servers.
   ///
   /// In en, this message translates to:
   /// **'Add a server first, then return here to benchmark it.'**
   String get benchmarkNoServers;
 
-  /// No description provided for @schemaTooNewTitle.
+  /// Title shown for the schema too new dialog or section.
   ///
   /// In en, this message translates to:
   /// **'This data is newer than the app'**
   String get schemaTooNewTitle;
 
-  /// No description provided for @schemaTooNewBody.
+  /// Explanatory message shown in the schema too new dialog or notice.
   ///
   /// In en, this message translates to:
   /// **'It was written by a newer version of ServerBox (storage v{stored}). This version reads up to v{supported}; nothing has been changed.'**
   String schemaTooNewBody(int stored, int supported);
 
-  /// No description provided for @schemaTooNewReinstall.
+  /// User-facing label or message for schema too new reinstall.
   ///
   /// In en, this message translates to:
   /// **'Reinstall the newer version to open all your data again.'**
   String get schemaTooNewReinstall;
 
-  /// No description provided for @schemaTooNewExportPlain.
+  /// User-facing label or message for schema too new export plain.
   ///
   /// In en, this message translates to:
   /// **'Export without a password'**
   String get schemaTooNewExportPlain;
 
-  /// No description provided for @schemaTooNewPlainWarn.
+  /// User-facing label or message for schema too new plain warn.
   ///
   /// In en, this message translates to:
   /// **'The file will contain every SSH private key, server password and API key in plain text. Anyone who gets the file can access them all.'**
   String get schemaTooNewPlainWarn;
 
-  /// No description provided for @schemaTooNewWipe.
+  /// User-facing label or message for schema too new wipe.
   ///
   /// In en, this message translates to:
   /// **'Delete all data'**
   String get schemaTooNewWipe;
 
-  /// No description provided for @schemaTooNewWipeConfirm.
+  /// Confirmation prompt for schema too new wipe confirm.
   ///
   /// In en, this message translates to:
   /// **'All servers, keys, snippets and settings on this device will be deleted. This cannot be undone. A backup exported here would be the only copy left.'**
   String get schemaTooNewWipeConfirm;
 
-  /// No description provided for @schemaTooNewWipeDone.
+  /// User-facing label or message for schema too new wipe done.
   ///
   /// In en, this message translates to:
   /// **'Data deleted. Open the app again to start fresh.'**
   String get schemaTooNewWipeDone;
 
-  /// No description provided for @schemaTooNewWipeFailed.
+  /// Error message shown when schema too new wipe failed.
   ///
   /// In en, this message translates to:
   /// **'Some of the data could not be deleted, and this build still cannot open what is left. Reinstall the newer version to reach it.'**
   String get schemaTooNewWipeFailed;
 
-  /// No description provided for @systemUsers.
+  /// User-facing label or message for system users.
   ///
   /// In en, this message translates to:
   /// **'Users'**
   String get systemUsers;
 
-  /// No description provided for @userManagerLinuxOnly.
+  /// User-facing label or message for user manager linux only.
   ///
   /// In en, this message translates to:
   /// **'System user management currently supports Linux servers.'**
   String get userManagerLinuxOnly;
 
-  /// No description provided for @userRegularAccount.
+  /// User-facing label or message for user regular account.
   ///
   /// In en, this message translates to:
   /// **'Regular'**
   String get userRegularAccount;
 
-  /// No description provided for @userCurrentAccount.
+  /// User-facing label or message for user current account.
   ///
   /// In en, this message translates to:
   /// **'Current account'**
   String get userCurrentAccount;
 
-  /// No description provided for @userSystemAccount.
+  /// User-facing label or message for user system account.
   ///
   /// In en, this message translates to:
   /// **'System account'**
   String get userSystemAccount;
 
-  /// No description provided for @userUid.
+  /// User-facing label or message for user UID.
   ///
   /// In en, this message translates to:
   /// **'UID'**
   String get userUid;
 
-  /// No description provided for @userLoginStatus.
+  /// User-facing label or message for user login status.
   ///
   /// In en, this message translates to:
   /// **'Status'**
   String get userLoginStatus;
 
-  /// No description provided for @userLoginEnabled.
+  /// User-facing label or message for user login enabled.
   ///
   /// In en, this message translates to:
   /// **'Login enabled'**
   String get userLoginEnabled;
 
-  /// No description provided for @userDetailAccount.
+  /// User-facing label or message for user detail account.
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get userDetailAccount;
 
-  /// No description provided for @userDetailSecurity.
+  /// User-facing label or message for user detail security.
   ///
   /// In en, this message translates to:
   /// **'Security'**
   String get userDetailSecurity;
 
-  /// No description provided for @userSshKeys.
+  /// User-facing label or message for user SSH keys.
   ///
   /// In en, this message translates to:
   /// **'SSH keys'**
   String get userSshKeys;
 
-  /// No description provided for @userExpires.
+  /// User-facing label or message for user expires.
   ///
   /// In en, this message translates to:
   /// **'Expires'**
   String get userExpires;
 
-  /// No description provided for @userNever.
+  /// User-facing label or message for user never.
   ///
   /// In en, this message translates to:
   /// **'Never'**
   String get userNever;
 
-  /// No description provided for @userPasswordSet.
+  /// User-facing label or message for user password set.
   ///
   /// In en, this message translates to:
   /// **'Set'**
   String get userPasswordSet;
 
-  /// No description provided for @userPasswordLocked.
+  /// User-facing label or message for user password locked.
   ///
   /// In en, this message translates to:
   /// **'Locked'**
   String get userPasswordLocked;
 
-  /// No description provided for @userPasswordNone.
+  /// Empty-state message for user password none.
   ///
   /// In en, this message translates to:
   /// **'None'**
   String get userPasswordNone;
 
-  /// No description provided for @userSuperuser.
+  /// User-facing label or message for user superuser.
   ///
   /// In en, this message translates to:
   /// **'Superuser'**
   String get userSuperuser;
 
-  /// No description provided for @userOpenShell.
+  /// User-facing label or message for user open shell.
   ///
   /// In en, this message translates to:
   /// **'Open shell'**
   String get userOpenShell;
 
-  /// No description provided for @userRootChangesWarning.
+  /// User-facing label or message for user root changes warning.
   ///
   /// In en, this message translates to:
   /// **'Changes to root take effect in every session at once.'**
   String get userRootChangesWarning;
 
-  /// No description provided for @userComment.
+  /// User-facing label or message for user comment.
   ///
   /// In en, this message translates to:
   /// **'Comment'**
   String get userComment;
 
-  /// No description provided for @userPrimaryGroup.
+  /// User-facing label or message for user primary group.
   ///
   /// In en, this message translates to:
   /// **'Primary group'**
   String get userPrimaryGroup;
 
-  /// No description provided for @userSupplementaryGroups.
+  /// User-facing label or message for user supplementary groups.
   ///
   /// In en, this message translates to:
   /// **'Supplementary groups'**
   String get userSupplementaryGroups;
 
-  /// No description provided for @userLoginShell.
+  /// User-facing label or message for user login shell.
   ///
   /// In en, this message translates to:
   /// **'Login shell'**
   String get userLoginShell;
 
-  /// No description provided for @userCreateHome.
+  /// User-facing label or message for user create home.
   ///
   /// In en, this message translates to:
   /// **'Create home directory'**
   String get userCreateHome;
 
-  /// No description provided for @userMoveHome.
+  /// User-facing label or message for user move home.
   ///
   /// In en, this message translates to:
   /// **'Move the existing home directory when the path changes'**
   String get userMoveHome;
 
-  /// No description provided for @userRemoveHome.
+  /// User-facing label or message for user remove home.
   ///
   /// In en, this message translates to:
   /// **'Remove the home directory'**
   String get userRemoveHome;
 
-  /// No description provided for @userPasswordCreateTip.
+  /// Help text for the user password create setting or action.
   ///
   /// In en, this message translates to:
   /// **'Leave the password empty to create a password-locked account.'**
   String get userPasswordCreateTip;
 
-  /// No description provided for @userPasswordEditTip.
+  /// Help text for the user password edit setting or action.
   ///
   /// In en, this message translates to:
   /// **'Leave the password empty to keep the existing password.'**
   String get userPasswordEditTip;
 
-  /// No description provided for @funcUnavailableFmt.
+  /// Formatted user-facing message for func unavailable; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{func} is not available over this server\'s connection.'**
-  String funcUnavailableFmt(Object func);
+  String funcUnavailableFmt(String func);
 
-  /// No description provided for @rangeLive.
+  /// User-facing label or message for range live.
   ///
   /// In en, this message translates to:
   /// **'Live'**
   String get rangeLive;
 
-  /// No description provided for @diskIo.
+  /// User-facing label or message for disk io.
   ///
   /// In en, this message translates to:
   /// **'Disk I/O'**
   String get diskIo;
 
-  /// No description provided for @peak.
+  /// User-facing label or message for peak.
   ///
   /// In en, this message translates to:
   /// **'peak'**
   String get peak;
 
-  /// No description provided for @hardware.
+  /// User-facing label or message for hardware.
   ///
   /// In en, this message translates to:
   /// **'Hardware'**
   String get hardware;
 
-  /// No description provided for @cores.
+  /// User-facing label or message for cores.
   ///
   /// In en, this message translates to:
   /// **'Cores'**
   String get cores;
 
-  /// No description provided for @historyNoStored.
+  /// User-facing label or message for history no stored.
   ///
   /// In en, this message translates to:
   /// **'Only a monitor agent stores history. This connection keeps what this app has seen since it connected.'**
   String get historyNoStored;
 
-  /// No description provided for @noHistoryYet.
+  /// User-facing label or message for no history yet.
   ///
   /// In en, this message translates to:
   /// **'Nothing measured yet'**
   String get noHistoryYet;
 
-  /// No description provided for @noData.
+  /// User-facing label or message for no data.
   ///
   /// In en, this message translates to:
   /// **'no data'**
   String get noData;
 
-  /// No description provided for @from.
+  /// User-facing label or message for from.
   ///
   /// In en, this message translates to:
   /// **'From'**
   String get from;
 
-  /// No description provided for @to.
+  /// User-facing label or message for to.
   ///
   /// In en, this message translates to:
   /// **'To'**
   String get to;
 
-  /// No description provided for @beyondRetention.
+  /// User-facing label or message for beyond retention.
   ///
   /// In en, this message translates to:
   /// **'beyond what this agent kept'**
   String get beyondRetention;
 
-  /// No description provided for @agentRetentionFmt.
+  /// Formatted user-facing message for agent retention; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Agent keeps {kept}'**
-  String agentRetentionFmt(Object kept);
+  String agentRetentionFmt(String kept);
 
-  /// No description provided for @oldestSampleFmt.
+  /// Formatted user-facing message for oldest sample; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'oldest sample {time}'**
-  String oldestSampleFmt(Object time);
+  String oldestSampleFmt(String time);
 
-  /// No description provided for @rangeEndsBeforeItStarts.
+  /// User-facing label or message for range ends before it starts.
   ///
   /// In en, this message translates to:
   /// **'The end of the range has to be after its start.'**
   String get rangeEndsBeforeItStarts;
 
-  /// No description provided for @samples.
+  /// User-facing label or message for samples.
   ///
   /// In en, this message translates to:
   /// **'samples'**
   String get samples;
 
-  /// No description provided for @unavailable.
+  /// User-facing label or message for unavailable.
   ///
   /// In en, this message translates to:
   /// **'unavailable'**
   String get unavailable;
 
-  /// No description provided for @metricUnavailableTip.
+  /// Help text for the metric unavailable setting or action.
   ///
   /// In en, this message translates to:
   /// **'The rest of this page is unaffected. Check the command this reading comes from on the host.'**
   String get metricUnavailableTip;
 
-  /// No description provided for @waitingFirstSample.
+  /// User-facing label or message for waiting first sample.
   ///
   /// In en, this message translates to:
   /// **'Waiting for the first sample'**
   String get waitingFirstSample;
 
-  /// No description provided for @atTimeFmt.
+  /// Formatted user-facing message for at time; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'at {time}'**
-  String atTimeFmt(Object time);
+  String atTimeFmt(String time);
 
-  /// No description provided for @stored.
+  /// User-facing label or message for stored.
   ///
   /// In en, this message translates to:
   /// **'stored'**
   String get stored;
 
-  /// No description provided for @lastSampleFmt.
+  /// Formatted user-facing message for last sample; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'last sample {ago}'**
-  String lastSampleFmt(Object ago);
+  String lastSampleFmt(String ago);
 
-  /// No description provided for @staleSinceFmt.
+  /// Formatted user-facing message for stale since; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Everything below is from {time}, {ago}.'**
-  String staleSinceFmt(Object ago, Object time);
+  String staleSinceFmt(String time, String ago);
 
-  /// No description provided for @noDataBeforeFmt.
+  /// Formatted user-facing message for no data before; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'no data before {time}'**
-  String noDataBeforeFmt(Object time);
+  String noDataBeforeFmt(String time);
 
-  /// No description provided for @loadingRangeFmt.
+  /// Formatted user-facing message for loading range; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Loading {range}…'**
-  String loadingRangeFmt(Object range);
+  String loadingRangeFmt(String range);
 
-  /// No description provided for @noStoredHistoryFor.
+  /// User-facing label or message for no stored history for.
   ///
   /// In en, this message translates to:
   /// **'No stored history for {metric}'**
-  String noStoredHistoryFor(Object metric);
+  String noStoredHistoryFor(String metric);
 
-  /// No description provided for @devicesFmt.
+  /// Formatted user-facing message for devices; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} devices'**
-  String devicesFmt(Object count);
+  String devicesFmt(int count);
 
-  /// No description provided for @devicesBusiestFmt.
+  /// Formatted user-facing message for devices busiest; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} devices · {name} busiest'**
-  String devicesBusiestFmt(Object count, Object name);
+  String devicesBusiestFmt(int count, String name);
 
-  /// No description provided for @devicesPlottedFmt.
+  /// Formatted user-facing message for devices plotted; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{plotted} of {total} devices'**
-  String devicesPlottedFmt(Object plotted, Object total);
+  String devicesPlottedFmt(int plotted, int total);
 
-  /// No description provided for @sensorsHottestFmt.
+  /// Formatted user-facing message for sensors hottest; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} sensors · {name} hottest'**
-  String sensorsHottestFmt(Object count, Object name);
+  String sensorsHottestFmt(int count, String name);
 
-  /// No description provided for @oneDeviceAtLeast.
+  /// User-facing label or message for one device at least.
   ///
   /// In en, this message translates to:
   /// **'At least one device stays on the chart.'**
   String get oneDeviceAtLeast;
 
-  /// No description provided for @shownOfFmt.
+  /// Formatted user-facing message for shown of; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{shown} of {total} {what}'**
-  String shownOfFmt(Object shown, Object total, Object what);
+  String shownOfFmt(int shown, int total, String what);
 
-  /// No description provided for @countOfFmt.
+  /// Formatted user-facing message for count of; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} {what}'**
-  String countOfFmt(Object count, Object what);
+  String countOfFmt(int count, String what);
 
-  /// No description provided for @unitDevices.
+  /// User-facing label or message for unit devices.
   ///
   /// In en, this message translates to:
   /// **'devices'**
   String get unitDevices;
 
-  /// No description provided for @unitSensors.
+  /// User-facing label or message for unit sensors.
   ///
   /// In en, this message translates to:
   /// **'sensors'**
   String get unitSensors;
 
-  /// No description provided for @unitBatteries.
+  /// User-facing label or message for unit batteries.
   ///
   /// In en, this message translates to:
   /// **'batteries'**
   String get unitBatteries;
 
-  /// No description provided for @unitCommands.
+  /// User-facing label or message for unit commands.
   ///
   /// In en, this message translates to:
   /// **'commands'**
   String get unitCommands;
 
-  /// No description provided for @unitReadings.
+  /// User-facing label or message for unit readings.
   ///
   /// In en, this message translates to:
   /// **'readings'**
   String get unitReadings;
 
-  /// No description provided for @unitGpus.
+  /// User-facing label or message for unit gpus.
   ///
   /// In en, this message translates to:
   /// **'GPUs'**
   String get unitGpus;
 
-  /// No description provided for @hottest.
+  /// User-facing label or message for hottest.
   ///
   /// In en, this message translates to:
   /// **'hottest'**
   String get hottest;
 
-  /// No description provided for @oldest.
+  /// User-facing label or message for oldest.
   ///
   /// In en, this message translates to:
   /// **'oldest'**
   String get oldest;
 
-  /// No description provided for @notApplicable.
+  /// User-facing label or message for not applicable.
   ///
   /// In en, this message translates to:
   /// **'not applicable'**
   String get notApplicable;
 
-  /// No description provided for @attributes.
+  /// User-facing label or message for attributes.
   ///
   /// In en, this message translates to:
   /// **'attributes'**
   String get attributes;
 
-  /// No description provided for @powerOnHours.
+  /// User-facing label or message for power on hours.
   ///
   /// In en, this message translates to:
   /// **'Power-on hours'**
   String get powerOnHours;
 
-  /// No description provided for @powerCycles.
+  /// User-facing label or message for power cycles.
   ///
   /// In en, this message translates to:
   /// **'Power cycles'**
   String get powerCycles;
 
-  /// No description provided for @lifeLeft.
+  /// User-facing label or message for life left.
   ///
   /// In en, this message translates to:
   /// **'Life left'**
   String get lifeLeft;
 
-  /// No description provided for @lifetimeWrite.
+  /// User-facing label or message for lifetime write.
   ///
   /// In en, this message translates to:
   /// **'Lifetime write'**
   String get lifetimeWrite;
 
-  /// No description provided for @lifetimeRead.
+  /// User-facing label or message for lifetime read.
   ///
   /// In en, this message translates to:
   /// **'Lifetime read'**
   String get lifetimeRead;
 
-  /// No description provided for @averageErase.
+  /// User-facing label or message for average erase.
   ///
   /// In en, this message translates to:
   /// **'Average erase'**
   String get averageErase;
 
-  /// No description provided for @unsafeShutdowns.
+  /// User-facing label or message for unsafe shutdowns.
   ///
   /// In en, this message translates to:
   /// **'Unsafe shutdowns'**
   String get unsafeShutdowns;
 
-  /// No description provided for @diskAllPassed.
+  /// User-facing label or message for disk all passed.
   ///
   /// In en, this message translates to:
   /// **'all PASSED'**
   String get diskAllPassed;
 
-  /// No description provided for @diskWarningFmt.
+  /// Formatted user-facing message for disk warning; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 warning} other{{count} warnings}}'**
-  String diskWarningFmt(num count);
+  String diskWarningFmt(int count);
 
-  /// No description provided for @diskWrongOfFmt.
+  /// Formatted user-facing message for disk wrong of; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{wrong} of {total} devices'**
-  String diskWrongOfFmt(Object total, Object wrong);
+  String diskWrongOfFmt(int wrong, int total);
 
-  /// No description provided for @diskSmartSortedTip.
+  /// Help text for the disk smart sorted setting or action.
   ///
   /// In en, this message translates to:
   /// **'Sorted worst first'**
   String get diskSmartSortedTip;
 
-  /// No description provided for @readAgoFmt.
+  /// Formatted user-facing message for read ago; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'read {ago}'**
-  String readAgoFmt(Object ago);
+  String readAgoFmt(String ago);
 
-  /// No description provided for @processesFmt.
+  /// Formatted user-facing message for processes; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} processes'**
-  String processesFmt(Object count);
+  String processesFmt(int count);
 
-  /// No description provided for @diskFailingFmt.
+  /// Formatted user-facing message for disk failing; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} failing'**
-  String diskFailingFmt(Object count);
+  String diskFailingFmt(int count);
 
-  /// No description provided for @diskSmartOpenTip.
+  /// Help text for the disk smart open setting or action.
   ///
   /// In en, this message translates to:
   /// **'Open one for its attributes'**
   String get diskSmartOpenTip;
 
-  /// No description provided for @cycle.
+  /// User-facing label or message for cycle.
   ///
   /// In en, this message translates to:
   /// **'Cycle'**
   String get cycle;
 
-  /// No description provided for @window.
+  /// User-facing label or message for window.
   ///
   /// In en, this message translates to:
   /// **'window'**
   String get window;
 
-  /// No description provided for @ofFmt.
+  /// Formatted user-facing message for of; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'of {total}'**
-  String ofFmt(Object total);
+  String ofFmt(String total);
 
-  /// No description provided for @serverDetailCards.
+  /// User-facing label or message for server detail cards.
   ///
   /// In en, this message translates to:
   /// **'Detail page cards'**
   String get serverDetailCards;
 
-  /// No description provided for @connection.
+  /// Action label for connection.
   ///
   /// In en, this message translates to:
   /// **'Connection'**
   String get connection;
 
-  /// No description provided for @connectionTip.
+  /// Help text for the connection setting or action.
   ///
   /// In en, this message translates to:
   /// **'Both can be on at once. The order is the order they are dialled.'**
   String get connectionTip;
 
-  /// No description provided for @transportOrderFmt.
+  /// Formatted user-facing message for transport order; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.'**
-  String transportOrderFmt(Object first, Object second);
+  String transportOrderFmt(String first, String second);
 
-  /// No description provided for @transportOnlyFmt.
+  /// Formatted user-facing message for transport only; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Only {name} is on, so there is nothing to fall back to.'**
-  String transportOnlyFmt(Object name);
+  String transportOnlyFmt(String name);
 
-  /// No description provided for @transportNoneOn.
+  /// User-facing label or message for transport none on.
   ///
   /// In en, this message translates to:
   /// **'Both are off — this server cannot be connected.'**
   String get transportNoneOn;
 
-  /// No description provided for @transportOffKept.
+  /// User-facing label or message for transport off kept.
   ///
   /// In en, this message translates to:
   /// **'off — settings kept, never dialled'**
   String get transportOffKept;
 
-  /// No description provided for @transportDialledFirst.
+  /// User-facing label or message for transport dialled first.
   ///
   /// In en, this message translates to:
   /// **'dialled first'**
   String get transportDialledFirst;
 
-  /// No description provided for @transportFallback.
+  /// User-facing label or message for transport fallback.
   ///
   /// In en, this message translates to:
   /// **'fallback'**
   String get transportFallback;
 
-  /// No description provided for @transportOnlyMethod.
+  /// User-facing label or message for transport only method.
   ///
   /// In en, this message translates to:
   /// **'only method'**
   String get transportOnlyMethod;
 
-  /// No description provided for @transportOff.
+  /// User-facing label or message for transport off.
   ///
   /// In en, this message translates to:
   /// **'off'**
   String get transportOff;
 
-  /// No description provided for @thisDevice.
+  /// User-facing label or message for this device.
   ///
   /// In en, this message translates to:
   /// **'This device'**
   String get thisDevice;
 
-  /// No description provided for @localServerTip.
+  /// Help text for the local server setting or action.
   ///
   /// In en, this message translates to:
   /// **'Reads this device directly, by running the status script here. SSH and Monitor HTTP are not used, and their settings are kept.'**
   String get localServerTip;
 
-  /// No description provided for @localServerUnsupported.
+  /// User-facing label or message for local server unsupported.
   ///
   /// In en, this message translates to:
   /// **'This platform cannot read this device as a server. Linux, Windows and the macOS DMG build can.'**
   String get localServerUnsupported;
 
-  /// No description provided for @remoteDesktopIntro.
+  /// Introductory text for the remote desktop screen or section.
   ///
   /// In en, this message translates to:
   /// **'Open a server\'s RDP or VNC desktop inside the app. The connection goes through the server\'s SSH connection or its Monitor agent, so the desktop port does not have to be reachable from the network.'**
   String get remoteDesktopIntro;
 
-  /// No description provided for @remoteDesktopIntroProfiles.
+  /// User-facing label or message for remote desktop intro profiles.
   ///
   /// In en, this message translates to:
   /// **'Save a profile per desktop from the Remote desktop button on a server, or from the Remote desktop tab.'**
   String get remoteDesktopIntroProfiles;
 
-  /// No description provided for @localServerIntro.
+  /// Introductory text for the local server screen or section.
   ///
   /// In en, this message translates to:
   /// **'Add the device running ServerBox as a server. Status, processes, services, containers, the terminal and files all work without SSH or a Monitor agent.'**
   String get localServerIntro;
 
-  /// No description provided for @localServerAdd.
+  /// User-facing label or message for local server add.
   ///
   /// In en, this message translates to:
   /// **'Add this device'**
   String get localServerAdd;
 
-  /// No description provided for @localServerIntroFooter.
+  /// User-facing label or message for local server intro footer.
   ///
   /// In en, this message translates to:
   /// **'It can also be turned on later, in a server\'s edit page under Connection.'**
   String get localServerIntroFooter;
 
-  /// No description provided for @transportSectionOff.
+  /// User-facing label or message for transport section off.
   ///
   /// In en, this message translates to:
   /// **'Off. The fields below are kept for when you turn it back on.'**
   String get transportSectionOff;
 
-  /// No description provided for @monitorAgent.
+  /// User-facing label or message for monitor agent.
   ///
   /// In en, this message translates to:
   /// **'Monitor agent'**
   String get monitorAgent;
 
-  /// No description provided for @plainHttpEditTip.
+  /// Help text for the plain HTTP edit setting or action.
   ///
   /// In en, this message translates to:
   /// **'Credentials and metrics cross the network unencrypted. Keep it to a LAN or a Tailscale address, or put the agent behind TLS.'**
   String get plainHttpEditTip;
 
-  /// No description provided for @behaviour.
+  /// User-facing label or message for behaviour.
   ///
   /// In en, this message translates to:
   /// **'Behaviour'**
   String get behaviour;
 
-  /// No description provided for @optional.
+  /// User-facing label or message for optional.
   ///
   /// In en, this message translates to:
   /// **'Optional'**
   String get optional;
 
-  /// No description provided for @optionalTip.
+  /// Help text for the optional setting or action.
   ///
   /// In en, this message translates to:
   /// **'Nothing here is needed to connect. Open one and its fields take over the form.'**
   String get optionalTip;
 
-  /// No description provided for @sshAdvanced.
+  /// User-facing label or message for SSH advanced.
   ///
   /// In en, this message translates to:
   /// **'SSH advanced'**
   String get sshAdvanced;
 
-  /// No description provided for @sshAdvancedTip.
+  /// Help text for the SSH advanced setting or action.
   ///
   /// In en, this message translates to:
   /// **'Fallback destination, ProxyCommand, jump server, file transport, remote path'**
   String get sshAdvancedTip;
 
-  /// No description provided for @sshLegacyAlgorithms.
+  /// User-facing label or message for SSH legacy algorithms.
   ///
   /// In en, this message translates to:
   /// **'Legacy algorithms'**
   String get sshLegacyAlgorithms;
 
-  /// No description provided for @sshLegacyAlgorithmsTip.
+  /// Help text for the SSH legacy algorithms setting or action.
   ///
   /// In en, this message translates to:
   /// **'For an old SSH daemon (a router, a switch) that only offers the SHA-1 `ssh-rsa` host key or a SHA-1 key exchange. Less secure; turn it on only for a host that needs it.'**
   String get sshLegacyAlgorithmsTip;
 
-  /// No description provided for @appearanceAndPlace.
+  /// User-facing label or message for appearance and place.
   ///
   /// In en, this message translates to:
   /// **'Appearance & location'**
   String get appearanceAndPlace;
 
-  /// No description provided for @appearanceAndPlaceTip.
+  /// Help text for the appearance and place setting or action.
   ///
   /// In en, this message translates to:
   /// **'Logo, coordinates'**
   String get appearanceAndPlaceTip;
 
-  /// No description provided for @statusCollection.
+  /// User-facing label or message for status collection.
   ///
   /// In en, this message translates to:
   /// **'Status collection'**
   String get statusCollection;
 
-  /// No description provided for @statusCollectionTip.
+  /// Help text for the status collection setting or action.
   ///
   /// In en, this message translates to:
   /// **'Which commands run, custom commands, which device to read'**
   String get statusCollectionTip;
 
-  /// No description provided for @tagAllTags.
+  /// User-facing label or message for tag all tags.
   ///
   /// In en, this message translates to:
   /// **'All tags'**
   String get tagAllTags;
 
-  /// No description provided for @tagMatching.
+  /// User-facing label or message for tag matching.
   ///
   /// In en, this message translates to:
   /// **'Matching'**
   String get tagMatching;
 
-  /// No description provided for @tagNewHint.
+  /// Hint shown in the tag new field or section.
   ///
   /// In en, this message translates to:
   /// **'New tag'**
   String get tagNewHint;
 
-  /// No description provided for @tagCreateFmt.
+  /// Formatted user-facing message for tag create; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Create #{tag}'**
-  String tagCreateFmt(Object tag);
+  String tagCreateFmt(String tag);
 
-  /// No description provided for @tagOnThisServer.
+  /// User-facing label or message for tag on this server.
   ///
   /// In en, this message translates to:
   /// **'on this server'**
   String get tagOnThisServer;
 
-  /// No description provided for @tagServersFmt.
+  /// Formatted user-facing message for tag servers; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} servers'**
-  String tagServersFmt(Object count);
+  String tagServersFmt(int count);
 
-  /// No description provided for @tagOnThisServerFmt.
+  /// Formatted user-facing message for tag on this server; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{count} on this server'**
-  String tagOnThisServerFmt(Object count);
+  String tagOnThisServerFmt(int count);
 
-  /// No description provided for @tagMatchesTyped.
+  /// User-facing label or message for tag matches typed.
   ///
   /// In en, this message translates to:
   /// **'matches what you typed'**
   String get tagMatchesTyped;
 
-  /// No description provided for @tagEditorTip.
+  /// Help text for the tag editor setting or action.
   ///
   /// In en, this message translates to:
   /// **'Typing filters the list; the button creates the tag and puts it on this server in one step. Renaming from the pencil renames it on every server that carries it. A tag no server carries disappears on save.'**
   String get tagEditorTip;
 
-  /// No description provided for @tagRenamesOnSave.
+  /// User-facing label or message for tag renames on save.
   ///
   /// In en, this message translates to:
   /// **'Renames apply on save'**
   String get tagRenamesOnSave;
 
-  /// No description provided for @scheduledTasks.
+  /// User-facing label or message for scheduled tasks.
   ///
   /// In en, this message translates to:
   /// **'Scheduled tasks'**
   String get scheduledTasks;
 
-  /// No description provided for @scheduledTaskLinuxOnly.
+  /// User-facing label or message for scheduled task linux only.
   ///
   /// In en, this message translates to:
   /// **'Scheduled task management currently supports Linux servers.'**
   String get scheduledTaskLinuxOnly;
 
-  /// No description provided for @scheduledTaskUnavailable.
+  /// User-facing label or message for scheduled task unavailable.
   ///
   /// In en, this message translates to:
   /// **'crontab is not available on this server.'**
   String get scheduledTaskUnavailable;
 
-  /// No description provided for @scheduledTaskPreserveTip.
+  /// Help text for the scheduled task preserve setting or action.
   ///
   /// In en, this message translates to:
   /// **'Comments, environment variables, and unrecognized lines in this crontab are preserved.'**
   String get scheduledTaskPreserveTip;
 
-  /// No description provided for @scheduledTaskSchedule.
+  /// User-facing label or message for scheduled task schedule.
   ///
   /// In en, this message translates to:
   /// **'Schedule'**
   String get scheduledTaskSchedule;
 
-  /// No description provided for @scheduledTaskAdd.
+  /// User-facing label or message for scheduled task add.
   ///
   /// In en, this message translates to:
   /// **'Add task'**
   String get scheduledTaskAdd;
 
-  /// No description provided for @scheduledTaskNextRun.
+  /// User-facing label or message for scheduled task next run.
   ///
   /// In en, this message translates to:
   /// **'Next run'**
   String get scheduledTaskNextRun;
 
-  /// No description provided for @scheduledTaskNextInFmt.
+  /// Formatted user-facing message for scheduled task next in; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'in {time}'**
-  String scheduledTaskNextInFmt(Object time);
+  String scheduledTaskNextInFmt(String time);
 
-  /// No description provided for @scheduledTaskEnabled.
+  /// User-facing label or message for scheduled task enabled.
   ///
   /// In en, this message translates to:
   /// **'Enabled'**
   String get scheduledTaskEnabled;
 
-  /// No description provided for @scheduledTaskCommentedOut.
+  /// User-facing label or message for scheduled task commented out.
   ///
   /// In en, this message translates to:
   /// **'Commented out'**
   String get scheduledTaskCommentedOut;
 
-  /// No description provided for @scheduledTaskSummaryFmt.
+  /// Formatted user-facing message for scheduled task summary; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'{total} tasks · {enabled} enabled'**
-  String scheduledTaskSummaryFmt(num enabled, num total);
+  String scheduledTaskSummaryFmt(int total, int enabled);
 
-  /// No description provided for @scheduledTaskFilterHint.
+  /// Hint shown in the scheduled task filter field or section.
   ///
   /// In en, this message translates to:
   /// **'Filter tasks'**
   String get scheduledTaskFilterHint;
 
-  /// No description provided for @scheduledTaskPreserved.
+  /// User-facing label or message for scheduled task preserved.
   ///
   /// In en, this message translates to:
   /// **'Preserved lines'**
   String get scheduledTaskPreserved;
 
-  /// No description provided for @scheduledTaskRaw.
+  /// User-facing label or message for scheduled task raw.
   ///
   /// In en, this message translates to:
   /// **'Raw crontab'**
   String get scheduledTaskRaw;
 
-  /// No description provided for @scheduledTaskEnableNow.
+  /// User-facing label or message for scheduled task enable now.
   ///
   /// In en, this message translates to:
   /// **'Enable now'**
   String get scheduledTaskEnableNow;
 
-  /// No description provided for @scheduledTaskEnableNowTip.
+  /// Help text for the scheduled task enable now setting or action.
   ///
   /// In en, this message translates to:
   /// **'Off writes the line commented out.'**
   String get scheduledTaskEnableNowTip;
 
-  /// No description provided for @scheduledTaskEmptyFmt.
+  /// Formatted user-facing message for scheduled task empty; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'No scheduled tasks for {user}. What is added here is written into that account\'s crontab.'**
-  String scheduledTaskEmptyFmt(Object user);
+  String scheduledTaskEmptyFmt(String user);
 
-  /// No description provided for @scheduledTaskFieldMinute.
+  /// User-facing label or message for scheduled task field minute.
   ///
   /// In en, this message translates to:
   /// **'Minute'**
   String get scheduledTaskFieldMinute;
 
-  /// No description provided for @scheduledTaskFieldHour.
+  /// User-facing label or message for scheduled task field hour.
   ///
   /// In en, this message translates to:
   /// **'Hour'**
   String get scheduledTaskFieldHour;
 
-  /// No description provided for @scheduledTaskFieldDayOfMonth.
+  /// User-facing label or message for scheduled task field day of month.
   ///
   /// In en, this message translates to:
   /// **'Day of month'**
   String get scheduledTaskFieldDayOfMonth;
 
-  /// No description provided for @scheduledTaskFieldMonth.
+  /// User-facing label or message for scheduled task field month.
   ///
   /// In en, this message translates to:
   /// **'Month'**
   String get scheduledTaskFieldMonth;
 
-  /// No description provided for @scheduledTaskFieldDayOfWeek.
+  /// User-facing label or message for scheduled task field day of week.
   ///
   /// In en, this message translates to:
   /// **'Day of week'**
   String get scheduledTaskFieldDayOfWeek;
 
-  /// No description provided for @cronErrScheduleEmpty.
+  /// Empty-state message for cron err schedule empty.
   ///
   /// In en, this message translates to:
   /// **'A schedule is required.'**
   String get cronErrScheduleEmpty;
 
-  /// No description provided for @cronErrCommandEmpty.
+  /// Empty-state message for cron err command empty.
   ///
   /// In en, this message translates to:
   /// **'A command is required.'**
   String get cronErrCommandEmpty;
 
-  /// No description provided for @cronErrLineBreak.
+  /// User-facing label or message for cron err line break.
   ///
   /// In en, this message translates to:
   /// **'A crontab line cannot contain line breaks.'**
   String get cronErrLineBreak;
 
-  /// No description provided for @cronErrMacro.
+  /// User-facing label or message for cron err macro.
   ///
   /// In en, this message translates to:
   /// **'A macro is one word, such as @reboot.'**
   String get cronErrMacro;
 
-  /// No description provided for @cronErrFieldCount.
+  /// User-facing label or message for cron err field count.
   ///
   /// In en, this message translates to:
   /// **'A cron schedule has five fields, or a macro such as @reboot.'**
   String get cronErrFieldCount;
 
-  /// No description provided for @cronAtBoot.
+  /// User-facing label or message for cron at boot.
   ///
   /// In en, this message translates to:
   /// **'At boot'**
   String get cronAtBoot;
 
-  /// No description provided for @cronEveryMin.
+  /// User-facing label or message for cron every min.
   ///
   /// In en, this message translates to:
   /// **'Every minute'**
   String get cronEveryMin;
 
-  /// No description provided for @cronEveryMinsFmt.
+  /// Formatted user-facing message for cron every mins; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Every {minutes} minutes'**
-  String cronEveryMinsFmt(Object minutes);
+  String cronEveryMinsFmt(int minutes);
 
-  /// No description provided for @cronHourlyAtFmt.
+  /// Formatted user-facing message for cron hourly at; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Every hour at :{minute}'**
-  String cronHourlyAtFmt(Object minute);
+  String cronHourlyAtFmt(String minute);
 
-  /// No description provided for @cronEveryHoursFmt.
+  /// Formatted user-facing message for cron every hours; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Every {hours} hours'**
-  String cronEveryHoursFmt(Object hours);
+  String cronEveryHoursFmt(int hours);
 
-  /// No description provided for @cronEveryHoursAtFmt.
+  /// Formatted user-facing message for cron every hours at; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Every {hours} hours at :{minute}'**
-  String cronEveryHoursAtFmt(Object hours, Object minute);
+  String cronEveryHoursAtFmt(int hours, String minute);
 
-  /// No description provided for @cronDailyAtFmt.
+  /// Formatted user-facing message for cron daily at; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Every day at {time}'**
-  String cronDailyAtFmt(Object time);
+  String cronDailyAtFmt(String time);
 
-  /// No description provided for @cronWeekdaysAtFmt.
+  /// Formatted user-facing message for cron weekdays at; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'On weekdays at {time}'**
-  String cronWeekdaysAtFmt(Object time);
+  String cronWeekdaysAtFmt(String time);
 
-  /// No description provided for @cronWeekdayAtFmt.
+  /// Formatted user-facing message for cron weekday at; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Every {day} at {time}'**
-  String cronWeekdayAtFmt(Object day, Object time);
+  String cronWeekdayAtFmt(String day, String time);
 
-  /// No description provided for @cronMonthlyAtFmt.
+  /// Formatted user-facing message for cron monthly at; runtime values are supplied by placeholders.
   ///
   /// In en, this message translates to:
   /// **'Day {day} of every month at {time}'**
-  String cronMonthlyAtFmt(Object day, Object time);
+  String cronMonthlyAtFmt(int day, String time);
 
-  /// No description provided for @monitorSettings.
+  /// User-facing label or message for monitor settings.
   ///
   /// In en, this message translates to:
   /// **'Monitor settings'**
   String get monitorSettings;
 
-  /// No description provided for @monitorAgentDefault.
+  /// User-facing label or message for monitor agent default.
   ///
   /// In en, this message translates to:
   /// **'Agent default'**
   String get monitorAgentDefault;
 
-  /// No description provided for @monitorNeedsRestart.
+  /// User-facing label or message for monitor needs restart.
   ///
   /// In en, this message translates to:
   /// **'Takes effect after the agent restarts'**
   String get monitorNeedsRestart;
 
-  /// No description provided for @monitorCollection.
+  /// User-facing label or message for monitor collection.
   ///
   /// In en, this message translates to:
   /// **'Collection'**
   String get monitorCollection;
 
-  /// No description provided for @extendedInterval.
+  /// User-facing label or message for extended interval.
   ///
   /// In en, this message translates to:
   /// **'Extended cycle interval'**
   String get extendedInterval;
 
-  /// No description provided for @idlePause.
+  /// User-facing label or message for idle pause.
   ///
   /// In en, this message translates to:
   /// **'Pause when nothing is watching'**
   String get idlePause;
 
-  /// No description provided for @idlePauseTip.
+  /// Help text for the idle pause setting or action.
   ///
   /// In en, this message translates to:
   /// **'The extended cycle runs smartctl, sensors and amd-smi. Pausing it while no client is polling keeps a disk from being woken for data nobody is reading.'**
   String get idlePauseTip;
 
-  /// No description provided for @idlePauseThreshold.
+  /// User-facing label or message for idle pause threshold.
   ///
   /// In en, this message translates to:
   /// **'Idle after'**
   String get idlePauseThreshold;
 
-  /// No description provided for @monitorAlerts.
+  /// User-facing label or message for monitor alerts.
   ///
   /// In en, this message translates to:
   /// **'Alerts'**
   String get monitorAlerts;
 
-  /// No description provided for @monitoringRules.
+  /// User-facing label or message for monitoring rules.
   ///
   /// In en, this message translates to:
   /// **'Alert rules'**
   String get monitoringRules;
 
-  /// No description provided for @ruleMonitorType.
+  /// User-facing label or message for rule monitor type.
   ///
   /// In en, this message translates to:
   /// **'Metric'**
   String get ruleMonitorType;
 
-  /// No description provided for @ruleThreshold.
+  /// User-facing label or message for rule threshold.
   ///
   /// In en, this message translates to:
   /// **'Threshold'**
   String get ruleThreshold;
 
-  /// No description provided for @ruleMatcher.
+  /// User-facing label or message for rule matcher.
   ///
   /// In en, this message translates to:
   /// **'Matcher'**
   String get ruleMatcher;
 
-  /// No description provided for @ruleTip.
+  /// Help text for the rule setting or action.
   ///
   /// In en, this message translates to:
   /// **'Metric: cpu / memory / swap / disk / network / temperature. Matcher: cpu0 for one core, used / free / avail for memory, rx / tx for network; disk and temperature ignore it. Threshold: a comparator and a value, such as >=80%, >=70c or >10m/s.'**
   String get ruleTip;
 
-  /// No description provided for @pushChannels.
+  /// User-facing label or message for push channels.
   ///
   /// In en, this message translates to:
   /// **'Notification channels'**
   String get pushChannels;
 
-  /// No description provided for @pushType.
+  /// User-facing label or message for push type.
   ///
   /// In en, this message translates to:
   /// **'Type'**
   String get pushType;
 
-  /// No description provided for @pushRate.
+  /// User-facing label or message for push rate.
   ///
   /// In en, this message translates to:
   /// **'Rate limit'**
   String get pushRate;
 
-  /// No description provided for @pushHeaders.
+  /// User-facing label or message for push headers.
   ///
   /// In en, this message translates to:
   /// **'Headers'**
   String get pushHeaders;
 
-  /// No description provided for @pushSecretSet.
+  /// User-facing label or message for push secret set.
   ///
   /// In en, this message translates to:
   /// **'Set on the agent, not shown'**
   String get pushSecretSet;
 
-  /// No description provided for @pushSecretKeep.
+  /// User-facing label or message for push secret keep.
   ///
   /// In en, this message translates to:
   /// **'Leave blank to keep'**
   String get pushSecretKeep;
 
-  /// No description provided for @pushTestTip.
+  /// Help text for the push test setting or action.
   ///
   /// In en, this message translates to:
   /// **'Sends one notification through this channel as it stands here, saved or not.'**
   String get pushTestTip;
 
-  /// No description provided for @pushTestSent.
+  /// User-facing label or message for push test sent.
   ///
   /// In en, this message translates to:
   /// **'The channel accepted it'**
   String get pushTestSent;
 
-  /// No description provided for @pushTestFailed.
+  /// Error message shown when push test failed.
   ///
   /// In en, this message translates to:
   /// **'The channel refused it'**
   String get pushTestFailed;
 
-  /// No description provided for @pushTestMessage.
+  /// User-facing label or message for push test message.
   ///
   /// In en, this message translates to:
   /// **'Test notification from ServerBox Monitor'**
   String get pushTestMessage;
 
-  /// No description provided for @pushUnknownType.
+  /// User-facing label or message for push unknown type.
   ///
   /// In en, this message translates to:
   /// **'This agent has no sender for this channel type, so its settings are not shown. It can be removed here, or edited in the agent\'s config.toml.'**
   String get pushUnknownType;
 
-  /// No description provided for @pushJsonInvalid.
+  /// User-facing label or message for push json invalid.
   ///
   /// In en, this message translates to:
   /// **'is not valid JSON'**
   String get pushJsonInvalid;
 
-  /// No description provided for @dataRetention.
+  /// User-facing label or message for data retention.
   ///
   /// In en, this message translates to:
   /// **'Data retention'**
   String get dataRetention;
 
-  /// No description provided for @dataRetentionTip.
+  /// Help text for the data retention setting or action.
   ///
   /// In en, this message translates to:
   /// **'Off means the agent never deletes anything and its database grows without limit.'**
   String get dataRetentionTip;
 
-  /// No description provided for @retentionMetrics.
+  /// User-facing label or message for retention metrics.
   ///
   /// In en, this message translates to:
   /// **'Keep metrics'**
   String get retentionMetrics;
 
-  /// No description provided for @retentionAlerts.
+  /// User-facing label or message for retention alerts.
   ///
   /// In en, this message translates to:
   /// **'Keep alerts'**
   String get retentionAlerts;
 
-  /// No description provided for @retentionCleanup.
+  /// User-facing label or message for retention cleanup.
   ///
   /// In en, this message translates to:
   /// **'Run cleanup every'**
   String get retentionCleanup;
 
-  /// No description provided for @retentionMaxDbSize.
+  /// User-facing label or message for retention max db size.
   ///
   /// In en, this message translates to:
   /// **'Database size cap'**
   String get retentionMaxDbSize;
 
-  /// No description provided for @corsOrigins.
+  /// User-facing label or message for cors origins.
   ///
   /// In en, this message translates to:
   /// **'CORS allowed origins'**
   String get corsOrigins;
 
-  /// No description provided for @corsOriginsTip.
+  /// Help text for the cors origins setting or action.
   ///
   /// In en, this message translates to:
   /// **'Origins a browser panel may call this agent from. Empty means same-origin only.'**
   String get corsOriginsTip;
 
-  /// No description provided for @monitorNoRemoteAccess.
+  /// User-facing label or message for monitor no remote access.
   ///
   /// In en, this message translates to:
   /// **'This agent is set up for monitoring only. You can\'t open a terminal, run commands, or browse files here. To enable these features, edit [remote_access] in the agent\'s config.toml.'**
   String get monitorNoRemoteAccess;
 
-  /// No description provided for @alerts.
+  /// User-facing label or message for alerts.
   ///
   /// In en, this message translates to:
   /// **'Alerts'**
   String get alerts;
 
-  /// No description provided for @online.
+  /// User-facing label or message for online.
   ///
   /// In en, this message translates to:
   /// **'online'**
   String get online;
 
-  /// No description provided for @densityCards.
+  /// User-facing label or message for density cards.
   ///
   /// In en, this message translates to:
   /// **'Cards'**
   String get densityCards;
 
-  /// No description provided for @densityRows.
+  /// User-facing label or message for density rows.
   ///
   /// In en, this message translates to:
   /// **'Rows'**
   String get densityRows;
 
-  /// No description provided for @densityGrid.
+  /// User-facing label or message for density grid.
   ///
   /// In en, this message translates to:
   /// **'Grid'**
   String get densityGrid;
 
-  /// No description provided for @connect.
+  /// Action label for connect.
   ///
   /// In en, this message translates to:
   /// **'Connect'**
   String get connect;
 
-  /// No description provided for @disconnect.
+  /// Action label for disconnect.
   ///
   /// In en, this message translates to:
   /// **'Disconnect'**
   String get disconnect;
 
-  /// No description provided for @searchServerTip.
+  /// Help text for the search server setting or action.
   ///
   /// In en, this message translates to:
   /// **'Searches names and addresses — the two the editor asks for first.'**
   String get searchServerTip;
 
-  /// No description provided for @addServerTip.
+  /// Help text for the add server setting or action.
   ///
   /// In en, this message translates to:
   /// **'Fill one in, scan a QR code, or import a file somebody shared.'**
   String get addServerTip;
 
-  /// No description provided for @move.
+  /// User-facing label or message for move.
   ///
   /// In en, this message translates to:
   /// **'Move'**
   String get move;
 
-  /// No description provided for @moveToTop.
+  /// User-facing label or message for move to top.
   ///
   /// In en, this message translates to:
   /// **'Move to top'**
   String get moveToTop;
 
-  /// No description provided for @moveToBottom.
+  /// User-facing label or message for move to bottom.
   ///
   /// In en, this message translates to:
   /// **'Move to bottom'**
   String get moveToBottom;
 
-  /// No description provided for @groupByTag.
+  /// User-facing label or message for group by tag.
   ///
   /// In en, this message translates to:
   /// **'Group by tag'**
   String get groupByTag;
 
-  /// No description provided for @groupByTagTip.
+  /// Help text for the group by tag setting or action.
   ///
   /// In en, this message translates to:
   /// **'Tags are set in a server’s own editor.'**
   String get groupByTagTip;
 
-  /// No description provided for @connecting.
+  /// Action label for connecting.
   ///
   /// In en, this message translates to:
   /// **'Connecting…'**
   String get connecting;
 
-  /// No description provided for @authShort.
+  /// User-facing label or message for auth short.
   ///
   /// In en, this message translates to:
   /// **'Auth'**
   String get authShort;
 
-  /// No description provided for @remoteDesktopFitToWindow.
+  /// User-facing label or message for remote desktop fit to window.
   ///
   /// In en, this message translates to:
   /// **'Fit to window'**
   String get remoteDesktopFitToWindow;
 
-  /// No description provided for @remoteDesktopActualSize.
+  /// User-facing label or message for remote desktop actual size.
   ///
   /// In en, this message translates to:
   /// **'Actual size'**
   String get remoteDesktopActualSize;
 
-  /// No description provided for @remoteDesktopZoom.
+  /// User-facing label or message for remote desktop zoom.
   ///
   /// In en, this message translates to:
   /// **'Zoom'**
   String get remoteDesktopZoom;
 
-  /// No description provided for @remoteDesktopViewOnly.
+  /// User-facing label or message for remote desktop view only.
   ///
   /// In en, this message translates to:
   /// **'View only'**
   String get remoteDesktopViewOnly;
 
-  /// No description provided for @remoteDesktopDisableViewOnly.
+  /// User-facing label or message for remote desktop disable view only.
   ///
   /// In en, this message translates to:
   /// **'Disable view only'**
   String get remoteDesktopDisableViewOnly;
 
-  /// No description provided for @remoteDesktopSendClipboardText.
+  /// User-facing label or message for remote desktop send clipboard text.
   ///
   /// In en, this message translates to:
   /// **'Send clipboard text'**
   String get remoteDesktopSendClipboardText;
 
-  /// No description provided for @remoteDesktopShowKeyboard.
+  /// User-facing label or message for remote desktop show keyboard.
   ///
   /// In en, this message translates to:
   /// **'Show keyboard'**
   String get remoteDesktopShowKeyboard;
 
-  /// No description provided for @remoteDesktopMoreControls.
+  /// User-facing label or message for remote desktop more controls.
   ///
   /// In en, this message translates to:
   /// **'More controls'**
   String get remoteDesktopMoreControls;
 
-  /// No description provided for @remoteDesktopUseDirectPointer.
+  /// User-facing label or message for remote desktop use direct pointer.
   ///
   /// In en, this message translates to:
   /// **'Use direct pointer'**
   String get remoteDesktopUseDirectPointer;
 
-  /// No description provided for @remoteDesktopUseTouchpadPointer.
+  /// User-facing label or message for remote desktop use touchpad pointer.
   ///
   /// In en, this message translates to:
   /// **'Use touchpad pointer'**
   String get remoteDesktopUseTouchpadPointer;
 
-  /// No description provided for @remoteDesktopSendCtrlAltDelete.
+  /// User-facing label or message for remote desktop send ctrl alt delete.
   ///
   /// In en, this message translates to:
   /// **'Send Ctrl+Alt+Delete'**
   String get remoteDesktopSendCtrlAltDelete;
 
-  /// No description provided for @remoteDesktopReconnect.
+  /// User-facing label or message for remote desktop reconnect.
   ///
   /// In en, this message translates to:
   /// **'Reconnect'**
   String get remoteDesktopReconnect;
 
-  /// No description provided for @remoteDesktopFullScreen.
+  /// User-facing label or message for remote desktop full screen.
   ///
   /// In en, this message translates to:
   /// **'Full screen'**
   String get remoteDesktopFullScreen;
 
-  /// No description provided for @remoteDesktopCloseSession.
+  /// User-facing label or message for remote desktop close session.
   ///
   /// In en, this message translates to:
   /// **'Close session'**
   String get remoteDesktopCloseSession;
 
-  /// No description provided for @remoteDesktopConnected.
+  /// User-facing label or message for remote desktop connected.
   ///
   /// In en, this message translates to:
   /// **'Connected'**
   String get remoteDesktopConnected;
 
-  /// No description provided for @remoteDesktopConnecting.
+  /// Status message shown while remote desktop connecting.
   ///
   /// In en, this message translates to:
   /// **'Connecting'**
   String get remoteDesktopConnecting;
 
-  /// No description provided for @remoteDesktopReconnecting.
+  /// User-facing label or message for remote desktop reconnecting.
   ///
   /// In en, this message translates to:
   /// **'Reconnecting'**
   String get remoteDesktopReconnecting;
 
-  /// No description provided for @remoteDesktopDisconnected.
+  /// User-facing label or message for remote desktop disconnected.
   ///
   /// In en, this message translates to:
   /// **'Disconnected'**
   String get remoteDesktopDisconnected;
 
-  /// No description provided for @remoteDesktopGuideTouch.
+  /// User-facing label or message for remote desktop guide touch.
   ///
   /// In en, this message translates to:
   /// **'Touchpad'**
   String get remoteDesktopGuideTouch;
 
-  /// No description provided for @remoteDesktopGuideTouchTip.
+  /// Help text for the remote desktop guide touch setting or action.
   ///
   /// In en, this message translates to:
   /// **'One finger moves the pointer like a touchpad, and a tap clicks. Tap with two fingers to right-click, drag with two to scroll, and pinch to zoom. Tap twice and keep the finger down to drag.'**
   String get remoteDesktopGuideTouchTip;
 
-  /// No description provided for @remoteDesktopGuideKeyboardTip.
+  /// Help text for the remote desktop guide keyboard setting or action.
   ///
   /// In en, this message translates to:
   /// **'Opens the on-screen keyboard. What you type is sent to the remote desktop.'**
   String get remoteDesktopGuideKeyboardTip;
 
-  /// No description provided for @remoteDesktopGuideViewOnlyTip.
+  /// Help text for the remote desktop guide view only setting or action.
   ///
   /// In en, this message translates to:
   /// **'Stops sending the pointer and keys, so you can look without clicking anything by accident.'**
   String get remoteDesktopGuideViewOnlyTip;
 
-  /// No description provided for @remoteDesktopGuideMoreTip.
+  /// Help text for the remote desktop guide more setting or action.
   ///
   /// In en, this message translates to:
   /// **'Ctrl+Alt+Delete, reconnecting and full screen are in here.'**
   String get remoteDesktopGuideMoreTip;
 
-  /// No description provided for @remoteDesktopGuidePointerTip.
+  /// Help text for the remote desktop guide pointer setting or action.
   ///
   /// In en, this message translates to:
   /// **'So is a direct pointer, where a finger clicks what it touches.'**
   String get remoteDesktopGuidePointerTip;
 
-  /// No description provided for @remoteDesktopVncClipboardLatin1Only.
+  /// User-facing label or message for remote desktop VNC clipboard latin 1 only.
   ///
   /// In en, this message translates to:
   /// **'VNC clipboard supports Latin-1 text only.'**
   String get remoteDesktopVncClipboardLatin1Only;
 
-  /// No description provided for @appearanceThemeModeLocked.
+  /// User-facing label or message for appearance theme mode locked.
   ///
   /// In en, this message translates to:
   /// **'This theme only supports {mode}. Select another theme to change the mode.'**

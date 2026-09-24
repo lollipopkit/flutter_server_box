@@ -154,6 +154,9 @@ flutter:
   assets:
     - assets/app_icon.png
     - assets/rootfs_manifest.json
+    # The theme catalog's floor: whose repositories the store offers when its
+    # own address does not answer. The list itself is read over HTTPS.
+    - assets/catalog/
     - assets/themes/amoled/
     - assets/themes/midnight/
     - assets/themes/one-dark-pro/

@@ -7,6 +7,7 @@
   "appearanceThemeStore": "主题商店",
   "appearanceThemeStoreUrl": "主题目录 URL",
   "appearanceInvalidTheme": "主题包或目录无效",
+  "appearanceThemeNeedsNewerApp": "需要更新版本的 App：{version}",
   "appearanceFontFamilies": "界面字体列表",
   "appearanceFontFamiliesTip": "每行一个字体名称，按顺序 fallback。",
   "appearanceFontImport": "导入界面字体文件",
@@ -278,7 +279,9 @@
   "mismatchSystem": "系统不匹配：{system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "镜像",
@@ -358,10 +361,18 @@
   "rootfsUpdateTip": "已安装 {distro} {installed}，新版本为 {latest}。更新会重新下载并替换整个容器，{pm} 中的数据将丢失。",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "请先关闭 {name} 上的终端，再删除",
@@ -369,9 +380,15 @@
   "rootfsInstallTip": "下载 {distro} {version}(约 {size} MB)并解压到本机。",
   "@rootfsInstallTip": {
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "nameAlreadyExistsFmt": "「{name}」已存在",
@@ -604,14 +621,20 @@
   "geoDataCurrent": "已经是 {month} 的数据。",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**下载大小：{download} · 本机占用：{disk}。** 完整数据集保存在本机，后续所有地理位置查询均在本地完成，不会向下载服务发送服务器地址或查询活动。\n\n数据每月更新。新版本会替换已安装的数据，不保留额外副本；你可以随时删除。",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "性能测试",
@@ -919,5 +942,5 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete、重新连接和全屏都在这里。",
   "remoteDesktopGuidePointerTip": "这里也可以切换为直接指针：手指点到哪里就点击哪里。",
   "remoteDesktopVncClipboardLatin1Only": "VNC 剪贴板仅支持 Latin-1 文本。",
-"appearanceThemeModeLocked": "此主题仅支持{mode}。如需切换模式，请选择其他主题。"
+  "appearanceThemeModeLocked": "此主题仅支持{mode}。如需切换模式，请选择其他主题。"
 }

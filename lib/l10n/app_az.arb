@@ -7,6 +7,7 @@
   "appearanceThemeStore": "Mövzu mağazası",
   "appearanceThemeStoreUrl": "Mövzu kataloqu URL-si",
   "appearanceInvalidTheme": "Mövzu paketi və ya kataloq etibarsızdır",
+  "appearanceThemeNeedsNewerApp": "Daha yeni tətbiq tələb olunur: {version}",
   "appearanceFontFamilies": "İnterfeys şrift ailələri",
   "appearanceFontFamiliesTip": "Hər sətirə bir ad yazın; şriftlər ardıcıllıqla yoxlanır.",
   "appearanceFontImport": "İnterfeys şrift faylını idxal et",
@@ -275,14 +276,20 @@
   "jumpServersNotFoundFmt": "{serverName} üçün vasitəçi serverlər tapılmadı: {jumpIds}",
   "@jumpServersNotFoundFmt": {
     "placeholders": {
-      "serverName": {},
-      "jumpIds": {}
+      "serverName": {
+        "type": "String"
+      },
+      "jumpIds": {
+        "type": "String"
+      }
     }
   },
   "nameAlreadyExistsFmt": "\"{name}\" artıq mövcuddur",
   "@nameAlreadyExistsFmt": {
     "placeholders": {
-      "name": {}
+      "name": {
+        "type": "String"
+      }
     }
   },
   "noJumpServerAvailable": "Mövcud vasitəçi server yoxdur.",
@@ -306,7 +313,9 @@
   "mismatchSystem": "Uyğun olmayan sistem: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Güzgü serveri",
@@ -421,25 +430,41 @@
   "rootfsUpdateTip": "{distro} {installed} quraşdırılıb; {latest} mövcuddur. Yeniləmə bütün konteyneri əvəz edir: {pm} məlumatları itirilir",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "{name} sistemini silməzdən əvvəl ondakı terminalları bağla",
   "@linuxSystemInUse": {
     "placeholders": {
-      "name": {}
+      "name": {
+        "type": "String"
+      }
     }
   },
   "rootfsSubtitle": "Bu cihazda Linux istifadəçi mühiti",
   "rootfsInstallTip": "{distro} {version} endirilir (təxminən {size} MB) və bu cihazda arxivdən çıxarılır.",
   "@rootfsInstallTip": {
     "placeholders": {
-      "distro": {},
-      "version": {},
-      "size": {}
+      "distro": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      },
+      "size": {
+        "type": "int"
+      }
     }
   },
   "sameIdServerExist": "Eyni ID ilə server artıq mövcuddur",
@@ -737,14 +762,20 @@
   "geoDataCurrent": "{month} artıq quraşdırılıb.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Endirmə: {download} · Cihazda tutulan yer: {disk}.** Tam məlumat toplusu bu cihazda saxlanılır və sonrakı bütün coğrafi mövqe sorğuları yerli olaraq icra olunur. Server ünvanları və sorğu fəaliyyəti endirmə servisinə göndərilmir.\n\nHər ay yenilənir. Yeni versiya əlavə nüsxə saxlamadan quraşdırılmış məlumatları əvəz edir. Məlumatları istənilən vaxt silə bilərsən.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Benchmark",
@@ -781,7 +812,7 @@
   "@benchmarkEstimatedTime": {
     "placeholders": {
       "minutes": {
-        "type": "String"
+        "type": "int"
       }
     }
   },
@@ -1114,5 +1145,26 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, yenidən qoşulma və tam ekran buradadır.",
   "remoteDesktopGuidePointerTip": "Barmağın toxunduğu yeri klikləyən birbaşa göstərici də buradadır.",
   "remoteDesktopVncClipboardLatin1Only": "VNC mübadilə buferi yalnız Latin-1 mətnini dəstəkləyir.",
-"appearanceThemeModeLocked": "Bu mövzu yalnız {mode} rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin."
+  "appearanceThemeModeLocked": "Bu mövzu yalnız {mode} rejimini dəstəkləyir. Rejimi dəyişmək üçün başqa mövzu seçin.",
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

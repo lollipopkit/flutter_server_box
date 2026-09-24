@@ -7,6 +7,7 @@
   "appearanceThemeStore": "Themawinkel",
   "appearanceThemeStoreUrl": "URL van themacatalogus",
   "appearanceInvalidTheme": "Ongeldig themapakket of ongeldige catalogus",
+  "appearanceThemeNeedsNewerApp": "Een nieuwere app is vereist: {version}",
   "appearanceFontFamilies": "Lettertypefamilies voor de interface",
   "appearanceFontFamiliesTip": "Eén naam per regel; lettertypen worden op volgorde geprobeerd.",
   "appearanceFontImport": "Lettertypebestand voor de interface importeren",
@@ -186,7 +187,9 @@
   "mismatchSystem": "Niet-overeenkomend systeem: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Mirror",
@@ -248,10 +251,18 @@
   "rootfsUpdateTip": "{distro} {installed} is geïnstalleerd, {latest} is beschikbaar. Bijwerken vervangt de hele container: {pm}-gegevens gaan verloren",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Sluit de terminals op {name} voordat je het verwijdert",
@@ -566,14 +577,20 @@
   "geoDataCurrent": "{month} is al geïnstalleerd.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Download: {download} · Opslag op het apparaat: {disk}.** De volledige gegevensset wordt op dit apparaat opgeslagen en alle latere locatiebepalingen worden lokaal uitgevoerd. Er worden geen serveradressen of opzoekactiviteiten naar de downloadservice verzonden.\n\nMaandelijks bijgewerkt. Een nieuwere versie vervangt de geïnstalleerde gegevens zonder een extra kopie te bewaren. Je kunt de gegevens op elk moment verwijderen.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Benchmark",
@@ -912,5 +929,61 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Del, opnieuw verbinden en volledig scherm staan hier.",
   "remoteDesktopGuidePointerTip": "Net als de directe aanwijzer, waarbij een vinger klikt waar hij tikt.",
   "remoteDesktopVncClipboardLatin1Only": "Het VNC-klembord ondersteunt alleen Latin-1-tekst.",
-"appearanceThemeModeLocked": "Dit thema ondersteunt alleen {mode}. Kies een ander thema om de modus te wijzigen."
+  "appearanceThemeModeLocked": "Dit thema ondersteunt alleen {mode}. Kies een ander thema om de modus te wijzigen.",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@diskWarningFmt": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@scheduledTaskSummaryFmt": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

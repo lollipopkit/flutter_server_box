@@ -498,34 +498,6 @@ void main() {
     );
   });
 
-  test('catalog requires a checksum and resolves HTTPS links', () {
-    final base = Uri.parse('https://example.org/store/catalog.json');
-    final catalog = {
-      'format': 1,
-      'themes': [
-        {
-          'name': 'Amethyst',
-          'modes': ['light', 'dark'],
-          'url': 'amethyst.fsbt',
-          'sha256': List.filled(64, 'a').join(),
-        },
-      ],
-    };
-    final entries = ThemePackages.parseCatalog(
-      utf8.encode(jsonEncode(catalog)),
-      base,
-    );
-    expect(
-      entries.single.url.toString(),
-      'https://example.org/store/amethyst.fsbt',
-    );
-    (catalog['themes'] as List).first.remove('sha256');
-    expect(
-      () => ThemePackages.parseCatalog(utf8.encode(jsonEncode(catalog)), base),
-      throwsFormatException,
-    );
-  });
-
   test('font family names retain fallback order and remove duplicates', () {
     expect(
       AppFont.normalizeFamilies([' Inter ', 'Noto Sans', 'inter', '', 'Arial']),

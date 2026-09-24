@@ -1,0 +1,19 @@
+# The theme catalog: which repositories the app's theme store offers.
+#
+# One entry per repository, and no theme and no version anywhere in this file:
+# a theme is published as a release in its author's own repository, and that is
+# where its versions live. Adding one is a pull request that adds a single
+# `[[repo]]` table below.
+#
+# The app ships a copy of this file and reads it over HTTPS from this
+# repository, so a new entry reaches devices without an app release.
+
+schema = 1
+name = "ServerBox themes"
+
+# The official repository, and one repository serves both kinds: its `themes/`
+# section is what this app reads, and the `plugins/` beside it is skipped rather
+# than refused. A third party publishes in their own repository and adds a line
+# here.
+[[repo]]
+url = "https://github.com/lollipopkit/serverbox-plugins"

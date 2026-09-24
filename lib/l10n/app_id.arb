@@ -7,6 +7,7 @@
   "appearanceThemeStore": "Toko tema",
   "appearanceThemeStoreUrl": "URL katalog tema",
   "appearanceInvalidTheme": "Paket tema atau katalog tidak valid",
+  "appearanceThemeNeedsNewerApp": "Memerlukan aplikasi versi lebih baru: {version}",
   "appearanceFontFamilies": "Daftar keluarga font antarmuka",
   "appearanceFontFamiliesTip": "Satu nama per baris; font dicoba sesuai urutan.",
   "appearanceFontImport": "Impor berkas font antarmuka",
@@ -186,7 +187,9 @@
   "mismatchSystem": "Sistem tidak cocok: {system}",
   "@mismatchSystem": {
     "placeholders": {
-      "system": {}
+      "system": {
+        "type": "String"
+      }
     }
   },
   "mirror": "Mirror",
@@ -248,10 +251,18 @@
   "rootfsUpdateTip": "{distro} {installed} terpasang, ada {latest}. Pembaruan mengganti seluruh kontainer: data {pm} hilang",
   "@rootfsUpdateTip": {
     "placeholders": {
-      "distro": {},
-      "installed": {},
-      "latest": {},
-      "pm": {}
+      "distro": {
+        "type": "String"
+      },
+      "installed": {
+        "type": "String"
+      },
+      "latest": {
+        "type": "String"
+      },
+      "pm": {
+        "type": "String"
+      }
     }
   },
   "linuxSystemInUse": "Tutup terminal di {name} sebelum menghapusnya",
@@ -566,14 +577,20 @@
   "geoDataCurrent": "{month} sudah terpasang.",
   "@geoDataCurrent": {
     "placeholders": {
-      "month": {}
+      "month": {
+        "type": "String"
+      }
     }
   },
   "geoDataConsent": "**Unduhan: {download} · Penyimpanan di perangkat: {disk}.** Seluruh kumpulan data disimpan di perangkat ini dan semua pencarian lokasi berikutnya dilakukan secara lokal. Alamat server dan aktivitas pencarian tidak dikirim ke layanan unduhan.\n\nDiperbarui setiap bulan. Versi yang lebih baru menggantikan data yang terpasang tanpa menyimpan salinan tambahan. Anda dapat menghapusnya kapan saja.",
   "@geoDataConsent": {
     "placeholders": {
-      "download": {},
-      "disk": {}
+      "download": {
+        "type": "String"
+      },
+      "disk": {
+        "type": "String"
+      }
     }
   },
   "benchmark": "Uji performa",
@@ -912,5 +929,40 @@
   "remoteDesktopGuideMoreTip": "Ctrl+Alt+Delete, sambung ulang, dan layar penuh ada di sini.",
   "remoteDesktopGuidePointerTip": "Begitu juga penunjuk langsung, di mana jari mengeklik tempat yang disentuhnya.",
   "remoteDesktopVncClipboardLatin1Only": "Clipboard VNC hanya mendukung teks Latin-1.",
-"appearanceThemeModeLocked": "Tema ini hanya mendukung {mode}. Pilih tema lain untuk mengubah mode."
+  "appearanceThemeModeLocked": "Tema ini hanya mendukung {mode}. Pilih tema lain untuk mengubah mode.",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@processShowKernelThreads": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceOtherUnits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@serviceJournalRecent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

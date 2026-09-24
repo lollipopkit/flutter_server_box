@@ -83,13 +83,6 @@ final class ThemePackage {
       : null;
 }
 
-final class ThemeStoreEntry {
-  const ThemeStoreEntry(this.name, this.url, this.sha256);
-  final String name;
-  final Uri url;
-  final String sha256;
-}
-
 /// Loads one bundled folder on demand and shares concurrent requests.
 final class BuiltinThemeLoader {
   BuiltinThemeLoader({AssetBundle? bundle, this.rootDirectory})
@@ -159,10 +152,13 @@ abstract final class ThemePackages {
   static const _maxBackgroundBytes = 8 * 1024 * 1024;
   static const _maxIconBytes = 256 * 1024;
   static const _maxManifestBytes = 64 * 1024;
-  static const _maxCatalogBytes = 1024 * 1024;
   static const _maxIcons = 48;
   static final _digestPattern = RegExp(r'^[a-f0-9]{64}$');
-  static final _idPattern = RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$');
+
+  /// What a theme's id may be, and therefore what a repository file for one may
+  /// be called: a repository names the theme its file describes, so the two are
+  /// one spelling and one pattern — see [ThemeRepoLayout.pathOf].
+  static final idPattern = RegExp(r'^[a-z0-9][a-z0-9._-]{0,63}$');
   static String? _activeId;
   static ThemePackage? _active;
   static const defaultTheme = ThemePackage(
@@ -314,41 +310,6 @@ abstract final class ThemePackages {
     }
   }
 
-  static Future<List<ThemeStoreEntry>> catalog(String url) async {
-    final base = httpsUri(url);
-    final bytes = await download(url, maxBytes: _maxCatalogBytes);
-    return parseCatalog(bytes, base);
-  }
-
-  static List<ThemeStoreEntry> parseCatalog(List<int> bytes, Uri base) {
-    httpsUri(base.toString());
-    if (bytes.length > _maxCatalogBytes) {
-      throw const FormatException('Catalog exceeds size limit');
-    }
-    final data = _map(jsonDecode(utf8.decode(bytes)), 'catalog');
-    if (data['format'] != 1) throw const FormatException('Unsupported catalog');
-    final rows = data['themes'];
-    if (rows is! List || rows.length > 100) {
-      throw const FormatException('Invalid catalog entries');
-    }
-    return rows.map((raw) {
-      final row = _map(raw, 'catalog entry');
-      final name = _label(row['name'], 'name');
-      final url = row['url'];
-      final digest = row['sha256'];
-      if (url is! String ||
-          digest is! String ||
-          !_digestPattern.hasMatch(digest)) {
-        throw const FormatException('Invalid catalog entry');
-      }
-      return ThemeStoreEntry(
-        name,
-        httpsUri(base.resolve(url).toString()),
-        digest,
-      );
-    }).toList();
-  }
-
   static Future<ThemePackage> installUrl(
     String url, {
     String? expectedSha256,
@@ -488,7 +449,7 @@ abstract final class ThemePackages {
     }
     final (schemaMin, schemaMax) = _schemaRange(data['schema']);
     final id = data['id'];
-    if (id is! String || !_idPattern.hasMatch(id)) {
+    if (id is! String || !idPattern.hasMatch(id)) {
       throw const FormatException('Invalid theme id');
     }
     final name = _label(data['name'], 'name');
@@ -643,7 +604,7 @@ abstract final class ThemePackages {
       if (data['format'] != 1) return null;
       final (schemaMin, schemaMax) = _schemaRange(data['schema']);
       final themeId = data['id'];
-      if (themeId is! String || !_idPattern.hasMatch(themeId)) return null;
+      if (themeId is! String || !idPattern.hasMatch(themeId)) return null;
       final colors = _map(data['colors'], 'colors');
       final palette = colors['palette'] == null
           ? <String, dynamic>{}
