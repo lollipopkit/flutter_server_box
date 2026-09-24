@@ -1,10 +1,11 @@
 # ServerBox theme packages
 
 `.fsbt` is a ZIP archive. Its root contains `manifest.toml` (UTF-8 TOML),
-optional `background.png` / `background.jpg` / `background.jpeg`, and optional
-PNG files in `icons/`. Format version 1 contains UI colors, in-app icons, a
-background, and component radii. Launcher icons and fonts are managed
-separately and are not accepted in a theme package.
+optional `background.png` / `background.jpg` / `background.jpeg`, optional
+`icons/` files, and an optional `splash_logo.png` / `.jpg` / `.jpeg` / `.svg`.
+Format version 1 contains UI colors, in-app icons, a background, component
+radii, and a splash screen. Launcher icons and fonts are managed separately and
+are not accepted in a theme package.
 
 An editable example is available at [Aurora](examples/aurora/manifest.toml).
 On desktop, select **Install theme → Folder** to import its directory during development.
@@ -26,9 +27,11 @@ id = "example.amethyst"
 name = "Amethyst"
 modes = ["dark"]
 
+# An SVG icon, an icon color, and a splash are schema 2 features, so the
+# minimum this package is readable at is 2. See "Schema versions".
 [schema]
-min = 1
-max = 1
+min = 2
+max = 2
 
 [colors]
 mode = 2
@@ -39,13 +42,23 @@ primary = 0xFFC87FD0
 surface = 0xFF141014
 
 [icons.images]
-"tab.server" = "icons/tab_server.png"
+"tab.server" = "icons/tab_server.svg"
 "nav.settings" = "icons/nav_settings.png"
+
+# Per-icon colors: an ARGB integer or the name of a palette role.
+[icons.colors]
+"tab.server" = "primary"
+"nav.settings" = 0xFFC87FD0
 
 [background]
 type = "image"
 image = "background.png"
 blur = 8
+
+[splash]
+color = "surface"
+logo = "splash_logo.svg"
+duration = 900
 ```
 
 Only `id`, `name`, `modes`, and the `schema` table are required. Omitted fields use
@@ -62,6 +75,8 @@ are rejected rather than replaced with defaults.
 | `colors.palette.light`, `colors.palette.dark` | Empty |
 | `icons.style` | `"classic"` |
 | `icons.images` | Empty |
+| `icons.colors` | Empty (follow the ambient icon color) |
+| `splash` | Absent (no splash) |
 | `background.type` | `"none"` |
 | `background.opacity` | `0.18` |
 | `background.blur` | `0` |
@@ -83,7 +98,7 @@ black dark surfaces. Legacy AMOLED settings migrate to Dark + AMOLED; Auto
 AMOLED migrates to System + AMOLED. It is no longer a ThemeMode option.
 `format` versions the ZIP manifest structure. `schema` is the inclusive range
 of theme UI schema versions the package supports. The app currently supports
-schema **v1–v1** and shows this range in the **Install theme** help text. The installer
+schema **v1–v2** and shows this range in the **Install theme** help text. The installer
 requires the package range to overlap the app range and checks it again when
 loading an installed theme. Both `schema.min` and `schema.max` are required.
 `seed` and palette colors are ARGB integers; hexadecimal TOML values such as
@@ -93,6 +108,56 @@ where the package does not provide an image. `background.type` is `none`,
 0–0.6, blur is 0–30, and each shape radius is 0–40.
 Image paths must match the fixed names above. The installer rejects other
 archive entries, duplicate paths, symlinks, encrypted files, and path traversal.
+A top-level table it does not know is refused rather than ignored, so a
+misspelled section is a failure instead of a setting that silently does nothing.
+
+## Schema versions
+
+`schema.min` is the oldest app that may read the package, and it is what a
+build checks itself against. This is a refusal, not a migration: a package
+whose range does not overlap the app's is not installed, and an installed one
+whose range later stops overlapping is not loaded (it is shown as unreadable,
+and its settings are left alone).
+
+Schema **2** added SVG icons, `icons.colors`, and the `splash` table. A package
+that uses any of them must declare `min = 2`, because a build that reads only
+schema 1 would otherwise install the same bytes and drop the feature without
+saying so: the SVG icon becomes the built-in glyph, and the color and the splash
+simply do not happen. `max = 2` is the current ceiling; a range that reaches
+past it still installs as long as it overlaps.
+
+## Icons
+
+`icons.images` maps an icon key to the file that carries it, inside `icons/`.
+The file name must be the key with dots replaced by underscores, and either
+extension:
+
+```toml
+[icons.images]
+"tab.server" = "icons/tab_server.svg"
+"nav.settings" = "icons/nav_settings.png"
+```
+
+A PNG is at most 512 × 512 pixels and 256 KiB. An SVG has no raster size to
+measure, so it is checked as a document instead: it must be UTF-8, its root
+element must be `svg`, and it is at most 256 KiB. A DTD, an entity declaration,
+a `<script>`, a `<foreignObject>`, or anything that reaches outside the file —
+an `http` `href` or an `url(http…)` — is refused. A refused or missing icon
+draws the built-in glyph for that key rather than an empty box.
+
+Both formats are tinted with one color, so a drawing should use `currentColor`
+for the parts that should follow it. Without `icons.colors` that color is the
+ambient icon color, which is what every icon used before a package could say
+otherwise. With it, each entry overrides that color for one icon:
+
+```toml
+[icons.colors]
+"tab.server" = "primary"       # any palette role, resolved per brightness
+"nav.settings" = 0xFFC87FD0    # or an ARGB integer
+```
+
+A color for a key the package carries no image for is refused: it would be a
+typo that shows up as nothing at all.
 
 ## Color palettes
 
@@ -153,10 +218,38 @@ compact Btn rows/columns retain their layout and use the themed radius.
 Explicit per-widget overrides still take priority. Theme preview uses these
 same settings in memory; dismissing the picker restores the previous appearance.
 
-## Image assets
+## Splash screen
 
-Package icon images must be PNG, at most 512 × 512 pixels and 256 KiB each.
-Supported keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`,
+`splash` covers the app with a color and an optional logo while it takes its
+first frames, then fades out. It is absent unless the table is present, since
+otherwise every package would carry one.
+
+```toml
+[splash]
+color = "surface"          # any palette role, or an ARGB integer
+logo = "splash_logo.svg"   # optional, one fixed name at the archive root
+duration = 900             # milliseconds, 100–3000, default 600
+```
+
+The logo is one file named `splash_logo.png`, `splash_logo.jpg`,
+`splash_logo.jpeg` or `splash_logo.svg` at the archive root — a name, not a
+path. A PNG or JPEG is at most 2048 × 2048 pixels and 512 KiB, an SVG 512 KiB
+and the same document checks as an icon. It is drawn at 96 logical pixels,
+centered, tinted like an icon only when it is an SVG — a raster logo keeps its
+own colors.
+
+`duration` is how long the splash stays up before it fades, and what it delays
+is the launch, which is why the ceiling is low. It is read once, when the app
+builds its first frame: choosing another theme later does not play a splash
+again, and a package selected during a launch does not play its own.
+
+Only this half can follow a theme. What the operating system draws before Dart
+starts — an Android window background or an iOS launch storyboard — is decided
+when the app is built and can only change with the system's brightness.
+
+## Image keys and limits
+
+Supported icon keys are `tab.<tab>` and `tab.<tab>.selected` for `server`, `ssh`,
 `file`, `snippet`, `agent`, `benchmark`, and `remoteDesktop`. Navigation keys
 are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.tabs`, `nav.server`, `nav.sort`, `nav.terminal`, `nav.folder`, `nav.cloud`,
@@ -164,9 +257,11 @@ are `nav.more`, `nav.settings`, `nav.tune`, `nav.privacy`, `nav.agent`,
 `nav.desktop`. Additional keys are rejected in version 1.
 
 The compressed archive and total extracted content are each limited to 16 MiB.
-`manifest.toml` is limited to 64 KiB. The background is limited to 8 MiB,
-8192 pixels on either side, and 64 megapixels. The installer decodes and checks
-images before writing an isolated, content-addressed installation directory.
+`manifest.toml` is limited to 64 KiB. An icon is limited to 256 KiB, the splash
+logo to 512 KiB, and the background to 8 MiB, 8192 pixels on either side, and 64
+megapixels. The installer checks every image — decoding a PNG or JPEG, reading
+an SVG as a document — before writing an isolated, content-addressed
+installation directory.
 
 ## Theme store
 
@@ -241,6 +336,9 @@ the repository's tree. `sha256` is required for the store to install it, and
 declares, which is how one repository serves apps of different ages at once:
 **the app installs the newest version it can read**, not the newest version
 listed. A theme whose only versions are too new is still listed, saying so.
+A version whose package uses a schema 2 feature lists `schema_min = 2`, since
+that is what the package itself must declare; listing 1 would offer an older
+app a download that installs and then loses the icon, the color or the splash.
 
 Publishing is a release per theme per version, tagged `<id>-<version>` with the
 `.fsbt` as its asset. Adding a repository to the app's catalog is a pull request

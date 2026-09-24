@@ -51,6 +51,16 @@ abstract final class ThemePalette {
     'surfaceTint',
   };
 
+  /// A color as a manifest writes one: an ARGB integer, or the name of a role
+  /// resolved against [scheme]. `null` for anything else, which every caller
+  /// treats as "not configured" — the values are validated at install time, so
+  /// this is the second reading of the same rules rather than the only one.
+  static Color? spec(Object? value, ColorScheme scheme) => switch (value) {
+    final int value => Color(value),
+    final String role => resolve(scheme, role),
+    _ => null,
+  };
+
   static Color resolve(ColorScheme scheme, String role) => switch (role) {
     'primary' => scheme.primary,
     'onPrimary' => scheme.onPrimary,

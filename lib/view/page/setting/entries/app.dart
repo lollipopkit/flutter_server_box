@@ -421,7 +421,9 @@ extension _App on _AppSettingsPageState {
       paletteLight: const {},
       paletteDark: const {},
       iconStyle: icons,
-      iconKeys: const {},
+      // A custom theme is the user's own background and radii, so it carries no
+      // package images and no splash: both of those are a package's.
+      iconFiles: const {},
       backgroundStyle: 'image',
       backgroundFile: path,
       directory: '',

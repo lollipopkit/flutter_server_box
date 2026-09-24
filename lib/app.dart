@@ -25,6 +25,7 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
 import 'package:server_box/view/widget/diagnostics_level_picker.dart';
+import 'package:server_box/view/widget/theme_splash.dart';
 
 part 'intro.dart';
 
@@ -349,7 +350,7 @@ class _MyAppState extends State<MyApp> {
             : Stores.setting.appBackgroundPath.fetch());
         if (backgroundStyle == 'none' ||
             (backgroundStyle == 'image' && backgroundPath.isEmpty)) {
-          return content;
+          return ThemeSplashGate(child: content);
         }
         final surface = Theme.of(ctx).colorScheme.surface;
         final accent = Theme.of(ctx).colorScheme.primary;
@@ -366,8 +367,9 @@ class _MyAppState extends State<MyApp> {
             (ThemePackages.preview.value?.blur ??
                     Stores.setting.appBackgroundBlur.fetch())
                 .clamp(0.0, 30.0);
-        return Stack(
-          children: [
+        return ThemeSplashGate(
+          child: Stack(
+            children: [
             Positioned.fill(
               child: backgroundStyle == 'gradient'
                   ? DecoratedBox(
@@ -404,7 +406,8 @@ class _MyAppState extends State<MyApp> {
                     ),
             ),
             Positioned.fill(child: content),
-          ],
+            ],
+          ),
         );
       },
       locale: locale,

@@ -7,7 +7,7 @@ import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show ColorScheme, ThemeMode;
+import 'package:flutter/material.dart' show Color, ColorScheme, ThemeMode;
 import 'package:flutter/services.dart'
     show AssetBundle, AssetManifest, rootBundle;
 import 'package:server_box/core/service/theme_components.dart';
@@ -15,6 +15,34 @@ import 'package:server_box/core/service/theme_palette.dart';
 import 'package:server_box/data/model/app/builtin_theme.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:toml/toml.dart';
+import 'package:xml/xml.dart' as xml;
+
+/// The splash a package asks for: a background color, an optional logo beside
+/// the manifest, and how long the app stays behind it before fading out.
+final class ThemeSplash {
+  const ThemeSplash({
+    required this.color,
+    required this.duration,
+    this.logo,
+  });
+
+  static const defaultDuration = 600;
+  static const minDuration = 100;
+  static const maxDuration = 3000;
+
+  /// An ARGB integer or a [ThemePalette] role name, resolved per brightness.
+  final Object color;
+
+  /// The logo's file name in the package root, or null for a plain color.
+  final String? logo;
+
+  /// Milliseconds the splash stays up. It covers the app's first frames, so
+  /// what it delays is the launch, which is why the ceiling is low.
+  final int duration;
+
+  Color resolve(ColorScheme scheme) =>
+      ThemePalette.spec(color, scheme) ?? scheme.surface;
+}
 
 /// A versioned .fsbt resource bundle. Fonts and launcher icons are separate.
 final class ThemePackage {
@@ -31,7 +59,7 @@ final class ThemePackage {
     required this.paletteLight,
     required this.paletteDark,
     required this.iconStyle,
-    required this.iconKeys,
+    required this.iconFiles,
     required this.backgroundStyle,
     required this.opacity,
     required this.blur,
@@ -39,6 +67,8 @@ final class ThemePackage {
     required this.tileRadius,
     required this.buttonRadius,
     required this.directory,
+    this.iconColors = const {},
+    this.splash,
     this.backgroundFile,
     this.components = const ThemeComponents.empty(),
   });
@@ -63,7 +93,16 @@ final class ThemePackage {
   final Map<String, int> paletteLight;
   final Map<String, int> paletteDark;
   final String iconStyle;
-  final Set<String> iconKeys;
+
+  /// Icon key to the file that carries it, inside `icons/`. The extension is
+  /// part of the value because the file decides how it is drawn: a PNG is
+  /// decoded by the engine, an SVG by `flutter_svg`.
+  final Map<String, String> iconFiles;
+
+  /// Icon key to an ARGB integer or a [ThemePalette] role name. A key without
+  /// one follows the ambient icon color, which is what an icon did before a
+  /// package could say otherwise.
+  final Map<String, Object> iconColors;
   final String backgroundStyle;
   final double opacity;
   final double blur;
@@ -71,6 +110,7 @@ final class ThemePackage {
   final double tileRadius;
   final double buttonRadius;
   final String directory;
+  final ThemeSplash? splash;
   final String? backgroundFile;
   final ThemeComponents components;
 
@@ -78,9 +118,20 @@ final class ThemePackage {
       ? backgroundFile ?? directory.joinPath('background.img')
       : null;
 
-  String? iconPath(String key) => iconKeys.contains(key)
-      ? directory.joinPath('icons').joinPath('${key.replaceAll('.', '_')}.png')
-      : null;
+  /// The splash logo, which sits beside the manifest rather than under any
+  /// directory of its own — there is only ever one.
+  String? get splashLogoPath => switch (splash?.logo) {
+    final String logo => directory.joinPath(logo),
+    _ => null,
+  };
+
+  String? iconPath(String key) => switch (iconFiles[key]) {
+    final String file => directory.joinPath('icons').joinPath(file),
+    _ => null,
+  };
+
+  Color? iconColor(String key, ColorScheme scheme) =>
+      ThemePalette.spec(iconColors[key], scheme);
 }
 
 /// Loads one bundled folder on demand and shares concurrent requests.
@@ -144,16 +195,49 @@ abstract final class ThemePackages {
   static final preview = ValueNotifier<ThemePackage?>(null);
 
   static const supportedSchemaMin = 1;
-  static const supportedSchemaMax = 1;
+  static const supportedSchemaMax = 2;
+
+  /// What schema 2 added: SVG icons, per-icon colors, and [ThemeSplash]. A
+  /// package that uses one of them has to say it needs 2, because a build that
+  /// reads only schema 1 installs the same bytes and then drops the feature
+  /// without saying so.
+  static const featureSchema = 2;
   static String get supportedSchemaRange =>
       'v$supportedSchemaMin–v$supportedSchemaMax';
 
   static const maxPackageBytes = 16 * 1024 * 1024;
   static const _maxBackgroundBytes = 8 * 1024 * 1024;
+  static const _maxSplashLogoBytes = 512 * 1024;
   static const _maxIconBytes = 256 * 1024;
   static const _maxManifestBytes = 64 * 1024;
   static const _maxIcons = 48;
   static final _digestPattern = RegExp(r'^[a-f0-9]{64}$');
+
+  /// Every top-level table a package may carry. One that is not here is refused
+  /// rather than ignored, because an ignored one is a theme that silently does
+  /// not do what its author wrote — a mistyped `[splas]` costs nothing to
+  /// report and is invisible otherwise.
+  static const _sections = {
+    'format',
+    'schema',
+    'id',
+    'name',
+    'modes',
+    'colors',
+    'icons',
+    'background',
+    'shapes',
+    'components',
+    'splash',
+  };
+  static const _iconFields = {'style', 'images', 'colors'};
+  static const _splashFields = {'color', 'logo', 'duration'};
+  static const _splashLogos = {
+    'splash_logo.png',
+    'splash_logo.jpg',
+    'splash_logo.jpeg',
+    'splash_logo.svg',
+  };
 
   /// What a theme's id may be, and therefore what a repository file for one may
   /// be called: a repository names the theme its file describes, so the two are
@@ -174,7 +258,7 @@ abstract final class ThemePackages {
     paletteLight: {},
     paletteDark: {},
     iconStyle: 'classic',
-    iconKeys: {},
+    iconFiles: {},
     backgroundStyle: 'none',
     opacity: 0.18,
     blur: 0,
@@ -382,7 +466,9 @@ abstract final class ThemePackages {
           final iconName = icon.uri.pathSegments
               .where((part) => part.isNotEmpty)
               .last;
-          if (!iconName.endsWith('.png')) continue;
+          if (!iconName.endsWith('.png') && !iconName.endsWith('.svg')) {
+            continue;
+          }
           if (icon is! File) {
             throw const FormatException('Invalid theme icon');
           }
@@ -398,6 +484,11 @@ abstract final class ThemePackages {
           throw const FormatException('Invalid theme background');
         }
         await readFile(entry, name, _maxBackgroundBytes);
+      } else if (_splashLogos.contains(name)) {
+        if (entry is! File) {
+          throw const FormatException('Invalid splash logo');
+        }
+        await readFile(entry, name, _maxSplashLogoBytes);
       }
     }
     return installAssets(assets, rootDirectory: rootDirectory);
@@ -412,7 +503,7 @@ abstract final class ThemePackages {
     if (manifest == null ||
         manifest.isEmpty ||
         manifest.length > _maxManifestBytes ||
-        assets.length > _maxIcons + 2 ||
+        assets.length > _maxIcons + 3 ||
         assets.values.fold<int>(0, (sum, bytes) => sum + bytes.length) >
             maxPackageBytes) {
       throw const FormatException('Invalid theme assets');
@@ -447,6 +538,9 @@ abstract final class ThemePackages {
         data.containsKey('font')) {
       throw const FormatException('Unsupported theme package');
     }
+    if (!data.keys.every(_sections.contains)) {
+      throw const FormatException('Unknown theme section');
+    }
     final (schemaMin, schemaMax) = _schemaRange(data['schema']);
     final id = data['id'];
     if (id is! String || !idPattern.hasMatch(id)) {
@@ -469,6 +563,9 @@ abstract final class ThemePackages {
     final paletteDark = _palette(palette['dark']);
     final components = ThemeComponents.parse(data['components']);
     final icons = _map(data['icons'], 'icons');
+    if (!icons.keys.every(_iconFields.contains)) {
+      throw const FormatException('Unknown icon field');
+    }
     final style = icons['style'];
     if (style != 'classic' && style != 'mingcute') {
       throw const FormatException('Invalid icon style');
@@ -480,6 +577,13 @@ abstract final class ThemePackages {
         !imageMap.keys.every(_iconKeys.contains)) {
       throw const FormatException('Invalid icon keys');
     }
+    final iconColors = _iconColors(
+      icons['colors'] == null
+          ? <String, dynamic>{}
+          : _map(icons['colors'], 'icon colors'),
+      imageMap.keys,
+    );
+    final splash = _splash(data['splash']);
     final background = _map(data['background'], 'background');
     final backgroundStyle = background['type'];
     if (!['none', 'gradient', 'image'].contains(backgroundStyle)) {
@@ -511,23 +615,42 @@ abstract final class ThemePackages {
     } else if (background.containsKey('image')) {
       throw const FormatException('Unexpected background image');
     }
+    final iconFiles = <String, String>{};
     final iconBytes = <String, Uint8List>{};
     for (final entry in imageMap.entries) {
-      final path = 'icons/${entry.key.replaceAll('.', '_')}.png';
-      if (entry.value != path) {
-        throw const FormatException('Invalid icon path');
-      }
+      final path = _iconAssetPath(entry.key, entry.value);
+      final name = path.substring('icons/'.length);
       usedAssets.add(path);
-      final image = _imageAsset(assets, path, _maxIconBytes);
-      if (!_isPng(image)) throw const FormatException('Icons must be PNG');
-      await _verifyImage(image, maxDimension: 512, maxPixels: 512 * 512);
-      iconBytes[entry.key] = image;
+      iconBytes[name] = path.endsWith('.svg')
+          ? _svgAsset(assets, path, _maxIconBytes)
+          : await _iconPng(assets, path, _maxIconBytes);
+      iconFiles[entry.key] = name;
+    }
+    Uint8List? splashLogoBytes;
+    if (splash?.logo case final logo?) {
+      usedAssets.add(logo);
+      if (logo.endsWith('.svg')) {
+        splashLogoBytes = _svgAsset(assets, logo, _maxSplashLogoBytes);
+      } else {
+        splashLogoBytes = _imageAsset(assets, logo, _maxSplashLogoBytes);
+        await _verifyImage(
+          splashLogoBytes,
+          maxDimension: 2048,
+          maxPixels: 2048 * 2048,
+        );
+      }
     }
     if (assets.keys.any(
       (path) => path != 'icons/' && !usedAssets.contains(path),
     )) {
       throw const FormatException('Unexpected theme asset');
     }
+    _requireFeatureSchema(
+      min: schemaMin,
+      iconFiles: iconFiles.values,
+      iconColors: iconColors,
+      splash: splash,
+    );
 
     final rootPath = rootDirectory ?? root;
     final directory = rootPath.joinPath(installationId);
@@ -549,9 +672,14 @@ abstract final class ThemePackages {
         await iconDir.create();
         for (final entry in iconBytes.entries) {
           await File(
-            iconDir.path.joinPath('${entry.key.replaceAll('.', '_')}.png'),
+            iconDir.path.joinPath(entry.key),
           ).writeAsBytes(entry.value, flush: true);
         }
+      }
+      if (splashLogoBytes != null) {
+        await File(
+          staging.path.joinPath(splash!.logo!),
+        ).writeAsBytes(splashLogoBytes, flush: true);
       }
       final profile = {
         'format': 1,
@@ -566,13 +694,23 @@ abstract final class ThemePackages {
           'systemColor': systemColor,
           'palette': {'light': paletteLight, 'dark': paletteDark},
         },
-        'icons': {'style': style, 'images': iconBytes.keys.toList()},
+        'icons': {
+          'style': style,
+          'images': iconFiles.keys.toList(),
+          if (iconColors.isNotEmpty) 'colors': iconColors,
+        },
         'background': {
           'type': backgroundStyle,
           'opacity': opacity,
           'blur': blur,
         },
         'shapes': {'card': card, 'tile': tile, 'button': button},
+        if (splash != null)
+          'splash': {
+            'color': splash.color,
+            'duration': splash.duration,
+            if (splash.logo != null) 'logo': splash.logo,
+          },
       };
       final normalized = TomlDocument.fromMap(profile).toString();
       if (utf8.encode(normalized).length > _maxManifestBytes) {
@@ -612,7 +750,7 @@ abstract final class ThemePackages {
       final icons = _map(data['icons'], 'icons');
       final background = _map(data['background'], 'background');
       final shapes = _map(data['shapes'], 'shapes');
-      final iconKeys = (icons['images'] as List).cast<String>().toSet();
+      final iconKeys = (icons['images'] as List).cast<String>();
       if (!iconKeys.every(_iconKeys.contains)) return null;
       final style = icons['style'] as String;
       final bgStyle = background['type'] as String;
@@ -620,6 +758,36 @@ abstract final class ThemePackages {
           !['none', 'gradient', 'image'].contains(bgStyle)) {
         return null;
       }
+      // The manifest names keys and not files, so which format each icon is in
+      // is a question for the directory. Both are asked for, in the order a
+      // package would have been written either way.
+      final iconDir = directory.joinPath('icons');
+      final iconFiles = <String, String>{};
+      for (final key in iconKeys) {
+        final stem = key.replaceAll('.', '_');
+        final svg = '$stem.svg';
+        final png = '$stem.png';
+        if (File(iconDir.joinPath(svg)).existsSync()) {
+          iconFiles[key] = svg;
+        } else if (File(iconDir.joinPath(png)).existsSync()) {
+          iconFiles[key] = png;
+        } else {
+          return null;
+        }
+      }
+      final iconColors = _iconColors(
+        icons['colors'] == null
+            ? <String, dynamic>{}
+            : _map(icons['colors'], 'icon colors'),
+        iconFiles.keys,
+      );
+      final splash = _splash(data['splash']);
+      _requireFeatureSchema(
+        min: schemaMin,
+        iconFiles: iconFiles.values,
+        iconColors: iconColors,
+        splash: splash,
+      );
       final package = ThemePackage(
         installationId: id,
         id: themeId,
@@ -634,7 +802,8 @@ abstract final class ThemePackages {
         paletteDark: _palette(palette['dark']),
         components: ThemeComponents.parse(data['components']),
         iconStyle: style,
-        iconKeys: iconKeys,
+        iconFiles: iconFiles,
+        iconColors: iconColors,
         backgroundStyle: bgStyle,
         opacity: _fraction(background['opacity'], 0.6),
         blur: _fraction(background['blur'], 30),
@@ -642,13 +811,14 @@ abstract final class ThemePackages {
         tileRadius: _fraction(shapes['tile'], 40),
         buttonRadius: _fraction(shapes['button'], 40),
         directory: directory,
+        splash: splash,
       );
       if (package.backgroundPath case final path?
           when !File(path).existsSync()) {
         return null;
       }
-      for (final key in iconKeys) {
-        if (!File(package.iconPath(key)!).existsSync()) return null;
+      if (package.splashLogoPath case final logo? when !File(logo).existsSync()) {
+        return null;
       }
       return package;
     } catch (_) {
@@ -679,6 +849,10 @@ abstract final class ThemePackages {
     if (!_iconKeys.contains(key)) return null;
     return activeTheme?.iconPath(key);
   }
+
+  /// The color a package gives this icon, or `null` to follow the ambient one.
+  static Color? activeIconColor(String key, ColorScheme scheme) =>
+      _iconKeys.contains(key) ? activeTheme?.iconColor(key, scheme) : null;
 
   static ThemePackage? get activeTheme {
     if (preview.value case final theme?) return theme;
@@ -842,6 +1016,149 @@ abstract final class ThemePackages {
     };
   }
 
+  /// A color as both [ThemePalette] and the splash accept one: an ARGB integer
+  /// or the name of a role, which is what lets one value read correctly in both
+  /// brightnesses.
+  static Object _colorSpec(Object? value) {
+    if (value is int && value >= 0 && value <= 0xffffffff) return value;
+    if (value is String && ThemePalette.roles.contains(value)) return value;
+    throw const FormatException('Invalid color');
+  }
+
+  /// Per-icon colors, each of which has to belong to an icon the package
+  /// carries — a color for a key that is not there is a typo that would
+  /// otherwise show up as nothing at all.
+  static Map<String, Object> _iconColors(
+    Map<String, dynamic> raw,
+    Iterable<String> icons,
+  ) {
+    final colors = <String, Object>{};
+    for (final entry in raw.entries) {
+      if (!icons.contains(entry.key)) {
+        throw const FormatException('Icon color without an image');
+      }
+      colors[entry.key] = _colorSpec(entry.value);
+    }
+    return colors;
+  }
+
+  /// The splash table, or null when the package asks for none — which is why it
+  /// is not in [_defaults]: every package would otherwise carry one.
+  static ThemeSplash? _splash(Object? raw) {
+    if (raw == null) return null;
+    final table = _map(raw, 'splash');
+    if (!table.keys.every(_splashFields.contains)) {
+      throw const FormatException('Unknown splash field');
+    }
+    final logo = table['logo'];
+    if (logo != null && !_splashLogos.contains(logo)) {
+      throw const FormatException('Invalid splash logo path');
+    }
+    final duration = table.containsKey('duration')
+        ? _integer(
+            table['duration'],
+            ThemeSplash.minDuration,
+            ThemeSplash.maxDuration,
+          )
+        : ThemeSplash.defaultDuration;
+    return ThemeSplash(
+      color: table.containsKey('color') ? _colorSpec(table['color']) : 'surface',
+      logo: logo as String?,
+      duration: duration,
+    );
+  }
+
+  /// Refuses a package that reaches for what schema [featureSchema] added while
+  /// saying an older schema can read it, because that build installs the same
+  /// bytes and then quietly drops the feature — an SVG icon becomes the built-in
+  /// glyph, a per-icon color or a splash simply does not happen.
+  ///
+  /// So what is asked of such a package is not that its range *contains*
+  /// [featureSchema] but that it *needs* it: `min` is the version a reader has
+  /// to understand, and one that does not understand schema 2 must not be
+  /// handed the files.
+  static void _requireFeatureSchema({
+    required int min,
+    required Iterable<String> iconFiles,
+    required Map<String, Object> iconColors,
+    required ThemeSplash? splash,
+  }) {
+    final uses =
+        iconFiles.any((name) => name.endsWith('.svg')) ||
+        iconColors.isNotEmpty ||
+        splash != null;
+    if (uses && min < featureSchema) {
+      throw const FormatException('This theme needs schema $featureSchema');
+    }
+  }
+
+  /// The only two names a package may give an icon. Both are derived from the
+  /// key, so the manifest cannot point at a file that is some other icon.
+  static String _iconAssetPath(String key, Object? value) {
+    final stem = key.replaceAll('.', '_');
+    if (value != 'icons/$stem.png' && value != 'icons/$stem.svg') {
+      throw const FormatException('Invalid icon path');
+    }
+    return value as String;
+  }
+
+  static Future<Uint8List> _iconPng(
+    Map<String, Uint8List> assets,
+    String path,
+    int maxBytes,
+  ) async {
+    final bytes = _imageAsset(assets, path, maxBytes);
+    if (!_isPng(bytes)) {
+      throw const FormatException('Icons must be PNG or SVG');
+    }
+    await _verifyImage(bytes, maxDimension: 512, maxPixels: 512 * 512);
+    return bytes;
+  }
+
+  /// An SVG icon is checked as a document rather than rendered: it has no
+  /// raster size to measure, and what a bad one costs is a fallback to the
+  /// built-in glyph rather than a broken install. Refused are the things that
+  /// make an SVG a document instead of a drawing — a DTD, which is what entity
+  /// expansion and external entities need to exist, and anything that reaches
+  /// outside the file.
+  static Uint8List _svgAsset(
+    Map<String, Uint8List> assets,
+    String path,
+    int maxBytes,
+  ) {
+    final bytes = _assetBytes(assets, path, maxBytes);
+    final String source;
+    try {
+      source = utf8.decode(bytes);
+    } on FormatException {
+      throw const FormatException('SVG must be UTF-8');
+    }
+    final lower = source.toLowerCase();
+    for (final refused in const [
+      '<!doctype',
+      '<!entity',
+      '<script',
+      '<foreignobject',
+      'href="http',
+      "href='http",
+      'url(http',
+    ]) {
+      if (lower.contains(refused)) {
+        throw const FormatException('Unsupported SVG content');
+      }
+    }
+    final xml.XmlDocument document;
+    try {
+      document = xml.XmlDocument.parse(source);
+    } on xml.XmlException {
+      throw const FormatException('Invalid SVG document');
+    }
+    if (document.rootElement.name.local != 'svg') {
+      throw const FormatException('An SVG must have svg as its root element');
+    }
+    return bytes;
+  }
+
   static Map<String, Uint8List> _readArchive(List<int> bytes) {
     try {
       final zip = ZipDirectory()
@@ -853,7 +1170,7 @@ abstract final class ThemePackages {
           zip.totalCentralDirectoryEntriesOnThisDisk !=
               zip.fileHeaders.length ||
           zip.fileHeaders.isEmpty ||
-          zip.fileHeaders.length > _maxIcons + 3) {
+          zip.fileHeaders.length > _maxIcons + 4) {
         throw const FormatException('Invalid theme ZIP');
       }
       final assets = <String, Uint8List>{};
@@ -879,6 +1196,8 @@ abstract final class ThemePackages {
             ? _maxManifestBytes
             : path.startsWith('icons/')
             ? _maxIconBytes
+            : path.startsWith('splash_logo.')
+            ? _maxSplashLogoBytes
             : _maxBackgroundBytes;
         if (path.isEmpty ||
             path.startsWith('/') ||
@@ -928,16 +1247,25 @@ abstract final class ThemePackages {
     }
   }
 
-  static Uint8List _imageAsset(
+  static Uint8List _assetBytes(
     Map<String, Uint8List> assets,
     String path,
     int maxBytes,
   ) {
     final bytes = assets[path];
-    if (bytes == null ||
-        bytes.isEmpty ||
-        bytes.length > maxBytes ||
-        !(_isPng(bytes) || _isJpeg(bytes))) {
+    if (bytes == null || bytes.isEmpty || bytes.length > maxBytes) {
+      throw const FormatException('Theme asset exceeds size limit');
+    }
+    return bytes;
+  }
+
+  static Uint8List _imageAsset(
+    Map<String, Uint8List> assets,
+    String path,
+    int maxBytes,
+  ) {
+    final bytes = _assetBytes(assets, path, maxBytes);
+    if (!(_isPng(bytes) || _isJpeg(bytes))) {
       throw const FormatException('Use a PNG or JPEG image');
     }
     return bytes;

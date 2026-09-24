@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/service/theme_package.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/widget/package_image.dart';
 
 /// A package image tinted like an icon, with the built-in glyph as fallback.
 class ThemeIconAsset extends StatelessWidget {
@@ -26,15 +25,18 @@ class ThemeIconAsset extends StatelessWidget {
       final path = ThemePackages.activeIconPath(keyName);
       if (path == null) return fallback;
       final iconTheme = IconTheme.of(context);
-      final size = iconTheme.size ?? 24;
-      return Image.file(
-        File(path),
-        width: size,
-        height: size,
-        color: iconTheme.color ?? Theme.of(context).colorScheme.onSurface,
-        colorBlendMode: BlendMode.srcIn,
-        filterQuality: FilterQuality.medium,
-        errorBuilder: (_, _, _) => fallback,
+      final scheme = Theme.of(context).colorScheme;
+      return PackageImage(
+        path: path,
+        size: iconTheme.size ?? 24,
+        // A package that names a color for this icon overrides the one the
+        // ambient icon theme would give it; without one it follows that theme,
+        // which is what every icon did before a package could say otherwise.
+        color:
+            ThemePackages.activeIconColor(keyName, scheme) ??
+            iconTheme.color ??
+            scheme.onSurface,
+        fallback: fallback,
       );
     },
   );

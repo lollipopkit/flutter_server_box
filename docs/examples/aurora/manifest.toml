@@ -3,7 +3,7 @@
 # See ../../theme-packages.md for supported fields and asset limits.
 # Only id, name, modes, and schema are required; optional fields inherit defaults.
 # This reference lists every supported field, including optional defaults.
-# Asset entries are commented out until their image files are supplied.
+# Optional asset entries are commented out until their files are supplied.
 # Fonts and launcher icons are configured separately in the app.
 
 # Package format version; defaults to 1. Currently only 1 is supported.
@@ -17,9 +17,11 @@ name = "Aurora"
 modes = ["light", "dark"]
 
 # Inclusive range of supported theme schema versions, not the theme's own version.
+# min is the oldest app that may read this package: an SVG icon, a per-icon color
+# and a splash are schema 2 features, so a package using one declares min = 2.
 [schema]
-min = 1
-max = 1
+min = 2
+max = 2
 
 [colors]
 # Initial preference: 0 = system (default), 1 = light, 2 = dark.
@@ -149,14 +151,18 @@ inversePrimary = 0xFF784287
 # Built-in icon family: "classic" (default) or "mingcute".
 style = "mingcute"
 
-# Optional PNG overrides; omitted entries use the selected icon family.
+# Optional PNG or SVG overrides; omitted entries use the selected icon family.
 # All supported keys are listed below. Keep dotted keys quoted.
 # Each path must match the key with dots replaced by underscores.
-# Add the matching PNG before uncommenting an entry (512x512, 256 KiB maximum).
-# Images are tinted with the app's icon foreground color.
+# Add the matching file before uncommenting an entry (256 KiB maximum; a PNG is
+# also limited to 512x512, an SVG is checked as a document instead).
+# Images are tinted with the app's icon foreground color, so an SVG should use
+# currentColor for the parts that follow it.
 [icons.images]
 # Tab icons, with separate overrides for selected tabs.
-# "tab.server" = "icons/tab_server.png"
+# This one ships with the example, as an SVG; the same key takes a PNG under
+# the same name. The rest are commented out until their files are supplied.
+"tab.server" = "icons/tab_server.svg"
 # "tab.server.selected" = "icons/tab_server_selected.png"
 # "tab.ssh" = "icons/tab_ssh.png"
 # "tab.ssh.selected" = "icons/tab_ssh_selected.png"
@@ -189,6 +195,12 @@ style = "mingcute"
 # "nav.download" = "icons/nav_download.png"
 # "nav.desktop" = "icons/nav_desktop.png"
 
+# Per-icon colors. A key must name an icon [icons.images] carries; without an
+# entry here the icon follows the app's ambient icon color.
+# Values are an ARGB integer or the name of any ColorScheme role above.
+[icons.colors]
+"tab.server" = "primary"
+
 [background]
 # "none" (default), "gradient" (generated from the palette), or "image".
 type = "gradient"
@@ -200,6 +212,19 @@ type = "gradient"
 opacity = 0.18
 # Image blur radius (0–30, default 0); does not affect the generated gradient.
 blur = 0
+
+# The splash shown while the app takes its first frames. Omit the whole table
+# for no splash. It is read once, at launch, so it does not replay when this
+# theme is selected later.
+[splash]
+# Background color: an ARGB integer or the name of any ColorScheme role above.
+color = "surface"
+# Optional logo, one fixed name beside the manifest: splash_logo.png, .jpg,
+# .jpeg, or .svg. Supply the file before enabling it.
+# Allowed paths: those four names (512 KiB; 2048x2048 for the raster ones).
+# logo = "splash_logo.svg"
+# Milliseconds the splash stays up before fading out (100–3000, defaults to 600).
+duration = 800
 
 # Corner radii in logical pixels (0–40). Omitted values default to 12, 8, and 10.
 [shapes]

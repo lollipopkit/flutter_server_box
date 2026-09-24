@@ -358,11 +358,7 @@ final class _Style {
 
   bool hasAny(Set<String> keys) => keys.any(values.containsKey);
   double? number(String key) => (values[key] as num?)?.toDouble();
-  Color? color(String key) => switch (values[key]) {
-    final int value => Color(value),
-    final String role => ThemePalette.resolve(scheme, role),
-    _ => null,
-  };
+  Color? color(String key) => ThemePalette.spec(values[key], scheme);
   EdgeInsets? insets(String key) {
     final value = values[key] as List?;
     if (value == null) return null;
