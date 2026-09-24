@@ -17,16 +17,7 @@ enum _Method {
 }
 
 extension _Widgets on _ServerEditPageState {
-  /// A group's heading: what the group is, a rule, and what it currently
-  /// amounts to.
-  ///
-  /// The right-hand text is the group's own answer read back — "dialled first",
-  /// "off", the order the two methods are in — so the form can be skimmed
-  /// without opening anything. A heading that only repeated the label of the
-  /// first row under it would be a line of furniture.
-  Widget _buildGroupTitle(String title, {String? right}) {
-    return GroupTitle(title, right: right);
-  }
+  Widget _buildGroupTitle(String title) => GroupTitle(title);
 
   /// A line of explanation under a group, in the form's own voice.
   Widget _buildGroupNote(String text) => Padding(
@@ -46,10 +37,9 @@ extension _Widgets on _ServerEditPageState {
     _Method.ssh => _useSsh.value,
   };
 
-  /// What a method's row says about itself under its name: where it goes, or
-  /// that it goes nowhere.
+  /// The address below an enabled connection method.
   String _methodSummary(_Method method) {
-    if (!_methodOn(method)) return l10n.transportOffKept;
+    if (!_methodOn(method)) return '';
     return switch (method) {
       _Method.monitorHttp => _monitorAddrCtrl.text.selfNotEmptyOrNull ?? '',
       _Method.ssh => [
@@ -59,16 +49,6 @@ extension _Widgets on _ServerEditPageState {
               ':${_portController.text.selfNotEmptyOrNull ?? '22'}',
       ].join(),
     };
-  }
-
-  /// What each method's own section says beside its heading.
-  String _methodRole(_Method method) {
-    if (!_methodOn(method)) return l10n.transportOff;
-    final live = _methodOrder.where(_methodOn).toList();
-    if (live.length < 2) return l10n.transportOnlyMethod;
-    return live.first == method
-        ? l10n.transportDialledFirst
-        : l10n.transportFallback;
   }
 
   /// Both ways in, in the order they are dialled, each with its own switch.
@@ -104,7 +84,7 @@ extension _Widgets on _ServerEditPageState {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildGroupTitle(l10n.connection, right: l10n.thisDevice),
+              _buildGroupTitle(l10n.connection),
               ?localRow,
               _buildGroupNote(
                 LocalServer.isSupported
@@ -117,25 +97,11 @@ extension _Widgets on _ServerEditPageState {
 
         final order = _methodOrder;
         final live = order.where(_methodOn).toList();
-        final note = switch (live.length) {
-          0 => l10n.transportNoneOn,
-          1 => l10n.transportOnlyFmt(live.first.label),
-          _ => l10n.transportOrderFmt(live.first.label, live.last.label),
-        };
-        final right = switch (live.length) {
-          // The word, not the sentence: `transportNoneOn` says what being off
-          // costs and is the note below, where there is a line to say it in.
-          // Read back beside the heading it is a state, like the other two.
-          0 => l10n.transportOff,
-          1 => '${live.first.label} ${l10n.transportOnlyMethod}',
-          _ => '${live.first.label} → ${live.last.label}',
-        };
-
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGroupTitle(l10n.connection, right: right),
+            _buildGroupTitle(l10n.connection),
             ?localRow,
             _buildGroupNote(l10n.connectionTip),
             ReorderableListView(
@@ -152,7 +118,7 @@ extension _Widgets on _ServerEditPageState {
                   _buildMethodRow(method, at: at, live: live),
               ],
             ),
-            _buildGroupNote(note),
+            if (live.isEmpty) _buildGroupNote(l10n.transportNoneOn),
           ],
         );
       },
@@ -306,7 +272,7 @@ extension _Widgets on _ServerEditPageState {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildGroupTitle(title, right: _methodRole(method)),
+            _buildGroupTitle(title),
             if (!_methodOn(method))
               _buildGroupNote(l10n.transportSectionOff)
             else
@@ -316,6 +282,7 @@ extension _Widgets on _ServerEditPageState {
       },
     );
   }
+
   Widget _buildAuth() {
     // Reads both sources: a server imported with an IdentityFile authenticates
     // with a key even though nothing is selected among the stored ones, and a
@@ -597,7 +564,6 @@ extension _Widgets on _ServerEditPageState {
           tip: '${l10n.betaTip}\n\n${l10n.wolTip}',
           children: [_buildWOLs()],
         ),
-        _buildGroupNote(l10n.optionalTip),
       ],
     );
   }

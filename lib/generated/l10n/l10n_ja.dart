@@ -2431,32 +2431,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get connectionTip => '両方を同時に有効にできます。並び順が接続を試す順序です。';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return 'ドラッグで順序を変更できます。最初に $first を試し、応答がなければ $second がセッションを引き受けます。';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return '$name だけが有効なので、切り替え先はありません。';
-  }
-
-  @override
   String get transportNoneOn => 'どちらも無効です — このサーバーには接続できません。';
-
-  @override
-  String get transportOffKept => '無効 — 設定は保持され、接続は行いません';
-
-  @override
-  String get transportDialledFirst => '最初に試す';
-
-  @override
-  String get transportFallback => '予備';
-
-  @override
-  String get transportOnlyMethod => '唯一の方法';
-
-  @override
-  String get transportOff => '無効';
 
   @override
   String get thisDevice => 'このデバイス';
@@ -2502,9 +2477,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get optional => '任意';
-
-  @override
-  String get optionalTip => '接続にはどれも必要ありません。開くと、その項目がフォームを置き換えます。';
 
   @override
   String get sshAdvanced => 'SSH 詳細';
@@ -2940,4 +2912,118 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC のクリップボードは Latin-1 テキストのみ対応しています。';
+
+  @override
+  String get remoteDesktopAddProfile => 'プロファイルを追加';
+
+  @override
+  String get remoteDesktopNoProfiles => 'リモートデスクトップのプロファイルがありません';
+
+  @override
+  String get remoteDesktopAdd => 'リモートデスクトップを追加';
+
+  @override
+  String get remoteDesktopEdit => 'リモートデスクトップを編集';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      '接続先は SSH サーバーまたは Monitor エージェントから解決されます。localhost はそのマシンを指します。';
+
+  @override
+  String get remoteDesktopDomain => 'ドメイン（任意）';
+
+  @override
+  String get remoteDesktopPassword => 'パスワード（任意）';
+
+  @override
+  String get remoteDesktopSavePassword => 'パスワードを保存';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      '暗号化データベースに保存されます。バックアップには保存済みのパスワードが含まれ、バックアップパスワードを設定した場合にのみ暗号化されます。';
+
+  @override
+  String get remoteDesktopShareSession => 'セッションを共有';
+
+  @override
+  String get remoteDesktopProtocol => 'プロトコル';
+
+  @override
+  String get remoteDesktopUniqueName => 'このサーバーではプロファイル名を重複させられません。';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      '従来の VNC パスワードは 8 ASCII バイトまでです。';
+
+  @override
+  String get remoteDesktopNameRequired => 'プロファイル名を入力してください。';
+
+  @override
+  String get remoteDesktopHostRequired => '接続先ホストを入力してください。';
+
+  @override
+  String get remoteDesktopPortRequired => '有効なポートを入力してください。';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'RDP のユーザー名を入力してください。';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      '従来の VNC パスワードは ASCII 文字のみ使用できます。';
+
+  @override
+  String get remoteDesktopCertificateRequired => '証明書の確認が必要です';
+
+  @override
+  String get remoteDesktopWaiting => 'デスクトップを待機しています…';
+
+  @override
+  String get remoteDesktopCertificateChanged => 'リモートデスクトップの証明書が変更されました';
+
+  @override
+  String get remoteDesktopTrustCertificate => '証明書を信頼しますか？';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      '証明書のフィンガープリントが保存された値と一致しません。信頼を置き換える前に新しいフィンガープリントを確認してください。';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'システムはこの証明書を検証できませんでした。続行する前に SHA-256 フィンガープリントを確認してください。';
+
+  @override
+  String get remoteDesktopReplaceTrust => '信頼を置き換える';
+
+  @override
+  String get remoteDesktopTrustReconnect => '信頼して再接続';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return 'リモートデスクトップのプロファイル「$name」を削除しますか？';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return '再接続中（$attempt/3）…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return '以前に信頼したフィンガープリント\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'サブジェクト：$subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return '発行者：$issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return '有効期間：$start – $end';
+  }
 }

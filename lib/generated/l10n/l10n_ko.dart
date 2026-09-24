@@ -2439,32 +2439,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get connectionTip => '둘 다 동시에 켤 수 있습니다. 순서가 곧 연결을 시도하는 순서입니다.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return '끌어서 순서를 바꿉니다. $first을(를) 먼저 시도하고, 응답이 없으면 $second이(가) 세션을 단독으로 맡습니다.';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return '$name만 켜져 있어 대체할 것이 없습니다.';
-  }
-
-  @override
   String get transportNoneOn => '둘 다 꺼져 있습니다 — 이 서버에는 연결할 수 없습니다.';
-
-  @override
-  String get transportOffKept => '꺼짐 — 설정은 보관되며 연결하지 않음';
-
-  @override
-  String get transportDialledFirst => '먼저 시도';
-
-  @override
-  String get transportFallback => '대체';
-
-  @override
-  String get transportOnlyMethod => '유일한 방법';
-
-  @override
-  String get transportOff => '꺼짐';
 
   @override
   String get thisDevice => '이 기기';
@@ -2510,9 +2485,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get optional => '선택';
-
-  @override
-  String get optionalTip => '여기 있는 것은 연결에 필요하지 않습니다. 하나를 열면 그 항목이 양식을 대신합니다.';
 
   @override
   String get sshAdvanced => 'SSH 고급';
@@ -2948,4 +2920,118 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'VNC 클립보드는 Latin-1 텍스트만 지원합니다.';
+
+  @override
+  String get remoteDesktopAddProfile => '프로필 추가';
+
+  @override
+  String get remoteDesktopNoProfiles => '원격 데스크톱 프로필이 없습니다';
+
+  @override
+  String get remoteDesktopAdd => '원격 데스크톱 추가';
+
+  @override
+  String get remoteDesktopEdit => '원격 데스크톱 편집';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      '대상은 SSH 서버 또는 Monitor 에이전트에서 확인됩니다. localhost는 해당 머신을 가리킵니다.';
+
+  @override
+  String get remoteDesktopDomain => '도메인(선택)';
+
+  @override
+  String get remoteDesktopPassword => '비밀번호(선택)';
+
+  @override
+  String get remoteDesktopSavePassword => '비밀번호 저장';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      '암호화된 데이터베이스에 저장됩니다. 백업에는 저장된 비밀번호가 포함되며, 백업 비밀번호를 설정한 경우에만 암호화됩니다.';
+
+  @override
+  String get remoteDesktopShareSession => '세션 공유';
+
+  @override
+  String get remoteDesktopProtocol => '프로토콜';
+
+  @override
+  String get remoteDesktopUniqueName => '이 서버에서는 프로필 이름이 중복될 수 없습니다.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      '클래식 VNC 비밀번호는 8 ASCII 바이트로 제한됩니다.';
+
+  @override
+  String get remoteDesktopNameRequired => '프로필 이름을 입력하세요.';
+
+  @override
+  String get remoteDesktopHostRequired => '대상 호스트를 입력하세요.';
+
+  @override
+  String get remoteDesktopPortRequired => '올바른 포트를 입력하세요.';
+
+  @override
+  String get remoteDesktopUsernameRequired => 'RDP 사용자 이름을 입력하세요.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      '클래식 VNC 비밀번호는 ASCII 문자만 포함할 수 있습니다.';
+
+  @override
+  String get remoteDesktopCertificateRequired => '인증서 확인이 필요합니다';
+
+  @override
+  String get remoteDesktopWaiting => '데스크톱을 기다리는 중…';
+
+  @override
+  String get remoteDesktopCertificateChanged => '원격 데스크톱 인증서가 변경되었습니다';
+
+  @override
+  String get remoteDesktopTrustCertificate => '인증서를 신뢰할까요?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      '인증서 지문이 저장된 값과 더 이상 일치하지 않습니다. 신뢰를 교체하기 전에 새 지문을 확인하세요.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      '시스템이 이 인증서를 확인할 수 없습니다. 계속하기 전에 SHA-256 지문을 확인하세요.';
+
+  @override
+  String get remoteDesktopReplaceTrust => '신뢰 교체';
+
+  @override
+  String get remoteDesktopTrustReconnect => '신뢰하고 다시 연결';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '원격 데스크톱 프로필 “$name”을(를) 삭제할까요?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return '다시 연결하는 중 ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return '이전에 신뢰한 지문\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return '주체: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return '발급자: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return '유효 기간: $start – $end';
+  }
 }

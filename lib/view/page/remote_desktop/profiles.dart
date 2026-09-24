@@ -219,7 +219,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                       ],
                       if (compact)
                         IconButton(
-                          tooltip: 'Connect',
+                          tooltip: l10n.connect,
                           icon: const Icon(Icons.play_arrow),
                           onPressed: () => _connect(profile),
                         )
@@ -227,7 +227,7 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
                         TextButton.icon(
                           onPressed: () => _connect(profile),
                           icon: const Icon(Icons.play_arrow),
-                          label: const Text('Connect'),
+                          label: Text(l10n.connect),
                         ),
                       if (compact)
                         IconButton(
@@ -258,13 +258,13 @@ extension _Widgets on _RemoteDesktopProfilesPageState {
     final add = FilledButton.icon(
       onPressed: () => _edit(null, split),
       icon: const Icon(Icons.add),
-      label: const Text('Add profile'),
+      label: Text(l10n.remoteDesktopAddProfile),
     );
     // In the rail's place the button is in the bar already, so the empty pane
     // only has to say what is missing.
     return EmptyPane(
       icon: Icons.desktop_windows_outlined,
-      label: 'No remote desktop profiles',
+      label: l10n.remoteDesktopNoProfiles,
       action: split ? null : add,
     );
   }
@@ -324,7 +324,7 @@ extension _Actions on _RemoteDesktopProfilesPageState {
       context,
       [
         ContextMenuAction(
-          text: 'Connect',
+          text: l10n.connect,
           icon: Icons.play_arrow,
           onTap: () => _connect(profile),
         ),
@@ -350,7 +350,7 @@ extension _Actions on _RemoteDesktopProfilesPageState {
   Future<void> _delete(RemoteDesktopProfile profile) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('Delete remote desktop profile “${profile.name}”?'),
+      child: Text(l10n.remoteDesktopDeleteProfile(profile.name)),
       actions: Btnx.cancelOk,
     );
     if (confirmed != true || !mounted) return;

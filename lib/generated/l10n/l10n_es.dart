@@ -2611,34 +2611,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Ambos pueden estar activos a la vez. El orden es el orden en que se marcan.';
 
   @override
-  String transportOrderFmt(Object first, Object second) {
-    return 'Arrastra para cambiar el orden. Se marca $first primero; si no responde, $second lleva la sesión por su cuenta.';
-  }
-
-  @override
-  String transportOnlyFmt(Object name) {
-    return 'Solo $name está activo, así que no hay nada a lo que recurrir.';
-  }
-
-  @override
   String get transportNoneOn =>
       'Ambos están desactivados: no se puede conectar con este servidor.';
-
-  @override
-  String get transportOffKept =>
-      'desactivado — los ajustes se conservan, nunca se marca';
-
-  @override
-  String get transportDialledFirst => 'se marca primero';
-
-  @override
-  String get transportFallback => 'alternativa';
-
-  @override
-  String get transportOnlyMethod => 'único método';
-
-  @override
-  String get transportOff => 'desactivado';
 
   @override
   String get thisDevice => 'Este dispositivo';
@@ -2686,10 +2660,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get optional => 'Opcional';
-
-  @override
-  String get optionalTip =>
-      'Nada de esto hace falta para conectar. Abre uno y sus campos toman el formulario.';
 
   @override
   String get sshAdvanced => 'SSH avanzado';
@@ -3150,4 +3120,122 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get remoteDesktopVncClipboardLatin1Only =>
       'El portapapeles VNC solo admite texto Latin-1.';
+
+  @override
+  String get remoteDesktopAddProfile => 'Añadir perfil';
+
+  @override
+  String get remoteDesktopNoProfiles => 'No hay perfiles de escritorio remoto';
+
+  @override
+  String get remoteDesktopAdd => 'Añadir escritorio remoto';
+
+  @override
+  String get remoteDesktopEdit => 'Editar escritorio remoto';
+
+  @override
+  String get remoteDesktopTargetTip =>
+      'El destino se resuelve desde el servidor SSH o el agente Monitor. localhost se refiere a esa máquina.';
+
+  @override
+  String get remoteDesktopDomain => 'Dominio (opcional)';
+
+  @override
+  String get remoteDesktopPassword => 'Contraseña (opcional)';
+
+  @override
+  String get remoteDesktopSavePassword => 'Guardar contraseña';
+
+  @override
+  String get remoteDesktopSavePasswordTip =>
+      'Se guarda en la base de datos cifrada. Las copias de seguridad incluyen las contraseñas guardadas y solo se cifran si se define una contraseña de copia.';
+
+  @override
+  String get remoteDesktopShareSession => 'Compartir sesión';
+
+  @override
+  String get remoteDesktopProtocol => 'Protocolo';
+
+  @override
+  String get remoteDesktopUniqueName =>
+      'Los nombres de perfil deben ser únicos para este servidor.';
+
+  @override
+  String get remoteDesktopVncPasswordLength =>
+      'Las contraseñas VNC clásicas se limitan a 8 bytes ASCII.';
+
+  @override
+  String get remoteDesktopNameRequired => 'Introduce un nombre de perfil.';
+
+  @override
+  String get remoteDesktopHostRequired => 'Introduce un host de destino.';
+
+  @override
+  String get remoteDesktopPortRequired => 'Introduce un puerto válido.';
+
+  @override
+  String get remoteDesktopUsernameRequired =>
+      'Introduce el nombre de usuario RDP.';
+
+  @override
+  String get remoteDesktopVncPasswordAscii =>
+      'Las contraseñas VNC clásicas solo pueden contener caracteres ASCII.';
+
+  @override
+  String get remoteDesktopCertificateRequired =>
+      'Se requiere confirmar el certificado';
+
+  @override
+  String get remoteDesktopWaiting => 'Esperando al escritorio…';
+
+  @override
+  String get remoteDesktopCertificateChanged =>
+      'El certificado del escritorio remoto ha cambiado';
+
+  @override
+  String get remoteDesktopTrustCertificate => '¿Confiar en el certificado?';
+
+  @override
+  String get remoteDesktopCertificateChangedTip =>
+      'La huella del certificado ya no coincide con el valor guardado. Verifica la nueva huella antes de reemplazar la confianza.';
+
+  @override
+  String get remoteDesktopCertificateUnverifiedTip =>
+      'El sistema no pudo verificar este certificado. Verifica su huella SHA-256 antes de continuar.';
+
+  @override
+  String get remoteDesktopReplaceTrust => 'Reemplazar confianza';
+
+  @override
+  String get remoteDesktopTrustReconnect => 'Confiar y reconectar';
+
+  @override
+  String remoteDesktopDeleteProfile(String name) {
+    return '¿Eliminar el perfil de escritorio remoto “$name”?';
+  }
+
+  @override
+  String remoteDesktopReconnectAttempt(int attempt) {
+    return 'Reconectando ($attempt/3)…';
+  }
+
+  @override
+  String remoteDesktopPreviousCertificate(String fingerprint) {
+    return 'Confiado anteriormente\n$fingerprint';
+  }
+
+  @override
+  String remoteDesktopCertificateSubject(String subject) {
+    return 'Sujeto: $subject';
+  }
+
+  @override
+  String remoteDesktopCertificateIssuer(String issuer) {
+    return 'Emisor: $issuer';
+  }
+
+  @override
+  String remoteDesktopCertificateValidity(String start, String end) {
+    return 'Válido: $start – $end';
+  }
 }

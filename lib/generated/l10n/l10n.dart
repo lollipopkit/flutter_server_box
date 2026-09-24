@@ -4438,53 +4438,11 @@ abstract class AppLocalizations {
   /// **'Both can be on at once. The order is the order they are dialled.'**
   String get connectionTip;
 
-  /// No description provided for @transportOrderFmt.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag to change the order. {first} is dialled first; if it does not answer, {second} carries the session on its own.'**
-  String transportOrderFmt(Object first, Object second);
-
-  /// No description provided for @transportOnlyFmt.
-  ///
-  /// In en, this message translates to:
-  /// **'Only {name} is on, so there is nothing to fall back to.'**
-  String transportOnlyFmt(Object name);
-
   /// No description provided for @transportNoneOn.
   ///
   /// In en, this message translates to:
   /// **'Both are off — this server cannot be connected.'**
   String get transportNoneOn;
-
-  /// No description provided for @transportOffKept.
-  ///
-  /// In en, this message translates to:
-  /// **'off — settings kept, never dialled'**
-  String get transportOffKept;
-
-  /// No description provided for @transportDialledFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'dialled first'**
-  String get transportDialledFirst;
-
-  /// No description provided for @transportFallback.
-  ///
-  /// In en, this message translates to:
-  /// **'fallback'**
-  String get transportFallback;
-
-  /// No description provided for @transportOnlyMethod.
-  ///
-  /// In en, this message translates to:
-  /// **'only method'**
-  String get transportOnlyMethod;
-
-  /// No description provided for @transportOff.
-  ///
-  /// In en, this message translates to:
-  /// **'off'**
-  String get transportOff;
 
   /// No description provided for @thisDevice.
   ///
@@ -4563,12 +4521,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Optional'**
   String get optional;
-
-  /// No description provided for @optionalTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Nothing here is needed to connect. Open one and its fields take over the form.'**
-  String get optionalTip;
 
   /// No description provided for @sshAdvanced.
   ///
@@ -5355,6 +5307,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VNC clipboard supports Latin-1 text only.'**
   String get remoteDesktopVncClipboardLatin1Only;
+
+  /// No description provided for @remoteDesktopAddProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Add profile'**
+  String get remoteDesktopAddProfile;
+
+  /// No description provided for @remoteDesktopNoProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'No remote desktop profiles'**
+  String get remoteDesktopNoProfiles;
+
+  /// No description provided for @remoteDesktopAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add remote desktop'**
+  String get remoteDesktopAdd;
+
+  /// No description provided for @remoteDesktopEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit remote desktop'**
+  String get remoteDesktopEdit;
+
+  /// No description provided for @remoteDesktopTargetTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The target is resolved from the SSH server or monitor agent. Localhost refers to that machine.'**
+  String get remoteDesktopTargetTip;
+
+  /// No description provided for @remoteDesktopDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'Domain (optional)'**
+  String get remoteDesktopDomain;
+
+  /// No description provided for @remoteDesktopPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password (optional)'**
+  String get remoteDesktopPassword;
+
+  /// No description provided for @remoteDesktopSavePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Save password'**
+  String get remoteDesktopSavePassword;
+
+  /// No description provided for @remoteDesktopSavePasswordTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.'**
+  String get remoteDesktopSavePasswordTip;
+
+  /// No description provided for @remoteDesktopShareSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Share session'**
+  String get remoteDesktopShareSession;
+
+  /// No description provided for @remoteDesktopProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get remoteDesktopProtocol;
+
+  /// No description provided for @remoteDesktopUniqueName.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile names must be unique for this server.'**
+  String get remoteDesktopUniqueName;
+
+  /// No description provided for @remoteDesktopVncPasswordLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic VNC passwords are limited to 8 ASCII bytes.'**
+  String get remoteDesktopVncPasswordLength;
+
+  /// No description provided for @remoteDesktopNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a profile name.'**
+  String get remoteDesktopNameRequired;
+
+  /// No description provided for @remoteDesktopHostRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a target host.'**
+  String get remoteDesktopHostRequired;
+
+  /// No description provided for @remoteDesktopPortRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid port.'**
+  String get remoteDesktopPortRequired;
+
+  /// No description provided for @remoteDesktopUsernameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the RDP username.'**
+  String get remoteDesktopUsernameRequired;
+
+  /// No description provided for @remoteDesktopVncPasswordAscii.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic VNC passwords must contain ASCII characters only.'**
+  String get remoteDesktopVncPasswordAscii;
+
+  /// No description provided for @remoteDesktopCertificateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate confirmation required'**
+  String get remoteDesktopCertificateRequired;
+
+  /// No description provided for @remoteDesktopWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for desktop…'**
+  String get remoteDesktopWaiting;
+
+  /// No description provided for @remoteDesktopCertificateChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote desktop certificate changed'**
+  String get remoteDesktopCertificateChanged;
+
+  /// No description provided for @remoteDesktopTrustCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust certificate?'**
+  String get remoteDesktopTrustCertificate;
+
+  /// No description provided for @remoteDesktopCertificateChangedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The certificate fingerprint no longer matches the saved value. Verify the new fingerprint before replacing trust.'**
+  String get remoteDesktopCertificateChangedTip;
+
+  /// No description provided for @remoteDesktopCertificateUnverifiedTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The system could not verify this certificate. Verify its SHA-256 fingerprint before continuing.'**
+  String get remoteDesktopCertificateUnverifiedTip;
+
+  /// No description provided for @remoteDesktopReplaceTrust.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace trust'**
+  String get remoteDesktopReplaceTrust;
+
+  /// No description provided for @remoteDesktopTrustReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Trust and reconnect'**
+  String get remoteDesktopTrustReconnect;
+
+  /// No description provided for @remoteDesktopDeleteProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete remote desktop profile “{name}”?'**
+  String remoteDesktopDeleteProfile(String name);
+
+  /// No description provided for @remoteDesktopReconnectAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting ({attempt}/3)…'**
+  String remoteDesktopReconnectAttempt(int attempt);
+
+  /// No description provided for @remoteDesktopPreviousCertificate.
+  ///
+  /// In en, this message translates to:
+  /// **'Previously trusted\n{fingerprint}'**
+  String remoteDesktopPreviousCertificate(String fingerprint);
+
+  /// No description provided for @remoteDesktopCertificateSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject: {subject}'**
+  String remoteDesktopCertificateSubject(String subject);
+
+  /// No description provided for @remoteDesktopCertificateIssuer.
+  ///
+  /// In en, this message translates to:
+  /// **'Issuer: {issuer}'**
+  String remoteDesktopCertificateIssuer(String issuer);
+
+  /// No description provided for @remoteDesktopCertificateValidity.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid: {start} – {end}'**
+  String remoteDesktopCertificateValidity(String start, String end);
 }
 
 class _AppLocalizationsDelegate
