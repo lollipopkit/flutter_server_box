@@ -367,6 +367,37 @@ fn configure_api_inner(cfg: &mut web::ServiceConfig, exec_max_request: usize) {
                     .route(web::post().to(crate::api::bmc::control)),
             )
             .service(
+                // A read with no body, which is small: the default 32 KiB
+                // applies. Its own resource rather than a query on `/backup`
+                // because it is the listing and the others are one blob.
+                web::resource("/backup").route(web::get().to(crate::api::backup::list_blobs)),
+            )
+            .service(
+                // A comment says why each resource is its own rather than a
+                // verb on another; this one has three verbs because they are
+                // one blob's whole life — read it, replace it, drop it — and a
+                // second path segment would only be the name again.
+                //
+                // Its own payload limit would be wrong for the download, which
+                // has no body, so the default 32 KiB applies to the request and
+                // the *body* is streamed and capped by `[backup] max_bytes` in
+                // the handler. A limit here would refuse a backup at the door
+                // with nothing to explain it.
+                web::resource("/backup/blob")
+                    .route(web::get().to(crate::api::backup::download))
+                    .route(web::put().to(crate::api::backup::upload))
+                    .route(web::delete().to(crate::api::backup::remove)),
+            )
+            .service(
+                // This agent's own config.toml, out and in. A file of a few
+                // kilobytes: the default 32 KiB applies to the export, and the
+                // import caps what it reads itself so a mistyped request cannot
+                // make the agent buffer.
+                web::resource("/backup/config")
+                    .route(web::get().to(crate::api::backup::export_config))
+                    .route(web::put().to(crate::api::backup::import_config)),
+            )
+            .service(
                 // A read with no body, and one action — a verb, a container id
                 // and a flag — so the default 32 KiB applies to both. The part
                 // is a query parameter rather than a path segment: the three
@@ -1091,6 +1122,16 @@ struct RemoteAccessView {
     /// machine and saving the controller's credential are `full_access`, said
     /// as `editable` in each response rather than by withholding the route.
     bmc: bool,
+    /// Whether this agent serves the backup endpoints at all.
+    ///
+    /// Served, not grantable, for [`Self::pve`]'s reason: listing the blobs
+    /// needs only the panel login, and a caller who may not store one can still
+    /// see what is here. Storing, removing and the configuration pair are
+    /// `full_access`, said as `editable` in the listing rather than by
+    /// withholding the route — and the configuration pair does not even offer
+    /// reading without it, because that file holds every write-only credential
+    /// this agent has.
+    backup: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -1153,6 +1194,9 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             // Served, not grantable, for `pve`'s reason. See
             // `RemoteAccessView::bmc`.
             bmc: true,
+            // Served, not grantable, for `pve`'s reason. See
+            // `RemoteAccessView::backup`.
+            backup: true,
         },
     }))
 }

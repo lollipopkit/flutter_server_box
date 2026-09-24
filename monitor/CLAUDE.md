@@ -741,6 +741,72 @@ the panel password can't switch it on); shared admission checks live in
     documents under test in `crates/sbm_parser/src/redfish.rs` are transcribed
     from `packages/redfish`'s suite rather than read from a fixture both sides
     share; they move to `test/fixtures/bmc/` when that package's model is deleted.
+- **`GET /api/v1/backup`**, **`/api/v1/backup/blob`** (GET, PUT, DELETE) and
+  **`GET/PUT /api/v1/backup/config`** — the blobs this agent hosts for a client,
+  and the agent's own configuration as a file.
+  - **A blob is opaque bytes under a name, and nothing here reads one.** The
+    app's backup is encrypted before it is sent (`fl_lib`'s `Cryptor`: PBKDF2 →
+    AES-256-GCM, envelope `LKFL_ENC_V01`, key from a password only the operator
+    has), so what arrives is ciphertext and leaving it on a server is not the
+    same as leaving their credentials for every other server they own there.
+    There is nothing this module could check and the one thing it could do is
+    leak, so it does not open one.
+  - **A blob is a file, not a row**, unlike every other feature here. A row
+    would mean the whole thing in memory twice — once to bind it and once for
+    SQLite — and the file API already streams to disk and renames into place,
+    which is the same shape a blob write needs. What is deliberately *not*
+    copied from `/fs` is the confinement: a blob has a name, not a path, so
+    there is no root to escape from. `[backup] dir` defaults to
+    `~/.config/server_box/backups`, is created 0700, and is refused if that does
+    not take.
+  - **A name is letters, digits, dot, dash and underscore; not a path, and not
+    sanitised into one.** A separator or a `..` is refused rather than
+    rewritten, because rewriting would mean two callers asking for different
+    things and getting the same file. The leading dot is refused too: a listing
+    that can show a name nobody can address is a store with entries that cannot
+    be deleted from here.
+  - **The cap is the body's, not the request's.** `[backup] max_bytes` (128 MiB
+    by default) is applied while the body streams, and an over-large upload is
+    refused **and** leaves nothing behind — the difference between a bound and a
+    truncation. A fixed number rather than a memory-derived one like
+    `remote_access`'s capacities: what a backup weighs is a fact about the
+    operator's data, and a write never sits in memory.
+  - **Reading needs only the panel login; storing and removing need
+    `full_access`.** The listing is readable, like a crontab or the file roots,
+    and says `editable` so the page goes read-only rather than failing on the
+    first press. `remote_access.backup` is **served, not grantable**.
+  - **The configuration pair is `full_access` in both directions**, which is the
+    exception: `config.toml` holds every write-only credential this agent has
+    (`[pve]`, `[bmc]`, `[ai]`, `[push]`), and `GET /settings` exists precisely
+    because those are not answerable over the API. Handing the file out is not a
+    new hole — anyone with the shell grant can read it — but it is not offered
+    to anyone else either.
+  - **An import is written verbatim, so the operator's comments and any key this
+    build does not know survive.** A round trip through the `Config` struct
+    would drop both, which is the reason this is not a `PUT /settings` with
+    every field named. It is parsed first, so a file that is not a config is
+    `invalidConfig` and nothing is written, and it takes the same
+    `config_write` lock and the same bounded backup as every other save — an
+    import is undoable by hand from `config.toml.bak-*`.
+  - **The two keys an import may not change are refused by name, not carried
+    over**: a `jwt_secret` from another agent would log every paired device out
+    of one that is running fine, and a `database_url` would point this agent at
+    somebody else's records. A file that omits them is accepted, since a default
+    install keeps both in `.env`; only a *differing* value is a refusal, so the
+    operator is told which line to take out. The answer says
+    `restart_required: true`, which is always true — `AppState.config` is a
+    startup snapshot.
+  - The audit rows are `kind = 'backup'`: the name and the byte count for a
+    store, the name for a removal, `config` for an import. What a blob contains
+    is never in a row, and neither is the configuration's text. Reading is not
+    recorded, except that the config export is a `full_access` read and a
+    refusal is.
+  - `tests/backup_api.rs` covers the four things a unit test cannot: that a body
+    which is not valid UTF-8 comes back identical, that a name which would
+    address another file is refused *and* writes nothing outside the store, that
+    an over-cap body leaves the store as it was, and that reading is not
+    writing — with the configuration's both-directions gate and the two
+    protected keys each refused by name.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

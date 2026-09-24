@@ -94,12 +94,37 @@ fn ensure_crypto_provider() {
 ///
 /// No lock is taken: nothing here writes a file another test of this file reads
 /// back, so ordering does not matter.
+///
+/// A `config.toml` is written as well, and that is not decoration. Two entries
+/// below are accepted by their handlers, so one exists by the time they run —
+/// and `/backup` resolves its directory from whatever the file says. Without a
+/// `[backup] dir` here, that entry would create the *default* store,
+/// `~/.config/server_box/backups`, in the operator's home. Writing the file
+/// first makes that a path in this directory instead, and the read-modify-write
+/// those two handlers do keeps the section.
 fn workspace() {
     static DIR: OnceLock<PathBuf> = OnceLock::new();
     DIR.get_or_init(|| {
         let dir = std::env::temp_dir().join(format!("sbm-watch-scope-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         std::env::set_current_dir(&dir).unwrap();
+        std::fs::write(
+            "config.toml",
+            format!(
+                r#"
+[remote_access]
+full_access = true
+
+[remote_access.terminal]
+enabled = true
+
+[backup]
+dir = "{store}"
+"#,
+                store = dir.join("store").display()
+            ),
+        )
+        .unwrap();
         dir
     });
 }
@@ -490,6 +515,27 @@ fn forbidden_routes() -> Vec<(Method, &'static str, Option<serde_json::Value>)> 
             Method::POST,
             "/api/v1/snippets/plan",
             Some(json!({ "script": "" })),
+        ),
+        (Method::GET, "/api/v1/backup", None),
+        (Method::GET, "/api/v1/backup/blob?name=sbm-scope-test", None),
+        // A name that would address a file outside the store, refused before
+        // the store is even opened — so the panel-login half writes nothing.
+        (
+            Method::PUT,
+            "/api/v1/backup/blob?name=../escape",
+            Some(json!("scope")),
+        ),
+        (
+            Method::DELETE,
+            "/api/v1/backup/blob?name=../escape",
+            None,
+        ),
+        (Method::GET, "/api/v1/backup/config", None),
+        // Not TOML, refused before the file is touched.
+        (
+            Method::PUT,
+            "/api/v1/backup/config",
+            Some(json!("this is not toml [")),
         ),
     ]
 }

@@ -71,7 +71,32 @@ pub fn read() -> Result<Config> {
 pub fn write(config: &Config) -> Result<()> {
     let content = toml::to_string_pretty(config)
         .map_err(|e| config_err(format!("Failed to serialize config: {e}")))?;
+    write_text(&content)
+}
 
+/// The file exactly as it is on disk.
+///
+/// The counterpart of [`write_text`], for a caller that has to hand the
+/// operator's own file back rather than a shape this build knows how to
+/// serialize. A file this build cannot parse still reads: what is being asked
+/// for is the bytes, and refusing to hand them back because a later build added
+/// a key would make the export useless exactly when it is wanted.
+pub fn read_text() -> Result<String> {
+    fs::read_to_string(CONFIG_PATH).map_err(|e| {
+        config_err(format!(
+            "Failed to read {CONFIG_PATH} (working directory: {}): {e}",
+            resolved_dir()
+        ))
+    })
+}
+
+/// Replaces the file with `content` verbatim, backing up what was there.
+///
+/// Verbatim, and not through [`Config`]: an imported file is the operator's,
+/// comments and keys this build does not know included, and a round trip
+/// through the struct would drop both. The same backup step as [`write`], so an
+/// import is undoable by hand the way a settings save is.
+pub fn write_text(content: &str) -> Result<()> {
     let path = Path::new(CONFIG_PATH);
     let dir = path.parent().filter(|p| !p.as_os_str().is_empty());
 
@@ -268,6 +293,51 @@ mod tests {
                 .filter(|n| n.contains("tmp-"))
                 .collect();
             assert!(leftovers.is_empty(), "temp files left behind: {leftovers:?}");
+        });
+    }
+
+    /// What an import depends on: the text is the file, not a reserialization
+    /// of it, and the file that was there is still recoverable by hand.
+    #[test]
+    fn a_text_write_is_verbatim_and_keeps_a_backup() {
+        with_temp_cwd(|dir| {
+            write_text("# the operator's own note\n[server]\nhost = \"0.0.0.0\"\n").unwrap();
+            let read_back = fs::read_to_string(CONFIG_PATH).unwrap();
+            assert!(read_back.starts_with("# the operator's own note"), "{read_back}");
+
+            // A second write, so there is something to back up.
+            write_text("host = \"127.0.0.1\"\n").unwrap();
+            let backups: Vec<_> = fs::read_dir(dir)
+                .unwrap()
+                .flatten()
+                .filter(|e| {
+                    e.file_name()
+                        .to_str()
+                        .is_some_and(|n| n.starts_with(BACKUP_PREFIX))
+                })
+                .collect();
+            assert_eq!(backups.len(), 1, "an import must be undoable by hand");
+            assert!(
+                fs::read_to_string(backups[0].path())
+                    .unwrap()
+                    .contains("the operator's own note"),
+                "the backup is not the file that was replaced",
+            );
+        });
+    }
+
+    /// A file this build cannot parse still reads: what an export asks for is
+    /// the bytes, and a key a later build added is exactly when they are wanted.
+    #[test]
+    fn reading_the_text_does_not_require_reading_it_as_a_config() {
+        with_temp_cwd(|_| {
+            let text = "[future]\nsomething = 1\n";
+            fs::write(CONFIG_PATH, text).unwrap();
+            assert_eq!(read_text().unwrap(), text);
+            assert!(
+                read().is_ok(),
+                "an unknown section is not a parse failure for `Config` either",
+            );
         });
     }
 

@@ -41,6 +41,12 @@ pub struct Config {
     /// and why the certificate is pinned rather than ignored.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bmc: Option<BmcConfig>,
+    /// Where this agent keeps the blobs it hosts for a client, and how large one
+    /// may be. Absent in every config written before the feature existed, hence
+    /// `Option`; see [`BackupConfig`] for why the bytes in them are never read
+    /// here.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backup: Option<BackupConfig>,
     /// WebSocket access to the local sshd — off unless present and enabled.
     /// Absent in every config written before the feature existed, hence
     /// `Option`; see `core::remote_access`.
@@ -589,6 +595,53 @@ impl BmcConfig {
     }
 }
 
+/// Where this agent keeps the blobs it hosts for a client.
+///
+/// One directory of opaque bytes. **What is in them is not this agent's to
+/// read and it never tries to**: the app's backup is encrypted under a password
+/// the app derived a key from (`fl_lib`'s `Cryptor`, envelope `LKFL_ENC_V01`),
+/// so what the agent holds is ciphertext and a backup left on a server is not a
+/// copy of the operator's credentials for every other server they own. That is
+/// the whole reason the store can be hosted here rather than only on a disk the
+/// operator controls.
+///
+/// **A directory rather than a table**, unlike every other feature here. A blob
+/// is arbitrary bytes of an arbitrary size: a row would mean the whole thing in
+/// memory twice — once to bind it and once for SQLite — and the file API
+/// already streams to disk and renames into place, which is the same shape a
+/// blob write needs. What is *not* copied from `/fs` is the confinement: a blob
+/// has a name, not a path, so there is no root to escape from.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackupConfig {
+    /// Where the blobs are. Empty means `~/.config/server_box/backups`, which is
+    /// where a fresh install should keep them — resolving it here rather than at
+    /// startup means moving the file is enough to move the store.
+    #[serde(default)]
+    pub dir: String,
+    /// The most one upload may be.
+    ///
+    /// A fixed number rather than a memory-derived one like
+    /// `remote_access`'s capacities: what a backup weighs is a fact about the
+    /// operator's data, not about this machine's RAM, and a write streams to
+    /// disk rather than sitting in memory. Generous, because the alternative to
+    /// a large backup arriving is the operator's records not moving at all.
+    #[serde(default = "default_backup_max_bytes")]
+    pub max_bytes: u64,
+}
+
+fn default_backup_max_bytes() -> u64 {
+    128 * 1024 * 1024
+}
+
+impl Default for BackupConfig {
+    fn default() -> Self {
+        Self {
+            dir: String::new(),
+            max_bytes: default_backup_max_bytes(),
+        }
+    }
+}
+
 /// Desktops this agent can reach, as saved routes rather than live sessions.
 ///
 /// A route is a destination the agent's own account can dial — which is the
@@ -1034,6 +1087,15 @@ impl Config {
         self.bmc.clone().unwrap_or_default()
     }
 
+    /// The backup store as written, or its empty default.
+    ///
+    /// Not `Option`: the directory's absence means "the default one", which is
+    /// a resolved value rather than an unset one, and every caller wants the
+    /// resolved one.
+    pub fn get_backup(&self) -> BackupConfig {
+        self.backup.clone().unwrap_or_default()
+    }
+
     /// The raw section as written (or its all-off defaults when absent).
     /// Call `.resolve(..)` on it to fill in the memory-derived capacities.
     pub fn get_remote_access(&self) -> RemoteAccessConfig {
@@ -1345,6 +1407,9 @@ impl Default for Config {
             // Same, for the BMC: the section is written out so it can be found
             // and so nothing it holds has to be guessed at.
             bmc: Some(BmcConfig::default()),
+            // Same, for the store: the section is written out so the directory
+            // and the cap are visible and settable rather than implied.
+            backup: Some(BackupConfig::default()),
         }
     }
 }

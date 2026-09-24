@@ -136,6 +136,16 @@ pub enum Kind {
     /// certificate fingerprint is not either: it is public, and a row is not
     /// the place a reviewer looks for it.
     Bmc,
+    /// A blob stored through `api::backup`, or this agent's own configuration
+    /// handed out or taken in.
+    ///
+    /// Its own kind because what it records is not a change to this machine's
+    /// configuration but bytes being put somewhere — and, for the config pair,
+    /// a replacement of the file that holds every credential this agent has.
+    /// Reading a blob is not recorded: it is the same bytes repeatedly. What is
+    /// in a blob is never in a row, and neither is the configuration's text:
+    /// the row says which name and how large, and that a file was imported.
+    Backup,
 }
 
 impl Kind {
@@ -161,6 +171,7 @@ impl Kind {
             Kind::Snippet => "snippet",
             Kind::Pve => "pve",
             Kind::Bmc => "bmc",
+            Kind::Backup => "backup",
         }
     }
 }
