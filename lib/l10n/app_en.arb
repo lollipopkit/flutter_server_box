@@ -1172,7 +1172,7 @@
   "remoteDesktopDomain": "Domain (optional)",
   "remoteDesktopPassword": "Password (optional)",
   "remoteDesktopSavePassword": "Save password",
-  "remoteDesktopSavePasswordTip": "Stored in the encrypted database and backups.",
+  "remoteDesktopSavePasswordTip": "Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.",
   "remoteDesktopShareSession": "Share session",
   "remoteDesktopProtocol": "Protocol",
   "remoteDesktopUniqueName": "Profile names must be unique for this server.",

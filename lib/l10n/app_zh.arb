@@ -911,7 +911,7 @@
   "remoteDesktopDomain": "域（可选）",
   "remoteDesktopPassword": "密码（可选）",
   "remoteDesktopSavePassword": "保存密码",
-  "remoteDesktopSavePasswordTip": "保存在加密数据库和备份中。",
+  "remoteDesktopSavePasswordTip": "保存在加密数据库中。备份会包含已保存的密码，只有设置备份密码时才会加密。",
   "remoteDesktopShareSession": "共享会话",
   "remoteDesktopProtocol": "协议",
   "remoteDesktopUniqueName": "此服务器的配置名称不能重复。",

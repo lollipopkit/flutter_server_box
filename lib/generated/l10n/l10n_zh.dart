@@ -2914,7 +2914,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remoteDesktopSavePassword => '保存密码';
 
   @override
-  String get remoteDesktopSavePasswordTip => '保存在加密数据库和备份中。';
+  String get remoteDesktopSavePasswordTip =>
+      '保存在加密数据库中。备份会包含已保存的密码，只有设置备份密码时才会加密。';
 
   @override
   String get remoteDesktopShareSession => '共享会话';

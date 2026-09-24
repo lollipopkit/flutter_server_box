@@ -33,7 +33,10 @@ abstract final class MergeableUtils {
       if (Cryptor.isEncrypted(json)) rethrow;
       final value = jsonDecode(json);
       final Backup bak;
-      if (value is Map<String, dynamic> && value['spis'] is List) {
+      if (value is Map<String, dynamic> &&
+          value['spis'] is List &&
+          value['version'] is num &&
+          (value['version'] as num) < BackupV2.formatVer) {
         bak = Backup.fromJson(value);
       } else if (value is List && value.every((e) => e is int)) {
         bak = Backup.fromJsonString(json);

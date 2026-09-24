@@ -893,7 +893,15 @@ extension on _BackupPageState {
 
     try {
       text = text.trim();
-      if (MergeableUtils.isBackup(text)) {
+      if (Cryptor.isEncrypted(text)) {
+        if (context.mounted) await BackupService.restoreFromText(context, text);
+        return;
+      }
+      final (isBackup, classificationError) = await context.showLoadingDialog(
+        fn: () => Computer.shared.start(MergeableUtils.isBackup, text),
+      );
+      if (classificationError != null) throw classificationError;
+      if (isBackup == true) {
         if (context.mounted) await BackupService.restoreFromText(context, text);
         return;
       }

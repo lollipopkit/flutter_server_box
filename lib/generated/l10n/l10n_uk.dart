@@ -3152,7 +3152,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get remoteDesktopSavePasswordTip =>
-      'Stored in the encrypted database and backups.';
+      'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.';
 
   @override
   String get remoteDesktopShareSession => 'Share session';

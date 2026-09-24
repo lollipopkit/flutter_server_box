@@ -49,6 +49,30 @@ void main() {
     expect(MergeableUtils.fromJsonString(legacy).$1, isA<Backup>());
   });
 
+  test('current-format and versionless maps do not fall back to v1', () {
+    final legacyShape = {
+      'version': BackupV2.formatVer,
+      'date': '12:00',
+      'spis': [],
+      'snippets': [],
+      'keys': [],
+      'container': {},
+      'history': {},
+      'settings': {},
+    };
+    final versionless = Map<String, dynamic>.from(legacyShape)
+      ..remove('version');
+
+    expect(
+      () => MergeableUtils.fromJsonString(jsonEncode(legacyShape)),
+      throwsA(isA<TypeError>()),
+    );
+    expect(
+      () => MergeableUtils.fromJsonString(jsonEncode(versionless)),
+      throwsA(isA<TypeError>()),
+    );
+  });
+
   test('wrong passwords retain the decryption error', () {
     final encrypted = Cryptor.encrypt(backup.toJsonString(), 'correct');
     expect(

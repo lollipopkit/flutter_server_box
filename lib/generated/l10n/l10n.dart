@@ -5413,7 +5413,7 @@ abstract class AppLocalizations {
   /// No description provided for @remoteDesktopSavePasswordTip.
   ///
   /// In en, this message translates to:
-  /// **'Stored in the encrypted database and backups.'**
+  /// **'Stored in the encrypted database. Backups include saved passwords, and are encrypted only when a backup password is set.'**
   String get remoteDesktopSavePasswordTip;
 
   /// No description provided for @remoteDesktopShareSession.
