@@ -44,7 +44,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get themeStoreUpdatedJustNow => 'mis à jour à l\'instant';
 
   @override
-  String get themeStoreSortInUse => 'En cours d\'abord';
+  String get themeStoreSortInUse => 'Utilisés d\'abord';
 
   @override
   String themeStoreMakeOwnFmt(String doc) {

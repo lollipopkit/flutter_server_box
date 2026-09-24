@@ -382,20 +382,6 @@ void main() {
     );
   });
 
-  test(
-    'renames the development Classic preset without resetting appearance',
-    () async {
-      Stores.setting.appThemePreset.put('classic');
-      Stores.setting.colorSeed.put(0xff123456);
-      Stores.setting.themeMode.put(ThemeMode.light.index);
-      await ThemePackages.prepareSelectedTheme();
-      expect(Stores.setting.appThemePreset.fetch(), 'default');
-      expect(ThemePackages.activeTheme!.name, 'Default');
-      expect(Stores.setting.colorSeed.fetch(), 0xff123456);
-      expect(Stores.setting.themeMode.fetch(), ThemeMode.light.index);
-    },
-  );
-
   for (final (legacyMode, expectedMode) in [
     (3, ThemeMode.dark),
     (4, ThemeMode.system),

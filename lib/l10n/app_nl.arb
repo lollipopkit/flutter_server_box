@@ -7,7 +7,7 @@
   "appearanceThemeStore": "Themawinkel",
   "appearanceInvalidTheme": "Ongeldig themapakket of ongeldige catalogus",
   "themeStoreRefreshFailed": "De themacatalogus kon niet worden gelezen.",
-  "themeStoreDeleteTheme": "“{name}” verwijderen? De bestanden worden van dit apparaat verwijderd. Is het het thema in gebruik, dan keert de app terug naar het standaardthema.",
+  "themeStoreDeleteTheme": "“{name}” verwijderen? De bestanden worden van dit apparaat verwijderd. Als dit het gebruikte thema is, keert de app terug naar het standaardthema.",
   "themeStoreUpdatedFmt": "bijgewerkt {ago}",
   "themeStoreUpdatedJustNow": "zojuist bijgewerkt",
   "themeStoreSortInUse": "In gebruik eerst",

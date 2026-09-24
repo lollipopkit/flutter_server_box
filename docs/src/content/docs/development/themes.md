@@ -49,10 +49,10 @@ It is as strict as the installer with one rule it cannot express: the installer
 refuses a color under `icons.colors` whose key has no entry under `icons.images`
 because the check spans two tables, and a JSON Schema has no way to say it.
 
-Every checked-in manifest — the bundled folders, `docs/examples/aurora/` and the
-published ones — has been validated against the schema with `uvx --from
-check-jsonschema check-jsonschema`. Nothing in CI does that today, so a parser
-change that the schema does not follow is silent.
+Every checked-in manifest — the bundled folders and `docs/examples/aurora/` — is
+validated against the schema by the `docs` job in CI, and
+`test/unit/theme_schema_test.dart` holds the schema against the parser: the
+fields, enums and bounds an editor offers are the ones an install accepts.
 
 ## Theme store
 

@@ -121,6 +121,39 @@ void main() {
       expect(rows.single.onDevice, isTrue);
     });
 
+    test('a second installation of one manifest id is a row of its own', () {
+      final rows = _rows(
+        installed: [
+          _package(installationId: 'aaa'),
+          _package(installationId: 'bbb', name: 'Aurora (edited)'),
+        ],
+        items: [_item()],
+      );
+
+      // One manifest id behind two packages on this device — an edited copy
+      // imported beside the store's. The catalog's record goes on one row and
+      // the other is a row of its own, rather than matched away and left on no
+      // row at all.
+      expect(rows.map((r) => r.key), unorderedEquals(['aaa', 'bbb']));
+      expect(rows.where((r) => r.item != null), hasLength(1));
+      expect(rows.where((r) => r.item == null).single.name, 'Aurora (edited)');
+    });
+
+    test('the catalog row carries the installation the app is drawing', () {
+      final rows = _rows(
+        installed: [
+          _package(installationId: 'aaa'),
+          _package(installationId: 'bbb'),
+        ],
+        items: [_item()],
+        active: 'bbb',
+      );
+
+      final listed = rows.singleWhere((r) => r.item != null);
+      expect(listed.installed?.installationId, 'bbb');
+      expect(listed.inUse, isTrue);
+    });
+
     test('the catalog names the row, since it is the newer record', () {
       final rows = _rows(
         installed: [_package(name: 'Aurora (local)')],

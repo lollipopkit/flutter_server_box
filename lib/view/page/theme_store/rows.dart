@@ -71,15 +71,27 @@ List<ThemeRow> buildThemeRows({
   ThemeSort sort = ThemeSort.inUse,
 }) {
   final active = activeInstallationId.isNotEmpty;
-  final byManifestId = {for (final theme in installed) theme.id: theme};
+  // One manifest id can be behind two installations — the store's copy and one
+  // imported beside it, or two versions installed one after the other — and the
+  // catalog's row is whichever of them the app is drawing.
+  final byManifestId = <String, ThemePackage>{};
+  for (final theme in installed) {
+    if (theme.installationId == activeInstallationId ||
+        !byManifestId.containsKey(theme.id)) {
+      byManifestId[theme.id] = theme;
+    }
+  }
   final rows = <ThemeRow>[];
+  // The installations the catalog's rows already carry. By installation and not
+  // by manifest id: a second package of a theme the store lists is a row of its
+  // own below, and matching on the manifest id would leave it on no row at all.
   final listed = <String>{};
 
   // The catalog first, so each of its themes is in the order the store offers
   // it; what only this device has follows.
   for (final item in items) {
     final match = byManifestId[item.listing.id];
-    if (match != null) listed.add(match.id);
+    if (match != null) listed.add(match.installationId);
     rows.add(
       ThemeRow(
         name: item.listing.name,
@@ -90,7 +102,7 @@ List<ThemeRow> buildThemeRows({
     );
   }
   for (final theme in installed) {
-    if (listed.contains(theme.id)) continue;
+    if (listed.contains(theme.installationId)) continue;
     rows.add(
       ThemeRow(
         name: theme.name,

@@ -150,9 +150,10 @@ SVG icon 变成内置字形，颜色和 splash 都不会出现。`max = 2` 是�
 ```
 
 PNG 最大 512 × 512 像素、256 KiB。SVG 没有可量的光栅尺寸，因此按文档校验：必须是
-UTF-8，根元素必须是 `svg`，最大 256 KiB。DTD、实体声明、`<script>`、
-`<foreignObject>`，以及任何指向文件外的写法 —— `http` 的 `href` 或 `url(http…)`
-—— 都会被拒绝。被拒绝或缺失的 icon 会画该 key 的内置字形，而不是空框。
+UTF-8，根元素必须是 `svg`，最大 256 KiB。DTD、实体声明、`<script>`、`<style>`、
+`<foreignObject>`，以及任何指向文件外的写法 —— 不是本文档片段的 `href`、不是本文档
+片段的 `url(…)` —— 都会被拒绝。被拒绝或缺失的 icon 会画该 key 的内置字形，而不是
+空框。
 
 两种格式都只染一种颜色，所以图形里应当用 `currentColor` 表示要跟随颜色的部分。
 没有 `icons.colors` 时，这个颜色就是 ambient icon color，也就是主题包无法自定义颜色
@@ -273,9 +274,6 @@ brightness。
 哪些 repository、读取于多久之前。重新读取 catalog 就是这一行旁边的刷新按钮。本版本
 读不了的版本会列出来并注明，而不是隐藏：它回答的是这个主题是否存在。
 
-应用读取 catalog 的地址是 **Settings → Appearance → Theme store URL**。该地址可
-编辑，因为一个不能改指其他 catalog 的客户端只服务于一个发布方。这个地址的默认值，
-以及地址不响应时应用改用什么，见[主题](/docs/zh/development/themes/#主题商店)。
 
 ```toml
 schema = 1

@@ -41,9 +41,9 @@ manifest 的语法由三个文件定义：`theme_package.dart`（顶层表、归
 它的严格程度与安装器一致，只有一条表达不了：`icons.colors` 里的颜色需要在
 `icons.images` 里有对应条目，这是跨两张表的检查，JSON Schema 没有对应的写法。
 
-所有入库的 manifest —— 内置目录、`docs/examples/aurora/`、以及已发布的那些
-—— 都用 `uvx --from check-jsonschema check-jsonschema` 校验过。CI 目前不做这件事，
-所以解析器改了而 schema 没跟上时不会有人出声。
+所有入库的 manifest —— 内置目录和 `docs/examples/aurora/` —— 都由 CI 的 `docs`
+任务按 schema 校验；schema 本身由 `test/unit/theme_schema_test.dart` 对着解析器
+对齐：编辑器给出的字段、枚举和取值范围，就是安装时接受的。
 
 ## 主题商店
 

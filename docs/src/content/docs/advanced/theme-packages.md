@@ -175,9 +175,10 @@ extension:
 A PNG is at most 512 × 512 pixels and 256 KiB. An SVG has no raster size to
 measure, so it is checked as a document instead: it must be UTF-8, its root
 element must be `svg`, and it is at most 256 KiB. A DTD, an entity declaration,
-a `<script>`, a `<foreignObject>`, or anything that reaches outside the file —
-an `http` `href` or an `url(http…)` — is refused. A refused or missing icon
-draws the built-in glyph for that key rather than an empty box.
+a `<script>`, a `<style>`, a `<foreignObject>`, or anything that reaches outside
+the file — an `href` that is not a fragment of this document, or a `url(…)` that
+is not — is refused. A refused or missing icon draws the built-in glyph for that
+key rather than an empty box.
 
 Both formats are tinted with one color, so a drawing should use `currentColor`
 for the parts that should follow it. Without `icons.colors` that color is the
@@ -315,12 +316,6 @@ time and the line under its bar says which repositories they came from and how
 long ago they were read. Reading the catalog again is the refresh button beside
 that line. A version this build cannot read is listed saying so instead of being
 hidden, since the question it answers is whether the theme exists.
-
-The address the app reads a catalog from is **Settings → Appearance → Theme
-store URL**. It is editable, because a client that cannot be pointed at another
-catalog serves one publisher. What that address defaults to, and what the app
-falls back to when it does not answer, is in
-[Themes](/docs/development/themes/#theme-store).
 
 ```toml
 schema = 1

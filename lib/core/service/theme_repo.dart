@@ -30,6 +30,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/services.dart' show AssetBundle, rootBundle;
 import 'package:server_box/core/service/theme_package.dart';
+import 'package:server_box/core/utils/bounded_output_stream.dart';
 import 'package:toml/toml.dart';
 
 /// Where a theme's file lives, and which theme a path is for.
@@ -689,6 +690,13 @@ abstract final class ThemeRepos {
   static const maxUnpackedBytes = 64 * 1024 * 1024;
   static const maxEntryBytes = 8 * 1024 * 1024;
 
+  /// A bound on the decompressed tar, which is what stops a gzip bomb before
+  /// [maxUnpackedBytes] can be applied to what it holds. Above that limit by
+  /// tar's own framing — a 512-byte header per file and padding to the same —
+  /// so that a repository near the content limit is refused by the check that
+  /// names the content, not by this one.
+  static const maxTarBytes = maxUnpackedBytes + 8 * 1024 * 1024;
+
   /// The tarball an address is fetched from.
   ///
   /// `<repo>/archive/HEAD.tar.gz` resolves the default branch server-side, and
@@ -724,7 +732,18 @@ abstract final class ThemeRepos {
   static Map<String, Uint8List> readArchive(List<int> bytes) {
     final Archive archive;
     try {
-      archive = TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
+      // The gunzip is bounded as it is written, not after: `maxUnpackedBytes`
+      // is about the files the tar holds and cannot be measured until all of it
+      // is in memory, which is the state a compressed input 16 MiB of which can
+      // be built to never leave.
+      final output = BoundedOutputStream(maxTarBytes);
+      GZipDecoder().decodeStream(
+        InputMemoryStream(Uint8List.fromList(bytes)),
+        output,
+      );
+      archive = TarDecoder().decodeBytes(output.getBytes());
+    } on OutputLimitExceeded {
+      throw const ThemeRepoError('the repository unpacks to too much');
     } catch (e) {
       throw ThemeRepoError('the repository is not a readable .tar.gz: $e');
     }

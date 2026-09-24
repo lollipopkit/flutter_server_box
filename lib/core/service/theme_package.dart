@@ -13,6 +13,7 @@ import 'package:flutter/services.dart'
     show AssetBundle, AssetManifest, rootBundle;
 import 'package:server_box/core/service/theme_components.dart';
 import 'package:server_box/core/service/theme_palette.dart';
+import 'package:server_box/core/utils/bounded_output_stream.dart';
 import 'package:server_box/data/model/app/builtin_theme.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/app/theme_style.dart';
@@ -327,10 +328,6 @@ abstract final class ThemePackages {
       _builtinLoader.load(theme);
 
   static Future<void> prepareSelectedTheme() async {
-    // TODO: Remove the development preset rename after existing installs update.
-    if (Stores.setting.appThemePreset.fetch() == 'classic') {
-      Stores.setting.appThemePreset.put(BuiltinTheme.defaultTheme.id);
-    }
     try {
       // TODO: Remove migration after legacy AMOLED mode settings age out.
       final legacyMode = Stores.setting.themeMode.fetch();
@@ -1261,6 +1258,58 @@ abstract final class ThemePackages {
     return bytes;
   }
 
+  /// What an SVG icon may not be, as the parsed document rather than as text.
+  ///
+  /// A spelling is not a reference: `href = "http://…"` and `url( http://… )`
+  /// are the same target to the parser as the spellings a substring test held,
+  /// and a namespace prefix is the same attribute. Read off the tree, the rules
+  /// are the ones they were written to mean.
+  static void _checkSvg(xml.XmlDocument document) {
+    for (final element in document.descendantElements) {
+      if (const {'script', 'style', 'foreignobject'}.contains(
+        element.name.local.toLowerCase(),
+      )) {
+        throw const FormatException('Unsupported SVG content');
+      }
+      for (final attribute in element.attributes) {
+        if (attribute.name.local == 'href' &&
+            !attribute.value.startsWith('#')) {
+          throw const FormatException('Unsupported SVG content');
+        }
+        if (_hasForeignUrl(attribute.value)) {
+          throw const FormatException('Unsupported SVG content');
+        }
+      }
+    }
+    // An instruction is the document telling its reader to read something else,
+    // and `<?xml-stylesheet href="…"?>` is the one that fetches. The XML
+    // declaration is a node of its own type, so nothing that belongs in a
+    // drawing is one of these.
+    if (document.children.whereType<xml.XmlProcessing>().isNotEmpty) {
+      throw const FormatException('Unsupported SVG content');
+    }
+  }
+
+  /// Whether a value reaches outside the file through a `url(…)`, which is how
+  /// a paint, a filter or a mask names what it uses.
+  ///
+  /// A reference to something in this same document — `url(#gradient)` — is
+  /// what a drawing is made of. Anything else, quotes and spacing included, is
+  /// a target that is not in the file.
+  static bool _hasForeignUrl(String value) {
+    final lower = value.toLowerCase();
+    for (var from = 0; ; ) {
+      final start = lower.indexOf('url(', from);
+      if (start < 0) return false;
+      var target = value.substring(start + 4).trimLeft();
+      if (target.startsWith('"') || target.startsWith("'")) {
+        target = target.substring(1);
+      }
+      if (!target.startsWith('#')) return true;
+      from = start + 4;
+    }
+  }
+
   /// An SVG icon is checked as a document rather than rendered: it has no
   /// raster size to measure, and what a bad one costs is a fallback to the
   /// built-in glyph rather than a broken install. Refused are the things that
@@ -1279,16 +1328,12 @@ abstract final class ThemePackages {
     } on FormatException {
       throw const FormatException('SVG must be UTF-8');
     }
+    // Before the parse, because a DTD is what the parser would otherwise be
+    // handed for no reason: entities are how a document describes itself
+    // instead of drawing, and neither expansion nor an external entity is
+    // anything an icon wants.
     final lower = source.toLowerCase();
-    for (final refused in const [
-      '<!doctype',
-      '<!entity',
-      '<script',
-      '<foreignobject',
-      'href="http',
-      "href='http",
-      'url(http',
-    ]) {
+    for (final refused in const ['<!doctype', '<!entity']) {
       if (lower.contains(refused)) {
         throw const FormatException('Unsupported SVG content');
       }
@@ -1302,6 +1347,7 @@ abstract final class ThemePackages {
     if (document.rootElement.name.local != 'svg') {
       throw const FormatException('An SVG must have svg as its root element');
     }
+    _checkSvg(document);
     return bytes;
   }
 
@@ -1372,7 +1418,7 @@ abstract final class ThemePackages {
                     : CompressionType.none)) {
           throw const FormatException('Invalid theme ZIP entry');
         }
-        final output = _BoundedOutputStream(max);
+        final output = BoundedOutputStream(max);
         file.decompress(output);
         final decoded = output.getBytes();
         if (decoded.length != header.uncompressedSize ||
@@ -1386,6 +1432,8 @@ abstract final class ThemePackages {
         throw const FormatException('Missing theme manifest');
       }
       return assets;
+    } on OutputLimitExceeded {
+      throw const FormatException('Theme asset exceeds size limit');
     } on FormatException {
       rethrow;
     } catch (_) {
@@ -1456,41 +1504,5 @@ abstract final class ThemePackages {
     } finally {
       buffer.dispose();
     }
-  }
-}
-
-final class _BoundedOutputStream extends OutputMemoryStream {
-  _BoundedOutputStream(this.maxBytes) : super(size: 0);
-
-  final int maxBytes;
-
-  void _check(int count) {
-    if (count < 0 || length + count > maxBytes) {
-      throw const FormatException('Theme asset exceeds size limit');
-    }
-  }
-
-  @override
-  void writeByte(int value) {
-    _check(1);
-    super.writeByte(value);
-  }
-
-  @override
-  void writeBytes(List<int> bytes, {int? length}) {
-    _check(length ?? bytes.length);
-    super.writeBytes(bytes, length: length);
-  }
-
-  @override
-  void writeStream(InputStream stream) {
-    _check(stream.length);
-    super.writeStream(stream);
-  }
-
-  @override
-  void writeBackReference(int distance, int count) {
-    _check(count);
-    super.writeBackReference(distance, count);
   }
 }

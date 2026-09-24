@@ -107,9 +107,16 @@ ThemeData _theme({Color? seed, Brightness? brightness}) {
     dialogTheme: DialogThemeData(shape: cardShape),
     // `centerTitle` for the bars that are a plain `AppBar` rather than a
     // `CustomAppBar`, which now defaults to the same thing itself.
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
       scrolledUnderElevation: 0,
       centerTitle: false,
+      // A bar over a background image or a gradient is the background's as
+      // well. The page under it is transparent on purpose, and a bar resolving
+      // the scheme's `surface` — which is what Material's own default is —
+      // drew a strip of a colour the wallpaper does not have across the top of
+      // it. Null where the page has no background, so the scheme's surface is
+      // still what a bar is.
+      backgroundColor: hasBackground ? Colors.transparent : null,
     ),
     listTileTheme: _listTileTheme.copyWith(shape: tileShape),
     // Material's back button is an arrow with a shaft on Android and a bare

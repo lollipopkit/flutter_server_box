@@ -33,7 +33,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String themeStoreDeleteTheme(String name) {
-    return '“$name” verwijderen? De bestanden worden van dit apparaat verwijderd. Is het het thema in gebruik, dan keert de app terug naar het standaardthema.';
+    return '“$name” verwijderen? De bestanden worden van dit apparaat verwijderd. Als dit het gebruikte thema is, keert de app terug naar het standaardthema.';
   }
 
   @override

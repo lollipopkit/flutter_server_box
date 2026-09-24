@@ -662,8 +662,22 @@ void main() {
             '<image href="http://example.org/a.png"/></svg>',
         "<svg><image href='http://example.org/a.png'/></svg>",
         '<svg><style>@import url(http://example.org/a.css);</style></svg>',
+        // A stylesheet is CSS, and what it names is not something this reads:
+        // an import that is spelled without `url(…)`, and one that names only
+        // local rules, are both refused for that reason rather than this one.
+        '<svg><style>@import "http://example.org/a.css";</style></svg>',
+        '<svg><style>rect{fill:currentColor}</style><rect/></svg>',
         '<svg><script>alert(1)</script></svg>',
         '<svg><foreignObject><body/></foreignObject></svg>',
+        // The same references spelled the way a substring test reads as
+        // something else: a space before the `=`, a target in quotes, a URL
+        // that carries its own document, a stylesheet fetched by instruction.
+        '<svg><image href = "http://example.org/a.png"/></svg>',
+        '<svg><image href="//example.org/a.png"/></svg>',
+        '<svg><image href="data:image/png;base64,AAAA"/></svg>',
+        '<svg><rect fill="url( http://example.org/a.svg#p )"/></svg>',
+        "<svg><rect fill='url(\"http://example.org/a.svg#p\")'/></svg>",
+        '<?xml-stylesheet href="http://example.org/a.css"?><svg>$body</svg>',
         // And what is not an SVG at all.
         '<svg',
         '<html><body>not a drawing</body></html>',
@@ -671,6 +685,42 @@ void main() {
         await attempt(source);
       }
       expect(ThemePackages.listInstalled(rootDirectory: root.path), isEmpty);
+    } finally {
+      await root.delete(recursive: true);
+    }
+  });
+
+  test('an SVG may reference what is inside itself', () async {
+    final root = await Directory.systemTemp.createTemp('fsbt-svg-local-');
+    try {
+      final data = package2();
+      ((data['icons'] as Map<String, Object?>)['images']
+              as Map<String, String>)['tab.server'] =
+          'icons/tab_server.svg';
+      // A paint, a `use` and a style attribute: three references, all to this
+      // document, which is what reading targets rather than spellings has to
+      // keep accepting. The XML declaration is not an instruction either.
+      const source =
+          '<?xml version="1.0" encoding="UTF-8"?>'
+          '<svg xmlns="http://www.w3.org/2000/svg"'
+          ' xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24">'
+          '<defs>'
+          '<linearGradient id="g">'
+          '<stop offset="0" stop-color="currentColor"/></linearGradient>'
+          '<rect id="r" width="8" height="8"/>'
+          '</defs>'
+          '<use xlink:href="#r" fill="url(#g)" style="opacity:0.5"/>'
+          '</svg>';
+      final installed = await ThemePackages.install(
+        bundle(data, {'icons/tab_server.svg': utf8.encode(source)}),
+        rootDirectory: root.path,
+      );
+
+      expect(installed.iconPath('tab.server'), endsWith('.svg'));
+      expect(
+        ThemePackages.listInstalled(rootDirectory: root.path),
+        hasLength(1),
+      );
     } finally {
       await root.delete(recursive: true);
     }

@@ -431,5 +431,32 @@ void main() {
         throwsA(isA<ThemeRepoError>()),
       );
     });
+
+    test('a bomb is refused before it is all in memory', () {
+      // 72 MiB of zeroes in a few kilobytes, and more than any limit below is
+      // measured against: the per-entry limit is applied to the header the tar
+      // decoder hands back, which is a state this is written not to reach. The
+      // message is what says which check stopped it.
+      final archive = Archive()
+        ..addFile(
+          ArchiveFile(
+            'owner-repo-sha/themes/big.toml',
+            ThemeRepos.maxTarBytes + 1,
+            Uint8List(ThemeRepos.maxTarBytes + 1),
+          ),
+        );
+      expect(
+        () => ThemeRepos.readArchive(
+          GZipEncoder().encode(TarEncoder().encode(archive)),
+        ),
+        throwsA(
+          isA<ThemeRepoError>().having(
+            (e) => e.message,
+            'message',
+            contains('unpacks to too much'),
+          ),
+        ),
+      );
+    });
   });
 }

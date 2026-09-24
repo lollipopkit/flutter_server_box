@@ -381,7 +381,7 @@ extension on _ThemeStorePageState {
             ),
         ],
       ),
-      onTap: busy
+      onTap: busy || row.inUse
           ? null
           : switch ((row.installed, row.item)) {
               (final theme?, _) => () => _apply(theme),
@@ -462,12 +462,22 @@ extension on _ThemeStorePageState {
     if (confirmed != true || !mounted) return;
 
     _rebuild(() => _working = theme.installationId);
-    final removed = await ThemePackages.remove(theme.installationId);
+    var removed = false;
+    try {
+      removed = await ThemePackages.remove(theme.installationId);
+    } catch (e) {
+      // A directory that cannot be deleted — a lock, a permission — is a
+      // failure the row reports like any other, and never a spinner left on it.
+      Loggers.app.warning('Removing ${theme.name} failed: $e');
+    } finally {
+      if (mounted) {
+        _rebuild(() {
+          _working = null;
+          _installed = ThemePackages.listInstalled();
+        });
+      }
+    }
     if (!mounted) return;
-    _rebuild(() {
-      _working = null;
-      _installed = ThemePackages.listInstalled();
-    });
     if (!removed) {
       Toast.error(libL10n.fail);
       return;
