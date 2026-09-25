@@ -3331,6 +3331,16 @@ class AppLocalizationsDe extends AppLocalizations {
       'In PVE unter Rechenzentrum → Berechtigungen → API-Token erstellen. Es braucht VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit und Sys.Audit auf den anzuzeigenden Pfaden; bei aktivierter Rechtetrennung müssen sie dem Token selbst erteilt werden.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Das Token $account darf auf diesem Host nichts sehen. Ein Token mit Rechtetrennung hat nicht die Rechte seines Benutzers; erteile ihm welche auf dem PVE-Host:\n$command\noder deaktiviere „Privilege Separation“ für das Token.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account darf auf diesem Host nichts sehen. Erteile Rechte auf dem PVE-Host:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid =>
       'Die Token-ID muss die Form user@realm!tokenid haben';
 
@@ -3467,6 +3477,28 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'Öffnet die serielle Konsole des Gasts mit virsh auf dem Host. Trennen oder Strg+] führt zurück zur Shell des Hosts.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'über $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Keine Ausgabe? Enter drücken';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds Sekunden',
+      one: '1 Sekunde',
+    );
+    return 'Enter wird in $_temp0 gedrückt, um die Eingabeaufforderung zu zeigen';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Jetzt';
 
   @override
   String get virtOffTip =>

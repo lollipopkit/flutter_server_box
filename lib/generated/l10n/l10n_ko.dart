@@ -3139,6 +3139,16 @@ class AppLocalizationsKo extends AppLocalizations {
       'PVE의 데이터센터 → 권한 → API 토큰에서 만듭니다. 표시할 경로에 VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit, Sys.Audit 권한이 필요하며, 권한 분리가 켜져 있으면 토큰 자체에 부여해야 합니다.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return '토큰 $account은(는) 이 호스트에서 아무것도 볼 수 없습니다. 권한 분리가 켜진 토큰은 사용자의 권한을 물려받지 않으므로 PVE 호스트에서 권한을 부여하세요:\n$command\n또는 토큰의 \"Privilege Separation\"을 해제하세요.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account은(는) 이 호스트에서 아무것도 볼 수 없습니다. PVE 호스트에서 권한을 부여하세요:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid => '토큰 ID는 user@realm!tokenid 형식이어야 합니다';
 
   @override
@@ -3270,6 +3280,22 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       '호스트에서 virsh로 게스트의 시리얼 콘솔을 엽니다. 연결 끊기 또는 Ctrl+]로 호스트 셸로 돌아갑니다.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '$transport 경유';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '출력이 없나요? Enter를 누르세요';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds초 후 Enter를 눌러 프롬프트를 표시합니다';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '지금';
 
   @override
   String get virtOffTip => '시작하면 여기에서 CPU, 메모리, 디스크, 네트워크를 실시간으로 볼 수 있습니다.';

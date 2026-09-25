@@ -3306,6 +3306,16 @@ class AppLocalizationsAz extends AppLocalizations {
       'PVE-də Datacenter → Permissions → API Tokens bölməsində yaradın. Göstəriləcək yollarda VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit və Sys.Audit lazımdır; imtiyaz ayrılması açıqdırsa, bunları tokenin özünə verin.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return '$account tokeni bu hostda heç nə görə bilmir. İmtiyaz ayrılığı olan token istifadəçisinin icazələrini almır; PVE hostunda icazə verin:\n$command\nvə ya tokendə \"Privilege Separation\" seçimini götürün.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account bu hostda heç nə görə bilmir. PVE hostunda icazə verin:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid =>
       'Token ID user@realm!tokenid formatında olmalıdır';
 
@@ -3441,6 +3451,22 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'Qonağın seriya konsolunu hostda virsh ilə açır. Bağlantını kəs və ya Ctrl+] hostun shell-inə qaytarır.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '$transport vasitəsilə';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Çıxış yoxdur? Enter basın';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return 'Sorğunu göstərmək üçün $seconds saniyədən sonra Enter basılacaq';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'İndi';
 
   @override
   String get virtOffTip =>

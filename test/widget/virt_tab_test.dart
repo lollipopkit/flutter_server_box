@@ -36,6 +36,7 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/remote_desktop/viewer.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
 import 'package:server_box/view/page/virt/guest.dart';
@@ -451,7 +452,7 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey(VirtConsoleKind.text)));
       await settle(tester);
-      expect(find.text(libL10n.open), findsOneWidget);
+      expect(find.text(app_locale.l10n.connect), findsOneWidget);
       // The virsh escape is libvirt's; PVE's console has none to explain.
       expect(find.text(app_locale.l10n.virtConsoleSerialTip), findsNothing);
     });
@@ -817,7 +818,7 @@ void main() {
       await openConsole(tester, host: _kvm, guest: 'db-01');
 
       expect(find.byKey(const ValueKey(VirtConsoleKind.vnc)), findsNothing);
-      expect(find.text(libL10n.open), findsOneWidget);
+      expect(find.text(app_locale.l10n.connect), findsOneWidget);
       expect(find.text(app_locale.l10n.virtConsoleSerialTip), findsOneWidget);
     });
 
@@ -947,7 +948,7 @@ void main() {
       await settle(tester);
     });
 
-    testWidgets('text: a running console is offered back, or closed', (
+    testWidgets('text: in place, kept when left, taken up again, closed', (
       tester,
     ) async {
       _details['qemu/100'] = const VirtGuestDetail(
@@ -957,10 +958,16 @@ void main() {
       final container = ProviderScope.containerOf(
         tester.element(find.byType(VirtGuestView)),
       );
-      expect(find.text(libL10n.open), findsOneWidget);
-      expect(find.text(app_locale.l10n.reopen), findsNothing);
+      // The home page says which tab is showing; nothing does in this test.
+      container.read(currentHomeTabProvider.notifier).update(AppTab.virt);
+      // The terminal's first-use help, a dialog over everything, is not what
+      // this is about.
+      Stores.setting.sshTermHelpShown.put(true);
+      await settle(tester);
+      expect(find.text(app_locale.l10n.connect), findsOneWidget);
+      expect(find.byType(SSHPage), findsNothing);
 
-      // What the terminal page leaves behind when it goes.
+      // A console left running earlier, as a page leaves it behind.
       final id = VirtConsoleConnect.textSessionId(_pve, 'qemu/100');
       final shell = FakeShellSession();
       final session = TerminalSession(
@@ -973,22 +980,98 @@ void main() {
       )..bindForeground(shell);
       var shellClosed = false;
       unawaited(shell.done.then((_) => shellClosed = true));
+      final consoles = container.read(virtTextConsolesProvider.notifier);
+      final keepAlive = container.read(sessionKeepAliveProvider.notifier);
+      consoles.park(id, session, name: 'web-01', host: 'pve-host');
+      await settle(tester);
+
+      // On screen here, not a page over the window: taken up in place, with
+      // what it goes through and the hint for a console that prints nothing.
+      expect(find.byType(SSHPage), findsOneWidget);
+      expect(find.byType(VirtGuestView), findsOneWidget);
+      expect(find.textContaining('termproxy'), findsOneWidget);
+      expect(
+        find.textContaining(app_locale.l10n.virtConsoleEnterTip),
+        findsOneWidget,
+      );
+      expect(container.read(virtTextConsolesProvider), isEmpty);
+      expect(keepAlive.isRegistered(id), isFalse, reason: 'on screen');
+
+      // Another guest: left, so kept running and counted off screen.
+      await tester.tap(find.text('dns-01'));
+      await settle(tester);
+      expect(find.byType(SSHPage), findsNothing);
+      expect(container.read(virtTextConsolesProvider), contains(id));
+      expect(keepAlive.isRegistered(id), isTrue);
+      expect(shellClosed, isFalse);
+
+      // Back: the same session, in place again.
+      await tester.tap(find.text('web-01'));
+      await settle(tester);
+      await tester.tap(find.byKey(const ValueKey(VirtGuestViewKind.console)));
+      await settle(tester);
+      expect(find.byType(SSHPage), findsOneWidget);
+      expect(keepAlive.isRegistered(id), isFalse);
+
+      await tester.tap(find.byTooltip(libL10n.close));
+      await settle(tester);
+      expect(find.byType(SSHPage), findsNothing);
+      expect(container.read(virtTextConsolesProvider), isEmpty);
+      expect(find.text(app_locale.l10n.connect), findsOneWidget);
+      expect(shellClosed, isTrue);
+    });
+
+    testWidgets('text: a silent serial console gets Enter after a countdown', (
+      tester,
+    ) async {
+      _details['qemu/100'] = const VirtGuestDetail(
+        consoles: {VirtConsoleKind.text},
+      );
+      await openConsole(tester);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(VirtGuestView)),
+      );
+      container.read(currentHomeTabProvider.notifier).update(AppTab.virt);
+      Stores.setting.sshTermHelpShown.put(true);
+
+      // Connected, and the guest's serial port says nothing more.
+      final shell = FakeShellSession();
+      final session = TerminalSession(
+        source: ConsoleSource(
+          id: 'virt-console:$_pve:qemu/100',
+          label: 'web-01',
+          connect: () async => FakeShellBackend(),
+        ),
+        backend: FakeShellBackend(),
+      )..bindForeground(shell);
+      session.terminal.write(
+        'starting serial terminal on interface serial1\r\n',
+      );
       container
           .read(virtTextConsolesProvider.notifier)
-          .park(id, session, name: 'web-01', host: 'pve-host');
+          .park(
+            VirtConsoleConnect.textSessionId(_pve, 'qemu/100'),
+            session,
+            name: 'web-01',
+            host: 'pve-host',
+          );
       await settle(tester);
+      expect(find.byType(SSHPage), findsOneWidget);
 
-      expect(find.text(app_locale.l10n.reopen), findsOneWidget);
-      expect(find.text(libL10n.open), findsNothing);
-      final keepAlive = container.read(sessionKeepAliveProvider.notifier);
-      expect(keepAlive.isRegistered(id), isTrue, reason: 'off screen');
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(find.text(app_locale.l10n.virtConsoleAutoEnter(3)), findsOneWidget);
+      expect(find.text(app_locale.l10n.virtConsoleEnterNow), findsOneWidget);
+      expect(shell.written.toString(), isEmpty);
 
-      await tester.tap(find.text(libL10n.close));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+      expect(shell.written.toString(), '\r');
+      expect(find.text(app_locale.l10n.virtConsoleEnterNow), findsNothing);
+      expect(find.text(app_locale.l10n.virtConsoleEnterTip), findsOneWidget);
+
+      await tester.tap(find.byTooltip(libL10n.close));
       await settle(tester);
-      expect(container.read(virtTextConsolesProvider), isEmpty);
-      expect(keepAlive.isRegistered(id), isFalse);
-      expect(find.text(libL10n.open), findsOneWidget);
-      expect(shellClosed, isTrue);
     });
 
     testWidgets('text: what the terminal page is given, per host', (

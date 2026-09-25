@@ -76,18 +76,17 @@ void main() {
             builder: (context) {
               app_locale.l10n = AppLocalizations.of(context)!;
               context.setLibL10n();
+              // Pushed from the navigator it sits in, as the app's pages are.
               return Scaffold(
-                body: TextButton(
-                  key: const ValueKey('open'),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          ServerEditPage(
-                            args: ServerEditArgs(server, section: section),
-                          ),
+                body: Builder(
+                  builder: (context) => TextButton(
+                    key: const ValueKey('open'),
+                    onPressed: () => ServerEditPage.route.go(
+                      context,
+                      args: ServerEditArgs(server, section: section),
                     ),
+                    child: const Text('Open editor'),
                   ),
-                  child: const Text('Open editor'),
                 ),
               );
             },
@@ -98,6 +97,13 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('open')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
+
+    // Opening on a group scrolls to it, after the first layout.
+    if (section != null) {
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
 
     whileOpen?.call();
     if (!save) {

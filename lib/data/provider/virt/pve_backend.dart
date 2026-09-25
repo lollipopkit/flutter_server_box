@@ -214,6 +214,11 @@ class PveBackend implements VirtBackend {
     }
     final at = _now();
     final parsed = PveResources.parse(_withFreshStatus(data, at), at: at);
+    // PVE lists only what this account may see, and says nothing about the
+    // rest: a token with privilege separation and no ACL of its own gets its
+    // nodes' bare names and no guests (seen on PVE 9.2). Asked only then — a
+    // host with no guests is rare, and it is one request.
+    if (parsed.guests.isEmpty) await _ensureAuditable();
     final stats = <String, VirtStats>{
       for (final MapEntry(:key, :value) in parsed.samples.entries)
         key: _rates.add(key, value),
@@ -242,6 +247,30 @@ class PveBackend implements VirtBackend {
         termConsole: true,
         storedHistory: true,
       ),
+    );
+  }
+
+  /// Throws [VirtErrType.permissionDenied] when this account may audit
+  /// nothing at all (`VM.Audit` and `Sys.Audit` nowhere), with the ACL that
+  /// fixes it; returns when the empty list is the host's real answer.
+  Future<void> _ensureAuditable() async {
+    final perms = await _call((dio) => dio.get(_url('/access/permissions')));
+    if (perms is! Map) return;
+    bool granted(String priv) => perms.values.any(
+      (privs) => privs is Map && privs[priv] != null && privs[priv] != 0,
+    );
+    if (granted('VM.Audit') || granted('Sys.Audit')) return;
+    final token = _config.auth == PveAuth.token;
+    final account = token ? _config.tokenId ?? '' : _userFields()['username']!;
+    final qualified = token || account.contains('@') ? account : '$account@pam';
+    final command =
+        "pveum acl modify / --${token ? 'tokens' : 'users'} '$qualified' "
+        '--roles PVEAuditor,PVEVMAdmin';
+    throw VirtErr(
+      type: VirtErrType.permissionDenied,
+      message: token
+          ? l10n.pveTokenNoPrivileges(qualified, command)
+          : l10n.pveUserNoPrivileges(qualified, command),
     );
   }
 

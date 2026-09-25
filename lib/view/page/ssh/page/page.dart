@@ -107,6 +107,10 @@ final class SshPageArgs {
   /// something per session instead.
   final String? restorationId;
 
+  /// The home tab a page shown in place ([notFromTab] false) lives in: what
+  /// "on screen" is checked against, with [visibleListenable].
+  final AppTab homeTab;
+
   const SshPageArgs({
     required this.source,
     this.initCmd,
@@ -123,10 +127,37 @@ final class SshPageArgs {
     this.tmuxWindow,
     this.onTmuxStateChanged,
     this.restorationId,
+    this.homeTab = AppTab.ssh,
   }) : assert(
          notFromTab || visibleListenable != null,
          'visibleListenable is required when notFromTab is false',
        );
+
+  /// These arguments for a page shown in place inside [homeTab] rather than
+  /// pushed: no bar of its own, on screen while [visible] says so and the tab
+  /// is the one showing, and [onSessionEnd] instead of popping when the shell
+  /// ends.
+  SshPageArgs embeddedIn(
+    AppTab homeTab, {
+    required ValueListenable<bool> visible,
+    FocusNode? focusNode,
+    VoidCallback? onSessionEnd,
+    String? restorationId,
+  }) => SshPageArgs(
+    source: source,
+    initCmd: initCmd,
+    initSnippet: initSnippet,
+    detachInput: detachInput,
+    session: session,
+    onLeave: onLeave,
+    notFromTab: false,
+    onSessionEnd: onSessionEnd,
+    terminalKey: terminalKey,
+    focusNode: focusNode,
+    visibleListenable: visible,
+    restorationId: restorationId,
+    homeTab: homeTab,
+  );
 }
 
 class SSHPage extends ConsumerStatefulWidget {
@@ -795,11 +826,20 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
+  /// The terminal this page shows, for a host that watches what it draws.
+  Terminal get terminal => _terminal;
+
+  /// Sends [SshPageArgs.detachInput], for a host showing this page without
+  /// its bar — where the button for it is.
+  void detach() {
+    if (widget.args.detachInput case final detach?) _session?.write(detach);
+  }
+
   List<Widget> _buildAppBarActions() {
     final actions = <Widget>[
-      if (widget.args.detachInput case final detach?)
+      if (widget.args.detachInput != null)
         IconButton(
-          onPressed: () => _session?.write(detach),
+          onPressed: detach,
           tooltip: l10n.disconnect,
           icon: const Icon(Icons.link_off),
         ),
@@ -1100,7 +1140,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       return route?.isCurrent ?? true;
     }
     if (widget.args.visibleListenable?.value != true) return false;
-    return ref.read(currentHomeTabProvider) == AppTab.ssh;
+    return ref.read(currentHomeTabProvider) == widget.args.homeTab;
   }
 
   /// Puts the cursor back in this terminal, and on a phone raises the keyboard

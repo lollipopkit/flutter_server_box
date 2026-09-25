@@ -3286,6 +3286,16 @@ class AppLocalizationsTr extends AppLocalizations {
       'PVE\'de Veri Merkezi → İzinler → API Tokens altında oluşturun. Gösterilecek yollarda VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit ve Sys.Audit gerekir; ayrıcalık ayrımı açıksa bunları belirtecin kendisine verin.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return '$account belirteci bu ana makinede hiçbir şey göremiyor. Yetki ayrımı açık bir belirteç, kullanıcısının izinlerini almaz; PVE ana makinesinde izin verin:\n$command\nya da belirteçte \"Privilege Separation\" seçeneğini kaldırın.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account bu ana makinede hiçbir şey göremiyor. PVE ana makinesinde izin verin:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid =>
       'Belirteç kimliği user@realm!tokenid biçiminde olmalıdır';
 
@@ -3421,6 +3431,22 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'Konuğun seri konsolunu ana makinede virsh ile açar. Bağlantıyı kes veya Ctrl+] ana makinenin kabuğuna döndürür.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '$transport üzerinden';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Çıktı yok mu? Enter\'a basın';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return 'İstemi göstermek için $seconds saniye içinde Enter\'a basılacak';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Şimdi';
 
   @override
   String get virtOffTip =>

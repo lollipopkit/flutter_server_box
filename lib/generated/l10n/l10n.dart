@@ -5674,6 +5674,18 @@ abstract class AppLocalizations {
   /// **'Create one in PVE under Datacenter → Permissions → API Tokens. It needs VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit and Sys.Audit on the paths to show; with privilege separation on, grant them to the token itself.'**
   String get pveTokenTip;
 
+  /// A PVE API token that may see nothing: explains privilege separation and gives the command that grants it permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'The token {account} may not see anything on this host. A token with privilege separation does not have its user\'s permissions; grant it some, on the PVE host:\n{command}\nor untick \"Privilege Separation\" for the token.'**
+  String pveTokenNoPrivileges(String account, String command);
+
+  /// A PVE user that may see nothing: gives the command that grants it permissions.
+  ///
+  /// In en, this message translates to:
+  /// **'{account} may not see anything on this host. Grant it permissions, on the PVE host:\n{command}'**
+  String pveUserNoPrivileges(String account, String command);
+
   /// Error shown when the Proxmox VE API token ID has the wrong format.
   ///
   /// In en, this message translates to:
@@ -5913,6 +5925,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Opens the guest\'s serial console with virsh on the host. Disconnect, or Ctrl+], returns to the host\'s shell.'**
   String get virtConsoleSerialTip;
+
+  /// Under a guest's text console: what the connection goes through, e.g. 'via SSH'.
+  ///
+  /// In en, this message translates to:
+  /// **'via {transport}'**
+  String virtConsoleVia(String transport);
+
+  /// Under a guest's text console: a serial console prints nothing until it is sent a key, so Enter brings up its prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'No output? Press Enter'**
+  String get virtConsoleEnterTip;
+
+  /// Countdown under a silent serial console: Enter will be pressed automatically to make the guest draw its login prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Pressing Enter in {seconds, plural, =1{1 second} other{{seconds} seconds}} to bring up the prompt'**
+  String virtConsoleAutoEnter(int seconds);
+
+  /// Button beside the auto-Enter countdown: press Enter now instead of waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get virtConsoleEnterNow;
 
   /// Shown for a guest that is not running, in place of its charts.
   ///

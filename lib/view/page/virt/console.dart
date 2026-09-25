@@ -6,11 +6,13 @@ part of 'guest.dart';
 /// (`VirtGuestDetail.consoles`); with both, a toggle picks between them. How
 /// each is opened is [VirtConsoleConnect].
 ///
-/// - **Text** opens the terminal page over the window, with its virtual keys,
-///   theme and reconnect: the one terminal the app has, given a console
-///   instead of a shell (PVE), or a shell on the host with `virsh console`
-///   typed into it (libvirt). Leaving that page leaves the console running
-///   ([VirtTextConsoles]), and this view offers it back as "Reopen".
+/// - **Text** is the terminal page, in place here: the one terminal the app
+///   has, with its virtual keys, theme and reconnect, given a console instead
+///   of a shell (PVE), or a shell on the host with `virsh console` typed into
+///   it (libvirt). A bar under it says what it is connected through, and that
+///   a serial console prints nothing until it is sent something. Leaving it
+///   leaves the console running ([VirtTextConsoles]), and coming back takes it
+///   up again.
 /// - **Graphical** is the remote desktop viewer, in place here. Its toolbar
 ///   has reconnect, full screen and close; closing brings back "Connect".
 ///
@@ -141,6 +143,33 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     widget.guest.id,
   );
 
+  /// The text console on screen here: its page's arguments, null when there
+  /// is none. Cleared whenever it leaves the screen — its page then hands the
+  /// session to [VirtTextConsoles], and showing it again takes it back.
+  SshPageArgs? _text;
+
+  /// [_text]'s page is on screen, for the page's own keyboard and focus.
+  final _textVisible = ValueNotifier(false);
+  final _textFocus = FocusNode();
+
+  /// Close, rather than park, the session the text page leaves behind next.
+  var _endText = false;
+
+  final _textPage = GlobalKey<SSHPageState>();
+
+  /// Enter for a serial console that waits silently, on [_textPage]'s
+  /// terminal. Null for a console that is not a serial port (a PVE
+  /// container's) and while no terminal is shown.
+  SerialWake? _wake;
+
+  /// Whether [widget.guest]'s text console is a serial port: every libvirt
+  /// one (`virsh console`), and a PVE VM's (`serialN`); a PVE container's is
+  /// its own console, which draws a prompt when connected.
+  bool get _serial => switch (ref.read(virtHostProvider(widget.serverId)).kind) {
+    VirtHostKind.pve => widget.guest.kind == VirtGuestKind.qemu,
+    _ => true,
+  };
+
   /// How many of these are mounted per graphical session.
   ///
   /// Two at once is a layout change — the guest pushed as a page becoming a
@@ -176,6 +205,10 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_mounted.containsKey(id)) sessions.setConsoleVisible(id, false);
     });
+    _wake?.dispose();
+    // After the page under them, which unmounts first and lets go of both.
+    _textVisible.dispose();
+    _textFocus.dispose();
     super.dispose();
   }
 
@@ -202,6 +235,12 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
       });
     }
 
+    _syncText(
+      shown: onScreen && _kind == VirtConsoleKind.text,
+      running: textRunning,
+    );
+
+    final text = _text;
     final body = switch (_kind) {
       VirtConsoleKind.vnc when vncOpen => RemoteDesktopViewer(
         sessionId: _vncId,
@@ -211,17 +250,17 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
         text: l10n.connect,
         onTap: _openVnc,
       ),
+      VirtConsoleKind.text when text != null && onScreen => _buildText(text),
+      // Being taken back: the page comes with the next frame.
+      VirtConsoleKind.text when textRunning => UIs.placeholder,
       VirtConsoleKind.text => _launcher(
         icon: Icons.terminal,
-        text: textRunning ? l10n.reopen : libL10n.open,
+        text: l10n.connect,
         tip: switch (ref.watch(virtHostProvider(widget.serverId)).kind) {
           VirtHostKind.libvirt => l10n.virtConsoleSerialTip,
           _ => null,
         },
         onTap: _openText,
-        onClose: textRunning
-            ? () => ref.read(virtTextConsolesProvider.notifier).close(_textId)
-            : null,
       ),
     };
     if (widget.consoles.length < 2) return body;
@@ -287,47 +326,202 @@ class _VirtConsolesState extends ConsumerState<_VirtConsoles> {
     );
   }
 
-  Future<void> _openText() async {
-    if (_opening) return;
+  /// Keeps [_text] to when it can be seen: gone from the screen, its page is
+  /// let go (and parks the session); back, a parked session is taken up.
+  void _syncText({required bool shown, required bool running}) {
+    if (_textVisible.value != shown) {
+      // After the frame: the page listening to it rebuilds on a change.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _textVisible.value = shown;
+      });
+    }
+    if ((shown && _text != null) || _wake != null) {
+      // The page is built (or gone) this frame; its terminal is there after.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _attachWake());
+    }
+    if (!shown && _text != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _text = null);
+      });
+    } else if (shown && _text == null && running && !_opening) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _text == null) _resumeText();
+      });
+    }
+  }
+
+  /// What a text page does with its session when it goes: back to
+  /// [VirtTextConsoles] to be kept, or closed when the bar's close asked.
+  ///
+  /// Captured rather than read through `ref` when it runs: it runs after the
+  /// page has gone, and this view may have too.
+  void Function(TerminalSession) _leaveText() {
     final consoles = ref.read(virtTextConsolesProvider.notifier);
     final id = _textId;
     final name = widget.guest.name;
-    final host = ref.read(serversProvider).servers[widget.serverId]?.name ??
+    final host =
+        ref.read(serversProvider).servers[widget.serverId]?.name ??
         widget.serverId;
-    // Captured rather than read through `ref` when it runs: it runs after the
-    // terminal page has gone, and this view may have too.
-    void park(TerminalSession session) =>
-        consoles.park(id, session, name: name, host: host);
+    return (session) {
+      if (_endText) {
+        _endText = false;
+        session.close();
+        return;
+      }
+      consoles.park(id, session, name: name, host: host);
+    };
+  }
 
-    final running = consoles.take(id);
-    if (running != null) {
-      await SSHPage.route.go(
-        context,
-        VirtConsoleConnect.resumedTextArgs(running, onLeave: park),
-        target: NavTarget.root,
+  /// Watches the shown terminal for a silent serial console — a new one when
+  /// the page shows another terminal, none once no page does.
+  void _attachWake() {
+    if (!mounted) return;
+    final terminal = _text == null || !_textVisible.value
+        ? null
+        : _textPage.currentState?.terminal;
+    if (identical(_wake?.terminal, terminal)) return;
+    _wake?.dispose();
+    _wake = terminal == null || !_serial
+        ? null
+        : (SerialWake(terminal)..addListener(_onWake));
+  }
+
+  void _onWake() {
+    if (mounted) setState(() {});
+  }
+
+  SshPageArgs _embed(SshPageArgs args) => args.embeddedIn(
+    AppTab.virt,
+    visible: _textVisible,
+    focusNode: _textFocus,
+    restorationId: 'virt_$_textId',
+    // The console hung up, or failed to connect: back to "Connect".
+    onSessionEnd: () {
+      if (mounted) setState(() => _text = null);
+    },
+  );
+
+  void _resumeText() {
+    final session = ref.read(virtTextConsolesProvider.notifier).take(_textId);
+    if (session == null) return;
+    setState(() {
+      _text = _embed(
+        VirtConsoleConnect.resumedTextArgs(session, onLeave: _leaveText()),
       );
-      return;
-    }
+    });
+  }
 
+  Future<void> _openText() async {
+    if (_opening) return;
     setState(() => _opening = true);
     try {
       final args = await VirtConsoleConnect.textArgs(
         ProviderScope.containerOf(context),
         serverId: widget.serverId,
         guest: widget.guest,
-        onLeave: park,
+        onLeave: _leaveText(),
       );
       if (!mounted) return;
-      setState(() => _opening = false);
-      // The whole window, as the terminal tab's pages have: the virtual keys
-      // need the width, and a pane is a column of it.
-      await SSHPage.route.go(context, args, target: NavTarget.root);
+      setState(() => _text = _embed(args));
     } catch (e, s) {
       Loggers.app.warning('Opening a text console', e, s);
       Toast.error(libL10n.fail, body: VirtConsoleConnect.describe(e));
     } finally {
       if (mounted && _opening) setState(() => _opening = false);
     }
+  }
+
+  /// The countdown to Enter on a silent serial console, with its two
+  /// answers; otherwise the hint to press it — a serial port prints nothing
+  /// until written to, whatever this saw.
+  List<Widget> _buildWake() {
+    final wake = _wake;
+    final left = wake?.remaining;
+    if (wake == null || left == null) {
+      return [
+        Flexible(
+          child: Text(
+            l10n.virtConsoleEnterTip,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: UIs.text12Grey,
+          ),
+        ),
+        UIs.width7,
+      ];
+    }
+    return [
+      Flexible(
+        child: Text(
+          l10n.virtConsoleAutoEnter(left),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: UIs.text12Grey.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ),
+      Btn.text(text: l10n.virtConsoleEnterNow, onTap: wake.now),
+      Btn.text(text: libL10n.cancel, onTap: wake.cancel),
+    ];
+  }
+
+  /// Ends the text console: its page goes, and closes the session it leaves.
+  void _closeText() {
+    _endText = true;
+    setState(() => _text = null);
+  }
+
+  /// The terminal, and under it what it is connected through.
+  Widget _buildText(SshPageArgs args) {
+    final spi = ref.watch(
+      serversProvider.select((s) => s.servers[widget.serverId]),
+    );
+    final what = switch (args.source) {
+      ServerSource() => 'virsh console',
+      _ => 'termproxy',
+    };
+    final via = switch (spi?.transport) {
+      ServerTransport.ssh => 'SSH',
+      ServerTransport.monitorHttp => 'monitor',
+      ServerTransport.local => 'localhost',
+      null => null,
+    };
+    return Column(
+      children: [
+        Expanded(
+          child: SSHPage(key: _textPage, args: args),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(13, 5, 7, 5),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  [what, if (via != null) l10n.virtConsoleVia(via)].join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: UIs.text12Grey,
+                ),
+              ),
+              ..._buildWake(),
+              // libvirt's: back to the host's shell, as Ctrl+] does.
+              if (args.detachInput != null)
+                Btn.icon(
+                  icon: const Icon(Icons.link_off, size: 17),
+                  text: l10n.disconnect,
+                  onTap: () => _textPage.currentState?.detach(),
+                ),
+              Btn.icon(
+                icon: const Icon(Icons.close, size: 17),
+                text: libL10n.close,
+                onTap: _closeText,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _openVnc() {

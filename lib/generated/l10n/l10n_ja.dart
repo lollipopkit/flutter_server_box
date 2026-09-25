@@ -3130,6 +3130,16 @@ class AppLocalizationsJa extends AppLocalizations {
       'PVE の データセンター → 権限 → API トークン で作成します。表示するパスに VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit、Sys.Audit が必要です。権限の分離が有効な場合は、トークン自体に付与してください。';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'トークン $account はこのホストで何も参照できません。権限分離が有効なトークンはユーザーの権限を継承しないため、PVE ホストで権限を付与してください:\n$command\nまたはトークンの「Privilege Separation」を外してください。';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account はこのホストで何も参照できません。PVE ホストで権限を付与してください:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid => 'トークン ID は user@realm!tokenid の形式にしてください';
 
   @override
@@ -3262,6 +3272,22 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'ホスト上の virsh でゲストのシリアルコンソールを開きます。切断または Ctrl+] でホストのシェルに戻ります。';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '$transport 経由';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '出力がない場合は Enter を押してください';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds 秒後に Enter を押してプロンプトを表示します';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '今すぐ';
 
   @override
   String get virtOffTip => '起動すると、CPU・メモリ・ディスク・ネットワークがここにリアルタイムで表示されます。';

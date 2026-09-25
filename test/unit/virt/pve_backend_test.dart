@@ -317,6 +317,44 @@ void main() {
       }
     });
 
+    test('a token that may see nothing says so, with the ACL to grant', () async {
+      // Privilege separation on and no ACL of its own: PVE answers with the
+      // node's bare name and nothing else, not a refusal (PVE 9.2).
+      final api = _Api()
+        ..resources = [
+          {
+            'id': 'node/pve',
+            'node': 'pve',
+            'type': 'node',
+            'status': 'online',
+            'level': '',
+            'cgroup-mode': 2,
+          },
+        ]
+        ..routes['GET /access/permissions'] = (_) => {};
+      const token = PveConfig(
+        addr: 'https://pve.lan:8006',
+        auth: PveAuth.token,
+        tokenId: 'root@pam!sb',
+        tokenSecret: 's3cret',
+      );
+      final e = await _err(api.backend(token).load());
+      expect(e.type, VirtErrType.permissionDenied);
+      expect(
+        e.message,
+        contains("pveum acl modify / --tokens 'root@pam!sb' "
+            '--roles PVEAuditor,PVEVMAdmin'),
+      );
+      expect(e.message, isNot(contains('s3cret')));
+
+      // An empty host that may be audited is only empty.
+      final empty = _Api()
+        ..routes['GET /access/permissions'] = (_) => {
+          '/': {'Sys.Audit': 1, 'VM.Audit': 1},
+        };
+      expect((await empty.backend(token).load()).guests, isEmpty);
+    });
+
     test('a refused token is authFailed naming the id, not the secret', () async {
       final api = _Api()..versionStatus = 401;
       final pve = api.backend(

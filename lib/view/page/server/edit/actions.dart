@@ -924,9 +924,13 @@ extension _Utils on _ServerEditPageState {
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final ctx = _pveKey.currentContext;
-          if (ctx == null || !ctx.mounted) return;
-          Scrollable.ensureVisible(
-            ctx,
+          final object = ctx?.findRenderObject();
+          if (ctx == null || !ctx.mounted || object == null) return;
+          // The page's own list only. `Scrollable.ensureVisible` walks every
+          // scrollable above, physics or not — the home's tab `PageView`
+          // included, which it leaves between two tabs.
+          Scrollable.maybeOf(ctx)?.position.ensureVisible(
+            object,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
           );

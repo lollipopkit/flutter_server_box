@@ -3324,6 +3324,16 @@ class AppLocalizationsPt extends AppLocalizations {
       'Crie um no PVE em Datacenter → Permissões → API Tokens. Ele precisa de VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit e Sys.Audit nos caminhos a mostrar; com a separação de privilégios ativa, conceda-os ao próprio token.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'O token $account não pode ver nada neste host. Um token com separação de privilégios não tem as permissões do usuário; conceda-as no host PVE:\n$command\nou desmarque \"Privilege Separation\" no token.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account não pode ver nada neste host. Conceda permissões no host PVE:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid =>
       'O ID do token deve ter a forma user@realm!tokenid';
 
@@ -3460,6 +3470,28 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'Abre o console serial do convidado com virsh no host. Desconectar, ou Ctrl+], volta ao shell do host.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'via $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Sem saída? Pressione Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds segundos',
+      one: '1 segundo',
+    );
+    return 'Enter será pressionado em $_temp0 para mostrar o prompt';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Agora';
 
   @override
   String get virtOffTip =>

@@ -3072,6 +3072,16 @@ class AppLocalizationsZh extends AppLocalizations {
       '在 PVE 的 数据中心 → 权限 → API Tokens 中创建。需要在要显示的路径上具有 VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit 和 Sys.Audit 权限；如果启用了权限分离，需要把这些权限授予 token 本身。';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'token $account 在这台主机上没有任何可见的资源。开启了权限分离的 token 不继承其用户的权限，需要单独授权。在 PVE 主机上执行：\n$command\n或者取消该 token 的“权限分离”。';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account 在这台主机上没有任何可见的资源。在 PVE 主机上为它授权：\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid => 'Token ID 的格式应为 user@realm!tokenid';
 
   @override
@@ -3201,6 +3211,22 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       '在宿主机上用 virsh 打开客户机的串口控制台。断开连接或按 Ctrl+] 可返回宿主机的 shell。';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '经 $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '没有输出？按 Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds 秒后自动按 Enter 唤出提示符';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '立即';
 
   @override
   String get virtOffTip => '启动后在这里显示实时 CPU、内存、磁盘和网络。';
@@ -6440,6 +6466,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '在 PVE 的 資料中心 → 權限 → API Tokens 中建立。需要在要顯示的路徑上具有 VM.Audit、VM.PowerMgmt、VM.Console、VM.Snapshot、VM.Snapshot.Rollback、Datastore.Audit 和 Sys.Audit 權限；若啟用了權限分離，需要將這些權限授予 token 本身。';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'token $account 在這台主機上沒有任何可見的資源。啟用了權限分離的 token 不繼承其使用者的權限，需要單獨授權。在 PVE 主機上執行：\n$command\n或取消該 token 的「權限分離」。';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account 在這台主機上沒有任何可見的資源。在 PVE 主機上為它授權：\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid => 'Token ID 的格式應為 user@realm!tokenid';
 
   @override
@@ -6568,6 +6604,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get virtConsoleSerialTip =>
       '在主機上以 virsh 開啟客體機的序列主控台。中斷連線或按 Ctrl+] 可返回主機的 shell。';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return '經 $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => '沒有輸出？按 Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return '$seconds 秒後自動按 Enter 喚出提示字元';
+  }
+
+  @override
+  String get virtConsoleEnterNow => '立即';
 
   @override
   String get virtOffTip => '啟動後在這裡顯示即時 CPU、記憶體、磁碟和網路。';

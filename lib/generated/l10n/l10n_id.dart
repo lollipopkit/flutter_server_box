@@ -3290,6 +3290,16 @@ class AppLocalizationsId extends AppLocalizations {
       'Buat di PVE pada Datacenter → Permissions → API Tokens. Token memerlukan VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit, dan Sys.Audit pada jalur yang ingin ditampilkan; jika pemisahan hak aktif, berikan hak tersebut ke token itu sendiri.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Token $account tidak dapat melihat apa pun di host ini. Token dengan pemisahan hak akses tidak mewarisi izin penggunanya; berikan izin di host PVE:\n$command\natau hapus centang \"Privilege Separation\" pada token.';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account tidak dapat melihat apa pun di host ini. Berikan izin di host PVE:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid => 'ID token harus berbentuk user@realm!tokenid';
 
   @override
@@ -3425,6 +3435,22 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'Membuka konsol serial tamu dengan virsh di host. Putuskan, atau Ctrl+], kembali ke shell host.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'melalui $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Tidak ada keluaran? Tekan Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    return 'Enter akan ditekan dalam $seconds detik untuk menampilkan prompt';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Sekarang';
 
   @override
   String get virtOffTip =>

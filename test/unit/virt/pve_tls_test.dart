@@ -60,7 +60,17 @@ void main() {
       authHeaders.add(req.headers.value('authorization'));
       final data = switch (req.uri.path) {
         '/api2/json/version' => {'version': '8.2.4'},
-        '/api2/json/cluster/resources' => <Object>[],
+        // One guest: a host with none has its permissions asked as well.
+        '/api2/json/cluster/resources' => [
+          {
+            'id': 'lxc/100',
+            'type': 'lxc',
+            'vmid': 100,
+            'node': 'pve',
+            'name': 'ct',
+            'status': 'running',
+          },
+        ],
         _ => null,
       };
       req.response

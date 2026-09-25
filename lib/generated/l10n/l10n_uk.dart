@@ -3313,6 +3313,16 @@ class AppLocalizationsUk extends AppLocalizations {
       'Створіть його в PVE: Датацентр → Дозволи → API Tokens. Потрібні права VM.Audit, VM.PowerMgmt, VM.Console, VM.Snapshot, VM.Snapshot.Rollback, Datastore.Audit і Sys.Audit на шляхах, які треба показати; якщо ввімкнено розділення привілеїв, надайте їх самому токену.';
 
   @override
+  String pveTokenNoPrivileges(String account, String command) {
+    return 'Токену $account нічого не видно на цьому хості. Токен із розділенням привілеїв не успадковує права користувача; надайте їх на хості PVE:\n$command\nабо зніміть для токена позначку «Privilege Separation».';
+  }
+
+  @override
+  String pveUserNoPrivileges(String account, String command) {
+    return '$account нічого не видно на цьому хості. Надайте права на хості PVE:\n$command';
+  }
+
+  @override
   String get pveTokenIdInvalid =>
       'ID токена має мати вигляд user@realm!tokenid';
 
@@ -3449,6 +3459,29 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get virtConsoleSerialTip =>
       'Відкриває послідовну консоль гостя через virsh на хості. «Від\'єднати» або Ctrl+] повертає до оболонки хоста.';
+
+  @override
+  String virtConsoleVia(String transport) {
+    return 'через $transport';
+  }
+
+  @override
+  String get virtConsoleEnterTip => 'Немає виводу? Натисніть Enter';
+
+  @override
+  String virtConsoleAutoEnter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other: '$seconds секунд',
+      few: '$seconds секунди',
+      one: '$seconds секунду',
+    );
+    return 'Enter буде натиснуто через $_temp0, щоб показати запрошення';
+  }
+
+  @override
+  String get virtConsoleEnterNow => 'Зараз';
 
   @override
   String get virtOffTip =>

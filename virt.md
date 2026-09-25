@@ -120,6 +120,13 @@ certificate is an error with the old and new fingerprints.
   (`VM.Audit`, `VM.PowerMgmt`, `VM.Console`, `Sys.Audit` on the paths the
   user wants shown; since phase 2 also `VM.Snapshot`, `VM.Snapshot.Rollback`
   and `Datastore.Audit`).
+- An account that may see nothing is not refused: `/cluster/resources`
+  answers the nodes' bare names and no guests (a privilege-separated token
+  with no ACL of its own, verified on PVE 9.2). A load with no guests asks
+  `/access/permissions`; with `VM.Audit` and `Sys.Audit` granted nowhere it
+  is `permissionDenied`, carrying the `pveum acl modify / --tokens … --roles
+  PVEAuditor,PVEVMAdmin` that fixes it (the two roles cover every privilege
+  above).
 
 ### libvirt
 
@@ -210,6 +217,21 @@ config below, so no store changes beyond the PVE columns.
 - Graphical sessions live in `RemoteDesktopSessions` as *consoles*, kept
   apart from the remote desktop tab's sessions; the viewer is the same
   widget. The session closes when the console view goes.
+- The text console is the terminal page shown in place in the console view
+  (`SshPageArgs.embeddedIn(AppTab.virt, …)`), not pushed over the window. A
+  bar under it names what it runs (`virsh console` / `termproxy`) and the
+  transport, says that a serial console prints nothing until sent a key
+  ("No output? Press Enter"), and has Disconnect (libvirt, Ctrl+]) and Close.
+  A serial console (libvirt, PVE QEMU) that connects and stays silent gets
+  Enter by itself (`lib/core/utils/serial_wake.dart`): when the cursor sits
+  on an empty line under a known banner (`starting serial terminal on
+  interface serialN`, `Escape character is ^]`, both captured from the real
+  hosts) and the terminal has been still for a second, the bar counts down
+  3 s with Now / Cancel; any output cancels it. At most one Enter per banner
+  line, remembered with the terminal across leaving and coming back.
+  Off screen — another guest, the graphical console, another tab — the page
+  goes and parks its session in `VirtTextConsoles` for `SessionKeepAlive`;
+  back on screen the view takes it up again. Close ends it.
 - Opening glue: `lib/view/page/virt/console_connect.dart`; view:
   `lib/view/page/virt/console.dart`.
 - A libvirt VNC display with a password is not supported: `dumpxml` without
