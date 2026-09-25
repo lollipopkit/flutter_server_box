@@ -60,6 +60,33 @@ extension AppTabViewX on AppTab {
     };
   }
 
+  /// The mark a tab carries, where the tab is *listed* — the settings page
+  /// that arranges them, and the sheet the bar opens for the ones it cannot
+  /// hold.
+  ///
+  /// Not on the destination itself: `NavigationDestination.label` and
+  /// [NavRailItem.label] are strings, and a bar that has to fit four of them
+  /// on a phone is the last place with room for a second glyph.
+  Widget? get mark => this == AppTab.remoteDesktop ? const BetaTag() : null;
+
+  /// [label] with [mark], for a row that lists the tab rather than opening it.
+  Widget get listTitle {
+    final mark_ = mark;
+    if (mark_ == null) return Text(label);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Flexible, so a long name in a narrow row — or a large text scale —
+        // ellipsises against the mark instead of overflowing the row.
+        Flexible(
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+        ),
+        const SizedBox(width: 7),
+        mark_,
+      ],
+    );
+  }
+
   /// Returns a [Widget] rather than a [NavigationDestination] on purpose:
   /// `NavigationBar.destinations` is a list of widgets, so [onMenu] can wrap
   /// the whole cell. The destination still finds the bar's inherited

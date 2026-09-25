@@ -377,7 +377,6 @@
   "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.",
   "podmanDockerEmulationDetected": "Podman Docker-Emulation erkannt. Bitte wechseln Sie in den Einstellungen zu Podman.",
   "sponsor": "Sponsor",
-  "portForwardBetaTitle": "Port Forwarding (Beta)",
   "containerSegmentsMismatch": "Unerwartete Anzahl von Segmenten in der Containerantwort: {count}",
   "containerOperationInProgress": "Ein anderer Container-Vorgang wird bereits ausgeführt",
   "processCount": "{count, plural, one{1 Prozess} other{{count} Prozesse}}",

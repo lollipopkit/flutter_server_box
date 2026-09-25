@@ -1607,9 +1607,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sortByJoinTime => '가입 시간순';
 
   @override
-  String get portForwardBetaTitle => '포트 포워딩 (Beta)';
-
-  @override
   String get tmuxAutoAttach => 'tmux 자동 연결';
 
   @override

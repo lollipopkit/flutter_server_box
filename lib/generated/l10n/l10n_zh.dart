@@ -1572,9 +1572,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sortByJoinTime => '按加入时间';
 
   @override
-  String get portForwardBetaTitle => '端口映射 (Beta)';
-
-  @override
   String get tmuxAutoAttach => 'tmux 自动附加';
 
   @override
@@ -5391,9 +5388,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sortByJoinTime => '依加入時間';
-
-  @override
-  String get portForwardBetaTitle => '連接埠轉送（Beta）';
 
   @override
   String get tmuxAutoAttach => 'tmux 自動附加';

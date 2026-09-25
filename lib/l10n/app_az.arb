@@ -604,7 +604,6 @@
   "portForward_deleteConfirmFmt": "{name} silinsin?",
   "sponsor": "Sponsor ol",
   "sortByJoinTime": "Əlavə edilmə vaxtına görə",
-  "portForwardBetaTitle": "Port yönləndirmə (beta)",
   "tmuxAutoAttach": "tmux sessiyasına avtomatik qoşulma",
   "tmuxAuto": "Avtomatik tmux",
   "tmuxAutoTip": "SSH ilə əlaqə qurarkən tmux sessiyasını avtomatik başlat və ya ona qoşul",

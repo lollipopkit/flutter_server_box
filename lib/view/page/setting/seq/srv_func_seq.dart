@@ -78,6 +78,14 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
               WidgetSpan(child: Icon(funcBtn.icon)),
               const WidgetSpan(child: UIs.width13),
               TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
+              if (funcBtn.mark case final mark?)
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 7),
+                    child: mark,
+                  ),
+                ),
             ],
           ),
         ),

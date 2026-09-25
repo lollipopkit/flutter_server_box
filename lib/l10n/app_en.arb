@@ -2162,10 +2162,6 @@
   "@sortByJoinTime": {
     "description": "User-facing label or message for sort by join time."
   },
-  "portForwardBetaTitle": "Port Forward (Beta)",
-  "@portForwardBetaTitle": {
-    "description": "Title shown for the port forward beta dialog or section."
-  },
   "tmuxAutoAttach": "tmux auto-attach",
   "@tmuxAutoAttach": {
     "description": "User-facing label or message for tmux auto attach."

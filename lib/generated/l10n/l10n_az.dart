@@ -1697,9 +1697,6 @@ class AppLocalizationsAz extends AppLocalizations {
   String get sortByJoinTime => 'Əlavə edilmə vaxtına görə';
 
   @override
-  String get portForwardBetaTitle => 'Port yönləndirmə (beta)';
-
-  @override
   String get tmuxAutoAttach => 'tmux sessiyasına avtomatik qoşulma';
 
   @override

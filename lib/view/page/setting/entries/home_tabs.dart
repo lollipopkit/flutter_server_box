@@ -149,7 +149,7 @@ class _HomeTabsConfigPageState extends State<HomeTabsConfigPage> {
         child: CardX(
           child: ListTile(
             leading: tab.icon,
-            title: Text(tab.label),
+            title: tab.listTitle,
             trailing: ReorderableDragStartListener(
               index: idx,
               child: const Icon(Icons.drag_handle),

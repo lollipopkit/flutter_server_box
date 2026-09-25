@@ -382,7 +382,6 @@
   "menuGitHubRepository": "Repository GitHub",
   "podmanDockerEmulationDetected": "Rilevata emulazione Docker Podman. Passa a Podman nelle impostazioni.",
   "sponsor": "Sponsor",
-  "portForwardBetaTitle": "Inoltro porte (Beta)",
   "containerSegmentsMismatch": "Numero imprevisto di segmenti nella risposta del container: {count}",
   "containerOperationInProgress": "È già in corso un'altra operazione sul container",
   "processCount": "{count, plural, one{1 processo} other{{count} processi}}",

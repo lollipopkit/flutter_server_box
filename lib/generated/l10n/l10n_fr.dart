@@ -1712,9 +1712,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sortByJoinTime => 'Par date d\'ajout';
 
   @override
-  String get portForwardBetaTitle => 'Transfert de port (Beta)';
-
-  @override
   String get tmuxAutoAttach => 'Rattachement auto à tmux';
 
   @override

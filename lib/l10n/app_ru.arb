@@ -377,7 +377,6 @@
   "writeScriptTip": "После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.",
   "podmanDockerEmulationDetected": "Обнаружена эмуляция Podman Docker. Пожалуйста, переключитесь на Podman в настройках.",
   "sponsor": "Спонсор",
-  "portForwardBetaTitle": "Перенаправление портов (бета)",
   "containerSegmentsMismatch": "Неожиданное количество сегментов в ответе контейнера: {count}",
   "containerOperationInProgress": "Уже выполняется другая операция с контейнером",
   "processCount": "{count, plural, one{{count} процесс} few{{count} процесса} many{{count} процессов} other{{count} процесса}}",

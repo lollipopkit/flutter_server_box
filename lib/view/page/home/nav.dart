@@ -145,7 +145,7 @@ extension _HomePageStrip on _HomePageState {
         for (final tab in overflow)
           ListTile(
             leading: tab.icon,
-            title: Text(tab.label),
+            title: tab.listTitle,
             selected: _tabs.indexOf(tab) == selected,
             onTap: () {
               // The sheet closes itself; the page it came from is what

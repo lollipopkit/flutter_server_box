@@ -493,7 +493,6 @@
   "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。",
   "podmanDockerEmulationDetected": "檢測到 Podman Docker 仿真。請在設定中切換到 Podman。",
   "sponsor": "贊助",
-  "portForwardBetaTitle": "連接埠轉送（Beta）",
   "tmuxAutoAttach": "tmux 自動附加",
   "tmuxAuto": "自動使用 tmux",
   "tmuxAutoTip": "透過 SSH 連線時自動啟動或附加 tmux",

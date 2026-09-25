@@ -1699,9 +1699,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sortByJoinTime => 'По времени добавления';
 
   @override
-  String get portForwardBetaTitle => 'Перенаправление портов (бета)';
-
-  @override
   String get tmuxAutoAttach => 'Автоподключение к tmux';
 
   @override

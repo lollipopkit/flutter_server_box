@@ -3016,12 +3016,6 @@ abstract class AppLocalizations {
   /// **'By join time'**
   String get sortByJoinTime;
 
-  /// Title shown for the port forward beta dialog or section.
-  ///
-  /// In en, this message translates to:
-  /// **'Port Forward (Beta)'**
-  String get portForwardBetaTitle;
-
   /// User-facing label or message for tmux auto attach.
   ///
   /// In en, this message translates to:

@@ -1692,9 +1692,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sortByJoinTime => 'Menurut waktu ditambahkan';
 
   @override
-  String get portForwardBetaTitle => 'Penerusan Port (Beta)';
-
-  @override
   String get tmuxAutoAttach => 'Sambung otomatis ke tmux';
 
   @override

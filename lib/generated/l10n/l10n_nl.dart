@@ -1701,9 +1701,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sortByJoinTime => 'Op moment van toevoegen';
 
   @override
-  String get portForwardBetaTitle => 'Poortdoorsturing (bèta)';
-
-  @override
   String get tmuxAutoAttach => 'tmux automatisch koppelen';
 
   @override

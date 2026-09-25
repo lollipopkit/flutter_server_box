@@ -179,9 +179,9 @@ final class _IntroPage extends StatelessWidget {
   }
 
   /// A page's title with the breathing room above and below it.
-  static List<Widget> _head(String title, double padTop) => [
+  static List<Widget> _head(String title, double padTop, {Widget? mark}) => [
     SizedBox(height: padTop),
-    IntroPage.title(text: title, big: true),
+    IntroPage.title(text: title, big: true, mark: mark),
     SizedBox(height: padTop),
   ];
 
@@ -312,7 +312,11 @@ final class _IntroPage extends StatelessWidget {
 
     return _introList(
       children: [
-        ..._head(l10n.remoteDesktop, padTop),
+        ..._head(
+          l10n.remoteDesktop,
+          padTop,
+          mark: const BetaTag(height: BetaTag.heading),
+        ),
         _prose(l10n.remoteDesktopIntro),
         ListTile(
           leading: const Icon(Icons.desktop_windows_outlined, size: _kIconSize),

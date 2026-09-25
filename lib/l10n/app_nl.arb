@@ -377,7 +377,6 @@
   "writeScriptTip": "Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.",
   "podmanDockerEmulationDetected": "Podman Docker-emulatie gedetecteerd. Schakel over naar Podman in de instellingen.",
   "sponsor": "Sponsor",
-  "portForwardBetaTitle": "Poortdoorsturing (bèta)",
   "containerSegmentsMismatch": "Onverwacht aantal segmenten in containerrespons: {count}",
   "containerOperationInProgress": "Er wordt al een andere containerbewerking uitgevoerd",
   "processCount": "{count, plural, one{1 proces} other{{count} processen}}",
