@@ -5755,4 +5755,1490 @@ as List<LibvirtLease>,
 
 }
 
+
+/// @nodoc
+mixin _$LibvirtHwCpu {
+
+ int get sockets; int get dies; int get clusters; int get cores; int get threads; int get max; int get current; bool get topology;
+/// Create a copy of LibvirtHwCpu
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtHwCpuCopyWith<LibvirtHwCpu> get copyWith => _$LibvirtHwCpuCopyWithImpl<LibvirtHwCpu>(this as LibvirtHwCpu, _$identity);
+
+  /// Serializes this LibvirtHwCpu to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHwCpu&&(identical(other.sockets, sockets) || other.sockets == sockets)&&(identical(other.dies, dies) || other.dies == dies)&&(identical(other.clusters, clusters) || other.clusters == clusters)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.threads, threads) || other.threads == threads)&&(identical(other.max, max) || other.max == max)&&(identical(other.current, current) || other.current == current)&&(identical(other.topology, topology) || other.topology == topology));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sockets,dies,clusters,cores,threads,max,current,topology);
+
+@override
+String toString() {
+  return 'LibvirtHwCpu(sockets: $sockets, dies: $dies, clusters: $clusters, cores: $cores, threads: $threads, max: $max, current: $current, topology: $topology)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtHwCpuCopyWith<$Res>  {
+  factory $LibvirtHwCpuCopyWith(LibvirtHwCpu value, $Res Function(LibvirtHwCpu) _then) = _$LibvirtHwCpuCopyWithImpl;
+@useResult
+$Res call({
+ int sockets, int dies, int clusters, int cores, int threads, int max, int current, bool topology
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtHwCpuCopyWithImpl<$Res>
+    implements $LibvirtHwCpuCopyWith<$Res> {
+  _$LibvirtHwCpuCopyWithImpl(this._self, this._then);
+
+  final LibvirtHwCpu _self;
+  final $Res Function(LibvirtHwCpu) _then;
+
+/// Create a copy of LibvirtHwCpu
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? sockets = null,Object? dies = null,Object? clusters = null,Object? cores = null,Object? threads = null,Object? max = null,Object? current = null,Object? topology = null,}) {
+  return _then(_self.copyWith(
+sockets: null == sockets ? _self.sockets : sockets // ignore: cast_nullable_to_non_nullable
+as int,dies: null == dies ? _self.dies : dies // ignore: cast_nullable_to_non_nullable
+as int,clusters: null == clusters ? _self.clusters : clusters // ignore: cast_nullable_to_non_nullable
+as int,cores: null == cores ? _self.cores : cores // ignore: cast_nullable_to_non_nullable
+as int,threads: null == threads ? _self.threads : threads // ignore: cast_nullable_to_non_nullable
+as int,max: null == max ? _self.max : max // ignore: cast_nullable_to_non_nullable
+as int,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
+as int,topology: null == topology ? _self.topology : topology // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtHwCpu].
+extension LibvirtHwCpuPatterns on LibvirtHwCpu {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtHwCpu value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtHwCpu() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtHwCpu value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwCpu():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtHwCpu value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwCpu() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int sockets,  int dies,  int clusters,  int cores,  int threads,  int max,  int current,  bool topology)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtHwCpu() when $default != null:
+return $default(_that.sockets,_that.dies,_that.clusters,_that.cores,_that.threads,_that.max,_that.current,_that.topology);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int sockets,  int dies,  int clusters,  int cores,  int threads,  int max,  int current,  bool topology)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwCpu():
+return $default(_that.sockets,_that.dies,_that.clusters,_that.cores,_that.threads,_that.max,_that.current,_that.topology);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int sockets,  int dies,  int clusters,  int cores,  int threads,  int max,  int current,  bool topology)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwCpu() when $default != null:
+return $default(_that.sockets,_that.dies,_that.clusters,_that.cores,_that.threads,_that.max,_that.current,_that.topology);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtHwCpu implements LibvirtHwCpu {
+  const _LibvirtHwCpu({required this.sockets, this.dies = 1, this.clusters = 1, required this.cores, this.threads = 1, required this.max, required this.current, this.topology = false});
+  factory _LibvirtHwCpu.fromJson(Map<String, dynamic> json) => _$LibvirtHwCpuFromJson(json);
+
+@override final  int sockets;
+@override@JsonKey() final  int dies;
+@override@JsonKey() final  int clusters;
+@override final  int cores;
+@override@JsonKey() final  int threads;
+@override final  int max;
+@override final  int current;
+@override@JsonKey() final  bool topology;
+
+/// Create a copy of LibvirtHwCpu
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtHwCpuCopyWith<_LibvirtHwCpu> get copyWith => __$LibvirtHwCpuCopyWithImpl<_LibvirtHwCpu>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtHwCpuToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHwCpu&&(identical(other.sockets, sockets) || other.sockets == sockets)&&(identical(other.dies, dies) || other.dies == dies)&&(identical(other.clusters, clusters) || other.clusters == clusters)&&(identical(other.cores, cores) || other.cores == cores)&&(identical(other.threads, threads) || other.threads == threads)&&(identical(other.max, max) || other.max == max)&&(identical(other.current, current) || other.current == current)&&(identical(other.topology, topology) || other.topology == topology));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,sockets,dies,clusters,cores,threads,max,current,topology);
+
+@override
+String toString() {
+  return 'LibvirtHwCpu(sockets: $sockets, dies: $dies, clusters: $clusters, cores: $cores, threads: $threads, max: $max, current: $current, topology: $topology)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtHwCpuCopyWith<$Res> implements $LibvirtHwCpuCopyWith<$Res> {
+  factory _$LibvirtHwCpuCopyWith(_LibvirtHwCpu value, $Res Function(_LibvirtHwCpu) _then) = __$LibvirtHwCpuCopyWithImpl;
+@override @useResult
+$Res call({
+ int sockets, int dies, int clusters, int cores, int threads, int max, int current, bool topology
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtHwCpuCopyWithImpl<$Res>
+    implements _$LibvirtHwCpuCopyWith<$Res> {
+  __$LibvirtHwCpuCopyWithImpl(this._self, this._then);
+
+  final _LibvirtHwCpu _self;
+  final $Res Function(_LibvirtHwCpu) _then;
+
+/// Create a copy of LibvirtHwCpu
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? sockets = null,Object? dies = null,Object? clusters = null,Object? cores = null,Object? threads = null,Object? max = null,Object? current = null,Object? topology = null,}) {
+  return _then(_LibvirtHwCpu(
+sockets: null == sockets ? _self.sockets : sockets // ignore: cast_nullable_to_non_nullable
+as int,dies: null == dies ? _self.dies : dies // ignore: cast_nullable_to_non_nullable
+as int,clusters: null == clusters ? _self.clusters : clusters // ignore: cast_nullable_to_non_nullable
+as int,cores: null == cores ? _self.cores : cores // ignore: cast_nullable_to_non_nullable
+as int,threads: null == threads ? _self.threads : threads // ignore: cast_nullable_to_non_nullable
+as int,max: null == max ? _self.max : max // ignore: cast_nullable_to_non_nullable
+as int,current: null == current ? _self.current : current // ignore: cast_nullable_to_non_nullable
+as int,topology: null == topology ? _self.topology : topology // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtHwDisk {
+
+ String get target; String get device; String? get bus; String? get sourceType; String? get source; String? get format; bool get readonly; int? get capacity; int? get bootOrder;
+/// Create a copy of LibvirtHwDisk
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtHwDiskCopyWith<LibvirtHwDisk> get copyWith => _$LibvirtHwDiskCopyWithImpl<LibvirtHwDisk>(this as LibvirtHwDisk, _$identity);
+
+  /// Serializes this LibvirtHwDisk to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHwDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.device, device) || other.device == device)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.bootOrder, bootOrder) || other.bootOrder == bootOrder));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,target,device,bus,sourceType,source,format,readonly,capacity,bootOrder);
+
+@override
+String toString() {
+  return 'LibvirtHwDisk(target: $target, device: $device, bus: $bus, sourceType: $sourceType, source: $source, format: $format, readonly: $readonly, capacity: $capacity, bootOrder: $bootOrder)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtHwDiskCopyWith<$Res>  {
+  factory $LibvirtHwDiskCopyWith(LibvirtHwDisk value, $Res Function(LibvirtHwDisk) _then) = _$LibvirtHwDiskCopyWithImpl;
+@useResult
+$Res call({
+ String target, String device, String? bus, String? sourceType, String? source, String? format, bool readonly, int? capacity, int? bootOrder
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtHwDiskCopyWithImpl<$Res>
+    implements $LibvirtHwDiskCopyWith<$Res> {
+  _$LibvirtHwDiskCopyWithImpl(this._self, this._then);
+
+  final LibvirtHwDisk _self;
+  final $Res Function(LibvirtHwDisk) _then;
+
+/// Create a copy of LibvirtHwDisk
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? target = null,Object? device = null,Object? bus = freezed,Object? sourceType = freezed,Object? source = freezed,Object? format = freezed,Object? readonly = null,Object? capacity = freezed,Object? bootOrder = freezed,}) {
+  return _then(_self.copyWith(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
+as String,bus: freezed == bus ? _self.bus : bus // ignore: cast_nullable_to_non_nullable
+as String?,sourceType: freezed == sourceType ? _self.sourceType : sourceType // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,readonly: null == readonly ? _self.readonly : readonly // ignore: cast_nullable_to_non_nullable
+as bool,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,bootOrder: freezed == bootOrder ? _self.bootOrder : bootOrder // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtHwDisk].
+extension LibvirtHwDiskPatterns on LibvirtHwDisk {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtHwDisk value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtHwDisk() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtHwDisk value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwDisk():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtHwDisk value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwDisk() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String target,  String device,  String? bus,  String? sourceType,  String? source,  String? format,  bool readonly,  int? capacity,  int? bootOrder)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtHwDisk() when $default != null:
+return $default(_that.target,_that.device,_that.bus,_that.sourceType,_that.source,_that.format,_that.readonly,_that.capacity,_that.bootOrder);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String target,  String device,  String? bus,  String? sourceType,  String? source,  String? format,  bool readonly,  int? capacity,  int? bootOrder)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwDisk():
+return $default(_that.target,_that.device,_that.bus,_that.sourceType,_that.source,_that.format,_that.readonly,_that.capacity,_that.bootOrder);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String target,  String device,  String? bus,  String? sourceType,  String? source,  String? format,  bool readonly,  int? capacity,  int? bootOrder)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwDisk() when $default != null:
+return $default(_that.target,_that.device,_that.bus,_that.sourceType,_that.source,_that.format,_that.readonly,_that.capacity,_that.bootOrder);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtHwDisk implements LibvirtHwDisk {
+  const _LibvirtHwDisk({required this.target, this.device = 'disk', this.bus, this.sourceType, this.source, this.format, this.readonly = false, this.capacity, this.bootOrder});
+  factory _LibvirtHwDisk.fromJson(Map<String, dynamic> json) => _$LibvirtHwDiskFromJson(json);
+
+@override final  String target;
+@override@JsonKey() final  String device;
+@override final  String? bus;
+@override final  String? sourceType;
+@override final  String? source;
+@override final  String? format;
+@override@JsonKey() final  bool readonly;
+@override final  int? capacity;
+@override final  int? bootOrder;
+
+/// Create a copy of LibvirtHwDisk
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtHwDiskCopyWith<_LibvirtHwDisk> get copyWith => __$LibvirtHwDiskCopyWithImpl<_LibvirtHwDisk>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtHwDiskToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHwDisk&&(identical(other.target, target) || other.target == target)&&(identical(other.device, device) || other.device == device)&&(identical(other.bus, bus) || other.bus == bus)&&(identical(other.sourceType, sourceType) || other.sourceType == sourceType)&&(identical(other.source, source) || other.source == source)&&(identical(other.format, format) || other.format == format)&&(identical(other.readonly, readonly) || other.readonly == readonly)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.bootOrder, bootOrder) || other.bootOrder == bootOrder));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,target,device,bus,sourceType,source,format,readonly,capacity,bootOrder);
+
+@override
+String toString() {
+  return 'LibvirtHwDisk(target: $target, device: $device, bus: $bus, sourceType: $sourceType, source: $source, format: $format, readonly: $readonly, capacity: $capacity, bootOrder: $bootOrder)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtHwDiskCopyWith<$Res> implements $LibvirtHwDiskCopyWith<$Res> {
+  factory _$LibvirtHwDiskCopyWith(_LibvirtHwDisk value, $Res Function(_LibvirtHwDisk) _then) = __$LibvirtHwDiskCopyWithImpl;
+@override @useResult
+$Res call({
+ String target, String device, String? bus, String? sourceType, String? source, String? format, bool readonly, int? capacity, int? bootOrder
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtHwDiskCopyWithImpl<$Res>
+    implements _$LibvirtHwDiskCopyWith<$Res> {
+  __$LibvirtHwDiskCopyWithImpl(this._self, this._then);
+
+  final _LibvirtHwDisk _self;
+  final $Res Function(_LibvirtHwDisk) _then;
+
+/// Create a copy of LibvirtHwDisk
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? target = null,Object? device = null,Object? bus = freezed,Object? sourceType = freezed,Object? source = freezed,Object? format = freezed,Object? readonly = null,Object? capacity = freezed,Object? bootOrder = freezed,}) {
+  return _then(_LibvirtHwDisk(
+target: null == target ? _self.target : target // ignore: cast_nullable_to_non_nullable
+as String,device: null == device ? _self.device : device // ignore: cast_nullable_to_non_nullable
+as String,bus: freezed == bus ? _self.bus : bus // ignore: cast_nullable_to_non_nullable
+as String?,sourceType: freezed == sourceType ? _self.sourceType : sourceType // ignore: cast_nullable_to_non_nullable
+as String?,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,format: freezed == format ? _self.format : format // ignore: cast_nullable_to_non_nullable
+as String?,readonly: null == readonly ? _self.readonly : readonly // ignore: cast_nullable_to_non_nullable
+as bool,capacity: freezed == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
+as int?,bootOrder: freezed == bootOrder ? _self.bootOrder : bootOrder // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtHwNic {
+
+ String get mac; String get kind; String? get source; String? get model; bool get linkUp; int? get bootOrder;
+/// Create a copy of LibvirtHwNic
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtHwNicCopyWith<LibvirtHwNic> get copyWith => _$LibvirtHwNicCopyWithImpl<LibvirtHwNic>(this as LibvirtHwNic, _$identity);
+
+  /// Serializes this LibvirtHwNic to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHwNic&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.linkUp, linkUp) || other.linkUp == linkUp)&&(identical(other.bootOrder, bootOrder) || other.bootOrder == bootOrder));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,mac,kind,source,model,linkUp,bootOrder);
+
+@override
+String toString() {
+  return 'LibvirtHwNic(mac: $mac, kind: $kind, source: $source, model: $model, linkUp: $linkUp, bootOrder: $bootOrder)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtHwNicCopyWith<$Res>  {
+  factory $LibvirtHwNicCopyWith(LibvirtHwNic value, $Res Function(LibvirtHwNic) _then) = _$LibvirtHwNicCopyWithImpl;
+@useResult
+$Res call({
+ String mac, String kind, String? source, String? model, bool linkUp, int? bootOrder
+});
+
+
+
+
+}
+/// @nodoc
+class _$LibvirtHwNicCopyWithImpl<$Res>
+    implements $LibvirtHwNicCopyWith<$Res> {
+  _$LibvirtHwNicCopyWithImpl(this._self, this._then);
+
+  final LibvirtHwNic _self;
+  final $Res Function(LibvirtHwNic) _then;
+
+/// Create a copy of LibvirtHwNic
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? mac = null,Object? kind = null,Object? source = freezed,Object? model = freezed,Object? linkUp = null,Object? bootOrder = freezed,}) {
+  return _then(_self.copyWith(
+mac: null == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String?,linkUp: null == linkUp ? _self.linkUp : linkUp // ignore: cast_nullable_to_non_nullable
+as bool,bootOrder: freezed == bootOrder ? _self.bootOrder : bootOrder // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtHwNic].
+extension LibvirtHwNicPatterns on LibvirtHwNic {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtHwNic value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtHwNic() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtHwNic value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwNic():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtHwNic value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwNic() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String mac,  String kind,  String? source,  String? model,  bool linkUp,  int? bootOrder)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtHwNic() when $default != null:
+return $default(_that.mac,_that.kind,_that.source,_that.model,_that.linkUp,_that.bootOrder);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String mac,  String kind,  String? source,  String? model,  bool linkUp,  int? bootOrder)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwNic():
+return $default(_that.mac,_that.kind,_that.source,_that.model,_that.linkUp,_that.bootOrder);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String mac,  String kind,  String? source,  String? model,  bool linkUp,  int? bootOrder)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwNic() when $default != null:
+return $default(_that.mac,_that.kind,_that.source,_that.model,_that.linkUp,_that.bootOrder);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtHwNic implements LibvirtHwNic {
+  const _LibvirtHwNic({required this.mac, this.kind = '', this.source, this.model, this.linkUp = true, this.bootOrder});
+  factory _LibvirtHwNic.fromJson(Map<String, dynamic> json) => _$LibvirtHwNicFromJson(json);
+
+@override final  String mac;
+@override@JsonKey() final  String kind;
+@override final  String? source;
+@override final  String? model;
+@override@JsonKey() final  bool linkUp;
+@override final  int? bootOrder;
+
+/// Create a copy of LibvirtHwNic
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtHwNicCopyWith<_LibvirtHwNic> get copyWith => __$LibvirtHwNicCopyWithImpl<_LibvirtHwNic>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtHwNicToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHwNic&&(identical(other.mac, mac) || other.mac == mac)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.source, source) || other.source == source)&&(identical(other.model, model) || other.model == model)&&(identical(other.linkUp, linkUp) || other.linkUp == linkUp)&&(identical(other.bootOrder, bootOrder) || other.bootOrder == bootOrder));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,mac,kind,source,model,linkUp,bootOrder);
+
+@override
+String toString() {
+  return 'LibvirtHwNic(mac: $mac, kind: $kind, source: $source, model: $model, linkUp: $linkUp, bootOrder: $bootOrder)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtHwNicCopyWith<$Res> implements $LibvirtHwNicCopyWith<$Res> {
+  factory _$LibvirtHwNicCopyWith(_LibvirtHwNic value, $Res Function(_LibvirtHwNic) _then) = __$LibvirtHwNicCopyWithImpl;
+@override @useResult
+$Res call({
+ String mac, String kind, String? source, String? model, bool linkUp, int? bootOrder
+});
+
+
+
+
+}
+/// @nodoc
+class __$LibvirtHwNicCopyWithImpl<$Res>
+    implements _$LibvirtHwNicCopyWith<$Res> {
+  __$LibvirtHwNicCopyWithImpl(this._self, this._then);
+
+  final _LibvirtHwNic _self;
+  final $Res Function(_LibvirtHwNic) _then;
+
+/// Create a copy of LibvirtHwNic
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? mac = null,Object? kind = null,Object? source = freezed,Object? model = freezed,Object? linkUp = null,Object? bootOrder = freezed,}) {
+  return _then(_LibvirtHwNic(
+mac: null == mac ? _self.mac : mac // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as String,source: freezed == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
+as String?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String?,linkUp: null == linkUp ? _self.linkUp : linkUp // ignore: cast_nullable_to_non_nullable
+as bool,bootOrder: freezed == bootOrder ? _self.bootOrder : bootOrder // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$LibvirtHwConfig {
+
+ LibvirtHwCpu get cpu; int get memoryKib; int get currentMemoryKib; List<LibvirtHwDisk> get disks; List<LibvirtHwNic> get nics; List<String> get boot; bool get balloon;
+/// Create a copy of LibvirtHwConfig
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtHwConfigCopyWith<LibvirtHwConfig> get copyWith => _$LibvirtHwConfigCopyWithImpl<LibvirtHwConfig>(this as LibvirtHwConfig, _$identity);
+
+  /// Serializes this LibvirtHwConfig to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHwConfig&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memoryKib, memoryKib) || other.memoryKib == memoryKib)&&(identical(other.currentMemoryKib, currentMemoryKib) || other.currentMemoryKib == currentMemoryKib)&&const DeepCollectionEquality().equals(other.disks, disks)&&const DeepCollectionEquality().equals(other.nics, nics)&&const DeepCollectionEquality().equals(other.boot, boot)&&(identical(other.balloon, balloon) || other.balloon == balloon));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,cpu,memoryKib,currentMemoryKib,const DeepCollectionEquality().hash(disks),const DeepCollectionEquality().hash(nics),const DeepCollectionEquality().hash(boot),balloon);
+
+@override
+String toString() {
+  return 'LibvirtHwConfig(cpu: $cpu, memoryKib: $memoryKib, currentMemoryKib: $currentMemoryKib, disks: $disks, nics: $nics, boot: $boot, balloon: $balloon)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtHwConfigCopyWith<$Res>  {
+  factory $LibvirtHwConfigCopyWith(LibvirtHwConfig value, $Res Function(LibvirtHwConfig) _then) = _$LibvirtHwConfigCopyWithImpl;
+@useResult
+$Res call({
+ LibvirtHwCpu cpu, int memoryKib, int currentMemoryKib, List<LibvirtHwDisk> disks, List<LibvirtHwNic> nics, List<String> boot, bool balloon
+});
+
+
+$LibvirtHwCpuCopyWith<$Res> get cpu;
+
+}
+/// @nodoc
+class _$LibvirtHwConfigCopyWithImpl<$Res>
+    implements $LibvirtHwConfigCopyWith<$Res> {
+  _$LibvirtHwConfigCopyWithImpl(this._self, this._then);
+
+  final LibvirtHwConfig _self;
+  final $Res Function(LibvirtHwConfig) _then;
+
+/// Create a copy of LibvirtHwConfig
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? cpu = null,Object? memoryKib = null,Object? currentMemoryKib = null,Object? disks = null,Object? nics = null,Object? boot = null,Object? balloon = null,}) {
+  return _then(_self.copyWith(
+cpu: null == cpu ? _self.cpu : cpu // ignore: cast_nullable_to_non_nullable
+as LibvirtHwCpu,memoryKib: null == memoryKib ? _self.memoryKib : memoryKib // ignore: cast_nullable_to_non_nullable
+as int,currentMemoryKib: null == currentMemoryKib ? _self.currentMemoryKib : currentMemoryKib // ignore: cast_nullable_to_non_nullable
+as int,disks: null == disks ? _self.disks : disks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtHwDisk>,nics: null == nics ? _self.nics : nics // ignore: cast_nullable_to_non_nullable
+as List<LibvirtHwNic>,boot: null == boot ? _self.boot : boot // ignore: cast_nullable_to_non_nullable
+as List<String>,balloon: null == balloon ? _self.balloon : balloon // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+/// Create a copy of LibvirtHwConfig
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwCpuCopyWith<$Res> get cpu {
+  
+  return $LibvirtHwCpuCopyWith<$Res>(_self.cpu, (value) {
+    return _then(_self.copyWith(cpu: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtHwConfig].
+extension LibvirtHwConfigPatterns on LibvirtHwConfig {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtHwConfig value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtHwConfig() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtHwConfig value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwConfig():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtHwConfig value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHwConfig() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtHwConfig() when $default != null:
+return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwConfig():
+return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LibvirtHwCpu cpu,  int memoryKib,  int currentMemoryKib,  List<LibvirtHwDisk> disks,  List<LibvirtHwNic> nics,  List<String> boot,  bool balloon)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHwConfig() when $default != null:
+return $default(_that.cpu,_that.memoryKib,_that.currentMemoryKib,_that.disks,_that.nics,_that.boot,_that.balloon);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtHwConfig implements LibvirtHwConfig {
+  const _LibvirtHwConfig({required this.cpu, required this.memoryKib, required this.currentMemoryKib, final  List<LibvirtHwDisk> disks = const <LibvirtHwDisk>[], final  List<LibvirtHwNic> nics = const <LibvirtHwNic>[], final  List<String> boot = const <String>[], this.balloon = false}): _disks = disks,_nics = nics,_boot = boot;
+  factory _LibvirtHwConfig.fromJson(Map<String, dynamic> json) => _$LibvirtHwConfigFromJson(json);
+
+@override final  LibvirtHwCpu cpu;
+@override final  int memoryKib;
+@override final  int currentMemoryKib;
+ final  List<LibvirtHwDisk> _disks;
+@override@JsonKey() List<LibvirtHwDisk> get disks {
+  if (_disks is EqualUnmodifiableListView) return _disks;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_disks);
+}
+
+ final  List<LibvirtHwNic> _nics;
+@override@JsonKey() List<LibvirtHwNic> get nics {
+  if (_nics is EqualUnmodifiableListView) return _nics;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_nics);
+}
+
+ final  List<String> _boot;
+@override@JsonKey() List<String> get boot {
+  if (_boot is EqualUnmodifiableListView) return _boot;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_boot);
+}
+
+@override@JsonKey() final  bool balloon;
+
+/// Create a copy of LibvirtHwConfig
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtHwConfigCopyWith<_LibvirtHwConfig> get copyWith => __$LibvirtHwConfigCopyWithImpl<_LibvirtHwConfig>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtHwConfigToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHwConfig&&(identical(other.cpu, cpu) || other.cpu == cpu)&&(identical(other.memoryKib, memoryKib) || other.memoryKib == memoryKib)&&(identical(other.currentMemoryKib, currentMemoryKib) || other.currentMemoryKib == currentMemoryKib)&&const DeepCollectionEquality().equals(other._disks, _disks)&&const DeepCollectionEquality().equals(other._nics, _nics)&&const DeepCollectionEquality().equals(other._boot, _boot)&&(identical(other.balloon, balloon) || other.balloon == balloon));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,cpu,memoryKib,currentMemoryKib,const DeepCollectionEquality().hash(_disks),const DeepCollectionEquality().hash(_nics),const DeepCollectionEquality().hash(_boot),balloon);
+
+@override
+String toString() {
+  return 'LibvirtHwConfig(cpu: $cpu, memoryKib: $memoryKib, currentMemoryKib: $currentMemoryKib, disks: $disks, nics: $nics, boot: $boot, balloon: $balloon)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtHwConfigCopyWith<$Res> implements $LibvirtHwConfigCopyWith<$Res> {
+  factory _$LibvirtHwConfigCopyWith(_LibvirtHwConfig value, $Res Function(_LibvirtHwConfig) _then) = __$LibvirtHwConfigCopyWithImpl;
+@override @useResult
+$Res call({
+ LibvirtHwCpu cpu, int memoryKib, int currentMemoryKib, List<LibvirtHwDisk> disks, List<LibvirtHwNic> nics, List<String> boot, bool balloon
+});
+
+
+@override $LibvirtHwCpuCopyWith<$Res> get cpu;
+
+}
+/// @nodoc
+class __$LibvirtHwConfigCopyWithImpl<$Res>
+    implements _$LibvirtHwConfigCopyWith<$Res> {
+  __$LibvirtHwConfigCopyWithImpl(this._self, this._then);
+
+  final _LibvirtHwConfig _self;
+  final $Res Function(_LibvirtHwConfig) _then;
+
+/// Create a copy of LibvirtHwConfig
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? cpu = null,Object? memoryKib = null,Object? currentMemoryKib = null,Object? disks = null,Object? nics = null,Object? boot = null,Object? balloon = null,}) {
+  return _then(_LibvirtHwConfig(
+cpu: null == cpu ? _self.cpu : cpu // ignore: cast_nullable_to_non_nullable
+as LibvirtHwCpu,memoryKib: null == memoryKib ? _self.memoryKib : memoryKib // ignore: cast_nullable_to_non_nullable
+as int,currentMemoryKib: null == currentMemoryKib ? _self.currentMemoryKib : currentMemoryKib // ignore: cast_nullable_to_non_nullable
+as int,disks: null == disks ? _self._disks : disks // ignore: cast_nullable_to_non_nullable
+as List<LibvirtHwDisk>,nics: null == nics ? _self._nics : nics // ignore: cast_nullable_to_non_nullable
+as List<LibvirtHwNic>,boot: null == boot ? _self._boot : boot // ignore: cast_nullable_to_non_nullable
+as List<String>,balloon: null == balloon ? _self.balloon : balloon // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+/// Create a copy of LibvirtHwConfig
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwCpuCopyWith<$Res> get cpu {
+  
+  return $LibvirtHwCpuCopyWith<$Res>(_self.cpu, (value) {
+    return _then(_self.copyWith(cpu: value));
+  });
+}
+}
+
+
+/// @nodoc
+mixin _$LibvirtHardwareInfo {
+
+ LibvirtHwConfig get config; LibvirtHwConfig? get live; String get configXml; bool get autostart; int? get hostCpus; int? get hostMemoryKib;
+/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$LibvirtHardwareInfoCopyWith<LibvirtHardwareInfo> get copyWith => _$LibvirtHardwareInfoCopyWithImpl<LibvirtHardwareInfo>(this as LibvirtHardwareInfo, _$identity);
+
+  /// Serializes this LibvirtHardwareInfo to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LibvirtHardwareInfo&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live)&&(identical(other.configXml, configXml) || other.configXml == configXml)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.hostCpus, hostCpus) || other.hostCpus == hostCpus)&&(identical(other.hostMemoryKib, hostMemoryKib) || other.hostMemoryKib == hostMemoryKib));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,config,live,configXml,autostart,hostCpus,hostMemoryKib);
+
+@override
+String toString() {
+  return 'LibvirtHardwareInfo(config: $config, live: $live, configXml: $configXml, autostart: $autostart, hostCpus: $hostCpus, hostMemoryKib: $hostMemoryKib)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $LibvirtHardwareInfoCopyWith<$Res>  {
+  factory $LibvirtHardwareInfoCopyWith(LibvirtHardwareInfo value, $Res Function(LibvirtHardwareInfo) _then) = _$LibvirtHardwareInfoCopyWithImpl;
+@useResult
+$Res call({
+ LibvirtHwConfig config, LibvirtHwConfig? live, String configXml, bool autostart, int? hostCpus, int? hostMemoryKib
+});
+
+
+$LibvirtHwConfigCopyWith<$Res> get config;$LibvirtHwConfigCopyWith<$Res>? get live;
+
+}
+/// @nodoc
+class _$LibvirtHardwareInfoCopyWithImpl<$Res>
+    implements $LibvirtHardwareInfoCopyWith<$Res> {
+  _$LibvirtHardwareInfoCopyWithImpl(this._self, this._then);
+
+  final LibvirtHardwareInfo _self;
+  final $Res Function(LibvirtHardwareInfo) _then;
+
+/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? config = null,Object? live = freezed,Object? configXml = null,Object? autostart = null,Object? hostCpus = freezed,Object? hostMemoryKib = freezed,}) {
+  return _then(_self.copyWith(
+config: null == config ? _self.config : config // ignore: cast_nullable_to_non_nullable
+as LibvirtHwConfig,live: freezed == live ? _self.live : live // ignore: cast_nullable_to_non_nullable
+as LibvirtHwConfig?,configXml: null == configXml ? _self.configXml : configXml // ignore: cast_nullable_to_non_nullable
+as String,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,hostCpus: freezed == hostCpus ? _self.hostCpus : hostCpus // ignore: cast_nullable_to_non_nullable
+as int?,hostMemoryKib: freezed == hostMemoryKib ? _self.hostMemoryKib : hostMemoryKib // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwConfigCopyWith<$Res> get config {
+  
+  return $LibvirtHwConfigCopyWith<$Res>(_self.config, (value) {
+    return _then(_self.copyWith(config: value));
+  });
+}/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwConfigCopyWith<$Res>? get live {
+    if (_self.live == null) {
+    return null;
+  }
+
+  return $LibvirtHwConfigCopyWith<$Res>(_self.live!, (value) {
+    return _then(_self.copyWith(live: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [LibvirtHardwareInfo].
+extension LibvirtHardwareInfoPatterns on LibvirtHardwareInfo {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LibvirtHardwareInfo value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _LibvirtHardwareInfo() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LibvirtHardwareInfo value)  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHardwareInfo():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LibvirtHardwareInfo value)?  $default,){
+final _that = this;
+switch (_that) {
+case _LibvirtHardwareInfo() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  bool autostart,  int? hostCpus,  int? hostMemoryKib)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _LibvirtHardwareInfo() when $default != null:
+return $default(_that.config,_that.live,_that.configXml,_that.autostart,_that.hostCpus,_that.hostMemoryKib);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  bool autostart,  int? hostCpus,  int? hostMemoryKib)  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHardwareInfo():
+return $default(_that.config,_that.live,_that.configXml,_that.autostart,_that.hostCpus,_that.hostMemoryKib);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( LibvirtHwConfig config,  LibvirtHwConfig? live,  String configXml,  bool autostart,  int? hostCpus,  int? hostMemoryKib)?  $default,) {final _that = this;
+switch (_that) {
+case _LibvirtHardwareInfo() when $default != null:
+return $default(_that.config,_that.live,_that.configXml,_that.autostart,_that.hostCpus,_that.hostMemoryKib);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class _LibvirtHardwareInfo implements LibvirtHardwareInfo {
+  const _LibvirtHardwareInfo({required this.config, this.live, required this.configXml, this.autostart = false, this.hostCpus, this.hostMemoryKib});
+  factory _LibvirtHardwareInfo.fromJson(Map<String, dynamic> json) => _$LibvirtHardwareInfoFromJson(json);
+
+@override final  LibvirtHwConfig config;
+@override final  LibvirtHwConfig? live;
+@override final  String configXml;
+@override@JsonKey() final  bool autostart;
+@override final  int? hostCpus;
+@override final  int? hostMemoryKib;
+
+/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$LibvirtHardwareInfoCopyWith<_LibvirtHardwareInfo> get copyWith => __$LibvirtHardwareInfoCopyWithImpl<_LibvirtHardwareInfo>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$LibvirtHardwareInfoToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LibvirtHardwareInfo&&(identical(other.config, config) || other.config == config)&&(identical(other.live, live) || other.live == live)&&(identical(other.configXml, configXml) || other.configXml == configXml)&&(identical(other.autostart, autostart) || other.autostart == autostart)&&(identical(other.hostCpus, hostCpus) || other.hostCpus == hostCpus)&&(identical(other.hostMemoryKib, hostMemoryKib) || other.hostMemoryKib == hostMemoryKib));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,config,live,configXml,autostart,hostCpus,hostMemoryKib);
+
+@override
+String toString() {
+  return 'LibvirtHardwareInfo(config: $config, live: $live, configXml: $configXml, autostart: $autostart, hostCpus: $hostCpus, hostMemoryKib: $hostMemoryKib)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$LibvirtHardwareInfoCopyWith<$Res> implements $LibvirtHardwareInfoCopyWith<$Res> {
+  factory _$LibvirtHardwareInfoCopyWith(_LibvirtHardwareInfo value, $Res Function(_LibvirtHardwareInfo) _then) = __$LibvirtHardwareInfoCopyWithImpl;
+@override @useResult
+$Res call({
+ LibvirtHwConfig config, LibvirtHwConfig? live, String configXml, bool autostart, int? hostCpus, int? hostMemoryKib
+});
+
+
+@override $LibvirtHwConfigCopyWith<$Res> get config;@override $LibvirtHwConfigCopyWith<$Res>? get live;
+
+}
+/// @nodoc
+class __$LibvirtHardwareInfoCopyWithImpl<$Res>
+    implements _$LibvirtHardwareInfoCopyWith<$Res> {
+  __$LibvirtHardwareInfoCopyWithImpl(this._self, this._then);
+
+  final _LibvirtHardwareInfo _self;
+  final $Res Function(_LibvirtHardwareInfo) _then;
+
+/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? config = null,Object? live = freezed,Object? configXml = null,Object? autostart = null,Object? hostCpus = freezed,Object? hostMemoryKib = freezed,}) {
+  return _then(_LibvirtHardwareInfo(
+config: null == config ? _self.config : config // ignore: cast_nullable_to_non_nullable
+as LibvirtHwConfig,live: freezed == live ? _self.live : live // ignore: cast_nullable_to_non_nullable
+as LibvirtHwConfig?,configXml: null == configXml ? _self.configXml : configXml // ignore: cast_nullable_to_non_nullable
+as String,autostart: null == autostart ? _self.autostart : autostart // ignore: cast_nullable_to_non_nullable
+as bool,hostCpus: freezed == hostCpus ? _self.hostCpus : hostCpus // ignore: cast_nullable_to_non_nullable
+as int?,hostMemoryKib: freezed == hostMemoryKib ? _self.hostMemoryKib : hostMemoryKib // ignore: cast_nullable_to_non_nullable
+as int?,
+  ));
+}
+
+/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwConfigCopyWith<$Res> get config {
+  
+  return $LibvirtHwConfigCopyWith<$Res>(_self.config, (value) {
+    return _then(_self.copyWith(config: value));
+  });
+}/// Create a copy of LibvirtHardwareInfo
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LibvirtHwConfigCopyWith<$Res>? get live {
+    if (_self.live == null) {
+    return null;
+  }
+
+  return $LibvirtHwConfigCopyWith<$Res>(_self.live!, (value) {
+    return _then(_self.copyWith(live: value));
+  });
+}
+}
+
 // dart format on

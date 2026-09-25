@@ -438,3 +438,128 @@ Map<String, dynamic> _$LibvirtNetworksToJson(_LibvirtNetworks instance) =>
       'ifaces': instance.ifaces,
       'leases': instance.leases,
     };
+
+_LibvirtHwCpu _$LibvirtHwCpuFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwCpu(
+      sockets: (json['sockets'] as num).toInt(),
+      dies: (json['dies'] as num?)?.toInt() ?? 1,
+      clusters: (json['clusters'] as num?)?.toInt() ?? 1,
+      cores: (json['cores'] as num).toInt(),
+      threads: (json['threads'] as num?)?.toInt() ?? 1,
+      max: (json['max'] as num).toInt(),
+      current: (json['current'] as num).toInt(),
+      topology: json['topology'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtHwCpuToJson(_LibvirtHwCpu instance) =>
+    <String, dynamic>{
+      'sockets': instance.sockets,
+      'dies': instance.dies,
+      'clusters': instance.clusters,
+      'cores': instance.cores,
+      'threads': instance.threads,
+      'max': instance.max,
+      'current': instance.current,
+      'topology': instance.topology,
+    };
+
+_LibvirtHwDisk _$LibvirtHwDiskFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwDisk(
+      target: json['target'] as String,
+      device: json['device'] as String? ?? 'disk',
+      bus: json['bus'] as String?,
+      sourceType: json['source_type'] as String?,
+      source: json['source'] as String?,
+      format: json['format'] as String?,
+      readonly: json['readonly'] as bool? ?? false,
+      capacity: (json['capacity'] as num?)?.toInt(),
+      bootOrder: (json['boot_order'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$LibvirtHwDiskToJson(_LibvirtHwDisk instance) =>
+    <String, dynamic>{
+      'target': instance.target,
+      'device': instance.device,
+      'bus': instance.bus,
+      'source_type': instance.sourceType,
+      'source': instance.source,
+      'format': instance.format,
+      'readonly': instance.readonly,
+      'capacity': instance.capacity,
+      'boot_order': instance.bootOrder,
+    };
+
+_LibvirtHwNic _$LibvirtHwNicFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwNic(
+      mac: json['mac'] as String,
+      kind: json['kind'] as String? ?? '',
+      source: json['source'] as String?,
+      model: json['model'] as String?,
+      linkUp: json['link_up'] as bool? ?? true,
+      bootOrder: (json['boot_order'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$LibvirtHwNicToJson(_LibvirtHwNic instance) =>
+    <String, dynamic>{
+      'mac': instance.mac,
+      'kind': instance.kind,
+      'source': instance.source,
+      'model': instance.model,
+      'link_up': instance.linkUp,
+      'boot_order': instance.bootOrder,
+    };
+
+_LibvirtHwConfig _$LibvirtHwConfigFromJson(Map<String, dynamic> json) =>
+    _LibvirtHwConfig(
+      cpu: LibvirtHwCpu.fromJson(json['cpu'] as Map<String, dynamic>),
+      memoryKib: (json['memory_kib'] as num).toInt(),
+      currentMemoryKib: (json['current_memory_kib'] as num).toInt(),
+      disks:
+          (json['disks'] as List<dynamic>?)
+              ?.map((e) => LibvirtHwDisk.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtHwDisk>[],
+      nics:
+          (json['nics'] as List<dynamic>?)
+              ?.map((e) => LibvirtHwNic.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LibvirtHwNic>[],
+      boot:
+          (json['boot'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          const <String>[],
+      balloon: json['balloon'] as bool? ?? false,
+    );
+
+Map<String, dynamic> _$LibvirtHwConfigToJson(_LibvirtHwConfig instance) =>
+    <String, dynamic>{
+      'cpu': instance.cpu,
+      'memory_kib': instance.memoryKib,
+      'current_memory_kib': instance.currentMemoryKib,
+      'disks': instance.disks,
+      'nics': instance.nics,
+      'boot': instance.boot,
+      'balloon': instance.balloon,
+    };
+
+_LibvirtHardwareInfo _$LibvirtHardwareInfoFromJson(Map<String, dynamic> json) =>
+    _LibvirtHardwareInfo(
+      config: LibvirtHwConfig.fromJson(json['config'] as Map<String, dynamic>),
+      live: json['live'] == null
+          ? null
+          : LibvirtHwConfig.fromJson(json['live'] as Map<String, dynamic>),
+      configXml: json['config_xml'] as String,
+      autostart: json['autostart'] as bool? ?? false,
+      hostCpus: (json['host_cpus'] as num?)?.toInt(),
+      hostMemoryKib: (json['host_memory_kib'] as num?)?.toInt(),
+    );
+
+Map<String, dynamic> _$LibvirtHardwareInfoToJson(
+  _LibvirtHardwareInfo instance,
+) => <String, dynamic>{
+  'config': instance.config,
+  'live': instance.live,
+  'config_xml': instance.configXml,
+  'autostart': instance.autostart,
+  'host_cpus': instance.hostCpus,
+  'host_memory_kib': instance.hostMemoryKib,
+};

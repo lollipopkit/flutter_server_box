@@ -871,7 +871,11 @@ extension _Widgets on _ServerEditPageState {
         title: TipText(
           libL10n.login,
           useToken
-              ? '${l10n.pveTokenTip}\n${l10n.pveTokenTipCreate}'
+              ? [
+                  l10n.pveTokenTip,
+                  l10n.pveTokenTipCreate,
+                  l10n.pveTokenTipHardware,
+                ].join('\n')
               : l10n.pvePasswordAuthTip,
         ),
         trailing: PopupMenu<bool>(

@@ -2,6 +2,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
 /// One virtualization host, as the Virtualization tab talks to it.
@@ -95,6 +96,22 @@ abstract interface class VirtBackend {
   /// PVE always does (`VirtCapabilities.deleteKeepsDisks`). Install media
   /// attached to it is never deleted.
   Future<void> delete(VirtGuest guest, {bool removeDisks = true});
+
+  /// [guest]'s hardware, for the Hardware view. Only where
+  /// `VirtCapabilities.hardware`.
+  Future<VirtHardware> hardware(VirtGuest guest);
+
+  /// Makes [change] (checked with `virtHwIssue` first) to [guest], from
+  /// [base] — what [hardware] last read — and returns once the host has.
+  /// What the running guest cannot take waits for its next start: read
+  /// [hardware] again to see it as pending. Throws `VirtErrType.conflict`
+  /// when the configuration changed since [base] was read, and
+  /// `VirtErrType.actionFailed` with the host's words when it refused.
+  Future<VirtHwOutcome> changeHardware(
+    VirtGuest guest,
+    VirtHardware base,
+    VirtHwChange change,
+  );
 
   /// Drops any session, so the next call starts over (a new login, a new
   /// sudo probe). Keeps what the user confirmed or typed: a pinned

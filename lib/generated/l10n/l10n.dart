@@ -6507,6 +6507,522 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.'**
   String get pveTokenTipCreate;
+
+  /// Token help: privileges for the Hardware view.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use.'**
+  String get pveTokenTipHardware;
+
+  /// Error title: the guest's configuration changed since it was read.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed elsewhere'**
+  String get virtErrConflict;
+
+  /// Explains the conflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone changed this guest\'s configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.'**
+  String get virtErrConflictTip;
+
+  /// The guest view showing and changing CPU, memory, disks and network interfaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Hardware'**
+  String get virtHardware;
+
+  /// Button and dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add disk'**
+  String get virtHwAddDisk;
+
+  /// Button: add a container mount point.
+  ///
+  /// In en, this message translates to:
+  /// **'Add mount point'**
+  String get virtHwAddMount;
+
+  /// Button and dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add network interface'**
+  String get virtHwAddNic;
+
+  /// Toast: the running guest could not take the change.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved. It takes effect at the next start.'**
+  String get virtHwAppliesOnRestart;
+
+  /// Autostart / onboot.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with the host'**
+  String get virtHwAutostart;
+
+  /// Note under PVE's start-with-host switch.
+  ///
+  /// In en, this message translates to:
+  /// **'onboot · started in VMID order'**
+  String get virtHwAutostartPve;
+
+  /// libvirt currentMemory: what the balloon gives the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Current memory'**
+  String get virtHwBalloonLibvirt;
+
+  /// Explains the virtio-balloon switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the host take back the guest\'s idle memory when memory runs short'**
+  String get virtHwBalloonNote;
+
+  /// Group title: booting.
+  ///
+  /// In en, this message translates to:
+  /// **'Boot'**
+  String get virtHwBoot;
+
+  /// Label.
+  ///
+  /// In en, this message translates to:
+  /// **'Boot order'**
+  String get virtHwBootOrder;
+
+  /// Explains the boot order rows.
+  ///
+  /// In en, this message translates to:
+  /// **'The arrows move a device; tapping it switches booting from it on or off.'**
+  String get virtHwBootTip;
+
+  /// A CD-ROM drive; also the group title.
+  ///
+  /// In en, this message translates to:
+  /// **'CD-ROM'**
+  String get virtHwCdrom;
+
+  /// Group title: the configuration as the host has it.
+  ///
+  /// In en, this message translates to:
+  /// **'Configuration file'**
+  String get virtHwConfigFile;
+
+  /// CPU cores (per socket for a VM).
+  ///
+  /// In en, this message translates to:
+  /// **'Cores'**
+  String get virtHwCores;
+
+  /// No CPU model set: the host's default.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get virtHwCpuTypeDefault;
+
+  /// Checkbox: delete the disk image as well.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete its volume too'**
+  String get virtHwDeleteVolume;
+
+  /// Action: take a disk off the guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Detach'**
+  String get virtHwDetach;
+
+  /// Empty row in a VM's disk group.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot-pluggable: can be added while it runs'**
+  String get virtHwDiskHotplug;
+
+  /// Group title: a container's root disk and mount points.
+  ///
+  /// In en, this message translates to:
+  /// **'Root disk and mount points'**
+  String get virtHwDisksLxc;
+
+  /// Menu item: empty the CD-ROM.
+  ///
+  /// In en, this message translates to:
+  /// **'Eject'**
+  String get virtHwEject;
+
+  /// Choice: no media in the CD-ROM.
+  ///
+  /// In en, this message translates to:
+  /// **'No media'**
+  String get virtHwEmpty;
+
+  /// PVE firewall on a NIC.
+  ///
+  /// In en, this message translates to:
+  /// **'Firewall'**
+  String get virtHwFirewall;
+
+  /// A storage's free space.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} free'**
+  String virtHwFree(String size);
+
+  /// Menu item and dialog title: make a disk larger.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow'**
+  String get virtHwGrow;
+
+  /// Under a stopped guest's disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks only grow from their size.'**
+  String get virtHwGrowNote;
+
+  /// Under a running guest's disk.
+  ///
+  /// In en, this message translates to:
+  /// **'Disks only grow from their size. Grown while running, the partition has to be grown inside the guest.'**
+  String get virtHwGrowNoteRunning;
+
+  /// Memory the running guest uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Used by the guest'**
+  String get virtHwGuestUsed;
+
+  /// Group note: the host's threads and the vCPUs given to guests.
+  ///
+  /// In en, this message translates to:
+  /// **'Host {threads} threads · {allocated} allocated'**
+  String virtHwHostCpus(int threads, int allocated);
+
+  /// Group note: the host's memory and what guests are given.
+  ///
+  /// In en, this message translates to:
+  /// **'Host {total} · {allocated} allocated'**
+  String virtHwHostMem(String total, String allocated);
+
+  /// Under an add block while the guest runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Hot-plugged: it takes effect at once.'**
+  String get virtHwHotplugNow;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Tick at least one device'**
+  String get virtHwIssueBootEmpty;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Between 1 and {max} vCPUs in total'**
+  String virtHwIssueCpuCount(int max);
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Online vCPUs: from 1 to the total'**
+  String get virtHwIssueCpuOnline;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger than it is: disks only grow'**
+  String get virtHwIssueDiskShrink;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'From 1 to 65536 GiB'**
+  String get virtHwIssueDiskSize;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'From {min} to {max} MiB'**
+  String virtHwIssueMemory(int min, int max);
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Not more than the memory'**
+  String get virtHwIssueMemoryMin;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'An absolute path, like /data'**
+  String get virtHwIssueMountPoint;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'More than the storage has free'**
+  String get virtHwIssueStorageSpace;
+
+  /// Form error.
+  ///
+  /// In en, this message translates to:
+  /// **'Not negative'**
+  String get virtHwIssueSwap;
+
+  /// Group note: changes here take effect at the next restart.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies at restart'**
+  String get virtHwLater;
+
+  /// Stepper button: less.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get virtHwLess;
+
+  /// A NIC whose link is down.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get virtHwLinkDown;
+
+  /// Explains the link switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Off, the guest sees its cable pulled; no restart needed'**
+  String get virtHwLinkNote;
+
+  /// Switch: the NIC's link is up.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get virtHwLinkUp;
+
+  /// A NIC's MAC address.
+  ///
+  /// In en, this message translates to:
+  /// **'MAC address'**
+  String get virtHwMac;
+
+  /// A VM's CPU model.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get virtHwModel;
+
+  /// Stepper button: more.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get virtHwMore;
+
+  /// Empty row in a container's disk group.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount points are allocated straight from a storage'**
+  String get virtHwMountFromPool;
+
+  /// Where a container's new volume appears.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point'**
+  String get virtHwMountPoint;
+
+  /// Boot order: move down.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get virtHwMoveDown;
+
+  /// Boot order: move up.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get virtHwMoveUp;
+
+  /// Header of the new disk block.
+  ///
+  /// In en, this message translates to:
+  /// **'New disk'**
+  String get virtHwNewDisk;
+
+  /// Header of the new mount point block.
+  ///
+  /// In en, this message translates to:
+  /// **'New mount point'**
+  String get virtHwNewMount;
+
+  /// Header of the new NIC block.
+  ///
+  /// In en, this message translates to:
+  /// **'New network interface'**
+  String get virtHwNewNic;
+
+  /// Empty row in the NIC group.
+  ///
+  /// In en, this message translates to:
+  /// **'virtio NICs are hot-pluggable'**
+  String get virtHwNicHotplug;
+
+  /// Group title: network interfaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Network interfaces'**
+  String get virtHwNics;
+
+  /// An empty CD-ROM drive.
+  ///
+  /// In en, this message translates to:
+  /// **'No media'**
+  String get virtHwNoMedia;
+
+  /// Nothing to attach a NIC to.
+  ///
+  /// In en, this message translates to:
+  /// **'No networks or bridges here'**
+  String get virtHwNoNetworks;
+
+  /// No storage can hold a new disk.
+  ///
+  /// In en, this message translates to:
+  /// **'No storage here takes disks'**
+  String get virtHwNoStorage;
+
+  /// How many of a VM's vCPUs are online.
+  ///
+  /// In en, this message translates to:
+  /// **'Online vCPUs'**
+  String get virtHwOnline;
+
+  /// Notice above a guest's views.
+  ///
+  /// In en, this message translates to:
+  /// **'Some hardware changes take effect at restart'**
+  String get virtHwPendingBanner;
+
+  /// Explains the pending card's rows (current → pending).
+  ///
+  /// In en, this message translates to:
+  /// **'The running guest keeps the value on the left; it gets the one on the right when it next starts.'**
+  String get virtHwPendingTip;
+
+  /// Card title: changes the running guest has not taken yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending until the next start'**
+  String get virtHwPendingTitle;
+
+  /// Summary of the new NIC block.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a network'**
+  String get virtHwPickNet;
+
+  /// Summary of the new disk block.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a storage and a size'**
+  String get virtHwPickPool;
+
+  /// Group title: a VM's CPU.
+  ///
+  /// In en, this message translates to:
+  /// **'Processor'**
+  String get virtHwProcessor;
+
+  /// Action: remove a NIC.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get virtHwRemove;
+
+  /// Action: remove the CD-ROM drive.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove CD-ROM'**
+  String get virtHwRemoveCdrom;
+
+  /// Confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {disk} from {guest}?'**
+  String virtHwRemoveDiskAsk(String disk, String guest);
+
+  /// Confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {nic} from {guest}?'**
+  String virtHwRemoveNicAsk(String nic, String guest);
+
+  /// A container's hardware view.
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get virtHwResources;
+
+  /// Button: restart the guest so pending changes apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart now'**
+  String get virtHwRestartNow;
+
+  /// Button: drop one pending change.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert'**
+  String get virtHwRevert;
+
+  /// Button: drop every pending change.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert all'**
+  String get virtHwRevertAll;
+
+  /// CPU sockets of a VM.
+  ///
+  /// In en, this message translates to:
+  /// **'Sockets'**
+  String get virtHwSockets;
+
+  /// Where a disk's data is: its volume or file.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get virtHwSource;
+
+  /// A container's swap.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap'**
+  String get virtHwSwap;
+
+  /// Label for a VM's CPU topology.
+  ///
+  /// In en, this message translates to:
+  /// **'Sockets × cores'**
+  String get virtHwTopology;
+
+  /// CPU topology.
+  ///
+  /// In en, this message translates to:
+  /// **'{sockets} sockets × {cores} cores × {threads} threads'**
+  String virtHwTopologyValue(int sockets, int cores, int threads);
+
+  /// Group note: the disks' total size.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} total'**
+  String virtHwTotal(String size);
+
+  /// Toast after removing a disk the running guest holds.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.'**
+  String get virtHwVolumeKept;
 }
 
 class _AppLocalizationsDelegate

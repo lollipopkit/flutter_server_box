@@ -3803,4 +3803,294 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Для створення й видалення гостей також потрібні VM.Allocate, VM.Config.*, Datastore.AllocateSpace і SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Для зміни обладнання потрібні VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network і VM.Config.Options; для нових дисків та інтерфейсів також Datastore.AllocateSpace і SDN.Use.';
+
+  @override
+  String get virtErrConflict => 'Змінено деінде';
+
+  @override
+  String get virtErrConflictTip =>
+      'Хтось змінив конфігурацію цього гостя після того, як її було прочитано тут, тому нічого не змінено. Її прочитано знову: повторіть зміну, якщо вона ще потрібна.';
+
+  @override
+  String get virtHardware => 'Обладнання';
+
+  @override
+  String get virtHwAddDisk => 'Додати диск';
+
+  @override
+  String get virtHwAddMount => 'Додати точку монтування';
+
+  @override
+  String get virtHwAddNic => 'Додати мережевий інтерфейс';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Збережено. Набуде чинності під час наступного запуску.';
+
+  @override
+  String get virtHwAutostart => 'Запускати разом із хостом';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · запуск у порядку VMID';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Поточна пам\'ять';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Дозволяє хосту забирати вільну пам\'ять гостя за нестачі пам\'яті';
+
+  @override
+  String get virtHwBoot => 'Завантаження';
+
+  @override
+  String get virtHwBootOrder => 'Порядок завантаження';
+
+  @override
+  String get virtHwBootTip =>
+      'Стрілки змінюють порядок; натискання вмикає чи вимикає завантаження з пристрою.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Файл конфігурації';
+
+  @override
+  String get virtHwCores => 'Ядра';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Типово';
+
+  @override
+  String get virtHwDeleteVolume => 'Також видалити його том';
+
+  @override
+  String get virtHwDetach => 'Від\'єднати';
+
+  @override
+  String get virtHwDiskHotplug =>
+      'Гаряче підключення: можна додати під час роботи';
+
+  @override
+  String get virtHwDisksLxc => 'Кореневий диск і точки монтування';
+
+  @override
+  String get virtHwEject => 'Вийняти';
+
+  @override
+  String get virtHwEmpty => 'Без носія';
+
+  @override
+  String get virtHwFirewall => 'Брандмауер';
+
+  @override
+  String virtHwFree(String size) {
+    return 'вільно $size';
+  }
+
+  @override
+  String get virtHwGrow => 'Збільшити';
+
+  @override
+  String get virtHwGrowNote => 'Диск можна лише збільшити.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Диск можна лише збільшити. Після збільшення на ходу розділ треба розширити всередині гостя.';
+
+  @override
+  String get virtHwGuestUsed => 'Використовує гість';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Хост $threads потоків · виділено $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Хост $total · виділено $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Гаряче підключення: одразу набуває чинності.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Позначте принаймні один пристрій';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Загалом від 1 до $max vCPU';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline =>
+      'Активні vCPU: від 1 до загальної кількості';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Більше за поточний: диски лише збільшуються';
+
+  @override
+  String get virtHwIssueDiskSize => 'Від 1 до 65536 ГіБ';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'Від $min до $max МіБ';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Не більше за пам\'ять';
+
+  @override
+  String get virtHwIssueMountPoint => 'Абсолютний шлях, наприклад /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Більше, ніж вільно у сховищі';
+
+  @override
+  String get virtHwIssueSwap => 'Не від\'ємне';
+
+  @override
+  String get virtHwLater => 'Набуде чинності після перезапуску';
+
+  @override
+  String get virtHwLess => 'Менше';
+
+  @override
+  String get virtHwLinkDown => 'Від\'єднано';
+
+  @override
+  String get virtHwLinkNote =>
+      'Вимкнено — гість бачить від\'єднаний кабель; перезапуск не потрібен';
+
+  @override
+  String get virtHwLinkUp => 'Під\'єднано';
+
+  @override
+  String get virtHwMac => 'MAC-адреса';
+
+  @override
+  String get virtHwModel => 'Модель';
+
+  @override
+  String get virtHwMore => 'Більше';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Точки монтування виділяються прямо зі сховища';
+
+  @override
+  String get virtHwMountPoint => 'Точка монтування';
+
+  @override
+  String get virtHwMoveDown => 'Вниз';
+
+  @override
+  String get virtHwMoveUp => 'Вгору';
+
+  @override
+  String get virtHwNewDisk => 'Новий диск';
+
+  @override
+  String get virtHwNewMount => 'Нова точка монтування';
+
+  @override
+  String get virtHwNewNic => 'Новий мережевий інтерфейс';
+
+  @override
+  String get virtHwNicHotplug => 'Інтерфейси virtio підключаються на ходу';
+
+  @override
+  String get virtHwNics => 'Мережеві інтерфейси';
+
+  @override
+  String get virtHwNoMedia => 'Немає носія';
+
+  @override
+  String get virtHwNoNetworks => 'Тут немає мереж або мостів';
+
+  @override
+  String get virtHwNoStorage => 'Тут немає сховища для дисків';
+
+  @override
+  String get virtHwOnline => 'Активні vCPU';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Частина змін обладнання набуде чинності після перезапуску';
+
+  @override
+  String get virtHwPendingTip =>
+      'Запущений гість зберігає значення ліворуч; значення праворуч він отримає під час наступного запуску.';
+
+  @override
+  String get virtHwPendingTitle => 'Очікує наступного запуску';
+
+  @override
+  String get virtHwPickNet => 'Виберіть мережу';
+
+  @override
+  String get virtHwPickPool => 'Виберіть сховище й розмір';
+
+  @override
+  String get virtHwProcessor => 'Процесор';
+
+  @override
+  String get virtHwRemove => 'Вилучити';
+
+  @override
+  String get virtHwRemoveCdrom => 'Вилучити CD-ROM';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return 'Вилучити $disk з $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return 'Вилучити $nic з $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Ресурси';
+
+  @override
+  String get virtHwRestartNow => 'Перезапустити';
+
+  @override
+  String get virtHwRevert => 'Скасувати';
+
+  @override
+  String get virtHwRevertAll => 'Скасувати все';
+
+  @override
+  String get virtHwSockets => 'Сокети';
+
+  @override
+  String get virtHwSource => 'Джерело';
+
+  @override
+  String get virtHwSwap => 'Підкачка';
+
+  @override
+  String get virtHwTopology => 'Сокети × ядра';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets сокет. × $cores ядер × $threads пот.';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return 'усього $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Вилучено, але запущений гість ще використовує диск, тому том збережено. Диск буде від\'єднано під час наступного запуску.';
 }

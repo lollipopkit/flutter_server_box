@@ -1230,7 +1230,11 @@ mixin _$VirtCapabilities {
  bool get storedHistory;/// Guests can be created (VMs; containers too where [lxc]) and deleted.
  bool get create;/// Deleting a guest can keep its disks. PVE's cannot: a guest's own
 /// volumes go with it.
- bool get deleteKeepsDisks;
+ bool get deleteKeepsDisks;/// A guest's hardware can be read and changed (the Hardware view).
+ bool get hardware;/// Pending changes can be dropped before they apply (PVE `revert`).
+/// libvirt keeps no such list: what is pending is the difference between
+/// two definitions.
+ bool get hardwareRevert;
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1243,16 +1247,16 @@ $VirtCapabilitiesCopyWith<VirtCapabilities> get copyWith => _$VirtCapabilitiesCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,storage,network,backup,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks);
+int get hashCode => Object.hash(runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,storage,network,backup,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert);
 
 @override
 String toString() {
-  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, storage: $storage, network: $network, backup: $backup, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks)';
+  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, storage: $storage, network: $network, backup: $backup, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert)';
 }
 
 
@@ -1263,7 +1267,7 @@ abstract mixin class $VirtCapabilitiesCopyWith<$Res>  {
   factory $VirtCapabilitiesCopyWith(VirtCapabilities value, $Res Function(VirtCapabilities) _then) = _$VirtCapabilitiesCopyWithImpl;
 @useResult
 $Res call({
- bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool storage, bool network, bool backup, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks
+ bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool storage, bool network, bool backup, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks, bool hardware, bool hardwareRevert
 });
 
 
@@ -1280,7 +1284,7 @@ class _$VirtCapabilitiesCopyWithImpl<$Res>
 
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? storage = null,Object? network = null,Object? backup = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? storage = null,Object? network = null,Object? backup = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,}) {
   return _then(_self.copyWith(
 lxc: null == lxc ? _self.lxc : lxc // ignore: cast_nullable_to_non_nullable
 as bool,pause: null == pause ? _self.pause : pause // ignore: cast_nullable_to_non_nullable
@@ -1296,6 +1300,8 @@ as bool,termConsole: null == termConsole ? _self.termConsole : termConsole // ig
 as bool,storedHistory: null == storedHistory ? _self.storedHistory : storedHistory // ignore: cast_nullable_to_non_nullable
 as bool,create: null == create ? _self.create : create // ignore: cast_nullable_to_non_nullable
 as bool,deleteKeepsDisks: null == deleteKeepsDisks ? _self.deleteKeepsDisks : deleteKeepsDisks // ignore: cast_nullable_to_non_nullable
+as bool,hardware: null == hardware ? _self.hardware : hardware // ignore: cast_nullable_to_non_nullable
+as bool,hardwareRevert: null == hardwareRevert ? _self.hardwareRevert : hardwareRevert // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -1381,10 +1387,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _VirtCapabilities() when $default != null:
-return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks);case _:
+return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert);case _:
   return orElse();
 
 }
@@ -1402,10 +1408,10 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert)  $default,) {final _that = this;
 switch (_that) {
 case _VirtCapabilities():
-return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks);case _:
+return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1422,10 +1428,10 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool lxc,  bool pause,  bool snapshots,  bool snapshotMemoryRequired,  bool storage,  bool network,  bool backup,  bool cluster,  bool serialConsole,  bool vncConsole,  bool termConsole,  bool storedHistory,  bool create,  bool deleteKeepsDisks,  bool hardware,  bool hardwareRevert)?  $default,) {final _that = this;
 switch (_that) {
 case _VirtCapabilities() when $default != null:
-return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks);case _:
+return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequired,_that.storage,_that.network,_that.backup,_that.cluster,_that.serialConsole,_that.vncConsole,_that.termConsole,_that.storedHistory,_that.create,_that.deleteKeepsDisks,_that.hardware,_that.hardwareRevert);case _:
   return null;
 
 }
@@ -1437,7 +1443,7 @@ return $default(_that.lxc,_that.pause,_that.snapshots,_that.snapshotMemoryRequir
 @JsonSerializable()
 
 class _VirtCapabilities implements VirtCapabilities {
-  const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.storage = false, this.network = false, this.backup = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false});
+  const _VirtCapabilities({this.lxc = false, this.pause = false, this.snapshots = false, this.snapshotMemoryRequired = false, this.storage = false, this.network = false, this.backup = false, this.cluster = false, this.serialConsole = false, this.vncConsole = false, this.termConsole = false, this.storedHistory = false, this.create = false, this.deleteKeepsDisks = false, this.hardware = false, this.hardwareRevert = false});
   factory _VirtCapabilities.fromJson(Map<String, dynamic> json) => _$VirtCapabilitiesFromJson(json);
 
 @override@JsonKey() final  bool lxc;
@@ -1470,6 +1476,12 @@ class _VirtCapabilities implements VirtCapabilities {
 /// Deleting a guest can keep its disks. PVE's cannot: a guest's own
 /// volumes go with it.
 @override@JsonKey() final  bool deleteKeepsDisks;
+/// A guest's hardware can be read and changed (the Hardware view).
+@override@JsonKey() final  bool hardware;
+/// Pending changes can be dropped before they apply (PVE `revert`).
+/// libvirt keeps no such list: what is pending is the difference between
+/// two definitions.
+@override@JsonKey() final  bool hardwareRevert;
 
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
@@ -1484,16 +1496,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _VirtCapabilities&&(identical(other.lxc, lxc) || other.lxc == lxc)&&(identical(other.pause, pause) || other.pause == pause)&&(identical(other.snapshots, snapshots) || other.snapshots == snapshots)&&(identical(other.snapshotMemoryRequired, snapshotMemoryRequired) || other.snapshotMemoryRequired == snapshotMemoryRequired)&&(identical(other.storage, storage) || other.storage == storage)&&(identical(other.network, network) || other.network == network)&&(identical(other.backup, backup) || other.backup == backup)&&(identical(other.cluster, cluster) || other.cluster == cluster)&&(identical(other.serialConsole, serialConsole) || other.serialConsole == serialConsole)&&(identical(other.vncConsole, vncConsole) || other.vncConsole == vncConsole)&&(identical(other.termConsole, termConsole) || other.termConsole == termConsole)&&(identical(other.storedHistory, storedHistory) || other.storedHistory == storedHistory)&&(identical(other.create, create) || other.create == create)&&(identical(other.deleteKeepsDisks, deleteKeepsDisks) || other.deleteKeepsDisks == deleteKeepsDisks)&&(identical(other.hardware, hardware) || other.hardware == hardware)&&(identical(other.hardwareRevert, hardwareRevert) || other.hardwareRevert == hardwareRevert));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,storage,network,backup,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks);
+int get hashCode => Object.hash(runtimeType,lxc,pause,snapshots,snapshotMemoryRequired,storage,network,backup,cluster,serialConsole,vncConsole,termConsole,storedHistory,create,deleteKeepsDisks,hardware,hardwareRevert);
 
 @override
 String toString() {
-  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, storage: $storage, network: $network, backup: $backup, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks)';
+  return 'VirtCapabilities(lxc: $lxc, pause: $pause, snapshots: $snapshots, snapshotMemoryRequired: $snapshotMemoryRequired, storage: $storage, network: $network, backup: $backup, cluster: $cluster, serialConsole: $serialConsole, vncConsole: $vncConsole, termConsole: $termConsole, storedHistory: $storedHistory, create: $create, deleteKeepsDisks: $deleteKeepsDisks, hardware: $hardware, hardwareRevert: $hardwareRevert)';
 }
 
 
@@ -1504,7 +1516,7 @@ abstract mixin class _$VirtCapabilitiesCopyWith<$Res> implements $VirtCapabiliti
   factory _$VirtCapabilitiesCopyWith(_VirtCapabilities value, $Res Function(_VirtCapabilities) _then) = __$VirtCapabilitiesCopyWithImpl;
 @override @useResult
 $Res call({
- bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool storage, bool network, bool backup, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks
+ bool lxc, bool pause, bool snapshots, bool snapshotMemoryRequired, bool storage, bool network, bool backup, bool cluster, bool serialConsole, bool vncConsole, bool termConsole, bool storedHistory, bool create, bool deleteKeepsDisks, bool hardware, bool hardwareRevert
 });
 
 
@@ -1521,7 +1533,7 @@ class __$VirtCapabilitiesCopyWithImpl<$Res>
 
 /// Create a copy of VirtCapabilities
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? storage = null,Object? network = null,Object? backup = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? lxc = null,Object? pause = null,Object? snapshots = null,Object? snapshotMemoryRequired = null,Object? storage = null,Object? network = null,Object? backup = null,Object? cluster = null,Object? serialConsole = null,Object? vncConsole = null,Object? termConsole = null,Object? storedHistory = null,Object? create = null,Object? deleteKeepsDisks = null,Object? hardware = null,Object? hardwareRevert = null,}) {
   return _then(_VirtCapabilities(
 lxc: null == lxc ? _self.lxc : lxc // ignore: cast_nullable_to_non_nullable
 as bool,pause: null == pause ? _self.pause : pause // ignore: cast_nullable_to_non_nullable
@@ -1537,6 +1549,8 @@ as bool,termConsole: null == termConsole ? _self.termConsole : termConsole // ig
 as bool,storedHistory: null == storedHistory ? _self.storedHistory : storedHistory // ignore: cast_nullable_to_non_nullable
 as bool,create: null == create ? _self.create : create // ignore: cast_nullable_to_non_nullable
 as bool,deleteKeepsDisks: null == deleteKeepsDisks ? _self.deleteKeepsDisks : deleteKeepsDisks // ignore: cast_nullable_to_non_nullable
+as bool,hardware: null == hardware ? _self.hardware : hardware // ignore: cast_nullable_to_non_nullable
+as bool,hardwareRevert: null == hardwareRevert ? _self.hardwareRevert : hardwareRevert // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

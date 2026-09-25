@@ -242,6 +242,9 @@ pub enum VirtError {
     InvalidState { message: String },
     /// A domain or volume of that name is there already
     Exists { message: String },
+    /// The persistent definition changed since it was read: an edit made
+    /// from the old one would undo someone else's
+    Conflict { message: String },
     /// Any other `virsh` failure, with its error text
     Command { message: String },
     /// Output that is not what the script prints: truncated, or a section
@@ -258,6 +261,7 @@ impl std::fmt::Display for VirtError {
             | VirtError::DomainNotFound { message }
             | VirtError::InvalidState { message }
             | VirtError::Exists { message }
+            | VirtError::Conflict { message }
             | VirtError::Command { message }
             | VirtError::Malformed { message } => f.write_str(message),
         }
@@ -325,7 +329,7 @@ pub fn classify_error(text: &str) -> VirtError {
         "not paused",
     ]) {
         VirtError::InvalidState { message }
-    } else if has(&["already exists"]) {
+    } else if has(&["already exists", "exists already"]) {
         VirtError::Exists { message }
     } else {
         VirtError::Command { message }
@@ -2529,6 +2533,1011 @@ pub fn undefine_script(domain: &str, storage: &[String]) -> Result<String, VirtE
     let mut s = prelude();
     s.push_str(&section(KEY_ACTION, &args));
     Ok(s)
+}
+
+// ---------------------------------------------------------------------------
+// Hardware: reading and editing a domain's devices
+// ---------------------------------------------------------------------------
+
+pub const KEY_HW_INFO: &str = "virt.hw.info";
+pub const KEY_HW_NODE: &str = "virt.hw.node";
+pub const KEY_HW_CONFIG: &str = "virt.hw.config";
+pub const KEY_HW_LIVE: &str = "virt.hw.live";
+pub const KEY_HW_BLK: &str = "virt.hw.blk";
+pub const KEY_HW_STEP: &str = "virt.hw.step";
+pub const KEY_HW_LIVE_STEP: &str = "virt.hw.live_step";
+pub const KEY_HW_CONFLICT: &str = "virt.hw.conflict";
+pub const KEY_HW_KEPT: &str = "virt.hw.kept";
+
+/// `<vcpu>` and `<cpu><topology>`. Without a topology libvirt gives the
+/// guest one socket per vCPU, which is what is reported then.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwCpu {
+    pub sockets: u32,
+    pub dies: u32,
+    pub clusters: u32,
+    pub cores: u32,
+    pub threads: u32,
+    /// `<vcpu>`: the most the domain can have online
+    pub max: u32,
+    /// `<vcpu current=…>`: online at boot (config) or now (live)
+    pub current: u32,
+    /// A `<topology>` element exists
+    pub topology: bool,
+}
+
+/// A `<disk>`, with what the host says of its size.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwDisk {
+    pub target: String,
+    /// `disk`, `cdrom`, `floppy`, `lun`
+    pub device: String,
+    pub bus: Option<String>,
+    /// `file`, `block`, `volume`, `network`
+    pub source_type: Option<String>,
+    /// Path, device, `pool/volume`; none for an empty drive
+    pub source: Option<String>,
+    pub format: Option<String>,
+    pub readonly: bool,
+    /// `domblkinfo` capacity in bytes; none for an empty drive
+    pub capacity: Option<u64>,
+    pub boot_order: Option<u32>,
+}
+
+/// An `<interface>`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwNic {
+    pub mac: String,
+    /// `network`, `bridge`, `direct`, ...
+    pub kind: String,
+    pub source: Option<String>,
+    pub model: Option<String>,
+    /// `<link state='down'/>` absent
+    pub link_up: bool,
+    pub boot_order: Option<u32>,
+}
+
+/// One definition of a domain's hardware: the persistent one, or the running
+/// one.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwConfig {
+    pub cpu: VirtHwCpu,
+    pub memory_kib: u64,
+    pub current_memory_kib: u64,
+    pub disks: Vec<VirtHwDisk>,
+    pub nics: Vec<VirtHwNic>,
+    /// Boot devices in order, by disk target or NIC MAC. From the devices'
+    /// own `<boot order>` where they have one; otherwise `<os><boot dev>`
+    /// read as the first disk, CD-ROM and NIC of each kind — what the
+    /// firmware does with it.
+    pub boot: Vec<String>,
+    /// A `<memballoon>` other than `none`: the current allocation can move
+    /// below the maximum
+    pub balloon: bool,
+}
+
+/// What [`hardware_script`] yields.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHardwareInfo {
+    /// The persistent definition: what the next boot gets
+    pub config: VirtHwConfig,
+    /// The running definition; none while the domain is not running
+    pub live: Option<VirtHwConfig>,
+    /// `dumpxml --inactive` as read. Edits that rewrite the definition are
+    /// made from it, and refused when the host's has changed since — a
+    /// digest in all but name
+    pub config_xml: String,
+    pub autostart: bool,
+    /// The host's logical CPUs and memory, the bounds of what a guest can use
+    pub host_cpus: Option<u32>,
+    pub host_memory_kib: Option<u64>,
+}
+
+/// Everything [`VirtHardwareInfo`] needs, in one round trip. Parse with
+/// [`parse_hardware`].
+pub fn hardware_script(domain: &str) -> String {
+    let d = domain_arg(domain);
+    let mut s = prelude();
+    s.push_str(&section(KEY_HW_INFO, &format!("dominfo {d}")));
+    s.push_str(&section(KEY_HW_NODE, "nodeinfo"));
+    s.push_str(&section(KEY_HW_CONFIG, &format!("dumpxml --inactive {d}")));
+    s.push_str(&section(KEY_HW_LIVE, &format!("dumpxml {d}")));
+    // One disk at a time: `domblkinfo --all` fails outright on a running
+    // domain with an empty CD-ROM (libvirt 11.3). An empty drive has no
+    // size to ask for.
+    s.push_str(&format!(
+        "virsh --connect {CONNECT_URI} -q domblklist {d} --details </dev/null 2>/dev/null | \
+         while read -r kind dev target src; do [ -n \"$target\" ] && [ \"$src\" != - ] || continue\n{}done\n",
+        item_section(KEY_HW_BLK, "target", &format!("domblkinfo {d} --device \"$target\""))
+    ));
+    s
+}
+
+/// A `<memory>`-like element in KiB.
+fn kib_of(node: Option<roxmltree::Node<'_, '_>>) -> Option<u64> {
+    let node = node?;
+    // Unlike pools, domains default to KiB.
+    let unit = node.attribute("unit").unwrap_or("KiB");
+    let n: u64 = node.text()?.trim().parse().ok()?;
+    let bytes = match unit {
+        "b" | "bytes" => n,
+        "KB" => n.checked_mul(1_000)?,
+        "k" | "KiB" => n.checked_mul(1 << 10)?,
+        "MB" => n.checked_mul(1_000_000)?,
+        "M" | "MiB" => n.checked_mul(1 << 20)?,
+        "GB" => n.checked_mul(1_000_000_000)?,
+        "G" | "GiB" => n.checked_mul(1 << 30)?,
+        "TB" => n.checked_mul(1_000_000_000_000)?,
+        "T" | "TiB" => n.checked_mul(1 << 40)?,
+        _ => return None,
+    };
+    Some(bytes / 1024)
+}
+
+fn boot_order_of(dev: roxmltree::Node<'_, '_>) -> Option<u32> {
+    child(dev, "boot")
+        .and_then(|b| b.attribute("order"))
+        .and_then(|o| o.parse().ok())
+}
+
+/// The hardware in one `dumpxml`. `capacity` fills in disk sizes by target.
+pub fn parse_hw_xml(raw: &str, capacity: &[(String, u64)]) -> Result<VirtHwConfig, VirtError> {
+    let doc = parse_xml_doc(raw, "domain", "dumpxml")?;
+    let root = doc.root_element();
+    let attr_u32 = |n: roxmltree::Node<'_, '_>, a: &str| n.attribute(a).and_then(|v| v.parse::<u32>().ok());
+
+    let vcpu = child(root, "vcpu");
+    let max = vcpu
+        .and_then(|v| v.text())
+        .and_then(|t| t.trim().parse::<u32>().ok())
+        .unwrap_or(1);
+    let current = vcpu.and_then(|v| attr_u32(v, "current")).unwrap_or(max);
+    let topology = child(root, "cpu").and_then(|c| child(c, "topology"));
+    let cpu = match topology {
+        Some(t) => VirtHwCpu {
+            sockets: attr_u32(t, "sockets").unwrap_or(1),
+            dies: attr_u32(t, "dies").unwrap_or(1),
+            clusters: attr_u32(t, "clusters").unwrap_or(1),
+            cores: attr_u32(t, "cores").unwrap_or(1),
+            threads: attr_u32(t, "threads").unwrap_or(1),
+            max,
+            current,
+            topology: true,
+        },
+        None => VirtHwCpu {
+            sockets: max,
+            dies: 1,
+            clusters: 1,
+            cores: 1,
+            threads: 1,
+            max,
+            current,
+            topology: false,
+        },
+    };
+
+    let memory_kib = kib_of(child(root, "memory")).unwrap_or(0);
+    let current_memory_kib = kib_of(child(root, "currentMemory")).unwrap_or(memory_kib);
+
+    let mut hw = VirtHwConfig {
+        cpu,
+        memory_kib,
+        current_memory_kib,
+        ..Default::default()
+    };
+    let os_boot: Vec<String> = child(root, "os")
+        .map(|os| {
+            os.children()
+                .filter(|n| n.is_element() && n.tag_name().name() == "boot")
+                .filter_map(|n| n.attribute("dev").map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    if let Some(devices) = child(root, "devices") {
+        for dev in devices.children().filter(|n| n.is_element()) {
+            match dev.tag_name().name() {
+                "disk" => {
+                    let Some(target) = child(dev, "target").and_then(|t| t.attribute("dev")) else {
+                        continue;
+                    };
+                    let source = child(dev, "source").and_then(|s| {
+                        s.attribute("file")
+                            .or_else(|| s.attribute("dev"))
+                            .map(str::to_string)
+                            .or_else(|| {
+                                Some(format!("{}/{}", s.attribute("pool")?, s.attribute("volume")?))
+                            })
+                            .or_else(|| s.attribute("name").map(str::to_string))
+                    });
+                    hw.disks.push(VirtHwDisk {
+                        target: target.to_string(),
+                        device: dev.attribute("device").unwrap_or("disk").to_string(),
+                        bus: child(dev, "target").and_then(|t| t.attribute("bus")).map(str::to_string),
+                        source_type: dev.attribute("type").map(str::to_string),
+                        capacity: source.as_ref().and_then(|_| {
+                            capacity.iter().find(|(t, _)| t == target).map(|(_, c)| *c)
+                        }),
+                        source,
+                        format: child(dev, "driver").and_then(|d| d.attribute("type")).map(str::to_string),
+                        readonly: child(dev, "readonly").is_some(),
+                        boot_order: boot_order_of(dev),
+                    });
+                }
+                "interface" => {
+                    let Some(mac) = child(dev, "mac").and_then(|m| m.attribute("address")) else {
+                        continue;
+                    };
+                    hw.nics.push(VirtHwNic {
+                        mac: mac.to_ascii_lowercase(),
+                        kind: dev.attribute("type").unwrap_or_default().to_string(),
+                        source: child(dev, "source").and_then(|s| {
+                            s.attribute("network")
+                                .or_else(|| s.attribute("bridge"))
+                                .or_else(|| s.attribute("dev"))
+                                .map(str::to_string)
+                        }),
+                        model: child(dev, "model").and_then(|m| m.attribute("type")).map(str::to_string),
+                        link_up: child(dev, "link").and_then(|l| l.attribute("state")) != Some("down"),
+                        boot_order: boot_order_of(dev),
+                    });
+                }
+                "memballoon" => hw.balloon = dev.attribute("model").is_some_and(|m| m != "none"),
+                _ => {}
+            }
+        }
+    }
+
+    let mut ordered: Vec<(u32, String)> = hw
+        .disks
+        .iter()
+        .filter_map(|d| Some((d.boot_order?, d.target.clone())))
+        .chain(hw.nics.iter().filter_map(|n| Some((n.boot_order?, n.mac.clone()))))
+        .collect();
+    if ordered.is_empty() {
+        for dev in &os_boot {
+            let key = match dev.as_str() {
+                "hd" => hw.disks.iter().find(|d| d.device == "disk").map(|d| d.target.clone()),
+                "cdrom" => hw.disks.iter().find(|d| d.device == "cdrom").map(|d| d.target.clone()),
+                "network" => hw.nics.first().map(|n| n.mac.clone()),
+                _ => None,
+            };
+            if let Some(key) = key
+                && !hw.boot.contains(&key)
+            {
+                hw.boot.push(key);
+            }
+        }
+    } else {
+        ordered.sort();
+        hw.boot = ordered.into_iter().map(|(_, k)| k).collect();
+    }
+    Ok(hw)
+}
+
+
+fn info_value<'a>(raw: &'a str, key: &str) -> Option<&'a str> {
+    raw.lines().find_map(|l| {
+        let (k, v) = l.split_once(':')?;
+        (k.trim() == key).then(|| v.trim())
+    })
+}
+
+/// [`hardware_script`]'s output.
+pub fn parse_hardware(raw: &str) -> Result<VirtHardwareInfo, VirtError> {
+    let secs = sections(raw)?;
+    let info = take(&secs, KEY_HW_INFO, raw)?.ok()?;
+    // `Id: -` is a domain with no process.
+    let active = info_value(info, "Id").is_some_and(|id| id != "-");
+    let autostart = info_value(info, "Autostart") == Some("enable");
+    let node = secs
+        .iter()
+        .find(|(k, _)| k == KEY_HW_NODE)
+        .and_then(|(_, s)| s.ok().ok())
+        .unwrap_or_default();
+    let host_cpus = info_value(node, "CPU(s)").and_then(|v| v.parse().ok());
+    let host_memory_kib = info_value(node, "Memory size")
+        .and_then(|v| v.strip_suffix("KiB"))
+        .and_then(|v| v.trim().parse().ok());
+    // A drive's size is extra: without it the disks are still listed.
+    let capacity: Vec<(String, u64)> = all_items(&secs, KEY_HW_BLK)
+        .filter_map(|sec| {
+            let (target, body) = split_item(&sec.body);
+            let section = Section { body: body.to_string(), rc: sec.rc };
+            let cap = info_value(section.ok().ok()?, "Capacity")?.parse().ok()?;
+            Some((target.to_string(), cap))
+        })
+        .collect();
+    let config_xml = take(&secs, KEY_HW_CONFIG, raw)?.ok()?;
+    let config = parse_hw_xml(config_xml, &capacity)?;
+    let live = if active {
+        Some(parse_hw_xml(take(&secs, KEY_HW_LIVE, raw)?.ok()?, &capacity)?)
+    } else {
+        None
+    };
+    Ok(VirtHardwareInfo {
+        config,
+        live,
+        config_xml: config_xml.to_string(),
+        autostart,
+        host_cpus,
+        host_memory_kib,
+    })
+}
+
+/// One change to a domain's hardware; see [`hardware_change_script`].
+///
+/// `config` and `live` say which definitions the change is made to: the
+/// persistent one, and the running one where the domain runs. Leaving one
+/// out is what the caller knows better than a script — a CD-ROM already
+/// empty there, a domain not running.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "op", rename_all = "snake_case")]
+pub enum VirtHwChange {
+    /// Topology and vCPU counts, made from `base_xml`
+    Cpu {
+        sockets: u32,
+        cores: u32,
+        /// Online vCPUs; none for all of them
+        current: Option<u32>,
+    },
+    Memory {
+        memory_mib: u64,
+        /// The balloon's target; none for all of `memory_mib`
+        current_mib: Option<u64>,
+    },
+    /// Grows a disk to `bytes`: `blockresize` where the running domain has
+    /// it (`live`), `vol-resize` on `path` otherwise — a disk only the
+    /// persistent definition has is a file nothing has open
+    GrowDisk {
+        target: String,
+        bytes: u64,
+        path: Option<String>,
+        live: bool,
+    },
+    /// Creates a volume in `pool` and attaches it as `target`
+    AddDisk {
+        pool: String,
+        volume: String,
+        gib: u64,
+        format: String,
+        target: String,
+        bus: String,
+    },
+    /// Detaches `target`, and deletes the volume at `delete_path` once
+    /// nothing uses it
+    RemoveDisk {
+        target: String,
+        delete_path: Option<String>,
+        config: bool,
+        live: bool,
+    },
+    /// Inserts `source` into a CD-ROM, or ejects it
+    SetMedia {
+        target: String,
+        source: Option<String>,
+        config: bool,
+        live: bool,
+    },
+    AddNic {
+        kind: String,
+        source: String,
+        model: String,
+        mac: String,
+    },
+    RemoveNic {
+        mac: String,
+        /// Its type in the persistent and the running definition, which
+        /// `detach-interface` must be told and which an update can have
+        /// made differ
+        kind: Option<String>,
+        live_kind: Option<String>,
+    },
+    /// Rewrites an interface's source and link state, keeping its MAC and
+    /// model, and the boot order each definition has for it
+    UpdateNic {
+        mac: String,
+        kind: String,
+        source: String,
+        model: Option<String>,
+        link_up: bool,
+        boot_order: Option<u32>,
+        live_boot_order: Option<u32>,
+        config: bool,
+        live: bool,
+    },
+    /// Boot devices in order, by disk target or NIC MAC; made from
+    /// `base_xml`
+    Boot { order: Vec<String> },
+    Autostart { on: bool },
+}
+
+/// What [`parse_hardware_change`] found.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct VirtHwOutcome {
+    /// The running domain refused its half: the persistent definition has
+    /// the change, and the next boot gets it. The host's words.
+    pub live_error: Option<String>,
+    /// A disk was to be deleted but the running domain still has it: it is
+    /// kept rather than deleted under a guest using it
+    pub volume_kept: bool,
+}
+
+fn is_target(t: &str) -> bool {
+    (2..=12).contains(&t.len()) && t.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+}
+
+fn is_mac(m: &str) -> bool {
+    let parts: Vec<&str> = m.split(':').collect();
+    parts.len() == 6
+        && parts
+            .iter()
+            .all(|p| p.len() == 2 && p.chars().all(|c| c.is_ascii_hexdigit()))
+}
+
+fn is_token(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 64
+        && s.chars().all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
+        && !s.starts_with('-')
+}
+
+fn is_host_path(p: &str) -> bool {
+    p.starts_with('/') && !p.chars().any(char::is_control)
+}
+
+impl VirtHwChange {
+    /// Refuses a value that would land somewhere it should not: every one
+    /// reaches `virsh` or an XML document. The app checks the user's input
+    /// first, so reaching here is a caller's bug and the message is for the
+    /// log.
+    fn check(&self) -> Result<(), VirtError> {
+        let bad = |what: &str| {
+            Err(VirtError::Malformed {
+                message: format!("invalid hardware change: {what}"),
+            })
+        };
+        match self {
+            VirtHwChange::Cpu { sockets, cores, current } => {
+                if *sockets == 0 || *cores == 0 || sockets * cores > 4096 {
+                    return bad("topology");
+                }
+                if current.is_some_and(|c| c == 0) {
+                    return bad("vcpus");
+                }
+            }
+            VirtHwChange::Memory { memory_mib, current_mib } => {
+                if *memory_mib < 16 || *memory_mib > 1 << 30 {
+                    return bad("memory");
+                }
+                if current_mib.is_some_and(|c| c == 0 || c > *memory_mib) {
+                    return bad("current memory");
+                }
+            }
+            VirtHwChange::GrowDisk { target, bytes, path, .. } => {
+                if !is_target(target) || *bytes == 0 {
+                    return bad("disk");
+                }
+                if path.as_deref().is_some_and(|p| !is_host_path(p)) {
+                    return bad("path");
+                }
+            }
+            VirtHwChange::AddDisk { pool, volume, gib, format, target, bus } => {
+                if pool.is_empty() || pool.chars().any(char::is_control) {
+                    return bad("pool");
+                }
+                if !is_token(volume) || volume.starts_with('.') {
+                    return bad("volume");
+                }
+                if *gib == 0 || *gib > 1 << 20 {
+                    return bad("size");
+                }
+                if format != "qcow2" && format != "raw" {
+                    return bad("format");
+                }
+                if !is_target(target) || !is_token(bus) {
+                    return bad("target");
+                }
+            }
+            VirtHwChange::RemoveDisk { target, delete_path, .. } => {
+                if !is_target(target) || delete_path.as_deref().is_some_and(|p| !is_host_path(p)) {
+                    return bad("disk");
+                }
+            }
+            VirtHwChange::SetMedia { target, source, .. } => {
+                if !is_target(target) || source.as_deref().is_some_and(|p| !is_host_path(p)) {
+                    return bad("media");
+                }
+            }
+            VirtHwChange::AddNic { kind, source, model, mac } => {
+                if !matches!(kind.as_str(), "network" | "bridge") || !is_token(model) || !is_mac(mac) {
+                    return bad("interface");
+                }
+                if source.is_empty() || source.chars().any(char::is_control) {
+                    return bad("source");
+                }
+            }
+            VirtHwChange::RemoveNic { mac, kind, live_kind } => {
+                if !is_mac(mac) || kind.iter().chain(live_kind).any(|k| !is_token(k)) {
+                    return bad("interface");
+                }
+            }
+            VirtHwChange::UpdateNic { mac, kind, source, model, .. } => {
+                if !matches!(kind.as_str(), "network" | "bridge")
+                    || !is_mac(mac)
+                    || model.as_deref().is_some_and(|m| !is_token(m))
+                    || source.is_empty()
+                    || source.chars().any(char::is_control)
+                {
+                    return bad("interface");
+                }
+            }
+            VirtHwChange::Boot { order } => {
+                if order.is_empty() || order.iter().any(|k| !is_target(k) && !is_mac(k)) {
+                    return bad("boot order");
+                }
+            }
+            VirtHwChange::Autostart { .. } => {}
+        }
+        Ok(())
+    }
+}
+
+/// ` name='value'` for each attribute of `node` not in `skip`, then `extra`.
+fn attrs_xml(node: roxmltree::Node<'_, '_>, skip: &[&str], extra: &[(&str, String)]) -> String {
+    let mut out = String::new();
+    for a in node.attributes() {
+        if skip.contains(&a.name()) || a.namespace().is_some() {
+            continue;
+        }
+        out.push_str(&format!(" {}='{}'", a.name(), xml_escape(a.value())));
+    }
+    for (name, value) in extra {
+        out.push_str(&format!(" {name}='{}'", xml_escape(value)));
+    }
+    out
+}
+
+/// Replaces byte ranges of `xml`, which must not overlap.
+fn splice(xml: &str, mut edits: Vec<(std::ops::Range<usize>, String)>) -> String {
+    edits.sort_by(|a, b| b.0.start.cmp(&a.0.start).then(b.0.end.cmp(&a.0.end)));
+    let mut out = xml.to_string();
+    for (range, text) in edits {
+        out.replace_range(range, &text);
+    }
+    out
+}
+
+/// Where the closing tag of `node` starts: the place a new last child goes.
+/// None for an element written `<x/>`.
+fn closing_tag_at(xml: &str, node: roxmltree::Node<'_, '_>) -> Option<usize> {
+    let range = node.range();
+    let close = format!("</{}>", node.tag_name().name());
+    xml[range.clone()]
+        .ends_with(&close)
+        .then(|| range.end - close.len())
+}
+
+/// `base_xml` with the CPU topology and vCPU counts changed, the rest as it
+/// was written: only the elements that change are rewritten.
+///
+/// Threads, dies and clusters are kept, and the maximum follows the
+/// topology, as libvirt requires. A topology is added only where the new one
+/// is not the default of one socket per vCPU. A `<vcpus>` list (per-vCPU
+/// hotplug settings) goes when the maximum changes, since it names every
+/// vCPU there is.
+pub fn edit_cpu_xml(base_xml: &str, sockets: u32, cores: u32, current: Option<u32>) -> Result<String, VirtError> {
+    let start = base_xml.find("<domain").ok_or_else(|| VirtError::Malformed {
+        message: "no <domain> element".into(),
+    })?;
+    let xml = &base_xml[start..];
+    let doc = roxmltree::Document::parse(xml).map_err(|e| VirtError::Malformed {
+        message: format!("dumpxml: {e}"),
+    })?;
+    let root = doc.root_element();
+    let vcpu = child(root, "vcpu").ok_or_else(|| VirtError::Malformed {
+        message: "no <vcpu> element".into(),
+    })?;
+    let old_max: u32 = vcpu.text().and_then(|t| t.trim().parse().ok()).unwrap_or(1);
+    let cpu = child(root, "cpu");
+    let topology = cpu.and_then(|c| child(c, "topology"));
+    let attr = |a: &str| topology.and_then(|t| t.attribute(a)).and_then(|v| v.parse::<u32>().ok()).unwrap_or(1);
+    let (dies, clusters, threads) = (attr("dies"), attr("clusters"), attr("threads"));
+    let max = sockets
+        .checked_mul(dies)
+        .and_then(|n| n.checked_mul(clusters))
+        .and_then(|n| n.checked_mul(cores))
+        .and_then(|n| n.checked_mul(threads))
+        .filter(|&n| n <= 4096)
+        .ok_or_else(|| VirtError::Malformed {
+            message: "topology too large".into(),
+        })?;
+    let current = current.unwrap_or(max);
+    if current > max {
+        return Err(VirtError::Malformed {
+            message: format!("{current} vCPUs online of {max}"),
+        });
+    }
+
+    let mut edits = Vec::new();
+    let current_attr = if current < max {
+        vec![("current", current.to_string())]
+    } else {
+        vec![]
+    };
+    edits.push((
+        vcpu.range(),
+        format!("<vcpu{}>{max}</vcpu>", attrs_xml(vcpu, &["current"], &current_attr)),
+    ));
+    if max != old_max
+        && let Some(list) = child(root, "vcpus")
+    {
+        edits.push((list.range(), String::new()));
+    }
+    let topo_xml = |node: Option<roxmltree::Node<'_, '_>>| {
+        let extra = [
+            ("sockets", sockets.to_string()),
+            ("cores", cores.to_string()),
+            ("threads", threads.to_string()),
+        ];
+        match node {
+            Some(t) => format!("<topology{}/>", attrs_xml(t, &["sockets", "cores", "threads"], &extra)),
+            None => format!("<topology sockets='{sockets}' cores='{cores}' threads='{threads}'/>"),
+        }
+    };
+    let default_shape = sockets == max;
+    match (cpu, topology) {
+        (_, Some(t)) => edits.push((t.range(), topo_xml(Some(t)))),
+        (_, None) if default_shape => {}
+        (Some(c), None) => match closing_tag_at(xml, c) {
+            Some(at) => edits.push((at..at, topo_xml(None))),
+            None => edits.push((
+                c.range(),
+                format!("<cpu{}>{}</cpu>", attrs_xml(c, &[], &[]), topo_xml(None)),
+            )),
+        },
+        (None, None) => {
+            let at = vcpu.range().end;
+            edits.push((at..at, format!("\n  <cpu>{}</cpu>", topo_xml(None))));
+        }
+    }
+    let out = splice(xml, edits);
+    roxmltree::Document::parse(&out).map_err(|e| VirtError::Malformed {
+        message: format!("edited XML: {e}"),
+    })?;
+    Ok(out)
+}
+
+/// `base_xml` booting from `order` (disk targets, NIC MACs), each by its own
+/// `<boot order>`. Every other boot setting goes: `<os><boot dev>` and the
+/// devices' own, which libvirt does not allow together.
+pub fn edit_boot_xml(base_xml: &str, order: &[String]) -> Result<String, VirtError> {
+    let start = base_xml.find("<domain").ok_or_else(|| VirtError::Malformed {
+        message: "no <domain> element".into(),
+    })?;
+    let xml = &base_xml[start..];
+    let doc = roxmltree::Document::parse(xml).map_err(|e| VirtError::Malformed {
+        message: format!("dumpxml: {e}"),
+    })?;
+    let root = doc.root_element();
+    let mut edits = Vec::new();
+    let boots = |parent: roxmltree::Node<'_, '_>| {
+        parent
+            .children()
+            .filter(|n| n.is_element() && n.tag_name().name() == "boot")
+            .map(|n| n.range())
+            .collect::<Vec<_>>()
+    };
+    if let Some(os) = child(root, "os") {
+        for r in boots(os) {
+            edits.push((r, String::new()));
+        }
+    }
+    let devices = child(root, "devices").ok_or_else(|| VirtError::Malformed {
+        message: "no <devices> element".into(),
+    })?;
+    for dev in devices.children().filter(|n| n.is_element()) {
+        for r in boots(dev) {
+            edits.push((r, String::new()));
+        }
+    }
+    let mut seen = std::collections::HashSet::new();
+    for (i, key) in order.iter().enumerate() {
+        if !seen.insert(key.to_ascii_lowercase()) {
+            return Err(VirtError::Malformed {
+                message: format!("{key} twice in the boot order"),
+            });
+        }
+        let dev = devices
+            .children()
+            .filter(|n| n.is_element())
+            .find(|n| match n.tag_name().name() {
+                "disk" => child(*n, "target").and_then(|t| t.attribute("dev")) == Some(key.as_str()),
+                "interface" => child(*n, "mac")
+                    .and_then(|m| m.attribute("address"))
+                    .is_some_and(|m| m.eq_ignore_ascii_case(key)),
+                _ => false,
+            })
+            .ok_or_else(|| VirtError::Malformed {
+                message: format!("no device {key} to boot from"),
+            })?;
+        let at = closing_tag_at(xml, dev).ok_or_else(|| VirtError::Malformed {
+            message: format!("{key} has no closing tag"),
+        })?;
+        edits.push((at..at, format!("<boot order='{}'/>", i + 1)));
+    }
+    let out = splice(xml, edits);
+    roxmltree::Document::parse(&out).map_err(|e| VirtError::Malformed {
+        message: format!("edited XML: {e}"),
+    })?;
+    Ok(out)
+}
+
+/// An interface's XML for `update-device`, which replaces the whole
+/// definition it matches by MAC: what is left out is reset, so the link
+/// state is always written, and the boot order the definition has.
+fn nic_xml(kind: &str, mac: &str, source: &str, model: Option<&str>, link_up: bool, boot_order: Option<u32>) -> String {
+    let e = xml_escape;
+    let mut x = format!("<interface type='{}'>", e(kind));
+    x.push_str(&format!("<mac address='{}'/>", e(mac)));
+    x.push_str(&format!("<source {}='{}'/>", if kind == "bridge" { "bridge" } else { "network" }, e(source)));
+    if let Some(m) = model {
+        x.push_str(&format!("<model type='{}'/>", e(m)));
+    }
+    x.push_str(&format!("<link state='{}'/>", if link_up { "up" } else { "down" }));
+    if let Some(o) = boot_order {
+        x.push_str(&format!("<boot order='{o}'/>"));
+    }
+    x.push_str("</interface>");
+    x
+}
+
+/// A step the change stands or falls by: its failure ends the script.
+fn hw_step(args: &str) -> String {
+    format!(
+        "echo '{}'\nR {args}\n[ \"$r\" = 0 ] || exit 0\n",
+        script::cmd_marker(KEY_HW_STEP)
+    )
+}
+
+/// The running domain's half of a change: its failure leaves the change in
+/// the persistent definition only.
+fn hw_live_step(args: &str) -> String {
+    format!("echo '{}'\nR {args}\n", script::cmd_marker(KEY_HW_LIVE_STEP))
+}
+
+/// Runs `args` with `$f` a temporary file holding `content`, as a step.
+fn hw_step_with_file(content: &str, args: &str, live: bool) -> String {
+    let key = if live { KEY_HW_LIVE_STEP } else { KEY_HW_STEP };
+    let mut s = format!(
+        "echo '{}'\nf=$(mktemp 2>&1) || {{ printf '%s\\n{RC_PREFIX}1\\n' \"$f\"; f=; r=1; }}\n\
+         if [ -n \"$f\" ]; then printf '%s' {} >\"$f\"; R {args}; rm -f \"$f\"; fi\n",
+        script::cmd_marker(key),
+        shell_quote_unix(content),
+    );
+    if !live {
+        s.push_str("[ \"$r\" = 0 ] || exit 0\n");
+    }
+    s
+}
+
+/// Reads the persistent definition, as a step so that a refusal is the
+/// daemon's (and sudo's cue), then stops with a conflict when it is not
+/// `base_xml` any more.
+fn hw_guard(domain: &str, base_xml: &str) -> String {
+    format!(
+        "echo '{step}'\ncur=$(virsh --connect {CONNECT_URI} -q dumpxml --inactive {d} </dev/null 2>&1); r=$?\n\
+         if [ \"$r\" != 0 ]; then printf '%s\\n{RC_PREFIX}%s\\n' \"$cur\" \"$r\"; exit 0; fi\n\
+         printf '\\n{RC_PREFIX}0\\n'\n\
+         if [ \"$cur\" != {base} ]; then echo '{conflict}'; exit 0; fi\n",
+        step = script::cmd_marker(KEY_HW_STEP),
+        d = domain_arg(domain),
+        base = shell_quote_unix(base_xml.trim_end_matches(['\n', '\r'])),
+        conflict = script::cmd_marker(KEY_HW_CONFLICT),
+    )
+}
+
+/// The script making `change` to `domain`. `running`: the domain has a
+/// running definition to change as well. `base_xml` is
+/// [`VirtHardwareInfo::config_xml`], needed by the changes that rewrite the
+/// definition ([`VirtHwChange::Cpu`], [`VirtHwChange::Boot`]). Parse with
+/// [`parse_hardware_change`].
+pub fn hardware_change_script(
+    domain: &str,
+    running: bool,
+    base_xml: Option<&str>,
+    change: &VirtHwChange,
+) -> Result<String, VirtError> {
+    change.check()?;
+    let d = domain_arg(domain);
+    let q = shell_quote_unix;
+    let mut s = prelude();
+    s.push_str(&run_fn());
+    let base = || {
+        base_xml.ok_or_else(|| VirtError::Malformed {
+            message: "invalid hardware change: no definition to edit".into(),
+        })
+    };
+    let define = |s: &mut String, xml: &str| {
+        s.push_str(&hw_step_with_file(xml, "define --file \"$f\"", false));
+    };
+    match change {
+        VirtHwChange::Cpu { sockets, cores, current } => {
+            let base = base()?;
+            let edited = edit_cpu_xml(base, *sockets, *cores, *current)?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &edited);
+            if running {
+                let online = match current {
+                    Some(c) => *c,
+                    None => {
+                        let doc = roxmltree::Document::parse(&edited).map_err(|e| VirtError::Malformed {
+                            message: format!("edited XML: {e}"),
+                        })?;
+                        child(doc.root_element(), "vcpu")
+                            .and_then(|v| v.text())
+                            .and_then(|t| t.trim().parse().ok())
+                            .unwrap_or(1)
+                    }
+                };
+                s.push_str(&hw_live_step(&format!("setvcpus {d} --count {online} --live")));
+            }
+        }
+        VirtHwChange::Memory { memory_mib, current_mib } => {
+            let current = current_mib.unwrap_or(*memory_mib);
+            s.push_str(&hw_step(&format!("setmaxmem {d} --size {memory_mib}MiB --config")));
+            s.push_str(&hw_step(&format!("setmem {d} --size {current}MiB --config")));
+            // The maximum is fixed while QEMU runs; the balloon moves.
+            if running {
+                s.push_str(&hw_live_step(&format!("setmem {d} --size {current}MiB --live")));
+            }
+        }
+        VirtHwChange::GrowDisk { target, bytes, path, live } => {
+            if running && *live {
+                s.push_str(&hw_step(&format!("blockresize {d} --path {} --size {bytes}B", q(target))));
+            } else {
+                let path = path.as_deref().ok_or_else(|| VirtError::Malformed {
+                    message: "invalid hardware change: no path to resize".into(),
+                })?;
+                s.push_str(&hw_step(&format!("vol-resize --vol {} --capacity {bytes}B", q(path))));
+            }
+        }
+        VirtHwChange::AddDisk { pool, volume, gib, format, target, bus } => {
+            let (pool, vol) = (q(pool), q(volume));
+            s.push_str(&hw_step(&format!(
+                "vol-create-as --pool {pool} --name {vol} --capacity {gib}G --format {format}"
+            )));
+            s.push_str(&format!(
+                "echo '{step}'\np=$(virsh --connect {CONNECT_URI} -q vol-path --pool {pool} --vol {vol} </dev/null 2>&1); r=$?\n\
+                 printf '%s\\n{RC_PREFIX}%s\\n' \"$p\" \"$r\"\n\
+                 if [ \"$r\" != 0 ]; then virsh --connect {CONNECT_URI} -q vol-delete --pool {pool} --vol {vol} </dev/null >/dev/null 2>&1; exit 0; fi\n",
+                step = script::cmd_marker(KEY_HW_STEP),
+            ));
+            let attach = format!(
+                "attach-disk {d} --source \"$p\" --target {} --targetbus {} --driver qemu --subdriver {format}",
+                q(target),
+                q(bus)
+            );
+            // Nothing half made: a disk the definition will not take is
+            // deleted again.
+            s.push_str(&format!(
+                "echo '{}'\nR {attach} --config\n\
+                 if [ \"$r\" != 0 ]; then virsh --connect {CONNECT_URI} -q vol-delete --pool {pool} --vol {vol} </dev/null >/dev/null 2>&1; exit 0; fi\n",
+                script::cmd_marker(KEY_HW_STEP),
+            ));
+            if running {
+                s.push_str(&hw_live_step(&format!("{attach} --live")));
+            }
+        }
+        VirtHwChange::RemoveDisk { target, delete_path, config, live } => {
+            let t = q(target);
+            if *config {
+                s.push_str(&hw_step(&format!("detach-disk {d} --target {t} --config")));
+            }
+            if *live && running {
+                s.push_str(&hw_live_step(&format!("detach-disk {d} --target {t} --live")));
+            }
+            if let Some(path) = delete_path {
+                // A guest that has not let go of the disk yet (an unplug is
+                // the guest's to finish) keeps it: deleting it under a
+                // running QEMU is not something to do to anyone's data.
+                let still = if running {
+                    format!(
+                        "virsh --connect {CONNECT_URI} -q domblklist {d} </dev/null 2>/dev/null | awk -v t={t} '$1==t{{f=1}} END{{exit !f}}'"
+                    )
+                } else {
+                    "false".to_string()
+                };
+                s.push_str(&format!(
+                    "if {still}; then echo '{kept}'; else\n{step}fi\n",
+                    kept = script::cmd_marker(KEY_HW_KEPT),
+                    step = hw_step(&format!("vol-delete --vol {}", q(path))),
+                ));
+            }
+        }
+        VirtHwChange::SetMedia { target, source, config, live } => {
+            let args = match source {
+                Some(src) => format!("change-media {d} --path {} --source {} --update", q(target), q(src)),
+                None => format!("change-media {d} --path {} --eject", q(target)),
+            };
+            if *config {
+                s.push_str(&hw_step(&format!("{args} --config")));
+            }
+            if *live && running {
+                s.push_str(&hw_live_step(&format!("{args} --live")));
+            }
+        }
+        VirtHwChange::AddNic { kind, source, model, mac } => {
+            let args = format!(
+                "attach-interface {d} --type {kind} --source {} --model {} --mac {mac}",
+                q(source),
+                q(model)
+            );
+            s.push_str(&hw_step(&format!("{args} --config")));
+            if running {
+                s.push_str(&hw_live_step(&format!("{args} --live")));
+            }
+        }
+        VirtHwChange::RemoveNic { mac, kind, live_kind } => {
+            if let Some(k) = kind {
+                s.push_str(&hw_step(&format!("detach-interface {d} --type {} --mac {mac} --config", q(k))));
+            }
+            if running && let Some(k) = live_kind {
+                s.push_str(&hw_live_step(&format!("detach-interface {d} --type {} --mac {mac} --live", q(k))));
+            }
+        }
+        VirtHwChange::UpdateNic { mac, kind, source, model, link_up, boot_order, live_boot_order, config, live } => {
+            if *config {
+                let xml = nic_xml(kind, mac, source, model.as_deref(), *link_up, *boot_order);
+                s.push_str(&hw_step_with_file(&xml, &format!("update-device {d} --file \"$f\" --config"), false));
+            }
+            if *live && running {
+                let xml = nic_xml(kind, mac, source, model.as_deref(), *link_up, *live_boot_order);
+                s.push_str(&hw_step_with_file(&xml, &format!("update-device {d} --file \"$f\" --live"), true));
+            }
+        }
+        VirtHwChange::Boot { order } => {
+            let base = base()?;
+            let edited = edit_boot_xml(base, order)?;
+            s.push_str(&hw_guard(domain, base));
+            define(&mut s, &edited);
+        }
+        VirtHwChange::Autostart { on } => {
+            let disable = if *on { "" } else { " --disable" };
+            s.push_str(&hw_step(&format!("autostart {d}{disable}")));
+        }
+    }
+    Ok(s)
+}
+
+/// [`hardware_change_script`]'s output. `Err` with the host's words when a
+/// step failed, `Conflict` when the definition changed since it was read.
+pub fn parse_hardware_change(raw: &str) -> Result<VirtHwOutcome, VirtError> {
+    let secs = sections(raw)?;
+    let mut steps = 0;
+    for (k, sec) in &secs {
+        if k == KEY_HW_STEP {
+            steps += 1;
+            sec.ok()?;
+        }
+    }
+    if secs.iter().any(|(k, _)| k == KEY_HW_CONFLICT) {
+        return Err(VirtError::Conflict {
+            message: "the definition changed since it was read".into(),
+        });
+    }
+    let live_error = secs
+        .iter()
+        .filter(|(k, _)| k == KEY_HW_LIVE_STEP)
+        .find_map(|(_, s)| s.ok().err())
+        .map(|e| e.message());
+    let volume_kept = secs.iter().any(|(k, _)| k == KEY_HW_KEPT);
+    if steps == 0 && live_error.is_none() && !volume_kept && secs.iter().all(|(k, _)| k != KEY_HW_LIVE_STEP) {
+        return Err(VirtError::Malformed {
+            message: "no step ran".into(),
+        });
+    }
+    Ok(VirtHwOutcome { live_error, volume_kept })
 }
 
 #[cfg(test)]

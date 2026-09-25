@@ -19,7 +19,7 @@
 ///
 ///   The running and the stopped domain get snapshots named `sbxe2e-*`
 ///   (their writable disks must be qcow2), reverted to and deleted again;
-///   pools and networks are only listed.
+///   pools, networks and hardware are only listed.
 /// - `SBM_E2E_PVE_HOST` — SSH destination of a Proxmox VE node. The API is
 ///   reached through an SSH channel to `https://localhost:8006`, and directly
 ///   at `SBM_E2E_PVE_ADDR` (default `https://<ssh hostname>:8006`).
@@ -102,6 +102,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
@@ -262,6 +263,25 @@ Future<void> _libvirt() async {
       final stopped = await virt.detail(await guest(stoppedName));
       expect(stopped.display, isNull);
       expect(stopped.consoles, {VirtConsoleKind.text});
+    });
+
+    test('hardware: both definitions of the running domain, one of the '
+        'shut-off one', () async {
+      final run = await virt.hardware(await guest(runningName));
+      expect(run.running, isTrue);
+      expect(run.cpu.total, greaterThan(0));
+      expect(run.memory.mib, greaterThan(0));
+      expect(run.disks.where((d) => d.kind == VirtHwDiskKind.disk), isNotEmpty);
+      expect(run.disks.first.size, greaterThan(0));
+      expect(run.nics, isNotEmpty);
+      expect(run.boot, isNotEmpty);
+      expect(run.autostart, isTrue);
+      expect(run.limits.hostCpus, greaterThan(0));
+      expect(run.revision, startsWith('<domain'));
+
+      final stopped = await virt.hardware(await guest(stoppedName));
+      expect(stopped.running, isFalse);
+      expect(stopped.pending, isEmpty);
     });
 
     test('the VNC console speaks RFB through the SSH loopback tunnel', () async {
@@ -644,6 +664,23 @@ Future<void> _pve() async {
           }
         }
         expect(owned, isTrue, reason: 'no volume of VM $vmId');
+      });
+
+      test('hardware: the VM and the container, as the next start has them',
+          () async {
+        final snap = await pve.load();
+        final vm = await pve.hardware(guestOf(snap, VirtGuestKind.qemu, vmId));
+        expect(vm.cpu.total, greaterThan(0));
+        expect(vm.memory.mib, greaterThan(0));
+        expect(vm.disks, isNotEmpty);
+        expect(vm.boot, isNotNull);
+        expect(vm.revision, matches(RegExp(r'^[0-9a-f]{40}$')));
+        expect(vm.configText, contains('memory'));
+
+        final ct = await pve.hardware(guestOf(snap, VirtGuestKind.lxc, lxcId));
+        expect(ct.disk('rootfs')?.kind, VirtHwDiskKind.rootfs);
+        expect(ct.memory.swapMib, isNotNull);
+        expect(ct.boot, isNull);
       });
 
       test('network: bridges with the guests on them', () async {

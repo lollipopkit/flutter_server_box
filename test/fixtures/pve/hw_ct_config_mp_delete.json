@@ -1,0 +1,1 @@
+{"arch":"amd64","cores":2,"digest":"c5e9b6d528d65e66afdecf3a8fb12be91bc5e173","hostname":"sbhw-e2e-ct","memory":384,"net0":"name=eth0,bridge=vmbr0,hwaddr=BC:24:11:3E:AA:6A,ip=dhcp,type=veth","ostype":"alpine","rootfs":"local-lvm:vm-9902-disk-0,size=1G","swap":128,"unprivileged":1}

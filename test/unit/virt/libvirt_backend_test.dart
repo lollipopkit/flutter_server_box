@@ -1,11 +1,12 @@
 /// `LibvirtBackend` over a scripted `ServerExec` that answers with the
 /// `sbm_parser` virt fixtures: mapping, rates across two samples, the sudo
-/// retry, a server without virsh, and snapshots, storage and networks against
-/// the captured script outputs.
+/// retry, a server without virsh, and snapshots, storage, networks and
+/// hardware against the captured script outputs.
 ///
 /// Parsing goes through the real FFI: `cargo build -p sbm_ffi` first.
 library;
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -16,9 +17,11 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/libvirt_backend.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
+import 'package:server_box/src/rust/api/virt.dart' show parseVirtHardwareJson;
 
 import '../../helpers/rust_lib_helper.dart';
 
@@ -708,6 +711,185 @@ void main() {
     expect(nets[1].users, isEmpty);
   });
 
+  group('hardware', () {
+    // `sbhw-test`, captured running with 3 of 4 vCPUs online and 2 in the
+    // persistent definition: the one change waiting for the next start.
+    const hwId = '34d2450f-095b-496c-91fe-c8c99b912ae8';
+    const guest = VirtGuest(
+      id: hwId,
+      name: 'sbhw-test',
+      kind: VirtGuestKind.qemu,
+      state: VirtGuestState.running,
+    );
+    const pool = VirtStoragePool(id: 'images', name: 'images', type: 'dir');
+    const net = VirtNetwork(id: 'isolated', name: 'isolated', mode: 'isolated');
+
+    ({LibvirtBackend virt, _Exec exec}) backend(
+      ExecResult Function(_Call call) change,
+    ) {
+      var reads = 0;
+      final exec = _Exec((call) {
+        if (call.script.contains('dumpxml --inactive') && reads++ == 0) {
+          return _ok(_fixture('script_hardware_running.txt'));
+        }
+        return change(call);
+      });
+      return (
+        virt: LibvirtBackend(serverId: 's', exec: () async => exec),
+        exec: exec,
+      );
+    }
+
+    test('both definitions: the next start\'s, and what differs now', () async {
+      final (:virt, :exec) = backend((_) => fail('no change'));
+      final hw = await virt.hardware(guest);
+      expect(exec.calls.single.script, contains("'$hwId'"));
+      expect(hw.running, isTrue);
+      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.threads, hw.cpu.online), (4, 1, 1, 2));
+      // No `<topology>`: libvirt gives each vCPU a socket of its own.
+      expect((hw.memory.mib, hw.memory.minMib, hw.memory.balloon), (512, 384, true));
+      final vda = hw.disk('vda')!;
+      expect((vda.kind, vda.bus, vda.size), (VirtHwDiskKind.disk, 'virtio', 117440512));
+      expect(vda.source, '/var/lib/libvirt/images/sbhw-root.qcow2');
+      final cd = hw.disk('hdc')!;
+      expect((cd.kind, cd.source), (VirtHwDiskKind.cdrom, null));
+      final nic = hw.nics.single;
+      expect((nic.key, nic.type, nic.source, nic.linkUp), ('52:54:00:b9:34:c3', 'network', 'default', true));
+      expect(hw.boot, ['vda']);
+      expect(hw.limits.hostCpus, 4);
+      expect(hw.revision, startsWith("<domain type='kvm'>"));
+      // Online vCPUs differ; the balloon's current size moves by itself and
+      // is not a change.
+      final p = hw.pending.single;
+      expect((p.key, p.current, p.pending), ('cpu', '3/4 (4×1×1)', '2/4 (4×1×1)'));
+    });
+
+    test('shut off: one definition, nothing pending', () async {
+      final exec = _Exec((_) => _ok(_fixture('script_hardware_stopped.txt')));
+      final virt = LibvirtBackend(serverId: 's', exec: () async => exec);
+      final hw = await virt.hardware(guest.copyWith(state: VirtGuestState.stopped));
+      expect(hw.running, isFalse);
+      expect(hw.pending, isEmpty);
+    });
+
+    test('changes are addressed by what each definition has', () async {
+      final info = LibvirtHardwareInfo.fromJson(
+        jsonDecode(
+              await parseVirtHardwareJson(
+                raw: _fixture('script_hardware_running.txt'),
+              ),
+            )
+            as Map<String, dynamic>,
+      );
+      final hw = LibvirtBackend.hardwareOf(info);
+      Map<String, Object?> json(VirtHwChange c) => LibvirtBackend.changeJson(
+        info,
+        hw,
+        c,
+        guestName: 'sbhw-test',
+        mac: () => '52:54:00:00:00:01',
+      );
+      expect(json(const VirtHwAddDisk(storage: pool, gib: 2)), {
+        'op': 'add_disk',
+        'pool': 'images',
+        // `hdc` is the CD-ROM's; a new disk takes the first disk's bus.
+        'volume': 'sbhw-test-vdb.qcow2',
+        'gib': 2,
+        'format': 'qcow2',
+        'target': 'vdb',
+        'bus': 'virtio',
+      });
+      expect(json(const VirtHwRemoveDisk(key: 'vda', deleteVolume: true)), {
+        'op': 'remove_disk',
+        'target': 'vda',
+        'delete_path': '/var/lib/libvirt/images/sbhw-root.qcow2',
+        'config': true,
+        'live': true,
+      });
+      // A CD-ROM's image is never deleted with it.
+      expect(json(const VirtHwRemoveDisk(key: 'hdc', deleteVolume: true))['delete_path'], isNull);
+      // Ejecting an empty drive: nothing to do in either definition.
+      expect(json(const VirtHwSetMedia(key: 'hdc')), containsPair('config', false));
+      expect(json(const VirtHwSetMedia(key: 'hdc')), containsPair('live', false));
+      expect(
+        json(const VirtHwSetMedia(key: 'hdc', media: VirtVolume(id: 'a.iso', name: 'a.iso', path: '/isos/a.iso'))),
+        {'op': 'set_media', 'target': 'hdc', 'source': '/isos/a.iso', 'config': true, 'live': true},
+      );
+      expect(json(const VirtHwUpdateNic(key: '52:54:00:b9:34:c3', linkUp: false, network: net)), {
+        'op': 'update_nic',
+        'mac': '52:54:00:b9:34:c3',
+        'kind': 'network',
+        'source': 'isolated',
+        'model': 'virtio',
+        'link_up': false,
+        'boot_order': null,
+        'live_boot_order': null,
+        'config': true,
+        'live': true,
+      });
+      expect(json(const VirtHwAddNic(network: net)), {
+        'op': 'add_nic',
+        'kind': 'network',
+        'source': 'isolated',
+        'model': 'virtio',
+        'mac': '52:54:00:00:00:01',
+      });
+      expect(json(const VirtHwGrowDisk(key: 'vda', bytes: 1 << 30)), {
+        'op': 'grow_disk',
+        'target': 'vda',
+        'bytes': 1 << 30,
+        'path': '/var/lib/libvirt/images/sbhw-root.qcow2',
+        'live': true,
+      });
+      expect(
+        () => json(const VirtHwRevert(['cpu'])),
+        throwsA(isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported)),
+      );
+    });
+
+    test('the running half refused: saved for the next start, in the host\'s words',
+        () async {
+      final (:virt, :exec) = backend(
+        (_) => _ok(_fixture('script_hw_add_disk_ide_live_refused.txt')),
+      );
+      final hw = await virt.hardware(guest);
+      final out = await virt.changeHardware(guest, hw, const VirtHwAddDisk(storage: pool, gib: 1));
+      expect(out.liveError, contains("disk bus 'ide' cannot be hotplugged"));
+      expect(out.volumeKept, isFalse);
+      final change = exec.calls.last;
+      expect(change.entry, 'sh');
+      expect(change.script, contains('attach-disk'));
+    });
+
+    test('a disk the running guest keeps: its volume is kept too', () async {
+      final (:virt, exec: _) = backend(
+        (_) => _ok(_fixture('script_hw_remove_disk_kept.txt')),
+      );
+      final hw = await virt.hardware(guest);
+      final out = await virt.changeHardware(
+        guest,
+        hw,
+        const VirtHwRemoveDisk(key: 'vda', deleteVolume: true),
+      );
+      expect(out.volumeKept, isTrue);
+    });
+
+    test('a definition changed since the read is a conflict', () async {
+      final (:virt, :exec) = backend((_) => _ok(_fixture('script_hw_conflict.txt')));
+      final hw = await virt.hardware(guest);
+      final err = await _err(virt.changeHardware(guest, hw, const VirtHwSetBoot(['hdc', 'vda'])));
+      expect(err.type, VirtErrType.conflict);
+      // Made from the definition read, compared on the host before `define`.
+      expect(exec.calls.last.script, contains('<boot order='));
+
+      // Not from this backend's last read: refused before reaching the host.
+      final calls = exec.calls.length;
+      final stale = hw.copyWith(revision: '<domain/>');
+      final err2 = await _err(virt.changeHardware(guest, stale, const VirtHwSetAutostart(true)));
+      expect(err2.type, VirtErrType.conflict);
+      expect(exec.calls, hasLength(calls));
+    });
+  });
 }
 
 Future<VirtErr> _err(Future<Object?> future) async {

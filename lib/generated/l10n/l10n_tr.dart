@@ -3770,4 +3770,292 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Konuk oluşturmak ve silmek için ayrıca VM.Allocate, VM.Config.*, Datastore.AllocateSpace ve SDN.Use gerekir.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Donanım düzenlemek için VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network ve VM.Config.Options gerekir; yeni diskler ve arabirimler için ayrıca Datastore.AllocateSpace ve SDN.Use gerekir.';
+
+  @override
+  String get virtErrConflict => 'Başka yerde değişti';
+
+  @override
+  String get virtErrConflictTip =>
+      'Bu konuğun yapılandırması burada okunduktan sonra başka biri tarafından değiştirildi, bu yüzden hiçbir şey değiştirilmedi. Yeniden okundu: hâlâ gerekiyorsa değişikliği tekrar yapın.';
+
+  @override
+  String get virtHardware => 'Donanım';
+
+  @override
+  String get virtHwAddDisk => 'Disk ekle';
+
+  @override
+  String get virtHwAddMount => 'Bağlama noktası ekle';
+
+  @override
+  String get virtHwAddNic => 'Ağ arabirimi ekle';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Kaydedildi. Bir sonraki başlatmada geçerli olur.';
+
+  @override
+  String get virtHwAutostart => 'Ana makineyle başlat';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · VMID sırasıyla başlatılır';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Geçerli bellek';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Bellek azaldığında ana makinenin konuğun boştaki belleğini geri almasına izin verir';
+
+  @override
+  String get virtHwBoot => 'Önyükleme';
+
+  @override
+  String get virtHwBootOrder => 'Önyükleme sırası';
+
+  @override
+  String get virtHwBootTip =>
+      'Oklar aygıtı taşır; dokunmak ondan önyüklemeyi açar veya kapatır.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Yapılandırma dosyası';
+
+  @override
+  String get virtHwCores => 'Çekirdekler';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Varsayılan';
+
+  @override
+  String get virtHwDeleteVolume => 'Birimini de sil';
+
+  @override
+  String get virtHwDetach => 'Ayır';
+
+  @override
+  String get virtHwDiskHotplug => 'Sıcak takılabilir: çalışırken eklenebilir';
+
+  @override
+  String get virtHwDisksLxc => 'Kök disk ve bağlama noktaları';
+
+  @override
+  String get virtHwEject => 'Çıkar';
+
+  @override
+  String get virtHwEmpty => 'Ortam yok';
+
+  @override
+  String get virtHwFirewall => 'Güvenlik duvarı';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size boş';
+  }
+
+  @override
+  String get virtHwGrow => 'Büyüt';
+
+  @override
+  String get virtHwGrowNote => 'Diskler yalnızca büyütülebilir.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Diskler yalnızca büyür. Çalışırken büyütüldüyse bölüm konukta genişletilmelidir.';
+
+  @override
+  String get virtHwGuestUsed => 'Konuğun kullandığı';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Ana makine $threads iş parçacığı · $allocated ayrılmış';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Ana makine $total · $allocated ayrılmış';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Sıcak takılır: hemen geçerli olur.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'En az bir aygıt işaretleyin';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Toplam 1 ile $max vCPU arası';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Etkin vCPU\'lar: 1 ile toplam arası';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Şimdikinden büyük olmalı: diskler yalnızca büyür';
+
+  @override
+  String get virtHwIssueDiskSize => '1 ile 65536 GiB arası';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '$min ile $max MiB arası';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Bellekten fazla olamaz';
+
+  @override
+  String get virtHwIssueMountPoint => '/data gibi mutlak bir yol';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Depolamanın boş alanından fazla';
+
+  @override
+  String get virtHwIssueSwap => 'Negatif olamaz';
+
+  @override
+  String get virtHwLater => 'Yeniden başlatınca geçerli';
+
+  @override
+  String get virtHwLess => 'Azalt';
+
+  @override
+  String get virtHwLinkDown => 'Bağlı değil';
+
+  @override
+  String get virtHwLinkNote =>
+      'Kapalıyken konuk kablonun çekildiğini görür; yeniden başlatma gerekmez';
+
+  @override
+  String get virtHwLinkUp => 'Bağlı';
+
+  @override
+  String get virtHwMac => 'MAC adresi';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Artır';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Bağlama noktaları doğrudan bir depolamadan ayrılır';
+
+  @override
+  String get virtHwMountPoint => 'Bağlama noktası';
+
+  @override
+  String get virtHwMoveDown => 'Aşağı taşı';
+
+  @override
+  String get virtHwMoveUp => 'Yukarı taşı';
+
+  @override
+  String get virtHwNewDisk => 'Yeni disk';
+
+  @override
+  String get virtHwNewMount => 'Yeni bağlama noktası';
+
+  @override
+  String get virtHwNewNic => 'Yeni ağ arabirimi';
+
+  @override
+  String get virtHwNicHotplug => 'virtio arabirimleri sıcak takılabilir';
+
+  @override
+  String get virtHwNics => 'Ağ arabirimleri';
+
+  @override
+  String get virtHwNoMedia => 'Ortam yok';
+
+  @override
+  String get virtHwNoNetworks => 'Burada ağ veya köprü yok';
+
+  @override
+  String get virtHwNoStorage => 'Burada disk alabilen depolama yok';
+
+  @override
+  String get virtHwOnline => 'Etkin vCPU\'lar';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Bazı donanım değişiklikleri yeniden başlatınca geçerli olur';
+
+  @override
+  String get virtHwPendingTip =>
+      'Çalışan konuk soldaki değeri korur; sağdakini bir sonraki başlatmada alır.';
+
+  @override
+  String get virtHwPendingTitle => 'Sonraki başlatmaya kadar bekliyor';
+
+  @override
+  String get virtHwPickNet => 'Bir ağ seçin';
+
+  @override
+  String get virtHwPickPool => 'Bir depolama ve boyut seçin';
+
+  @override
+  String get virtHwProcessor => 'İşlemci';
+
+  @override
+  String get virtHwRemove => 'Kaldır';
+
+  @override
+  String get virtHwRemoveCdrom => 'CD-ROM\'u kaldır';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$disk, $guest konuğundan kaldırılsın mı?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$nic, $guest konuğundan kaldırılsın mı?';
+  }
+
+  @override
+  String get virtHwResources => 'Kaynaklar';
+
+  @override
+  String get virtHwRestartNow => 'Şimdi yeniden başlat';
+
+  @override
+  String get virtHwRevert => 'Geri al';
+
+  @override
+  String get virtHwRevertAll => 'Tümünü geri al';
+
+  @override
+  String get virtHwSockets => 'Soketler';
+
+  @override
+  String get virtHwSource => 'Kaynak';
+
+  @override
+  String get virtHwSwap => 'Takas';
+
+  @override
+  String get virtHwTopology => 'Soket × çekirdek';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets soket × $cores çekirdek × $threads iş parçacığı';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return 'toplam $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Kaldırıldı, ancak çalışan konuk diski hâlâ kullanıyor, bu yüzden birimi korundu. Bir sonraki başlatmada ayrılacak.';
 }

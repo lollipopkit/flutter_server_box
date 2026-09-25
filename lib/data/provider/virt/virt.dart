@@ -16,6 +16,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -363,6 +364,9 @@ abstract class VirtHostState with _$VirtHostState {
     /// Guests being deleted.
     @Default(<String>{}) Set<String> deleting,
 
+    /// Guests with a hardware change in flight.
+    @Default(<String>{}) Set<String> editing,
+
     /// This session's readings per guest, oldest first, capped at
     /// [VirtHostNotifier.sampleLimit] — the chart for a host without
     /// `storedHistory`, and the live tail for one with it.
@@ -400,14 +404,16 @@ abstract class VirtHostState with _$VirtHostState {
         _ => false,
       } &&
       !snapshotOps.containsKey(id) &&
-      !deleting.contains(id);
+      !deleting.contains(id) &&
+      !editing.contains(id);
 
-  /// A power action, a snapshot operation or a delete of this app's is in
-  /// flight on the guest [id].
+  /// A power action, a snapshot operation, a hardware change or a delete of
+  /// this app's is in flight on the guest [id].
   bool isBusy(String id) =>
       busy.containsKey(id) ||
       snapshotOps.containsKey(id) ||
-      deleting.contains(id);
+      deleting.contains(id) ||
+      editing.contains(id);
 }
 
 /// A snapshot operation in flight.
@@ -620,9 +626,45 @@ class VirtHostNotifier extends _$VirtHostNotifier {
     } finally {
       if (ref.mounted && _powerSeq[guestId] == seq) {
         state = state.copyWith(busy: {...state.busy}..remove(guestId));
+        // A start takes up what was pending: the hardware read before it
+        // says otherwise.
+        ref.invalidate(virtHardwareProvider(serverId, guestId));
         unawaited(refresh());
       }
     }
+  }
+
+  /// How long [restartToApply] waits for a libvirt guest to shut down.
+  static const shutdownWait = Duration(minutes: 3);
+
+  /// Restarts [guestId] so that its pending hardware changes apply.
+  ///
+  /// PVE's reboot does: it stops the guest and starts it again from its
+  /// configuration. libvirt's does not — the same QEMU process restarts the
+  /// guest with the running definition — so there it is a shutdown, waited
+  /// for, and a start. A guest that has not shut down after [shutdownWait]
+  /// is left running and reported; force stopping it is the user's call.
+  Future<void> restartToApply(String guestId) async {
+    if (state.kind == VirtHostKind.pve) {
+      return power(guestId, VirtPowerAction.reboot);
+    }
+    await power(guestId, VirtPowerAction.shutdown);
+    final deadline = DateTime.now().add(shutdownWait);
+    while (true) {
+      if (!ref.mounted) return;
+      await refresh();
+      final guest = state.guest(guestId);
+      if (guest == null) return;
+      if (guest.state == VirtGuestState.stopped) break;
+      if (DateTime.now().isAfter(deadline)) {
+        throw VirtErr(
+          type: VirtErrType.actionFailed,
+          message: '${guest.name} did not shut down',
+        );
+      }
+      await Future<void>.delayed(const Duration(seconds: 2));
+    }
+    await power(guestId, VirtPowerAction.start);
   }
 
   Future<VirtGuestDetail> detail(String guestId) =>
@@ -691,6 +733,36 @@ class VirtHostNotifier extends _$VirtHostNotifier {
         state = state.copyWith(
           snapshotOps: {...state.snapshotOps}..remove(guestId),
         );
+        unawaited(refresh());
+      }
+    }
+  }
+
+  /// See [VirtBackend.hardware].
+  Future<VirtHardware> hardware(String guestId) =>
+      _backend.hardware(_guest(guestId));
+
+  /// Makes [change] to [guestId] from [base], then refreshes: a CPU or
+  /// memory change shows in the guest list. One operation per guest at a
+  /// time, as [power]. Throws [VirtErr].
+  Future<VirtHwOutcome> changeHardware(
+    String guestId,
+    VirtHardware base,
+    VirtHwChange change,
+  ) async {
+    final guest = _guest(guestId);
+    if (state.isBusy(guestId)) {
+      throw VirtErr(
+        type: VirtErrType.unsupported,
+        message: '${guest.name} is busy',
+      );
+    }
+    state = state.copyWith(editing: {...state.editing, guestId});
+    try {
+      return await _backend.changeHardware(guest, base, change);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(editing: {...state.editing}..remove(guestId));
         unawaited(refresh());
       }
     }
@@ -826,6 +898,16 @@ final class _MissingBackend implements VirtBackend {
   Future<VirtCreated> create(VirtCreateSpec spec) async => _fail();
 
   @override
+  Future<VirtHardware> hardware(VirtGuest guest) async => _fail();
+
+  @override
+  Future<VirtHwOutcome> changeHardware(
+    VirtGuest guest,
+    VirtHardware base,
+    VirtHwChange change,
+  ) async => _fail();
+
+  @override
   Future<void> delete(VirtGuest guest, {bool removeDisks = true}) async =>
       _fail();
 
@@ -903,6 +985,21 @@ Future<List<VirtGuestSnapshot>> virtSnapshots(
   final host = _hostOf(ref, serverId);
   await host.firstLoad;
   return host.snapshots(guestId);
+}
+
+/// The hardware of one guest. Invalidated by the view after each change and
+/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
+/// pending banner from it, and reading it again for every guest opened would
+/// be a round trip to the host each time.
+@Riverpod(retry: _noRetry, keepAlive: true)
+Future<VirtHardware> virtHardware(
+  Ref ref,
+  String serverId,
+  String guestId,
+) async {
+  final host = _hostOf(ref, serverId);
+  await host.firstLoad;
+  return host.hardware(guestId);
 }
 
 /// The host's storage pools.

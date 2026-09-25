@@ -240,6 +240,11 @@ enum VirtErrType {
 
   /// A new guest's name (or PVE VMID, or disk volume) is taken on the host.
   exists,
+
+  /// The guest's configuration changed since it was read (PVE's digest,
+  /// libvirt's persistent definition): the edit was not made, so as not to
+  /// undo someone else's.
+  conflict,
   unknown,
 }
 

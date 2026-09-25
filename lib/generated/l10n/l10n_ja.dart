@@ -3593,4 +3593,284 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'ゲストの作成と削除には VM.Allocate、VM.Config.*、Datastore.AllocateSpace、SDN.Use も必要です。';
+
+  @override
+  String get pveTokenTipHardware =>
+      'ハードウェアの編集には VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network、VM.Config.Options が必要です。ディスクやインターフェースの追加には Datastore.AllocateSpace と SDN.Use も必要です。';
+
+  @override
+  String get virtErrConflict => '他の場所で変更済み';
+
+  @override
+  String get virtErrConflictTip =>
+      'ここで読み込んだ後にこのゲストの設定が他の誰かに変更されたため、何も変更していません。再読み込みしたので、必要なら改めて変更してください。';
+
+  @override
+  String get virtHardware => 'ハードウェア';
+
+  @override
+  String get virtHwAddDisk => 'ディスクを追加';
+
+  @override
+  String get virtHwAddMount => 'マウントポイントを追加';
+
+  @override
+  String get virtHwAddNic => 'ネットワークインターフェースを追加';
+
+  @override
+  String get virtHwAppliesOnRestart => '保存しました。次回起動時に反映されます。';
+
+  @override
+  String get virtHwAutostart => 'ホストと一緒に起動';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · VMID 順に起動';
+
+  @override
+  String get virtHwBalloonLibvirt => '現在のメモリ';
+
+  @override
+  String get virtHwBalloonNote => 'メモリ不足時にホストがゲストの空きメモリを回収できるようにします';
+
+  @override
+  String get virtHwBoot => 'ブート';
+
+  @override
+  String get virtHwBootOrder => '起動順序';
+
+  @override
+  String get virtHwBootTip => '矢印で並べ替え、タップでそのデバイスから起動するかを切り替えます。';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => '設定ファイル';
+
+  @override
+  String get virtHwCores => 'コア';
+
+  @override
+  String get virtHwCpuTypeDefault => 'デフォルト';
+
+  @override
+  String get virtHwDeleteVolume => 'ボリュームも削除する';
+
+  @override
+  String get virtHwDetach => '切り離す';
+
+  @override
+  String get virtHwDiskHotplug => 'ホットプラグ対応: 実行中でも追加できます';
+
+  @override
+  String get virtHwDisksLxc => 'ルートディスクとマウントポイント';
+
+  @override
+  String get virtHwEject => '取り出し';
+
+  @override
+  String get virtHwEmpty => 'メディアなし';
+
+  @override
+  String get virtHwFirewall => 'ファイアウォール';
+
+  @override
+  String virtHwFree(String size) {
+    return '空き $size';
+  }
+
+  @override
+  String get virtHwGrow => '拡張';
+
+  @override
+  String get virtHwGrowNote => 'ディスクは現在の容量から拡張のみ可能です。';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      '拡張のみ可能です。実行中に拡張した場合はゲスト内でパーティションを拡張してください。';
+
+  @override
+  String get virtHwGuestUsed => 'ゲスト使用量';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'ホスト $threads スレッド · 割り当て済み $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'ホスト $total · 割り当て済み $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'ホットプラグ: すぐに反映されます。';
+
+  @override
+  String get virtHwIssueBootEmpty => '少なくとも 1 つのデバイスをチェックしてください';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'vCPU の合計は 1〜$max';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'オンライン vCPU は 1〜合計数';
+
+  @override
+  String get virtHwIssueDiskShrink => '現在より大きく: ディスクは拡張のみ可能';
+
+  @override
+  String get virtHwIssueDiskSize => '1〜65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '$min〜$max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'メモリ以下';
+
+  @override
+  String get virtHwIssueMountPoint => '/data のような絶対パス';
+
+  @override
+  String get virtHwIssueStorageSpace => 'ストレージの空き容量を超えています';
+
+  @override
+  String get virtHwIssueSwap => '負の値は不可';
+
+  @override
+  String get virtHwLater => '再起動後に反映';
+
+  @override
+  String get virtHwLess => '減らす';
+
+  @override
+  String get virtHwLinkDown => '切断';
+
+  @override
+  String get virtHwLinkNote => 'オフにするとゲストからはケーブルが抜けたように見えます。再起動は不要です';
+
+  @override
+  String get virtHwLinkUp => '接続';
+
+  @override
+  String get virtHwMac => 'MAC アドレス';
+
+  @override
+  String get virtHwModel => 'モデル';
+
+  @override
+  String get virtHwMore => '増やす';
+
+  @override
+  String get virtHwMountFromPool => 'マウントポイントはストレージから直接割り当てられます';
+
+  @override
+  String get virtHwMountPoint => 'マウントポイント';
+
+  @override
+  String get virtHwMoveDown => '下へ';
+
+  @override
+  String get virtHwMoveUp => '上へ';
+
+  @override
+  String get virtHwNewDisk => '新しいディスク';
+
+  @override
+  String get virtHwNewMount => '新しいマウントポイント';
+
+  @override
+  String get virtHwNewNic => '新しいネットワークインターフェース';
+
+  @override
+  String get virtHwNicHotplug => 'virtio NIC はホットプラグ対応です';
+
+  @override
+  String get virtHwNics => 'ネットワークインターフェース';
+
+  @override
+  String get virtHwNoMedia => 'メディアなし';
+
+  @override
+  String get virtHwNoNetworks => 'ネットワークまたはブリッジがありません';
+
+  @override
+  String get virtHwNoStorage => 'ディスクを置けるストレージがありません';
+
+  @override
+  String get virtHwOnline => 'オンライン vCPU';
+
+  @override
+  String get virtHwPendingBanner => '一部のハードウェア変更は再起動後に反映されます';
+
+  @override
+  String get virtHwPendingTip => '実行中のゲストは左の値のままで、次回起動時に右の値になります。';
+
+  @override
+  String get virtHwPendingTitle => '次回起動時に反映';
+
+  @override
+  String get virtHwPickNet => 'ネットワークを選択';
+
+  @override
+  String get virtHwPickPool => 'ストレージと容量を選択';
+
+  @override
+  String get virtHwProcessor => 'プロセッサ';
+
+  @override
+  String get virtHwRemove => '削除';
+
+  @override
+  String get virtHwRemoveCdrom => 'CD-ROM を削除';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$guest から $disk を削除しますか？';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$guest から $nic を削除しますか？';
+  }
+
+  @override
+  String get virtHwResources => 'リソース';
+
+  @override
+  String get virtHwRestartNow => '今すぐ再起動';
+
+  @override
+  String get virtHwRevert => '元に戻す';
+
+  @override
+  String get virtHwRevertAll => 'すべて元に戻す';
+
+  @override
+  String get virtHwSockets => 'ソケット';
+
+  @override
+  String get virtHwSource => 'ソース';
+
+  @override
+  String get virtHwSwap => 'スワップ';
+
+  @override
+  String get virtHwTopology => 'ソケット × コア';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets ソケット × $cores コア × $threads スレッド';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '合計 $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      '削除しましたが、実行中のゲストがまだディスクを使用しているため、ボリュームは残しました。次回起動時に切り離されます。';
 }

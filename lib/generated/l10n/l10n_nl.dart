@@ -3816,4 +3816,293 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Gasten aanmaken en verwijderen vraagt ook VM.Allocate, VM.Config.*, Datastore.AllocateSpace en SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Hardware bewerken vereist VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network en VM.Config.Options; nieuwe schijven en interfaces vereisen ook Datastore.AllocateSpace en SDN.Use.';
+
+  @override
+  String get virtErrConflict => 'Elders gewijzigd';
+
+  @override
+  String get virtErrConflictTip =>
+      'Iemand heeft de configuratie van deze gast gewijzigd nadat die hier is gelezen, dus er is niets gewijzigd. Hij is opnieuw gelezen: voer de wijziging opnieuw uit als die nog nodig is.';
+
+  @override
+  String get virtHardware => 'Hardware';
+
+  @override
+  String get virtHwAddDisk => 'Schijf toevoegen';
+
+  @override
+  String get virtHwAddMount => 'Koppelpunt toevoegen';
+
+  @override
+  String get virtHwAddNic => 'Netwerkinterface toevoegen';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Opgeslagen. Van kracht bij de volgende start.';
+
+  @override
+  String get virtHwAutostart => 'Starten met de host';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · gestart in VMID-volgorde';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Huidig geheugen';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Laat de host ongebruikt geheugen van de gast terugnemen als het krap wordt';
+
+  @override
+  String get virtHwBoot => 'Opstarten';
+
+  @override
+  String get virtHwBootOrder => 'Opstartvolgorde';
+
+  @override
+  String get virtHwBootTip =>
+      'De pijlen verplaatsen een apparaat; tikken zet opstarten ervan aan of uit.';
+
+  @override
+  String get virtHwCdrom => 'Cd-rom';
+
+  @override
+  String get virtHwConfigFile => 'Configuratiebestand';
+
+  @override
+  String get virtHwCores => 'Kernen';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Standaard';
+
+  @override
+  String get virtHwDeleteVolume => 'Ook het volume verwijderen';
+
+  @override
+  String get virtHwDetach => 'Loskoppelen';
+
+  @override
+  String get virtHwDiskHotplug =>
+      'Hot-plug: ook toe te voegen terwijl hij draait';
+
+  @override
+  String get virtHwDisksLxc => 'Rootschijf en koppelpunten';
+
+  @override
+  String get virtHwEject => 'Uitwerpen';
+
+  @override
+  String get virtHwEmpty => 'Geen medium';
+
+  @override
+  String get virtHwFirewall => 'Firewall';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size vrij';
+  }
+
+  @override
+  String get virtHwGrow => 'Vergroten';
+
+  @override
+  String get virtHwGrowNote => 'Schijven worden alleen groter.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Schijven worden alleen groter. Vergroot terwijl hij draait, moet de partitie in de gast worden vergroot.';
+
+  @override
+  String get virtHwGuestUsed => 'Gebruikt door de gast';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads threads · $allocated toegewezen';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated toegewezen';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Hot-plug: direct van kracht.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Vink minstens één apparaat aan';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'In totaal 1 tot $max vCPU\'s';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Actieve vCPU\'s: van 1 tot het totaal';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Groter dan nu: schijven worden alleen groter';
+
+  @override
+  String get virtHwIssueDiskSize => 'Van 1 tot 65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'Van $min tot $max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Niet meer dan het geheugen';
+
+  @override
+  String get virtHwIssueMountPoint => 'Een absoluut pad, zoals /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Meer dan de opslag vrij heeft';
+
+  @override
+  String get virtHwIssueSwap => 'Niet negatief';
+
+  @override
+  String get virtHwLater => 'Van kracht na herstart';
+
+  @override
+  String get virtHwLess => 'Minder';
+
+  @override
+  String get virtHwLinkDown => 'Verbroken';
+
+  @override
+  String get virtHwLinkNote =>
+      'Uit ziet de gast een losgetrokken kabel; geen herstart nodig';
+
+  @override
+  String get virtHwLinkUp => 'Verbonden';
+
+  @override
+  String get virtHwMac => 'MAC-adres';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Meer';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Koppelpunten worden direct uit een opslag toegewezen';
+
+  @override
+  String get virtHwMountPoint => 'Koppelpunt';
+
+  @override
+  String get virtHwMoveDown => 'Omlaag';
+
+  @override
+  String get virtHwMoveUp => 'Omhoog';
+
+  @override
+  String get virtHwNewDisk => 'Nieuwe schijf';
+
+  @override
+  String get virtHwNewMount => 'Nieuw koppelpunt';
+
+  @override
+  String get virtHwNewNic => 'Nieuwe netwerkinterface';
+
+  @override
+  String get virtHwNicHotplug => 'virtio-interfaces zijn hot-plug';
+
+  @override
+  String get virtHwNics => 'Netwerkinterfaces';
+
+  @override
+  String get virtHwNoMedia => 'Geen medium';
+
+  @override
+  String get virtHwNoNetworks => 'Geen netwerken of bridges hier';
+
+  @override
+  String get virtHwNoStorage => 'Geen opslag hier neemt schijven aan';
+
+  @override
+  String get virtHwOnline => 'Actieve vCPU\'s';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Sommige hardwarewijzigingen gelden na een herstart';
+
+  @override
+  String get virtHwPendingTip =>
+      'De draaiende gast houdt de waarde links; bij de volgende start krijgt hij die rechts.';
+
+  @override
+  String get virtHwPendingTitle => 'In afwachting tot de volgende start';
+
+  @override
+  String get virtHwPickNet => 'Kies een netwerk';
+
+  @override
+  String get virtHwPickPool => 'Kies een opslag en een grootte';
+
+  @override
+  String get virtHwProcessor => 'Processor';
+
+  @override
+  String get virtHwRemove => 'Verwijderen';
+
+  @override
+  String get virtHwRemoveCdrom => 'Cd-rom verwijderen';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$disk verwijderen uit $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$nic verwijderen uit $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Middelen';
+
+  @override
+  String get virtHwRestartNow => 'Nu herstarten';
+
+  @override
+  String get virtHwRevert => 'Terugdraaien';
+
+  @override
+  String get virtHwRevertAll => 'Alles terugdraaien';
+
+  @override
+  String get virtHwSockets => 'Sockets';
+
+  @override
+  String get virtHwSource => 'Bron';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Sockets × kernen';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets sockets × $cores kernen × $threads threads';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size totaal';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Verwijderd, maar de draaiende gast gebruikt de schijf nog, dus het volume is bewaard. Bij de volgende start wordt hij losgekoppeld.';
 }

@@ -166,6 +166,8 @@ _VirtCapabilities _$VirtCapabilitiesFromJson(Map<String, dynamic> json) =>
       storedHistory: json['storedHistory'] as bool? ?? false,
       create: json['create'] as bool? ?? false,
       deleteKeepsDisks: json['deleteKeepsDisks'] as bool? ?? false,
+      hardware: json['hardware'] as bool? ?? false,
+      hardwareRevert: json['hardwareRevert'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$VirtCapabilitiesToJson(_VirtCapabilities instance) =>
@@ -184,4 +186,6 @@ Map<String, dynamic> _$VirtCapabilitiesToJson(_VirtCapabilities instance) =>
       'storedHistory': instance.storedHistory,
       'create': instance.create,
       'deleteKeepsDisks': instance.deleteKeepsDisks,
+      'hardware': instance.hardware,
+      'hardwareRevert': instance.hardwareRevert,
     };

@@ -49,6 +49,8 @@ pub enum VirtErrorKind {
     InvalidState,
     /// A domain or volume of that name is there already
     Exists,
+    /// The definition changed since it was read
+    Conflict,
     /// Any other virsh failure
     Command,
     /// Output cut off or not what the script prints
@@ -72,6 +74,7 @@ impl From<virt::VirtError> for VirtFfiError {
             E::DomainNotFound { .. } => VirtErrorKind::DomainNotFound,
             E::InvalidState { .. } => VirtErrorKind::InvalidState,
             E::Exists { .. } => VirtErrorKind::Exists,
+            E::Conflict { .. } => VirtErrorKind::Conflict,
             E::Command { .. } => VirtErrorKind::Command,
             E::Malformed { .. } => VirtErrorKind::Malformed,
         };
@@ -259,4 +262,34 @@ pub fn parse_virt_create_json(raw: String) -> Result<String, VirtFfiError> {
 #[flutter_rust_bridge::frb(sync)]
 pub fn virt_undefine_script(domain: String, storage: Vec<String>) -> Result<String, VirtFfiError> {
     Ok(virt::undefine_script(&domain, &storage)?)
+}
+
+/// A domain's hardware, persistent and running, in one round trip
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_hardware_script(domain: String) -> String {
+    virt::hardware_script(&domain)
+}
+
+/// [`virt_hardware_script`]'s output → `VirtHardwareInfo` JSON
+pub fn parse_virt_hardware_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_hardware(&raw)?).map_err(json_err)
+}
+
+/// One hardware change; `change_json` is a `VirtHwChange`, `base_xml` the
+/// persistent definition it was made from. Parse with
+/// [`parse_virt_hardware_change_json`].
+#[flutter_rust_bridge::frb(sync)]
+pub fn virt_hardware_change_script(
+    domain: String,
+    running: bool,
+    base_xml: Option<String>,
+    change_json: String,
+) -> Result<String, VirtFfiError> {
+    let change: virt::VirtHwChange = serde_json::from_str(&change_json).map_err(json_err)?;
+    Ok(virt::hardware_change_script(&domain, running, base_xml.as_deref(), &change)?)
+}
+
+/// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
+pub fn parse_virt_hardware_change_json(raw: String) -> Result<String, VirtFfiError> {
+    serde_json::to_string(&virt::parse_hardware_change(&raw)?).map_err(json_err)
 }

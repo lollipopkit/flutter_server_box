@@ -28,6 +28,7 @@ import 'package:server_box/view/page/server/reading_text.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/virt/common.dart';
 import 'package:server_box/view/page/virt/console_connect.dart';
+import 'package:server_box/view/page/virt/hardware.dart';
 import 'package:server_box/view/page/virt/snapshots.dart';
 import 'package:server_box/view/widget/progress_line.dart';
 
@@ -74,6 +75,9 @@ enum VirtGuestViewKind {
   overview,
   console,
 
+  /// Where the host has `VirtCapabilities.hardware`, and not for a template.
+  hardware,
+
   /// Where the host has `VirtCapabilities.snapshots`, and not for a template.
   snapshots;
 
@@ -82,6 +86,7 @@ enum VirtGuestViewKind {
       [
         overview,
         console,
+        if ((caps?.hardware ?? false) && !guest.template) hardware,
         if ((caps?.snapshots ?? false) && !guest.template) snapshots,
       ];
 }
@@ -170,6 +175,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
       body: Column(
         children: [
           SizedBox(height: 3, child: busy ? const ProgressLine() : null),
+          ?_buildPendingBanner(st, guest, state, view),
           Padding(
             padding: const EdgeInsets.fromLTRB(13, 3, 13, 7),
             child: Align(
@@ -185,7 +191,7 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
                     for (final v in views)
                       SegmentedTab(
                         value: v,
-                        label: v.label,
+                        label: v.labelFor(guest),
                         icon: v.iconFor(guest),
                         sub: v == VirtGuestViewKind.console
                             ? _consoleSub(snap.data?.consoles, state)
@@ -199,6 +205,12 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
           Expanded(
             child: switch (view) {
               VirtGuestViewKind.overview => _buildOverview(st, guest, state),
+              VirtGuestViewKind.hardware => VirtHardwareView(
+                key: ValueKey('hardware:${guest.id}'),
+                serverId: widget.serverId,
+                guest: guest,
+                caps: st.data!.capabilities,
+              ),
               VirtGuestViewKind.snapshots => VirtSnapshotsView(
                 key: ValueKey('snapshots:${guest.id}'),
                 serverId: widget.serverId,
@@ -220,6 +232,56 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  /// The design's notice above the views: hardware changes waiting for the
+  /// next start, and the restart that applies them. Only from a hardware
+  /// read this session already has — the notice is not worth a round trip to
+  /// the host for every guest opened.
+  ///
+  /// `ref.exists` does not subscribe: while the Hardware view is shown, it is
+  /// what reads the hardware, and this watches it too, so the notice follows
+  /// the first read and every one after it. Any other view is reached by a
+  /// rebuild, which sees the read the Hardware view left.
+  Widget? _buildPendingBanner(
+    VirtHostState st,
+    VirtGuest guest,
+    VirtGuestState state,
+    VirtGuestViewKind view,
+  ) {
+    if (!(st.data?.capabilities.hardware ?? false) || !state.isActive) {
+      return null;
+    }
+    final provider = virtHardwareProvider(widget.serverId, guest.id);
+    if (view != VirtGuestViewKind.hardware && !ref.exists(provider)) {
+      return null;
+    }
+    final pending = ref.watch(provider).value?.pending ?? const [];
+    if (pending.isEmpty) return null;
+    final busy = st.isBusy(guest.id);
+    return Padding(
+      key: const ValueKey('hw:pending-banner'),
+      padding: const EdgeInsets.fromLTRB(13, 3, 13, 0),
+      child: CardX(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(13, 3, 5, 3),
+          child: Row(
+            children: [
+              const Icon(Icons.schedule, size: 17, color: StatePalette.warn),
+              UIs.width7,
+              Expanded(
+                child: Text(l10n.virtHwPendingBanner, style: UIs.text12),
+              ),
+              Btn.text(
+                key: const ValueKey('hw:restart-now'),
+                text: l10n.virtHwRestartNow,
+                onTap: busy ? null : () => _restartToApply(guest),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -264,7 +326,6 @@ class _VirtGuestViewState extends ConsumerState<VirtGuestView> {
             Expanded(
               child: SessionSwitcherLabel(
                 name: guest?.name ?? '',
-                icon: guest?.kind.icon,
                 leading: guest == null
                     ? null
                     : VirtStateDot(st.displayState(guest)),
@@ -327,14 +388,22 @@ extension on VirtGuestViewKind {
   String get label => switch (this) {
     VirtGuestViewKind.overview => l10n.virtOverview,
     VirtGuestViewKind.console => l10n.virtConsole,
+    VirtGuestViewKind.hardware => l10n.virtHardware,
     VirtGuestViewKind.snapshots => l10n.virtSnapshots,
   };
+
+  /// A container's hardware is its resources: CPU, memory, mount points.
+  String labelFor(VirtGuest guest) =>
+      this == VirtGuestViewKind.hardware && guest.kind == VirtGuestKind.lxc
+      ? l10n.virtHwResources
+      : label;
 
   IconData iconFor(VirtGuest guest) => switch (this) {
     VirtGuestViewKind.overview => Icons.monitor_heart_outlined,
     VirtGuestViewKind.console => guest.kind == VirtGuestKind.lxc
         ? Icons.terminal
         : Icons.desktop_windows_outlined,
+    VirtGuestViewKind.hardware => Icons.memory,
     VirtGuestViewKind.snapshots => Icons.history,
   };
 }
@@ -342,6 +411,17 @@ extension on VirtGuestViewKind {
 // --- Actions ---
 
 extension _GuestActions on _VirtGuestViewState {
+  Future<void> _restartToApply(VirtGuest guest) async {
+    try {
+      await _notifier.restartToApply(guest.id);
+    } on VirtErr catch (e) {
+      Toast.error(e.title, body: e.detail);
+    } catch (e, s) {
+      Loggers.app.warning('Restarting to apply hardware changes', e, s);
+      Toast.error(libL10n.fail, body: '$e');
+    }
+  }
+
   void _switchTo(String guestId) {
     setState(() {
       _guestId = guestId;

@@ -3827,4 +3827,293 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Gäste erstellen und löschen braucht außerdem VM.Allocate, VM.Config.*, Datastore.AllocateSpace und SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Hardware bearbeiten braucht VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network und VM.Config.Options; neue Datenträger und Schnittstellen zusätzlich Datastore.AllocateSpace und SDN.Use.';
+
+  @override
+  String get virtErrConflict => 'Anderswo geändert';
+
+  @override
+  String get virtErrConflictTip =>
+      'Jemand hat die Konfiguration dieses Gasts geändert, nachdem sie hier gelesen wurde, daher wurde nichts geändert. Sie wurde neu gelesen: Ändere es erneut, falls es noch nötig ist.';
+
+  @override
+  String get virtHardware => 'Hardware';
+
+  @override
+  String get virtHwAddDisk => 'Datenträger hinzufügen';
+
+  @override
+  String get virtHwAddMount => 'Einhängepunkt hinzufügen';
+
+  @override
+  String get virtHwAddNic => 'Netzwerkschnittstelle hinzufügen';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Gespeichert. Wirksam ab dem nächsten Start.';
+
+  @override
+  String get virtHwAutostart => 'Mit dem Host starten';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · in VMID-Reihenfolge gestartet';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Aktueller Speicher';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Lässt den Host bei Speicherknappheit ungenutzten Speicher des Gasts zurückholen';
+
+  @override
+  String get virtHwBoot => 'Start';
+
+  @override
+  String get virtHwBootOrder => 'Startreihenfolge';
+
+  @override
+  String get virtHwBootTip =>
+      'Die Pfeile verschieben ein Gerät; ein Tippen schaltet das Starten davon an oder aus.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Konfigurationsdatei';
+
+  @override
+  String get virtHwCores => 'Kerne';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Standard';
+
+  @override
+  String get virtHwDeleteVolume => 'Auch das Volume löschen';
+
+  @override
+  String get virtHwDetach => 'Trennen';
+
+  @override
+  String get virtHwDiskHotplug => 'Hot-Plug-fähig: auch im Betrieb hinzufügbar';
+
+  @override
+  String get virtHwDisksLxc => 'Root-Datenträger und Einhängepunkte';
+
+  @override
+  String get virtHwEject => 'Auswerfen';
+
+  @override
+  String get virtHwEmpty => 'Kein Medium';
+
+  @override
+  String get virtHwFirewall => 'Firewall';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size frei';
+  }
+
+  @override
+  String get virtHwGrow => 'Vergrößern';
+
+  @override
+  String get virtHwGrowNote =>
+      'Datenträger wachsen nur über ihre Größe hinaus.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Datenträger wachsen nur. Im Betrieb vergrößert, muss die Partition im Gast erweitert werden.';
+
+  @override
+  String get virtHwGuestUsed => 'Vom Gast belegt';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads Threads · $allocated vergeben';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated vergeben';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Hot-Plug: sofort wirksam.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Mindestens ein Gerät markieren';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Insgesamt 1 bis $max vCPUs';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Aktive vCPUs: 1 bis zur Gesamtzahl';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Größer als jetzt: Datenträger werden nur größer';
+
+  @override
+  String get virtHwIssueDiskSize => '1 bis 65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '$min bis $max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Nicht mehr als der Speicher';
+
+  @override
+  String get virtHwIssueMountPoint => 'Ein absoluter Pfad, z. B. /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Mehr als der Speicher frei hat';
+
+  @override
+  String get virtHwIssueSwap => 'Nicht negativ';
+
+  @override
+  String get virtHwLater => 'Wirksam nach Neustart';
+
+  @override
+  String get virtHwLess => 'Weniger';
+
+  @override
+  String get virtHwLinkDown => 'Getrennt';
+
+  @override
+  String get virtHwLinkNote =>
+      'Aus sieht der Gast ein gezogenes Kabel; kein Neustart nötig';
+
+  @override
+  String get virtHwLinkUp => 'Verbunden';
+
+  @override
+  String get virtHwMac => 'MAC-Adresse';
+
+  @override
+  String get virtHwModel => 'Modell';
+
+  @override
+  String get virtHwMore => 'Mehr';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Einhängepunkte werden direkt aus einem Speicher zugewiesen';
+
+  @override
+  String get virtHwMountPoint => 'Einhängepunkt';
+
+  @override
+  String get virtHwMoveDown => 'Nach unten';
+
+  @override
+  String get virtHwMoveUp => 'Nach oben';
+
+  @override
+  String get virtHwNewDisk => 'Neuer Datenträger';
+
+  @override
+  String get virtHwNewMount => 'Neuer Einhängepunkt';
+
+  @override
+  String get virtHwNewNic => 'Neue Netzwerkschnittstelle';
+
+  @override
+  String get virtHwNicHotplug => 'virtio-Schnittstellen sind Hot-Plug-fähig';
+
+  @override
+  String get virtHwNics => 'Netzwerkschnittstellen';
+
+  @override
+  String get virtHwNoMedia => 'Kein Medium';
+
+  @override
+  String get virtHwNoNetworks => 'Keine Netzwerke oder Bridges hier';
+
+  @override
+  String get virtHwNoStorage => 'Kein Speicher hier nimmt Datenträger auf';
+
+  @override
+  String get virtHwOnline => 'Aktive vCPUs';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Einige Hardwareänderungen werden nach dem Neustart wirksam';
+
+  @override
+  String get virtHwPendingTip =>
+      'Der laufende Gast behält den linken Wert; den rechten erhält er beim nächsten Start.';
+
+  @override
+  String get virtHwPendingTitle => 'Ausstehend bis zum nächsten Start';
+
+  @override
+  String get virtHwPickNet => 'Netzwerk wählen';
+
+  @override
+  String get virtHwPickPool => 'Speicher und Größe wählen';
+
+  @override
+  String get virtHwProcessor => 'Prozessor';
+
+  @override
+  String get virtHwRemove => 'Entfernen';
+
+  @override
+  String get virtHwRemoveCdrom => 'CD-ROM entfernen';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$disk von $guest entfernen?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$nic von $guest entfernen?';
+  }
+
+  @override
+  String get virtHwResources => 'Ressourcen';
+
+  @override
+  String get virtHwRestartNow => 'Jetzt neu starten';
+
+  @override
+  String get virtHwRevert => 'Zurücknehmen';
+
+  @override
+  String get virtHwRevertAll => 'Alle zurücknehmen';
+
+  @override
+  String get virtHwSockets => 'Sockel';
+
+  @override
+  String get virtHwSource => 'Quelle';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Sockel × Kerne';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets Sockel × $cores Kerne × $threads Threads';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size gesamt';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Entfernt, aber der laufende Gast nutzt den Datenträger noch, daher wurde sein Volume behalten. Beim nächsten Start wird er getrennt.';
 }

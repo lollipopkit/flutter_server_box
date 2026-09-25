@@ -4906,5 +4906,431 @@
   "pveTokenTipCreate": "Creating and deleting guests also needs VM.Allocate, VM.Config.*, Datastore.AllocateSpace and SDN.Use.",
   "@pveTokenTipCreate": {
     "description": "Second part of the PVE API token help: the extra privileges creating and deleting guests needs."
+  },
+  "pveTokenTipHardware": "Editing hardware needs VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network and VM.Config.Options; new disks and interfaces also need Datastore.AllocateSpace and SDN.Use.",
+  "@pveTokenTipHardware": {
+    "description": "Token help: privileges for the Hardware view."
+  },
+  "virtErrConflict": "Changed elsewhere",
+  "@virtErrConflict": {
+    "description": "Error title: the guest's configuration changed since it was read."
+  },
+  "virtErrConflictTip": "Someone changed this guest's configuration after it was read here, so nothing was changed. It has been read again: make the change again if it still applies.",
+  "@virtErrConflictTip": {
+    "description": "Explains the conflict."
+  },
+  "virtHardware": "Hardware",
+  "@virtHardware": {
+    "description": "The guest view showing and changing CPU, memory, disks and network interfaces."
+  },
+  "virtHwAddDisk": "Add disk",
+  "@virtHwAddDisk": {
+    "description": "Button and dialog title."
+  },
+  "virtHwAddMount": "Add mount point",
+  "@virtHwAddMount": {
+    "description": "Button: add a container mount point."
+  },
+  "virtHwAddNic": "Add network interface",
+  "@virtHwAddNic": {
+    "description": "Button and dialog title."
+  },
+  "virtHwAppliesOnRestart": "Saved. It takes effect at the next start.",
+  "@virtHwAppliesOnRestart": {
+    "description": "Toast: the running guest could not take the change."
+  },
+  "virtHwAutostart": "Start with the host",
+  "@virtHwAutostart": {
+    "description": "Autostart / onboot."
+  },
+  "virtHwAutostartPve": "onboot · started in VMID order",
+  "@virtHwAutostartPve": {
+    "description": "Note under PVE's start-with-host switch."
+  },
+  "virtHwBalloonLibvirt": "Current memory",
+  "@virtHwBalloonLibvirt": {
+    "description": "libvirt currentMemory: what the balloon gives the guest."
+  },
+  "virtHwBalloonNote": "Lets the host take back the guest's idle memory when memory runs short",
+  "@virtHwBalloonNote": {
+    "description": "Explains the virtio-balloon switch."
+  },
+  "virtHwBoot": "Boot",
+  "@virtHwBoot": {
+    "description": "Group title: booting."
+  },
+  "virtHwBootOrder": "Boot order",
+  "@virtHwBootOrder": {
+    "description": "Label."
+  },
+  "virtHwBootTip": "The arrows move a device; tapping it switches booting from it on or off.",
+  "@virtHwBootTip": {
+    "description": "Explains the boot order rows."
+  },
+  "virtHwCdrom": "CD-ROM",
+  "@virtHwCdrom": {
+    "description": "A CD-ROM drive; also the group title."
+  },
+  "virtHwConfigFile": "Configuration file",
+  "@virtHwConfigFile": {
+    "description": "Group title: the configuration as the host has it."
+  },
+  "virtHwCores": "Cores",
+  "@virtHwCores": {
+    "description": "CPU cores (per socket for a VM)."
+  },
+  "virtHwCpuTypeDefault": "Default",
+  "@virtHwCpuTypeDefault": {
+    "description": "No CPU model set: the host's default."
+  },
+  "virtHwDeleteVolume": "Delete its volume too",
+  "@virtHwDeleteVolume": {
+    "description": "Checkbox: delete the disk image as well."
+  },
+  "virtHwDetach": "Detach",
+  "@virtHwDetach": {
+    "description": "Action: take a disk off the guest."
+  },
+  "virtHwDiskHotplug": "Hot-pluggable: can be added while it runs",
+  "@virtHwDiskHotplug": {
+    "description": "Empty row in a VM's disk group."
+  },
+  "virtHwDisksLxc": "Root disk and mount points",
+  "@virtHwDisksLxc": {
+    "description": "Group title: a container's root disk and mount points."
+  },
+  "virtHwEject": "Eject",
+  "@virtHwEject": {
+    "description": "Menu item: empty the CD-ROM."
+  },
+  "virtHwEmpty": "No media",
+  "@virtHwEmpty": {
+    "description": "Choice: no media in the CD-ROM."
+  },
+  "virtHwFirewall": "Firewall",
+  "@virtHwFirewall": {
+    "description": "PVE firewall on a NIC."
+  },
+  "virtHwFree": "{size} free",
+  "@virtHwFree": {
+    "description": "A storage's free space.",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "18.4 GiB"
+      }
+    }
+  },
+  "virtHwGrow": "Grow",
+  "@virtHwGrow": {
+    "description": "Menu item and dialog title: make a disk larger."
+  },
+  "virtHwGrowNote": "Disks only grow from their size.",
+  "@virtHwGrowNote": {
+    "description": "Under a stopped guest's disk."
+  },
+  "virtHwGrowNoteRunning": "Disks only grow from their size. Grown while running, the partition has to be grown inside the guest.",
+  "@virtHwGrowNoteRunning": {
+    "description": "Under a running guest's disk."
+  },
+  "virtHwGuestUsed": "Used by the guest",
+  "@virtHwGuestUsed": {
+    "description": "Memory the running guest uses."
+  },
+  "virtHwHostCpus": "Host {threads} threads · {allocated} allocated",
+  "@virtHwHostCpus": {
+    "description": "Group note: the host's threads and the vCPUs given to guests.",
+    "placeholders": {
+      "threads": {
+        "type": "int",
+        "example": "12"
+      },
+      "allocated": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "virtHwHostMem": "Host {total} · {allocated} allocated",
+  "@virtHwHostMem": {
+    "description": "Group note: the host's memory and what guests are given.",
+    "placeholders": {
+      "total": {
+        "type": "String",
+        "example": "15.5 GiB"
+      },
+      "allocated": {
+        "type": "String",
+        "example": "4.5 GiB"
+      }
+    }
+  },
+  "virtHwHotplugNow": "Hot-plugged: it takes effect at once.",
+  "@virtHwHotplugNow": {
+    "description": "Under an add block while the guest runs."
+  },
+  "virtHwIssueBootEmpty": "Tick at least one device",
+  "@virtHwIssueBootEmpty": {
+    "description": "Form error."
+  },
+  "virtHwIssueCpuCount": "Between 1 and {max} vCPUs in total",
+  "@virtHwIssueCpuCount": {
+    "description": "Form error.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  "virtHwIssueCpuOnline": "Online vCPUs: from 1 to the total",
+  "@virtHwIssueCpuOnline": {
+    "description": "Form error."
+  },
+  "virtHwIssueDiskShrink": "Larger than it is: disks only grow",
+  "@virtHwIssueDiskShrink": {
+    "description": "Form error."
+  },
+  "virtHwIssueDiskSize": "From 1 to 65536 GiB",
+  "@virtHwIssueDiskSize": {
+    "description": "Form error."
+  },
+  "virtHwIssueMemory": "From {min} to {max} MiB",
+  "@virtHwIssueMemory": {
+    "description": "Form error.",
+    "placeholders": {
+      "min": {
+        "type": "int",
+        "example": "16"
+      },
+      "max": {
+        "type": "int",
+        "example": "16384"
+      }
+    }
+  },
+  "virtHwIssueMemoryMin": "Not more than the memory",
+  "@virtHwIssueMemoryMin": {
+    "description": "Form error."
+  },
+  "virtHwIssueMountPoint": "An absolute path, like /data",
+  "@virtHwIssueMountPoint": {
+    "description": "Form error."
+  },
+  "virtHwIssueStorageSpace": "More than the storage has free",
+  "@virtHwIssueStorageSpace": {
+    "description": "Form error."
+  },
+  "virtHwIssueSwap": "Not negative",
+  "@virtHwIssueSwap": {
+    "description": "Form error."
+  },
+  "virtHwLater": "Applies at restart",
+  "@virtHwLater": {
+    "description": "Group note: changes here take effect at the next restart."
+  },
+  "virtHwLess": "Less",
+  "@virtHwLess": {
+    "description": "Stepper button: less."
+  },
+  "virtHwLinkDown": "Disconnected",
+  "@virtHwLinkDown": {
+    "description": "A NIC whose link is down."
+  },
+  "virtHwLinkNote": "Off, the guest sees its cable pulled; no restart needed",
+  "@virtHwLinkNote": {
+    "description": "Explains the link switch."
+  },
+  "virtHwLinkUp": "Connected",
+  "@virtHwLinkUp": {
+    "description": "Switch: the NIC's link is up."
+  },
+  "virtHwMac": "MAC address",
+  "@virtHwMac": {
+    "description": "A NIC's MAC address."
+  },
+  "virtHwModel": "Model",
+  "@virtHwModel": {
+    "description": "A VM's CPU model."
+  },
+  "virtHwMore": "More",
+  "@virtHwMore": {
+    "description": "Stepper button: more."
+  },
+  "virtHwMountFromPool": "Mount points are allocated straight from a storage",
+  "@virtHwMountFromPool": {
+    "description": "Empty row in a container's disk group."
+  },
+  "virtHwMountPoint": "Mount point",
+  "@virtHwMountPoint": {
+    "description": "Where a container's new volume appears."
+  },
+  "virtHwMoveDown": "Move down",
+  "@virtHwMoveDown": {
+    "description": "Boot order: move down."
+  },
+  "virtHwMoveUp": "Move up",
+  "@virtHwMoveUp": {
+    "description": "Boot order: move up."
+  },
+  "virtHwNewDisk": "New disk",
+  "@virtHwNewDisk": {
+    "description": "Header of the new disk block."
+  },
+  "virtHwNewMount": "New mount point",
+  "@virtHwNewMount": {
+    "description": "Header of the new mount point block."
+  },
+  "virtHwNewNic": "New network interface",
+  "@virtHwNewNic": {
+    "description": "Header of the new NIC block."
+  },
+  "virtHwNicHotplug": "virtio NICs are hot-pluggable",
+  "@virtHwNicHotplug": {
+    "description": "Empty row in the NIC group."
+  },
+  "virtHwNics": "Network interfaces",
+  "@virtHwNics": {
+    "description": "Group title: network interfaces."
+  },
+  "virtHwNoMedia": "No media",
+  "@virtHwNoMedia": {
+    "description": "An empty CD-ROM drive."
+  },
+  "virtHwNoNetworks": "No networks or bridges here",
+  "@virtHwNoNetworks": {
+    "description": "Nothing to attach a NIC to."
+  },
+  "virtHwNoStorage": "No storage here takes disks",
+  "@virtHwNoStorage": {
+    "description": "No storage can hold a new disk."
+  },
+  "virtHwOnline": "Online vCPUs",
+  "@virtHwOnline": {
+    "description": "How many of a VM's vCPUs are online."
+  },
+  "virtHwPendingBanner": "Some hardware changes take effect at restart",
+  "@virtHwPendingBanner": {
+    "description": "Notice above a guest's views."
+  },
+  "virtHwPendingTip": "The running guest keeps the value on the left; it gets the one on the right when it next starts.",
+  "@virtHwPendingTip": {
+    "description": "Explains the pending card's rows (current → pending)."
+  },
+  "virtHwPendingTitle": "Pending until the next start",
+  "@virtHwPendingTitle": {
+    "description": "Card title: changes the running guest has not taken yet."
+  },
+  "virtHwPickNet": "Pick a network",
+  "@virtHwPickNet": {
+    "description": "Summary of the new NIC block."
+  },
+  "virtHwPickPool": "Pick a storage and a size",
+  "@virtHwPickPool": {
+    "description": "Summary of the new disk block."
+  },
+  "virtHwProcessor": "Processor",
+  "@virtHwProcessor": {
+    "description": "Group title: a VM's CPU."
+  },
+  "virtHwRemove": "Remove",
+  "@virtHwRemove": {
+    "description": "Action: remove a NIC."
+  },
+  "virtHwRemoveCdrom": "Remove CD-ROM",
+  "@virtHwRemoveCdrom": {
+    "description": "Action: remove the CD-ROM drive."
+  },
+  "virtHwRemoveDiskAsk": "Remove {disk} from {guest}?",
+  "@virtHwRemoveDiskAsk": {
+    "description": "Confirmation.",
+    "placeholders": {
+      "disk": {
+        "type": "String",
+        "example": "scsi1"
+      },
+      "guest": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "virtHwRemoveNicAsk": "Remove {nic} from {guest}?",
+  "@virtHwRemoveNicAsk": {
+    "description": "Confirmation.",
+    "placeholders": {
+      "nic": {
+        "type": "String",
+        "example": "net1"
+      },
+      "guest": {
+        "type": "String",
+        "example": "web-01"
+      }
+    }
+  },
+  "virtHwResources": "Resources",
+  "@virtHwResources": {
+    "description": "A container's hardware view."
+  },
+  "virtHwRestartNow": "Restart now",
+  "@virtHwRestartNow": {
+    "description": "Button: restart the guest so pending changes apply."
+  },
+  "virtHwRevert": "Revert",
+  "@virtHwRevert": {
+    "description": "Button: drop one pending change."
+  },
+  "virtHwRevertAll": "Revert all",
+  "@virtHwRevertAll": {
+    "description": "Button: drop every pending change."
+  },
+  "virtHwSockets": "Sockets",
+  "@virtHwSockets": {
+    "description": "CPU sockets of a VM."
+  },
+  "virtHwSource": "Source",
+  "@virtHwSource": {
+    "description": "Where a disk's data is: its volume or file."
+  },
+  "virtHwSwap": "Swap",
+  "@virtHwSwap": {
+    "description": "A container's swap."
+  },
+  "virtHwTopology": "Sockets × cores",
+  "@virtHwTopology": {
+    "description": "Label for a VM's CPU topology."
+  },
+  "virtHwTopologyValue": "{sockets} sockets × {cores} cores × {threads} threads",
+  "@virtHwTopologyValue": {
+    "description": "CPU topology.",
+    "placeholders": {
+      "sockets": {
+        "type": "int",
+        "example": "1"
+      },
+      "cores": {
+        "type": "int",
+        "example": "4"
+      },
+      "threads": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "virtHwTotal": "{size} total",
+  "@virtHwTotal": {
+    "description": "Group note: the disks' total size.",
+    "placeholders": {
+      "size": {
+        "type": "String",
+        "example": "64 GiB"
+      }
+    }
+  },
+  "virtHwVolumeKept": "Removed, but the running guest still uses the disk, so its volume was kept. It is detached at the next start.",
+  "@virtHwVolumeKept": {
+    "description": "Toast after removing a disk the running guest holds."
   }
 }

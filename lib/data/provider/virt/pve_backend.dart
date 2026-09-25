@@ -18,6 +18,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/backend.dart';
@@ -249,6 +250,8 @@ class PveBackend implements VirtBackend {
         termConsole: true,
         storedHistory: true,
         create: true,
+        hardware: true,
+        hardwareRevert: true,
       ),
     );
   }
@@ -882,6 +885,305 @@ class PveBackend implements VirtBackend {
         queryParameters: {'purge': 1, 'destroy-unreferenced-disks': 1},
       ),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hardware
+  // ---------------------------------------------------------------------------
+
+  /// `GET .../config` (pending changes applied, and the `digest` an edit is
+  /// sent back with) and `GET .../pending`, with the node's CPUs, memory
+  /// and — for a VM — the CPU models it offers. The node's parts are extras:
+  /// a token without `Sys.Audit` on the node still edits the guest.
+  @override
+  Future<VirtHardware> hardware(VirtGuest guest) async {
+    final path = _guestPath(guest);
+    final node = guest.node!;
+    Future<Object?> extra(String url) async {
+      try {
+        return await _call((dio) => dio.get(_url(url)));
+      } on VirtErr catch (e) {
+        Loggers.app.info('PVE $url for the hardware view: ${e.message}');
+        return null;
+      }
+    }
+
+    final (config, pending, status, cpus) = await (
+      _call((dio) => dio.get(_url('$path/config'))),
+      _call((dio) => dio.get(_url('$path/pending'))),
+      extra('/nodes/${_seg(node)}/status'),
+      guest.kind == VirtGuestKind.qemu
+          ? extra('/nodes/${_seg(node)}/capabilities/qemu/cpu')
+          : Future<Object?>.value(),
+    ).wait;
+    if (config is! Map || pending is! List) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: l10n.pveInvalidResponseData,
+      );
+    }
+    final cpuinfo = status is Map ? status['cpuinfo'] : null;
+    final memory = status is Map ? status['memory'] : null;
+    return PveResources.parseHardware(
+      config: config.cast<String, Object?>(),
+      pending: pending,
+      kind: guest.kind,
+      running: guest.state.isActive,
+      limits: VirtHwLimits(
+        hostCpus: cpuinfo is Map ? _intOf(cpuinfo['cpus']) : null,
+        hostMemoryBytes: memory is Map ? _intOf(memory['total']) : null,
+      ),
+      cpuTypes: [
+        if (cpus is List)
+          for (final c in cpus)
+            if (c is Map && c['name'] is String) c['name'] as String,
+      ]..sort(),
+    );
+  }
+
+  static int? _intOf(Object? v) => switch (v) {
+    final num n => n.toInt(),
+    final String s => int.tryParse(s),
+    _ => null,
+  };
+
+  /// Every change is `.../config` with the `digest` [base] was read with, so
+  /// PVE refuses one made from a configuration someone has changed since
+  /// ("checksum mismatch"), except a disk's growth, which is `.../resize`
+  /// with the same digest. A VM's configuration is set with `POST` (a task,
+  /// since adding a disk allocates it), a container's with `PUT`.
+  ///
+  /// What the running guest cannot take is PVE's to put in `pending`: this
+  /// returns once the request has, and [hardware] shows it.
+  @override
+  Future<VirtHwOutcome> changeHardware(
+    VirtGuest guest,
+    VirtHardware base,
+    VirtHwChange change,
+  ) async {
+    final path = _guestPath(guest);
+    final lxc = guest.kind == VirtGuestKind.lxc;
+    final digest = base.revision;
+    // The options as PVE writes them, for the changes that keep most of an
+    // option and set a part of it.
+    Map<String, Object?>? raw;
+    Future<Map<String, Object?>> rawConfig() async =>
+        raw ??= await _configOf(path);
+    String? rawOf(Map<String, Object?> config, String key) =>
+        config[key] is String ? config[key] as String : null;
+
+    try {
+      switch (change) {
+        case VirtHwSetCpu(:final sockets, :final cores, :final online, :final type):
+          if (lxc) {
+            await _setConfig(guest, {'cores': cores}, digest: digest);
+          } else {
+            final cpu = type == null || type == base.cpu.type
+                ? null
+                : PveResources.withCpuType(rawOf(await rawConfig(), 'cpu'), type);
+            await _setConfig(
+              guest,
+              {
+                'sockets': sockets,
+                'cores': cores,
+                'vcpus': ?online,
+                'cpu': ?cpu,
+              },
+              delete: [if (online == null && base.cpu.online != null) 'vcpus'],
+              digest: digest,
+            );
+          }
+        case VirtHwSetMemory(:final mib, :final minMib, :final swapMib):
+          await _setConfig(
+            guest,
+            {
+              'memory': mib,
+              if (!lxc) 'balloon': ?minMib,
+              if (lxc) 'swap': ?swapMib,
+            },
+            delete: [if (!lxc && minMib == null && base.memory.minMib != null) 'balloon'],
+            digest: digest,
+          );
+        case VirtHwGrowDisk(:final key, :final bytes):
+          await _task(
+            guest,
+            (dio) => dio.put(
+              _url('$path/resize'),
+              data: {
+                'disk': key,
+                'size': PveResources.sizeArg(bytes),
+                'digest': ?digest,
+              },
+              options: Options(contentType: Headers.formUrlEncodedContentType),
+            ),
+          );
+        case VirtHwAddDisk(:final storage, :final gib, :final mountPoint):
+          final config = await rawConfig();
+          final String key;
+          final String value;
+          if (lxc) {
+            key = _freeKey(config, 'mp', 256);
+            value = '${storage.name}:$gib,mp=$mountPoint';
+          } else {
+            // On the bus the guest's first disk is on: the controller it
+            // already has, and the drivers its OS already loads.
+            final bus = base.disks
+                    .where((d) => d.kind == VirtHwDiskKind.disk)
+                    .firstOrNull
+                    ?.bus ??
+                'scsi';
+            key = _freeKey(config, bus, _busSlots[bus] ?? 1);
+            value = '${storage.name}:$gib';
+          }
+          await _setConfig(guest, {key: value}, digest: digest);
+        case VirtHwRemoveDisk(:final key, :final deleteVolume):
+          final volume = switch (rawOf(await rawConfig(), key)) {
+            final String v => PveResources.volumeOf(v),
+            null => null,
+          };
+          await _setConfig(guest, const {}, delete: [key], digest: digest);
+          if (!deleteVolume || volume == null) break;
+          // Detached, the volume is `unusedN`, and deleting that entry
+          // deletes it. Still attached — a running guest that cannot let go
+          // of it until it stops — it is not there, and is kept.
+          final after = await _configOf(path);
+          final unused = after.entries
+              .where(
+                (e) =>
+                    e.key.startsWith('unused') &&
+                    e.value is String &&
+                    PveResources.volumeOf(e.value! as String) == volume,
+              )
+              .map((e) => e.key)
+              .firstOrNull;
+          if (unused == null) return const VirtHwOutcome(volumeKept: true);
+          await _setConfig(
+            guest,
+            const {},
+            delete: [unused],
+            digest: after['digest'] as String?,
+          );
+        case VirtHwSetMedia(:final key, :final media):
+          await _setConfig(guest, {
+            key: '${media?.id ?? 'none'},media=cdrom',
+          }, digest: digest);
+        case VirtHwAddNic(:final network, :final model):
+          final config = await rawConfig();
+          final key = _freeKey(config, 'net', 32);
+          final String value;
+          if (lxc) {
+            final names = {
+              for (final n in base.nics)
+                if (n.name != null) n.name,
+            };
+            var i = 0;
+            while (names.contains('eth$i')) {
+              i++;
+            }
+            value = 'name=eth$i,bridge=${network.name},ip=dhcp';
+          } else {
+            value = '${model ?? 'virtio'},bridge=${network.name}';
+          }
+          await _setConfig(guest, {key: value}, digest: digest);
+        case VirtHwRemoveNic(:final key):
+          await _setConfig(guest, const {}, delete: [key], digest: digest);
+        case VirtHwUpdateNic(
+          :final key,
+          :final network,
+          :final linkUp,
+          :final firewall,
+        ):
+          final current = rawOf(await rawConfig(), key);
+          if (current == null) {
+            throw VirtErr(type: VirtErrType.conflict, message: '$key is gone');
+          }
+          await _setConfig(guest, {
+            key: PveResources.withOptions(current, {
+              'bridge': ?network?.name,
+              'link_down': linkUp ? null : '1',
+              if (firewall != null) 'firewall': firewall ? '1' : null,
+            }),
+          }, digest: digest);
+        case VirtHwSetBoot(:final order):
+          await _setConfig(guest, {
+            'boot': 'order=${order.join(';')}',
+          }, digest: digest);
+        case VirtHwSetAutostart(:final on):
+          await _setConfig(guest, {'onboot': on ? 1 : 0}, digest: digest);
+        case VirtHwRevert(:final keys):
+          await _setConfig(guest, {'revert': keys.join(',')}, digest: digest);
+      }
+    } on VirtErr catch (e) {
+      throw _changeErr(e);
+    }
+    return const VirtHwOutcome();
+  }
+
+  /// How many drives each bus takes (`ide0`–`ide3`, …).
+  static const _busSlots = {'ide': 4, 'sata': 6, 'scsi': 31, 'virtio': 16};
+
+  /// The first `<prefix>N` below [slots] that [config] does not use.
+  static String _freeKey(Map<String, Object?> config, String prefix, int slots) {
+    for (var i = 0; i < slots; i++) {
+      if (!config.containsKey('$prefix$i')) return '$prefix$i';
+    }
+    throw VirtErr(
+      type: VirtErrType.unsupported,
+      message: 'No free $prefix slot',
+    );
+  }
+
+  Future<Map<String, Object?>> _configOf(String path) async {
+    final data = await _call((dio) => dio.get(_url('$path/config')));
+    if (data is! Map) {
+      throw VirtErr(
+        type: VirtErrType.invalidResponse,
+        message: l10n.pveInvalidResponseData,
+      );
+    }
+    return data.cast<String, Object?>();
+  }
+
+  Future<void> _setConfig(
+    VirtGuest guest,
+    Map<String, Object?> params, {
+    List<String> delete = const [],
+    String? digest,
+  }) {
+    final data = {
+      ...params,
+      if (delete.isNotEmpty) 'delete': delete.join(','),
+      'digest': ?digest,
+    };
+    final url = _url('${_guestPath(guest)}/config');
+    final options = Options(contentType: Headers.formUrlEncodedContentType);
+    return _task(
+      guest,
+      (dio) => guest.kind == VirtGuestKind.lxc
+          ? dio.put(url, data: data, options: options)
+          : dio.post(url, data: data, options: options),
+    );
+  }
+
+  /// PVE's refusal of a stale digest as [VirtErrType.conflict]; a rejected
+  /// parameter as the action refused, in PVE's words.
+  static VirtErr _changeErr(VirtErr e) {
+    final message = e.message ?? '';
+    if (message.contains('checksum mismatch') ||
+        message.contains('file change by other user')) {
+      return VirtErr(type: VirtErrType.conflict, message: message, cause: e);
+    }
+    final cause = e.cause;
+    if (e.type == VirtErrType.invalidResponse &&
+        cause is DioException &&
+        cause.response != null) {
+      return VirtErr(
+        type: VirtErrType.actionFailed,
+        message: e.message,
+        cause: cause,
+      );
+    }
+    return e;
   }
 
   // ---------------------------------------------------------------------------

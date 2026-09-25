@@ -285,6 +285,14 @@ abstract class VirtCapabilities with _$VirtCapabilities {
     /// Deleting a guest can keep its disks. PVE's cannot: a guest's own
     /// volumes go with it.
     @Default(false) bool deleteKeepsDisks,
+
+    /// A guest's hardware can be read and changed (the Hardware view).
+    @Default(false) bool hardware,
+
+    /// Pending changes can be dropped before they apply (PVE `revert`).
+    /// libvirt keeps no such list: what is pending is the difference between
+    /// two definitions.
+    @Default(false) bool hardwareRevert,
   }) = _VirtCapabilities;
 
   factory VirtCapabilities.fromJson(Map<String, dynamic> json) =>

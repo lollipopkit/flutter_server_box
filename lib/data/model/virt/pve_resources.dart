@@ -1,5 +1,6 @@
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 
@@ -520,6 +521,230 @@ abstract final class PveResources {
     }
     return out;
   }
+
+  // ---------------------------------------------------------------------------
+  // Hardware
+  // ---------------------------------------------------------------------------
+
+  /// A guest's hardware from `GET .../config` — which has the pending
+  /// changes applied, so the form edits what the next start gets — and
+  /// `GET .../pending`, which says what the running guest has instead.
+  ///
+  /// [limits] and [cpuTypes] are the node's: `/nodes/{node}/status` and
+  /// `/nodes/{node}/capabilities/qemu/cpu`.
+  static VirtHardware parseHardware({
+    required Map<String, Object?> config,
+    required List<Object?> pending,
+    required VirtGuestKind kind,
+    required bool running,
+    VirtHwLimits limits = const VirtHwLimits(),
+    List<String> cpuTypes = const [],
+  }) {
+    final lxc = kind == VirtGuestKind.lxc;
+    final disks = <VirtHwDisk>[];
+    final nics = <VirtHwNic>[];
+    final keys = config.keys.toList()..sort(_naturalCompare);
+    for (final key in keys) {
+      final value = config[key];
+      if (value is! String) continue;
+      final diskMatch = lxc ? _lxcDisk.firstMatch(key) : _qemuDisk.firstMatch(key);
+      if (diskMatch != null) {
+        // Detached volumes, EFI vars and a TPM state are not disks to edit.
+        if (key.startsWith('unused') ||
+            key.startsWith('efidisk') ||
+            key.startsWith('tpmstate')) {
+          continue;
+        }
+        final d = _disk(key, value, kind, diskMatch);
+        final named = {for (final (k, v) in _options(value)) k: v};
+        final source = d.source;
+        disks.add(
+          VirtHwDisk(
+            key: key,
+            kind: switch (d.device) {
+              'cdrom' => VirtHwDiskKind.cdrom,
+              'rootfs' => VirtHwDiskKind.rootfs,
+              'mp' => VirtHwDiskKind.mount,
+              _ => VirtHwDiskKind.disk,
+            },
+            source: source,
+            size: d.size,
+            storage: source != null && source.contains(':')
+                ? source.substring(0, source.indexOf(':'))
+                : null,
+            mountPoint: named['mp'],
+            bus: d.bus,
+            format: d.format,
+            readonly: d.readonly,
+          ),
+        );
+        continue;
+      }
+      if (_net.hasMatch(key)) {
+        final n = _nic(key, value, kind);
+        final named = {for (final (k, v) in _options(value)) k: v};
+        nics.add(
+          VirtHwNic(
+            key: key,
+            mac: n.mac,
+            source: n.source,
+            model: n.model,
+            linkUp: named['link_down'] != '1',
+            firewall: named['firewall'] == '1',
+            name: n.target,
+          ),
+        );
+      }
+    }
+
+    final VirtHwCpu cpu;
+    final VirtHwMemory memory;
+    if (lxc) {
+      // No `cores`: every core of the host.
+      cpu = VirtHwCpu(
+        sockets: 1,
+        cores: _int(config['cores']) ?? limits.hostCpus ?? 1,
+      );
+      memory = VirtHwMemory(
+        mib: _int(config['memory']) ?? 512,
+        swapMib: _int(config['swap']) ?? 512,
+      );
+    } else {
+      final total =
+          (_int(config['sockets']) ?? 1) * (_int(config['cores']) ?? 1);
+      final vcpus = _int(config['vcpus']);
+      final cpuRaw = _str(config['cpu']);
+      // `memory` is a property string since PVE 8.1 (`current=2048`), and a
+      // number before.
+      final memRaw = config['memory'];
+      final mib = memRaw is String
+          ? _int(_options(memRaw).firstWhere(
+              (o) => o.$1.isEmpty || o.$1 == 'current',
+              orElse: () => ('', ''),
+            ).$2)
+          : _int(memRaw);
+      cpu = VirtHwCpu(
+        sockets: _int(config['sockets']) ?? 1,
+        cores: _int(config['cores']) ?? 1,
+        online: vcpus == null || vcpus >= total ? null : vcpus,
+        type: cpuRaw == null ? null : _cpuType(cpuRaw),
+      );
+      memory = VirtHwMemory(
+        mib: mib ?? 512,
+        minMib: _int(config['balloon']),
+        balloon: true,
+      );
+    }
+
+    return VirtHardware(
+      kind: kind,
+      running: running,
+      cpu: cpu,
+      memory: memory,
+      disks: disks,
+      nics: nics,
+      boot: lxc ? null : _bootOrder(_str(config['boot']), config, disks, nics),
+      autostart: _int(config['onboot']) == 1,
+      pending: [
+        for (final item in pending)
+          if (item is Map && item['key'] != 'digest')
+            if (item.containsKey('pending') || item.containsKey('delete'))
+              VirtPendingField(
+                key: '${item['key']}',
+                current: item['value']?.toString(),
+                pending: item['pending']?.toString(),
+                delete: _int(item['delete']) != null && _int(item['delete'])! > 0,
+              ),
+      ],
+      revision: _str(config['digest']),
+      limits: limits,
+      cpuTypes: cpuTypes,
+      configText: [
+        for (final k in keys)
+          if (k != 'digest' && config[k] != null) '$k: ${config[k]}',
+      ].join('\n'),
+    );
+  }
+
+  /// `cpu: host,flags=+aes` or `cputype=host,…`: the model.
+  static String? _cpuType(String raw) {
+    for (final (k, v) in _options(raw)) {
+      if (k.isEmpty || k == 'cputype') return v.isEmpty ? null : v;
+    }
+    return null;
+  }
+
+  /// `cpu`'s value with the model set to [type], its other options kept.
+  static String withCpuType(String? raw, String type) {
+    final rest = raw == null
+        ? const <(String, String)>[]
+        : [
+            for (final o in _options(raw))
+              if (o.$1.isNotEmpty && o.$1 != 'cputype') o,
+          ];
+    return [type, for (final (k, v) in rest) '$k=$v'].join(',');
+  }
+
+  /// `boot`: `order=scsi0;ide2;net0`, or the legacy letters (`cdn`, with
+  /// `bootdisk` naming the disk) read the way PVE reads them.
+  static List<String> _bootOrder(
+    String? raw,
+    Map<String, Object?> config,
+    List<VirtHwDisk> disks,
+    List<VirtHwNic> nics,
+  ) {
+    if (raw == null) return const [];
+    final named = {for (final (k, v) in _options(raw)) k: v};
+    final order = named['order'];
+    if (order != null) {
+      return order.split(';').where((k) => k.isNotEmpty).toList();
+    }
+    final legacy = named[''] ?? named['legacy'] ?? '';
+    final out = <String>[];
+    for (final c in legacy.split('')) {
+      final key = switch (c) {
+        'c' => _str(config['bootdisk']) ??
+            disks.where((d) => d.kind == VirtHwDiskKind.disk).firstOrNull?.key,
+        'd' => disks.where((d) => d.kind == VirtHwDiskKind.cdrom).firstOrNull?.key,
+        'n' => nics.firstOrNull?.key,
+        _ => null,
+      };
+      if (key != null && !out.contains(key)) out.add(key);
+    }
+    return out;
+  }
+
+  /// [raw] with [set] applied: a key to a value, or to null to drop it. The
+  /// options it does not name stay as they were, in their place — a NIC's
+  /// MAC among them, which rewriting the option from scratch would lose.
+  static String withOptions(String raw, Map<String, String?> set) {
+    final out = <String>[];
+    final done = <String>{};
+    for (final (k, v) in _options(raw)) {
+      if (set.containsKey(k) && k.isNotEmpty) {
+        done.add(k);
+        final value = set[k];
+        if (value != null) out.add('$k=$value');
+        continue;
+      }
+      out.add(k.isEmpty ? v : '$k=$v');
+    }
+    for (final MapEntry(key: k, value: v) in set.entries) {
+      if (!done.contains(k) && v != null) out.add('$k=$v');
+    }
+    return out.join(',');
+  }
+
+  /// The volume an option names (`local-lvm:vm-100-disk-1,size=8G`).
+  static String? volumeOf(String raw) {
+    final first = _options(raw).first;
+    return first.$1.isEmpty ? first.$2 : null;
+  }
+
+  /// PVE sizes, for [VirtHwGrowDisk]: whole GiB where it is, KiB otherwise.
+  static String sizeArg(int bytes) => bytes % (1 << 30) == 0
+      ? '${bytes >> 30}G'
+      : '${(bytes + 1023) >> 10}K';
 
   /// `a,b=c,d=e` → `[('', a), (b, c), (d, e)]`.
   static List<(String, String)> _options(String value) {

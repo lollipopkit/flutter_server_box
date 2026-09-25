@@ -3773,4 +3773,293 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Membuat dan menghapus tamu juga memerlukan VM.Allocate, VM.Config.*, Datastore.AllocateSpace dan SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Mengedit perangkat keras memerlukan VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network, dan VM.Config.Options; disk dan antarmuka baru juga memerlukan Datastore.AllocateSpace dan SDN.Use.';
+
+  @override
+  String get virtErrConflict => 'Diubah di tempat lain';
+
+  @override
+  String get virtErrConflictTip =>
+      'Seseorang mengubah konfigurasi tamu ini setelah dibaca di sini, jadi tidak ada yang diubah. Konfigurasi telah dibaca ulang: ulangi perubahan jika masih diperlukan.';
+
+  @override
+  String get virtHardware => 'Perangkat keras';
+
+  @override
+  String get virtHwAddDisk => 'Tambah disk';
+
+  @override
+  String get virtHwAddMount => 'Tambah titik kait';
+
+  @override
+  String get virtHwAddNic => 'Tambah antarmuka jaringan';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Tersimpan. Berlaku saat mulai berikutnya.';
+
+  @override
+  String get virtHwAutostart => 'Mulai bersama host';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · dijalankan menurut urutan VMID';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Memori saat ini';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Memungkinkan host mengambil kembali memori menganggur tamu saat memori menipis';
+
+  @override
+  String get virtHwBoot => 'Boot';
+
+  @override
+  String get virtHwBootOrder => 'Urutan boot';
+
+  @override
+  String get virtHwBootTip =>
+      'Panah memindahkan perangkat; ketuk untuk mengaktifkan atau menonaktifkan boot darinya.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Berkas konfigurasi';
+
+  @override
+  String get virtHwCores => 'Inti';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Bawaan';
+
+  @override
+  String get virtHwDeleteVolume => 'Hapus juga volumenya';
+
+  @override
+  String get virtHwDetach => 'Lepas';
+
+  @override
+  String get virtHwDiskHotplug => 'Hot-plug: bisa ditambah saat berjalan';
+
+  @override
+  String get virtHwDisksLxc => 'Disk root dan titik kait';
+
+  @override
+  String get virtHwEject => 'Keluarkan';
+
+  @override
+  String get virtHwEmpty => 'Tanpa media';
+
+  @override
+  String get virtHwFirewall => 'Firewall';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size bebas';
+  }
+
+  @override
+  String get virtHwGrow => 'Perbesar';
+
+  @override
+  String get virtHwGrowNote => 'Disk hanya bisa diperbesar.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Disk hanya bisa diperbesar. Jika diperbesar saat berjalan, partisi harus diperbesar di dalam tamu.';
+
+  @override
+  String get virtHwGuestUsed => 'Dipakai tamu';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads thread · $allocated dialokasikan';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated dialokasikan';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Hot-plug: langsung berlaku.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Centang minimal satu perangkat';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Total 1 hingga $max vCPU';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'vCPU aktif: dari 1 hingga total';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Lebih besar dari sekarang: disk hanya bisa diperbesar';
+
+  @override
+  String get virtHwIssueDiskSize => 'Dari 1 hingga 65536 GiB';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'Dari $min hingga $max MiB';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Tidak lebih dari memori';
+
+  @override
+  String get virtHwIssueMountPoint => 'Jalur absolut, seperti /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Lebih dari ruang kosong penyimpanan';
+
+  @override
+  String get virtHwIssueSwap => 'Tidak negatif';
+
+  @override
+  String get virtHwLater => 'Berlaku setelah mulai ulang';
+
+  @override
+  String get virtHwLess => 'Kurangi';
+
+  @override
+  String get virtHwLinkDown => 'Terputus';
+
+  @override
+  String get virtHwLinkNote =>
+      'Mati, tamu melihat kabel dicabut; tidak perlu mulai ulang';
+
+  @override
+  String get virtHwLinkUp => 'Terhubung';
+
+  @override
+  String get virtHwMac => 'Alamat MAC';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Tambah';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Titik kait dialokasikan langsung dari penyimpanan';
+
+  @override
+  String get virtHwMountPoint => 'Titik kait';
+
+  @override
+  String get virtHwMoveDown => 'Turun';
+
+  @override
+  String get virtHwMoveUp => 'Naik';
+
+  @override
+  String get virtHwNewDisk => 'Disk baru';
+
+  @override
+  String get virtHwNewMount => 'Titik kait baru';
+
+  @override
+  String get virtHwNewNic => 'Antarmuka jaringan baru';
+
+  @override
+  String get virtHwNicHotplug => 'NIC virtio mendukung hot-plug';
+
+  @override
+  String get virtHwNics => 'Antarmuka jaringan';
+
+  @override
+  String get virtHwNoMedia => 'Tanpa media';
+
+  @override
+  String get virtHwNoNetworks => 'Tidak ada jaringan atau bridge di sini';
+
+  @override
+  String get virtHwNoStorage =>
+      'Tidak ada penyimpanan di sini yang menampung disk';
+
+  @override
+  String get virtHwOnline => 'vCPU aktif';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Sebagian perubahan perangkat keras berlaku setelah mulai ulang';
+
+  @override
+  String get virtHwPendingTip =>
+      'Tamu yang berjalan tetap memakai nilai di kiri; nilai di kanan berlaku saat dijalankan berikutnya.';
+
+  @override
+  String get virtHwPendingTitle => 'Tertunda hingga mulai berikutnya';
+
+  @override
+  String get virtHwPickNet => 'Pilih jaringan';
+
+  @override
+  String get virtHwPickPool => 'Pilih penyimpanan dan ukuran';
+
+  @override
+  String get virtHwProcessor => 'Prosesor';
+
+  @override
+  String get virtHwRemove => 'Hapus';
+
+  @override
+  String get virtHwRemoveCdrom => 'Hapus CD-ROM';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return 'Lepas $disk dari $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return 'Lepas $nic dari $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Sumber daya';
+
+  @override
+  String get virtHwRestartNow => 'Mulai ulang sekarang';
+
+  @override
+  String get virtHwRevert => 'Kembalikan';
+
+  @override
+  String get virtHwRevertAll => 'Kembalikan semua';
+
+  @override
+  String get virtHwSockets => 'Soket';
+
+  @override
+  String get virtHwSource => 'Sumber';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Soket × inti';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets soket × $cores inti × $threads thread';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size total';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Dilepas, tetapi tamu yang berjalan masih memakai disk itu, jadi volumenya disimpan. Disk akan dilepas saat mulai berikutnya.';
 }

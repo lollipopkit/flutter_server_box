@@ -86,3 +86,14 @@ anything), `define_script` with the ISO `sbm-test.iso` and the network
 `default`, started (`_ok`), and with the machine type `pc-bogus-9.9`
 (`_rollback`: "No PCI buses available", the volume deleted again), and
 `undefine_script` with `--storage vda`. All of them were removed afterwards.
+
+`script_hardware_{running,stopped}.txt` are `hardware_script` on a domain
+`sbhw-test` made for them (libvirt 11.3, 2026-09-26): running with 3 of 4
+vCPUs online and 2 in the persistent definition, and shut off.
+`script_hw_*.txt` are `hardware_change_script` on the same domain, one
+change each (`hardware_changes_as_captured` names the change behind each
+file), including the refusals: `_add_disk_ide_live_refused` (IDE cannot be
+hot-plugged, saved for the next start), `_remove_disk_kept` (the running
+domain keeps the disk, so its volume is kept), `_add_disk_exists` (the volume
+name taken), `_conflict` (the persistent XML changed since it was read) and
+`_guard_refused`. The domain and its volumes were removed afterwards.

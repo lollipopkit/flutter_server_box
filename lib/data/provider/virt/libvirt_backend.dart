@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/utils/privileged_exec.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -11,6 +13,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_rates.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -122,6 +125,7 @@ class LibvirtBackend implements VirtBackend {
         vncConsole: true,
         create: true,
         deleteKeepsDisks: true,
+        hardware: true,
       ),
     );
   }
@@ -660,6 +664,358 @@ class LibvirtBackend implements VirtBackend {
   }
 
   // ---------------------------------------------------------------------------
+  // Hardware
+  // ---------------------------------------------------------------------------
+
+  /// The last hardware read per guest: which disks and NICs each definition
+  /// has, which a change needs to know to address the right one.
+  final _hardware = <String, LibvirtHardwareInfo>{};
+
+  /// One round trip: both definitions, autostart, the host's CPUs and
+  /// memory, and each disk's size. See `sbm_parser::virt::hardware_script`.
+  @override
+  Future<VirtHardware> hardware(VirtGuest guest) async {
+    final info = LibvirtHardwareInfo.fromJson(
+      _decode(
+        await _run(
+          ffi.virtHardwareScript(domain: guest.id),
+          ffi.parseVirtHardwareJson,
+        ),
+      ),
+    );
+    _hardware[guest.id] = info;
+    return hardwareOf(info);
+  }
+
+  /// [info] as the Hardware view edits it: the persistent definition, with
+  /// what the running one has instead as pending.
+  @visibleForTesting
+  static VirtHardware hardwareOf(LibvirtHardwareInfo info) {
+    final c = info.config;
+    final hostMem = info.hostMemoryKib;
+    return VirtHardware(
+      kind: VirtGuestKind.qemu,
+      running: info.live != null,
+      cpu: _cpuOf(c.cpu),
+      memory: VirtHwMemory(
+        mib: c.memoryKib ~/ 1024,
+        minMib: c.balloon ? c.currentMemoryKib ~/ 1024 : null,
+        balloon: c.balloon,
+      ),
+      disks: [
+        for (final d in c.disks)
+          if (d.device == 'disk' || d.device == 'cdrom')
+            VirtHwDisk(
+              key: d.target,
+              kind: d.device == 'cdrom'
+                  ? VirtHwDiskKind.cdrom
+                  : VirtHwDiskKind.disk,
+              source: d.source,
+              size: d.capacity,
+              bus: d.bus,
+              format: d.format,
+              readonly: d.readonly,
+            ),
+      ],
+      nics: [
+        for (final n in c.nics)
+          VirtHwNic(
+            key: n.mac,
+            mac: n.mac,
+            type: n.kind,
+            source: n.source,
+            model: n.model,
+            linkUp: n.linkUp,
+          ),
+      ],
+      boot: c.boot,
+      autostart: info.autostart,
+      pending: pendingOf(c, info.live),
+      revision: info.configXml,
+      configText: info.configXml.trimRight(),
+      limits: VirtHwLimits(
+        hostCpus: info.hostCpus,
+        hostMemoryBytes: hostMem == null ? null : hostMem * 1024,
+      ),
+    );
+  }
+
+  /// Dies and clusters count as threads here: the form sets sockets and
+  /// cores, and keeps the rest of the topology as it is.
+  static VirtHwCpu _cpuOf(LibvirtHwCpu cpu) => VirtHwCpu(
+    sockets: cpu.sockets,
+    cores: cpu.cores,
+    threads: cpu.threads * cpu.dies * cpu.clusters,
+    online: cpu.current < cpu.max ? cpu.current : null,
+  );
+
+  /// What the running definition ([live]) has differently from the
+  /// persistent one ([config]): the changes the next start makes. libvirt
+  /// keeps no list of its own; this is the difference.
+  ///
+  /// The balloon's current size is not one: it moves while the guest runs,
+  /// and is not a change anybody made.
+  @visibleForTesting
+  static List<VirtPendingField> pendingOf(
+    LibvirtHwConfig config,
+    LibvirtHwConfig? live,
+  ) {
+    if (live == null) return const [];
+    String cpu(LibvirtHwCpu c) {
+      final v = _cpuOf(c);
+      final shape = '${v.sockets}×${v.cores}×${v.threads}';
+      return c.current < c.max ? '${c.current}/${c.max} ($shape)' : '${c.max} ($shape)';
+    }
+
+    String mem(int kib) => '${kib ~/ 1024} MiB';
+    String nic(LibvirtHwNic n) =>
+        [n.kind, n.source, if (!n.linkUp) 'link down'].nonNulls.join(' ');
+    final out = <VirtPendingField>[];
+    if (cpu(config.cpu) != cpu(live.cpu)) {
+      out.add(VirtPendingField(key: 'cpu', current: cpu(live.cpu), pending: cpu(config.cpu)));
+    }
+    if (config.memoryKib != live.memoryKib) {
+      out.add(
+        VirtPendingField(
+          key: 'memory',
+          current: mem(live.memoryKib),
+          pending: mem(config.memoryKib),
+        ),
+      );
+    }
+    final liveDisks = {for (final d in live.disks) d.target: d};
+    final configDisks = {for (final d in config.disks) d.target: d};
+    for (final d in config.disks) {
+      final l = liveDisks[d.target];
+      if (l == null) {
+        out.add(VirtPendingField(key: d.target, pending: d.source ?? d.device));
+      } else if (l.source != d.source) {
+        out.add(VirtPendingField(key: d.target, current: l.source, pending: d.source));
+      }
+    }
+    for (final l in live.disks) {
+      if (!configDisks.containsKey(l.target)) {
+        out.add(VirtPendingField(key: l.target, current: l.source ?? l.device, delete: true));
+      }
+    }
+    final liveNics = {for (final n in live.nics) n.mac: n};
+    final configNics = {for (final n in config.nics) n.mac: n};
+    for (final n in config.nics) {
+      final l = liveNics[n.mac];
+      if (l == null) {
+        out.add(VirtPendingField(key: n.mac, pending: nic(n)));
+      } else if (nic(l) != nic(n)) {
+        out.add(VirtPendingField(key: n.mac, current: nic(l), pending: nic(n)));
+      }
+    }
+    for (final l in live.nics) {
+      if (!configNics.containsKey(l.mac)) {
+        out.add(VirtPendingField(key: l.mac, current: nic(l), delete: true));
+      }
+    }
+    if (config.boot.join(',') != live.boot.join(',')) {
+      out.add(
+        VirtPendingField(
+          key: 'boot',
+          current: live.boot.join(', '),
+          pending: config.boot.join(', '),
+        ),
+      );
+    }
+    return out;
+  }
+
+  /// One `virsh` round trip per change, each made to the persistent
+  /// definition and, where the domain runs, to the running one: the running
+  /// half failing leaves it for the next start ([VirtHwOutcome.liveError]).
+  /// A change that rewrites the definition (CPU, boot order) is made from
+  /// [base]'s copy and refused when the host's has changed since.
+  @override
+  Future<VirtHwOutcome> changeHardware(
+    VirtGuest guest,
+    VirtHardware base,
+    VirtHwChange change,
+  ) async {
+    final info = _hardware[guest.id];
+    if (info == null || info.configXml != base.revision) {
+      // Not what this backend read last: the definitions it would address
+      // disks and NICs by may be someone else's.
+      throw const VirtErr(
+        type: VirtErrType.conflict,
+        message: 'Read the hardware again',
+      );
+    }
+    final running = info.live != null;
+    final json = changeJson(info, base, change, guestName: guest.name, mac: _newMac);
+    final outcome = _decode(
+      await _run(
+        _script(
+          () => ffi.virtHardwareChangeScript(
+            domain: guest.id,
+            running: running,
+            baseXml: info.configXml,
+            changeJson: jsonEncode(json),
+          ),
+        ),
+        ffi.parseVirtHardwareChangeJson,
+        action: true,
+      ),
+    );
+    return VirtHwOutcome(
+      liveError: outcome['live_error'] as String?,
+      volumeKept: outcome['volume_kept'] as bool? ?? false,
+    );
+  }
+
+  /// A MAC in QEMU's locally administered range, `52:54:00`.
+  static String _newMac() {
+    final r = Random.secure();
+    String b() => r.nextInt(256).toRadixString(16).padLeft(2, '0');
+    return '52:54:00:${b()}:${b()}:${b()}';
+  }
+
+  /// [change] as `sbm_parser::virt::VirtHwChange` JSON, addressed by what
+  /// [info]'s two definitions have.
+  @visibleForTesting
+  static Map<String, Object?> changeJson(
+    LibvirtHardwareInfo info,
+    VirtHardware base,
+    VirtHwChange change, {
+    required String guestName,
+    required String Function() mac,
+  }) {
+    final config = info.config;
+    final live = info.live;
+    LibvirtHwDisk? diskIn(LibvirtHwConfig? c, String target) =>
+        c?.disks.where((d) => d.target == target).firstOrNull;
+    LibvirtHwNic? nicIn(LibvirtHwConfig? c, String mac) =>
+        c?.nics.where((n) => n.mac == mac).firstOrNull;
+    switch (change) {
+      case VirtHwSetCpu(:final sockets, :final cores, :final online):
+        return {'op': 'cpu', 'sockets': sockets, 'cores': cores, 'current': online};
+      case VirtHwSetMemory(:final mib, :final minMib):
+        return {'op': 'memory', 'memory_mib': mib, 'current_mib': minMib};
+      case VirtHwGrowDisk(:final key, :final bytes):
+        final disk = diskIn(config, key);
+        return {
+          'op': 'grow_disk',
+          'target': key,
+          'bytes': bytes,
+          'path': disk?.sourceType == 'file' ? disk?.source : null,
+          'live': diskIn(live, key) != null,
+        };
+      case VirtHwAddDisk(:final storage, :final gib):
+        final taken = {
+          for (final d in [...config.disks, ...?live?.disks]) d.target,
+        };
+        final bus = config.disks
+                .where((d) => d.device == 'disk')
+                .firstOrNull
+                ?.bus ??
+            'virtio';
+        final prefix = switch (bus) {
+          'virtio' => 'vd',
+          'ide' => 'hd',
+          _ => 'sd',
+        };
+        final target = _freeTarget(prefix, taken);
+        final format = virtLibvirtDiskFormat(storage.type);
+        return {
+          'op': 'add_disk',
+          'pool': storage.id,
+          'volume': '$guestName-$target.${format == 'qcow2' ? 'qcow2' : 'img'}',
+          'gib': gib,
+          'format': format,
+          'target': target,
+          'bus': bus,
+        };
+      case VirtHwRemoveDisk(:final key, :final deleteVolume):
+        final disk = diskIn(config, key) ?? diskIn(live, key);
+        // A CD-ROM's image, or a read-only disk, is somebody's media: not
+        // deleted here whatever was asked.
+        final deletable =
+            deleteVolume &&
+            disk != null &&
+            disk.device == 'disk' &&
+            !disk.readonly &&
+            disk.sourceType == 'file';
+        return {
+          'op': 'remove_disk',
+          'target': key,
+          'delete_path': deletable ? disk.source : null,
+          'config': diskIn(config, key) != null,
+          'live': diskIn(live, key) != null,
+        };
+      case VirtHwSetMedia(:final key, :final media):
+        final path = media?.path;
+        bool touches(LibvirtHwConfig? c) {
+          final d = diskIn(c, key);
+          // Ejecting an empty drive is refused; there is nothing to do.
+          return d != null && (path != null || d.source != null);
+        }
+        return {
+          'op': 'set_media',
+          'target': key,
+          'source': path,
+          'config': touches(config),
+          'live': touches(live),
+        };
+      case VirtHwAddNic(:final network, :final model):
+        return {
+          'op': 'add_nic',
+          'kind': 'network',
+          'source': network.name,
+          'model': model ?? 'virtio',
+          'mac': mac(),
+        };
+      case VirtHwRemoveNic(:final key):
+        return {
+          'op': 'remove_nic',
+          'mac': key,
+          'kind': nicIn(config, key)?.kind,
+          'live_kind': nicIn(live, key)?.kind,
+        };
+      case VirtHwUpdateNic(:final key, :final network, :final linkUp):
+        final c = nicIn(config, key);
+        final l = nicIn(live, key);
+        final current = c ?? l;
+        return {
+          'op': 'update_nic',
+          'mac': key,
+          'kind': network != null ? 'network' : current?.kind,
+          'source': network?.name ?? current?.source,
+          'model': current?.model,
+          'link_up': linkUp,
+          'boot_order': c?.bootOrder,
+          'live_boot_order': l?.bootOrder,
+          'config': c != null,
+          'live': l != null,
+        };
+      case VirtHwSetBoot(:final order):
+        return {'op': 'boot', 'order': order};
+      case VirtHwSetAutostart(:final on):
+        return {'op': 'autostart', 'on': on};
+      case VirtHwRevert():
+        throw const VirtErr(type: VirtErrType.unsupported);
+    }
+  }
+
+  /// `vda`, `vdb`, … `vdz`, then `vdaa`, as libvirt names disks.
+  static String _freeTarget(String prefix, Set<String> taken) {
+    String name(int i) {
+      const a = 97;
+      return i < 26
+          ? '$prefix${String.fromCharCode(a + i)}'
+          : '$prefix${String.fromCharCode(a + i ~/ 26 - 1)}${String.fromCharCode(a + i % 26)}';
+    }
+
+    for (var i = 0; i < 26 * 27; i++) {
+      if (!taken.contains(name(i))) return name(i);
+    }
+    throw const VirtErr(type: VirtErrType.unsupported, message: 'No free disk target');
+  }
+
+  // ---------------------------------------------------------------------------
   // Running scripts
   // ---------------------------------------------------------------------------
 
@@ -770,6 +1126,7 @@ class LibvirtBackend implements VirtBackend {
       ffi.VirtErrorKind.permissionDenied => VirtErrType.permissionDenied,
       ffi.VirtErrorKind.connectFailed => VirtErrType.unreachable,
       ffi.VirtErrorKind.malformed => VirtErrType.invalidResponse,
+      ffi.VirtErrorKind.conflict => VirtErrType.conflict,
       // `exists` too: a snapshot name taken is the action refused, with the
       // host's words. Creating a guest tells it apart itself.
       ffi.VirtErrorKind.domainNotFound ||

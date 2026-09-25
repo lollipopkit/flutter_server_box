@@ -356,6 +356,68 @@ deleted with no volume of their VMID left. The Rust scripts also ran by hand
 there for the fixtures, including a hostile name (quotes, spaces, `$(id)`
 and backticks) through create, define and undefine.
 
+### Hardware editing (phase 4)
+
+A "Hardware" view next to Overview / Console / Snapshots (labelled
+"Resources" for a container), where `VirtCapabilities.hardware` (both
+backends), not on a template (`lib/view/page/virt/hardware.dart`). One form
+per group — processor, memory, disks (a container: root disk and mount
+points), NICs, CD-ROM, boot, the configuration as the host writes it — with
+an index beside them from 860 pt. Steppers and pickers are drafts with
+Cancel / Save; device toggles (link, firewall, autostart) and device
+actions (add, grow, detach, eject) are one change each, a destructive one
+behind a red confirmation (a disk: "delete its volume too", unticked).
+
+`VirtHardware` (`lib/data/model/virt/virt_hardware.dart`) is **the
+definition the next start gets**, so an edit starts from what was last
+saved; what the running guest has instead is `pending`. `virtHwIssue`
+refuses before sending: vCPUs 1..host, online 1..total, memory 16 MiB..host
+and a balloon floor under it, disks only grow and fit the storage's free
+space, a mount point absolute and free of `,` `=` and blanks, a boot order
+with a device. What the host refuses beyond that is shown in its words.
+
+| | libvirt | PVE |
+| --- | --- | --- |
+| Read | `hardware_script`: `dominfo`, `nodeinfo`, `dumpxml --inactive`, `dumpxml` while running, `domblkinfo` per disk (`--all` fails on a running domain with an empty CD-ROM) — parsed in Rust (`parse_hardware`) | `GET config` (pending applied, with `digest`), `GET pending`, node status and `capabilities/qemu/cpu` (both optional: a token without `Sys.Audit` still reads the guest) |
+| Pending | The running definition compared with the persistent one (`LibvirtBackend.pendingOf`): CPU, memory, disks, NICs, boot. Not the balloon's current size, which moves by itself | PVE's `pending` list: `{key, value, pending}` or `delete: 1` |
+| Change | One `virsh` round trip (`hardware_change_script`): the persistent half (`--config`, `define`) and, while running, the live half (`--live`); a refused live half leaves the change for the next start (`VirtHwOutcome.liveError`) | `POST config` (VM) / `PUT config` (container) with `digest`; `PUT resize` (a task) |
+| Guard | CPU and boot rewrite the XML in Rust (`edit_cpu_xml`, `edit_boot_xml`, range splicing that keeps the rest as written), from the XML read; the script compares the host's `dumpxml --inactive` with it before `define` → `conflict`. Every other change is addressed by target/MAC from the same read, refused before the host if the backend's last read differs | `digest`: a stale one is "checksum mismatch (file change by other user?)" → `conflict`; the view says so and reads again |
+| Revert | Not offered (`hardwareRevert` false): libvirt keeps no pending list to drop | `revert=<keys>`, per row and all |
+| Remove a disk | `detach-disk` in both halves; the volume deleted (`vol-delete`) only once `domblklist` no longer lists it — else `volumeKept` | Delete the key; the volume turns up as `unusedN` and deleting that deletes it. Still attached to a running guest (pending) → `volumeKept` |
+| Restart to apply | Shutdown, wait for it to stop (up to 3 min), start: `reboot` does not load the persistent definition | `reboot` |
+
+- The notice above the views ("some hardware changes apply at the next
+  restart", "Restart now") comes from a hardware read this session already
+  has, while the guest runs.
+- libvirt: all scripts and XML in Rust through FFI, every argument quoted;
+  the hostile-name test runs each change script under `sh` with a stub
+  `virsh`. A new NIC's MAC is `52:54:00:xx:xx:xx`; a new disk is a qcow2 (raw
+  on LVM/ZFS/RBD) file volume `<guest>-<target>` in the chosen pool, on the
+  first disk's bus, deleted again if the attach fails.
+- PVE privileges on top of the listing ones (in the token help):
+  `VM.Config.CPU`, `VM.Config.Memory`, `VM.Config.Disk`, `VM.Config.CDROM`,
+  `VM.Config.Network`, `VM.Config.Options`; new disks and interfaces
+  `Datastore.AllocateSpace` and `SDN.Use`. A privilege-separated token with exactly that
+  set ran the whole PVE e2e group (verified).
+
+Verified on libvirt 11.3 (through the agent and sudo, and by hand on a
+domain of its own for the fixtures) and PVE 9.2.2 (through the relay), by
+the "hardware" groups of `test/e2e/virt_monitor_test.dart`, 2026-09-26:
+
+| Topic | Result |
+| --- | --- |
+| libvirt CPU and memory | `setvcpus --maximum` and `setmaxmem` cannot be done live: saved, pending. `setvcpus --live` within the maximum applies at once. |
+| libvirt disks | IDE cannot be hot-plugged (live half refused, saved); `blockresize` grows a running disk, `vol-resize` a stopped one; a disk only in the persistent definition is grown on its file. |
+| libvirt NIC and media | `update-device` replaces the whole interface, so the link state is always written; `change-media --update` inserts into an empty drive, and ejecting an empty drive is refused (not sent). |
+| libvirt autostart | Not part of the XML: a separate `autostart` call, outside the guard. |
+| PVE VM | Cores, sockets and the boot order go to pending while running; the balloon floor applies at once; `revert` drops each. A hot-plugged NIC applies at once. |
+| PVE container | Cores, memory and swap apply at once; removing a mount point from a running container is pending (`delete: 1`), its volume kept. |
+
+Not verified: libvirt topologies with dies/clusters (folded into threads,
+kept as they are), a CD-ROM on SATA/SCSI, PVE clusters, and hardware over
+SSH (the read-only groups in `virt_real_test.dart` need an SSH key the test
+can open).
+
 ## Verified against real hosts
 
 `test/e2e/virt_real_test.dart` (opt-in; its header lists the variables) and
@@ -558,7 +620,9 @@ page, so feature pages use the `featureIntroVer` counter.
 - Snapshots: external libvirt snapshots (disk-only while running), a
   snapshot's configuration diff, PVE's per-storage snapshot support shown
   before trying.
-- Hardware editing (pending-change model: libvirt `define` vs PVE `pending`).
+- Hardware: bus and cache, NIC model and MAC, CD-ROM/USB/PCI/TPM devices,
+  the display, firmware and Secure Boot; libvirt revert (redefine from the
+  running XML).
 - Clone, migrate (PVE cluster); creating from a cloud image or with
   cloud-init, UEFI/TPM and a choice of bus and NIC model in the create form.
 - Backups (PVE `vzdump` / backup storage).

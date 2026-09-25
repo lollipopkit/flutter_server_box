@@ -3785,4 +3785,293 @@ class AppLocalizationsAz extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Qonaq yaratmaq və silmək üçün həmçinin VM.Allocate, VM.Config.*, Datastore.AllocateSpace və SDN.Use lazımdır.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Avadanlığı redaktə etmək üçün VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network və VM.Config.Options lazımdır; yeni disklər və interfeyslər üçün həmçinin Datastore.AllocateSpace və SDN.Use lazımdır.';
+
+  @override
+  String get virtErrConflict => 'Başqa yerdə dəyişdirilib';
+
+  @override
+  String get virtErrConflictTip =>
+      'Bu qonağın konfiqurasiyası burada oxunandan sonra başqası tərəfindən dəyişdirildi, ona görə heç nə dəyişdirilmədi. Yenidən oxundu: hələ lazımdırsa dəyişikliyi təkrar edin.';
+
+  @override
+  String get virtHardware => 'Avadanlıq';
+
+  @override
+  String get virtHwAddDisk => 'Disk əlavə et';
+
+  @override
+  String get virtHwAddMount => 'Qoşulma nöqtəsi əlavə et';
+
+  @override
+  String get virtHwAddNic => 'Şəbəkə interfeysi əlavə et';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Yadda saxlanıldı. Növbəti başlanğıcda qüvvəyə minir.';
+
+  @override
+  String get virtHwAutostart => 'Hostla birlikdə başlat';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · VMID sırası ilə başladılır';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Cari yaddaş';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Yaddaş azaldıqda hostun qonağın boş yaddaşını geri almasına icazə verir';
+
+  @override
+  String get virtHwBoot => 'Yükləmə';
+
+  @override
+  String get virtHwBootOrder => 'Yükləmə sırası';
+
+  @override
+  String get virtHwBootTip =>
+      'Oxlar cihazı yerini dəyişir; toxunmaq ondan yükləməni açır və ya bağlayır.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Konfiqurasiya faylı';
+
+  @override
+  String get virtHwCores => 'Nüvələr';
+
+  @override
+  String get virtHwCpuTypeDefault => 'Standart';
+
+  @override
+  String get virtHwDeleteVolume => 'Həcmini də sil';
+
+  @override
+  String get virtHwDetach => 'Ayır';
+
+  @override
+  String get virtHwDiskHotplug => 'İsti qoşulma: işləyərkən əlavə edilə bilər';
+
+  @override
+  String get virtHwDisksLxc => 'Kök disk və qoşulma nöqtələri';
+
+  @override
+  String get virtHwEject => 'Çıxar';
+
+  @override
+  String get virtHwEmpty => 'Daşıyıcı yoxdur';
+
+  @override
+  String get virtHwFirewall => 'Təhlükəsizlik divarı';
+
+  @override
+  String virtHwFree(String size) {
+    return '$size boş';
+  }
+
+  @override
+  String get virtHwGrow => 'Böyüt';
+
+  @override
+  String get virtHwGrowNote => 'Disklər yalnız böyüdülə bilər.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Disklər yalnız böyüyür. İşləyərkən böyüdülübsə, bölmə qonaqda genişləndirilməlidir.';
+
+  @override
+  String get virtHwGuestUsed => 'Qonağın istifadə etdiyi';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Host $threads axın · $allocated ayrılıb';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Host $total · $allocated ayrılıb';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'İsti qoşulma: dərhal qüvvəyə minir.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Ən azı bir cihaz işarələyin';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Cəmi 1 ilə $max vCPU arası';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Aktiv vCPU-lar: 1-dən cəmə qədər';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'İndikindən böyük olmalıdır: disklər yalnız böyüyür';
+
+  @override
+  String get virtHwIssueDiskSize => '1 ilə 65536 GiB arası';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '$min ilə $max MiB arası';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Yaddaşdan çox olmamalıdır';
+
+  @override
+  String get virtHwIssueMountPoint => '/data kimi mütləq yol';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Yaddaşdakı boş yerdən çoxdur';
+
+  @override
+  String get virtHwIssueSwap => 'Mənfi olmamalıdır';
+
+  @override
+  String get virtHwLater => 'Yenidən başladıqda qüvvəyə minir';
+
+  @override
+  String get virtHwLess => 'Azalt';
+
+  @override
+  String get virtHwLinkDown => 'Ayrılıb';
+
+  @override
+  String get virtHwLinkNote =>
+      'Söndürüldükdə qonaq kabelin çıxarıldığını görür; yenidən başlatma lazım deyil';
+
+  @override
+  String get virtHwLinkUp => 'Qoşulub';
+
+  @override
+  String get virtHwMac => 'MAC ünvanı';
+
+  @override
+  String get virtHwModel => 'Model';
+
+  @override
+  String get virtHwMore => 'Artır';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Qoşulma nöqtələri birbaşa yaddaşdan ayrılır';
+
+  @override
+  String get virtHwMountPoint => 'Qoşulma nöqtəsi';
+
+  @override
+  String get virtHwMoveDown => 'Aşağı';
+
+  @override
+  String get virtHwMoveUp => 'Yuxarı';
+
+  @override
+  String get virtHwNewDisk => 'Yeni disk';
+
+  @override
+  String get virtHwNewMount => 'Yeni qoşulma nöqtəsi';
+
+  @override
+  String get virtHwNewNic => 'Yeni şəbəkə interfeysi';
+
+  @override
+  String get virtHwNicHotplug =>
+      'virtio interfeysləri isti qoşulmanı dəstəkləyir';
+
+  @override
+  String get virtHwNics => 'Şəbəkə interfeysləri';
+
+  @override
+  String get virtHwNoMedia => 'Daşıyıcı yoxdur';
+
+  @override
+  String get virtHwNoNetworks => 'Burada şəbəkə və ya körpü yoxdur';
+
+  @override
+  String get virtHwNoStorage => 'Burada disk qəbul edən yaddaş yoxdur';
+
+  @override
+  String get virtHwOnline => 'Aktiv vCPU-lar';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Bəzi avadanlıq dəyişiklikləri yenidən başladıqda qüvvəyə minir';
+
+  @override
+  String get virtHwPendingTip =>
+      'İşləyən qonaq soldakı dəyəri saxlayır; sağdakını növbəti başlanğıcda alır.';
+
+  @override
+  String get virtHwPendingTitle => 'Növbəti başlanğıca qədər gözləyir';
+
+  @override
+  String get virtHwPickNet => 'Şəbəkə seçin';
+
+  @override
+  String get virtHwPickPool => 'Yaddaş və ölçü seçin';
+
+  @override
+  String get virtHwProcessor => 'Prosessor';
+
+  @override
+  String get virtHwRemove => 'Çıxar';
+
+  @override
+  String get virtHwRemoveCdrom => 'CD-ROM-u çıxar';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '$disk $guest qonağından çıxarılsın?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '$nic $guest qonağından çıxarılsın?';
+  }
+
+  @override
+  String get virtHwResources => 'Resurslar';
+
+  @override
+  String get virtHwRestartNow => 'İndi yenidən başlat';
+
+  @override
+  String get virtHwRevert => 'Geri qaytar';
+
+  @override
+  String get virtHwRevertAll => 'Hamısını geri qaytar';
+
+  @override
+  String get virtHwSockets => 'Soketlər';
+
+  @override
+  String get virtHwSource => 'Mənbə';
+
+  @override
+  String get virtHwSwap => 'Swap';
+
+  @override
+  String get virtHwTopology => 'Soket × nüvə';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets soket × $cores nüvə × $threads axın';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return 'cəmi $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Çıxarıldı, lakin işləyən qonaq diski hələ istifadə edir, ona görə həcmi saxlanıldı. Növbəti başlanğıcda ayrılacaq.';
 }

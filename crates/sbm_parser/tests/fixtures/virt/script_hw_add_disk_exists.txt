@@ -1,0 +1,5 @@
+SrvBoxSep.b64.dmlydC5ody5zdGVw
+error: Failed to create vol sbhw-test-vdc.qcow2
+error: storage volume 'sbhw-test-vdc.qcow2' exists already
+
+SbVirtRc=1

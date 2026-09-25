@@ -3531,6 +3531,283 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       '创建和删除客户机还需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
+
+  @override
+  String get pveTokenTipHardware =>
+      '编辑硬件需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；添加磁盘和网卡还需要 Datastore.AllocateSpace 和 SDN.Use。';
+
+  @override
+  String get virtErrConflict => '已在别处修改';
+
+  @override
+  String get virtErrConflictTip => '此客户机的配置在读取后被他人修改，因此未做任何更改。已重新读取，如仍需要请再次修改。';
+
+  @override
+  String get virtHardware => '硬件';
+
+  @override
+  String get virtHwAddDisk => '添加磁盘';
+
+  @override
+  String get virtHwAddMount => '添加挂载点';
+
+  @override
+  String get virtHwAddNic => '添加网卡';
+
+  @override
+  String get virtHwAppliesOnRestart => '已保存，将在下次启动时生效。';
+
+  @override
+  String get virtHwAutostart => '随宿主机启动';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · 按 VMID 顺序启动';
+
+  @override
+  String get virtHwBalloonLibvirt => '当前内存';
+
+  @override
+  String get virtHwBalloonNote => '允许宿主机在内存紧张时回收来宾的空闲内存';
+
+  @override
+  String get virtHwBoot => '引导';
+
+  @override
+  String get virtHwBootOrder => '启动顺序';
+
+  @override
+  String get virtHwBootTip => '用箭头调整顺序；点按设备可切换是否从它启动。';
+
+  @override
+  String get virtHwCdrom => '光驱';
+
+  @override
+  String get virtHwConfigFile => '配置文件';
+
+  @override
+  String get virtHwCores => '核心';
+
+  @override
+  String get virtHwCpuTypeDefault => '默认';
+
+  @override
+  String get virtHwDeleteVolume => '同时删除卷';
+
+  @override
+  String get virtHwDetach => '分离';
+
+  @override
+  String get virtHwDiskHotplug => '支持热插拔，运行中也能添加';
+
+  @override
+  String get virtHwDisksLxc => '根磁盘与挂载点';
+
+  @override
+  String get virtHwEject => '弹出';
+
+  @override
+  String get virtHwEmpty => '无介质';
+
+  @override
+  String get virtHwFirewall => '防火墙';
+
+  @override
+  String virtHwFree(String size) {
+    return '可用 $size';
+  }
+
+  @override
+  String get virtHwGrow => '扩容';
+
+  @override
+  String get virtHwGrowNote => '只能在原容量上扩容。';
+
+  @override
+  String get virtHwGrowNoteRunning => '只能在原容量上扩容。运行中扩容后需在来宾内扩展分区。';
+
+  @override
+  String get virtHwGuestUsed => '来宾已用';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return '宿主机 $threads 线程 · 已分配 $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return '宿主机 $total · 已分配 $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => '支持热插拔，运行中立即生效。';
+
+  @override
+  String get virtHwIssueBootEmpty => '至少勾选一个设备';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'vCPU 总数须在 1 到 $max 之间';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => '在线 vCPU 须在 1 到总数之间';
+
+  @override
+  String get virtHwIssueDiskShrink => '须大于当前大小：磁盘只能扩大';
+
+  @override
+  String get virtHwIssueDiskSize => '须在 1 到 65536 GiB 之间';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '须在 $min 到 $max MiB 之间';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => '不能超过内存';
+
+  @override
+  String get virtHwIssueMountPoint => '须为绝对路径，如 /data';
+
+  @override
+  String get virtHwIssueStorageSpace => '超出了存储的可用空间';
+
+  @override
+  String get virtHwIssueSwap => '不能为负数';
+
+  @override
+  String get virtHwLater => '重启后生效';
+
+  @override
+  String get virtHwLess => '减少';
+
+  @override
+  String get virtHwLinkDown => '已断开';
+
+  @override
+  String get virtHwLinkNote => '断开后来宾看到网线拔出，不需要重启';
+
+  @override
+  String get virtHwLinkUp => '已连接';
+
+  @override
+  String get virtHwMac => 'MAC 地址';
+
+  @override
+  String get virtHwModel => '型号';
+
+  @override
+  String get virtHwMore => '增加';
+
+  @override
+  String get virtHwMountFromPool => '挂载点直接从存储池分配';
+
+  @override
+  String get virtHwMountPoint => '挂载点';
+
+  @override
+  String get virtHwMoveDown => '下移';
+
+  @override
+  String get virtHwMoveUp => '上移';
+
+  @override
+  String get virtHwNewDisk => '新磁盘';
+
+  @override
+  String get virtHwNewMount => '新挂载点';
+
+  @override
+  String get virtHwNewNic => '新网卡';
+
+  @override
+  String get virtHwNicHotplug => 'virtio 网卡支持热插拔';
+
+  @override
+  String get virtHwNics => '网卡';
+
+  @override
+  String get virtHwNoMedia => '无介质';
+
+  @override
+  String get virtHwNoNetworks => '没有可用的网络或网桥';
+
+  @override
+  String get virtHwNoStorage => '没有可存放磁盘的存储';
+
+  @override
+  String get virtHwOnline => '在线 vCPU';
+
+  @override
+  String get virtHwPendingBanner => '部分硬件更改在重启后生效';
+
+  @override
+  String get virtHwPendingTip => '运行中的客户机仍使用左边的值，下次启动时改用右边的值。';
+
+  @override
+  String get virtHwPendingTitle => '下次启动时生效';
+
+  @override
+  String get virtHwPickNet => '选择网络';
+
+  @override
+  String get virtHwPickPool => '选择存储池和容量';
+
+  @override
+  String get virtHwProcessor => '处理器';
+
+  @override
+  String get virtHwRemove => '移除';
+
+  @override
+  String get virtHwRemoveCdrom => '移除光驱';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '从 $guest 移除 $disk？';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '从 $guest 移除 $nic？';
+  }
+
+  @override
+  String get virtHwResources => '资源';
+
+  @override
+  String get virtHwRestartNow => '立即重启';
+
+  @override
+  String get virtHwRevert => '撤销';
+
+  @override
+  String get virtHwRevertAll => '全部撤销';
+
+  @override
+  String get virtHwSockets => '插槽';
+
+  @override
+  String get virtHwSource => '源';
+
+  @override
+  String get virtHwSwap => '交换空间';
+
+  @override
+  String get virtHwTopology => '插槽 × 核心';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets 插槽 × $cores 核 × $threads 线程';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size 总计';
+  }
+
+  @override
+  String get virtHwVolumeKept => '已移除，但运行中的客户机仍在使用该磁盘，因此保留了卷。它会在下次启动时分离。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -7057,4 +7334,281 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get pveTokenTipCreate =>
       '建立和刪除客體還需要 VM.Allocate、VM.Config.*、Datastore.AllocateSpace 和 SDN.Use。';
+
+  @override
+  String get pveTokenTipHardware =>
+      '編輯硬體需要 VM.Config.CPU、VM.Config.Memory、VM.Config.Disk、VM.Config.CDROM、VM.Config.Network 和 VM.Config.Options；新增磁碟和網路卡還需要 Datastore.AllocateSpace 和 SDN.Use。';
+
+  @override
+  String get virtErrConflict => '已在別處修改';
+
+  @override
+  String get virtErrConflictTip => '此客體的設定在讀取後被他人修改，因此未做任何變更。已重新讀取，如仍需要請再次修改。';
+
+  @override
+  String get virtHardware => '硬體';
+
+  @override
+  String get virtHwAddDisk => '新增磁碟';
+
+  @override
+  String get virtHwAddMount => '新增掛載點';
+
+  @override
+  String get virtHwAddNic => '新增網路卡';
+
+  @override
+  String get virtHwAppliesOnRestart => '已儲存，將在下次啟動時生效。';
+
+  @override
+  String get virtHwAutostart => '隨主機啟動';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · 依 VMID 順序啟動';
+
+  @override
+  String get virtHwBalloonLibvirt => '目前記憶體';
+
+  @override
+  String get virtHwBalloonNote => '允許主機在記憶體緊張時回收客體的閒置記憶體';
+
+  @override
+  String get virtHwBoot => '開機';
+
+  @override
+  String get virtHwBootOrder => '啟動順序';
+
+  @override
+  String get virtHwBootTip => '用箭頭調整順序；點按裝置可切換是否從它開機。';
+
+  @override
+  String get virtHwCdrom => '光碟機';
+
+  @override
+  String get virtHwConfigFile => '設定檔';
+
+  @override
+  String get virtHwCores => '核心';
+
+  @override
+  String get virtHwCpuTypeDefault => '預設';
+
+  @override
+  String get virtHwDeleteVolume => '同時刪除磁碟區';
+
+  @override
+  String get virtHwDetach => '分離';
+
+  @override
+  String get virtHwDiskHotplug => '支援熱插拔，執行中也能新增';
+
+  @override
+  String get virtHwDisksLxc => '根磁碟與掛載點';
+
+  @override
+  String get virtHwEject => '退出';
+
+  @override
+  String get virtHwEmpty => '無媒體';
+
+  @override
+  String get virtHwFirewall => '防火牆';
+
+  @override
+  String virtHwFree(String size) {
+    return '可用 $size';
+  }
+
+  @override
+  String get virtHwGrow => '擴充';
+
+  @override
+  String get virtHwGrowNote => '只能在原容量上擴充。';
+
+  @override
+  String get virtHwGrowNoteRunning => '只能在原容量上擴充。執行中擴充後需在客體內擴充分割區。';
+
+  @override
+  String get virtHwGuestUsed => '客體已用';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return '主機 $threads 執行緒 · 已分配 $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return '主機 $total · 已分配 $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => '支援熱插拔，執行中立即生效。';
+
+  @override
+  String get virtHwIssueBootEmpty => '至少勾選一個裝置';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'vCPU 總數須在 1 到 $max 之間';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => '線上 vCPU 須在 1 到總數之間';
+
+  @override
+  String get virtHwIssueDiskShrink => '須大於目前大小：磁碟只能擴大';
+
+  @override
+  String get virtHwIssueDiskSize => '須在 1 到 65536 GiB 之間';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return '須在 $min 到 $max MiB 之間';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => '不能超過記憶體';
+
+  @override
+  String get virtHwIssueMountPoint => '須為絕對路徑，如 /data';
+
+  @override
+  String get virtHwIssueStorageSpace => '超出了儲存的可用空間';
+
+  @override
+  String get virtHwIssueSwap => '不能為負數';
+
+  @override
+  String get virtHwLater => '重新啟動後生效';
+
+  @override
+  String get virtHwLess => '減少';
+
+  @override
+  String get virtHwLinkDown => '已中斷';
+
+  @override
+  String get virtHwLinkNote => '中斷後客體會看到網路線被拔出，不需要重新啟動';
+
+  @override
+  String get virtHwLinkUp => '已連線';
+
+  @override
+  String get virtHwMac => 'MAC 位址';
+
+  @override
+  String get virtHwModel => '型號';
+
+  @override
+  String get virtHwMore => '增加';
+
+  @override
+  String get virtHwMountFromPool => '掛載點直接從儲存池分配';
+
+  @override
+  String get virtHwMountPoint => '掛載點';
+
+  @override
+  String get virtHwMoveDown => '下移';
+
+  @override
+  String get virtHwMoveUp => '上移';
+
+  @override
+  String get virtHwNewDisk => '新磁碟';
+
+  @override
+  String get virtHwNewMount => '新掛載點';
+
+  @override
+  String get virtHwNewNic => '新網路卡';
+
+  @override
+  String get virtHwNicHotplug => 'virtio 網路卡支援熱插拔';
+
+  @override
+  String get virtHwNics => '網路卡';
+
+  @override
+  String get virtHwNoMedia => '無媒體';
+
+  @override
+  String get virtHwNoNetworks => '沒有可用的網路或橋接';
+
+  @override
+  String get virtHwNoStorage => '沒有可存放磁碟的儲存';
+
+  @override
+  String get virtHwOnline => '線上 vCPU';
+
+  @override
+  String get virtHwPendingBanner => '部分硬體變更在重新啟動後生效';
+
+  @override
+  String get virtHwPendingTip => '執行中的客體仍使用左邊的值，下次啟動時改用右邊的值。';
+
+  @override
+  String get virtHwPendingTitle => '下次啟動時生效';
+
+  @override
+  String get virtHwPickNet => '選擇網路';
+
+  @override
+  String get virtHwPickPool => '選擇儲存池和容量';
+
+  @override
+  String get virtHwProcessor => '處理器';
+
+  @override
+  String get virtHwRemove => '移除';
+
+  @override
+  String get virtHwRemoveCdrom => '移除光碟機';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return '從 $guest 移除 $disk？';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return '從 $guest 移除 $nic？';
+  }
+
+  @override
+  String get virtHwResources => '資源';
+
+  @override
+  String get virtHwRestartNow => '立即重新啟動';
+
+  @override
+  String get virtHwRevert => '復原';
+
+  @override
+  String get virtHwRevertAll => '全部復原';
+
+  @override
+  String get virtHwSockets => '插槽';
+
+  @override
+  String get virtHwSource => '來源';
+
+  @override
+  String get virtHwSwap => '交換空間';
+
+  @override
+  String get virtHwTopology => '插槽 × 核心';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets 插槽 × $cores 核 × $threads 執行緒';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return '$size 總計';
+  }
+
+  @override
+  String get virtHwVolumeKept => '已移除，但執行中的客體仍在使用該磁碟，因此保留了磁碟區。它會在下次啟動時分離。';
 }

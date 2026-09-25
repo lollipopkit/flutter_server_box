@@ -3804,4 +3804,292 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get pveTokenTipCreate =>
       'Для создания и удаления гостей также нужны VM.Allocate, VM.Config.*, Datastore.AllocateSpace и SDN.Use.';
+
+  @override
+  String get pveTokenTipHardware =>
+      'Для изменения оборудования нужны VM.Config.CPU, VM.Config.Memory, VM.Config.Disk, VM.Config.CDROM, VM.Config.Network и VM.Config.Options; для новых дисков и интерфейсов также Datastore.AllocateSpace и SDN.Use.';
+
+  @override
+  String get virtErrConflict => 'Изменено в другом месте';
+
+  @override
+  String get virtErrConflictTip =>
+      'Кто-то изменил конфигурацию этого гостя после того, как она была прочитана здесь, поэтому ничего не изменено. Она прочитана заново: повторите изменение, если оно ещё нужно.';
+
+  @override
+  String get virtHardware => 'Оборудование';
+
+  @override
+  String get virtHwAddDisk => 'Добавить диск';
+
+  @override
+  String get virtHwAddMount => 'Добавить точку монтирования';
+
+  @override
+  String get virtHwAddNic => 'Добавить сетевой интерфейс';
+
+  @override
+  String get virtHwAppliesOnRestart =>
+      'Сохранено. Вступит в силу при следующем запуске.';
+
+  @override
+  String get virtHwAutostart => 'Запускать вместе с хостом';
+
+  @override
+  String get virtHwAutostartPve => 'onboot · запуск в порядке VMID';
+
+  @override
+  String get virtHwBalloonLibvirt => 'Текущая память';
+
+  @override
+  String get virtHwBalloonNote =>
+      'Позволяет хосту забирать свободную память гостя при нехватке памяти';
+
+  @override
+  String get virtHwBoot => 'Загрузка';
+
+  @override
+  String get virtHwBootOrder => 'Порядок загрузки';
+
+  @override
+  String get virtHwBootTip =>
+      'Стрелки меняют порядок; нажатие включает или выключает загрузку с устройства.';
+
+  @override
+  String get virtHwCdrom => 'CD-ROM';
+
+  @override
+  String get virtHwConfigFile => 'Файл конфигурации';
+
+  @override
+  String get virtHwCores => 'Ядра';
+
+  @override
+  String get virtHwCpuTypeDefault => 'По умолчанию';
+
+  @override
+  String get virtHwDeleteVolume => 'Также удалить его том';
+
+  @override
+  String get virtHwDetach => 'Отключить';
+
+  @override
+  String get virtHwDiskHotplug => 'Горячее подключение: можно добавить на ходу';
+
+  @override
+  String get virtHwDisksLxc => 'Корневой диск и точки монтирования';
+
+  @override
+  String get virtHwEject => 'Извлечь';
+
+  @override
+  String get virtHwEmpty => 'Без носителя';
+
+  @override
+  String get virtHwFirewall => 'Брандмауэр';
+
+  @override
+  String virtHwFree(String size) {
+    return 'свободно $size';
+  }
+
+  @override
+  String get virtHwGrow => 'Увеличить';
+
+  @override
+  String get virtHwGrowNote => 'Диск можно только увеличить.';
+
+  @override
+  String get virtHwGrowNoteRunning =>
+      'Диск можно только увеличить. После увеличения на ходу раздел нужно расширить внутри гостя.';
+
+  @override
+  String get virtHwGuestUsed => 'Используется гостем';
+
+  @override
+  String virtHwHostCpus(int threads, int allocated) {
+    return 'Хост $threads потоков · выделено $allocated';
+  }
+
+  @override
+  String virtHwHostMem(String total, String allocated) {
+    return 'Хост $total · выделено $allocated';
+  }
+
+  @override
+  String get virtHwHotplugNow => 'Горячее подключение: сразу вступает в силу.';
+
+  @override
+  String get virtHwIssueBootEmpty => 'Отметьте хотя бы одно устройство';
+
+  @override
+  String virtHwIssueCpuCount(int max) {
+    return 'Всего от 1 до $max vCPU';
+  }
+
+  @override
+  String get virtHwIssueCpuOnline => 'Активные vCPU: от 1 до общего числа';
+
+  @override
+  String get virtHwIssueDiskShrink =>
+      'Больше текущего: диски только увеличиваются';
+
+  @override
+  String get virtHwIssueDiskSize => 'От 1 до 65536 ГиБ';
+
+  @override
+  String virtHwIssueMemory(int min, int max) {
+    return 'От $min до $max МиБ';
+  }
+
+  @override
+  String get virtHwIssueMemoryMin => 'Не больше памяти';
+
+  @override
+  String get virtHwIssueMountPoint => 'Абсолютный путь, например /data';
+
+  @override
+  String get virtHwIssueStorageSpace => 'Больше, чем свободно в хранилище';
+
+  @override
+  String get virtHwIssueSwap => 'Не отрицательное';
+
+  @override
+  String get virtHwLater => 'Вступит в силу после перезапуска';
+
+  @override
+  String get virtHwLess => 'Меньше';
+
+  @override
+  String get virtHwLinkDown => 'Отключён';
+
+  @override
+  String get virtHwLinkNote =>
+      'Выключено — гость видит отключённый кабель; перезапуск не нужен';
+
+  @override
+  String get virtHwLinkUp => 'Подключён';
+
+  @override
+  String get virtHwMac => 'MAC-адрес';
+
+  @override
+  String get virtHwModel => 'Модель';
+
+  @override
+  String get virtHwMore => 'Больше';
+
+  @override
+  String get virtHwMountFromPool =>
+      'Точки монтирования выделяются прямо из хранилища';
+
+  @override
+  String get virtHwMountPoint => 'Точка монтирования';
+
+  @override
+  String get virtHwMoveDown => 'Вниз';
+
+  @override
+  String get virtHwMoveUp => 'Вверх';
+
+  @override
+  String get virtHwNewDisk => 'Новый диск';
+
+  @override
+  String get virtHwNewMount => 'Новая точка монтирования';
+
+  @override
+  String get virtHwNewNic => 'Новый сетевой интерфейс';
+
+  @override
+  String get virtHwNicHotplug => 'Интерфейсы virtio подключаются на ходу';
+
+  @override
+  String get virtHwNics => 'Сетевые интерфейсы';
+
+  @override
+  String get virtHwNoMedia => 'Нет носителя';
+
+  @override
+  String get virtHwNoNetworks => 'Здесь нет сетей или мостов';
+
+  @override
+  String get virtHwNoStorage => 'Здесь нет хранилища для дисков';
+
+  @override
+  String get virtHwOnline => 'Активные vCPU';
+
+  @override
+  String get virtHwPendingBanner =>
+      'Часть изменений оборудования вступит в силу после перезапуска';
+
+  @override
+  String get virtHwPendingTip =>
+      'Работающий гость сохраняет значение слева; значение справа он получит при следующем запуске.';
+
+  @override
+  String get virtHwPendingTitle => 'Ожидает следующего запуска';
+
+  @override
+  String get virtHwPickNet => 'Выберите сеть';
+
+  @override
+  String get virtHwPickPool => 'Выберите хранилище и размер';
+
+  @override
+  String get virtHwProcessor => 'Процессор';
+
+  @override
+  String get virtHwRemove => 'Удалить';
+
+  @override
+  String get virtHwRemoveCdrom => 'Удалить CD-ROM';
+
+  @override
+  String virtHwRemoveDiskAsk(String disk, String guest) {
+    return 'Удалить $disk из $guest?';
+  }
+
+  @override
+  String virtHwRemoveNicAsk(String nic, String guest) {
+    return 'Удалить $nic из $guest?';
+  }
+
+  @override
+  String get virtHwResources => 'Ресурсы';
+
+  @override
+  String get virtHwRestartNow => 'Перезапустить';
+
+  @override
+  String get virtHwRevert => 'Отменить';
+
+  @override
+  String get virtHwRevertAll => 'Отменить все';
+
+  @override
+  String get virtHwSockets => 'Сокеты';
+
+  @override
+  String get virtHwSource => 'Источник';
+
+  @override
+  String get virtHwSwap => 'Подкачка';
+
+  @override
+  String get virtHwTopology => 'Сокеты × ядра';
+
+  @override
+  String virtHwTopologyValue(int sockets, int cores, int threads) {
+    return '$sockets сокет. × $cores ядер × $threads пот.';
+  }
+
+  @override
+  String virtHwTotal(String size) {
+    return 'всего $size';
+  }
+
+  @override
+  String get virtHwVolumeKept =>
+      'Удалён, но работающий гость ещё использует диск, поэтому том сохранён. Диск будет отключён при следующем запуске.';
 }

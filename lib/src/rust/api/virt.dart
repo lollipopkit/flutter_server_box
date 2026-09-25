@@ -160,6 +160,33 @@ String virtUndefineScript({
   storage: storage,
 );
 
+/// A domain's hardware, persistent and running, in one round trip
+String virtHardwareScript({required String domain}) =>
+    RustLib.instance.api.crateApiVirtVirtHardwareScript(domain: domain);
+
+/// [`virt_hardware_script`]'s output → `VirtHardwareInfo` JSON
+Future<String> parseVirtHardwareJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtHardwareJson(raw: raw);
+
+/// One hardware change; `change_json` is a `VirtHwChange`, `base_xml` the
+/// persistent definition it was made from. Parse with
+/// [`parse_virt_hardware_change_json`].
+String virtHardwareChangeScript({
+  required String domain,
+  required bool running,
+  String? baseXml,
+  required String changeJson,
+}) => RustLib.instance.api.crateApiVirtVirtHardwareChangeScript(
+  domain: domain,
+  running: running,
+  baseXml: baseXml,
+  changeJson: changeJson,
+);
+
+/// [`virt_hardware_change_script`]'s output → `VirtHwOutcome` JSON
+Future<String> parseVirtHardwareChangeJson({required String raw}) =>
+    RustLib.instance.api.crateApiVirtParseVirtHardwareChangeJson(raw: raw);
+
 /// Power actions (mirrors sbm_parser::virt::VirtAction)
 enum VirtActionKind {
   start,
@@ -195,6 +222,9 @@ enum VirtErrorKind {
 
   /// A domain or volume of that name is there already
   exists,
+
+  /// The definition changed since it was read
+  conflict,
 
   /// Any other virsh failure
   command,

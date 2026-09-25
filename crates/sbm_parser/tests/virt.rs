@@ -1129,3 +1129,355 @@ fn vnc_console_without_a_password_or_refused_one() {
         other => panic!("{other:?}"),
     }
 }
+
+// ---------------------------------------------------------------------------
+// Hardware: reading and editing
+// ---------------------------------------------------------------------------
+
+/// Captured from libvirt 11.3 for a throwaway domain, running with a vCPU
+/// hot-plugged and the balloon moved, so the two definitions differ.
+#[test]
+fn hardware_running_has_both_definitions() {
+    let hw = virt::parse_hardware(&fixture("script_hardware_running.txt")).unwrap();
+    let config = &hw.config;
+    let live = hw.live.as_ref().expect("running");
+    assert_eq!((config.cpu.max, config.cpu.current), (4, 2));
+    assert_eq!((live.cpu.max, live.cpu.current), (4, 3));
+    // No topology: one socket per vCPU, as libvirt gives the guest.
+    assert_eq!((config.cpu.sockets, config.cpu.cores, config.cpu.topology), (4, 1, false));
+    assert_eq!(config.memory_kib, 512 * 1024);
+    assert_eq!(config.current_memory_kib, 384 * 1024);
+    assert!(config.balloon);
+    let vda = &config.disks[0];
+    assert_eq!((vda.target.as_str(), vda.device.as_str()), ("vda", "disk"));
+    assert_eq!(vda.capacity, Some(117_440_512));
+    // An empty CD-ROM: listed, with no source and no size.
+    let cd = &config.disks[1];
+    assert_eq!((cd.target.as_str(), cd.device.as_str(), cd.source.as_deref(), cd.capacity), ("hdc", "cdrom", None, None));
+    assert!(cd.readonly);
+    let nic = &config.nics[0];
+    assert_eq!((nic.mac.as_str(), nic.kind.as_str(), nic.source.as_deref()), ("52:54:00:b9:34:c3", "network", Some("default")));
+    assert!(nic.link_up);
+    // `<os><boot dev='hd'/>` is the first disk.
+    assert_eq!(config.boot, vec!["vda"]);
+    assert!(!hw.autostart);
+    assert_eq!((hw.host_cpus, hw.host_memory_kib), (Some(4), Some(4_016_000)));
+    assert!(hw.config_xml.starts_with("<domain type='kvm'>"), "{}", &hw.config_xml[..40]);
+}
+
+#[test]
+fn hardware_stopped_has_no_running_definition() {
+    let hw = virt::parse_hardware(&fixture("script_hardware_stopped.txt")).unwrap();
+    assert!(hw.live.is_none());
+    assert_eq!(hw.config.disks[0].capacity, Some(117_440_512));
+}
+
+fn base_xml() -> String {
+    virt::parse_hardware(&fixture("script_hardware_running.txt")).unwrap().config_xml
+}
+
+fn hw_of(xml: &str) -> virt::VirtHwConfig {
+    virt::parse_hw_xml(xml, &[]).unwrap()
+}
+
+#[test]
+fn cpu_edits_keep_the_rest_as_written() {
+    let base = base_xml();
+    // One socket of four cores, two online: a topology added inside the
+    // self-closing `<cpu mode='host-passthrough' …/>`, which keeps its mode.
+    let xml = virt::edit_cpu_xml(&base, 1, 4, Some(2)).unwrap();
+    let cpu = hw_of(&xml).cpu;
+    assert_eq!((cpu.sockets, cpu.cores, cpu.threads, cpu.max, cpu.current), (1, 4, 1, 4, 2));
+    assert!(xml.contains("<cpu mode='host-passthrough' check='none' migratable='on'><topology sockets='1' cores='4' threads='1'/></cpu>"), "{xml}");
+    assert!(xml.contains("<vcpu placement='static' current='2'>4</vcpu>"), "{xml}");
+    // Everything else is byte for byte what it was.
+    let strip = |s: &str| {
+        s.lines()
+            .filter(|l| !l.contains("<vcpu") && !l.contains("<cpu"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+    assert_eq!(strip(&xml), strip(&base));
+
+    // An existing topology is edited in place, dies and threads kept, and
+    // the maximum follows it; all online drops `current`.
+    let xml = virt::edit_cpu_xml(&xml.replace("threads='1'", "threads='2' dies='1'"), 2, 3, None).unwrap();
+    let cpu = hw_of(&xml).cpu;
+    assert_eq!((cpu.sockets, cpu.cores, cpu.threads, cpu.max, cpu.current), (2, 3, 2, 12, 12));
+    assert!(xml.contains("<vcpu placement='static'>12</vcpu>"), "{xml}");
+
+    // The default shape needs no topology: none is added.
+    let xml = virt::edit_cpu_xml(&base, 6, 1, None).unwrap();
+    assert!(!xml.contains("<topology"), "{xml}");
+    assert_eq!(hw_of(&xml).cpu.max, 6);
+
+    // No `<cpu>` at all: one is added after `<vcpu>`.
+    let bare = base.replace("<cpu mode='host-passthrough' check='none' migratable='on'/>", "");
+    let xml = virt::edit_cpu_xml(&bare, 2, 2, None).unwrap();
+    assert!(xml.contains("<vcpu placement='static'>4</vcpu>\n  <cpu><topology sockets='2' cores='2' threads='1'/></cpu>"), "{xml}");
+
+    // A per-vCPU list names every vCPU: it goes when the maximum changes.
+    let listed = base.replace(
+        "</vcpu>",
+        "</vcpu>\n  <vcpus><vcpu id='0' enabled='yes' hotpluggable='no'/></vcpus>",
+    );
+    assert!(virt::edit_cpu_xml(&listed, 4, 1, Some(2)).unwrap().contains("<vcpus>"));
+    assert!(!virt::edit_cpu_xml(&listed, 8, 1, None).unwrap().contains("<vcpus>"));
+
+    // Online more than there are, or a topology past what QEMU takes.
+    assert!(virt::edit_cpu_xml(&base, 1, 2, Some(3)).is_err());
+    assert!(virt::edit_cpu_xml(&base, 64, 128, None).is_err());
+}
+
+#[test]
+fn boot_edits_move_to_per_device_order() {
+    let base = base_xml();
+    let xml = virt::edit_boot_xml(&base, &["hdc".into(), "vda".into(), "52:54:00:B9:34:C3".into()]).unwrap();
+    assert!(!xml.contains("<boot dev="), "{xml}");
+    let hw = hw_of(&xml);
+    assert_eq!(hw.boot, vec!["hdc", "vda", "52:54:00:b9:34:c3"]);
+    assert_eq!(hw.disks.iter().map(|d| d.boot_order).collect::<Vec<_>>(), vec![Some(2), Some(1)]);
+
+    // Again, from a definition that already has orders: none are left over.
+    let again = virt::edit_boot_xml(&xml, &["vda".into()]).unwrap();
+    assert_eq!(hw_of(&again).boot, vec!["vda"]);
+    assert_eq!(again.matches("<boot ").count(), 1, "{again}");
+
+    assert!(virt::edit_boot_xml(&base, &["vdz".into()]).is_err());
+    assert!(virt::edit_boot_xml(&base, &["vda".into(), "vda".into()]).is_err());
+}
+
+/// Every change, captured from libvirt 11.3 on a throwaway running domain.
+#[test]
+fn hardware_changes_as_captured() {
+    for name in [
+        "cpu",
+        "cpu_stopped",
+        "memory",
+        "add_disk",
+        "grow_disk",
+        "grow_disk_stopped",
+        "remove_disk",
+        "set_media",
+        "add_nic",
+        "update_nic",
+        "update_nic_with_boot",
+        "boot",
+        "remove_nic",
+        "autostart",
+    ] {
+        let out = virt::parse_hardware_change(&fixture(&format!("script_hw_{name}.txt")));
+        assert_eq!(out, Ok(virt::VirtHwOutcome::default()), "{name}");
+    }
+    // An IDE disk: the definition takes it, the running domain cannot.
+    let out = virt::parse_hardware_change(&fixture("script_hw_add_disk_ide_live_refused.txt")).unwrap();
+    assert!(out.live_error.unwrap().contains("cannot be hotplugged"));
+    // …and cannot let it go either: the volume is kept, not deleted.
+    let out = virt::parse_hardware_change(&fixture("script_hw_remove_disk_kept.txt")).unwrap();
+    assert!(out.volume_kept);
+    assert!(out.live_error.unwrap().contains("cannot be hot unplugged"));
+
+    assert!(matches!(
+        virt::parse_hardware_change(&fixture("script_hw_add_disk_exists.txt")),
+        Err(VirtError::Exists { .. })
+    ));
+    assert!(matches!(
+        virt::parse_hardware_change(&fixture("script_hw_conflict.txt")),
+        Err(VirtError::Conflict { .. })
+    ));
+    // The definition could not be read (no sudo yet): that, not a conflict.
+    assert!(matches!(
+        virt::parse_hardware_change(&fixture("script_hw_guard_refused.txt")),
+        Err(VirtError::PermissionDenied { .. })
+    ));
+}
+
+#[test]
+fn hardware_changes_refuse_what_must_not_reach_a_shell() {
+    use virt::VirtHwChange as C;
+    let script = |c: &C| virt::hardware_change_script("vm", true, Some(&base_xml()), c);
+    assert!(script(&C::GrowDisk { target: "vda; rm".into(), bytes: 1, path: None, live: true }).is_err());
+    assert!(script(&C::GrowDisk { target: "vda".into(), bytes: 1, path: Some("rel".into()), live: false }).is_err());
+    assert!(script(&C::AddNic {
+        kind: "direct".into(),
+        source: "eth0".into(),
+        model: "virtio".into(),
+        mac: "52:54:00:00:00:01".into(),
+    })
+    .is_err());
+    assert!(script(&C::AddNic {
+        kind: "network".into(),
+        source: "default".into(),
+        model: "virtio".into(),
+        mac: "52:54:00:00:00".into(),
+    })
+    .is_err());
+    assert!(script(&C::AddDisk {
+        pool: "images".into(),
+        volume: "../etc".into(),
+        gib: 1,
+        format: "qcow2".into(),
+        target: "vdb".into(),
+        bus: "virtio".into(),
+    })
+    .is_err());
+    assert!(script(&C::Memory { memory_mib: 512, current_mib: Some(1024) }).is_err());
+    assert!(script(&C::Boot { order: vec![] }).is_err());
+    // Rewriting the definition needs the one it is made from.
+    assert!(virt::hardware_change_script("vm", false, None, &C::Cpu { sockets: 1, cores: 1, current: None }).is_err());
+    // A stopped domain's disk grows by its file, and so does one only the
+    // persistent definition has.
+    assert!(virt::hardware_change_script(
+        "vm",
+        true,
+        None,
+        &C::GrowDisk { target: "vdb".into(), bytes: 1, path: None, live: false }
+    )
+    .is_err());
+    assert!(virt::hardware_change_script(
+        "vm",
+        false,
+        None,
+        &C::GrowDisk { target: "vda".into(), bytes: 1, path: None, live: false }
+    )
+    .is_err());
+}
+
+/// A `virsh` for the change scripts: logs its arguments, keeps the files it
+/// is given, prints `base.xml` for `dumpxml --inactive`, fails what the test
+/// asks it to.
+#[cfg(unix)]
+fn hardware_stub(tag: &str, base: &str) -> PathBuf {
+    let d = std::env::temp_dir().join(format!("sbm_virt_hw_{tag}_{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&d);
+    std::fs::create_dir_all(&d).unwrap();
+    std::fs::write(d.join("base.xml"), base).unwrap();
+    let stub = r#"#!/bin/sh
+dir="$(dirname "$0")"
+for a in "$@"; do printf '%s\n' "$a" >> "$dir/log"; done
+echo --- >> "$dir/log"
+cat >> "$dir/stdin"
+shift 3
+[ -f "$dir/fail_$1" ] && { echo "error: $1 refused" >&2; exit 1; }
+case "$1" in
+  dumpxml) cat "$dir/base.xml" ;;
+  define) cp "$3" "$dir/given_define.xml" ;;
+  update-device) cp "$5" "$dir/given_update-device.xml" ;;
+  vol-path) echo "/pool/$5" ;;
+  domblklist) [ -f "$dir/still" ] && echo " vdb /pool/x" ;;
+  *) ;;
+esac
+"#;
+    let path = d.join("virsh");
+    std::fs::write(&path, stub).unwrap();
+    Command::new("chmod").arg("+x").arg(&path).status().unwrap();
+    d
+}
+
+#[cfg(unix)]
+#[test]
+fn hardware_change_scripts_under_sh_with_hostile_names() {
+    use virt::VirtHwChange as C;
+    let name = "it's \"odd\"; touch pwned $(id) `id`";
+    let base = base_xml();
+    let d = hardware_stub("hostile", &base);
+    let path = format!("{}:/usr/bin:/bin", d.display());
+    let log = || std::fs::read_to_string(d.join("log")).unwrap_or_default();
+    let reset = || {
+        let _ = std::fs::remove_file(d.join("log"));
+    };
+    let run = |running: bool, c: &C| {
+        let script = virt::hardware_change_script(name, running, Some(&base), c).unwrap();
+        virt::parse_hardware_change(&run_sh(&script, &path))
+    };
+
+    // The definition given to `define` is the edit, byte for byte, made
+    // only once the one on the host is still the one it was made from.
+    reset();
+    assert_eq!(run(true, &C::Cpu { sockets: 1, cores: 4, current: Some(2) }), Ok(Default::default()));
+    assert_eq!(
+        std::fs::read_to_string(d.join("given_define.xml")).unwrap(),
+        virt::edit_cpu_xml(&base, 1, 4, Some(2)).unwrap()
+    );
+    assert!(log().contains(&format!("dumpxml\n--inactive\n--domain\n{name}\n")), "{}", log());
+    assert!(log().contains(&format!("setvcpus\n--domain\n{name}\n--count\n2\n--live\n")), "{}", log());
+    // …and it is not, when it changed.
+    std::fs::write(d.join("base.xml"), base.replace("<on_crash>destroy", "<on_crash>restart")).unwrap();
+    reset();
+    assert!(matches!(run(true, &C::Boot { order: vec!["vda".into()] }), Err(VirtError::Conflict { .. })));
+    assert!(!log().contains("define"), "{}", log());
+    std::fs::write(d.join("base.xml"), &base).unwrap();
+
+    // A path with every quote in it reaches virsh as one argument.
+    let file = format!("/pool/{name}.iso");
+    reset();
+    let media = C::SetMedia { target: "hdc".into(), source: Some(file.clone()), config: true, live: true };
+    assert_eq!(run(true, &media), Ok(Default::default()));
+    assert!(log().contains(&format!("--source\n{file}\n--update\n--config\n")), "{}", log());
+    assert!(log().contains(&format!("--source\n{file}\n--update\n--live\n")), "{}", log());
+
+    // The running domain refusing its half is not a failure of the change.
+    std::fs::write(d.join("fail_change-media"), "").unwrap();
+    let only_live = C::SetMedia { target: "hdc".into(), source: None, config: false, live: true };
+    assert_eq!(
+        run(true, &only_live).unwrap().live_error.as_deref(),
+        Some("change-media refused")
+    );
+    std::fs::remove_file(d.join("fail_change-media")).unwrap();
+
+    // A disk the definition refuses is deleted again; a new one is attached
+    // by the path the pool gave.
+    let add = C::AddDisk {
+        pool: name.into(),
+        volume: "vm-vdb.qcow2".into(),
+        gib: 2,
+        format: "qcow2".into(),
+        target: "vdb".into(),
+        bus: "virtio".into(),
+    };
+    reset();
+    assert_eq!(run(true, &add), Ok(Default::default()));
+    assert!(log().contains("--source\n/pool/vm-vdb.qcow2\n--target\nvdb\n"), "{}", log());
+    std::fs::write(d.join("fail_attach-disk"), "").unwrap();
+    reset();
+    assert!(run(true, &add).is_err());
+    assert!(log().contains(&format!("vol-delete\n--pool\n{name}\n--vol\nvm-vdb.qcow2\n")), "{}", log());
+    std::fs::remove_file(d.join("fail_attach-disk")).unwrap();
+
+    // A disk the running guest still holds is kept.
+    let remove = C::RemoveDisk { target: "vdb".into(), delete_path: Some(file.clone()), config: true, live: true };
+    std::fs::write(d.join("still"), "").unwrap();
+    reset();
+    assert!(run(true, &remove).unwrap().volume_kept);
+    assert!(!log().contains("vol-delete"), "{}", log());
+    std::fs::remove_file(d.join("still")).unwrap();
+    reset();
+    assert!(!run(true, &remove).unwrap().volume_kept);
+    assert!(log().contains(&format!("vol-delete\n--vol\n{file}\n")), "{}", log());
+
+    // An interface's source with quotes lands in the XML escaped, with the
+    // link state and each definition's own boot order.
+    reset();
+    let update = C::UpdateNic {
+        mac: "52:54:00:b9:34:c3".into(),
+        kind: "network".into(),
+        source: name.into(),
+        model: Some("virtio".into()),
+        link_up: false,
+        boot_order: Some(2),
+        live_boot_order: None,
+        config: true,
+        live: false,
+    };
+    assert_eq!(run(true, &update), Ok(Default::default()));
+    assert_eq!(
+        std::fs::read_to_string(d.join("given_update-device.xml")).unwrap(),
+        "<interface type='network'><mac address='52:54:00:b9:34:c3'/>\
+         <source network='it&apos;s &quot;odd&quot;; touch pwned $(id) `id`'/>\
+         <model type='virtio'/><link state='down'/><boot order='2'/></interface>"
+    );
+
+    assert!(!d.join("pwned").exists() && !std::path::Path::new("pwned").exists());
+    assert_eq!(std::fs::read_to_string(d.join("stdin")).unwrap_or_default(), "");
+    let _ = std::fs::remove_dir_all(&d);
+}

@@ -1,7 +1,7 @@
 /// `PveBackend` against a scripted PVE API: parsing, auth (ticket, TOTP,
 /// token), session drop on 401 and not on 403, the generation guard, UPID
-/// polling, and snapshots, storage and networks against payloads captured
-/// from PVE 9.2.2 (`test/fixtures/pve/`).
+/// polling, and snapshots, storage, networks and hardware against payloads
+/// captured from PVE 9.2.2 (`test/fixtures/pve/`).
 ///
 /// TLS is `pve_tls_test.dart`, against a real TLS server.
 library;
@@ -20,6 +20,7 @@ import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_console.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/virt/pve_backend.dart';
 
@@ -332,7 +333,7 @@ void main() {
             'cgroup-mode': 2,
           },
         ]
-        ..routes['GET /access/permissions'] = (_) => {};
+        ..routes['GET /access/permissions'] = ((_) => {});
       const token = PveConfig(
         addr: 'https://pve.lan:8006',
         auth: PveAuth.token,
@@ -350,9 +351,9 @@ void main() {
 
       // An empty host that may be audited is only empty.
       final empty = _Api()
-        ..routes['GET /access/permissions'] = (_) => {
+        ..routes['GET /access/permissions'] = ((_) => {
           '/': {'Sys.Audit': 1, 'VM.Audit': 1},
-        };
+        });
       expect((await empty.backend(token).load()).guests, isEmpty);
     });
 
@@ -1163,10 +1164,10 @@ void main() {
 
     test('a VMID taken is exists; a bad parameter, the host\'s words', () async {
       final api = _Api()
-        ..routes['POST /nodes/pve/qemu'] = (_) => _Api._status(
+        ..routes['POST /nodes/pve/qemu'] = ((_) => _Api._status(
           500,
           message: "unable to create VM 100 - VM 100 already exists on node 'pve'\n",
-        );
+        ));
       const spec = VirtCreateSpec(
         kind: VirtGuestKind.qemu,
         name: 'x',
@@ -1236,6 +1237,302 @@ void main() {
 
       final running = off.copyWith(state: VirtGuestState.running);
       expect((await _err(pve.delete(running))).type, VirtErrType.unsupported);
+    });
+  });
+
+  group('hardware', () {
+    Object? fixture(String name) =>
+        jsonDecode(File('test/fixtures/pve/$name').readAsStringSync());
+    Map<String, Object?> config(String name) =>
+        (fixture(name)! as Map).cast<String, Object?>();
+
+    const token = PveConfig(
+      addr: 'https://pve.lan:8006',
+      auth: PveAuth.token,
+      tokenId: 'root@pam!sb',
+      tokenSecret: 's',
+    );
+    const vm = VirtGuest(
+      id: 'qemu/9901',
+      name: 'sbhw-e2e-vm',
+      kind: VirtGuestKind.qemu,
+      state: VirtGuestState.running,
+      vmid: 9901,
+      node: 'pve',
+    );
+    const ct = VirtGuest(
+      id: 'lxc/9902',
+      name: 'sbhw-e2e-ct',
+      kind: VirtGuestKind.lxc,
+      state: VirtGuestState.running,
+      vmid: 9902,
+      node: 'pve',
+    );
+
+    /// Captured from PVE 9.2 with cores, memory and the boot order pending,
+    /// a hot-plugged NIC disconnected behind the firewall, and a CPU model
+    /// with a flag.
+    VirtHardware vmHardware() => PveResources.parseHardware(
+      config: config('hw_vm_config.json'),
+      pending: fixture('hw_vm_pending.json')! as List,
+      kind: VirtGuestKind.qemu,
+      running: true,
+      limits: const VirtHwLimits(hostCpus: 12, hostMemoryBytes: 16 << 30),
+    );
+
+    test('a VM: the next start\'s values, and what is pending', () {
+      final hw = vmHardware();
+      expect((hw.cpu.sockets, hw.cpu.cores, hw.cpu.type), (1, 2, 'host'));
+      expect((hw.memory.mib, hw.memory.minMib, hw.memory.balloon), (768, 256, true));
+      expect(hw.disk('scsi0')!.size, 1 << 30);
+      expect(hw.disk('scsi0')!.storage, 'local-lvm');
+      expect(hw.disk('ide2')!.kind, VirtHwDiskKind.cdrom);
+      expect(hw.disk('ide2')!.source, isNull);
+      final net1 = hw.nic('net1')!;
+      expect((net1.linkUp, net1.firewall, net1.mac), (false, true, 'BC:24:11:DE:00:BF'));
+      expect(hw.nic('net0')!.firewall, isFalse);
+      expect(hw.boot, ['scsi0', 'ide2', 'net0']);
+      expect(hw.autostart, isFalse);
+      final pending = {for (final p in hw.pending) p.key: p};
+      expect(pending['cores']?.current, '1');
+      expect(pending['cores']?.pending, '2');
+      expect(pending.keys, containsAll(['memory', 'boot']));
+      // Not pending: applied at once (the NIC was hot-plugged).
+      expect(pending.keys, isNot(contains('net1')));
+      expect(pending.keys, isNot(contains('digest')));
+      expect(hw.revision, '698abb29c27485d3497f5b7a8ca4b6b2789c1cd1');
+      expect(hw.configText, contains('cpu: host,flags=+aes'));
+      expect(hw.configText, isNot(contains('digest')));
+    });
+
+    test('a container: resources, mount points, a removal pending', () {
+      var hw = PveResources.parseHardware(
+        config: config('hw_ct_config.json'),
+        pending: fixture('hw_ct_pending.json')! as List,
+        kind: VirtGuestKind.lxc,
+        running: true,
+      );
+      expect((hw.cpu.cores, hw.memory.mib, hw.memory.swapMib), (2, 384, 128));
+      expect(hw.boot, isNull);
+      expect(hw.disk('rootfs')!.kind, VirtHwDiskKind.rootfs);
+      expect(hw.disk('mp0')!.mountPoint, '/mnt/e2e');
+      expect(hw.nic('net0')!.name, 'eth0');
+      expect(hw.pending, isEmpty);
+
+      // `delete=mp0` on a running container: gone from what the next start
+      // gets, pending until then.
+      hw = PveResources.parseHardware(
+        config: config('hw_ct_config_mp_delete.json'),
+        pending: fixture('hw_ct_pending_mp_delete.json')! as List,
+        kind: VirtGuestKind.lxc,
+        running: true,
+      );
+      expect(hw.disk('mp0'), isNull);
+      final p = hw.pending.single;
+      expect((p.key, p.delete), ('mp0', true));
+      expect(p.current, contains('vm-9902-disk-1'));
+    });
+
+    test('option strings: what is not set stays, in its place', () {
+      const net = 'virtio=BC:24:11:DE:00:BF,bridge=vmbr0,firewall=1,link_down=1';
+      expect(
+        PveResources.withOptions(net, {'bridge': 'vmbr1', 'link_down': null}),
+        'virtio=BC:24:11:DE:00:BF,bridge=vmbr1,firewall=1',
+      );
+      expect(
+        PveResources.withOptions('virtio=AA,bridge=vmbr0', {'link_down': '1'}),
+        'virtio=AA,bridge=vmbr0,link_down=1',
+      );
+      expect(PveResources.withCpuType('host,flags=+aes', 'x86-64-v3'), 'x86-64-v3,flags=+aes');
+      expect(PveResources.withCpuType('cputype=kvm64,hidden=1', 'host'), 'host,hidden=1');
+      expect(PveResources.withCpuType(null, 'host'), 'host');
+      expect(PveResources.sizeArg(2 << 30), '2G');
+      expect(PveResources.sizeArg((1 << 30) + 1), '1048577K');
+    });
+
+    /// An API answering the hardware reads with the captures.
+    _Api hwApi() => _Api()
+      ..routes['GET /nodes/pve/qemu/9901/config'] = ((_) => fixture('hw_vm_config.json'))
+      ..routes['GET /nodes/pve/qemu/9901/pending'] = ((_) => fixture('hw_vm_pending.json'))
+      ..routes['GET /nodes/pve/status'] = ((_) => {
+        'cpuinfo': {'cpus': 12},
+        'memory': {'total': 16627777536},
+      })
+      ..routes['GET /nodes/pve/capabilities/qemu/cpu'] = ((_) => [
+        {'name': 'x86-64-v3', 'custom': 0},
+        {'name': 'host', 'custom': 0},
+      ])
+      ..routes['POST /nodes/pve/qemu/9901/config'] = ((_) => _Api.upid)
+      ..routes['PUT /nodes/pve/lxc/9902/config'] = ((_) => null)
+      ..routes['PUT /nodes/pve/qemu/9901/resize'] = ((_) => _Api.upid);
+
+    Map<String, String> sent(_Api api, String key) {
+      final i = api.paths.lastIndexOf(key);
+      expect(i, isNot(-1), reason: '$key not sent: ${api.paths}');
+      return Uri.splitQueryString(api.bodies[i]);
+    }
+
+    test('read: the node\'s limits and CPU models, sorted', () async {
+      final hw = await hwApi().backend(token).hardware(vm);
+      expect(hw.limits.hostCpus, 12);
+      expect(hw.limits.hostMemoryBytes, 16627777536);
+      expect(hw.cpuTypes, ['host', 'x86-64-v3']);
+    });
+
+    test('read: a token without Sys.Audit on the node still reads the guest',
+        () async {
+      final api = hwApi()
+        ..routes['GET /nodes/pve/status'] = ((_) => _Api._status(403))
+        ..routes['GET /nodes/pve/capabilities/qemu/cpu'] = ((_) => _Api._status(403));
+      final hw = await api.backend(token).hardware(vm);
+      expect(hw.limits.hostCpus, isNull);
+      expect(hw.cpuTypes, isEmpty);
+      expect(hw.cpu.cores, 2);
+    });
+
+    test('every change carries the digest it was made from', () async {
+      final api = hwApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(vm, hw, const VirtHwSetCpu(sockets: 2, cores: 2, type: 'x86-64-v3'));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
+        'sockets': '2',
+        'cores': '2',
+        // The model changes, its flag stays.
+        'cpu': 'x86-64-v3,flags=+aes',
+        'digest': hw.revision,
+      });
+      await pve.changeHardware(vm, hw, const VirtHwSetMemory(mib: 1024));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config'), {
+        'memory': '1024',
+        // No floor any more: the default, the whole memory.
+        'delete': 'balloon',
+        'digest': hw.revision,
+      });
+      await pve.changeHardware(vm, hw, VirtHwUpdateNic(key: 'net1', linkUp: true, network: _bridge('vmbr1')));
+      expect(
+        sent(api, 'POST /nodes/pve/qemu/9901/config')['net1'],
+        'virtio=BC:24:11:DE:00:BF,bridge=vmbr1,firewall=1',
+      );
+      await pve.changeHardware(vm, hw, const VirtHwSetBoot(['ide2', 'scsi0']));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['boot'], 'order=ide2;scsi0');
+      await pve.changeHardware(vm, hw, const VirtHwRevert(['cores', 'memory']));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['revert'], 'cores,memory');
+      await pve.changeHardware(vm, hw, const VirtHwGrowDisk(key: 'scsi0', bytes: 3 << 30));
+      expect(sent(api, 'PUT /nodes/pve/qemu/9901/resize'), {
+        'disk': 'scsi0',
+        'size': '3G',
+        'digest': hw.revision,
+      });
+      // A task each, waited for.
+      expect(api.paths.last, contains('/tasks/'));
+    });
+
+    test('a new disk and NIC go in the first free slot', () async {
+      final api = hwApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      await pve.changeHardware(
+        vm,
+        hw,
+        VirtHwAddDisk(storage: _pool('local-lvm'), gib: 4),
+      );
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['scsi1'], 'local-lvm:4');
+      await pve.changeHardware(vm, hw, VirtHwAddNic(network: _bridge('vmbr0')));
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['net2'], 'virtio,bridge=vmbr0');
+      await pve.changeHardware(
+        vm,
+        hw,
+        VirtHwSetMedia(key: 'ide2', media: _iso('local:iso/a.iso')),
+      );
+      expect(sent(api, 'POST /nodes/pve/qemu/9901/config')['ide2'], 'local:iso/a.iso,media=cdrom');
+    });
+
+    test('a removed disk\'s volume: deleted as unused, or kept while in use',
+        () async {
+      final api = hwApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      // Detached: PVE lists the volume as unused, and deleting that deletes
+      // it.
+      final detached = Map.of(config('hw_vm_config.json'))
+        ..remove('scsi0')
+        ..['unused0'] = 'local-lvm:vm-9901-disk-0'
+        ..['digest'] = 'after';
+      var reads = 0;
+      api.routes['GET /nodes/pve/qemu/9901/config'] = (_) =>
+          reads++ == 0 ? config('hw_vm_config.json') : detached;
+      var out = await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
+      );
+      expect(out.volumeKept, isFalse);
+      final bodies = [
+        for (final (i, p) in api.paths.indexed)
+          if (p == 'POST /nodes/pve/qemu/9901/config')
+            Uri.splitQueryString(api.bodies[i]),
+      ];
+      expect(bodies[0]['delete'], 'scsi0');
+      expect(bodies[1], {'delete': 'unused0', 'digest': 'after'});
+
+      // Still attached (pending until the guest stops): kept.
+      reads = 0;
+      api.routes['GET /nodes/pve/qemu/9901/config'] = (_) => config('hw_vm_config.json');
+      out = await pve.changeHardware(
+        vm,
+        hw,
+        const VirtHwRemoveDisk(key: 'scsi0', deleteVolume: true),
+      );
+      expect(out.volumeKept, isTrue);
+    });
+
+    test('a container: PUT, a mount point and an interface named for it',
+        () async {
+      final api = hwApi()
+        ..routes['GET /nodes/pve/lxc/9902/config'] = ((_) => fixture('hw_ct_config.json'))
+        ..routes['GET /nodes/pve/lxc/9902/pending'] = ((_) => fixture('hw_ct_pending.json'));
+      final pve = api.backend(token);
+      final hw = await pve.hardware(ct);
+      expect(api.paths, isNot(contains('GET /nodes/pve/capabilities/qemu/cpu')));
+      await pve.changeHardware(ct, hw, const VirtHwSetMemory(mib: 512, swapMib: 0));
+      expect(sent(api, 'PUT /nodes/pve/lxc/9902/config'), {
+        'memory': '512',
+        'swap': '0',
+        'digest': hw.revision,
+      });
+      await pve.changeHardware(
+        ct,
+        hw,
+        VirtHwAddDisk(storage: _pool('local-lvm'), gib: 2, mountPoint: '/srv'),
+      );
+      expect(sent(api, 'PUT /nodes/pve/lxc/9902/config')['mp1'], 'local-lvm:2,mp=/srv');
+      await pve.changeHardware(ct, hw, VirtHwAddNic(network: _bridge('vmbr0')));
+      expect(
+        sent(api, 'PUT /nodes/pve/lxc/9902/config')['net1'],
+        'name=eth1,bridge=vmbr0,ip=dhcp',
+      );
+    });
+
+    test('a stale digest is a conflict; a bad value the host\'s words',
+        () async {
+      final api = hwApi();
+      final pve = api.backend(token);
+      final hw = await pve.hardware(vm);
+      api.routes['POST /nodes/pve/qemu/9901/config'] = (_) => _Api._status(
+        500,
+        message: 'checksum mismatch (file change by other user?)\n',
+      );
+      final stale = await _err(pve.changeHardware(vm, hw, const VirtHwSetAutostart(true)));
+      expect(stale.type, VirtErrType.conflict);
+      api.routes['POST /nodes/pve/qemu/9901/config'] = (_) => _Api._status(
+        400,
+        message: 'Parameter verification failed.',
+        errors: {'cores': 'value must have a minimum value of 1'},
+      );
+      final bad = await _err(pve.changeHardware(vm, hw, const VirtHwSetCpu(sockets: 1, cores: 1)));
+      expect(bad.type, VirtErrType.actionFailed);
+      expect(bad.message, contains('minimum value of 1'));
     });
   });
 
@@ -1747,3 +2044,17 @@ class _Adapter implements HttpClientAdapter {
   @override
   void close({bool force = false}) => api.closed++;
 }
+
+VirtStoragePool _pool(String name) => VirtStoragePool(
+  id: 'pve/$name',
+  name: name,
+  node: 'pve',
+  type: 'lvmthin',
+  content: const ['images', 'rootdir'],
+);
+
+VirtNetwork _bridge(String name) =>
+    VirtNetwork(id: 'pve/$name', name: name, node: 'pve', mode: 'bridge');
+
+VirtVolume _iso(String id) =>
+    VirtVolume(id: id, name: id.split('/').last, content: 'iso');

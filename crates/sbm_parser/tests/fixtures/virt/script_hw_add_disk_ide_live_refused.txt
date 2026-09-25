@@ -1,0 +1,14 @@
+SrvBoxSep.b64.dmlydC5ody5zdGVw
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ody5zdGVw
+/var/lib/libvirt/images/sbhw-test-hdb.qcow2
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ody5zdGVw
+
+SbVirtRc=0
+SrvBoxSep.b64.dmlydC5ody5saXZlX3N0ZXA=
+error: Failed to attach disk
+error: Operation not supported: disk bus 'ide' cannot be hotplugged.
+
+SbVirtRc=1

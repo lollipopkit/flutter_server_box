@@ -369,3 +369,94 @@ abstract class LibvirtNetworks with _$LibvirtNetworks {
   factory LibvirtNetworks.fromJson(Map<String, dynamic> json) =>
       _$LibvirtNetworksFromJson(json);
 }
+
+// --- Hardware -----------------------------------------------------------------
+
+/// `sbm_parser::virt::VirtHwCpu`.
+@freezed
+abstract class LibvirtHwCpu with _$LibvirtHwCpu {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwCpu({
+    required int sockets,
+    @Default(1) int dies,
+    @Default(1) int clusters,
+    required int cores,
+    @Default(1) int threads,
+    required int max,
+    required int current,
+    @Default(false) bool topology,
+  }) = _LibvirtHwCpu;
+
+  factory LibvirtHwCpu.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwCpuFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHwDisk with _$LibvirtHwDisk {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwDisk({
+    required String target,
+    @Default('disk') String device,
+    String? bus,
+    String? sourceType,
+    String? source,
+    String? format,
+    @Default(false) bool readonly,
+    int? capacity,
+    int? bootOrder,
+  }) = _LibvirtHwDisk;
+
+  factory LibvirtHwDisk.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwDiskFromJson(json);
+}
+
+@freezed
+abstract class LibvirtHwNic with _$LibvirtHwNic {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwNic({
+    required String mac,
+    @Default('') String kind,
+    String? source,
+    String? model,
+    @Default(true) bool linkUp,
+    int? bootOrder,
+  }) = _LibvirtHwNic;
+
+  factory LibvirtHwNic.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwNicFromJson(json);
+}
+
+/// One definition of a domain's hardware (`sbm_parser::virt::VirtHwConfig`).
+@freezed
+abstract class LibvirtHwConfig with _$LibvirtHwConfig {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHwConfig({
+    required LibvirtHwCpu cpu,
+    required int memoryKib,
+    required int currentMemoryKib,
+    @Default(<LibvirtHwDisk>[]) List<LibvirtHwDisk> disks,
+    @Default(<LibvirtHwNic>[]) List<LibvirtHwNic> nics,
+    @Default(<String>[]) List<String> boot,
+    @Default(false) bool balloon,
+  }) = _LibvirtHwConfig;
+
+  factory LibvirtHwConfig.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHwConfigFromJson(json);
+}
+
+/// `sbm_parser::virt::VirtHardwareInfo`.
+@freezed
+abstract class LibvirtHardwareInfo with _$LibvirtHardwareInfo {
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  const factory LibvirtHardwareInfo({
+    required LibvirtHwConfig config,
+    LibvirtHwConfig? live,
+    required String configXml,
+    @Default(false) bool autostart,
+    int? hostCpus,
+    int? hostMemoryKib,
+  }) = _LibvirtHardwareInfo;
+
+  factory LibvirtHardwareInfo.fromJson(Map<String, dynamic> json) =>
+      _$LibvirtHardwareInfoFromJson(json);
+}

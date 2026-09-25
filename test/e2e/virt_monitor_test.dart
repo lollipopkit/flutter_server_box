@@ -76,6 +76,7 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/virt/virt.dart';
 import 'package:server_box/data/model/virt/virt_create.dart';
 import 'package:server_box/data/model/virt/virt_detail.dart';
+import 'package:server_box/data/model/virt/virt_hardware.dart';
 import 'package:server_box/data/model/virt/virt_resources.dart';
 import 'package:server_box/data/provider/remote_desktop.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -131,7 +132,9 @@ Future<void> main() async {
   // `--plain-name 'create and delete'` runs only these.
   if (libvirt != null) _libvirtCreate(libvirt);
   if (libvirt != null) _libvirtVncPassword(libvirt);
+  if (libvirt != null) _libvirtHardware(libvirt);
   if (pve != null) _pveCreate(pve);
+  if (pve != null) _pveHardware(pve);
   if (libvirt != null) {
     _libvirt(libvirt);
   } else {
@@ -744,6 +747,535 @@ void _libvirtCreate(_Agent agent) {
       if (mediaPool != null) {
         final still = await w.host.volumes(mediaPool);
         expect(still.map((v) => v.name), contains(media.first.name));
+      }
+    });
+  });
+}
+
+void _libvirtHardware(_Agent agent) {
+  final sudoPassword = e2eEnv('SBM_E2E_MONITOR_SUDO_PASSWORD');
+
+  group('hardware: libvirt over the monitor agent', () {
+    late _World w;
+    final name = _e2eName('hw');
+    late VirtStoragePool pool;
+    late VirtGuest g;
+
+    Future<VirtHardware> hw() => w.host.hardware(g.id);
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-libvirt-hw'));
+      await w.host.firstLoad;
+      if (w.state.error?.type == VirtErrType.sudoPasswordRequired &&
+          sudoPassword != null) {
+        await w.host.provideSudoPassword(sudoPassword);
+      }
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+      expect(w.state.data!.capabilities.hardware, isTrue);
+      expect(w.state.data!.capabilities.hardwareRevert, isFalse);
+      final pools = await w.host.storagePools();
+      pool = virtDiskStorages(
+        pools,
+        host: VirtHostKind.libvirt,
+        kind: VirtGuestKind.qemu,
+      ).first;
+      final net = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.libvirt,
+      ).firstWhere((n) => n.name == 'default');
+      final created = await w.host.create(
+        VirtCreateSpec(
+          kind: VirtGuestKind.qemu,
+          name: name,
+          cores: 1,
+          memoryMiB: 256,
+          storage: pool,
+          diskGiB: 1,
+          network: net,
+          start: true,
+        ),
+      );
+      g = await w.settle(
+        (x) => x.id == created.id,
+        name,
+        (x) => x.state == VirtGuestState.running,
+      );
+    });
+    tearDownAll(() async {
+      final left = w.state.data?.guests.where((x) => x.name == name);
+      for (final x in left ?? const <VirtGuest>[]) {
+        try {
+          if (x.state != VirtGuestState.stopped) {
+            await w.host.power(x.id, VirtPowerAction.forceStop);
+            await w.host.refresh();
+          }
+          await w.host.delete(x.id);
+        } catch (_) {}
+      }
+      // A disk kept because the guest never let go of it (it has no OS to
+      // answer the unplug) is in no definition any more: deleted by name.
+      try {
+        final exec = await w.server.ensureExec();
+        await PrivilegedExec.run(
+          exec,
+          "for v in \$(virsh -c qemu:///system -q vol-list --pool '${pool.id}' "
+          "| awk '{print \$1}' | grep '^$name-'); do "
+          "virsh -c qemu:///system -q vol-delete --pool '${pool.id}' --vol \"\$v\"; done",
+          isRoot: false,
+          password: sudoPassword,
+        );
+      } catch (_) {}
+      await w.dispose();
+    });
+
+    /// [pool]'s volumes as they are now, not as the last listing had them.
+    Future<Iterable<String>> volumesNow() async {
+      final pools = await w.host.storagePools();
+      final now = pools.firstWhere((p) => p.id == pool.id);
+      return (await w.host.volumes(now)).map((v) => v.name);
+    }
+
+    test('read: both definitions, the host\'s limits, nothing pending',
+        () async {
+      final h = await hw();
+      expect(h.running, isTrue);
+      expect(h.cpu.total, 1);
+      expect(h.memory.mib, 256);
+      expect(h.disks.where((d) => d.kind == VirtHwDiskKind.disk), hasLength(1));
+      expect(h.disks.first.size, 1 << 30);
+      expect(h.nics, hasLength(1));
+      expect(h.pending, isEmpty);
+      expect(h.limits.hostCpus, greaterThan(0));
+      expect(h.limits.hostMemoryBytes, greaterThan(0));
+      expect(h.revision, startsWith('<domain'));
+    });
+
+    test('CPU and memory: kept for the next start, shown as pending',
+        () async {
+      var h = await hw();
+      await w.host.changeHardware(
+        g.id,
+        h,
+        const VirtHwSetCpu(sockets: 1, cores: 2, online: 1),
+      );
+      h = await hw();
+      expect((h.cpu.sockets, h.cpu.cores, h.cpu.online), (1, 2, 1));
+      // The running domain still has one vCPU of one.
+      expect(h.pending.map((p) => p.key), contains('cpu'));
+
+      await w.host.changeHardware(
+        g.id,
+        h,
+        const VirtHwSetMemory(mib: 320, minMib: 256),
+      );
+      h = await hw();
+      expect((h.memory.mib, h.memory.minMib), (320, 256));
+      expect(h.pending.map((p) => p.key), contains('memory'));
+    });
+
+    test('an edit from an old read is refused, and changes nothing',
+        () async {
+      final old = await hw();
+      // The definition changes after [old] was read …
+      await w.host.changeHardware(
+        g.id,
+        old,
+        const VirtHwSetMemory(mib: 384, minMib: 256),
+      );
+      // … so a CPU change made from [old] would undo it: refused.
+      final err = await _virtErr(
+        w.host.changeHardware(
+          g.id,
+          old,
+          const VirtHwSetCpu(sockets: 2, cores: 2),
+        ),
+      );
+      expect(err.type, VirtErrType.conflict);
+      final h = await hw();
+      expect(h.memory.mib, 384);
+      expect((h.cpu.sockets, h.cpu.cores), (1, 2));
+
+      // Autostart is no part of the definition: made from anything.
+      await w.host.changeHardware(g.id, h, const VirtHwSetAutostart(true));
+      expect((await hw()).autostart, isTrue);
+      await w.host.changeHardware(g.id, h, const VirtHwSetAutostart(false));
+      expect((await hw()).autostart, isFalse);
+    });
+
+    test('a disk: added in a pool, grown, removed with its volume', () async {
+      var h = await hw();
+      final out = await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwAddDisk(storage: pool, gib: 1),
+      );
+      h = await hw();
+      final added = h.disks.firstWhere(
+        (d) => d.kind == VirtHwDiskKind.disk && d.key != 'vda',
+      );
+      expect(added.source, endsWith('/$name-${added.key}.qcow2'));
+      // Hot-plugged, or not (a q35 domain with no free root port): either
+      // way the next start has it.
+      if (out.liveError != null) {
+        expect(h.pending.map((p) => p.key), contains(added.key));
+      }
+
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwGrowDisk(key: added.key, bytes: 2 << 30),
+      );
+      h = await hw();
+      expect(h.disk(added.key)!.size, 2 << 30);
+      final shrink = virtHwIssue(h, VirtHwGrowDisk(key: added.key, bytes: 1 << 30));
+      expect(shrink, VirtHwIssue.diskShrink);
+
+      final removed = await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwRemoveDisk(key: added.key, deleteVolume: true),
+      );
+      h = await hw();
+      expect(h.disk(added.key), isNull);
+      final vols = await volumesNow();
+      // A guest with no OS never lets go of a hot-plugged disk: kept then.
+      if (removed.volumeKept) {
+        expect(vols, contains('$name-${added.key}.qcow2'));
+        expect(h.pending.map((p) => p.key), contains(added.key));
+      } else {
+        expect(vols, isNot(contains('$name-${added.key}.qcow2')));
+      }
+    });
+
+    test('a NIC: added, disconnected, removed', () async {
+      var h = await hw();
+      final net = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.libvirt,
+      ).firstWhere((n) => n.name == 'default');
+      await w.host.changeHardware(g.id, h, VirtHwAddNic(network: net));
+      h = await hw();
+      expect(h.nics, hasLength(2));
+      final nic = h.nics.last;
+      expect(nic.mac, startsWith('52:54:00:'));
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwUpdateNic(key: nic.key, linkUp: false),
+      );
+      h = await hw();
+      expect(h.nic(nic.key)!.linkUp, isFalse);
+      await w.host.changeHardware(g.id, h, VirtHwRemoveNic(key: nic.key));
+      h = await hw();
+      expect(h.nic(nic.key), isNull);
+    });
+
+    test('boot order: per device, pending while it runs', () async {
+      var h = await hw();
+      final order = [h.nics.first.key, 'vda'];
+      await w.host.changeHardware(g.id, h, VirtHwSetBoot(order));
+      h = await hw();
+      expect(h.boot, order);
+      expect(h.pending.map((p) => p.key), contains('boot'));
+      expect(
+        await _virtErr(w.host.changeHardware(g.id, h, const VirtHwRevert(['boot']))),
+        isA<VirtErr>().having((e) => e.type, 'type', VirtErrType.unsupported),
+      );
+    });
+
+    test('stopped: nothing pending, and the next start has it all', () async {
+      await w.host.power(g.id, VirtPowerAction.forceStop);
+      await w.settle(
+        (x) => x.id == g.id,
+        name,
+        (x) => x.state == VirtGuestState.stopped,
+      );
+      final h = await hw();
+      expect(h.running, isFalse);
+      expect(h.pending, isEmpty);
+      expect((h.cpu.cores, h.memory.mib), (2, 384));
+      // A stopped domain's disk grows by its file.
+      await w.host.changeHardware(
+        g.id,
+        h,
+        VirtHwGrowDisk(key: 'vda', bytes: 2 << 30),
+      );
+      expect((await hw()).disk('vda')!.size, 2 << 30);
+    });
+  });
+}
+
+void _pveHardware(_Agent agent) {
+  final tokenId = e2eEnv('SBM_E2E_PVE_TOKEN_ID');
+  final tokenSecret = e2eEnv('SBM_E2E_PVE_TOKEN_SECRET');
+  final vmId = e2eEnv('SBM_E2E_PVE_HW_VM');
+  final ctId = e2eEnv('SBM_E2E_PVE_HW_CT');
+  if (tokenId == null || tokenSecret == null || vmId == null || ctId == null) {
+    return;
+  }
+
+  group('hardware: PVE over the monitor agent relay', () {
+    late _World w;
+    late String node;
+    late VirtStoragePool storage;
+    late VirtNetwork bridge;
+    late VirtGuest vm;
+    late VirtGuest ct;
+
+    Future<VirtHardware> hw(VirtGuest g) => w.host.hardware(g.id);
+
+    setUpAll(() async {
+      w = _World(agent.spi('e2e-monitor-pve-hw'));
+      Stores.pve.put(
+        w.id,
+        PveConfig(
+          addr: 'https://localhost:8006',
+          auth: PveAuth.token,
+          tokenId: tokenId,
+          tokenSecret: tokenSecret,
+        ),
+      );
+      await w.host.firstLoad;
+      final cert = w.state.error?.cert;
+      if (cert != null) await w.host.confirmCert(cert.fingerprint);
+      expect(w.state.error, isNull, reason: '${w.state.error}');
+      final caps = w.state.data!.capabilities;
+      expect((caps.hardware, caps.hardwareRevert), (true, true));
+      vm = w.guest((g) => g.vmid == int.parse(vmId), 'VM $vmId');
+      ct = w.guest((g) => g.vmid == int.parse(ctId), 'container $ctId');
+      node = vm.node!;
+      storage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      ).first;
+      bridge = virtCreateNetworks(
+        await w.host.networks(),
+        host: VirtHostKind.pve,
+        node: node,
+      ).first;
+    });
+    tearDownAll(() => w.dispose());
+
+    test('a VM: read with the node\'s limits and CPU models', () async {
+      final h = await hw(vm);
+      expect(h.kind, VirtGuestKind.qemu);
+      expect(h.running, isTrue);
+      expect(h.revision, isNotEmpty);
+      expect(h.disk('scsi0')!.size, 1 << 30);
+      expect(h.disk('ide2')!.kind, VirtHwDiskKind.cdrom);
+      expect(h.nics.map((n) => n.key), contains('net0'));
+      expect(h.boot, isNotEmpty);
+      expect(h.cpuTypes, contains('host'));
+      expect(h.limits.hostCpus, greaterThan(0));
+      expect(h.configText, contains('scsi0: '));
+    });
+
+    test('a VM: CPU pending while it runs, and reverted', () async {
+      var h = await hw(vm);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        const VirtHwSetCpu(sockets: 1, cores: 2),
+      );
+      h = await hw(vm);
+      expect(h.cpu.cores, 2);
+      expect(h.pending.map((p) => p.key), contains('cores'));
+      await w.host.changeHardware(vm.id, h, const VirtHwRevert(['cores']));
+      h = await hw(vm);
+      expect(h.cpu.cores, 1);
+      expect(h.pending.map((p) => p.key), isNot(contains('cores')));
+    });
+
+    test('a VM: memory and its balloon floor', () async {
+      var h = await hw(vm);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        const VirtHwSetMemory(mib: 768, minMib: 256),
+      );
+      h = await hw(vm);
+      expect((h.memory.mib, h.memory.minMib), (768, 256));
+      expect(h.pending.map((p) => p.key), contains('memory'));
+    });
+
+    test('a VM: an edit from an old digest is refused', () async {
+      final old = await hw(vm);
+      await w.host.changeHardware(vm.id, old, const VirtHwSetAutostart(true));
+      final err = await _virtErr(
+        w.host.changeHardware(vm.id, old, const VirtHwSetBoot(['ide2'])),
+      );
+      expect(err.type, VirtErrType.conflict);
+      final h = await hw(vm);
+      expect(h.autostart, isTrue);
+      await w.host.changeHardware(vm.id, h, const VirtHwSetAutostart(false));
+    });
+
+    test('a VM: a disk added, grown, removed with its volume', () async {
+      var h = await hw(vm);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        VirtHwAddDisk(storage: storage, gib: 1),
+      );
+      h = await hw(vm);
+      final added = h.disks.firstWhere(
+        (d) => d.kind == VirtHwDiskKind.disk && d.key != 'scsi0',
+      );
+      expect(added.size, 1 << 30);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        VirtHwGrowDisk(key: added.key, bytes: 2 << 30),
+      );
+      h = await hw(vm);
+      expect(h.disk(added.key)!.size, 2 << 30);
+      final out = await w.host.changeHardware(
+        vm.id,
+        h,
+        VirtHwRemoveDisk(key: added.key, deleteVolume: true),
+      );
+      final vols = await w.host.volumes(storage);
+      final volume = added.source!.split(':').last;
+      if (out.volumeKept) {
+        expect((await hw(vm)).pending.map((p) => p.key), contains(added.key));
+      } else {
+        expect((await hw(vm)).disk(added.key), isNull);
+        expect(vols.map((v) => v.id), isNot(contains(added.source)));
+        expect(vols.map((v) => v.name), isNot(contains(volume)));
+      }
+    });
+
+    test('a VM: the CD-ROM takes an ISO, and gives it back', () async {
+      var h = await hw(vm);
+      final isos = <VirtVolume>[];
+      for (final p in virtMediaStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.qemu,
+        node: node,
+      )) {
+        isos.addAll(
+          (await w.host.volumes(p)).where(
+            (v) => virtIsMedia(v, VirtGuestKind.qemu),
+          ),
+        );
+      }
+      if (isos.isEmpty) return;
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        VirtHwSetMedia(key: 'ide2', media: isos.first),
+      );
+      h = await hw(vm);
+      expect(h.disk('ide2')!.source, isos.first.id);
+      await w.host.changeHardware(vm.id, h, const VirtHwSetMedia(key: 'ide2'));
+      expect((await hw(vm)).disk('ide2')!.source, isNull);
+    });
+
+    test('a VM: a NIC added, disconnected behind a firewall, removed',
+        () async {
+      var h = await hw(vm);
+      await w.host.changeHardware(vm.id, h, VirtHwAddNic(network: bridge));
+      h = await hw(vm);
+      final nic = h.nics.firstWhere((n) => n.key != 'net0');
+      final mac = nic.mac;
+      expect(mac, isNotNull);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        VirtHwUpdateNic(key: nic.key, linkUp: false, firewall: true),
+      );
+      h = await hw(vm);
+      final after = h.nic(nic.key)!;
+      expect((after.linkUp, after.firewall, after.mac), (false, true, mac));
+      await w.host.changeHardware(vm.id, h, VirtHwRemoveNic(key: nic.key));
+      expect((await hw(vm)).nic(nic.key), isNull);
+    });
+
+    test('a VM: boot order pending, then everything reverted', () async {
+      var h = await hw(vm);
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        const VirtHwSetBoot(['ide2', 'scsi0']),
+      );
+      h = await hw(vm);
+      expect(h.boot, ['ide2', 'scsi0']);
+      expect(h.pending.map((p) => p.key), contains('boot'));
+      await w.host.changeHardware(
+        vm.id,
+        h,
+        VirtHwRevert([for (final p in h.pending) p.key]),
+      );
+      h = await hw(vm);
+      expect(h.pending, isEmpty);
+      expect(h.memory.mib, 512);
+    });
+
+    test('a container: cores, memory and swap, a mount point, a NIC', () async {
+      var h = await hw(ct);
+      expect(h.kind, VirtGuestKind.lxc);
+      expect(h.boot, isNull);
+      expect(h.disk('rootfs')!.kind, VirtHwDiskKind.rootfs);
+      await w.host.changeHardware(
+        ct.id,
+        h,
+        const VirtHwSetCpu(sockets: 1, cores: 2),
+      );
+      h = await hw(ct);
+      await w.host.changeHardware(
+        ct.id,
+        h,
+        const VirtHwSetMemory(mib: 384, swapMib: 128),
+      );
+      h = await hw(ct);
+      expect((h.cpu.cores, h.memory.mib, h.memory.swapMib), (2, 384, 128));
+
+      final ctStorage = virtDiskStorages(
+        await w.host.storagePools(),
+        host: VirtHostKind.pve,
+        kind: VirtGuestKind.lxc,
+        node: node,
+      ).first;
+      await w.host.changeHardware(
+        ct.id,
+        h,
+        VirtHwAddDisk(storage: ctStorage, gib: 1, mountPoint: '/mnt/e2e'),
+      );
+      h = await hw(ct);
+      final mp = h.disks.firstWhere((d) => d.kind == VirtHwDiskKind.mount);
+      expect(mp.mountPoint, '/mnt/e2e');
+      final removed = await w.host.changeHardware(
+        ct.id,
+        h,
+        VirtHwRemoveDisk(key: mp.key, deleteVolume: true),
+      );
+      h = await hw(ct);
+      // A running container keeps the mount point until it stops (PVE 9.2):
+      // the removal is pending, and its volume kept for then.
+      final pending = h.pending.where((p) => p.key == mp.key).firstOrNull;
+      if (removed.volumeKept) {
+        expect(pending?.delete, isTrue, reason: '${h.pending}');
+      } else {
+        expect(pending, isNull);
+      }
+      expect(h.disk(mp.key), isNull);
+
+      await w.host.changeHardware(ct.id, h, VirtHwAddNic(network: bridge));
+      h = await hw(ct);
+      final nic = h.nics.firstWhere((n) => n.key != 'net0');
+      expect(nic.name, 'eth1');
+      await w.host.changeHardware(ct.id, h, VirtHwRemoveNic(key: nic.key));
+      h = await hw(ct);
+      expect(h.nic(nic.key), isNull);
+      if (h.pending.isNotEmpty) {
+        await w.host.changeHardware(
+          ct.id,
+          h,
+          VirtHwRevert([for (final p in h.pending) p.key]),
+        );
       }
     });
   });

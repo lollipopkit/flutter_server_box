@@ -318,7 +318,7 @@ final class VirtHostNotifierProvider
   }
 }
 
-String _$virtHostNotifierHash() => r'd267953710b98bdb0809dcd447a491f42434b99d';
+String _$virtHostNotifierHash() => r'30f7fdc59612d6f3cce6ceaad6fca1ec21d9815f';
 
 /// One virtualization host: its backend, periodic refresh, actions in flight
 /// and the answers the user gives (TOTP, certificate, sudo password).
@@ -508,6 +508,105 @@ final class VirtSnapshotsFamily extends $Family
 
   @override
   String toString() => r'virtSnapshotsProvider';
+}
+
+/// The hardware of one guest. Invalidated by the view after each change and
+/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
+/// pending banner from it, and reading it again for every guest opened would
+/// be a round trip to the host each time.
+
+@ProviderFor(virtHardware)
+final virtHardwareProvider = VirtHardwareFamily._();
+
+/// The hardware of one guest. Invalidated by the view after each change and
+/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
+/// pending banner from it, and reading it again for every guest opened would
+/// be a round trip to the host each time.
+
+final class VirtHardwareProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<VirtHardware>,
+          VirtHardware,
+          FutureOr<VirtHardware>
+        >
+    with $FutureModifier<VirtHardware>, $FutureProvider<VirtHardware> {
+  /// The hardware of one guest. Invalidated by the view after each change and
+  /// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
+  /// pending banner from it, and reading it again for every guest opened would
+  /// be a round trip to the host each time.
+  VirtHardwareProvider._({
+    required VirtHardwareFamily super.from,
+    required (String, String) super.argument,
+  }) : super(
+         retry: _noRetry,
+         name: r'virtHardwareProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$virtHardwareHash();
+
+  @override
+  String toString() {
+    return r'virtHardwareProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<VirtHardware> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<VirtHardware> create(Ref ref) {
+    final argument = this.argument as (String, String);
+    return virtHardware(ref, argument.$1, argument.$2);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is VirtHardwareProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$virtHardwareHash() => r'dccc8de29434dde75b4ee6987a273d5303e939b8';
+
+/// The hardware of one guest. Invalidated by the view after each change and
+/// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
+/// pending banner from it, and reading it again for every guest opened would
+/// be a round trip to the host each time.
+
+final class VirtHardwareFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<VirtHardware>, (String, String)> {
+  VirtHardwareFamily._()
+    : super(
+        retry: _noRetry,
+        name: r'virtHardwareProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// The hardware of one guest. Invalidated by the view after each change and
+  /// by [VirtHostNotifier.power]. Kept once read: the guest view shows the
+  /// pending banner from it, and reading it again for every guest opened would
+  /// be a round trip to the host each time.
+
+  VirtHardwareProvider call(String serverId, String guestId) =>
+      VirtHardwareProvider._(argument: (serverId, guestId), from: this);
+
+  @override
+  String toString() => r'virtHardwareProvider';
 }
 
 /// The host's storage pools.
