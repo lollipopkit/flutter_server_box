@@ -1,8 +1,9 @@
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/data/ssh/tmux/tmux_pane_mode_snapshot.dart';
 
 /// A tmux session as shown by the native window bar and session switcher.
 final class TmuxControlSessionSummary {
-  final String id;
+  final TmuxSessionId id;
   final String name;
   final int windows;
   final bool attached;
@@ -20,7 +21,7 @@ final class TmuxControlSessionSummary {
 
 /// A tmux window. The ID is stable; the index is display-only state.
 final class TmuxControlWindow {
-  final String id;
+  final TmuxWindowId id;
   final int index;
   final String name;
   final bool active;
@@ -44,7 +45,7 @@ final class TmuxControlWindow {
 /// This model keeps the other panes addressable so they remain visible and
 /// switchable instead of silently disappearing behind that decision.
 final class TmuxControlPane {
-  final String id;
+  final TmuxPaneId id;
   final int index;
   final String title;
   final String currentCommand;
@@ -66,7 +67,7 @@ final class TmuxControlPane {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isNotEmpty) return trimmedTitle;
     final command = currentCommand.trim();
-    return command.isEmpty ? id : command;
+    return command.isEmpty ? id.value : command;
   }
 
   @override
@@ -78,8 +79,8 @@ final class TmuxControlSnapshot {
   final List<TmuxControlSessionSummary> sessions;
   final TmuxControlSessionSummary session;
   final List<TmuxControlWindow> windows;
-  final String activeWindowId;
-  final String activePaneId;
+  final TmuxWindowId activeWindowId;
+  final TmuxPaneId activePaneId;
   final TmuxPaneModeSnapshot mode;
 
   const TmuxControlSnapshot({
@@ -100,7 +101,7 @@ final class TmuxControlSnapshot {
 }
 
 final class TmuxControlPaneOutput {
-  final String paneId;
+  final TmuxPaneId paneId;
   final List<int> data;
 
   const TmuxControlPaneOutput(this.paneId, this.data);

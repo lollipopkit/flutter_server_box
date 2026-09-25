@@ -167,8 +167,6 @@ class TerminalSession {
 
   Map<String, String>? get environment => source.environment;
 
-  String? get tmuxLang => source.tmuxLang;
-
   // — Connecting ————————————————————————————————————————————————————
 
   /// Reuses the connection the status poller already holds, when there is one.
@@ -508,7 +506,7 @@ class TerminalSession {
     if (stream == null) return;
     final subscription = stream
         .cast<List<int>>()
-        .transform(const Utf8Decoder())
+        .transform(const Utf8Decoder(allowMalformed: true))
         .listen(
           _queue,
           onError: (Object error, StackTrace stack) {

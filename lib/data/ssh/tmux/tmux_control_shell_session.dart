@@ -5,6 +5,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/data/ssh/tmux/tmux_output_normalizer.dart';
 
 /// Presents a `tmux -CC` client to [TerminalSession] as an ordinary shell.
@@ -23,7 +24,7 @@ final class TmuxControlShellSession implements ShellSession {
   StreamSubscription<TmuxControlPaneOutput>? _paneOutputSubscription;
   Future<void> _done = Future.value();
   bool _closed = false;
-  String? _normalizedPaneId;
+  TmuxPaneId? _normalizedPaneId;
 
   TmuxControlShellSession(this._client, this._session) {
     _paneOutputSubscription = _client.paneOutput.listen(_handlePaneOutput);

@@ -41,7 +41,7 @@ final class TmuxControlProtocolCommandResult extends TmuxControlProtocolEvent {
 
 /// `%output <pane-id> <escaped bytes>`.
 final class TmuxControlProtocolOutput extends TmuxControlProtocolEvent {
-  final String paneId;
+  final TmuxPaneId paneId;
   final Uint8List data;
 
   const TmuxControlProtocolOutput(this.paneId, this.data);
@@ -279,8 +279,10 @@ final class TmuxControlProtocolParser {
     if (firstSpace < 0) return null;
     final secondSpace = line.indexOf(' ', firstSpace + 1);
     if (secondSpace < 0) return null;
-    final paneId = line.substring(firstSpace + 1, secondSpace);
-    if (paneId.isEmpty || !paneId.startsWith('%')) return null;
+    final paneId = TmuxPaneId.tryParse(
+      line.substring(firstSpace + 1, secondSpace),
+    );
+    if (paneId == null) return null;
 
     // `%extended-output` is `pane-id age ... : value`; the colon is a complete
     // argument, not the first byte of the value. Future arguments between age

@@ -6,9 +6,14 @@ import 'package:server_box/view/widget/tmux_session_picker_sheet.dart';
 
 void main() {
   const sessions = [
-    TmuxPickerSession(id: r'$0', name: 'main', windowCount: 2, attached: true),
     TmuxPickerSession(
-      id: r'$1',
+      id: TmuxSessionId(r'$0'),
+      name: 'main',
+      windowCount: 2,
+      attached: true,
+    ),
+    TmuxPickerSession(
+      id: TmuxSessionId(r'$1'),
       name: 'build',
       windowCount: 1,
       attached: false,
@@ -22,7 +27,7 @@ void main() {
       context,
       sessions: sessions,
       defaultSessionName: 'server_box',
-      selectedSessionId: r'$0',
+      selectedSessionId: TmuxSessionId(r'$0'),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -54,7 +59,7 @@ void main() {
     final result = await future;
     expect(result, isA<TmuxPickExisting>());
     final existing = result as TmuxPickExisting;
-    expect(existing.sessionId, r'$1');
+    expect(existing.sessionId, TmuxSessionId(r'$1'));
     expect(existing.sessionName, 'build');
   });
 

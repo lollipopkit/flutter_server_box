@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 
 /// A tmux session as the session picker sees it.
@@ -9,7 +10,7 @@ import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 /// Discovery and control mode both provide tmux's stable `$id`; the picker is
 /// the boundary where their remaining field differences become one shape.
 final class TmuxPickerSession {
-  final String id;
+  final TmuxSessionId id;
   final String name;
   final int windowCount;
   final bool attached;
@@ -45,7 +46,7 @@ sealed class TmuxSessionPickerResult {
 }
 
 final class TmuxPickExisting extends TmuxSessionPickerResult {
-  final String sessionId;
+  final TmuxSessionId sessionId;
   final String sessionName;
 
   const TmuxPickExisting({required this.sessionId, required this.sessionName});
@@ -75,7 +76,7 @@ Future<TmuxSessionPickerResult?> showTmuxSessionPickerSheet(
   BuildContext context, {
   required List<TmuxPickerSession> sessions,
   required String defaultSessionName,
-  String? selectedSessionId,
+  TmuxSessionId? selectedSessionId,
   bool showSkip = false,
   bool showDetach = false,
 }) {

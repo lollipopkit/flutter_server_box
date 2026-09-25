@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:server_box/data/ssh/tmux/tmux_control_protocol.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -76,7 +77,7 @@ void main() {
       );
 
       final output = events.single as TmuxControlProtocolOutput;
-      expect(output.paneId, '%0');
+      expect(output.paneId, TmuxPaneId('%0'));
       expect(output.data, utf8.encode('hello\x1b[1mworld\r\\'));
     });
 
@@ -106,7 +107,7 @@ void main() {
       );
 
       final output = events.single as TmuxControlProtocolOutput;
-      expect(output.paneId, '%9');
+      expect(output.paneId, TmuxPaneId('%9'));
       expect(utf8.decode(output.data), 'live text');
     });
 

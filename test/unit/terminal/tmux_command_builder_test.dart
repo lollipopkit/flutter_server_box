@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
+import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -14,14 +17,14 @@ void main() {
     test('attachSession builds correct command', () {
       expect(
         TmuxCommandBuilder.attachSession('main'),
-        "'tmux' -u attach-session -t 'main'",
+        "'tmux' -u -CC attach-session -t 'main'",
       );
     });
 
     test('attachSessionWindow builds correct command', () {
       expect(
         TmuxCommandBuilder.attachSessionWindow('main', 2),
-        "'tmux' -u attach-session -t 'main:2'",
+        "'tmux' -u -CC attach-session -t 'main:2'",
       );
     });
 
@@ -29,72 +32,110 @@ void main() {
       const tmuxBin = '/home/linuxbrew/.linuxbrew/bin/tmux';
       expect(
         TmuxCommandBuilder.attachSession('main', tmuxBin: tmuxBin),
-        "'$tmuxBin' -u attach-session -t 'main'",
+        "'$tmuxBin' -u -CC attach-session -t 'main'",
       );
       expect(
         TmuxCommandBuilder.attachSessionWindow('main', 2, tmuxBin: tmuxBin),
-        "'$tmuxBin' -u attach-session -t 'main:2'",
+        "'$tmuxBin' -u -CC attach-session -t 'main:2'",
       );
       expect(
         TmuxCommandBuilder.newSessionOrAttach('server_box', tmuxBin: tmuxBin),
-        "'$tmuxBin' -u new-session -A -s 'server_box'",
-      );
-    });
-
-    test('newSession builds correct command', () {
-      expect(
-        TmuxCommandBuilder.newSession('dev'),
-        "'tmux' -u new-session -s 'dev'",
+        "'$tmuxBin' -u -CC new-session -A -s 'server_box'",
       );
     });
 
     test('newSessionOrAttach builds correct command', () {
       expect(
         TmuxCommandBuilder.newSessionOrAttach('server_box'),
-        "'tmux' -u new-session -A -s 'server_box'",
+        "'tmux' -u -CC new-session -A -s 'server_box'",
       );
     });
 
-    test('killSession builds correct command', () {
+    test('listSessions uses shell-generated tab separators', () {
+      const shellTab = "\$(printf '\\t')";
+      final command = TmuxCommandBuilder.listSessionsCmd();
+      expect(command, contains("'tmux' -u list-sessions"));
+      expect(command, contains('"#{session_id}$shellTab#{q:session_name}'));
       expect(
-        TmuxCommandBuilder.killSession('old'),
-        "'tmux' kill-session -t 'old'",
+        command,
+        contains('#{session_windows}$shellTab#{session_attached}'),
       );
+      expect(command, contains(shellTab));
+      expect(command.contains('\t'), isFalse);
     });
 
-    test('listSessions is correct format string', () {
+    test('listSessions output parses against real tmux', () {
+      if (Platform.isWindows) {
+        markTestSkipped('the real tmux command harness is POSIX-only');
+        return;
+      }
+      try {
+        final version = Process.runSync('tmux', ['-V']);
+        if (version.exitCode != 0) {
+          markTestSkipped('tmux is not installed');
+          return;
+        }
+      } on ProcessException {
+        markTestSkipped('tmux is not installed');
+        return;
+      }
+
+      final shell = _pickPosixShell();
+      final tempDir = Directory.systemTemp.createTempSync('sb-list-sessions-');
+      final environment = {
+        ...Platform.environment,
+        'TMUX_TMPDIR': tempDir.path,
+        'TMUX': '',
+        'TMUX_PANE': '',
+        // This is the condition that broke the Android app: an exec shell can
+        // have no locale at all, which leaves tmux in the C locale and makes
+        // it replace tab separators with underscores unless `-u` is passed.
+        'LANG': 'C',
+        'LC_ALL': 'C',
+        'LC_CTYPE': 'C',
+      };
+      try {
+        final created = Process.runSync('tmux', [
+          'new-session',
+          '-d',
+          '-s',
+          'dis|covery',
+        ], environment: environment);
+        expect(created.exitCode, 0);
+
+        final result = Process.runSync(shell, [
+          '-c',
+          TmuxCommandBuilder.listSessionsCmd(),
+        ], environment: environment);
+        expect(result.exitCode, 0);
+
+        final sessions = (result.stdout as String)
+            .split('\n')
+            .where((line) => line.trim().isNotEmpty)
+            .map(TmuxSessionInfo.tryParse)
+            .whereType<TmuxSessionInfo>()
+            .toList();
+        expect(sessions, isNotEmpty);
+        expect(sessions.map((session) => session.name), contains('dis|covery'));
+      } finally {
+        Process.runSync('tmux', ['kill-server'], environment: environment);
+        try {
+          tempDir.deleteSync(recursive: true);
+        } on FileSystemException {
+          // tmux can remove its socket directory concurrently with the test.
+        }
+      }
+    });
+
+    test('discovery commands force UTF-8 output', () {
       expect(
         TmuxCommandBuilder.listSessionsCmd(),
-        contains("'tmux' list-sessions"),
+        startsWith("'tmux' -u list-sessions"),
       );
-      expect(TmuxCommandBuilder.listSessionsCmd(), contains('#{session_name}'));
       expect(
-        TmuxCommandBuilder.listSessionsCmd(),
-        contains('#{session_windows}'),
+        TmuxCommandBuilder.listWindows('main'),
+        startsWith("'tmux' -u list-windows"),
       );
-    });
-
-    test('listClients uses client session and window fields', () {
-      expect(
-        TmuxCommandBuilder.listClients(),
-        "'tmux' list-clients -F "
-        '"#{client_tty}|#{client_session}|#{window_index}|#{client_activity}"',
-      );
-    });
-
-    test('switchClient targets a specific client tty', () {
-      expect(
-        TmuxCommandBuilder.switchClient('/dev/pts/3', 'main:2'),
-        "'tmux' switch-client -c '/dev/pts/3' -t 'main:2'",
-      );
-    });
-
-    test('commands include locale only when lang is explicit', () {
-      expect(
-        TmuxCommandBuilder.attachSession('main', lang: 'C.UTF-8'),
-        "env LANG='C.UTF-8' LC_CTYPE='C.UTF-8' LC_ALL='C.UTF-8' 'tmux' -u attach-session -t 'main'",
-      );
-      expect(TmuxCommandBuilder.tmuxPrefix(lang: ''), "'tmux'");
     });
 
     test('checkTmux includes multiple paths', () {
@@ -104,14 +145,14 @@ void main() {
     test('attachSession handles special characters', () {
       expect(
         TmuxCommandBuilder.attachSession('my session'),
-        "'tmux' -u attach-session -t 'my session'",
+        "'tmux' -u -CC attach-session -t 'my session'",
       );
     });
 
-    test('newSession handles special characters in name', () {
+    test('newSessionOrAttach handles special characters in name', () {
       expect(
-        TmuxCommandBuilder.newSession("user's-work"),
-        "'tmux' -u new-session -s 'user'\\''s-work'",
+        TmuxCommandBuilder.newSessionOrAttach("user's-work"),
+        "'tmux' -u -CC new-session -A -s 'user'\\''s-work'",
       );
     });
 
@@ -121,8 +162,17 @@ void main() {
           'main',
           tmuxBin: "/opt/tmux builds/tmux'; echo injected; '",
         ),
-        "'/opt/tmux builds/tmux'\\''; echo injected; '\\''' -u attach-session -t 'main'",
+        "'/opt/tmux builds/tmux'\\''; echo injected; '\\''' -u -CC attach-session -t 'main'",
       );
     });
   });
+}
+
+String _pickPosixShell() {
+  final result = Process.runSync('/bin/sh', ['-c', 'command -v dash']);
+  if (result.exitCode == 0) {
+    final path = (result.stdout as String).trim();
+    if (path.isNotEmpty) return path;
+  }
+  return '/bin/sh';
 }

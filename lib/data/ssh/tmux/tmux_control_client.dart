@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:server_box/data/model/server/shell_backend.dart';
+import 'package:server_box/data/ssh/tmux/tmux_command_executor.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_protocol.dart';
 import 'package:server_box/data/ssh/tmux/tmux_format.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/data/ssh/tmux/tmux_pane_mode_snapshot.dart';
 
 /// A client attached to tmux through the real `tmux -CC` protocol.
@@ -21,8 +22,9 @@ final class TmuxControlClient {
 
   final ShellSession _session;
   final TmuxControlProtocolParser _parser = TmuxControlProtocolParser();
-  final _pending = Queue<Completer<TmuxControlCommandResult>>();
-  final _startupCompleter = Completer<TmuxControlCommandResult>();
+  late final TmuxCommandExecutor _commands = TmuxCommandExecutor(
+    writeCommand: _writeCommand,
+  );
   final _stateController = StreamController<TmuxControlSnapshot>.broadcast();
   final _paneOutputController =
       StreamController<TmuxControlPaneOutput>.broadcast();
@@ -31,7 +33,6 @@ final class TmuxControlClient {
   bool _refreshing = false;
   bool _refreshQueued = false;
   bool _captureAfterRefresh = false;
-  bool _closed = false;
   TmuxControlSnapshot? _snapshot;
 
   /// Called for fire-and-forget commands (notably keyboard input) which fail.
@@ -52,7 +53,6 @@ final class TmuxControlClient {
       onError: _handleStreamError,
       onDone: () => _handleDone(cleanExit: false),
     );
-    unawaited(_startupCompleter.future.then((_) {}, onError: (_) {}));
   }
 
   Stream<TmuxControlSnapshot> get snapshots => _stateController.stream;
@@ -62,7 +62,7 @@ final class TmuxControlClient {
   /// Waits for the command which launched the CC client, then builds the first
   /// snapshot and, by default, captures the active pane's existing screen.
   Future<void> initialize({bool captureActivePane = true}) async {
-    final startup = await _startupCompleter.future.timeout(_startupTimeout);
+    final startup = await _commands.startup.timeout(_startupTimeout);
     if (startup.error) {
       throw TmuxControlCommandException('<attach>', startup.output);
     }
@@ -70,15 +70,8 @@ final class TmuxControlClient {
   }
 
   /// Runs a tmux command and returns its `%begin/%end` output.
-  Future<TmuxControlCommandResult> run(String command) {
-    if (_closed) {
-      return Future.error(StateError('tmux control client is closed'));
-    }
-    final completer = Completer<TmuxControlCommandResult>();
-    _pending.add(completer);
-    _writeCommand(command);
-    return completer.future;
-  }
+  Future<TmuxControlCommandResult> run(String command) =>
+      _commands.run(command);
 
   Future<TmuxControlCommandResult> runRequired(String command) async {
     final result = await run(command);
@@ -144,17 +137,17 @@ final class TmuxControlClient {
     send('refresh-client -C $target${width}x$height');
   }
 
-  Future<void> selectWindow(String windowId) async {
+  Future<void> selectWindow(TmuxWindowId windowId) async {
     await runRequired("select-window -t '$windowId'");
     await refreshState(captureActivePane: true);
   }
 
-  Future<void> selectPane(String paneId) async {
+  Future<void> selectPane(TmuxPaneId paneId) async {
     await runRequired("select-pane -t '$paneId'");
     await refreshState(captureActivePane: true);
   }
 
-  Future<void> closePane(String paneId) async {
+  Future<void> closePane(TmuxPaneId paneId) async {
     // Closing the final pane of the final window destroys the session and this
     // CC client. As with `kill-window`, do not ask the departing client for a
     // refresh that can race `%exit` and turn success into a failure.
@@ -169,22 +162,22 @@ final class TmuxControlClient {
     }
   }
 
-  Future<String> newWindow({String? name}) async {
+  Future<TmuxWindowId> newWindow({String? name}) async {
     final target = _snapshot?.session.id;
     final nameArg = name == null ? '' : ' -n ${quoteTmux(name)}';
     final command =
         "new-window -P -F '#{window_id}'"
         "${target == null ? '' : " -t '$target'"}$nameArg";
     final result = await runRequired(command);
-    final id = result.output.trim();
-    if (!id.startsWith('@')) {
+    final id = TmuxWindowId.tryParse(result.output.trim());
+    if (id == null) {
       throw TmuxControlCommandException(command, result.output);
     }
     await refreshState(captureActivePane: true);
     return id;
   }
 
-  Future<void> closeWindow(String windowId) async {
+  Future<void> closeWindow(TmuxWindowId windowId) async {
     // Killing the last window also destroys the session and exits this CC
     // client. Do not ask the departing client for a new snapshot: tmux may
     // answer `kill-window` and then immediately send `%exit`, so a refresh can
@@ -215,21 +208,21 @@ final class TmuxControlClient {
     try {
       await runRequired(command);
     } catch (error) {
-      if (!_closed) rethrow;
+      if (!_commands.isClosed) rethrow;
     }
   }
 
-  Future<void> switchSession(String sessionId) async {
+  Future<void> switchSession(TmuxSessionId sessionId) async {
     await runRequired("switch-client -t '$sessionId'");
     await refreshState(captureActivePane: true);
   }
 
-  Future<String> createSession(String name) async {
+  Future<TmuxSessionId> createSession(String name) async {
     final command =
         "new-session -d -P -F '#{session_id}' -s ${quoteTmux(name)}";
     final result = await runRequired(command);
-    final id = result.output.trim();
-    if (!id.startsWith(r'$')) {
+    final id = TmuxSessionId.tryParse(result.output.trim());
+    if (id == null) {
       throw TmuxControlCommandException(command, result.output);
     }
     await switchSession(id);
@@ -237,18 +230,10 @@ final class TmuxControlClient {
   }
 
   Future<void> dispose() async {
-    if (_closed) return;
-    _closed = true;
+    if (_commands.isClosed) return;
+    _commands.close();
     _refreshTimer?.cancel();
     _refreshTimer = null;
-
-    final error = StateError('tmux control client disposed');
-    if (!_startupCompleter.isCompleted) {
-      _startupCompleter.completeError(error);
-    }
-    while (_pending.isNotEmpty) {
-      _pending.removeFirst().completeError(error);
-    }
 
     await _outputSubscription?.cancel();
     await _stateController.close();
@@ -260,7 +245,7 @@ final class TmuxControlClient {
   }
 
   void _handleData(Uint8List data) {
-    if (_closed) return;
+    if (_commands.isClosed) return;
     try {
       for (final event in _parser.push(data)) {
         switch (event) {
@@ -280,18 +265,7 @@ final class TmuxControlClient {
   }
 
   void _completeCommand(TmuxControlCommandResult result) {
-    if (!_startupCompleter.isCompleted) {
-      if (result.error) {
-        _startupCompleter.completeError(
-          TmuxControlCommandException('<attach>', result.output),
-        );
-      } else {
-        _startupCompleter.complete(result);
-      }
-      return;
-    }
-    if (_pending.isEmpty) return;
-    _pending.removeFirst().complete(result);
+    _commands.complete(result);
   }
 
   void _handleNotification(TmuxControlProtocolNotification event) {
@@ -332,7 +306,7 @@ final class TmuxControlClient {
   }
 
   void _scheduleRefresh({bool captureActivePane = false}) {
-    if (_closed) return;
+    if (_commands.isClosed) return;
     _captureAfterRefresh = _captureAfterRefresh || captureActivePane;
     _refreshTimer ??= Timer(_refreshDelay, () {
       _refreshTimer = null;
@@ -347,7 +321,7 @@ final class TmuxControlClient {
   }
 
   Future<void> _refreshNow({required bool captureActivePane}) async {
-    if (_closed) return;
+    if (_commands.isClosed) return;
     if (_refreshing) {
       _refreshQueued = true;
       _captureAfterRefresh = _captureAfterRefresh || captureActivePane;
@@ -377,8 +351,16 @@ final class TmuxControlClient {
         if (parsed != null) sessions.add(parsed);
       }
 
-      final sessionId = unescapeTmuxField(currentParts[0]);
+      final sessionId = TmuxSessionId.tryParse(
+        unescapeTmuxField(currentParts[0]),
+      );
       final sessionName = unescapeTmuxField(currentParts[1]);
+      if (sessionId == null) {
+        throw const TmuxControlCommandException(
+          'display-message',
+          'session identity was malformed',
+        );
+      }
       var session = sessions.where((item) => item.id == sessionId).firstOrNull;
       session ??= TmuxControlSessionSummary(
         id: sessionId,
@@ -461,7 +443,7 @@ final class TmuxControlClient {
       if (captureActivePane) await _captureActivePane();
     } finally {
       _refreshing = false;
-      if (_refreshQueued && !_closed) {
+      if (_refreshQueued && !_commands.isClosed) {
         _refreshQueued = false;
         _scheduleRefresh(captureActivePane: _captureAfterRefresh);
         _captureAfterRefresh = false;
@@ -508,7 +490,7 @@ final class TmuxControlClient {
     _resumePaneOutput(paneId);
   }
 
-  void _resumePaneOutput(String paneId) {
+  void _resumePaneOutput(TmuxPaneId paneId) {
     unawaited(
       runRequired("refresh-client -A '$paneId:continue'").catchError((
         Object error,
@@ -522,10 +504,10 @@ final class TmuxControlClient {
   TmuxControlSessionSummary? _parseSession(String line) {
     final fields = splitTmuxFields(line);
     if (fields.length < 4) return null;
-    final id = unescapeTmuxField(fields[0]);
+    final id = TmuxSessionId.tryParse(unescapeTmuxField(fields[0]));
     final windows = int.tryParse(unescapeTmuxField(fields[2]));
     final attached = int.tryParse(unescapeTmuxField(fields[3]));
-    if (!id.startsWith(r'$') || windows == null) return null;
+    if (id == null || windows == null) return null;
     return TmuxControlSessionSummary(
       id: id,
       name: unescapeTmuxField(fields[1]),
@@ -537,10 +519,10 @@ final class TmuxControlClient {
   TmuxControlWindow? _parseWindow(String line) {
     final fields = splitTmuxFields(line);
     if (fields.length < 4) return null;
-    final id = unescapeTmuxField(fields[0]);
+    final id = TmuxWindowId.tryParse(unescapeTmuxField(fields[0]));
     final index = int.tryParse(unescapeTmuxField(fields[1]));
     final active = int.tryParse(unescapeTmuxField(fields[3]));
-    if (!id.startsWith('@') || index == null || active == null) return null;
+    if (id == null || index == null || active == null) return null;
     return TmuxControlWindow(
       id: id,
       index: index,
@@ -552,10 +534,10 @@ final class TmuxControlClient {
   TmuxControlPane? _parsePane(String line) {
     final fields = splitTmuxFields(line);
     if (fields.length < 5) return null;
-    final id = unescapeTmuxField(fields[0]);
+    final id = TmuxPaneId.tryParse(unescapeTmuxField(fields[0]));
     final index = int.tryParse(unescapeTmuxField(fields[1]));
     final active = int.tryParse(unescapeTmuxField(fields[2]));
-    if (!id.startsWith('%') || index == null || active == null) return null;
+    if (id == null || index == null || active == null) return null;
     final cursorX = fields.length > 5
         ? int.tryParse(unescapeTmuxField(fields[5])) ?? 0
         : 0;
@@ -574,29 +556,17 @@ final class TmuxControlClient {
   }
 
   void _handleStreamError(Object error, StackTrace stackTrace) {
-    if (_closed) return;
-    if (!_startupCompleter.isCompleted) {
-      _startupCompleter.completeError(error, stackTrace);
-    }
-    while (_pending.isNotEmpty) {
-      _pending.removeFirst().completeError(error, stackTrace);
-    }
+    if (_commands.isClosed) return;
+    _commands.fail(error, stackTrace);
     _handleDone();
   }
 
   void _handleDone({bool cleanExit = false}) {
-    if (_closed) return;
-    _closed = true;
+    if (_commands.isClosed) return;
+    _commands.close();
     _refreshTimer?.cancel();
     _refreshTimer = null;
 
-    final error = StateError('tmux control client ended');
-    if (!_startupCompleter.isCompleted) {
-      _startupCompleter.completeError(error);
-    }
-    while (_pending.isNotEmpty) {
-      _pending.removeFirst().completeError(error);
-    }
     _paneOutputController.close();
     _stateController.close();
     onClosed?.call(cleanExit);

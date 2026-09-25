@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 
 /// A native app bar for the windows in the attached tmux session.
 ///
@@ -208,7 +209,7 @@ final class _ClosePane extends _PaneSelection {
 
 final class _PaneSummaryButton extends StatefulWidget {
   final List<TmuxControlPane> panes;
-  final String activePaneId;
+  final TmuxPaneId activePaneId;
   final ValueChanged<TmuxControlPane>? onSelectPane;
   final ValueChanged<TmuxControlPane>? onClosePane;
 

@@ -7,6 +7,7 @@ import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_format.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:test/test.dart';
 import 'package:xterm/core.dart';
 
@@ -25,13 +26,13 @@ void main() {
       await _pumpEventQueue();
 
       final snapshot = client.snapshot!;
-      expect(snapshot.session.id, r'$0');
+      expect(snapshot.session.id, TmuxSessionId(r'$0'));
       expect(snapshot.session.name, 'main');
       expect(snapshot.sessions, hasLength(2));
       expect(snapshot.session.windows, 2);
       expect(snapshot.windows, hasLength(2));
-      expect(snapshot.activeWindowId, '@0');
-      expect(snapshot.activePaneId, '%0');
+      expect(snapshot.activeWindowId, TmuxWindowId('@0'));
+      expect(snapshot.activePaneId, TmuxPaneId('%0'));
       expect(snapshot.activeWindow!.panes, hasLength(1));
       expect(snapshot.activeWindow!.panes.single.displayName, 'shell');
       expect(
@@ -239,11 +240,11 @@ void main() {
       await _pumpEventQueue();
 
       shell.activeWindowId = '@1';
-      await client.selectWindow('@1');
+      await client.selectWindow(TmuxWindowId('@1'));
 
       expect(shell.writes, contains("select-window -t '@1'"));
-      expect(client.snapshot!.activeWindowId, '@1');
-      expect(client.snapshot!.activePaneId, '%3');
+      expect(client.snapshot!.activeWindowId, TmuxWindowId('@1'));
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(shell.writes, contains("capture-pane -p -e -t '%3'"));
       await client.dispose();
       shell.close();
@@ -262,7 +263,7 @@ void main() {
 
       final panes = client.snapshot!.activeWindow!.panes;
       expect(panes, hasLength(2));
-      expect(client.snapshot!.activePaneId, '%0');
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%0'));
       expect(
         shell.writes,
         contains(
@@ -272,10 +273,10 @@ void main() {
         ),
       );
 
-      await client.selectPane('%3');
+      await client.selectPane(TmuxPaneId('%3'));
 
       expect(shell.writes, contains("select-pane -t '%3'"));
-      expect(client.snapshot!.activePaneId, '%3');
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(client.snapshot!.activeWindow!.panes.last.active, isTrue);
       expect(shell.writes, contains("capture-pane -p -e -t '%3'"));
       await client.dispose();
@@ -292,11 +293,11 @@ void main() {
 
       shell.splitPanes = true;
       await client.refreshState();
-      await client.closePane('%0');
+      await client.closePane(TmuxPaneId('%0'));
 
       expect(shell.writes, contains("kill-pane -t '%0'"));
       expect(client.snapshot!.activeWindow!.panes, hasLength(1));
-      expect(client.snapshot!.activePaneId, '%3');
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       await client.dispose();
       shell.close();
     });
@@ -315,7 +316,7 @@ void main() {
 
         shell.onlyOneWindow = true;
         await client.refreshState();
-        await client.closePane('%0');
+        await client.closePane(TmuxPaneId('%0'));
 
         expect(shell.writes, contains("kill-pane -t '%0'"));
         final killAt = shell.writes.indexOf("kill-pane -t '%0'");
@@ -338,19 +339,19 @@ void main() {
       await initialized;
       await _pumpEventQueue();
 
-      await client.switchSession(r'$1');
+      await client.switchSession(TmuxSessionId(r'$1'));
       expect(shell.writes, contains("switch-client -t '\$1'"));
-      expect(client.snapshot!.session.id, r'$1');
+      expect(client.snapshot!.session.id, TmuxSessionId(r'$1'));
 
       final id = await client.createSession("work 'quotes'");
-      expect(id, r'$1');
+      expect(id, TmuxSessionId(r'$1'));
       expect(
         shell.writes,
         contains(
           r"new-session -d -P -F '#{session_id}' -s 'work '\''quotes'\'''",
         ),
       );
-      expect(client.snapshot!.session.id, r'$1');
+      expect(client.snapshot!.session.id, TmuxSessionId(r'$1'));
       await client.dispose();
       shell.close();
     });
@@ -371,8 +372,8 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 80));
       await _pumpEventQueue();
 
-      expect(client.snapshot!.activeWindowId, '@1');
-      expect(client.snapshot!.activePaneId, '%3');
+      expect(client.snapshot!.activeWindowId, TmuxWindowId('@1'));
+      expect(client.snapshot!.activePaneId, TmuxPaneId('%3'));
       expect(shell.writes, contains("capture-pane -p -e -t '%3'"));
 
       final capturesBefore = shell.writes
@@ -403,7 +404,7 @@ void main() {
       shell.nextWindowId = '@2';
       final id = await client.newWindow(name: "work 'quotes'");
 
-      expect(id, '@2');
+      expect(id, TmuxWindowId('@2'));
       expect(
         shell.writes,
         contains(
@@ -428,7 +429,7 @@ void main() {
 
         shell.onlyOneWindow = true;
         await client.refreshState();
-        await client.closeWindow('@0');
+        await client.closeWindow(TmuxWindowId('@0'));
 
         expect(shell.writes, contains("kill-window -t '@0'"));
         final killAt = shell.writes.indexOf("kill-window -t '@0'");
@@ -454,7 +455,7 @@ void main() {
         await _pumpEventQueue();
 
         shell.exitBeforeNextCommandResult = true;
-        await client.closeWindow('@0');
+        await client.closeWindow(TmuxWindowId('@0'));
 
         expect(shell.writes, contains("kill-window -t '@0'"));
         await client.dispose();
@@ -473,7 +474,7 @@ void main() {
         await _pumpEventQueue();
 
         shell.exitBeforeNextCommandResult = true;
-        await client.closePane('%0');
+        await client.closePane(TmuxPaneId('%0'));
 
         expect(shell.writes, contains("kill-pane -t '%0'"));
         await client.dispose();

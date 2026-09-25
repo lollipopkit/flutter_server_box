@@ -11,6 +11,7 @@ import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_shell_session.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 
 /// Runs the CC parser and command queue against the real tmux binary.
 ///
@@ -61,10 +62,10 @@ void main() {
       await client.initialize().timeout(const Duration(seconds: 10));
 
       expect(client.snapshot, isNotNull);
-      expect(client.snapshot!.session.id, startsWith(r'$'));
+      expect(client.snapshot!.session.id.value, startsWith(r'$'));
       expect(client.snapshot!.session.name, 'serverbox_real');
-      expect(client.snapshot!.activeWindowId, startsWith('@'));
-      expect(client.snapshot!.activePaneId, startsWith('%'));
+      expect(client.snapshot!.activeWindowId.value, startsWith('@'));
+      expect(client.snapshot!.activePaneId.value, startsWith('%'));
 
       client.sendInput(utf8.encode('serverbox-cc-real-input\n'));
       await echoed.future.timeout(const Duration(seconds: 5));
@@ -72,8 +73,8 @@ void main() {
       final created = await client.runRequired(
         "new-window -d -P -F '#{window_id}' -n second cat",
       );
-      final secondWindowId = created.output.trim();
-      expect(secondWindowId, startsWith('@'));
+      final secondWindowId = TmuxWindowId.parse(created.output.trim());
+      expect(secondWindowId.value, startsWith('@'));
       await client.refreshState(captureActivePane: true);
       expect(client.snapshot!.windows, hasLength(2));
 
@@ -89,8 +90,8 @@ void main() {
       final splitPane = await client.runRequired(
         "split-window -d -P -F '#{pane_id}' -t '$secondWindowId' cat",
       );
-      final splitPaneId = splitPane.output.trim();
-      expect(splitPaneId, startsWith('%'));
+      final splitPaneId = TmuxPaneId.parse(splitPane.output.trim());
+      expect(splitPaneId.value, startsWith('%'));
       await client.refreshState(captureActivePane: true);
       expect(client.snapshot!.activeWindow!.panes, hasLength(2));
 
@@ -106,7 +107,7 @@ void main() {
       final special = await client.runRequired(
         "new-session -d -P -F '#{session_id}' -s 'a|b:c'",
       );
-      final specialId = special.output.trim();
+      final specialId = TmuxSessionId.parse(special.output.trim());
       await client.switchSession(specialId);
       expect(client.snapshot!.session.id, specialId);
       expect(client.snapshot!.session.name, 'a|b:c');

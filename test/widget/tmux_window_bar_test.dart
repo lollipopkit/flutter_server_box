@@ -8,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_client.dart';
 import 'package:server_box/data/ssh/tmux/tmux_control_models.dart';
+import 'package:server_box/data/ssh/tmux/tmux_ids.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/widget/tmux_window_bar.dart';
 
@@ -60,14 +61,14 @@ void main() {
     await tester.tap(find.text('1:logs'));
     await tester.pump();
 
-    expect(selected?.id, '@1');
+    expect(selected?.id, TmuxWindowId('@1'));
     expect(newWindowTaps, 0);
 
     await tester.tap(find.byTooltip('New window'));
     expect(newWindowTaps, 1);
 
     await tester.tap(find.byTooltip('Delete'));
-    expect(closed?.id, '@0');
+    expect(closed?.id, TmuxWindowId('@0'));
 
     shell.splitPanes = true;
     await tester.runAsync(() => client.refreshState());
@@ -92,14 +93,14 @@ void main() {
     await tester.tap(find.text('1:tail'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(selectedPane?.id, '%3');
+    expect(selectedPane?.id, TmuxPaneId('%3'));
 
     await tester.tap(find.text('1/2'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byKey(const ValueKey('close_tmux_pane_%0')).first);
     await tester.pump();
-    expect(closedPane?.id, '%0');
+    expect(closedPane?.id, TmuxPaneId('%0'));
 
     await tester.runAsync(() async {
       await client.dispose();
